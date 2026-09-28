@@ -5,10 +5,10 @@
  *
  *   The worktree arm's interface, exercised against a throwaway git repo rather than this one.
  *
- *   Deliberately not a geocode: building an engine costs minutes and needs the data root, so a test that ran one
- *   would be a slow integration test wearing a unit test's clothes. What is asserted here is the implementation that
- *   was actually hard — that a ref arm runs the REF's source and a `worktree` arm runs the uncommitted one,
- *   that a dirty tree says so in the commit it reports, and that neither leaves litter behind.
+ *   This test does not geocode. Building an engine takes minutes and requires the data root, so a test that ran one
+ *   would be a slow integration test. The test checks the worktree-arm implementation.
+ *   A ref arm runs the ref's source. A `worktree` arm runs the uncommitted source.
+ *   Reported commits identify dirty trees. Both arms leave the caller's tree unchanged.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -32,8 +32,8 @@ afterAll(() => fixtures.disposeAsync())
  * resolves without this test needing the monorepo.
  * That is the same resolution path the real arm uses.
  *
- * A stub here proves the farm and the subprocess, and the engine is exercised
- * for real by the tools that call this.
+ * A stub here exercises the farm and subprocess.
+ * The calling tools exercise the engine against real data.
  */
 async function fakeRepo(marker: string): Promise<PathBuilder> {
 	const root = fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path
@@ -44,8 +44,9 @@ async function fakeRepo(marker: string): Promise<PathBuilder> {
 	await writeLocalJSONFile(
 		{
 			name: "mailwoman",
-			// Mirrors the real package after the prefix fold: `geocode-session.ts` became `geocode/session.ts`
-			// behind the `./geocode` directory entry, which is the subpath the arm runner imports.
+			// Mirrors the real package after the prefix fold: `geocode-session.ts` became
+			// `geocode/session.ts` behind the `./geocode` directory entry.
+			// The arm runner imports that subpath.
 			exports: { "./geocode": { node: "./geocode/index.ts", default: "./geocode/index.ts" } },
 		},
 		root("packages", "mailwoman", "package.json")
@@ -62,8 +63,9 @@ async function fakeRepo(marker: string): Promise<PathBuilder> {
 	)
 
 	// The workspace link yarn would have installed.
-	// Both arms need it and for different reasons: the worktree arm resolves through it
-	// directly, and the ref arm's farm mirrors this directory to build its own.
+	// Both arms need it for different reasons.
+	// The worktree arm resolves through it directly.
+	// The ref arm's farm mirrors this directory to build its own.
 	// So an empty node_modules here would test neither path.
 	await makeDirectories(root("node_modules"))
 	await createSymbolicLink(root("packages", "mailwoman"), root("node_modules", "mailwoman"))
@@ -174,7 +176,7 @@ describe("runWorktreeArm — cleanup", () => {
 		expect(runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
 		expect(runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
 		// A stash-based arm would have moved these.
-		// A worktree cannot, which is why it is a worktree.
+		// Worktree creation leaves these entries unchanged.
 		expect(await Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false }).toArray()).toContain("packages")
 	})
 })

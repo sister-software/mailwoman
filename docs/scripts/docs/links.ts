@@ -5,8 +5,8 @@
  *
  *   Finds relative markdown links under `docs/` whose targets do not exist on disk.
  *
- *   Only `./` and `../` targets are checked. A bare `docs/x.md` could be a repo path or a Docusaurus doc id, and an
- *   absolute `/docs/…` link is a route. The `#anchor` is dropped before resolution, and a target directory passes
+ *   Only `./` and `../` targets are checked. A bare `docs/x.md` could be a repo path or a Docusaurus doc id. An
+ *   absolute `/docs/…` link is a route. The `#anchor` is dropped before resolution. A target directory passes
  *   because Docusaurus serves its index page.
  */
 
@@ -38,7 +38,8 @@ const SKIP_DIRECTORIES = new Set(["node_modules", "build", ".docusaurus", "stati
 /**
  * This pattern matches an inline link whose target starts with `./` or `../`.
  *
- * Group 1 is the target, and group 2 is the optional `#anchor`.
+ * Group 1 holds the target.
+ * Group 2 holds the optional `#anchor`.
  *
  * Reference-style definitions (`[id]: ../x.md`) are ignored.
  */

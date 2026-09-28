@@ -4,9 +4,9 @@ One `random.Random` runs through every stage — exact-selection masks, shuffle,
 per-row fraction — so the order of the stages and of the draws inside them decides what the corpus
 contains; `tests/mailwoman_train/countries/test_jp_build_parity.py` pins the emitted rows.
 
-Two passes over the source: pass 1 counts eligible rows so the per-prefecture cap can be water-filled
-against the target, and pass 2 streams the selection under it. Holding pass 1's rows instead would
-mean 19.5M rendered records in memory.
+Pass 1 counts eligible rows so the per-prefecture cap can be water-filled against the target.
+Pass 2 streams the selection under that cap. Holding pass 1's rows would put 19.5M rendered records
+in memory.
 """
 
 from __future__ import annotations
@@ -53,7 +53,7 @@ SourceRow = tuple[str, str, str, str, float, float]
 
 @dataclass(frozen=True)
 class SourceSurvey:
-    """Pass 1's answer: how many eligible rows each prefecture has, and the quota each one gets."""
+    """Pass 1's answer: each prefecture's eligible row count and assigned quota."""
 
     scanned: int
     dropped: Counter[str]
@@ -116,7 +116,7 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
 
 
 def select_rows(parquet: Path, args: argparse.Namespace, rng: random.Random, survey: SourceSurvey) -> Selection:
-    """Stream pass 2 under the quotas, then shuffle, divide into splits, and apply the upweight."""
+    """Stream pass 2 under the quotas. Shuffle the rows, split them, then apply the upweight."""
     selectors = {p: select_exact(survey.pool_counts[p], survey.quotas[p], rng) for p in survey.pool_counts}
     board_selector = select_exact(survey.board_count, args.board_rows, rng)
     selected: list[SourceRow] = []
@@ -180,7 +180,7 @@ class RowEncoder:
         return postcode
 
     def encode(self, rows: Sequence[SourceRow]) -> list[dict[str, Any]]:
-        """Render training rows: every register, and the variant-hyphen draw the board does without."""
+        """Render every available training register. Draw the variant-hyphen form that the board omits."""
         out: list[dict[str, Any]] = []
         for prefecture, municipality, street, number, _lon, _lat in rows:
             district, chome = split_street(street)

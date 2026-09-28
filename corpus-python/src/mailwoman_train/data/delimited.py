@@ -1,7 +1,7 @@
 """Reading a delimited corpus file that may be zstd-compressed at rest.
 
-Corpus part files are stored as ``.jsonl.zst`` because the rows repeat heavily, and every consumer
-streams them line by line: no reader here, and no reader on the TypeScript side, seeks into one.
+Corpus part files are stored as ``.jsonl.zst`` because the rows repeat heavily. Every consumer
+streams them line by line. Neither this reader nor the TypeScript reader seeks into a part file.
 
 The TypeScript equivalent is ``@mailwoman/core/fs/delimited``; both must agree on the extension, or a
 part file written by one is invisible to the other.

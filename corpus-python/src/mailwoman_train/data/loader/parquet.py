@@ -1,8 +1,8 @@
 """Reading rows out of one parquet file, shuffled, with the per-row filters applied.
 
-Three shuffles happen here and they are all drawn from the caller's `rng`: row-group order within
-a file, row order within a group, and file order within a source. Source weighting is not applied
-here — that is `mixture.py`'s multinomial, and doing it per row instead produces the
+Three shuffles happen here. Each uses the caller's `rng`. Shuffle row groups within each file.
+Shuffle rows within each group. Shuffle files within each source. Source weighting belongs to `mixture.py`'s
+multinomial. Applying weights per row instead produces the
 `raw_share × accept_share` mix rather than the configured one.
 """
 
@@ -20,9 +20,9 @@ from ..augment import SPAN_KEYS
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
 
-# Char-offset label columns. Presence is decided per file by schema: a file carries all three, with
-# every row non-null in all three, or none, and rows then ride the legacy token path. A file with
-# some of the three is corrupt.
+# Char-offset label columns. Presence is decided per file by schema: a file carries all three and
+# every row has non-null values, or it carries none. Files without the columns use the legacy token
+# path. A file with only some columns is corrupt.
 _SPAN_COLUMNS: tuple[str, ...] = SPAN_KEYS
 
 
@@ -48,16 +48,16 @@ def _file_row_iter(
 ) -> Iterator[dict[str, Any]]:
     """Yield filter-accepted rows from a single parquet file, with row-group and row shuffle.
 
-    Applies the country-weight acceptance test, the coarse-label check when ``coarse_filter`` is set,
-    and a per-row source equality check when ``expected_source`` is given. A file can span sources,
+    Applies the country-weight acceptance test and the coarse-label check when ``coarse_filter`` is set.
+    It also checks per-row source equality when ``expected_source`` is given. A file can span sources,
     so without it the per-source iterator would yield rows from the wrong source.
 
     Does **not** apply source weighting. That is the multinomial sampler in ``_raw_row_stream``, which
     makes the observed mix match ``source_weights`` exactly.
     """
     pf = pq.ParquetFile(path)
-    # Span-column presence is a per-file schema fact: all three or none. A partial file is corrupt,
-    # and reading the survivors would silently train the wrong labels.
+    # Span-column presence is a per-file schema fact: all three or none. A partial file is corrupt.
+    # Reading the surviving columns would silently train the wrong labels.
     schema_names = set(pf.schema_arrow.names)
     span_present = [c for c in _SPAN_COLUMNS if c in schema_names]
     if span_present and len(span_present) != len(_SPAN_COLUMNS):
@@ -112,8 +112,8 @@ def _file_row_iter(
                         "fallback to token labels"
                     )
                 # Empty is the quieter way a span-schema file lies: a writer that projects rows without
-                # the span triple emits `[]` for all three, which passes the null check above and then
-                # trains as all-`O`. A row whose BIO labels carry a tag cannot honestly have no spans.
+                # the span triple emits `[]` for all three. Those values pass the null check above
+                # and train as all-`O`. A row whose BIO labels carry a tag cannot honestly have no spans.
                 if all(not v for v in spans.values()) and any(lbl != "O" for lbl in bio_labels):
                     raise ValueError(
                         f"corrupt row in {path} (row-group {rg}, raw={row['raw']!r}): "
@@ -140,7 +140,7 @@ def _source_iter(
     row-group's worth of rows is held in memory at a time per source, so total RAM is bounded by the
     number of distinct sources rather than by any file-pool parameter.
 
-    A draw reads one row-group, and rows are ordered by country within a source, so a draw sees only
+    A draw reads one row-group. Rows are ordered by country within a source, so a draw sees only
     the countries in that row-group. Shuffling file order moves which row-group that is without
     widening it. ``docs/records/engineering/corpus-draw-coverage.mdx`` records the measurement and
     the candidate repairs.

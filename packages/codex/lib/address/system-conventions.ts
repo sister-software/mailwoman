@@ -56,8 +56,8 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	 * The model fragments that shape (`SK11 9PD` → region "S" + postcode "K11 9PD"), and a fragment is
 	 * a strict sub-match of the pattern-valid string — exactly the class `postcodePattern` flags.
 	 *
-	 * No `forbiddenTags`: no GB-ungrammatical tag class is known, and a forbid
-	 * needs measured zero-cost receipts.
+	 * `forbiddenTags` is empty because no GB-ungrammatical tag class is known.
+	 * A prohibition requires receipts showing zero cost.
 	 */
 	gb: {
 		postcodePattern: UK_POSTCODE_PATTERN,

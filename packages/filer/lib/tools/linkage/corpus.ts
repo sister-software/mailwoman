@@ -36,7 +36,8 @@ export const LINKAGE_EVAL_AS_OF = "2026-06-01"
 export const PUBLISHED_WITHHELD_INPUTS_SHA256 = "b20909439dcf6bc0d2b04da43b3b3fb11cdb9ff68313e12d3eeb78a24bacda58"
 
 /**
- * This hash is the published SHA-256 of the control run's inputs, which keep `holdingCompany`.
+ * This hash is the published SHA-256 of the control run's inputs.
+ * Those inputs retain `holdingCompany`.
  */
 export const PUBLISHED_CONTROL_INPUTS_SHA256 = "86f4c23616835425615960dabbf22df214fb2001b325e9b0128f9e0abf45f802"
 
@@ -80,8 +81,10 @@ function evalForm499Row(
 /**
  * This function returns the authored held-out corpus of 12 Form 499 filers.
  *
- * The corpus covers two multi-member families with spelling variants, standalone filers,
- * distinct entities that share a name, a registrant with two FRNs, and a shared management company.
+ * The corpus covers two multi-member families with spelling variants and standalone filers.
+ * It covers distinct entities that share a name, a registrant with two FRNs
+ * and a shared management company.
+ *
  * No legal name or DBA repeats a holding-company value, so a withheld run cannot
  * recover a parent from another field.
  */
@@ -237,8 +240,8 @@ export interface LinkageEvalRegistrant {
 	 */
 	frns: FRN[]
 	/**
-	 * These IDs cover the registrant's FRN and provider nodes, which the eval
-	 * reads family memberships through.
+	 * These IDs cover the registrant's FRN and provider nodes.
+	 * The eval reads family memberships through them.
 	 */
 	nodeIDs: string[]
 }

@@ -38,7 +38,8 @@ describe("readLicenseRecord", () => {
 
 	it("resolves the two prose spellings this repository writes for 623.8M rows", () => {
 		// `Public Domain` labels 478,632,849 corpus rows and `Licence Ouverte 2.0` labels 145,193,536.
-		// Neither is an SPDX identifier, and a lookup keyed on the identifier finds no entry for either.
+		// Neither is an SPDX identifier.
+		// A lookup keyed on the identifier finds no entry for either string.
 		const publicDomain = readLicenseRecord("Public Domain")
 		const ouverte = readLicenseRecord("Licence Ouverte 2.0")
 
@@ -89,8 +90,9 @@ describe("readLicenseRecord", () => {
 		const prose = readLicenseRecord(SUB_VENUE)
 		const grant = readLicenseRecord("ODbL-1.0")
 
-		// The prose row's grant is unknown, so it cannot be said to carry share-alike,
-		// and it cannot be said to be free of it either.
+		// The prose row's grant is unknown.
+		// The record cannot establish whether the row carries share-alike.
+		// It also cannot establish that the row is free of share-alike.
 		// That distinction is the whole point of two predicates.
 		expect(carriesShareAlike(prose)).toBe(false)
 		expect(mentionsShareAlike(prose)).toBe(true)
@@ -139,8 +141,8 @@ describe("readLicenseRecord", () => {
 
 	it("resolves the two publisher terms documents that name no SPDX license", () => {
 		// Both retrieved 2026-09-27 and retained under internal/strategy/rights-receipts/mx-gb-2026-09-27/.
-		// INEGI's document names no Creative Commons license and carries no version,
-		// and the ONS licences page spells OGL v3.0 with a dot after the v.
+		// INEGI's document names no Creative Commons license and gives no version.
+		// The ONS licences page spells OGL v3.0 with a dot after the v.
 		const inegi = readLicenseRecord("Términos de Libre Uso de la Información del INEGI")
 		const ons = readLicenseRecord("Open Government Licence v.3.0")
 
@@ -190,8 +192,9 @@ describe("licenseNamedIn", () => {
 
 	it("returns null for a parenthetical that describes access rather than a grant", () => {
 		// The OA PL entry.
-		// `public` states that the download costs no fee, which is not a license,
-		// and reading it as one would turn the gap this record exists to report into an answer.
+		// `public` states that the download costs no fee.
+		// It does not identify a license.
+		// Treating it as a license would turn the missing grant into an answer.
 		expect(licenseNamedIn("OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice text")).toBeNull()
 	})
 

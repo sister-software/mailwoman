@@ -5,10 +5,10 @@
  * @file Bundles each browser and Worker subpath under its platform conditions and fails on a Node builtin in the
  *   static graph.
  *
- *   The check reads esbuild's metafile and reports any static edge onto a builtin or onto `@mailwoman/core`'s `fs/`
- *   directory. The fix for such an edge is a `browser` condition in the owning package. Dynamic imports stay external,
- *   and a dynamic import of a builtin passes only when the row lists it with a reason. The check bundles `out/`, so it
- *   requires a compiled tree.
+ *   The check reads esbuild's metafile. It reports static edges to Node builtins and to `@mailwoman/core`'s `fs/`
+ *   directory. Add a `browser` condition to the owning package to resolve such an edge. Dynamic imports stay external.
+ *   A row may allow a dynamic builtin import when it lists the builtin and gives a reason. The check bundles `out/`,
+ *   so it requires a compiled tree.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -20,7 +20,8 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 /**
  * A dynamic builtin import that a row allows.
  *
- * It records the importing file, the builtin, and the reason the import is Node-only.
+ * It records the importing file and builtin.
+ * Its reason field explains why the import must stay Node-only.
  */
 interface AllowedDynamicImport {
 	file: RegExp
@@ -31,7 +32,8 @@ interface AllowedDynamicImport {
 /**
  * One bundle to check.
  *
- * It records the entry specifier, the target platform, and the files the bundle must or must not contain.
+ * It records the entry specifier and target platform.
+ * It also lists files the bundle must include or exclude.
  */
 export interface BundleRow {
 	entry: string
@@ -107,7 +109,8 @@ const browserRow = (entry: string, extra: Partial<BundleRow> = {}): BundleRow =>
 /**
  * The rows to check.
  *
- * The license subpaths use the Cloudflare Worker conditions, and the other rows use the browser conditions.
+ * License subpaths use Cloudflare Worker conditions.
+ * Every other row uses browser conditions.
  */
 const BUNDLE_ROWS: readonly BundleRow[] = [
 	{
@@ -191,7 +194,7 @@ function edgePolicy(row: BundleRow): Plugin {
 	return {
 		name: "bundle-graph-edge-policy",
 		setup(builder) {
-			// Esbuild compiles the filter as a Go regular expression, which has no `u` flag.
+			// Esbuild compiles the filter as a Go regular expression. Go regular expressions have no `u` flag.
 			// oxlint-disable-next-line unicorn/require-unicode-regexp -- Go regexp syntax
 			builder.onResolve({ filter: /.*/ }, (args) => {
 				if (isNodeBuiltin(args.path)) return { path: args.path, external: true }

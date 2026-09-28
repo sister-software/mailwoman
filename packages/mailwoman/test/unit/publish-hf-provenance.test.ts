@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file What `mailwoman release hf` refuses to upload: a model whose card records no training sources.
  *
- *   The check runs before any byte leaves, and it refuses only when the card records no attribution at all. An entry naming no license is a gap to record and passes.
+ *   The check runs before upload starts. It refuses only when the card records no attribution.
+ *   An entry without a license passes and remains a recorded gap.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -49,8 +50,8 @@ describe("verifyTrainingProvenance", () => {
 	})
 
 	it("reads the top-level attribution key, which the character-path card uses", async () => {
-		// A control that answers a false absence refuses a release nobody needed to block,
-		// and the absence it reports is indistinguishable from a real one.
+		// A control that reports a false absence blocks a release without cause.
+		// The report is indistinguishable from a real absence.
 		const card = await cardWith({
 			attribution: [
 				"Korean road-name address data (주소DB): 행정안전부, 공공누리 제1유형 (KOGL Type 1) — attribution required.",

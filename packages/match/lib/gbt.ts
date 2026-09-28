@@ -16,8 +16,9 @@ export type TreeNode = { leaf: number } | { f: number; thr: number; lo: TreeNode
 const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
 
 /**
- * Returns each feature's candidate split thresholds: midpoints between values for
- * features with at most five distinct values, and six quantiles otherwise.
+ * Returns each feature's candidate split thresholds: midpoints between values
+ * for features with at most five distinct values.
+ * It returns six quantiles otherwise.
  */
 export function buildThresholds(X: number[][]): number[][] {
 	const dim = X[0]?.length ?? 0
@@ -202,8 +203,9 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 }
 
 /**
- * Returns the model's logit for one feature vector, which is compared against a
- * threshold the same way as a Fellegi-Sunter match weight.
+ * Returns the model's logit for one feature vector.
+ *
+ * Compare it against a threshold like a Fellegi-Sunter match weight.
  */
 export function gbtScore(m: GBT, x: number[]): number {
 	let f = m.base

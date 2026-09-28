@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Interface tests for the Stage 2.7 span proposer: unbalanced delimiters never propose, annotation confidence follows content shape, dual-path numeric readings emit both alternatives under one group, and designator proposals are codex-conditioned and suppressed inside confident annotations.
+ *   Interface tests for the Stage 2.7 span proposer. Unbalanced delimiters never propose. Annotation confidence follows content shape. Dual-path numeric readings emit both alternatives under one group. Codex conditions designator proposals. The proposer suppresses them inside confident annotations.
  */
 
 import {
@@ -21,8 +21,9 @@ const LEXICON: SpanProposerLexicon = {
 	unitDesignators: new Set(["apt", "apartment", "suite", "ste", "unit", "rm", "room", "bldg", "building"]),
 	levelDesignators: new Set(["fl", "floor", "bsmt", "basement"]),
 	weakDesignators: new Set(["bldg", "building"]),
-	// Empty on purpose: the venue-structure split is exercised in its own describe below, and a fixture
-	// carrying both would make every assertion ambiguous about which provenance produced the proposal.
+	// Empty on purpose: the venue-structure split is exercised in its own describe below.
+	// A fixture carrying both would make every assertion ambiguous about
+	// which provenance produced the proposal.
 	venueStructureDesignators: new Set<string>(),
 	venueStructureModifiers: new Set<string>(),
 	modifierEligibleStructureDesignators: new Set<string>(),

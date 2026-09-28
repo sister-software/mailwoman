@@ -5,7 +5,7 @@
  *
  *   Node reader for `poi.db` (spec §3.4), the res-9 k-ring reader over the clustered `poi`
  *   `without rowid` B-tree `poi-schema.ts` builds. Category, brand and name searches share one
- *   artifact, and each path's own method carries its details.
+ *   artifact. Each path has a method that carries its details.
  *
  *   `latLngToCell` and `gridDisk` come from `h3-js`. The 48-bit short-cell packing that turns a raw
  *   H3 cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt`, and
@@ -30,8 +30,8 @@ export const POI_H3_RESOLUTION = 9
  * Category path only, since the brand path ignores rings entirely.
  * Dense categories never reach this ceiling, because the loop breaks once a ring accumulates `limit` rows.
  *
- * Only sparse-but-present categories that never reach `limit` scan the fuller budget,
- * and the extra rings keep the radius stable against small db rebuilds.
+ * Sparse-but-present categories that never reach `limit` scan the fuller budget.
+ * The extra rings keep the radius stable across small DB rebuilds.
  * The browser reader passes its own smaller `maxRings`.
  */
 const DEFAULT_MAX_RINGS = 16
@@ -209,8 +209,10 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 	 *
 	 * The partial `poi_brand_wikidata` index turns the QID fetch into a range-scan
 	 * instead of a 13.68M full scan.
-	 * Rows are haversine-sorted from `center`, anything past {@link BRAND_MAX_DISTANCE_KM}
-	 * is dropped, and the nearest `limit` is returned.
+	 * Rows are sorted by haversine distance from `center`.
+	 *
+	 * The lookup drops rows past {@link BRAND_MAX_DISTANCE_KM}.
+	 * It returns the nearest `limit` rows.
 	 */
 	#searchBrand(brandWikidata: string, center: { latitude: number; longitude: number }, limit: number): POISearchHit[] {
 		const rows = allRows<POIRow>(this.#brandProbe, brandWikidata)
@@ -232,8 +234,8 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		const categoryIDs: number[] = []
 
 		// `categoryIDs` (the fan-out list) supersedes the single `categoryID`.
-		// Each id resolves through the dictionary and unresolved ones are dropped,
-		// which covers Overture-taxonomy drift and identity ids with no rows.
+		// Each id resolves through the dictionary.
+		// Unresolved ids are dropped to cover Overture taxonomy drift and identity ids with no rows.
 		const seedIDs = query.categoryIDs?.length ? query.categoryIDs : query.categoryID ? [query.categoryID] : []
 
 		for (const id of seedIDs) {

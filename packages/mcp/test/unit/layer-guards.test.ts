@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The layer-absent guards are pure and transport-independent, which is why they live outside `cli.ts`,
- *   and each is exercised on its three branches: path `undefined`, path set but the file missing, and
- *   path set with the file present.
+ *   The layer-absent guards are pure and transport-independent, so they live outside `cli.ts`.
+ *   Each guard is exercised on three branches: path `undefined`, path set with a missing file, and
+ *   path set with a present file.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

@@ -1,8 +1,7 @@
 """Reading tag sequences out of the logits.
 
-`forward` answers logits. these two answer tags. They are the only inference paths that consult
-the CRF, and the only ones that trim each row to its mask length, so a caller gets one list per
-row with no padding in it.
+`forward` returns logits. These two paths return tags. They are the only inference paths that
+consult the CRF and trim each row to its mask length. A caller gets one unpadded list per row.
 """
 
 from __future__ import annotations

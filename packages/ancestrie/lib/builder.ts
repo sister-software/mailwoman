@@ -29,7 +29,10 @@ import {
 import type { AncestrieBuilderOptions, AncestrieEntry, JSONValue, SealOptions, TokenNormalizer } from "#types"
 
 /**
- * Upper bound for ids, parent ids, and every table index — the format stores them as u32.
+ * Upper bound for ids.
+ *
+ * The same bound applies to parent ids and table indexes.
+ * The format stores each value as u32.
  */
 const U32_MAX = 0xff_ff_ff_ff
 
@@ -233,9 +236,11 @@ export class AncestrieBuilder {
 	/**
 	 * Add one entry.
 	 *
-	 * May be called several times with the same `id` under different token sequences (aliases);
-	 * the id-carried fields — rank, parents, payload — must be identical on every add,
-	 * and a divergence throws rather than silently keeping one.
+	 * The same `id` can appear under multiple token sequences (aliases).
+	 * Its rank must match on every call.
+	 *
+	 * Parent ids and payload must also match.
+	 * A divergence throws instead of silently keeping one value.
 	 */
 	add(entry: AncestrieEntry): void {
 		const normalize = this.normalizeToken
@@ -286,8 +291,10 @@ export class AncestrieBuilder {
 	}
 
 	/**
-	 * Seal into the versioned binary: canonicalize the trie, label the primary-parent
-	 * forest with pre/post intervals, and serialize.
+	 * Seal into the versioned binary.
+	 *
+	 * This canonicalizes the trie and labels the primary-parent forest with pre/post intervals.
+	 * It then serializes the result.
 	 *
 	 * @throws on a primary-parent cycle.
 	 * Does not consume the builder — sealing twice yields identical bytes.
@@ -372,7 +379,8 @@ export class AncestrieBuilder {
 
 		view.setUint32(sections.stringOffsets + encodedStrings.length * 4, stringOffset, true)
 
-		// Write state records, their edge records, and their entry references in state order.
+		// Write state records and edge records in state order.
+		// Then write entry references in that order.
 		let edgeIdx = 0
 		let entryRefIdx = 0
 
@@ -409,7 +417,8 @@ export class AncestrieBuilder {
 			}
 		}
 
-		// Write entries, parent IDs, and payload bytes in forest pre-order.
+		// Write entries and parent IDs in forest pre-order.
+		// Write payload bytes in the same order.
 		let parentIdx = 0
 		let payloadOffset = 0
 

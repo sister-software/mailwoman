@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Environment Agency NCERM vocabulary: product identity, the twelve scenarios, the policy and defence
- *   domains, and the OGL v3.0 attribution.
+ *   Environment Agency NCERM vocabulary: product identity, twelve scenarios, policy and defence
+ *   domains and OGL v3.0 attribution.
  *
  *   Every stored row and every reading carries its scenario, because the twelve layers answer different
  *   questions and must not be pooled.
  *
- *   The domains are closed, and the builder throws on a value outside them because an unknown code means the
- *   source schema changed. The domains cover all twelve layers of the 2024 geodatabase.
+ *   The domains are closed. The builder throws on an unknown value because it signals a source-schema change.
+ *   These domains cover all twelve layers of the 2024 geodatabase.
  *
  *   Stored values keep the source spelling. A blank value is a single space. `def_type` has case variants,
- *   so membership is tested on the folded form. The two policy fields also space one value differently, and the
- *   policy domain holds both spellings.
+ *   so membership is tested on the folded form. The two policy fields also use different spacing for one value.
+ *   The policy domain holds both spellings.
  */
 
 /**
@@ -48,8 +48,7 @@ export const NCERM_LAYER_NAME = "coastal-erosion-ea-england"
 export const NCERM_DATASET_ID = "9fede91f-5acd-4fd2-9bd8-98153fa3c2ff"
 
 /**
- * The data.gov.uk catalogue package, which lists the ISO reference dates,
- * the licence field and the file URLs.
+ * The data.gov.uk catalogue package lists the ISO reference dates, licence field and file URLs.
  */
 export const NCERM_CATALOGUE_PACKAGE_ID = "e75374d5-ef4b-4f9f-abc1-6aefde4627b7"
 
@@ -64,7 +63,9 @@ export const NCERM_SERVICE_SLUG = "ncern-national-2024"
 /**
  * The attribution string from the record's structured licence field, with its trailing space trimmed.
  *
- * OGL v3.0 requires this attribution, and it is written to `layer_manifest.attribution`.
+ * OGL v3.0 requires this attribution.
+ * The build writes it to `layer_manifest.attribution`.
+ *
  * The abstract carries a second, yearless copy that `parseAttributionStatement` in `sdk/client.ts` rejects.
  */
 export const NCERM_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
@@ -222,8 +223,8 @@ export const DEFAULT_NCERM_SCENARIO = "NFI_2055_0CC"
 /**
  * The two ground-instability layers.
  *
- * These layers describe a different hazard with its own schema, and they have
- * no erosion distance or scenario.
+ * These layers describe a different hazard with its own schema.
+ * They have no erosion distance or scenario.
  * They are stored in a separate table from the erosion zones.
  */
 export const NCERM_GROUND_INSTABILITY_LAYERS: ReadonlyArray<{ layer: string; kind: string; label: string }> = [
@@ -253,7 +254,7 @@ export const NCERM_ALL_LAYERS: ReadonlyArray<string> = [
 export const NCERM_DECLARED_FEATURE_COUNT = 89_371
 
 /**
- * The blank value in this product, which is a single space.
+ * The blank value in this product is a single space.
  */
 export const NCERM_BLANK = " "
 
@@ -320,7 +321,8 @@ export const NCERM_POLICY_INTERPRETATION_VALUES: ReadonlySet<string> = new Set(
  * The defence-type domain in folded form.
  *
  * The source spells some defences with different case, such as `Sheet piles` and `Sheet Piles`.
- * Membership is tested on the folded form, and the stored value keeps the source spelling.
+ * Membership is tested on the folded form.
+ * The stored value keeps the source spelling.
  */
 export const NCERM_DEFENCE_TYPES_FOLDED: ReadonlySet<string> = new Set(
 	[

@@ -15,8 +15,8 @@ import type { CountryCoverage } from "#coverage/census"
  *
  * `Absent` (no layer holds the code) and `Declined` (the admission list omits a code the gazetteer
  * or the board does hold) are different findings; `DeclinedWithRows` means rows exist
- * but contribute no training signal, so closing it takes a `country_weights` entry
- * rather than data, and `AdmittedEmpty` is the mirror.
+ * but contribute no training signal, so closing it takes a `country_weights` entry rather than data.
+ * `AdmittedEmpty` is the mirror.
  */
 export const ParseReading = {
 	Absent: "absent",

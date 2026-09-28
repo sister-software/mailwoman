@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The sheet owns the disclosure, and groups come from the protomaps theme's layer-ID prefixes, so a layer no pattern matches falls into a catch-all "Other" group rather than disappearing.
+ *   The sheet owns the disclosure. Groups use layer-ID prefixes from the Protomaps theme.
+ *   A layer with no matching prefix appears in the catch-all "Other" group.
  */
 
 import { useCallback, useEffect, useState } from "react"
@@ -78,7 +79,8 @@ export interface LayerToggleControlProps {
 	/**
 	 * The live map.
 	 *
-	 * `null` before react-map-gl instantiates it, which is when the control renders no content.
+	 * `null` until react-map-gl instantiates the map.
+	 * The control renders no content during that time.
 	 */
 	map: MapInstance | null
 }

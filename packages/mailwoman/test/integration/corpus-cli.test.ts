@@ -28,19 +28,23 @@ const CLI_SPAWN_TIMEOUT_MS = 45_000
  * Vitest's own per-test budget.
  *
  * It has to exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
- * A per-test timeout below the child's timeout means vitest kills the test before the thing it is
- * measuring can report, which reads as "timed out" with no indication of what actually took the time.
+ * A per-test timeout below the child's timeout lets Vitest kill the test before the child reports.
+ *
+ * The failure then says "timed out" without identifying what consumed the time.
  */
 const CLI_TEST_TIMEOUT_MS = 90_000
 
 /**
  * Vitest's per-test budget for this whole file.
  *
- * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
- * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
- * A per-test annotation has to be remembered on each new test, and the one that forgets
- * inherits the global 15s, which kills the test before the thing being measured can report,
- * surfacing as a bare timeout with no attribution.
+ * Set the timeout at file scope because every test spawns the compiled CLI.
+ * Startup takes seconds before assertions, then each test queues behind {@link withCLISpawnLockAsync}.
+ *
+ * A new test can omit its per-test annotation.
+ * It would inherit the global 15s timeout.
+ *
+ * That timeout can kill the operation before it reports.
+ * The failure then says timeout without attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 

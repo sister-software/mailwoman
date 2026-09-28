@@ -1,4 +1,4 @@
-"""Writing a resumable checkpoint, and finding the last complete one.
+"""Write resumable checkpoints and find the last complete one.
 
 The write is atomic: an interrupted save leaves either the previous complete checkpoint or no
 directory `--resume auto` would load. Model, optimizer, scheduler, step and RNG resume. The data

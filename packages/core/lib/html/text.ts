@@ -68,13 +68,17 @@ export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
  * The text of an html fragment with source whitespace runs intact — the reading for
  * a document that states its columns as runs of spaces.
  *
- * Entities are decoded, and every whitespace character the document states survives as
- * itself: a caller splitting on a run must include U+00A0 in its own character class,
- * since `&nbsp;` and `&#160;` are the same character and `[ \t]` matches neither.
+ * Entities are decoded.
+ * Every whitespace character the document states survives as itself: a caller
+ * splitting on a run must include U+00A0 in its own character class, since `&nbsp;`
+ * and `&#160;` are the same character and `[ \t]` matches neither.
  *
- * Markup between two text runs inserts one separator, and only where the source states none,
- * so `<td>a</td><td>b</td>` separates into two values while `a <b>b</b>` stays single-spaced,
- * and neither fabricates the 2+-space run a caller would read as a column boundary.
+ * Markup between two text runs inserts one separator only when the source has no whitespace.
+ * Thus `<td>a</td><td>b</td>` separates into two values.
+ *
+ * `a <b>b</b>` stays single-spaced.
+ * Neither example fabricates the 2+-space run a caller would read as a column boundary.
+ *
  * A run of markup is one separation rather than one per tag: `</p><p>` inserts a single break.
  *
  * An element in `lineBreakElements` makes that separator a newline, unconditionally,

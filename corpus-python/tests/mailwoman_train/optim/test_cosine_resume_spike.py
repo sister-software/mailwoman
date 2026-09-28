@@ -2,14 +2,14 @@
 
 ``_restamp_resume_lrs`` overwrites each resumed param group's CURRENT ``lr`` with the live
 config's BASE (peak) LR. Under the constant schedule that is a no-op post-warmup (multiplier
-1.0), which is why ``test_resume_lr_restamp.py`` — all constant-schedule — never caught it.
+1.0). The constant-schedule cases in ``test_resume_lr_restamp.py`` therefore never caught it.
 Under cosine, the first resumed optimizer step runs at PEAK LR before the next
 ``scheduler.step()`` restores the tail value: measured 8.808e-06 → 5.000e-04 → 8.805e-06 at
 step 55k on v4.3.3 — a 56.8× one-step spike into a nearly-converged model.
 
 Interface pinned here (the repair): after restamp, the group's current LR equals the live
 base times the SCHEDULE MULTIPLIER AT THE RESUMED STEP — i.e. an unchanged config resumes at
-exactly the checkpoint's tail LR, and a deliberate base-LR change scales the tail
+exactly the checkpoint's tail LR. A deliberate base-LR change scales the tail
 proportionally. The restamp must never hand the raw base to the next optimizer step mid-run.
 """
 

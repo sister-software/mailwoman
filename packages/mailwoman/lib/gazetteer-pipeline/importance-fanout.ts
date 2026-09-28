@@ -5,9 +5,9 @@
  *
  * Which WOF place does a Wikidata id actually mean?
  *
- * `gazetteer importance` joins Wikipedia importance onto WOF through `concordances`, and that join
- * is not a function: one Wikidata id can name several current WOF places, all of which receive the
- * same score, and the FST bias is linear in importance. The rule is coincident → keep all, else
+ * `gazetteer importance` joins Wikipedia importance onto WOF through `concordances`.
+ * That join can map one Wikidata id to several current WOF places. Each place receives the
+ * same score. The FST bias is linear in importance. The rule is coincident → keep all, else
  * decisive population → keep the winner, else drop, with coincidence checked first because WOF does
  * not populate every role's row.
  *
@@ -26,8 +26,8 @@ export interface FanoutCandidate {
 	lat: number
 	lon: number
 	/**
-	 * WOF population, or 0 when the place has no `place_population` row. zero
-	 * means absent, never a population of nobody.
+	 * WOF population, or 0 when the place has no `place_population` row. zero means absent,
+	 * never a zero-population estimate.
 	 */
 	population: number
 }
@@ -62,8 +62,9 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 		return { verdict: "single", keep: candidates.map((c) => c.id) }
 	}
 
-	// Whole-group spread rather than the first pair: a group of two coincident rows plus one
-	// 6,000 km straggler is not coincident, and a pairwise-first check would keep the straggler.
+	// Check the whole-group spread.
+	// A group of two coincident rows plus one 6,000 km straggler is not coincident.
+	// A pairwise-first check would keep the straggler.
 	let maxSpread = 0
 
 	for (let i = 0; i < candidates.length && maxSpread <= FANOUT_SPREAD_EPSILON_KM; i++) {
@@ -84,8 +85,9 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 	const top = sorted[0]!
 	const runnerUp = sorted[1]!
 
-	// A zero maximum is an absent population rather than a small one, and a tie is not evidence,
-	// so picking a winner either way would be picking by row order.
+	// A zero maximum means the population is absent.
+	// A tie supplies no evidence.
+	// Picking a winner in either case would select by row order.
 	if (top.population > 0 && top.population > runnerUp.population) {
 		return { verdict: "population", keep: [top.id] }
 	}

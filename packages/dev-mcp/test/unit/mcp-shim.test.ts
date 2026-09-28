@@ -15,8 +15,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 const CLI_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "cli", "index.ts")
 
 /**
- * Worker boot imports the whole mailwoman graph, which is seconds rather than
- * milliseconds under vitest concurrency.
+ * Worker boot imports the whole Mailwoman graph.
+ * Under Vitest concurrency, that import takes seconds.
  */
 const BOOT_TIMEOUT_MS = 120_000
 
@@ -123,8 +123,8 @@ describe("the never-stale shim", () => {
 		"rejects mis-shaped arguments at the schema, not deep inside the handler",
 		async () => {
 			// The split moved the SDK's argument validation off the call path, so the worker must
-			// re-impose it: a client holding a pre-restart schema sends an array parameter as
-			// JSON text, and the failure must name the arguments rather than surface a TypeError.
+			// re-impose it: a client holding a pre-restart schema sends an array parameter as JSON text.
+			// The failure must identify the arguments instead of raising a TypeError.
 			const result = await client.callTool({
 				name: "mwdev_run",
 				arguments: { tally: '["tier"]' },

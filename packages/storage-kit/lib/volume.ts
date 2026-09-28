@@ -14,7 +14,7 @@
  *   One entry rather than a list of every directory that happens to hold a database. The property propagates to
  *   children created after it is set, at any depth, so a database written into `db/` next year is uncompressed
  *   without anyone remembering to extend a list. The flat alternative was already wrong when it was written: it
- *   named eight directories and missed `address-points` and `interpolation`, which hold 54 and 52 databases.
+ *   listed eight directories and missed `address-points` and `interpolation`, which hold 54 and 52 databases.
  */
 
 import { z } from "zod"

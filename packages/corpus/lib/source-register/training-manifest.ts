@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The frozen record of which sources contributed rows to one corpus build, and under which terms.
+ *   The frozen record of sources that contributed rows to one corpus build.
+ *   It also records the applicable terms.
  *
  *   Its digest is over the manifest with `contentDigest` emptied, so two builds over identical inputs
- *   produce the same digest and any change to a source, its elected grant, its row count or the recipe
- *   changes it.
+ *   produce the same digest. A change to a source, its elected grant, row count or recipe changes the digest.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -16,8 +16,9 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { LicenseReviewState, type LicenseDecision, type SourceOperation } from "#source-register/types"
 
 /**
- * What one source contributed to one build, and what had been established
- * about its terms when the build ran.
+ * What one source contributed to a build.
+ *
+ * Also records what the build had established about its terms.
  */
 export interface TrainingSourceRecord {
 	/**
@@ -32,7 +33,7 @@ export interface TrainingSourceRecord {
 	license: string
 	/**
 	 * The register's decision for that license when the build ran, or `null`
-	 * when the register named no decision for it.
+	 * when the register contains no decision for it.
 	 */
 	decision: {
 		licenseID: string

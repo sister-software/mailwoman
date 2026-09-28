@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two arm kinds that are not a live geocoder: a metered reference oracle, and a stored past run.
+ *   The two comparison arms outside live geocoders: a metered reference oracle and a stored past run.
  *
- *   Separate from `compare.test.ts` because neither touches the http transport, and because both are about the same
- *   thing. A comparison that must not produce a verdict, for two different reasons.
+ *   Separate from `compare.test.ts` because neither test touches HTTP transport. Both cover comparisons that must not
+ *   produce a verdict for different reasons.
  */
 
 import { createPostalAddressID } from "@mailwoman/address-id"
@@ -28,8 +28,8 @@ const ANDORRA_LA_VELLA = { lat: 42.5063174, lon: 1.5218355 }
 /**
  * A registry whose engine answers one fixed coordinate.
  *
- * `hierarchy` is present because the mailwoman arm reads its answer through
- * the gauntlet projection, which walks it.
+ * `hierarchy` is present because the mailwoman arm reads its answer through the gauntlet projection.
+ * That projection walks it.
  */
 function registryAt(point: { lat: number | null; lon: number | null }): EngineRegistryLike {
 	const engine = stubEngine({
@@ -75,7 +75,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 }
 
 /**
- * An oracle client that answers one fixed point, and counts what it was asked.
+ * An oracle client that answers one fixed point and counts each request.
  */
 function oracleAt(point: { lat: number; lon: number }): OracleGeocoderLike & { calls: string[] } {
 	const calls: string[] = []

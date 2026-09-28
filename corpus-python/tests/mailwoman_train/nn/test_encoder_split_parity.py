@@ -32,10 +32,10 @@ REFERENCE_README = [
     "  logits, so a split that drops one of those terms moves this and nothing else.",
     "state_dict_keys: what save_pretrained writes. A change invalidates existing checkpoints.",
     "parameter_checksums: each parameter's initial sum. Most are constants, not RNG state:",
-    "  _init_weights zeroes biases and cue vectors, resets every LayerNorm gamma to 1.0 (a zeroed",
-    "  gamma collapses the layer to a constant output, which it has done), and zeroes locale_film",
+    "  _init_weights zeroes biases and cue vectors, resets every LayerNorm gamma to 1.0 (zeroing",
+    "  gamma collapses the layer to a constant output), then zeroes locale_film",
     "  last. Therefore, locale conditioning starts as the identity. The remaining xavier_uniform_ weights",
-    "  are the RNG-dependent ones: they move if module construction is REORDERED, which the logits",
+    "  are the RNG-dependent ones: they move if module construction is REORDERED. The logits",
     "  do not detect because the reference forward supplies no channel features.",
 ]
 
@@ -122,7 +122,11 @@ def reference_logits(model: MailwomanCoarseEncoder) -> list[float]:
 
 
 def reference_loss(model: MailwomanCoarseEncoder) -> float:
-    """Return the loss of the reference forward call with an all-``O`` label row, which covers the CRF, locale-auxiliary, span-boundary and conventions-mask terms that the logits omit."""
+    """Return the reference forward loss for a label row filled with ``O``.
+
+    This loss includes the CRF, locale-auxiliary, span-boundary and conventions-mask terms.
+    The logits omit the CRF, locale-auxiliary, span-boundary and conventions-mask terms.
+    """
     inputs = reference_inputs(model)
     inputs["labels"] = torch.zeros(1, SEQ_LEN, dtype=torch.long)
     with torch.no_grad():
@@ -156,7 +160,7 @@ def test_logits_match_the_committed_reference() -> None:
 
 
 def test_loss_matches_the_committed_reference() -> None:
-    """Compare the reference loss, which covers terms that the logits omit."""
+    """Compare the reference loss, including terms that the logits omit."""
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
     expected = json.loads(REFERENCE.read_text())
@@ -210,7 +214,10 @@ def test_every_layer_norm_gamma_starts_at_one() -> None:
 
 
 def test_parameter_initialization_matches_the_committed_reference() -> None:
-    """Compare initial parameter sums exactly, which detects a change in construction order that would stop a from-scratch run reproducing earlier runs."""
+    """Compare initial parameter sums exactly to detect changes in construction order.
+
+    A construction-order change alters the parameters produced by a from-scratch run.
+    """
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; regenerate it before splitting")
     expected = json.loads(REFERENCE.read_text())["parameter_checksums"]

@@ -5,9 +5,12 @@
  *
  *   The soil-capability route on the geocode path, exercised through `geocodeAddress` with mock classifier and resolver deps and a fixture-built layer.
  *
- *   The first test is the one that matters: with the layer absent the geocode result must be identical to a run with the field never built, which is what makes rollback removing the argument.
+ *   The first test checks the rollback contract. With the layer absent, the geocode result must match a run where the field was never built.
+ *   Rollback satisfies that contract by removing the argument.
  *
- *   A rated cell becomes one additive marker naming the verdict's own top kind and carrying the share the class rests on, a mapped-but-unrated cell becomes the same marker with no class and the absence shares that say why, and a location outside every survey area raises no marker.
+ *   A rated cell becomes one additive marker with the verdict's top kind and the share supporting its class.
+ *   A mapped-but-unrated cell produces the same marker without a class and includes the shares that explain the absence.
+ *   A location outside every survey area produces no marker.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -228,7 +231,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 				soilCapabilityRoute: route,
 			})
 
-			// An advisory here would report a survey nobody ran.
+			// An advisory here would report an unmeasured survey.
 			expect(result.intent_markers).toEqual([])
 
 			expect(route.observe(OUTSIDE_SURVEY.latitude, OUTSIDE_SURVEY.longitude)).toEqual({

@@ -68,7 +68,7 @@ export interface PLBlockTable {
 }
 
 /**
- * Kysely row type for `tiger_streets` (addrfeat — named street segments + ZIPs, per county).
+ * Kysely row type for `tiger_streets` (addrfeat — street segments with names and ZIPs, per county).
  */
 export interface TIGERStreetTable {
 	linearid: string

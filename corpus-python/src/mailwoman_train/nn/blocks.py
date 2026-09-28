@@ -1,8 +1,8 @@
 """The transformer block the encoder stacks.
 
-Hand-rolled rather than taken from `transformers`: the export path needs a graph whose ops the
-onnxruntime-web WebGPU runtime accepts, and a library block brings structure the exporter has to
-be argued out of.
+Hand-rolled rather than taken from `transformers`. The export path needs a graph whose ops the
+onnxruntime-web WebGPU runtime accepts. A library block brings structure that the exporter must
+remove.
 """
 
 from __future__ import annotations

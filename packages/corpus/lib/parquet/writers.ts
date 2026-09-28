@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Parquet writing, and the manifest that describes what was written.
+ * @file Writes Parquet files and the manifest that describes their contents.
  *
- *   Two writers, and the names say which is which. {@linkcode writeParquetFile} writes a single file from rows already
- *   in memory. {@linkcode writeParquetSplits} streams per-split row iterables into as many files as the row cap needs,
- *   and answers the manifest. Both create their parent directory, the same ceremony `@mailwoman/core/fs`'s writers
+ *   This module exposes two writers. {@linkcode writeParquetFile} writes one file from rows already in memory.
+ *   {@linkcode writeParquetSplits} streams per-split row iterables into as many files as the row cap requires. It
+ *   returns the manifest. Both writers create their parent directory, as `@mailwoman/core/fs` writers do
  *   encode rather than repeat at each call site.
  *
  *   Layout under `<outputDir>`:
@@ -141,7 +141,8 @@ export async function writeParquetFile(rows: readonly ParquetRow[], path: PathBu
 		.setMaxRowGroupSize(ROW_GROUP_SIZE)
 		.build()
 
-	// parquet-wasm serializes key-value metadata through a hash map, whose order is not stable between writes.
+	// parquet-wasm serializes key-value metadata through a hash map.
+	// Its order can change between writes.
 	// File identity and provenance live in manifest.json, so omitting file
 	// metadata preserves deterministic bytes.
 	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
@@ -206,10 +207,11 @@ export interface WriteParquetSplitsOptions {
 	/**
 	 * Continue from the files `<corpusDir>/MANIFEST.json` already records.
 	 *
-	 * The manifest is rewritten after every finished file, and a descriptor is appended
-	 * only once its `.parquet` file is closed, so each recorded file is complete.
-	 * A resumed run re-reads each descriptor's size, discards as many rows from the front
-	 * of each split's iterable as those files hold, and opens the next file index.
+	 * The manifest is rewritten after each finished file.
+	 * A descriptor is appended only after its `.parquet` file closes, so each recorded file is complete.
+	 *
+	 * A resumed run rereads each descriptor's size.
+	 * It discards that many rows from the front of each split's iterable and opens the next file index.
 	 *
 	 * The caller therefore has to supply the same iterables in the same order.
 	 * For `buildCorpus` that means the same labeled files and the same shuffle seed.
@@ -222,8 +224,8 @@ export interface WriteParquetSplitsOptions {
  *
  * Callers (`buildCorpus`) decide each row's split inline at align time via `splitForRow`
  * and route rows to the matching stream.
- * Splits with no rows can be omitted, or passed as an empty iterable,
- * and {@linkcode writeParquetSplits} skips them.
+ * Splits with no rows can be omitted or passed as an empty iterable.
+ * {@linkcode writeParquetSplits} skips them.
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
@@ -252,8 +254,8 @@ async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void
 }
 
 /**
- * Stream labeled rows into `.parquet` files, one set of files per split,
- * and write the manifest describing them.
+ * Streams labeled rows into `.parquet` files, with one set per split.
+ * It writes the manifest that describes them.
  *
  * Splits are processed sequentially so only one file is open at a time.
  * Rows are staged to newline-delimited JSON with backpressure, then DuckDB
@@ -417,9 +419,9 @@ export async function writeParquetSplits(
  * The finished `.parquet` files an earlier run recorded, each verified against its file on disk.
  *
  * @throws When a recorded file is missing or its size differs from the descriptor.
- * A descriptor is written only after its file is closed, so either case means the
- * file changed after the run that wrote it, and continuing would produce a corpus
- * whose manifest describes bytes the files no longer hold.
+ * The writer creates a descriptor only after closing the file.
+ * Either case therefore means the file changed after its run.
+ * Continuing would produce a corpus whose manifest describes bytes the files no longer contain.
  */
 async function readFinishedParquetFiles(manifestPath: PathBuilderLike): Promise<ParquetFileDescriptor[]> {
 	if (!(await pathExists(manifestPath))) return []

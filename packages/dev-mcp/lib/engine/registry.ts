@@ -46,7 +46,8 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
-	 * Enables the POI venue tier, which is off by default.
+	 * Enables the POI venue tier.
+	 * The default is off.
 	 */
 	poi_venue_tier?: boolean
 	/**
@@ -146,8 +147,8 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 /**
  * Throws when a candidate weights bundle is missing files.
  *
- * Loading an incomplete bundle would silently fall back to other weights or disable channels,
- * and the eval would report that as the candidate's score.
+ * An incomplete bundle makes the loader fall back to other weights or disable channels.
+ * The eval would then report those results as the candidate's score.
  */
 export async function assertWeightsCacheStaged(cacheRoot: PathBuilderLike, locale = "en-us"): Promise<void> {
 	const { kind, paths } = await missingWeightsCacheArtifacts(cacheRoot, locale)

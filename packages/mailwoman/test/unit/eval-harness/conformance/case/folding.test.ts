@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The key and the applicability rule are two guards because `İstanbul` clears the first and fails the second, and every exclusion is exercised against a committed board row rather than a synthetic string.
+ *   The key and applicability rule are separate guards. `İstanbul` clears the key check and fails the applicability check.
+ *   Each exclusion uses a committed board row instead of a synthetic string.
  */
 
 import {
@@ -268,7 +269,7 @@ describe("a seeded case regression", () => {
 		expect(rendered).toContain("cases/fr/street-name-boundaries.jsonl#fr-street-name-rue-du-faubourg-saint-honore")
 		expect(rendered).toContain("parse_whole_strict expected equivalent, observed diverges")
 		expect(rendered).toContain('locality: ∅ → "RUE"')
-		// The transformation, which the report line derives rather than storing.
+		// The report line derives the transformation instead of storing it.
 		expect(describeCaseTransformation(findings[0]!.fixture)).toBe("upper")
 	})
 

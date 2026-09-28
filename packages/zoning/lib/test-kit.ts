@@ -3,7 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/zoning/test-kit` — hand-built geometry for the fixture rung: zones in two plans over the same ground, one with a hole encoded the way this service encodes them, one smaller than a cell, and one the authority states as unzoned.
+ *   `@mailwoman/zoning/test-kit` provides hand-built geometry for fixture tests.
+ *   It includes zones in two plans over the same ground. It includes a zone with a service-encoded hole.
+ *   It includes a zone smaller than a cell and a zone the authority states as unzoned.
  *
  *   Under this service a clockwise ring is the exterior and a counter-clockwise one is a hole, the inverse of the GeoJSON convention and of every sibling fixture.
  */
@@ -97,8 +99,10 @@ export function fixtureFeature(
 }
 
 /**
- * The fixture set: two adjacent zones (one holed the way this service encodes holes), a second
- * plan over the same ground, a zone smaller than a cell, and a zone the authority states as unzoned.
+ * The fixture set has two adjacent zones and one with a service-encoded hole.
+ *
+ * It has a second plan over the same ground.
+ * It has a zone smaller than a cell and a zone the authority states as unzoned.
  */
 export function fixtureFeatures(): ZoningSourceFeature[] {
 	const { lon, lat } = FIXTURE_ORIGIN
@@ -106,7 +110,8 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 	const zoneA = exteriorRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)
 	const zoneB = exteriorRing(lon + FIXTURE_SIDE, lat, lon + 2 * FIXTURE_SIDE, lat + FIXTURE_SIDE)
 
-	// The hole is a separate part rather than a nested ring, which is how the real service encodes it.
+	// The real service encodes the hole as a separate part.
+	// It does not nest the hole ring.
 	const holed: MultiPolygonRings = [
 		[exteriorRing(lon, lat + 2 * FIXTURE_SIDE, lon + FIXTURE_SIDE, lat + 3 * FIXTURE_SIDE)],
 		[
@@ -147,7 +152,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 			crosswalkCode: "N1.1",
 			crosswalkDescription: "Road",
 		}),
-		// The authority states unzoned land positively, and uses a code its own domain never declares for it.
+		// The authority marks land as unzoned with a code its own domain does not declare.
 		fixtureFeature(5, [[unzoned]], {
 			localCode: GZT_UNZONED_LOCAL_CODE,
 			localDescription: "Unzoned",

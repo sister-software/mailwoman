@@ -125,8 +125,8 @@ describe("runAdapter", () => {
 	})
 
 	it("stamps sourceName over the adapter id, after holding the adapter to emitting its own", async () => {
-		// One adapter reads every Overture country, and a config has to weight
-		// Brazilian rows apart from European ones.
+		// One adapter reads every Overture country.
+		// A config must weight Brazilian rows separately from European rows.
 		// `overture-latam` exists for that and the runner had no way to ask for it.
 		const adapter = makeAdapter({ id: "syn", rows: [baseRow({ source_id: "syn-1", raw: "Paris" })] })
 
@@ -259,9 +259,10 @@ describe("runAdapter", () => {
 	})
 
 	it("rejects a country code outside the ISO 3166-1 alpha-2 shape", async () => {
-		// `Nl` is what WOF record 1141959953 publishes, and 431 rows reached `v0.6.0-register-surface`
-		// under it: admitted by no `country_weights` entry, selected by no country filter,
-		// and indistinguishable from an ordinary country in any count of them.
+		// WOF record 1141959953 publishes `Nl`.
+		// In corpus version `v0.6.0-register-surface`, 431 rows used that code.
+		// Those rows bypassed `country_weights` and country filters.
+		// The runner counted them like rows from an ordinary country.
 		const emitting = (country: string): CorpusAdapter => ({
 			id: "syn",
 			defaultLicense: "CC0-1.0",
@@ -286,7 +287,8 @@ describe("runAdapter", () => {
 		await expect(run("nl")).rejects.toThrow(/is not two upper-case letters/)
 		await expect(run("NLD")).rejects.toThrow(/is not two upper-case letters/)
 
-		// `ZZ` states that the row's country is undetermined, which the fragment recipes rely on.
+		// `ZZ` marks the row's country as undetermined.
+		// The fragment recipes use this value.
 		await expect(run("ZZ")).resolves.toBeDefined()
 	})
 
@@ -312,9 +314,9 @@ describe("runAdapter", () => {
 	})
 
 	it("refuses to write a manifest when the adapter honored the signal by returning", async () => {
-		// The test above aborts an adapter that ignores `signal` and keeps yielding,
-		// which the in-loop check catches.
-		// Every adapter in the tree returns instead, the way this one does.
+		// The test above aborts an adapter that ignores `signal` and keeps yielding.
+		// The in-loop check catches that behavior.
+		// Other adapters in the tree return when signaled.
 		const ac = new AbortController()
 
 		const honorsSignal: CorpusAdapter = {
@@ -396,7 +398,8 @@ describe("runAdapter", () => {
 			rows: [
 				baseRow({ source_id: "cap-1", raw: "Paris" }),
 				baseRow({ source_id: "cap-2", raw: "Lyon", components: { locality: "Lyon" } }),
-				// Exhausts the set: two keys are held, and this third one is not added.
+				// The set reaches its limit with two keys.
+				// It cannot add this third key.
 				baseRow({ source_id: "cap-3", raw: "Nice", components: { locality: "Nice" } }),
 				// A duplicate of a key the set holds.
 				// It is still dropped.
@@ -416,8 +419,9 @@ describe("runAdapter", () => {
 		})
 
 		expect(manifest.yielded).toBe(5)
-		// Paris, Lyon, Nice, and the second Nice.
-		// The second Paris is dropped.
+		// The retained rows include Paris and Lyon.
+		// Both Nice rows are also retained.
+		// The duplicate Paris row is dropped.
 		expect(manifest.written).toBe(4)
 		expect(manifest.deduped).toBe(1)
 		expect(manifest.dedup_exhausted_at_yielded).toBe(3)

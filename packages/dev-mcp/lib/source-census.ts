@@ -6,8 +6,8 @@
  * What data the repository holds, per country and per artifact — the question before `lookup-sources.ts`'s "does this
  * source know this string".
  *
- * A row count is a misleading yes, so `join` and `parentLinked` are reported: `postalcode-geonames-intl.db` holds
- * 395,544 PT postcodes and is `spr`-only, and even `postalcode-intl.db`'s `ancestors` table reaches no locality when
+ * A row count alone can mislead. The report includes `join` and `parentLinked`: `postalcode-geonames-intl.db` holds
+ * 395,544 PT postcodes and is `spr`-only. Even `postalcode-intl.db`'s `ancestors` table reaches no locality when
  * every `parent_id` is `-1`. A zero-byte or table-less extract is reported unreadable rather than as zero rows.
  *
  * Absence is reported, never omitted: "the query returned no rows" and "we never looked there" are different facts.
@@ -22,7 +22,7 @@ import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * What an extract can be joined through, which decides what a corpus builder can extract from it.
+ * How a corpus builder can join an extract to retrieve data from it.
  *
  * `ancestry` promises only that the table exists.
  * Whether the chain reaches a locality is a separate question.
@@ -51,8 +51,9 @@ export interface SourceCensusRow {
 	countries?: Record<string, number>
 	join: JoinCapability[]
 	/**
-	 * Whether any row carries a usable `parent_id`; an extract whose every row reads
-	 * `-1` cannot be walked upward, which is invisible from a row count.
+	 * Whether any row carries a usable `parent_id`.
+	 *
+	 * A row count cannot show that every row has `-1` and lacks a parent link.
 	 */
 	parentLinked?: boolean
 	readable: boolean
@@ -149,7 +150,7 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 /**
  * Every gazetteer-shaped artifact under the data root's `db/wof/` directory,
  * plus the admin gazetteer beside it; `.prev`, `.bak` and journal siblings are excluded
- * because censusing them reports the same country twice under names nobody can act on.
+ * because censusing them reports the same country twice under unusable names.
  */
 export async function gazetteerArtifacts(source: PathBuilderLike = dataRootPath()): Promise<string[]> {
 	const wof = wofDatabaseRoot(source)

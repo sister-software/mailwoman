@@ -12,7 +12,7 @@
  *   A bare `«region»` form is deliberately absent: teaching it as `region` would fight the
  *   locality/region ambiguity the dominance race arbitrates. A `dependentLocality`, when present,
  *   becomes `«dep_locality», «locality»…`; without it every row begins with the locality and teaches
- *   the model that the first named segment is the locality.
+ *   the model that the first segment is the locality.
  */
 
 import { lookupCanadianProvince } from "@mailwoman/codex/ca"

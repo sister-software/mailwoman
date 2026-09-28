@@ -112,8 +112,9 @@ describe("buildDiskStorage: round trip", () => {
 
 	it("keeps a key continuously visible across the write, never showing a gap", async () => {
 		// The `loading` marker must be replaced by the real value in one step: clearing it
-		// before the file lands leaves the key in neither place, and a concurrent reader gets
-		// `empty` for a response already in hand, defeating the cache interceptor's stampede guard.
+		// before the file lands leaves the key in neither place.
+		// A concurrent reader gets `empty` for a response already in hand,
+		// defeating the cache interceptor's stampede guard.
 		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("k", { state: "loading", previous: "empty" })
@@ -198,8 +199,8 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 
 describe("buildDiskStorage: atomic write with a per-write-unique temp name", () => {
 	// A per-write-unique temp name is required: with a fixed `${finalPath}.building`,
-	// two writers racing on the same key target the same temp file, and the second
-	// gets a raw enoent for a response that had already succeeded.
+	// two writers racing on the same key target the same temp file.
+	// The second writer gets a raw enoent for a response that had already succeeded.
 	it("never throws and never corrupts when two independent writers race on the same key", async () => {
 		const ROUNDS = 10
 		const BODY_BYTES = 200_000

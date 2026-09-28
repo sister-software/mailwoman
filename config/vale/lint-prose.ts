@@ -4,221 +4,213 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The working-tree entry point for the repository's Vale prose surfaces.
- *
- *   The package scripts stay declarative. This file owns the pathspecs, asks the shared git reader for the working
- *   tree's file set, and invokes Vale through the shared process boundary.
- *
- *   It reads the working tree rather than the index, so a file written a minute ago is checked. Reading the index
- *   meant a newly created file reached no surface, produced an empty file list, and exited clean without Vale opening
- *   it — and the editor hook that calls this reports findings off Vale's own summary, so it stayed silent too.
+ * @file Vale prose linting entry point.
  */
 
 /// <reference types="node" />
 
-import { pathExists } from "@mailwoman/core/fs/readers"
 import { workingTreeFiles } from "@mailwoman/core/git"
-import { repoRootPath } from "@mailwoman/core/paths"
-import { isProcessError, runFile } from "@mailwoman/core/process"
-import { cliArguments } from "@mailwoman/core/scripting/arguments"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/process"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { runCLICommand } from "@mailwoman/core/scripting/command"
-import { valeCommand } from "@mailwoman/core/vale"
-import { resolvePath } from "path-ts"
+import { availableParallelism } from "@mailwoman/core/utils/system"
+import { type ValeCommand, valeCommand } from "@mailwoman/core/vale"
+import { chunks } from "spliterator"
 
-type Surface = "docs" | "docs-vocab" | "code"
+import {
+	narrowTo,
+	loadValeIgnore,
+	assertSurfaceArg,
+	configFor,
+	type Surface,
+	describeUnmatched,
+} from "#config/vale/shared"
 
-const REPO_ROOT = repoRootPath()
+async function pathspecsFor(value: Surface): Promise<string[]> {
+	const ignoreFileName = value === "code" ? "code" : "docs"
+	const ignorePatterns = await loadValeIgnore(repoRootPathBuilder("config", "vale", `${ignoreFileName}.valeignore`))
 
-const prependExclude = (path: string) => `:(exclude)${path}`
+	const filePatterns = value === "code" ? ["*.ts", "*.tsx", "*.py", "*.yaml", "*.yml"] : ["*.md", "*.mdx"]
 
-const DOC_EXCLUDES = [
-	"config/vale/fixtures/**",
-	".agents/skills/**",
-	"corpus-python/**/AGENTS.md",
-	"corpus-python/**/CLAUDE.md",
-	"packages/**/AGENTS.md",
-	"packages/**/CLAUDE.md",
-	"CHANGELOG.md",
-	"**/CHANGELOG.md",
-	"LICENSE.md",
-	"**/LICENSE.md",
-	"COMMERCIAL-LICENSE.md",
-	"**/COMMERCIAL-LICENSE.md",
-	"CODE_OF_CONDUCT.md",
-	"**/CODE_OF_CONDUCT.md",
-	"SECURITY.md",
-	"**/SECURITY.md",
-	"THIRD_PARTY_NOTICES.md",
-	"**/THIRD_PARTY_NOTICES.md",
-	"packages/**/data/PROVENANCE.md",
-	"packages/**/lib/**/*.md",
-	// `docs/records/evals/2026-07-31-filer-linkage.md` is regenerated from string literals in
-	// `packages/filer/lib/tools/linkage/report.ts`, and a test compares the two byte for byte.
-	// A vocabulary rule reaching the generated copy and not its generator desynchronizes them,
-	// which is what broke the `Test` workflow on 2026-09-22.
-	// The rest of this directory is dated eval receipts, whose value is that
-	// they say what they said at the time.
-	"docs/records/evals/**",
-	"packages/mailwoman/skills/**",
-	"packages/mailwoman/lib/eval-harness/**",
-	"packages/resolver-wof-sqlite/CONVENTION.md",
-	"packages/resolver-wof-sqlite/POSTCODE-*.md",
-].map(prependExclude)
-
-const CODE_EXCLUDES = [
-	"config/vale/**",
-	"docs/**/test-fixtures/**",
-	"packages/**/test-fixtures/**",
-	"packages/neural/test/fixtures/**",
-	"packages/mailwoman/lib/eval-harness/conformance/fixture.ts",
-	".yarnrc.yml",
-	"docker/docker-compose.yml",
-	"docs/tags.yml",
-].map(prependExclude)
-
-function surface(value: string | undefined): Surface {
-	if (value === "docs" || value === "docs-vocab" || value === "code") return value
-
-	throw new Error("Usage: node config/vale/lint-prose.ts <docs|docs-vocab|code> [path ...]")
-}
-
-function pathspecsFor(value: Surface): string[] {
-	switch (value) {
-		case "code":
-			return ["*.ts", "*.tsx", "*.py", "*.yaml", "*.yml", ...CODE_EXCLUDES]
-		default:
-			return ["*.md", "*.mdx", ...DOC_EXCLUDES]
-	}
+	return [...filePatterns, ...ignorePatterns]
 }
 
 /**
- * The surface's files narrowed to the ones a caller named.
+ * The file list split into one slice per core for concurrent Vale processes.
  *
- * We intersect here instead of passing the caller paths to git with the exclude pathspecs.
- *
- * Why: git pathspec rules can produce false negatives when literals and recursive excludes are combined.
- * In practice, a literal path plus the recursive `test-fixtures` exclude in `DOC_EXCLUDES`
- * can return zero matches even when the literal file is unrelated to that exclude
- * (for example `packages/core/lib/module/compiled-freshness.ts`).
- *
- * If we trusted that result, a narrowed run could report clean for a file Vale never read.
- * String-set intersection avoids that pathspec behavior and keeps narrowing deterministic.
+ * Vale reads an explicit file list on a single core.
+ * Handing each core its own slice brings the same work down to a few seconds.
  */
-function narrowTo(files: readonly string[], narrowing: readonly string[]): string[] {
-	if (!narrowing.length) return [...files]
-
-	const wanted = new Set(narrowing.map((path) => path.replace(/^\.\//, "")))
-
-	return files.filter((file) => wanted.has(file))
+function chunkFiles(files: readonly string[], chunkCount: number): string[][] {
+	return Array.from(chunks(files, Math.max(1, Math.ceil(files.length / chunkCount))))
 }
 
-function configFor(value: Surface): string {
-	switch (value) {
-		case "code":
-			return "config/vale/.vale-code.ini"
-		case "docs":
-			return "config/vale/.vale.ini"
-		case "docs-vocab":
-			return "config/vale/.vale-vocab.ini"
-	}
+interface ValeCheck {
+	configPath: string
+	files: string[]
 }
 
-/**
- * Each named path that reached no file, with the reason it did.
- *
- * Three causes produce one empty set and want three different repairs.
- * A path absent from the working tree is a typo or a stale reference.
- *
- * A path an ignore rule covers is a build output, and linting one would report
- * findings its author cannot act on.
- * A path present and carried by git is one this surface excludes by design,
- * which is the only case where silence was ever the right answer.
- *
- * The second `git ls-files` runs only when something failed to match,
- * so an ordinary invocation pays for one.
- */
-async function describeUnmatched(
-	narrowing: readonly string[],
-	matched: readonly string[],
-	selectedSurface: Surface
-): Promise<string[]> {
-	const found = new Set(matched)
-	const missing = narrowing.map((path) => path.replace(/^\.\//, "")).filter((path) => !found.has(path))
+interface ValeRun extends ProcessOutput {
+	exitCode: number
+}
 
-	if (!missing.length) return []
-
-	const carried = new Set(await workingTreeFiles(REPO_ROOT))
-
-	return Promise.all(
-		missing.map(async (path) => {
-			if (!(await pathExists(resolvePath(REPO_ROOT, path)))) {
-				return `${path} — no such file in the working tree`
-			}
-
-			if (!carried.has(path)) {
-				return `${path} — an ignore rule covers it, so it is a build output rather than prose to check.`
-			}
-
-			return `${path} — excluded from the ${selectedSurface} surface by design.`
+async function runVale(vale: ValeCommand, configPath: string, files: readonly string[]): Promise<ValeRun> {
+	try {
+		const result = await runFile(vale.file, [...vale.argv, "--config", configPath, ...files], {
+			cwd: repoRootPathBuilder,
+			maxBuffer: 50 * 1024 * 1024,
 		})
-	)
+
+		return { ...result, exitCode: 0 }
+	} catch (error: unknown) {
+		if (!isProcessError(error)) throw error
+
+		return {
+			stdout: error.stdout,
+			stderr: error.stderr,
+			exitCode: typeof error.code === "number" ? error.code : 1,
+		}
+	}
 }
 
-async function main(args: readonly string[]): Promise<number> {
-	const selectedSurface = surface(args[0])
-	// Narrowing paths, for a caller that has just edited a file and wants the same verdict CI would give it.
-	// They are intersected with the surface's pathspecs rather than linted directly, so an excluded
-	// path stays excluded and the caller never has to carry a second copy of the exclusion list.
-	const narrowing = args.slice(1)
-	// The working tree rather than the index.
-	// A file written a minute ago carries prose nobody has read, and reading the
-	// committed list reported it clean without opening it.
-	// `--exclude-standard` keeps build outputs out.
-	const surfaceFiles = await workingTreeFiles(REPO_ROOT, pathspecsFor(selectedSurface))
+/**
+ * The closing line Vale prints per process.
+ * A chunked run would otherwise repeat it once per slice.
+ */
+const SUMMARY_LINE = /^[✔✖] (\d+) errors?, (\d+) warnings? and (\d+) suggestions? in (\d+) files?\.\n?$/mu
 
-	if (!surfaceFiles.length) throw new Error(`No files in the working tree matched the ${selectedSurface} Vale surface`)
+/**
+ * A chunk's output with Vale's closing summary line removed and its counts returned.
+ */
+function splitSummary(stdout: string): { body: string; counts: number[] } {
+	const match = SUMMARY_LINE.exec(stdout)
 
-	const files = narrowTo(surfaceFiles, narrowing)
+	if (!match) return { body: stdout, counts: [0, 0, 0, 0] }
 
-	// A named path that reaches no file is reported rather than passed over.
-	// Returning 0 here answered "no findings" to a question Vale was never asked:
-	// the surface list comes from `git ls-files`, so naming an untracked file produced
-	// an empty set, printed nothing and exited clean.
-	// A new file's prose is exactly what a caller wants read, and this reported it as read and clean instead.
-	//
-	// Each unmatched path carries the reason it matched nothing, because the three cases
-	// need different repairs and a bare count distinguishes none of them.
+	return {
+		body: stdout.slice(0, match.index) + stdout.slice(match.index + match[0].length),
+		counts: match.slice(1).map(Number),
+	}
+}
+
+/**
+ * Every check's chunks run at once.
+ *
+ * Output is written in chunk order after all have finished.
+ * A file's findings stay together.
+ *
+ * Two checks never interleave.
+ * Each check closes with one summary that sums its chunks.
+ */
+async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promise<number> {
+	const parallelism = availableParallelism()
+
+	const runs = checks.map(({ configPath, files }) => {
+		console.log(`Running Vale check with config: ${configPath}`)
+
+		return Promise.all(chunkFiles(files, parallelism).map((chunk) => runVale(vale, configPath, chunk)))
+	})
+
+	let exitCode = 0
+
+	for (const results of await Promise.all(runs)) {
+		const totals = [0, 0, 0, 0]
+
+		for (const { stdout, stderr, exitCode: code } of results) {
+			const { body, counts } = splitSummary(stdout)
+
+			process.stdout.write(body)
+			process.stderr.write(stderr)
+
+			counts.forEach((count, index) => (totals[index] += count))
+			exitCode = Math.max(exitCode, code)
+		}
+
+		const [errors, warnings, suggestions, files] = totals
+		const mark = errors || warnings ? "✖" : "✔"
+
+		console.log(`${mark} ${errors} errors, ${warnings} warnings and ${suggestions} suggestions in ${files} files.`)
+	}
+
+	return exitCode
+}
+
+async function lint(surface: Surface, narrowing: readonly string[]) {
+	const resolvedPathSpecs = await pathspecsFor(surface)
+	const surfaceFiles = await workingTreeFiles(resolvedPathSpecs)
+
+	if (!surfaceFiles.length) {
+		throw new Error(`No files in the working tree matched the ${surface} Vale surface`)
+	}
+
+	const filteredSurfaceFiles = narrowTo(surfaceFiles, narrowing)
+
 	if (narrowing.length) {
-		const unmatched = await describeUnmatched(narrowing, files, selectedSurface)
+		const unmatched = await describeUnmatched(narrowing, filteredSurfaceFiles, surface)
 
 		if (unmatched.length) {
 			throw new Error(
-				`${unmatched.length} of ${narrowing.length} named paths reached no file in the ${selectedSurface} ` +
+				`${unmatched.length} of ${narrowing.length} paths reached no file in the ${surface} ` +
 					`surface, so Vale did not read them:\n  ${unmatched.join("\n  ")}`
 			)
 		}
 	}
 
 	const vale = await valeCommand(import.meta.url)
+	const checks: ValeCheck[] = [{ configPath: configFor(surface).toString(), files: filteredSurfaceFiles }]
 
-	try {
-		const result = await runFile(vale.file, [...vale.argv, "--config", configFor(selectedSurface), ...files], {
-			cwd: REPO_ROOT,
-			maxBuffer: 50 * 1024 * 1024,
-		})
+	if (surface === "code") {
+		const sourceFiles = filteredSurfaceFiles.filter((file) => /\.(?:ts|tsx|py)$/u.test(file))
 
-		process.stdout.write(result.stdout)
-		process.stderr.write(result.stderr)
-
-		return 0
-	} catch (error: unknown) {
-		if (!isProcessError(error)) throw error
-
-		process.stdout.write(error.stdout)
-		process.stderr.write(error.stderr)
-
-		return typeof error.code === "number" ? error.code : 1
+		if (sourceFiles.length) {
+			checks.push({ configPath: configFor("code-terms").toString(), files: sourceFiles })
+		}
 	}
+
+	return runChecks(vale, checks)
 }
 
-process.exitCode = await runCLICommand(() => main(cliArguments()))
+async function main(): Promise<number> {
+	const {
+		values: options,
+		// Narrow paths to the selected surface so callers get the same exclusions as CI.
+		positionals: narrowing,
+	} = parseArguments({
+		options: {
+			surface: {
+				type: "string",
+				short: "s",
+				multiple: true,
+			},
+		},
+		allowPositionals: true,
+	})
+
+	if (!options.surface?.length) {
+		console.error("No surface specified")
+
+		return 1
+	}
+
+	const surfaces: Surface[] = []
+
+	for (const surface of options.surface) {
+		assertSurfaceArg(surface)
+		surfaces.push(surface)
+	}
+
+	let exitCode = 0
+
+	for (const surface of surfaces) {
+		exitCode = await lint(surface, narrowing)
+
+		if (exitCode !== 0) {
+			return exitCode
+		}
+	}
+
+	return exitCode
+}
+
+process.exitCode = await runCLICommand(main)

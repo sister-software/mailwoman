@@ -107,9 +107,10 @@ export function fixtureComponents(): SoilComponentTable[] {
 		component("co-mixed-2", "mu-mixed", 35, "Series", "3", "e"),
 		component("co-mixed-3", "mu-mixed", 20, "Series", "6", "s"),
 		component("co-class8", "mu-class8", 100, "Series", "8", "s"),
-		// A miscellaneous area with no rating: not rateable, which is not the same as unrated and not the same as class 8.
+		// A miscellaneous area with no rating is not rateable.
+		// That differs from unrated soil and class 8.
 		component("co-water", "mu-water", 100, "Miscellaneous area", null, null),
-		// A named soil the survey did not rate: unrated.
+		// A soil type the survey did not rate: unrated.
 		component("co-unrated", "mu-unrated", 100, "Series", null, null),
 		// A minority component small enough to fall under the truncation floor once the lattice splits it.
 		component("co-tail", "mu-mixed", 1, "Series", "7", "e"),
@@ -161,8 +162,8 @@ export function fixtureDomains(): SurveyAreaAttributes["domains"] {
 }
 
 /**
- * The fixture delineations: a mixed square, a class-8 square, a water square, an unrated square,
- * and a `notcom` square, laid out left to right so each occupies its own ground.
+ * The fixture delineations include mixed, class-8, water, and unrated squares, plus a `notcom` square.
+ * They sit left to right, each on its own ground area.
  */
 export function fixtureDelineations(areaSymbol = "XX001"): SoilDelineation[] {
 	const { lat, lon } = FIXTURE_ORIGIN

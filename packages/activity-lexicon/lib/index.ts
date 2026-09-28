@@ -5,10 +5,10 @@
  *
  *   `@mailwoman/activity-lexicon` — the reviewed surface forms for activity concepts.
  *
- *   The vocabulary answers one question: which strings does a person type when they mean a given activity, and where
- *   is each of those strings used. It answers no question about the world. Which entity kinds afford the activity, in
- *   which country and on whose authority live in `@mailwoman/geographic-model`; which venue nouns name a POI category
- *   live in `@mailwoman/poi-taxonomy`. A consumer joins them. none of the three restates another.
+ *   The vocabulary lists the strings people type to refer to an activity. It also records where each string is
+ *   used. `@mailwoman/geographic-model` records which entity kinds support an activity and in which countries.
+ *   It also records the authority for each association. `@mailwoman/poi-taxonomy` records which venue nouns identify
+ *   a POI category. A consumer joins these sources. Each source keeps its own information.
  */
 
 export {

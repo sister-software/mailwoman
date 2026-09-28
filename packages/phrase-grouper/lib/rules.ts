@@ -419,8 +419,9 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 }
 
 /**
- * Caps the length of a proposed locality phrase in tokens, and also caps the forward walk
- * so a long capitalized run does not cost quadratic time.
+ * Caps the length of a proposed locality phrase in tokens.
+ *
+ * It also caps the forward walk so a long capitalized run does not cost quadratic time.
  */
 export const MAX_LOCALITY_PHRASE_TOKENS = 6
 
@@ -428,8 +429,10 @@ export const MAX_LOCALITY_PHRASE_TOKENS = 6
  * Proposes every `LOCALITY_PHRASE` prefix of each capitalized run, including runs joined
  * by place-name particles such as "de" or "sur", up to {@link MAX_LOCALITY_PHRASE_TOKENS}.
  *
- * Longer runs and runs at the segment tail score higher, and a lone US state
- * name away from the tail is penalized.
+ * Longer runs score higher.
+ * Runs at the segment tail also score higher.
+ *
+ * The score penalizes a lone US state name away from the tail.
  */
 export function scoreLocalityPhrase(
 	tokens: ReadonlyArray<SegmentToken>,

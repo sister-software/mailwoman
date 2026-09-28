@@ -118,7 +118,7 @@ export function loadUSRegionVocabulary(fold: (surface: string) => string[] = pai
 }
 
 /**
- * German city-states, whose state names are also locality names.
+ * German city-states use their state names as locality names.
  */
 const DE_CITY_STATES: ReadonlySet<GermanStateCode> = new Set(["BE", "HB", "HH"])
 
@@ -170,7 +170,7 @@ export function isSubPhraseAlias(alt: readonly string[], primary: readonly strin
 }
 
 /**
- * Loads the one-token person-name surfaces from libpostal's given names, surnames, and personal titles.
+ * Loads one-token person-name surfaces from libpostal's given names and surnames, plus personal titles.
  *
  * The result is cached for the life of the process and shared between callers.
  * Callers must copy the set before changing it.
@@ -223,8 +223,8 @@ async function scanPersonNameSurfaces(): Promise<Set<string>> {
  * `parentImportance` is the highest importance among the parent localities of neighbourhoods with this name.
  *
  * A person-name surface must clear the higher floor on its own importance,
- * because a neighbourhood named after a person in a large city would otherwise pass on
- * its parent's importance and match street names such as "Rue Joseph".
+ * because a neighbourhood bearing a person's name in a large city would otherwise pass
+ * on its parent's importance and match street names such as "Rue Joseph".
  */
 export function clearsProminenceFloor(
 	surface: string,
@@ -289,8 +289,9 @@ export interface BuiltLexicon {
 /**
  * Builds the locality-surface lexicon from the WOF admin database.
  *
- * The build excludes degenerate and directional surfaces, region vocabulary, alternate names
- * that are sub-phrases of the primary name, and one-token surfaces below the prominence floors.
+ * The build excludes degenerate and directional surfaces plus region vocabulary.
+ * It also excludes alternate names that are sub-phrases of the primary name
+ * and one-token surfaces below the prominence floors.
  */
 export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts = {}): Promise<BuiltLexicon> {
 	const countries = opts.countries ?? ["US", "FR"]
@@ -503,7 +504,7 @@ export interface BuildStreetTypeLexiconOpts {
 }
 
 /**
- * Builds the street-type lexicon from the codex tables for FR, US, GB, DE, and CA.
+ * Builds the street-type lexicon from the codex tables for FR, US, GB, DE plus CA.
  *
  * Canonical words such as "rue" match case-insensitively at any length.
  * Abbreviations of up to {@link MAX_ABBREVIATION_LETTERS} letters become case-sensitive

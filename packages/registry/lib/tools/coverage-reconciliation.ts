@@ -82,7 +82,8 @@ const ELIGIBILITY = new Set(["nppes", "txhhsc-nursing"])
 const FUNDING = new Set(["fcc-rhc"])
 
 /**
- * Reconcile eligibility and funding sources, and emit the markdown report to stdout.
+ * Reconcile eligibility and funding sources.
+ * Emit the markdown report to stdout.
  */
 export async function coverageReconciliation(
 	options: CoverageReconciliationOptions,
@@ -148,8 +149,8 @@ export async function coverageReconciliation(
 
 	report?.("[D] resolving + reconciling…")
 	// Use the Fellegi-Sunter baseline for this cross-dataset join.
-	// It is recall-oriented, because the same facility under a different operational
-	// name is the signal, which the dedup-calibrated GBT default rejects.
+	// It is recall-oriented because the signal is the same facility under a different operational name.
+	// The dedup-calibrated GBT default rejects that pair.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })
 
 	// Reconcile through the shared @mailwoman/registry code path, so the script and the CLI agree.

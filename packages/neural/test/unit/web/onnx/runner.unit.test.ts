@@ -7,9 +7,9 @@
  *   they need no model files.
  *
  *   Gazetteer-anchor-trained graphs declare `gazetteer_features` / `gazetteer_confidence` and
- *   `anchor_features` / `anchor_confidence` as required inputs, and the runner must mirror
- *   `@mailwoman/neural`'s node `ONNXRunner`: feed caller-provided features through, zero-fill a
- *   declared input the caller omits instead of letting ORT throw, and surface the optional
+ *   `anchor_features` / `anchor_confidence` as required inputs. The runner must mirror
+ *   `@mailwoman/neural`'s node `ONNXRunner`. It passes through caller-provided features and zero-fills
+ *   a declared input the caller omits, rather than letting ORT throw. It also surfaces the optional
  *   `locale_logits` as `localeLogits` and `span_scores` as `spanScores` with the node runner's
  *   (token, length, type) unflattening.
  */

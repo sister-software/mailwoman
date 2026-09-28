@@ -8,21 +8,20 @@
  *   (npm >= 9.5). The files land in `docs/static/sbom/` so Docusaurus serves them at
  *   `https://mailwoman.ai/sbom/mailwoman-<version>.{spdx,cdx}.json`.
  *
- *   Why generate from the published tarball rather than the working tree: the monorepo uses yarn's
- *   `workspace:*` protocol, which `npm sbom` cannot resolve, and an sbom's job is to document what a
- *   consumer actually installs — concrete versions, the production dependency closure. So the
- *   operation `npm pack`s the released version, then installs and inspects that tarball.
+ *   The monorepo uses Yarn's `workspace:*` protocol. `npm sbom` cannot resolve that protocol.
+ *   An SBOM documents what a consumer installs: concrete versions and the production dependency
+ *   closure. The operation runs `npm pack` on the released version, then installs and inspects its tarball.
  *
- *   One wrinkle: the published `mailwoman` package.json carries a single devDependency,
- *   `@mailwoman/osm`, an internal dev-only workspace that is never published (a clean install would
- *   404 on it). Consumers never install a dependency's devDependencies, and a production sbom excludes
- *   them by definition, so devDependencies are stripped before installing. The extracted tarball
- *   directory is renamed to `mailwoman` so the CycloneDX root component's display name (which npm
- *   derives from the directory basename) reads `mailwoman` rather than `package`.
+ *   The published `mailwoman` package.json carries one devDependency: `@mailwoman/osm`.
+ *   This internal dev-only workspace is never published, so a clean install would return 404.
+ *   Consumers do not install a dependency's devDependencies. A production SBOM excludes them by
+ *   definition, so the operation strips devDependencies before installation. It renames the extracted
+ *   tarball directory to `mailwoman`. npm derives the CycloneDX root display name from the directory
+ *   basename, so the renamed directory gives the component the display name `mailwoman`.
  *
- *   Two npm-spdx-output quirks are normalized so the document passes the spdx reference validator
- *   (pyspdxtools): the `created` timestamp is truncated to whole seconds (spdx forbids fractional
- *   seconds) and any `_` in an spdxid is rewritten to `-` (the spdx spdxid charset is letters,
+ *   The operation normalizes two npm-spdx-output quirks so the document passes the SPDX reference validator
+ *   (pyspdxtools). It truncates the `created` timestamp to whole seconds because SPDX forbids fractional
+ *   seconds. It rewrites each `_` in an SPDX ID to `-` because the SPDX ID character set allows letters,
  *   numbers, `.`, and `-` only — e.g. `string_decoder`). The rewrite is applied consistently across
  *   every spdxid cross-reference (documentDescribes, relationships, hasFiles) so the graph stays
  *   internally consistent. CycloneDX output validates as-is and is only re-serialized for a tidy diff.

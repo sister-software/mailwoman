@@ -81,8 +81,8 @@ describe("isImplausibleResolution", () => {
 	})
 
 	test("guard B: a coordinate outside the expected country's bbox is implausible (the cross-country jump)", () => {
-		// A locality-tier coordinate can land far outside the expected country,
-		// and guard A (country-centroid) cannot catch it.
+		// A locality-tier coordinate can land far outside the expected country.
+		// Guard A (country-centroid) cannot catch it.
 		// Guard B does, given the expected country.
 		const t = tree(
 			[node({ tag: "locality", value: "Ia", lat: -6.3, lon: 155.6, placeID: "wof:ia-png" })],
@@ -181,8 +181,7 @@ describe("COUNTRY_BBOX covers every shipping locale", () => {
 	})
 
 	test("every box contains its country's own capital", () => {
-		// The failure a hand-written box invites is a trimmed one, and a box that has
-		// lost territory has usually lost it at an edge.
+		// A hand-written box can omit territory at an edge.
 		// A capital is the cheapest point every box must hold.
 		const capitals: ReadonlyArray<readonly [string, number, number]> = [
 			["US", 38.9072, -77.0369],

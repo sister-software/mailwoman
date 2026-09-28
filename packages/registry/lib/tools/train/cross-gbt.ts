@@ -5,12 +5,11 @@
  *
  *   Train the cross-source link scorer. The dedup GBT is trained on within-NPPES labels, so its
  *   strongest feature (`spatial-exact × name-disagree`) rejects the prototypical cross-source pair,
- *   the same provider under different operational text across registries. CMS Open Payments joins
- *   NPPES by NPI, which gives ground-truth positives labeled by a key the matcher's features never
- *   see.
+ *   the same provider under different operational text across registries.
+ *   CMS Open Payments joins NPPES by NPI. That join provides ground-truth positive pairs labeled by a key the matcher never sees.
  *
  *   The pipeline assembles NPPES and Open Payments TX records for the same NPI population, then the
- *   shared `trainCrossSourceModel` geocodes through the standard ingest, blocks the union, keeps only
+ *   shared `trainCrossSourceModel` geocodes through the standard ingest and blocks the union. It keeps only
  *   cross-source candidate pairs, and trains the shipped model into
  *   `registry/models/crosssource-gbt-en-us.ts`.
  *

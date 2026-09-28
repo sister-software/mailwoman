@@ -5,8 +5,8 @@
  *
  *   `mailwoman registry <csv>`: the geocode-first record matcher, end to end.
  *
- *   Constructs the heavy geocoder (neural parser, WOF resolver, and per-state situs/interp databases)
- *   and injects it into the matcher's `GeocodeAddress` interface, so `@mailwoman/registry` never
+ *   Constructs the heavy geocoder with a neural parser, WOF resolver and per-state situs/interp databases.
+ *   It injects the geocoder into the matcher's `GeocodeAddress` interface, so `@mailwoman/registry` never
  *   imports the runtime.
  *
  *   Blocking uses geography, so textual variants of the same place land in one block. The real run
@@ -123,8 +123,8 @@ async function resolveWOFPath(options: Options): Promise<string> {
 }
 
 /**
- * Construct the heavy geocoder once (neural parser, WOF resolver, and per-state databases)
- * and wire it into the matcher's {@link GeocodeAddress} interface.
+ * Construct the heavy geocoder once with a neural parser, WOF resolver and per-state
+ * databases. and wire it into the matcher's {@link GeocodeAddress} interface.
  *
  * @returns it plus a disposal hook for the database handles.
  */
@@ -354,8 +354,9 @@ async function writeOutputs(
 }
 
 /**
- * Multi-source mode: stream each dataset under its own mapping and provenance label into one
- * combined record set, geocode, resolve, and report the entities that span two or more sources.
+ * Multi-source mode: stream each dataset under its own mapping and provenance label
+ * into one combined record set, geocode and resolve it.
+ * Report entities that span two or more sources.
  *
  * No shared key required.
  * Geography is the join.

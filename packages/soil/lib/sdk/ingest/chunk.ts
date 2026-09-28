@@ -3,21 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The streaming pass — every delineation into `soil_map_unit_area` and into the build's touch table — as a
- *   unit of work that can run over part of one survey area.
+ *   This streaming pass writes each delineation to `soil_map_unit_area` and the build's touch table.
+ *   It can process part of one survey area as a unit of work.
  *
- *   why this is A chunk rather than A whole file. h3's wasm heap cannot be reset from JavaScript, and it does
- *   not survive an unbounded number of polyfill calls: over the flood layer's real product, runs died after
- *   roughly 510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process. A
- *   build that completes only when fragmentation happens to stay low is not a reproducible build, so the
- *   classification is bounded by construction — {@linkcode buildSoilDatabase} runs one of these per range of
- *   the shapefile's own FIDs, each in its own process, and each therefore against a heap that starts empty.
- *   Iowa's 99 survey areas hold far more delineations together than any one of them does, which is why the
- *   bound is per range rather than per area.
+ *   H3's wasm heap cannot be reset from JavaScript. It also cannot sustain unlimited polyfill calls.
+ *   Two runs over the flood layer's real product stopped after roughly 510,000 and 798,000 features.
+ *   The same geometries classify in milliseconds in a fresh process. A build that completes only when
+ *   fragmentation stays low is not reproducible. {@linkcode buildSoilDatabase} bounds each process to a range
+ *   of the shapefile's FIDs. Each range gets a separate process with a fresh heap. Iowa's 99 survey areas
+ *   contain far more delineations together than each area contains alone. The bound therefore applies per range.
  *
- *   the chunk owns no artifact. It appends rows to a database the parent created and will seal, and returns
- *   counts the parent adds up. Chunks run one at a time against that file, so there is no concurrent writer
- *   and no locking to reason about.
+ *   The chunk appends rows to a database created by the parent. The parent seals that database and adds up
+ *   the counts returned by each chunk. Chunks run one at a time against the file, so only one writer uses it.
  */
 
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox, shortCellToInt } from "@mailwoman/spatial"
@@ -31,8 +28,10 @@ import type { SoilFeatureSource } from "#sdk/ingest/index"
 /**
  * Rows per bulk-insert transaction.
  *
- * Chosen for the geometry table, whose rows carry a blob: a larger transaction
- * grows the write-ahead file without improving throughput.
+ * Chosen for the geometry table.
+ * Each row carries a blob.
+ *
+ * A larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
 
@@ -61,13 +60,15 @@ export interface SoilChunkResult {
 	/**
 	 * The same, counting only delineations whose map unit has soil mapping behind it.
 	 *
-	 * Separate from the total because the coverage rule turns on it: a coverage cell
-	 * reached only by `notcom` and access-denied polygons is inside a published survey area
-	 * and carries no digitized soil mapping, and the survey's §3.2 gives it no row.
+	 * Separate from the total because the coverage rule depends on this value.
+	 * A cell reached only by `notcom` or access-denied polygons lies inside a published
+	 * survey area and carries no digitized soil mapping.
+	 *
+	 * Section 3.2 of the survey specification assigns no row to that cell.
 	 */
 	mappedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres: the encoded rings read with their holes, and read without.
+	 * Square metres computed from the encoded rings, with holes and with every ring treated as exterior.
 	 */
 	area: { nestedM2: number; allExteriorM2: number }
 }

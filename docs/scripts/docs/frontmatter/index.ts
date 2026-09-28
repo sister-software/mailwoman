@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared plumbing for the docs structural checks: walk `docs/articles`, parse each page's frontmatter block, and derive the Docusaurus doc id.
+ *   Shared plumbing for the docs structural checks. It walks `docs/articles` and parses each page's frontmatter block.
+ *   It also derives the Docusaurus doc id.
  *
  *   The frontmatter parser is deliberately minimal — top-level `key: scalar` lines only, quotes stripped, with nested values recording the key but no value — so no YAML dependency reaches the pre-install CI path.
  */

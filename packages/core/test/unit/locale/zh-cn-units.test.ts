@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The CN organizational-unit reader. It reads rows into rungs and splits them from their named
+ * @file The CN organizational-unit reader. It reads rows into rungs and splits them from their head
  *   heads the way the corpus labeler needs.
  */
 

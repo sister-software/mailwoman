@@ -23,7 +23,7 @@ def test_a_target_of_five_lands_at_five_reps_per_row():
     assert merged is not None
     assert _reps(merged, "synth-bare-country-v23") == pytest.approx(5.0)
     assert derived[0].weight == pytest.approx(0.0302, abs=0.0005)
-    # The fixed weights stay unchanged, and the targeted source's draws come out of their share.
+    # The fixed weights stay unchanged. The targeted source's draws come out of its share.
     assert {k: merged[k] for k in FIXED} == FIXED
 
 

@@ -9,7 +9,7 @@
  *   Exclusion is a deliberate act rather than a silent default: the build includes every row an adapter
  *   yields (stamping its `license`), and a build that needs a license set carrying no share-alike
  *   obligation asks for {@linkcode LicensePolicy.ShareAlikeFree}, so no source is dropped unless the
- *   operator named the policy.
+ *   operator selected the policy.
  *
  *   The refusal reads `readLicenseRecord`, which resolves a value to an SPDX expression and looks up
  *   that expression's obligations. An anchored prefix match over the raw column cannot do this. Measured
@@ -21,8 +21,8 @@
  *   Three refusal classes exist because they are different claims. A value that resolves to an
  *   expression carrying share-alike states the obligation. A value whose prose mentions a share-alike
  *   licence while resolving to no expression is share-alike-derived without stating its own grant. A
- *   value that resolves to no expression at all has unknown obligations, which is different from having
- *   none, and 628,203,119 of those rows are prose this repository writes about its own renderings. The
+ *   value that resolves to no expression has unknown obligations. Unknown obligations differ from an empty
+ *   obligation set. Of these rows, 628,203,119 contain prose this repository writes about its own renderings. The
  *   third class is therefore reported rather than refused under {@linkcode LicensePolicy.ShareAlikeFree},
  *   and {@linkcode LicensePolicy.ResolvedOnly} refuses it for a caller that needs every grant stated.
  */
@@ -41,16 +41,17 @@ export const LicensePolicy = {
 	 */
 	All: "all",
 	/**
-	 * Refuse a row whose license carries a share-alike obligation, and a row whose license
-	 * text mentions a share-alike licence while stating no grant of its own.
+	 * Refuse a row whose license carries a share-alike obligation.
+	 *
+	 * Also refuse a row whose license text mentions a share-alike licence while stating no grant of its own.
 	 *
 	 * A row whose license resolves to no expression and mentions no share-alike licence is admitted
 	 * and counted, because its obligations are unknown rather than known to include share-alike.
 	 */
 	ShareAlikeFree: "share-alike-free",
 	/**
-	 * Refuse everything {@linkcode LicensePolicy.ShareAlikeFree} refuses,
-	 * and additionally refuse a row whose license resolves to no expression.
+	 * Apply all refusals from {@linkcode LicensePolicy.ShareAlikeFree}.
+	 * Also refuse a row whose license resolves to no expression.
 	 *
 	 * Measured over `v0.7.0-de-holdout`, this refuses 628,203,119 of 703,835,753 rows,
 	 * so a caller asking for it is asking for the subset whose grant is stated as an identifier.
@@ -69,7 +70,7 @@ export type LicensePolicy = (typeof LicensePolicy)[keyof typeof LicensePolicy]
  */
 export const LicenseRefusalKind = {
 	/**
-	 * The operator named this license prefix in `--exclude-licenses`.
+	 * The operator supplied this license prefix in `--exclude-licenses`.
 	 */
 	OperatorExcluded: "operator-excluded",
 	/**
@@ -115,8 +116,9 @@ export interface LicenseVerdict {
  * Compile an `--exclude-licenses` spec (comma-separated, e.g. `"ODbL,CC-BY-SA"`) into anchored,
  * case-insensitive prefix patterns, so `CC-BY-SA` catches `CC-BY-SA-3.0`.
  *
- * The spec is a literal license prefix the operator typed rather than a user-supplied
- * regex, and regex metacharacters are escaped.
+ * The spec is a literal license prefix the operator typed.
+ * Regex metacharacters are escaped.
+ *
  * This is the one place a prefix match is the right reading, because the operator
  * is naming a spelling rather than asking about an obligation.
  */
@@ -186,7 +188,9 @@ export interface ShareAlikeFinding {
 /**
  * Every license value in a built corpus's license set that carries or mentions share-alike.
  *
- * Takes the `licenses` map a `BuildCorpusManifest` records, which counts what the adapters yielded.
+ * Takes the `licenses` map recorded by `BuildCorpusManifest`.
+ * The map counts the rows adapters yielded.
+ *
  * A caller about to move or publish a corpus reads this rather than its own list of source ids,
  * because the obligation is a property of the license value on the row.
  *

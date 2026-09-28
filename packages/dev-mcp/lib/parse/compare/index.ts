@@ -5,9 +5,9 @@
  *
  *   What is this string made OF — mailwoman's reading against libpostal's, on the same input.
  *
- *   `mwdev_compare` grades geocoders on a coordinate, and libpostal produces none, so this gets its own surface rather
- *   than a column in a distance table: it is the only genuinely like-for-like parse comparison available, being Pelias's
- *   parser with `@mailwoman/libpostal` implementing its exact `/parse` interface.
+ *   `mwdev_compare` grades geocoders on a coordinate. libpostal produces no coordinate, so this gets its own surface
+ *   rather than a column in a distance table. Pelias's parser with `@mailwoman/libpostal` implements its exact `/parse`
+ *   interface. That is the only like-for-like parse comparison available.
  *
  *   Both sides are expressed in libpostal's label vocabulary using the drop-in's own converter,
  *   `treeToParseMatches` + `toLibpostalComponents`, and that map is many-to-one — `neighbourhood` and
@@ -16,8 +16,8 @@
  *
  *   Values are compared case-folded because libpostal lowercases its output and mailwoman preserves the input's case.
  *
- *   No winner is declared: two parsers disagreeing says where to look, and grading libpostal against mailwoman's tag
- *   vocabulary would run the lossy map in the direction that loses.
+ *   No winner is declared. Two parsers disagreeing says where to look. Grading libpostal against mailwoman's tag
+ *   vocabulary would apply the lossy map in the direction that loses.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -130,8 +130,10 @@ export function libpostalClient(endpoint: string): APIClient {
 }
 
 /**
- * `address` rather than `query` is the parameter the reference libpostal rest server takes,
- * and `@mailwoman/libpostal` accepts it as an alias, so one spelling reaches both.
+ * The reference libpostal REST server takes the `address` parameter.
+ *
+ * `@mailwoman/libpostal` accepts `address` as an alias.
+ * One spelling reaches both.
  */
 export async function libpostalSpans(client: APIClient, input: string): Promise<LabelledSpan[]> {
 	const response = await client.fetch<unknown>({ url: `/parse?address=${encodeURIComponent(input)}` })

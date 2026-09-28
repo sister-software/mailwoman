@@ -1,13 +1,13 @@
 """Count what a row's OPENING token teaches, at both the draw level and the emitted level.
 
 A count is only comparable when its definition and sampling level travel with it, so the narrow
-openings are named here and counted at both levels. Reading an opening more or less narrowly does not
-shade the answer, it REVERSES it, which is why the whole-row counters exist alongside the opening ones.
+the token list lives here and is counted at both levels. Changing the opening-token definition can
+reverse the answer. Whole-row counters show the difference.
 
 The two levels disagree: pass 1 counts rows straight off the sampler, while pass 2 expands the same
 stream through the augmentation policy and counts what fills the trainer's row budget. Augmentation
-expands long addresses, so a short-row source keeps a smaller part of a fixed budget, and a ratio
-mixing the two levels is meaningless.
+expands long addresses. A short-row source then uses a smaller share of the fixed budget. Ratios that
+mix these levels are meaningless.
 
 The sampling mirrors `audit_epoch_mixture` exactly — same stream, same seed convention, same budget —
 so a count here is comparable with an exposure reported there. The one deliberate difference is
@@ -191,8 +191,8 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
     corpus_dir = Path(cfg.data.corpus_dir)
     resolve_config_reps(cfg, corpus_dir)
 
-    # Raise rather than fall back to a default epoch length: a census counted over a different number
-    # of rows than the audit reports is not comparable with it, and no downstream check would say so.
+    # A census over a different number of rows is not comparable with the audit.
+    # No downstream check reports this difference.
     epoch_rows = draws or getattr(cfg.data, "train_rows_per_epoch", None)
     if not epoch_rows:
         raise ValueError("config has no train_rows_per_epoch — pass --draws for the epoch length")

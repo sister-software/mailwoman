@@ -6,12 +6,12 @@
  *   Maps floor designators to signed integer ordinals across locales, with ground at 0 as in Apple's IMDF.
  *
  *   The same numbered floor can mean different storeys. In the United States "1st floor" is ground, while in
- *   France, Germany and the UK it is one storey above ground. Designator words are keyed by language family,
- *   and numbering conventions are keyed by full locale.
+ *   France, Germany and the UK it is one storey above ground. Designator words are keyed by language family.
+ *   Numbering conventions are keyed by full locale.
  *
  *   The tables encode common building usage because no single authority publishes these conventions.
- *   Half-storeys round down: a mezzanine or upper ground maps to 0, and a lower ground maps to -1. Penthouse,
- *   roof and attic have no fixed ordinal and map to `undefined`.
+ *   Half-storeys round down: a mezzanine or upper ground maps to 0. A lower ground maps to -1.
+ *   Penthouse, roof and attic have no fixed ordinal and map to `undefined`.
  *
  * @see {@link https://register.apple.com/resources/imdf/Level/ imdf Level — `ordinal` (Apple Indoor Mapping Data Format)}
  */
@@ -452,7 +452,8 @@ const LEVEL_LOCALE_FAMILIES: ReadonlySet<LevelLocaleFamily> = new Set(
 const NORWEGIAN_LANGUAGE_TAGS: ReadonlySet<string> = new Set(["no", "nb", "nn"])
 
 /**
- * Splits a locale tag into a lowercased language and an uppercased region, which may be absent.
+ * Splits a locale tag into a lowercased language and an uppercased region.
+ * The region may be absent.
  */
 function splitLocaleTag(locale: string): { language: string; region: string | undefined } {
 	const [language, region] = locale.split("-")

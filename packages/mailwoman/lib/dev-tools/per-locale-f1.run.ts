@@ -33,8 +33,8 @@ async function main(): Promise<void> {
 	})
 
 	// The old parseArgs() only assigned a field when the flag was present (`!= null`),
-	// leaving the module's own default in place otherwise, and the boolean flags
-	// were set to `true` on presence regardless of value.
+	// leaving the module's own default in place otherwise.
+	// Boolean flags were set to `true` on presence regardless of value.
 	// Spreading conditionally here reproduces both behaviors exactly: an absent flag
 	// must not arrive as `undefined` where that would override a default.
 	await perLocaleF1({

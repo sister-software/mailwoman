@@ -5,9 +5,9 @@
  *
  *   Smoke-test that declared channels feed real input (ROAD_TO_V9 §1 A2/A4).
  *
- *   This catches channels that resolve and load, but emit only zeros.
- *   The script loads weights via `loadFromWeights`, rebuilds soft features for one input,
- *   and reports per-channel non-zero coverage.
+ *   This catches a channel that resolves and loads but emits only zeros.
+ *   The script loads weights via `loadFromWeights` and rebuilds soft features for one input.
+ *   It reports per-channel non-zero coverage.
  *
  *   `--cache-root` checks a package-shaped candidate:
  *   `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`.

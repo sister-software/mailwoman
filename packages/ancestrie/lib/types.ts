@@ -3,7 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Public types for the ancestrie, a materialized trie over an ancestry graph, whose interface is domain-agnostic: placetypes, gazetteers, and geocoding live in the consumer's payload and tokenizer.
+ *   Public types for ancestrie, a materialized trie over an ancestry graph. Consumers provide the payload.
+ *   They also provide the tokenizer. Domain-specific placetypes and gazetteers live in consumer payloads.
+ *   Consumers implement geocoding.
  */
 
 /**
@@ -18,8 +20,10 @@ export type JSONValue = string | number | boolean | null | JSONValue[] | { [key:
 export type TokenNormalizer = (token: string) => string
 
 /**
- * One build-side entry, whose `id` may be added under several token sequences
- * (aliases) that must carry identical id-carried fields.
+ * One build-side entry.
+ *
+ * A builder may add its `id` under several token sequences as aliases.
+ * Every alias must carry the same fields that depend on the `id`.
  */
 export interface AncestrieEntry {
 	/**
@@ -67,7 +71,8 @@ export interface AncestrieRecord<TPayload = Uint8Array | JSONValue> {
 }
 
 /**
- * The result of walking a token sequence, whose `depth` is the number of tokens consumed.
+ * The result of walking a token sequence.
+ * `depth` gives the number of tokens consumed.
  */
 export interface AncestrieMatch {
 	stateID: number
@@ -94,8 +99,10 @@ export interface AncestrieSuggestion<TPayload = Uint8Array | JSONValue> {
 	tokens: string[]
 
 	/**
-	 * The tokens beyond what was typed: empty for an exact match, and the completed
-	 * token first for a partial last token.
+	 * The tokens beyond the typed input.
+	 *
+	 * This is empty for an exact match.
+	 * For a partial last token, it starts with the completed token.
 	 */
 	completionTokens: string[]
 
@@ -134,7 +141,8 @@ export interface AutocompleteOptions<TPayload = Uint8Array | JSONValue> {
 	dedupe?: boolean | ((suggestion: AncestrieSuggestion<TPayload>) => string)
 
 	/**
-	 * Applied to each query token before walking, and must be the same function the builder was given.
+	 * Applied to each query token before walking.
+	 * The builder must receive the same function.
 	 */
 	normalizeToken?: TokenNormalizer
 }
@@ -154,10 +162,14 @@ export interface AutocompleteResult<TPayload = Uint8Array | JSONValue> {
 /**
  * The storage interface the algorithm half of this package ({@link autocomplete}) requires of a reader.
  *
- * `entriesAt(stateID)` answers every accepting entry in the reader's stored order,
- * `entriesAt(stateID, limit)` answers the top `limit` by rank descending — where a sealed artifact
- * serves a prefix of its rank-sorted storage, an adapter over unsorted storage must select by
- * rank itself, and ties are the reader's own — and `ancestorsOf` decorates suggestions' `chain`.
+ * `entriesAt(stateID)` answers every accepting entry in the reader's stored order.
+ * `entriesAt(stateID, limit)` answers the top `limit` entries by descending rank.
+ *
+ * A sealed artifact serves a prefix of its rank-sorted storage.
+ * An adapter over unsorted storage must sort by rank.
+ *
+ * The reader resolves ties.
+ * `ancestorsOf` decorates each suggestion's `chain`.
  */
 export interface AncestrieReaderLike<TPayload = Uint8Array | JSONValue> {
 	walk(tokens: readonly string[]): AncestrieMatch | null

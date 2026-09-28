@@ -6,7 +6,7 @@
  *   `buildCoincidentRoles` derives the coincident-roles relation into the unified gazetteer.
  *
  *   Many places occupy multiple admin tiers under one name: German city-states (Berlin, Hamburg,
- *   Bremen), Italian provinces named after their capital (Milano, Varese), Spanish
+ *   Bremen), Italian provinces whose names match their capital (Milano, Varese), Spanish
  *   provinces-after-capitals, UK unitary authorities, JP prefectures, NL province-capitals (Utrecht,
  *   Groningen), and Shanghai. When an address surfaces only the admin role because the parser
  *   dropped the locality span, the resolver has no locality to place. The hierarchy-completion step
@@ -15,12 +15,12 @@
  *
  *   V1 is region-tier only (admin.placetype = `region`), the ~124 places matching the census across
  *   nine countries. County-tier same-name coincidences are excluded because they are dominated by
- *   French cantons and JP counties, admin subdivisions named after a seat town that do not hit the
+ *   French cantons and JP counties, admin subdivisions whose names match a seat town that do not hit the
  *   parser-drops-locality failure. Consolidated city-counties (US SF, Denver) are a separate
  *   follow-up needing a relative-size filter.
  *
- *   A pair `(admin, locality)` is recorded when all hold: the same `name` (case-insensitive), the
- *   locality a descendant of the admin via the `ancestors` table, and their centroids within a
+ *   A pair `(admin, locality)` is recorded when the names match case-insensitively, the locality descends from the admin in `ancestors`,
+ *   and their centroids fall within a
  *   relative tolerance of `toleranceFraction × admin-bbox-diagonal`, floored at `minToleranceKm`.
  *   The relative term lets a large Italian province admit a city tens of km from its centroid while
  *   a tiny city-state stays tight. The floor catches city-states whose bbox is small (Bremen's
@@ -157,8 +157,9 @@ export function buildCoincidentRoles(
 
 	// Admin (region or county tier) joined to a same-name descendant locality.
 	// `place_population` is optional, so the left join yields 0 when absent.
-	// The relative-tolerance filter and the relationship classification happen in JS
-	// so the SQL stays a plain join, and `spr` exposes the bbox columns the diagonal needs.
+	// JavaScript applies the relative-tolerance filter and classifies the relationship.
+	// SQL stays a plain join.
+	// `spr` exposes the bbox columns needed for the diagonal.
 	const candidates = allRows<CandidateRow>(
 		db.prepare(
 			`SELECT r.id AS admin_id, r.placetype AS admin_placetype, r.country AS country, l.id AS locality_id,
@@ -195,7 +196,7 @@ export function buildCoincidentRoles(
 
 			if (dist > tolerance) continue
 			// v1 is region-tier only: a place is `city-state` when its centroid coincides with the
-			// region's (Berlin, Hamburg), otherwise `capital-seat` (a region named after its
+			// region's (Berlin, Hamburg), otherwise `capital-seat` (a region whose name matches its
 			// principal city, such as Milano province and Milano comune). `consolidated-county` is
 			// reserved for a future county-tier pass (US SF, Denver), excluded from v1 because
 			// county-tier same-name coincidences are dominated by French cantons and JP counties

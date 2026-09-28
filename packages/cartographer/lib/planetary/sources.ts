@@ -9,7 +9,7 @@ import type { RasterDEMSourceSpecification, VectorSourceSpecification } from "@m
 import { TileSetSourceID } from "#styles/sources"
 
 /**
- * The vector source carrying a body's IAU nomenclature: one `nomenclature` source layer of named features.
+ * The vector source carrying a body's IAU nomenclature: one `nomenclature` source layer of labeled features.
  */
 export const PlanetaryNomenclatureSourceID = TileSetSourceID("nomenclature")
 

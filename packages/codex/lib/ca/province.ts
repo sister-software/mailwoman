@@ -19,7 +19,7 @@
 import { foldName } from "#normalize"
 
 /**
- * Per-province record: ISO 3166-2:CA code, English name, and the co-official French name.
+ * Per-province record with an ISO 3166-2:CA code, English name, and co-official French name.
  */
 export interface CanadianProvinceInfo {
 	/**

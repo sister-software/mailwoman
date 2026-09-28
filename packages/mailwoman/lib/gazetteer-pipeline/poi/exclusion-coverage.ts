@@ -3,19 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Compose a region outline, one class's rows from two inventories, and a capture-recapture estimate
- * into the coverage cells a layer writes. The only path in this pipeline that reaches
+ * Compose a region outline and one class's rows from two inventories.
+ * Include a capture-recapture estimate in the composition.
+ * Write the resulting coverage cells through the only path in this pipeline that reaches
  * {@link CoverageBasis.Surveyed}.
  *
  * Pure: the IO belongs to the command, so the arithmetic behind a completeness claim is testable over
- * synthetic points. Three rules connect each conclusion to its evidence:
+ * synthetic points. Three rules connect each conclusion to its evidence.
  *
- * 1. Every interior cell gets a row, including empty ones: `observedRows: 0` under a surveyed basis
- *    means "surveyed, and there is none here", while a cell left out of the table means unknown.
+ * 1. Every interior cell gets a row, including empty ones. `observedRows: 0` under a surveyed basis
+ *    means "surveyed with no rows here". A cell left out of the table means unknown.
  * 2. Cells outside the region are never written, because the region is what was measured.
- * 3. One region, one completeness: the estimate is regional, and per-cell variation would need a
- *    per-cell denominator. The pilot's départements agreed to within 0.7%, which licenses the uniform
- *    value here but does not transfer to another region unmeasured.
+ * 3. One region, one completeness: the estimate is regional. Per-cell variation would need a
+ *    per-cell denominator. The pilot's départements agreed to within 0.7%, which supports the uniform
+ *    value here. Another region needs its own measurement.
  */
 
 import { CoverageBasis } from "@mailwoman/evidence"
@@ -46,13 +47,13 @@ export interface ExclusionCoverageInput {
 	/**
 	 * Resolution of the coverage cells.
 	 *
-	 * Match the layer being written, or a reader keyed to the other resolution
-	 * finds no cell and reads that as unsurveyed.
+	 * Match the layer being written.
+	 * A reader keyed to another resolution finds no cell and reads it as unsurveyed.
 	 */
 	resolution: number
 	/**
-	 * The inventory the layer being built is made of.
-	 * The one whose completeness is recorded.
+	 * The inventory used to build the layer.
+	 * Its completeness is recorded.
 	 */
 	subject: readonly CaptureRow[]
 	/**
@@ -66,7 +67,9 @@ export interface ExclusionCoverageResult {
 	cells: ExclusionCoverageCell[]
 	/**
 	 * Interior cells holding no subject row.
-	 * The exclusion payload, and the count worth reading first.
+	 *
+	 * This is the exclusion payload.
+	 * Read this count first.
 	 */
 	emptyCells: number
 	/**
@@ -82,9 +85,11 @@ export interface ExclusionCoverageResult {
  *
  * Derived as `cellToParent(res-9 cell)` rather than by a direct `latLngToCell` at the
  * coverage resolution, matching `bboxCoverageCells` and every reader.
- * H3's hierarchy is not geometrically exact, so the two derivations disagree for
- * a real fraction of points, and a row landing on a neighbouring cell here would
- * move an observed count off the cell it was observed in.
+ * H3's hierarchy is not geometrically exact.
+ *
+ * The two derivations disagree for some points.
+ * A row landing on a neighbouring cell here would move its observed count away
+ * from the cell where it was observed.
  */
 function coverageCellOf(row: CaptureRow, resolution: number): number {
 	const rowCell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
@@ -128,8 +133,9 @@ function clipToRegion(
 }
 
 /**
- * Measure the subject inventory's completeness against the reference, and emit one
- * surveyed coverage cell per interior cell of the region.
+ * Measure the subject inventory's completeness against the reference.
+ *
+ * Emit one surveyed coverage cell for each interior cell of the region.
  */
 export function buildExclusionCoverage(input: ExclusionCoverageInput): ExclusionCoverageResult {
 	const interiorCells = interiorCoverageCells(input.geometry, input.resolution)

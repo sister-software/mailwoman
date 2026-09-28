@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What a corpus build is asked for and what it records: the options `buildCorpus` takes, the profile
- *   that decides whether a source must be eligible, and the top-level manifest tying every stage together.
+ * @file Defines the `buildCorpus` options and the profile that determines source eligibility.
+ *   It also defines the top-level manifest for each build stage.
  *
  *   These sit apart from `buildCorpus` because every phase module reads them and the orchestrator imports
  *   each phase. Holding them beside the orchestrator would make the phases import it back.
@@ -28,7 +28,9 @@ export type BuildStage = "adapter-run" | "align" | "split" | "parquet" | "manife
 export const TRAINING_MANIFEST_FILE = "TRAINING_SOURCES.json"
 
 /**
- * What a corpus build is for, and therefore whether a source has to be eligible before its rows enter.
+ * Defines the purpose of a corpus build.
+ *
+ * The profile determines whether a source must be eligible before its rows enter.
  *
  * `excludeLicenses` is orthogonal to this: it is a refusal rather than positive eligibility.
  */
@@ -92,9 +94,11 @@ export interface BuildCorpusOptions {
 	/**
 	 * Rows held in memory while shuffling each split before it is written to parquet.
 	 *
-	 * Rows arrive in adapter order, and within one source that order is by country.
-	 * An unshuffled row-group therefore holds one to eleven of its source's countries,
-	 * and a bounded epoch draw reads only those.
+	 * Rows arrive in adapter order.
+	 * Within one source, that order groups rows by country.
+	 *
+	 * An unshuffled row group therefore holds rows from one to eleven countries in its source.
+	 * A bounded epoch draw reads only those countries.
 	 *
 	 * The default is `DEFAULT_SHUFFLE_WINDOW`, where `0` or `1` writes arrival
 	 * order unchanged and consumes no random draw.
@@ -115,7 +119,7 @@ export interface BuildCorpusOptions {
 	onProgress?: (stage: BuildStage, message: string) => void
 
 	/**
-	 * License prefixes the operator named in `--exclude-licenses`.
+	 * License prefixes supplied in `--exclude-licenses`.
 	 *
 	 * A row whose `license` starts with one is dropped at ingest.
 	 * The default excludes no prefix.
@@ -187,8 +191,8 @@ export interface BuildCorpusManifest {
 	 */
 	refused_license_values: Record<string, LicenseRefusalKind>
 	/**
-	 * Admitted rows whose license resolves to no SPDX expression, whose obligations
-	 * are therefore unknown rather than known to be empty.
+	 * Admitted rows whose license resolves to no SPDX expression.
+	 * Their obligations are unknown rather than empty.
 	 *
 	 * Under `LicensePolicy.ResolvedOnly` this reads zero because those rows are refused instead.
 	 */

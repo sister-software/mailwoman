@@ -80,7 +80,9 @@ export function routeFamilyWithLeadingRun(text: string): RoutingDecision {
  * Routes like {@linkcode routeFamilyForText}, then tries the postcode format when that router abstains.
  *
  * This experimental router is used only for measurement.
- * It can route romanized Japanese, which has no non-Latin characters for a script rule to match.
+ * It can route romanized Japanese.
+ *
+ * Romanized text has no non-Latin characters for a script rule to match.
  *
  * Of the unambiguous formats that `scoreByPostcode` recognizes, only `jp_postcode`
  * maps to a family with routing scripts.
@@ -160,7 +162,8 @@ export type RoutableClassifier = Pick<
  */
 export interface ScriptRoutedClassifierOpts<C extends RoutableClassifier = RoutableClassifier> {
 	/**
-	 * The classifier for the caller's locale, which handles every input that does not route to a family.
+	 * The classifier for the caller's locale.
+	 * It handles inputs that do not route to a family.
 	 */
 	primary: C
 	/**
@@ -177,7 +180,8 @@ export interface ScriptRoutedClassifierOpts<C extends RoutableClassifier = Routa
 }
 
 /**
- * Removes the FST options, which belong to the primary's weights package, from a routed parse.
+ * Removes the FST options from a routed parse.
+ * Those options belong to the primary's weights package.
  */
 function withoutPrimaryArtifacts(opts: ParseOpts | undefined): ParseOpts | undefined {
 	if (!opts) return opts

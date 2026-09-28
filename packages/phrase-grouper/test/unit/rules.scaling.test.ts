@@ -6,7 +6,7 @@
  *   Every per-segment rule must stay linear in segment length, including on the worst-case input shape: a long run
  *   of capitalized tokens, every one of which is candidate place-name content.
  *
- *   `scoreLocalityPhrase` walks forward from each start index, and that walk must stay bounded by
+ *   `scoreLocalityPhrase` walks forward from each start index. The walk must stay bounded by
  *   {@link MAX_LOCALITY_PHRASE_TOKENS} — unbounded, it costs quadratic time for the identical proposals its
  *   clamped results already produce.
  *

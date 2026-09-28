@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   FST-based autocomplete, mailwoman vocabulary over `@mailwoman/ancestrie`'s generic algorithm.
- *   The prefix walk, BFS expansion, partial-last-token completion, per-branch capping, and dedupe
+ *   The prefix walk, BFS expansion, partial-last-token completion, per-branch capping and dedupe
  *   live in ancestrie's `autocomplete`. This module contributes only the storage adapter
  *   ({@link FSTMatcher} → `AncestrieReaderLike`) and the mapping back to mailwoman's suggestion
  *   shape (name, placetype, referential and encyclopedic scores, WOF ids).
@@ -12,8 +12,8 @@
  *   The bytes do not migrate. The shipped artifacts are `FST\0` v1 to v5 (`fst-serialize.ts`), and
  *   ancestrie's entries are id-keyed with one record per id. An FST place row is per-(surface,
  *   place), because `crossCountryBranches` is a property of the surface, so the same wofID
- *   legitimately carries different values under different aliases and cannot be represented
- *   id-keyed. The matcher, both deserializers, and the serializer stay here. The algorithm is the
+ *   legitimately carries different values under different aliases, so it cannot use IDs as keys.
+ *   The matcher, both deserializers and serializer stay here. The algorithm is the
  *   half that migrated.
  */
 
@@ -82,9 +82,11 @@ const PER_BRANCH = 4
 /**
  * The top-`k` entries by referential likelihood (descending).
  *
- * Avoids sorting/allocating when `entries` is small, and that shortcut is part
- * of the observable interface: at or under `k` the insertion order is served,
- * which decides suggestion order among referential ties.
+ * Avoids sorting or allocating when `entries` is small.
+ * That shortcut is part of the observable interface.
+ *
+ * At or under `k`, suggestions retain insertion order.
+ * That order decides suggestions among referential ties.
  */
 function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
 	if (entries.length <= k) return [...entries]

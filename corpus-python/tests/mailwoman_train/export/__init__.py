@@ -1,1 +1,4 @@
-"""Tests for `mailwoman_train.export`: the ONNX graph, quantization, and the weights package."""
+"""Tests for `mailwoman_train.export`, including the ONNX graph and quantization.
+
+The tests also cover the weights package.
+"""

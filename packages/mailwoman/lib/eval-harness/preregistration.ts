@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared hashing, loading, audit, and artifact-identity helpers for frozen pre-registrations.
+ *   Shared helpers for hashing, loading, auditing, plus identifying frozen pre-registration artifacts.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -164,8 +164,8 @@ export interface SamplingRegistration {
 /**
  * Audits sampling settings.
  *
- * It reports a per-stratum target below `minimumTarget`, a minimum above the target,
- * and a seed that is not an integer.
+ * It reports a per-stratum target below `minimumTarget` and a minimum above the target.
+ * It also reports a seed that is not an integer.
  */
 export function samplingProblems(sampling: SamplingRegistration, minimumTarget: number): string[] {
 	const problems: string[] = []

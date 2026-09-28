@@ -81,7 +81,7 @@ export async function runConformanceFixtures(
 export interface ConformanceSummary {
 	/**
 	 * Findings from `status: pass` rows that were violated.
-	 * These, and only these, decide {@linkcode pass}.
+	 * Only these findings decide {@linkcode pass}.
 	 */
 	failures: ConformanceFinding[]
 	/**
@@ -89,8 +89,8 @@ export interface ConformanceSummary {
 	 */
 	tracked: ConformanceFinding[]
 	/**
-	 * Tracked rows whose law now holds, printed as a promotion instruction because a
-	 * tracked list nobody prunes stops being a record of known defects.
+	 * Tracked rows whose law now holds, printed as a promotion instruction because a tracked
+	 * list that retains resolved defects stops describing the current known set.
 	 */
 	newlyHolding: ConformanceFinding[]
 	/**
@@ -106,8 +106,8 @@ export interface ConformanceSummary {
 }
 
 /**
- * Splits a run by row status, mirroring the Gauntlet regression layer,
- * and reports `pass: false` when no enforcing row was decided.
+ * Splits a run by row status, mirroring the Gauntlet regression layer.
+ * Reports `pass: false` when no enforcing row was decided.
  */
 export function summarizeConformanceRun(findings: readonly ConformanceFinding[]): ConformanceSummary {
 	const failures: ConformanceFinding[] = []

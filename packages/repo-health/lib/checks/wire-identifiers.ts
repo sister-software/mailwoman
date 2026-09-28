@@ -7,17 +7,18 @@
  *   A `source_weights` key refers to a string stored inside a built corpus. This check reads the
  *   configs as data and asks whether each key is a string something in the checkout emits.
  *
- *   What it catches: a key in `source_weights`, `source_reps`, `augment_exclude_sources` or
- *   `required_corpus_receipts[].source` that no adapter declares as its `<NAME>_ADAPTER_ID`, no Python corpus builder
- *   declares as a `SOURCE` constant, and `RECIPE_SOURCES` records under neither its retired nor its current spelling.
- *   A sweep that renames a key in a config alone fails here, in either direction.
+ *   The check compares values from `source_weights`, `source_reps`, `augment_exclude_sources`, and
+ *   `required_corpus_receipts[].source` with source ids declared by adapters and Python corpus builders.
+ *   It also checks both retired and current spellings in `RECIPE_SOURCES`. Renaming only a config key
+ *   produces a diagnostic.
  *
- *   What it does not catch: a corpus on disk whose rows carry a different spelling from the config that targets it.
- *   The loader's `_apply_source_weights` and `missing_positive` checks refuse that at launch, and only they can, because
- *   the corpus is not in the checkout. It also does not catch a sweep that renames the table entry and the config
- *   together, a string inside a built parquet file, a manifest, a model card or a dated record, or a key that spells a
- *   real source the config never meant. A historical config keeps the spelling its corpus stores, so both spellings
- *   of a recipe source pass by design.
+ *   This check cannot compare a corpus on disk with the spelling in its targeting config.
+ *   The loader's `_apply_source_weights` and `missing_positive` checks verify that relationship at launch because
+ *   corpus files are outside the checkout. A sweep that renames both a table entry and its config also passes here.
+ *   This check also ignores strings in built parquet files and manifests.
+ *   It ignores model cards and dated records too.
+ *   It can accept a valid source spelling from another config. Historical configs keep the
+ *   spelling stored in their corpus, so both spellings of a recipe source pass by design.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -58,13 +59,14 @@ export interface ConfigSourceName {
 /**
  * The source ids a training config addresses, read from the four fields that hold them.
  *
- * The configs are written by hand in a small subset of YAML: two-space indentation,
- * one entry per line, `#` comments, and no flow syntax.
- * This scanner reads that subset by indentation, which is the same reading
- * `packages/corpus/lib/tools/audit.ts` applies to `source_weights`.
+ * The configs use a small hand-written subset of YAML: two-space indentation and one entry per line.
+ * They allow `#` comments and omit flow syntax.
  *
- * A field this scanner cannot follow is an absence rather than an error,
- * and the loader still reads the real value at launch.
+ * This scanner reads the subset by indentation, matching `packages/corpus/lib/tools/audit.ts`
+ * applies to `source_weights`.
+ *
+ * An unrecognized field produces no source ids here.
+ * The loader reads the actual value at launch.
  */
 export function configSourceNames(text: string): ConfigSourceName[] {
 	const names: ConfigSourceName[] = []
@@ -122,8 +124,10 @@ const ADAPTER_ID = /_ADAPTER_ID\s*=\s*"([a-z0-9-]+)"/g
 const PYTHON_SOURCE = /^[A-Z_]*SOURCE\s*=\s*"([a-z0-9-]+)"/gm
 
 /**
- * The source ids the checkout declares: every adapter's id, every Python builder's
- * `SOURCE` constant, and every spelling in `RECIPE_SOURCES` and `CARRIED_SOURCES`.
+ * All source ids declared in the checkout.
+ *
+ * This includes adapter ids and Python builders' `SOURCE` constants.
+ * It also includes spellings from `RECIPE_SOURCES` and `CARRIED_SOURCES`.
  */
 export async function declaredSourceNames(context: Parameters<RepoCheck["run"]>[0]): Promise<Set<string>> {
 	const declared = new Set(knownOverlaySourceNames())

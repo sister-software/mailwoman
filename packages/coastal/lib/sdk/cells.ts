@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The scenario-keyed cell index: one accumulator per scenario, and the measurement the index resolution is
- *   chosen from.
+ *   The scenario-keyed cell index has one accumulator per scenario. Its measurements determine the index resolution.
  *
  *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's call sites and
  *   its `@mailwoman/coastal/sdk/cells` subpath keep reading the same. `classifyFeatureCells`, the per-part
@@ -18,7 +17,7 @@
  *   defence, under one of twelve scenarios that must never be pooled — so this accumulates per (scenario,
  *   polygon) and reports per scenario.
  *
- *   the measurement is PER scenario and never pooled, and that is not a reporting preference. The twelve
+ *   the measurement is per scenario and never pooled. The twelve
  *   scenario layers cover the same frontages with different extents, so a pooled `partial` share would
  *   average a present-day designation together with a 2105 projection and describe neither. The number that
  *   decides the resolution is the share within one scenario, because that is the population a scenario-scoped
@@ -82,8 +81,9 @@ export interface CellIndexMeasurement {
 	 * Cell rows the artifact would store at this resolution, across every scenario —
 	 * the compacted whole rows plus the partial rows.
 	 *
-	 * This is the artifact's size, and it is a SUM over scenarios rather than a union:
-	 * two scenarios naming the same cell are two rows, because they are two different claims.
+	 * This is the artifact's size.
+	 * It is a sum over scenarios rather than a union: two scenarios naming the same
+	 * cell are two rows, because they are two different claims.
 	 */
 	storedCellRows: number
 	/**
@@ -147,11 +147,12 @@ export class CoastalCellIndex {
 	/**
 	 * The measurement, per scenario and then pooled.
 	 *
-	 * The compacted count here is an approximation of what the build stores and is reported as one:
-	 * the build compacts each feature's whole set, while this compacts the scenario's union of them.
-	 * The union can only compact at least as far, so this is a lower bound on the
-	 * stored row count, which is the direction a size estimate should err in,
-	 * and the build's own receipt reports the real number.
+	 * The compacted count approximates what the build stores.
+	 * The build compacts each feature's whole set, while this compacts the scenario's union of those sets.
+	 *
+	 * The union can only compact at least as far, so this is a lower bound on the stored row count.
+	 * A size estimate should err in this direction.
+	 * The build's own receipt reports the real number.
 	 */
 	finish(): CellIndexMeasurement {
 		const perScenario: ScenarioCellMeasurement[] = []
@@ -225,7 +226,7 @@ export function formatScenarioMeasurementRows(measurements: readonly CellIndexMe
 }
 
 /**
- * The per-resolution totals, which is the size question rather than the containment one.
+ * The per-resolution totals answer the size question rather than the containment question.
  */
 export function formatResolutionTotalRows(measurements: readonly CellIndexMeasurement[]): string[] {
 	return [

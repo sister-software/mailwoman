@@ -33,8 +33,9 @@ interface CountryProbe {
 }
 
 /**
- * Command specification for `gazetteer overture-ingest`, which copies Overture address
- * rows into per-country Parquet files and writes a fill-rate report.
+ * Command specification for `gazetteer overture-ingest`.
+ *
+ * It copies Overture address rows into per-country Parquet files and writes a fill-rate report.
  *
  * Every output lands under `<out>/<release>/`, so rows from two releases never mix in one directory.
  */
@@ -123,8 +124,9 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		/**
 		 * Copies one country's rows into local Parquet.
 		 *
-		 * The copy keeps the Overture columns unchanged, including the nested `sources` that
-		 * evaluation filtering relies on, and adds `lon` and `lat` decoded from the point geometry.
+		 * The copy keeps the Overture columns unchanged, including the nested
+		 * `sources` used by evaluation filtering.
+		 * It adds `lon` and `lat` decoded from the point geometry.
 		 */
 		const ingestCountry = async (cc: string): Promise<void> => {
 			const limitClause = limit ? `LIMIT ${limit}` : ""

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Format v5, the two-score split: round-trip, the meaning-of-zero rule, v4 back-compat, and
- * the freshness guard's format verdict.
+ * Tests format v5, the two-score split. They cover round-trip behavior and the meaning-of-zero rule.
+ * They also cover v4 compatibility and the freshness guard's format verdict.
  */
 
 import {
@@ -100,8 +100,8 @@ describe("two-score split — format v5", () => {
 	})
 
 	it("an absent encyclopedic score round-trips as ABSENT, never as 0", () => {
-		// The meaning-of-zero rule in bytes: roughly 89% of the gazetteer has no Wikipedia article,
-		// and a consumer reading 0.0 there would be reading a fact nobody recorded.
+		// Roughly 89% of gazetteer places have no Wikipedia article.
+		// A consumer reading 0.0 for those places would mistake absence for a recorded value.
 		const entry = deserializeFST(serializeFST(splitMatcher())).query("Saint-Denis").accepting[0]!
 
 		expect(entry.encyclopedic).toBeUndefined()
@@ -109,8 +109,8 @@ describe("two-score split — format v5", () => {
 	})
 
 	it("an encyclopedic score of exactly 0 survives as a RECORDED zero", () => {
-		// A place whose article scored 0 has an article, and the per-place presence
-		// bit keeps that apart from a place with no article.
+		// A place with a score of 0 has a Wikipedia article.
+		// The per-place presence bit distinguishes it from a place without an article.
 		const entry = deserializeFST(serializeFST(splitMatcher(0))).query("Saint-Denis").accepting[0]!
 
 		expect(entry.encyclopedic).toBe(0)

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Comment reflow: paragraph detection, markup preservation, and the line breaker.
+ * @file Comment reflow: paragraph detection, markup preservation and the line breaker.
  *
  * Paragraph detection, markup preservation and the rule plumbing began as oxlint-plugin-comment-reflow (MIT,
  * © Diego Haz).
@@ -303,7 +303,8 @@ interface TokenFacts {
 	 */
 	clause: boolean
 	/**
-	 * The next token leads with a dash, which must not start a line.
+	 * The next token leads with a dash.
+	 * A dash cannot start a line.
 	 */
 	danglingDash: boolean
 	/**
@@ -491,7 +492,8 @@ function groupSentences(sentences: readonly string[], perParagraph: number, lead
 
 	const last = groups.at(-1)
 
-	// A short sentence left over on its own is a stranded paragraph, which reads worse than a paragraph of three.
+	// A short sentence left over on its own is a stranded paragraph.
+	// That reads worse than a paragraph of three.
 	if (groups.length > 1 && last && last.length === 1 && last[0]!.length < weights.orphanParagraph) {
 		groups.at(-2)!.push(...groups.pop()!)
 	}
@@ -505,7 +507,8 @@ function groupSentences(sentences: readonly string[], perParagraph: number, lead
 function wrapProse(text: string, limits: WrapLimits, first = "", continuation = "") {
 	const sentences = splitSentences(text)
 
-	// A tag with no description has no sentences, and its prefix is the whole line — `@deprecated` on its own.
+	// A tag with no description has no sentences.
+	// Its prefix is the whole line: `@deprecated` on its own.
 	if (!sentences.length) return wrap(text, limits, first, continuation)
 	const lines: string[] = []
 
@@ -597,7 +600,7 @@ function isStructure(line: string) {
 		/^\s*<(?:[!?]|[^>]*$|.*>\s*$)/.test(line) ||
 		/(?: {2}|\\)$/.test(line) ||
 		/^\s*type\s+[\w$]+(?:\s*<.*>)?\s*=/.test(line) ||
-		// A section marker names what follows rather than saying anything, and `concise-section-marker`
+		// A section marker identifies what follows without stating a behavior. `concise-section-marker`
 		// caps its label at 60 characters. Joining the sentence under one onto it breaks that cap.
 		/^\s*MARK:/.test(line) ||
 		// `{@link …}` opens a description rather than an object literal, so the brace test excludes an inline tag.
@@ -607,8 +610,9 @@ function isStructure(line: string) {
 }
 
 /**
- * `paragraphs` is off for a run of `//` comments: a blank line there is a `//` on its own,
- * which reads as a gap in the code rather than a paragraph break.
+ * `paragraphs` is off for a run of `//` comments.
+ *
+ * A blank line there is a `//` on its own. which reads as a gap in the code rather than a paragraph break.
  */
 interface ParagraphShape {
 	paragraphs: boolean
@@ -677,9 +681,9 @@ function reflowText(
 					(value) => words(value) !== undefined
 				)
 
-				// A tag's continuation sits flush with the star rather than indented under the tag,
-				// because that is where oxfmt puts it, and an indent it strips is a line
-				// this rule would report again on the next run.
+				// A tag's continuation sits flush with the star rather than indented under
+				// the tag, because that is where oxfmt puts it.
+				// An indent it strips is a line this rule would report again on the next run.
 				output.push(
 					...((completeMarkup ? wrapProse(text, limits, parts.prefix, "") : undefined) ?? lines.slice(i, end))
 				)

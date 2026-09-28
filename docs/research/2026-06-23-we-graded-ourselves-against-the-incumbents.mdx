@@ -9,7 +9,7 @@ Our geocoder had beaten Nominatim across the United States by fifteen points, so
 
 Losing to Nominatim was acceptable, because Nominatim covers the whole planet on community-contributed data and is the standard to beat. The problem was that we could not explain the loss. We knew our parser was not ten points worse in Europe than in America, so we investigated what the gap consisted of.
 
-This post covers the cause, the fixes, and the problems the fixes did not solve. For the European comparison we added a third system: Pelias, through geocode.earth, the hosted Elasticsearch stack many teams use. Pelias turned out to be the stronger competitor, and this post states where it still beats us.
+This post covers the cause, the fixes, and the problems the fixes did not solve. For the European comparison we added a third system: Pelias, through geocode.earth, which hosts Pelias on Elasticsearch. Pelias turned out to be the stronger competitor, and this post states where it still beats us.
 
 {/* truncate */}
 
@@ -35,7 +35,7 @@ Empty results are easier to fix than wrong ones. We investigated why the results
 
 The first cause is fragmentation. The subword tokenizer splits a town like **Grudziądz** at the accented `ą` into `Grudzi` + `dz`. Neither half is a place, so neither resolves, and the whole address fails. The full town name was present in the input the entire time. The tokenizer split a word that it had received intact.
 
-The unresolved results contain many cases like this: Polish, Czech, and Portuguese towns that the model split at a diacritic and then could not find.
+The unresolved results include Polish, Czech, and Portuguese towns that the model split at a diacritic and then could not find.
 
 ## Why it went quiet, part two: postcodes we never had
 
@@ -43,7 +43,7 @@ The second cause was missing data. We had no postcodes for Poland and Czechia. W
 
 ## The fixes: read the word, and fill the gap
 
-For the first cause, when a parse resolves no place, the resolver now returns to the raw text, using the actual characters with diacritics intact instead of the model's subwords. It enumerates the whitespace tokens, matches each against the same-country gazetteer, and takes the longest exact match, because the real town is usually the longer, specific name and not an ambiguous prefix. Before trusting it, we checked that it recovered _real coordinates_. The recovered towns land about 1.8 km from the truth, and not in a same-named place elsewhere in the country.
+For the first cause, when a parse resolves no place, the resolver now returns to the raw text, using the actual characters with diacritics intact instead of the model's subwords. It enumerates the whitespace tokens, matches each against the same-country gazetteer, and takes the longest exact match because a specific town name carries more information than an ambiguous prefix. Before trusting it, we checked that it recovered _real coordinates_. The recovered towns land about 1.8 km from the truth, and not in a same-named place elsewhere in the country.
 
 For the second cause, we imported the missing postcodes from GeoNames: about 73,000 for Poland and 15,000 for Czechia, each with its own centroid and an open license. We added them directly to the gazetteer without a model change or retrain.
 
@@ -61,7 +61,7 @@ We have been wrong before by declaring success early, so here are the numbers wi
 
 Across all seven locales including Australia, the results are **90% for us, 81% Nominatim, and 88% Pelias**. We still lead, but the margin is thin, and Australia accounts for all of the narrowing: we score **65%** there to Nominatim's 97. We have now worked out that Australia is a _parsing_ problem. Australian addresses in this set lead with the postcode ("3053 Carlton, Barry Street 50"). Our model, trained on American and European formats where the number comes first, reads the leading 3053 as a house number and mislabels everything after it. Given the **same address reordered** in the American format, it parses correctly, and 65% becomes 87%. The fix belongs in the model: we will train it on the Australian format using the national address file. Australia remains unfixed. We know the cause, and it lies in the parser. The reordered addresses resolve with the existing gazetteer, so the gazetteer needs no change.
 
-There is also a precision cost. At 25 km we're competitive, and at one kilometer we are not. We resolve to admin and postcode **centroids**, so we place the _area_ correctly, within a couple of kilometers, where Nominatim and Pelias place a rooftop pin. The headline result therefore means the right neighborhood and not the right building. For many jobs the neighborhood is enough, and where it is not, we say so.
+There is also a precision cost. At 25 km we're competitive, and at one kilometer we are not. We resolve to admin and postcode **centroids**, so we place the _area_ correctly, within a couple of kilometers, where Nominatim and Pelias place a rooftop pin. The headline result therefore means the right neighborhood and not the right building. A neighborhood-level result answers an area-level question; a rooftop result requires building-level data.
 
 Word recovery stays **off by default**, because about one in six of the _newly_ recovered addresses lands more than 25 km away when recovery matched the wrong same-named place. Where we have postcode coverage, a consistency check rejects those before they are returned. The GeoNames fill means that check now runs for Poland and Czechia, where a month ago it could not. Australia is where it still cannot run. A batch pipeline therefore leaves recovery off, because a wrong coordinate corrupts a join without any visible error. The demo turns recovery on, because in an interactive tool a visible, correctable result is more useful than no result. Every recovered place is tagged with whether the postcode check ran, so each caller can decide how to treat it.
 

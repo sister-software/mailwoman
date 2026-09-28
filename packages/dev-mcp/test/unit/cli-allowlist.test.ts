@@ -46,7 +46,7 @@ describe("checkCLIAllowlist", () => {
 	})
 
 	it("refuses an unknown verb rather than permitting it", () => {
-		// Allowlist rather than denylist: a verb nobody has vetted is refused.
+		// Allowlist rather than denylist: the check refuses every unvetted verb.
 		// The day someone adds `gazetteer nuke`, this is what keeps it out.
 		const verdict = checkCLIAllowlist(["nuke", "--everything"])
 

@@ -16,7 +16,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 /**
- * A loose SQLite row shape for the test's column probes, which avoids an explicit `any`.
+ * A loose SQLite row shape for the test's column probes.
+ * It avoids an explicit `any`.
  */
 type Row = Record<string, string | number | null>
 
@@ -99,7 +100,8 @@ test("links the locality → region → country ancestry so parentID scoping rea
 	const region = db.prepare("SELECT id FROM spr WHERE placetype='region' AND country='GE'").get() as Row
 	const country = db.prepare("SELECT id FROM spr WHERE placetype='country' AND country='GE'").get() as Row
 
-	// The locality is parented to its region, and the ancestor chain carries both region and country.
+	// The locality's direct parent is its region.
+	// Its ancestor chain includes both region and country.
 	expect(loc.parent_id).toBe(region.id)
 
 	const ancestorIDs = db

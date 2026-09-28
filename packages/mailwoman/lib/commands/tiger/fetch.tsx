@@ -7,7 +7,7 @@
  *   SQLite database via the Kysely `DatabaseClient`. Geometry is stored as GeoJSON text (no
  *   SpatiaLite).
  *
- *   Idempotent: a valid cached ZIP is reused, and re-running a state replaces its rows. Pass
+ *   A valid cached ZIP is reused. Re-running a state replaces its rows. Pass
  *   `--county <FIPS3>` to load just one county (handy for downstream per-county work).
  */
 
@@ -48,10 +48,10 @@ const TIGERFetch: CommandComponent<typeof spec> = ({ options }) => {
 	const [status, setStatus] = useState("Starting…")
 
 	const state = useCommandTask(async () => {
-		// `@mailwoman/tiger` is an optional dependency (the census-tiger fetch tooling is for
-		// operators building the street tier rather than end-user geocoding) — imported lazily here
-		// so a clean geocoding-only install of the CLI never loads it at startup, and a missing
-		// optional dep degrades to a friendly message instead of crashing the whole CLI.
+		// `@mailwoman/tiger` is an optional dependency (the census-tiger fetch tooling is
+		// for operators building the street tier rather than end-user geocoding).
+		// The command imports it lazily so a clean geocoding-only install of the CLI never loads it at startup.
+		// A missing optional dep degrades to a friendly message instead of crashing the whole CLI.
 		let fetchTIGER: typeof import("@mailwoman/tiger/sdk").fetchTIGER
 
 		try {

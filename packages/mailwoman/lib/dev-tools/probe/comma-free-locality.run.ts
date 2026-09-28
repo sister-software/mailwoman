@@ -5,7 +5,7 @@
  *
  *   Does the comma-free register still find the locality? A rate rather than an anecdote.
  *
- *   This walks every fixture row that carries both a `street` and a `locality`, drops the commas, and asks
+ *   This walks every fixture row with both `street` and `locality` fields. It drops commas and asks
  *   whether the gold locality still lands in the locality slot, so the question becomes a measurement with
  *   a denominator.
  *

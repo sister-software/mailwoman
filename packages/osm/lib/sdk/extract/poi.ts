@@ -5,13 +5,13 @@
  *
  *   Telecom-infrastructure POI extractor (decisions 2/3) — stream OSM telecom features
  *   (telephone exchanges, street cabinets, communications masts, data centers) out of a Geofabrik
- *   `.osm.pbf` extract via gdal/ogr2ogr, matched against an and/or tag-rule table, and yielded as
+ *   `.osm.pbf` extract via gdal/ogr2ogr. The extractor matches features against an and/or tag-rule table and yields
  *   {@link POISourceRow}s ready for `buildPOIDatabase`'s injected `rows` point
  *   (`mailwoman/gazetteer-pipeline/poi/build-poi.ts:341`) — DuckDB bypassed entirely (decision 3).
  *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly. the two differences
  *   are the predicate (telecom tags rather than `addr:housenumber`) and the match fan-out (a feature can only
  *   satisfy the first rule in table order — `man_made` alone appears in four rules and `telecom` in
- *   two, but every rule sharing a key requires a different value for it, so a real feature, which
+ *   two. Every rule sharing a key requires a different value, so a real feature
  *   carries one value per key, can satisfy at most one rule regardless of table order).
  *
  *   Tag disjunctions/conjunctions live here rather than in the taxonomy (decision 2): `CategoryRecord.osmTag`
@@ -151,9 +151,11 @@ const POI_LAYERS = ["points", "multipolygons"] as const
  *
  * See the module docstring's "Promoted vs. hstore tag columns" note.
  *
- * The two lists differ, and the difference is not cosmetic: a promoted key is removed from
- * `other_tags`, so reading it with `hstore_get_value` on a layer that promotes it returns
- * NULL for every feature — a whole layer of real matches reported as an empty result.
+ * The two lists differ.
+ * A promoted key is removed from `other_tags`, so reading it with `hstore_get_value`
+ * on a layer that promotes it returns NULL for every feature — a whole layer of
+ * real matches reported as an empty result.
+ *
  * Measured on the Île-de-France extract with `amenity=pharmacy`
  * (promoted on `multipolygons`, hstore on `points`): the hstore expression answered 0
  * on `multipolygons` where the bare column answered 178, against 3,130 from `points` —
@@ -201,9 +203,10 @@ function distinctPredicateKeys(rules: readonly OSMPOITagRule[]): string[] {
  * so {@link extractOSMPOIs} can re-derive the matched category in JS via
  * {@link matchOSMPOITagRule} — the belt to this predicate's suspenders.
  *
- * A gdal ogrsql dialect quirk could only narrow, never widen, what this where matches,
- * and the JS-side matcher re-checks the same rule table before a row is ever yielded,
- * so no false positive can slip through even if the pushdown predicate were imprecise.
+ * A GDAL OGRSQL dialect quirk can only narrow the rows matched by this WHERE clause.
+ * The JavaScript matcher checks the same rule table before yielding a row.
+ *
+ * That check rejects false positives even when the pushdown predicate is imprecise.
  *
  * @throws via {@link assertSafeTagRules} if `rules` contains a key/value
  * outside the OSM tag-token allowlist.

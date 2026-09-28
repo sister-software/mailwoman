@@ -128,7 +128,8 @@ export interface AuDeliveryServiceMatch {
  * Parses a standalone Australia Post delivery-service line, such as "GPO Box 2890" or a bare "CMB".
  *
  * Returns null for any other input.
- * Australia Post lists "Private Box" as invalid, and it returns null.
+ * Australia Post lists "Private Box" as invalid.
+ * This function returns null for it.
  */
 export function matchAuDeliveryService(input: unknown): AuDeliveryServiceMatch | null {
 	if (typeof input !== "string") return null

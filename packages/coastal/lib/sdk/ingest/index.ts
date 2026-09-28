@@ -6,8 +6,8 @@
  *   Streams the NCERM file geodatabase as WGS84 features through ogr2ogr, one layer at a time.
  *
  *   Every NCERM layer is published in British National Grid (EPSG:27700, metres). Each layer's declared EPSG code
- *   is checked before any feature is read. The OSTN15 datum grid check also runs inside `readOGRLayerIdentity`.
- *   Every reprojected vertex is then checked against the declared bounding box, which catches a swapped axis
+ *   is checked before any feature is read. `readOGRLayerIdentity` also checks the OSTN15 datum grid.
+ *   Every reprojected vertex is then checked against the declared bounding box. This catches a swapped axis
  *   order that the EPSG check cannot see.
  *
  *   The `OGR_GEOM_AREA` column is computed by gdal in source metres before reprojection. Callers compare it with
@@ -94,7 +94,8 @@ export interface CoastalIngestOptions {
 	/**
 	 * The WGS84 extent that every reprojected vertex must fall inside.
 	 *
-	 * The default is the erosion collections' declared box, which contains both ground-instability boxes.
+	 * The default is the erosion collections' declared box.
+	 * It contains both ground-instability boxes.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
 	/**
@@ -120,8 +121,7 @@ export interface CoastalLayerIdentity {
 	/**
 	 * The layer's attribute field names.
 	 *
-	 * The fourteen layers do not share one schema, and ogr2ogr rejects a `select`
-	 * that asks for a missing column.
+	 * The fourteen layers use different schemas. ogr2ogr rejects a `select` that asks for a missing column.
 	 * The query builders therefore use this set.
 	 */
 	fields: ReadonlySet<string>
@@ -130,7 +130,8 @@ export interface CoastalLayerIdentity {
 /**
  * Coordinate decimals that ogr2ogr writes.
  *
- * Nine decimals is about 0.1 mm, which keeps rounding out of the area cross-check.
+ * Nine decimals is about 0.1 mm.
+ * This keeps rounding out of the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 

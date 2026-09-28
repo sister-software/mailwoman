@@ -7,7 +7,7 @@
  * neighborhood, because the model can memorize a street it saw in train. Rows inside a held-out place
  * go to val or test 50/50 by a hash of `source_id`; every other row goes to train.
  *
- * A holdout change takes effect at the next corpus rebuild, and each versioned corpus keeps the
+ * A holdout change takes effect at the next corpus rebuild. Each versioned corpus keeps the
  * `SPLIT_MANIFEST.json` it was built with, because adding a holdout to a built corpus would leak rows
  * the model already trained on.
  */
@@ -47,8 +47,9 @@ export interface HoldoutPolicy {
 }
 
 /**
- * One country's holdout, as a bare region list or as a {@link HoldoutPolicy}; the bare array means
- * a list of region values, which is the form older committed `SPLIT_MANIFEST.json` files use.
+ * One country's holdout as a bare region list or a {@link HoldoutPolicy}.
+ *
+ * Older committed `SPLIT_MANIFEST.json` files use a bare array of region values.
  */
 export type CountryHoldout = readonly string[] | HoldoutPolicy
 
@@ -95,8 +96,8 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			regions: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
 			// DE street rows come from two OpenAddresses members, Berlin and Sachsen,
 			// so the regions above match no street row.
-			// Postcode area `02` (Upper Lusatia in eastern Sachsen) is the street-level holdout,
-			// and a five-digit German postcode means it cannot collide.
+			// Postcode area `02` (Upper Lusatia in eastern Sachsen) is the street-level holdout.
+			// German postcodes have five digits, so this holdout cannot collide.
 			postcodePrefixes: ["02"],
 		},
 		GB: {
@@ -225,10 +226,11 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: Pa
 export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**
- * Writes the same files as `writeSplitManifests` by streaming one labeled JSONL file
- * per split; `buildCorpus` calls this after its align loop has partitioned rows
- * with `splitForRow`, the caller passes the counts so the files are not rescanned,
- * and `sort(1)` spills to disk so memory stays constant.
+ * Writes the same files as `writeSplitManifests` by streaming one labeled JSONL file per split.
+ *
+ * `buildCorpus` calls this after its align loop partitions rows with `splitForRow`.
+ * The caller passes the counts to avoid rescanning the files.
+ * `sort(1)` spills to disk, so memory stays constant.
  */
 export async function writeSplitManifestsFromLabeledFiles(opts: {
 	labeledPaths: Record<SplitName, PathBuilderLike>

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Framework-neutral command metadata and the small `node:util.parseArgs` adapter behind Mailwoman's lazy
- * CLI. Parsing never imports the help renderer, and `@isaacs/cliui` is reached only from
+ * CLI. Parsing never imports the help renderer. `@isaacs/cliui` is reached only from
  * {@link renderCommandHelp}.
  */
 
@@ -115,8 +115,9 @@ type AlwaysPresentFlag<Options> = {
  * A command's options object, derived from its own `spec` so a property spelled differently from
  * what `optionPropertyName` writes becomes a compile error rather than a silently dead flag.
  *
- * A flag with a `default` or marked `required` is required, every other property optional,
- * `choices` narrows the union, and `multiple` widens it to an array.
+ * A flag with a `default` or marked `required` is required, every other property
+ * optional, `choices` narrows the union.
+ * `multiple` widens it to an array.
  */
 export type OptionsOf<Spec extends CommandSpec> = Spec["options"] extends infer Options
 	? Options extends Readonly<Record<string, OptionSpec>>
@@ -233,8 +234,8 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
 		}
 
-		// The retired spelling parses and carries no default, which would make the alias
-		// look supplied on every run and shadow the current flag's own.
+		// The retired spelling parses and carries no default.
+		// Otherwise, the alias would look supplied on every run and shadow the current flag's value.
 		if (option.deprecatedName) {
 			definitions[option.deprecatedName] = {
 				type: option.type === "boolean" ? "boolean" : "string",
@@ -408,20 +409,23 @@ export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 export const positiveInteger = (value: number): boolean => Number.isInteger(value) && value > 0
 
 /**
- * A `--locale` option's value — a lower-case language subtag and an optional upper-case region,
- * as `en` or `en-US`; the casing is part of the check because the tag is interpolated
- * into a weights package specifier and a data-root directory path, and it admits a tag
- * with no weights package while refusing a family name such as `cjk` or `base-latn`.
+ * A `--locale` option's value has a lower-case language subtag and an optional
+ * upper-case region, such as `en` or `en-US`.
+ *
+ * The check enforces casing because the tag is interpolated into a weights package
+ * specifier and a data-root directory path.
+ * It admits a tag with no weights package while refusing a family name such as `cjk` or `base-latn`.
  */
 export const isLocaleTag = (value: string): boolean => /^[a-z]{2}(-[A-Z]{2})?$/u.test(value)
 
 /**
- * A `--corpus-version` option's value, which is the version alone without the `corpus-v` prefix.
+ * A `--corpus-version` option's value contains the version without the `corpus-v` prefix.
  *
  * Three sites compose a directory name as `corpus-v${version}`, so a value already carrying
  * the prefix produced `corpus-vv0.7.0-de-holdout` on disk and 695 files had to be re-stamped.
- * The check refuses a leading `v` for that reason, and refuses a path separator
- * because the value is interpolated into a directory name.
+ * The check refuses a leading `v` for that reason.
+ *
+ * It also refuses a path separator because the value is interpolated into a directory name.
  *
  * It accepts a dotted release with an optional suffix, such as `0.7.0` or `0.7.0-de-holdout`,
  * and the bare-integer spellings the older corpora use, such as `8` or `8-jp-full-2026-08-04`.
@@ -444,7 +448,8 @@ export const numberOption = (description: string) => ({ type: "number", descript
 export const booleanOption = (description: string) => ({ type: "boolean", default: false, description }) as const
 
 /**
- * Option-descriptor shorthand: a number option refusing zero, negatives, and fractions.
+ * Option-descriptor shorthand for a number option.
+ * It refuses zero, negative values and fractions.
  */
 export const positiveIntegerOption = (description: string, defaultValue?: number) =>
 	({
@@ -472,8 +477,10 @@ export function booleanValue(values: Record<string, unknown>, name: string): boo
 }
 
 /**
- * A boolean flag with no schema default: unstated stays `undefined` so the library default applies
- * downstream, and only a stated `--flag` / `--no-flag` reaches the consumer as an explicit value.
+ * A boolean flag with no schema default: unstated stays `undefined`
+ * so the library default applies downstream.
+ *
+ * Only a stated `--flag` / `--no-flag` reaches the consumer as an explicit value.
  */
 export function triStateValue(values: Record<string, unknown>, name: string): boolean | undefined {
 	const value = values[name]

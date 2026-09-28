@@ -15,7 +15,8 @@ export { type PipelineFault, type PipelineResult } from "#pipeline/result"
 export { type MachinePreferences } from "#pipeline/preferences"
 
 /**
- * The user's location, which the resolver may use for scoring.
+ * The user's location.
+ * The resolver may use it for scoring.
  */
 export type UserLocation = { lat: number; lon: number } | { country: string } | { region: string; country: string }
 
@@ -164,7 +165,7 @@ export type QueryKind =
  */
 export const QueryIntentCode = {
 	/**
-	 * Resolution found no decisive candidate for a named place.
+	 * Resolution found no decisive candidate for a place with a recognized name.
 	 */
 	DeclaredAmbiguity: "declared_ambiguity",
 	/**

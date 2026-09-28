@@ -166,10 +166,11 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
  * Codepoints that Unicode assigns to `Common` inside blocks that otherwise belong to one script.
  *
  * These codepoints map to `Zyyy`, so script shares ignore them.
- * For example, the prolonged sound mark `ー` in `ブロードウェイ` does not count, and the word reads as `Kana` 1.00.
+ * For example, the prolonged sound mark `ー` in `ブロードウェイ` does not count.
+ * The word reads as `Kana` 1.00.
  */
 const COMMON_RANGES: ReadonlyArray<[number, number]> = [
-	[0x06_40, 0x06_40], // Arabic tatweel ـ, which stretches a joined letter
+	[0x06_40, 0x06_40], // Arabic tatweel ـ stretches a joined letter
 	// CJK symbols and punctuation, except the characters that Unicode assigns to Han: 々 (U+3005),
 	// 〇 (U+3007), the Hangzhou numerals (U+3021..3029) and the ideographic marks U+3038..303B.
 	[0x30_00, 0x30_04],
@@ -486,7 +487,8 @@ export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClas
  * In `逊克二分场四队, heilongjiang, china`, the whole string is mostly `Latn`, but the first segment is `Hani`.
  *
  * Each token counts by its length in UTF-16 code units, so one long token can outweigh several short ones.
- * `Zyyy` tokens are skipped, and a range with only such tokens returns `Zyyy`.
+ * `Zyyy` tokens are skipped.
+ * A range with only such tokens returns `Zyyy`.
  *
  * The offsets index the same normalized text as `TokenClass.span`.
  */

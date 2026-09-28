@@ -30,9 +30,10 @@ interface WorkspaceManifest {
 const CONVENTIONAL_EMPTY_PATTERNS = new Set(["#*"])
 
 /**
- * The `include` and `exclude` globs of a workspace `tsconfig.json`, as written. a
- * config lacking either field admits every source, and `extends` is not followed
- * because every emitting workspace states both locally.
+ * The `include` and `exclude` globs of a workspace `tsconfig.json`, as written.
+ *
+ * A config lacking either field admits every source.
+ * The checker does not follow `extends` because every emitting workspace states both fields locally.
  */
 export interface CompileScope {
 	include?: readonly string[]
@@ -40,9 +41,12 @@ export interface CompileScope {
 }
 
 /**
- * Converts a tsconfig glob to a matcher over workspace-relative paths,
- * where `**` spans directories, `*` matches within one segment, and an entry without
- * a wildcard matches that path and everything under it.
+ * Converts a tsconfig glob to a matcher over workspace-relative paths.
+ *
+ * `**` spans directories.
+ * `*` matches within one segment.
+ *
+ * An entry without a wildcard matches that path and everything under it.
  */
 export function tsconfigGlob(glob: string): RegExp {
 	const normalized = glob.replace(/^\.\//u, "").replace(/\/$/u, "")
@@ -64,8 +68,10 @@ export function tsconfigGlob(glob: string): RegExp {
 }
 
 /**
- * Returns whether `tsc` emits the workspace-relative `path` under `scope`:
- * it must match an `include` glob when the config has any, and no `exclude` glob.
+ * Returns whether `tsc` emits the workspace-relative `path` under `scope`.
+ *
+ * The path must match an `include` glob when the config has one.
+ * It must match no `exclude` glob.
  */
 export function compilerAdmits(scope: CompileScope, path: string): boolean {
 	const included = !scope.include || scope.include.some((glob) => tsconfigGlob(glob).test(path))

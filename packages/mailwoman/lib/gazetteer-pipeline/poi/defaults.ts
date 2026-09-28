@@ -15,7 +15,9 @@
 export const DEFAULT_RELEASE = "2026-07-22.0"
 
 /**
- * `--min-rows` default, which keeps the table to real chains rather than one-off name collisions.
+ * Default for `--min-rows`.
+ *
+ * This value keeps the table to real chains rather than one-off name collisions.
  */
 export const DEFAULT_MIN_ROWS = 25
 

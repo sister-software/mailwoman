@@ -44,7 +44,8 @@ export interface DebugFrameProps {
 	columns: number
 	rows: number
 	/**
-	 * Null = static render (no focus chrome, and the footer says so instead of listing keys).
+	 * Null means static render with no focus chrome.
+	 * The footer says so instead of listing keys.
 	 */
 	focused: DebugPane | null
 	/**
@@ -316,7 +317,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 			<Text color={line.tag ? tagColor(line.tag) : undefined}>{`${line.label} `.padEnd(OUTPUT_LABEL_WIDTH)}</Text>
 			{line.badge ? (
 				// The badge's text is wrapped in a `<Text>` because `Badge` uppercases a plain-string child,
-				// and these badges carry machine values (`address_point`, `structured_address`) a reader copies.
+				// These badges carry machine values (`address_point`, `structured_address`) that a reader copies.
 				<Badge color={line.badgeColor ?? "cyan"}>
 					<Text>{line.badge}</Text>
 				</Badge>

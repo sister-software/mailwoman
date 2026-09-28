@@ -5,9 +5,9 @@
  * @file The edgar chain, assembled — carrier names in, {@linkcode EdgarSubsidiaryRow}s out.
  *
  *   The corroboration check is mandatory: resolving 24 telecom names by score alone returned the wrong company twice,
- *   at 0.829 and 0.886, so {@link EdgarIngestOptions} exposes `pinnedCIKs` and no bypass. Every drop is counted
- *   rather than thrown, and a genuine tie between different CIKs that survives corroboration abstains unless a pinned
- *   CIK at the top score breaks it.
+ *   at 0.829 and 0.886. {@link EdgarIngestOptions} exposes `pinnedCIKs` for operator decisions.
+ *   Every dropped row is counted. A genuine tie between different CIKs after corroboration produces an abstention.
+ *   A pinned CIK at the top score resolves that tie.
  */
 
 import type { EdgarSubsidiaryRow } from "#sdk/build/filer"
@@ -113,8 +113,9 @@ export interface EdgarIngestOptions extends CIKCorroborationOptions {
 }
 
 /**
- * Edgar's submissions payload: only the two fields this module reads are declared,
- * and the rest is handed to `parseTenKFilings` untouched.
+ * Edgar's submissions payload fields read by this module.
+ *
+ * The module passes the remaining fields to `parseTenKFilings` untouched.
  */
 interface SubmissionsPayload {
 	sic?: unknown

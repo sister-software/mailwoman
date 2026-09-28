@@ -340,8 +340,9 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 /**
  * The order a person name prints in.
  *
- * Western / romanized only, the same scope {@linkcode parsePersonName} declares: a family-first
- * system is not this order reversed, and inventing one here would be worse than having none.
+ * Western / romanized only, the same scope {@linkcode parsePersonName} declares.
+ * A family-first system does not use this order in reverse.
+ * Inventing that order here would be worse than having none.
  */
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]
 
@@ -360,13 +361,15 @@ export type PersonNameStyle = "full" | "short"
 /**
  * Render a {@linkcode PersonName} back to a string — the inverse of {@linkcode parsePersonName}.
  *
- * `"full"` prints every part the parser identified except the nickname, which is an
- * alternative to the given name rather than an addition to it.
- * `"short"` prints what a person is addressed by, which is the form a display label and a match key want.
+ * `"full"` prints every part the parser identified except the nickname.
+ * A nickname is an alternative to the given name rather than an addition to it.
+ *
+ * `"short"` prints what a person is addressed by.
+ * Display labels and match keys use this form.
  *
  * The particle travels with the surname in both styles.
- * The parser stores it separately so the matcher can compare `Vega` independently of
- * `de la`; printing them apart would produce a name nobody wrote.
+ * The parser stores it separately so the matcher can compare `Vega` independently of `de la`;
+ * printing them apart would produce a form absent from the input name.
  */
 export function formatPersonName(name: PersonName | null | undefined, style: PersonNameStyle = "full"): string {
 	if (!name) return ""

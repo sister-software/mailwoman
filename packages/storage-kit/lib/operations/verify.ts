@@ -5,8 +5,8 @@
  *
  *   `storage.verify` — every property `storage.prepare` was supposed to establish, asserted again from scratch.
  *
- *   This is the operation that makes the preparation non-forgettable. `prepare` ends by calling it, and it re-runs
- *   standalone afterwards, so "did anyone remember to set the compression property on the database subtrees" stops
+ *   This operation makes the preparation verifiable. `prepare` calls it at the end.
+ *   It can also run independently afterward, so "did anyone remember to set the compression property on the database subtrees" stops
  *   being something a person has to hold in their head.
  */
 

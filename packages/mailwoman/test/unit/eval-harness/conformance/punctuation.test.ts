@@ -3,22 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The punctuation law's two guards, its three exclusion rules, and the failure line a violation produces.
+ *   The punctuation law's required guards and exclusion rules. It also defines the failure line a violation produces.
  *
  *   The required pair is `punctuationBlindKey` and `punctuationApplicability`. The key refuses a pair that
- *   changed anything besides punctuation. the rules refuse a pair the key accepts but whose mark the
- *   transformation may not take — because the query holds none, because the mark is part of a name, or
- *   because the row's comparator would read the transformation back out of a component value and report it as
- *   a pipeline defect.
+ *   changed anything besides punctuation. The rules refuse a pair the key accepts when the transformation
+ *   cannot account for its mark. The query may contain no punctuation. The mark may belong to a name. The row's
+ *   comparator may read the transformed mark from a component value and report a pipeline defect.
  *
- *   independence is asserted IN both directions, and that is what makes a seeded punctuation regression
- *   attributable. A case, spacing or Unicode-normalization change is refused by this law's own audit, and a
- *   punctuation-only pair is refused by the case-folding and spacing classifiers — so a failing arm here
- *   cannot be a mis-filed row from either of the other two suites, and neither of them can absorb this one.
+ *   Independence is asserted in both directions. That makes a seeded punctuation regression attributable.
+ *   This law's audit refuses changes to case, spacing, or Unicode normalization. The case-folding and spacing
+ *   classifiers refuse punctuation-only pairs. A failing arm here therefore cannot be a row from either of the
+ *   other suites. Neither suite can absorb a punctuation failure.
  *
- *   Every exclusion is exercised against a real committed board row rather than an invented string: the venue
- *   whose own name carries a point, the bare GB unit code that carries no punctuation at all, and the two
- *   rows whose asserted span carries the abbreviation point their comparator would grade.
+ *   Every exclusion uses a real committed board row. One venue's name carries a point. The bare GB unit code
+ *   carries no punctuation. Two rows have an asserted span with the abbreviation point their comparator grades.
  */
 
 import { classifyCaseTransformation } from "mailwoman/eval-harness/conformance/case-folding"
@@ -107,7 +105,7 @@ describe("punctuation transformations", () => {
 	})
 
 	it("leaves a mark that sits inside a token alone", () => {
-		// The point in the venue's own name, and the ellipsis a name ends on — neither is a separator.
+		// The point in the venue's name and the ellipsis at the end of a name are not separators.
 		expect(PUNCTUATION_TRANSFORMATION_BY_NAME["period-removed"](FR_COMER)).toBe(FR_COMER)
 
 		expect(PUNCTUATION_TRANSFORMATION_BY_NAME["period-removed"]("and more..., 1217 Queen St")).toBe(
@@ -395,10 +393,11 @@ describe("a seeded punctuation regression", () => {
 		expect(rendered).toContain("cases/de/regression.jsonl#de-r9-nippes-koeln")
 		// The comparator and both relations.
 		expect(rendered).toContain("component_map expected equivalent, observed diverges")
-		// The mechanism: which component moved, how, and how severely.
+		// The mechanism reports which component moved.
+		// It reports the direction of movement and its size.
 		expect(rendered).toContain("compareComponents verdict LOST")
 		expect(rendered).toContain('street: "Neusser Str." → "Neusser Str. Nippes"')
-		// The transformation, which the report line derives rather than storing.
+		// The report line derives the transformation rather than storing it.
 		expect(describePunctuationTransformation(findings[0]!.fixture)).toBe("comma-removed")
 	})
 

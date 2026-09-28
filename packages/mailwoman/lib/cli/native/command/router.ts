@@ -17,7 +17,9 @@ interface CommandModule {
 /**
  * The compiled command tree.
  *
- * The commands are TSX, and Node loads TSX only after compilation.
+ * The commands are TSX.
+ * Node loads TSX only after compilation.
+ *
  * The router therefore reads `out/commands/` even when the package's `#` imports have handed
  * it the source router, anchored at the package rather than counted in `..` from this file.
  */
@@ -146,8 +148,9 @@ export async function dispatchCommand(argv: readonly string[]): Promise<number> 
 	if (!argv.length || argv[0] === "--help" || argv[0] === "-h") return rootHelp()
 	const commandParts: string[] = []
 
-	// The path each accepted segment resolved to, which parts company with `commandParts` —
-	// the name the user typed — once a prefix directory stands between them.
+	// The path each accepted segment resolved to.
+	// It differs from `commandParts`, the name the user typed, whenever a prefix
+	// directory stands between them.
 	const filesystemParts: string[] = []
 
 	for (const value of argv) {

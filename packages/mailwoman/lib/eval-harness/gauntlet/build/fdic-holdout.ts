@@ -5,8 +5,8 @@
  *
  * Build the US verified-coordinate held-out pool for the Gauntlet: fdic BankFind publishes every insured bank
  * branch with a real street address and a geocoded lat/lon, a public-domain US truth source absent from
- * mailwoman's training corpus, so it measures genuine US generalization. Writes a semicolon CSV pool to
- * $MAILWOMAN_DATA_ROOT/corpus/staging/fdic-us.csv, build-on-copy, which holdout.ts reservoir-samples in
+ * Mailwoman's training corpus, so it measures US generalization. It writes a semicolon CSV pool to
+ * $MAILWOMAN_DATA_ROOT/corpus/staging/fdic-us.csv. `holdout.ts` reservoir-samples that copy in
  * milliseconds instead of streaming the 5 GB BAN file.
  */
 
@@ -51,8 +51,9 @@ function plausibleUs(lat: number, lon: number): boolean {
 }
 
 /**
- * Retry is on because the page loop is all-or-none: one throttled page aborted the whole build,
- * and the tmp-then-rename tail discards a partial run rather than publishing it.
+ * The page loop is all-or-none, so retries handle throttled pages.
+ *
+ * The final tmp-then-rename discards partial runs instead of publishing them.
  *
  * No `minRequestIntervalMs`, because strictly sequential 10,000-row pages already pace themselves.
  */

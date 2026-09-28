@@ -8,7 +8,7 @@
  *   emit that country. Per query (`<City>, <Country>` from cities15000):
  *
  *   - `in_class_set`  - is the true country even in the placer's class set? A class the model
- *                       cannot represent cannot be recovered by any threshold change, which is a
+ *                       cannot represent cannot be recovered by changing a threshold. This is a
  *                       data gap.
  *   - `top1_correct`  - did the placer's argmax land on the true country?
  *   - `prob_1`        - the calibrated top-class confidence (vs `HARD_PLACE_COUNTRY_MIN_CONF` = 0.9)

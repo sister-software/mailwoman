@@ -19,7 +19,9 @@ import type { CensusAddressComponents, CensusAddressMatch } from "#sdk/census/ty
  * The Census geocoder finds the tiger/Line segment whose address range contains the house number
  * and interpolates a position along it, so `interpolated` here is the mechanism rather than a hedge.
  *
- * A Census coordinate is routinely 20–100 m from the building, and further on a long rural segment.
+ * A Census coordinate is routinely 20–100 m from the building.
+ * It can be further away on a long rural segment.
+ *
  * Pin `expectToleranceM` against that rather than against a rooftop assumption.
  */
 export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
@@ -89,9 +91,11 @@ export function buildStreetComponents(components: CensusAddressComponents): Comp
 /**
  * Build the full `ComponentTag` dictionary for one match.
  *
- * `country` is hardcoded to `US`: the Census geocoder covers the United States
- * and its territories only, there is no field to read it from, and leaving it unset
- * would give every US address a different `canonicalKey`.
+ * `country` is hardcoded to `US`.
+ * The Census geocoder covers the United States and its territories only.
+ *
+ * The response has no country field.
+ * Leaving it unset would give every US address a different `canonicalKey`.
  */
 export function buildCensusComponents(match: CensusAddressMatch): ComponentDict {
 	const source = match.addressComponents
@@ -121,9 +125,9 @@ export function buildCensusComponents(match: CensusAddressMatch): ComponentDict 
 /**
  * Turn one Census `addressMatches` entry into the package's normalized {@linkcode OracleGeocodeResult}.
  *
- * `uncertaintyMeters` is left `null`: the Census geocoder publishes no uncertainty
- * figure, and the honest one for a tiger interpolation depends on segment length
- * and address density, neither in the response.
+ * `uncertaintyMeters` is left `null` because the Census geocoder publishes no uncertainty figure.
+ * A useful value for a TIGER interpolation depends on segment length and address density.
+ * The response includes neither.
  */
 export function parseCensusAddressMatch<Match extends CensusAddressMatch>(match: Match): OracleGeocodeResult<Match> {
 	const components = buildCensusComponents(match)

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Rows, comparator, metric arithmetic, baseline, and thresholds all come from `probe-definition.json`, which the loader
+ *   Rows, comparator, metric arithmetic, baseline and thresholds all come from `probe-definition.json`. The loader
  *   refuses to hand over if its content hash has moved.
  *
  *   `--semantic-observation` builds the one semantic observation route and injects it into the pipeline this run
- *   constructs. Without it the run is the un-injected pipeline whatever `--arm` is called, and the receipt records which
+ *   constructs. Without it the run is the un-injected pipeline whatever `--arm` is called. The receipt records which
  *   of the two happened because a dropped route and a route that changed no answer produce the same numbers.
  *
  *   Report-only by design: the exit code is non-zero only when the harness broke, so a recorded stop-redesign is a result

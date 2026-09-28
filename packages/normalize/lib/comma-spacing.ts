@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Comma spacing — a comma directly followed by a letter gains one space, so `Biggin Hill,United Kingdom`
- *   reaches stage 2 as `Biggin Hill, United Kingdom`. A tight comma is an ordinary typing pattern, and the parse
- *   is the first stage that reads it differently: with no space, the tokenizer glues `,United` into one piece,
- *   the segmenter still splits, and the decoder labels the glued piece as a street or a locality it is not.
+ *   Comma spacing — a comma directly followed by a letter gains one space.
+ *   `Biggin Hill,United Kingdom` reaches stage 2 as `Biggin Hill, United Kingdom`.
+ *   Tight commas are a common typing pattern. The tokenizer is the first stage that reads them differently.
+ *   Without a space, it combines `,United` into one piece. The segmenter still splits the input.
+ *   The decoder then labels the combined piece as a street or locality, though it is neither.
  *
  *   A letter or a digit after the comma triggers the insertion, with one exception: a comma with a digit on
  *   both sides is a numeric separator (`12,5`, `1,000`) and is left as typed. `Köln,50733` has a letter before

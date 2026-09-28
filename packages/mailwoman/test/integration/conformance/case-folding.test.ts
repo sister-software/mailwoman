@@ -8,17 +8,17 @@
  *   It lives in `test/integration/` because that is the suite the `mailwoman-data` runner runs, with
  *   `MAILWOMAN_DATA_ROOT` set and the weights materialized. the fast leg is portable by construction and a
  *   data-dependent test placed there would skip its way to green. The guard is the resolver-based
- *   `weightsPresent()` idiom the other integration suites use: ASK the resolver for the model the loader will
- *   open, never a path literal, because a skip-guard that stops matching does not fail — it skips, and the
- *   suite disappears from the run reporting success.
+ *   `weightsPresent()` idiom the other integration suites use: ask the resolver which model the loader will open.
+ *   A path literal can drift from the resolver. A skip guard that stops matching skips the suite without failing,
+ *   so the run appears successful while the test is absent.
  *
  *   this LEG cannot GO RED on A known defect. `runConformanceCommand` checks on `status: pass` rows and
  *   reports tracked ones without blocking, so a case-folding violation the pipeline currently has is printed
  *   in full and does not fail CI — and a tracked row that starts holding prints a promotion instruction
- *   rather than sitting in the list forever. What it does fail on is a new violation on a row that held, or
- *   a suite that stopped stating this law, which is the whole point of running it here.
+ *   rather than sitting in the list forever. It fails on a new violation in a row that previously passed.
+ *   It also fails if the suite stops asserting this rule.
  *
- *   The suite path is pinned rather than defaulted: a default run covers every committed law, and this file
+ *   The suite path is pinned rather than defaulted. A default run covers every committed law. This file
  *   is the case-folding leg.
  *
  *   Cheap enough to belong: measured 6.2 s end to end for 29 rows — two geocodes each plus one engine load.
@@ -34,7 +34,8 @@ import { describe, expect, it } from "vitest"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK the resolver — see the module docstring, and `v1-parse-eval.test.ts`, which carries the incident.
+		// Ask the resolver, as described in the module comment.
+		// `v1-parse-eval.test.ts` records the reason.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false

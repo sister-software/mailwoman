@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Checks representative command snapshots, the committed generated page, deterministic rendering, and omission of host paths and timestamps.
+ * Checks representative command snapshots and the committed generated page. It also checks deterministic rendering and omission of host paths and timestamps.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"

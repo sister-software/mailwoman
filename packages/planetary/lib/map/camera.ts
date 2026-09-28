@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Where the camera goes when a feature is selected. The zoom is the inverse of the pipeline's declutter rule: a
- *   feature first appears at the zoom its diameter earns, and the camera lands one or two levels past that, so the
+ *   feature first appears at the zoom its diameter earns. The camera lands one or two levels past that so the
  *   selected label is on screen with its neighbors rather than alone.
  */
 
@@ -18,7 +18,7 @@ const SELECTION_ZOOM_STEPS: ReadonlyArray<readonly [minDiameterKm: number, zoom:
 ]
 
 /**
- * The zoom for a feature smaller than every step, and for one whose diameter the source does not give.
+ * The zoom for a feature smaller than every step or one whose diameter the source does not give.
  */
 const SMALL_FEATURE_ZOOM = 9
 
@@ -26,7 +26,7 @@ const SMALL_FEATURE_ZOOM = 9
  * How far past the terrain archive's deepest zoom the camera may go.
  *
  * One level of over-zoom is a sharp enough upsample to read as terrain.
- * Three, which is where an unclamped small-feature framing landed against a zoom-6 archive,
+ * An unclamped small-feature frame reached three levels past a zoom-6 archive,
  * is a grey blur with the tile boundaries showing.
  */
 const OVERZOOM_ALLOWANCE = 1
@@ -34,9 +34,10 @@ const OVERZOOM_ALLOWANCE = 1
 /**
  * The zoom a selected feature is framed at, from its diameter in kilometres.
  *
- * `maxTerrainZoom` is the deepest zoom the body's terrain archive carries, read from the
- * live source rather than pinned here: the two bodies do not publish the same depth,
- * and a constant would drift the first time either is rebuilt.
+ * `maxTerrainZoom` is the deepest zoom the body's terrain archive carries.
+ * Read it from the live source rather than pinning it here because the two bodies publish different depths.
+ *
+ * A constant would drift when either is rebuilt.
  * Omit it and the framing is unclamped.
  */
 export function framingZoom(diameterKm: number | undefined, maxTerrainZoom?: number): number {

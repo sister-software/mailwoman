@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Download + alphabetize libpostal's `resources/dictionaries` — the per-language abbreviation,
- *   street-type, and synonym tables the normalizer expands against. Shallow-clones
- *   {@link https://github.com/openvenues/libpostal openvenues/libpostal}, sorts each dictionary file
- *   in place, and copies the `dictionaries/` tree next to this script.
+ *   Download and alphabetize libpostal's `resources/dictionaries`.
+ *   The normalizer uses per-language abbreviation and street-type tables.
+ *   It also uses synonym tables.
+ *   The script shallow-clones {@link https://github.com/openvenues/libpostal openvenues/libpostal}.
+ *   It sorts each dictionary file in place and copies the `dictionaries/` tree beside this script.
  *
  *   Replaces the bash `resources-download.sh`. `git clone` runs through zx's `$` (no clean native
  *   equivalent); everything else is `node:fs` / `node:os`. Sorting is done in-process with a plain
@@ -58,8 +59,9 @@ async function sortFileInPlace(path: PathBuilder): Promise<void> {
 }
 
 /**
- * Shallow-clone libpostal, alphabetize each dictionary file, and install the tree
- * at the checked-in `core/data/libpostal/dictionaries`.
+ * Shallow-clone libpostal and alphabetize each dictionary file.
+ *
+ * Install the tree at the checked-in `core/data/libpostal/dictionaries`.
  *
  * Refuses to clobber an existing tree unless `force`.
  * Zx is lazy-imported (dev-grade dependency — the pipeline convention).

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Serializes CLI spawns across vitest workers with an async directory lock that carries the holder's pid so a crashed worker's lock can be reclaimed, and always releases in a `finally`.
+ *   Serializes CLI spawns across vitest workers with an async directory lock. The lock stores the holder's pid so a crashed worker's lock can be reclaimed. A `finally` block always releases the lock.
  */
 
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"
@@ -22,14 +22,17 @@ const ACQUIRE_TIMEOUT_MS = 120_000
 const POLL_MS = 50
 
 /**
- * Removes the lock directory while tolerating every failure, because a failed removal degrades to the
- * next acquirer reclaiming it as stale while a throwing lock would turn contention into a test failure.
+ * Removes the lock directory while tolerating every failure.
+ *
+ * A failed removal lets the next acquirer reclaim the directory as stale.
+ * A thrown lock error would turn contention into a test failure.
  */
 async function releaseQuietly(): Promise<void> {
 	try {
 		await removePathIfPresent(LOCK_DIR)
 	} catch {
-		// Another worker is mid-removal or mid-write, and its stale check will reclaim.
+		// Another worker may be removing or writing the lock.
+		// Its stale check will reclaim it.
 	}
 }
 

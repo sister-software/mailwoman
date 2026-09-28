@@ -21,7 +21,7 @@ def iter_tuples(count: int, rng: random.Random) -> Iterator[dict[str, Any]]:
     """Reservoir-sample the derived CSV in one streaming pass.
 
     The file is 25.7M rows, so it is read once and never held in memory. `region` is carried
-    because the recipe guard requires the field, and never rendered: a GB address tail is
+    because the recipe guard requires the field. The GB address tail omits it and uses
     `locality postcode`.
     """
     reservoir: list[dict[str, Any]] = []

@@ -61,8 +61,8 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 	return roots
 }
 
-// `locality_id` is not special-cased: self is filtered by the `aid === id` check,
-// and for a neighbourhood it is a real ancestor.
+// The `aid === id` check filters out a place's own `locality_id`.
+// For a neighbourhood, that id identifies a real ancestor.
 function placetypeFromKey(key: string): string | null {
 	if (!key.endsWith("_id")) return null
 
@@ -70,9 +70,10 @@ function placetypeFromKey(key: string): string | null {
 }
 
 /**
- * Insert missing ancestor rows for every place whose ancestry chain dead-ended before reaching
- * a country by reading `wof:hierarchy`; runs in one transaction under the caller's connection,
- * and `opts.maxID` bounds the scan so synthetic-id Overture/GeoNames rows are not probed.
+ * Insert missing ancestor rows for places whose ancestry chain ended before reaching a country.
+ *
+ * The function reads `wof:hierarchy` and runs in one transaction under the caller's connection.
+ * `opts.maxID` bounds the scan to avoid probing synthetic-id Overture and GeoNames rows.
  */
 export async function backfillAncestorsFromHierarchy(
 	db: DatabaseClient<WOFDatabase>,
@@ -99,8 +100,8 @@ export async function backfillAncestorsFromHierarchy(
 
 	const candidates = await candidateBase.select(["id", "placetype"]).execute()
 
-	// The candidate set rides in as a subquery rather than a materialized `IN` list,
-	// which node:sqlite would cap at 32,766 bound variables.
+	// Keep the candidate set as a subquery instead of materializing an `IN` list.
+	// node:sqlite limits bound variables to 32,766.
 	const alreadyPresent = new Map<number, Set<number>>()
 
 	for (const row of await db

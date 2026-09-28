@@ -11,8 +11,10 @@ import type { PathBuilderLike } from "path-ts"
 /**
  * Options for {@linkcode oaResolverEval}.
  *
- * Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default off,
- * and tri-states are the paired on/off flags the eval legs pin (`adminCoherence`/`noAdminCoherence`).
+ * Keys mirror the command's kebab flags (`--out-md` → `outMd`).
+ * Booleans default off.
+ *
+ * Tri-states are paired on/off flags that eval legs pin (`adminCoherence`/`noAdminCoherence`).
  */
 export interface OAResolverEvalOptions {
 	/**
@@ -46,7 +48,8 @@ export interface OAResolverEvalOptions {
 	 * since the FST is a decode-time prior applied by `createRuntimePipeline`
 	 * while the bare `neural` arm calls `classifier.parse` directly.
 	 *
-	 * Omit for the byte-stable no-FST default, and note this is the tree's only FST-sensitive eval.
+	 * Omit this option to use the byte-stable no-FST default.
+	 * This is the tree's only FST-sensitive eval.
 	 */
 	adminFST?: string
 	/**

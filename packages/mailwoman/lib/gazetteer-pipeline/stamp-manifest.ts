@@ -27,13 +27,14 @@ import type { PathBuilderLike } from "path-ts"
 /**
  * What a postcode or locality builder states about the database it seals.
  *
- * The candidate build folds these databases, and `candidateLayerManifest` composes its
- * own terms from what each one records, so every field here is a claim the builder
- * makes about its own artifact rather than a value copied from a runbook.
+ * The candidate build folds these databases.
+ * `candidateLayerManifest` composes its own terms from what each one records, so every field here
+ * is a claim the builder makes about its own artifact rather than a value copied from a runbook.
  */
 export interface FoldLayerManifestInput {
 	/**
-	 * The artifact's filename without its extension, which is how `DEFAULT_POSTCODE_DATABASES` names it.
+	 * The artifact's filename without its extension.
+	 * `DEFAULT_POSTCODE_DATABASES` uses this name.
 	 */
 	name: string
 	/**
@@ -50,8 +51,9 @@ export interface FoldLayerManifestInput {
 	 * The grant as the builder records it, as an SPDX expression or as the prose its `meta` table carries.
 	 *
 	 * Prose resolves through `readLicenseRecord`.
-	 * An expression naming a `LicenseRef-` this repository defines is admissible while unresolved,
-	 * which is the form a build-local artifact uses for an input nobody has declared terms for.
+	 * An expression naming a repository-defined `LicenseRef-` is admissible while unresolved.
+	 *
+	 * Build-local artifacts use that form for inputs with no declared terms.
 	 *
 	 * A value that is neither stops the build rather than reaching the manifest.
 	 */
@@ -130,7 +132,8 @@ export function foldLayerManifest(input: FoldLayerManifestInput): LayerManifest 
 }
 
 /**
- * Opens `path`, writes `manifest` into it, and closes the connection.
+ * Opens `path` and writes `manifest` into it.
+ * Then closes the connection.
  *
  * The function opens its own connection.
  * Callers reach it after closing their build handle and before sealing the database.

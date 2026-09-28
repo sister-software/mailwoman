@@ -10,7 +10,7 @@
  *
  * Checks, per country: header sanity (country, `delta === 0`, `probeArtifact`, edge, versions);
  * entry-count match against the re-derived set. Full membership sweep with tag `locality` and parent
- * tag `region`; and named receipts including cross-country negative controls.
+ * tag `region`; and receipts for cross-country negative controls.
  *
  * Throws (exits non-zero under `runIfScript`) on any failure.
  */
@@ -96,8 +96,8 @@ function expectedPairSet(
 	parentPlacetypes: string[]
 ): Map<string, [string, string]> {
 	// Explicitly numbered placeholders throughout: `?1` (country) and `?2..?N`
-	// (parent placetypes) are each reused across clauses, and mixing `?1` with anonymous
-	// `?` silently mis-numbers the anonymous ones past the bound arguments.
+	// (parent placetypes) are reused across clauses.
+	// Mixing `?1` with anonymous `?` silently mis-numbers the anonymous ones past the bound arguments.
 	const parentPlaceholder = parentPlacetypes.map((_, i) => `?${i + 2}`).join(",")
 	const wofCountry = country.toUpperCase()
 

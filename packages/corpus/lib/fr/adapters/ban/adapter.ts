@@ -11,9 +11,9 @@
  * country. The adapter stamps `country: "FR"` on every row and leaves region to the
  * wof-postalcode and wof-admin cross-reference at corpus build time.
  *
- * The official BAN is dual-licensed under Licence Ouverte 2.0 and ODbL. This adapter elects
- * Licence Ouverte 2.0, which permits training with attribution, and stamps it on every row. The
- * model card must carry the BAN attribution.
+ * The official BAN is dual-licensed under Licence Ouverte 2.0 and ODbL.
+ * This adapter elects Licence Ouverte 2.0. Its terms permit training with attribution.
+ * It records that licence on every row. The model card must include BAN attribution.
  *
  * The adapter streams with `CSVSpliterator.fromAsync`, so a 25M-row file never sits in memory. It
  * honors `opts.limit`, `opts.signal`, and `opts.country` (which errors when country is not FR).

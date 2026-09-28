@@ -46,8 +46,8 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// Section 4 of commercial-LICENSE.md requires attribution.
 	["LicenseRef-Commercial", [LicenseObligation.Attribution]],
 	["ODbL-1.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
-	// Open Data Commons publishes an attribution-only license beside ODbL,
-	// and the two are confused because both are ODC.
+	// Open Data Commons publishes an attribution-only license beside ODbL.
+	// Readers confuse them because both are ODC.
 	// This one carries no share-alike term.
 	["ODC-By-1.0", [LicenseObligation.Attribution]],
 	// Every identifier `readLicenseRecord` can resolve a share-alike mention to belongs here,
@@ -71,8 +71,8 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	["OGDL-Taiwan-1.0", [LicenseObligation.Attribution]],
 	// Mexico's national statistics institute publishes under its own "Términos de Libre Uso de
 	// la Información del INEGI", which names no Creative Commons license and carries no version.
-	// The terms permit copying, publishing, adapting, extracting and commercial use,
-	// and require the credit `Fuente: INEGI, <product name>`.
+	// The terms permit copying, publishing, adapting, extracting and commercial use.
+	// They require the credit `Fuente: INEGI, <product name>`.
 	// They state no share-alike term.
 	// Retrieved 2026-09-27 and retained at internal/strategy/rights-receipts/mx-gb-2026-09-27/mx-inegi-terminos.html.
 	["LicenseRef-INEGI-Terms", [LicenseObligation.Attribution]],

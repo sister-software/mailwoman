@@ -14,7 +14,8 @@ export type NameKey = Tagged<string, "NameKey">
 
 /**
  * A street name folded by {@link normalizeStreetForKey} or {@link normalizeStreetForKeyLocale},
- * the form an address-point `street_norm` column stores, and not interchangeable with {@link RouteKey}.
+ * the form an address-point `street_norm` column stores.
+ * Do not substitute {@link RouteKey} for this type.
  */
 export type StreetKey = Tagged<string, "StreetKey">
 

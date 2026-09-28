@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 
-#: The kana-surface build, and the base the CJK overlay's MANIFEST re-roots onto.
+#: The kana-surface build. The CJK overlay's MANIFEST re-roots onto this base.
 KANA_CORPUS = "v8-jp-kana-2026-09-06"
 #: The noisy register corpus: corporate numbers, a separate build with its own single part.
 REGISTER_CORPUS = "v8-jp-registry-2026-09-08"

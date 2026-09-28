@@ -9,7 +9,7 @@
  *
  *   1. A written rationale in the commit message.
  *   2. A migration plan for corpus rows tagged with the prior schema.
- *   3. A same-commit check that alignment, training, and inference code is updated to match.
+ *   3. A same-commit check that alignment, training and inference code matches the new schema.
  */
 
 /**
@@ -45,8 +45,8 @@ export const COMPONENT_TAGS = [
 	"sub_block",
 	"building_number",
 	"building_name",
-	// CN-specific: the organizational ladder China's rural addresses carry below the named
-	// settlement, with one contiguous span holding the whole ordinal chain.
+	// CN-specific: the organizational ladder China's rural addresses carry below the head
+	// unit settlement, with one contiguous span holding the whole ordinal chain.
 	"locality_unit",
 ] as const
 
@@ -66,14 +66,16 @@ export const BIO_LABELS = ["O", ...COMPONENT_TAGS.flatMap((tag) => [`B-${tag}`, 
 export type BIOLabel = (typeof BIO_LABELS)[number]
 
 /**
- * The tag carried by a BIO label, with its `B-` or `I-` prefix removed, and `O` returned unchanged.
+ * The tag carried by a BIO label after removing its `B-` or `I-` prefix.
+ * The function returns `O` unchanged.
  */
 export function bareBIOTag(label: string): string {
 	return label.replace(/^[BI]-/u, "")
 }
 
 /**
- * The street-name family in assembly order, which is part of the interface.
+ * The street-name family in assembly order.
+ * That order is part of the interface.
  */
 export const STREET_FAMILY_TAGS = [
 	"street_prefix",

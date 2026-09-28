@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/ancestrie` — a materialized trie over an ancestry graph. Build entries into a token
- *   trie, seal to one static binary artifact, and answer lexical continuation, rank, and containment
- *   questions from a single prefix walk. See the readme for lineage and the format doc in
- *   `format.ts` for the bytes.
+ *   `@mailwoman/ancestrie` is a materialized trie over an ancestry graph. Build entries into a token
+ *   trie and seal them into one static binary artifact. A single prefix walk answers lexical
+ *   continuation, rank and containment queries. The readme describes lineage. `format.ts` describes
+ *   the binary layout.
  */
 
 export { autocomplete } from "#autocomplete"

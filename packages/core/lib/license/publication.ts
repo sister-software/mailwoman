@@ -25,8 +25,9 @@ export function licenseKeysWellKnownURL(): string {
 /**
  * Whether mailwoman.ai still lists a key id as active.
  *
- * `unreachable` is a network answer while `unpublished` means the site answered without
- * a register to give, and offline verification stands under both.
+ * `unreachable` means the network request received no answer.
+ * `unpublished` means the site answered without a register.
+ * Offline verification remains available in both states.
  */
 export type LicenseKeyPublication = "listed" | "retired" | "unlisted" | "unpublished" | "unreachable"
 

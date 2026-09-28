@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The stamp carries no licensee and no key id, and is offline by design: the well-known register is the doctor's
- *   freshness check rather than a per-process network call.
+ *   The stamp carries no licensee or key ID. It works offline by design.
+ *   The well-known register supplies the doctor's freshness check, so each process makes no network call.
  */
 
 import { docsSiteURL } from "#license/docs-site"
@@ -18,7 +18,8 @@ import { appliedLicenseBranch } from "#license/obligations"
 export const LICENSE_PAGE_PATH = "/license"
 
 /**
- * The AGPL source offer to network users, which the commercial agreement waives.
+ * The AGPL source offer to network users.
+ * The commercial agreement waives this obligation.
  */
 const NOTICE_OBLIGATION = "modified or network-served copies must offer their source."
 const NOTICE_REMEDY = "A commercial license waives that obligation"

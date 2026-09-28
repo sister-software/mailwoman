@@ -157,8 +157,9 @@ describe("parseExhibit21 — clean HTML table", () => {
 
 describe("parseExhibit21 — header-mapped columns and the indented corporate tree", () => {
 	/**
-	 * TDS indents each subsidiary one column right of its parent, and the nesting depth is
-	 * discarded because an Exhibit 21 row is a registrant→subsidiary edge either way.
+	 * TDS indents each subsidiary one column to the right of its parent.
+	 *
+	 * The parser discards nesting depth because each Exhibit 21 row is a registrant-to-subsidiary edge.
 	 */
 	it("reads an indented child row's name from the column between the header's name and jurisdiction columns", () => {
 		const html =
@@ -310,9 +311,10 @@ const FIXTURE_FILES = [
 ]
 
 /**
- * The substring check catches a jurisdiction or name fabricated from no input,
- * which requires a name-only shape in the swept set, rather than the concatenation
- * bugs the case-specific tests above cover.
+ * The substring check catches a jurisdiction or name fabricated from no input.
+ *
+ * A name-only shape in the swept set exposes that failure.
+ * The case-specific tests above cover concatenation bugs.
  */
 const NAME_ONLY_PROBES: Record<string, string> = {
 	"name-only table row": "<table><tr><td>Standalone Sub LLC</td></tr></table>",

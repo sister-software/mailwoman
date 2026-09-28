@@ -8,7 +8,8 @@ import { assertPublishable, refusalsForPublication } from "@mailwoman/core/layer
 import { describe, expect, it } from "vitest"
 
 /**
- * The `candidate` bundle as its manifest recorded it on 2026-09-26, which is the case this exists for.
+ * The `candidate` bundle as its manifest recorded it on 2026-09-26.
+ * This fixture preserves that case.
  */
 const CANDIDATE = {
 	name: "candidate",
@@ -18,7 +19,8 @@ const CANDIDATE = {
 }
 
 /**
- * The `poi` bundle, whose tier and license agree with publishing it.
+ * The `poi` bundle.
+ * Its tier and license permit publication.
  */
 const POI = {
 	name: "poi",

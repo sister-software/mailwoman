@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman release merge-admin`: the one sanctioned `gh pr merge --admin` route. It runs the
- *   sub-second guards the skipped checks would have, synchronously, and refuses to merge over a
- *   failure.
+ *   sub-second guards that the skipped checks would have run. It runs them synchronously and refuses
+ *   to merge after a failure.
  *
  *   The local checkout must be at the PR's head commit, because the guards measure the tree they run
  *   in. The command verifies the SHA and refuses with the checkout command otherwise.
@@ -36,8 +36,8 @@ export const spec = {
 const MERGE_METHODS = ["merge", "squash", "rebase"] as const
 
 /**
- * The paths whose change makes the board-pin guard mandatory: the corpus rows themselves,
- * the loader/fingerprint implementation, the pins API, and the pin test.
+ * Board-pin guard paths include the corpus rows, the loader and fingerprint
+ * implementation, the pins API plus the pin test.
  *
  * The same three filters `.github/workflows/board-pins.yml` triggers on.
  */

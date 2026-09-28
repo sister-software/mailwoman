@@ -159,8 +159,9 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 }
 
 /**
- * The scan cap for {@linkcode countShapedOnlyKeys}, since the answer is only used as "any,
- * and roughly how many" in an error message.
+ * The scan cap for {@linkcode countShapedOnlyKeys}.
+ *
+ * The error message needs to say only whether any keys exist and roughly how many.
  */
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 

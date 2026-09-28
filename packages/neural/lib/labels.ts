@@ -5,16 +5,16 @@
  *
  *   Mirror of `packages/corpus-python/src/mailwoman_train/labels.py`.
  *
- *   Index ↔ label parity is essential: the model emits logits in one canonical order on both sides
- *   and any drift here silently corrupts BIO decoding. STAGE2 strictly extends STAGE1 — the first
+ *   Index ↔ label parity is essential. The model emits logits in one canonical order on both sides.
+ *   Any drift silently corrupts BIO decoding. STAGE2 strictly extends STAGE1. The first
  *   15 indices are identical, so reading a v0.2.0 (Stage 1) model with the Stage 2 label vocabulary
  *   stays correct. the extra entries are unused.
  *
  *   Runtime loading: as of v0.4.0 the trained label vocabulary is carried in `model-card.json`'s
  *   `labels` field and read by `loadFromWeights` (see `weights.readLabelsFromModelCard`). These
  *   constants remain the compile-time fallback for legacy bundles whose cards predate the field —
- *   safe because such bundles are by construction Stage 1 or Stage 2, and Stage 2 prefix-extends
- *   Stage 1. A future Stage 3 ship will not be safe under the fallback. the loader treats a missing
+ *   safe because such bundles are by construction Stage 1 or Stage 2. Stage 2 prefix-extends
+ *   Stage 1. A future Stage 3 ship will not be safe under the fallback. The loader treats a missing
  *   `labels` field as "you are loading a pre-v0.4.0 bundle" rather than "unknown stage".
  */
 
@@ -82,7 +82,8 @@ export const STAGE3_FINE_TAGS = [
 export const STAGE3_TAGS = [...STAGE2_TAGS, ...STAGE3_FINE_TAGS] as const
 
 /**
- * Stage-3 tags expanded into BIO labels, which is the form the decoder scores against.
+ * Stage-3 tags expanded into BIO labels.
+ * The decoder scores against this form.
  */
 export const STAGE3_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
 	"O" as BIOLabel,

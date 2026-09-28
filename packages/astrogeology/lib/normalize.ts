@@ -56,8 +56,9 @@ export interface NormalizedBBox {
 }
 
 /**
- * A full turn in degrees: the width of the source's 0..360 range, and the shift
- * that carries a longitude past 180 back into −180..180.
+ * A full turn in degrees is the width of the source's 0..360 range.
+ *
+ * It is also the shift used to return longitude values past 180 to −180..180.
  */
 const FULL_TURN_DEGREES = 360
 

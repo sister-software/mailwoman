@@ -7,9 +7,9 @@
  * from the input and re-run the full pipeline: the displacement from the row's own undeleted anchor says what the
  * component was worth, aggregated per (component, locale).
  *
- * This is a measurement layer rather than a check: it never joins the combined verdict, it has no stored expected
- * values, and its verdict says only whether the instrument ran. A map of all-zero cells is "not measured", never
- * "no check failed".
+ * This layer measures component ablations and does not contribute to the combined verdict. It stores no expected
+ * values. Its verdict reports whether the instrument ran. A map of all-zero cells means "not measured"; it does not
+ * mean "no check failed".
  *
  * Every variant grades against a graceful-degradation ladder synthesized per row from the gazetteer, with the
  * expected rung computed from the components the deletion left behind rather than from the variant's own output.
@@ -153,14 +153,15 @@ export function deleteSpan(input: string, at: number, length: number): string {
  *
  * 1. `empty` — the asserted value is the empty string.
  *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty.
- *    There is no value to delete, and treating it as a deletion would manufacture support.
+ *    An empty asserted value gives the ablation no text to remove.
+ *    Counting it as a deletion would create support.
  * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the
  *    resolved value, e.g. `country: "United States"` against an input saying `USA`).
  *    Deleting it would require guessing which span it came from.
  * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value
  *    asserted for a second component.
- *    Either way the deletion is not attributable to one component,
- *    which is the only thing this map measures.
+ *    Neither case attributes a deletion to one component.
+ *    This map measures component-level deletions.
  * 4. `nested` — the value is a proper substring of another asserted component's
  *    value (`York` inside `New York`).
  *    Deleting it damages the neighbour, so the row would measure a two-component
@@ -281,7 +282,9 @@ interface CaseRow {
 /**
  * The per-case `ablation_expect` pins, keyed by case id.
  *
- * Read from the built DB when the column is there, and from the committed seed otherwise.
+ * Read from the built DB when it has the column.
+ * Otherwise, read from the committed seed.
+ *
  * The dual path is not belt-and-braces: `ablation_expect` landed with the expectation
  * model (2026-08-05) and the shared `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`
  * predates it, so a layer that only read the column would silently ignore every pin
@@ -464,8 +467,8 @@ export async function runAblationLayer(
 
 			// Where the undeleted case already stands on its own ladder.
 			// The floor every variant is judged from (`gradeAgainstLadder`).
-			// `null` (anchor off its own ladder, or unresolved) makes the whole case ungradable,
-			// which is reported rather than counted as anything.
+			// `null` means the anchor is off its ladder or unresolved.
+			// The case is ungradable and reported separately.
 			const anchorRungDepth =
 				built.ladder && anchor.lat != null && anchor.lon != null
 					? (achievedRung(anchor.lat, anchor.lon, built.ladder)?.depth ?? null)
@@ -543,9 +546,9 @@ export async function runAblationLayer(
 					ladderGaps: built.ladder ? built.ladder.gaps.map((g) => `${g.placetype} ${g.name}: ${g.reason}`) : [],
 				})
 
-				// Two different nulls, and the progress line must not conflate them: `no-anchor`
-				// is the row failing to resolve as written (no anchor to measure against),
-				// `unresolved` is the deletion costing the answer.
+				// The progress line keeps two null cases separate.
+				// `no-anchor` means the row failed to resolve as written, leaving no anchor to measure against.
+				// `unresolved` means the deletion cost the answer.
 				const moved =
 					scored.displacementKm != null
 						? `${scored.displacementKm.toFixed(2)}km`
@@ -581,7 +584,7 @@ export async function runAblationLayer(
 			unavailableReason: gazetteer.unavailableReason,
 			overrideSource: overrides.source,
 			overrideCount: overrides.byCaseID.size,
-			// Cases whose ladder could not be built, and why.
+			// Cases whose ladder could not be built, with the reason.
 			// The complement of `ladderGradedCount` at the row level, kept per case so a thin
 			// expectation column is attributable to the gazetteer rather than to the parser.
 			ladderProblems,
@@ -607,8 +610,9 @@ export async function runAblationLayer(
 
 	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir: outDir.toString(), pinLine, skips })
 
-	// The instrument rather than a check: a map of zero cells means the run measured no row, and a "pass"
-	// printed over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
+	// This instrument measures rows rather than checking them.
+	// A map of zero cells means the run measured no row.
+	// Printing "pass" over an empty map would report success when the run measured no rows.
 	return { pass: cells.length > 0, outDir: outDir.toString(), cells }
 }
 
@@ -675,10 +679,10 @@ function printSummary(
 		)
 	}
 
-	// The headline the operator asked for, in one line each: the old verdict,
-	// the new one, and the size of the difference between them.
-	// Printed even at zero, because "0 rows were misgraded" is a measurement here, but only
-	// when the ladder actually graded something, which the `ungraded` count states outright.
+	// Print the old verdict, new verdict and difference on separate lines.
+	// Print these values at zero too.
+	// "0 rows were misgraded" is a measurement only when the ladder graded at least one row.
+	// The `ungraded` count makes that denominator clear.
 	const ungraded = rows.length - ladderGraded.length
 	const trueFail = ladderGraded.filter((r) => !PASSING_GRADES.has(r.grade))
 

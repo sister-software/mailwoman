@@ -11,8 +11,8 @@
  *   1. rows: `placetype = 'postalcode'` counts per country, read straight off the backend's own table. A count is not
  *      reachability (an indexed row the query path never returns is still zero evidence), so it is reported as a bound rather than as coverage.
  *   2. reachability: one real (postcode, locality) pair per codex system, run through the same `findPlace` calls the
- *      pass itself makes, reporting whether the postcode resolved, whether an exact same-named locality came back, and
- *      whether the pair was therefore coherent. This is the number that decides whether the pass can speak.
+ *      pass itself makes. It reports whether the postcode resolved and whether an exact same-name locality came back.
+ *      Those results show whether the pair was coherent. This is the number that decides whether the pass can speak.
  *
  *   The candidate set is bounded by codex rather than by the gazetteer: `candidateSystemsForPostcode` only knows the systems
  *   in `SYSTEM_CODES`, so a country with no codex address system can never be proposed however many rows it has. The
@@ -36,8 +36,9 @@ import { conventionCandidateDBPath, existingWOFDatabasePaths } from "#resolver-b
 /**
  * One real pair per codex system, a postcode that exists and the locality it belongs to.
  *
- * The pass needs both halves, so a system whose postcodes are present but whose localities
- * are not still reads as unreachable, which is correct: the mechanism would abstain there.
+ * The pass needs both halves, so a system whose postcodes are present
+ * but whose localities are not still reads as unreachable.
+ * The mechanism would abstain in that case.
  */
 const PROBES: ReadonlyArray<{ system: string; country: string; postcode: string; locality: string }> = [
 	{ system: "us", country: "US", postcode: "75001", locality: "Addison" },

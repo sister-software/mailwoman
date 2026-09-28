@@ -6,7 +6,7 @@
  *   The decode surface's fold, against a stub engine.
  *
  *   Three decisions in this fold are silent when wrong and change the resulting curve: which tokens count toward a
- *   component's confidence, how they are folded to one number, and what happens to a component the truth row never
+ *   component's confidence, how they are folded to one number and what happens to a component the truth row never
  *   mentions. The last has a wrong answer in both directions — grade it wrong and a partial-truth corpus scores correct
  *   output as hallucination. drop it silently and the curve covers a fraction of the parse without saying so.
  */
@@ -62,8 +62,9 @@ describe("decodeReliabilitySample", () => {
 	}
 
 	it("keeps a produced tag the truth row never mentions OUT of the curve, and counts it", async () => {
-		// No wired corpus asserts every component — the board asserts a median of one key per row —
-		// so an unasserted tag is not evidence of a hallucination, and curving it as one measures the corpus.
+		// No wired corpus asserts every component — the board asserts a median of one key
+		// per row — so an unasserted tag is not evidence of a hallucination.
+		// Curving it as one measures the corpus.
 		const sample = await decodeReliabilitySample(stubEngine(WITH_UNASSERTED), [ROW], ComponentAggregate.Min)
 
 		expect(sample.observations.map((observation) => observation.strata["tag"])).toEqual(["street"])
@@ -120,7 +121,7 @@ describe("decodeReliabilitySample", () => {
 
 	it("EXCLUDES a row with no component truth rather than grading it", async () => {
 		// A literal input carries no truth.
-		// Counting it as wrong would manufacture errors out of rows nobody asserted anything about.
+		// Counting it as wrong would manufacture errors from rows without an assertion.
 		// Counting it as right would do the opposite.
 		// Both are worse than saying so.
 		const run: GeocodeRunLike = {
@@ -153,7 +154,8 @@ describe("decodeReliabilitySample", () => {
 	it("ignores a component whose tokens are not in the trace, and says the row scored nothing", async () => {
 		// The result and the trace can disagree: a component assembled by a repair
 		// after the decode has no token carrying its tag.
-		// There is no confidence to grade there, and inventing one would be the whole defect.
+		// There is no confidence to grade there.
+		// Inventing one would be the defect.
 		const sample = await decodeReliabilitySample(
 			stubEngine({
 				result: { components: { locality: "Springfield" } },

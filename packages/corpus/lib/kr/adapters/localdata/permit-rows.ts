@@ -19,8 +19,8 @@ import { Globerator } from "spliterator/node/fs"
 import type { Aligned } from "#kr/adapters/localdata/align"
 
 /**
- * The source label every row of this adapter carries, and the name a config's
- * `source_weights` addresses it by.
+ * The source label stored on every row from this adapter.
+ * Configs use this label as the `source_weights` key.
  */
 export const SOURCE = "localdata-kr"
 
@@ -151,8 +151,8 @@ export async function* readPermitDirectory(
  *
  * The token labels are derived from the spans rather than carried beside them:
  * a token is `B-<tag>` when its first character falls inside a span, `O` otherwise.
- * A span covering several tokens therefore labels only the token it starts in,
- * which is what the char-path trainer reads the spans for.
+ * A span covering several tokens labels only the token where it starts.
+ * The char-path trainer reads this label from each span.
  */
 export function alignedToCJKRow(aligned: Aligned): Record<string, unknown> {
 	const raw = aligned.raw

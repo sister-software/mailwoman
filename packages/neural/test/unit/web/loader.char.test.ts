@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The browser loader takes the char path when the card says `encoder: "char"` (#2164): it fetches the graph and
- *   the sealed vocabulary, never the tokenizer or the lexicons, and hands the classifier a `charEncoder`.
+ * @file The browser loader takes the char path when the card says `encoder: "char"` (#2164). It fetches the graph and
+ *   sealed vocabulary without fetching the tokenizer or lexicons. It gives the classifier a `charEncoder`.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

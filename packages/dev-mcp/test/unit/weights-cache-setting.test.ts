@@ -105,8 +105,8 @@ describe("weights_cache — the guard", () => {
 	})
 
 	it("separates under-staged from wrong-shape", async () => {
-		// The two need different fixes, and the failure they prevent looks like a model regression
-		// rather than a missing file, so one message for both sends the reader to the wrong place.
+		// The two states need different fixes.
+		// Both can look like a model regression, so one shared message would send the reader to the wrong fix.
 		const root = await stageCache("under-staged", ["fst-en-us.bin", "postcode-en-us.bin"])
 
 		await expect(assertWeightsCacheStaged(root)).rejects.toThrow(/declares/)
@@ -114,8 +114,9 @@ describe("weights_cache — the guard", () => {
 	})
 
 	it("checks the locale the engine will actually load", async () => {
-		// A cache staged for en-us is not a cache for fr-fr, and the resolver would silently
-		// fall through to the installed fr-fr package rather than report that.
+		// A cache staged for en-us does not match the fr-fr locale this engine loads.
+		// The resolver would otherwise fall through to the installed fr-fr package
+		// without reporting the mismatch.
 		const root = await stageCache("ok")
 
 		await expect(assertWeightsCacheStaged(root, "fr-fr")).rejects.toThrow(/fr-fr/)

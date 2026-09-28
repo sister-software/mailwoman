@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Build `zoning-ireland.db`, the sealed two-tier polygon layer whose coverage basis and licence tier are independent refusals.
+ * Build `zoning-ireland.db`, the sealed two-tier polygon layer. Its coverage basis and licence tier can each refuse publication.
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers"
@@ -65,12 +65,14 @@ export const PLAN_LEVEL_SCHEME = "IE-PLAN-LEVEL"
 export const DEFAULT_CHUNK_SIZE = 100_000
 
 /**
- * Where a build gets its features, and — for a real one — how it bounds each process's share of them.
+ * Where a build gets its features.
+ * A real build also bounds each process's share of them.
  */
 export type BuildZoningInput =
 	| {
 			/**
-			 * A feature source consumed in this process, and the per-chunk fallback of the batched form.
+			 * A feature source consumed in this process.
+			 * It is the per-chunk fallback of the batched form.
 			 */
 			source: ZoningFeatureSource
 	  }
@@ -110,18 +112,20 @@ export type BuildZoningOptions = BuildZoningInput & {
 	 */
 	indexResolution: number
 	/**
-	 * The resolution `layer_coverage` rows are keyed at, which must be coarser than the index resolution.
+	 * The resolution used for `layer_coverage` row keys.
+	 * It must be coarser than the index resolution.
 	 */
 	coverageResolution: number
 	/**
 	 * The publisher's own `Shape__Area` sum in square metres, read from the live service.
-	 * supplied, the build asserts its encoded rings agree with it.
+	 *
+	 * When supplied, the build asserts that its encoded rings agree with this value.
 	 */
 	expectedSourceAreaM2?: number
 	/**
 	 * The feature count the live service reports.
 	 *
-	 * Supplied, the build asserts its own streamed total against it.
+	 * When supplied, the build asserts its streamed total against this value.
 	 */
 	expectedFeatureCount?: number
 	/**
@@ -142,8 +146,10 @@ export interface BuildZoningResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * The partial share over the stored rows, which differs from the share the resolution
-	 * was chosen on because the whole side is compacted per feature.
+	 * The partial share over the stored rows.
+	 *
+	 * This differs from the share used to choose the resolution because the whole
+	 * side is compacted per feature.
 	 */
 	storedPartialShare: number
 	/**
@@ -160,8 +166,9 @@ export interface BuildZoningResult {
 	tier: LayerTier
 	license: string
 	/**
-	 * The ring-role census: how many rings, how many the orientation read as exteriors and holes,
-	 * and how many holes were placed on their parent's boundary rather than inside it.
+	 * The ring-role census records the total rings and the exteriors and holes inferred from orientation.
+	 *
+	 * It also counts holes placed on their parent's boundary rather than inside it.
 	 */
 	rings: {
 		total: number
@@ -326,8 +333,8 @@ async function buildZoningResult(
 		}>
 	).map((row) => row.resolution)
 
-	// No secondary indexes: both probes this artifact serves are already primary-key probes,
-	// and an index over a `without rowid` table would roughly double the cell tier
+	// Both probes this artifact serves already use primary keys, so it needs no secondary indexes.
+	// An index over a `without rowid` table would roughly double the cell tier
 	// to serve a scan that is already short.
 	const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
 
@@ -540,9 +547,9 @@ function assertAreaAgreement(
 /**
  * Run the ingest as a sequence of bounded child processes, over ranges of the authority's own feature ids.
  *
- * @throws {Error} When a chunk exits non-zero, or prints no result line —
- * a chunk that died mid-range has written a partial set of rows, and continuing
- * would seal an artifact missing features nobody could name.
+ * @throws {Error} When a chunk exits non-zero or prints no result line.
+ * A chunk that died mid-range has written a partial set of rows.
+ * Continuing would seal an artifact missing features without stable identifiers.
  */
 async function runBatchedIngest(
 	tmpPath: string,
@@ -553,8 +560,8 @@ async function runBatchedIngest(
 	const script = resolveModulePath("@mailwoman/zoning/scripts/ingest-chunk")
 	const chunks: ZoningChunkResult[] = []
 
-	// The upper bound is deliberately open: the source reports a count rather than a maximum id,
-	// and a range that stopped at the count would drop every feature past a gap in the numbering.
+	// The upper bound is deliberately open because the source reports a count instead of a maximum ID.
+	// A range that stopped at the count would drop every feature after a numbering gap.
 	let from = 1
 
 	for (;;) {
@@ -584,8 +591,10 @@ async function runBatchedIngest(
 }
 
 /**
- * Refuse a coverage row that would license a negative claim, which no row of this layer may
- * support because the Department publishes its coverage detail only inside a map viewer.
+ * Refuse a coverage row that would license a negative claim.
+ *
+ * No row of this layer can support that claim because the Department publishes
+ * coverage detail only in a map viewer.
  */
 export function assertNoNegativeClaim(cells: ReadonlyArray<CoverageCell>): void {
 	assertCoverageNoNegativeClaim("zoning build", cells, GZT_COVERAGE_LIMIT)

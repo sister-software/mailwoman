@@ -1,8 +1,8 @@
 """Rendering US and French addresses into five non-Latin scripts.
 
 Each batch carries the seed rows and their target script. The model answers one JSONL line per seed,
-keyed by the seed's index in the batch, and every returned row is re-validated against the
-surface-form invariant before it is written.
+keyed by the seed's index in the batch. Validate each returned row against the surface-form invariant
+before writing it.
 """
 
 from __future__ import annotations

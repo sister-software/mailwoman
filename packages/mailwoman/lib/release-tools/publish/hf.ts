@@ -91,7 +91,8 @@ export interface PublishHFOptions {
 	/**
 	 * A retired option.
 	 *
-	 * It is accepted so existing invocations keep working, and it is ignored.
+	 * Existing invocations may still pass this option.
+	 * The command ignores it.
 	 */
 	wofHot?: string
 }
@@ -189,7 +190,8 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
 }
 
 /**
- * Fails when the model card records no training attribution, and warns about each source without a licence.
+ * Fails when the model card has no training attribution.
+ * Warns about each source without a licence.
  *
  * Only a missing attribution list is fatal.
  */

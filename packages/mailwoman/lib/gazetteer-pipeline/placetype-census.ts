@@ -12,8 +12,8 @@
  *   The census counts what the source can actually answer. `admin-global-priority.db` carries nine
  *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
- *   those. the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
- *   artifact by build recipe rather than by WOF's contents — which is coverage rather than fact (the
+ *   those. The projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
+ *   artifact by build recipe rather than by WOF's contents. This is coverage rather than fact (the
  *   meaning-of-zero rule), and why the artifact ships positive counts only and the reader treats a
  *   missing node as neutral. `mailwoman gazetteer granularity` measures the difference.
  *
@@ -43,8 +43,8 @@ import type { PathBuilderLike } from "path-ts"
  * this list stops compiling if it names something outside the vocabulary.
  * The type is the authority on membership.
  *
- * This array exists because a type union cannot be enumerated at runtime,
- * which is what the completeness test needs.
+ * A type union cannot be enumerated at runtime.
+ * The completeness test needs this array.
  *
  * A hand-maintained copy drifted once already — it was missing `custom`.
  */
@@ -90,10 +90,11 @@ export const WOF_PLACETYPES = [
  * WOF placetype → `ComponentTag` projection, the executable copy of
  * plan/reference/placetype-evidence.mdx's table.
  *
- * A `null` value means "in the vocabulary, deliberately not projected"
- * (context-only placetypes: metroarea, timezone, and the out-of-grammar continent/ocean rows) —
- * distinct from a placetype missing from this map entirely, which is an unmapped
- * placetype the builder will refuse to count silently.
+ * A `null` value means "in the vocabulary, deliberately not projected".
+ * This applies to context-only placetypes: metroarea, timezone, plus out-of-grammar continent/ocean rows.
+ *
+ * It differs from a placetype missing from this map entirely.
+ * That is an unmapped placetype the builder will refuse to count silently.
  *
  * `county`/`macrocounty` project onto `subregion` here, the US reading.
  * Ireland writes county as an address line ("Co. Kerry"), where the same rows project onto
@@ -124,8 +125,8 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	// A WOF `building`/`campus` place carries a venue name ("Empire State Building", "MIT Campus");
 	// the interior subdivisions carry a unit designator ("Concourse B", "Terminal 4", "West Wing").
 	// The admin build stocks none of these today.
-	// That is the ingest allowlist (`ADMIN_PLACETYPES`), not the source, and measuring
-	// the difference is what `mailwoman gazetteer granularity` exists for.
+	// That is the ingest allowlist (`ADMIN_PLACETYPES`), not the source.
+	// Measuring the difference is what `mailwoman gazetteer granularity` exists for.
 	building: "venue",
 	campus: "venue",
 	arcade: "unit",
@@ -159,8 +160,8 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 /**
  * The projection every census parent is keyed by.
  *
- * A census node describes the children of a place, and the placetypes that host
- * address-containing children are the locality-class ones.
+ * A census node describes the children of a place.
+ * The placetypes that host address-containing children are the locality-class ones.
  */
 const PARENT_PLACETYPES = ["locality", "localadmin"] as const
 

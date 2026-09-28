@@ -68,8 +68,8 @@ export function applyParentFallbackContradiction(roots: readonly AddressNode[]):
 }
 
 /**
- * Re-picks a resolved region and its unresolved child locality as a pair, choosing
- * the region candidate that actually contains a same-named locality.
+ * Re-picks a resolved region and its unresolved child locality as a pair, choosing the
+ * region candidate that actually contains a locality with the same name.
  *
  * This recovers cases such as "Portland, ME" where the region was picked in isolation
  * before the locality was known, and it leaves trees with a resolved locality untouched.
@@ -220,11 +220,11 @@ function revertResolverDecoration(node: AddressNode): void {
 }
 
 /**
- * Re-picks a locality to the same-named place inside the country the address names,
- * when that country is the locality's nearest admin context.
+ * Re-picks a locality to the place with the same name inside the country specified in
+ * the address, when that country is the locality's nearest admin context.
  *
  * It leaves the locality alone when it already resolved to that place or
- * when the named country holds no same-named locality.
+ * when that country has no locality with the same name.
  */
 export async function applyExplicitCountryCoherence(
 	roots: readonly AddressNode[],
@@ -284,7 +284,7 @@ async function reconcileExplicitCountry(
  * Re-picks the region and locality into a foreign country when the region token is that
  * country's subdivision and the default-country filter left it unresolved.
  *
- * Both the foreign region and a same-named locality under that country must resolve,
+ * Both the foreign region and a locality with the same name under that country must resolve,
  * so domestic queries whose region resolves are never changed.
  */
 export async function applyRegionCountryCoherence(

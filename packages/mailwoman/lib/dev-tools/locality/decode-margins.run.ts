@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `traceParse` carries both readings of a token — `logits`, the model's raw emission, and
- *   `emissions`, what viterbi decoded over after every prior wrote into it — so a row whose raw
+ *   `traceParse` carries two readings of a token. `logits` is the model's raw emission.
+ *   `emissions` is what viterbi decoded after every prior wrote into it. A row whose raw
  *   emission already refuses the locality is a training result while one whose raw emission
  *   favours it and whose post-prior matrix does not favour it reveals the prior that took it.
  */
@@ -189,8 +189,8 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 		const { trace } = await deps.diagnoseParse(input, { caseCountry: place.country })
 		const start = input.indexOf(place.locality)
 
-		// A rewritten locality (transliteration, different casing) leaves no token to index against,
-		// and a margin read at the wrong tokens describes the wrong part of the string.
+		// A rewritten locality (transliteration or different casing) leaves no token to index against.
+		// A margin read at the wrong tokens describes the wrong part of the string.
 		if (start === -1) {
 			entry.unlocated++
 
@@ -212,8 +212,8 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 		entry.rows++
 
 		if (values["with-geocode"]) {
-			// `defaultCountry` here rather than `caseCountry`: this call is the resolver's,
-			// and the country it takes is the scope prior the answer is produced under.
+			// Use `defaultCountry` rather than `caseCountry` for this resolver call.
+			// The resolver uses that country as the scope prior for its answer.
 			const answered = (await deps.geocode(input, { defaultCountry: place.country })).locality ?? null
 
 			if (answered === null) {

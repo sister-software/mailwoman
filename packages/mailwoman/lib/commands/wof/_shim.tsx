@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Deprecation-shim factory — the `mailwoman wof *` commands moved. Each sibling is one call naming its
- *   replacement. remove them, and this file with the last of them, after the one-minor-version courtesy window.
+ *   Deprecation-shim factory for moved `mailwoman wof *` commands. Each sibling calls its replacement.
+ *   Remove each shim after the one-minor-version courtesy window. Remove this file with the last shim.
  */
 
 import { Text } from "ink"

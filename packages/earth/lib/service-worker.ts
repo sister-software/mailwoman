@@ -7,16 +7,16 @@
  * hashed assets, the icons and the manifest — and no code here precaches a model, a database or a tile.
  *
  * The worker also carries the range-chunk cache for the byte-range databases the resolver reads from the data
- * origin: every validated 64 KB range chunk of a versioned, immutable URL is stored in Cache Storage keyed by URL
- * and offset, and each chunk's body length is checked against its Content-Range because Mobile Safari's http cache
+ * origin: every validated 64 KB range chunk of a versioned, immutable URL is stored in Cache Storage. The URL
+ * and offset form its key. Each chunk's body length is checked against its Content-Range because Mobile Safari's HTTP cache
  * can hand back a torn chunk (a truncated body for a 206) that reaches SQLite as "database disk image is
  * malformed" — a torn chunk is refetched once with `cache: "no-store"`, and the readers' own cache-busting retry
  * stays as the backstop for browsers without service workers.
  *
- * Non-database requests are never intercepted (no `respondWith`); sql.js-httpvfs issues its range reads as
- * synchronous XHR inside a dedicated worker, which still routes through here because a dedicated worker inherits
- * its creator document's controller, and the page posts {@link PruneMessage} after a release is selected and chunks
- * from other releases are dropped.
+ * Non-database requests are never intercepted. The handler does not call `respondWith` for them. sql.js-httpvfs issues
+ * range reads as synchronous XHR inside a dedicated worker. Those reads still route through this handler because the
+ * worker inherits its creator document's controller. The page posts {@link PruneMessage} after it selects a release
+ * and drops chunks from other releases.
  */
 
 /// <reference lib="webworker" />
@@ -146,8 +146,9 @@ async function respondWithCachedRange(request: Request, href: string, start: num
 }
 
 /**
- * Read a 206 response's body and verify its length against the Content-Range header,
- * which is the truth because a file's final chunk is legitimately shorter than requested.
+ * Read a 206 response's body and verify its length against the Content-Range header.
+ *
+ * The header gives the expected length, including for a final chunk shorter than requested.
  * The result is null for a torn body or an unparsable header.
  */
 async function validatedChunk(response: Response): Promise<ValidatedChunk | null> {

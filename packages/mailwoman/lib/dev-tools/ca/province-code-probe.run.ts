@@ -1,13 +1,14 @@
 /**
- * All thirteen Canadian province and territory codes, through the production path:
- * several collide with an ISO alpha-2 country code, and a code left unattested
- * by the corpus is read as the country it spells.
+ * Run all thirteen Canadian province and territory codes through the production path.
+ *
+ * Several collide with an ISO alpha-2 country code.
+ * A code left unattested by the corpus is read as the country it spells.
  *
  * Two arms per province, because `NL` contradicts the country with or without a postal code
  * while `PE` takes the locality slot once one is present.
  *
- * Each postal code is real and nearest its seat, and the distance is reported
- * so a reader can see the city and code name the same town.
+ * Each postal code is real and nearest its seat.
+ * The report includes the distance so a reader can see the city and code name the same town.
  *
  * Run:
  *
@@ -35,8 +36,9 @@ const { values } = parseArguments({
 })
 
 /**
- * One locality per province, the province's own seat rather than a name read from the postcode
- * artifact, which carries the code and its point but no name a query could be written with.
+ * Use one locality per province: the province's own seat.
+ *
+ * The postcode artifact carries the code and point but has no name for a query.
  */
 const SEATS: Readonly<Record<string, string>> = {
 	AB: "Edmonton",
@@ -55,8 +57,9 @@ const SEATS: Readonly<Record<string, string>> = {
 }
 
 /**
- * The first letter of a Canadian postal code names its province, which lets a real
- * code be found per province without a name join.
+ * The first letter of a Canadian postal code names its province.
+ *
+ * The probe uses that letter to select a real code for each province without a name join.
  */
 const POSTAL_PREFIXES: Readonly<Record<string, readonly string[]>> = {
 	AB: ["T"],
@@ -127,7 +130,8 @@ interface PostcodePick {
 	km: number
 }
 
-// Without `--weights-cache` this can only grade the installed model, which is the arm the change is measured against.
+// Without `--weights-cache`, this grades the installed model.
+// That is the arm used to measure the change.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const report: ProbeRow[] = []
 

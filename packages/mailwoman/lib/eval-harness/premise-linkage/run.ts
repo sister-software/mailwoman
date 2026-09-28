@@ -3,16 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two-arm premise-linkage runner: every controlled row goes through the same production
- *   `geocodeAddress` twice — once with the deps the shipped product uses, and once with those deps
- *   plus a configured authoritative provider — so the arm-to-arm delta is attributable to the
- *   provider rather than to the harness.
+ *   Runs each controlled row through production `geocodeAddress` twice. The first call uses the shipped product's
+ *   dependencies. The second adds a configured authoritative provider. The arm-to-arm difference therefore measures
+ *   the provider rather than the harness.
  *
- *   The open arm refuses on identity by construction: it has no authoritative namespace to answer
- *   in, so its identifier outcome is `refused` on every row, never `wrong`. Its comparable metric
- *   is the coordinate table. A refusal is not a miss, an ambiguous answer is never `exact`, a
- *   transport failure is `errored` rather than refused, and a match naming no identifier in the
- *   graded scheme is ungradable rather than `wrong`.
+ *   The open arm has no authoritative namespace for identity. Its identifier outcome is `refused` on every row.
+ *   The comparable metric is the coordinate table. A refusal, ambiguous answer and transport failure have distinct
+ *   outcomes: `refused`, a non-exact result and `errored`. A match without an identifier in the graded scheme is
+ *   ungradable.
  */
 
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
@@ -54,22 +52,27 @@ export const AUTHORITATIVE_ARM_NAME = "authoritative"
 /**
  * What the open arm records in the provider slot.
  *
- * An empty name would read as a provider whose name was lost, and this arm consulted none.
+ * An empty name would suggest that the provider's name was lost.
+ * This arm consulted no provider.
  */
 const OPEN_PROVIDER_NAME = "none"
 
 const METERS_PER_KM = 1000
 
 /**
- * Coordinate thresholds reported when the caller names none: a rooftop bar, a parcel bar,
- * and a building-block bar, each stated in the report beside its own denominator.
+ * Reports coordinate thresholds when the caller supplies none.
+ *
+ * The defaults are rooftop, parcel and building-block bars.
+ * The report gives each threshold with its own denominator.
  */
 const DEFAULT_COORDINATE_THRESHOLDS_M: readonly number[] = [5, 25, 100]
 
 /**
- * The ladder improvement and regression are measured on: a confidently wrong identifier
- * ranks worst, an abstention next, candidates next, and a committed correct identifier
- * best. ungradable rows have no rank and are excluded from the comparison.
+ * Ranks outcomes to measure ladder improvement or regression.
+ *
+ * A confidently wrong identifier ranks lowest, followed by an abstention,
+ * then candidates and a committed correct identifier.
+ * Ungradable rows have no rank and stay outside the comparison.
  */
 const OUTCOME_RANK: Readonly<Record<string, number>> = {
 	[PremiseLinkageOutcome.Wrong]: 0,
@@ -79,7 +82,7 @@ const OUTCOME_RANK: Readonly<Record<string, number>> = {
 }
 
 /**
- * How one arm's answer graded, and why it was not exact.
+ * Records how one arm's answer graded and explains an outcome short of exact.
  */
 export interface PremiseLinkageGrade {
 	outcome: PremiseLinkageOutcome
@@ -164,9 +167,9 @@ function coordinateErrorFor(
 	result: GeocodeResult,
 	assertion: AuthoritativeAssertion | undefined
 ): number | undefined {
-	// Three independent absences — terms that forbid publication, a row with no
-	// truth coordinate, and an arm that produced none — each keep the row out of the
-	// coordinate table rather than counting as a zero.
+	// Three independent conditions exclude a row from the coordinate table: terms forbid
+	// publication, the row lacks a truth coordinate, or the arm produced no coordinate.
+	// The aggregate does not count these cases as zero.
 	if (!row.coordinatePublishable) return undefined
 
 	if (row.expectedLat === undefined || row.expectedLon === undefined) return undefined
@@ -226,8 +229,10 @@ function isErrored(row: PremiseLinkageResultRow): boolean {
 }
 
 /**
- * The rows an arm could have answered exactly: ungradable rows always leave, and refusals
- * leave only under `abstain_ok`, while remaining `refused` in the row itself.
+ * Returns rows eligible for exact answers.
+ *
+ * It removes ungradable rows and removes refusals only under `abstain_ok`.
+ * Each refusal retains its `refused` outcome in the row.
  */
 function eligibleRows(
 	rows: readonly PremiseLinkageResultRow[],
@@ -291,7 +296,8 @@ function aggregateArm(
 	for (const shapeClass of PREMISE_LINKAGE_SHAPE_CLASSES) {
 		const classRows = rows.filter((row) => row.inputShapeClass === shapeClass)
 
-		// A class nobody supplied rows for has no rate to report, which is absent rather than zero.
+		// A class with no supplied rows has no rate.
+		// The report omits the rate instead of recording zero.
 		if (!classRows.length) continue
 
 		perClass[shapeClass] = ratesFor(classRows, policy)
@@ -413,7 +419,7 @@ export async function runPremiseLinkage(options: PremiseLinkageRunOptions): Prom
 		mailwomanVersion: options.mailwomanVersion,
 		policy: options.policy,
 		minCellSize: options.minCellSize,
-		// Set by the report writer, which is what removes cells.
+		// The report writer sets this field and removes cells.
 		// Zero here states no cell has been removed yet.
 		suppressedCells: 0,
 		arms: [

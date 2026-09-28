@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  * `@mailwoman/geographic-model` — the world-semantic layer: stable concepts beyond the POI
- * vocabulary, relation definitions, activities and affordances, rule modality, source observations,
- * derived facts, derivation provenance, and deterministic compilation and validation.
+ * vocabulary, relation definitions, activities, affordances, rule modality, source observations,
+ * derived facts, derivation provenance, deterministic compilation, plus validation.
  *
  * The authoring loader (`./load.ts`, the `./load` subpath) is deliberately not re-exported here: it is
  * the only module in the package that touches a filesystem and belongs to the build step rather than
@@ -23,8 +23,8 @@
  * 3. A second coverage register — dataset identity and coverage epistemics belong to
  *    `@mailwoman/core/layers`, and an expected-but-absent observation becomes negative evidence only
  *    where `supportsExclusion` permits it there.
- * 4. Empirical affordance statistics — this package owns the stable activity and affordance
- *    identifiers those statistics are fitted against, and no numeric values about them.
+ * 4. Empirical affordance statistics — this package owns the stable activity and affordance identifiers.
+ *    It does not own numeric values fitted against those identifiers.
  *
  * `@mailwoman/core` must not depend on this package: core ships the pipeline interface and roughly
  * 9 MB of reference data to every consumer, so a world-semantics dependency there is one every

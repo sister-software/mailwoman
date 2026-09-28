@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The conformance-law fixture interface's refusals. Every case here is a row that must not load, because
- *   the alternative to a refusal is a row that grades under a default nobody wrote and reports as authored.
+ *   the alternative to a refusal is a row that grades under an undeclared default and reports as authored.
  *
  *   The required pair is `rejects a fixture with no comparator` and `rejects an unknown comparator`:
  *   between them they are the whole reason the comparator set is closed, and both messages must carry the

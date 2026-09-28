@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The bin entry's argument handling, which sits in front of every command.
+ *   The bin entry's argument handling sits in front of every command.
  *
- *   The launcher cannot know the union of every command's flags, and it decides only two things before dispatching: is
- *   this a bare version request, and should an interactive geocode print a loading line. Both cases below are ones a
+ *   The launcher cannot know the union of every command's flags. Before dispatching, it decides whether this is
+ *   a bare version request and whether an interactive geocode should print a loading line. Both cases below are ones a
  *   stricter reading of the argument vector gets wrong while still looking correct for `mw --version`.
  */
 

@@ -1,18 +1,18 @@
-"""Which countries the validation and test splits hold rows for, and how many of those rows carry a street.
+"""Count countries represented in the validation and test splits. Count street-carrying rows for each country.
 
 `evaluate()` reports `val_loss`, `val_rows` and `macro_f1` over the whole split. A country
 contributing no row to it changes none of those numbers, so a run cannot tell a locale it validates
 well from a locale it does not validate at all.
 
 `splitForRow` in `packages/corpus/lib/utils/split.ts` sends a row to val or test only when its
-`components.region` matches a declared holdout string for its country, and `defaultHoldouts()` names
-US, FR and DE. So the splits are geographic holdouts over three countries rather than a sample of the
-corpus, every other country holds zero by construction, and a street row carrying no `region`
-component cannot be held out whatever the holdouts name.
+`components.region` matches a declared holdout string for its country. `defaultHoldouts()` names
+US, FR and DE. The splits hold out three countries geographically rather than sampling the corpus.
+Every other country holds zero by construction. A street row without `region` cannot be held out,
+regardless of the holdout values.
 
 Read a per-locale validation metric with its denominator beside it: a `macro_f1` computed over a split
-holding no GB row makes no statement about GB, and `cross_pollution`'s per-locale readings carry the
-same limit.
+holding no GB row makes no statement about GB. `cross_pollution`'s per-locale readings carry the same
+limit.
 
 Scans the parquet directly rather than the loader, because the question is which rows the split
 contains. What a run draws from it is a property of the sampler and is `audit_epoch_mixture`.
@@ -32,7 +32,7 @@ from ..config import ValidationCoverageConfig, load_config
 from ..data.loader import _parquet_paths
 
 #: Tags whose presence makes a row street-level. A validation row carrying neither measures the
-#: admin hierarchy alone, which is a different claim from parsing an address.
+#: admin hierarchy alone. That differs from parsing an address.
 STREET_TAGS = frozenset({"street", "house_number"})
 
 #: Columns the scan projects. Everything else in the row is irrelevant to the counts and reading it
@@ -181,8 +181,8 @@ def run(
     """Print the per-country table for each split, then the countries with no street-level signal.
 
     ``corpus_dir`` overrides ``data.corpus_dir``, which a training config states as the path the
-    corpus has on the Modal volume. On a machine that built the corpus, that path does not exist,
-    and the audit has to run there: it is the check that decides whether a run may start.
+    corpus has on the Modal volume. On a machine that built the corpus, that volume path does not
+    exist. Run the audit on the volume because its result determines whether a run may start.
 
     Raises {@link ValidationCoverageError} when the config declares ``data.required_validation_coverage``
     and a split falls short of it. The report is written and printed first either way, because a

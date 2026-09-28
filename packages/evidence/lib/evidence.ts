@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  * @file The typed evidence union. The difference between the kinds is what each is allowed to do:
  *
- *   - `observation` — retrieved from a named source at a named vintage. Carries no score. a source either said it or
+ *   - `observation` — retrieved from an identified source at a recorded vintage. Carries no score. a source either said it or
  *     did not.
- *   - `relation` — structural compatibility between entities. Carries an assertion, and a score only when that
- *     assertion is `inferred`.
+ *   - `relation` — structural compatibility between entities. It contains an assertion.
+ *     It contains a score only when that assertion is `inferred`.
  *   - `prior` — moves probability. Can never, by itself, prove or exclude.
  *
  *   An `exclusion` — proof that a candidate is impossible — joins the union from `./coverage.ts` and has no constructor
@@ -25,8 +25,9 @@ export interface Observation {
 	 * The vintage the source recorded this at.
 	 *
 	 * `null` when the record does not carry one — the gazetteer trace, for instance,
-	 * names the row it picked and not the extract's date — and a `null` is the statement
-	 * that it was not recorded, which a fabricated date could never be.
+	 * identifies the row the source picked.
+	 * It does not identify the extract's date.
+	 * A `null` means the source did not record a date.
 	 */
 	vintage: string | null
 	value: unknown

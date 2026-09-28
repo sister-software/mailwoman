@@ -82,7 +82,7 @@ describe("outputLines", () => {
 
 	it("omits the sections whose source produced nothing", () => {
 		// Omitted rather than rendered empty, because an empty `kind` section would read
-		// as the classifier having no opinion rather than nobody asking it.
+		// as the classifier having no opinion rather than because no query ran.
 		const lines = outputLines({ result: { ...RESULT, hierarchy: [], candidates: [] }, tree: TREE })
 
 		expect(labels(lines)).toEqual(["components", "resolved"])

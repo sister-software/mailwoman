@@ -2,16 +2,16 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A `{@link}` or `{@linkcode}` naming a symbol with no declaration. The tag reads as a promise that the
- *   thing exists, and an agent following one implements the name instead of finding the code.
+ * @file This check finds `{@link}` or `{@linkcode}` tags that point to undeclared symbols.
+ *   Readers can follow a tag as a promise that the symbol exists.
  *
- *   A bare identifier target — `{@link foo}`, `{@linkcode Foo.bar}` — is checked against every identifier the tree
- *   declares or imports anywhere. A URL target, a path, and a `{@link foo | text}` label are left alone, and the name
- *   set is repository-wide because a link to a name declared in another package is correct and common.
+ *   A bare identifier target such as `{@link foo}` or `{@linkcode Foo.bar}` is checked against every identifier
+ *   the tree declares or imports. URL targets and file paths are handled as addresses. A `{@link foo | text}`
+ *   label supplies its own display text. The identifier set covers the repository because links may point across packages.
  *
- *   A backticked name inside a doc comment is read the same way when it is shaped like a declaration — a call such as
- *   `` `parse()` ``, or a camel-case name with at least two humps such as `` `readPackageJSONFile` `` — while a short
- *   backticked word such as `` `db` ``, `` `lat` ``, a CLI flag, or a wire field is prose and is not judged.
+ *   A backticked token inside a doc comment is checked when it has declaration shape. Examples include
+ *   `` `parse()` `` and camel-case `` `readPackageJSONFile` ``. Short tokens such as `` `db` `` and `` `lat` ``
+ *   remain prose. The same applies to CLI flags and wire fields.
  *
  *   A tag naming a symbol that exists somewhere but not where the reader can reach it still passes. What this refuses
  *   is the name that exists nowhere at all.
@@ -65,8 +65,8 @@ const FILE_EXTENSION_TAIL = /\.[a-z0-9]{1,4}$/u
  * with at least {@linkcode HUMP_FLOOR} humps, or a call with at least one,
  * judged by its head since the head is what resolves.
  *
- * A single word, called or not, is prose and prose may spell anything, and a name
- * with no lowercase letter is a code such as a postcode.
+ * Single-word tokens remain prose with or without call syntax.
+ * A token without a lowercase letter is a code, such as a postcode.
  */
 function isDeclarationShaped(target: string): boolean {
 	if (FILE_EXTENSION_TAIL.test(target)) return false
@@ -151,8 +151,9 @@ function docTargets(text: string, file: string): DocTarget[] {
 }
 
 /**
- * Every identifier the file spells, in a declaration or a use, including a name the code reaches
- * on an external library, which a doc comment may point at as readily as a local declaration.
+ * Every identifier the file spells in a declaration or use, including external-library identifiers.
+ *
+ * A doc comment may point to an external identifier or a local declaration.
  */
 function spelledNames(text: string, file: string, into: Set<string>): void {
 	const source = ts.createSourceFile(
@@ -232,7 +233,7 @@ interface DocLinkSweep {
 }
 
 /**
- * Every doc target the tree never declares, and every register entry the tree no longer needs.
+ * Every doc target the tree does not declare and every register entry the tree no longer needs.
  */
 async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 	// The vocabulary is read from every tracked TypeScript file, tests included,

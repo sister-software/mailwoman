@@ -12,8 +12,7 @@
  *   feeds `neural/span-proposer-lexicon.ts` and no module in `formatter/` reads it.
  *
  *   Provenance: `arcade`, `building`, `campus`, `concourse`, `enclosure`, `installation` and `wing`
- *   are WOF placetypes; `terminal` and `gate` are OpenStreetMap `aeroway` tag values, which WOF's
- *   vocabulary does not cover.
+ *   are WOF placetypes. `terminal` and `gate` are OpenStreetMap `aeroway` tag values absent from WOF's vocabulary.
  *
  *   The pin is a type-only import (`satisfies readonly WhosOnFirstPlacetype[]`) erased at build, so
  *   the compiler refuses an entry WOF does not define at zero bundle cost. A value import of the
@@ -44,9 +43,12 @@ const WOF_VENUE_STRUCTURE_PLACETYPES = [
 const OSM_AEROWAY_STRUCTURE_DESIGNATORS = ["terminal", "gate"] as const
 
 /**
- * Every venue-interior designator the span proposer recognizes, lowercased and deliberately
- * without abbreviations: these words are written in full on signage, and a two-or-three letter
- * abbreviation is the false-positive shape ("Ms Smith" for `MS`) the lexicon already avoids.
+ * Every venue-interior designator the span proposer recognizes, lowercased
+ * and deliberately without abbreviations.
+ *
+ * These words are written in full on signage.
+ * A two-or-three letter abbreviation is the false-positive shape ("Ms Smith" for `MS`)
+ * the lexicon already avoids.
  * Add one only with a measured need.
  */
 export const VENUE_STRUCTURE_DESIGNATORS: readonly string[] = [
@@ -82,7 +84,8 @@ export const VENUE_STRUCTURE_MODIFIERS: readonly string[] = [
  * a subset of {@link VENUE_STRUCTURE_DESIGNATORS} that excludes `gate` and `building`, which form
  * ordinary street names in the modifier+designator shape ("East Gate", "Building Society Place").
  *
- * Adding an entry means claiming no street is named "<modifier> <entry>"; check before you do.
+ * Adding an entry claims no street uses the name "<modifier> <entry>".
+ * Check before you add it.
  */
 export const MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS: readonly string[] = [
 	"wing",

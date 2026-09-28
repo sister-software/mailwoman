@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Build-health check. Runs the real production build (`docusaurus build`) and asserts it both
- *   succeeds and emits no warnings/errors — most importantly Docusaurus's broken-anchor /
- *   broken-link warnings, which only surface during the static-site-generation phase rather than during
+ *   succeeds and emits no warnings/errors. This includes Docusaurus's broken-anchor and broken-link warnings.
+ *   Those warnings surface during static-site generation rather than during
  *   typecheck or bundling.
  *
  *   This runs as the Playwright `build` project (see playwright.config.ts), building into a throwaway
@@ -29,7 +29,7 @@ import { TextSpliterator } from "spliterator"
 const DOCS_ROOT = resolvePath(__dirname, "../..")
 
 // Not `childEnv` from @mailwoman/core: importing workspace TypeScript pulls Playwright's loader into
-// the module graph, and it handles neither `.ts`-extension imports nor the project references behind
+// the module graph. It handles neither `.ts`-extension imports nor the project references behind
 // them. The helper is a spread over process.env. Playwright loads this spec outside the repo's helpers.
 // oxlint-disable-next-line sister-software/no-process-globals -- see above
 const processEnv = process.env

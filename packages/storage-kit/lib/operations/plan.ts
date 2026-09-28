@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `storage.plan` — what `storage.prepare` would do to this device, and every reason it would refuse.
+ *   `storage.plan` — the actions `storage.prepare` would take on this device and each reason it would refuse.
  *
  *   Read-only and unprivileged on purpose: the operator should be able to see the guard verdict without first handing
  *   the process root.

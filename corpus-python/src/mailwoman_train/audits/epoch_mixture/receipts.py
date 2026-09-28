@@ -1,11 +1,11 @@
 """Match drawn rows against corpus receipts and bind a passing audit to its input bytes.
 
 A receipt describes a row shape that a config expects its corpus to contain. The shape can fix a
-source, a country and an ordered component sequence. The receipt also sets the minimum number of
-matching draws per epoch, and the audit raises when a receipt falls short.
+source-country pair plus an ordered component sequence. The receipt also sets the minimum number of
+matching draws per epoch. The audit raises when a receipt falls short.
 
-The binding token is a digest of the config file and the corpus MANIFEST. A GPU run must present
-the token from the CPU preflight, which prevents a passing audit from being reused for other bytes.
+The binding token is a digest of the config file and the corpus MANIFEST. The CPU preflight computes
+the token. A GPU run must present it to tie a passing audit to those bytes.
 """
 
 from __future__ import annotations

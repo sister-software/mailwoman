@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Collects BDC filings and nearby infrastructure as evidence for one broadband claim. Evidence can
- *   support a claim, and missing coverage produces an abstention or a lower confidence.
+ *   Collects BDC filings and nearby infrastructure as evidence for one broadband claim.
+ *   The evidence can support a claim. Missing coverage produces an abstention or lower confidence.
  *
  *   The filing channel uses `geoid` when present and otherwise approximates the block with the point's
  *   H3 cell. The physical channel needs a coordinate, so a geoid-only claim skips it. Only fiber and
@@ -240,7 +240,8 @@ function combineCoverage(
 /**
  * Throw unless a layer's recorded H3 spine resolution equals `BDC_H3_RESOLUTION`.
  *
- * The coverage lookup derives res-6 parents from res-9 cells, which only works at that resolution.
+ * The coverage lookup derives res-6 parents from res-9 cells.
+ * The lookup requires cells at that resolution.
  */
 async function assertLayerSpineResolution(
 	layer: "bdc" | "poi",

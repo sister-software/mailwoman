@@ -53,8 +53,8 @@ export async function loadScriptRoutedClassifier(
  * Resolves a weights package and builds a {@link NeuralAddressClassifier} from its model,
  * tokenizer or character encoder, CRF transitions and optional channel artifacts.
  *
- * A channel artifact that is missing or fails to parse is warned about and skipped rather
- * than failing the load, and a pair index for another country than the locale's is ignored.
+ * The loader warns about a missing or unreadable channel artifact and skips it.
+ * The loader also ignores a pair index for a country that differs from the locale's country.
  */
 export async function loadClassifierFromWeights(
 	opts: ResolveWeightsOpts & {

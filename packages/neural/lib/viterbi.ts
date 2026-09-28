@@ -66,7 +66,7 @@ interface ViterbiTransitionAdjustment {
 }
 
 /**
- * The scores that {@link viterbi} decodes: emissions, transitions, and optional start,
+ * The scores that {@link viterbi} decodes: emissions, transitions and optional start,
  * end and per-timestep bonuses.
  */
 export interface ViterbiInput {

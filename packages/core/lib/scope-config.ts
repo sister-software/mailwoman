@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reads `scope.config.json`, which lists the countries in each locale tier and the extra countries where the graded
+ *   Reads `scope.config.json`. It lists the countries in each locale tier and the extra countries where the graded
  *   arc blocks a regression.
  *
- *   The config holds membership only. The evidence for each tier lives in `docs/engineering/scope.mdx`, and the
- *   `repo-health` `locale-scope` check fails when the two disagree.
+ *   The config holds membership only. `docs/engineering/scope.mdx` contains the evidence for each tier.
+ *   The `repo-health` `locale-scope` check fails when the two disagree.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -16,7 +16,7 @@ import { readLocalJSONFile } from "#fs/readers"
 import { repoRootPathBuilder } from "#paths"
 
 /**
- * The tier keys, as numbered in `scope.mdx`.
+ * The tier keys, numbered as in `scope.mdx`.
  * They are strings because JSON object keys are strings.
  */
 export const SCOPE_TIER_KEYS = ["1", "2", "3", "4", "5"] as const
@@ -54,8 +54,8 @@ export interface ScopeConfig {
 /**
  * The training config behind one shipped model.
  *
- * The config's `country_weights` block decides which countries the model admits,
- * and coverage reports read it.
+ * The config's `country_weights` block decides which countries the model admits.
+ * Coverage reports also read this block.
  */
 export interface ShippedTrainingConfig {
 	/**
@@ -75,7 +75,8 @@ export interface ShippedTrainingConfig {
 }
 
 /**
- * Reads `scope.config.json` from a repository root, which defaults to this checkout.
+ * Reads `scope.config.json` from a repository root.
+ * The default root is this checkout.
  */
 export async function readScopeConfig(repoRoot: PathBuilderLike = repoRootPathBuilder()): Promise<ScopeConfig> {
 	return readLocalJSONFile<ScopeConfig>(repoRoot, "scope.config.json")

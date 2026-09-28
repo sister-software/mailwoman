@@ -15,8 +15,8 @@
  *   the two publishing operations are off BY default. An MCP session that receives this server must not thereby receive
  *   npm authority — the same posture `@mailwoman/dev-mcp` states for itself. `publish-workspace` and `bless-package` are
  *   registered only when the server is started with `--allow-external-write`, and even then they run the plan → execute
- *   interface the operations enforce themselves: a plan file whose digest must match a recomputed one on an unmoved,
- *   clean head. This table never bypasses that, and carries no release logic of its own.
+ *   interface the operations enforce themselves: a plan file whose digest must match a recomputed one on a clean,
+ *   unmoved head. This table does not bypass those checks. It carries no release logic of its own.
  */
 
 import { OperationEffect, type ReleaseContext, type ReleaseOperation } from "@mailwoman/release-kit"
@@ -34,9 +34,11 @@ export interface ReleaseTool {
 }
 
 /**
- * What every tool answers: the operation's output beside the effect it declared,
- * the dry-run flag it ran under, and the progress lines the operation logged.
- * A receipt a reader can check without a terminal.
+ * What every tool answers.
+ *
+ * It returns the operation's output beside its declared effect.
+ * It also returns the dry-run flag and progress lines.
+ * A reader can check the receipt without a terminal.
  */
 export interface ReleaseToolResult {
 	operation: string
@@ -51,7 +53,8 @@ export interface ReleaseToolTableOptions {
 	/**
 	 * Register the `external-write` operations too.
 	 *
-	 * Off by default, and the CLI exposes it as an explicit flag.
+	 * Defaults to off.
+	 * The CLI exposes it as an explicit flag.
 	 */
 	allowExternalWrite?: boolean
 }
@@ -66,9 +69,10 @@ export function toolNameFor(operationID: string): string {
 /**
  * Build the tool table over a registry.
  *
- * The operation's `inputSchema` must be an object schema: a tool's arguments are a JSON
- * object, and an operation that took anything else could not be called from any client,
- * so it is refused here by id rather than registered as a tool nobody can invoke.
+ * The operation's `inputSchema` must be an object schema because tool arguments are JSON objects.
+ * No client could call an operation with another input shape.
+ *
+ * This function refuses it by id rather than registering an unreachable tool.
  */
 export function buildReleaseToolTable(
 	registry: ReadonlyArray<ReleaseOperation<unknown, unknown>>,

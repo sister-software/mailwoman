@@ -204,8 +204,8 @@ export class PlacetypeDataSource implements Disposable {
 				.join(" OR ")}
 		`)
 
-		// node:sqlite's StatementSync.iterate() accepts named params via an object whose
-		// keys match the `@name` / `:name` / `$name` placeholders in the SQL.
+		// node:sqlite's StatementSync.iterate() accepts parameter values in an object keyed
+		// by keys match the `@name` / `:name` / `$name` placeholders in the SQL.
 		return Iterator.from(statement.iterate(sqlParameters(criteria))).map(placetypeRecordFromRow)
 	}
 

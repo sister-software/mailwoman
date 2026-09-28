@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The smoke over a built body: the preview serves whichever body it was built for, read from `build.json`
- *   rather than assumed, and the spec reaches the real archives so it needs the network.
+ *   Smoke-tests a built body. The preview serves the body recorded in `build.json`.
+ *   The spec requests real archives, so it needs network access.
  */
 
 import { expect, test } from "@playwright/test"
@@ -35,8 +35,8 @@ test("the globe loads for the built body, search finds a known feature, selectio
 		.first()
 		.click()
 
-	// Read the panel by role and name so the assertion is that it is FOR this feature,
-	// which a text match only implied.
+	// Read the panel by role and name to verify that it belongs to this feature.
+	// A text match alone would not establish that.
 	await expect(page).toHaveURL(/\/feature\/\d+$/u)
 	await expect(page.getByRole("complementary", { name: known.name })).toBeVisible()
 

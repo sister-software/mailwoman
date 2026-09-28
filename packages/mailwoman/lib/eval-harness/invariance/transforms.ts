@@ -7,7 +7,7 @@
  */
 
 /**
- * Named perturbation with its literature citation.
+ * Perturbation described in its literature citation.
  */
 export interface Transform {
 	id: string
@@ -67,7 +67,8 @@ const SECONDARY_DESIGNATOR_WORDS = new Set(["apt", "ste", "suite", "unit", "fl",
  * It is one when it has no trailing punctuation and the next word is capitalized
  * and is neither a street suffix nor a unit marker.
  *
- * The heuristic can skip a real suffix, which is safer than rewriting a place name such as `St Louis`.
+ * The heuristic may skip a real suffix.
+ * That error is safer than rewriting a place name such as `St Louis`.
  */
 function isSaintPrefixFollower(tokens: string[], i: number): boolean {
 	const ownBare = tokens[i]!.replace(/[.,]+$/, "")
@@ -176,7 +177,8 @@ function wrapInQuotes(raw: string): string | null {
 }
 
 /**
- * Appends an irrelevant parenthetical, which must leave the existing components unchanged.
+ * Appends an irrelevant parenthetical.
+ * Existing components must remain unchanged.
  */
 function addParenthetical(raw: string): string | null {
 	return `${raw} (main entrance)`

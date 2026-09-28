@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode buildSlimWOFDatabase}. Builds a tiny fixture WOF with a country + a few
- *   localities (varying populations) + postcodes + a non-US locality, then asserts that the slim
- *   output keeps only what the selection policy promises.
+ *   Tests for {@linkcode buildSlimWOFDatabase}. The fixture contains a country and localities with
+ *   varying populations. It also contains postcodes and a non-US locality. The test checks which rows the slim
+ *   output keeps under the selection policy.
  *
- *   The fixture mirrors the production source shape: `spr` + `names` + a pre-built `place_population`
- *   aux table, and no `geojson` table. `scripts/build-unified-wof.ts` extracts `wof:population`
- *   into `place_population` at ingest and never persists geojson, so the slim builder reads
- *   population straight from that table.
+ *   The fixture mirrors the production source shape. It contains `spr`, `names`, and a pre-built
+ *   `place_population` auxiliary table. It has no `geojson` table. `scripts/build-unified-wof.ts`
+ *   extracts `wof:population` into `place_population` during ingest. The builder does not persist
+ *   geojson, so the slim builder reads population directly from `place_population`.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -106,7 +106,8 @@ describe("buildSlimWOFDatabase", () => {
 
 		expect(names).toEqual(["United States", "Illinois", "Chicago", "Springfield", "62701", "60601"])
 
-		// Mascoutah, Paris, and Old Town must be absent.
+		// The slim output excludes Mascoutah.
+		// It also excludes Paris and Old Town.
 		expect(names).not.toContain("Mascoutah")
 		expect(names).not.toContain("Paris")
 		expect(names).not.toContain("Old Town")
@@ -146,8 +147,8 @@ describe("buildSlimWOFDatabase", () => {
 		expect(popIDs).not.toContain(400)
 		expect(popIDs).not.toContain(202)
 
-		// The slim DB never carries a geojson table — production source has none,
-		// and the builder reads population from place_population rather than geojson.
+		// Production sources have no geojson table.
+		// The builder reads population from place_population, so the slim database needs no geojson table.
 		const geojsonExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'geojson'`).get()
 		expect(geojsonExists).toBeUndefined()
 	})

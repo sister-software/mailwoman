@@ -96,7 +96,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const asked = countries ?? []
 		const missing = asked.filter((code) => !byCountry[code]?.length)
 
-		// When the caller named countries, an artifact holding none of them is noise —
+		// When the caller supplies country filters, an artifact holding none of them is noise —
 		// 29 lines of zeros buries the two that matter.
 		// The absence is still reported, in `summary` and by a country's empty `by_country` entry.
 		// What is dropped is the per-artifact restatement of it.

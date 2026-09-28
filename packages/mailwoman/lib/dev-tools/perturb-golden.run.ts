@@ -28,8 +28,9 @@ interface GoldenRow {
 /**
  * Collapse the whitespace between the region and the postcode where the row writes
  * them adjacently, driven by the row's own components rather than by a shape:
- * a country whose layout writes the postcode first or writes no region produces no change,
- * and the caller counts that rather than emitting the row unperturbed.
+ * a country whose layout writes the postcode first or has no region produces no change.
+ *
+ * The caller counts that outcome instead of emitting an unperturbed row.
  */
 function glue(raw: string, components: Record<string, string>): string {
 	const region = components.region?.trim()
@@ -51,7 +52,7 @@ async function main(): Promise<void> {
 	const out: string[] = []
 
 	/**
-	 * Per class: cases written, and rows the class could not change.
+	 * Per class: cases written plus rows the class could not change.
 	 *
 	 * A class that covers one country reports a large unperturbed count here
 	 * rather than looking like a class that simply produced fewer cases.

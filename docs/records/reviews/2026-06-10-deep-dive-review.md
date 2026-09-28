@@ -6,7 +6,7 @@
 
 ## Verdict
 
-The model refactor can fairly be called mature, and the external research supports that more strongly than expected: **no open-source geocoder ships a neural parser in production**. Every published neural-vs-libpostal comparison (Huppert's SOTA survey, Continuity's transformer parser, the arXiv fraud-detection work) reaches the same conclusion mailwoman bet on: transformers beat CRFs exactly where real geocoder queries live (typos, prefixes, degraded input), at under 80 MB instead of libpostal's 2.2 GiB. The ONNX-in-browser parser is ahead of the field rather than behind it.
+The model refactor is mature enough for production use, and the external research supports that assessment: **no open-source geocoder ships a neural parser in production**. Every published neural-vs-libpostal comparison (Huppert's SOTA survey, Continuity's transformer parser, the arXiv fraud-detection work) reaches the same conclusion mailwoman bet on: transformers beat CRFs exactly where real geocoder queries live (typos, prefixes, degraded input), at under 80 MB instead of libpostal's 2.2 GiB. The ONNX-in-browser parser is ahead of the field rather than behind it.
 
 The Elasticsearch-free architecture is also no longer a contrarian bet. Pelias's Placeholder/PIP sidecars exist _because_ ES can't do admin hierarchy; Photon recently finished a multi-year forced OpenSearch port; Nominatim 5.0 (Feb 2025) shipped as a pip-installable library; addok serves all of France from Redis+SQLite in 6 GB. The field is moving toward "geocoder as a library", and the ancestors-table-in-SQLite design already fits that description.
 

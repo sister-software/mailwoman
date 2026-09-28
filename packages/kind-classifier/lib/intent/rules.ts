@@ -11,7 +11,7 @@
  * `bare_toponym` and `route_pair` score below the structural kind that already owns their population
  * (`locality_only`, 0.85), so they surface in `QueryKindResult.alternatives` and never as the top kind.
  * The top kind is the only thing the coordinator routes on, so pinning it is what makes these additions
- * answer-neutral on the bare-city-name register, and the intent they carry travels on the marker.
+ * answer-neutral on the bare-city-name register. Their intent travels on the marker.
  *
  * `near_me` does win its top slot (0.91), because there is no incumbent worth preserving: a query
  * ending "near me" is not a locality.
@@ -27,8 +27,9 @@ import { carriesLetter, isDisqualifyingStreetSuffix, MAX_LOCALITY_ONLY_LENGTH, w
 const BARE_TOPONYM_CONFIDENCE = 0.84
 
 /**
- * Lower still, and for a second reason on top of the ranking discipline: a route pair is
- * a hypothesis whose competing reading (locality + region) is more common in this corpus.
+ * Lower still for a second reason beyond the ranking discipline.
+ *
+ * A route pair is a hypothesis whose competing reading (locality + region) is more common in this corpus.
  */
 const ROUTE_PAIR_CONFIDENCE = 0.55
 
@@ -238,13 +239,17 @@ export function scoreBareToponym(input: NormalizedInputLite, shape: QueryShapeLi
 /**
  * `route_pair` rule: exactly two toponym-shaped tokens with no token between them.
  *
- * The known confound is structural and unfixable here: "Paris London" and "Moscow Idaho" are
- * the same string shape, and separating them needs the gazetteer fact that Idaho is a region,
- * which is why ROAD_TO_V9 §4.3 specifies classification plus a declared fork, never a router —
- * both readings are named in the marker, neither wins, and the resolver keeps answering as it did.
+ * The known confound is structural and unfixable here.
+ * "Paris London" and "Moscow Idaho" have the same string shape.
  *
- * The one structurally separable class is the two-token single name ("New York", "Fort Worth")
- * carrying a toponymic head particle, and that guard is what keeps the fork off the common case.
+ * Separating them needs gazetteer knowledge that Idaho is a region.
+ * ROAD_TO_V9 §4.3 therefore specifies classification plus a declared fork.
+ *
+ * Both readings appear in the marker, neither wins and the resolver keeps its existing answer.
+ *
+ * The structurally separable class is a two-token single name ("New York", "Fort Worth")
+ * with a toponymic head particle.
+ * That guard keeps the fork off the common case.
  */
 export function scoreRoutePair(input: NormalizedInputLite, shape: QueryShapeLike): number {
 	const words = bareNameWords(input, shape)
@@ -254,7 +259,7 @@ export function scoreRoutePair(input: NormalizedInputLite, shape: QueryShapeLike
 	const [first, second] = [words[0]!.toLowerCase(), words[1]!.toLowerCase()]
 
 	// Reduplication — "Pago Pago", "Baden-Baden", "Walla Walla" — is a universal single-name
-	// signal that needs no lexicon, because nobody travels from a place to itself.
+	// signal that needs no lexicon, because a route from a place to itself is invalid.
 	if (first === second) return 0
 
 	if (TOPONYM_HEAD_PARTICLES.has(first) || TOPONYM_HEAD_PARTICLES.has(second)) return 0
@@ -274,8 +279,9 @@ export function scoreNearMe(input: NormalizedInputLite, _shape: QueryShapeLike):
 
 	if (!hasDeicticTail(lowercased)) return 0
 
-	// The subject is everything before the locator, and `hasDeicticTail` already anchored
-	// the match to the end, so the first match index is where the subject stops.
+	// The subject is everything before the locator.
+	// `hasDeicticTail` already anchored the match to the end, so the first match
+	// index marks where the subject stops.
 	const match = DEICTIC_LOCATOR_TAIL.exec(lowercased) ?? DEICTIC_ADVERB_TAIL.exec(lowercased)
 
 	if (!match) return 0
@@ -284,9 +290,10 @@ export function scoreNearMe(input: NormalizedInputLite, _shape: QueryShapeLike):
 }
 
 /**
- * The subject of a `near_me` query — the category or thing the asker wants,
- * with the locator stripped, and empty when the rule would not have fired.
- * It builds the marker's evidence, never a route.
+ * The subject of a `near_me` query is the requested category or thing with the locator stripped.
+ *
+ * It is empty when the rule would not have fired.
+ * The subject builds marker evidence and never a route.
  */
 export function nearMeSubject(input: NormalizedInputLite): string {
 	const trimmed = input.normalized.trim()

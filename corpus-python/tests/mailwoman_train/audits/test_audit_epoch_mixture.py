@@ -84,10 +84,10 @@ def _audit(corpus: Path, **overrides) -> dict:
 
 
 def test_an_admitted_country_that_draws_nothing_reads_zero_rather_than_going_absent(tmp_path: Path) -> None:
-    """`by_country` omits a country the sampler never reached, which reads as if it was never admitted.
+    """`by_country` omits a country the sampler never reached. That can look like the config never admitted it.
 
     A country at `country_weights` 1.0 whose rows sit in a row-group the sampler never opened draws
-    zero, so it is absent from `by_country` — the same shape as a country nobody admitted. Those
+    zero, so it is absent from `by_country` — the same shape as a country with no admission record. Those
     are different findings with different repairs.
     """
     report = _audit(_write_corpus(tmp_path), country_weights={"US": 1.0, "BE": 1.0, "BR": 1.0})
@@ -156,7 +156,7 @@ def _pinned_report(corpus: Path) -> dict:
 
 
 def test_the_whole_report_matches_the_committed_reference(tmp_path: Path) -> None:
-    """A share stays in range while the rows behind it change, and the windows and counts stay fixed."""
+    """A share stays in range when its source rows change. Windows and counts stay fixed."""
     expected = json.loads(AUGMENTED_REFERENCE.read_text())["report"]
     assert _pinned_report(_write_corpus(tmp_path)) == expected
 

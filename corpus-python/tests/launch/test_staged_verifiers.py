@@ -17,7 +17,7 @@ def test_some_version_carries_a_verifier() -> None:
 
 @pytest.mark.parametrize("version", VERIFIED)
 def test_the_verifier_resolves_and_answers_a_verdict_per_check(version: str, tmp_path) -> None:
-    """The named function exists, takes the two roots, and answers `{what it means: whether it holds}`.
+    """The selected function exists and accepts the two roots. It answers `{what it means: whether it holds}`.
 
     Called against an empty tree, so every answer must be False. A verifier reporting True on an
     empty volume checks no files.

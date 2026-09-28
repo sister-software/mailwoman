@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read HTML tables as grids of cells without assigning meaning to their columns. Parsing the
- *   document tree preserves table, row, and cell ancestry, including in malformed markup.
+ *   Read HTML tables as grids of cells without assigning meaning to their columns. The parser
+ *   preserves table, row and cell ancestry from the document tree, including malformed markup.
  */
 
 import render from "dom-serializer"

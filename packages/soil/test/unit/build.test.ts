@@ -91,8 +91,9 @@ describe("the fixture build", () => {
 	it("declares the spine key on the table a consumer joins, table-qualified", () => {
 		const spineKeys = lookup.identity.manifest.spineKeys
 
-		// The layer interface settles this: the key names what a consumer joins on, and for this layer
-		// that is the single-resolution reduction rather than the mixed-resolution containment index.
+		// The layer interface defines the consumer's join key.
+		// This layer's consumer key uses the single-resolution reduction.
+		// The mixed-resolution containment index serves a separate purpose.
 		expect(spineKeys.h3?.column).toBe("soil_capability_cell.h3_cell")
 		expect(spineKeys.h3?.resolution).toBe(INDEX_RESOLUTION)
 	})
@@ -125,8 +126,8 @@ describe("what each reading says", () => {
 		const distribution = reading.distribution!
 
 		// 45/35/20 across three classes.
-		// The top class is class 2 and it holds well under half, which is exactly the
-		// case a winner-class schema would report as "class 2" full stop.
+		// Class 2 has the largest share, but that share is below half.
+		// A winner-class schema would report only "class 2".
 		expect(distribution.topClass).toBe("2")
 		expect(distribution.topClassShare).toBeLessThan(0.5)
 		expect(Object.keys(distribution.classShares).length).toBeGreaterThan(1)
@@ -194,7 +195,7 @@ describe("the invariants that make the shares readable", () => {
 
 		for (const row of rows) {
 			// Read column by column rather than cast whole: the five fields the invariant
-			// turns on are named here, so a column that stopped being written fails as a
+			// turns on are listed here, so a column that stopped being written fails as a
 			// missing name rather than as a share that reads zero.
 			const total = shareTotal({
 				h3_cell: 0,

@@ -40,8 +40,8 @@ export interface OSMAddrRecord {
 	 */
 	unit: string | null
 	/**
-	 * `addr:place` — the named scheme or estate that stands in for a street where none
-	 * is named (Pakistan's `DHA Phase 6`, `Gulshan e Iqbal Block 2`).
+	 * `addr:place` — the scheme or estate value that stands in for a street where no
+	 * `addr:street` value exists (Pakistan's `DHA Phase 6`, `Gulshan e Iqbal Block 2`).
 	 */
 	place: string | null
 	/**

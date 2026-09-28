@@ -8,7 +8,7 @@
  *   `@mailwoman/zoning/sdk`.
  *
  *   The artifact is built locally and never shipped: three published statements disagree about the source's
- *   licence, so the manifest carries `tier: build-local` and `license: noassertion`, and the SDK refuses a
+ *   licence. The manifest carries `tier: build-local` and `license: noassertion`. The SDK refuses a
  *   `shipped` tier while that holds.
  *
  *   `--measure-resolutions` measures without building. The index resolution is a measurement this layer takes
@@ -152,8 +152,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			]
 		}
 
-		// A build needs the vintage because it stamps the manifest, and a manifest
-		// carrying a guessed version states no fact.
+		// A build needs the vintage because it stamps the manifest.
+		// A guessed version in the manifest states no fact.
 		if (!vintage) {
 			throw new Error(
 				"gazetteer build zoning: no product vintage — pass --source-vintage, or drop --offline so the item can be read. " +
@@ -178,8 +178,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		// `ogrinfo` reports only the layer's total, so a narrowed run counts its own subset first —
-		// otherwise the declared-count check, which turns a truncated read into a failure
-		// rather than a smaller country, would refuse every smoke run.
+		// otherwise the declared-count check would refuse every smoke run.
+		// That check turns a truncated read into a failure instead of a smaller country.
 		let narrowedCount = 0
 
 		if (narrowed) {
@@ -198,8 +198,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		console.error(`▸ source declares ${source.declaredFeatureCount.toLocaleString()} features`)
 
 		// The live service's own feature count and `Shape__Area` sum are the two-path checks.
-		// The publisher's figure is absent from the archive, which is what makes it a second path,
-		// and a narrowed run skips both rather than making them pass.
+		// The publisher's figure is absent from the archive, so this check uses a second path.
+		// A narrowed run skips both checks instead of treating them as passes.
 		const serviceChecks =
 			options.offline || narrowed
 				? {}

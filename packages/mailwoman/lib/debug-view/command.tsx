@@ -110,7 +110,7 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
  * renders rather than mounting a second renderer.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- One-shot by interface, like `useCommandTask`: the handoff happens
-	 once at mount, and a fresh `options` object per render must not repeat it. The empty deps array is the point. */
+	 once at mount. A fresh `options` object per render must not repeat it. The empty deps array is the point. */
 
 function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOptions }): React.ReactElement | null {
 	const { exit } = useApp()

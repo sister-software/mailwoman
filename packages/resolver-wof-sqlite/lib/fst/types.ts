@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Types for the FST gazetteer, which maps place-name token sequences to place entries.
+ * @file Types for the FST gazetteer. These types map place-name token sequences to place entries.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -97,7 +97,7 @@ export interface FSTProvenance {
 	 * The count of places with an encyclopedic score at build time.
 	 *
 	 * It is `undefined` for a build that predates the separate encyclopedic score.
-	 * That differs from 0, which means a current build against a database without encyclopedic scores.
+	 * The value `0` means a current build used a database without encyclopedic scores.
 	 */
 	encyclopedicMatches?: number
 	/**
@@ -107,12 +107,14 @@ export interface FSTProvenance {
 	importanceSource?: string
 	sourceDB?: string
 	/**
-	 * The MD5 of the source database's bytes at build time, which `fst-freshness.ts` compares.
+	 * The MD5 of the source database's bytes at build time.
+	 * The freshness check compares it.
 	 *
-	 * `sourceDB` alone cannot detect staleness, because a rebuild replaces the
-	 * admin database at the same path.
-	 * The field is `undefined` for artifacts built before the stamp existed,
-	 * which differs from an unknown digest.
+	 * `sourceDB` alone cannot detect staleness.
+	 * A rebuild replaces the admin database at the same path.
+	 *
+	 * The field is `undefined` for artifacts built before the stamp existed.
+	 * An unknown digest has a different value.
 	 */
 	sourceDBMD5?: string
 	/**

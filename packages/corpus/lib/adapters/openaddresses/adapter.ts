@@ -7,8 +7,8 @@
  *
  * Country must be explicit because OpenAddresses organizes files by country while the row data
  * carries no country code. A per-row `LICENSE` property wins where present and the configured
- * `defaultLicense` covers the rest. `district` stays unmapped because US data carries a borough
- * or county there, and spreading it would inflate alignment quarantine.
+ * `defaultLicense` covers the remaining rows. `district` stays unmapped because US data carries a borough or county there.
+ * Mapping that field would inflate alignment quarantine.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -101,8 +101,9 @@ export interface OpenaddressesAdapterOptions {
 	 *
 	 * The default is `true`.
 	 * `buildCorpus({ licensePolicy })` and `mw corpus build --license-policy share-alike-free`
-	 * express a refusal at build level, which reads the obligations of every adapter's
-	 * rows under one policy and records what it refused.
+	 * express a refusal at build level.
+	 *
+	 * The policy reads the obligations of every adapter's rows under one policy and records what it refused.
 	 *
 	 * Pass `false` only for an adapter-scoped drop, such as a fixture that must carry one license.
 	 */
@@ -120,16 +121,16 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 	const allowShareAlike = opts.allowShareAlike ?? true
 	// The same reading the build applies, so an adapter-scoped drop
 	// and a build-level policy refuse the same rows.
-	// OpenAddresses stamps a per-file license, and a file's value can be prose naming
-	// a share-alike register rather than an identifier.
+	// OpenAddresses stamps a per-file license.
+	// A file's value can be prose naming a share-alike register rather than an identifier.
 	const shareAlike = createLicenseVerdictCache(LicensePolicy.ShareAlikeFree)
 
 	return {
 		id: OPENADDRESSES_ADAPTER_ID,
 		defaultLicense,
 		addressRole: AddressRole.Premise,
-		// OpenAddresses redistributes national and municipal registers whose terms differ per file,
-		// and a row's upstream is named by the source file it came from rather than by this adapter.
+		// OpenAddresses redistributes national and municipal registers with terms that differ per file.
+		// A row's source file identifies its upstream, rather than this adapter.
 		register: SourceRegister.OpenAddresses,
 		surface: SurfaceOrigin.Attested,
 		description: "OpenAddresses (global): line-delimited GeoJSON dumps with per-row licenses.",

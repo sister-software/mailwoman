@@ -19,7 +19,7 @@
  *
  *   Resolver wiring: an anchor remainder ("near Springfield IL") only gains a searchable center when the
  *   pipeline's `resolver` stage decorates the anchor's parsed tree with lat/lon — `poi-executor.ts`'s
- *   `resolveCenter` walks the tree for that, and `--db` queries abstain `anchor_required` without it. Mirrors
+ *   `resolveCenter` walks the tree for that. `--db` queries abstain with `anchor_required` without it. Mirrors
  *   `geocode.tsx`/`parse.tsx --resolve`: the same `createResolverBackend` + `createWOFResolver(lookup)`
  *   pairing, lazily built and closed after the run. A missing/unbuilt gazetteer degrades to today's behavior
  *   (no resolver — anchors stay coordinate-less) with a stderr note, never a hard failure.
@@ -134,8 +134,8 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
 		const { categoryIDs } = intent.subject
 		// Every member needs a tag rather than just one: a union emitted from the subset that
-		// happens to carry `osmTag` is a narrower query than the one the POI branch ran,
-		// and the difference would be invisible in the printed result.
+		// happens to carry `osmTag` is a narrower query than the one the POI branch ran.
+		// The printed result would hide that difference.
 		const untagged = categoryIDs.filter((id) => !getPOICategory(id)?.osmTag)
 
 		if (untagged.length) {
@@ -224,7 +224,8 @@ async function runPOI(input: string, options: Options): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
 
 	// An attempted-but-failed encoder load always reports its failure.
-	// Absent weights get an install hint, and a corrupt bundle surfaces its underlying error.
+	// Absent weights produce an install hint.
+	// A corrupt bundle surfaces its underlying error.
 	// Stderr only.
 	// Stdout stays the probe output.
 	const classifier = await loadClassifierTolerant(options.locale, { onDegrade: reportToStderr })
@@ -270,8 +271,8 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 	}
 
 	// --json dumps raw JSON.
-	// Bypass Ink's word-wrapping <Text> renderer, which corrupts long lines at 80 cols
-	// when piped (see writeRawStdout).
+	// Bypass Ink's word-wrapping <Text> renderer.
+	// It corrupts long lines at 80 cols when piped (see writeRawStdout).
 	if (options.json) {
 		return writeRawStdout(state.result)
 	}

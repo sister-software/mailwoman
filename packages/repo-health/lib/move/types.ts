@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What a module move is, and what planning one produces.
+ * @file Defines a module move and the plan that describes it.
  *
- * Every path here is repo-relative in `git ls-files` form, so a plan reads the same in a terminal, in a
- * JSON payload, and in a test fixture that has no checkout behind it.
+ * Every path here is repo-relative in `git ls-files` form.
+ * A plan reads the same in a terminal or JSON payload. It also reads the same in a test fixture without a checkout.
  */
 
 export interface ModuleMove {
@@ -21,8 +21,10 @@ export interface SpecifierRewrite {
 	specifier: string
 	replacement: string
 	/**
-	 * The file both spellings name, which the replacement was proven against
-	 * and a verification pass re-resolves once the move is on disk.
+	 * The file identified by both spellings.
+	 *
+	 * The replacement was proven against this file.
+	 * A verification pass resolves it again after the move is on disk.
 	 */
 	target: string
 	/**

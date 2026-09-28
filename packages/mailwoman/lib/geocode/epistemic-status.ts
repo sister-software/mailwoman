@@ -17,7 +17,7 @@ import { CoverageBasis, EpistemicStatus } from "@mailwoman/evidence"
  * - No coordinate → `unresolved`
  * - A register row whose coverage basis is `designated` → `designated` (an authority assigned it)
  * - `interpolated`, `street` and `plus_code` → `derived` (a stated rule computed the point)
- * - Everything else → `observed` (a named source recorded it, claiming no authority)
+ * - Everything else → `observed` (an identified source recorded it without claiming authority)
  *
  * `inferred` is not producible here and stays defined and unused rather than repurposed.
  */

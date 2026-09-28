@@ -31,8 +31,8 @@ interface ArtifactState {
 	/**
 	 * `true` when the file is read-only.
 	 *
-	 * An owner-writable artifact is mid-build or one a verify step refused,
-	 * and must never be measured against as if it had passed.
+	 * An owner-writable artifact is mid-build or a verify step refused it.
+	 * Do not measure it as a verified artifact.
 	 */
 	sealed: boolean | null
 }
@@ -60,8 +60,8 @@ export interface ProvenanceReport {
 	reposStampPath: string
 	reposStampAge: string | null
 	/**
-	 * The last entries of the admin build log: what was built, from which Overture
-	 * release, and whether it was swapped.
+	 * The last entries of the admin build log record the built artifact and its Overture release.
+	 * They also record whether the artifact was swapped.
 	 */
 	buildLog: string[]
 	notes: string[]

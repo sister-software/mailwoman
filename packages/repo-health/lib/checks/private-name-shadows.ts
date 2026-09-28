@@ -2,9 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A module-private function that shares its name with a function another module exports is either a re-typed
- *   copy or a collision, and both are worth one look before merge. `mailwoman/prefer-home` reports the shapes someone
- *   has already tabled. this is the detector for the shape nobody has tabled yet. A 2026-09-04 census found 39 such
+ * @file A module-private function that shares its name with an exported function is a copy or a collision.
+ *   Review both cases before merge. `mailwoman/prefer-home` reports shapes someone
+ *   has already tabled. This detector reports other collision patterns. A 2026-09-04 census found 39 such
  *   pairs across `packages/*\/lib`: two were true copies (`percentile` with the percentile as a fraction, a second
  *   `pyRound`), the rest thin wrappers, deliberate dependency-free copies, or same-name-different-thing.
  *
@@ -114,8 +114,8 @@ function functionSites(file: string, text: string): FunctionSite[] {
 }
 
 /**
- * Every module-private top-level function in `packages/*\/lib` whose name another module exports,
- * minus the generic names, the short ones, and the copies that carry the ignore marker with a reason.
+ * Every module-private top-level function in `packages/*\/lib` whose name another module
+ * exports, excluding generic names, short names, and copies with a reasoned ignore marker.
  */
 export async function findPrivateNameShadows(context: RepoContext): Promise<PrivateNameShadow[]> {
 	const paths = await trackedSourcePaths(context, {

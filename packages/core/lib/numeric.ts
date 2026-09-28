@@ -21,8 +21,8 @@ export function clamp(value: number, min: number, max: number): number {
  *   beside `python-json.ts` (CPython `json.dumps` spacing) and `python-random.ts` (`random.Random`).
  *
  *   These exist because the gazetteer pipeline was ported from Python and its outputs have to match
- *   the originals bit for bit: a postcode centroid that rounds differently is a different centroid,
- *   and the extract it lands in is a different extract. Divergence here never throws — it surfaces as a
+ *   the originals bit for bit. A postcode centroid that rounds differently is a different centroid.
+ *   The extract containing it then differs from the reference. Divergence here never throws. It surfaces as a
  *   extract that quietly disagrees with the reference.
  */
 
@@ -30,7 +30,8 @@ export function clamp(value: number, min: number, max: number): number {
  * Digit at which a fractional remainder is exactly half.
  *
  * Above it the value rounds up.
- * At it the tie is broken toward even, which is what keeps repeated centroid rounding unbiased.
+ * At it the tie is broken toward even.
+ * This keeps repeated centroid rounding unbiased.
  */
 const ROUND_HALF_DIGIT = 5
 

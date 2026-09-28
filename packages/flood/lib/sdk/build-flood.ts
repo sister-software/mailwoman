@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `flood.db`, the sealed two-tier polygon layer, from the authority's published geodatabase.
- *   Zone 1 is written as coverage rather than as rows, so a `designated`-complete cell holding no polygon
- *   is a designation and must never collapse into the absent row a cell outside England has, and a
- *   coverage cell is always `cellToParent` of its finer cell rather than a fresh `latLngToCell`.
+ *   Builds `flood.db`, the sealed two-tier polygon layer, from the authority's published geodatabase.
+ *   Zone 1 is recorded in coverage. A `designated`-complete cell with no polygon still records a designation. Cells
+ *   outside England have no coverage row. Each coverage cell uses `cellToParent` on its finer cell, rather than a
+ *   fresh `latLngToCell` result.
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers"
@@ -49,7 +49,9 @@ import {
 export const FLOOD_SCHEMA_VERSION = 1
 
 /**
- * Where a build gets its features, and — for a real one — how it bounds each process's share of them.
+ * Defines where a build gets its features.
+ *
+ * For a real build, it also defines the bounds assigned to each process.
  */
 export type BuildFloodInput =
 	| {
@@ -69,8 +71,8 @@ export type BuildFloodInput =
 				geodatabasePath: string
 				layer?: string
 				/**
-				 * Inclusive bounds of the authority's own `objectid` values,
-				 * and the feature count they should yield.
+				 * Inclusive bounds of the authority's `objectid` values.
+				 * The range also defines the expected feature count.
 				 */
 				objectIDFrom: number
 				objectIDTo: number
@@ -101,7 +103,8 @@ export type BuildFloodOptions = BuildFloodInput & {
 	 */
 	indexResolution: number
 	/**
-	 * The resolution `layer_coverage` rows are keyed at, which must be coarser than the index resolution.
+	 * The resolution used to key `layer_coverage` rows.
+	 * It must be coarser than the index resolution.
 	 */
 	coverageResolution: number
 	/**
@@ -126,21 +129,24 @@ export interface BuildFloodResult {
 	partialCellRows: number
 	candidateRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows,
-	 * which is not the number the resolution was chosen on because the whole side is compacted.
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` over stored rows.
+	 *
+	 * This differs from the measurement used to choose the resolution
+	 * because compaction reduces the whole-cell rows.
 	 */
 	storedPartialShare: number
 	/**
-	 * Features coarsened below `indexResolution`, and the resolutions the stored rows are actually at,
-	 * because a reader that assumed one resolution would read every coarsened feature as an absence.
+	 * Counts features coarsened below `indexResolution` and records the resolutions used by stored rows.
+	 *
+	 * A reader that assumes one resolution would read every coarsened feature as an absence.
 	 */
 	coarsenedFeatures: number
 	storedResolutions: number[]
 	coverageCells: number
 	coverageCellsWithRows: number
 	/**
-	 * The area totals in square kilometres: the source's, the encoded rings read
-	 * with their holes, and read without.
+	 * Reports area totals in square kilometres for the source and encoded rings.
+	 * It reports the ring area with holes and without holes.
 	 */
 	area: AreaAgreementReading
 	sizeBytes: number
@@ -183,9 +189,9 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			await createLayerCoverageTable(kdb)
 
 			// The touch table exists only for this build and is dropped before the artifact is sealed.
-			// No primary key while loading: the resolution queries below read it through
-			// indexes created once the load is done, and a clustered key would sort every
-			// insert against an ingest order that no code controls.
+			// Loading uses no primary key.
+			// The resolution queries use indexes created after loading.
+			// A clustered key would sort every insert against an ingest order that this code does not control.
 			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, zone_code TEXT NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
@@ -404,8 +410,8 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	let wholeRows = 0
 	let partialRows = 0
 
-	// One group per (zone, resolution): `compactCells` takes a single resolution,
-	// and pooling across an adaptively-indexed layer throws.
+	// Create one group per (zone, resolution).
+	// `compactCells` takes a single resolution and throws when rows from different resolutions share a group.
 	for (const { zone_code: zoneCode, resolution } of zones) {
 		const wholeShort = database
 			.prepare("SELECT DISTINCT h3_cell FROM build_cell_touch WHERE zone_code = ? AND resolution = ? AND is_full = 1")
@@ -464,9 +470,11 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 }
 
 /**
- * The coverage rows, one per interior cell of the authority's footprint: `observed_rows` counts
- * the polygons reaching into the cell and is zero for a designated cell no polygon covers,
- * which a reader must not confuse with the absent row a cell outside England has.
+ * Creates one coverage row per interior cell of the authority's footprint.
+ *
+ * `observed_rows` counts polygons that reach into the cell.
+ * A designated cell with no covering polygon has a zero count.
+ * A cell outside England has no row.
  */
 function buildCoverageCells(extent: FloodMapExtent, observed: Map<number, number>): CoverageCell[] {
 	return designatedCoverageCells(extent.coverageCells, observed)

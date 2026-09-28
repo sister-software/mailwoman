@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Runs inside a worker thread (spawned by `geocodeStream` via `spliterator.parallelMap`). Top-level
- * code is per-worker init: rebuild the classifier, WOF SQLite lookup, resolver, and geometry databases
+ * code is per-worker init: rebuild the classifier, WOF SQLite lookup, resolver and geometry databases
  * from the serializable `workerData.userData` config (paths + locale), then assemble the same geocode
  * interface the CLI builds. Each dispatched record is geocoded by `makeGeocodeHandler`.
  */

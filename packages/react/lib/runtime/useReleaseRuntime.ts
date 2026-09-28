@@ -7,7 +7,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
- * The minimal fields of a release-manifest entry, which hosts extend with their own.
+ * The minimal fields of a release-manifest entry.
+ * Hosts can add their own fields.
  */
 export interface ReleaseBase {
 	version: string
@@ -31,9 +32,10 @@ export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 }
 
 /**
- * The abort signal and progress setters that the hook passes to a host's `loadAssets`;
- * the setters have no effect once the load is aborted or superseded, and the hook
- * sets the final ready or error state itself.
+ * The abort signal and progress setters that the hook passes to a host's `loadAssets`.
+ *
+ * The setters stop affecting state after abort or supersession.
+ * The hook sets the final ready or error state.
  */
 export interface AssetsLoadContext {
 	/**
@@ -79,8 +81,8 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 	/**
 	 * Fetches the releases manifest once on mount.
 	 *
-	 * It returns `null` when no manifest is available, and the hook reports a
-	 * rejection through `errorMessage`.
+	 * It returns `null` when the manifest is unavailable.
+	 * The hook reports a rejection through `errorMessage`.
 	 */
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 
@@ -95,8 +97,10 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 	 * Releases resources the garbage collector does not own, such as an ONNX
 	 * session's WASM heap or a GPU buffer.
 	 *
-	 * The hook calls it for a replaced bundle, a bundle that resolved after abort,
-	 * and on unmount, and without it every reload leaves a model resident.
+	 * The hook calls it when replacing a bundle.
+	 * It also calls it if a bundle resolves after abort or when unmounting.
+	 *
+	 * Without this function, each reload leaves the model resident.
 	 */
 	disposeAssets?: (assets: TAssets) => void | Promise<void>
 
@@ -185,8 +189,8 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
  * Loads the release manifest on mount and the selected release's assets whenever
  * the version or `forceWASM` changes.
  *
- * Each reload aborts the previous load and disposes the old assets, and `ready`
- * becomes true only after the new assets fully load.
+ * Each reload aborts the previous load and disposes the old assets.
+ * `ready` becomes true after the new assets load.
  */
 export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = ReleaseBase>(
 	config: ReleaseRuntimeConfig<TAssets, TRelease>

@@ -161,7 +161,8 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 	})
 
 	it("gives a multi-FRN registrant ONE truth family, taken from whichever registration disclosed the parent (C2)", () => {
-		// The parent is on the filing for 9100000011, and the registrant is scored under 9100000010.
+		// The filing for 9100000011 lists the parent.
+		// The eval scores the registrant under 9100000010.
 		expect(truth().get(FRN_SHARED_REGISTRANT_1)).toBe(truth().get(FRN_MERIDIAN_1))
 		expect(truth().has(FRN_SHARED_REGISTRANT_2)).toBe(false)
 	})
@@ -329,7 +330,8 @@ describe("filerLinkageEval — the control run (POSITIVE CONTROL: this is what d
 	it("finds the multi-FRN registrant's family through the registration that disclosed it", async () => {
 		const { control } = await runEval()
 
-		// The parent is on the filing for 9100000011, and the registrant is scored under 9100000010.
+		// The filing for 9100000011 lists the parent.
+		// The eval scores the registrant under 9100000010.
 		// A prediction that read only the representative FRN would miss it.
 		expect(control.predictedFamilyIDsOf.get(FRN_SHARED_REGISTRANT_1)).toEqual([
 			"holding_company_name:meridian communications group",
@@ -407,8 +409,8 @@ describe("filerLinkageEval — what is really in the artifacts", () => {
 })
 
 describe("the standing guarantee: this baseline CAN be beaten", () => {
-	// This helper joins the three Cascade registrants to one family through a
-	// `subsidiary` relationship, which the builder never writes.
+	// This helper joins the three Cascade registrants to one family through a `subsidiary` relationship.
+	// The builder never writes that relationship.
 	// The eval injects the rows after its leakage check has run.
 	const injectSubsidiaryFamily = async (db: DatabaseClient<FilerDatabase>): Promise<void> => {
 		for (const frn of [FRN_CASCADE_1, FRN_CASCADE_2, FRN_CASCADE_3]) {
@@ -446,7 +448,8 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	it("moves the score off zero when ownership arrives as filer_family rows", async () => {
 		const injected = await runInjected()
 
-		// The Cascade registrants account for 3 of the 6 true pairs, and the Meridian pairs stay unlinked.
+		// The Cascade registrants account for 3 of 6 true pairs.
+		// The Meridian pairs stay unlinked.
 		expect(injected.score.truePositivePairs).toBe(3)
 		expect(injected.score.falsePositivePairs).toBe(0)
 		expect(injected.score.recall).toBe(0.5)
@@ -569,7 +572,8 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const form499Rows = buildLinkageEvalForm499Rows()
 		const providerRows = buildLinkageEvalProviderRows()
 
-		// A bare lookup of "constructor" in a plain object returns an inherited function, which is truthy.
+		// A plain-object lookup of "constructor" returns an inherited function.
+		// That function is truthy.
 		const injected = await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),

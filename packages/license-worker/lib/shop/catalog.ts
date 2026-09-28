@@ -3,15 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The shop as data: `provision.ts` reconciles a Stripe account against it, test mode and live mode alike, so the objects the worker depends on are defined here and nowhere in a dashboard, and the plan codes are the Price lookup keys, so a provisioned Price is found again without an id in git.
+ * This module defines shop configuration as data. `provision.ts` reconciles test and live Stripe accounts against it.
+ * The worker's required objects are defined here instead of in a dashboard. Plan codes serve as Price lookup keys,
+ * so provisioning can find a Price again without storing its id in git.
  */
 
 import type { CommercialPlan } from "#plans"
 
 /**
- * The agreement version the Payment Links carry as metadata and the worker
- * records on every license: bumping it is a new terms page, new Payment Links,
- * and a new value in each environment's `AGREEMENT_VERSION`.
+ * The agreement version carried as Payment Link metadata and recorded on every license.
+ *
+ * Bump it when the terms page changes.
+ * Then create new Payment Links and update `AGREEMENT_VERSION` in each environment.
  */
 export const AGREEMENT_VERSION = "commercial-2026-10"
 
@@ -22,8 +25,8 @@ export const AGREEMENT_VERSION = "commercial-2026-10"
 export const LICENSEE_FIELD_KEY = "licensee_legal_name"
 
 /**
- * The Payment Link metadata key Stripe copies onto each Checkout Session,
- * which the worker reads the agreement version from.
+ * The Payment Link metadata key Stripe copies onto each Checkout Session.
+ * The worker reads the agreement version from it.
  */
 export const AGREEMENT_METADATA_KEY = "agreement_version"
 
@@ -38,8 +41,10 @@ export const SHOP_METADATA_KEY = "mailwoman_shop"
 export const SHOP_MARK = "commercial-license"
 
 /**
- * What Checkout collects from a buyer beyond the payment, spread into a Payment Link
- * and into a Checkout Session built for a rehearsal alike, so the two cannot drift.
+ * Defines the fields Checkout collects beyond payment.
+ *
+ * The provisioner copies them into Payment Links and rehearsal Checkout Sessions
+ * so both use the same collection settings.
  */
 export interface CheckoutCollection {
 	custom_fields: Array<{ key: string; label: { type: "custom"; custom: string }; type: "text" }>
@@ -51,16 +56,18 @@ export interface CheckoutCollection {
 	 */
 	allow_promotion_codes: true
 	/**
-	 * No card when no payment is due: a 100%-off first invoice collects none,
-	 * and Stripe asks for one at the first invoice that charges.
+	 * Stripe collects no card when a 100%-off first invoice requires no payment.
+	 * It requests a card for the first invoice that charges.
 	 */
 	payment_method_collection: "if_required"
 	metadata: Record<string, string>
 }
 
 /**
- * The fields of the collection a Payment Link can change after creation: the provisioner
- * holds an existing link to these, and a change to any other field is a new link.
+ * Lists the collection fields a Payment Link can change after creation.
+ *
+ * The provisioner updates these fields on an existing link.
+ * A change to any other field requires a new link.
  */
 export const RECONCILED_LINK_FIELDS = {
 	allow_promotion_codes: true,
@@ -120,7 +127,8 @@ export const SHOP_PLAN_CODES = [
 export const WEBHOOK_PATH = "/v1/webhooks/stripe"
 
 /**
- * The events the webhook destination subscribes to: the ones the worker acts on, and no more.
+ * Lists the events the webhook destination subscribes to.
+ * The worker acts on each listed event.
  */
 export { ACCEPTED_EVENT_TYPES as WEBHOOK_EVENTS } from "#stripe/webhook"
 

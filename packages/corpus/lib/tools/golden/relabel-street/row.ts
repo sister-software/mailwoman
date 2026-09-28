@@ -45,7 +45,8 @@ export type GoldenRelabelClass =
 	| "untrimmed-street"
 
 /**
- * A review note on a changed row, which the relabel decision ignores.
+ * A review note attached to a changed row.
+ * The relabel decision ignores it.
  */
 export interface GoldenRelabelFlag {
 	kind: "name-prone-suffix" | "venue-context" | "remainder-is-affix"
@@ -57,7 +58,8 @@ export interface GoldenRelabelFlag {
  */
 export interface GoldenRelabelResult {
 	/**
-	 * The row to write, which is the input object itself when no field changed.
+	 * The row to write.
+	 * This is the input object itself when no field changed.
 	 */
 	row: GoldenStreetRow
 	changed: boolean

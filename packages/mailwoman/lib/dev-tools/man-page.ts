@@ -6,8 +6,8 @@
  *   Generate `man/mailwoman.1` from the CLI's own help tree. The command descriptions already live once, in each
  *   command module — a hand-written man page would be a second copy of every sentence, stale by the first help edit, so
  *   this derives the page instead: root help supplies name/synopsis/commands, each user-facing command's `--help`
- *   supplies its own section. npm links `package.json#man` on a global install, which is what makes `man mailwoman`
- *   answer.
+ *   supplies its own section. npm links `package.json#man` on a global install.
+ *   That link makes `man mailwoman` answer.
  *
  *   Committed-artifact discipline: the page is generated into the tree and committed (the freshness test under
  *   `test/unit/` re-renders and fails on drift), matching the sentencepiece-wasm single-file-ESM precedent — consumers
@@ -85,8 +85,9 @@ export async function renderManPage(cliPath: string = CLI_PATH): Promise<string>
 	const version = (await runFile("node", [cliPath, "--version"])).stdout.trim()
 
 	const sections: string[] = [
-		// No date field on purpose: the page regenerates from the help tree, and a wall-clock stamp
-		// would make the freshness test fail on every calendar day rather than on real drift.
+		// Omit the date field because the page regenerates from the help tree.
+		// A wall-clock stamp would make the freshness test fail on every calendar day
+		// rather than on real drift.
 		`.TH MAILWOMAN 1 "" "mailwoman ${version}" "User Commands"`,
 		".SH NAME",
 		"mailwoman \\- calibrated, retrieval\\-augmented postal\\-address parser and geocoder",

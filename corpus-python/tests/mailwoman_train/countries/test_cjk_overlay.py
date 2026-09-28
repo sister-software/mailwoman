@@ -1,5 +1,8 @@
-"""The v8 CJK overlay builder (#2034): the CN rows in the JP parquet schema, the manifest that references the JP parts
-by volume path, and the re-sealed vocabulary."""
+"""Test the v8 CJK overlay builder (#2034).
+
+The fixture uses CN rows in the JP parquet schema plus a manifest of JP volume paths and a re-sealed
+vocabulary.
+"""
 
 from __future__ import annotations
 

@@ -31,8 +31,9 @@ function emittedTargetFor(target: string): string {
 /**
  * Rewrites an `exports` map for the packed consumer manifest.
  *
- * The development map points conditions such as `node` at `.ts` source,
- * and published packages ship only `out/`.
+ * The development map points conditions such as `node` at `.ts` source.
+ * Published packages ship only `out/`.
+ *
  * This function rewrites every TypeScript target to its emitted JavaScript file
  * and moves `types` to the front of each entry.
  *
@@ -77,8 +78,9 @@ export function transformExportsForPublish(exports: unknown): unknown {
 /**
  * Rewrites package-private `imports` aliases for the packed consumer manifest.
  *
- * The development aliases point `node` at TypeScript source, which Node cannot
- * type-strip under `node_modules`.
+ * The development aliases point `node` at TypeScript source.
+ * Node cannot type-strip that source under `node_modules`.
+ *
  * This function rewrites those targets to emitted JavaScript in the same way
  * as {@link transformExportsForPublish}.
  */
@@ -88,7 +90,8 @@ export function transformImportsForPublish(imports: unknown): unknown {
 	const out: Record<string, unknown> = {}
 
 	for (const [specifier, value] of Object.entries(imports as Record<string, unknown>)) {
-		// A string alias to TypeScript source is test-only, and the tarball excludes its file.
+		// A string alias to TypeScript source is test-only.
+		// The tarball excludes the source file.
 		if (typeof value === "string") {
 			if (!isTypeScriptSource(value)) {
 				out[specifier] = value

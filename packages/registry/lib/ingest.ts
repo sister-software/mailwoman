@@ -165,7 +165,7 @@ export interface IngestOptions {
 }
 
 /**
- * Join the named column(s) of a row into a single trimmed string, or undefined if empty.
+ * Join the selected columns of a row into a single trimmed string, or undefined if empty.
  */
 export function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
 	if (!columns) return undefined

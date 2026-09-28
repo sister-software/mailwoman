@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The candidate manifest's provenance chain, and the four ways it can fail to have one.
+ *   The candidate manifest's provenance chain and four ways the chain can fail.
  *
- *   The lab holds thirteen candidate builds and about ten admin builds, and which pairs with which is
- *   recorded nowhere. That is the gap the chain closes, and it is only closed if an absent ancestor reads
- *   as absent — substituting the file's name would look like provenance and carry none.
+ *   The lab holds thirteen candidate builds and about ten admin builds. No record currently pairs them.
+ *   The manifest chain records those pairs. An absent ancestor must remain absent because substituting a filename
+ *   would look like provenance without identifying an ancestor build.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -314,7 +314,8 @@ describe("candidateLayerManifest", () => {
 	})
 
 	it("declares the spine that joins back to the ancestor", async () => {
-		// `spr_id` only means something against a known admin build, which is the reason the chain is worth having at all.
+		// `spr_id` is meaningful only against a known admin build.
+		// The chain records that build.
 		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: (await scratch())("n.db") })
 
 		expect(manifest.spineKeys).toEqual({ wofID: "spr_id" })

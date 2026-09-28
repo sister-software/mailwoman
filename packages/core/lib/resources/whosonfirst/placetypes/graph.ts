@@ -49,14 +49,15 @@ export interface PlacetypeGraph {
  * Build a node-link graph of a placetype and its descendants, optionally filtered by role.
  *
  * Unlike {@linkcode generatePlacetypeTree}, this emits each node and each (parent, child) edge exactly once.
- * WOF placetypes form a DAG with heavy descendant sharing
- * (e.g. `installation` is a leaf reachable from many parents); projecting that DAG to
- * a nested tree duplicates every shared subtree under every parent path and blows up
- * exponentially for roots like `planet` (~165 MB for the full hierarchy).
+ * WOF placetypes form a DAG with heavy descendant sharing.
+ *
+ * For example, `installation` is a leaf reachable from many parents.
+ * Projecting that DAG to a nested tree duplicates every shared subtree under every parent path
+ * and blows up exponentially for roots like `planet` (~165 MB for the full hierarchy).
  *
  * The graph shape stays O(nodes + edges) regardless.
  *
- * Output is well-suited for d3-force, react-flow, cytoscape, and any other html graph viewer.
+ * Output works with d3-force, react-flow, cytoscape and other HTML graph viewers.
  */
 export function generatePlacetypeGraph(placetype: Placetype, roles?: Iterable<PlacetypeRole> | null): PlacetypeGraph {
 	const roleSet = roles ? new Set(roles) : null

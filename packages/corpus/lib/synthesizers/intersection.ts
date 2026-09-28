@@ -6,9 +6,9 @@
  *   Intersection synthesizer — v0.7 coverage fix (night-3, DeepSeek-decided).
  *
  *   The 2026-05-29 harness diagnostic found the neural model emits `intersection_a`/`intersection_b`
- *   with ~0.0001 probability on canonical intersections ("Broadway & W 42nd St") — it never learned
- *   the tags, because the corpus has no intersection training signal (no generator, and real-data
- *   adapters don't emit intersection-formatted rows). Intersections are 65 of the 376 harness
+ *   with ~0.0001 probability on canonical intersections ("Broadway & W 42nd St"). It never learned
+ *   the tags because the corpus has no intersection training signal. The corpus has no generator.
+ *   Real-data adapters don't emit intersection-formatted rows. Intersections are 65 of the 376 harness
  *   assertions (17%), all 0% neural. This generator produces the missing signal as a small targeted
  *   supplement source (synthesis-as-supplement discipline: weight < 0.25, one-and-done).
  *
@@ -21,7 +21,7 @@
 
 /* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because this synthesizer
    refuses a non-US tuple outright (`if (base.country !== "US") return null`). A layout call would answer the same
-   string for the only country that reaches it, and would read as though the file served more. */
+   string for the only country that reaches it. The function would read as though the file served more. */
 
 import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
 import { sample } from "@mailwoman/core/random"
@@ -39,9 +39,9 @@ const MAX_DISTINCT_STREET_TRIES = 8
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
+    output distribution. Reading the cascade top-to-bottom shows it. Naming each cutoff
+   would hide the distribution behind identifiers. The genuine thresholds in these files are
+    extracted as constants above. */
 
 const STREET_CORES = [
 	"Main",

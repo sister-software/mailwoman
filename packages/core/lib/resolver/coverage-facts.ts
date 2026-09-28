@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What a loaded gazetteer artifact declares about its own country coverage, and the one derivation
- *   the reader and the build share. A country absent from a coverage map was never measured. A
+ *   A loaded gazetteer artifact declares facts about its own country coverage.
+ *   The reader and the build share one derivation.
+ *   A country absent from a coverage map was never measured. A
  *   measured-and-failed country is present with `hardFilterSafe: false`.
  */
 
@@ -33,7 +34,7 @@ export interface CountryCoverageFact {
 	 */
 	hardFilterSafe: boolean
 	/**
-	 * Measured hard-resolve rate (0..1) on the panel named in `source`, when the receipt recorded one.
+	 * Measured hard-resolve rate (0..1) on the panel identified by `source`, when the receipt recorded one.
 	 */
 	hardResolveRate?: number
 	/**
@@ -75,8 +76,10 @@ export interface CountryBBoxFact {
  * {@link ResolverBackend}/{@link Resolver} handle so consumers read the facts from
  * the artifact they are actually resolving against.
  *
- * `undefined` on the handle means the artifact predates the manifest, and consumers fall
- * back to the code constants, which keeps the legacy behavior byte-identical.
+ * `undefined` on the handle means the artifact predates the manifest.
+ * Consumers then use the code constants.
+ *
+ * Those constants produce the same results as the pre-manifest implementation.
  */
 export interface GazetteerArtifactCoverage {
 	/**

@@ -9,8 +9,8 @@
  *   CI is a flake generator.
  *
  *   It lives in `test/full` because it needs two staged weights caches under
- *   `$MAILWOMAN_TEMP_ROOT` that no CI checkout carries, and it would otherwise pull the
- *   onnxruntime web graph into the fast leg's shared module graph at collection time.
+ *   `$MAILWOMAN_TEMP_ROOT`. CI checkouts do not carry those caches. Importing the test into the fast leg
+ *   would pull the onnxruntime web graph into the shared module graph during collection.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"

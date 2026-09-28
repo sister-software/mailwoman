@@ -103,8 +103,8 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
  * Merges the Overture snapshot with the curated overlay into a deterministically
  * sorted {@link POITaxonomyTable} without I/O.
  *
- * Curated categories replace Overture rows with the same code, and they absorb the
- * Overture leaves they list unless `retainOvertureLeaves` is set.
+ * Curated categories replace Overture rows with the same code.
+ * They absorb the Overture leaves they list unless `retainOvertureLeaves` is set.
  */
 export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: CuratedOverlay): POITaxonomyTable {
 	const curatedIDs = new Set<string>(overlay.categories.map((c) => c.id))
@@ -147,7 +147,7 @@ export function taxonomyPaths() {
 }
 
 /**
- * Read the committed CSV + overlay, merge, and return the table (no write).
+ * Reads and merges the committed CSV and overlay, then returns the table without writing it.
  */
 export async function generateTaxonomyTable(): Promise<POITaxonomyTable> {
 	const paths = taxonomyPaths()

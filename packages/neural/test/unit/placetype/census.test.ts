@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   PCN1 round-trip + doctrine tests. The doctrine cases are the point: `probe` on an unknown parent
- *   must be neutral (null), `share`/`lift` must never manufacture evidence out of a missing
- *   denominator, and the serializer must refuse duplicate parents rather than silently keeping one.
+ *   must be neutral (null). `share`/`lift` must preserve a missing denominator as missing evidence.
+ *   The serializer must refuse duplicate parents instead of silently keeping one.
  */
 
 import {

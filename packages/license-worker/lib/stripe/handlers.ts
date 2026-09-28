@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   One handler per accepted event type. Every handler re-reads state from Stripe by id or acts only on the ledger. none
- *   reads an entitlement from the event body, and none decides a state: each hands what it observed to `policy.ts` and
- *   writes the answer. Each is safe to run twice: the mint answers `already_minted`, the row creation finds the row,
- *   and the state writes are idempotent.
+ *   One handler per accepted event type. Every handler re-reads state from Stripe by ID or acts only on the ledger.
+ *   No handler reads an entitlement from the event body or decides a state. Each passes its observation to `policy.ts`
+ *   and writes the answer. Each is safe to run twice. The mint answers `already_minted` on a repeat.
+ *   Row creation finds the existing row. State writes are idempotent.
  */
 
 import type Stripe from "stripe"
@@ -22,7 +22,8 @@ import { idOf, invoiceSubscriptionID } from "#stripe/shapes"
  * The invoice a charge paid.
  *
  * A charge no longer names its invoice.
- * The link runs through the PaymentIntent, and the invoice-payments list is the one query that answers it.
+ * The link runs through the PaymentIntent.
+ * The invoice-payments list is the query that answers it.
  */
 async function invoiceIDForCharge(stripe: Stripe, charge: Stripe.Charge): Promise<string | undefined> {
 	const paymentIntent = idOf(charge.payment_intent)

@@ -36,7 +36,8 @@ const MINIMUM_COLUMNS = 8
 const MINIMUM_PLAUSIBLE_COUNTRIES = 200
 
 /**
- * Sets the smallest number written with `_` separators, which the house style uses from five digits up.
+ * Sets the smallest number written with `_` separators.
+ * The house style uses them from five digits up.
  */
 const SEPARATOR_MINIMUM = 10_000
 
@@ -45,7 +46,8 @@ const SEPARATOR_MINIMUM = 10_000
  */
 export interface GenerateCountryPopulationOptions {
 	/**
-	 * Overrides the output path, which defaults to the committed `codex/country/population.ts`.
+	 * Overrides the output path.
+	 * The default is the committed `codex/country/population.ts`.
 	 */
 	out?: string
 }

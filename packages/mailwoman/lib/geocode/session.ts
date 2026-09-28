@@ -88,8 +88,8 @@ export interface GeocodeSessionOptions {
 
 	/**
 	 * Whether to promote a national capital among same-name candidates for a bare place name,
-	 * where only `false` disables it, an unset option disables promotion on a missing
-	 * capitals reference, and an explicit `true` throws instead.
+	 * where only `false` disables it, an unset option disables promotion on a missing capitals reference.
+	 * An explicit `true` throws instead.
 	 */
 	capitalTier?: boolean
 
@@ -115,7 +115,8 @@ export interface GeocodeSessionOptions {
 	placeCountryThreshold: number
 
 	/**
-	 * Whether to record a {@link GeocodeTrace} per input, which costs one extra decode per input.
+	 * Whether to record a {@link GeocodeTrace} per input.
+	 * Recording it costs one extra decode per input.
 	 */
 	trace?: boolean
 
@@ -164,8 +165,9 @@ export interface GeocodeTrace {
 }
 
 /**
- * One address's geocode result and the {@link AddressTree} it was resolved from,
- * whose nodes carry character offsets for span rendering.
+ * One address's geocode result and the {@link AddressTree} it was resolved from.
+ *
+ * The tree's nodes carry character offsets for span rendering.
  */
 export interface GeocodeRun {
 	result: GeocodeResult
@@ -358,8 +360,9 @@ export async function loadForkEntityDeps(
 }
 
 /**
- * Loads the gazetteer, neural model and optional layers, and returns a
- * {@linkcode GeocodeSession} that reuses them across inputs.
+ * Loads the gazetteer, neural model and optional layers.
+ *
+ * Returns a {@linkcode GeocodeSession} that reuses them across inputs.
  */
 export async function createGeocodeSession(options: GeocodeSessionOptions): Promise<GeocodeSession> {
 	const initStartedAt = performance.now()

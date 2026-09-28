@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Environment variables the neural classifier reads at load time, and the model overrides its test suites accept.
+ * Environment variables the neural classifier reads at load time and model overrides accepted by its test suites.
  *   Node-only: the loader reaches this module through a `webpackIgnore` dynamic import so the browser chunk graph
  *   never follows it.
  */
@@ -17,8 +17,8 @@ import { z } from "zod"
  */
 export const PublicNeuralEnvSchema = z.object({
 	// ONNX intra-op thread cap.
-	// Deployment-shaped rather than code-shaped: the right value depends on how many
-	// mailwoman processes share the host, which the library cannot know.
+	// Deployment-shaped rather than code-shaped: the right value depends on how many The
+	// library cannot know how many Mailwoman processes share the host.
 	// See DEFAULT_INTRA_OP_THREADS.
 	MAILWOMAN_INTRA_OP_THREADS: blankAsAbsent(z.coerce.number().int().positive().optional()).meta({
 		title: "ONNX intra-op threads",
@@ -32,9 +32,10 @@ export const PublicNeuralEnvSchema = z.object({
 	 *
 	 * A bar-conditional toggle rather than a shipped knob.
 	 * The mechanism stays off until the four bars in
-	 * `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md` clear,
-	 * and this drives the on leg of B-1's on-vs-off comparison through
-	 * `mailwoman eval gauntlet` without a code edit between the two runs.
+	 * `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md` clear.
+	 *
+	 * This drives the on leg of B-1's on-vs-off comparison through `mailwoman eval gauntlet`
+	 * without a code edit between the two runs.
 	 */
 	MAILWOMAN_PAIR_PARENT_DELTA: blankAsAbsent(z.coerce.number().optional()).meta({
 		title: "Pair-parent delta",

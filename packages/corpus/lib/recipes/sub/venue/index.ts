@@ -89,7 +89,8 @@ export interface SubVenueLeg {
  * and most eval confound rows are GB or US addresses.
  * The en-US leg carries the largest negative share because its confound pool is the largest.
  *
- * Japanese sub-venue rows belong to the JP corpus builder, which uses a different label set.
+ * The JP corpus builder processes Japanese sub-venue rows.
+ * It uses a different label set.
  */
 export const SUBVENUE_LEGS: readonly SubVenueLeg[] = [
 	{
@@ -144,8 +145,9 @@ export const SUBVENUE_LEGS: readonly SubVenueLeg[] = [
 /**
  * The region whose identifier distribution the en-US leg uses.
  *
- * The en-US leg has no OSM extract, and `poi.db` carries names without refs,
- * so it borrows the GB distribution.
+ * The en-US leg has no OSM extract.
+ * Its `poi.db` contains venue names without refs.
+ * The recipe borrows the identifier distribution from GB.
  */
 export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
 
@@ -262,8 +264,9 @@ export interface SubVenueForm {
  * Builds one sub-venue string for a leg, or returns `null` when it cannot.
  *
  * A promotion with `shape: "identifier-required"` always renders as `<Phrase> <identifier>`.
- * Some such phrases, such as German `Halle`, are also place names,
- * and only the identifier separates the two.
+ * German `Halle` also serves as a place name.
+ *
+ * The identifier distinguishes the two readings.
  * The guard lives here so that every caller inherits it.
  */
 export function buildSubVenueForm(
@@ -360,7 +363,8 @@ export type NegativeClass = (typeof NegativeClass)[keyof typeof NegativeClass]
 /**
  * Returns the negative classes that have a non-empty source pool for this leg.
  *
- * The recipe skips a class without a source, and the report shows its absence.
+ * The recipe skips a class that has no source.
+ * The report records the missing source.
  */
 function availableNegativeClasses(pools: LegPools, streets: StreetNegatives): NegativeClass[] {
 	const available: NegativeClass[] = []
@@ -424,7 +428,8 @@ interface EmitContext {
 }
 
 /**
- * Renders, aligns and writes one row, and returns whether the row was written.
+ * Renders and aligns one row.
+ * Writes the row and returns whether the write succeeded.
  *
  * The function drops rows that contain an eval-board surface or fail alignment.
  */
@@ -585,7 +590,8 @@ function emitNegatives(
 			]
 		}
 
-		// The loop skips rows without an address, which occur when no layout covers the country.
+		// The loop skips rows without an address.
+		// This happens when no layout covers the country.
 		if (!groups.length || groups.every((group) => group.every((piece) => piece.tag === "venue"))) continue
 
 		const ok = emitRow(context, leg, stats, groups, register, `sub-venue-negative:${negativeClass}`, {

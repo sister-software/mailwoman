@@ -10,9 +10,9 @@
  *   the polygons reach. {@linkcode assertNoNegativeClaim} rejects any stronger basis.
  *
  *   Each cell row refers to one polygon, so rows are final when written and need no resolve pass.
- *   The ingest still runs in bounded child processes because h3's wasm heap cannot be reset and fails
- *   after enough polyfill calls. The area cross-check catches a hole read as an exterior ring, which
- *   would otherwise cover ground the source did not map.
+ *   The ingest still runs in bounded child processes because h3's wasm heap cannot be reset.
+ *   It fails after enough polyfill calls. The area cross-check catches a hole read as an exterior ring.
+ *   That error would cover ground the source did not map.
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers"
@@ -138,7 +138,8 @@ export type BuildCoastalOptions = BuildCoastalInput & {
 	/**
 	 * Per-layer feature counts from the live WFS.
 	 *
-	 * The build checks each layer's streamed count against them, which catches a stale or truncated archive.
+	 * The build checks each layer's streamed count against them.
+	 * This catches a stale or truncated archive.
 	 */
 	expectedFeatureCounts?: Readonly<Record<string, number>>
 	onProgress?: (message: string) => void
@@ -173,7 +174,9 @@ export interface BuildCoastalResult {
 	storedResolutions: number[]
 	coverageCells: number
 	/**
-	 * The basis of every coverage row, which is `source_present` while `coastal_mapped_extent` is empty.
+	 * The basis of every coverage row.
+	 *
+	 * It is `source_present` while `coastal_mapped_extent` is empty.
 	 */
 	coverageBasis: CoverageBasis
 	/**

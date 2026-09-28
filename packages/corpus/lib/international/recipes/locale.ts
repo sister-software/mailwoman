@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Samples real address tuples for one country, renders them in native or international order, and emits aligned
- *   rows. Sampling and rendering use separate seeded generators.
+ *   Samples real address tuples for one country and renders them in native or international order.
+ *   It emits aligned rows. Sampling and rendering use separate seeded generators.
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
@@ -42,8 +42,9 @@ export interface LocalePart {
 	/**
 	 * Reads Spain's raw CNIG schema.
 	 *
-	 * `poblacion` is the settlement, `municipio` is its parent, and the street
-	 * joins `tipo_vial` and `nombre_via`.
+	 * `poblacion` is the settlement.
+	 * `municipio` is its parent.
+	 * The street combines `tipo_vial` with `nombre_via`.
 	 */
 	cnigRaw?: boolean
 }
@@ -162,7 +163,8 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 }
 
 /**
- * The reservoir size per part, which bounds memory use.
+ * The reservoir size per part.
+ * This value bounds memory use.
  */
 const RESERVOIR_CAP = 1_200_000
 
@@ -172,15 +174,15 @@ const RESERVOIR_CAP = 1_200_000
 const ES_SPACE_JOIN_FRACTION = 0.5
 
 /**
- * The share of NL rows that keep the source postcode form, which has no space.
+ * The share of NL rows that keep the source postcode form without a space.
  */
 const NL_GLUED_POSTCODE_FRACTION = 0.5
 
 /**
  * Cleans a city value.
  *
- * Returns `null` for a value with a comma or four digits, and strips a trailing
- * parenthesized code of one to three letters.
+ * Returns `null` for a value with a comma or four digits.
+ * Strips a trailing parenthesized code of one to three letters.
  */
 export function cleanCityNoise(city: string): string | null {
 	if (/,|\d{4}/.test(city)) return null
@@ -371,8 +373,8 @@ export function applyDistrictAsLocalityOverride(part: LocalePart, override: bool
 }
 
 /**
- * Returns the country's `pedaniaParts` when the override is true and they exist,
- * and its default parts otherwise.
+ * Returns the country's `pedaniaParts` when the override is true and that property exists.
+ * Returns the default parts in all other cases.
  */
 export function resolveLocaleParts(countrySource: LocaleCountrySource, override: boolean | undefined): LocalePart[] {
 	return override === true && countrySource.pedaniaParts ? countrySource.pedaniaParts : countrySource.parts

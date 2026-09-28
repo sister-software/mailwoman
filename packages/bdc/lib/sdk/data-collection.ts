@@ -97,7 +97,7 @@ export interface NTIARecord {
 	location_id: BroadbandServicableLocationID
 
 	/**
-	 * Primary postal address excluding city, state, and ZIP code.
+	 * Primary postal address without the city, state or ZIP code.
 	 *
 	 * @example
 	 * 	123 Main St
@@ -267,7 +267,7 @@ export interface NTIARecord {
 	longitude: number
 
 	/**
-	 * FCC Fabric Release Date, present only for tier 2, 3, and 4 licensees.
+	 * FCC Fabric Release Date, present only for tier 2 through tier 4 licensees.
 	 *
 	 * @example
 	 * 	07212023

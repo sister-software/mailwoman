@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `mwdev_reliability`'s measurement: collect graded confidences for one surface, curve them, and state what an eval
- * on them would buy, because a well-calibrated surface can still have no threshold worth setting.
+ * `mwdev_reliability` collects graded confidences for one surface and curves them.
+ * The report states what an eval would buy. A well-calibrated surface can still have no threshold worth setting.
  */
 
 import { resolvePath } from "path-ts"
@@ -41,8 +41,9 @@ export type ReliabilitySurface = (typeof ReliabilitySurface)[keyof typeof Reliab
 /**
  * Where the coarse placer's held-out split lives, relative to the repo root.
  *
- * It is untracked in git, and the surface reports its absence rather than substituting
- * a split that would be the temperature fit reporting on itself.
+ * It is untracked in git.
+ * The surface reports its absence rather than substituting a split that would
+ * be the temperature fit reporting on itself.
  */
 const PLACER_TEST_SPLIT = ["data", "coarse-placer", "test.jsonl"] as const
 
@@ -141,8 +142,8 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 		sample,
 		provenance: provenanceFor(engine, set),
 		nRequested: selected.length,
-		// A `limit` makes a full board a subset, and reporting the set's own selection
-		// would let a 20-row probe carry a full board's confidence wording.
+		// A `limit` makes a full board a subset.
+		// Reporting the set's own selection would let a 20-row probe carry a full board's confidence wording.
 		selection: limit && limit < set.inputs.length ? "subset" : set.selection,
 		eventLabel: "incorrect component",
 	}
@@ -181,8 +182,8 @@ function summarize(
 		return `No gradeable observations on the ${surface} surface, so nothing was measured. ${powerSentence}`
 	}
 
-	// The most useful single row: the highest threshold that still admits a majority of what
-	// it could, named because a table's rows are all equally prominent and its point is not.
+	// The most useful single row: the highest threshold that still admits a majority of what it could,
+	// prioritized because a table gives each row equal prominence while the threshold does not.
 	const workable = check.toReversed().find((row) => row.admitted_share >= 0.5)
 
 	const thresholdSentence = workable
@@ -194,8 +195,8 @@ function summarize(
 	const excludedTotal = sample.excluded.reduce((total, entry) => total + entry.n, 0)
 	const excludedSentence = excludedTotal ? ` ${excludedTotal} rows were excluded and are itemized.` : ""
 
-	// Named in the sentence rather than only in a field, because the curve covers only the
-	// components truth asserted and a reader could otherwise read the ECE as covering the parse.
+	// Stated in the sentence as well as in a field, because the curve covers only the components
+	// truth asserted and a reader could otherwise read the ECE as covering the parse.
 	const unassertedSentence = sample.unasserted?.n
 		? ` A further ${sample.unasserted.n} produced components were not asserted by any truth row (mean confidence ` +
 			`${sample.unasserted.mean_confidence?.toFixed(3)}) and are counted, not curved.`

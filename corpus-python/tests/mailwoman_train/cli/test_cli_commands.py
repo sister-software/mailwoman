@@ -1,13 +1,12 @@
-"""Every subcommand is a module in the registry, and declares its own flags.
+"""Every subcommand has a module in the registry and declares its own flags.
 
-`cli.py` held eight command bodies, their private helpers, and a 145-line `build_parser` that
-declared all eight commands' flags in one run — so adding a command meant editing a function that
-every other command shared, and reading one command meant finding its flags a hundred lines from
-its body.
+`cli.py` held eight command bodies and their private helpers. Its 145-line `build_parser` declared
+all eight commands' flags in one function. Adding a command meant editing that shared function.
+Reading a command meant finding its flags a hundred lines from its body.
 
-A command is now a module exporting `NAME`, `add_parser` and `run`, and `COMMANDS` is the list.
-`build_parser` loops it. These tests read the registry rather than argparse's private attributes, so they
-say what a command owes rather than how argparse happens to store it.
+A command is now a module exporting `NAME`, `add_parser`, plus `run`. `COMMANDS` is the registry.
+`build_parser` loops over it. These tests read the registry rather than argparse's private attributes.
+They assert what each command provides without depending on argparse's storage details.
 """
 
 from __future__ import annotations

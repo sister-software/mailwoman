@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file The streaming zip readers' two interfaces no other test checks — a consumer may stop early, and a member name the archive never declared an encoding for can still be read — because the recipes that pipe a member into a row-limited spliterator (`locale.ts`, `scaffold.ts`, `po-box-cedex.ts`) take that path whenever the limit is reached first.
+ * @file Tests two streaming zip reader behaviors. A consumer may stop early. A member name remains readable when the archive declares no encoding. Recipes that pipe members into row-limited spliterators (`locale.ts`, `scaffold.ts`, `po-box-cedex.ts`) use this path when the limit is reached first.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

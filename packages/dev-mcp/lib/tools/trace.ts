@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The `mwdev_trace` tool definition, whose description, input schema and handler wiring are the interface an agent
- * reads. The measurement itself lives in the package root.
+ * The `mwdev_trace` tool definition provides the agent-facing description and input schema.
+ * Its handler reads the trace measurement in the package root.
  */
 
 import { z } from "zod"
@@ -40,7 +40,8 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 		const config = (args["config"] as EngineConfig | undefined) ?? {}
 		const fullParseTrace = args["full_parse_trace"] === true
 		// Tracing is forced on because this surface exists to explain one row,
-		// and the band probe rides with it since neither can change the answer.
+		// The band probe runs with tracing.
+		// Neither diagnostic changes the answer.
 		const engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
 
 		const set = await resolveInputSet({

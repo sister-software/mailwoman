@@ -14,7 +14,8 @@ import { $public } from "#env"
  * --tiles flag → $MAILWOMAN_TILES → dataRootPath("tiles", "planet.pmtiles") if it exists → null (degrade).
  *
  * Flag and environment values pass through verbatim.
- * An `https://` archive URL is as valid as a path, and `TileSource.open` reads either.
+ * An `https://` archive URL is as valid as a path.
+ * `TileSource.open` reads either form.
  *
  * Only the data-root fallback is existence-probed.
  * A URL is never probed here.

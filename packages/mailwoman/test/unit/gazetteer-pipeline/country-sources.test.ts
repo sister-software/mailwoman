@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The check must distinguish a measured two-source trade from an accidental third source: refusing all
- *   multi-source countries would refuse the trade, and accepting all would never catch the accident.
+ *   multi-source countries would refuse the trade. Accepting all would never catch the accident.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -67,8 +67,8 @@ describe("sourceConflicts", () => {
 	})
 
 	it("accepts a baseline country, because that trade was measured", () => {
-		// CZ duplicates Overture deliberately, and FI in the same set gains names Overture
-		// lacks, so dropping the fold is a coverage decision.
+		// CZ duplicates Overture deliberately.
+		// FI in the same set gains names Overture lacks, so dropping the fold is a coverage decision.
 		expect(
 			sourceConflicts(countrySourceMap({ wofCountries: [], overtureCountries: ["CZ"], geonamesCountries: ["CZ"] }))
 		).toEqual([])
@@ -171,7 +171,8 @@ describe("planCountryMove", () => {
 	})
 
 	it("multiplies the packed size out to the checkout cost", () => {
-		// GitHub reports packed size, which understates the checkout cost a sync actually writes.
+		// GitHub reports packed size.
+		// It understates the checkout cost a sync actually writes.
 		const plan = planCountryMove({
 			country: "TR",
 			target: AdminSource.WOF,

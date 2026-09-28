@@ -12,8 +12,9 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 
 /**
- * Command specification for `gazetteer granularity`, which reports the deepest
- * admin placetype the gazetteer covers in each country.
+ * Command specification for `gazetteer granularity`.
+ *
+ * It reports the deepest admin placetype the gazetteer covers in each country.
  */
 export const spec = {
 	name: "granularity",

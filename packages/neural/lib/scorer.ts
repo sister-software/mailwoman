@@ -36,7 +36,7 @@ import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
 export const CAPABILITY_DELTA_THRESHOLD = 0.05
 
 /**
- * The default postcode anchor lookup, which the shipped en-US model trained against.
+ * The default postcode anchor lookup used to train the shipped en-US model.
  */
 export const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
@@ -113,9 +113,9 @@ function assertShapedKeyerObligation(
 }
 
 /**
- * Deliberate departures from the model card's declared channel configuration for ablations,
- * which {@link createScorer} applies and logs a warning for when a required channel
- * or the conventions mode is changed.
+ * Deliberate departures from the model card's declared channel configuration
+ * for ablations. {@link createScorer} applies them and logs a warning when they
+ * change a required channel or the conventions mode.
  */
 export interface ScorerOverrides {
 	/**
@@ -190,31 +190,37 @@ export interface CreateScorerOpts {
 	anchorLookupPath?: PathBuilderLike
 
 	/**
-	 * The gazetteer lexicon, which defaults to {@link DEFAULT_GAZETTEER_LEXICON}
-	 * and then to the weights package's copy.
+	 * The gazetteer lexicon.
+	 *
+	 * The default is {@link DEFAULT_GAZETTEER_LEXICON} when present, followed by the weights package's copy.
 	 */
 	gazetteerLexiconPath?: PathBuilderLike
 
 	/**
-	 * The street-type evidence lexicon, which defaults to the card's named file under
-	 * `data/gazetteer/` and then to the weights package's copy.
+	 * The street-type evidence lexicon.
+	 *
+	 * The default is the file listed on the card under `data/gazetteer/`,
+	 * followed by the weights package's copy.
 	 */
 	streetTypeLexiconPath?: string
 
 	/**
-	 * The locality-surface evidence lexicon, which defaults to the weights package's copy.
+	 * The locality-surface evidence lexicon.
+	 * The default is the weights package's copy.
 	 */
 	localitySurfaceLexiconPath?: string
 
 	/**
-	 * The country-surface lexicon, which defaults to {@link DEFAULT_COUNTRY_LEXICON}
-	 * and then to the weights package's copy.
+	 * The country-surface lexicon.
+	 *
+	 * The default is {@link DEFAULT_COUNTRY_LEXICON} when present, followed by the weights package's copy.
 	 */
 	countryLexiconPath?: string
 
 	/**
-	 * The locale of the weights package that supplies default lexicons and the anchor
-	 * lookup. the model, tokenizer and card are never resolved from it.
+	 * The locale of the weights package that supplies default lexicons and the anchor lookup.
+	 *
+	 * The model, tokenizer and card are never resolved from that package.
 	 */
 	locale?: string
 
@@ -231,7 +237,8 @@ export interface CreateScorerOpts {
 	tier?: string
 
 	/**
-	 * Deliberate ablations, which log a warning instead of throwing.
+	 * Deliberate ablations.
+	 * The scorer logs a warning instead of throwing for them.
 	 */
 	overrides?: ScorerOverrides
 }
@@ -298,10 +305,11 @@ async function assertConventionsRespectCapabilities(
 }
 
 /**
- * Creates a `NeuralAddressClassifier` with the channels its model card declares,
- * inferring them from the ONNX input names when the card has no `requires` block,
- * and either throwing or logging (per `strict`) when a required channel cannot be fed
- * or a conventions mask would break a certified capability.
+ * Creates a `NeuralAddressClassifier` with the channels its model card declares.
+ *
+ * When the card has no `requires` block, the scorer infers channels from ONNX input names.
+ * The `strict` option controls whether the scorer throws or logs when it cannot feed a
+ * required channel or when a conventions mask would break a certified capability.
  */
 export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddressClassifier> {
 	const strict = opts.strict ?? true

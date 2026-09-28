@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The fetch the browser runtime loads its artifacts through: a reset late in a download rejects the body read
- *   rather than the `fetch()` call, so the body is buffered inside the retry, and an http status is never retried
+ *   rather than the `fetch()` call, so the body is buffered inside the retry. An HTTP status is never retried
  *   because a 404 is an answer the loaders interpret.
  */
 
@@ -15,7 +15,7 @@ const FIRST_RETRY_DELAY_MS = 500
 /**
  * Only a `TypeError` marks a retriable network failure — a reset, a refused connection,
  * a cors refusal, or a body read that loses its connection — while an http status,
- * an abort, and a bad URL are not retried.
+ * an abort or a bad URL are not retried.
  */
 function isNetworkFailure(error: unknown): boolean {
 	return error instanceof TypeError
@@ -43,8 +43,11 @@ async function fetchComplete(
 }
 
 /**
- * How much of a body has arrived: `total` is the response's declared length or `null`, and a retry
- * restarts `received` at zero because the lost attempt's bytes are gone and the transfer begins again.
+ * How much of a body has arrived.
+ *
+ * `total` is the response's declared length or `null`.
+ * A retry restarts `received` at zero because the lost attempt's bytes are gone
+ * and the transfer begins again.
  */
 export type BytesReceived = (received: number, total: number | null) => void
 

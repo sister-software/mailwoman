@@ -6,7 +6,7 @@
  *   Implements the `mailwoman data` command group and its bare invocation.
  *
  *   Output goes through {@linkcode writeRawStdout} instead of Ink. An Ink frame at least as tall as the
- *   viewport makes Ink clear the scrollback, and the bundle list can exceed a short terminal.
+ *   viewport clears the scrollback. The bundle list can exceed a short terminal.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -39,7 +39,8 @@ export const spec = {
 /**
  * Formats the bundle list printed by `--list`.
  *
- * Sizes are the registry's `approxBytes` totals, which `data pull --dry-run` also uses.
+ * Sizes come from the registry's `approxBytes` totals.
+ * `data pull --dry-run` uses the same values.
  */
 function listBundles(dataRoot: PathBuilderLike): string {
 	const lines: string[] = ["Downloadable bundles (mailwoman data pull <bundle>)", ""]

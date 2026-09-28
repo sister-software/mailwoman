@@ -7,8 +7,8 @@
  *
  *   Every mint is `${identifierType}:${value}`, so a blank identifier mints one degenerate node that every other
  *   blank-valued row collapses into. The identifier mints therefore throw, while the company-name mints rely on callers
- *   having established non-emptiness, and the two assertions guard temporal columns, where a blank `valid_from` reads
- *   as valid since forever and a non-ISO one matches no row.
+ *   having established non-emptiness. The two assertions guard temporal columns.
+ *   A blank `valid_from` reads as valid since forever. A non-ISO value matches no row.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -95,8 +95,10 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
  * Validates `lastFiledAt` is non-blank before it is written into both
  * `filer_edge.source_vintage`/`valid_from` and every attribute's `source_vintage` for this row.
  *
- * It is a raw, unvalidated TSV string, and SQLite's `not NULL` does not reject an empty string,
- * which a `valid_from <= asOf` read would treat as valid since forever.
+ * It is a raw, unvalidated TSV string.
+ * SQLite's `not NULL` does not reject an empty string.
+ *
+ * A `valid_from <= asOf` read would treat an empty string as valid since forever.
  */
 export function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowIndex: number): string {
 	if (lastFiledAt.trim() === "") {

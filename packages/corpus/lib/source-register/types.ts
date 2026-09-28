@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for the address-source register, which holds a jurisdiction table and a separate source table.
+ *   This module defines the address-source register's types. The register has a jurisdiction table and a source table.
  */
 
 import type { AssertedProposition } from "@mailwoman/evidence/status"
@@ -28,12 +28,14 @@ export const BackboneState = {
 	 */
 	VerifiedPartial: "A~",
 	/**
-	 * An official address system exists, and bulk access, openness, coverage
-	 * or redistribution rights are incomplete.
+	 * An official address system exists.
+	 *
+	 * Bulk access, openness, coverage or redistribution rights are incomplete.
 	 */
 	Restricted: "B",
 	/**
-	 * The research pass verified no permissive nationwide premise corpus, which may still exist.
+	 * The research pass found no permissive nationwide premise corpus.
+	 * One may still exist.
 	 */
 	Unverified: "C",
 	/**
@@ -81,7 +83,7 @@ export const SourceStatus = {
 	/**
 	 * Research confirmed that the register exists and is the national authority.
 	 *
-	 * Nobody has inspected its address fields, bulk access or terms.
+	 * Its address fields, bulk access and terms have no review record.
 	 */
 	VerifiedAuthority: "verified-authority",
 	/**
@@ -98,8 +100,8 @@ export const SourceStatus = {
 	/**
 	 * A bulk corpus is reachable but the examined copy is no longer updated.
 	 *
-	 * The row points to the national portal instead, and the state is separate from
-	 * `VerifiedCorpus` so a filter for reachable corpora excludes it.
+	 * The row points to the national portal instead.
+	 * This state differs from `VerifiedCorpus` so a filter for reachable corpora excludes it.
 	 */
 	VerifiedCorpusStale: "verified-corpus-stale",
 } as const
@@ -151,7 +153,7 @@ export const SourceGeometry = {
 	 */
 	Partial: "partial",
 	/**
-	 * Nobody has checked the source for coordinates.
+	 * The source has no coordinate review record.
 	 */
 	Unresolved: "unresolved",
 } as const
@@ -183,7 +185,7 @@ export type ResearchPass = (typeof ResearchPass)[keyof typeof ResearchPass]
  */
 export const LicenseReviewState = {
 	/**
-	 * Nobody has read the publisher's terms.
+	 * The publisher's terms have no review record.
 	 *
 	 * The research pass's license text is kept verbatim in
 	 * {@linkcode UncheckedLicense.publisherStatement} and grants no license.
@@ -194,7 +196,8 @@ export const LicenseReviewState = {
 	 */
 	Elected: "elected",
 	/**
-	 * A reviewer read the terms and ruled the source out, and the row records the reason.
+	 * A reviewer read the terms and rejected the source.
+	 * The row records the reason.
 	 */
 	Refused: "refused",
 } as const
@@ -205,7 +208,7 @@ export const LicenseReviewState = {
 export type LicenseReviewState = (typeof LicenseReviewState)[keyof typeof LicenseReviewState]
 
 /**
- * A license decision whose terms nobody has read.
+ * A license decision whose terms have no review record.
  */
 export interface UncheckedLicense {
 	licenseID: string
@@ -262,8 +265,11 @@ export const SourceOperation = {
 export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperation]
 
 /**
- * What a grant says about one operation; `unreviewed` means nobody has read the terms against it,
- * eligibility checks treat it as blocking, and it stays distinct from `refused`.
+ * What a grant says about one operation.
+ *
+ * `unreviewed` means the terms lack an operation-specific review.
+ * Eligibility checks treat it as blocking.
+ * The state stays distinct from `refused`.
  */
 export const OperationPermission = {
 	Permitted: "permitted",
@@ -279,7 +285,8 @@ export type OperationPermission = (typeof OperationPermission)[keyof typeof Oper
 /**
  * The legal basis of a permission.
  *
- * Most permissions rest on a publisher grant, and the other values mark permissions that rest elsewhere.
+ * Most permissions rest on a publisher grant.
+ * The other values mark permissions with a different basis.
  */
 export const PermissionBasis = {
 	PublisherGrant: "publisher-grant",
@@ -298,7 +305,7 @@ export type PermissionBasis = (typeof PermissionBasis)[keyof typeof PermissionBa
 export interface OperationDecision {
 	permission: OperationPermission
 	/**
-	 * The basis of the permission, which the audit requires when the permission is `permitted`.
+	 * The audit requires a permission basis when the permission is `permitted`.
 	 */
 	basis?: PermissionBasis
 	/**
@@ -391,7 +398,8 @@ export interface JurisdictionRecord {
 /**
  * What a review found about personal data in one publication, a question separate from licensing.
  *
- * Only `Present` blocks ingest, and a source without any review is also blocked.
+ * `Present` blocks ingest.
+ * A source without a review is also blocked.
  */
 export const PersonalDataReading = {
 	/**
@@ -399,11 +407,12 @@ export const PersonalDataReading = {
 	 */
 	Absent: "absent",
 	/**
-	 * A review found such records, and no analysis of them is complete.
+	 * A review found such records.
+	 * Analysis remains incomplete.
 	 */
 	Present: "present",
 	/**
-	 * A review found such records, and {@link PersonalDataReview.record} points to the completed analysis.
+	 * A review found such records. {@link PersonalDataReview.record} points to the completed analysis.
 	 */
 	Assessed: "assessed",
 } as const
@@ -420,7 +429,7 @@ export interface PersonalDataReview {
 	reading: PersonalDataReading
 	because: string
 	/**
-	 * The location of the completed analysis, which the audit requires when the reading is `assessed`.
+	 * The audit requires the completed analysis location when the reading is `assessed`.
 	 */
 	record?: string
 }
@@ -448,7 +457,7 @@ export interface AddressSourceRecord {
 	/**
 	 * Free text on how the data is reached, such as a bulk CSV, an API or a portal search.
 	 *
-	 * An absent value means that research recorded no route, and the data may still be reachable.
+	 * Research may have recorded no route even when the data is reachable.
 	 */
 	access?: string
 	geometry: SourceGeometry
@@ -487,8 +496,9 @@ export interface AddressSourceRecord {
 /**
  * Source fields that no row resolves yet.
  *
- * The audit checks both directions: a listed field must be absent from every row,
- * and an unlisted field must be present on at least one row.
+ * The audit checks both directions.
+ * A listed field must be absent from every row.
+ * An unlisted field must appear on at least one row.
  */
 export const UNRESOLVED_FIELDS = ["addressRole", "upstreamLineage", "coverage", "personalDataReview"] as const
 
@@ -517,7 +527,7 @@ export interface AddressSourceRegister {
 	registerID: string
 	version: string
 	/**
-	 * The SHA-256 digest of every other field, which the build writes.
+	 * The build writes the SHA-256 digest of every other field.
 	 *
 	 * The research inputs are not committed, so this is the only way to detect
 	 * a hand edit to the generated file.

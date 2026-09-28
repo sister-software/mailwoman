@@ -9,22 +9,24 @@
  *   why not WOF: the admin artifact carries the tier twice and both copies are wrong for a Han query. A parsed
  *   `新北市林口區` scoped to New Taipei City finds no in-region row keyed `林口區`: the record that carries the Han
  *   names (WOF 102026697) has no parent and a centroid 54 km away in the hills, while the correctly parented record
- *   (WOF 890467835) carries only the Latin `Linkou`. Across the 289 units the training board holds, 102 have no
- *   Han-keyed TW row at all, 15 have one only on a namesake in another 縣市, and 10 only on a parentless row.
+ *   (WOF 890467835) carries only the Latin `Linkou`. The training board holds 289 units.
+ *   Of those, 102 have no Han-keyed TW row. Another 15 have a row only on a namesake in another 縣市.
+ *   Ten have a row only on a parentless place.
  *
  *   source + LICENSE: the pinned Overture Maps addresses parquet for Taiwan
- *   (`overture/<release>/addresses-tw.parquet`), whose rows come from the civil-affairs bureaus' registers under the
+ *   (`overture/<release>/addresses-tw.parquet`). Its rows come from the civil-affairs bureaus' registers under the
  *   Open Government Data License, Taiwan, v1.0 — the same input and the same license expression as the rooftop tier
  *   (`situs address-points --country TW`). Overture declares no identifier for the addresses theme, so the expression
  *   is the register's own. `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區,
- *   the register's own administrative pair. there is no free-text grouping here, so no thin-group threshold either.
- *   every pair is a real unit, and the smallest (金門縣烏坵鄉, 3 points) is reported rather than dropped.
+ *   the register's own administrative pair. This build does no free-text grouping and uses no thin-group threshold.
+ *   Every pair is a real unit. The smallest pair (金門縣烏坵鄉, 3 points) is reported rather than dropped.
  *
  *   shape: one `spr` row per (縣市, 鄉鎮市區), placetype `locality` — the tier `placetypeMapForCountry("tw")` maps a
  *   parsed `subregion` onto — with the median address point as the centroid and the p5–p95 envelope as the bbox. The
- *   縣市 is matched to its WOF region by name (the official `zho` name first, then any Han name that names exactly one
- *   region, then the name minus its 縣/市 suffix, which is how 桃園市 reaches a region WOF still names 桃園縣), and the
- *   match is written as an `ancestors` row. Therefore, the candidate build stamps the row with the region's scope. `names`
+ *   縣市 is matched to its WOF region by name. The build tries the official `zho` name first,
+ *   then a Han name that identifies exactly one region. It then tries the name without its 縣/市 suffix.
+ *   That step lets 桃園市 reach the region WOF still names 桃園縣. The build writes the match as an `ancestors` row.
+ *   The candidate build then stamps the row with the region's scope. `names`
  *   carries the register's spelling as the official name and its 臺/台 twin as an alias. Population is 0 (unmeasured:
  *   an address-point count is not a population), so a row wins only where its key is the answer.
  *
@@ -58,10 +60,10 @@ import { licenseForOvertureCountry } from "#geocode/national-overture"
  * so one grant covers both and one entry records it.
  * `COUNTRY_LICENSES` in `#geocode/national-overture` gives Taiwan `CC-BY-4.0 AND OGDL-Taiwan-1.0`.
  *
- * Two documents describe these municipal 門牌 rows and they describe two grants:
- * Overture's attribution page states the terms Overture redistributes under, and
- * `docs/superpowers/plans/counsel-dossier.md` §6 reads the originating agencies' own licence.
- * A consumer of a row that came through Overture is bound by both.
+ * So this build stops until one is settled.
+ * Stamping a candidate would record an unverified grant.
+ *
+ * The artifact would carry that claim for as long as it exists.
  *
  * @throws Through `licenseForOvertureCountry` when no entry is registered for the country.
  */
@@ -114,7 +116,8 @@ export interface TaiwanRegionName {
  *
  * Three rungs, each answering only when it names exactly one region:
  *
- * 1. The official `zho` name (`新竹市` → Hsinchu City, never Hsinchu County, which also lists `新竹市` as a variant);
+ * 1. The official `zho` name (`新竹市` → Hsinchu City).
+ *    Hsinchu County also lists `新竹市` as a variant.
  * 2. Any Han name, when only one region carries it.
  * 3. The name minus its 縣/市 suffix against rung 1 and 2 (`桃園市` → `桃園`, the only name WOF
  *    gives the region that became a special municipality after the record was written).

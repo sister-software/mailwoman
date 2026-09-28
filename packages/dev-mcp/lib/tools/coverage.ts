@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   MCP interface for per-country parse, geocoding, and training coverage reports.
+ *   MCP interface for per-country parse, geocoding and training coverage reports.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -147,12 +147,13 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		rendered: shown.map(line),
 		...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
 		// Reported beside `rows` rather than inside it.
-		// These rows exist in the corpus and belong to no jurisdiction, and a caller that
-		// read only `rows` would not know they were counted at all.
+		// These rows exist in the corpus and belong to no jurisdiction.
+		// A caller that reads only `rows` would not know they were counted.
 		...(report.countryLess.length ? { country_less_rows: report.countryLess } : {}),
 		mismatches: report.mismatches,
 		summary:
-			// A mismatch leads. A caller reads the first sentence, and every count after it is about a corpus the run does not read.
+			// A mismatch leads. A caller reads the first sentence.
+			// Every following count is about a corpus the run does not read.
 			(report.corpusMismatch ? `CORPUS MISMATCH — ${report.corpusMismatch} ` : "") +
 			`${trained.length} countries train (${withStreet.length} with street-level rows); ` +
 			`${report.countries.filter((c) => c.gazetteerPlaces > 0).length} are geocodable to a locality, ` +

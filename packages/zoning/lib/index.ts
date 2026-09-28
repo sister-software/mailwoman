@@ -111,8 +111,10 @@ export interface ZoningPlan {
 	validFrom: string | null
 	validTo: string | null
 	/**
-	 * The publisher's `CURRENT_PLAN` flag as published: `1` means the plan is not
-	 * superseded, and it leaves today's force to `validTo`.
+	 * The publisher's `CURRENT_PLAN` flag as published.
+	 *
+	 * The value `1` means the plan is active.
+	 * `validTo` determines whether it has force today.
 	 */
 	currentPlan: number
 }
@@ -215,8 +217,9 @@ export interface ZoningLayerIdentity {
 	/**
 	 * Every resolution at which `zoning_cell` stores rows, coarsest first.
 	 *
-	 * A probe walks all of them because whole cells are compacted into parents, and a polygon
-	 * too large for the h3 allocator at the index resolution was indexed at a coarser one.
+	 * A probe walks all of them because whole cells are compacted into parents.
+	 * The builder indexes a polygon at a coarser resolution when the h3 allocator
+	 * cannot fit it at the index resolution.
 	 */
 	cellResolutions: number[]
 	/**
@@ -306,8 +309,9 @@ export class ZoningLookup implements Disposable {
 
 		this.#selectCell = this.#database.prepare("SELECT area_id, containment FROM zoning_cell WHERE h3_cell = ?")
 
-		// Read without the ring blob: the bounding box rejects most polygons before the
-		// ray cast needs rings, and a whole cell never reads the blob.
+		// Read without the ring blob.
+		// The bounding box rejects most polygons before the ray cast needs rings.
+		// A whole cell never reads the blob.
 		this.#selectArea = this.#database.prepare(
 			"SELECT area_id, jurisdiction_id, plan_id, local_code, local_description, local_code_url, crosswalk_code, " +
 				"crosswalk_scheme, crosswalk_description, crosswalk_rollup, provenance_grade, min_lat, min_lon, max_lat, max_lon " +
@@ -541,8 +545,10 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 			.all() as Array<{ crosswalk_scheme: string }>
 	).map((entry) => entry.crosswalk_scheme)
 
-	// The layer stores no coverage resolution, so it is recovered from the coverage cells: a short cell
-	// expands to a valid index at exactly one resolution, and the helper throws on mixed resolutions.
+	// The layer stores no coverage resolution.
+	// The code recovers it from the coverage cells.
+	// A short cell expands to a valid index at exactly one resolution.
+	// The helper throws on mixed resolutions.
 	const coverageResolution = recoverShortCellResolution(
 		(database.prepare("SELECT h3_cell FROM layer_coverage").all() as Array<{ h3_cell: number }>).map(
 			(coverageRow) => coverageRow.h3_cell

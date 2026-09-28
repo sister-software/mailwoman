@@ -7,9 +7,10 @@
 /**
  * PMTiles archive reader for map-tui.
  *
- * TileSource wraps a local `.pmtiles` file (node:fs/promises FileHandle) behind the pmtiles
- * `Source` interface, decodes each requested tile's MVT payload via ./mvt.ts, and keeps a
- * small LRU cache of decoded tiles so repeated draws of the same viewport don't re-decode.
+ * TileSource wraps a local `.pmtiles` file (node:fs/promises FileHandle) behind
+ * the pmtiles `Source` interface.
+ * It decodes each requested tile's MVT payload via ./mvt.ts and keeps a small LRU cache
+ * of decoded tiles so repeated draws of the same viewport don't re-decode.
  */
 
 import { type FileHandle, open } from "@mailwoman/core/fs/readers"
@@ -78,11 +79,12 @@ export function readAttribution(metadata: unknown): string {
 
 /**
  * Plain text out of an html fragment via `htmlparser2`'s event parser — a hand scan
- * misreads `<` inside attribute values and unclosed tags, and the parser's own entity
- * decoding covers the full named set a metadata field can carry.
+ * misreads `<` inside attribute values and unclosed tags.
  *
- * Local rather than `@mailwoman/core`'s `htmlToText`: this package stays standalone by design,
- * and one attribution string does not price core's shipped data into every consumer.
+ * The parser's own entity decoding covers the full set of labels supported by the metadata field.
+ *
+ * Local rather than `@mailwoman/core`'s `htmlToText` because this package stays standalone by design.
+ * One attribution string should not add core's shipped data to every consumer.
  */
 function htmlText(html: string): string {
 	let text = ""

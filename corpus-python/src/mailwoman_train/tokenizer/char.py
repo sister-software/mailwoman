@@ -13,8 +13,8 @@ This module is the data side of that fix:
   table is tiny vs a 48k subword vocab), which is exactly why char-composition scales to CJK where
   subword-vocab expansion does not.
 - ``encode_row_charword`` — turn ``raw`` + whitespace ``tokens`` + per-token ``labels`` into the model
-  inputs: a ``(S, W)`` matrix of char IDs (S = word count, W = max chars/word), an attention mask over
-  words, and per-word BIO label IDs. The word-level labels come straight from the corpus's whitespace
+  inputs: a ``(S, W)`` matrix of char IDs (S = word count, W = max chars/word). It also returns an
+  attention mask over words plus per-word BIO label IDs. The word-level labels come straight from the corpus's whitespace
   ``tokens``/``labels`` (already word-aligned) — no SentencePiece sub-token projection.
 
 Deliberately minimal for the de-risk probe: no anchor / gazetteer / phrase channels (those project per

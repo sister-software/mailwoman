@@ -44,9 +44,9 @@ export function makeDirectories<T extends PathBuilderLike[]>(...paths: T): Promi
 /**
  * Creates one directory and rejects with `EEXIST` when the path already exists.
  *
- * A non-recursive `mkdir` is an atomic test-and-set, and the repository's inter-process
- * locks depend on it. {@linkcode makeDirectories} succeeds on an existing directory,
- * so it cannot replace this function for a lock.
+ * A non-recursive `mkdir` is an atomic test-and-set.
+ * The repository's inter-process locks depend on it. {@linkcode makeDirectories} succeeds
+ * on an existing directory, so it cannot replace this function for a lock.
  */
 export function makeDirectoryExclusive(path: PathBuilderLike): Promise<void> {
 	return mkdir(path.toString()).then(() => undefined)
@@ -70,8 +70,9 @@ export type BufferLike =
  * Writes a local text file.
  *
  * A string is written as is.
- * Any other iterable of strings is written one element per line, and every line
- * ends with a newline, including the last.
+ * Any other iterable of strings is written one element per line.
+ *
+ * Every line ends with a newline, including the last.
  * An empty iterable writes an empty file.
  *
  * @see {@linkcode writeLocalJSONFile} for a JSON-specific writer that pretty-prints and adds a trailing newline.

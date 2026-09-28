@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The root manifest's `workspaces` field, expanded to the directories it names: only a single trailing `*` segment is
- *   supported, a literal entry that names no manifest is an error rather than an empty result, and a pattern this reader
- *   cannot expand must refuse rather than report no matches.
+ *   This function expands the root manifest's `workspaces` field to the directories it names.
+ *   It supports only a single trailing `*` segment.
+ *   A literal entry without a manifest is an error instead of an empty result.
+ *   The function refuses patterns it cannot expand instead of reporting no matches.
  */
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -32,15 +33,18 @@ export interface ReadWorkspaceDirectoriesOptions {
 }
 
 /**
- * Repo-relative workspace directories, in the field's order: a literal entry stays where it is, and a
- * `parent/*` entry expands to every child of `parent` that carries a `package.json`, sorted by name.
+ * Returns repo-relative workspace directories in the field's order.
+ *
+ * A literal entry stays where it is.
+ * A `parent/*` entry expands to child directories that carry a `package.json`, sorted by name.
  */
 export async function readWorkspaceDirectories(
 	repoRoot: PathBuilderLike,
 	options: ReadWorkspaceDirectoriesOptions = {}
 ): Promise<string[]> {
 	const manifest = await readPackageJSON(resolvePath(repoRoot, "package.json"))
-	// The field is either the pattern array or yarn's object form, which nests the same patterns under `packages`.
+	// The field is either the pattern array or Yarn's object form.
+	// Yarn's object form nests the same patterns under `packages`.
 	const entries = Array.isArray(manifest.workspaces) ? manifest.workspaces : (manifest.workspaces?.packages ?? [])
 
 	if (!entries.length) throw new Error(`${resolvePath(repoRoot, "package.json")} declares no workspaces`)

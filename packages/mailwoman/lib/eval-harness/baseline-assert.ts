@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Baseline assertion: a harness refuses to report when its instruments read wrong, and the check is two-sided because a metric above its registered value is as loud a signal as one below.
+ *   A harness refuses to report when its instruments read incorrectly.
+ *   The check is two-sided: a metric above or below its registered value signals a regression.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -91,7 +92,7 @@ let cachedFile: BaselineFile | undefined
 
 /**
  * Anchored at the package root because tsc does not emit `baselines.json` into `out/`,
- * so the file is named from where the package starts rather than from where this module runs.
+ * so the file path derives from the package root rather than this module's location.
  */
 function resolveBaselineFilePath(): string {
 	return resolvePackagePath("mailwoman", "lib", "eval-harness", "baselines.json")
@@ -171,8 +172,8 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 
 		const tolerance = baseline.tolerance_rel ?? file.default_tolerance_rel
 
-		// An absolute tolerance wins when declared, and a zero-valued row must declare one
-		// because relative deviation is undefined.
+		// An absolute tolerance takes precedence when declared.
+		// A zero-valued row needs an absolute tolerance because relative deviation is undefined.
 		if (baseline.tolerance_abs !== undefined || baseline.value === 0) {
 			const toleranceAbs = baseline.tolerance_abs ?? 0
 			const drift = Math.abs(observation.observed - baseline.value)

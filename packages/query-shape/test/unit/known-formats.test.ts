@@ -21,7 +21,7 @@ describe("isPostcodeFormat", () => {
 
 	it("holds for every format the table can emit", () => {
 		// The convention is what `@mailwoman/core`'s runtime pipeline reads in place of a
-		// copied list, so a format named outside it would be a postcode here and not there.
+		// copied list, so a format omitted from it would be a postcode here and not there.
 		// Every pattern is exercised through detection.
 		const probes = [
 			"10001",

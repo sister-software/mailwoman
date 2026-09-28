@@ -8,8 +8,8 @@
  *   co-official language, so the table follows the statutes:
  *
  *   - Catalan (`cat`): the Statute of Catalonia (2006, art. 6) for Barcelona, Girona, Lleida and Tarragona. the Statute
- *     of the Balearic Islands (2007, art. 4); and the Statute of the Valencian Community (2006, art. 6) for Alicante,
- *     Castellón and Valencia, whose Valencian the Who's On First names table files under `cat`.
+ *     of the Balearic Islands (2007, art. 4). The Statute of the Valencian Community (2006, art. 6)
+ *     covers Alicante, Castellón and Valencia. Who's On First stores Valencian entries under `cat`.
  *   - Occitan (`oci`, Aranese): the Statute of Catalonia (2006, art. 6.5) makes it official throughout Catalonia.
  *   - Galician (`glg`): the Statute of Galicia (1981, art. 5) for A Coruña, Lugo, Ourense and Pontevedra.
  *   - Basque (`eus`): the Statute of the Basque Country (1979, art. 6) for Álava, Biscay and Gipuzkoa. the Foral Law
@@ -18,9 +18,10 @@
  *   Asturian and Aragonese are guarded by their statutes and not co-official, so Asturias, Huesca, Teruel and Zaragoza
  *   carry no entry. Ceuta, Melilla and the province-less territories carry none.
  *
- *   why A table and not the gazetteer. Who's On First stores a preferred name for a province in many languages, and for
- *   a language not spoken there the "preferred name" is often the autonomous community's: Zamora's Catalan preferred
- *   name is `Castella i Lleó`, Seville's Asturian one is `Andalucía`, Ourense's Occitan one is `Galícia`. Reading every
+ *   why a table. Who's On First stores preferred province names in many languages.
+ *   For languages not spoken in a province, its preferred name may belong to the autonomous community.
+ *   Zamora's Catalan preferred name is `Castella i Lleó`. Seville's Asturian name is `Andalucía`.
+ *   Ourense's Occitan name is `Galícia`. Reading every
  *   language's name as a surface of the province would teach those pairs. The statute says which languages a province's
  *   addresses are written in. this table carries that answer, keyed by the province's Castilian name as the gazetteer
  *   spells it in its `spa` preferred form.

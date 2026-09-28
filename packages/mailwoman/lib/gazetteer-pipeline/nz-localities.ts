@@ -12,15 +12,15 @@
  *   OpenAddresses, CC-BY 4.0 with attribution to Land Information New Zealand (the same lane the
  *   country-evidence runbook already ships pair-index data from). It is not derived from any
  *   Nominatim import, so the ODbL comparison arm stays a comparison arm. The build refuses to run
- *   unless the source's md5 sidecar matches, and stamps source md5 and vintage into the database's
+ *   unless the source's MD5 sidecar matches. It stamps the source MD5 and vintage into the database's
  *   `database_meta` table so provenance travels with the artifact.
  *
  *   Shape: one `spr` row per (city, district) group. The city column is the address's
- *   suburb/locality line, and 49 names span more than one district (`Hillsborough` is both an
+ *   suburb/locality line. 49 names span more than one district (`Hillsborough` is both an
  *   Auckland and a Christchurch suburb), so the group key is the pair. Coordinates are the median
- *   address point (robust against depot-coded outliers), and the bbox is the group's p5–p95 envelope.
- *   Placetype is `locality`: that is the tier NZ addressing puts the suburb on, and the tier a bare
- *   parsed toponym queries. A `neighbourhood` row would be invisible to the locality filter group,
+ *   address point (robust against depot-coded outliers). The bbox is the group's p5–p95 envelope.
+ *   Placetype is `locality`, the tier NZ addressing uses for suburbs and bare
+ *   parsed toponyms. A `neighbourhood` row would be invisible to the locality filter group.
  *   and widening that group is a global ranking change this database must not smuggle in. Population
  *   is deliberately 0/unmeasured (meaning-of-zero: an address-point count is not a population), so
  *   a database row ranks behind any populated namesake and wins only where its key is the answer.
@@ -135,7 +135,7 @@ export async function buildNZLocalitiesDatabase(
 	const tmpPath = `${outPath}.tmp`
 
 	// Provenance check: the md5 sidecar must exist and match.
-	// A database whose source cannot be named is exactly the artifact the provenance discipline forbids.
+	// The provenance discipline forbids a database without a source identifier.
 	const sourceMD5 = md5Hex(await readLocalBuffer(csvPath))
 
 	const sidecar = (await readLocalTextFile(`${csvPath}.md5`)).trim().split(/\s+/)[0]
@@ -186,7 +186,8 @@ export async function buildNZLocalitiesDatabase(
 	db.exec("PRAGMA synchronous = OFF")
 	await createUnifiedSchema(db)
 
-	// Provenance stamp, which travels with the artifact (the coverage register's basis/vintage discipline).
+	// Stamp provenance into the artifact.
+	// This follows the coverage register's basis/vintage discipline.
 	db.exec(`CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
 	const meta = db.prepare(`INSERT INTO database_meta VALUES (?, ?)`)
 	meta.run("source", "LINZ NZ Street Address via OpenAddresses (nz/countrywide)")

@@ -5,7 +5,7 @@
  * @file Every CLI flag fills a property some module names.
  *
  *   A flag whose segment is missing from `optionPropertyName`'s table title-cases instead and reaches the component
- *   under a name no code reads, so it parses, validates, and has no effect.
+ *   under a name no code reads. The flag parses and validates, but changes no behavior.
  *
  *   The check derives each flag's property with that same function and asks whether any tracked source mentions it,
  *   over the component command tree under `lib/commands/`; the `native/commands/` family reads `parsed.values` by
@@ -53,8 +53,9 @@ function specFlags(source: string): string[] {
 }
 
 /**
- * A flag whose derived property no tracked source mentions fails here
- * rather than parsing, validating, and having no effect.
+ * This check fails when no tracked source mentions a flag's derived property.
+ *
+ * It catches flags that parse and validate but have no effect.
  */
 export const cliFlagPropertiesCheck: RepoCheck = {
 	id: "cli-flag-properties",

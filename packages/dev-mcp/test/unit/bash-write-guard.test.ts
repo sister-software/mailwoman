@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file The refused set and the admitted set are both the interface, and the admitted set is the one that decides
- *   whether the guard is usable: a guard that refuses ordinary work gets switched off. The cases below came from
- *   driving the first version over the commands a working session runs, where it refused 55 of 56 of them.
+ * @file The refused set and admitted set define this interface. The admitted set determines whether the guard
+ *   remains usable, since a guard that refuses ordinary work gets switched off. The first version refused
+ *   55 of 56 commands from a working session.
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -51,8 +51,8 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 		["a writer inside a command substitution", `echo $(sed -i 's/a/b/' AGENTS.md)`],
 		["a writer after a single ampersand", `true & sed -i 's/a/b/' AGENTS.md`],
 		["a writer in a conditional head", `if sed -i 's/a/b/' AGENTS.md; then echo ok; fi`],
-		// A real brace group still opens a command, because bash's own rule is that `{` opens one only
-		// when whitespace follows it, which is exactly the boundary the segmenter now splits on.
+		// A real brace group still opens a command, because bash's own rule is that `{` opens
+		// one only Whitespace after the brace marks the boundary where the segmenter now splits.
 		["a writer inside a brace group", `{ sed -i 's/a/b/' AGENTS.md; }`],
 		["a writer after an apostrophe in prose", `echo "don't" && sed -i 's/a/b/' AGENTS.md`],
 		["git restoring a path", `git restore packages/core/lib/env.ts`],
@@ -156,8 +156,8 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["git staging", `git add -A && git status --porcelain`],
 		// A patch is an artifact the author produced and can dry-run.
-		// It fails rather than clobbering when the context does not match, and it is the
-		// only exact way to land a bulk deletion without retyping every removed line.
+		// It preserves the target when the context does not match.
+		// It also applies a bulk deletion without requiring every removed line to be retyped.
 		["applying a patch", `git apply /tmp/prune.patch`],
 		["dry-running a patch", `git apply --check /tmp/prune.patch`],
 		["a formatter over its own inputs", `npx oxfmt .`],
@@ -172,13 +172,15 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a subshell group piped into a reader", `(git diff --name-only HEAD; git diff --cached --name-only) | sort -u`],
 		["process substitution as an argument", `comm -12 <(sort /tmp/a.txt) /tmp/b.txt`],
 		["reading the stash", `git stash list`],
-		// Writes no file, and the standing rule says to clear an entry once it has been restored.
+		// This command writes no file.
+		// The standing rule says to clear an entry after restoration.
 		// The explicit index is the condition: it is what stops a bare `drop` from
 		// silently taking another session's `stash@{0}`.
 		["dropping a named stash entry", `git stash drop stash@{0}`],
 		["dropping a named stash entry further down the stack", `git stash drop stash@{12}`],
 		// A brace glued to a word is part of that word. Splitting on it read each of these as two segments, the second
-		// headed by a digit, and refused a read-only command with "`1` is not on the admitted command list".
+		// The next segment started with a digit. The guard refused the read-only command with
+		// "`1` is not on the admitted command list".
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["a reflog selector", `git rev-parse HEAD@{1}`],
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
@@ -187,8 +189,9 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["switching branch", `git checkout -b feature/x`],
 		["a conditional", `if test -f AGENTS.md; then head -1 AGENTS.md; fi`],
 		["a scratch directory", `mkdir -p /tmp/scratch && rm -rf /tmp/scratch`],
-		// A directory carries no content for the symbol precheck to read, and git tracks no empty one,
-		// so a path inside the tree is admitted where every other path writer's is refused.
+		// A directory has no content for the symbol precheck to read.
+		// Git also leaves empty directories untracked.
+		// The hook admits this path inside the tree while it refuses other path writers.
 		["a directory inside the tree", `mkdir -p packages/mailwoman/lib/dev-tools/codex`],
 		["the state directory a linked session writes", `mkdir -p .claude/state`],
 		["clearing a workspace's build output", `rm -rf packages/repo-health/out`],
@@ -216,15 +219,15 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a database probe", `sqlite3 /tmp/wof.db 'select count(*) from place'`],
 		["an environment assignment", `MAILWOMAN_DATA_ROOT=\${HOME}/data yarn test`],
 		// A quoted value used to split the assignment into two words, so the head became
-		// the quote placeholder and the refusal named `quoted` — a word nobody typed,
+		// the quote placeholder and the `quoted` refusal — a word absent from the input,
 		// for a command admitted the moment the quotes came off.
 		// Quoting a value that carries `$PWD` or a space is how anyone writes one.
 		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/srv/mailwoman-data/x" yarn test`],
 		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node config/vale/check-rules.ts`],
 		// A quote nested inside another kind of quote.
 		// The pair must be read as one span.
-		// Mis-pairing it leaves a stray delimiter that swallows the rest of the command,
-		// and the head then comes from inside someone's `-e` script.
+		// Mis-pairing it leaves a stray delimiter that swallows the rest of the command.
+		// The head then comes from inside the `-e` script.
 		["a grep pattern quoting a JSON key", `grep -rc '"spliterator": "^6.5.0"' package.json packages/*/package.json`],
 		[
 			"that grep before a multi-line node probe",

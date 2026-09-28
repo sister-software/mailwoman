@@ -22,8 +22,9 @@ test("the neural view inherits live core settings and owns its own", () => {
 
 /**
  * A blank environment variable must mean the same as an absent one: shells, Docker
- * and CI all produce empty strings where an operator set no value, and any coerced-numeric
- * schema turns that into `0` which a `.positive()` or `.min()` then rejects at import.
+ * and CI all produce empty strings when an operator sets no value.
+ *
+ * Any coerced-numeric schema turns that into `0` which a `.positive()` or `.min()` then rejects at import.
  *
  * The failure lives in the interaction between `z.coerce` and the constraint,
  * so every coerced-numeric key gets these cases.

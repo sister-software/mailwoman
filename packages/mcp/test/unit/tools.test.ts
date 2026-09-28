@@ -5,10 +5,10 @@
  *
  *   `buildToolTable` against stub deps — no MCP transport/server involved. `server.ts`/`cli.ts`'s actual wiring isn't
  *   covered by a CI job (no stdio smoke run exists as of this writing) — `cli.ts` top-level-`await`s a real stdio
- *   connection, so it can't be imported here at all. its own type-checking (`tsc -b`) plus manual verification is
- *   what currently backs it, and its extractable pure logic (the decision-6 layer guards) has its own direct unit
- *   tests in `layer-guards.test.ts`. This file covers: every registered tool is present, each schema accepts a
- *   canonical example + rejects a bad one, and each handler routes to the correct dep with the correct arguments.
+ *   connection, so this test cannot import it. Its `tsc -b` type check and manual verification cover that surface.
+ *   The extractable decision-6 layer guards have direct unit tests in `layer-guards.test.ts`.
+ *   This file checks that every registered tool is present and schemas accept canonical examples and reject invalid ones.
+ *   It also checks that handlers route to the correct dependency with the correct arguments.
  */
 
 import { buildToolTable, type MCPToolDeps } from "@mailwoman/mcp/tools"

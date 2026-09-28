@@ -5,7 +5,8 @@
  *
  *   Build a street-morphology FST from libpostal's street_types dictionaries. The morphology FST maps
  *   street-typing affixes (Street/Avenue/rue/Calle/Straße/...) to a single synthetic placetype
- *   `"street_affix"` — distinct from the admin FST in source data, intent, and binary artifact.
+ *   `"street_affix"`. Its source data and purpose differ from the admin FST.
+ *   It also produces a separate binary artifact.
  *
  *   The morphology FST closes the inference-time vacuum identified by the v0.6.1 postmortem: street
  *   tokens have no admin-FST anchor, so synth-street training pushed the model toward over-emitting
@@ -59,10 +60,11 @@ export interface BuildStreetMorphologyFSTOpts {
 	 *
 	 * Defaults to 3.
 	 *
-	 * Rationale: libpostal's street_types dictionaries contain 1-2 character
-	 * abbreviations (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix
-	 * tokens at parse time — notably US state abbreviations (`or`, `CA`, `ND`, `NY`),
-	 * single-letter unit designators, and arbitrary short tokens.
+	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations
+	 * (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time,
+	 * including US state abbreviations (`or`, `CA`, `ND`, `NY`).
+	 * Single-letter unit designators and other short tokens also collide.
+	 *
 	 * Empirically these collisions push the morphology prior to mis-tag state
 	 * abbreviations as `street_suffix`.
 	 *

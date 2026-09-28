@@ -42,8 +42,8 @@ def test_a_batch_id_is_stable_for_the_same_seeds_and_script() -> None:
     """The checkpoint's whole interface: same inputs, same id, so a restart skips what it paid for."""
     payload = '["seed-us-0001", "seed-fr-0002"]|cyrl'
     assert deterministic_id("translit-cyrl", payload) == deterministic_id("translit-cyrl", payload)
-    # The literal pins the derivation: a second call would pass however the derivation changed, and
-    # every checkpoint depends on the derivation.
+    # The literal pins the derivation. A second call would pass after the derivation changed.
+    # Every checkpoint depends on the derivation.
     assert deterministic_id("translit-cyrl", payload) == "translit-cyrl-f9f2cedf899da917"
 
 
@@ -55,7 +55,7 @@ def test_a_batch_id_changes_with_the_script_and_with_the_seeds() -> None:
 
 
 def test_the_transliteration_prompt_carries_every_seed_and_its_components() -> None:
-    """A seed missing from the prompt is a row the model is never asked for and nobody counts."""
+    """A seed missing from the prompt is a row the model is never asked for or counts."""
     prompt = build_translit_user_prompt("Russian Cyrillic", SEEDS)
     assert prompt.splitlines()[0] == "Script: Russian Cyrillic"
     for index, seed in enumerate(SEEDS):
@@ -75,7 +75,7 @@ def test_the_kryptonite_prompt_carries_the_category_and_its_examples() -> None:
 
 
 def test_every_script_and_category_is_well_formed() -> None:
-    """The two tables are hand-maintained, and a row missing a field fails at request time, mid-spend."""
+    """The two tables are hand-maintained. A row missing a field fails at request time, mid-spend."""
     for label, language, script, slug in TRANSLIT_SCRIPTS:
         assert label and language and script and slug
         assert slug.islower() and " " not in slug
@@ -104,7 +104,7 @@ def test_every_script_and_category_is_well_formed() -> None:
     ],
 )
 def test_the_response_parser_keeps_only_the_object_lines(content: str, expected: int) -> None:
-    """Model output arrives fenced, prefaced and occasionally truncated, and only whole objects count."""
+    """Model output may be fenced, prefaced, or truncated. Only whole objects count."""
     assert len(parse_jsonl_response(content)) == expected
 
 

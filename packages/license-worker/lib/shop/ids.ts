@@ -5,8 +5,8 @@
  *
  *   Exposes the Stripe object IDs for each mode, stored in `ids.json` beside this file.
  *
- *   The provisioner writes `ids.json`. The worker reads the Price allowlist from it, and the site and
- *   emails read the Payment Links and portal URL. All other code gets Stripe IDs from this module, so
+ *   The provisioner writes `ids.json`. The worker reads the Price allowlist from that file.
+ *   The site and emails read Payment Links and the portal URL. All other code gets Stripe IDs from this module, so
  *   re-provisioning an account changes only `ids.json`.
  */
 
@@ -43,7 +43,8 @@ export const SHOP_IDS: ShopIDsByMode = ids
 /**
  * Returns the next contents of `ids.json` after provisioning `mode`.
  *
- * Each ID in `answered` replaces the recorded ID, and each absent ID keeps its recorded value.
+ * Each ID in `answered` replaces the recorded ID.
+ * An absent ID keeps its recorded value.
  */
 export function withShopIDs(
 	current: ShopIDsByMode,

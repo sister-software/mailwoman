@@ -36,8 +36,8 @@ export interface DiscoveredRepo {
 const REPO_NAME_PATTERN = /^whosonfirst(?:-data)?-[a-z0-9-]+$/
 
 /**
- * Throws when the destination directory's basename is a WOF repository name,
- * which usually means the user meant `--repos`.
+ * Throws when the destination directory's basename is a WOF repository name.
+ * In that case, the user likely meant `--repos`.
  */
 export function assertDestinationNotARepoName(destination: string): void {
 	const basename = destination.trim().replace(/\/+$/, "").split("/").pop() ?? ""
@@ -113,8 +113,9 @@ function totalKB(entries: readonly DiscoveredRepo[]): number {
 }
 
 /**
- * Selects discovered repositories by name, country or `all`, and throws a descriptive
- * error for an unknown name, an unknown country or a missing filter.
+ * Selects discovered repositories by name, country or `all`.
+ *
+ * It throws a descriptive error for an unknown name, an unknown country or a missing filter.
  */
 export function selectRepos(discovered: readonly DiscoveredRepo[], options: SelectReposOptions): RepoSelection {
 	const byName = new Map(discovered.map((entry) => [entry.name, entry]))

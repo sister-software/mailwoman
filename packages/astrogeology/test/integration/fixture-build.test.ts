@@ -96,7 +96,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 	expect(suggestions[0]?.id).toBe(6163)
 	expect(suggestions[0]?.payload).toMatchObject({ id: "6163", name: "Tycho", body: "moon" })
 
-	// The manifest: two sources, two outputs with checksums, and the tippecanoe invocation.
+	// The manifest records two sources, two checksummed outputs, plus the tippecanoe invocation.
 	const manifestPath = resolvePath(scratch.path, "manifest.json")
 
 	const manifest = await emitManifest(

@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The org-name entity-truth grains: union-find labellings that collapse co-located same-org NPIs, keyed three
- *   ways — the address string, a haversine co-location radius, and an H3 cell.
+ * @file Defines union-find truth labels that group co-located NPIs for one organization.
+ *   One label uses address strings. Another uses a haversine radius. The third uses H3 cells.
  */
 
 import { createUnionFind, type UnionFind } from "@mailwoman/core/utils"
@@ -27,7 +27,9 @@ export type TruthLabel = (rec: SourceRecord) => string
 /**
  * Union every pair in each block whose org names agree.
  *
- * Quadratic within a block, which is what keeps the test honest: the Jaccard test is per pair.
+ * Checks every pair within a block.
+ * This preserves the per-pair Jaccard test.
+ *
  * Therefore, a chain of near-matches cannot transitively fuse two genuinely distinct
  * co-located orgs unless some pair actually agrees.
  */
@@ -50,8 +52,8 @@ function unionAgreeingPairs(
 /**
  * An NPI's primary practice coordinate.
  *
- * The first geocoded record it owns, which is its primary row because the sample builder
- * pushes that row before the alternate-name and mailing variants.
+ * Returns the first geocoded record for the NPI.
+ * The sample builder adds this primary row before alternate-name and mailing variants.
  */
 export function collectPrimaryCoordinates(records: readonly SourceRecord[]): Map<string, GeoCoordinate> {
 	const npiCoord = new Map<string, GeoCoordinate>()
@@ -77,7 +79,8 @@ export function collectPrimaryCoordinates(records: readonly SourceRecord[]): Map
  * so a correct merge across them is still charged as an error.
  * The coordinate grain below is the tighter reading.
  *
- * Neither relies on the NPPES subpart flag, which the gold set showed misses 37%.
+ * Neither method uses the NPPES subpart flag.
+ * The gold set misses 37% of cases when grouped by that flag.
  */
 export function buildOrgNameGrain(npiPrimary: Map<string, NPIPrimary>): TruthLabel {
 	const uf = createUnionFind()
@@ -109,8 +112,8 @@ export function buildOrgNameGrain(npiPrimary: Map<string, NPIPrimary>): TruthLab
  * string keys apart, so this F1 is at or above the string grain's.
  * The Jaccard test still blocks distinct co-located orgs.
  *
- * Brute-force pairwise over the sampled NPIs — trivial at this scale,
- * and unlike a cell key it has no boundary artifact.
+ * Compares every sampled NPI pair.
+ * This is small enough for the sample and has no cell-boundary artifact.
  */
 export function buildOrgNameCoordGrain(
 	npiPrimary: Map<string, NPIPrimary>,

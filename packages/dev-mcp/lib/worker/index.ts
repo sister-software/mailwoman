@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The dev-MCP worker that actually imports mailwoman: the shim speaks MCP stdio and imports no runtime module, so
- * this child holds the whole graph and is the unit of restart, and its stdout is piped to the shim's stderr so
- * library noise cannot corrupt the MCP channel.
+ * The dev-MCP worker imports mailwoman. The shim speaks MCP stdio and imports no runtime module.
+ * This child holds the whole graph and is the unit of restart. Its stdout is piped to the shim's stderr,
+ * so library noise cannot corrupt the MCP channel.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -46,7 +46,7 @@ export interface WorkerToolMeta {
 }
 
 /**
- * Messages the worker sends: a ready signal, and a result carrying either a value or an error string.
+ * Messages the worker sends: a ready signal and a result carrying either a value or an error string.
  */
 export type WorkerOutbound =
 	| { type: "ready"; pid: number; bootFingerprint: string; tools: WorkerToolMeta[] }
@@ -107,9 +107,9 @@ process.on("message", (message: WorkerInbound) => {
 			return
 		}
 
-		// Validate here rather than in the shim: an unvalidated handler turns a
-		// stale-schema client's mis-shaped argument into a deep, misattributed TypeError,
-		// and parsing also applies the schema's defaults.
+		// Validate here rather than in the shim: an unvalidated handler turns a stale-schema
+		// client's mis-shaped argument into a deep, misattributed TypeError.
+		// Parsing also applies the schema's defaults.
 		const parsed = tool.inputSchema.safeParse(message.args)
 
 		if (!parsed.success) {

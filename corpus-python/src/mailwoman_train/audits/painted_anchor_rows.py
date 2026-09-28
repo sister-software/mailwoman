@@ -8,9 +8,9 @@ diverged.
 
 It exercises the real train-side code rather than a re-implementation:
 ``mailwoman_train.features.postcode_shapes.collect_matches`` for the spans (``anchor_paint_mode: shaped``) and
-``mailwoman_train.tokenizer._paint_anchor_chars`` for the lookup + normalization. The only thing
-skipped is the char->piece projection, which cannot turn a painted row into an unpainted one (it
-copies per-char values onto pieces).
+``mailwoman_train.tokenizer._paint_anchor_chars`` for the lookup + normalization. The only skipped
+step is the char->piece projection. It copies per-char values onto pieces, so it cannot turn a painted
+row into an unpainted one.
 
     python -m mailwoman_train.audits.painted_anchor_rows \\
       --lookup $MAILWOMAN_DATA_ROOT/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json \\

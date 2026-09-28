@@ -45,7 +45,7 @@ describe("adminLayerManifest — source is derived from the run", () => {
 
 describe("adminLayerManifest — the license is a conjunction", () => {
 	it("ANDs every contributing source's terms rather than picking one", () => {
-		// The most permissive license, or the largest contributor's, would be a distribution claim nobody made.
+		// The most permissive license, or the largest contributor's, would be an unsupported distribution claim.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 1, geonames: 1 } })
 
 		expect(manifest.license).toBe("LicenseRef-WhosOnFirst-Mixed AND ODbL-1.0 AND CC-BY-4.0")

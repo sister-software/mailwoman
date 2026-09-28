@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The WebCrypto Ed25519 module against the `node:crypto` implementation it replaces, with the fixture token as the
- *   reference: its signature was produced under the old module over `mwl1.<payload>`, so it must verify here, and the
- *   same key and bytes must sign to the same signature, because Ed25519 is deterministic. Its key id is the first eight
- *   hex digits of SHA-256 over the spki DER, so the DER decoder and the digest are checked by the same fixture. No
- *   builtin is imported, which is the property under test.
+ *   Compare the WebCrypto Ed25519 module with the replaced `node:crypto` implementation. The fixture token supplies
+ *   the reference signature, produced by the old module over `mwl1.<payload>`. The new module must verify it.
+ *   Ed25519 is deterministic, so the same key and bytes must produce the same signature. The key ID is the first eight
+ *   hex digits of SHA-256 over the spki DER. The fixture therefore checks the DER decoder and digest. The test
+ *   imports no builtin. That is the property under test.
  */
 
 import { fromBase64URL, utf8Bytes } from "@mailwoman/core/crypto/base64url"

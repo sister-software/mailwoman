@@ -15,9 +15,11 @@ import type { RawSearchRow } from "#search-fetch"
 import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "#types"
 
 /**
- * Score one raw FTS row into a `PlaceCandidate`: the weighted sum over the negated BM25
- * baseline, the placetype / country / parent boosts, the length penalty, the proximity
- * and population terms, and the carried fields consumers read.
+ * Score one raw FTS row into a `PlaceCandidate`: the weighted sum over the negated
+ * BM25 baseline plus placetype, country and parent boosts.
+ *
+ * It also applies the length penalty, proximity and population terms,
+ * then returns the fields consumers read.
  */
 export function candidateFromSearchRow(
 	row: RawSearchRow,
@@ -137,8 +139,8 @@ export function candidateFromSearchRow(
 }
 
 /**
- * Order `candidates` in place, exact-match tier first when the extract can answer
- * the name probes, and stamp every candidate's `exactMatch` flag.
+ * Order `candidates` in place with the exact-match tier first when the extract can answer name probes.
+ * Stamp every candidate's `exactMatch` flag.
  */
 export function rankCandidates<DB>(
 	candidates: PlaceCandidate[],
@@ -151,8 +153,8 @@ export function rankCandidates<DB>(
 ): void {
 	const { db, schemaName, query, weights } = options
 
-	// Exact-match tiering ranks a case-folded full match above a partial one,
-	// and runs even for a single candidate so `exactMatch` is stamped consistently.
+	// Exact-match tiering ranks a case-folded full match above a partial one.
+	// It also runs for a single candidate so `exactMatch` is stamped consistently.
 	if (weights.exactMatchTiering && candidates.length) {
 		const exactIDs = exactMatchIDs(
 			db,
@@ -193,8 +195,8 @@ export function rankCandidates<DB>(
 			}
 
 			// With proximity hints, prominence replaces raw population as the within-tier key.
-			// Without them, referential ordering decides, and encyclopedic importance
-			// must not become an input here.
+			// Without them, referential ordering decides.
+			// Encyclopedic importance does not affect this order.
 			const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 
 			candidates.sort((a, b) => {

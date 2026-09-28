@@ -6,10 +6,10 @@
  *   Acquire the published file geodatabase — a 367 MB archive streamed to disk and unzipped.
  *
  *   the transfer, the cache KEY and the extraction live IN `@mailwoman/core/utils`, because none of them is
- *   this product's: `downloadZippedGeodatabase` carries why the archive unzips into a `.gdb` directory and
- *   why the cache is keyed on a vintage rather than a length probe, and `streamToDisk` carries why a file
- *   transfer keeps raw `fetch` instead of going through `APIClient`. What is flood's, and stays here, is the
- *   two names below. The metadata reads around this transfer do go through `APIClient` — see `client.ts`.
+ *   `downloadZippedGeodatabase` documents the `.gdb` extraction and vintage-based cache key.
+ *   The cache uses a vintage instead of a length probe.
+ *   `streamToDisk` documents why file transfers use raw `fetch` instead of `APIClient`.
+ *   This module owns the two functions below. Metadata reads around the transfer use `APIClient`; see `client.ts`.
  *
  *   the host leaves no choice about the cache KEY. It answers `head` with http 405 and ignores `Range`,
  *   returning 200 with the full body — so "just check the size" starts a real 367 MB transfer.

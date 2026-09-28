@@ -1,10 +1,12 @@
-"""Every exportable channel combination reaches ONNX with its inputs named, and refuses when it cannot.
+"""Every exportable channel combination reaches ONNX with its declared input keys.
 
-The exporter picks one wrapper per input combination, and the production ship shape — the full
+The exporter refuses a combination when it cannot preserve those keys.
+
+The exporter picks one wrapper per input combination. The production ship shape is the full
 evidence bundle: anchor + gazetteer + country + street-type + locality-surface — had no export test
 at all. Only the two simplest wrappers were covered, so a channel that silently stopped reaching
-the graph would ship as a model running that channel off, which is the #566/#685 trap the
-exporter's own guards exist to prevent.
+the graph would ship as a model running that channel off. This is the #566/#685 failure the exporter's
+guards exist to prevent.
 
 Each case here asserts what a consumer reads: the graph's input NAMES. A runtime feeds by name, so
 a missing name is a channel the model was trained with and inference cannot supply.
@@ -128,7 +130,7 @@ def test_the_full_evidence_bundle_reaches_the_graph(tmp_path) -> None:
 
 
 def test_the_locale_head_adds_a_second_output(tmp_path) -> None:
-    """A trained locale head that never reaches the graph is address-system detection nobody can read."""
+    """A trained locale head that never reaches the graph leaves address-system predictions out of the output."""
     from mailwoman_train.export.onnx import export_to_onnx
 
     model = _model(use_locale_conditioning=True, num_locales=NUM_LOCALES)

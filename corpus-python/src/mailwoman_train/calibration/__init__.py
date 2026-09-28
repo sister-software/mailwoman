@@ -1,4 +1,4 @@
-"""Confidence calibration: fitting the mapping, and checking it has not drifted.
+"""Fit the confidence mapping and check it for drift.
 
 `isotonic` fits a monotone map from a model's raw confidence to its observed accuracy;
 `drift_guard` re-measures a shipped map's expected calibration error against fresh outcomes. A

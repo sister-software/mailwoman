@@ -14,7 +14,7 @@ mode for §8. If we ever need static (per-channel + activation quant), revisit h
 
 Stale-value_info guard (2026-06-09): ``quantize_dynamic`` runs onnx shape inference internally
 (``save_and_reload_model_with_shape_infer``). The dynamo ONNX exporter writes intermediate
-``value_info`` shape annotations into the graph, and a toolchain drift (``transformers`` /
+``value_info`` shape annotations into the graph. A toolchain drift (``transformers`` /
 ``onnxscript`` / ``torch.onnx`` float — our deps were unpinned ``>=``) started emitting a
 ``locale_film`` annotation (``[768] = 2*hidden``) that newer onnx (≥1.21) infers as ``384`` and
 then REJECTS with ``[ShapeInferenceError] ... (384) vs (768)``. The annotations are redundant
@@ -35,8 +35,8 @@ from onnxruntime.quantization import QuantType, quantize_dynamic
 def _strip_value_info(src: Path, dst: Path) -> Path:
     """Drop intermediate ``value_info`` so onnx re-infers shapes cleanly at quantize time.
 
-    Graph inputs, outputs, and initializers are untouched. only the (redundant, possibly
-    stale) intermediate shape annotations are cleared. See module docstring for why.
+    The function preserves graph inputs/outputs/initializers. It clears only the
+    redundant or stale intermediate shape annotations. See the module docstring for the reason.
     """
     model = onnx.load(str(src))
     del model.graph.value_info[:]

@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Train the production learned-scorer model. Builds the same NPI-keyed record set the dedup
- *   benchmark and the clustering A/B use (the shared `buildNPPESSample` with the real registry,
- *   name drift and address variation), geocodes it, blocks it into candidate pairs, featurizes each
- *   pair with the shared `createMatchFeaturizer`, labels by NPI, and fits the gradient-boosted-tree
- *   model. It writes the model as a committed TS module (`registry/models/dedup-gbt-en-us.ts`) that
- *   ships in the package.
+ *   Trains the production learned-scorer model. `buildNPPESSample` creates the same NPI-keyed records used by
+ *   the dedup benchmark and clustering A/B. The sample uses the real registry and includes name drift plus address variation.
+ *   The trainer geocodes records and groups them into candidate pairs. It featurizes each pair with
+ *   `createMatchFeaturizer`. It labels pairs by NPI and fits a gradient-boosted tree model.
+ *   It writes the model to the committed package module `registry/models/dedup-gbt-en-us.ts`.
  *
  *   Unlike the eval, this trains on all sampled NPIs with no held-out split, since the held-out F1
  *   is the eval's job.
@@ -90,8 +89,9 @@ export interface TrainDedupGBTOptions {
 	 * so the model is more conservative about merging.
 	 *
 	 * It trades recall for precision to reduce over-merge.
-	 * `1` is the symmetric class-balanced default, and a value above 1 penalizes
-	 * a false merge more than a missed one.
+	 * `1` is the symmetric class-balanced default.
+	 *
+	 * A value above 1 penalizes a false merge more than a missed merge.
 	 */
 	cost?: number
 	/**
@@ -129,7 +129,8 @@ export async function trainDedupGBT(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `record.id` is the NPI label, and multiple records share an NPI as the ground truth.
+	// `record.id` supplies the NPI label.
+	// Multiple records can share an NPI as ground truth.
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -161,10 +162,10 @@ export async function trainDedupGBT(
 	}
 
 	// Calibrate the default link threshold.
-	// The GBT logit is not in FS-weight units, and with class-balanced weights logit
-	// 0 ignores the roughly 1% match base rate and over-merges.
-	// The threshold is swept on a held-out 20% of the NPIs, and the shipped full-data
-	// model has near-identical logit calibration, so the threshold transfers.
+	// The GBT logit uses no Fellegi-Sunter weight units.
+	// With class-balanced weights, logit 0 ignores the roughly 1% match base rate and over-merges.
+	// The threshold is swept on a held-out 20% of NPIs.
+	// The shipped full-data model has near-identical logit calibration, so the threshold transfers.
 	report?.("[E] calibrating the default link threshold on a held-out NPI split…")
 	const rnd = makeLcg(20_260_615)
 	const split = new Map<string, "fit" | "holdout">()

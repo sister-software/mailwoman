@@ -508,7 +508,8 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		pipelineOpts.resolveOpts = resolveOpts
 	}
 
-	// Passing `undefined` keeps the pipeline's default street-evidence rerank, and `false` disables it.
+	// Passing `undefined` keeps the pipeline's default street-evidence rerank.
+	// Passing `false` disables it.
 	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
 
 	const { createRuntimePipeline } = await import("#index")

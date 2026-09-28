@@ -84,7 +84,7 @@ export const ANCESTRIE_MAGIC: readonly number[] = [0x41, 0x4e, 0x43, 0x54]
 export const ANCESTRIE_FORMAT_VERSION = 1
 
 /**
- * Fixed header size in bytes: magic, version, flags, and the nine u32 fields that follow.
+ * Fixed header size in bytes: magic, version, flags plus the nine following u32 fields.
  */
 const HEADER_SIZE = 48
 
@@ -208,7 +208,7 @@ export function computeSections(counts: AncestrieCounts): AncestrieSections {
 }
 
 /**
- * The decoded header: format version, counts, and the metadata trailer offset (0 = none).
+ * The decoded header: format version, counts and metadata trailer offset (0 = none).
  */
 export interface AncestrieHeader extends AncestrieCounts {
 	version: number
@@ -218,8 +218,8 @@ export interface AncestrieHeader extends AncestrieCounts {
 /**
  * Write the 48-byte header.
  *
- * The field order here and in {@link readHeader} is the format — change one
- * and the round-trip tests fail, which is the point.
+ * The field order here and in {@link readHeader} defines the format.
+ * A change to either order makes the round-trip tests fail.
  */
 export function writeHeader(view: DataView, header: AncestrieHeader): void {
 	for (let i = 0; i < ANCESTRIE_MAGIC.length; i++) {

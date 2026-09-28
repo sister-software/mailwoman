@@ -1,13 +1,16 @@
 /**
- * Reports which board rows the weights-family routers send to a graph that cannot emit
- * the row's expected tags, and which rows the routers disagree about.
+ * Reports board rows that weights-family routers send to a graph unable to emit the row's expected tags.
  *
- * The board has no routing label, so this tool derives one where it can.
+ * It also reports rows for which the routers choose different graphs.
+ *
+ * The board has no routing label.
+ * This tool derives one where it can.
  * A family's model card lists the tags its head can emit.
  *
- * When only one family can emit every tag in a row's `expectComponents`, that family is the row's label.
- * Neither the country nor the script mix can serve as a label, because mixed-script
- * rows route correctly to either family.
+ * When only one family can emit every tag in a row's `expectComponents`,
+ * the tool assigns that family as the row's label.
+ * Mixed-script rows route correctly to either family, so neither country
+ * nor script mix can serve as a label.
  *
  * Most rows have tags that every family can emit, so they get no label.
  * For those rows the tool prints where the routers disagree, for a human to label.
@@ -60,7 +63,8 @@ const { values } = parseArguments({
 const CALLER = "(caller)"
 
 /**
- * Sets the family an abstention resolves to, which is `resolveWeights`' default locale.
+ * Sets the family for an abstention.
+ * `resolveWeights` uses this default locale.
  *
  * Routers are compared after this resolution.
  * Otherwise an abstention and an explicit Latin answer would count as a disagreement
@@ -76,11 +80,12 @@ function resolved(answer: string): string {
 }
 
 /**
- * Returns the family `detectLocale` implies, the locale it chose, and which scorer chose it.
+ * Returns the family implied by `detectLocale`, the chosen locale, plus its scorer.
  *
- * The locale is kept beside the family because they can diverge.
- * A romanized Japanese address gets `ja-JP` from its postcode, which folds to the
- * `cjk` family although the text is Latin script.
+ * The output keeps the locale beside the family because the values can diverge.
+ * A postcode can give a romanized Japanese address the `ja-JP` locale.
+ *
+ * `ja-JP` folds to the `cjk` family although the text uses Latin script.
  */
 function localeHintAnswer(text: string): { family: string; locale: string; reason: string } {
 	const shape = computeQueryShape(text)
@@ -98,8 +103,8 @@ function localeHintAnswer(text: string): { family: string; locale: string; reaso
 /**
  * Reads the tags each family's head can emit from its model card, with the BIO prefix stripped.
  *
- * A family whose card is missing from the checkout is skipped, which shrinks
- * the graded set without mislabeling any row.
+ * The function skips a family when its card is missing from the checkout.
+ * This shrinks the graded set and leaves each remaining row's label unchanged.
  */
 async function emittableTags(): Promise<Map<string, ReadonlySet<string>>> {
 	const out = new Map<string, ReadonlySet<string>>()
@@ -178,7 +183,7 @@ interface Disagreement {
 	hintLocale: string
 	hintReason: string
 	/**
-	 * Describes the input's script mix, which helps a reader label the row.
+	 * Describes the input's script mix to help a reader label the row.
 	 */
 	scripts: string
 }
@@ -215,7 +220,8 @@ const movedByLeadingRun: MovedRow[] = []
 const movedByPostcode: MovedRow[] = []
 
 /**
- * Lists the unshipped candidate routers, which apply only where the shipped router abstains.
+ * Lists unshipped candidate routers.
+ * They apply only where the shipped router abstains.
  *
  * Each candidate is reported on its own so the output shows which one moved each row.
  */

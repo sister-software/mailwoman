@@ -1,6 +1,6 @@
 """The JP 47-label head gets its own param group, read from the shipped ``configs/v8-jp-full.yaml`` rather than a fixture.
 
-The carve-out is the whole head or none of it: ``classifier`` is one ``nn.Linear(384, 47)`` and a PyTorch param group owns whole tensors, so the 14 fresh rows cannot get a different LR from the 33 stage3 rows.
+The carve-out covers the whole head. ``classifier`` is one ``nn.Linear(384, 47)``. A PyTorch param group owns whole tensors, so the 14 fresh rows share an LR with the 33 stage3 rows.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ CONFIGS = paths.CONFIGS
 FULL = CONFIGS / "v8-jp-full.yaml"
 PROBE_2K = CONFIGS / "v8-jp-full-2k.yaml"
 
-# The full JP corpus's sealed train-split char vocab size (build-report.json: 2237); the vocab file
+# The full JP corpus's sealed train-split char vocab size is 2237 (build-report.json). The vocab file
 # lives on the data root and only the size is needed here.
 CHAR_VOCAB_SIZE = 2237
 
@@ -44,8 +44,8 @@ def test_the_shipped_config_declares_the_head_lr_and_no_warm_start():
     assert cfg.data.char_mode == "char"
     assert cfg.train.classifier_learning_rate == 1e-3
     assert cfg.train.learning_rate == 5e-4
-    # From scratch: the probe checkpoint's classifier and char embedding are size-mismatched here,
-    # and `load_state_dict(strict=False)` tolerates only missing/unexpected keys.
+    # The probe checkpoint's classifier and char embedding have incompatible sizes here.
+    # `load_state_dict(strict=False)` tolerates missing or unexpected keys only.
     assert cfg.train.init_from == ""
     # `reinit_label_rows` requires init_from and is a no-op on a from-scratch model.
     assert cfg.train.reinit_label_rows == []

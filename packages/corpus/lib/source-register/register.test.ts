@@ -131,7 +131,7 @@ describe("auditAddressSourceRegister", () => {
 	const base: AddressSourceRegister = {
 		registerID: "test",
 		version: "0.0.0",
-		// A literal nobody generated, so it carries no meaningful digest.
+		// A literal without a generating source carries no meaningful digest.
 		// The structural audit does not read the field.
 		contentDigest: "",
 		provenance: { source: "test" },
@@ -521,9 +521,8 @@ describe("permission by operation", () => {
 	})
 
 	/**
-	 * Whether records are about identifiable people is governed by different law
-	 * and reached through a different analysis, so an elected grant must not admit
-	 * a source whose personal-data question nobody asked.
+	 * Whether records are about identifiable people is governed by different law and reached through a
+	 * different analysis, so an elected grant must not admit a source with no personal-data review.
 	 */
 	describe("personal data", () => {
 		const { personalDataReview: _reviewed, ...unreviewed } = source
@@ -682,7 +681,7 @@ describe("permission by operation", () => {
 			expect(elected.electedBecause).toContain("attribution-only half")
 
 			// Electing the permissive half makes no statement about publishing a model.
-			// Nobody read these terms against that act, so it reads unreviewed
+			// No reviewer compared these terms with that act, so the record reads unreviewed
 			// rather than inheriting either half's answer.
 			expect(permissionFor(elected, SourceOperation.RedistributeModel).permission).toBe(OperationPermission.Unreviewed)
 		})

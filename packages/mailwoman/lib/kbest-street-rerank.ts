@@ -175,7 +175,8 @@ function spliceStreetTree(
  * argmax tree when the model exports no span scores or the evidence keeps rank-1.
  */
 export async function rerankByStreetEvidence(
-	// Only `traceParse` is called; `Pick` says so, and a test double is then an object rather than an assertion.
+	// The reranker calls only `traceParse`, as the `Pick` type shows.
+	// A test double can therefore be an object without a type assertion.
 	classifier: Pick<NeuralAddressClassifier, "traceParse">,
 	text: string,
 	evidence: StreetLocalityEvidence,
@@ -218,9 +219,9 @@ export async function rerankByStreetEvidence(
 		...(opts.scope ? { scope: opts.scope } : {}),
 	})
 
-	// Only an atlas-confirmed street may override the argmax tree's street. the
-	// model owns every call the atlas cannot confirm wrong, and on a clean address
-	// the two streets agree so the splice is a no-op.
+	// Only an atlas-confirmed street may override the argmax tree's street.
+	// The model keeps every street the atlas cannot disprove.
+	// On a clean address, both streets agree, so the splice leaves the argmax tree unchanged.
 	const confirmed =
 		pick.candidate.streetSurface !== "" && evidence.hasStreetName(pick.candidate.streetSurface, opts.scope)
 

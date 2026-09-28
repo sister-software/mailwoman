@@ -27,11 +27,12 @@ export interface GeonamesPostalRow {
  * `header: false` is required.
  * The dump is headerless, so row 1 would otherwise be read as column names.
  *
- * Callers own the reduction: the JP builder keeps the last row per postcode,
- * the KR builder the first, and both semantics are theirs rather than this reader's.
+ * Callers own the reduction: the JP builder keeps the last row per postcode, the KR builder the first.
+ * Both reduction rules belong to those callers.
+ *
  * (`zcta-centroids.ts`'s `parseGeonamesCentroids` is the third reader of this format
- * and deliberately stays local: it is synchronous over an in-memory string by test interface,
- * and its `Number` + `(0, 0)`-skip validity rules differ from the `pyFloat` port here.)
+ * and deliberately stays local. Its test interface is synchronous over an in-memory string.
+ * Its `Number` and `(0, 0)`-skip validity rules also differ from the `pyFloat` port here.)
  */
 export async function* geonamesPostalRows(source: string): AsyncGenerator<GeonamesPostalRow> {
 	for await (const f of readUnquotedTSV(source)) {

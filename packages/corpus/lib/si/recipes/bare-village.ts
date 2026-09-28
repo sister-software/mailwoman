@@ -5,7 +5,7 @@
  *
  *   `si-bare-village`, the Slovenian no-street counter-recipe. Slovenia's rural addressing has no
  *   street line, so the village name is the street-level token and repeats as the locality
- *   ("Zabiče 8, 6250 Zabiče"). The leading name must keep its number whole, and the trailing mention
+ *   ("Zabiče 8, 6250 Zabiče"). The leading name must keep its number whole. The trailing mention
  *   must stay locality-bound. This recipe is the paired counter-distribution, with the same lesson
  *   ("name before number, comma, then admin") and the opposite polarity on the trailing mention.
  *
@@ -30,8 +30,8 @@ import { SurfaceOrigin } from "#types"
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behaviour this recipe exercises
+ * and `description` below for its surface form.
  */
 export const siBareVillageRecipe: CorpusRecipe = {
 	name: "si-bare-village",
@@ -97,7 +97,8 @@ export const siBareVillageRecipe: CorpusRecipe = {
 			}
 
 			// Per row rather than on the shared literal, because the id names this tuple's record.
-			// A tuples file written before `sourceID` existed carries none, and `null` says so.
+			// A tuples file written before `sourceID` existed carries none.
+			// `null` says so.
 			if (
 				alignAndWrite(write, canonical, "si-bare-village", {
 					...SI_BARE_VILLAGE_PROVENANCE,

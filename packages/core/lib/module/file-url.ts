@@ -20,7 +20,7 @@ export function fileURLToPath(url: string | URL): string {
 }
 
 /**
- * Converts a filesystem path to a `file:` URL, which a dynamic `import()` accepts for an absolute path.
+ * Converts a filesystem path to a `file:` URL for dynamic `import()` of an absolute path.
  */
 export function pathToFileURL(path: PathBuilderLike): URL {
 	return nativePathToFileURL(path.toString())

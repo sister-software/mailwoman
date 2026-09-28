@@ -174,8 +174,8 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	// `place_importance` column, because a legacy row that got a Wikipedia score overwrote
 	// whatever population would have said and the two are indistinguishable afterwards.
 	// Encyclopedic rides along for consumers and is never handed to the decoder.
-	// `loadImportanceSplit` handles all four schema generations, and the source it reports
-	// is stamped into provenance so an artifact says which one it read.
+	// `loadImportanceSplit` handles all four schema generations.
+	// Provenance records the source so the artifact identifies the schema it read.
 	progress("importance", "Loading referential + encyclopedic scores")
 	const split = loadImportanceSplit(db)
 
@@ -239,9 +239,9 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		return false
 	}
 
-	// Surface-ambiguity classes are a per-surface fact, so the entry is cloned per
-	// insertion with its accepting surface's count attached, and the same place under "nyc"
-	// and "new york city" records each surface's own ambiguity.
+	// Surface-ambiguity classes are per-surface facts, so clone the entry for each
+	// insertion and attach that surface's count.
+	// The same place under "nyc" and "new york city" records a separate ambiguity count for each surface.
 	// An absent map means entries carry no count for back-compat bytes.
 	const surfaceCountryCounts = opts.surfaceCountryCounts
 

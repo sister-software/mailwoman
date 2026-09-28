@@ -5,8 +5,8 @@
  *
  *   Shared setup for each layer's `scripts/ingest-chunk.ts`.
  *
- *   Each chunk runs in a new process because h3's WebAssembly heap cannot be reset from JavaScript.
- *   This helper parses shared flags, opens the database created by the parent, runs the chunk,
+ *   Each chunk runs in a new process because JavaScript cannot reset h3's WebAssembly heap.
+ *   This helper parses shared flags, opens the database created by the parent, runs the chunk
  *   and prints its result as one JSON line.
  *
  *   Standard output contains only the result.
@@ -43,7 +43,8 @@ export interface IngestChunkScriptContext {
 }
 
 /**
- * Parse flags, open the parent's database, run one chunk, and print its JSON result.
+ * Parse flags and open the parent's database.
+ * Then run one chunk and print its JSON result.
  */
 export async function runIngestChunkScript<
 	DB,
@@ -54,7 +55,7 @@ export async function runIngestChunkScript<
 	 */
 	context: string
 	/**
-	 * The script's flags, including {@link INGEST_CHUNK_FLAGS}.
+	 * All script flags, including {@link INGEST_CHUNK_FLAGS}.
 	 */
 	options: Options
 	run: (

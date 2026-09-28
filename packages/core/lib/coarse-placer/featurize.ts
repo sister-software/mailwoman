@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Feature extraction for the coarse-placer. A fastText-style hashed char-n-gram representation
- *   plus explicit Unicode-script presence tokens. Deterministic and pure, shared by training and
- *   the always-resident inference, with zero dependencies. A string maps to a set of active
+ *   Feature extraction for the coarse-placer uses a fastText-style hashed character n-gram representation
+ *   plus explicit Unicode-script presence tokens. The function is deterministic and pure.
+ *   Training and always-resident inference share it without dependencies. A string maps to a set of active
  *   feature indices in [0, FEATURE_DIM).
  *
  *   Script is the dominant coarse-geography signal. Char n-grams separate within a script, so a
@@ -15,14 +15,15 @@
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 
 /**
- * The trained classes: the well-represented corpus countries, the Overture-sourced EU
- * expansion, and `other`, the explicit off-map class trained on non-Latin and non-CJK
- * scripts via outlier exposure, so the model learns the edge of its competence.
+ * The trained classes include well-represented corpus countries and the Overture-sourced EU expansion.
+ *
+ * `other` is the explicit off-map class trained on non-Latin and non-CJK scripts via
+ * outlier exposure, so the model learns the edge of its competence.
  *
  * Index order is the label id.
  *
- * It acts as a soft prior, so a neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps
- * resolution in-region, off the global-pop attractors.
+ * The class acts as a soft prior.
+ * A neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps resolution in-region, off the global-pop attractors.
  *
  * Adding a class requires a retrain and a fresh artifact.
  * The bundled meta.json carries its own `classes` for inference, so this constant drives training.

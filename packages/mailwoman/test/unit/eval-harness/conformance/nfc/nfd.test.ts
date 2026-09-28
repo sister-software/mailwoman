@@ -3,29 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The canonical-form law's guard, its two exclusion rules, and the failure line a violation produces.
+ *   The canonical-form law defines a key, two exclusions and the failure line a violation produces.
  *
- *   the guard is the scope. `canonicalFormKey` is `NFD`, so a pair whose decompositions match is canonically
- *   equivalent and a pair whose decompositions differ is not — which is the whole of what this law claims, and
- *   the reason the relations it must not absorb are refused by construction rather than by a list.
- *   Compatibility normalization, a removed accent, a transliteration and a case change each move the key, and
- *   each is asserted here to move it.
+ *   `canonicalFormKey` defines the scope with `NFD`. Pairs with matching decompositions are canonically equivalent.
+ *   Pairs with different decompositions are outside this law. The law rejects compatibility normalization, accent
+ *   removal, transliteration and case changes through the key transformation. Tests assert that each change moves it.
  *
- *   independence is asserted IN both directions, and that is what makes a seeded normalization regression
- *   attributable. A case, spacing or punctuation change is refused by this law's audit, and a canonical-form
- *   pair is refused by the other three classifiers — so a failing arm here cannot be a mis-filed row from
- *   another suite, and no other suite can absorb this one.
+ *   Tests assert independence in both directions. This makes a seeded normalization regression attributable. This
+ *   audit refuses case, spacing and punctuation changes. The other three classifiers refuse canonical-form pairs.
+ *   A failing arm here therefore cannot be a row assigned to another suite. The other suites cannot absorb this one.
  *
- *   no decomposed string is typed IN this file, and `nfc-nfd-suite.test.ts` holds that line for the whole
- *   directory. The composed and decomposed spellings of `Köln` render identically, so a hand-typed decomposed
- *   literal is a value a reviewer cannot check and an editor can silently rewrite. Every one is built from a
- *   composed literal by the law's own transformation, and a decomposition's content is stated in code points.
+ *   This file contains no hand-typed decomposed string. `nfc-nfd-suite.test.ts` enforces that rule for the directory.
+ *   The composed and decomposed spellings of `Köln` render identically. A reviewer cannot check a hand-typed
+ *   decomposed literal. An editor can silently rewrite it. Each decomposed value is built from a composed literal
+ *   with the law's transformation. Tests state each decomposition in code points.
  *
- *   Every case is stated over a real committed board input rather than an invented string: the Cologne row for
- *   the umlaut, the Paris street for the acute and the typographic apostrophe it must leave alone, the Hanoi
- *   row for a base letter carrying two stacked marks, the Paris venue for a Hangul syllable, the Vienna street
- *   for the letter that has no canonical decomposition at all, and the bare GB unit code for a query with no
- *   canonical variance to state.
+ *   Each case uses a committed board input. The Cologne row tests the umlaut. The Paris street tests the acute and
+ *   typographic apostrophe. The Hanoi row tests a base letter with two stacked marks. The Paris venue tests a Hangul
+ *   syllable. The Vienna street tests a letter with no canonical decomposition. The bare GB unit code tests a query
+ *   with no canonical variance.
  */
 
 import { normalize } from "@mailwoman/normalize"
@@ -76,8 +72,8 @@ const compose = CANONICAL_TRANSFORMATION_BY_NAME.nfc
 /**
  * The Hanoi row with its first accented word decomposed and every later one left composed.
  *
- * A query written in neither canonical form, and therefore canonically equivalent to the base
- * while being reproducible from neither transformation's name.
+ * The query uses neither canonical form.
+ * It remains canonically equivalent to the base, but neither transformation produces it.
  *
  * It is the shape a string assembled from two differently-normalized sources arrives in.
  */
@@ -344,15 +340,16 @@ describe("the coverage reading", () => {
 
 describe("a seeded normalization regression", () => {
 	/**
-	 * Two pipeline stand-ins differing in one thing: whether Stage 1 composed before the parse.
+	 * Two pipeline stand-ins differ in one behavior: whether Stage 1 composed before parsing.
 	 *
-	 * The leaky one echoes the query's own bytes into the component values,
-	 * which is what a pipeline that skipped NFC produces.
-	 * The composing one applies Stage 1 first, which is what the shipped one does.
+	 * The leaky stand-in echoes the query's bytes into component values.
+	 * A pipeline that skipped NFC produces that behavior.
 	 *
-	 * Seeding the regression rather than waiting for one is what proves the failure line
-	 * carries enough to diagnose from, and running one fixture through both is what
-	 * shows the reading is about Stage 1 rather than about the row.
+	 * The composing stand-in applies Stage 1 before parsing.
+	 * The shipped pipeline does the same.
+	 *
+	 * The seeded regression checks whether the failure line carries enough diagnostic detail.
+	 * Running one fixture through both stand-ins shows whether the result concerns Stage 1 or the row.
 	 */
 	function observer(stage1: (query: string) => string): ConformanceObserver {
 		return async (query) => {
@@ -396,7 +393,7 @@ describe("a seeded normalization regression", () => {
 		expect(rendered).toContain("parse_whole_strict expected equivalent, observed diverges")
 		// The component that moved, with both byte forms on the line.
 		expect(rendered).toContain(`locality: "Köln" → "${decompose("Köln")}"`)
-		// The transformation, which the report line derives rather than storing.
+		// The report line derives the transformation instead of storing it.
 		expect(describeCanonicalTransformation(findings[0]!.fixture)).toBe("nfd")
 	})
 

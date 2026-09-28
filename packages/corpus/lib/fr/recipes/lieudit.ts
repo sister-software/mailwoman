@@ -10,8 +10,9 @@
  * lieu-dit survive into the pool.
  *
  * Mapping: lieu-dit to `dependent_locality`, commune to `locality`. Rendered to match the
- * formatter's FR `place`-slot convention. House and street on line 1, the lieu-dit alone on line 2,
- * postcode and commune on line 3, which is French postal convention (La Poste's line 5).
+ * formatter's FR `place`-slot convention. House and street go on line 1.
+ * The lieu-dit goes alone on line 2. Postcode and commune go on line 3.
+ * This follows French postal convention (La Poste's line 5).
  *
  * The pool is read in full and Fisher-Yates shuffled with the seeded prng before slicing to
  * `--count`. With-replacement draws at a large `--count` would produce a large duplicate rate.
@@ -56,7 +57,9 @@ interface LieuDitTuple {
 /**
  * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, one path per département.
  *
- * Excludes the `merged` and `france` aggregates, which duplicate the per-département rows.
+ * Excludes the `merged` and `france` aggregates.
+ * They duplicate the per-département rows.
+ *
  * When both a `.csv` and a `.csv.gz` exist for the same department, the uncompressed `.csv` wins.
  */
 async function departementFiles(banDir: PathBuilderLike): Promise<PathBuilder[]> {

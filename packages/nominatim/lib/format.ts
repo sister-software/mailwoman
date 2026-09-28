@@ -71,8 +71,9 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 /**
  * A resolved address in a neutral shape, the input to {@link toNominatimResult}.
  *
- * The engine maps its native geocode or reverse result into this, and the
- * formatter renders it as a Nominatim result.
+ * The engine maps its native geocode or reverse result into this.
+ * The formatter renders it as a Nominatim result.
+ *
  * It is the mapping boundary and stays dependency-free so it is unit-testable.
  */
 export interface ResolvedAddress {
@@ -164,8 +165,10 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 /**
  * Project a Nominatim result into a schema.org `Place` JSON-LD object for `format=jsonld`.
  *
- * It reads the result's `address` breakdown, which the router populates by forcing
- * `addressdetails` for jsonld, and re-serializes the same resolved place.
+ * It reads the result's `address` breakdown.
+ * The router populates this by forcing `addressdetails` for jsonld.
+ *
+ * The formatter then re-serializes the same resolved place.
  * `streetAddress` is the house-number-first join and `addressCountry` is ISO-3166 alpha-2 uppercased.
  */
 export function nominatimResultToSchemaOrg(r: NominatimResult): SchemaOrgPlace {

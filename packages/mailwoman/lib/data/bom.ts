@@ -16,11 +16,11 @@
  *   it and the software SBOMs beside it are already in that format. The components are of type `data`.
  *
  *   **The document is deterministic.** `metadata.timestamp` carries the snapshot's `measuredAt` rather than
- *   the run's own clock, and no `serialNumber` is emitted, so re-running over an unchanged snapshot produces
+ *   the run's own clock. No `serialNumber` is emitted, so re-running over an unchanged snapshot produces
  *   identical bytes and the committed file diffs only when a measurement changed.
  *
  *   **What it does not establish.** An artifact whose `layer_manifest` could not be read carries the
- *   expression this repository's bundle registry assigns from the publishers' stated terms, and the component
+ *   expression this repository's bundle registry assigns from the publishers' stated terms. The component
  *   records which of the two it is under `mailwoman:licenseBasis`. The 177 databases under the data root that
  *   carry no `layer_manifest` row are counted in the metadata and are not emitted as components, because a
  *   component with no license field reads as unlicensed rather than as unrecorded.
@@ -96,8 +96,8 @@ export interface DataBOMOptions {
 	 *
 	 * The bundle registry ships inside that package, so its version is what identifies
 	 * the set of artifacts the document describes.
-	 * There is no separate bundle-manifest version: `releases.json` pins one version
-	 * per database family, and those appear per component.
+	 * There is no separate bundle-manifest version: `releases.json` pins one version per database family.
+	 * Those versions appear per component.
 	 */
 	mailwomanVersion: string
 
@@ -199,9 +199,9 @@ function inventoryComponent(entry: InventoryEntry): DataBOMComponent {
 		name: entry.path,
 		version: manifest.version,
 		description: manifest.name,
-		// A row written before the column existed leaves `license` undefined,
-		// and an absent expression is an unstated one.
-		// `NOASSERTION` is SPDX's own word for that state, and a validator accepts it.
+		// A row written before the column existed leaves `license` undefined, An absent expression is unstated.
+		// `NOASSERTION` is SPDX's term for that state.
+		// A validator accepts it.
 		licenses: [{ expression: manifest.license ?? "NOASSERTION" }],
 		properties: [
 			...property("mailwoman:licenseBasis", LicenseBasis.ArtifactManifest),

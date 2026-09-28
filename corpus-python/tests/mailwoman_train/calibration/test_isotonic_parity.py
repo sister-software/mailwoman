@@ -113,7 +113,7 @@ def test_the_table_matches_the_committed_reference(fitted: dict[str, Any]) -> No
     """The artifact a decoder loads: the metrics, the subgroups, the curve and the 20 bins."""
     expected = json.loads(REFERENCE.read_text())["table"]
     actual = dict(fitted["table"])
-    # `created_from` is the fixture's own scratch path, which differs every run.
+    # `created_from` stores the fixture's scratch path. That path differs every run.
     expected.pop("created_from", None)
     actual.pop("created_from", None)
     assert actual == approximately(expected)

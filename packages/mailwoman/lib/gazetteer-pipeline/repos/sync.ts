@@ -9,8 +9,9 @@
  *   Split into a pure planner and an executor, so every refusal can be tested without a network or a
  *   clone.
  *
- *   It never re-points a remote silently, never touches a dirty tree or one carrying local commits,
- *   and never forces a shallow clone forward. The plan carries the shallowness because a shallow
+ *   It preserves remote configuration. It leaves dirty trees and local commits intact.
+ *   It preserves shallow clone depth.
+ *   The plan carries the shallowness because a shallow
  *   checkout has no history to diff against.
  */
 
@@ -65,7 +66,8 @@ export type SyncAction = (typeof SyncAction)[keyof typeof SyncAction]
 /**
  * The observable state of one checkout.
  *
- * `undefined` means the question could not be answered here, which is different from a negative answer.
+ * `undefined` means the checkout could not answer the question.
+ * A negative answer has a known value.
  */
 export interface CloneState {
 	exists: boolean
@@ -197,8 +199,9 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 	}
 
 	// Compared against origin's branch rather than `@{u}`: `git remote rename origin upstream`
-	// rewrites `branch.<name>.remote`, so after a re-point the tracked upstream is the remote we
-	// moved away from, and a clone level with its fork would report as carrying unpushed commits.
+	// rewrites `branch.<name>.remote`.
+	// After a re-point, the tracked upstream is the remote we moved away from.
+	// A clone level with its fork would then report unpushed commits.
 	const branch = read(["rev-parse", "--abbrev-ref", "HEAD"])
 
 	const counts =
@@ -244,7 +247,9 @@ export async function planReposSync(options: {
 
 		if (options.fetchFirst !== false && (await pathExists(directory))) {
 			try {
-				// Depth-preserving: a shallow clone stays shallow, and an unshallow one is not truncated.
+				// Preserve clone depth.
+				// A shallow clone keeps its depth.
+				// A full clone keeps complete history.
 				git(directory, ["fetch", "--quiet", "origin"])
 			} catch {
 				// An unreachable remote is reported through `behind: undefined`

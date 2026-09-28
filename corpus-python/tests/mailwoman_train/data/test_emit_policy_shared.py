@@ -86,7 +86,7 @@ def test_audit_emitted_count_matches_the_loader_for_an_excluded_source(tmp_path:
         )
     )
 
-    # Share rather than raw count: the audit skips `iter_rows`' shuffle buffer, which reorders rows
+    # Compare source share because the audit skips `iter_rows`' shuffle buffer. The buffer reorders rows
     # without changing each source's share.
     loader_share = sum(1 for row in loader if row["source"] == EXCLUDED) / len(loader)
     audited_share = report["emitted_level"]["per_source"][EXCLUDED]["emitted_share"]

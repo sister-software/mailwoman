@@ -89,7 +89,7 @@ export interface OvertureSubVenueRow extends SubVenueHarvestRow {
 }
 
 /**
- * Read named POI rows in selected sub-venue categories, optionally filtered by country.
+ * Read POI rows with names in selected sub-venue categories, optionally filtered by country.
  */
 export async function readOvertureSubVenues(options: ReadOvertureSubVenuesOptions): Promise<OvertureSubVenueRow[]> {
 	const categories = options.categories ?? OVERTURE_SUBVENUE_CATEGORIES

@@ -5,13 +5,13 @@
  *
  * Convert a jsonl of LabeledRow objects to a Parquet file matching the schema the corpus writes.
  *
- * DuckDB reproduces the same logical schema as the PyArrow original in the same column order, so a PyArrow
- * reader sees an identical table. The trainer reads parquet by column name, which is blind to physical layout.
+ * DuckDB reproduces the PyArrow file's logical schema and column order. A PyArrow reader therefore sees an identical table.
+ * The trainer reads Parquet by column name, so physical layout does not affect it.
  *
  * Schema: `PARQUET_COLUMNS` from `#parquet/schema`, the same list the native writer uses.
  *
- * The span triple is required on every row: a row arriving without it came from a producer that has not
- * migrated, and writing it would silently drop the char-offset labels. Fail loudly and report the row number.
+ * Every row must contain the span triple. A row without it came from a producer that has not migrated.
+ * Writing that row would silently drop the character-offset labels. Fail loudly and report the row number.
  */
 
 import { delimitedSource } from "@mailwoman/core/fs/delimited"
@@ -25,7 +25,7 @@ import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { PARQUET_COLUMNS, PARQUET_COLUMN_TYPES } from "#parquet/schema"
 
 /**
- * The columns this converter writes, and the DuckDB type each is written as.
+ * The columns this converter writes and the DuckDB type for each column.
  *
  * Both come from `#parquet/schema`, the one definition the native writer,
  * the reader and the manifest share.
@@ -111,8 +111,8 @@ export async function jsonlToParquet(
 	}
 
 	// Streaming keeps memory O(1) on the Node side.
-	// The staging directory owns the write stream, so it is closed before the directory
-	// is removed, and a mid-stream span-triple failure leaves no orphan.
+	// The staging directory owns the write stream, so it is closed before the directory is removed.
+	// A mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
 	const stagePath = staging.path("rows.ndjson")
 	const stage = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))

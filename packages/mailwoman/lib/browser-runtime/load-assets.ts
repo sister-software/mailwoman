@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The per-release asset loader: the classifier, the calibration table, the FST gazetteer and street-morphology
- *   matchers, the pair indexes, and the byte-range gazetteer lookup for one published release, reporting staged
+ *   matchers, the pair indexes and the byte-range gazetteer lookup for one published release. It reports staged
  *   progress through {@link AssetLoadProgress}. The host owns the terminal ready/error state and reveals the returned
  *   bundle atomically. The onnxruntime-web and sql.js-httpvfs imports stay dynamic so a host that never loads a
  *   release never pays for them.
@@ -59,8 +59,8 @@ export interface ReleaseAssets {
 	/**
 	 * Give this bundle's native memory back.
 	 *
-	 * The ONNX session's weights and arenas, which live in the wasm heap outside the
-	 * JavaScript heap and are not reclaimed by dropping this object.
+	 * The ONNX session's weights and arenas live in the wasm heap outside the JavaScript heap
+	 * and are not reclaimed by dropping this object.
 	 *
 	 * A host that loads a second bundle over a page's life (a version switch,
 	 * a backend-force toggle, compare mode) must call this on the one it is replacing.

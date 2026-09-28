@@ -330,7 +330,7 @@ TypeScript files and in 7 Markdown files, and it was never a flag on `mw corpus 
 command. `excludeLicenses` was reachable only from `buildCorpus`, whose sole caller was
 `packages/corpus/lib/build/index.test.ts`, so the mechanism had no operator surface. `mw corpus build` now
 carries `--license-policy` and `--exclude-licenses`, and the corpus manifest records which policy ran,
-how many rows each refusal class removed, and how many admitted rows carry a license value resolving to
+the row count for each refusal class, and the count of admitted rows whose license value resolves to
 no SPDX expression.
 
 The flag is neither necessary nor sufficient as evidence about a released model. It does not record

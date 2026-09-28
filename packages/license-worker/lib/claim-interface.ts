@@ -3,13 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * What the claim route answers as one schema: the route publishes it in the OpenAPI document and answers by it, the success page's fetch and the rehearsal read by it, and their TypeScript types are inferred from it.
+ * Defines the schema used by the claim route and published in its OpenAPI document.
+ * The success page and rehearsal use this schema for their responses. TypeScript types are inferred from it.
  */
 
 import { z } from "zod"
 
 /**
- * The lifecycle states: `pending` until the first invoice is paid, `revoked`
+ * The lifecycle states are `pending` until the first invoice is paid, `revoked`
  * after a full refund or dispute, and `issued` once the token is minted.
  */
 export const ClaimResponseSchema = z.discriminatedUnion("status", [

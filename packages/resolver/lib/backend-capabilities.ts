@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which optional {@link ResolverBackend} methods the loaded backend does not implement, and what each absence
- *   silently costs.
+ *   Lists optional {@link ResolverBackend} methods that the loaded backend lacks and the cost of each omission.
  *
  *   Optional backend methods can make default-on resolver features no-op. This module exposes and
  *   reports those gaps without changing resolution behavior.
@@ -52,9 +51,12 @@ export function describeCapabilityGaps(backend: ResolverBackend): readonly Backe
 /**
  * One log line for a backend's whole set of gaps.
  *
- * Deliberately short: what is missing, which option that costs, and where the consequences are written down.
- * The per-gap `degrades` prose stays on the data for a consumer that wants it,
- * because a line long enough to carry it is a line an operator learns to skip.
+ * Keep the log line short.
+ * It states the missing methods and affected options.
+ *
+ * A reference points to the document that describes their consequences.
+ * Each gap's `degrades` field retains details for consumers.
+ * Long log lines are harder for operators to scan.
  */
 export function formatCapabilityGaps(gaps: readonly BackendCapabilityGap[]): string {
 	const [first] = gaps

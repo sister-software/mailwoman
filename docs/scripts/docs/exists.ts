@@ -5,7 +5,7 @@
  *
  *   Filesystem existence for the docs checks, on node builtins.
  *
- *   `@mailwoman/core/fs/readers` exports this, and the checks may not reach it: the Docs workflow runs
+ *   `@mailwoman/core/fs/readers` exports this. The checks may not reach it because the Docs workflow runs
  *   `check/docs-structure.ts` before `yarn install`, so no workspace specifier resolves. One copy lives here rather
  *   than one per check.
  */
@@ -19,8 +19,9 @@ import { stat } from "node:fs/promises"
 /**
  * Whether anything is at `target` — a file or a directory alike.
  *
- * A directory counts, because both callers treat one as a valid target: a markdown link to a
- * folder reaches its index page, and a citation naming a directory names something that exists.
+ * A directory counts, because both callers treat one as a valid target:
+ * a markdown link to a folder reaches its index page.
+ * A citation naming a directory therefore names an existing target.
  */
 export async function pathExists(target: string): Promise<boolean> {
 	try {

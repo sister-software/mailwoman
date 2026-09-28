@@ -10,7 +10,7 @@
  *     `vocabulary.ts` keeps the misspelling as a constant.
  *   - The download host rejects HEAD and ignores `Range`, so file size cannot show freshness.
  *     {@linkcode EANCERMClient.readCatalogueRecord} reads the ISO revision date instead.
- *   - The abstract holds the attribution statement twice, and only the second copy has a year.
+ *   - The abstract holds the attribution statement twice. Only the second copy has a year.
  *     {@linkcode parseAttributionStatement} rejects copies without a year.
  */
 
@@ -34,7 +34,7 @@ import { NCERM_ATTRIBUTION, NCERM_CATALOGUE_PACKAGE_ID, NCERM_DATASET_ID, NCERM_
 export const EA_NCERM_SPATIAL_BASE_URL = `https://environment.data.gov.uk/spatialdata/${NCERM_SERVICE_SLUG}`
 
 /**
- * The EA's CSW endpoint, which serves the ISO 19115 record.
+ * The EA's CSW endpoint serves the ISO 19115 record.
  *
  * The dataset landing page is a client-side app, so a plain fetch cannot read it.
  */
@@ -80,7 +80,8 @@ const YEAR_PATTERN = /\b\d{4}\b/u
 /**
  * Return the last attribution statement in `text` that contains a four-digit year.
  *
- * The record's abstract holds two copies, and the first copy has no year.
+ * The record's abstract holds two copies.
+ * The first copy has no year.
  * Each copy ends at the next marker or the next XML tag.
  *
  * The parser uses `indexOf` scans because the obvious regex backtracks polynomially on network input.

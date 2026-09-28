@@ -3,13 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The comparable-key expansion for a parsed region qualifier, shared by both consumers (the
- *   shared-function rule). The admin-coherence verdicts (`mailwoman/admin-coherence.ts`) fold a
- *   qualifier and a winner-ancestry name through this to decide `confirmed` or `contradicted`. The
- *   candidate backend's admin-containment re-rank (`candidate-lookup.ts`) folds the same qualifier
- *   through it to find the qualifier's own region-class rows in the candidate table. A check that
- *   says `contradicted` and a re-rank that cannot find the qualifier would otherwise be two
- *   readings of one string that silently disagree, which is the drift the shared function prevents.
+ *   Both consumers use this expansion to compare parsed region qualifiers with stored keys.
+ *   Admin-coherence verdicts (`mailwoman/admin-coherence.ts`) fold a qualifier and the winner's ancestry
+ *   to decide `confirmed` or `contradicted`. The candidate backend's admin-containment re-rank
+ *   (`candidate-lookup.ts`) uses the same fold to find region-class rows. The shared function keeps
+ *   both decisions aligned.
  *
  *   Lives here rather than in `mailwoman` because the dependency points this way. `mailwoman`
  *   depends on `@mailwoman/resolver-wof-sqlite` (which owns the fold and already depends on codex),
@@ -24,10 +22,12 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * The ancestry placetypes that answer for a parsed `region` qualifier,
  * WOF's admin band between country and locality.
  *
- * Deliberately the whole band: a qualifier stated at any grain
- * ("Lancashire", a ceremonial county, or "Thüringen", a Land) may confirm against
- * whichever level the backend stored, and `contradicted` requires the entire band to miss,
- * so widening the band only ever makes the check more conservative.
+ * The full band covers qualifiers at any grain, such as "Lancashire"
+ * (a ceremonial county) or "Thüringen" (a Land).
+ * A qualifier may confirm against any level the backend stored.
+ *
+ * `contradicted` requires every level in the band to miss.
+ * Widening the band makes the check more conservative.
  */
 export const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "macroregion", "county", "macrocounty"])
 
@@ -38,8 +38,9 @@ export const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "
  * and every Irish county qualifier would read `contradicted`.
  * The stripped form is added to the key set, never substituted.
  *
- * `County Durham` is a real name whose stripped variant also matches, and a set union
- * can only widen confirmation, so the closure is monotone.
+ * `County Durham` is a real name that also matches after prefix removal.
+ * Set union can only widen confirmation, so the closure is monotone.
+ *
  * `contradicted → confirmed` is the only movement it can cause.
  */
 const COUNTY_QUALIFIER_PREFIXES = ["county", "co.", "co"] as const
@@ -140,17 +141,21 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
  *
  * The verdict implementation intersects two {@link regionKeys} sets, so `Co. Donegal`
  * meets stored `County Donegal` at the shared stripped key `donegal`.
- * A table probe is one-sided and matches the stored fold verbatim, and WOF stores
- * Irish counties under `county donegal` with no bare `donegal` key.
+ * A table probe matches the stored fold verbatim in one direction.
+ *
+ * WOF stores Irish counties under `county donegal`.
+ * The table has no bare `donegal` key.
  *
  * The qualifier probe missed every Irish county until this variant landed.
  *
  * Adding `county <key>` restores the two-sidedness for the one stored-form family with an evidenced case.
- * The union is monotone, since a wider qualifier set can only find more bearers,
- * and each bearer must still contain a candidate before anything moves.
+ * The union is monotone because a wider qualifier set can only find more bearers.
+ *
+ * Each bearer must still contain a candidate before anything moves.
  *
  * The suffix sibling (`<key> province`) is deliberately absent.
- * No stored-form case has been evidenced, and a change without a board does not get built.
+ * The board has no case for this stored form.
+ * Add one before building a change for this suffix.
  */
 export function regionQualifierProbeKeys(value: string, countryAlpha2?: string): Set<string> {
 	const keys = regionKeys(value, countryAlpha2)

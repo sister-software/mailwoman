@@ -195,7 +195,9 @@ interface BDCStageRow {
  * Every row in a file shares one provider.
  *
  * It throws on a value that is not a safe integer.
- * A `NaN` would bind as NULL, and `INSERT OR IGNORE` would then drop every row as if it were a duplicate.
+ * A `NaN` would bind as NULL.
+ *
+ * `INSERT OR IGNORE` would then drop every row as a duplicate.
  */
 export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID {
 	const headerEnd = csvBuffer.indexOf(0x0a)

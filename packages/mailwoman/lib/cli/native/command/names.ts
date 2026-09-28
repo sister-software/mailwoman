@@ -37,9 +37,10 @@ export function commandPathCandidates(segment: string): string[][] {
 }
 
 /**
- * Whether `directory` is layout rather than something the user types, which the declared name
- * alone separates: `gazetteer/inspect/fst.tsx` declaring `fst` makes `inspect` a namespace,
- * while `gazetteer/build/postcode/codepoint.tsx` declaring `postcode-codepoint` makes `postcode` layout.
+ * Whether `directory` is layout rather than a user-entered command name.
+ *
+ * `gazetteer/inspect/fst.tsx` declares `fst`, so `inspect` is a namespace.
+ * `gazetteer/build/postcode/codepoint.tsx` declares `postcode-codepoint`, so `postcode` is layout.
  */
 export function isPrefixDirectory(directory: string, name: string): boolean {
 	return name.startsWith(`${directory}-`)
@@ -49,7 +50,7 @@ const DECLARED_NAME = /\bspec\s*=\s*\{\s*name\s*:\s*["'`]([^"'`]+)["'`]/u
 
 /**
  * The command name a compiled module declares, read from its text rather than imported because
- * importing a command module runs it and pulls Ink, a resolver, and sometimes a database handle.
+ * importing a command module runs it and pulls Ink, a resolver plus sometimes a database handle.
  *
  * A module whose spec cannot be found falls back to its filename.
  */

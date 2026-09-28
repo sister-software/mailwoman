@@ -5,20 +5,18 @@
  *
  *   Refuse to run a compiled tree that predates its source.
  *
- *   This server imports source, so `out/` is normally not on its path at all (see `tree-fingerprint.ts`). One thing
- *   re-opens it: the gauntlet writes its whole report to stdout, and stdout here is the JSON-RPC channel — running it
- *   in-process would corrupt the transport. So it is spawned as `out/cli.js`, which puts the stale-`out/` trap back on
- *   the table, and this is the answer to it.
+ *   This server imports source, so `out/` is normally absent from its import path (see `tree-fingerprint.ts`).
+ *   The gauntlet writes its full report to stdout. Here stdout carries JSON-RPC messages, so running the gauntlet
+ *   in-process would corrupt the transport. The server spawns `out/cli.js`, which makes stale compiled files relevant.
  *
- *   The trap is not hypothetical. `corpus-stamp.ts` records 2026-08-06: `eval gauntlet-build regression-db` ran from a
- *   compiled tree whose `out/` loader still held a deleted case array, wrote a database, printed "built", exited 0, and
- *   every eval afterwards graded a corpus nobody had. The failure mode is silence, so the answer here is a refusal
- *   rather than a warning.
+ *   A stale compiled tree can load a deleted case array, write a database, print "built", and exit with status 0.
+ *   Later evals then grade a corpus absent from the artifact. The guard refuses that tree because a warning would leave
+ *   misleading successful build output in place.
  *
- *   The RULE — newest source against newest emit, with `out/*.d.ts` and the test tree excluded — lives in
- *   `@mailwoman/core/module/compiled-freshness`, because the promotion battery needs the same one and its own copy
- *   disagreed: it compared sources against the mtime of the `out/` DIRECTORY, which `tsc` never advances when it
- *   overwrites in place. What stays here is the workspace SET, which is a property of what this server spawns.
+ *   `@mailwoman/core/module/compiled-freshness` compares the newest source with the newest emit. It excludes
+ *   `out/*.d.ts` and the test tree. The promotion battery uses the same check. Its previous copy compared source
+ *   mtimes with the `out/` directory. `tsc` does not advance that directory's timestamp when it overwrites files in place.
+ *   This module defines the workspace set because that set depends on what this server spawns.
  */
 
 import { checkCompiledFreshness, type CompiledFreshness } from "@mailwoman/core/module/compiled-freshness"

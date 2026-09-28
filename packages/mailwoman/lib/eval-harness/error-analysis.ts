@@ -17,8 +17,10 @@
  *   This is the pre-publish 2pp promote eval: run the full per-tag error analysis and compare against
  *   the current default release, then abort the upload if any tag regresses by more than 2pp. It
  *   therefore builds the classifier via the canonical `createScorer` in strict mode, so the model is
- *   fed the full ship-config it was trained against (anchor, gazetteer and conventions, per the
- *   model-card's `requires` block). A candidate is graded in-distribution, and `--no-strict`
+ *   fed the full ship-config it was trained against (anchor, gazetteer, and conventions).
+ *   The model card's `requires` block specifies these channels.
+ *   A candidate is graded against that configuration.
+ *   `--no-strict`
  *   warns-and-continues for ad-hoc or legacy pre-anchor models instead of failing closed.
  *
  *   Usage: mailwoman eval error-analysis\
@@ -147,10 +149,10 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		: undefined
 
 	// Full ship-config via the canonical ProductionScorer: feed the anchor, gazetteer
-	// and conventions channels the model was trained against (per the model-card `requires` block)
-	// so a `--model` candidate is graded in-distribution, the same as the dev-weights
-	// default. createScorer fails closed in strict mode if a declared channel can't
-	// actually be fed, and `--no-strict` opts out.
+	// and conventions channels listed in the model-card `requires` block.
+	// This grades a `--model` candidate against the same configuration as the dev-weights default.
+	// createScorer fails closed in strict mode if a declared channel can't actually be fed.
+	// `--no-strict` opts out of this check.
 	const resolved = options.model
 		? { modelPath: options.model, tokenizerPath: options.tokenizer!, modelCardPath: options.modelCard! }
 		: await resolveWeights({ locale: "en-us" })

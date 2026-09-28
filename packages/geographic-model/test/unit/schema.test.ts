@@ -155,8 +155,10 @@ const minimalDocument: GeographicModelDocument = {
 }
 
 /**
- * The whole first record set: the concepts, the mapping into the external vocabulary,
- * one source observation, and one derived fact naming every record its derivation read.
+ * The first record set contains concepts and their mapping into the external vocabulary.
+ *
+ * It also contains one source observation.
+ * It also contains one derived fact that lists every record its derivation read.
  */
 const pharmacyDocument: GeographicModelDocument = {
 	...minimalDocument,
@@ -528,7 +530,7 @@ describe("relation refusals", () => {
 			})
 		})
 
-		// Both records declare the pairing so both are named.
+		// Both records declare the pairing, so the validator identifies both.
 		// Either could be the wrong half and the validator does not decide which.
 		expect(refusalPairs(input)).toEqual([
 			["$.relations[0].inverse", ValidationIssueCode.InverseKindsMismatch],
@@ -622,8 +624,8 @@ describe("reporting every violation at once", () => {
 			["$.concepts[0].assertions[0].relation", ValidationIssueCode.UnknownRelation],
 			["$.concepts[0].assertions[0].target", ValidationIssueCode.UnknownConcept],
 			// The duplicate identifier removed `obtain_medication` from the concept table,
-			// so every record that named it now names no concept — the cascade the
-			// whole-table reference pass exists to catch.
+			// so every record that referenced it now points to no concept — the cascade
+			// the whole-table reference pass exists to catch.
 			["$.observations[0].object", ValidationIssueCode.UnknownConcept],
 			["$.derivedFacts[0].object", ValidationIssueCode.UnknownConcept],
 			["$.derivedFacts[0].inputs[1].id", ValidationIssueCode.UnknownDerivationInput],
@@ -672,7 +674,7 @@ describe("reporting every violation at once", () => {
 		const issues = refusalOf(ninefoldDefect())
 		const rendered = formatValidationIssues(issues)
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- an in-memory string of one line per issue, and the line count is the assertion.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- this in-memory string has one line per issue. The line count is the assertion.
 		expect(rendered.split("\n")).toHaveLength(issues.length)
 	})
 })

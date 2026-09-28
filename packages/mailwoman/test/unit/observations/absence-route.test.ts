@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the coverage-qualified absence route: the conjunction, every named silence, the authority an observation carries, and the construction refusals.
+ *   Tests the coverage-qualified absence route: its conjunction, recorded absences, observation authority, plus construction refusals.
  *
- *   The route reads a finished `POIIntentOutcome` and a sealed coverage layer, both supplied here, so the asymmetry can be stated at its sharpest: the same query, the same empty answer, two cells differing only in `basis`, and opposite readings.
+ *   The route reads a finished `POIIntentOutcome` and a sealed coverage layer supplied here.
+ *   The same query and empty answer produce opposite readings for two cells that differ only in `basis`.
  *
  *   The committed pre-registration is asserted too, because its hash is what stops a row that failed from being rewritten into a row that passes.
  */
@@ -147,8 +148,8 @@ async function scratchLayer(options: ScratchLayerOptions = {}): Promise<PathBuil
 }
 
 /**
- * A finished POI answer: a category subject, an anchor tree whose one node carries
- * the resolved centroid, and the rows the search returned.
+ * A finished POI answer with a category subject, an anchor tree, plus the rows returned by search.
+ * One anchor node contains the resolved centroid.
  */
 function answered(
 	categoryID: string,

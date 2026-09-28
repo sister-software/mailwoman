@@ -113,8 +113,10 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 }
 
 /**
- * Keep this exact glibc-constant LCG stream: the published conformal thresholds were
- * selected under it, and `@mailwoman/core/utils`' `makeLcg` uses different constants.
+ * Keep this exact glibc-constant LCG stream.
+ *
+ * The published conformal thresholds were selected under it.
+ * `@mailwoman/core/utils`' `makeLcg` uses different constants.
  *
  * Swapping streams re-splits calibration and test and silently moves Q̂.
  */
@@ -147,9 +149,10 @@ interface StreetHit {
 }
 
 /**
- * Kept local because tree-hits' `findAddressPointHit` and `findInterpolatedHit`
- * answer only a coordinate, and this walk also needs the stamped `resolution_tier`
- * and the interpolation `uncertainty_m` to price the claimed radius.
+ * Kept local because tree-hits' `findAddressPointHit` and `findInterpolatedHit` answer only a coordinate.
+ *
+ * This walk also needs the stamped `resolution_tier` and the interpolation
+ * `uncertainty_m` to price the claimed radius.
  * The shared readers carry neither.
  */
 function findStreetHit(tree: AddressTree): StreetHit | null {

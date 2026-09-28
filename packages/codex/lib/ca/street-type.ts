@@ -17,7 +17,7 @@
  *       vocabulary and stays position-agnostic — it cannot assume a side the way the
  *       single-language files do.
  *
- *   The directionals carry the same bilingual twist, and one trap inside it: French `Ouest`
+ *   The directionals follow the same bilingual convention. French `Ouest`
  *   abbreviates to `O`, not `W`. A naive English-only matcher reading `Rue Sherbrooke O` would miss
  *   the quadrant entirely. {@link CA_DIRECTIONALS} spells out the French abbreviations so `O` =
  *   Ouest = West is recognized.

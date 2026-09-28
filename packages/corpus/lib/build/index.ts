@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file The corpus build, as the four phases it runs in order: adapters, align, split, parquet.
  *
- *   Each phase is its own module. This one holds the sequence, the paths the phases share, and the
- *   manifest assembled from what they report.
+ *   Each phase is its own module. This module defines their sequence and shared paths.
+ *   It assembles the manifest from the phase reports.
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -44,8 +44,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	const licensePolicy = opts.licensePolicy ?? LicensePolicy.All
 	const built_at = new Date().toISOString()
 
-	// A build that aborts with SIGABRT reports the heap it had nowhere else,
-	// and the abort arrives twelve minutes into the adapter phase.
+	// The build reports heap state when it aborts with SIGABRT.
+	// These aborts arrive twelve minutes into the adapter phase.
 	const heapLimit = heapLimitBytes()
 	const configured = adapters.filter((adapter) => opts.adapterInputs[adapter.id]).map((adapter) => adapter.id)
 

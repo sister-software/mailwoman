@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman dev generate man-page` — regenerate the committed `man/mailwoman.1` from the compiled CLI's own help
- *   tree. Offline codegen. the freshness test under `test/unit/` fails on drift, and the pre-commit hook runs this when
- *   a commit touches the command surface.
+ *   `mailwoman dev generate man-page` regenerates the committed `man/mailwoman.1` from the compiled CLI help tree.
+ *   The command runs offline. The `test/unit/` freshness test fails on drift. The pre-commit hook runs this command
+ *   when a commit touches the command surface.
  */
 
 import { Text } from "ink"

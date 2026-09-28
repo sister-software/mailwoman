@@ -302,8 +302,10 @@ describe("buildBDCDatabase", () => {
 
 describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	/**
-	 * Three rows that differ only on `location_id` exercise the materialize collapse,
-	 * which keeps one row unless `includeLocationIDs` is true.
+	 * Three rows share all values except `location_id`.
+	 *
+	 * This tests materialize collapse.
+	 * The collapse keeps one row unless `includeLocationIDs` is true.
 	 */
 	function multiBSLRows(): BDCAvailabilityRow[] {
 		return ["2000000001", "2000000002", "2000000003"].map((locationID) => ({
@@ -383,8 +385,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	}
 
 	/**
-	 * Seeds `provider_id` 700001 with two FRN edges whose later filing must win the pick,
-	 * and two conflicting holding-company edges.
+	 * Seeds `provider_id` 700001 with two FRN edges and two conflicting holding-company edges.
+	 * The later filing must win the FRN pick.
 	 */
 	async function seedTwoFRNFixture(db: DatabaseClient<FilerDatabase>): Promise<void> {
 		await createFilerNodeTable(db)
@@ -399,8 +401,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.values({
 				name: "filer",
 				version: "2026-Q2",
-				// filerLookup refuses a manifest whose schema_version predates filer_family,
-				// which this fixture creates above.
+				// filerLookup refuses a manifest with a schema_version earlier than filer_family.
+				// This fixture creates a manifest with that earlier version.
 				schema_version: 2,
 				source: "form-499,bdc-provider-list",
 				source_vintage: "2026-Q2",
@@ -559,7 +561,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_001)
 			.executeTakeFirstOrThrow()
 
-		// `bdc_provider` holds one FRN, and the later-filed one wins.
+		// `bdc_provider` holds one FRN.
+		// The later-filed FRN wins.
 		// Its two holding-company values conflict, so the column stays NULL.
 		expect(multiFRNProvider.frn).toBe(FRN_LATE)
 		expect(multiFRNProvider.brand_name).toBeNull()
@@ -571,7 +574,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_002)
 			.executeTakeFirstOrThrow()
 
-		// Its lone FRN is primary, and its single holding-company value populates directly.
+		// Its only FRN is primary.
+		// Its only holding-company value populates the column directly.
 		expect(singleFRNProvider.frn).toBe(FRN_SOLO)
 		expect(singleFRNProvider.brand_name).toBeNull()
 		expect(singleFRNProvider.holding_company).toBe("Solo Broadband")
@@ -707,8 +711,9 @@ describe("peekProviderID", () => {
 })
 
 describe("buildBDCDatabase — malformed provider_id via csvPaths (the production ingest path)", () => {
-	// A non-numeric `provider_id` parses to NaN, which binds as SQLite NULL and lets
-	// `insert or ignore` drop every row of the file while the build counts them as deduped.
+	// A non-numeric `provider_id` parses to NaN.
+	// SQLite binds NaN as NULL, so `insert or ignore` drops every row
+	// while the build counts those rows as deduped.
 	it("rejects the whole build, naming the malformed CSV, instead of silently absorbing its rows as deduped", async () => {
 		const malformedCSVPath = resolvePackagePath(
 			"@mailwoman/bdc",
@@ -778,7 +783,8 @@ describe("geometryCentroid", () => {
 
 		const centroid = geometryCentroid(multiPolygon)
 		expect(centroid).toBeDefined()
-		// Area-weighted by the shoelace formula, which is immune to the repeated closing vertex.
+		// The shoelace formula weights the centroid by area.
+		// It ignores the repeated closing vertex.
 		expect(centroid!.lon).toBeCloseTo(1, 5)
 		expect(centroid!.lat).toBeCloseTo(1, 5)
 	})

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * A cross-engine comparison end to end: a stub registry for the mailwoman arm, a scripted Axios adapter for the
- * external one, and the two-row `AD` board subset for truth coordinates so every assertion can be checked by hand.
+ * Runs a cross-engine comparison end to end with a stub registry for Mailwoman and a scripted Axios adapter for the external engine.
+ * It uses two `AD` board rows with truth coordinates so each assertion can be checked by hand.
  */
 
 import { stubTransport } from "@mailwoman/core/api/test-transport"
@@ -28,7 +28,7 @@ const RUN_STORE = await temporaryDirectory("mwdev-compare-runs-")
 afterAll(() => RUN_STORE[Symbol.asyncDispose]())
 
 /**
- * Andorra la Vella and Les Escaldes, the two `AD` board rows, and their truth coordinates.
+ * The two `AD` board rows: Andorra la Vella and Les Escaldes, with their truth coordinates.
  */
 const ANDORRA_LA_VELLA = { lat: 42.5063174, lon: 1.5218355 }
 const LES_ESCALDES = { lat: 42.5100804, lon: 1.5387862 }

@@ -141,9 +141,10 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	 */
 	readonly #extractCountries: Map<string, ReadonlySet<string>>
 	/**
-	 * The Geographic Rule Engine: `#conventionSource` supplies per-WOF-polygon profiles,
-	 * `#strategies` is the named-primitive registry, and `#countryWOFIdCache`
-	 * memoizes the country-code to country-WOF-id lookup.
+	 * `#conventionSource` supplies per-WOF-polygon profiles for the Geographic Rule Engine.
+	 *
+	 * `#strategies` maps primitive names to strategies.
+	 * `#countryWOFIdCache` memoizes country-code to country-WOF-id lookups.
 	 */
 	readonly #conventionSource: ConventionSource
 	readonly #strategies: Map<string, Strategy>
@@ -213,9 +214,9 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.database, s.schemaName))
 		}
 
-		// An extract is guarded when it is named for a routed placetype or carries `spr`,
-		// and must then carry `place_search`; testing only one of those would let an
-		// empty file through or exempt a build input.
+		// An extract is guarded when its path identifies a routed placetype
+		// or it carries `spr`, and must then carry `place_search`; testing only one of
+		// those would let an empty file through or exempt a build input.
 		for (const s of this.#extracts) {
 			if (s.schemaName === "main") continue
 
@@ -433,13 +434,15 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		if (!ftsQuery) return []
 
-		// Multi-extract routing is placetype-driven, a query without `placetype` goes to main,
-		// and mixed-placetype spread across extracts is unsupported.
+		// Multi-extract routing uses placetype.
+		// Queries without `placetype` go to main.
+		// Mixed-placetype spread across extracts is unsupported.
 		const firstPlacetype = placetypes?.[0]
 
 		// A country-less query with proximity hints queries every matching extract
 		// so cross-extract ambiguity is visible.
-		// The bound requires hints, an absent country, and more than one matching extract.
+		// The bound requires hints and an absent country.
+		// It also requires more than one matching extract.
 		const hasBiasHints = !!query.near || (query.bias?.length ?? 0) > 0
 
 		if (!forceExtract && hasBiasHints && !query.country) {

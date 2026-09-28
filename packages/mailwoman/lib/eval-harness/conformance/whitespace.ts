@@ -25,7 +25,7 @@ import {
 export const WHITESPACE_LAW = "whitespace-invariance"
 
 /**
- * Named whitespace transformations.
+ * Whitespace transformations.
  *
  * - `leading` and `trailing` add one ASCII space at the start or end.
  *   They have separate names because the pipeline trims the two ends with separate code.
@@ -53,7 +53,7 @@ export type WhitespaceTransformationName = (typeof WHITESPACE_TRANSFORMATIONS)[n
 export type WhitespaceScope = "boundary" | "run" | "separator"
 
 /**
- * Scope of each named transformation.
+ * Scope of each whitespace transformation.
  */
 export const WHITESPACE_TRANSFORMATION_SCOPE: Record<WhitespaceTransformationName, WhitespaceScope> = {
 	leading: "boundary",
@@ -131,7 +131,7 @@ function rewriteSafeRuns(text: string, rewrite: (run: string) => string): string
 }
 
 /**
- * Implementation of each named transformation.
+ * Implementation of each whitespace transformation.
  */
 export const WHITESPACE_TRANSFORMATION_BY_NAME: Record<WhitespaceTransformationName, (text: string) => string> = {
 	leading: (text) => ` ${text}`,
@@ -151,7 +151,7 @@ export function whitespaceBlindKey(text: string): string {
 }
 
 /**
- * Returns the named transformation that maps `base` to `variant`, or `null` when none does.
+ * Returns the whitespace transformation that maps `base` to `variant`, or `null` when none does.
  */
 export function classifyWhitespaceTransformation(base: string, variant: string): WhitespaceTransformationName | null {
 	if (base === variant || whitespaceBlindKey(base) !== whitespaceBlindKey(variant)) return null
@@ -246,7 +246,7 @@ export const WHITESPACE_SUITE_PATH: string = resolvePackagePath(
 /**
  * Audits suite rows.
  *
- * Each row needs a `rowRef`, a `caseCountry`, and a variant that a named
+ * Each row needs a `rowRef`, a `caseCountry`, and a variant that a whitespace
  * transformation derives from the base.
  */
 export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): string[] {
@@ -277,7 +277,7 @@ export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): s
 }
 
 /**
- * Returns the fixture's transformation name, or `?` when no named transformation fits.
+ * Returns the fixture's transformation label, or `?` when no whitespace transformation fits.
  */
 export function describeWhitespaceTransformation(fixture: ConformanceFixture): string {
 	return classifyWhitespaceTransformation(fixture.base, fixture.variant) ?? "?"

@@ -38,8 +38,9 @@ export interface RunnerProgress {
 /**
  * Base-2 logarithm of the fingerprint table's slot count.
  *
- * 2^27 slots hold 93,952,409 keys before the load limit, against the largest measured
- * adapter's 57,570,829 distinct keys, and occupy 2.0 GiB outside the V8 heap.
+ * 2^27 slots hold 93,952,409 keys before the load limit.
+ * The largest measured adapter has 57,570,829 distinct keys.
+ * The table occupies 2.0 GiB outside the V8 heap.
  */
 export const DEFAULT_DEDUP_SLOTS_LOG2 = 27
 
@@ -78,11 +79,16 @@ export interface RunAdapterOptions {
 	 * Hold dedup keys in a V8 `Set` capped at this many, rather than in a fingerprint table.
 	 *
 	 * The cap is what the fingerprint table replaces.
-	 * A run that sets this reproduces the pre-2026-09-28 behavior: past the cap the runner still
-	 * drops a duplicate of a key it holds, and writes a duplicate of a key first seen after the cap.
+	 * A run that sets this reproduces the pre-2026-09-28 behavior.
+	 *
+	 * Past the cap, the runner still drops a duplicate of a key it holds
+	 * and writes a duplicate of a key first seen after the cap.
 	 *
 	 * Over `v0.7.0-de-holdout` that wrote 1,490,992 duplicate rows across three adapters.
 	 * A test sets it low to reach exhaustion in a few rows.
+	 *
+	 * After reaching the cap, the runner still drops duplicates for keys already in the set.
+	 * It writes duplicates for keys first seen after the cap.
 	 */
 	dedupMaxSize?: number
 
@@ -122,7 +128,9 @@ export interface RunAdapterOptions {
 
 	/**
 	 * Yielded-row interval at which `onProgress` fires.
-	 * Defaults to 1000, and the terminal tick is always emitted.
+	 *
+	 * Defaults to 1000 rows per callback.
+	 * The runner always emits a terminal update.
 	 */
 	progressEvery?: number
 }
@@ -141,9 +149,10 @@ export interface AdapterRunManifest {
 	/**
 	 * The `yielded` count at which the dedup set stopped growing, or `null` where it never did.
 	 *
-	 * A run reporting a number here deduplicated its rows completely up to that point
-	 * and partially after it: a row duplicating a key already held is still dropped,
-	 * and a duplicate of a key first seen after the cap is written.
+	 * A run reporting a number here deduplicated its rows completely up to that point.
+	 * After that point, it still drops duplicates for keys already held.
+	 *
+	 * It writes duplicates for keys first seen after the cap.
 	 * `deduped` alone cannot say which, so a consumer comparing two builds'
 	 * duplicate counts needs this beside it.
 	 */
@@ -189,10 +198,10 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	const stream = openWriteStream(jsonlPath, { encoding: "utf8" })
 	const hasher: StreamingHasher = streamingSha256()
 
-	// The `Set` path exists for a caller that cannot accept a fingerprint collision dropping
-	// a legitimate row, and for the test that reaches the capped behavior in three rows.
-	// Every other run takes the table, whose entry count is bounded by the array it sized
-	// rather than by V8's `Set` limit.
+	// The `Set` path serves callers that cannot accept a fingerprint collision dropping a legitimate row.
+	// A test also uses it to reach the capped behavior in three rows.
+	// Every other run takes the table.
+	// Its entry count is bounded by the array it sized rather than by V8's `Set` limit.
 	const capped = opts.dedupMaxSize !== undefined
 	const seen = capped ? new Set<string>() : null
 	const fingerprints = capped ? null : new FingerprintSet(opts.dedupSlotsLog2 ?? DEFAULT_DEDUP_SLOTS_LOG2)
@@ -248,10 +257,10 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 				}
 			} else if (seen) {
 				// The membership test runs whether or not the set is full.
-				// Exhaustion stops the set GROWING, and a set that has stopped growing
-				// still rejects every duplicate of a key it holds.
-				// Skipping the test once full let a row duplicating one of the first `dedupMaxSize` keys through.
-				// This ordering exists to refuse that row.
+				// Reaching the cap stops the set from growing.
+				// The set still rejects every duplicate of a key it holds.
+				// Skipping the membership test at the cap let duplicates of the first `dedupMaxSize` keys through.
+				// This ordering keeps those duplicates out.
 				if (seen.has(key)) {
 					if (yielded % progressEvery === 0) {
 						emitProgress()
@@ -368,8 +377,9 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 		throw new Error(`adapter ${adapter.id}: row.country is empty for source_id=${row.source_id}`)
 	}
 
-	// `country_weights` and every country filter key on this value, and the shape
-	// rather than ISO membership because `ZZ` and `XK` are legitimate non-members.
+	// `country_weights` and every country filter use this value.
+	// Validate its ISO 3166-1 alpha-2 shape.
+	// `ZZ` and `XK` are legitimate codes even though ISO membership does not list them.
 	if (!isAlpha2CodeShape(row.country)) {
 		throw new Error(
 			`adapter ${adapter.id}: row.country ${stringifyJSON(row.country)} is not two upper-case letters ` +
@@ -386,10 +396,14 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 /**
  * Resolve once everything written to `stream` so far has reached the file.
  *
- * A zero-length write is the barrier: its callback runs after the writes queued before it,
- * so a caller that records a byte offset can state that the file holds those bytes.
- * `drain` fires only when the buffer was full, and `bytesWritten` excludes what
- * is still queued, so neither answers the question.
+ * A zero-length write acts as a barrier.
+ * Its callback runs after earlier queued writes.
+ *
+ * A caller can then record a byte offset for the bytes in the file.
+ * `drain` fires only when the buffer was full.
+ *
+ * `bytesWritten` excludes queued data.
+ * Neither value answers when all earlier writes have reached the file.
  */
 export function flushStream(stream: WriteStream): Promise<void> {
 	return new Promise((resolve, reject) => {

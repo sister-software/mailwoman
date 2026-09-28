@@ -3,17 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * One deterministic pass over everything the repository records about where its published artifacts came from, and
- * what it does not record.
+ * One deterministic pass over the repository's records about the sources of published artifacts. It also identifies
+ * missing records.
  *
- * Seven repository checks already hold individual invariants: the notices agree, the rights documents name a
- * licensor, the generated files equal their writer's output, the register's digest matches its contents. None of
- * them answers the question a release asks, which is whether the chain from a source's terms to a published
- * tarball closes, and this pass says exactly where it does not.
+ * Seven repository checks test individual conditions. The notices agree. Rights documents identify a licensor.
+ * Generated files match their writer's output. The register digest matches its contents. Those checks do not answer
+ * whether a source's terms can be traced to a published tarball. This pass identifies gaps in that chain.
  *
- * No part of this report asserts clearance, and a clean report is not one. A section that establishes no fact says
- * so, and the report separates what it observed from what it could not read. Reading this as permission is the
- * misreading the whole rights record was built to refuse.
+ * This report does not establish clearance. A clean report also does not establish clearance. Each section says when
+ * it establishes no fact. The report separates observations from unreadable records. The rights record does not grant
+ * permission to use data.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -35,7 +34,7 @@ import { SourceUse, type WeightsRightsRecord } from "#weights/rights/record"
 import { weightsRightsRecords } from "#weights/rights/write"
 
 /**
- * What the register admits, and what refuses the rest.
+ * What the register admits and what it refuses.
  */
 export interface SourceRegisterAudit {
 	sources: number
@@ -84,8 +83,8 @@ export interface PackageRightsAudit {
 	/**
 	 * Entries whose text names no license this reader could find.
 	 *
-	 * The entry may still state terms outside a parenthetical, which is why this
-	 * counts entries rather than declaring them unlicensed.
+	 * The entry may state terms outside a parenthetical.
+	 * The audit counts entries and does not declare them unlicensed.
 	 */
 	entriesNamingNoLicense: number
 	/**
@@ -97,8 +96,10 @@ export interface PackageRightsAudit {
 	/**
 	 * Entries stating no use at all.
 	 *
-	 * Whether the source trained the model is unrecorded, which is a different answer from recorded as
-	 * not having trained it — counting the two together would report an absence as a measurement.
+	 * The records do not establish whether the source trained the model.
+	 * That differs from a record stating the source did not train it.
+	 *
+	 * Combining those cases would report missing evidence as a measurement.
 	 */
 	entriesStatingNoUse: number
 	/**
@@ -149,8 +150,10 @@ export interface TrainingRecordAudit {
 	 * What one config's audited epoch actually drew from that corpus, when the repository holds the record.
 	 *
 	 * The frozen manifest states what the corpus holds.
-	 * This states what reached the trainer, and the two differ by the country filter, the source weights,
-	 * a zero weight, the sampler and every overlay merged after the frozen manifest was written.
+	 * This states what reached the trainer.
+	 *
+	 * The two differ because of the country filter, source weights, zero weights,
+	 * the sampler and every overlay merged after the frozen manifest was written.
 	 */
 	effective: {
 		config: string
@@ -158,7 +161,7 @@ export interface TrainingRecordAudit {
 		trainingSources: number
 		excludedSources: number
 		/**
-		 * Sources the epoch emitted that the frozen manifest does not name, and their row total.
+		 * Sources the epoch emitted that the frozen manifest does not record, plus their row totals.
 		 *
 		 * A non-zero count means the frozen manifest covers part of what trained the model.
 		 */
@@ -174,8 +177,10 @@ export interface TrainingRecordAudit {
 	 * Why a release may not assert that this package's declared provenance equals what trained it.
 	 *
 	 * An empty array does not state agreement.
-	 * A model card's attribution entries are prose naming publishers, and an effective
-	 * manifest's entries are corpus source ids, so no field joins the two.
+	 * A model card's attribution entries are prose that identifies publishers.
+	 *
+	 * An effective manifest's entries are corpus source IDs.
+	 * No field joins the two.
 	 *
 	 * The refusals below are the ones measurable without that join: no effective manifest
 	 * was read, or the one read covers part of the emitted set.
@@ -186,10 +191,13 @@ export interface TrainingRecordAudit {
 /**
  * What the committed data bill of materials states about the artifacts a release can deliver.
  *
- * The register covers source terms, the weights records cover what a model shipped,
- * and the frozen manifests cover what trained it.
- * None of the three reaches a runtime database, so a release could publish a
- * bundle whose terms no audited record named.
+ * The register covers source terms.
+ * The weights records cover what a model shipped.
+ *
+ * The frozen manifests cover what trained it.
+ * None of the three reaches a runtime database.
+ *
+ * A release could publish a bundle whose terms no audited record records.
  * This is that fourth input.
  */
 export interface DataBOMAudit {
@@ -250,15 +258,19 @@ export interface RightsAudit {
 /**
  * Where a frozen training manifest would be read from, relative to the repository root.
  *
- * A corpus build writes it beside the corpus it produced, under the data root, which no release path reads.
- * The repository copy is the one a release can check, and none exists yet.
+ * A corpus build writes it beside its corpus under the data root.
+ * Release paths do not read that location.
+ *
+ * A release can check a repository copy.
+ * The repository currently contains none.
  */
 const FROZEN_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
 
 /**
  * How many of the data document's license expressions the terminal report prints.
  *
- * The count under each is what a reader compares, and the tail is a long list of one-component expressions.
+ * The count under each is what a reader compares.
+ * The tail is a long list of one-component expressions.
  * The full set is in the document the line above names.
  */
 const EXPRESSIONS_SHOWN = 8
@@ -342,10 +354,14 @@ async function auditPackage(repoRoot: PathBuilderLike, record: WeightsRightsReco
 }
 
 /**
- * The frozen manifest for a corpus, or `null` when the repository holds none.
+ * Reads the frozen manifest for a corpus.
+ * It returns `null` when the repository holds none.
  *
- * A read that fails for any reason returns `null` and the caller records the corpus as unestablished.
- * It never reports zero sources, which would read as a corpus built from no source.
+ * A failed read returns `null`.
+ * The caller records the corpus as unestablished.
+ *
+ * The function never reports zero sources.
+ * That value would imply a corpus built from no source.
  */
 async function readFrozenManifest(repoRoot: PathBuilderLike, corpusVersion: string): Promise<TrainingManifest | null> {
 	try {
@@ -418,7 +434,8 @@ async function auditTraining(
 				unresolved: record.inherited
 					? `ships no model graph and its card names no corpus; what trained ${record.inherited.package}'s graph is that package's row`
 					: "its model card names no corpus, so a manifest lookup has no key",
-				// An empty list reads as agreement, and a card naming no corpus supports no comparison at all.
+				// An empty list reads as agreement.
+				// A card naming no corpus supports no comparison.
 				// The inherited case points at the package that owns the graph rather than repeating its refusal.
 				provenanceRefusals: record.inherited
 					? [
@@ -621,8 +638,8 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
  *
  * The document is generated rather than hand-written, so this audit reports
  * what it says instead of re-deriving it.
- * An absent document goes into `unresolved` as a missing record, which is
- * where a release decision reads it.
+ * An absent document goes into `unresolved` as a missing record.
+ * A release decision reads that field.
  */
 async function auditDataBOM(repoRoot: PathBuilderLike): Promise<DataBOMAudit> {
 	const manifest = await readPackageJSON(resolvePath(repoRoot, "packages", "mailwoman", "package.json"))
@@ -689,10 +706,11 @@ async function auditDataBOM(repoRoot: PathBuilderLike): Promise<DataBOMAudit> {
 }
 
 /**
- * The audit as lines for a terminal.
+ * Formats the audit as terminal lines.
  *
  * The unresolved section prints last and is never omitted.
- * A report ending on what it established would read as a verdict, and this pass reaches none.
+ * A report ending on its established findings could read as a verdict.
+ * This pass reaches no verdict.
  */
 export function renderRightsAudit(audit: RightsAudit): string[] {
 	const lines: string[] = [
@@ -712,8 +730,10 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 			`    ${entry.digestsRecorded} of ${entry.artifacts} artifact digests recorded; ${entry.attributionEntries} attribution entries, ${entry.entriesNotTraining} describing data the model did not learn from and ${entry.entriesStatingNoUse} stating no use; ${entry.openQuestions} open questions`
 		)
 
-		// The chain starts with the package itself, so a reader following it sees where it began.
-		// This line is about the base, and printing the package's own name twice on one line reads as a cycle.
+		// The chain starts with the package itself.
+		// Showing that entry helps readers see its origin.
+		// This line describes the base.
+		// Repeating the package name would make the chain appear circular.
 		if (entry.lineage.length > 1) {
 			lines.push(`    decodes through ${entry.lineage.slice(1).join(" → ")}`)
 		}

@@ -19,8 +19,8 @@ const FUNCTION_PATTERN = /^(?:export\s+)?(?:async\s+)?function\s+(\w+)/gm
 /**
  * Matches a top-level constant whose value is a function.
  *
- * The lazy type annotation keeps an `=>` inside an annotation from ending the match, and the
- * right-hand side must start with `function`, `(` or a type parameter to exclude lookup tables.
+ * The lazy type annotation keeps an `=>` inside an annotation from ending the match.
+ * The right-hand side must start with `function`, `(` or a type parameter to exclude lookup tables.
  */
 const FUNCTION_CONSTANT_PATTERN =
 	/^(?:export\s+)?const\s+(\w+)\s*(?::.*?)?=\s*(?:async\s+)?(?:function\b|\(|<[A-Za-z])/gm
@@ -56,7 +56,7 @@ export interface DeclarationSite {
 	 */
 	exported: boolean
 	/**
-	 * The declaration line, which shows the signature.
+	 * The declaration line shows the signature.
 	 */
 	text: string
 }
@@ -74,7 +74,8 @@ export interface FindDeclarationsOptions {
 	/**
 	 * The paths to search.
 	 *
-	 * The default is the whole tree, which ripgrep filters by `.gitignore`.
+	 * Defaults to the whole tree.
+	 * Ripgrep filters that search by `.gitignore`.
 	 */
 	searchPaths?: readonly string[]
 }
@@ -201,7 +202,8 @@ function collectSites(output: string, accept: (name: string) => boolean): Map<st
 		const sites = found.get(name) ?? []
 
 		sites.push({
-			// Ripgrep prefixes each path with the search root, which is usually `./`.
+			// Ripgrep prefixes each path with the search root.
+			// That prefix is generally `./`.
 			file: file.replace(/^\.\//, ""),
 			line: Number(lineNumber),
 			exported: text.startsWith("export "),
@@ -249,8 +251,9 @@ function runRipgrep(
 		"--no-heading",
 		"--color",
 		"never",
-		// The `*.ts` glob excludes `.tsx` files, which ripgrep's `ts` type would include.
-		// the exclusion globs come after it because a later glob wins.
+		// The `*.ts` glob excludes `.tsx` files.
+		// Ripgrep's `ts` type would include them.
+		// Later exclusion globs take precedence over this include glob.
 		"--glob",
 		"*.ts",
 		"--glob",
@@ -335,9 +338,10 @@ function readStringField(input: Record<string, unknown>, key: string): string | 
 }
 
 /**
- * Returns the text a Write or Edit call is about to add, or `null` when there is none —
- * an Edit contributes only its replacement text, and an unrecognized payload returns `null`
- * rather than throwing because this runs in a hook.
+ * Returns the text a Write or Edit call is about to add, or `null` when there is none.
+ *
+ * An Edit contributes only its replacement text.
+ * An unrecognized payload returns `null` because this runs in a hook.
  */
 export function readWriteIntent(payload: unknown): WriteIntent | null {
 	if (!payload || typeof payload !== "object") return null

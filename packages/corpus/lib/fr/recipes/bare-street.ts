@@ -27,8 +27,9 @@ const FR_BARE_STREET_SOURCE = defaultRecipeSource("synth-fr-bare-street")
 const FR_BARE_STREET_PROVENANCE = {
 	register: SourceRegister.BaseAdresseNationale,
 	surface: SurfaceOrigin.Composed,
-	// The BAN record behind each row exists, and the tuples file this reads carries no `sourceID` to name it.
-	// Populating this needs the extraction to emit one (#2359).
+	// The BAN record behind each row exists.
+	// The tuple file has no `sourceID` to identify it.
+	// The extraction must emit that ID to populate this field (#2359).
 	baseSourceID: null,
 }
 
@@ -106,7 +107,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Rotate comma-separated, compact, abbreviated, and street-only variants.
+			// Rotate comma-separated, compact, abbreviated and street-only variants.
 			const form = read % 4
 			const prefixSurface = form >= 2 ? (FR_VOIE_ABBREV[prefix.toLowerCase()] ?? prefix) : prefix
 

@@ -46,7 +46,8 @@ describe("diffParse", () => {
 		const diff = diffParse(INPUT, before, after)
 		const changed = diff.spans.filter(isChange)
 
-		// The venue was retagged onto its own text rather than deleted, which a tag-keyed diff cannot say.
+		// The venue was retagged onto its own text rather than deleted.
+		// A tag-keyed diff cannot show that change.
 		const retag = changed.find((s) => s.kind === "retagged")
 
 		expect(retag?.tagBefore).toBe("venue")
@@ -63,8 +64,8 @@ describe("diffParse", () => {
 	})
 
 	it("calls a boundary slide a MOVE, not a delete plus an insert", () => {
-		// `Green Point, Cape Town` slides the locality one segment left, which equality-keyed
-		// matching reports as two events, losing that one span shifted.
+		// `Green Point, Cape Town` slides the locality one segment left.
+		// Equality-keyed matching reports two events and loses the information that one span shifted.
 		const before = tree(["locality", "Cape Town", 20, 29, 0.9])
 		const after = tree(["locality", "Cape Town, 8001", 20, 35, 0.7])
 
@@ -88,8 +89,8 @@ describe("diffParse", () => {
 	})
 
 	it("does not relate two spans that merely touch at the edges", () => {
-		// Below the overlap floor these are unrelated, and calling it a `moved` would
-		// invent a relationship the parse never asserted.
+		// Below the overlap floor these spans are unrelated.
+		// Calling them `moved` would invent a relationship the parse never asserted.
 		const before = tree(["street", "Minories", 19, 27, 0.9])
 		const after = tree(["locality", "London", 29, 35, 0.9])
 
@@ -102,7 +103,10 @@ describe("diffParse", () => {
 	})
 
 	it("surfaces a span that kept its tag but LOST its resolver backing", () => {
-		// Same tag, same text, same span, but it stopped being gazetteer-backed, which no tag-level diff can show.
+		// The tag and text stayed the same.
+		// The span stayed the same too.
+		// The span lost its gazetteer backing.
+		// A tag-level diff cannot show that change.
 		const before = tree(["locality", "London", 29, 35, 0.95, "resolver"])
 		const after = tree(["locality", "London", 29, 35, 0.95, "neural"])
 
@@ -139,7 +143,7 @@ describe("diffParse", () => {
 		const after = tree(["locality", "Ye Three Lords", 0, 14, 0.62])
 
 		const out = renderParseDiff(diffParse(INPUT, before, after))
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and in-memory already
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded and already in memory
 		const lines = out.split("\n")
 
 		expect(lines[0]).toBe(INPUT)

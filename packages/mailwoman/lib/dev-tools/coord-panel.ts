@@ -97,7 +97,8 @@ export async function readCoordPanel(
  * folded into the dict, because `${locality}, ${region} ${postcode}` is the United
  * States postal order and prints other countries backwards.
  *
- * Answers `""` when no layout can write the country, which is an absence rather than an invented order.
+ * Answers `""` when no layout can write the country.
+ * The empty value records the absence of a layout.
  */
 export function renderAdmin(place: PanelLocality, extra: ComponentDict = {}): string {
 	return formatAddress(

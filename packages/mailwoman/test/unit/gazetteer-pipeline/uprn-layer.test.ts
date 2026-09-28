@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Open uprn builder's interface: the line parser's input-tail behavior (truncated fields,
+ *   The Open uprn builder's interface: line-parser behavior at the input tail (truncated fields,
  *   `Number("")`-shaped traps), the versions.txt parse, and a full fixture build through
  *   `buildUPRNLayer` — DDL, checks, coverage, manifest, seal — verified by reading the sealed
  *   artifact back through the production reader.
@@ -167,7 +167,8 @@ describe("buildUPRNLayer (fixture)", () => {
 		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest.name).toBe("os-open-uprn")
-		// The tier the builder states, which a candidate build or a publish would read.
+		// The tier recorded by the builder.
+		// Candidate builds and publishing read this value.
 		expect(manifest.tier).toBe("build-local")
 		expect(manifest.license).toBe("OGL-UK-3.0")
 		expect(manifest.attribution).toContain("© Crown copyright and database right 2026")

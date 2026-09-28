@@ -1,11 +1,11 @@
-"""One soft-feed channel: how it is built, and how it reaches the token representations.
+"""Build one soft-feed channel and inject it into token representations.
 
 Five channels — the postcode anchor, the gazetteer, the country lexicon, the street type and the
 locality surface — are the same shape and differ only in feature width, so both halves live here
 rather than being expressed five times.
 
-Pure functions over tensors and modules: neither reads the encoder, which keeps construction order
-visible at the one place that decides it, `model.__init__`.
+These are pure functions over tensors and modules. They do not read the encoder, so construction
+order remains visible in `model.__init__`, the one place that decides it.
 """
 
 from __future__ import annotations
@@ -52,11 +52,11 @@ def inject_soft_feed(
 
     Absent features on an ENABLED channel are zeros, the well-defined "no clue anywhere" inference
     path. Features supplied for a DISABLED channel raise: that combination means the caller built
-    the wrong encoder, and silently dropping the evidence they passed would train or serve a model
-    that ignores half its input.
+    the wrong encoder. Silently dropping the evidence would train or serve a model that ignores part
+    of its input.
 
-    Returns the updated representations and the projected vector, which the postcode anchor needs
-    for its second, pooled injection.
+    Returns the updated representations plus the projected vector for the postcode anchor's second,
+    pooled injection.
     """
     if projection is None or cue is None:
         if features is not None:

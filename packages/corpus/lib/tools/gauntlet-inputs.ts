@@ -6,12 +6,12 @@
  *
  *   A recipe's own reserve list holds the strings its author knew about. The boards are a separate instrument with a
  *   separate history — `cz/bare-postcode.jsonl` was authored months before the recipe that trains on Czech postcodes —
- *   so neither register knows the other exists, and a board row that reaches the corpus stops measuring a capability
- *   and starts measuring recall of one string.
+ *   so neither register knows the other exists. A board row that reaches the corpus measures recall of one string
+ *   instead of a capability.
  *
  *   read from disk rather than imported. `mailwoman` depends on `@mailwoman/corpus`, so this package cannot import the
- *   gauntlet loader without a cycle. A recipe is a build tool reading the repository it is built in, which is a file
- *   read rather than a dependency. the shipped package never calls this.
+ *   gauntlet loader without a cycle. A recipe is a build tool reading the repository it is built in.
+ *   This is a file read rather than a dependency. The shipped package never calls this.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -48,9 +48,11 @@ export function normalizeGauntletSurface(surface: string): string {
  * Reads the whole corpus once.
  * Callers retain the output.
  *
- * A row that does not parse is skipped rather than thrown on: the gauntlet loader is what
- * validates the corpus, and a recipe that refused to build over a malformed board row
- * would turn one bad line into a stopped build for a check that is advisory to it.
+ * A row that does not parse is skipped.
+ * The gauntlet loader validates the corpus.
+ *
+ * A recipe that refused to build over a malformed board row would stop a build
+ * for a check that is advisory to it.
  */
 export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_DIR): Promise<ReadonlySet<string>> {
 	const inputs = new Set<string>()

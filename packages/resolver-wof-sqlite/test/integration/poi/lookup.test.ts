@@ -8,9 +8,9 @@
  *   cafes at increasing distance from a Springfield, IL center, one branded McDonald's (`Q38076`),
  *   seven rows clustered ~280 km away in Chicago (a distinct res-9 cell far outside the default
  *   ring budget, including the only `museum`-category rows in the fixture), and one uncategorized
- *   named row ("Pier 39") for the FTS name path. All twelve rows land in the final `poi` table via
- *   typed Kysely inserts — not the `poi_stage` mirror, which is the builder's concern rather than the
- *   reader's.
+ *   row with the name "Pier 39" for the FTS name path. All twelve rows land in the final `poi` table via
+ *   typed Kysely inserts. The builder owns the `poi_stage` mirror.
+ *   This test exercises the reader's table.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -59,9 +59,9 @@ const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3,
 
 // A sparse-category instance placed at exactly gridDistance 13 from the Springfield
 // origin cell — the nm-04 boundary.
-// A res-9 disk of radius r covers gridDistance ≤ r, and the reader's loop over `maxRings`
-// rings covers gridDistance ≤ `maxRings - 1`; so this cell first appears at maxRings 14
-// and is missed by the old 12-ring default (covers ≤ 11).
+// A res-9 disk of radius r covers gridDistance ≤ r.
+// The reader's loop over `maxRings` rings covers gridDistance ≤ `maxRings - 1`, so this
+// cell first appears at maxRings 14 and is missed by the old 12-ring default (covers ≤ 11).
 // The coordinate is derived from h3-js (a real ring-13 cell's center),
 // never hardcoded — same discipline as `cellFor`.
 // This mirrors "hiking trail near Marseille", whose nearest `trail` sits at
@@ -155,7 +155,7 @@ const CHICAGO_ROWS: FixtureRow[] = [
 	{ name: "Shedd Wing", category: "museum", brandWikidata: null, latitude: 41.8676, longitude: -87.6153 },
 ]
 
-// 1 uncategorized named row, unrelated location — the FTS name-path fixture.
+// 1 uncategorized row with a name, unrelated location — the FTS name-path fixture.
 const PIER_39: FixtureRow = {
 	name: "Pier 39",
 	category: null,
@@ -305,7 +305,7 @@ describe("POILookup", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
 		const hits = lk.search({ name: "Cafe", center: SPRINGFIELD })
-		// Every "Cafe"-named row matches (Alpha/Beta/Gamma near, Windy City/Loop Cafe far) — near ones first.
+		// Every row labelled "Cafe" matches (Alpha/Beta/Gamma near, Windy City/Loop Cafe far) — near ones first.
 		expect(hits[0]!.distanceM).toBeLessThanOrEqual(hits.at(-1)!.distanceM!)
 	})
 

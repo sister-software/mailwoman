@@ -64,8 +64,9 @@ export interface POIBoardOptions {
 
 /**
  * Builds the anchor resolver the same way as `tryLoadResolver` in `commands/poi.tsx`:
- * it prefers the candidate-table backend, then the WOF FTS databases, and with neither
- * available returns `undefined`, leaving anchored cases to abstain with `anchor_required`.
+ * It prefers the candidate-table backend, then the WOF FTS databases.
+ *
+ * With neither available, it returns `undefined` so anchored cases abstain with `anchor_required`.
  * The caller must dispose the returned handle.
  */
 async function loadResolver(
@@ -130,8 +131,8 @@ export interface POIBoardPipelineHandle extends Disposable {
 }
 
 /**
- * Builds the board's pipeline from the classifier, the anchor resolver,
- * and the POI executor, the same way `commands/poi.tsx` does.
+ * Builds the board's pipeline from the classifier, anchor resolver, plus POI executor.
+ * It uses the same setup as `commands/poi.tsx`.
  *
  * Probes that grade with {@link gradeCase} call this too, so their results use
  * the same backend and weights locale as the board.

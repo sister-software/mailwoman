@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Marker derivation for the ROAD_TO_V9 §4 intent vocabulary: pure, synchronous, and the only place the
+ * Marker derivation for the ROAD_TO_V9 §4 intent vocabulary. This code is pure and synchronous. It is the only place the
  * classifier turns a fired rule into something a caller reads.
  *
  * Three of the four intent kinds can raise their marker here from the string alone. The fourth,
- * `bare_toponym`'s `declared_ambiguity`, cannot, because its trigger is the dominance margin of the
- * resolved candidate list, which Stage 2.5 does not have yet: `mailwoman/query-intent.ts` raises it
+ * Stage 2.5 cannot raise `bare_toponym`'s `declared_ambiguity` from the string alone.
+ * Its trigger is the dominance margin of the resolved candidate list. `mailwoman/query-intent.ts` raises it
  * after the resolve against `DECISIVE_MARGIN_LOG10`. This module therefore never emits
  * `declared_ambiguity`, since a marker asserting ambiguity from the string alone would declare every
  * bare city name ambiguous.
@@ -63,10 +63,11 @@ export function deriveIntentMarkers(
 			evidence: {
 				tokens,
 				/**
-				 * Both readings, named.
+				 * Both readings, listed.
 				 *
-				 * The order is stable (pair first, then the admin reading) so a consumer
-				 * can index it, and it is not a ranking.
+				 * The order is stable: pair first, then the admin reading.
+				 * A consumer can index it.
+				 * This order does not rank the entries.
 				 */
 				interpretations: ["two_toponyms", "locality_with_admin_context"],
 			},
@@ -84,8 +85,10 @@ export function deriveIntentMarkers(
 			evidence: {
 				subject,
 				/**
-				 * The plug point, named but not wired: `photon/` is the eventual consumer,
-				 * whose `/api` already accepts `lat`/`lon` location-bias params.
+				 * The plug point is documented but not wired.
+				 *
+				 * `photon/` is the eventual consumer.
+				 * Its `/api` already accepts `lat`/`lon` location-bias params.
 				 */
 				focusParameter: "photon:lat/lon",
 			},

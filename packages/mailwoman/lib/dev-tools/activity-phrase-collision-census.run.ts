@@ -3,9 +3,11 @@
  *
  * Not a release check.
  *
- * Runs every declared surface form, and every candidate subject `matchPOISubject` would
- * meet it through, against the committed POI category lexicon and the POI name lexicon in a
- * sealed `poi.db`, and classifies each colliding venue name as query-shaped or legitimate.
+ * Runs every declared surface form.
+ * It checks every candidate subject `matchPOISubject` would meet it through, against the
+ * committed POI category lexicon and the POI name lexicon in a sealed `poi.db`.
+ *
+ * It classifies each colliding venue name as query-shaped or legitimate.
  * The committed report is `packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json`.
  * Regenerate it whenever the lexicon or the database moves.
  *
@@ -14,8 +16,10 @@
  * ```
  *
  * Expect roughly eleven minutes on the shipped `poi.db`.
- * The venue read is a `like` over every `name_key`, which no index can answer,
- * and the cost scales with probes and rows: 19 probes over 13.68M names.
+ * The venue read uses `like` over every `name_key`.
+ *
+ * No index can answer that query.
+ * Cost scales with the probes and rows: 19 probes over 13.68M names.
  *
  * Reaching for a ranked FTS read instead makes it fast and makes it wrong.
  * See `CensusPOIReader`.
@@ -44,7 +48,8 @@ const shippedRung = createPOINameLookup(lookup)
 
 // A complete key scan.
 // See `CensusPOIReader` for why the ranked read is inadmissible.
-// `like` is a superset filter, and the census applies whole-token containment to what comes back.
+// `like` is a superset filter.
+// The census applies whole-token containment to the results.
 // One scan covers the whole probe set, because the predicate is unindexable either way,
 // so the cost is the 13.68M-row pass.
 function candidates(probes: ReadonlyArray<string>): CensusVenue[] {

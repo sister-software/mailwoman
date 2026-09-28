@@ -25,8 +25,10 @@ import type { MailwomanTokenizer } from "#tokenizer"
 import type { WordConsistencyOpts } from "#word-consistency"
 
 /**
- * Configures a neural address classifier: the model runner, its tokenizer or character
- * encoder, the decode grammar, and the optional lexicons and priors.
+ * Configures a neural address classifier.
+ *
+ * Options cover the model runner, tokenizer or character encoder, decode grammar,
+ * optional lexicons and priors.
  */
 export interface NeuralAddressClassifierConfig {
 	/**
@@ -36,8 +38,8 @@ export interface NeuralAddressClassifierConfig {
 	tokenizer?: MailwomanTokenizer
 
 	/**
-	 * The character vocabulary and encoder interface for a character-input model,
-	 * whose runner must implement `inferChars`.
+	 * The character vocabulary and encoder interface for a character-input model.
+	 * Its runner must implement `inferChars`.
 	 */
 	charEncoder?: { vocabulary: CharVocabulary; interface: CharEncoderInterface }
 	runner: NeuralRunner
@@ -77,8 +79,8 @@ export interface NeuralAddressClassifierConfig {
 	semiCRFGrammar?: SemiCRFTransitions
 
 	/**
-	 * The path to the per-locale FST gazetteer (`fst-<locale>.bin`) in the resolved
-	 * weights package, which the runtime pipeline loads into `ParseOpts.fst`.
+	 * Path to the per-locale FST gazetteer (`fst-<locale>.bin`) in the resolved weights package.
+	 * The runtime pipeline loads it into `ParseOpts.fst`.
 	 */
 	fstPath?: PathBuilderLike
 
@@ -118,8 +120,10 @@ export interface NeuralAddressClassifierConfig {
 	gazetteerLexicon?: GazetteerLexicon
 
 	/**
-	 * The country-surface lexicon for a model trained with the `country_features`
-	 * and `country_confidence` inputs, which `suppressGazetteerNearPostcode` leaves unchanged.
+	 * Country-surface lexicon for a model trained with the `country_features`
+	 * and `country_confidence` inputs.
+	 *
+	 * `suppressGazetteerNearPostcode` leaves this lexicon unchanged.
 	 */
 	countryLexicon?: CountryLexicon
 
@@ -149,8 +153,9 @@ export interface NeuralAddressClassifierConfig {
 	addressSystemConventions?: "auto" | SystemCode
 
 	/**
-	 * Whether to merge adjacent same-tag spans separated only by short punctuation, which the
-	 * model splits because the corpus label format cannot mark punctuation inside a span.
+	 * Whether to merge adjacent same-tag spans separated only by short punctuation.
+	 *
+	 * The model splits these spans because the corpus label format cannot mark punctuation inside a span.
 	 */
 	bridgePunctuationGaps?: boolean
 
@@ -169,8 +174,9 @@ export interface NeuralAddressClassifierConfig {
 	placetypePair?: PlacetypePairPriorOpts
 
 	/**
-	 * The default placetype census, which never changes the decode and is probed only
-	 * while tracing with the placetype-pair prior active.
+	 * Default placetype census.
+	 *
+	 * It never changes decoding and is probed only while tracing with the placetype-pair prior active.
 	 */
 	placetypeCensus?: PlacetypeCensusLike
 
@@ -258,8 +264,10 @@ export interface ParseOpts {
 	fstStreetContextRequirement?: boolean
 
 	/**
-	 * The street-morphology FST matcher, whose prior biases matched street-type affixes
-	 * toward `street_prefix` or `street_suffix` and adjacent name tokens toward `street`.
+	 * Street-morphology FST matcher.
+	 *
+	 * Its prior biases matched street-type affixes toward `street_prefix`
+	 * or `street_suffix`, and adjacent name tokens toward `street`.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
 
@@ -316,14 +324,18 @@ export interface ParseOpts {
 	addressSystemConventions?: "auto" | SystemCode
 
 	/**
-	 * A per-parse override of the config's `placetypePair`, `false` disabling the prior, which biases a
-	 * place name toward the tag the pair index recorded for it next to another name in the input.
+	 * Per-parse override of the config's `placetypePair`.
+	 *
+	 * Set it to `false` to disable the prior.
+	 * The prior biases a place name toward the tag the pair index recorded beside another input name.
 	 */
 	placetypePair?: PlacetypePairPriorOpts | false
 
 	/**
-	 * A per-parse override of the config's `placetypeCensus`, `false` disabling it,
-	 * which changes only what `traceParse` records.
+	 * Per-parse override of the config's `placetypeCensus`.
+	 *
+	 * Set it to `false` to disable the census.
+	 * This changes only what `traceParse` records.
 	 */
 	placetypeCensus?: PlacetypeCensusLike | false
 }

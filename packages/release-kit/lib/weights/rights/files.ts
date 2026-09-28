@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Render a weights package's two rights files from its {@link WeightsRightsRecord}: `LICENSE.md`, the terms this
- *   repository grants, and `PROVENANCE.json`, where the artifacts came from and what the repository does not know
- *   about them.
+ *   Render a weights package's two rights files from its {@link WeightsRightsRecord}.
+ *   `LICENSE.md` states the terms this repository grants. `PROVENANCE.json` records artifact sources and unresolved facts.
  *
- *   Neither file asserts clearance: `PROVENANCE.json` records what the model card records and marks the rest
- *   unresolved, and `LICENSE.md` states that the commercial grant does not reach third-party inputs.
+ *   Neither file asserts clearance. `PROVENANCE.json` records the model card's statements and marks other facts
+ *   unresolved. `LICENSE.md` states that the commercial grant excludes third-party inputs.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -60,8 +59,9 @@ export interface ProvenanceDocument {
 	 * What this package's own model graph emits, read from the `.onnx` file at generation time.
 	 *
 	 * `null` for a package shipping no graph of its own, such as an overlay that decodes through its base.
-	 * `text_emitting_output` answers what running the model returns, and settles no
-	 * question about a white-box extraction attack over the weights.
+	 * `text_emitting_output` answers what running the model returns.
+	 *
+	 * It settles no question about a white-box extraction attack over the weights.
 	 */
 	model_graph: {
 		format: string
@@ -86,13 +86,16 @@ export interface ProvenanceDocument {
 	 * Which of the corpus's sources one config's audited epoch drew from, read from the
 	 * effective training manifest committed under `packages/corpus/data/training-manifests/`.
 	 *
-	 * `corpus_version` is the corpus a card names, and the corpus manifest states what that corpus holds.
-	 * Neither states what reached the trainer, and the two differ by the country filter, the source
-	 * weights, a zero weight, the sampler and every overlay merged after the corpus manifest was written.
+	 * `corpus_version` identifies the corpus.
+	 * The corpus manifest states what it holds.
+	 *
+	 * Neither states what reached the trainer.
+	 * The two differ by the country filter and source weights, a zero weight, the sampler
+	 * and every overlay merged after the corpus manifest was written.
 	 * This block carries the difference.
 	 *
-	 * `null` means the repository holds no effective manifest for the corpus this card names,
-	 * which is a statement about the checkout rather than about the model.
+	 * `null` means the repository holds no effective manifest for the corpus recorded by this card.
+	 * This describes the checkout rather than the model.
 	 */
 	effective_training_sources: {
 		config: string
@@ -109,10 +112,12 @@ export interface ProvenanceDocument {
 		/**
 		 * Sources the epoch emitted that the corpus manifest does not name, each at its three stages.
 		 *
-		 * `corpus_rows` is how many rows of the source the corpus holds, `drawn_rows` how many
-		 * the epoch sampled, and `emitted_rows` how many reached the trainer after augmentation.
-		 * A non-empty list means this block covers part of what trained the model,
-		 * because the corpus manifest records the terms of none of these sources.
+		 * `corpus_rows` counts rows of the source in the corpus.
+		 * `drawn_rows` counts rows sampled by the epoch.
+		 *
+		 * `emitted_rows` counts rows that reached the trainer after augmentation.
+		 * A non-empty list means this block covers part of the training data, because the
+		 * corpus manifest records the terms of none of these sources.
 		 *
 		 * `corpus_rows` reads `-1` when the audit reported no count for the source.
 		 */
@@ -141,8 +146,8 @@ const SERIES_MEANING: Readonly<Record<string, string>> = {
 /**
  * The questions this record leaves open, each phrased as the question rather than as a finding.
  *
- * A reader has to be able to tell a package with no recorded training inputs from a package trained on
- * no inputs, and an artifact with no recorded digest from an artifact whose digest was checked.
+ * A reader must distinguish a package with no recorded training inputs from one trained on no inputs.
+ * The reader must also distinguish an artifact with no recorded digest from one whose digest was checked.
  */
 function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 	const questions: string[] = []

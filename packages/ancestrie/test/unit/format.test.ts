@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Serialization interface: round-trip fidelity, canonical byte-stability across add orders, header
- *   validation, payload/metadata encoding, and the empty/single-entry edges.
+ *   Tests round-trip fidelity, canonical byte stability across add orders, header validation,
+ *   payload and metadata encoding, plus empty and single-entry cases.
  */
 
 import { AncestrieBuilder } from "@mailwoman/ancestrie/builder"

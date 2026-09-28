@@ -37,8 +37,8 @@ async function fixture(name: string): Promise<string> {
 }
 
 /**
- * The document as the parser's own preprocessing leaves it, which the substring
- * invariant is measured against.
+ * The document after the parser's preprocessing.
+ * The substring invariant is measured against this text.
  */
 function normalized(html: string): string {
 	return normalizeWhitespace(htmlToLayoutText(html))
@@ -85,8 +85,8 @@ describe("parseExhibit21 — real EDGAR filings", () => {
 
 describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 	/**
-	 * These are all literal substrings of their documents, so the substring invariant admits
-	 * every one of them, which is why this assertion exists separately from it.
+	 * Every value is a literal substring of its document, so the substring invariant admits each one.
+	 * This assertion checks them separately.
 	 */
 	const NEVER_A_SUBSIDIARY_NAME = [
 		/^ex-?21(\.\d+)?$/i,

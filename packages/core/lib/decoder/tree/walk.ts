@@ -2,9 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The one tree walk, in document order, and the slot order both result projections read. A leaf module on
- *   purpose: `serialize-json`, `serialize-tuples`, `unknown-spans` and `tree-shape` all read it, and a walk that lived
- *   beside `tree-shape`'s reporters closed a cycle through `serialize-tuples`.
+ * @file This module defines the tree walk and slot order used by result projections.
+ *   It stays a leaf module because `serialize-json`, `serialize-tuples`, `unknown-spans`, and `tree-shape` all read it.
+ *   Placing the walk beside `tree-shape`'s reporters would create a cycle through `serialize-tuples`.
  */
 
 import type { AddressNode } from "#decoder/types"
@@ -12,12 +12,11 @@ import type { AddressNode } from "#decoder/types"
 /**
  * Every node of a forest in document order: parent before children, siblings by their position in the input.
  *
- * Generic over any node shape carrying `children`, so the eval harness's flat nodes
- * and the admin-coherence tree walk the same way the decoder's do.
+ * The function accepts any node shape that carries `children`.
+ * The eval harness's flat nodes and admin-coherence tree use it like decoder nodes do.
  *
- * The order is material rather than a convenience: `find` over this walk decides
- * which of two same-tag spans becomes a named result slot, and the flat component
- * map (`decodeAsJSON`) keeps the first span in text order.
+ * The order determines which of two same-tag spans becomes a result slot when `find` walks the nodes.
+ * The flat component map (`decodeAsJSON`) keeps the first span in text order.
  */
 export function* walkNodes<T extends { children?: readonly T[] }>(roots: readonly T[]): Generator<T> {
 	const stack = roots.toReversed()
@@ -69,9 +68,10 @@ export function isGroundedNode(node: AddressNode): boolean {
  * The order in which a projection reads spans when one tag occurs twice:
  * every grounded node first, then the rest, each group in document order.
  *
- * Both the flat component map (`decodeAsJSON`) and the named result slots
- * read this order, so they name the same span: a component is what resolved,
- * and the query's wording only decides among the ungrounded spans.
+ * The flat component map (`decodeAsJSON`) and result slots read this order.
+ * They expose the same span: a component is what resolved.
+ *
+ * Query wording only decides among ungrounded spans.
  * Before resolution runs the order is the text's and no node is grounded.
  */
 export function slotNodes(roots: readonly AddressNode[]): AddressNode[] {

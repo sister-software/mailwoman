@@ -1,13 +1,12 @@
 """Running a batch of generation requests, checkpointed and concurrent.
 
-Both modes had their own copy of this loop. The copies had already diverged — only one of them
-noticed a truncated completion — so what they share is a function rather than a pair of matched
-constants: the mode supplies a worker, and everything about resuming, writing and reporting is
-here.
+Both modes had their own copy of this loop. The copies had already diverged because only one noticed
+a truncated completion. They now share this function. Each mode supplies a worker. This function
+handles the resume/output/reporting workflow.
 
-A worker answers `(batch_id, stats)`. Prefixing the id with `!RETRY:` leaves the batch PENDING: its
-parsed rows are still written (deterministic source ids dedupe a re-emit), and the next run asks
-for the rest. That is how a completion truncated at `max_tokens` stops costing the rows it dropped.
+A worker answers `(batch_id, stats)`. Prefixing the id with `!RETRY:` leaves the batch PENDING. Its
+parsed rows are still written. Deterministic source IDs deduplicate re-emitted rows. The next run
+asks for the rest. This lets a completion truncated at `max_tokens` recover the rows it dropped.
 """
 
 from __future__ import annotations
@@ -42,8 +41,8 @@ def rejects(stats: Counter[str]) -> int:
 class Sink:
     """The two append-only files a run writes, guarded so concurrent workers do not interleave.
 
-    Append, never truncate: a resumed run adds to what the previous one wrote, and the
-    deterministic source ids are what keep a re-emitted row from becoming a duplicate.
+    Append to the files so a resumed run adds to the previous output. Deterministic source IDs keep
+    re-emitted rows from becoming duplicates.
     """
 
     canonical_path: Path
@@ -91,7 +90,7 @@ def run_batches(
     label: str,
     sink: Sink,
 ) -> Counter[str]:
-    """Run every pending batch, checkpointing as they land, and print the summary.
+    """Run every pending batch and print the summary while checkpointing results.
 
     The checkpoint is flushed every 25 completions and once at the end, so an interrupted run loses
     at most the last few ids — the rows themselves are already on disk.

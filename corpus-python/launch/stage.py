@@ -2,7 +2,7 @@
 
 The normal path is `launch/syncs.py`: local -> R2 -> a container-side rclone -> the volume. This is
 the same container-side write and commit with no bucket in between, for when the R2 token answers
-401 — it did on 2026-09-07, locally and from a Modal container alike, and a corpus that is built and
+401 — it did on 2026-09-07, locally and from a Modal container alike. A corpus that is built and
 cannot be staged is a run that cannot start.
 
     MAILWOMAN_DATA_ROOT=<root> modal run -m launch.train_remote::stage_v8cjk_regs
@@ -21,8 +21,8 @@ from .plan import corpus_versions
 from .syncs import verify_staged
 
 #: The corpora this path stages, READ OFF the row the bucket path would have transferred. Retyping
-#: the list here is how the two spellings come to disagree, and the disagreement is silent: a
-#: corpus this list forgets is simply never copied, and the run fails later on a missing parquet file.
+#: the list here explains why the two spellings disagree. The disagreement is silent: a
+#: corpus omitted from this list is never copied. The run later fails on a missing parquet file.
 V8CJK_REGS_CORPORA = tuple(corpus_versions(CORPUS_VERSIONS["v8cjk_regs"]))
 
 _LOCAL_DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "")

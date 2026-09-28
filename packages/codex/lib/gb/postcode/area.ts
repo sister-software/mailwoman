@@ -6,7 +6,7 @@
  *   Postcode area → constituent country, the Royal Mail mapping — and the concrete proof of the
  *   lesson in `postcode.ts` that UK postcodes do not track administrative geography.
  *
- *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), named
+ *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), derived
  *   after the sorting town Royal Mail routes it through rather than after a county or a constituent
  *   country. There is no clean postcode→admin hierarchy to inherit the way France gives you a
  *   département from the first two digits. The only honest thing we _can_ derive is which of the
@@ -17,9 +17,9 @@
  *       Wales). A handful of individual postcodes on the wrong side of the line are a gazetteer
  *       concern rather than a thing this coarse table tries to model.
  *
- *   So this is the royal mail area→country mapping, and the fact that it needs a hand-built
- *   non-England set with documented border fudges — rather than a tidy prefix rule — is exactly why
- *   a UK postcode is not a county.
+ *   This module maps Royal Mail areas to constituent countries.
+ *   Several areas need a hand-built non-England set with documented border exceptions.
+ *   UK postcodes identify postal areas. Counties remain separate administrative units.
  */
 
 import type { UkCountryCode } from "#gb/country"
@@ -73,7 +73,7 @@ const WALES_AREAS = [
  * England is intentionally absent: it is the default (the great majority of UK areas are English),
  * so listing it would be both enormous and a maintenance trap.
  * Keeping only the non-England set makes the default transparent.
- * Anything not named here is England.
+ * All other postcode areas fall in England.
  */
 export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
 	...Object.fromEntries(NORTHERN_IRELAND_AREAS.map((a) => [a, "NIR" as const])),
@@ -85,8 +85,9 @@ export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
  * The two postcode areas whose assignment in {@link GB_POSTCODE_AREA_COUNTRY}
  * is a majority call rather than a fact.
  *
- * TD (Galashiels) straddles the Scotland/England border and SY (Shrewsbury) straddles the
- * Wales/England border, and both carry real postcodes on the other side of the line.
+ * TD (Galashiels) spans the Scotland/England border.
+ * SY (Shrewsbury) spans the Wales/England border.
+ * Real postcodes occur on both sides of each border.
  *
  * The header above documents them in prose.
  * This is the same knowledge in a form a build can read, so an artifact that asserts ancestry per

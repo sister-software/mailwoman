@@ -208,7 +208,9 @@ export function buildPostcodeBinaryEntries(
 /**
  * Per-country key floors used to detect collapsed builds.
  *
- * A floor is a coarse threshold: it states the count the build must clear, and any larger count passes.
+ * A floor is a coarse threshold.
+ * The build must clear the count for that country.
+ *
  * Unknown countries default to a floor of 1 (see {@linkcode keyFloorFor}).
  */
 export const POSTCODE_BINARY_KEY_FLOORS: Readonly<Record<string, number>> = {

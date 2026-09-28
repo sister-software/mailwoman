@@ -5,7 +5,7 @@
  *
  *   Term-frequency adjustment — making a rare-value agreement count more than a common one.
  *
- *   Two people both named "Vijayan" is far stronger evidence of a match than two both named "Smith",
+ *   Two people who share the name "Vijayan" are far stronger evidence of a match than two who share the name "Smith",
  *   because "Smith" agreements happen by chance all the time and "Vijayan" agreements don't. The
  *   Fellegi-Sunter `m` (how often a true match agrees) is roughly the same either way. what differs
  *   is `u` — the chance a _non_-match agrees — which for an exact agreement on value `v` is just

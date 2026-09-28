@@ -18,7 +18,8 @@ import {
 import { describe, expect, test } from "vitest"
 
 /**
- * The corpus workspace's scope as it was when its `./test-kit` export named a source the config excluded.
+ * The corpus workspace's scope as it was when its `./test-kit` export referred
+ * to a source the config excluded.
  */
 const CORPUS_SCOPE = {
 	include: ["./lib/**/*"],

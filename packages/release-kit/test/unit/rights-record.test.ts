@@ -2,9 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The three readings a rights record must not make: a package with no recorded attribution read as a package
- *   with none to record, an artifact with no recorded digest read as a verified one, and an overlay's card version
- *   read as the version of the model it decodes through.
+ * @file Three distinctions a rights record must preserve. A package with no recorded attribution may still have attribution.
+ *   An artifact with no recorded digest has no verified digest. An overlay's card version can differ from its base model version.
  *
  *   The fixtures are written to a scratch tree rather than read from the checkout, so the assertions state what the
  *   reader does rather than what twelve packages happen to hold today. One assertion over the real tree stays, because
@@ -55,8 +54,8 @@ describe("usesStatedIn", () => {
 
 	it("reads an entry describing only an evaluation set as evaluation", () => {
 		// `en-us` carries two of these.
-		// Reading them as training attribution says the model learned from rows it never saw,
-		// and dropping them loses an attribution the source still requires.
+		// Reading them as training attribution says the model learned from rows it never saw.
+		// Dropping them loses attribution the source still requires.
 		expect(
 			usesStatedIn("OpenAddresses SI — GURS (CC-BY per OA source): oa-si coord eval set (free-rider validation)")
 		).toEqual(["evaluation"])
@@ -82,8 +81,9 @@ describe("usesStatedIn", () => {
 describe("roleForArtifact", () => {
 	it("gives each shipped filename the lineage class it carries", () => {
 		// One `files` array holds artifacts with unrelated provenance.
-		// The model graph carries a training corpus, the tokenizer carries the text it
-		// was fitted on, and a pair index carries one named register.
+		// The model graph carries a training corpus.
+		// The tokenizer carries the text it was fitted on.
+		// A pair index carries one selected register.
 		expect(roleForArtifact("model.onnx")).toBe("model-graph")
 		expect(roleForArtifact("tokenizer.model")).toBe("tokenizer")
 		expect(roleForArtifact("char-vocab.json")).toBe("character-vocabulary")
@@ -193,7 +193,8 @@ describe("readWeightsRightsRecords", () => {
 			const overlay = records[1]!
 
 			// The overlay ships no graph and contributed none of those rows.
-			// Its own attribution stays empty, and the base's travels under a field that says whose it is.
+			// Its own attribution stays empty.
+			// The base's attribution uses a field that identifies its owner.
 			// The distinction that keeps a record from claiming the overlay's locale trained the encoder.
 			expect(overlay.attribution).toEqual([])
 			expect(overlay.inherited?.package).toBe("@mailwoman/neural-weights-graph")

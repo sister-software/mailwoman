@@ -39,10 +39,10 @@ import type { CanonicalRow } from "#types"
  * A real address tuple (e.g. One OpenAddresses row): street + locality required, rest optional.
  */
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches defines the
+   output distribution. Reading the cascade top-to-bottom shows the distribution. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
+    extracted as constants above. */
 
 export interface LocaleBaseTuple {
 	house_number?: string
@@ -83,8 +83,10 @@ export interface LocaleRenderOpts {
 	 * Rendering order for the same components.
 	 *
 	 * `"native"` (default) uses the country's own template (DE → house-after-street, postcode-before-city).
-	 * `"international"` renders house-first, postcode-after-city — the US/GB layout that international
-	 * feeds, US-centric systems, and our own OpenAddresses de-sample impose on non-US addresses.
+	 * `"international"` renders house-first and postcode-after-city.
+	 *
+	 * International feeds and US-centric systems impose that layout on non-US addresses.
+	 * The OpenAddresses de-sample does the same.
 	 *
 	 * Training both teaches the model that a German address can arrive either way,
 	 * so the eval's US-order rendering stops reading as a collapse.
@@ -98,7 +100,8 @@ export interface LocaleRenderOpts {
 	 * (NL: OA's glued `1011AB` → the spaced `1011 AB`).
 	 * `"as-source"` keeps the source's own surface.
 	 *
-	 * The form OA (and the OA-derived evals) feed, which for NL is 100% glued.
+	 * OA and the OA-derived evals provide the source form.
+	 * In NL, 100% of those values are glued.
 	 *
 	 * Only NL differs today.
 	 * Every other country passes through identically either way.
@@ -129,8 +132,12 @@ export interface LocaleRenderOpts {
 	 * `" "` renders the comma-free single-line register for dictation or a copy out of a
 	 * one-field form, as in `Neusser Str. 12 Nippes 50733 Köln` for the same components.
 	 *
-	 * Stage 2 segments the comma form into three and the comma-free form into one, and a single
-	 * segment starves the placetype-pair prior, which is how the comma-free form loses `Nippes`.
+	 * Stage 2 segments the comma form into three segments.
+	 * It segments the comma-free form into one.
+	 *
+	 * A single segment starves the placetype-pair prior.
+	 * That is why the comma-free form loses `Nippes`.
+	 *
 	 * Only the native order reads it.
 	 * The international layout keeps its own separator.
 	 */
@@ -205,9 +212,10 @@ function tokenPresent(raw: string, value: string): boolean {
  *
  * International order includes it in the tail ("City, Region Postcode", the US/feed layout the eval uses).
  *
- * Pass `opts.order: "international"` to render the same components house-first and postcode-after-city
- * instead (see {@link LocaleRenderOpts.order}), the layout international feeds impose on
- * foreign addresses, and the one a native-order-trained model treats as a collapse.
+ * Pass `opts.order: "international"` to render the same components house-first
+ * and postcode-after-city instead (see {@link LocaleRenderOpts.order}),
+ * the layout international feeds impose on foreign addresses.
+ * A model trained on native order treats this layout as a collapse.
  */
 export function renderLocaleRow(
 	base: LocaleBaseTuple,
@@ -243,8 +251,8 @@ export function renderLocaleRow(
 
 	// International order carries the region in the tail ("City, Region Postcode"),
 	// the layout real US/feed renderings (and our OA eval) use.
-	// Native order omits the region, because the native template absorbs it into the
-	// city line, which would break verbatim alignment.
+	// Native order omits the region because the template absorbs it into the city line.
+	// That would break verbatim alignment.
 	if (order === "international" && base.region) {
 		components.region = base.region
 	}

@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A linear country classifier over hashed character n-gram and script features. Confidence is
- *   temperature-calibrated, and a prediction below the threshold abstains. The module runs in Node and browsers.
+ *   A linear country classifier over hashed character n-gram and script features.
+ *   Confidence is temperature-calibrated. Predictions below the threshold abstain.
+ *   The module runs in Node and browsers.
  */
 
 import type { PathBuilderLike } from "path-ts"

@@ -3,25 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/flood/test-kit` — hand-built geometry for the fixture rung: a square zone polygon, an
- *   adjacent one, one with a hole, and a mapped-extent rectangle bigger than the cells the polygons reach.
+ *   `@mailwoman/flood/test-kit` provides hand-built geometry for fixtures. It includes a square zone polygon,
+ *   It includes a square zone polygon plus a polygon in an adjacent zone. Another polygon has a hole.
+ *   A mapped-extent rectangle exceeds the cells the polygons reach.
  *
- *   A package subpath rather than A `test/` file, for the same reason `packages/mailwoman/lib/test-kit` is one:
- *   the observation route's suite lives in another workspace, and a relative import across two TypeScript
- *   projects is refused outright (`TS2878`) because the compiled layout would not match the source layout.
+ *   This module uses a package subpath rather than a `test/` file, like `packages/mailwoman/lib/test-kit`.
+ *   The observation route's suite lives in another workspace. TypeScript rejects a relative import across projects
+ *   with `TS2878` because the compiled layout does not match the source layout.
  *
- *   no network and no gdal. The builder takes a {@linkcode FloodFeatureSource}, so a fixture is a list of
- *   features — which is what lets this rung exercise the vocabulary check, the cell classification, the
- *   coverage rows, the manifest and the seal on every machine rather than only the ones with ogr2ogr.
+ *   The fixture uses no network or GDAL. The builder accepts a {@linkcode FloodFeatureSource}, so fixtures can supply
+ *   feature lists. This lets every machine exercise the vocabulary checks and cell classification.
+ *   It also exercises coverage rows and manifest generation. It exercises sealing without `ogr2ogr`.
  *
- *   the coordinates are over england, and deliberately so. The extent rectangle sits in the North Sea off
- *   Great Yarmouth where no real EA polygon interferes, but inside the declared extent the ingest asserts
- *   against — so a fixture stays a fixture and still lives in the coordinate space the product occupies.
+ *   The coordinates deliberately fall over England. The extent rectangle sits in the North Sea off Great Yarmouth,
+ *   where no real EA polygon interferes. It remains inside the declared ingest extent and uses the product's coordinate space.
  */
 
 // The exterior and hole ring builders live in `@mailwoman/spatial`.
-// A winding convention rather than this product's geometry, and a second copy of
-// it is a second place for a hole to stop being one.
+// Ring winding is a geometry convention owned by `@mailwoman/spatial`.
+// Reimplementing it here would create another place for a hole to be lost.
 import { rectangleRing, reversedRing as holeRing, ringAreaReadings, type MultiPolygonRings } from "@mailwoman/spatial"
 
 import type { FloodFeatureSource, FloodSourceFeature } from "#sdk/ingest/index"
@@ -69,7 +69,7 @@ export function fixtureFeature(
 }
 
 /**
- * The fixture set: two adjacent squares in different zones, and a third square with a hole through it.
+ * Returns two adjacent squares in different zones plus a third square with a hole.
  */
 export function fixtureFeatures(): FloodSourceFeature[] {
 	const { lon, lat } = FIXTURE_ORIGIN

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The well-known register check over the scripted transport, whose point is the two non-verdicts: a site that answers without a register and a site that does not answer call for different actions.
+ *   Tests the well-known register check over a scripted transport. The check distinguishes a site that answers without a register from a site that does not answer because each requires a different action.
  */
 
 import { stubTransport } from "@mailwoman/core/api/test-transport"

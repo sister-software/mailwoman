@@ -48,12 +48,12 @@ FIXTURE_SCHEMA = pa.schema(
     ]
 )
 
-#: Rows per pool municipality. The draw needs at least `(train_rows + val_rows) / 47` per
-#: prefecture to reach its target, and the reservoir caps at three times that.
+#: Rows per pool municipality. The draw needs at least `(train_rows + val_rows) / 47` rows per prefecture.
+#: The reservoir caps at three times that value.
 ROWS_PER_POOL_MUNI = 5
 
 #: Small enough to run in a test, large enough that the train split still covers all 47 prefectures
-#: after the draw is shuffled, which the builder RAISES on.
+#: after the draw is shuffled. The builder raises when it misses one.
 TRAIN_ROWS = 470
 VAL_ROWS = 47
 BOARD_ROWS = 20
@@ -159,7 +159,7 @@ def built(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
 
 @pytest.mark.parametrize("split", ["train", "val", "board"])
 def test_the_rows_match_the_committed_reference(built: dict[str, Any], split: str) -> None:
-    """Emission order is the draw order, and the draw order is the seeded RNG's."""
+    """Emission order follows the seeded RNG's draw order."""
     expected = json.loads(REFERENCE.read_text())[split]
     actual = built[split]
     assert len(actual) == len(expected), f"{split}: {len(actual)} rows, not {len(expected)}"

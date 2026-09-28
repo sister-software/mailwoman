@@ -179,8 +179,8 @@ async function openCSV(csvPath: PathBuilderLike): Promise<AsyncIterable<Uint8Arr
  */
 export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGenerator<BANAddrRecord> {
 	// CSVSpliterator handles quoted fields and embedded delimiters.
-	// `split(";")` that leaked CSV quotes into lieu-dit street keys (#1044): quoted fields unwrap,
-	// doubled inner quotes fold, and a quoted `;` no longer mis-splits the row.
+	// `split(";")` leaked CSV quotes into lieu-dit street keys (#1044).
+	// Quoted fields now unwrap, doubled inner quotes fold, and a quoted `;` stays within its field.
 	let checkedHeader = false
 
 	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(await openCSV(csvPath), {

@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Counts the duplicate rows an adapter's `canonical.jsonl` still carries, and splits them by whether the
+ *   Counts duplicate rows in an adapter's `canonical.jsonl`. It splits them by whether the
  *   runner's dedup set held their key when the duplicate arrived.
  *
- *   The runner holds at most `DEFAULT_DEDUP_MAX_SIZE` distinct keys, and three adapters passed that in
+ *   The runner holds at most `DEFAULT_DEDUP_MAX_SIZE` distinct keys. Three adapters passed that limit in
  *   `v0.7.0-de-holdout`. Every row in the file was written, so every duplicate the census finds reached the
  *   corpus. The split states which mechanism removes each group. A duplicate whose key was among the first
  *   `--cap` distinct keys is refused by the membership check that now runs whether or not the set is full.
@@ -16,10 +16,10 @@
  *   at the moment it writes that key's first row. The census therefore reconstructs the set's contents from
  *   the file without reading the build log.
  *
- *   **Why this holds hashes rather than keys.** A V8 `Set` refuses a 16,777,216th entry, and these
+ *   **Why this holds hashes rather than keys.** A V8 `Set` refuses a 16,777,216th entry. These
  *   adapters exceed it. The census stores a 64-bit hash of each dedup key in a growable `BigUint64Array`,
- *   sorts it, and counts adjacent equal values. A 64-bit collision would report one duplicate that is not
- *   one, at a rate under 1 in 10^8 for 100 million keys. That rate is stated here rather than left for a
+ *   sorts it and counts adjacent equal values. A 64-bit collision would report a duplicate where none exists.
+ *   The collision rate is under 1 in 10^8 for 100 million keys. State that rate here rather than leaving it for a
  *   reader to assume away.
  *
  *   Usage:
@@ -67,7 +67,8 @@ function hashKey(key: string): bigint {
 /**
  * A growable array of 64-bit hashes.
  *
- * `BigUint64Array` has a fixed length, and the row count is unknown before the pass, so this doubles.
+ * `BigUint64Array` has a fixed length.
+ * The row count is unknown before the pass, so this doubles.
  */
 class HashList {
 	#data = new BigUint64Array(1 << 20)
@@ -232,8 +233,8 @@ for (const adapter of adapters) {
 	}
 
 	// The unique hashes that occur more than once.
-	// Every row outside this set is its key's only occurrence, so the second pass can ignore it,
-	// and the array is bounded by the duplicate count rather than by the row count.
+	// Every row outside this set is its key's only occurrence, so the second pass can ignore it.
+	// The array is bounded by the duplicate count rather than by the row count.
 	const repeated = new BigUint64Array(distinct === sorted.length ? 0 : sorted.length - distinct)
 	let repeatedCount = 0
 

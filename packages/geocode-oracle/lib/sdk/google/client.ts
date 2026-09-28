@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  * @file Google Geocoding API client built on {@linkcode APIClient}.
  *
- *   Every request goes through `APIClient.fetch`, which provides pacing, caching, retries and
- *   {@linkcode ResourceError} mapping.
+ *   Every request goes through `APIClient.fetch`. It provides pacing and caching. It also retries
+ *   HTTP failures and maps them to {@linkcode ResourceError}.
  *
  *   Google reports failures such as `REQUEST_DENIED` and `OVER_QUERY_LIMIT` in the body of an HTTP 200
- *   response. {@linkcode statusToResourceError} maps each in-band status to a synthetic HTTP status, and
+ *   response. {@linkcode statusToResourceError} maps each in-band status to a synthetic HTTP status.
  *   {@linkcode isCacheableGoogleBody} keeps failure bodies out of the cache.
  *
- *   The API key travels as an Axios instance-level `params` default, so logged URLs and error messages
- *   do not contain it. {@linkcode geocodeCacheKey} also excludes it, so rotating the key keeps the cache.
+ *   The API key travels as an Axios instance-level `params` default. Logged URLs and error messages omit it.
+ *   {@linkcode geocodeCacheKey} also excludes the key, so rotating it preserves the cache.
  *
  *   Callers branch on the error's `status` and {@linkcode isTransientResourceError}:
  *
@@ -66,7 +66,9 @@ const MS_PER_MINUTE = 60_000
 /**
  * Cache lifetime of 30 days.
  *
- * Every cache miss is billed, and rooftop coordinates rarely change.
+ * Google bills every cache miss.
+ * Rooftop coordinates rarely change.
+ *
  * The TTL still bounds how long a cached answer can disagree with a fresh geocode.
  * Deleting the cache directory forces fresh requests.
  */
@@ -158,8 +160,8 @@ export interface CreateGoogleGeocoderClientOptions {
 	/**
 	 * Default BCP-47 response language.
 	 *
-	 * When it is unset, Google renders each result in the address's local language,
-	 * which suits a multi-country oracle.
+	 * When unset, Google renders each result in the address's local language.
+	 * This suits a multi-country oracle.
 	 */
 	language?: string
 	/**
@@ -208,7 +210,8 @@ export interface GoogleGeocoderClientConfig extends APIClientConfig {
 	 */
 	language?: string
 	/**
-	 * Maximum attempts for Google's in-band transient statuses, which the HTTP-level `retry` cannot see.
+	 * Maximum attempts for Google's in-band transient statuses.
+	 * The HTTP-level `retry` option does not handle them.
 	 */
 	maxAttempts: number
 	/**
@@ -247,9 +250,10 @@ export function geocodeCacheKey(config: { method?: string; url?: string; params?
 /**
  * Reports whether a decoded response body is safe to cache.
  *
- * Only `OK` and `ZERO_RESULTS` bodies qualify, because they describe the address.
- * Other statuses describe the request or the account, and caching one such as
- * `REQUEST_DENIED` would repeat the failure for the whole TTL.
+ * Only `OK` and `ZERO_RESULTS` bodies qualify because they describe the address.
+ * Other statuses describe the request or account.
+ *
+ * Caching `REQUEST_DENIED`, for example, would repeat the failure for the whole TTL.
  */
 export function isCacheableGoogleBody(value: { data?: { data?: unknown } }): boolean {
 	const body = value.data?.data as GoogleGeocodeResponse | undefined
@@ -408,7 +412,8 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 			)
 		}
 
-		// `isGooglePlaceID` checks only the character class, which a word like "Paris" also passes.
+		// `isGooglePlaceID` checks only the character class.
+		// A word like "Paris" also passes that check.
 		// The length and `_`/`-` tests keep addresses out of the Place ID branch.
 		// A misrouted Place ID still geocodes as an address, but a misrouted address fails as `INVALID_REQUEST`.
 		if (trimmed.length >= GOOGLE_PLACE_ID_MIN_LENGTH && /[_-]/.test(trimmed) && isGooglePlaceID(trimmed)) {
@@ -422,8 +427,8 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 	 * Sends one geocode request and parses the results.
 	 *
 	 * `APIClient` retries only HTTP-level failures.
-	 * This loop retries Google's in-band `OVER_QUERY_LIMIT` and `UNKNOWN_ERROR` statuses,
-	 * and each attempt goes back through `fetch` and its pacer.
+	 * This loop retries Google's in-band `OVER_QUERY_LIMIT` and `UNKNOWN_ERROR` statuses.
+	 * Each attempt goes through `fetch` and its pacer.
 	 *
 	 * @internal
 	 */

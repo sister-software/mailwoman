@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What `packageHasBinaries` accepts, and the half-materialized directory it refuses.
+ * @file Tests what `packageHasBinaries` accepts and which half-materialized directories it refuses.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -42,8 +42,10 @@ describe("packageHasBinaries", () => {
 	})
 
 	it("refuses a character vocabulary whose card does not declare a char encoder", async () => {
-		// The shape a half-materialized overlay takes: the model and its vocabulary link, the card does not.
-		// Answering `false` loads this as a Latin model, and a bare kanji line parses as one locality.
+		// A half-materialized overlay has the model and vocabulary link,
+		// but its card omits the encoder declaration.
+		// Returning `false` loads it as a Latin model.
+		// A bare kanji line then parses as one locality.
 		await using pkg = await weightsPackage({ "model.onnx": "onnx", "char-vocab.json": "{}" })
 
 		await expect(packageHasBinaries(pkg.directory)).rejects.toThrow(/char-vocab\.json is present/)

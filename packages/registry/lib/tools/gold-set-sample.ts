@@ -6,11 +6,11 @@
  *   Gold-set sampling for adjudication. The programmatic entity truth
  *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-flagged subparts (Is-Subpart plus parent
  *   LBN/TIN), so it cannot settle the genuinely ambiguous co-located collisions: distinct NPIs at
- *   one address with near-identical name text and no subpart flag for the same parent. Those
- *   are where NPI-truth and any programmatic rule disagree, and exactly the pairs a frozen
+ *   one address with near-identical name text and no subpart flag for the same parent.
+ *   NPI truth and programmatic rules may disagree on these pairs. A frozen
  *   adjudicated gold set must cover.
  *
- *   This finds them over the full TX registry, geocode-free, and writes each as a jsonl row carrying
+ *   This scans the full TX registry without geocoding and writes each pair as a JSONL row containing
  *   both records' fields (org name, address, authorized official, taxonomy, subpart and parent
  *   flags) plus the programmatic verdict. An adjudicator (human or LLM-as-judge, flagged as such)
  *   can then label same real-world entity or not.

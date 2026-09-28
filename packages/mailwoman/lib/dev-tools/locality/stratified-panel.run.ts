@@ -5,15 +5,16 @@
  *
  *   Write a coordinate panel that draws evenly across a country's regions.
  *
- *   The default US panel `$MAILWOMAN_DATA_ROOT/eval/coord/us.jsonl` carries 2,000 rows over 7 of the 50 states and DC,
- *   and five of those seven are the five regions `synth-suffix-boundary` draws from. A rate measured on it is a rate
- *   for those regions. The 97.7-point interior spread is invisible there, and no tool in the repository
+ *   The default US panel `$MAILWOMAN_DATA_ROOT/eval/coord/us.jsonl` carries 2,000 rows over 7 of the 50 states plus DC.
+ *   Five of the 7 states are the five regions `synth-suffix-boundary` draws from. A rate measured on it is a rate
+ *   for those regions. The 97.7-point interior spread is invisible there. No tool in the repository
  *   built the panel that exposed it.
  *
- *   The draw: GeoNames' postal export through `readTriplesFromGeonames`, which applies the known-locality filter and
- *   the per-country locality column (column 3 is the city for the US, admin2 for PT/MX/IN), then
- *   `applyLocalityQuota`. Therefore, one city's postcode list cannot fill a region, then a fixed count per region. A region the
- *   source holds fewer rows for contributes what it has, and the run reports which regions came up short.
+ *   The draw uses GeoNames' postal export through `readTriplesFromGeonames`.
+ *   That reader applies the known-locality filter and selects each country's locality column.
+ *   Column 3 is the city for the US and admin2 for PT/MX/IN. `applyLocalityQuota` then draws the panel.
+ *   One city's postcode list cannot fill a region. The quota draws a fixed count per region.
+ *   A region contributes fewer rows when the source holds fewer. The run reports regions that came up short.
  *
  *   The coordinate is the postcode's, straight from the export's own columns. It is good enough to place a row on a
  *   map and to reject a gross mis-geocode. It is not a locality centroid, so a probe grading rooftop distance against
@@ -59,10 +60,12 @@ const { values } = parseArguments({
 		 * What the even draw is taken across: `region`, `shape` (the locality name's shape), or `region-shape`.
 		 *
 		 * Region answers the interior spread.
-		 * Shape answers a different question, and one the region draw cannot: measured on
-		 * `candidate.db`, 34.7% of the 86,063 distinct US locality names end in a USPS
-		 * street suffix (`Orland Park`, `Saxtons River`), while the default US panel draws
-		 * that shape at 12.8% and the corpus recipe teaches it at 9.7%.
+		 * Shape answers a different question.
+		 *
+		 * The region draw cannot answer it.
+		 * Measured on `candidate.db`, 34.7% of the 86,063 distinct US locality names end in
+		 * a USPS street suffix (`Orland Park`, `Saxtons River`), while the default US panel
+		 * draws that shape at 12.8% and the corpus recipe teaches it at 9.7%.
 		 *
 		 * A rate measured on a draw that under-samples the shape it fails on reports the easy population.
 		 */
@@ -136,8 +139,9 @@ function seededOrder(size: number): (a: unknown, b: unknown) => number {
 /**
  * Keyed by the stratum the draw is even across.
  *
- * The region form is the one the panel writes out, since GeoNames publishes `California`
- * and never `CA`, and the surface under test is the code.
+ * The panel writes the region form because GeoNames publishes `California`, never `CA`.
+ * The surface under test is the code.
+ *
  * Folding here keeps the shortfall report and the rows speaking the same vocabulary.
  */
 const byStratum = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()
@@ -182,7 +186,8 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 		short.push(`${stratum} ${bucket.length}`)
 	}
 
-	// Taking the head of the bucket is a sample ordered by the source, which is postcode order within a state.
+	// Taking the head of the bucket samples source order.
+	// The source orders postcodes within each state.
 	// For a region stratum that is harmless.
 	// The stratum already fixes the state.
 	// For a shape stratum it is not: the first 400 suffix-tail names in US.txt are all Alaskan,

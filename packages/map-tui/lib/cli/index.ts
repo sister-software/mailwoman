@@ -7,7 +7,7 @@
  */
 
 /**
- * The `map-tui` bin, which opens a PMTiles archive as a full-screen terminal map.
+ * Opens a PMTiles archive as a full-screen terminal map through the `map-tui` binary.
  *
  * This file is the only place in the package that touches `process`.
  * It restores the terminal on SIGINT, SIGTERM and `exit`, because a process killed
@@ -88,7 +88,7 @@ async function main(): Promise<number> {
 
 	try {
 		// The bin reads raw argv and env here because `@mailwoman/core/env` depends on core's data-backed schema,
-		// which is too heavy for an `npx` entry point.
+		// Core's data-backed schema is too heavy for an `npx` entry point.
 		// oxlint-disable-next-line sister-software/no-process-globals -- see above.
 		args = parseCLIArgs(process.argv.slice(2), process.env)
 	} catch (error) {

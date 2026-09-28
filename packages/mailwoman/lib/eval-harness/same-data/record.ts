@@ -69,9 +69,9 @@ function recordingBackend(
 			const key = canonicalQueryKey(query)
 
 			if (!into.has(key)) {
-				// The stored query is parsed back from the key rather than kept by reference:
-				// the walk mutates its query object after the call returns, which would
-				// leave the fixture key and query disagreeing.
+				// The stored query is parsed back from the key instead of kept by reference.
+				// The walk mutates its query object after the call returns, so retaining it
+				// would leave the fixture key and query in disagreement.
 				into.set(key, {
 					key,
 					// A throw is the interface: the key is this process's own canonical JSON,
@@ -101,7 +101,8 @@ export interface RecordCensus {
 	/**
 	 * Set when an arm's walk raised while recording.
 	 *
-	 * The row is still written, and the run receipt carries the count.
+	 * The recorder writes the row.
+	 * The run receipt carries the count.
 	 */
 	error?: string
 }
@@ -121,11 +122,11 @@ export interface RecordInputs {
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
 	/**
-	 * Withhold every row denoting the gold place rather than only the ids the concordance linked.
+	 * Withhold every row that denotes the gold place, including rows whose ids the concordance did not link.
 	 *
-	 * Off by default, which keeps the frozen definitions byte-stable on a re-record.
+	 * The option defaults to `false`, keeping frozen definitions byte-stable on a re-record.
 	 * It exists because the gold identity set comes from the `gn:id` concordance
-	 * while the gazetteer carries 285,478 of its 2,689,326 populated localities twice,
+	 * while the gazetteer carries 285,478 of 2,689,326 populated localities twice,
 	 * so removing the concorded id leaves the twin answerable and an arm returning it
 	 * is graded as selecting where no correct candidate exists.
 	 *
@@ -141,9 +142,10 @@ export interface RecordResult {
 }
 
 /**
- * How far apart two rows with the same folded name may sit and still denote one
- * settlement. 5 km is the radius the `same-data-resolver-v1` correction re-graded at,
- * and the figure moves with the radius, so the radius is stated wherever the figure is.
+ * Maximum distance for treating two rows with the same folded name as one settlement.
+ *
+ * The 5 km value defines this matcher's scope.
+ * Reports include the radius because changing it changes the result.
  */
 const SAME_SETTLEMENT_KM = 5
 
@@ -160,9 +162,11 @@ function settlementKey(name: string): string {
 }
 
 /**
- * What the recorder withholds for one row, or null when the row carries its gold. the
- * default is id equality, and {@link RecordInputs.withholdEveryDenotingRow} adds rows
- * whose folded name matches the gold's within {@link SAME_SETTLEMENT_KM}.
+ * Returns the recorder's withholding decision for one row.
+ *
+ * It returns `null` when the row carries its gold.
+ * The default compares ids. {@link RecordInputs.withholdEveryDenotingRow} also includes
+ * rows whose folded name matches the gold within {@link SAME_SETTLEMENT_KM}.
  */
 function withholdPredicate(
 	row: SameDataPanelRow,
@@ -197,8 +201,8 @@ export async function recordFixture(inputs: RecordInputs): Promise<RecordResult>
 	for (const row of panel) {
 		const tree = await parse(row.query)
 		const lookups = new Map<string, SameDataLookup>()
-		// Not `error`: the catch binding below takes that name, so a same-named outer variable
-		// would be shadowed and the receipt would report a clean run over a failed one.
+		// Not `error`: the catch binding below takes that name, so an outer variable with the
+		// same name would be shadowed and the receipt would report a clean run over a failed one.
 		let recordingError: string | undefined
 
 		let removedGold = 0

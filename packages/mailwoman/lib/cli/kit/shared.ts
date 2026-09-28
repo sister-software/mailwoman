@@ -134,8 +134,8 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
 }
 
 /**
- * Writes machine-readable output straight to stdout so Ink does not wrap it,
- * and returns `null` so a render branch can return its result.
+ * Writes machine-readable output straight to stdout so Ink does not wrap it.
+ * Returns `null` so a render branch can return its result.
  */
 export function writeRawStdout(text: string | object): null {
 	const normalized = typeof text === "string" ? text + "\n" : prettyJSON(text)

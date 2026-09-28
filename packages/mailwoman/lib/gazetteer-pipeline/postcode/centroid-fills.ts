@@ -6,8 +6,8 @@
  *   Postcode-centroid fills. They run on the staging db inside `buildPostcodeDatabase`, never against
  *   a shipped artifact (the sealed-artifact invariant).
  *
- *   Fill priority. Each pass touches only rows still `(0,0)`, so a placeholder never overwrites a real
- *   coordinate, and all passes are idempotent:
+ *   Fill priority. Each pass touches only rows still `(0,0)`. A placeholder cannot overwrite a real coordinate.
+ *   Every pass is idempotent:
  *
  *   1. US only: Census zcta Gazetteer internal points (public domain), then GeoNames `US.txt` for the
  *      PO-box/unique-ZIP residual (`zcta-centroids.ts`, provenance in `centroid_source`).
@@ -92,11 +92,12 @@ const GEONAMES_COUNTRY_ALIASES: Readonly<Record<string, readonly string[]>> = {
 }
 
 /**
- * One postcode's accumulated GeoNames evidence: the mean of its centroids,
- * and every distinct place name it appears under.
+ * Stores one postcode's accumulated GeoNames evidence.
+ *
+ * It includes the mean of its centroids and every distinct place name.
  *
  * A postcode legitimately carries several names.
- * Those are its delivery-city aliases, which is the point.
+ * Those names are its delivery-city aliases.
  */
 interface GeonamesPostcode {
 	lat: number
@@ -108,10 +109,10 @@ interface GeonamesPostcode {
 /**
  * Read a country's GeoNames postal rows.
  *
- * Prefers the per-country `<CC>.txt` dump and falls back to the combined `allCountries-postal.txt`,
- * because the two layouts cover different countries on disk.
- * The per-country directory holds the locales fetched one at a time,
- * and the combined file is the one that carries the US.
+ * Prefers the per-country `<CC>.txt` dump and falls back to the combined
+ * `allCountries-postal.txt`, The layouts cover different countries on disk.
+ * The per-country directory holds locales fetched one at a time.
+ * The combined file holds the US data.
  *
  * Without the fallback the US pass finds no file and silently no-ops.
  */
@@ -122,7 +123,8 @@ async function readGeonamesPostal(
 	country: string,
 	combinedPath: PathBuilderLike
 ): Promise<Map<string, GeonamesPostcode>> {
-	// The centroid pass and the name pass ask for the same country, and the combined dump is 140 MB.
+	// The centroid pass and name pass request the same country.
+	// The combined dump is 140 MB.
 	const cached = geonamesCache.get(`${geonamesDir}\u0000${country}`)
 
 	if (cached) return cached
@@ -134,11 +136,11 @@ async function readGeonamesPostal(
 
 	if (!(await pathExists(source))) return acc
 
-	// Streamed: `source` is a per-country dump of ~1 MB or the 140 MB combined file,
-	// and only the caller knows which.
+	// `source` can be a per-country dump of ~1 MB or the 140 MB combined file.
+	// Only the caller knows which.
 	// `header: false` is required.
-	// The spliterator consumes row 1 as a header even in array mode, and GeoNames postal
-	// is headerless, so the first postcode would vanish without it.
+	// The spliterator consumes row 1 as a header even in array mode.
+	// GeoNames postal data is headerless, so the first postcode would vanish without this setting.
 	//
 	// Columns: country, postcode, place, admin1..3 (name + code pairs), latitude, longitude, accuracy.
 	for await (const cells of readUnquotedTSV(source)) {
@@ -178,9 +180,10 @@ async function readGeonamesPostal(
  * Separate from the centroid pass because the two select different rows: a centroid
  * is only wanted where one is missing, while a name is wanted on every postcode,
  * including one that already has a Census zcta coordinate and no name at all.
- * Rows are the USPS delivery city, which is frequently not the geographic locality
- * (11201 is Brooklyn, inside the locality New York), and for Queens is a neighbourhood name
- * rather than the borough (Astoria, Flushing, Jamaica).
+ * Rows contain the USPS delivery city.
+ *
+ * That value can differ from the geographic locality: 11201 is Brooklyn, inside New York.
+ * For Queens, it is a neighbourhood name rather than the borough (Astoria, Flushing, Jamaica).
  *
  * Shipping these rows obliges the "GeoNames (CC-BY 4.0)" attribution the sibling modules already carry.
  */
@@ -221,8 +224,9 @@ async function geonamesNameFill(
 			}
 		}
 
-		// `official` stays 0: a delivery city is what the postal system calls the place
-		// rather than an official name of it, and the name-exact tier reads that bit.
+		// `official` stays 0 because the postal system supplies a delivery-city name
+		// rather than an official locality name.
+		// The name-exact tier reads this flag.
 		const rows = [...acc]
 			.flatMap(([postcode, entry]) => {
 				const id = byPostcode.get(postcode)
@@ -307,8 +311,9 @@ async function geonamesFill(
  * County is preferred over region for tighter placement.
  */
 async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: PathBuilderLike): Promise<number> {
-	// Resolved once per country rather than composed per row: the answer depends on which layout
-	// the repository was cloned in, and a row-rate stat over an unplaced set is wasted work.
+	// Resolve the layout once per country instead of composing it per row.
+	// The result depends on the checkout's layout.
+	// A row-rate statistic over an unplaced set would waste work.
 	const dataDirByCountry = new Map<string, string | null>()
 
 	const dataDirFor = async (country: string): Promise<string | null> => {

@@ -1,7 +1,8 @@
 /**
- * @file Console + page-error capture fixture. Buffers every console message, pageerror, and matching requestfailed
- *   event for the test's lifetime. Test bodies call `assertNoFailEvents()` to enforce the blocklist + ignorelist
- *   defined in `console-policy.ts`, or pull the raw `events` array for ad-hoc inspection. Pattern ported from
+ * @file Console and page-error capture fixture. It buffers console messages, page errors, and failed requests matching
+ *   the policy for the test's lifetime. Test bodies call `assertNoFailEvents()` to enforce both policy lists
+ *   defined in `console-policy.ts`. They can inspect the raw `events` array directly.
+ *   The pattern comes from
  *   authentik's PageFixture base class — minus the pino logger (we let Playwright's `list` reporter handle stdout
  *   instead).
  */
@@ -38,8 +39,9 @@ export class ConsoleFixture {
 			if (isIgnored(text)) return
 
 			// The browser's own network-error lines ("Failed to load resource: … 404")
-			// name no url in their text — it rides `location()`.
-			// Without it, a failing suite says only that something 404'd, which is undiagnosable from CI output.
+			// The name has no URL in its text.
+			// `location()` supplies the URL.
+			// Without it, CI reports only that something returned 404.
 			const location = msg.location().url
 
 			this.events.push({

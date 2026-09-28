@@ -9,7 +9,7 @@
  *   throws at load.
  *
  *   This guard fails the moment en-us's labels / components / requires change without fr-fr
- *   following, and is pure JSON (no weights), so it is CI-safe.
+ *   following. It is pure JSON with no weights, so it is CI-safe.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The pipe-delimited reader: the embedded-newline trap, the dictionary bootstrap, and the projection that
- *   throws rather than dropping a column.
+ *   Tests the pipe-delimited reader's embedded-newline handling and dictionary bootstrap.
+ *   It also checks that projection errors throw instead of dropping a column.
  *
  *   the embedded newline is not hypothetical. Measured on the real `IA153` export: `sacatlog.txt` holds 594
  *   newline bytes and exactly one record, because its `fgdcmetadata` column carries a 43,251-character XML
@@ -31,8 +31,10 @@ const MSTAB = [
 ].join("\r\n")
 
 /**
- * `mstabcol.txt` is fourteen columns, and one of its descriptions carries an embedded
- * newline, which is the whole point of the fixture.
+ * `mstabcol.txt` has fourteen columns.
+ *
+ * One description contains an embedded newline.
+ * The fixture reproduces this case.
  */
 const MSTABCOL = [
 	'"widget"|1|"widget_key"|"widget_key"|"Key"|"String"|"Yes"|30||||||"The key."',

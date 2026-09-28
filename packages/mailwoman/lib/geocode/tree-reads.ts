@@ -25,8 +25,8 @@ export function resolvedCountryOf(tree: AddressTree): string | undefined {
 /**
  * Returns the promoted candidate's country from the `capital_promotion` stamp.
  *
- * It returns `"unknown"` for a stamp without a country, and `undefined`
- * when capital promotion changed no node's winner.
+ * It returns `"unknown"` for a stamp without a country.
+ * It returns `undefined` when capital promotion changed no node's winner.
  */
 export function capitalPromotionOf(tree: AddressTree): string | undefined {
 	for (const n of walkNodes(tree.roots)) {
@@ -41,7 +41,8 @@ export function capitalPromotionOf(tree: AddressTree): string | undefined {
 }
 
 /**
- * Returns `true` when the variant-alias exemption decided some node's winner, and `undefined` otherwise.
+ * Returns `true` when the variant-alias exemption selected a node's winner.
+ * Returns `undefined` otherwise.
  */
 export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
 	return firstNodeWhere(tree.roots, (n) => n.metadata?.["variant_alias_exemption"] === true) ? true : undefined
@@ -75,8 +76,8 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
 /**
  * Retags the tree's only valued node as `postcode` when its value is an unambiguous postcode.
  *
- * The model sometimes tags a bare postcode such as `N7 0BT` as a street,
- * and the resolver then finds no coordinate.
+ * The model sometimes tags a bare postcode such as `N7 0BT` as a street.
+ * The resolver then finds no coordinate.
  * The retag applies only when all of these hold:
  *
  * - The tree has no `postcode` node.

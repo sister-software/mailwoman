@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build postcode-ni-osm` — the Northern Ireland `BT` unit-postcode database from
- *   OpenStreetMap. Runs one Overpass query, saves the response as the reproducibility artifact, and
+ *   OpenStreetMap. It runs one Overpass query and saves the response as the reproducibility artifact. It
  *   writes a sealed database to a new dated path.
  *
  *   **build-local tier.** OSM is ODbL 1.0 and share-alike binds a Derived Database, so this artifact is

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Schema for the street-centroid extract, which groups the address-point extract by street.
+ *   Schema for the street-centroid extract. It groups address-point rows by street.
  */
 
 import type { Kysely } from "kysely"
@@ -48,7 +48,8 @@ export interface StreetCentroidTable {
 	min_lon: number
 	max_lon: number
 	/**
-	 * The number of member address points, which weights the cross-row centroid.
+	 * The number of member address points.
+	 * This value weights the cross-row centroid.
 	 */
 	point_count: number
 	/**
@@ -132,8 +133,8 @@ export async function createStreetCentroidTable(db: Kysely<StreetCentroidDatabas
 /**
  * Creates the postcode and locality indexes that the reader probes, plus `idx_sc_name`.
  *
- * The `idx_sc_name` index serves the unscoped `name_key = ?` lookup,
- * which would otherwise skip-scan `idx_sc_postcode`.
+ * The `idx_sc_name` index serves the unscoped `name_key = ?` lookup.
+ * Without it, SQLite would skip-scan `idx_sc_postcode`.
  */
 export async function createStreetCentroidIndexes(db: Kysely<StreetCentroidDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_sc_postcode").on("street_centroid").columns(["postcode", "street_norm"]).execute()

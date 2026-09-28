@@ -33,11 +33,14 @@ export interface ServiceFeature {
 /**
  * The one call the verification makes against the service: the features it publishes near a point.
  *
- * A function rather than the client, and that is what makes the check's own logic testable.
+ * The reader is a function.
+ * Tests can exercise the check's logic without a live client.
+ *
  * The comparison's value is that it decides which of three outcomes a point gets.
  *
- * Expressed against an http client it could only ever be watched on a live run, and a scripted
- * reader lets those decisions be pinned. {@link createEAServiceReader} builds the real one.
+ * An HTTP client would let tests observe these decisions only in a live run.
+ * A scripted reader lets tests pin each decision. {@link createEAServiceReader}
+ * builds the production reader.
  */
 export type ServiceFeatureReader = (latitude: number, longitude: number) => Promise<ServiceFeature[]>
 

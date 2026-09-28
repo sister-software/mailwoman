@@ -22,14 +22,16 @@ import {
  */
 export interface WebONNXRunnerOpts {
 	/**
-	 * Whether to try the WebGPU provider before WASM, which defaults to `true`.
+	 * Whether to try the WebGPU provider before WASM.
+	 * The default is `true`.
 	 *
 	 * Turn it off where WebGPU is known to fail, because the failed attempt adds latency.
 	 */
 	useWebGPU?: boolean
 
 	/**
-	 * The fixed input sequence length of the model, which defaults to {@link DEFAULT_FIXED_SEQ_LEN}.
+	 * The fixed input sequence length of the model.
+	 * The default is {@link DEFAULT_FIXED_SEQ_LEN}.
 	 */
 	fixedSeqLen?: number
 
@@ -169,8 +171,8 @@ export class WebONNXRunner implements NeuralRunner {
 	}
 
 	/**
-	 * Frees the session's native memory in the WASM heap or on the GPU,
-	 * which garbage collection never reclaims.
+	 * Frees the session's native memory in the WASM heap or on the GPU.
+	 * Garbage collection never reclaims that memory.
 	 *
 	 * It may be called more than once.
 	 * When a load is in progress, it waits for the session and then releases it.

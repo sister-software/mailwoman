@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman license <keygen|issue|verify|register|adopt|refresh>` — the issuer's side of the commercial license key,
- *   the customer's side, and the check any installation can run. `keygen` mints an Ed25519 signing pair into the config
- *   root and prints the public half with its key id; `issue` signs a payload with that private key and prints the token;
- *   `verify` checks a token (or the configured one) offline against the register this build ships, and with `--online`
- *   also asks mailwoman.ai whether the key id is still listed and the license worker whether the license still stands;
- *   `register` prints the well-known file the register derives, or writes it under `docs/static` with `--write`. `adopt`
- *   writes a purchased token to the config-root key file, and its refresh secret beside it; `refresh` trades that secret
- *   for the current token after a renewal. Neither writes a token this build cannot verify.
+ *   `mailwoman license <keygen|issue|verify|register|adopt|refresh>` provides commands for license issuers,
+ *   customers and installations. `keygen` creates an Ed25519 signing pair in the config root and prints the
+ *   public key with its key id. `issue` signs a payload with the private key and prints the token.
+ *   `verify` checks a token (or the configured token) offline against this build's register. With `--online`,
+ *   it asks mailwoman.ai whether the key id remains listed and asks the license worker whether the license is active.
+ *   `register` prints the well-known file derived from the register. The `--write` flag writes it under `docs/static`.
+ *   `adopt` writes a purchased token to the config-root key file and stores its refresh secret beside it.
+ *   `refresh` exchanges that secret for the current token after renewal. Neither command writes a token this build cannot verify.
  */
 
 import { configRootPath } from "@mailwoman/core/data-root"
@@ -310,7 +310,8 @@ async function adopt(parsed: ParsedCommand): Promise<number> {
 }
 
 /**
- * The exit code for a worker that did not answer: not a refusal, so not 1, and not success.
+ * The exit code for a worker that did not answer.
+ * It differs from refusal (1) and success (0).
  */
 const EXIT_UNREACHABLE = 2
 
@@ -430,8 +431,9 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 /**
  * `license attribution` — what this installation owes upstream, read off the packages it has.
  *
- * An action on `license` rather than a command of its own, because it answers a question
- * about the same subject and a new top-level name would need a design nobody has asked for.
+ * An action on `license` rather than a command of its own, because it answers
+ * a question about the same subject.
+ * No request calls for a new top-level command.
  * It reads no key and changes no verification path.
  */
 async function attributionCommand(parsed: ParsedCommand): Promise<number> {

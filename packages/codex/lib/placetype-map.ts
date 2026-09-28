@@ -12,8 +12,8 @@ import type { ComponentTag } from "#component"
 /**
  * Maps address-component tags to resolver placetypes.
  *
- * The resolver does not query a tag that is missing from the map, and it keeps
- * that tag's classifier attribution unchanged.
+ * The resolver skips tags missing from the map.
+ * It keeps that tag's classifier attribution unchanged.
  */
 export type PlacetypeMap = Partial<Record<ComponentTag, string>>
 
@@ -44,8 +44,8 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
  * Per-country entries that replace {@link DEFAULT_PLACETYPE_MAP} entries
  * where WOF types a tier differently.
  *
- * In Taiwan, WOF types most 鄉鎮市區 districts, which the parser tags `subregion`,
- * as `locality` or `localadmin`, with a minority typed as `county`.
+ * In Taiwan, WOF types most 鄉鎮市區 districts.
+ * The parser tags them `subregion`, as `locality` or `localadmin`, with a minority typed as `county`.
  */
 const COUNTRY_PLACETYPE_OVERRIDES: Readonly<Record<string, PlacetypeMap>> = {
 	tw: { subregion: "locality" },
@@ -67,9 +67,10 @@ export function placetypeMapForCountry(countryCode: string | null | undefined): 
  * The placetypes a lookup filter accepts for each requested placetype.
  *
  * WOF spreads one addressing tier across several placetypes.
- * The first entry in each group is the requested type, and extract routing uses it.
+ * The first entry in each group is the requested type.
+ * Extract routing uses it.
  *
- * - `locality` also accepts `borough`, such as Brooklyn, and `localadmin`, such as French communes.
+ * - `locality` also accepts `borough` (such as Brooklyn) and `localadmin` (such as French communes).
  * - `region` also accepts `macroregion`, which WOF uses for Italian regions and the current French régions.
  * - `county` also accepts `macrocounty`.
  *

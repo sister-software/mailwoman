@@ -129,8 +129,9 @@ export async function resurrectCurrencyHoles(ctx: {
 			continue
 		}
 
-		// Dead rows are read first so a country with no dead names never loads its national dump,
-		// which is heap pressure on a build near its ceiling.
+		// Read dead rows first.
+		// A country with no dead names then avoids loading its national dump.
+		// That avoids heap pressure on a build near its limit.
 		const dead = deadStmt.all(cc, ...deadPlacetypes)
 
 		if (!dead.length) {
@@ -204,8 +205,8 @@ export async function resurrectCurrencyHoles(ctx: {
 			const dLat = Number(d.latitude)
 			const dLon = Number(d.longitude)
 
-			// A live row blocks unless it is strictly finer than the dead one, and an unranked
-			// placetype blocks because this check's failure mode is inventing a place.
+			// A live row blocks unless it is strictly finer than the dead one.
+			// An unranked placetype also blocks because the failure mode is inventing a place.
 			const liveNear = liveStmt.all(cc, name).some((row) => {
 				if (haversineKm(dLat, dLon, Number(row.latitude), Number(row.longitude)) > CURRENCY_BACKFILL_RADIUS_KM) {
 					return false

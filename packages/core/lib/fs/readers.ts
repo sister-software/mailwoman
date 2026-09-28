@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file The asynchronous read surface. Every reader here takes a {@linkcode PathBuilderLike} and answers a promise.
  *
- *   `node:fs` is reached from this directory alone, and every reader answers a promise: no executable repository
- *   code makes a blocking filesystem call, and the `debt` check in `packages/repo-health` counts any that appears.
+ *   Repository code accesses `node:fs` through this directory. Every reader returns a promise, so executable code
+ *   makes no blocking filesystem calls. The `debt` check in `packages/repo-health` counts any violations.
  */
 
 import { readFile } from "node:fs/promises"
@@ -27,14 +27,15 @@ export type { FileHandle } from "node:fs/promises"
  *
  * @param path The file to read.
  * @param byteSize How many bytes to read.
- * Defaults to 65,536, which is enough to sniff a file's format.
+ * Defaults to 65,536 bytes.
+ * That size is enough to sniff a file's format.
  *
  * @returns The bytes read, as a UTF-8 string.
  * @throws Enoent when the file does not exist.
  */
 export async function readFileHead(path: PathBuilderLike, byteSize: number): Promise<string> {
-	// `try`/`finally` rather than `await using`: this module is on the Docusaurus config
-	// loader's import path, and its transform does not parse explicit resource management.
+	// `try`/`finally` rather than `await using`: this module is on the Docusaurus config loader's import path.
+	// Its transform does not parse explicit resource management.
 	const handle = await open(path, "r")
 
 	try {
@@ -54,7 +55,8 @@ export async function readFileHead(path: PathBuilderLike, byteSize: number): Pro
  * Three reads at three positions, where reading the whole file would mean loading
  * a multi-gigabyte artifact to look at sixteen bytes.
  *
- * Answers what it actually read, which is shorter than `length` at end of file.
+ * Returns the bytes it actually read.
+ * The result is shorter than `length` at end of file.
  *
  * @throws Enoent when the file does not exist.
  */
@@ -72,8 +74,9 @@ export async function readFileRange(path: PathBuilderLike, offset: number, lengt
 }
 
 /**
- * The first segment may be a `file:` URL, which `node:fs` accepts as an object
- * and rejects as the string it prints.
+ * The first segment may be a `file:` URL.
+ *
+ * `node:fs` accepts it as a URL object and rejects its printed string form.
  *
  * `resolvePath` would stringify it, so a URL is passed through whole and never joined.
  */
@@ -173,10 +176,13 @@ export function readLocalBuffer<S extends Array<PathBuilderLike | URL>>(...pathS
 /**
  * Drain standard input.
  *
- * A hook or a filter reads its payload from file descriptor 0, which is not a path — none of the
- * readers above accepts one, and `fsPromises.readFile` does not take a bare descriptor either.
- * Streaming the handle is the asynchronous way to say the same thing, and it lives here
- * so a caller does not re-derive it.
+ * A hook or filter reads its payload from file descriptor 0.
+ * The readers above accept paths.
+ *
+ * `fsPromises.readFile` also requires a path.
+ * Streaming the descriptor provides asynchronous reads.
+ *
+ * This helper keeps callers from reimplementing that operation.
  */
 export async function readStandardInput(): Promise<string> {
 	return Buffer.concat(await Array.fromAsync(process.stdin)).toString("utf8")

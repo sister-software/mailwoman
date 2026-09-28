@@ -55,7 +55,8 @@ export interface SurveyAreaArchive {
 	versionDate: string
 
 	/**
-	 * The extracted `<areasymbol>/` directory, which holds `spatial/` and `tabular/`.
+	 * The extracted `<areasymbol>/` directory.
+	 * It contains `spatial/` and `tabular/`.
 	 */
 	root: PathBuilder
 	spatialDirectory: PathBuilder
@@ -68,8 +69,8 @@ export interface SurveyAreaArchive {
 }
 
 /**
- * Downloads and unzips one survey area into the cache, skipping steps already done,
- * and returns where its pieces are.
+ * Downloads and unzips one survey area into the cache, skipping completed steps.
+ * Returns the paths to its files.
  *
  * The download goes through a `.part` file so an interrupted transfer never looks like a complete archive.
  *

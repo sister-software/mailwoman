@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Builds Taiwan's table from 3-digit postcodes to WOF districts, using Chunghwa Post district
- *   centers, Overture division polygons, and the WOF admin database.
+ *   Builds Taiwan's table from 3-digit postcodes to WOF districts.
+ *   It uses Chunghwa Post district centers and Overture division polygons.
+ *   It also uses the WOF admin database.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -69,7 +70,7 @@ export function normHan(s: string): string {
 }
 
 /**
- * Normalizes a romanized name by removing diacritics, case, separators, and common tier suffixes.
+ * Normalizes a romanized name by removing diacritics and case, plus separators and common tier suffixes.
  */
 export function normEn(s: string): string {
 	return (
@@ -77,7 +78,7 @@ export function normEn(s: string): string {
 			.normalize("NFKD")
 			.replaceAll(/\p{M}/gu, "")
 			.toLowerCase()
-			// WOF sometimes carries the romanized 區, 鄉, and 鎮 suffixes, as in "Zhongzheng Qu".
+			// WOF sometimes carries romanized suffixes 區, 鄉, 鎮. One example is "Zhongzheng Qu".
 			.replaceAll(/\s+(district|township|city|county|village|islands?|qu|xiang|zhen)$/g, "")
 			.replaceAll(/[\s'’-]/g, "")
 	)
@@ -110,7 +111,8 @@ export interface PostalDistrict {
 /**
  * Parses Chunghwa Post's `行政區經緯度(toPost).xml` from data.gov.tw dataset 25489.
  *
- * The file is flat, so a regular expression reads each entry's name, postcode, and center.
+ * The file is flat.
+ * A regular expression reads each entry's name and postcode, then its center point.
  */
 export async function loadPostalDistricts(path: string): Promise<PostalDistrict[]> {
 	const xml = await readLocalTextFile(path)
@@ -266,8 +268,8 @@ interface AdminPlace {
 /**
  * Reads the WOF admin data that district matching needs into memory, then closes the database.
  *
- * It returns the places with their name forms, the regions keyed by Chinese name,
- * the places keyed by Wikidata QID, and a proximity search over 0.5-degree cells.
+ * It returns places with their name forms and regions keyed by Chinese name.
+ * It also returns places keyed by Wikidata QID and a proximity search over 0.5-degree cells.
  */
 function loadAdminIndexes(args: { adminDB: string }) {
 	using admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)

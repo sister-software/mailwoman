@@ -19,8 +19,8 @@
  *
  *   The "nearest" rule (vs "most-recent-prior") is intentional: it makes the decoder independent of
  *   source ordering — e.g. "75004 Paris" attaches postcode to locality even though postcode came
- *   first. Source order is still preserved in the `start`/`end` fields, which the XML serializer
- *   exposes as attributes.
+ *   first. The `start`/`end` fields preserve source order.
+ *   The XML serializer exposes those fields as attributes.
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
@@ -169,9 +169,9 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// Fold it into the open span.
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only.
-			// A comma or any other separator keeps them distinct, and an intervening
-			// O/different-tag token already nulls/replaces `open` above, so two separate
-			// same-tag spans (e.g. "Springfield, Chicago") are never merged.
+			// A comma or any other separator keeps them distinct.
+			// An intervening O or different-tag token already nulls or replaces `open` above.
+			// Two separate same-tag spans (e.g. "Springfield, Chicago") are never merged.
 			if (prefix === "B" && open !== null && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
 				open.end = tok.end
 				open.confidences.push(tok.confidence)

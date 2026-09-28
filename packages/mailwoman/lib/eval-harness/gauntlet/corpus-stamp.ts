@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The freshness interface between the committed corpus (`cases/<cc>/*.jsonl`) and its built artifact
- *   (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`): the builder stamps what it wrote, and every runner that
+ *   (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`). The builder stamps what it wrote. Every runner that
  *   grades against the DB refuses when the stamp disagrees with the corpus on disk right now.
  *
  *   Two guards deliberately differ in kind: content (`corpus_hash` against the live {@linkcode regressionCorpusHash})
@@ -34,7 +34,8 @@ export type CorpusStamp = Pick<GauntletMetaTable, "corpus_hash" | "case_count" |
  * Refuse a corpus with no rows, naming the directory that produced none.
  *
  * A compiled tree pointing at a `cases/` directory with no country dirs loads cleanly
- * and builds a valid empty DB that grades 0/0 and passes, which a hash comparison cannot catch.
+ * and builds a valid empty DB that grades 0/0 and passes.
+ * A hash comparison cannot catch that case.
  */
 export function assertCorpusIsNonEmpty(rows: readonly SeedCase[], dir: PathBuilderLike = CASES_DIR): void {
 	if (rows.length) return
@@ -71,8 +72,8 @@ export async function writeCorpusStamp(
  * as in a DB built before the stamp existed.
  */
 export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Promise<CorpusStamp | null> {
-	// Presence probe first: selecting from a missing table throws a driver error,
-	// and branching on error prose is how a guard starts lying.
+	// Probe for presence first because selecting from a missing table throws a driver error.
+	// Branching on error prose would make the guard unreliable.
 	const present = await sql<{
 		name: string
 	}>`select name from sqlite_master where type = 'table' and name = ${GAUNTLET_META_TABLE}`.execute(kdb)

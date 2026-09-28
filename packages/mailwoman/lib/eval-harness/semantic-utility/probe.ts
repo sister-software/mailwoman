@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Defines, audits, and decides the frozen semantic-utility probe.
+ *   Defines the frozen semantic-utility probe and audits its decision criteria.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -156,7 +156,8 @@ export interface ProbeControlRow {
 }
 
 /**
- * One metric's numerator, denominator, and aggregation, stated explicitly.
+ * One metric with explicit numerator and denominator fields.
+ * It also records how the metric aggregates.
  */
 export interface ProbeMetric {
 	id: string
@@ -399,7 +400,8 @@ function auditThresholds(definition: SemanticProbeDefinition): string[] {
 }
 
 /**
- * Loads the frozen pre-registration after checking its identity, hash, and audit.
+ * Loads the frozen pre-registration after checking its identity and hash.
+ * It also checks the audit.
  */
 export async function loadProbeDefinition(
 	definitionPath: PathBuilderLike = PROBE_DEFINITION_PATH,
@@ -467,7 +469,8 @@ export interface ProbeRowOutcome {
 }
 
 /**
- * The primary, diagnostic, and control counts that a decision reads.
+ * Counts for the decision's primary and diagnostic comparisons.
+ * It also holds the control comparison counts.
  */
 export interface ProbeCounts {
 	primaryNumerator: number
@@ -511,8 +514,13 @@ export interface ProbeVerdict {
 }
 
 /**
- * Applies the frozen thresholds: control regressions above tolerance give STOP-REDESIGN, otherwise
- * the primary bars give GO, the diagnostic bars DIAGNOSTIC-ONLY, and anything else STOP-REDESIGN.
+ * Applies the frozen thresholds.
+ *
+ * Control regressions above tolerance produce `STOP-REDESIGN`.
+ * Otherwise, the primary bars can produce `GO`.
+ *
+ * Diagnostic bars produce `DIAGNOSTIC-ONLY`.
+ * Any remaining result produces `STOP-REDESIGN`.
  */
 export function decideProbe(definition: SemanticProbeDefinition, counts: ProbeCounts): ProbeVerdict {
 	const thresholds = definition.thresholds

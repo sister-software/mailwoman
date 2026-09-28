@@ -64,8 +64,10 @@ export function housenumberIsDesignator(value: string): boolean {
 }
 
 /**
- * Whether `addr:street` is a street name: no comma, at most {@link MAX_STREET_WORDS} words,
- * and not a direction (`Near Cozy Water Park`, `Opposite Askari Towers`, `Behind …`).
+ * Whether `addr:street` matches the street-name shape.
+ *
+ * The value has no comma and contains at most {@link MAX_STREET_WORDS} words.
+ * Direction phrases such as `Near Cozy Water Park`, `Opposite Askari Towers` or `Behind …` return false.
  */
 export function isStreetName(value: string): boolean {
 	const trimmed = value.trim()
@@ -167,7 +169,8 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.region = province
 	}
 
-	// A street alone is not an address row, and the coarse adapters already teach bare names.
+	// An address row needs another component alongside the street.
+	// Coarse adapters already teach bare names.
 	if (Object.keys(components).length === 1) return null
 
 	return components

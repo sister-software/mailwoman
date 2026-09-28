@@ -5,17 +5,17 @@
  * @file What a shipped model graph can emit, read from the graph rather than from its card.
  *
  *   A rights review asks whether a model can reproduce its training data. For this architecture the
- *   answer rests on the graph's output signature: the model maps a token sequence to label logits and a
- *   locale classification, and its supported inference interface carries no output that emits
- *   characters, vocabulary tokens or address text.
+ *   The graph's output signature supports the answer. The model maps a token sequence to label logits
+ *   and a locale classification. Its supported inference interface returns no characters, vocabulary
+ *   tokens, or address text.
  *
  *   That claim belongs beside the artifact rather than in a review document, because it is a property of
  *   the file and a later build can change it. The model card states `num_labels`, and a card is a claim
  *   about the graph rather than the graph. This reads the graph.
  *
  *   **This describes the supported inference interface.** It does not establish that reconstruction is
- *   impossible. A white-box extraction or inversion attack over the weights is a different question from
- *   what a caller can obtain by running the model, and a reader of this record must not collapse the two.
+ *   impossible. A white-box extraction or inversion attack over the weights differs from what a caller
+ *   can obtain by running the model. A reader of this record must keep those questions separate.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -70,8 +70,8 @@ export interface ModelGraphRecord {
  * Element types a text-emitting output would use.
  *
  * A graph that emitted tokens would return integer token ids or strings.
- * A float logit tensor over a fixed label count cannot carry them, which is
- * what makes the distinction mechanical.
+ * A float logit tensor over a fixed label count cannot carry them.
+ * That type and shape distinction makes the check mechanical.
  */
 const TEXT_CAPABLE_TYPES: ReadonlySet<string> = new Set(["string", "int32", "int64", "uint8"])
 

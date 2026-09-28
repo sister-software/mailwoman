@@ -853,8 +853,10 @@ const noCrossPackageReexportRule: Rule = {
 /**
  * Types whose whole teardown runs inside `[Symbol.dispose]`.
  *
- * `DatabaseClient` closes the `node:sqlite` handle, `DisposableDuckDB` calls `closeSync()` on the
- * connection and on the instance behind it, and a `RegionDatabaseProvider` closes its cached handles.
+ * `DatabaseClient` closes the `node:sqlite` handle.
+ * `DisposableDuckDB` calls `closeSync()` on its connection and the instance behind it.
+ *
+ * A `RegionDatabaseProvider` closes its cached handles.
  * `USStateDatabaseProvider` is the concrete class whose static `create` answers one.
  */
 const SYNC_DISPOSABLE_TYPES = new Set([
@@ -905,7 +907,7 @@ function namesSyncDisposable(node: AstNode | undefined): boolean {
 }
 
 /**
- * The initialized expression past `await`, a cast, and a non-null assertion.
+ * The initialized expression after `await`, a cast, or a non-null assertion.
  */
 function initializedExpression(node: AstNode | null | undefined): AstNode | null {
 	let current = node ?? null
@@ -923,7 +925,7 @@ function initializedExpression(node: AstNode | null | undefined): AstNode | null
 /**
  * The synchronously-disposed name an initializer resolves to, or null for any other expression.
  *
- * `locals` holds the same-file helpers whose return type named one.
+ * `locals` holds same-file helpers whose return type is a single identifier.
  */
 function syncDisposableSource(node: AstNode, locals: ReadonlySet<string>): string | null {
 	if (node.type === "NewExpression") {

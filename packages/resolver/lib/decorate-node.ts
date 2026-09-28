@@ -72,7 +72,7 @@ export function decorateNode(
 	}
 
 	// Written only when the backend supplies a value, because `resolver_*: 0`
-	// would assert a measurement nobody made.
+	// would assert an unmeasured value.
 	if (resolved.referential !== undefined) {
 		node.metadata["resolver_referential"] = resolved.referential
 	}

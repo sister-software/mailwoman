@@ -7,9 +7,9 @@
  *   A corpus row's `license` column holds whichever of these the writer had to hand. Measured over
  *   `v0.7.0-de-holdout` on 2026-09-26: 71 distinct values across 703,835,753 rows, of which 4 are SPDX
  *   identifiers covering 75,582,634 rows and 66 are prose covering 628,203,119, plus 50,000 rows at
- *   `null`. `Public Domain` labels 478,632,849 rows and `Licence Ouverte 2.0` labels 145,193,536, and
- *   neither is an SPDX identifier where this repository's own are `LicenseRef-USGov-Public-Domain` and
- *   `etalab-2.0`.
+ *   `null`. `Public Domain` labels 478,632,849 rows. `Licence Ouverte 2.0` labels 145,193,536 rows.
+ *   Neither label is an SPDX identifier. This repository uses `LicenseRef-USGov-Public-Domain` and
+ *   `etalab-2.0` for those values.
  *
  *   The recurring failures all came from reading one of these facts out of a field holding another. A
  *   share-alike filter written as `/^ODbL/` cannot see 120,000 rows whose text reads "Synthetic —
@@ -18,14 +18,14 @@
  *   `etalab-2.0` finds no entry for `Licence Ouverte 2.0` and would report no obligation if its caller
  *   ignored `unrecognized`.
  *
- *   So: the grant is an expression, the credit owed is attribution text, what the row was built from is
- *   provenance, and what a user must do is obligations. This separates them and keeps the raw value, so
- *   a reading can be revisited against what the writer actually wrote.
+ *   Store each fact in its own field: the grant is an expression, credit owed is attribution text,
+ *   source material is provenance and user duties are obligations. The raw value remains available
+ *   for later review against what the writer recorded.
  *
  *   **A value this cannot resolve reads `unresolved`, and that is a finding rather than a default.**
- *   `unresolved` means the obligations are unknown, which is different from knowing there are none. A
- *   caller deciding whether to publish or to train has to treat the two differently, and the whole
- *   reason this type exists is that a bare string let them be confused.
+ *   `unresolved` means the obligations are unknown. That differs from knowing there are none.
+ *   A caller deciding whether to publish or train must distinguish those cases. This type exists
+ *   because a bare string made them easy to confuse.
  */
 
 import { LicenseObligation, summarizeLicense } from "#license/obligations"
@@ -34,14 +34,15 @@ import { LicenseObligation, summarizeLicense } from "#license/obligations"
  * Whether a license value has been mapped to an expression whose obligations are recorded.
  *
  * This states what reading the string achieved.
- * `@mailwoman/corpus/source-register` exports a separate `LicenseReviewState`
- * recording whether a person has read a source's terms and elected them,
- * which is a different question about a different subject.
+ * `@mailwoman/corpus/source-register` exports a separate `LicenseReviewState`.
+ *
+ * It records whether a person read and accepted a source's terms.
+ * That state answers a different question about a different subject.
  */
 export const LicenseResolution = {
 	/**
-	 * The expression is an SPDX identifier or a `LicenseRef` this repository defines,
-	 * and `KNOWN_OBLIGATIONS` records its obligations.
+	 * The expression is an SPDX identifier or a `LicenseRef` this repository defines.
+	 * `KNOWN_OBLIGATIONS` records the expression's obligations.
 	 */
 	Resolved: "resolved",
 	/**
@@ -75,10 +76,9 @@ export interface LicenseRecord {
 	/**
 	 * Licence identifiers the raw text mentions, whether or not each is the grant on the row.
 	 *
-	 * A row rendered from an attested record can name the upstream register's licence in
-	 * its provenance prose while the grant on the row is something else.
-	 * These are what the text mentions, and reading them as the grant is the
-	 * mistake this field exists to make visible.
+	 * A row rendered from an attested record can mention the upstream register's licence
+	 * in its provenance prose while the row carries a different grant.
+	 * This field records those mentions separately so callers do not treat them as the grant.
 	 */
 	mentions: string[]
 	/**
@@ -89,18 +89,18 @@ export interface LicenseRecord {
 }
 
 /**
- * Values this repository writes that are not SPDX identifiers, and the expression each one means.
+ * Repository-specific license values and the SPDX expression each one represents.
  *
  * Every entry is a value measured in a built corpus or a layer manifest.
  * A value absent from this map and from SPDX resolves to `unresolved` rather than to a guess.
  */
 const EXPRESSION_ALIASES: ReadonlyMap<string, string> = new Map([
-	// 478,632,849 corpus rows. US federal works carry no copyright under 17 U.S.C. § 105, and SPDX has
-	// no identifier for that, which is why the `LicenseRef` exists.
+	// These values appear on 478,632,849 corpus rows. U.S. federal works carry no copyright under
+	// 17 U.S.C. § 105. SPDX has no identifier for that status, so this repository defines a `LicenseRef`.
 	["Public Domain", "LicenseRef-USGov-Public-Domain"],
 	["public domain", "LicenseRef-USGov-Public-Domain"],
 	// 145,193,536 corpus rows.
-	// BAN's attribution-only half, which the `ban` adapter elects.
+	// The `ban` adapter maps BAN's attribution-only license to this expression.
 	["Licence Ouverte 2.0", "etalab-2.0"],
 	["Licence Ouverte 2.0 (Etalab)", "etalab-2.0"],
 	// The `meta.license` value in `postalcode-ni-osm.db`, measured 2026-09-27.
@@ -110,18 +110,20 @@ const EXPRESSION_ALIASES: ReadonlyMap<string, string> = new Map([
 	["Open Government Licence v3.0", "OGL-UK-3.0"],
 	["Open Government Licence v.3.0", "OGL-UK-3.0"],
 	// The `meta.license` value in `postalcode-geonames-tail.db`, measured 2026-09-27.
-	// GB rows in that database carry OGL-UK-3.0 as well, which its `meta.license_gb` states
-	// and the builder's own manifest records.
+	// GB rows in that database also carry OGL-UK-3.0.
+	// Its `meta.license_gb` field states this value.
+	// The builder's manifest records it too.
 	["CC-BY 4.0 (GeoNames) — attribution required on redistribution", "CC-BY-4.0"],
 	// The `meta.license` value in `postcode-locality-intl.db`, measured 2026-09-27.
 	// The admin gazetteer's manifest reads Who's On First as `LicenseRef-WhosOnFirst-Mixed`.
-	// This alias resolves what the locality builder wrote, which is that builder's claim.
+	// The locality builder wrote this alias value.
+	// This mapping preserves the builder's claim.
 	["CC-BY 4.0 (Who's On First) — attribution required on redistribution", "CC-BY-4.0"],
 	// The `database_meta.license` values in `localities-cz-districts.db`
 	// and `localities-nz-linz.db`, measured 2026-09-27.
 	["CC-BY-4.0, attribution GeoNames", "CC-BY-4.0"],
 	["CC-BY-4.0, attribution Land Information New Zealand", "CC-BY-4.0"],
-	// INEGI's own terms document, which names no Creative Commons license.
+	// INEGI's own terms document mentions no Creative Commons license.
 	// Retrieved 2026-09-27, retained at internal/strategy/rights-receipts/mx-gb-2026-09-27/.
 	["Términos de Libre Uso de la Información del INEGI", "LicenseRef-INEGI-Terms"],
 ])
@@ -216,8 +218,8 @@ export function mentionsShareAlike(record: LicenseRecord): boolean {
  *
  * Published cards carry the list under `training.data_attribution` or under a top-level
  * `attribution`, and a published card cannot change, so both spellings have to be read.
- * The first candidate holding at least one string wins, and a candidate that
- * is not an array of strings is skipped.
+ * The first candidate holding at least one string wins.
+ * Candidates that are not arrays of strings are skipped.
  *
  * The caller passes the field values rather than a card, because the card's own
  * shape belongs to the package that reads the file.

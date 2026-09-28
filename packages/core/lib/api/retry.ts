@@ -59,9 +59,10 @@ export interface RetryDirective {
 	/**
 	 * Whether this class of failure is worth another attempt.
 	 *
-	 * `true` for 408/429/5xx and every network-class failure
-	 * (connect, DNS, timeout, mid-body-transfer drop), `false` for 403/404/other non-transient
-	 * statuses, a caller-initiated cancel, and a body that failed to decode.
+	 * `true` for 408/429/5xx and network-class failures such as connect errors,
+	 * DNS errors, timeouts, or mid-body-transfer drops.
+	 * `false` for 403/404/other non-transient statuses, caller-initiated cancels,
+	 * or bodies that failed to decode.
 	 */
 	retryable: boolean
 	/**
@@ -83,8 +84,8 @@ export interface RetryDirective {
  * See the constant's docstring for why unparseable fails open toward caution rather than speed.
  *
  * The http-date branch compares against real wall-clock time (`Date.now()`), not an injectable clock.
- * An http-date is an absolute calendar timestamp, which only means something
- * relative to the actual current time.
+ * An HTTP date is an absolute calendar timestamp.
+ * Its delay depends on the actual current time.
  */
 export function parseRetryAfterMs(header: string | null | undefined): number | null {
 	if (!header) return null
@@ -133,16 +134,19 @@ function retryAfterFrom(error: AxiosError): number | null {
 }
 
 /**
- * Classify one failed attempt: is this failure class worth retrying,
- * and did the server name its own backoff?
+ * Classify one failed attempt.
  *
- * A network-class failure — a dropped socket, a DNS blip, this attempt's own timeout firing,
- * or a body read that died mid-transfer — is retryable.
- * This is the case a bulk crawler hits most: fetching multi-MB documents, a dropped socket is far more
- * common than a 503, and the standalone SEC client shipped a version that treated it as terminal.
+ * Determine whether it is worth retrying.
+ * Read the server's requested backoff when present.
+ *
+ * A dropped socket, DNS failure, request timeout, or mid-transfer body-read failure is retryable.
+ * Bulk crawlers fetch multi-MB documents, where dropped sockets are more common than 503 responses.
+ *
+ * The standalone SEC client treated dropped sockets as terminal.
  *
  * A caller-initiated cancel (`ERR_CANCELED`, i.e. the caller's own `AbortSignal` fired) is not retryable.
- * The caller asked us to stop, and retrying would defy that.
+ * The caller asked us to stop.
+ * Retrying would defy that request.
  *
  * Axios reports its own `timeout` config as `econnaborted`/`etimedout`, so the two are distinguishable.
  */
@@ -164,8 +168,10 @@ export function classifyAxiosFailure(error: unknown): RetryDirective {
  *
  * Pass `true` to accept every default.
  *
- * Retry is OPT-IN: an `APIClient` constructed without this option makes exactly one attempt,
- * which is what the existing `TileAPI` consumer has always done.
+ * Retry is opt-in.
+ * An `APIClient` without this option makes exactly one attempt.
+ *
+ * The existing `TileAPI` consumer uses that behavior.
  * Turning it on repo-wide would silently multiply every caller's failure latency.
  */
 export interface RetryOptions {
@@ -179,8 +185,8 @@ export interface RetryOptions {
 	/**
 	 * Base delay for the exponential backoff, in milliseconds.
 	 *
-	 * Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, unless the response carried a
-	 * `Retry-After` header, which is honored instead.
+	 * Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, unless the response carried a `Retry-After` header.
+	 * The client honors that delay instead.
 	 * Default {@linkcode DEFAULT_BASE_RETRY_DELAY_MS}.
 	 */
 	baseDelayMs?: number

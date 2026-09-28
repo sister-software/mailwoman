@@ -113,7 +113,7 @@ for (const c of [...FRAGMENT_ROWS, ...TOPONYM_ROWS]) {
 	const { pop, imp } = await matchers(c.locale)
 	const popTags = biasOf(pop, c.probeSurface)
 	const impTags = biasOf(imp, c.probeSurface)
-	// Report on the tag the row is about — locality unless the curator named another,
+	// Report on the tag the row is about — locality unless the curator selected another,
 	// with an unaccepted surface reading as a declared zero on that tag.
 	const tag = c.probeTag ?? "locality"
 	const point = c.expectID === undefined ? undefined : pointOf(c.expectID)

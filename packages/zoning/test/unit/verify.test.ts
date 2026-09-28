@@ -3,22 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two-path comparison's own logic, against a scripted service reader.
+ *   The two-path comparison's own logic runs against a scripted service reader.
  *
- *   the value OF the check is which OF three outcomes A point gets, and that decision is what a live run can
- *   only be watched making. Expressed against a function rather than an http client it can be pinned: a point
- *   the service also places inside agrees, a point far from any service edge disagrees, and a point a few
- *   centimetres from an edge is `boundary_tolerance` — because the two channels render the same edge through
- *   different rounding.
+ *   The check assigns one of three outcomes to each point. A live run can only be watched making that decision.
+ *   A scripted function makes the decision testable. Points the service places inside agree. Points far from
+ *   every service edge disagree. Points within a few centimetres of an edge receive `boundary_tolerance` because
+ *   the two channels round the same edge differently.
  *
- *   and the service side resolves hole roles the same WAY the ingest does. The publisher uses one convention
- *   on both channels, so a checker that read the service's rings as nested GeoJSON would answer "inside" for a
- *   point in a hole and report the artifact as wrong at exactly the locations the hole handling exists for.
+ *   The service side resolves hole roles the same way the ingest does. The publisher uses one convention on both
+ *   channels. A checker that read the service's rings as nested GeoJSON would answer "inside" for a point in a
+ *   hole and report the artifact as wrong at exactly the locations the hole handling exists for.
  *
- *   the negative half is pinned here too. Donegal is the one local authority of 31 the Department does not
- *   publish, and Northern Ireland is a different jurisdiction entirely. both must read `unknown` with no
- *   designation, and this is the check that would catch a builder generalizing the flood layer's
- *   Zone-1-by-absence rule.
+ *   The test also pins the negative case. The Department does not publish Donegal, one of 31 local authorities.
+ *   Northern Ireland is a separate jurisdiction. Both cases must read `unknown` with no designation. The test
+ *   catches a builder that applies the flood layer's Zone-1-by-absence rule to these cases.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -132,14 +130,14 @@ describe("the positive half", () => {
 		})
 
 		expect(verified.disagreed).toBe(1)
-		// No polygon nearby at all, so there is no edge to measure to — reported as absent rather than as zero.
+		// No polygon appears near the point, so the result omits an edge distance instead of reporting zero.
 		expect(verified.agreement[0]!.nearestEdgeMetres).toBeUndefined()
 	})
 
 	it("tolerates a point a few centimetres outside the service's rendering of the same edge", async () => {
-		// The service's rendering of zone A's southern edge sits 0.000004° — about 45 cm —
-		// north of the artifact's, which is the scale of a rounding difference between
-		// two renderings of the same coordinates.
+		// The service's rendering of zone A's southern edge sits 0.000004° —
+		// about 45 cm — north of the artifact's.
+		// This 45 cm shift measures the rounding difference between two renderings of the same coordinates.
 		const shifted: ServiceFeatureReader = async () => [
 			{
 				geometry: {
@@ -186,8 +184,8 @@ describe("the positive half", () => {
 			points: [holeCentre],
 		})
 
-		// A checker that read the service's two single-ring parts as two exteriors would report
-		// `inside` here, and the artifact — which resolves the roles — would read as wrong.
+		// A checker that read the service's two single-ring parts as exteriors would report `inside` here.
+		// The artifact resolves the roles and would then appear wrong.
 		expect(verified.agreement[0]!.serviceInside).toBe(false)
 	})
 })
@@ -214,7 +212,7 @@ describe("the negative half", () => {
 			expect(point.label.length).toBeGreaterThan(0)
 		}
 
-		// Both populations are required: the unpublished authority, and the other jurisdiction.
+		// The test includes both the unpublished authority and the other jurisdiction.
 		expect(OUTSIDE_PUBLICATION_POINTS.some((point) => point.label.includes("Donegal"))).toBe(true)
 		expect(OUTSIDE_PUBLICATION_POINTS.some((point) => point.label.includes("Northern Ireland"))).toBe(true)
 	})

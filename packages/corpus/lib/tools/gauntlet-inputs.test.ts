@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The board-input register a recipe consults, and the rows it has to contain.
+ * @file Tests the board-input register that recipes consult and the rows it must contain.
  */
 
 import { normalizeGauntletSurface, readGauntletInputs } from "@mailwoman/corpus/tools/gauntlet-inputs"
@@ -41,7 +41,8 @@ describe("readGauntletInputs", () => {
 	})
 
 	it("reaches a board row outside the two-letter country directories", () => {
-		// `generalization/` holds parked passes the gauntlet loader skips, which this register must not.
+		// The gauntlet loader skips parked passes under `generalization/`.
+		// This register must include those board rows.
 		expect(inputs.has(normalizeGauntletSurface("Praha 100 00, Czechia"))).toBe(true)
 	})
 

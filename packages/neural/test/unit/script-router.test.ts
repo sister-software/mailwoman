@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The script-routed classifier over stub classifiers: a Latin line stays on the primary, a kanji or Hangul line
- *   runs on the family loaded once, a family whose load fails degrades to the primary with one report, a
- *   character-path primary is never re-routed, and a routed parse drops the primary's gazetteer priors.
+ *   Tests script routing with stub classifiers. A Latin line stays on the primary. A kanji or Hangul line
+ *   runs on the family loaded once. A family whose load fails falls back to the primary with one report.
+ *   A character-path primary always handles its own inputs. A routed parse drops the primary's gazetteer priors.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -43,7 +43,8 @@ describe("scriptFamilyForText", () => {
 	})
 
 	it("names the family for a Han address line beside Latin segments", () => {
-		// The whole-input fold answers `mixed` for these, which sent the Han unit to the Latin model as one locality.
+		// The whole-input fold answers `mixed` for these.
+		// The Latin model then treats the Han unit as one locality.
 		expect(scriptFamilyForText("逊克二分场四队, HEILONGJIANG, CHINA")).toBe("cjk")
 		expect(scriptFamilyForText("七分场, LIAONING, CHINA")).toBe("cjk")
 		expect(scriptFamilyForText("一零三团七连, xinjiang uyghur")).toBe("cjk")
@@ -54,10 +55,9 @@ describe("scriptFamilyForText", () => {
 	})
 
 	it("keeps a Latin line carrying a foreign-script venue name on the primary", () => {
-		// These four are what make the segment reading narrower than "any family script
-		// in the input": the name shares its segment with the Latin words around it,
-		// and the character model reads those by codepoint — `Far East Chinese 口福羊汤`
-		// came back as `country: "Chi"`, `region: "Far East"`.
+		// These four make the segment reading narrower than "any family script in the input".
+		// The name shares its segment with surrounding Latin words. and the character model reads those by
+		// codepoint — `Far East Chinese 口福羊汤` came back as `country: "Chi"`, `region: "Far East"`.
 		expect(scriptFamilyForText("Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS")).toBeUndefined()
 
 		expect(
@@ -95,8 +95,8 @@ describe("routeFamilyWithLeadingRun", () => {
 	/**
 	 * The four board rows that pass today with Han or Hangul inside a Latin line.
 	 *
-	 * A reading that moves one of these changes the graph serving a checking row,
-	 * and two of them are GB, which `scope.config.json` names in `dRuleProtected`.
+	 * A reading that moves one of these changes the graph serving a checking row.
+	 * Two rows are in GB, listed in `scope.config.json` under `dRuleProtected`.
 	 */
 	const LATIN_LED = [
 		"JJAN! 짠 Châtelet, 14 Rue du Pont Neuf, 75001 Paris",
@@ -115,8 +115,8 @@ describe("routeFamilyWithLeadingRun", () => {
 	})
 
 	it("keeps the shipped router's answer wherever that router names a family", () => {
-		// Tried last and only on an abstention, which is what makes the difference
-		// between the two arms exactly the rows the reading adds.
+		// The route runs last and only after an abstention.
+		// The added rows are the only difference between the arms.
 		// A reading that could also change an existing answer would need its own comparison.
 		for (const input of ["富山県中新川郡上市町大岩148-7", "逊克二分场四队, HEILONGJIANG, CHINA", "新加坡"]) {
 			expect(routeFamilyWithLeadingRun(input).family).toBe(scriptFamilyForText(input))
@@ -134,8 +134,8 @@ describe("routeFamilyWithLeadingRun", () => {
 
 	it("skips a leading token carrying no script rather than letting it decide", () => {
 		// `Zyyy` is the class for a house number or a postal mark.
-		// Answering on the first token regardless would make `〒150-0001` decide a route,
-		// and the postal mark belongs to no family's script set.
+		// Letting the first token decide would make `〒150-0001` select a route.
+		// The postal mark belongs to no family's script set.
 		expect(routeFamilyWithLeadingRun("〒150-0001 東京都渋谷区").family).toBe("cjk")
 	})
 })

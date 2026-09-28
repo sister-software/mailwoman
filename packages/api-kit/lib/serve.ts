@@ -28,11 +28,14 @@ export type ServeNodeOptions = Parameters<typeof serve>[0] & {
 }
 
 /**
- * The listener plus the port it bound, which `port: 0` callers need.
+ * The listener and the port it bound.
+ * Callers that pass `port: 0` need the selected port.
  *
- * Only `port` is added: `net.Server` already owns an `address()` method, and Node's
- * cluster child calls it inside its own `listening` handler, so a value property of
- * that name on the handle breaks every cluster worker at listen.
+ * The wrapper adds only `port`.
+ * `net.Server` already owns an `address()` method.
+ *
+ * Node's cluster child calls that method in its `listening` handler.
+ * A value property with the same name breaks cluster workers when they listen.
  */
 export type ServerHandle = ServerType &
 	AsyncDisposable & {

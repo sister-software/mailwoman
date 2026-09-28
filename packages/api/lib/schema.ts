@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Zod wire schemas for the native `/v1` surface, which is ours to design rather than a vendor
- *   interface: request bodies are required and validator-enforced, and validation failures answer
- *   through `@mailwoman/api-kit`'s `APIErrorSchema` envelope.
+ *   Zod wire schemas for the native `/v1` surface. We design this interface ourselves. Request
+ *   bodies are required and validator-enforced. Validation failures use `@mailwoman/api-kit`'s
+ *   `APIErrorSchema` envelope.
  */
 
 import { z } from "@hono/zod-openapi"
@@ -97,7 +97,7 @@ const GeocodeCandidateSchema = z
 	.openapi("GeocodeCandidate")
 
 /**
- * The `ComponentTag` union at this engine-agnostic boundary, named once so every schema
+ * The `ComponentTag` union at this engine-agnostic boundary, declared once so every schema
  * that speaks about a tag speaks about the same list rather than a hand-copied twin.
  */
 const ComponentTagSchema = z.enum([
@@ -138,9 +138,10 @@ const ComponentTagSchema = z.enum([
 const GeocodeComponentsSchema = z.partialRecord(ComponentTagSchema, z.string())
 
 /**
- * One `GeocodeOutcome.intent_markers` entry, mirroring `QueryIntentMarker`;
- * `evidence` is deliberately open because each `code` carries its own measurement,
- * and `code` is the discriminator a client branches on.
+ * One `GeocodeOutcome.intent_markers` entry, mirroring `QueryIntentMarker`.
+ *
+ * `evidence` stays open because each `code` carries its own measurement.
+ * A client branches on `code`.
  */
 const QueryIntentMarkerSchema = z
 	.object({
@@ -294,8 +295,8 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// reached the top because the exemption spared it the cross-country alias penalty.
 	variant_alias_exemption: z.literal(true).optional(),
 	// Query-intent advisories, always present.
-	// Empty means the vocabulary looked and reported no marker, and a client is
-	// free to ignore the array entirely.
+	// Empty means the vocabulary found no marker.
+	// Clients can ignore the array.
 	intent_markers: z.array(QueryIntentMarkerSchema),
 	// Flag-only admin-coherence verdicts: no code ranks or filters on them.
 	// Present whenever a winner resolved (both members always populated; `unstated` is the
@@ -335,8 +336,9 @@ export const GeocodeOutcomeLikeSchema = z.object({
 			})
 		)
 		.optional(),
-	// A component the parse kept and the answer did not follow: its value in `components` reads
-	// as if it were honoured, and no other field says it points at a place far from the rest.
+	// The parse kept this component, but the answer did not follow it.
+	// Its value in `components` looks honored.
+	// No other field says it points at a place far from the rest.
 	// Absent when the answer followed everything it parsed.
 	unfollowed_components: z
 		.array(
@@ -420,8 +422,10 @@ export const ResolveResponseSchema = z
 const ComponentValueSchema = z.union([z.string(), z.array(z.string())])
 
 /**
- * `post /v1/format` request body; `components` accepts `string | string[]` per key,
- * which a handler must join because `formatAddress`/`canonicalKey` take single strings.
+ * `post /v1/format` request body.
+ *
+ * Each `components` key accepts `string | string[]`.
+ * A handler joins array values because `formatAddress` and `canonicalKey` take single strings.
  */
 export const FormatRequestSchema = z
 	.object({

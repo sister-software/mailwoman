@@ -9,7 +9,7 @@
  *   `attribution.json` undercounts. This reads every `address-points-us-*.db` in the directory and
  *   aggregates the per-row `source` (`overture:<dataset>`) provenance into a full ledger — the
  *   document we owe consumers for the OpenAddresses attribution obligation (NAD is US public
- *   domain. the named OA sources want credit).
+ *   domain. the OA data sources request credit).
  *
  *   This regenerates a small JSON manifest from read-only databases (it builds no large DB), so — as in
  *   the original script — `attribution.json` is written directly in place. Per-database progress

@@ -41,7 +41,8 @@ export interface NPPESReportInput {
 	state: string
 
 	/**
-	 * The number of sampled NPIs, which is the true entity count at the NPI grain.
+	 * The number of sampled NPIs.
+	 * This is the true entity count at the NPI grain.
 	 */
 	keptNpis: number
 	recordCount: number
@@ -59,8 +60,8 @@ export interface NPPESReportInput {
 	addressFrequency: TermFrequencyTable
 
 	/**
-	 * The setting progression from the bare baseline to the full stack,
-	 * which the report expects to hold at least four rows.
+	 * The setting progression from the bare baseline to the full stack.
+	 * The report requires at least four rows.
 	 */
 	progression: readonly SettingScore[]
 
@@ -72,7 +73,9 @@ export interface NPPESReportInput {
 	sweep: readonly SweepArm[]
 
 	/**
-	 * The best-F1 arm, which must be an element of `sweep` because the table marks it by identity.
+	 * The best-F1 arm.
+	 *
+	 * It must be an element of `sweep` because the table marks it by identity.
 	 */
 	best: SweepArm
 	entityCount: number
@@ -96,8 +99,8 @@ export interface NPPESReportInput {
 	h3Res: number
 
 	/**
-	 * The number of sampled NPIs whose primary practice address was placed,
-	 * which bounds what the coordinate grain can act on.
+	 * The number of sampled NPIs whose primary practice address was placed.
+	 * This bounds what the coordinate grain can act on.
 	 */
 	geocodedNpis: number
 }

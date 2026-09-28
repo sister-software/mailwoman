@@ -69,7 +69,8 @@ export interface SoilIngestOptions {
 	/**
 	 * The layer inside the shapefile.
 	 *
-	 * The default is the file's base name, which the ESRI driver reports.
+	 * The default is the file's base name.
+	 * The ESRI driver reports that name.
 	 */
 	layer?: string
 
@@ -80,7 +81,8 @@ export interface SoilIngestOptions {
 	expectEPSG?: number
 
 	/**
-	 * The inclusive range of shapefile FIDs to read, which lets a build read one chunk.
+	 * The inclusive range of shapefile FIDs to read.
+	 * A build can use it to read one chunk.
 	 */
 	fidFrom?: number
 	fidTo?: number
@@ -137,8 +139,10 @@ interface RawFeature {
 /**
  * Streams a shapefile's map-unit delineations reprojected to WGS84.
  *
- * It throws on a feature that has no geometry or `mukey`, or that has a vertex outside the declared extent.
- * The extent check catches swapped coordinate axes, which the projection check misses.
+ * It throws when a feature lacks geometry or `mukey`.
+ * It also throws when a vertex falls outside the declared extent.
+ *
+ * The extent check catches swapped coordinate axes that the projection check misses.
  */
 export async function* readSoilDelineations(
 	options: SoilIngestOptions & { bbox: readonly [number, number, number, number] }

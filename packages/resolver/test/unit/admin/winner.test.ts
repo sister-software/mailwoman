@@ -32,7 +32,8 @@ const GB_UNIT = { value: "N7 0BT", resolverName: "n70bt" }
  */
 const GB_OUTWARD = { value: "N7 0BT", resolverName: "n7" }
 /**
- * A US ZIP: a full code, and never unit-grade whatever the resolver returns.
+ * A US ZIP is a full code.
+ * The resolver result is never unit-grade.
  */
 const US_ZIP = { value: "62701", resolverName: "62701" }
 /**
@@ -40,7 +41,9 @@ const US_ZIP = { value: "62701", resolverName: "62701" }
  */
 const NL_PC6 = { value: "1012 LG", resolverName: "1012LG" }
 /**
- * A German PLZ: an ordinary 5-digit code, unit-grade by no shape test, whose system warrants the lead.
+ * A German PLZ is an ordinary 5-digit code.
+ *
+ * Shape checks classify it as unit-grade, and its system warrants priority.
  */
 const DE_PLZ = { value: "12623", resolverName: "12623" }
 

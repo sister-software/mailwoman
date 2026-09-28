@@ -2,18 +2,18 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The trailing parenthetical an OpenAddresses locality sometimes carries, and the one function that removes it.
+ * @file The trailing parenthetical an OpenAddresses locality sometimes carries and the function that removes it.
  *
  *   `Manilla (Rural)` is the town of Manilla reached on a rural route. The parenthesis is the source's delivery-type
  *   marker rather than part of the place name, so grading against the raw expectation marks the parser's correct
  *   `Manilla` answer wrong.
  *
- *   A gazetteer name may carry one too, so this is a fallback rather than an up-front normalization: a caller compares
- *   the raw surfaces first and reaches for the stripped form only when that misses, which can add credit only where the
- *   base name already matches. The strip applies to the expectation, never to what a run answered.
+ *   A gazetteer name may carry one too, so this is a fallback rather than an up-front normalization.
+ *   A caller compares the raw surfaces first and tries the stripped form only after a miss.
+ *   The fallback adds credit only where the base name already matches. It strips the expectation, never the run's answer.
  *
- *   Two readers need it and they have to agree, so it is a function rather than a regex typed into each: the panel
- *   reader keys rows by locality, and the resolver eval compares an expectation to a resolved name.
+ *   Two readers need this behavior and they have to agree, so it lives in a function rather than a regex in each reader.
+ *   The panel reader keys rows by locality. The resolver eval compares an expectation to a resolved name.
  */
 
 /**

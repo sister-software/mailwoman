@@ -1,6 +1,6 @@
 """Tests for the support-aware token-F1 metric (`train._token_f1`).
 
-Layer 1 of the val-metrics honesty fix: per-tag support is reported, and `macro_f1` averages only
+Layer 1 of the val-metrics honesty fix reports per-tag support. `macro_f1` averages only
 component labels (excludes "O") that actually occur in the val sample — so a tag the sample happens
 not to contain doesn't pin F1 at 0 and drag the headline number down.
 """

@@ -9,8 +9,8 @@ from typing import Any
 from ...corpora.address_points import sample_address_points
 from ...paths import data_root_path
 
-#: One database per state, named `address-points-us-<state>.db`. The state code comes off the
-#: filename, which is the only place the row carries it.
+#: One database per state, with path pattern `address-points-us-<state>.db`. The state code comes off the
+#: filename. The row carries the state code nowhere else.
 SITUS_DIR_PARTS = (
     "db",
     "address-points",

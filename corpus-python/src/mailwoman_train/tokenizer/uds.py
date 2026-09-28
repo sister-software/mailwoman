@@ -1,4 +1,4 @@
-"""The strings SentencePiece must keep whole, and how they reach it.
+"""Keep selected strings whole in SentencePiece and explain how they reach it.
 
 A user-defined symbol bypasses unigram inference and is always emitted as one piece. Two things
 about them are easy to get wrong and both live here: the LITERAL a caller writes is not the literal

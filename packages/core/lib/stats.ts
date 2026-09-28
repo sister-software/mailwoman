@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Statistical helpers for percentiles, averages, and percentages.
+ *   Statistical helpers for percentiles, averages and percentages.
  */
 
 /**

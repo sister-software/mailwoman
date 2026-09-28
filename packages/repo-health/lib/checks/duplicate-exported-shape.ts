@@ -2,18 +2,19 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file An exported `interface` or `type` alias whose body is identical to one another workspace exports. Two
- *   packages that each declare the same shape have two homes for one declaration, and the two drift the first time
- *   either is edited. A declaration several packages need has one home and is imported with `import type`, which
+ * @file Finds an exported `interface` or `type` alias whose body matches one from another workspace. Two
+ *   packages that declare the same shape have two homes for one declaration. They can drift when either is edited.
+ *   A declaration several packages need has one home and is imported with `import type`, which
  *   adds zero modules to the importing package's runtime graph.
  *
- *   The check reads each exported interface, type literal alias, and union alias under `packages/*\/lib`, keyed by
- *   its body after comments are dropped, whitespace is collapsed, and members are sorted. Two declarations with
+ *   The check reads exported interfaces, type literal aliases and union aliases under `packages/*\/lib`.
+ *   It keys each one by its body after dropping comments, collapsing whitespace and sorting members.
+ *   Two declarations with
  *   the same key in different workspaces form a group. Names are ignored: `GeoCoordinate` and `LatLng` with the
  *   same two fields are one shape. A declaration with the same key inside one workspace is the
  *   `mailwoman/prefer-home` lint rule's concern and is left out here.
  *
- *   A single-member interface, a union of one member, and an alias of a bare reference such as `type Id = string`
+ *   A single-member interface, a one-member union or an alias of a bare reference such as `type Id = string`
  *   are skipped: they agree by coincidence far more often than by copy. Member order is normalized one level
  *   deep. A nested type literal keeps its written order.
  */

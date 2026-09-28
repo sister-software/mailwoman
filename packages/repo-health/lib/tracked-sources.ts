@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  * @file The tracked-source enumerator the checks share: a filter over `RepoContext.trackedFiles`.
  *
- *   Enumerated from the index rather than the filesystem. A file set read off the disk is not a property of the repository.
- *   it is a property of whichever files happen to be sitting in that checkout. A tree carrying gitignored scratch
- *   scripts counted 166 `asNever` against a clean checkout's 85 at the same commit, so the debt check failed on files no
- *   commit contains. a directory walk likewise kept flagging `scratchpad/` probes and agent worktrees — hits that fail
- *   for whoever has the file and cannot fail in CI, which reads as a real violation and is unreproducible by the person
- *   asked to fix it. `git ls-files` answers the actual question, and drops the hand-maintained skip lists (build output,
- *   `node_modules`, `.yarn`) with it: two readers of the same count must be able to reproduce each other.
+ *   The enumerator reads paths from the index. Disk-based enumeration depends on checkout contents.
+ *   A tree with gitignored scratch scripts counted 166 `asNever` against 85 in a clean checkout
+ *   at the same commit. The debt check therefore flagged scratch paths absent from the commit.
+ *   A directory walk also found `scratchpad/` probes and agent worktrees. Those findings appeared
+ *   only in local worktrees because CI reads the committed path list. The checker uses `git ls-files`
+ *   to make the result reproducible and avoid hand-maintained skip lists for build output, `node_modules`,
+ *   and `.yarn`.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -76,8 +76,8 @@ export function pathspecPattern(pathspec: string): RegExp {
 /**
  * The tracked sources of `context`, as absolute paths in `git ls-files` order.
  *
- * `out/` and `node_modules/` path segments are always dropped: the index can carry
- * a stray build artifact, and no check means to read one.
+ * The index can carry a stray build artifact under `out/` or `node_modules/`.
+ * Checks should never read those paths, so the function always drops these segments.
  */
 export async function trackedSourcePaths(context: RepoContext, options: TrackedSourceOptions = {}): Promise<string[]> {
 	const { prefix, excludePrefixes } = options

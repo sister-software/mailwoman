@@ -37,12 +37,12 @@ OA_LOCALES: dict[str, tuple[str, str, bool]] = {
 PER_LOCALE_CAP = 4000
 SEED = 42
 
-#: The wire identifier every row of this recipe output carries, and the prefix of every `source_id`.
+#: Every row of this recipe output stores this wire identifier. Each `source_id` begins with it.
 #:
-#: `RECIPE_SOURCES` in `packages/corpus/lib/recipes/sources.ts` is the authority for both spellings of this
-#: source and records `fragment-assay` as the current one. Python cannot import that table, so the two agree
-#: by hand: this constant carries the same value as the table's `current` field, and `WRITE_CURRENT_SOURCE_NAMES`
-#: in that file is the switch the TypeScript recipes read.
+#: `RECIPE_SOURCES` in `packages/corpus/lib/recipes/sources.ts` defines both spellings of this source.
+#: It records `fragment-assay` as the current spelling. Python cannot import that table, so maintain
+#: both values in sync. This constant matches the table's `current` field.
+#: `WRITE_CURRENT_SOURCE_NAMES` in that file tells the TypeScript recipes which spelling to use.
 #:
 #: `v0.6.0-register-surface` and the `.pre-rename` copy of the staging directory store the retired spelling
 #: `synth-fragment`, and the configs that target either corpus key on it. A run of this generator writes rows

@@ -25,10 +25,11 @@ import { MODEL_GRAPH_FILE, type ModelGraphRecord, readModelGraph } from "#weight
 /**
  * The meaning of the `version` field in a package's `model-card.json`.
  *
- * A graph package's card version identifies the trained model, and
- * `mwops release verify-metadata` keys its checks on it.
+ * A graph package's card version identifies the trained model.
+ * `mwops release verify-metadata` keys its checks on that version.
+ *
  * An overlay's card version identifies the overlay's own artifacts.
- * Neither is the npm version, which every workspace shares.
+ * The npm version is a separate field shared by every workspace.
  */
 export const VersionSeries = {
 	Model: "model",
@@ -41,12 +42,15 @@ export const VersionSeries = {
 export type VersionSeries = (typeof VersionSeries)[keyof typeof VersionSeries]
 
 /**
- * The kind of an artifact, which determines which sources it derives from.
+ * The artifact kind determines which sources it derives from.
  *
  * The files in one package have unrelated provenance: `model.onnx` derives from
- * the training corpus, `tokenizer.model` from the tokenizer text, and a pair index
- * or postcode binary from one named register. {@link roleForArtifact} derives the
- * role from the file name, and an unrecognized name maps to `other`.
+ * `model.onnx` derives from the training corpus.
+ * `tokenizer.model` derives from tokenizer text.
+ *
+ * A pair index or postcode binary derives from one selected register.
+ * {@link roleForArtifact} derives the role from the file path.
+ * An unrecognized file maps to `other`.
  */
 export const ArtifactRole = {
 	ModelGraph: "model-graph",
@@ -101,7 +105,8 @@ export interface ArtifactRecord {
 	role: ArtifactRole
 	md5: string | null
 	/**
-	 * `recorded` when the card's `files_md5` lists this artifact, and `unrecorded` otherwise.
+	 * `recorded` when the card's `files_md5` lists this artifact.
+	 * The value is `unrecorded` when that list omits it.
 	 */
 	digest: "recorded" | "unrecorded"
 }
@@ -254,8 +259,9 @@ export interface WeightsRightsRecord {
 	 * What the package's own model graph can emit, read from the `.onnx` file.
 	 *
 	 * `null` for a package that ships no graph of its own, such as an overlay that reuses its base's.
-	 * The record answers what running the model returns, and settles no question
-	 * about a white-box extraction attack over the weights.
+	 * The record describes outputs from running the model.
+	 *
+	 * A white-box extraction attack over the weights requires a separate assessment.
 	 */
 	modelGraph: ModelGraphRecord | null
 }

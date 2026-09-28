@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The Cloudflare Workers this repository deploys, and which of them a change reaches. The table is the one
- *   place a target's build, wrangler invocation and receipt URL are written. the deploy workflow reads it through
+ * @file Lists the Cloudflare Workers this repository deploys and which targets a change reaches.
+ *   The table records each target's build, wrangler invocation, and receipt URL. The deploy workflow reads it through
  *   `release.deploy-targets` as a job matrix, so a new Worker is one row here and no YAML.
  *
  *   A target is affected when a changed file lies in a workspace inside its dependency closure, or in a root file
@@ -21,7 +21,8 @@ export type DeployTargetID = "tiles" | "license" | "earth" | "moon" | "mars"
 export interface DeployTarget {
 	id: DeployTargetID
 	/**
-	 * The Worker name on Cloudflare, and the concurrency key a deploy holds.
+	 * The Worker name on Cloudflare.
+	 * A deploy uses it as its concurrency key.
 	 */
 	worker: string
 	workspace: string

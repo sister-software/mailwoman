@@ -3,9 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   JSON parsing and printing: the strict parser every reader of untrusted text goes through, its forgiving sibling, the
- *   array reader for a JSON column, and the pretty printer. Platform-neutral by construction — a type import and the
- *   global `JSON` are all it reaches — so the license key module, which a Cloudflare Worker bundles, can depend on it.
+ *   This module parses and prints JSON.
+ *   It provides the strict parser.
+ *   It also provides a forgiving parser and a reader for JSON columns.
+ *   The module includes the pretty printer.
+ *   The module imports only types and uses the global `JSON` object, so it stays platform-neutral.
+ *   The license key module can depend on it when a Cloudflare Worker bundles that module.
  */
 
 import type { GetTagMetadata, Tagged } from "type-fest"
@@ -27,8 +30,8 @@ export type StringifiedJSON<T = unknown> = Tagged<string, "JSON", T>
  * Defaults to `true`.
  * @param space The indent: a string to repeat, or a count of spaces.
  * Defaults to a tab character (`"\t"`).
- * Both forms are accepted because both are what the builtin accepts, and a caller converting
- * `2` to `" "` at the call site would be doing the conversion this parameter exists to hold.
+ * The builtin accepts a string or number for indentation.
+ * This parameter handles the conversion from `2` to `" "` for callers that need it.
  *
  * @returns A string containing the pretty-printed JSON representation of the input object.
  * @see {@linkcode stringifyJSON} for a jsonl-compatible version that returns a branded type.
@@ -46,9 +49,10 @@ export function prettyJSON<T = unknown>(input: T, newline = true, space: string 
  *
  * @param input The object to be stringified.
  * @param keys An allowlist of property names, in the order they should print.
- * Two call sites need it and neither is cosmetic: a cache key that must omit the API key and fix the
- * order of what remains, and a regenerated seed file that must diff only where a value changed.
- * Passing the list here keeps both on the branded printer.
+ * Two call sites need the allowlist.
+ * A cache key must omit the API key and keep the remaining keys in a fixed order.
+ * A regenerated seed file must diff only when a value changes.
+ * Passing the list here keeps both call sites on the branded printer.
  *
  * @returns A string containing the JSON representation of the input object.
  * @see {@linkcode prettyJSON} for human-friendly JSON output.

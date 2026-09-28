@@ -84,7 +84,8 @@ function canContainCell(box: LatLonBounds, resolution: number): boolean {
 }
 
 /**
- * The two cell sets one feature produces, and the resolution they came out at.
+ * The two cell sets produced by one feature.
+ * The record also stores their resolution.
  */
 export interface FeatureCells {
 	/**
@@ -256,8 +257,8 @@ export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 }
 
 /**
- * Compact a cell set that may span several resolutions by grouping it before compaction
- * rather than pooling, which would throw inside h3.
+ * Compact a cell set that spans several resolutions by grouping its cells first.
+ * Pooling cells from different resolutions makes h3 throw.
  */
 export function compactAcrossResolutions(cells: Iterable<string>): string[] {
 	const compacted: string[] = []
@@ -270,8 +271,9 @@ export function compactAcrossResolutions(cells: Iterable<string>): string[] {
 }
 
 /**
- * The cells a probe walks for one index cell: the cell itself at the index resolution,
- * and its parent at every other resolution the layer stores.
+ * The probe visits the index cell at its own resolution.
+ *
+ * At every other resolution stored by the layer, it visits the parent cell.
  */
 export function ancestorChainCells(
 	indexCell: H3Cell,

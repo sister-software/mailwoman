@@ -6,9 +6,9 @@ import { familyFallbackFor } from "#weights/families"
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The character encoder for char-path models — one unit per Unicode code point rather than per
- *   UTF-16 unit, so an astral character is one unit as in Python, and this module reaches no `node:`
- *   module because the classifier imports it on the browser bundle.
+ * @file The character encoder for char-path models. It uses one unit per Unicode code point rather than per
+ *   UTF-16 unit, matching Python's treatment of astral characters. The classifier imports this module
+ *   into the browser bundle, so it reaches no `node:` module.
  */
 
 /**

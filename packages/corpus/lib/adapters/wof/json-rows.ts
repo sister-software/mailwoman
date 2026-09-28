@@ -30,7 +30,9 @@ const HIERARCHY_ORDER: readonly ComponentTag[] = [
  * Render an admin-hierarchy variant: the components it carries, in hierarchy order,
  * joined the way the country joins a line.
  *
- * This is a gazetteer query rather than a postal address, which is why it does not go through a layout.
+ * This adapter emits a gazetteer query.
+ * It follows the gazetteer path without a postal layout.
+ *
  * A country whose postal layout drops the region would collapse `Paris, Île-de-France` back into `Paris`.
  */
 function renderHierarchy(
@@ -136,8 +138,8 @@ interface EmitWOFJSONRowsOptions {
 	/**
 	 * The ancestor names each record's variants read, rather than its ancestor records.
 	 *
-	 * A record absent from the map resolves to an empty set of ancestor names,
-	 * which is the same value a record with no resolvable ancestor carries.
+	 * A record absent from the map resolves to an empty set of ancestor names.
+	 * Records with no resolvable ancestor produce the same value.
 	 */
 	ancestry: ReadonlyMap<number, AncestorNames>
 	adapterOptions: AdapterOptions

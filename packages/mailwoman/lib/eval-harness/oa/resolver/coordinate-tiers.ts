@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The coordinate tiers a run grades: which lookups to open, and the postcode-anchor reads that
- *   sit between the admin centroid and the street-level point.
+ * @file Coordinate tiers graded by a run, the lookups they open, plus postcode-anchor reads between
+ *   the admin centroid and the street-level point.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -75,9 +75,9 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// per-row, per-state situs and interpolation databases via RegionDatabaseProvider,
 	// so the eval reports the shipped coordinate (address_point > interpolated > admin)
 	// across all states rather than the admin centroid the neural headline alone reports.
-	// The single-state --address-points/--interpolation flags still work for a one-state run,
-	// and --cascade supersedes them with multi-state per-row selection. --data-root
-	// locates the databases (<root>/address-points/, <root>/interpolation/).
+	// The single-state --address-points/--interpolation flags support one-state runs.
+	// --cascade selects databases per row across multiple states. --data-root locates
+	// the databases (<root>/address-points/, <root>/interpolation/).
 	const cascadeOn = options.cascade ?? false
 	const dataRoot = options.dataRoot || dataRootPath()
 	let cascadeProvider: RegionDatabaseProvider | null = null

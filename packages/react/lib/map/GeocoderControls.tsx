@@ -84,8 +84,9 @@ const DRAG_TRAVEL_PX = 3
 const OVERSCROLL_PROMOTE_PX = 8
 
 /**
- * Renders the search panel, result panel, map control rail, and side sheets over the map.
- * on narrow screens the search panel is a bottom drawer the user can drag between detents.
+ * Renders the search and result panels, map control rail and side sheets over the map.
+ *
+ * On narrow screens, users can drag the search panel between bottom-drawer detents.
  */
 export function GeocoderControls({
 	runtime,
@@ -129,7 +130,8 @@ export function GeocoderControls({
 			floor: viewport * 0.15,
 			// A drag released below this height dismisses the result.
 			dismissBelow: viewport * 0.28,
-			// At or below this height the drawer counts as collapsed, and the control rail returns.
+			// At or below this height, the drawer counts as collapsed.
+			// The control rail then returns.
 			collapsedBelow: viewport * 0.2,
 		}
 	}, [])
@@ -183,8 +185,8 @@ export function GeocoderControls({
 		[sheetDetents]
 	)
 
-	// A tap, the handle's keyboard activation, and the handle's `aria-expanded` all
-	// use this midpoint to decide which detent the drawer is at.
+	// A tap, keyboard activation of the handle and the handle's `aria-expanded` state
+	// all use this midpoint to select the drawer detent.
 	const detentMidpoint = useCallback(() => {
 		const { medium, large } = sheetDetents()
 
@@ -211,7 +213,8 @@ export function GeocoderControls({
 		const midpoint = (medium + large) / 2
 		const current = sheetRef.current?.getBoundingClientRect().height ?? medium
 
-		// A press without travel is a tap, which toggles between the two detents.
+		// A press without travel counts as a tap.
+		// It toggles between the two detents.
 		if (!drag.moved) {
 			toggleDetent()
 
@@ -315,7 +318,8 @@ export function GeocoderControls({
 		void geocode.submit(initialQuery)
 	}, [initialQuery, runtime.ready, geocode])
 
-	// Crossing the drawer breakpoint clears a dragged height, which would otherwise clip the desktop column.
+	// Crossing the drawer breakpoint clears any dragged height.
+	// The height could clip the desktop column.
 	useEffect(() => {
 		const query = globalThis.matchMedia(DRAWER_LAYOUT)
 		const onChange = () => setSheetHeight(null)
@@ -405,8 +409,8 @@ export function GeocoderControls({
 		<>
 			<MapProgressBar active={bundleLoading} fraction={fraction} label="Loading the geocoder" />
 
-			{/* One panel holds the search, the examples, and the result. On desktop it is a left column sized to
-			    its content, and on narrow screens a bottom drawer. */}
+			{/* One panel holds the search, examples and result. On desktop it is a left column sized to its content.
+			    On narrow screens it is a bottom drawer. */}
 			<section
 				className="mw-map-panel"
 				aria-label="Search and results"
@@ -417,7 +421,10 @@ export function GeocoderControls({
 				onPointerCancel={onPanelPointerUp}
 				{...(sheetHeight === null ? {} : { style: { maxHeight: `${Math.round(sheetHeight)}px` } })}
 			>
-				{/* The header holds the grab bar and the search field, and it stays pinned while the result scrolls. */}
+				{/*
+				 * The header holds the grab bar and search field.
+				 * It stays pinned while the result scrolls.
+				 */}
 				<div className="mw-map-panel__header" onPointerDown={onHeaderPointerDown}>
 					<div className="mw-map-panel__grip">
 						{/* The handle appears only with a result, because there is no content to expand without one. */}
@@ -539,8 +546,8 @@ export function GeocoderControls({
 				) : null}
 			</section>
 
-			{/* Every floating control lives in this one rail so none can overlap. The compass has its own group
-			    because it appears and disappears, and the rail hides while the drawer is raised. */}
+			{/* Every floating control uses this rail to prevent overlap. The compass has its own group because it appears
+			    and disappears. The rail hides while the drawer is raised. */}
 			<MapControlStack label="Map controls" className={drawerRaised ? "mw-map-control-stack--drawer-open" : undefined}>
 				<MapControlGroup>
 					<MapControlButton

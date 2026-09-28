@@ -4,18 +4,19 @@
  * @author Teffen Ellis, et al.
  * @file Binary serialization for the FST gazetteer.
  *
- *   All integers are little-endian. The writer emits the current version, and the reader accepts every earlier one.
+ *   All integers are little-endian. The writer emits the current version. The reader accepts every earlier version.
  *
  *   - Header, 32 bytes: magic `FST\0`, version u16, flags u16 (bit 0 means `crossCountryBranches` is present),
- *     stateCount u32, edgeCount u32, placeCount u32, stringCount u32, stringBytes u32, and the provenance offset u32
- *     (0 when absent).
+ *     The header stores five u32 counts (stateCount, edgeCount, placeCount, stringCount, stringBytes).
+ *     Its provenance offset is u32. The value 0 means the trailer is absent.
  *   - String table: `stringCount + 1` u32 offsets, the last being a sentinel, followed by the UTF-8 data.
  *   - State table, 16 bytes per state: edgeStart u32, placeStart u32, edgeCount u32, placeCount u32. Before version
  *     4 the entry is 12 bytes with u16 counts.
  *   - Edge table, 8 bytes per edge: stringIdx u32, targetState u32.
  *   - Place table, 60 bytes per place: wofID u32, placetypeIdx u8, chainLen u8, crossCountryBranches u8,
- *     placeFlags u8 (bit 0 means `encyclopedic` is present), nameIdx u32, referential f32, lat f32, lon f32, eight
- *     u32 parent ids, and encyclopedic f32. Before version 5 the entry is 56 bytes without the encyclopedic score.
+ *     placeFlags u8 (bit 0 means `encyclopedic` is present), nameIdx u32, referential f32, lat f32, lon f32.
+ *     Each entry then stores eight u32 parent ids. Version 5 added encyclopedic f32. Earlier entries contain 56 bytes.
+ *     Those entries have no encyclopedic score.
  *   - Provenance trailer: a u32 length followed by JSON.
  *
  *   Presence bits keep a missing value distinct from a stored zero.
@@ -188,7 +189,8 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			buf.writeUInt8(placetypeToIdx.get(place.placetype) ?? 0, pp + 4)
 			buf.writeUInt8(chainLen, pp + 5)
 			buf.writeUInt8(hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0, pp + 6)
-			// An absent encyclopedic score writes flag 0 and a 0.0 float, and readers skip the float when the flag is 0.
+			// An absent encyclopedic score writes flag 0 and a 0.0 float.
+			// Readers skip the float when the flag is 0.
 			const hasEncyclopedic = place.encyclopedic !== undefined
 			buf.writeUInt8(hasEncyclopedic ? PLACE_FLAG_HAS_ENCYCLOPEDIC : 0, pp + 7)
 			buf.writeUInt32LE(intern(place.name), pp + 8)
@@ -299,8 +301,8 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
 
-			// Version 1 stored a raw population u32 here, which this maps through the
-			// `referentialFromPopulation` curve.
+			// Version 1 stored a raw population u32 here.
+			// This version maps it through the `referentialFromPopulation` curve.
 			// Later versions store an f32 score.
 			const referential = isV2
 				? buf.readFloatLE(pp + 12)

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Shared plumbing for the Latin off-map outlier builders (`build-outlier-latin.ts` — Overture,
- *   `build-outlier-oa.ts` — OpenAddresses): the address-string assembler and its shape variants,
- *   the dedup/cap loop, and the other-row jsonl encoding. The builders differ only in where the
+ *   `build-outlier-oa.ts` — OpenAddresses): the address-string assembler and its shape variants.
+ *   It also provides the dedup/cap loop and the other-row jsonl encoding. The builders differ in where the
  *   locality comes from and in OA's PO-box guard, so both are parameters here.
  */
 

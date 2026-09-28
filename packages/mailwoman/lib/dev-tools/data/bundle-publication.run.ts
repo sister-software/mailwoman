@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ask every bundle's own artifacts whether they may be published, and report each refusal.
+ *   Ask every bundle's own artifacts whether publication is allowed. Report each refusal.
  *
  *   `BUNDLES` says what `mailwoman data pull` fetches. Each artifact is a sealed database carrying a
- *   `layer_manifest` whose `tier` states whether this project publishes it, and until now no reader
- *   compared the two. `candidate.db` ships as the `candidate` bundle while its manifest records
+ *   `layer_manifest` whose `tier` states whether this project publishes it. No earlier reader compared those values.
+ *   `candidate.db` ships as the `candidate` bundle while its manifest records
  *   `tier = build-local`, which `LayerTier` defines as the tier a share-alike source requires.
  *
- *   The decision lives in `refusalsForPublication`, which reads manifests and holds no opinion about
- *   where they came from. This supplies them from the databases on disk and prints what it read,
+ *   `refusalsForPublication` reads manifests and makes no judgment about their source.
+ *   This command supplies manifests from databases on disk and prints the values it read,
  *   including the artifacts it could not read: an absent database is an unanswered question rather than
- *   a pass, and it says so.
+ *   a pass. The command reports it as unanswered.
  *
  *   Usage:
  *   node packages/mailwoman/lib/dev-tools/data/bundle-publication.run.ts [--bundle <name>]
@@ -68,8 +68,8 @@ for (const name of names) {
 		subjects.push({
 			name: manifest.name,
 			tier: manifest.tier,
-			// An absent expression reaches `refusalsForPublication` as the empty string, which it
-			// reports as an identifier with no recorded obligations rather than reading as permissive.
+			// An absent expression reaches `refusalsForPublication` as the empty string.
+			// The function reports an identifier with no recorded obligations rather than a permissive license.
 			license: manifest.license ?? "",
 			publishedAs: `bundle ${name} -> ${artifact.remotePath}`,
 		})

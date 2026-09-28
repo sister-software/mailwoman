@@ -3,18 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The premise-linkage input adapter interface, plus the one implementation this repository ships: a synthetic
- * fixture whose addresses, coordinates, and identifiers are invented.
+ * Defines the premise-linkage input adapter and this repository's synthetic fixture implementation. The fixture's
+ * addresses, coordinates and identifiers are invented.
  *
- * The interface is an async iterable rather than an array because a controlled file is read under terms that
- * usually forbid holding it whole, and because a run that streams can be stopped without having materialized
- * the licensed rows. The controlled adapter is deliberately not written here: its file format is the
- * provider's and is not known yet.
+ * The interface is an async iterable because controlled-file terms can forbid holding the entire file in memory.
+ * Streaming also lets a run stop before materializing all licensed rows. The controlled adapter belongs with its
+ * provider because its file format is provider-specific and remains unknown.
  *
- * Everything below is synthetic. The identifiers sit in the reserved 0-prefixed range the
- * `@mailwoman/core/resolver` fixture provider uses, which no real uprn occupies. The one rule this file must
- * keep is that the rows and the provider's answers are derived from a single table, because two
- * hand-maintained lists drift the moment someone edits one.
+ * Everything below is synthetic. The identifiers use the reserved 0-prefixed range from the
+ * `@mailwoman/core/resolver` fixture provider. Real UPRNs do not use that range. This file derives rows and provider
+ * answers from one table. Separate hand-maintained lists could drift after an edit.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -34,8 +32,11 @@ import type { GeocodeClassifier, GeocodeDeps } from "#geocode/core"
 /**
  * Where a run's rows come from.
  *
- * One method, asynchronous, licensed-data-neutral: the controlled implementation reads a provider's
- * file, this file's implementation reads a constant, and the runner cannot tell them apart.
+ * Exposes one asynchronous method that does not depend on licensed data.
+ * The controlled implementation reads a provider file.
+ *
+ * This implementation reads a constant.
+ * The runner uses either implementation through the same method.
  */
 export interface PremiseLinkageAdapter {
 	/**
@@ -50,8 +51,9 @@ export interface PremiseLinkageAdapter {
 /**
  * The scheme every synthetic row grades against.
  *
- * Real UK premise linkage grades against UPRNs, and the fixture uses the same scheme name
- * with invented identifiers so the grading path is the one a controlled run takes.
+ * Real UK premise linkage grades against UPRNs.
+ * The fixture uses the same scheme name and invented identifiers so a controlled run
+ * and the fixture follow the same grading path.
  */
 const SYNTHETIC_SCHEME = "uprn"
 
@@ -78,12 +80,13 @@ interface SyntheticCase {
 	/**
 	 * The provider's answer.
 	 *
-	 * Absent means no rule, which the fixture answers as a refusal.
+	 * When absent, the fixture answers with a refusal because no rule applies.
 	 */
 	response?: AuthoritativeResponse
 	/**
-	 * Throw instead of answering, the transport-failure case: a thrown provider is not
-	 * a refusal, and the harness must tell them apart on real data.
+	 * Makes the provider throw to simulate a transport failure.
+	 *
+	 * The harness must distinguish that failure from a refusal on real data.
 	 */
 	transportError?: boolean
 }
@@ -130,7 +133,7 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			hasHistoricalAlias: false,
 		},
 		matchOn: "bravo terrace",
-		// Committed to a premise, named the neighbour's identifier: the `wrong` case.
+		// Committed to a premise and supplied the neighbour's identifier: the `wrong` case.
 		response: fixtureExactMatch({
 			providerPlaceID: "synthetic-place-0902",
 			objectIDs: { [SYNTHETIC_SCHEME]: syntheticIdentifier(9) },
@@ -144,8 +147,8 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			expectedObjectID: { scheme: SYNTHETIC_SCHEME, id: syntheticIdentifier(3) },
 			expectedLat: 51.503,
 			expectedLon: -0.103,
-			// Carries truth coordinates the terms do not permit publishing: the row still grades on identity,
-			// and any coordinate error computed for it is a defect the report writer must refuse.
+			// The fixture retains truth coordinates for grading on identity.
+			// The terms forbid publishing them, so the report writer must refuse any computed coordinate error.
 			coordinatePublishable: false,
 			inputShapeClass: PremiseLinkageInputShapeClass.Misspelled,
 			hasUnit: false,
@@ -265,7 +268,9 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			hasHistoricalAlias: false,
 		},
 		matchOn: "hotel terrace",
-		// Committed to a premise and named no identifier in the graded scheme: ungradable, and never `wrong`.
+		// The provider commits to a premise but supplies no identifier in the graded scheme.
+		// The result is ungradable.
+		// The harness leaves `wrong` unassigned.
 		response: fixtureExactMatch({
 			providerPlaceID: "synthetic-place-0008",
 			objectIDs: undefined,
@@ -295,9 +300,8 @@ export function syntheticFixtureAdapter(): PremiseLinkageAdapter {
  * `@mailwoman/core/resolver`'s fixture so the arm under test consumes the shipped
  * reference implementation rather than a local mock.
  *
- * The one thing layered on top is the throwing case: `createFixtureAuthoritativeProvider`
- * always answers, and a harness that has never seen a transport failure cannot
- * claim it keeps failures apart from refusals.
+ * Adds a throwing case because `createFixtureAuthoritativeProvider` always answers.
+ * A harness must see a transport failure before it can show that failures and refusals remain distinct.
  */
 export function syntheticFixtureProvider(options: { log?: AuthoritativeQuery[] } = {}): AuthoritativeProvider {
 	const rules = SYNTHETIC_CASES.filter((entry) => entry.response !== undefined).map((entry) => ({
@@ -335,10 +339,11 @@ function syntheticNode(partial: Partial<AddressNode> & Pick<AddressNode, "tag" |
  * A pipeline that always resolves to one admin coordinate — the shape of the open
  * arm's answer when it can name a town and not a premise.
  *
- * Fixture-only: a controlled run supplies real {@link GeocodeDeps} built from the shipped model
- * and gazetteer, and this exists so the synthetic self-check runs on a machine with neither.
- * It is exported for the same reason the fixture provider is: one reference
- * stub the command and the tests share.
+ * Used only by fixtures.
+ * Controlled runs supply real {@link GeocodeDeps} from the shipped model and gazetteer.
+ *
+ * This implementation lets the synthetic self-check run without either resource.
+ * The command and tests share this exported reference stub, as they share the fixture provider.
  */
 export function syntheticFixtureDeps(): GeocodeDeps {
 	const classifier: GeocodeClassifier = {

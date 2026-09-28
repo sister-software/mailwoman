@@ -50,15 +50,18 @@ export interface CandidateManifestInput {
 	 */
 	adminDBPath: PathBuilderLike
 	/**
-	 * Every postcode and locality database whose rows this candidate carries, whose paths
-	 * compose the manifest's license expression and whose count reaches `sourceVintage`.
+	 * Every postcode and locality database whose rows this candidate carries.
+	 *
+	 * Their paths compose the manifest's license expression.
+	 * Their count reaches `sourceVintage`.
 	 */
 	contributingDatabases: {
 		postcodes: readonly PathBuilderLike[]
 		localities: readonly PathBuilderLike[]
 	}
 	/**
-	 * Whether an importance database was folded in, which changes ranking in a way the schema does not show.
+	 * Whether an importance database was folded in.
+	 * This changes ranking in a way the schema does not show.
 	 */
 	importance: boolean
 	buildSHA: string
@@ -67,8 +70,8 @@ export interface CandidateManifestInput {
 	/**
 	 * Each fold's rows and places on the table this build wrote, from {@linkcode censusFolds}.
 	 *
-	 * A caller that passes none records `fold-census=unmeasured` rather than a set of zeroes,
-	 * because a later reader cannot tell a fold that contributed zero rows from a census nobody ran.
+	 * A caller that passes none records `fold-census=unmeasured` rather than a set of zeroes, because a
+	 * later reader cannot tell a fold that contributed zero rows from a census that the build skipped.
 	 */
 	foldCensus?: readonly FoldCensusRow[]
 }
@@ -134,8 +137,10 @@ export interface FoldCensusRow {
  *
  * A fold's share of a published artifact is recoverable from the artifact alone only
  * while the upstream release is still served.
- * Overture prunes a release from its bucket, and the per-country register behind an
- * Overture row is then unreadable, so the count belongs in the manifest at build time.
+ * Overture prunes a release from its bucket.
+ *
+ * The per-country register behind an Overture row is then unreadable,
+ * so the count belongs in the manifest at build time.
  *
  * The bounds come from `SYNTHETIC_ID_RANGES`, the same registry each builder mints its
  * place ids from, so a range added there reaches this census without a second list.
@@ -166,8 +171,9 @@ export function censusFolds(candidateDBPath: PathBuilderLike): FoldCensusRow[] {
 			.get(bound.low, bound.high) as { rows: number; places: number } | undefined
 
 		// A range holding zero rows is left out rather than recorded at zero.
-		// The registry lists every range any builder may mint from, and one artifact folds a handful,
-		// so the zeroes would outnumber the counts and read as folds this build refused.
+		// The registry lists every range any builder may mint from.
+		// One artifact folds only a handful, so zeroes would outnumber the counts
+		// and read as folds this build refused.
 		if (row?.rows) {
 			counted.push({ fold: bound.fold, rows: row.rows, places: row.places })
 		}
@@ -273,8 +279,8 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		name: "candidate",
 		version: input.version,
 		schemaVersion: 1,
-		// Never `shipped`: the admin ancestor is `build-local`, this file carries its rows,
-		// and the postcode folds add share-alike sources.
+		// Never `shipped`: the admin ancestor is `build-local`, and this file carries its rows.
+		// The postcode folds add share-alike sources.
 		tier: LayerTier.BuildLocal,
 		license: [...identifiers].toSorted().join(" AND "),
 		attribution: "derived from the mailwoman admin gazetteer and its postcode folds; see each layer's manifest",

@@ -105,9 +105,10 @@ describe("isStrictlyFiner", () => {
 
 describe("the table", () => {
 	it("carries no duplicate rank except the rungs documented as deliberate ties", () => {
-		// Two ties remain, and neither is an admin rung.
-		// `building+campus+venue` are three tags for a thing at an address,
-		// and `country+dependency` is WOF's own sovereignty hedge.
+		// Two ties remain.
+		// Neither is an admin rung.
+		// `building+campus+venue` groups three tags for a thing at an address.
+		// `country+dependency` is WOF's own sovereignty hedge.
 		// The admin ladder itself is strictly ordered, because a tie there is a
 		// silent disagreement with containment.
 		// See the agreement suite below.
@@ -126,13 +127,17 @@ describe("the table", () => {
 /**
  * The admin ladder, coarsest first.
  *
- * A copy of `resolver-wof-sqlite/ancestry.ts`'s `PLACETYPE_DEPTH` order,
- * and the only place in `core` allowed to know it.
+ * This copies the `PLACETYPE_DEPTH` order from `resolver-wof-sqlite/ancestry.ts`.
+ * It is the only place in `core` allowed to know that order.
  *
  * `core` cannot import from `resolver-wof-sqlite` (the dependency runs the other way),
- * so the two tables cannot be derived from one another and this list is what keeps them honest.
- * It records the order only: the scales differ in offset by design, and `PLACETYPE_DEPTH`
- * additionally maps an unranked placetype to 0 where this one answers `undefined`.
+ * so the two tables cannot be derived from one another.
+ * This list keeps them aligned.
+ *
+ * It records only the order.
+ * The scales differ in offset by design.
+ *
+ * `PLACETYPE_DEPTH` additionally maps an unranked placetype to 0 where this one answers `undefined`.
  */
 const ANCESTRY_DEPTH_ORDER = [
 	"country",

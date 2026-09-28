@@ -87,7 +87,7 @@ describe("formatPersonName", () => {
 		const name = parsePersonName("Dr Jane Q. Xavier de la Vega III")
 
 		// The parser stores the particle separately for the matcher, so printing it
-		// apart would produce a name nobody wrote.
+		// apart would produce a form absent from the input name.
 		expect(formatPersonName(name, "short")).toBe("Jane de la Vega")
 	})
 

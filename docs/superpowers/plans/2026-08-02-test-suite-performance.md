@@ -913,7 +913,7 @@ grep -rn "loadPersonNameSurfaces" --include="*.ts" --include="*.tsx" . | grep -v
 Run: `time yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts`
 Expected: PASS, and meaningfully faster than the 236.9s baseline. Record the number — the spec estimates ~130s.
 
-⚠ If it is not faster, the memo is not being hit. Add a temporary `console.error` in the miss branch and re-run to see how many times it scans.
+⚠ If it is not faster, the memo is not being hit. Add a temporary `console.error` in the miss branch and re-run to record the scan count.
 
 - [ ] **Step 7: Commit**
 

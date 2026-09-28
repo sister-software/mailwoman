@@ -6,8 +6,8 @@
  * An admin tail carrying a postcode is a locality query.
  *
  * The cases run through the real `computeQueryShape` rather than a hand-built shape, so a test asserts the
- * production reading rather than the rule's assumption: a postcode makes the whole input alphanumeric and
- * registers a known-format hit, and `scoreLocalityOnly` rejected on both.
+ * production reading instead of the rule's assumption: a postcode makes the whole input alphanumeric.
+ * The postcode also registers a known-format hit. `scoreLocalityOnly` rejects both cases.
  *
  * The verdict decides the parse register (`deriveInputMode`), whose `formatted` register withholds the
  * street-type and locality-surface lexicons, so the verdict on these rows decides whether the decoder sees
@@ -81,8 +81,8 @@ describe("an admin tail carrying a postcode", () => {
 		// and a locality query where a street address was typed.
 		expect(kindOf("3215 SE Clinton St, Portland OR")).toBe("structured_address")
 
-		// The same restriction declines a postcode-led tail, which no US address writes and
-		// which cannot be told from the case above by any property this stage reads.
+		// The same restriction declines a postcode-led tail that US addresses do not use.
+		// This stage cannot distinguish it from the case above by any property it reads.
 		expect(kindOf("26292 Thomas, WV")).not.toBe("locality_only")
 	})
 

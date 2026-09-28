@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `prefix-directories.ts` for the Python tree: a repeated underscore prefix among a directory's children is a
- *   hierarchy encoded in names, and keeping that boundary as a directory lets an import, a file listing, and an
- *   editor's tree state the same thing.
+ *   `prefix-directories.ts` for the Python tree: a repeated underscore prefix among a directory's children
+ *   encodes hierarchy in names. Keeping that boundary as a directory lets imports and file listings
+ *   show the same structure as the editor tree.
  *
- *   The rule matches the TypeScript check except for the delimiter (`_` rather than `-`), no workspace exclusion
- *   (no Python directory here carries a published npm-name interface), and `__init__.py` / `__main__.py` never
- *   joining a group as Python's own names.
+ *   The rule matches the TypeScript check and uses `_` as its delimiter instead of `-`.
+ *   It needs no workspace exclusion because no Python directory carries a published npm-name interface.
+ *   It also skips `__init__.py` and `__main__.py`, which Python reserves as module names.
  *
  *   Scoped to `corpus-python/`, the one Python tree in the repository. The check reports rather than fixes, because
  *   the TypeScript fix's value is repointing import specifiers and this repository has no equivalent mover for
@@ -37,7 +37,10 @@ const PREFIXED = /^(?<prefix>[a-z0-9]+)_.+$/u
 const SOURCE_FILE = /\.py$/u
 
 /**
- * Python's own names, which a reader does not choose and this check does not rearrange.
+ * Python chooses these names.
+ *
+ * Readers do not choose them.
+ * This check leaves them in place.
  */
 const RESERVED = new Set(["__init__.py", "__main__.py"])
 
@@ -142,7 +145,7 @@ export function findPythonPrefixGroups(trackedFiles: readonly string[]): PythonP
 			byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), member])
 		}
 
-		// A sibling named for the prefix itself heads the family rather than sitting beside it,
+		// A sibling whose full name is the prefix heads the family rather than sitting beside it,
 		// since leaving `splice.py` out splits the family across two levels.
 		for (const [prefix, grouped] of byPrefix) {
 			const head = stems.get(prefix)

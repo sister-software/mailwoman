@@ -46,7 +46,7 @@ The modules:
 - `client.py` — the API call, the response parser, the component validator, the id function.
 - `prompts.py` — the two system prompts, the script table, the adversarial category table.
 - `run.py` — checkpointed concurrent execution, shared by both modes.
-- `transliteration.py` / `kryptonite.py` — one mode each: what to ask for, and what to keep.
+- `transliteration.py` / `kryptonite.py` — one mode each, defining its prompts and retained rows.
 - `cli.py` — the argument parser and the mode switch.
 """
 

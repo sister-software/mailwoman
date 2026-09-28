@@ -98,13 +98,13 @@ export type BroadbandTechnologyCode = (typeof BroadbandTechnologyCode)[keyof typ
  */
 export const BroadbandTechnologyCategory = {
 	/**
-	 * Cable, including docsis 1, 3, and 3.1.
+	 * Cable, including DOCSIS 1, DOCSIS 3 and DOCSIS 3.1.
 	 *
 	 * @title Cable
 	 */
 	Cable: "CABLE",
 	/**
-	 * DSL, including adsl, ADSL2/ADSL2+, vdsl, and symmetric xDSL.
+	 * DSL, including ADSL, ADSL2/ADSL2+, VDSL and symmetric xDSL.
 	 *
 	 * @title DSL
 	 */
@@ -116,7 +116,7 @@ export const BroadbandTechnologyCategory = {
 	 */
 	Fiber: "FIBER",
 	/**
-	 * Fixed wireless, including unlicensed, licensed, and licensed by rule.
+	 * Fixed wireless, including unlicensed, licensed and licensed by rule.
 	 *
 	 * @title Fixed Wireless
 	 */

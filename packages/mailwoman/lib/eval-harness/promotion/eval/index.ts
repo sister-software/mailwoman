@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Promotion eval runner: runs the standard battery, checks spec floors, and writes one
- *   machine-readable verdict. `--model` compares raw artifacts, where delta checks are valid and
- *   absolute floors are not; `--weights-cache` is the in-distribution path.
+ *   Runs the standard promotion battery and checks its spec floors. It writes one machine-readable verdict.
+ *   `--model` compares raw artifacts and supports delta checks. `--weights-cache` selects the in-distribution path
+ *   with absolute floors.
  *
- *   Every leg runs in-process, and written `.md` artifacts are byte-for-byte identical to prior child
- *   stdout capture.
+ *   Every leg runs in-process. Written `.md` artifacts match the prior child stdout capture byte for byte.
  */
 
 import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
@@ -52,8 +51,8 @@ interface ThresholdSpec {
 	/**
 	 * Answer-key path for per-locale grading, spec-declared for comparability.
 	 *
-	 * Omitted uses the per-locale-f1 default, and changing it means floors must
-	 * be re-anchored on fresh measurements.
+	 * When omitted, the run uses the per-locale-f1 default.
+	 * Changing this path requires fresh measurements to re-anchor the floors.
 	 */
 	golden_dir?: string
 	floors?: Record<string, unknown>
@@ -104,9 +103,10 @@ export interface PromotionEvalOptions {
 	 */
 	weightsCache?: string
 	/**
-	 * Package-shaped INT8 dir, same layout as {@linkcode PromotionEvalOptions.weightsCache};
-	 * pairing requires weightsCache, excludes --model/--int8, and makes floors
-	 * and fp32/int8 deltas valid in one run.
+	 * Package-shaped INT8 directory with the same layout as {@linkcode PromotionEvalOptions.weightsCache}.
+	 *
+	 * Pairing requires `weightsCache` and excludes `--model` and `--int8`.
+	 * It makes floors and fp32/int8 deltas valid in one run.
 	 */
 	int8WeightsCache?: string
 	/**
@@ -116,8 +116,10 @@ export interface PromotionEvalOptions {
 	 */
 	outDir?: PathBuilderLike
 	/**
-	 * Optional per-leg wall-time ledger path, which must be outside {@linkcode PromotionEvalOptions.outDir}
-	 * because receipt comparison expects stable bytes under outDir.
+	 * Optional per-leg wall-time ledger path.
+	 *
+	 * It must be outside {@linkcode PromotionEvalOptions.outDir} because receipt
+	 * comparison expects stable bytes under `outDir`.
 	 * Omitted, the run writes no file.
 	 */
 	profileJSON?: string
@@ -178,8 +180,10 @@ export async function listEvalSpecs(): Promise<string[]> {
 }
 
 /**
- * Pre-flight guards before the battery: tokenizer comparability, a compiled-freshness warning,
- * and artifact provenance, returning an exit code to propagate or `null` when the run may proceed.
+ * Runs pre-flight guards before the battery.
+ *
+ * It checks tokenizer comparability, compiled freshness and artifact provenance,
+ * then returns an exit code or `null` when the run can proceed.
  */
 async function runLoreGuards(env: {
 	WC: string
@@ -318,7 +322,8 @@ async function runLoreGuards(env: {
  * Demo-cascade smoke: whole-stack parse→reconcile→resolve coverage on the ship
  * artifact against the slim hot DB.
  *
- * A missing DB warns and skips, and a spec floor declared on this leg then fails.
+ * A missing database produces a warning and skips the leg.
+ * A spec floor declared for this leg then fails.
  */
 async function runDemoCascadeLeg(env: {
 	outDir: PathBuilderLike
@@ -339,7 +344,8 @@ async function runDemoCascadeLeg(env: {
 		return
 	}
 
-	// nothrow parity: a refusal and a throw both map to non-zero, and only the stdout sink reaches the `.md`.
+	// Refusals and thrown errors both map to non-zero.
+	// Only the stdout sink reaches the `.md` artifact.
 	const cascadeLines: string[] = []
 	let cascadeExit: number
 
@@ -694,8 +700,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		console.log(`✓ fr.bare_street_intact PASS (floor ${bareStreetFloor}%)`)
 	}
 
-	// Mask-regression is the second promotion lock, runs only under conventions mode,
-	// and feeds the final verdict.
+	// Mask-regression is the second promotion lock.
+	// It runs only in conventions mode and contributes to the final verdict.
 	let MASK_CHECK_STATUS = 0
 
 	if (CONV_MODE) {

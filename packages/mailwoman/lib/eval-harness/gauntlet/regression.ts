@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gauntlet regression runner, the conditional curated layer (the executable bug log). Loads
- *   `regression.db`, runs every `status=pass` case through the full pipeline, and asserts the
- *   assembled output: coordinate within tolerance, resolution tier, resolved place identity, and
- *   admin components (case-insensitive). A fixed bug must stay fixed, and any drift fails the run.
- *   This corpus is deliberately small since curated-set capture is the Pelias trap, and the
+ *   Gauntlet regression runner for the conditional curated layer, the executable bug log. It loads
+ *   `regression.db`, runs every `status=pass` case through the full pipeline and checks the assembled
+ *   output: coordinate within tolerance, resolution tier, resolved place identity and
+ *   admin components (case-insensitive). A fixed bug must stay fixed. Any drift fails the run.
+ *   This corpus is deliberately small because curated-set capture is the Pelias trap. The
  *   metamorphic and held-out layers carry breadth.
  *
  *   The grading itself lives in `check-case.ts` (pure, unit-tested), and the freshness refusal
@@ -50,8 +50,9 @@ export interface GauntletLayerOptions {
 	 *
 	 * A declared ablation.
 	 * The choreography pairs with the train-time half, so a board run under `false`
-	 * measures what the channel is worth on every tag at once, which is the only way to
-	 * price the locality it recovers against the postcode it was added to guard.
+	 * measures what the channel is worth on every tag at once.
+	 *
+	 * This is the only way to price the locality it recovers against the postcode it was added to guard.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 	/**
@@ -117,7 +118,7 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	using kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	// Before a single address is graded: does this DB hold the corpus that is committed right now?
-	// A check reading a stale artifact reports a verdict about a corpus nobody has.
+	// A check reading a stale artifact reports a verdict about a corpus absent from its source data.
 	// See corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()
@@ -204,9 +205,9 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 	}
 
-	// Printed whenever the pass could have fired, which is unless it is explicitly pinned off.
-	// Keying this on the enabled pin would hide the firing count on the standard
-	// unpinned run, which now has the pass enabled.
+	// Printed whenever the pass could have fired, except when it is explicitly pinned off.
+	// Keying this on the enabled pin would hide the firing count on the standard unpinned run.
+	// The pass is now enabled by default.
 	if (options.pins?.postcodeCountryCoherence !== false) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 

@@ -4,21 +4,21 @@
  * @author Teffen Ellis, et al.
  * @file Rewrite a parquet file's `source` column from the retired spelling to the current one.
  *
- *   A recipe-output `source` is a wire identifier. It is stored on every row of every corpus carrying it,
- *   keyed by every training config that weights it, and quoted by every model card trained on it. The
+ *   A recipe-output `source` is a wire identifier. Every row of every corpus carrying it stores the value.
+ *   Every training config that weights it keys on it. Every model card trained on it quotes it. The
  *   retired `synth-*` spelling says a row is fabricated where most of these rows are attested records a
  *   recipe rendered, spliced or fragmented. `RECIPE_SOURCES` in `#recipes/sources` holds both spellings and
  *   the operation each recipe performed.
  *
  *   The rewrite runs over an assembly's staging files before `overlay-manifest` computes each file's
  *   `sha256`, so the manifest describes the renamed bytes. A corpus already assembled is never rewritten in
- *   place: its manifest records digests over the bytes it has, and the configs that target it keep the
+ *   place. Its manifest records digests over the bytes it has. The configs that target it keep the
  *   spelling it stores.
  *
- *   **What the verification establishes.** Row count, distinct `source` set, and an md5 over the ordered
- *   `source_id` column are compared before and after. Those three together establish that the rewrite
+ *   **What the verification establishes.** The check compares row count, distinct `source` set and an md5
+ *   over the ordered `source_id` column before and after. Together, those checks establish that the rewrite
  *   changed the `source` column and the row order of no other column. They do not establish that the
- *   output's other columns are unchanged, which a full-file digest cannot show either, because the rewrite
+ *   output's other columns are unchanged. A full-file digest cannot show that either because the rewrite
  *   re-encodes the file.
  */
 
@@ -65,7 +65,8 @@ async function readSourceFacts(
 
 	// The digest reads `source_id` in file order rather than sorted, so a rewrite
 	// that reordered rows produces a different value.
-	// `preserve_insertion_order` is what keeps the order, and this is the check that it did.
+	// `preserve_insertion_order` keeps the order.
+	// This check verifies that it did.
 	const ids = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${literal}')`)
 	const digest = md5Hex((ids.getRowObjectsJS() as Array<{ source_id: string }>).map((row) => row.source_id).join("\n"))
 

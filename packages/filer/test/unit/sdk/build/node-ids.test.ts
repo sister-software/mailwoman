@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file The node-identity rules, pinned directly rather than through a whole `filer.db` build.
  *
- *   Every case here is a value that the builder's own suites can only reach by feeding it a row and reading the
- *   artifact back, which means a degenerate node id shows up there as a wrong row count rather than as the identity
- *   collision it is. These assert the mint's output and the shape of what it refuses.
+ *   The builder's suites reach each case by feeding it a row and reading the artifact back.
+ *   A degenerate node ID would appear as a wrong row count. The artifact would hide the identity collision.
+ *   These tests assert the mint's output and the shape of refused values.
  */
 
 import {
@@ -78,9 +78,9 @@ describe("temporal-column guards", () => {
 
 	it("refuses a vintage LABEL as valid_from", () => {
 		expect(() => assertProviderValidFrom("2026-Q2")).toThrow(/ISO YYYY-MM-DD/)
-		// Why it has to be refused: string comparison decides at the first differing
-		// character, and `Q` outranks every digit.
-		// So within its own year the label sorts above every real date and `valid_from <= asOf` never matches.
+		// Why it has to be refused: string comparison decides at the first differing character.
+		// `Q` sorts after every digit.
+		// Within its year, this label sorts above every real date, so `valid_from <= asOf` never matches.
 		const datesInThatYear = ["2026-01-01", "2026-06-30", "2026-12-31"]
 
 		expect(datesInThatYear.every((asOf) => "2026-Q2" > asOf)).toBe(true)

@@ -2,9 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Shared plumbing for the baseline-vs-candidate probes: the argument block with its
- *   required-flag check, the punctuation-dropping fold, the word-boundary containment test, the
- *   paired classifier load, and the golden-row loader. Each probe keeps its own scoring.
+ * @file Shared plumbing for baseline-vs-candidate probes.
+ *   It defines the argument block with its required-flag check. It also defines the punctuation-dropping fold,
+ *   word-boundary containment test, paired classifier load plus golden-row loader.
+ *   Each probe keeps its own scoring.
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

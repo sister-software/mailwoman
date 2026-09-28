@@ -16,8 +16,9 @@ import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"
 // #region Model artifact staging
 
 /**
- * Relative imports of a staged ES module, whose siblings must be staged beside it
- * or the worker fails at its first import with no useful browser error.
+ * Relative imports of a staged ES module require sibling modules beside it.
+ *
+ * Otherwise, the worker fails at its first import without a useful browser error.
  */
 export function relativeImportSpecifiers(source: string): string[] {
 	const specifiers = new Set<string>()

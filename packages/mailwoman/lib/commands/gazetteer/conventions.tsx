@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Implements `mailwoman gazetteer conventions`, which compiles the authored convention profiles in
+ *   Implements `mailwoman gazetteer conventions`. It compiles the authored convention profiles in
  *   `data/conventions/conventions.json` into a read-only SQLite asset.
  *
  *   The asset holds an `address_convention` table keyed by WOF polygon ID and a `meta` table. The

@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file Wall-time attribution for one OA resolver run, written beside the run rather than into it.
  *
- *   The promotion comparator reads every file under a promotion output directory byte-for-byte, and a timing number
- *   differs between two runs of the same artifact. So a profile path must name somewhere outside that directory, and a
- *   run that passes no path writes no file.
+ *   The promotion comparator reads every file under a promotion output directory byte-for-byte. Timing differs
+ *   between runs of the same artifact, so a profile path must point outside that directory. A run without a path
+ *   writes no file.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -20,8 +20,11 @@ export interface LookupCensus {
 }
 
 /**
- * The accumulators one run fills: setup is the rig build, and the two per-row totals separate the model
- * call from the gazetteer work, which no thread or concurrency setting can trade against the other.
+ * The accumulators one run fills.
+ *
+ * `setup` measures the rig build.
+ * Two per-row totals separate model calls from gazetteer work because thread
+ * or concurrency settings cannot trade one against the other.
  */
 export interface RunTiming {
 	setupMs: number

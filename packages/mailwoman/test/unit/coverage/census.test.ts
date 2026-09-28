@@ -59,8 +59,8 @@ describe("normalizeArrowListColumn", () => {
 
 describe("readAdmittedCountries", () => {
 	it("keeps a bare NO as the string it is", async () => {
-				// YAML 1.1 resolves a bare `no` to boolean false, which would report Norway
-				// as un-admitted while the config lists it.
+				// YAML 1.1 resolves a bare `no` to boolean false.
+				// That result would report Norway as unadmitted even though the config lists it.
 						const path = root("norway.yaml")
 
 		await writeLocalTextFile(
@@ -111,7 +111,7 @@ describe("readAdmittedCountries", () => {
 	})
 
 	it("throws on a missing config rather than answering with an empty admitted set", async () => {
-			// An empty set is a real answer, so returning it for a file nobody could open
+			// An empty set is a real answer, so returning it for an unreadable file
 			// would give one value for two different facts.
 								await expect(readAdmittedCountries(root("nope.yaml"))).rejects.toThrow(/no training config at/)
 	})
@@ -136,7 +136,8 @@ describe("readBoardCoverage", () => {
 		await makeDirectories(cases("gb", "archived"))
 		await writeLocalJSONFile({ id: "archived", country: "GB", status: "pass" }, cases("gb", "archived", "old.jsonl"))
 
-				// The loader's /^[a-z]{2}$/ filter excludes this directory, which a glob would include and overstate the board.
+				// The loader's /^[a-z]{2}$/ filter excludes this directory.
+				// A glob would include it and overstate the board.
 				await writeLocalJSONFile({ id: "z", country: "ZZ", status: "pass" }, cases("generalization", "passes.jsonl"))
 	})
 
@@ -153,8 +154,8 @@ describe("readBoardCoverage", () => {
 	})
 
 	it("attributes a row by its own country field, not its directory", async () => {
-			// Board rows live in a directory by convention but carry their country explicitly,
-			// and the two disagree in practice.
+				// Board rows carry their country explicitly even though the directory also encodes one.
+				// Those values can disagree.
 				expect((await readBoardCoverage(root("cases"))).get("IE")).toEqual({ rows: 1, passed: 1 })
 	})
 
@@ -328,8 +329,8 @@ describe("readConfiguredCorpusVersion", () => {
 
 describe("readAdmittedCountries — the Norway shape", () => {
 	it("keeps a QUOTED NO as the string it is, and counts it", async () => {
-						// A YAML parser turns a bare `no` key into boolean false,
-						// which is the bug this reader exists to avoid.
+							// A YAML parser turns a bare `no` key into boolean false.
+							// This reader preserves the key as text.
 						// A quoted "no" must still be counted.
 								await using scratch = await temporaryDirectory("mw-cfg-no-")
 		const path = scratch.path("c.yaml")
@@ -396,8 +397,8 @@ describe("resolveTrainingConfig", () => {
 	})
 
 	it("throws for a family the register does not name, rather than answering with another family's config", () => {
-		// Answering with the Latin config would report 25 Latin admissions under a third
-		// family's name, which no later stage would disagree with.
+				// A Latin config would report 25 Latin admissions under a third family's name.
+				// Later stages would accept that mismatched report.
 				expect(() => resolveTrainingConfig(scope, { family: "deva" })).toThrow(/names no training config/)
 	})
 })

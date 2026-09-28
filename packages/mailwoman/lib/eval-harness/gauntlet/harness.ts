@@ -45,7 +45,7 @@ export interface GauntletDeps extends Disposable {
 		opts?: GauntletGeocodeOpts
 	): Promise<{ result: GeocodeResult; resolver: ResolveNodeTrace[] }>
 	/**
-	 * Report-only access to the exact classifier, overlay, parse options,
+	 * Report-only access to the exact classifier, overlay, parse options
 	 * and FST selected by the Gauntlet path.
 	 *
 	 * It performs no resolution and does not alter the check's geocode path.
@@ -62,8 +62,7 @@ export interface GauntletDeps extends Disposable {
 }
 
 /**
- * Everything {@linkcode buildGauntletDeps} needs: which model to grade, and
- * which resolver configuration to grade it in.
+ * {@linkcode buildGauntletDeps} needs two choices: the model to grade and its resolver configuration.
  */
 export interface GauntletDepsOptions {
 	/**
@@ -113,13 +112,17 @@ export interface GauntletDepsOptions {
  * `modelPath`/`tokenizerPath` swaps.
  *
  * Following `eval oa-resolver`'s idiom, a pin is a default-override rather than a new mechanism:
- * every field maps 1:1 onto a {@linkcode geocodeAddress} dep of the same name, an absent field leaves
- * the production default in force, and `undefined` means production default rather than off.
+ * Every field maps 1:1 onto a {@linkcode geocodeAddress} dependency of the same name.
+ * An absent field leaves the production default in force.
+ * `undefined` also means the production default.
  */
 export interface GauntletResolverPins {
 	/**
-	 * Postcode-country coherence — a (postcode, locality) pair coherent in exactly one country
-	 * overrides a wrong `defaultCountry`; default on, and `false` grades the off arm.
+	 * Postcode-country coherence — a (postcode, locality) pair coherent in exactly
+	 * one country overrides a wrong `defaultCountry`.
+	 *
+	 * The default is on.
+	 * `false` grades the off arm.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -136,10 +139,11 @@ export interface GauntletResolverPins {
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
-	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
-	 * that the harness loads rather than `resolverPinDeps`; default on, `false` pins
-	 * the off arm, and unset degrades on a reference-less artifact.
+	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym class,
+	 * carrying an artifact (the candidate `capital` table with a repo-file fallback) that
+	 * the harness loads rather than `resolverPinDeps`; default on, `false` pins the off arm.
+	 *
+	 * An unset value uses the default and degrades on a reference-less artifact.
 	 */
 	capitalTier?: boolean
 	/**
@@ -152,7 +156,8 @@ export interface GauntletResolverPins {
 	 * The opt-in venue tier: upgrade a venue-led address's admin or street answer to
 	 * the poi.db entity with the venue's name near the resolved anchor.
 	 *
-	 * Default off, and `true` degrades to the incumbent answer on a machine without poi.db.
+	 * The default is off.
+	 * `true` degrades to the incumbent answer on a machine without poi.db.
 	 */
 	poiVenueTier?: boolean
 	/**
@@ -205,7 +210,7 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
  */
 export function describeResolverPins(pins: GauntletResolverPins | undefined): string {
 	// `resolverPinDeps` is pure and cannot see the artifact-carrying pins,
-	// so every pin is named here rather than only the boolean ones.
+	// so this list includes every pin rather than only the boolean ones.
 	// A non-boolean pin prints its value instead of collapsing three different configurations to `on`.
 	const entries: string[] = Object.entries(resolverPinDeps(pins)).map(([k, v]) =>
 		typeof v === "boolean" ? `${k}=${v ? "ON" : "OFF"}` : `${k}=${v}`
@@ -236,9 +241,13 @@ export function describeResolverPins(pins: GauntletResolverPins | undefined): st
 export interface GauntletGeocodeOpts {
 	defaultCountry?: string
 	/**
-	 * The case's country (ISO-3166 alpha-2), which selects the per-locale weights overlay
-	 * the classifier loads with (GB → en-GB's pair-index, NZ → en-NZ's); absent means en-US,
-	 * and grading every row through the bare en-US package silently drops the dependent-locality prior.
+	 * The case's country (ISO-3166 alpha-2) selects the per-locale weights overlay the classifier loads.
+	 *
+	 * GB selects en-GB's pair-index.
+	 * NZ selects en-NZ's pair-index.
+	 *
+	 * An absent country selects en-US.
+	 * Grading every row through the bare en-US package silently drops the dependent-locality prior.
 	 */
 	caseCountry?: string
 	/**
@@ -249,10 +258,10 @@ export interface GauntletGeocodeOpts {
 }
 
 /**
- * Drift guard: the materialized model the check is about to grade must match
- * the en-us model-card's `files_md5["model.onnx"]`, throwing on mismatch
- * so the release `before:release` step blocks the ship, soft-returning when the card
- * or the field is absent, and checking only the shipped default.
+ * Drift guard: the materialized model the check is about to grade must match the en-us
+ * model-card's `files_md5["model.onnx"]`, throwing on mismatch so the release `before:release`
+ * step blocks the ship, soft-returning when the card or the field is absent.
+ * The check only examines the shipped default.
  *
  * The md5 it receives is of the model `resolveWeights` returned rather than of a path
  * spelled out here, because the guard must check the artifact the run will actually grade.
@@ -346,7 +355,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	// A package-shaped candidate weights dir.
 	// Prefer this over `modelPath` when the vocab differs, because `loadFromWeights({cacheRoot})`
-	// resolves the model, tokenizer, card, and anchor/gazetteer siblings as production does,
+	// resolves the model, tokenizer, card and anchor/gazetteer siblings as production does,
 	// while a bare `modelPath` swap feeds no soft channels and keeps the shipped tokenizer.
 	const cacheModel = opts.weightsCacheRoot
 		? resolvePath(weightsCachePackageDir(opts.weightsCacheRoot, "en-us"), "model.onnx")
@@ -470,8 +479,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 		if (!opts.forceQueryKind) return verdict
 
-		// Only `kind` moves: rewriting the confidence, alternatives, or intent markers would make the arm
-		// differ in more than the verdict under test, and the coordinator routes on the top kind alone.
+		// Only `kind` moves.
+		// Rewriting confidence, alternatives or intent markers would change more than the verdict under test.
+		// The coordinator routes on the top kind alone.
 		return { ...verdict, kind: opts.forceQueryKind }
 	}
 
@@ -492,9 +502,11 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		})
 	)
 
-	// The reference loads here and becomes the per-candidate `capitalLevel` closure, mirroring
-	// `createGeocodeSession`: `false` pins the off arm, explicit `true` demands the reference,
-	// and unset follows the default (on) and degrades on a reference-less artifact.
+	// The reference loads here and becomes the per-candidate `capitalLevel` closure,
+	// matching `createGeocodeSession`.
+	// `false` pins the off arm.
+	// Explicit `true` requires the reference.
+	// An unset value uses the default (on) and degrades on a reference-less artifact.
 	const capitalIndex =
 		opts.pins?.capitalTier === false
 			? undefined
@@ -509,8 +521,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		: undefined
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
-	// Lazy like the resolver module above: `@mailwoman/osm` is unpublished, and a static import
-	// here would break the published `mailwoman` CLI rather than only this maintainer-run check.
+	// Load this module lazily, like the resolver module above.
+	// `@mailwoman/osm` is unpublished.
+	// A static import would break the published `mailwoman` CLI as well as this maintainer-run check.
 	const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
 	const osmProvider = await OSMRegionDatabaseProvider.create(dataRootPath)
 	// The BAN national-register tier sits ahead of OSM in production, so without it the
@@ -520,11 +533,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const pinDeps = resolverPinDeps(opts.pins)
 
-	// This pin carries an artifact rather than a boolean, and the artifact is PER classifier.
+	// This pin carries an artifact rather than a boolean.
+	// The artifact is PER classifier.
 	// The FST ships beside the weights, so the en-GB package carries `fst-en-gb.bin`
-	// and the base carries `fst-en-us.bin`, and they hold different places:
-	// reading the path off the base classifier would feed every overlay case a gazetteer
-	// for the wrong country, a pairing production never runs.
+	// and the base carries `fst-en-us.bin`.
+	// They hold different places: reading the path off the base classifier would feed every
+	// overlay case a gazetteer for the wrong country, a pairing production never runs.
 	// Cached per resolved path, because the overlay classifiers are themselves cached
 	// and several countries share one.
 	const priorDepsByPath = new Map<string, Pick<GeocodeDeps, "fst" | "streetMorphology">>()
@@ -569,8 +583,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		try {
 			deps = { fst: deserializeFST(await readLocalBuffer(fstPath)), streetMorphology: (await loadMorph()).matcher }
 		} catch (error) {
-			// A missing or unreadable artifact degrades to no prior, named because a silently
-			// absent prior scores lower and reads as a model difference.
+			// A missing or unreadable artifact degrades to no prior, with its reason recorded
+			// because a silent absent prior scores lower and reads as a model difference.
 			console.error(
 				`[gauntlet] gazetteer prior unavailable at ${fstPath}: ${(error as Error).message} — grading without it`
 			)
@@ -669,7 +683,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
  */
 export interface GauntletResult {
 	/**
-	 * All parsed components, including locale-specific tags that have no legacy named result slot.
+	 * All parsed components, including locale-specific tags that have no legacy result field.
 	 */
 	components: GeocodeResult["components"]
 	lat: number | null
@@ -710,16 +724,19 @@ export interface GauntletResult {
 	 */
 	variant_alias_exemption?: true
 	/**
-	 * The resolved admin chain, locality → country, verbatim from {@linkcode GeocodeResult.hierarchy};
-	 * not asserted by any case, it carries the gazetteer `placeID`s the ablation layer's degradation
-	 * ladder is synthesized from, and an empty array means the run resolved no admin-grade entry.
+	 * The resolved admin chain, locality → country, verbatim from
+	 * {@linkcode GeocodeResult.hierarchy}; Cases do not assert this value.
+	 *
+	 * The ablation layer's degradation ladder is synthesized from the gazetteer `placeID`s.
+	 * An empty array means the run resolved no admin-grade entry.
 	 */
 	hierarchy: Array<{ tag: string; name: string; placeID?: string; lat?: number; lon?: number }>
 	/**
 	 * The stage-1 admin-coherence verdicts, verbatim from {@linkcode GeocodeResult.admin_coherence};
-	 * not asserted by any case, they are flag-only measurement carried
-	 * so a dev-mcp row can count verdicts per component across a board run, and absent
-	 * when the geocode resolved no winner to check against.
+	 * Cases do not assert these flag-only measurements.
+	 *
+	 * A dev-mcp row can count verdicts per component across a board run.
+	 * The field is absent when the geocode resolved no winner to check.
 	 */
 	admin_coherence?: AdminCoherenceReport
 }

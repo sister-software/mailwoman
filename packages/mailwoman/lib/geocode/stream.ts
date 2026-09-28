@@ -5,10 +5,10 @@
  *
  * The heavy, threaded half of the parallel-ingest split: geocode a stream of normalized records across worker
  * threads (`spliterator.parallelMapWorkers`), composed after `@mailwoman/registry`'s `normalizeCSV`. Each worker
- * rebuilds the classifier, WOF lookup, resolver, and databases from {@link GeocodeStreamConfig} at startup, and
- * records arrive in completion order. Concurrency is low on purpose: geocoding is latency- and memory-bound, and
+ * rebuilds the classifier, WOF lookup, resolver and databases from {@link GeocodeStreamConfig} at startup. It
+ * records arrive in completion order. Concurrency is low on purpose. Geocoding is latency- and memory-bound.
  * a measured NPPES sweep peaked at 2 workers (~1.4x) and degraded past that, because the shared DB plus memory
- * bandwidth is the ceiling rather than the core count. Threads are the only change available, because
+ * bandwidth is the ceiling rather than the core count. Threads are the only change available because
  * `onnxruntime-node`'s `session.run()` blocks the JS thread and `node:sqlite` reads are synchronous, so a
  * separate runtime per row — a worker — is what provides concurrency.
  */
@@ -50,8 +50,8 @@ export interface GeocodeStreamOptions {
 	/**
 	 * Worker pool size.
 	 *
-	 * Keep it small, because throughput peaks at about 2 workers and degrades past that,
-	 * and each worker loads the model and opens the DB. @default Math.min(4, availableParallelism())
+	 * Keep it small because throughput peaks at about 2 workers and degrades past that.
+	 * Each worker loads the model and opens the DB. @default Math.min(4, availableParallelism())
 	 */
 	concurrency?: number
 	/**

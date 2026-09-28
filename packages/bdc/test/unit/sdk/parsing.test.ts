@@ -144,7 +144,7 @@ test("readAvailabilityRows: a quoted field containing a NEWLINE stays in its own
 	// Its 12/13/14-field line counts sum exactly to `wc -l`, so no record is split across lines.
 	// The byte scanner this replaced would have desynced every subsequent row here regardless,
 	// because it quote-guarded the comma branch and not the newline branch.
-	// The guarantee is the point: correctness on a file nobody has measured yet.
+	// The guarantee is the point: correctness on a file with no prior measurement.
 	const csv = [
 		"frn,provider_id,brand_name,location_id,technology,max_advertised_download_speed,max_advertised_upload_speed,low_latency,business_residential_code,state_usps,block_geoid,h3_res8_id",
 		'0004215211,130077,"Acme\nBroadband, LLC",1000000009,50,1000,1000,1,R,CA,060014001001001,8828308281fffff',

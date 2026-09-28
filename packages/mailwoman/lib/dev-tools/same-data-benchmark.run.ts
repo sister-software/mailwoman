@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The same-data controlled resolver benchmark: no step after `record` reads a database, so a
- *   difference the `run` phase reports cannot come from retrieval, an index vintage, or a data
- *   footprint, and `replayBackend` raises rather than inventing an answer.
+ *   The same-data controlled resolver benchmark. No step after `record` reads a database.
+ *   A difference reported by `run` cannot come from retrieval, index vintage, or data footprint.
+ *   `replayBackend` raises when the recording has no answer.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -79,15 +79,16 @@ const { values, positionals } = parseArguments({
 
 const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
- * The FTS gazetteer, read for its `concordances` and `spr` tables: the candidate backend below
- * carries no concordance table, which is why the two are separate flags rather than one.
+ * The FTS gazetteer supplies the `concordances` and `spr` tables.
+ *
+ * The candidate backend below carries no concordance table, so these use separate flags.
  */
 const GAZETTEER = values.gazetteer || wofDatabasePath("admin-global-priority.db")
 const BACKEND = values.backend || wofDatabasePath("candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
 
 /**
- * Named separately from `--out` so a successor construction can read the frozen panel
+ * The separate flag lets a successor construction read the frozen panel
  * while writing its own fixture, since one path for both would force it to overwrite
  * the frozen artifacts to change the withheld-gold rule.
  */
@@ -269,8 +270,8 @@ async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule:
 
 	return {
 		benchmarkID: receipt?.benchmarkID ?? "(no receipt beside these results)",
-		// A fixture recorded before the rule was named carries no field,
-		// which is the v1 rule rather than a silent absence.
+		// A fixture recorded before the rule was introduced carries no field.
+		// This selects the v1 rule and marks the receipt's age.
 		withheldGoldRule: receipt?.withheldGoldRule ?? "concorded-ids (receipt predates the field)",
 	}
 }
@@ -424,11 +425,16 @@ async function sweepPhase(): Promise<void> {
 }
 
 /**
- * The option sets the knob replay walks: the candidate backend's score is a log-population
- * rank measured over this fixture's pools at min 0, median 2.55 and max 9.14,
- * and the `spanRescore` arms are here because `applySpanRescore` returns early only
- * when the tree already holds a resolved place (`resolve/passes.ts`), so a floor's refusal
- * leaves exactly the state that invites the recovery pass to answer instead.
+ * These option sets define the arms used by the knob replay.
+ *
+ * Over this fixture's pools, the candidate backend's log-population rank ranges
+ * from 0 to 9.14, with a median of 2.55.
+ * The arms also include `spanRescore` options.
+ *
+ * `applySpanRescore` returns early when the tree already holds a resolved place.
+ * The implementation is in `resolve/passes.ts`.
+ *
+ * A floor refusal leaves the tree eligible for the recovery pass to answer instead.
  */
 const DEFAULT_KNOB_ARMS: KnobArm[] = [
 	{ label: "default", opts: {} },
@@ -439,9 +445,10 @@ const DEFAULT_KNOB_ARMS: KnobArm[] = [
 	{ label: "minWinningScore 5", opts: { minWinningScore: 5 } },
 	{ label: "spanRescore off", opts: { spanRescore: false } },
 	{ label: "minWinningScore 4 + spanRescore off", opts: { minWinningScore: 4, spanRescore: false } },
-	// The narrower refusal beside the blanket one: span rescore still runs, and a
-	// sub-span that drops a word of the name is refused while one that drops a qualifier,
-	// a number or a street the parse read is kept.
+	// This arm applies a narrower refusal than the blanket floor.
+	// Span rescore still runs.
+	// It refuses a sub-span that drops a word of the name.
+	// It keeps one that drops a qualifier, a number or a street the parse read is kept.
 	{ label: "spanRescore context remainder", opts: { spanRescoreRequireContextRemainder: true } },
 ]
 
@@ -476,9 +483,9 @@ async function knobPhase(): Promise<void> {
 		byArm.set(label, results)
 	}
 
-	// A raised floor changes what the walk asks next, so each arm loses a different
-	// set of rows to replay misses, and scoring every arm over its own survivors
-	// would compare rates whose denominators moved.
+	// A raised floor changes what the walk asks next.
+	// Each arm loses a different set of rows to replay misses.
+	// Scoring each arm over its own survivors would compare rates whose denominators moved.
 	// This intersection is what makes the columns comparable.
 	const errored = new Set(
 		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))

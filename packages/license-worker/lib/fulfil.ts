@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fulfilment: one paid invoice becomes one signed token. Everything checked here is re-read from Stripe by id — the
- *   invoice, its subscription, and when the license row does not exist yet, the Checkout Session — so a webhook body is
- *   never the source of an entitlement. The ledger's unique keys are the idempotency: a second mint for one invoice
- *   answers `already_minted`, two events for one payment in either order produce one token, and two callers racing
- *   for one invoice or one subscription both get a defined answer with one row between them. What the keys do not
- *   promise is one email: the loser of a mint race may find the winner's token with its email still pending and send
- *   it too, and the provider's idempotency key is what closes that window where the provider honours one.
+ *   Fulfilment turns one paid invoice into one signed token. The worker re-reads the invoice and its subscription
+ *   from Stripe by id. When the license row does not exist, it also re-reads the Checkout Session. A webhook body
+ *   never grants an entitlement. The ledger's unique keys make minting idempotent: a second mint for one invoice
+ *   returns `already_minted`. Two events for one payment produce one token in either order. Two callers racing
+ *   for one invoice or subscription receive defined answers, with one row between them. The keys do not prevent
+ *   duplicate email. The losing caller can find the winner's token while its email is pending and send it too.
+ *   The provider's idempotency key closes that window when the provider honors it.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -52,8 +52,10 @@ export type FulfilOutcome =
 	| { outcome: "refused"; reason: string }
 
 /**
- * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret,
- * read back after, and read back all the same when a concurrent caller's row landed first.
+ * The license row for a Checkout Session.
+ *
+ * The first caller creates it with a fresh lid and refresh secret.
+ * Later callers read that row back, including when a concurrent caller created it first.
  *
  * Mints no token; `invoice.paid` does.
  * The refresh secret is stored by digest and held in plaintext only until the first claim reads it.
@@ -234,8 +236,8 @@ export async function fulfilInvoice(
 /**
  * The answer for an invoice whose token exists.
  *
- * A crash between the insert and the send leaves the email pending,
- * and the retry that finds the token sends it.
+ * A crash between insert and send leaves the email pending.
+ * A retry that finds the token sends it.
  */
 async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): Promise<FulfilOutcome> {
 	if (token.email_state !== "sent") {
@@ -253,9 +255,10 @@ async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): 
  * What one send attempt came to.
  *
  * `failed` is the provider's refusal, recorded as such so the reconciliation pass sends again.
- * A failure to record either answer throws instead: the row keeps its earlier state
- * and the pass sends again, which after an accepted send is the one window in
- * which a licensee can receive the message twice.
+ * A failure to record either answer throws.
+ *
+ * The row keeps its earlier state, so reconciliation sends again.
+ * After an accepted send, that retry can deliver the message twice.
  */
 export type SendOutcome = { state: "sent" } | { state: "failed"; reason: string }
 

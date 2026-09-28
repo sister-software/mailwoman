@@ -3,24 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for `soil.db`, the polygon truth table, the containment index above it, and the one
- *   reduction both consumers read, plus the layer-interface tables from `@mailwoman/core/layers`.
+ *   Typed schema for `soil.db`. It defines the polygon truth table, its containment index and the shared reduction
+ *   that both consumers read. It also defines the layer-interface tables from `@mailwoman/core/layers`.
  *
- *   {@link SoilMapUnitAreaTable} is what the authority drew, unsimplified.
- *   {@link SoilMapUnitCellTable} says which cells each delineation reaches and whether it fills them.
+ *   {@link SoilMapUnitAreaTable} stores the authority's unsimplified geometry.
+ *   {@link SoilMapUnitCellTable} records which cells each delineation reaches and whether it fills them.
  *   {@link SoilCapabilityCellTable} is that index reduced once, at build time, into a per-cell
- *   distribution. A `partial` cell's contribution is weighted by the area it covers, so the truth
- *   table keeps unsimplified rings and simplification would change the weights silently.
+ *   distribution. A `partial` cell's contribution is weighted by the area it covers. The truth table keeps
+ *   unsimplified rings so simplification cannot change those weights silently.
  *
- *   The reduction stores a distribution rather than a winner. Four separate shares record the
- *   absence reasons, and class 8 is a determination rather than an absence, so it is a class share
- *   like any other. Folding a `notcom` polygon, a water body and an unrated series into "not arable"
- *   would produce a well-formed wrong answer, and the four shares exist to prevent that.
+ *   The reduction stores a distribution instead of one winning class. Four separate shares record reasons for
+ *   absence. Class 8 is a determination, so it contributes a class share. Folding a `notcom` polygon, a water body
+ *   and an unrated series into "not arable" would produce a well-formed but wrong answer. The four shares preserve
+ *   those distinctions.
  *
- *   `without rowid` applies to the cell tables, while the geometry table stays a plain rowid table.
- *   Small fixed-width rows probed by their exact primary key belong in the B-tree, while a row
- *   carrying a geometry blob does not, since clustering it into the B-tree makes every index page a
- *   geometry page.
+ *   Cell tables use `without rowid`; the geometry table uses ordinary rowids. Small fixed-width rows are probed by
+ *   their exact primary key, so they fit the B-tree. A geometry blob would make every index page a geometry page if
+ *   stored in that B-tree.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -51,22 +50,27 @@ export type SoilCellContainment = (typeof SoilCellContainment)[keyof typeof Soil
 /**
  * One map-unit delineation, verbatim.
  *
- * A plain rowid table, because a geometry blob is the one shape `without rowid` hurts.
+ * A plain rowid table.
+ * It holds a geometry blob.
+ * `without rowid` stores this shape inefficiently.
  */
 export interface SoilMapUnitAreaTable {
 	/**
-	 * `<areasymbol>:<ordinal>`, the survey area plus this delineation's position
-	 * in the authority's own shapefile order.
+	 * `<areasymbol>:<ordinal>` identifies the survey area and this delineation's
+	 * position in the authority's own shapefile order.
 	 *
-	 * Ssurgo publishes no per-delineation key of its own.
-	 * `mukey` identifies the MAP unit, and one map unit has many delineations,
-	 * so the ordinal is what makes a row nameable at all.
+	 * SSURGO publishes no per-delineation key.
+	 * `mukey` identifies the map unit.
 	 *
-	 * Text, so a source that starts publishing a non-numeric id needs no schema change.
+	 * Each map unit has many delineations.
+	 * The ordinal distinguishes each delineation row.
+	 *
+	 * Text allows the source to publish a non-numeric ID without a schema change.
 	 */
 	area_id: string
 	/**
-	 * The map unit this delineation belongs to, nrcs's own key and the join to every attribute.
+	 * The map unit that contains this delineation.
+	 * NRCS uses this key to join every attribute.
 	 */
 	mukey: string
 	areasymbol: string
@@ -82,23 +86,24 @@ export interface SoilMapUnitAreaTable {
 }
 
 /**
- * Per (cell, delineation): does the delineation cover the whole cell, or only part of it?
+ * Records whether a delineation covers a whole cell or only part of it.
  *
- * Keyed on the delineation rather than on the map unit, because the reduction weights by the area a
- * delineation covers and two delineations of one map unit reaching the same cell cover different ground.
+ * Rows use the delineation as the key because the reduction weights by covered area.
+ * Two delineations from one map unit can reach the same cell while covering different ground.
  */
 export interface SoilMapUnitCellTable {
 	/**
 	 * 48-bit short H3 cell.
 	 *
-	 * Mixed-resolution: `whole` rows are compacted parent-ward, `partial` rows stay at the index resolution.
+	 * Uses mixed resolutions.
+	 * `whole` rows are compacted parent-ward; `partial` rows stay at the index resolution.
 	 */
 	h3_cell: number
 	/**
 	 * The resolution this row's cell was captured at.
 	 *
-	 * A short cell carries no resolution of its own, and a table that mixes
-	 * resolutions cannot be probed without this column.
+	 * A short cell carries no resolution of its own.
+	 * A table that mixes resolutions requires this column for probes.
 	 */
 	resolution: number
 	area_id: string
@@ -259,19 +264,23 @@ export interface SoilCapabilityCellTable {
 	/**
 	 * The fraction of the cell covered by any map-unit delineation at all.
 	 *
-	 * The five shares above are normalized over this, so they sum to 1 exactly.
-	 * A cell at the edge of a survey area is partly outside every delineation, and without
-	 * this column that unmapped remainder would silently deflate every class share.
+	 * The five shares above are normalized over this value and sum to 1 exactly.
+	 * A cell at a survey-area edge can fall partly outside every delineation.
 	 *
-	 * An absence represented as a small number, which is the one thing this schema exists to prevent.
+	 * This column prevents the unmapped remainder from deflating every class share.
+	 *
+	 * This schema prevents an absence from appearing as a small number.
 	 * A cell wholly inside the mapped area reads 1.
 	 */
 	mapped_share: number
 	/**
-	 * The largest class share and the share it rests on, the result-level consumer's reading
-	 * and nrcs's own `niccdcd`/`niccdcdpct` pattern at cell grain.
+	 * Stores the largest class share and its proportion.
 	 *
-	 * NULL when the cell carries no class at all, which is a real answer.
+	 * This gives consumers an at-cell result and follows NRCS's `niccdcd`/`niccdcdpct` pattern.
+	 *
+	 * NULL when the cell carries no class.
+	 * This is a valid result.
+	 *
 	 * A cell that is 100% `unrated_share` is complete and carries no capability reading at all.
 	 */
 	top_class: string | null
@@ -279,15 +288,15 @@ export interface SoilCapabilityCellTable {
 	/**
 	 * Which weighting produced the shares, one of {@link SOIL_SHARE_WEIGHTING}.
 	 *
-	 * Stored per row rather than only in the manifest, because a later build at a
-	 * different weighting must not read as the same claim.
+	 * Stored per row as well as in the manifest.
+	 * A later build with different weighting must have a distinct record.
 	 */
 	weighting: string
 	/**
 	 * How many delineations reached this cell.
 	 *
-	 * The denominator behind every share above, and the number that separates a
-	 * confident single-delineation cell from a crowded one.
+	 * Supplies the denominator behind each share above.
+	 * It also distinguishes a single-delineation cell from a crowded cell.
 	 */
 	delineations: number
 }
@@ -313,14 +322,16 @@ export interface SoilSurveyAreaTable {
 	 * The oldest source citation date in the area's own fgdc lineage, the field
 	 * survey the republished polygons rest on.
 	 *
-	 * This is a different fact from `saverest` and keeping them apart is the point.
-	 * `IA153` carries a 2025-09-09 refresh over a field survey published in 1960,
-	 * and the dataset's own time-period-of-content ends at the refresh, so a consumer
-	 * reading that as survey currency reads it wrong.
+	 * This date differs from `saverest`.
+	 * `IA153` records a 2025-09-09 refresh over a field survey published in 1960.
+	 *
+	 * The dataset's time-period-of-content ends at the refresh, so it does not state
+	 * when the field survey occurred.
 	 */
 	survey_source_date: string | null
 	/**
-	 * The title of the source `survey_source_date` came from, so the date is checkable rather than assertible.
+	 * The title of the source for `survey_source_date`.
+	 * It lets readers check the date against its source.
 	 */
 	survey_source_title: string | null
 	/**
@@ -330,8 +341,8 @@ export interface SoilSurveyAreaTable {
 	/**
 	 * The scale the map units were digitized at, from `legend.projectscale`, 12000 for `IA153`.
 	 *
-	 * A different number from `source_scale` and a different fact: one is how finely
-	 * the ground was walked, the other how finely it was drawn.
+	 * This differs from `source_scale`.
+	 * `source_scale` describes survey detail; `mapping_scale` describes drawing detail.
 	 */
 	mapping_scale: number | null
 	/**
@@ -345,7 +356,7 @@ export interface SoilSurveyAreaTable {
 	max_lat: number
 	max_lon: number
 	/**
-	 * How many `layer_coverage` rows this survey area produced, and at what resolution.
+	 * The number of `layer_coverage` rows this survey area produced and their resolution.
 	 */
 	coverage_cells: number
 	coverage_resolution: number
@@ -354,9 +365,9 @@ export interface SoilSurveyAreaTable {
 /**
  * The authority's declared domain for one `Choice` column, read out of the `msdomdet.txt` the archive ships.
  *
- * Stored so a reader can refuse a code the layer was never built to hold, and
- * so the authority's own prose definition of "capability class 3" travels with the artifact
- * instead of living in a handbook the reader has to go find.
+ * Stored so a reader can refuse a code the layer cannot hold.
+ * The artifact also carries the authority's prose definition of "capability class 3"
+ * instead of requiring a separate handbook.
  */
 export interface SoilVocabularyTable {
 	/**

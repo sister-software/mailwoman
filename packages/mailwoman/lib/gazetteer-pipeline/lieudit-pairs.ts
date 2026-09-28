@@ -15,8 +15,8 @@
  *   addresses never contain.
  *
  *   Filtering is not reimplemented here. `@mailwoman/ban/sdk`'s `cleanLieuDit` already owns it
- *   (header leaks, placeholders, `ancienne commune` prefixes, and rows whose lieu-dit merely repeats
- *   the commune — 5.0% of filled values), and it is the same filter the `synth-fr-lieudit` training
+ *   (header leaks, placeholders, `ancienne commune` prefixes plus rows whose lieu-dit repeats
+ *   the commune — 5.0% of filled values). The `synth-fr-lieudit` training
  *   database reads through, so the index and the database agree on what a lieu-dit is by construction.
  */
 
@@ -38,8 +38,8 @@ export interface LieuDitPair {
 	 * Always `locality` (PIX2 / schema 3).
 	 *
 	 * The parent surface is BAN's `nom_commune` (`record.city` below).
-	 * The commune, which is the French postal locality line and the slot every
-	 * FR address writes after the postcode.
+	 * The commune is the French postal locality line.
+	 * Every FR address writes it after the postcode.
 	 *
 	 * There is no per-row variation to read here: BAN carries exactly one commune column
 	 * and every row's parent comes from it.

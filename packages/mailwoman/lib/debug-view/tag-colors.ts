@@ -7,7 +7,7 @@
  *   color family per address-component group — street-level greens/blues, admin-hierarchy
  *   ambers/purples, venue-level oranges — so a glance at the ribbon shows which spans are related
  *   without reading the tag text underneath. Hex strings: Ink/chalk accept `backgroundColor="#rrggbb"`
- *   directly, so no named-color lookup table is needed downstream.
+ *   directly, so no color-name lookup table is needed downstream.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

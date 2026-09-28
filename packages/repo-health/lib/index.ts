@@ -5,11 +5,13 @@
  *
  *   Repository health checks as a registry. See `registry.ts` for the entry point and `check.ts` for the shape.
  *
- *   Three exports here are not checks and are never registered as one. `baseline.ts` writes the debt baseline for
- *   `mwops health baseline debt`. `fixes.ts` lists the checks whose diagnostics have a mechanical repair, and
- *   `move/` plans and applies it for `mwops health fix <check>`; planning reads, and only `applyModuleMoves` writes.
- *   `comment/triage/inventory.ts` rebuilds the source-comment inventory for `mwops health comments` — an inventory
- *   rather than a verdict, which is why it answers a report and not a diagnostic list.
+ *   Three exports here are utilities rather than checks, so the registry never registers them.
+ *   `baseline.ts` writes the debt baseline for `mwops health baseline debt`.
+ *   `fixes.ts` lists checks with mechanical diagnostic repairs.
+ *   `move/` plans and applies moves for `mwops health fix <check>`. Planning reads files.
+ *   `applyModuleMoves` applies the writes. `comment/triage/inventory.ts` rebuilds the
+ *   source-comment inventory for `mwops health comments`. That command reports inventory data
+ *   and leaves verdicts and diagnostics to other checks.
  */
 
 export * from "#baseline"

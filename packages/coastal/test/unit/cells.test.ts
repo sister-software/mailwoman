@@ -60,8 +60,9 @@ describe("featureCellRows", () => {
 	it("indexes a polygon smaller than a cell rather than returning nothing", () => {
 		const rows = featureCellRows(classifyFeatureCells(sliver, 9, "sliver", "test"))
 
-		// Cell-touches-polygon rather than centre-in-polygon: a polyfill keyed on centres returns
-		// zero cells here, and a feature indexed to no cell reads downstream as an absence.
+		// Cell-touches-polygon rather than centre-in-polygon: a polyfill keyed on
+		// centres returns zero cells here.
+		// A feature indexed to no cell reads downstream as absent.
 		expect(rows.length).toBeGreaterThan(0)
 		expect(rows.every((row) => row.containment === "partial")).toBe(true)
 
@@ -91,7 +92,8 @@ describe("CoastalCellIndex", () => {
 
 		// The band has an interior and the sliver is entirely fringe, so the two
 		// scenarios' partial shares differ.
-		// Their pooled value sits strictly between them, which is why it cannot be read as either.
+		// Their pooled value sits strictly between them.
+		// It cannot represent either scenario.
 		expect(nfi!.partialShare).toBeLessThan(1)
 		expect(smp!.partialShare).toBe(1)
 		expect(measurement.pooledPartialShare).toBeGreaterThan(nfi!.partialShare)

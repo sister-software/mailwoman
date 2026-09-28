@@ -6,18 +6,18 @@
  *   Generates address pairs in which context decides whether a leading five-digit token is a house number or a postcode.
  */
 
-/* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because every tuple this
-   synthesizer draws from is `US_TUPLES`, a hardcoded US list, and the rows put a bare five-digit ZIP in front of a
-   street to make the anchor channel fire on the wrong span. That is a US postcode shape by construction. */
+/* oxlint-disable mailwoman/prefer-home -- every tuple comes from the hardcoded US `US_TUPLES` list.
+   The admin tails use US templates. Each row puts a bare five-digit ZIP before a street to make the anchor channel
+   fire on the wrong span. This produces a US postcode shape by construction. */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { sample } from "@mailwoman/core/random"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches defines the
+   output distribution. Reading the cascade top-to-bottom shows it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
+    extracted as constants above. */
 
 /**
  * A US locality, region and postcode used as an address tail.
@@ -68,7 +68,8 @@ export interface SynthesizedAnchorAbsorptionRow {
 }
 
 /**
- * Samples a house number, which is a real ZIP code a quarter of the time.
+ * Samples a house number.
+ * One quarter of the samples use a real ZIP code.
  */
 function houseNum(random: () => number, realZips: ReadonlyArray<string>): string {
 	if (random() < 0.25) return sample(realZips, random)
@@ -191,7 +192,8 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 
 	if (template === "locale-ambig") {
-		// A following street makes the value a house number, and a following locality makes it a postcode.
+		// A following street makes the value a house number.
+		// A following locality makes it a postcode.
 		const zip = sample(realZips, random)
 
 		if (random() < 0.5) {

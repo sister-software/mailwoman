@@ -16,9 +16,9 @@
  *   channels.
  * - **L1 signaled** — it produced nonzero input to the next stage. This file computes L0 and L1 from one
  *   traced run.
- * - **L2 moved an outcome** — needs ablation pairs and is not computed here. The gauntlet's ablation
- *   layer owns it, and it is reported as explicitly unmeasured so a reader cannot mistake L1 coverage
- *   for outcome relevance.
+ * - **L2 moved an outcome** — needs ablation pairs. This file does not compute L2.
+ *   The gauntlet's ablation layer owns that measurement. Reports mark it unmeasured so readers can
+ *   distinguish L1 coverage from outcome relevance.
  *
  * A mechanism at zero L1 across the whole set is reported as inert with the standing rule attached:
  * every zero needs either a row that activates it or an allowlisted reason someone can state
@@ -36,8 +36,8 @@ import { inputSetProvenance, provenanceFor } from "#tool-kit"
 /**
  * Mechanisms whose L1 zero is expected, each with the reason a reader can check.
  *
- * The census reports them as `allowlisted` rather than inert, and one that unexpectedly
- * fires is reported loudly because the reason on file is then stale.
+ * The census reports them as `allowlisted`.
+ * It reports any unexpected signal because the recorded reason is stale.
  */
 export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 	placetypeCensus:

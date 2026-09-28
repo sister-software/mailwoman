@@ -68,12 +68,11 @@ describe("layer manifest IO", () => {
 		expect(await readLayerManifest(db)).toEqual(counted)
 	})
 
-	it("reads a build that recorded no count as carrying no count, and one that counted no publisher as empty", async () => {
-		// The two are different findings.
-		// A manifest written before the column existed, and one whose build did not count,
-		// both leave `sourceRecords` absent.
-		// `{}` says the build counted and found no publisher, and the count cannot be
-		// recovered from the input once Overture prunes its release.
+	it("reads a missing count as absent and a zero-publisher count as empty", async () => {
+		// These outcomes differ.
+		// Old manifests and builds without a count omit `sourceRecords`.
+		// `{}` means the build counted records and found no publisher.
+		// Overture prunes its release, so the original count cannot be recovered from the input.
 		using absent = await openschemadb()
 		await writeLayerManifest(absent, MANIFEST)
 

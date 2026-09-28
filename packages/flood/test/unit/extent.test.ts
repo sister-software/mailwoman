@@ -55,7 +55,7 @@ describe("realizeFloodMapExtent", () => {
 		const extent = realize(GEOMETRY)
 
 		expect(extent.coverageCells.size).toBeGreaterThan(0)
-		// The conservative interior test drops the fringe, so the footprint never claims a cell nobody determined.
+		// The conservative interior test drops the fringe, so the footprint never claims an undetermined cell.
 		expect(extent.bbox).toEqual({ minLat: 52, minLon: -1, maxLat: 53, maxLon: 0 })
 	})
 

@@ -277,7 +277,7 @@ export async function buildCoverageTiles(
 	}
 
 	// domain9: every fine child of a domain-res parent holding either signal,
-	// with the address-point count (pt), segment count (seg), and a blended coverage
+	// with the address-point count (pt), segment count (seg) and a blended coverage
 	// score cov ∈ [0,1] (points strong, segments weak).
 	onProgress("domain", "expanding fog neighborhood + blending signals…")
 

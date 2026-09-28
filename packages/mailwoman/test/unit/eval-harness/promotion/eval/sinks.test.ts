@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Because no code here loads a model, this layer runs in CI: `renderLines` must reproduce a child's
- *   stdout byte-for-byte, and the per-leg error semantics must not move from what the spawns had.
+ *   No code here loads a model, so this layer runs in CI.
+ *   `renderLines` must reproduce a child's stdout byte-for-byte.
+ *   Per-leg error handling must match the previous child processes.
  */
 
 import { deOrderEval } from "mailwoman/eval-harness/de-order-eval"
@@ -48,7 +49,8 @@ describe("renderLines — child stdout parity", () => {
 })
 
 /**
- * Each row records the behavior the former child-process spawn had, which the migration must not change.
+ * Each row records behavior from the former child process.
+ * The migration must preserve it.
  */
 const LEG_SEMANTICS = [
 	{

@@ -7,9 +7,9 @@
  *   candidate-locality table the resolver's `postcode_area_resolution` strategy attaches.
  *
  *   One table, several builds: the European point-in-polygon build and the CJK name/point-match
- *   builds (JP, KR, TW) all emit this shape, which is what lets a single resolver strategy consume
- *   every database. The DDL therefore lives here rather than in any one builder, so a column added to
- *   the row interface is a compile error against the builder that fills it.
+ *   builds (JP, KR, TW) all emit this shape. A single resolver strategy can therefore consume
+ *   every database. The DDL lives here rather than in one builder. A column added to the row interface
+ *   then causes a compile error in any builder that fails to fill it.
  *
  *   The builders' bulk insert stays a positional prepared statement for throughput — but its column
  *   list comes from {@link POSTCODE_LOCALITY_COLUMNS} and its table from
@@ -43,7 +43,8 @@ export interface PostcodeLocalityTable {
 /**
  * Provenance / license / build-statistics key-value pairs.
  *
- * Every database carries one, and its contents are per-builder.
+ * Every database carries one.
+ * Its contents are specific to the builder.
  */
 export interface PostcodeLocalityMetaTable {
 	key: string
@@ -68,8 +69,10 @@ export type PostcodeLocalitySchemaHandle = Pick<Kysely<PostcodeLocalityDatabase>
  * Whether the statement carries `if not exists`.
  *
  * Required rather than defaulted: the databases divide into accumulative builds,
- * where one shared database is filled country by country in successive runs and the second run
- * must find the table already there, and single-country rebuilds, which drop and recreate.
+ * where one shared database is filled country by country in successive runs.
+ * The second run must find the table already there.
+ *
+ * Single-country rebuilds drop and recreate the table.
  * Silently defaulting either way turns a mismatched call site into a wrong artifact
  * instead of a compile error.
  */
@@ -107,7 +110,7 @@ type ColumnValues<Columns extends readonly (keyof PostcodeLocalityTable)[]> = {
 export type PostcodeLocalityInsertValues = ColumnValues<typeof POSTCODE_LOCALITY_COLUMNS>
 
 /**
- * The builders' bulk-load statement — named columns, one placeholder each,
+ * The builders' bulk-load statement — explicit columns, one placeholder each,
  * both derived from {@link POSTCODE_LOCALITY_COLUMNS}.
  */
 export const POSTCODE_LOCALITY_INSERT_SQL = `INSERT INTO postcode_locality (${POSTCODE_LOCALITY_COLUMNS.join(", ")}) VALUES (${POSTCODE_LOCALITY_COLUMNS.map(() => "?").join(", ")})`

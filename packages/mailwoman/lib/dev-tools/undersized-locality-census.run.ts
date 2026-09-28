@@ -50,8 +50,10 @@ using db = new DatabaseClient<WOFDatabase>(args.admin ?? wofDatabasePath("admin-
 })
 
 /**
- * The comparison surface, diacritic- and case-folded but not emptied for a non-Latin name the way
- * the resolver's `foldName` is, which would fold a Han or Cyrillic locality equal to its parent.
+ * The comparison surface, diacritic- and case-folded but not emptied for a
+ * non-Latin name the way the resolver's `foldName`.
+ *
+ * That function would fold a Han or Cyrillic locality equal to its parent.
  */
 const nameKey = (name: string): string =>
 	name
@@ -110,7 +112,7 @@ const linked = (
 ).filter((link) => wanted.has(link.id)).length
 
 // Counted in SQL on the exact name because folding every one of `spr`'s 4,386,926
-// named localities in JS to key a map costs the whole scan.
+// keying each locality by name in JS costs the whole scan.
 const bearerCount = db.prepare(
 	`SELECT COUNT(*) AS n FROM spr WHERE placetype = 'locality' AND country = ? AND name = ?`
 )

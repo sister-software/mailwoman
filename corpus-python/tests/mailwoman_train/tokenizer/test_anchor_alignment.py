@@ -2,7 +2,7 @@
 
 DeepSeek flagged a span→sub-token off-by-one as the silent run-killer, so this nails the one
 property that matters: the anchor confidence/features land on exactly the SP pieces the postcode
-covers, and nowhere else — by reusing the same char→piece projection as the BIO labels. Uses mock
+covers and nowhere else. The test reuses the BIO labels' char→piece projection and uses mock
 ``PieceSpan``s (explicit char offsets) so no SentencePiece model is needed.
 """
 

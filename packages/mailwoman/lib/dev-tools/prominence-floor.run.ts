@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The prominence-floor benchmark: does a `minWinningScore` floor reduce invented selections at
- *   every population band, or only where the gold is large enough to clear it?
+ *   The prominence-floor benchmark asks whether a `minWinningScore` floor reduces invented selections
+ *   in every population band. It also checks whether the reduction occurs only where the gold is large enough to clear the floor.
  *
  *   Four phases, run separately so the expensive one happens once:
  *
- *     panel   Execute the frozen selection rules over the per-country GeoNames dumps and write the panel.
- *     record  Parse every query with the shipped model, drive the real backend once per arm option set, and
- *             freeze every answer. The only phase that touches a gazetteer.
- *     run     Replay the frozen fixture through the five arms and write the results.
- *     score   Read the results and decide the registered per-band rule.
+ *     panel   Execute the frozen selection rules over the per-country GeoNames dumps. Write the panel.
+ *     record  Parse every query with the shipped model. Drive the real backend once per arm option set.
+ *             Freeze every answer. This is the only phase that touches a gazetteer.
+ *     run     Replay the frozen fixture through the five arms. Write the results.
+ *     score   Read the results. Decide the registered per-band rule.
  *
  *   Run:
  *     node packages/mailwoman/lib/dev-tools/prominence-floor.run.ts panel
@@ -63,16 +63,16 @@ const { values, positionals } = parseArguments({
 
 const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
- * The FTS gazetteer, read for its `concordances` and `spr` tables, the identity join.
+ * The FTS gazetteer supplies the `concordances` and `spr` tables for the identity join.
  *
- * The candidate backend below carries no concordance table, which is why the
- * two are separate flags rather than one.
+ * The candidate backend below carries no concordance table.
+ * The tool therefore accepts separate flags for the two databases.
  */
 const GAZETTEER = values.gazetteer || wofDatabasePath("admin-global-priority.db")
 /**
  * The backend the recording drives.
  *
- * Defaults to the promoted candidate table, which is what the shipped geocoder reads.
+ * Defaults to the promoted candidate table used by the shipped geocoder.
  */
 const BACKEND = values.backend || wofDatabasePath("candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
@@ -86,11 +86,13 @@ const SCORE_PATH = `${OUT}/prominence-floor-report.md`
 /**
  * The frozen decision rule's two conditions, in percentage points.
  *
- * They are prose in `benchmark-definition.json`: the false-selection rate must fall by at
- * least 10 percentage points against the default arm in every band, and selection accuracy
- * must not fall more than 5 percentage points below the default arm's in any band.
- * So they are named here rather than carried as data: adding them to the definition
- * after the freeze would move the content hash the freeze record pins.
+ * The false-selection rate must fall by at least 10 percentage points against the default arm in every band.
+ * Selection accuracy must stay within 5 percentage points of the default arm in every band.
+ *
+ * These conditions appear in `benchmark-definition.json`.
+ * The constants hold these thresholds because the benchmark definition is already frozen.
+ *
+ * Adding them to that definition would change the content hash pinned by the freeze record.
  */
 const REQUIRED_FALSE_SELECTION_DROP_POINTS = 10
 const ALLOWED_ACCURACY_COST_POINTS = 5
@@ -98,8 +100,10 @@ const ALLOWED_ACCURACY_COST_POINTS = 5
 /**
  * Every arm's `ResolveOpts`, in the definition's order.
  *
- * The default arm's empty bag is listed explicitly: an omitted default is a missing replay key,
- * and `replayBackend` would raise on the arm the benchmark compares against.
+ * The default arm's empty bag is listed explicitly.
+ * Omitting it would remove a replay key.
+ *
+ * `replayBackend` would then raise when the benchmark compares against the default arm.
  */
 function armOptionSets(definition: ProminenceFloorDefinition): ResolveOpts[] {
 	return definition.arms.map((arm) => ({ ...arm.resolveOpts }))
@@ -300,8 +304,9 @@ async function scorePhase(): Promise<void> {
 				return { band: band.id, falseDrop, accuracyCost }
 			})
 
-			// The rule is per band and decisive, so the arm is judged on its worst band on each axis:
-			// the smallest refusal it bought anywhere, and the largest accuracy it cost anywhere.
+			// The rule applies per band.
+			// The arm is judged by its smallest refusal reduction and its largest
+			// accuracy cost across those bands.
 			const worstDrop = Math.min(...perBand.map((entry) => entry.falseDrop))
 			const worstCost = Math.max(...perBand.map((entry) => entry.accuracyCost))
 			const passed = worstDrop >= REQUIRED_FALSE_SELECTION_DROP_POINTS && worstCost <= ALLOWED_ACCURACY_COST_POINTS

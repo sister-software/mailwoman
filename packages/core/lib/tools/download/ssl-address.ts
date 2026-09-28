@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Download Google/Chromium's per-country `ssl-address` postal-address metadata — the
- *   {@link https://github.com/google/libaddressinput libaddressinput} AddressValidationMetadata that
- *   seeds the per-locale field order, required-field, and upper-casing conventions.
+ *   Download Google and Chromium's per-country `ssl-address` metadata.
+ *   This is the {@link https://github.com/google/libaddressinput libaddressinput} AddressValidationMetadata.
+ *   It supplies each locale's field order and required fields.
+ *   It also supplies upper-casing conventions.
  *
  *   See: https://github.com/google/libaddressinput/wiki/AddressValidationMetadata
  *
@@ -36,12 +37,14 @@ const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 /**
  * One host, ~250 small records, fetched `concurrency`-wide.
  *
- * Retry is the point: a throttle or a dropped connection on one country previously counted
- * as a permanent failure for that country, and the run reported `written: 249, failed: 1` —
- * indistinguishable from a country the source does not carry.
- * No `minRequestIntervalMs`: the concurrency-wide burst is what this tool has always done
- * and the host has not objected, and inventing a rate limit no measurement
- * supports would only make a working tool slower.
+ * Retry prevents a temporary throttle or dropped connection from counting as a permanent country failure.
+ * Without retry, the run reported `written: 249, failed: 1`.
+ *
+ * That result was indistinguishable from a country absent from the source.
+ * This tool uses a concurrency-wide burst and has no `minRequestIntervalMs` setting.
+ *
+ * The host has not objected to that request pattern.
+ * A rate limit without supporting measurements would slow the tool.
  */
 const sslAddressClient = new APIClient({
 	displayName: "ssl-address",
@@ -80,8 +83,8 @@ async function fetchCountryCodes(): Promise<string[]> {
  * Fetch a single country's metadata record and write its raw JSON body to `<outDir>/<cc>.json`.
  */
 async function fetchCountry(cc: string, outDir: PathBuilder): Promise<void> {
-	// `responseType: "text"` keeps the RAW body: these records are written to disk verbatim, and letting
-	// axios parse then re-serialize would rewrite key order and spacing in a checked-in artifact.
+	// `responseType: "text"` preserves the raw body because the tool writes these records verbatim.
+	// If Axios parsed and reserialized them, it would rewrite key order and spacing in a checked-in artifact.
 	const body = await sslAddressClient
 		.fetch<string>({ url: `${BASE_URL}/${cc}`, responseType: "text" })
 		.then(pluckResponseData)

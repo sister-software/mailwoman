@@ -13,13 +13,14 @@ import { soilDatabasePath } from "#paths"
 import { saverestToISODate } from "#sdk/tabular"
 
 /**
- * Addresses the anonymous Soil Data Access tabular query endpoint, which needs no key or account.
+ * Sends anonymous requests to the Soil Data Access tabular query endpoint.
+ * Requests need no key or account.
  */
 export const SDA_POST_REST_URL = "https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest"
 
 /**
- * Sets the minimum spacing between Soil Data Access requests, which is courtesy pacing
- * because NRCS publishes no rate limit for the service.
+ * Sets the minimum spacing between Soil Data Access requests.
+ * NRCS publishes no rate limit for the service.
  */
 export const SDA_MIN_REQUEST_INTERVAL_MS = 500
 
@@ -33,7 +34,8 @@ export interface SurveyAreaCatalogEntry {
 	areaname: string
 
 	/**
-	 * The version-established date as an ISO date, which the survey area's archive file name embeds.
+	 * The version-established date as an ISO date.
+	 * The survey area's archive filename embeds it.
 	 */
 	saverest: string
 	saversion: number
@@ -47,7 +49,8 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 	 * Runs one SQL query and returns its rows as strings, with NULL as an empty string.
 	 *
 	 * @throws {OGCServiceError} When the service answers with an exception report,
-	 * including on an HTTP 200, which is how a server-side timeout arrives.
+	 * including an HTTP 200 response.
+	 * A server-side timeout uses that status.
 	 */
 	public async query(sql: string): Promise<string[][]> {
 		const { data } = await this.fetch<string>({

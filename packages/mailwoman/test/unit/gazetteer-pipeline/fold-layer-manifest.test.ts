@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The manifest a postcode or locality builder stamps, and the tier each builder states.
+ *   Tests the manifest stamped by postcode and locality builders. Each test also checks the tier a builder states.
  *
- *   A fold's `layer_manifest.tier` is what the candidate build reads before folding it, so the value each
- *   builder writes is pinned here: the Code-Point and Taiwan composers directly, because their full builds
- *   need an archive and a parquet, and the GeoNames tail's terms function for both of its country shapes.
+ *   The candidate build reads a fold's `layer_manifest.tier` before folding it. These tests pin the value each builder writes.
+ *   They call the Code-Point and Taiwan composers directly because full builds require an archive and parquet input.
+ *   They also check the GeoNames tail's terms function for both country shapes.
  */
 
 import { LayerTier } from "@mailwoman/core/layers"
@@ -49,7 +49,8 @@ describe("foldLayerManifest", () => {
 	})
 
 	it("refuses a tier the license contradicts", () => {
-		// A share-alike grant cannot be shipped, and an attribution-only grant is not build-local.
+		// A share-alike grant cannot use the shipped tier.
+		// An attribution-only grant also cannot use build-local.
 		expect(() =>
 			foldLayerManifest({ ...BASE, tier: LayerTier.Shipped, license: "Open Database License (ODbL) 1.0" })
 		).toThrow(/carries share-alike/)
@@ -60,8 +61,8 @@ describe("foldLayerManifest", () => {
 	})
 
 	it("accepts an admissible expression that stays unresolved at build-local", () => {
-		// An input nobody has declared terms for is a reason to withhold publication,
-		// and the manifest carries it as written rather than dropping it.
+		// An input without declared terms requires withholding publication.
+		// The manifest preserves the input text for review.
 		const manifest = foldLayerManifest({
 			...BASE,
 			tier: LayerTier.BuildLocal,
@@ -120,7 +121,8 @@ describe("geonamesTailTerms", () => {
 	})
 
 	it("is build-local with an undeclared input once GB rides in", () => {
-		// GB_full's Northern Ireland rows have no documented provenance, which withholds publication.
+		// GB_full's Northern Ireland rows have no documented provenance.
+		// Their presence withholds publication.
 		const terms = geonamesTailTerms(["FI", "GB"])
 
 		expect(terms.tier).toBe(LayerTier.BuildLocal)

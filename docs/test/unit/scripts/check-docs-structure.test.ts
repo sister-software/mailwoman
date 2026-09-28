@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Tests the strict frontmatter rules with in-memory fixtures. Filesystem, sidebar, and legacy-mode
- * checks are outside this suite.
+ * Tests strict frontmatter rules with in-memory fixtures. It excludes filesystem checks and sidebar checks.
+ * It also excludes legacy-mode checks.
  */
 
 import { PAGE_ROLES, validatePage } from "@mailwoman/docs/scripts/docs-frontmatter-metadata"

@@ -4,22 +4,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Materialize the en-gb overlay's dev artifacts, plus the one step no manifest expresses, the
- *   card-conditional GB postcode binary.
+ *   Materializes the en-gb overlay's development artifacts.
+ *   It also builds or removes the card-conditional GB postcode binary, a step absent from manifests.
  *
- *   A single multilingual model serves both en-us and en-gb, and en-gb carries its own retrieval
- *   data on top. This overlay links the same pair the base does and holds it to en-us's
+ *   One multilingual model serves en-us and en-gb. The en-gb overlay adds its own retrieval data.
+ *   This overlay links the same pair as the base and checks it against en-us's
  *   `model-card.json` `files_md5`, since en-gb's own card carries no `files_md5` block.
  *
  *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation this
  *   overlay's card records under `requires.<channel>.lexicon`. The card claims its `requires`
- *   block is a verbatim copy of the base's, and the base model is trained with both channels, so
- *   an overlay without them runs a GB parse with the channels off on a model that expects them.
+ *   block matches the base card verbatim. The base model is trained with both channels.
+ *   An overlay without them would run a GB parse with expected channels disabled.
  *
- *   `pair-index-gb.bin` is derived from the HM Land Registry PPD tuples CSV, the WOF admin DB and
- *   three checked-in pairs JSONLs through the shared `buildPairIndexOverlay`. Its freshness guard
- *   compares the format, every calibrated magnitude and every source md5. The build is
- *   sidecar-cached because the PPD CSV is ~25.6M rows, and `weights.test.ts` invokes this script
+ *   `pair-index-gb.bin` is derived from the HM Land Registry PPD tuples CSV and WOF admin DB.
+ *   The shared `buildPairIndexOverlay` also reads three checked-in pairs JSONL files. Its freshness guard
+ *   compares artifact format and calibrated magnitudes. It also compares every source MD5. The build is sidecar-cached
+ *   because the PPD CSV has about 25.6 million rows. `weights.test.ts` invokes this script
  *   on every `yarn test`. The shipped bundle's delta is 10.
  */
 
@@ -91,8 +91,9 @@ const overlay = await materializeDevOverlay({
 
 // Build `postcode-gb.bin` only when the model card declares `requires.anchor.span_mode === "shaped"`.
 //
-// It helps only a model trained with shaped (letter-containing) GB anchor lookups.
-// On an older model it is a measured regression, and a stale bin from an old checkout can re-enable it.
+// Build this binary only for a model trained with shaped (letter-containing) GB anchor lookups.
+// On an older model, the binary regresses results.
+// A stale binary from another checkout can re-enable that behavior.
 //
 // Policy:
 // - `span_mode: "shaped"` -> build the binary
@@ -107,8 +108,8 @@ const POSTCODE_BIN_DEST = overlay.destDir("postcode-gb.bin")
  * The licence-clean GB postcode source, Ordnance Survey Code-Point Open (OGL v3.0),
  * carrying 1,746,976 units with every one placed.
  *
- * The measured coverage gap is zero Northern Ireland (`BT`) codes, and the shaped
- * keyer's outward fallback carries those rows.
+ * The source has zero Northern Ireland (`BT`) codes.
+ * The shaped keyer's outward fallback handles those rows.
  */
 const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 

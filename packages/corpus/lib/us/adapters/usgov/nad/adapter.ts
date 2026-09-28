@@ -155,7 +155,8 @@ interface DecomposedNADStreet {
 	full: string
 }
 
-// The structured street fields take precedence, and `StNam_Full` becomes the whole street when they are empty.
+// Structured street fields take precedence.
+// If they are empty, `StNam_Full` supplies the whole street.
 function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
 	const name = (r.St_Name ?? "").toString().trim()
 
@@ -196,8 +197,8 @@ function composePostcode(r: NADRecord): string | undefined {
 /**
  * Creates the NAD adapter.
  *
- * The adapter skips records without a US state code, a locality or a ZIP code,
- * and rows whose rendering keeps two or fewer components.
+ * The adapter skips records without a US state code, locality, or ZIP code.
+ * It also skips rows whose rendering keeps two or fewer components.
  */
 export function createUsgovNADAdapter(): CorpusAdapter {
 	return {

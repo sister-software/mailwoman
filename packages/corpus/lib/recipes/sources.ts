@@ -6,19 +6,18 @@
  *
  *   A recipe-output `source` is a wire identifier rather than prose. It is the literal value of the `source` column on
  *   every row of every built corpus, the key a training config's `source_weights`, `source_reps`,
- *   `augment_exclude_sources` and `required_corpus_receipts[].source` address, the `--source` label `overlay-manifest`
- *   records per file, and the string a published model card quotes. Renaming one is a data migration over every
- *   corpus that stores it, which is why both spellings stay in this table for as long as an archived corpus or a
- *   historical config carries the older one.
+ *   `augment_exclude_sources` and `required_corpus_receipts[].source` address this value. `overlay-manifest` records
+ *   the `--source` label per file. Published model cards also quote the string. Renaming it requires a data migration
+ *   across every corpus that stores it. This table retains both spellings while an archived corpus or historical
+ *   config carries the older one.
  *
  *   The retired spelling is `synth-<tail>`. It was read as "synthetic", and most of the rows it labels are real
  *   published records written in a layout: `synth-german` carries `register: openaddresses` and `surface: composed`.
  *   The current spelling is `<operation>-<tail>`, where the operation states what the recipe did to attested data.
  *   The tail is kept byte-for-byte, so the mapping is a prefix swap in either direction.
  *
- *   The prefix states the recipe's operation, which is constant per source. It never restates `surface`, which is a
- *   property of the row and varies inside a source, and it never carries the register, which `requireRegister` makes
- *   a property of the invocation.
+ *   The prefix states the recipe's operation. That value stays constant per source. It omits `surface`, a row property that
+ *   varies within a source. It also omits the register because `requireRegister` makes that an invocation property.
  *
  *   Every recipe reads its default `source` from this table through {@linkcode defaultRecipeSource}, and
  *   {@linkcode WRITE_CURRENT_SOURCE_NAMES} decides which spelling it answers with. An assembly rewrites its routed
@@ -65,7 +64,9 @@ export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperat
  */
 export interface RecipeSource {
 	/**
-	 * The spelling recipes wrote through 2026-09-26, which every corpus assembled before then stores.
+	 * The spelling recipes wrote through 2026-09-26.
+	 *
+	 * Every corpus assembled before that date stores this spelling.
 	 */
 	retired: string
 	/**
@@ -108,7 +109,7 @@ const TRAILING_REGION = "recipes/trailing-region.ts"
  * or a recipe default has spelled `synth-*`.
  *
  * Measured on 2026-09-26 over `/mnt/mw/corpus/versioned/`: 46 values on disk,
- * 47 keys across 226 configs, and the defaults in the recipes.
+ * 47 keys across 226 configs and the recipe defaults.
  * This list is their union.
  */
 export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
@@ -143,17 +144,19 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 	// Its producer already sits in `de/recipes/`, and a reader comparing `rendered-de`
 	// against `rendered-fr` and `rendered-es` sees one shape for all three.
 	//
-	// The table keeps every other tail byte-for-byte, so three conventions for
-	// where a locale sits in a tail survive: the locale alone (`rendered-fr`), the locale
-	// first (`invented-no-street`), and the locale last (`spliced-trailing-region-us`).
-	// Normalizing those is a second migration over the rows each one names, and it is not this one.
+	// The table keeps every other tail byte-for-byte, so three conventions for where a locale sits
+	// in a tail survive: the locale alone (`rendered-fr`), the locale first (`invented-no-street`).
+	// The locale comes last (`spliced-trailing-region-us`).
+	// Normalizing those requires a second migration over the rows each entry names.
+	// This migration preserves them.
 	{
 		retired: "synth-german",
 		current: "rendered-de",
 		operation: SourceOperation.Rendered,
 		producer: "de/recipes/locale.ts",
 	},
-	// Three tails carry the word `fragment` themselves, and it folds into the prefix rather than repeating.
+	// Three tails carry the word `fragment` themselves.
+	// It folds into the prefix instead of repeating.
 	{
 		retired: "synth-fragment",
 		current: "fragment-assay",
@@ -259,8 +262,9 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"overture-tw",
 	"gcis-tw",
 	"coarse-placer-cn-units",
-	// A 2026-07 overlay that `v1.9.6-slavic-anchor.yaml` and `v1.9.7-bsplice.yaml` weight.
-	// Its producer is not in the tree, and the two configs are records of runs.
+	// A 2026-07 overlay weighted by `v1.9.6-slavic-anchor.yaml` and `v1.9.7-bsplice.yaml`.
+	// The producer's code is absent from the tree.
+	// The two configs record its runs.
 	"oa-slavic",
 ]
 
@@ -288,13 +292,15 @@ export function recipeSource(source: string): RecipeSource | null {
 /**
  * The spelling a recipe writes today, given the retired spelling it has always written.
  *
- * Every recipe's default `source` reads this rather than holding a literal, so the vocabulary
- * is one constant rather than 26 files. {@linkcode WRITE_CURRENT_SOURCE_NAMES} decides
- * which spelling it answers with, and it has to agree with the corpus a recipe output joins.
+ * Every recipe's default `source` reads this rather than holding a literal, so the
+ * vocabulary is one constant rather than 26 files. {@linkcode WRITE_CURRENT_SOURCE_NAMES}
+ * decides which spelling it answers with.
+ * It must agree with the corpus that a recipe output joins.
  *
  * @throws When the table records no entry for `retired`.
- * A pass-through would let a typo become a source id on every row of a built corpus,
- * which is the failure `wire-identifiers` exists to catch later and this catches at the call.
+ * A pass-through would let a typo become a source ID on every row of a built corpus.
+ * `wire-identifiers` catches that failure later.
+ * This function catches it at the call.
  */
 export function defaultRecipeSource(retired: string): string {
 	const entry = BY_RETIRED.get(retired)
@@ -330,8 +336,9 @@ export const WRITE_CURRENT_SOURCE_NAMES = true
 /**
  * The retired spelling of a recipe-output source given either spelling, or the value unchanged.
  *
- * `RECIPE_SURFACES` and `OVERLAY_REGISTERS` key on the retired spelling,
- * and both refuse a source they do not name.
+ * `RECIPE_SURFACES` and `OVERLAY_REGISTERS` key on the retired spelling.
+ * Both refuse a source they do not record.
+ *
  * A corpus rewritten to the current spelling would therefore make each of
  * them throw on every row it carries.
  *

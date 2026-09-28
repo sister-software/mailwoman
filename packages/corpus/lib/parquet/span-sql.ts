@@ -4,12 +4,13 @@
  * @author Teffen Ellis, et al.
  * @file The SQL that reads one component's text out of a corpus row, for a query that runs in DuckDB.
  *
- *   A parquet row carries no `components` map. Each component's text is `raw` sliced at the offsets the
- *   parallel `span_starts` / `span_ends` / `span_tags` triple records, and a query that groups or filters
- *   by a component has to do that slice in SQL rather than row by row in the process.
+ *   A parquet row stores component offsets in `span_starts` and `span_ends` arrays.
+ *   A third array, `span_tags`, identifies each component. The text comes from slicing `raw` at those offsets.
+ *   A query that groups or filters by a
+ *   component performs that slice in SQL instead of decoding every row in the process.
  *
- *   `holdoutComponents` in `#tools/overlay/split-slice` is the same read in JavaScript. The two are not
- *   interchangeable, and the difference is stated below rather than left for a reader to find twice.
+ *   `holdoutComponents` in `#tools/overlay/split-slice` performs the same read in JavaScript.
+ *   The SQL and JavaScript operations use different string indexing. The difference is described below.
  */
 
 /**
@@ -19,15 +20,17 @@
  * `substr` takes a one-based start with a length, so the start is `span_starts[i] + 1`
  * and the length is the span's width.
  *
- * WHAT THIS GETS WRONG, AND WHEN.
+ * Known limitation and scope.
  * `alignRow` records a span in UTF-16 code units.
  *
  * DuckDB's `substr` counts characters.
  * The two agree for the Basic Multilingual Plane and diverge by one unit per astral character,
  * so a row carrying one slices late by the number of astral characters before the span.
  *
- * Measured over the first 40 train files of `v0.6.0-register-surface`, 40,000,000 rows: 6,982 rows
- * carry an astral character, which is 0.0175%, and 5,230 of 11,521,648 US rows, which is 0.0454%.
+ * In the first 40 train files of `v0.6.0-register-surface`, 6,982 of 40,000,000
+ * rows (0.0175%) carry an astral character.
+ * Among 11,521,648 US rows, 5,230 (0.0454%) carry one.
+ *
  * `𐍀𐍂𐍉𐍆𐌹𐌳𐌰𐌹𐌽𐍃, RHODE ISLAND` read its region as `ND`, taken from `ISLAND`.
  *
  * So this is sound for an aggregate over millions of rows and unsound for a decision about one row.
@@ -41,8 +44,9 @@ export function componentAtSpanSQL(tag: string, rawColumn = "raw"): string {
 /**
  * The same slice against a span index the caller already computed.
  *
- * A query that hoists `list_position(span_tags, …)` into a subquery column reads it by name,
- * and recomputing it in the projection would evaluate the search twice per row.
+ * A query can hoist `list_position(span_tags, …)` into a subquery column and read it by name.
+ * Recomputing that expression in the projection would evaluate the search twice per row.
+ *
  * Every caveat on {@linkcode componentAtSpanSQL} applies here, because this is the expression it builds.
  */
 export function componentAtIndexSQL(indexExpression: string, rawColumn = "raw"): string {

@@ -34,9 +34,12 @@ export async function readRegisterDecisions(): Promise<ReadonlyMap<string, Licen
 }
 
 /**
- * Reads why a row's source may not enter a release-eligible corpus, and records each refused source.
+ * Reads why a row's source may be refused from a release-eligible corpus.
+ * Records each refused source.
  *
- * `refused` accumulates as rows arrive, and the build's manifest reports it.
+ * `refused` accumulates as rows arrive.
+ * The build manifest reports the collected values.
+ *
  * A build whose `eligibility` is `null` runs under the exploratory profile and every row reads eligible.
  */
 export function createIneligibilityReader(eligibility: ReadonlyMap<string, readonly string[]> | null): {

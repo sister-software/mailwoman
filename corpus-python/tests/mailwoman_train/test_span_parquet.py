@@ -8,7 +8,7 @@ test pins the two properties the parquet leg must now hold:
    converter read back bit-identical through PyArrow (the reader stack the training
    loader uses), including the empty-triple (all-O) row.
 2. **Loud refusal** — a row missing the triple, or carrying a partial one, fails the conversion
-   with a named row. Silent loss (the pre-#519 behavior: columns simply dropped) is the hazard
+    with a row identifier. Silent loss (the pre-#519 behavior: columns simply dropped) is the hazard
    this step exists to close.
 
 Runs the converter via subprocess so the check covers the actual converter rather than a
@@ -42,8 +42,8 @@ pytestmark = pytest.mark.skipif(
     reason="span converter is TypeScript now — needs node on PATH + `yarn install` at the repo root",
 )
 
-# Inline node driver: imports the real TS converter (Node strips types natively), runs it on
-# the argv-supplied paths, and forwards any thrown error's message to stderr with a non-zero
+# Inline node driver: imports the real TS converter (Node strips types natively) and runs it on
+# the argv-supplied paths. It forwards any thrown error's message to stderr with a non-zero
 # exit — so the loud-failure assertions below exercise the converter's own interface text.
 _NODE_DRIVER = """
 import { pathToFileURL } from "node:url";

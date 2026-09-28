@@ -181,7 +181,7 @@ export interface NormalizedInputLite {
  *
  * The `(string & {})` members let `QueryShapeLite` from `@mailwoman/core/pipeline`,
  * whose fields are plain strings, satisfy these views.
- * The named literals still give editor completion.
+ * The enumerated literals still give editor completion.
  */
 export interface KnownFormatHitView {
 	format: KnownFormat | (string & {})

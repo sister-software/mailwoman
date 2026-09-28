@@ -141,7 +141,7 @@ export interface FloodZoneCellAreaTable {
  * would report Zone 1 as unmapped.
  *
  * `layer_coverage` holds the resulting cells.
- * This table records the statement and the boundary used to turn a named area such as "England" into cells.
+ * This table records the statement and the boundary used to turn an area such as "England" into cells.
  */
 export interface FloodMapExtentTable {
 	extent_id: string
@@ -161,7 +161,7 @@ export interface FloodMapExtentTable {
 	statement: string
 	statement_url: string
 	/**
-	 * The publisher of the boundary used to turn the named area into cells.
+	 * The publisher of the boundary used to turn the area into cells.
 	 *
 	 * The EA covers "all of England" but publishes no outline of England,
 	 * so the boundary comes from elsewhere.

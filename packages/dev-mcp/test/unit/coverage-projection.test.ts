@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file `projectCoverage` — the projection that dropped the guard it was supposed to carry.
  *
- *   The corpus-mismatch guard was computed correctly by the census, covered by fifteen passing tests, and invisible on
- *   its first live call: this projection builds its result field by field and did not name it. That is the same shape
- *   as every other silent-absence defect in this repo — a field the consumer needed came back missing rather than
- *   wrong, and missing reads as "there is none of it". So the projection is pure and tested rather than inline and trusted.
+ *   The census computed the corpus-mismatch guard correctly. Fifteen tests passed.
+ *   The first live call still omitted the guard because this projection builds its result field by field.
+ *   A consumer then reads a missing field as an absence. This test keeps the projection pure and checks that it includes the guard.
  */
 
 import { projectCoverage } from "@mailwoman/dev-mcp/tools/coverage"
@@ -81,7 +80,7 @@ describe("projectCoverage", () => {
 	})
 
 	it("reports a requested country that exists nowhere, rather than returning an empty row set", () => {
-		// An empty `rows` for a country nobody has heard of is indistinguishable from a country with no data.
+		// An empty `rows` value for an unknown country is indistinguishable from a country with no data.
 		// Naming it separately is the difference between "absent" and "I could not find it".
 		const out = projectCoverage(report(), ["ZZ"])
 

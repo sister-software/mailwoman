@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Both bases, at every tier.
  *
- *   The locale is pinned explicitly: `Intl.NumberFormat` follows the host otherwise, and a runner's default is not a
- *   property of the formatter.
+ *   The test pins the locale explicitly because `Intl.NumberFormat` otherwise follows the host.
+ *   A runner's default is not a property of the formatter.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"

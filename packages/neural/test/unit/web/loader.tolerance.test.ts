@@ -6,11 +6,11 @@
  *   Regression test for the 2026-07 demo outage: an optional postcode-anchor binary that 404s must
  *   not block the whole classifier load.
  *
- *   The incident: `postcode-de.bin` went 404 on prod R2 for every shipped version (postcode-us/fr
- *   stayed 200). The loader fetched the postcode binaries with a throwing `Promise.all(...fetchBytes)`,
- *   so that single 404 rejected the whole `Promise.all` → `loadNeuralClassifierFromURLs` rejected →
- *   the demo's `runtime.ready` never fired → the input stayed permanently disabled even though the
- *   model, tokenizer, and the other postcode binaries were all fine.
+ *   `postcode-de.bin` returned 404 from production R2 for every shipped version. `postcode-us/fr`
+ *   returned 200. The loader fetched postcode binaries with a throwing `Promise.all(...fetchBytes)`.
+ *   One 404 rejected the whole `Promise.all`, so `loadNeuralClassifierFromURLs` rejected and
+ *   the demo's `runtime.ready` never fired. The input stayed disabled even though the model, tokenizer
+ *   and other postcode binaries were available.
  *
  *   The postcode anchor is a soft ranking channel rather than a required model input. This suite pins the
  *   fix: one 404 is skipped (with a loud warn) and the classifier still loads with the survivors'
@@ -70,9 +70,9 @@ vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 // already be cached — evaluated without this file's mocks by an earlier file.
 // A cached module never re-evaluates, so the mock factories above would be skipped
 // and the real tokenizer/classifier would try to parse the dummy fixture bytes
-// (SentencePiece ParseFromArray failure). resetModules forces re-evaluation against
-// the registered mocks, and reset again on the way out so the next file in this
-// fork never inherits our mocked modules from the cache.
+// (SentencePiece ParseFromArray failure). resetModules forces re-evaluation against the registered mocks.
+// The afterAll reset runs again on the way out so the next file in this fork
+// never inherits our mocked modules from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
@@ -168,7 +168,7 @@ describe("loadNeuralClassifierFromURLs — optional postcode-anchor binary toler
 		expect(lookup!.has("10001")).toBe(true) // US survived
 		expect(lookup!.has("10115")).toBe(false) // DE was skipped
 
-		// The skip was loud and named the URL + the status.
+		// The skip was loud and included the URL and status.
 		const warned = warn.mock.calls.map((c) => String(c[0])).join("\n")
 		expect(warned).toContain(DE_BIN)
 		expect(warned).toContain("404")

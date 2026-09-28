@@ -19,7 +19,7 @@ import type React from "react"
  * `WriteStream` test double that records every frame Ink writes.
  *
  * The `stdout` cast goes through `unknown` because Ink expects `NodeJS.WriteStream`
- * (socket-backed), but only uses `columns`, `isTTY`, and `write` here.
+ * (socket-backed), but this code only uses `columns`, `isTTY` and `write`.
  * The cast isolates that known type gap.
  */
 class CaptureStream extends Duplex {

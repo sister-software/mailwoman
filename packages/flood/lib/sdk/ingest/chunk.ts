@@ -3,21 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The streaming pass — every feature into `flood_zone_area` and into the build's touch table — as a
- *   unit of work that can run over part of the source.
+ *   This module processes a source range as a streaming pass. It writes every feature to `flood_zone_area`
+ *   and to the build's touch table.
  *
- *   why this is A chunk rather than the whole file. h3's wasm heap cannot be reset from JavaScript, and
- *   it does not survive an unbounded number of polyfill calls: over the real product, runs died after
+ *   This work runs in chunks because h3's wasm heap cannot be reset from JavaScript.
+ *   It also fails after an unbounded number of polyfill calls. In the production input, runs died after
  *   roughly 510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process.
  *   A build that completes only when fragmentation happens to stay low is not a reproducible build, so
- *   the classification is bounded by construction — {@linkcode buildFloodDatabase} runs one of these per
- *   range of the authority's own feature ids, each in its own process, and each therefore against a heap
- *   that starts empty. The call-removal shortcuts in `cells.ts` make this faster. they are not what makes
- *   it correct.
+ *   {@linkcode buildFloodDatabase} bounds classification by running one chunk for each range of authority feature ids.
+ *   It runs each chunk in a separate process, so each starts with an empty heap. The call-removal shortcuts in `cells.ts`
+ *   improve speed. Chunking provides the correctness guarantee.
  *
- *   the chunk owns no artifact. It appends rows to a database the parent created and will seal, and
- *   returns counts the parent adds up. Chunks run one at a time against that file, so there is no
- *   concurrent writer and no locking to reason about.
+ *   The chunk appends rows to a database created and sealed by its parent. It returns counts for the parent to add.
+ *   Chunks run sequentially against the file, so the build has one writer and requires no locking.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -39,8 +37,8 @@ import { EA_FLOOD_ZONE_CODES } from "#vocabulary"
 /**
  * Rows per bulk-insert transaction.
  *
- * Chosen for the geometry table, whose rows carry a blob: a larger transaction
- * grows the write-ahead file without improving throughput.
+ * Chosen for the geometry table because each row carries a blob.
+ * A larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
 
@@ -67,7 +65,7 @@ export interface FloodChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres: the source's own figure, the encoded rings read with their holes, and read without.
+	 * Square metres for three areas: the source's figure and encoded rings with holes or without holes.
 	 */
 	area: { sourceM2: number; nestedM2: number; allExteriorM2: number }
 }

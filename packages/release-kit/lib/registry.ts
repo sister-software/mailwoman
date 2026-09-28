@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The registry of release operations — the only executable entry point of this package, and the file knip treats as
- *   such. An operation that is not listed here is dead code and knip reports it, which is the property the retired
- *   `scripts/**` entry glob could never provide. Adapters (`@mailwoman/ops-cli`, the release MCP) iterate this array.
- *   they never import an operation module directly.
+ *   This registry is the package's executable entry point. Knip treats it as such.
+ *   Knip reports any operation omitted from this array as dead code. The retired `scripts/**`
+ *   entry glob could not provide that check. Adapters (`@mailwoman/ops-cli` and the release MCP)
+ *   iterate this array. They do not import operation modules directly.
  */
 
 import { findOperation as findRegisteredOperation } from "@mailwoman/core/scripting"
@@ -34,8 +34,11 @@ import { verifyMetadata } from "#operations/verify-metadata"
 import { writeRightsFiles } from "#operations/write-rights-files"
 
 /**
- * Every release operation, in the order an adapter lists them: the plan first, then the
- * read-only checks, the local writes in release order, and the two external writes last.
+ * Every release operation in adapter order.
+ *
+ * The plan comes first, followed by read-only checks.
+ * Local writes follow in release order.
+ * The two external writes come last.
  */
 export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	plan,

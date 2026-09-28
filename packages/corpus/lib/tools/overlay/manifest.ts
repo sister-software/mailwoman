@@ -93,7 +93,7 @@ export interface OverlayFile {
 	 * The split that the file's rows belong to.
 	 * The default is `train`.
 	 *
-	 * `val` and `test` are allowed only for files that `splitOverlaySlice` named,
+	 * `val` and `test` are allowed only for files that `splitOverlaySlice` returned,
 	 * so that the holdout policy chooses held-out rows.
 	 */
 	split?: SplitName
@@ -113,17 +113,21 @@ export function splitFromFilename(parquet: string): SplitName | null {
 /**
  * Reads one overlay parquet and describes it for the manifest.
  *
- * The `source` argument is what the caller believes the file holds, and the file itself
- * is what the loader reads: `file_source_counts` groups the rows, never the manifest.
- * So a caller passing a stale label writes a manifest that disagrees with its own rows, the run
- * trains on the rows, and the next plan derived from that manifest carries the stale label forward.
+ * The loader groups rows by `file_source_counts`.
+ * The manifest records the `source` value supplied by the caller.
+ *
+ * A stale argument therefore writes a manifest that disagrees with the rows.
+ * The run trains on the rows.
+ *
+ * The next plan then carries the stale label forward from the manifest.
  *
  * This reads the column and refuses the mismatch rather than recording the claim.
  *
  * `source_id` is materialized rather than aggregated because `first_source_id`
  * and `last_source_id` mean the first and last row of the file.
- * DuckDB's `first` and `last` aggregates read whichever row a parallel scan
- * reaches first, which is not the same thing.
+ * DuckDB's `first` and `last` aggregates read whichever row a parallel scan reaches first.
+ *
+ * That result can differ from the first and last rows in the file.
  */
 async function descriptor(
 	localPath: string,
@@ -131,7 +135,7 @@ async function descriptor(
 	split: SplitName,
 	source: string
 ): Promise<ParquetFileDescriptor> {
-	// One per file, and `assembleOverlayManifest` calls this once per file.
+	// `assembleOverlayManifest` calls this once for each file.
 	using db = await openDuckDB()
 
 	const result = await db.runAndReadAll(`SELECT source_id, source FROM read_parquet('${escapeSQLString(localPath)}')`)
@@ -189,11 +193,12 @@ export interface OverlayPlan {
 	/**
 	 * Each added file with the route its split came from.
 	 *
-	 * `route` reads `split-slice` where the filename carries the split suffix that command
-	 * writes, and `caller` where the split was supplied as an argument.
+	 * `route` reads `split-slice` when the filename carries the split suffix written by the command.
+	 * `caller` reads the split supplied as an argument.
+	 *
 	 * A hand-placed split reached `v0.6.0-register-surface` through the second route
-	 * and put 770 of DE's 3,987 validation `source_id`s in train, and the filename
-	 * was the only place that showed it (#2359).
+	 * and put 770 of DE's 3,987 validation `source_id`s in train.
+	 * The filename was the only place that showed this (#2359).
 	 */
 	files: Array<{ parquet: string; source: string; split: SplitName; route: SplitRoute }>
 }
@@ -264,8 +269,8 @@ export function localManifestFilePath(path: string): string {
 /**
  * Writes a corpus manifest that keeps every file of `args.base` and appends `args.files`.
  *
- * A `val` or `test` file must have the `.<split>.parquet` name that `splitOverlaySlice`
- * writes, which shows that the holdout policy chose its rows.
+ * A `val` or `test` file must use the `.<split>.parquet` suffix written by `splitOverlaySlice`.
+ * The suffix shows that the holdout policy chose its rows.
  * A `train` file has no naming requirement.
  *
  * @throws When the base lists no files or a held-out file lacks the matching filename suffix.
@@ -290,7 +295,8 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		}
 	}
 
-	// Held-out rows must come from the holdout policy, which encodes the split in the filename.
+	// Held-out rows must come from the holdout policy.
+	// The filename records the split.
 	// A caller that picks held-out rows by hand can leak them into train.
 	for (const file of args.files) {
 		if (!file.split || file.split === "train") continue
@@ -354,7 +360,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
 		// Saying so in the artifact is what keeps a reader from deriving an attribution
 		// table from `slices` and treating the base build's set as the whole.
-		// The overlay sources named here carry their own terms, recorded per source in
+		// The overlay sources listed here carry their own terms, recorded per source in
 		// `packages/corpus/lib/recipes/sources.ts` and per row in the `license` column itself.
 		licenses_cover:
 			`no license set is measured here. The base build's MANIFEST.json covers the rows it aligned, and ` +

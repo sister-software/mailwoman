@@ -7,9 +7,9 @@
  *   contains no judgement of its own: the bands, the eligibility rule, the fill order and the seed all come
  *   from `benchmark-definition.json`, committed before any row was inspected.
  *
- *   Two strata per band, and the band is what this benchmark adds. The same-data panel drew every gold above
- *   one population floor, so a floor arm admitted all of it by construction. Here a stratum is filled once per
- *   band, from that band's own rows, and the record reports each band separately.
+ *   The benchmark's addition is its band field. The same-data panel drew each gold above one population floor,
+ *   so a floor arm admitted every gold case by construction. This builder fills one stratum per band from that
+ *   band's rows. The record reports each band separately.
  *
  *   Rows are drawn from the per-country main-table dumps rather than `cities15000.txt`, because the point is
  *   to reach below 15,000. The dumps carry the same columns, so `readCities` parses them unchanged.
@@ -67,9 +67,9 @@ function panelProvenance(definition: ProminenceFloorDefinition): SameDataPanelRo
 /**
  * Build the panel by executing the frozen selection rules.
  *
- * Strata are filled band by band, in the definition's order, from one shared used-set.
- * So a geonameid taken by the gold-present stratum of any band can never reappear in the withheld-gold
- * stratum, and the two strata of a band are disjoint rather than the same rows graded twice.
+ * Strata are filled band by band in the definition's order, using one shared used-set.
+ * A geonameid taken by any gold-present stratum cannot reappear in a withheld-gold stratum.
+ * The two strata of a band therefore contain disjoint rows.
  */
 export function buildProminencePanel(inputs: ProminencePanelInputs): ProminencePanelResult {
 	const { definition, cities, goldSets } = inputs
@@ -81,8 +81,9 @@ export function buildProminencePanel(inputs: ProminencePanelInputs): ProminenceP
 	const census: StratumFillCensus[] = []
 
 	/**
-	 * Rows whose name is borne exactly once across the registered countries,
-	 * whose population falls in `band`, and which no earlier stratum has taken.
+	 * Rows whose name occurs exactly once across the registered countries
+	 * and whose population falls in `band`.
+	 * No earlier stratum can have taken the row.
 	 */
 	const eligibleIn = (band: ProminenceBand): GeoNamesCity[] =>
 		uniqueNameEligible({
@@ -122,8 +123,8 @@ export function buildProminencePanel(inputs: ProminencePanelInputs): ProminenceP
 							country: city.country,
 							query: city.name,
 							// The withheld-gold stratum is what `goldPresent: false` marks:
-							// the recorder reads it to know which candidates to remove after recording,
-							// and the scorer reads it to pick the denominator.
+							// The recorder uses it to choose candidates for removal after recording.
+							// The scorer uses it to choose the denominator.
 							goldPresent: !stratum.correctIsAbstention,
 							gold: goldOf(city, gold),
 							source: panelProvenance(definition),

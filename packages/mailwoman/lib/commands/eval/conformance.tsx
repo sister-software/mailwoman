@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval conformance` — run the conformance-LAW suites: pairs of queries that differ by one
- *   declared transformation, each graded on the axis its own row names (entity identity, assembled
+ *   declared transformation. Each pair is graded on the axis its own row specifies (entity identity, assembled
  *   coordinate, strict parse, component map, mechanism shape). Every suite in the register runs by default,
- *   with rows drawn from committed board cases and variants derived from those same queries by the named
- *   transformation. The laws are named by the register (`conformance/suites.ts`) rather than here: a list in
- *   this file is a second copy of it, and the copy is what goes stale.
+ *   with rows drawn from committed board cases and variants derived from those same queries by the specified
+ *   transformation. The register (`conformance/suites.ts`) defines the laws. This file contains a second list
+ *   of those laws. The list can go stale.
  *
  *   Runs through the Gauntlet's own deps, so the pipeline under test is the one the board grades rather than a
  *   second assembly of it. Rows are audited before the engine loads; `status: pass` rows check the exit
- *   code, tracked rows report without blocking, and a tracked row that starts holding prints a promotion
+ *   code. Tracked rows report without blocking. A tracked row that starts holding prints a promotion
  *   instruction.
  */
 

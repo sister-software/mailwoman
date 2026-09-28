@@ -6,12 +6,11 @@
  *   `nearestInfrastructure` — a coverage-paired k-nearest read over the telecom-infrastructure POI
  *   categories (`telecom_exchange`/`tower_comms` — `@mailwoman/poi-taxonomy` categories, populated by the
  *   `--source osm` extractor) that a caller can join against any layer's own `layer_coverage`
- *   survey-completeness table (decision 7). Typical caller: a BDC filing scorer that wants "what's the
- *   nearest real infrastructure to this claimed Broadband Serviceable Location, and does OUR layer even
- *   have survey evidence for that area" in one call.
+ *   survey-completeness table (decision 7). A typical caller is a BDC filing scorer.
+ *   It asks for the nearest real infrastructure to a claimed Broadband Serviceable Location.
+ *   It also asks whether this layer has survey evidence for that area.
  *
- *   Two shapes below are not the obvious ones, and both are forced by what `poi-lookup.ts` and
- *   `@mailwoman/core/layers` actually expose:
+ *   The shapes below follow the interfaces in `poi-lookup.ts` and `@mailwoman/core/layers`:
  *
  *   - **`poiLookup` is an already-open {@link POILookup}, not a `POILookupOpts` this function
  *     constructs itself.** `POILookup`'s constructor eagerly loads the poi-taxonomy category dictionary

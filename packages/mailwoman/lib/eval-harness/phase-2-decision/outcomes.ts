@@ -24,7 +24,7 @@ export interface Phase2Counts {
  */
 export interface Phase2Comparability {
 	/**
-	 * Every pinned artifact whose observed identity differs, named with both values.
+	 * Every pinned artifact whose observed identity differs, with both values included.
 	 *
 	 * Empty means the run is comparable to the receipts the ruler cites as baselines.
 	 */
@@ -53,13 +53,13 @@ export interface Phase2Verdict {
 	/**
 	 * The default-change bar rows that do not read `met`.
 	 *
-	 * Recorded so nobody reads this decision as authorizing a default change.
+	 * This decision records opt-in behavior and grants no authorization for a default change.
 	 * Never an input.
 	 */
 	defaultChangeBarUnmetRows: number[]
 	reasons: string[]
 	/**
-	 * Every check that missed its bar, named with its arithmetic.
+	 * Every check that missed its bar, with the arithmetic included.
 	 */
 	misses: string[]
 }

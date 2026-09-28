@@ -3,22 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What is actually cloned in the WOF repos root, the other half of `country-plan`.
+ *   Reports the clones in the WOF repos root. This supplies the other half of `country-plan`.
  *
- *   `country-plan` reads the built artifact, which answers what source serves this country. It
- *   cannot answer what is on disk waiting to be built, and for the WOF leg those are different
- *   questions: `ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list, so
- *   the directory is the recipe. A clone that landed is coverage the next build will pick up whether
- *   or not anyone declared it, and a declaration with no clone is coverage that will silently not
- *   appear.
+ *   `country-plan` reads the built artifact to learn what source serves each country. It cannot report files on disk
+ *   that await a build. For the WOF leg, `ingestWOF` globs `**\/data\/**\/*.geojson` under the repos root and reads no
+ *   list. The directory contents form the recipe. The next build includes any clone, whether or not someone declared
+ *   it. A declaration without a clone will produce no coverage.
  *
- *   Two layouts coexist, and a repo present in both is one of two different things, which is why
- *   this distinguishes them rather than counting paths. A repo can be two independent checkouts, or
- *   one checkout reachable twice through a symlink, and only the independent copies carry the
- *   hazard. The moment they diverge, after only one is pulled, the ingested value is last-writer-wins
- *   over filesystem enumeration order. `verifyAdmin` cannot catch that because it tests floors. An
- *   alias can never reach that state, so reporting the two as one number would either overstate the
- *   risk or hide it.
+ *   Two layouts can coexist. A repository present in both can represent two independent checkouts or one checkout
+ *   reached through a symlink. The audit distinguishes these cases instead of counting paths. Only independent copies
+ *   can diverge. If one copy is pulled and the other remains unchanged, filesystem enumeration order decides which
+ *   value is ingested. `verifyAdmin` tests floors and cannot detect that conflict. A symlink alias points to one
+ *   physical copy, so it cannot diverge. Combining aliases and separate checkouts would misstate the risk.
  */
 
 import { entryLeadsToDirectory, pathExists, realPath } from "@mailwoman/core/fs/readers"
@@ -48,7 +44,8 @@ export interface ClonedRepo {
 	/**
 	 * True when the layouts resolve to the same directory through a symlink rather than a second checkout.
 	 *
-	 * The ingest does not follow the alias, and one directory can never diverge from itself.
+	 * The ingest skips the alias.
+	 * One physical directory cannot diverge from itself.
 	 */
 	aliased: boolean
 	/**
@@ -78,8 +75,8 @@ export interface ReposAudit {
 	/**
 	 * Repos reachable through both layouts via a symlink, one physical copy.
 	 *
-	 * The ingest skips the symlinked layout, and the directory cannot diverge in
-	 * the way {@link ReposAudit.duplicated} can.
+	 * The ingest skips the symlinked layout.
+	 * The physical directory cannot diverge like a duplicated checkout in {@link ReposAudit.duplicated}.
 	 */
 	aliased: ClonedRepo[]
 	/**
@@ -107,9 +104,8 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
 /**
  * `head` for a checkout, or `undefined` when the directory is not one.
  *
- * A clone with no git metadata is not an error here.
- * It is a directory someone extracted from an archive, and reporting the vintage
- * as absent is more useful than refusing to audit the root.
+ * A clone without git metadata can be a directory extracted from an archive.
+ * The audit reports its vintage as absent and continues checking the root.
  */
 function headOf(dir: PathBuilder): string | undefined {
 	try {
@@ -122,8 +118,8 @@ function headOf(dir: PathBuilder): string | undefined {
 /**
  * Walk the repos root and report every clone, its layout(s) and its vintage.
  *
- * Only two levels are examined, because only two layouts exist: a repo directly
- * under the root, and a repo under an owner directory.
+ * The audit examines two levels because repositories use two layouts:
+ * directly under the root or under an owner directory.
  * Anything deeper is a repo's own contents.
  */
 export async function auditReposRoot(

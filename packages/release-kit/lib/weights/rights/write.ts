@@ -5,8 +5,9 @@
  *
  *   Write each published weights workspace's `LICENSE.md` and `PROVENANCE.json` from its manifest and model card.
  *
- *   The files are committed rather than materialized at pack time: they change only when a manifest or card
- *   changes, a reviewer has to see a rights statement move in a diff, and the `weights-rights` check holds the
+ *   The files are committed rather than materialized at pack time.
+ *   They change only when a manifest or card changes. Reviewers can see each rights statement in the diff.
+ *   The `weights-rights` check keeps the
  *   tree equal to this writer's output. Private weights workspaces are skipped, because a rights file there would
  *   state terms for a tarball that never publishes.
  */
@@ -35,8 +36,8 @@ export interface RightsFileState {
  * Every published `neural-weights-*` workspace, in the order `readWorkspaceDirectories` lists them.
  *
  * Read from the root workspace list rather than `.release-it.json`, because a weights
- * workspace held out of the release still publishes the moment it is added back,
- * and a rights file that only appears then is one nobody reviewed.
+ * workspace held out of the release can publish as soon as it is added back.
+ * A rights file that appears only then has no review record.
  */
 export async function publishedWeightsWorkspaces(repoRoot: PathBuilderLike): Promise<string[]> {
 	const workspaces = await readWorkspaceDirectories(repoRoot)

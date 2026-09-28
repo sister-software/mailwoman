@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   A fold's own tier decides whether the candidate build takes its rows. The fixture is the state the lab
- *   host's `postalcode-ni-osm.db` is in: no `layer_manifest`, and `tier = build-local` in a `meta` table.
- *   Without the opt-in the build stops before it opens the admin gazetteer, which is why an absent admin
- *   database is enough to prove the order.
+ *   host's `postalcode-ni-osm.db` has no `layer_manifest` and records `tier = build-local` in a `meta` table.
+ *   Without the opt-in, the build stops before opening the admin gazetteer.
+ *   An absent admin database therefore proves the order.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -65,7 +65,8 @@ test("buildCandidate refuses a build-local fold before building, and names it", 
 test("buildCandidate folds a build-local database when asked, and says so before the build", async () => {
 	const phases: string[] = []
 
-	// The build goes on to fail on the absent admin gazetteer, which is a different failure from the refusal.
+	// The build then fails on the absent admin gazetteer.
+	// That failure differs from the refusal above.
 	const outcome = await buildCandidate({
 		adminDB: root.path("nope.db"),
 		out: root.path("candidate-local.db"),

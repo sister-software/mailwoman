@@ -108,8 +108,7 @@ export interface ReleaseListIdentity {
 }
 
 /**
- * The named-absence identity: root `workspaces` minus the release list must
- * equal the sanctioned set exactly.
+ * The absence identity: root `workspaces` minus the release list must equal the sanctioned set exactly.
  */
 export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promise<ReleaseListIdentity> {
 	const root = await readWorkspaceDirectories(repoRoot)

@@ -64,7 +64,8 @@ export const EA_CATALOGUE_PACKAGE_ID = "104434b0-5263-4c90-9b1e-e43b1d57c750"
 /**
  * The licence the catalogue entry must declare.
  *
- * Any other value means the licence changed, and the build stops so someone can review the new terms.
+ * Any other value means the licence changed.
+ * The build stops so someone can review the new terms.
  */
 export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
 
@@ -78,7 +79,8 @@ export type FloodCatalogueRecord = CKANPackageRecord
  */
 export class EAFloodClient extends APIClient<APIClientConfig> {
 	/**
-	 * Reads the catalogue entry, which holds the reference dates, licence and file URLs.
+	 * Reads the catalogue entry.
+	 * It contains the reference dates, licence and file URLs.
 	 *
 	 * The download URL must come from the catalogue.
 	 * The EA file service keys files by an opaque `fileDataSetId`, so a hard-coded
@@ -140,7 +142,7 @@ export function createEAFloodClient(options: CreateFloodClientOptions = {}): EAF
 }
 
 /**
- * The ONS Open Geography boundary service, which supplies the outline of England.
+ * The ONS Open Geography boundary service supplies the outline of England.
  *
  * The EA says its mapping covers all of England but publishes no outline.
  * The build records the ONS boundary it used in `flood_map_extent`.
@@ -152,7 +154,8 @@ export const ONS_BOUNDARY_BASE_URL =
  * The ONS boundary product, generalised to 20 m and clipped to the coastline.
  *
  * The full-resolution product would give the same cells for a much larger download.
- * Coverage cells are kilometres across, and the interior test drops cells near the border.
+ * Coverage cells are kilometres across.
+ * The interior test drops cells near the border.
  */
 export const ONS_BOUNDARY_PRODUCT = "Countries (December 2025) Boundaries UK BGC"
 

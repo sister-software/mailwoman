@@ -88,7 +88,8 @@ export async function buildDataset(
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 
-	// AU rows come from the G-NAF corpus, which has more AU rows than v0.5.0.
+	// AU rows come from the G-NAF corpus.
+	// It has more AU rows than v0.5.0.
 	const AU_GLOB = dataRootPath(
 		"corpus",
 		"versioned",

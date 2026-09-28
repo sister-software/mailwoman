@@ -48,8 +48,10 @@ interface Viewport {
 }
 
 /**
- * The session's long-lived handles; `renderer` is null when there is no usable tile archive,
- * and `mapNote` is what the map pane shows in its place.
+ * The session's long-lived handles.
+ *
+ * `renderer` is null when no usable tile archive exists.
+ * `mapNote` is what the map pane shows in its place.
  */
 interface Resources {
 	session: GeocodeSession
@@ -152,8 +154,8 @@ async function openResources(options: GeocodeCommandOptions): Promise<Resources>
 
 		return { session, source, renderer: new MapRenderer(source), mapNote: null }
 	} catch (error) {
-		// A corrupt or unreadable archive costs the map pane rather than the session,
-		// whose parse and resolution are still the answer the user came for.
+		// A corrupt or unreadable archive makes the map pane unavailable.
+		// The session still provides the parse and resolution the user came for.
 		return { session, source: null, renderer: null, mapNote: `tiles unavailable: ${messageOf(error)}` }
 	}
 }
@@ -165,12 +167,12 @@ function closeResources(resources: Resources | null): void {
 
 	void resources.source?.[Symbol.asyncDispose]().catch(() => {
 		// Teardown is best-effort: this runs after the terminal is restored and
-		// while the process exits, so a rejected close has nobody left to tell.
+		// while the process exits, so no caller remains to receive a close error.
 	})
 }
 
-/* oxlint-disable react-hooks/exhaustive-deps -- The mount effect is one-shot BY interface: it opens the
-	 session, the tile archive and the first geocode, and its cleanup is the only thing that closes them.
+/* oxlint-disable react-hooks/exhaustive-deps -- The mount effect runs once by interface. It opens the
+	 session, the tile archive and the first geocode. Its cleanup is the only code that closes them.
 	 Tracking `options`/`initialInput` would re-open every handle on any identity change. A fresh options object
 	 per render is enough. The empty deps array is the point, same as `useCommandTask`. */
 

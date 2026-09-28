@@ -1,4 +1,4 @@
-"""Which checkpoint grows onto which tokenizer: the splice table, and no code that runs.
+"""The splice table maps checkpoints to tokenizers. It contains no executable code.
 
 A splice is five paths and a pair of vocabulary sizes. The expected size is data here, so
 `launch/mean_init.py` can refuse a result that does not match it and `tests/launch/test_splices.py`
@@ -19,11 +19,11 @@ TOKENIZERS = "models/tokenizer"
 
 @dataclass(frozen=True)
 class Splice:
-    """One embedding expansion: whose weights, from which vocabulary to which, and where it lands."""
+    """One embedding expansion: the source weights, source vocabulary, target vocabulary and output."""
 
     #: Volume-relative directory holding the checkpoint whose embeddings grow.
     checkpoint: str
-    #: The tokenizer the checkpoint was trained against, and the wider one it is grown onto.
+    #: The tokenizer used to train the checkpoint and the wider tokenizer used for expansion.
     from_tokenizer: str
     to_tokenizer: str
     #: Volume-relative directory the expanded checkpoint is written to.

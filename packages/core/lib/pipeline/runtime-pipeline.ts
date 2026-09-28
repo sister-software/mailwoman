@@ -278,7 +278,8 @@ export async function runPipeline(
 				...opts,
 				resolveOpts: {
 					...opts?.resolveOpts,
-					// The resolver uses the full posterior when the placer supplies one, and a one-hot argmax otherwise.
+					// The resolver uses the placer's full posterior when available.
+					// Otherwise it uses a one-hot argmax.
 					anchorPosterior: placed.posterior ?? { [placed.country]: placed.confidence },
 					anchorWeight: opts?.resolveOpts?.anchorWeight ?? COARSE_PLACER_ANCHOR_WEIGHT,
 					...(hardCountry ? { hardCountry } : {}),

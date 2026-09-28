@@ -6,17 +6,17 @@
  * one with no public constructor: {@link requireExclusionBasis} is the sole way to make one and refuses far more often
  * than it admits.
  *
- * Fold parity is a precondition rather than a detail: a key that "exists nowhere" may exist under a surface we did
- * not probe, so the probe must name the fold it used and the layer must name the fold its builder wrote, and a
- * mismatch is a refusal rather than an exclusion.
+ * Fold parity is a precondition. A key that "exists nowhere" may exist under a surface the probe did
+ * not check. The probe must identify the fold it used. The layer must identify the fold its builder wrote.
+ * A mismatch causes refusal rather than exclusion.
  */
 
 /**
  * What a `completeness` value rests on.
  *
- * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support an
- * exclusion, since {@link CoverageBasis.SourcePresent} records that the source looked,
- * which is not the same as the source having found everything.
+ * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support
+ * an exclusion. {@link CoverageBasis.SourcePresent} records that the source looked.
+ * It does not establish that the source found everything.
  */
 export const CoverageBasis = {
 	/**
@@ -123,10 +123,11 @@ export function requireExclusionBasis(input: RequireExclusionInput): Exclusion |
 }
 
 /**
- * Inputs a fold identity is computed over, each exercising an axis folds can
- * differ on (word-internal diacritics, hyphens, periods, apostrophes, case,
- * whitespace collapsing, non-Latin scripts); adding an input changes every identity,
- * and the order is load-bearing because identity is order-dependent.
+ * Inputs a fold identity is computed over, each exercising an axis folds can differ on word-internal
+ * diacritics, hyphens, periods, apostrophes, case, whitespace collapsing and non-Latin scripts.
+ *
+ * Adding an input changes every identity.
+ * The order is load-bearing because identity is order-dependent.
  */
 export const FOLD_PROBE_CORPUS: readonly string[] = [
 	"Besançon",

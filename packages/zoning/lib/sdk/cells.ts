@@ -57,11 +57,12 @@ export interface CellIndexMeasurement {
 	 */
 	storedCellRows: number
 	/**
-	 * How many polygons name a cell over the cells the layer reaches, which is what a probe pays.
+	 * Polygon count per cell across all cells the layer reaches.
+	 * A probe pays this cost.
 	 */
 	candidatesPerCell: { mean: number; p90: number; max: number }
 	/**
-	 * Cells naming more than one polygon, and their share of the touched cells.
+	 * Count of cells naming more than one polygon and their share among touched cells.
 	 */
 	multiCandidateCells: number
 	multiCandidateShare: number
@@ -134,8 +135,10 @@ export class ZoningCellIndex {
 	}
 
 	/**
-	 * The measurement, whose compacted count is a lower bound on the stored rows
-	 * because it compacts the union of features rather than each feature.
+	 * The measurement.
+	 *
+	 * Its compacted count is a lower bound on stored rows.
+	 * The compaction uses the feature union rather than each feature.
 	 */
 	finish(): CellIndexMeasurement {
 		const compacted = compactAcrossResolutions(this.#whole).length
@@ -178,7 +181,8 @@ export class ZoningCellIndex {
 			storedCellRows: compacted + partial,
 			candidatesPerCell: {
 				mean: touched ? total / touched : 0,
-				// Nearest-rank p90 over the candidate counts, which is the shape `@mailwoman/core/stats` uses.
+				// Nearest-rank p90 over candidate counts.
+				// This matches `@mailwoman/core/stats`.
 				p90: counts.length ? counts[Math.min(counts.length - 1, Math.ceil(0.9 * counts.length) - 1)]! : 0,
 				max,
 			},

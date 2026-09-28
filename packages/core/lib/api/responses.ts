@@ -121,9 +121,9 @@ export const ResourceErrorKind = {
 	 * A response arrived with a success status, but its body could not be decoded into the requested
 	 * type — the classic case being an upstream that serves an html error page under a 200.
 	 *
-	 * Never transient, deliberately: retrying an unchanged bad body cannot help,
-	 * and a client that treated this as retryable would spend its whole attempt
-	 * budget re-downloading the same broken payload.
+	 * This failure is terminal because retrying an unchanged bad body cannot help.
+	 * A client that treated it as retryable would spend its whole attempt budget
+	 * re-downloading the same broken payload.
 	 */
 	Payload: "payload",
 } as const
@@ -241,8 +241,8 @@ function responseReason(status: number): string {
  *
  * - Every responseless failure (`ERR_NETWORK`, `econnrefused`, `econnreset`, `econnaborted`,
  *   `etimedout`, `ERR_CANCELED`) used to collapse into a uniform 500.
- *   They now split into 503 / 504 / 400 by cause, and `ERR_CANCELED` flips from
- *   transient to terminal, which is the point.
+ *   They now split into 503 / 504 / 400 by cause.
+ *   `ERR_CANCELED` changes from transient to terminal.
  *   A caller who cancelled should not requeue.
  * - Every non-401 http status used to rethrow the raw `AxiosError`, so `status`-based branching
  *   (404 → skip, 403 → abort) had to reach into `error.response`. 401's own message and URN changed too.
@@ -252,9 +252,10 @@ function responseReason(status: number): string {
  * `if (!response) throw` ran before that `switch`, and axios never attaches a `response`
  * to a timeout or a cancellation, so a real one threw `axios:response:missing` 500 —
  * a misclassified 500 rather than a `TypeError` at the caller.
- * Note the `return` arms were not unreachable in general, only unreachable via axios:
- * reaching the `switch` required a response to be present, and an error carrying both
- * a `response` and `econnaborted` did resolve with `undefined`.
+ * The `return` arms remained reachable through a constructed error shape.
+ *
+ * Reaching the `switch` required a response to be present.
+ * An error carrying both a `response` and `econnaborted` did resolve with `undefined`.
  *
  * Stock adapters never pair those, but this repo's own `axiosLikeError(message, code, config, response)`
  * helper builds that shape in one argument.
@@ -321,12 +322,12 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 		// It cost one unbounded, un-timed-out request per exhausted DNS failure —
 		// with a never-settling `fetch` the client never settled at all —
 		// and no test could reach it: deleting the whole branch caused 0 of 269 failures,
-		// and the hermetic no-live-network harness could not see it either, because the
-		// probe swallowed its own synchronously-throwing `fetch` stub into `false`.
+		// The hermetic no-live-network harness also failed to detect it.
+		// The probe swallowed its synchronously-throwing `fetch` stub into `false`.
 		// Making the probe incapable of throwing is exactly what made it invisible
 		// to the guard meant to catch it.
-		// The classification is identical either way — network-class, transient —
-		// so the whole thing bought one message string.
+		// Both branches produce the same classification: network-class and transient.
+		// The connectivity probe changed only the message string.
 		throw taggedResourceError(
 			error,
 			HttpStatusCode.ServiceUnavailable,

@@ -3,18 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared core of the reply prose check: run a finished agent reply through the Mailwoman Vale
- *   rules and render one verdict. The platform adapters — `vale-response-check.ts` (Claude Code)
- *   and `vale-response-check-codex.ts` (Codex) — own payload parsing, the loop guard, and the
- *   output JSON. the policy (which config, which severities block, how findings read) lives here
- * . Therefore, the two hooks cannot drift apart the way parallel copies do.
+ *   This module runs finished agent replies through the Mailwoman Vale rules and renders one verdict.
+ *   `vale-response-check.ts` adapts Claude Code. `vale-response-check-codex.ts` adapts Codex.
+ *   Both parse payloads and guard against loops. They format output JSON through the shared policy in this module.
+ *   This module defines the config and blocking severities. It also defines the finding text.
  *
  *   The rule set is `config/vale/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
  *   additions, fixture-tested by `config/vale/check-rules.ts`. The config path resolves
  *   relative to this module, so a worktree checkout lints with its own rules.
  *
- *   Severity picks the mechanism. Error-severity findings render a `block` verdict — that tier is
- *   curated to near-zero legitimate use, and the correction must replace the judgment with the
+ *   Severity picks the mechanism. Error-severity findings render a `block` verdict. The tier is
+ *   curated to near-zero legitimate use. The correction must replace the judgment with the
  *   concrete claim rather than merely delete the flagged word. Warning-only findings render a `context`
  *   verdict: those rules (opaque IDs, minted metaphors, vague praise) need judgment a regex does
  *   not have, so the agent weighs them.
@@ -44,8 +43,9 @@ export async function lintReply(reply: string): Promise<ValeAlert[]> {
 	const vale = await valeCommand(import.meta.url)
 	const configPath = repoRootPath("config", "vale", ".vale-chat.ini")
 
-	// Vale exits 1 when error-severity alerts exist, so the exit code carries no failure signal.
-	// An unparseable stdout is the failure, and that reads as "no findings" per the silence interface.
+	// Vale exits 1 when error-severity alerts exist, so the exit code does not indicate a tool failure.
+	// Unparseable stdout indicates failure.
+	// The silence interface would otherwise treat it as "no findings".
 	const result = spawnProcessSync(vale.file, [...vale.argv, "--config", configPath, "--output=JSON", "--ext=.md"], {
 		input: reply,
 		encoding: "utf8",
@@ -67,11 +67,15 @@ export async function lintReply(reply: string): Promise<ValeAlert[]> {
 }
 
 /**
- * The rule's guidance with the match's own name factored out, so one grouped line
- * carries the message once instead of once per hit.
+ * Returns rule guidance without the match's name.
  *
- * Message templates vary ("'%s' is …", the stock-form template, and templates with no substitution at all),
- * so the fallbacks keep every shape readable.
+ * A grouped line then carries the message once instead of once per hit.
+ *
+ * Message templates vary.
+ * Some contain `'%s'` or use a stock form.
+ *
+ * Others have no substitution.
+ * The fallbacks keep each template readable.
  */
 function ruleGuidance(alert: ValeAlert): string {
 	const quoted = `'${alert.Match}'`

@@ -32,8 +32,8 @@ vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 
 // The root vitest config runs `isolate: false`, so `./sec-client.ts` may already sit
 // in the worker's cache evaluated without this file's env mock.
-// Reset on the way in so the chain re-evaluates against the mock, and on the way out
-// so the next file never inherits it.
+// Reset on the way in so the chain re-evaluates against the mock.
+// Reset on the way out so the next file never inherits it.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
@@ -691,8 +691,8 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 		["numeric", "60", 60_000],
 		["clamped", "999999", 60_000],
 		["unparseable (fails LONG, never the short exponential)", "not-a-valid-value", 60_000],
-		// RFC 9110's `delay-seconds` is `1*digit` only, and `Number()` is laxer,
-		// so a naive parse would honor these as a plausible-looking wait.
+		// RFC 9110's `delay-seconds` is `1*digit` only.
+		// `Number()` accepts more forms, so a naive parse would honor these as plausible waits.
 		["hex-looking", "0x10", 60_000],
 		["fractional", "1.5", 60_000],
 	])("honors a %s Retry-After over the default exponential backoff", async (_label, header, expected) => {
@@ -794,8 +794,8 @@ describe("createSECClient: the caller's failure taxonomy, decided without readin
 	})
 
 	it("exhausted timeout → requeue", async () => {
-		// Axios reports its own `timeout` config as econnaborted, which must read as
-		// network-class rather than as a caller-initiated cancel.
+		// Axios reports its own `timeout` config as econnaborted.
+		// The client must treat that as a network error rather than a caller-initiated cancel.
 		const error = await failureFor([{ throws: { message: "timeout of 30000ms exceeded", code: "ECONNABORTED" } }])
 
 		expect(error).toBeInstanceOf(ResourceError)

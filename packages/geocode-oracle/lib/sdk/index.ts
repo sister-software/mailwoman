@@ -9,11 +9,12 @@
 
 // Re-exported so a caller branching on either client's failures needs exactly one import.
 //
-// here rather than on each client, which is where `filer/sdk/sec-client.ts`
-// and `bdc/sdk/client.ts` put theirs.
-// Those are one client per package, so the convenience re-export cannot collide.
-// This package holds two, and `export *` over two modules that both re-export `ResourceError`
-// makes the name ambiguous and drops it from the barrel entirely — silently.
+// Keep the convenience export here.
+// `filer/sdk/sec-client.ts` and `bdc/sdk/client.ts` put their convenience exports on each client.
+// Those packages each have one client, so their exports cannot collide.
+// This package has two clients.
+// `export *` from both modules would make their shared `ResourceError` name ambiguous.
+// TypeScript would then omit `ResourceError` from this barrel.
 
 export * from "#sdk/census/client"
 export * from "#sdk/census/parser"

@@ -3,13 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The batched path's arithmetic — the one part a fixture build cannot reach, and the one whose failure
- *   produces a well-formed artifact.
+ *   Tests the batched path's arithmetic. A fixture build cannot reach this path.
+ *   A failure here could still produce a well-formed artifact.
  *
- *   A chunk here is one scenario, and every scenario covers the same coast. So a coverage cell appears in
- *   twelve chunks and the counts must ADD. taking the last chunk's value would report a cell as holding one
- *   scenario's polygons, which is a twelfth of what is there — a number that looks entirely plausible on a
- *   receipt.
+ *   A chunk represents one scenario. Every scenario covers the same coast, so a coverage cell appears in
+ *   twelve chunks and the counts must be added. Taking the last chunk's value would report one scenario's
+ *   polygons as the full cell value. That is one twelfth of the actual count and could look plausible on a receipt.
  */
 
 import { aggregateChunks } from "@mailwoman/coastal/sdk/build-coastal"
@@ -104,9 +103,8 @@ describe("aggregateChunks", () => {
 			}),
 		])
 
-		// The two spellings stay apart in the census: the fold is what the domain
-		// check compares on, and folding the receipt too would hide the source's own
-		// inconsistency from the reader who has to see it.
+		// The two spellings stay apart in the census: the fold is what the domain check compares.
+		// Folding the receipt too would hide the source's own inconsistency from the reader who has to see it.
 		expect(result.defenceTypeCounts).toEqual([
 			["Sheet piles", 1350],
 			["Sheet Piles", 270],

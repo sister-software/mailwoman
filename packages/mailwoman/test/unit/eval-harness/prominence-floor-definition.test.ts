@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The prominence-floor ruler's audit. Every case here is a definition a runner could not execute,
- *   and the audit's job is to say which one.
+ *   Tests the prominence-floor definition audit. Each case supplies a definition the runner cannot execute.
+ *   The audit reports the reason for each refusal.
  *
- *   The band cases carry the weight. The band edges are the measurement, so bands that overlap
- *   would count a row twice under a claim stated per band, and a row with no recorded population
- *   bucketed at zero would invent a band member the register never counted.
+ *   Band edges define the measurement. Overlapping bands would count a row twice in per-band results.
+ *   A row without a recorded population must stay unbucketed rather than count as a zero-population member.
  */
 
 import {
@@ -67,9 +66,8 @@ describe("prominence-floor ruler (#2264)", () => {
 	it("refuses a band whose ceiling sits below its floor", () => {
 		const problems = auditProminenceDefinition(
 			withChange((draft) => {
-				// The second band, so the inverted ceiling is not 0.
-				// That value means unbounded and would be refused by a different check,
-				// which would let this one pass without ever running.
+				// Use the second band so the inverted ceiling is not 0.
+				// Zero means unbounded, so another check would refuse that value first.
 				draft.populationBands[1]!.max = draft.populationBands[1]!.min - 1
 			})
 		)
@@ -148,7 +146,8 @@ describe("prominence-floor ruler (#2264)", () => {
 		expect(bandFor(bands, 49_999)?.id).toBe("pop_15k_49999")
 		expect(bandFor(bands, 9_000_000)?.id).toBe("pop_50k_up")
 
-		// An absent count and a zero count both reach no band, and the smallest band starts at 1.
+		// An absent count and a zero count reach no band.
+		// The smallest band starts at 1.
 		expect(bandFor(bands, undefined)).toBeNull()
 		expect(bandFor(bands, 0)).toBeNull()
 	})
@@ -161,10 +160,10 @@ describe("prominence-floor ruler (#2264)", () => {
 		expect(floors).toEqual([1, 2, 3, 4])
 
 		// A floor of F admits population 10^F.
-		// The registered set must reject at least one whole band, or the benchmark repeats
-		// the same-data panel's blind spot: every gold clearing every floor, and a rate
-		// nobody can attribute. floor_4 admits 10,000 and the second band ends at 4,999,
-		// so it rejects both of the two smallest bands outright.
+		// The registered set must reject at least one whole band.
+		// Otherwise, every gold could clear every floor, repeating the same-data panel's
+		// blind spot and leaving the rate uninterpretable. floor_4 admits 10,000.
+		// The second band ends at 4,999, so floor_4 rejects both smallest bands.
 		const highest = Math.max(...floors)
 
 		const bandsRejectedOutright = frozen.populationBands.filter(

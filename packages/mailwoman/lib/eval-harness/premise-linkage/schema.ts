@@ -6,10 +6,9 @@
  *   The premise-linkage row and report interface, fixed before any controlled data arrives so a
  *   provider's file populates an adapter rather than reshaping the evaluation after results are seen.
  *
- *   The two row types are the privacy design: {@link PremiseLinkageInputRow} carries the licensed
- *   address, the expected identifier, and the truth coordinate in memory only, while
- *   {@link PremiseLinkageResultRow} persists a salted case identifier, shape class, presence booleans,
- *   and closed-set outcomes with no free-text field for an address to leak through.
+ *   The row types define the privacy boundary. {@link PremiseLinkageInputRow} holds the licensed address,
+ *   expected identifier plus truth coordinate in memory. {@link PremiseLinkageResultRow} persists a salted case
+ *   identifier and shape class. It also stores presence booleans and closed-set outcomes without address text.
  *
  *   Every rate is a numerator and denominator as separate fields. No field stores a precomputed ratio.
  */
@@ -69,7 +68,7 @@ export interface PremiseLinkagePresence {
 }
 
 /**
- * One authoritative identifier, named by the scheme it belongs to.
+ * One authoritative identifier, associated with its scheme.
  *
  * The scheme is carried per row so a non-UK register grades against its own
  * namespace without a second row type.
@@ -143,12 +142,12 @@ export const PremiseLinkageFailureCategory = {
 	 */
 	ProviderAmbiguous: "provider_ambiguous",
 	/**
-	 * The provider committed to a premise and named a different identifier than the register holds.
+	 * The provider committed to a premise and supplied a different identifier than the register holds.
 	 */
 	IdentifierMismatch: "identifier_mismatch",
 	/**
-	 * The provider committed to a premise but named no identifier in the graded scheme —
-	 * ungradable rather than wrong.
+	 * The provider committed to a premise but supplied no identifier in the graded
+	 * scheme — ungradable rather than wrong.
 	 */
 	SchemeAbsent: "scheme_absent",
 	/**
@@ -175,13 +174,15 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	inputShapeClass: PremiseLinkageInputShapeClass
 	outcome: PremiseLinkageOutcome
 	/**
-	 * Carried so the report writer can refuse a coordinate on a row whose terms
-	 * forbid one. a permission flag is not a licensed value.
+	 * Lets the report writer omit a coordinate when the row's terms forbid publication.
+	 * A permission flag does not supply a licensed coordinate.
 	 */
 	coordinatePublishable: boolean
 	/**
-	 * Great-circle error in meters, present only when {@link coordinatePublishable} is true,
-	 * the row carried a truth coordinate, and the arm produced one.
+	 * Great-circle error in meters.
+	 *
+	 * It is present only when {@link coordinatePublishable} is true.
+	 * The row must carry a truth coordinate and the arm must produce one.
 	 */
 	coordinateErrorM?: number
 	/**
@@ -203,9 +204,10 @@ export interface PremiseLinkageCount {
 }
 
 /**
- * Whether the registered evaluation policy required a unique answer: under `abstain_ok`
- * a refusal leaves the eligible set, and under `unique_required` it stays in the
- * denominator while still being recorded as `refused`.
+ * Indicates whether the registered evaluation policy required a unique answer.
+ *
+ * Under `abstain_ok`, a refusal leaves the eligible set.
+ * Under `unique_required`, it remains in the denominator and is recorded as `refused`.
  */
 export const PremiseLinkagePolicy = {
 	UniqueRequired: "unique_required",
@@ -287,8 +289,8 @@ export interface PremiseLinkageReport {
 	/**
 	 * How many cells the writer removed.
 	 *
-	 * Zero means none were removed, which is distinct from no cells being small
-	 * only if this number is visible.
+	 * Zero means the writer removed no cells.
+	 * The report includes this value to distinguish that result from a run that did not measure small cells.
 	 */
 	suppressedCells: number
 	arms: PremiseLinkageArmReport[]

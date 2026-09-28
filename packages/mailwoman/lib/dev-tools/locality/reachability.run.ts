@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A locality miss has two causes a rate cannot tell apart: ranking, where the right place is in
- *   the candidate set and was outranked, and reachability, where the right place carries no row
+ *   A locality miss has two causes that a rate cannot distinguish.
+ *   Ranking means the right place is in the candidate set but was outranked.
+ *   Reachability means the right place carries no row
  *   under the asked key so no ranking could have reached it at any position.
  */
 
@@ -129,8 +130,8 @@ const outcomes: Array<{
 for (const place of panel) {
 	const input = renderAdmin(place)
 
-	// A country whose layout writes no line answers "" rather than an invented order,
-	// and the row is reported as its own class instead of being graded as a miss.
+	// A country whose layout writes no line answers "" rather than an invented order.
+	// Report the row as its own class instead of grading it as a miss.
 	if (!input) {
 		unrenderable++
 

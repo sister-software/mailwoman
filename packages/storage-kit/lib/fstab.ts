@@ -20,9 +20,9 @@
  * directory still came back with 1600 encoded extents.
  * Under `compress` it came back with none.
  *
- * The heuristic that `compress` applies is not a problem for this data — it skips
- * what looks already compressed, which is what the model and tile artifacts want,
- * and it compresses the corpus text correctly.
+ * The `compress` heuristic skips files that already appear compressed.
+ * The model and tile artifacts need that behavior.
+ * The heuristic compresses corpus text correctly.
  *
  * The volume this replaces ran plain `compress=zstd:3` and achieved 2.3x.
  * `nofail` keeps a missing external drive out of the boot path.
@@ -54,8 +54,10 @@ export function renderFstabEntry(entry: FstabEntry): string {
 /**
  * `fstab` with any existing entry for this mount point replaced by the rendered one.
  *
- * Matching is on the mount point field rather than the UUID: re-preparing a drive gives
- * it a new UUID, and the stale line would otherwise accumulate and shadow the new one.
+ * Matching uses the mount point field.
+ * Re-preparing a drive gives it a new UUID.
+ *
+ * The mount-point match replaces its stale line instead of accumulating entries.
  */
 export function spliceFstab(fstab: string, entry: FstabEntry): string {
 	const rendered = renderFstabEntry(entry)

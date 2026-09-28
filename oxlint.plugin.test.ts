@@ -292,7 +292,7 @@ test("prefer-home stays silent on loops that are not a shuffle", () => {
 
 	expect(reportsFor("prefer-home", forLoop({ body: across }))).toEqual([])
 
-	// Heapsort's extraction phase, which satisfies every clause except that one index is the literal 0.
+	// Heapsort's extraction phase satisfies every clause except the case where one index equals the literal 0.
 	const heapsort: TestNode = {
 		type: "BlockStatement",
 		range: [0, 0],

@@ -5,8 +5,8 @@
  *
  *   Add or remove a country in one of `defaults.ts`'s coverage lists, as a text transformation.
  *
- *   Text rather than an AST rewrite: a codemod could reproduce the arrays' values but not the comments
- *   above their entries, and those comments are why the entries are defensible.
+ *   Use text edits rather than an AST rewrite. A codemod could reproduce the array values but lose
+ *   the comments above each entry. Those comments explain why the entries are defensible.
  *
  *   A removal that would orphan a comment block is refused with the lines quoted rather than guessed at.
  *   a person moves the prose.
@@ -24,8 +24,9 @@ export type RecipeEditResult =
 /**
  * Locate a list's entries by name.
  *
- * @returns The source offsets of the array body so a caller can splice inside it without touching
- * anything else in the file — including the docstring above the list, which every one of them carries.
+ * @returns The source offsets of the array body so a caller can splice inside it without
+ * touching anything else in the file, including the docstring above the list.
+ * Every list carries that docstring.
  */
 function listBody(source: string, listName: string): { start: number; end: number } | undefined {
 	const header = new RegExp(`export const ${listName}\\s*=\\s*\\[`, "u").exec(source)

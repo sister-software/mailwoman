@@ -42,7 +42,8 @@ export async function removeStagingArtifacts(ingestPath: string): Promise<void> 
 }
 
 /**
- * Checkpoints the staging database's WAL, switches it to a sidecar-free journal mode, and runs `ANALYZE`.
+ * Checkpoints the staging database's WAL and switches to a sidecar-free journal mode.
+ * Then runs `ANALYZE`.
  *
  * Call it after the last write and before {@link vacuumDatabaseInto}.
  */
@@ -65,7 +66,8 @@ export async function vacuumDatabaseInto<DB>(db: DatabaseClient<DB>, out: string
 }
 
 /**
- * Opens a published database, builds its full-text search and bounding-box indexes, and closes it.
+ * Opens a published database and builds its full-text search and bounding-box indexes.
+ * Closes the database when the build finishes.
  */
 export async function buildDatabaseFTS<DB>(
 	out: string,
@@ -78,8 +80,9 @@ export async function buildDatabaseFTS<DB>(
 }
 
 /**
- * Finishes a database built in place rather than staged, by switching to a sidecar-free
- * journal mode, analyzing, checking integrity, and vacuuming.
+ * Finishes a database built in place rather than staged, by switching to a sidecar-free journal mode.
+ *
+ * It analyzes the database and checks integrity, then vacuums it.
  * The caller seals the database afterwards.
  */
 export function finalizeSealedBuild<DB>(db: DatabaseClient<DB>, path: string): void {

@@ -6,10 +6,10 @@
  *   `mailwoman dev lint corpus-slice --database <parquet> --stats <stats.json>` — corpus linter:
  *   compares a new recipe-output parquet against pre-computed corpus statistics (see `mailwoman corpus
  *   stats`) and flags the v0.6.2 "5th Avenue Theatre" class of poisoning patterns. Markdown report on
- *   stdout. exits 1 when any error-severity flag fires (warnings don't check).
+ *   stdout. It exits 1 when any error-severity flag fires. Warnings do not fail the check.
  *
- *   The command keeps its name: the router resolves a command by its file path, and a renamed command has no
- *   `deprecatedName` the way a flag does, so the scripts and runbooks that type it would break silently.
+ *   The command keeps its name because the router resolves it by file path. Unlike a flag, a renamed command
+ *   has no `deprecatedName` alias. Scripts and runbooks that use the old name would break silently.
  */
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"

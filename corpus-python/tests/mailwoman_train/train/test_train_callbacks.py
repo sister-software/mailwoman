@@ -78,7 +78,10 @@ def test_a_supplied_list_replaces_the_defaults(tmp_path: Path) -> None:
 
 
 def test_a_raising_callback_stops_the_run_and_still_closes_the_others(tmp_path: Path) -> None:
-    """The loop reads no return value, so raising is a callback's only way to stop a run, and `on_train_end` must still reach the other callbacks."""
+    """The loop ignores callback return values, so a callback must raise to stop a run.
+
+    The loop must still call `on_train_end` on the other callbacks.
+    """
     cfg = _probe_config(tmp_path)
     recorder = _Recorder()
     with pytest.raises(RuntimeError, match="must stop the run"):

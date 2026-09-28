@@ -3,13 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@link explodeAliasBags} — pass 2 of the candidate build, which turns each place's
+ *   Tests for {@link explodeAliasBags}, pass 2 of the candidate build. The function turns each place's
  *   `place_search.alt_names` bag into distinct-key alias rows and counts the distinct keys a place
  *   ends up carrying.
  *
- *   The key count is not bookkeeping: it is the gloss detector's only volume signal, so what counts
- *   as "distinct" (folded, primary included, de-duplicated within the bag) is the interface, and it is
- *   asserted here directly rather than through a whole build.
+ *   The gloss detector uses the key count as its only volume signal. The interface defines "distinct" as folded.
+ *   That count includes the primary key and deduplicates keys within the bag. These tests assert that behavior directly.
  */
 
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
@@ -124,8 +123,10 @@ describe("explodeAliasBags", () => {
 
 		expect(nAlias).toBe(0)
 		expect(staged).toEqual([])
-		// No key count for either: an unknown place has no place to hang one on, and a place
-		// whose bag is absent is unmeasured, which the detector must not read as a low key count.
+		// Neither place has a key count.
+		// The unknown place has no place to store one.
+		// The other place's bag is absent.
+		// The detector must treat its count as unmeasured.
 		expect(keyCounts.size).toBe(0)
 	})
 })

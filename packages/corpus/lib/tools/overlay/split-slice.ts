@@ -79,7 +79,7 @@ export interface SplitSliceOptions {
 	input: PathBuilderLike
 	/**
 	 * Where the per-split parquets are written.
-	 * Each is named for the input plus its split.
+	 * Each filename combines the input and its split.
 	 */
 	outputDir: PathBuilderLike
 	/**
@@ -95,8 +95,8 @@ export interface SplitSliceResult {
 	/**
 	 * The file written per split.
 	 *
-	 * A split that drew no row is absent rather than an empty parquet,
-	 * which would read as a file whose rows were lost.
+	 * A split with zero rows has no output file.
+	 * An empty parquet would suggest that the writer lost its rows.
 	 */
 	outputs: Partial<Record<SplitName, string>>
 }
@@ -104,7 +104,8 @@ export interface SplitSliceResult {
 /**
  * Split one overlay parquet into up to three, by the same policy the base build applies.
  *
- * Each output is named for the input plus its split, and the input is left in place.
+ * Each output filename combines the input name and split name.
+ * The function leaves the input file in place.
  */
 export async function splitOverlaySlice(options: SplitSliceOptions): Promise<SplitSliceResult> {
 	const input = options.input.toString()

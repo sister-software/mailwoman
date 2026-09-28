@@ -4,23 +4,23 @@
  * @author Teffen Ellis, et al.
  *
  *   Fold GeoNames postcode rows into a WOF or unified postcode extract as first-class `postalcode`
- *   places, for countries whose WOF postalcode repos do not exist.
+ *   places for countries whose WOF postalcode repos do not exist.
  *
  *   Two laws are enforced here in code rather than in a runbook.
  *
  *   1. The name law. A postcode row's `name` is stored in the sanitized-query token shape with
- *      every non-letter and non-number stripped, because that is what `sanitizeFTSQuery` reduces
- *      the parsed token to at lookup time. A stored `"110 00"` or `"11-041"` can never match the
+ *      every non-letter and non-number stripped. `sanitizeFTSQuery` reduces the parsed token to
+ *      that shape at lookup time. A stored `"110 00"` or `"11-041"` can never match the
  *      query `"11000"` or `"11041"`. The display form is preserved as an alt row in `names`.
- *   2. The medoid law. A postcode whose rows carry scattered points has no single true centre, and
- *      averaging them puts the code somewhere no address is. The medoid is the member point
+ *   2. The medoid law. A postcode whose rows carry scattered points has no single true centre.
+ *      Averaging them puts the code somewhere no address is. The medoid is the member point
  *      nearest the group's mean.
  *
- *   `build-unified-wof --geonames-postal-countries`, any standalone fold, and the `mailwoman
+ *   `build-unified-wof --geonames-postal-countries`, standalone folds and the `mailwoman
  *   gazetteer` commands share one implementation. The GeoNames postal dump is
  *   `download.geonames.org/export/zip/<CC>.zip` → `<CC>.txt`, a headerless TSV of country,
- *   postcode, place, admin1, code1, admin2, code2, admin3, code3, lat, lon, accuracy. License
- *   CC BY 4.0, so attribution rides the extract's `meta` provenance and the model card.
+ *   postcode, place, admin1, code1, admin2, code2, admin3, code3, lat, lon and accuracy.
+ *   The license is CC BY 4.0. Attribution appears in the extract's `meta` provenance and model card.
  */
 
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
@@ -58,9 +58,10 @@ export type PostcodePoint = readonly [number, number]
  * A medoid and the size of the group it came from.
  *
  * These two integers describe the source dump.
- * `@mailwoman/evidence`'s `EpistemicStatus` vocabulary belongs to the answering path,
- * where `epistemicStatusFor` derives it, and naming them `observed` or `derived`
- * here would give those words a second, local meaning.
+ * `@mailwoman/evidence`'s `EpistemicStatus` vocabulary belongs to the answering path.
+ *
+ * `epistemicStatusFor` derives it there.
+ * Naming these fields `observed` or `derived` here would give those words a second, local meaning.
  */
 export interface MedoidSupport {
 	/**
@@ -74,7 +75,7 @@ export interface MedoidSupport {
 	/**
 	 * Distinct coordinates among them.
 	 *
-	 * One means every row named the same point.
+	 * One means every row refers to the same point.
 	 * In a dump whose coordinates are computed, that is one value inherited N times
 	 * rather than N sources agreeing.
 	 */
@@ -84,14 +85,18 @@ export interface MedoidSupport {
 /**
  * Collapse a group to its distinct points before any geometric consensus reads it.
  *
- * Rows sharing a coordinate to the digit are not independent measurements.
- * GeoNames computes a postal coordinate by matching the code against the names of places
- * and admin divisions, and averages neighbouring codes where the match fails,
- * so one computed value reaches every row that matched it.
+ * Rows sharing a coordinate to the digit provide one coordinate value.
+ * GeoNames computes a postal coordinate by matching the code against the names
+ * of places and admin divisions.
  *
- * Exact equality rather than a proximity radius.
- * `collapseCoincident` answers a different question, which ranked candidates are the same physical
- * place within `COINCIDENT_PLACE_KM`, and two surveyed settlements 200 m apart are two points here.
+ * It averages neighbouring codes when the match fails.
+ * One computed value can reach every row that matched it.
+ *
+ * Uses exact equality rather than a proximity radius.
+ * `collapseCoincident` answers whether ranked candidates are the same physical
+ * place within `COINCIDENT_PLACE_KM`.
+ *
+ * Two surveyed settlements 200 m apart remain two points here.
  */
 function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoint[] {
 	const seen = new Set<string>()
@@ -120,15 +125,17 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
  * inherited it. {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.
  *
  * Distance is squared-Euclidean in degrees rather than haversine.
- * At the scale a postcode spans the two produce the same ranking, and this one
- * keeps trig out of a per-group inner loop.
+ * At the scale a postcode spans, both methods produce the same ranking.
  *
- * Ties go to the earliest member, which makes the result a pure function of the
- * input order, the property a rebuilt extract's ids depend on.
+ * Squared-Euclidean distance keeps trigonometry out of a per-group inner loop.
  *
- * Exported rather than inlined at each ingest because every postcode source that
- * groups member points, GeoNames postal and OSM `addr:postcode`, owes the same law,
- * and a second hand-rolled copy is where they drift.
+ * Ties go to the earliest member, so the result is a pure function of input order.
+ * Rebuilt extract IDs depend on that property.
+ *
+ * Exported for reuse by every postcode source that groups member points:
+ * GeoNames postal and OSM `addr:postcode`.
+ * Both sources owe the same law.
+ * A second hand-rolled copy would let them drift.
  */
 export function medoidPoint(points: readonly PostcodePoint[]): PostcodePoint {
 	return medoidWithSupport(points).point
@@ -184,11 +191,12 @@ export interface GeonamesPostalIngestResult {
 	 */
 	byCountry: Record<string, number>
 	/**
-	 * Per-country count of inserted codes the dump carried on several rows that all named one point.
+	 * Per-country count of inserted codes the dump carried on several rows that all refer to one point.
 	 *
 	 * The coordinate rests on a single value no matter how many settlements sit under the code.
-	 * Reported rather than refused: the point is still the best the source offers,
-	 * and a consumer weighing postal coverage needs to know how much of it is this.
+	 * Reported because the point is still the best the source offers.
+	 *
+	 * A consumer weighing postal coverage needs to know how much of it is this.
 	 */
 	singlePointByCountry: Record<string, number>
 	/**

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `boundary-stress` recipe, the boundary-instability augmentation. Self-generates `--count` rows
- *   from {@link synthesizeBoundaryStressRow}'s weighted template mix, aligns each to BIO, and emits a
+ *   from {@link synthesizeBoundaryStressRow}'s weighted template mix. It aligns each to BIO and emits a
  *   labeled jsonl.
  *
  *   `synthesizeBoundaryStressRow` is imported directly here.
@@ -24,8 +24,9 @@ import { alignRow } from "#utils"
  *
  * The mix keeps `bare-locality` near 11%, so bare "City, state" rows are well
  * represented without a locality-first majority.
- * House-number-before and house-number-after render at 7:3, which breaks the order-bias
- * shortcut while keeping FR house-number-before accuracy.
+ * House-number-before and house-number-after render at 7:3.
+ *
+ * This breaks the order-bias shortcut while keeping FR house-number-before accuracy.
  *
  * Weights sum to 1.0.
  * The key order drives the cumulative thresholds below.
@@ -58,7 +59,7 @@ function pickTemplate(r: () => number): BoundaryStressTemplate {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
+ * See the file header for the parse behaviour this recipe exercises
  * and `description` below for the surface form it generates.
  */
 export const boundaryStressRecipe: CorpusRecipe = {

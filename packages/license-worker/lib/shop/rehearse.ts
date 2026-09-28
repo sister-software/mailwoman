@@ -7,7 +7,7 @@
  *
  *   The rehearsal creates a customer on a Stripe test clock and a Checkout Session with the same
  *   `checkoutCollection` settings as the Payment Link. A person pays in a browser with the test card.
- *   The rehearsal then advances the clock past the period end, and Stripe delivers the renewal's
+ *   The rehearsal advances the clock past the period end. Stripe delivers the renewal's
  *   `invoice.paid` event to the worker. The claim route should then return the renewed token.
  *
  *   Payment Links cannot use a test clock, so the rehearsal creates its own Checkout Session.
@@ -43,14 +43,17 @@ export interface StartRehearsalInput {
 	licensee: string
 	email: string
 	/**
-	 * Returns the current time in milliseconds, which becomes the clock's frozen time.
+	 * Returns the current time in milliseconds.
+	 *
+	 * The test clock freezes at that time.
 	 * Defaults to `Date.now`.
 	 */
 	now?: () => number
 }
 
 /**
- * Creates the test clock, customer and Checkout Session, and returns the payment URL.
+ * Creates the test clock and customer.
+ * It creates a Checkout Session and returns the payment URL.
  *
  * The function looks up the provisioned Price by lookup key.
  * It throws when no such Price exists in the current mode.
@@ -101,7 +104,8 @@ export interface RehearsalRenewal {
 	 */
 	periodEnd: string
 	/**
-	 * The expected `expires` of the renewed token, which is `periodEnd` plus the grace period.
+	 * The expected `expires` value for the renewed token.
+	 * It equals `periodEnd` plus the grace period.
 	 */
 	expected: string
 	agrees: boolean

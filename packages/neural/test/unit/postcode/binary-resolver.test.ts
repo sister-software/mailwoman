@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Round-trip tests for the browser flat-binary postcode resolver: serialize entries, load the
- *   bytes, and assert exact-match, multi-country runs, coordinate-less membership, and quantization
+ *   bytes. Assert exact-match, multi-country runs, coordinate-less membership and quantization
  *   fidelity.
  *   The suite also confirms `extractPostcodeAnchors` works through the `PostcodeResolver` interface,
  *   so the wasm resolver is a drop-in for the SQLite one.

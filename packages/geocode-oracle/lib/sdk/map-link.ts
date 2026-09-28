@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  * @file Resolve a Google Maps share link to the place PIN it names, for gauntlet-case authoring.
  *
- *   The sibling clients in this package ask a geocoder where an address string is. This one reads a coordinate a
- *   human already picked, out of a link they already have — which is a different and often better oracle, because
- *   somebody chose that place deliberately rather than a matcher guessing at a string.
+ *   Other clients in this package ask a geocoder to locate an address string. This client reads a coordinate
+ *   that a person selected from an existing link. That coordinate records a deliberate choice rather than a
+ *   matcher guess about a string.
  *
- *   Same posture as the rest of the package: not truth rather than a check. A share link points at whatever pin its author
- *   clicked, which may be a car park, a mall's centroid, or the wrong branch.
+ *   A share link provides a check against another result. It records the pin its author clicked.
+ *   That pin may identify a car park, a mall's centroid, or the wrong branch.
  *
  *   ## `!3d`/`!4d` is the pin. `@lat,lng` is not.
  *
@@ -18,15 +18,15 @@
  *       .../place/Donkey's+Place/@39.9942189,-74.792132,1062m/data=...!3d39.9933298!4d-74.7902421
  *                                ^^^^^^^^^^^^^^^^^^^^^^^ map viewport centre     ^^^^^^^^^^^^^^^^ the place PIN
  *
- *   The `@` pair is where the camera sits — offset from the pin by however the view was framed, and carrying a zoom
- *   suffix. Reading it instead of `!3d`/`!4d` is a silent accuracy loss of tens to hundreds of metres, which is the
- *   whole tolerance budget of a rooftop case. So the viewport is used only as a labelled fallback, and a row that
- *   fell back says so in `source` rather than blending in.
+ *   The `@` pair marks the camera location. It can be offset from the pin by the view framing and carries a zoom
+ *   suffix. Using it instead of `!3d`/`!4d` can lose tens to hundreds of metres of accuracy.
+ *   That distance can consume a rooftop case's full tolerance budget. The resolver uses the viewport only as a
+ *   labelled fallback. A fallback row records that source explicitly.
  *
  *   ## A link that does not resolve is reported
  *
  *   `resolved: false` with a reason, never a coordinate of `0,0` and never a silent drop. A batch that quietly loses
- *   rows produces a case file whose denominator nobody can reconstruct.
+ *   rows produces a case file whose denominator cannot be reconstructed.
  */
 
 import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@mailwoman/core/api"
@@ -103,8 +103,8 @@ const NAME_PATTERN = /\/place\/([^/@]+)/
 /**
  * Parse an expanded Google Maps URL.
  *
- * Exported separately from the fetch so the parsing rules are testable without a network,
- * which is the half that actually carries the defects.
+ * Exported separately from the fetch so tests can exercise parsing without a network.
+ * Parsing is the part of this module that carries the defects.
  */
 export function parseMapURL(url: string, expandedURL: string): MapLinkResolution {
 	const name = NAME_PATTERN.exec(expandedURL)?.[1]
@@ -189,7 +189,7 @@ export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}
 		 *
 		 * Never throws for an unresolvable link.
 		 * That is a reported row, because a batch that drops rows silently produces a
-		 * case file whose denominator nobody can reconstruct.
+		 * case file whose denominator cannot be reconstructed.
 		 */
 		async resolve(url: string): Promise<MapLinkResolution> {
 			try {

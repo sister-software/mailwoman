@@ -5,7 +5,7 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
  * @author Teffen Ellis, et al.
  *
  * Fetch the full TIGER 2024 addrfeat dataset for all US counties from
- * `https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/`, where files are named
+ * `https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/`, where files use the pattern
  * `tl_2024_<statefips><countyfips>_addrfeat.zip`.
  *
  * Each state's ZIPs land in `<outRoot>/tiger/addrfeat/state-<statefips>/` with a per-state

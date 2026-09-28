@@ -5,16 +5,16 @@
  *
  *   Every weights package must decode with its model's label vocabulary.
  *
- *   A carrier overlay (`mailwoman.baseWeights` set) ships no model of its own — it shares the base's — so its card
- *   describes the overlay while the vocabulary belongs to the base. An overlay card that omits `labels` is therefore
- *   correct, and the resolver has to fall back rather than the author having to copy 33 strings into every carrier,
- *   which is a duplicate that goes stale on the first retrain.
+ *   A carrier overlay (`mailwoman.baseWeights` set) ships no model of its own. It shares the base's model.
+ *   Its card describes the overlay, while the vocabulary belongs to the base. An overlay card that omits `labels` is
+ *   correct. The resolver falls back to the base vocabulary, so authors do not copy 33 strings into every carrier.
+ *   Those duplicate strings would go stale on the first retrain.
  *
  *   The failure this pins is silent and total. `NeuralAddressClassifier` falls back to `STAGE2_BIO_LABELS` (21) when no
- *   labels reach it, the shared base emits 33 logits per token, and the first parse throws inside
- *   `assertEmissionWidth` — so the package is not degraded, it is inoperable, and only at runtime.
+ *   labels reach it. The shared base emits 33 logits per token. The first parse then throws inside
+ *   `assertEmissionWidth`. The package is inoperable at runtime.
  *
- *   Presence-checking the card is not enough, which is how this shipped: `resolveWeights` already fell back to the
+ *   Checking for a card alone is insufficient. `resolveWeights` already fell back to the
  *   base card when the overlay's was absent, but four scaffolded carriers had a card that existed and simply had no
  *   `labels` key. Existence and completeness are different questions.
  */
@@ -58,8 +58,9 @@ describe("weights overlays inherit their base's label vocabulary", () => {
 		test.skipIf(!HAVE_WEIGHTS.get(locale))(`${locale} decodes with the model's full vocabulary`, async () => {
 			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
 
-			// Reaching into `labels` rather than asserting on a parse: a wrong vocabulary throws
-			// on the first parse, and a thrown assertion says less than a count comparison does.
+			// Reaching into `labels` rather than asserting on a parse: a wrong
+			// vocabulary throws on the first parse.
+			// A thrown assertion says less than a count comparison.
 			const labels = classifier["labels"]
 
 			expect(labels, `${locale} resolved ${labels.length} labels; en-US resolves ${baseline?.length}`).toHaveLength(

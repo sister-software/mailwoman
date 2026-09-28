@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixture-scale guard for the GeoNames-postal tail reproducer. The real check is per-country
- *   row-count parity against the frozen 946 MB artifact. This holds the three things that eval cannot
- *   express cheaply: the name law survives a rebuild, a country with no dump is reported rather than
- *   silently zeroed, and the provenance `meta` table reaches the sealed artifact with source md5s.
+ *   Fixture-scale guard for the GeoNames-postal tail. The full check compares per-country row counts
+ *   with the frozen 946 MB artifact. This test also checks the name rule after a rebuild and requires
+ *   countries without dumps to appear in the report. It verifies source MD5 values in the sealed `meta` table.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers"
@@ -37,8 +36,9 @@ beforeAll(async () => {
 	postalDir = root.path("geonames-postal")
 	await makeDirectories(postalDir)
 
-	// CZ: one code in the spaced display form across three settlements, which exercises both laws
-	// at once, normalization to `11000` and a medoid that must land on one of the three points.
+	// CZ: one code in spaced display form across three settlements.
+	// This tests normalization to `11000` and the rule that the medoid must equal
+	// one of the three member points.
 	await writeLocalTextFile(
 		[
 			row("CZ", "110 00", "Praha 1", 50.1, 14.1),
@@ -67,7 +67,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 
 	expect(result.inserted).toBe(3)
 	expect(result.byCountry).toEqual({ CZ: 2, PL: 1 })
-	// The meaning-of-zero rule: a country with no dump is a named absence rather than a zero row.
+	// The meaning-of-zero rule: a country with no dump gets an explicit absence rather than a zero row.
 	expect(result.missing).toEqual(["ZZ"])
 	expect(result.sources.map((s) => s.country)).toEqual(["CZ", "PL"])
 	expect(result.sources.every((s) => /^[0-9a-f]{32}$/.test(s.md5))).toBe(true)
@@ -90,7 +90,8 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(spaced.n).toBe(0)
 
 	// Medoid law: the centroid is one of the three member points.
-	// Here 50.2/14.2, the one nearest the (50.2333, 14.2333) mean, which is itself not a member.
+	// The selected medoid is 50.2/14.2, the member nearest the (50.2333, 14.2333) mean.
+	// The mean itself is not a member.
 	// A mean-of-members build would store the mean and put the postcode on no settlement at all.
 	const cz = db.prepare("SELECT latitude, longitude FROM spr WHERE country='CZ' AND name='11000'").get() as {
 		latitude: number
@@ -156,8 +157,8 @@ test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten lead, in its in
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-3166 alpha-2", () => {
-	// A duplicate would ingest a country twice under two id ranges, and a lower-case
-	// entry would miss its `<CC>.txt` and be reported missing.
+	// A duplicate would ingest a country twice under two id ranges.
+	// A lower-case entry would miss its `<CC>.txt` dump and appear as missing.
 	// Both failures are silent, since neither stops the build.
 	const list = [...DEFAULT_GEONAMES_TAIL_COUNTRIES]
 
@@ -167,7 +168,7 @@ test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the UAE is absent — Makani codes are not postcodes", () => {
 	// GeoNames publishes AE's 10-digit Makani building geocodes in the postal dump.
-	// They are a building reference rather than a postcode, and folding them stored
-	// 178,171 rows under a placetype that means something else.
+	// Makani codes identify buildings rather than postal delivery areas.
+	// Folding them would store rows under a placetype with a different meaning.
 	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).not.toContain("AE")
 })

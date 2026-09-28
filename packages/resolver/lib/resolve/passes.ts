@@ -173,8 +173,8 @@ export interface ResolutionState {
 	/**
 	 * The count of lookups rejected by {@link ResolutionState.minWinningScore}.
 	 *
-	 * A nonzero count skips the span-rescore pass, which would otherwise treat the
-	 * refused node as unresolved and repeat the rejected lookup.
+	 * A nonzero count skips the span-rescore pass.
+	 * That pass would otherwise treat the refused node as unresolved and repeat the rejected lookup.
 	 */
 	minScoreRefusals: number
 	candidatesPerLookup: number
@@ -199,7 +199,8 @@ export interface ResolutionState {
 	/**
 	 * The tree's first postcode value.
 	 *
-	 * Locality lookups send it to the backend, which can then favor nearby candidates.
+	 * Locality lookups send it to the backend.
+	 * The backend can then favor nearby candidates.
 	 */
 	postcode?: string
 
@@ -260,7 +261,8 @@ export interface ResolutionState {
 	/**
 	 * Whether an empty lookup re-probes the other admin bands and traces which ones hold the value.
 	 *
-	 * It is set only when a trace sink exists, and it never affects the pick.
+	 * It is set only when a trace sink exists.
+	 * It never affects the pick.
 	 */
 	diagnoseUnreachable?: boolean
 
@@ -333,8 +335,10 @@ export interface ResolutionState {
 }
 
 /**
- * Picks the completion locality among coincident candidates of the same name,
- * preferring the most populous and then the nearest, and returns `null` on an exact tie.
+ * Picks the completion locality among coincident candidates of the same name.
+ *
+ * It prefers the most populous candidate, then the nearest candidate.
+ * It returns `null` on an exact tie.
  */
 export function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
 	if (!candidates.length) return null

@@ -5,7 +5,7 @@
  *
  *   Stream one large file to disk through a `.part` rename, so an interrupted transfer can never present as a complete file.
  *
- *   Raw `fetch` is deliberate: `APIClient` serves small, repeated requests, and a multi-hundred-megabyte stream is none of those.
+ *   Raw `fetch` is deliberate. `APIClient` serves small, repeated requests. A multi-hundred-megabyte stream does not fit that use.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -37,8 +37,8 @@ export interface StreamToDiskOptions {
 /**
  * Download one file to `destination`, returning the bytes received.
  *
- * Follows redirects: a job endpoint that answers with a generated result URL routinely redirects
- * again, and stopping at the redirect would write a redirect page to disk and report success.
+ * Follows redirects: a job endpoint that answers with a generated result URL routinely redirects again.
+ * Stopping at the redirect would write a redirect page to disk and report success.
  *
  * @throws {Error} When the response is not OK or carries no body.
  * A partial file is removed on any failure.

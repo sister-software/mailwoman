@@ -1,9 +1,8 @@
-"""The two measuring passes: what the register holds, and what the permits align to.
+"""Measure eligible register rows and permit alignment in two passes.
 
 Neither draws from the RNG and neither writes a row. Pass 1 reads the register to count eligible
-rows per 시도 and to BUILD THE KEY INDEX. pass 2 reads the permits, which can only be aligned once
-that index exists, and averages their coordinates per 시군구. Everything the selecting half needs
-from the sources comes back in the two records below.
+rows per 시도 and to BUILD THE KEY INDEX. Pass 2 reads the permits after the index exists.
+It averages permit coordinates per 시군구. The two records below carry the measurements used for selection.
 
 `transform_coordinates` is reached through the `registers` module rather than bound by name, so a
 test that stands in for `gdaltransform` patches one function and both callers see it.
@@ -28,7 +27,7 @@ PROJECTION_BATCH = 200_000
 
 @dataclass(frozen=True)
 class RegisterSurvey:
-    """Pass 1's answer: the key index every later pass reads, plus the quotas pass 3 selects under."""
+    """Pass 1's answer: the key index for later passes and the quotas for pass 3."""
 
     index: KeyIndex
     scanned: int
@@ -41,7 +40,7 @@ class RegisterSurvey:
 
 @dataclass
 class PermitSurvey:
-    """Pass 2's answer: the alignment census, the per-시군구 centroids, and the pool sizes pass 4 selects from."""
+    """Pass 2's answer: the alignment census, per-시군구 centroids, plus pool sizes for pass 4."""
 
     census_form: Counter[str] = field(default_factory=Counter)
     census_category: dict[str, Counter[str]] = field(default_factory=dict)
@@ -95,7 +94,7 @@ def survey_register(juso_zip: Path, args: argparse.Namespace) -> RegisterSurvey:
 
 
 def survey_permits(permit_dir: Path, args: argparse.Namespace, index: KeyIndex) -> PermitSurvey:
-    """Pass 2: measure alignment per form and per category, and average each 시군구's permit points.
+    """Pass 2: measure alignment per form and category. Average each 시군구's permit points.
 
     The census is written to the build report before any row is selected, so the alignment rate is a
     measurement of the source rather than of what survived selection.

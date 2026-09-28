@@ -6,17 +6,17 @@
  *
  *   `form499.ts`'s {@linkcode parseForm499} reads a headerless 17-column TSV. That shape is not something
  *   the FCC publishes. It is what a human produced by hand-massaging this workbook, column by column, into
- *   the tuple Nexus's `csv.parse` was configured with. The tuple being positional is why the massaging had
- *   to be exact, and the massaging is why the pipeline could never be re-run from source.
+ *   the tuple configured for Nexus's `csv.parse`. Because the tuple is positional, every column had to be massaged
+ *   exactly. That pipeline could not be reproduced from the original workbook.
  *
  *   This reads the published workbook directly: 122 columns, a real header row, 19,852 filers in the
  *   2025-12-07 vintage. The 17-column TSV path stays for the artifacts already produced against it.
  *
  *   **What the workbook has that the TSV never did**, and why each matters:
  *
- *   - `note1`/`note2`/`note3` — the filer lifecycle. 11,533 rows carry one, and they parse to a closed
- *     eight-template vocabulary with zero unrecognized across the whole file (`form499-notes.ts`). Two of
- *     the eight are data the schema already has columns for: a cessation date, and a successor filer ID.
+ *   - `note1`/`note2`/`note3` record the filer lifecycle. Of 19,852 rows, 11,533 contain at least one note. The notes
+ *     parse to an eight-template vocabulary with zero unrecognized values (`form499-notes.ts`). Two templates map to
+ *     existing schema columns: cessation date and successor filer ID.
  *   - 59 per-jurisdiction true/false columns — the registered operating footprint. 11,256 filers operate in
  *     exactly one state, 1,780 in fifty or more.
  *   - `coresid` — the FRN, under a name the 17-column tuple called `frn`.
@@ -24,9 +24,9 @@
  *   **Three mappings would corrupt data if done naively**, which is the real argument for a reader rather
  *   than a spreadsheet export:
  *
- *   1. `LastFiling` is `M/D/yyyy`. It becomes `valid_from`, `assertISODate` rejects it, and
- *      `build-filer.ts` picks the latest legal name per FRN by comparing these as plain strings — where
- *      `4/1/2025` sorts below `12/31/2018`. Converted here, once.
+ *   1. `LastFiling` uses `M/D/yyyy` and becomes `valid_from`. `assertISODate` rejects that format. `build-filer.ts`
+ *      selects the latest legal name per FRN by comparing plain strings, where `4/1/2025` sorts below `12/31/2018`.
+ *      This reader converts the date once.
  *   2. `USF_Contributor_1` is `Yes`/`No`. {@link Form499Row.usfContributor} is documented as true iff the
  *      raw value is the literal `true`, so a pass-through makes every filer a non-contributor.
  *   3. The address is six columns (`HQ_Address1..3`, city, state, zip) where the row shape has one string.
@@ -38,7 +38,7 @@
  *
  *   **Memory:** `XLSXSpliterator` materializes the sheet — xlsx is a ZIP of XML with shared strings in a
  *   separate entry, so bounded-memory streaming is not available. ~20k × 122 is fine. this note exists so
- *   nobody points it at a genuinely large workbook expecting otherwise.
+ *   the reader materializes the sheet, so avoid large workbooks.
  */
 
 import { isoDate } from "@mailwoman/core/utils"
@@ -99,8 +99,9 @@ const NOTE_KEYS = ["note1", "note2", "note3"] as const
  * USPS codes for the workbook's 59 jurisdiction columns, keyed by the normalized header name.
  *
  * Territories and the Pacific atolls are included because the workbook carries them.
- * Johnston and Midway have no USPS code of their own and take their FIPS-adjacent
- * conventional abbreviations, which are recorded here rather than silently dropped.
+ * Johnston and Midway have no USPS code of their own.
+ *
+ * This map records their FIPS-adjacent conventional abbreviations.
  */
 const STATE_CODE_BY_KEY: Record<string, string> = {
 	alabama: "AL",
@@ -164,9 +165,9 @@ const STATE_CODE_BY_KEY: Record<string, string> = {
 	wyoming: "WY",
 }
 
-// A cell can also arrive as a real boolean: a transformer that types the column hands
-// one through, and `cell()` normalizes it like every other scalar.
-// The union says so rather than a test asserting past it.
+// A transformer that types the column can pass through a real boolean.
+// `cell()` normalizes booleans like other scalars.
+// The union records this accepted input type.
 type WorkbookRow = Record<string, XLSXCellValue | boolean>
 
 /**
@@ -204,8 +205,8 @@ const US_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
  * That is deliberate and it is not silent: `lastFiledAt` becomes `valid_from`,
  * and `assertISODate` throws on a non-ISO value.
  *
- * So an unconverted date fails the build loudly at the point it would be written,
- * which is where a reader can see which filer caused it.
+ * An unconverted date therefore fails the build at the write point.
+ * The error identifies the filer.
  *
  * Emitting the raw `M/D/yyyy` here would fail the same assertion.
  * Emitting a guess would not fail at all.
@@ -227,7 +228,8 @@ export function toISOFilingDate(value: string): string {
  * Read the jurisdiction columns into sorted USPS codes.
  *
  * A column is set when its cell is the literal `true`.
- * The same comparison `usfContributor` uses, and the same one the workbook's own values follow.
+ * Uses the same comparison as `usfContributor`.
+ * The workbook's values follow this rule.
  */
 export function readOperatingStates(row: WorkbookRow): string[] {
 	const states: string[] = []
@@ -275,9 +277,9 @@ export function toForm499Row(row: WorkbookRow): Form499Row {
 /**
  * Every key {@linkcode toForm499Row} reads.
  *
- * A header missing any of these means the FCC changed its export, and this reader
- * would otherwise emit rows whose fields are all empty strings — a silent,
- * whole-file data loss that looks like a successful parse.
+ * A header missing any required key means the FCC changed its export.
+ * Without this check, the reader would emit rows with empty-string fields
+ * and lose the whole file's data while appearing to parse successfully.
  */
 const REQUIRED_KEYS: readonly string[] = [
 	...Object.values(FORM_499_WORKBOOK_KEYS),

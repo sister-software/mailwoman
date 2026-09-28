@@ -6,7 +6,9 @@
  */
 
 /**
- * Lowercase, replace non-alphanumeric runs with spaces, and collapse whitespace.
+ * Lowercases text.
+ *
+ * Replaces non-alphanumeric runs with spaces, then collapses whitespace.
  */
 export function norm(s: string): string {
 	return s

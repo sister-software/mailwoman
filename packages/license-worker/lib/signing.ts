@@ -3,11 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Prove the configured private key is the one the configured kid names, and that something trusts that kid. In
- *   production the shipped register is the only authority: a worker whose key the installed release does not trust
- *   would mint tokens no installation accepts, so it must refuse to mint at all. In a sandbox no shipped release trusts
- *   the key by design, so the worker trusts its own: the public half is derived from the private key and must digest
- *   to the configured kid, which is what a sandbox end-to-end run verifies tokens against.
+ *   Check that the configured private key matches the configured `kid` and that a trust source recognizes that `kid`.
+ *   In production, the shipped register is the only trust source.
+ *   A worker whose key the installed release does not trust would mint tokens that no installation accepts.
+ *   The worker must refuse to mint those tokens.
+ *   In a sandbox, the worker trusts its own key because no shipped release trusts it.
+ *   It derives the public half from the private key and checks that its digest matches the configured `kid`.
+ *   A sandbox end-to-end run verifies tokens against that key.
  */
 
 import { publicKeyFromPrivateKey } from "@mailwoman/core/crypto/ed25519"

@@ -173,7 +173,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	const lifecycleTotals: Form499LifecycleTotals = { closed: 0, abstained: 0, supersessions: 0 }
 	let skipped = 0
 
-	// The counts outlive the connection, which closes at the end of the block below.
+	// The counts outlive the connection.
+	// The connection closes at the end of the block below.
 	let materialized: { nodes: number; edges: number; attributes: number; families: number }
 
 	{
@@ -240,7 +241,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				`form499 row #${form499RowIndex} (form499ID=${stringifyJSON(row.form499ID)}) lastFiledAt`
 			)
 
-			// Attributes attach to the Form 499 node, which every row has.
+			// Every row has a Form 499 node.
+			// Attributes attach to that node.
 			// The build stores DC-agent fields as attributes only.
 			stageAttribute(form499NodeID, "legal_name", row.legalNameOfCarrier, "form-499", lastFiledAt)
 			stageAttribute(form499NodeID, "dba", row.doingBusinessAs, "form-499", lastFiledAt)

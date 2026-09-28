@@ -3,14 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `shuffleWith` replaced four re-typed Fisher-Yates walks, three of which decide bytes that have shipped: the
- *   frozen eval panel's rows, the fr-lieudit corpus recipe's rows, and the coarse-placer's train/test split.
- *   So the property under test is not that it shuffles. It is that it draws in exactly the order each of
- *   those loops drew, because a changed order silently rewrites an artifact nobody re-reads.
+ *   `shuffleWith` replaced four retyped Fisher-Yates walks.
+ *   Three walks decide shipped data: frozen eval panel rows / fr-lieudit corpus recipe rows / coarse-placer split.
+ *   The test checks that `shuffleWith` draws in each loop's original order.
+ *   A changed order silently rewrites an artifact that later runs do not read.
  *
- *   The fourth, in `conformal-calibrate.run.ts`, takes a raw LCG state modulo `i + 1` rather than
- *   `floor(random() * (i + 1))`. That is the same walk with a different sampler, so it goes through `shuffleBy`;
- *   the last case asserts both halves — that `shuffleBy` reproduces it, and that `shuffleWith` does not.
+ *   The fourth walk in `conformal-calibrate.run.ts` takes raw LCG state modulo `i + 1`.
+ *   The other walks use `floor(random() * (i + 1))`.
+ *   This walk uses the same swaps with a different sampler, so it goes through `shuffleBy`.
+ *   The final case asserts that `shuffleBy` reproduces it and `shuffleWith` produces a different result.
  */
 
 import {
@@ -122,12 +123,14 @@ describe("shuffleWith", () => {
 			fromFloat64.push(float64())
 		}
 
-		// Same multiplier and increment, and the first step agrees: 1234567 × 1103515245
-		// is about 1.4e15, still under 2^53 where a double is exact.
-		// The state then grows past it, `*` starts rounding where `Math.imul` wraps at 32 bits,
-		// and the sequences part company on the second step.
-		// So neither file's stream can be served by the other's generator, and a reader
-		// comparing only the first value would conclude the opposite.
+		// Both streams use the same multiplier and increment.
+		// The first step agrees: 1234567 × 1103515245 is about 1.4e15, still under 2^53
+		// where a double is exact.
+		// The state then grows past 2^53.
+		// `*` starts rounding while `Math.imul` wraps at 32 bits.
+		// The sequences part company on the second step.
+		// A reader cannot substitute one file's stream for the other's generator.
+		// A reader who compares only the first value would conclude the opposite.
 		expect(fromInt32[0]).toBe(fromFloat64[0])
 		expect(fromInt32[1]).not.toBe(fromFloat64[1])
 		expect(fromInt32).not.toStrictEqual(fromFloat64)
@@ -135,8 +138,8 @@ describe("shuffleWith", () => {
 
 	it("reproduces the modulo-indexed walk through shuffleBy, and not through shuffleWith", () => {
 		// `conformal-calibrate.run.ts` derives its index as `state % (i + 1)` over a raw glibc LCG state.
-		// That is the same walk with a different sampler, so `shuffleBy` reproduces it,
-		// which is why that call site no longer keeps a loop.
+		// The walk uses the same swaps with a different sampler, so `shuffleBy` reproduces it.
+		// The call site can use `shuffleBy` instead of keeping a loop.
 		for (const size of [2, 17, 64, 500]) {
 			for (const seed of SEEDS) {
 				const mixed = (seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff

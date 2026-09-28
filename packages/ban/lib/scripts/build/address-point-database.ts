@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Builds the BAN rooftop address-point database from département CSV files. The output is a
- *   separate sealed database, and the OSM extract is left unchanged. Street keys use the same
+ *   separate sealed database. The OSM extract remains unchanged. Street keys use the same
  *   normalizer as the lookup side.
  *
  *   Examples:
@@ -80,7 +80,8 @@ async function parse(): Promise<BuildArgs> {
 /**
  * Return département CSV paths keyed by département code.
  *
- * Aggregate files are skipped, and an uncompressed CSV wins over its gzipped copy.
+ * The reader skips aggregate files.
+ * When both forms exist, it uses the uncompressed CSV.
  */
 async function departementFiles(csvDir: string, depts: string[] | null): Promise<Map<string, string>> {
 	const byDept = new Map<string, string>()

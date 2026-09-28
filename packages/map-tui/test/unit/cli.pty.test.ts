@@ -5,9 +5,10 @@
  */
 
 /**
- * A pty is required because the app only takes over the screen when stdin can be
- * put in raw mode, and `script` supplies one with `stty` setting a window size
- * since a controlling-terminal-less pty reports 0x0.
+ * A pty is required because the app takes over the screen only when stdin can enter raw mode.
+ *
+ * `script` supplies a pty and uses `stty` to set a window size since a
+ * controlling-terminal-less pty reports 0x0.
  */
 
 import { isExecutable } from "@mailwoman/core/fs/readers"
@@ -26,8 +27,10 @@ const MOUSE_SGR_DISABLE = `${ESC}[?1006l`
 const BRAILLE_PATTERN = /[⠀-⣿]/u
 
 /**
- * The status bar's coordinate/zoom field, whose first appearance means a frame has
- * rendered and raw mode is on, so keystrokes will land.
+ * The status bar's coordinate/zoom field.
+ *
+ * Its first appearance means a frame rendered and raw mode is on.
+ * Keystrokes will then reach the application.
  */
 const STATUS_PATTERN = /-?\d+\.\d{4},-?\d+\.\d{4} z\d+/g
 

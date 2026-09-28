@@ -51,20 +51,20 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         crf_fp32: bool,
         class_weights: torch.Tensor | None,
     ) -> None:
-        """The CRF decoder settings, label smoothing, and the per-class CE weight buffer.
+        """Configure CRF decoding and label smoothing. Register per-class CE weights as a buffer.
 
-        CRF NLL is per-sequence and unbounded — at random init it runs ~seq_len*log(num_tags),
-        so ~380 against CE's ~3 per token, and equal-weight summing lets CRF gradients drown out
-        CE. `crf_loss_weight` 0.1 keeps the CRF a structural regularizer on the emissions.
+        CRF NLL is per-sequence and unbounded. At random init it runs ~seq_len*log(num_tags),
+        or ~380 against CE's ~3 per token. Equal weighting lets CRF gradients drown out CE.
+        `crf_loss_weight` 0.1 keeps the CRF a structural regularizer on the emissions.
         weight 1.0 regressed val_macro_f1 from 0.26 to 0.17 by step 750. `crf_normalization`
         "per_token" divides by the real-token count for a magnitude comparable to per-token CE,
-        which removes the hand-tuning that weight search needed. `crf_fp32` forces the CRF forward
+        This removes the hand-tuning required by weight search. `crf_fp32` forces the CRF forward
         to fp32 inside a bf16 autocast region, to
         isolate the 33x33 transition matrix with its masked `-inf` entries as a NaN suspect.
 
         `class_weights` registers as a buffer so it follows the model to GPU and serializes with
-        the state dict; `None` leaves uniform weights. This runs before any parameter is
-        registered, which is where the buffer's state-dict position comes from.
+        the state dict; `None` leaves uniform weights. The buffer is registered before any
+        parameters, so registration order determines its state-dict position.
         """
         self.use_crf = use_crf
         self.label_smoothing = label_smoothing
@@ -100,13 +100,13 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         With `use_char_embed` on, a per-token embedding is COMPOSED from the token's characters
         (see `CharCNNEmbedding`) instead of read from a SentencePiece piece-ID table, so a whole
         word ("Čistá") is one token and diacritics never fragment the span. The SentencePiece
-        table stays built and unused in that mode, which keeps the pretrain, MLM and save paths
-        working unchanged.
+        table stays built and unused in that mode. This keeps pretraining and MLM behavior unchanged.
+        It also preserves the checkpoint save path.
 
         `phrase_input_projection` maps `(hidden + phrase_feature_dim) → hidden` so the body's
         stack keeps its declared `hidden_size`. It is None when phrase priors are off and the
-        forward path then skips the projection entirely, which is what keeps the earlier numerics
-        reproducible for a back-compat ablation.
+        forward path then skips the projection entirely. This keeps earlier numerics reproducible
+        for a back-compat ablation.
         """
         self.pad_token_id = pad_token_id
         self.max_position_embeddings = max_position_embeddings

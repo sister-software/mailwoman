@@ -5,12 +5,12 @@
  *
  *   The hard-case board's fragment-register rows — inputs whose difficulty is their shape.
  *
- *   Split out of `build/hard-case-board.run.ts` because the two halves change for different reasons and
- *   at different rates: the builder is implementation (read a WOF point, walk two FST binaries, emit jsonl),
- *   while this file is the editorial content — which inputs pin which discrimination case, and why. A row
- *   here carries no coordinates and no bias numbers on purpose. those are measured at build time from
- *   primary data, so the only thing a curator can get wrong is the choice, which is the thing worth
- *   reviewing.
+ *   Split out of `build/hard-case-board.run.ts` because the two halves change for different reasons.
+ *   They also change at different rates. The builder reads a WOF point and walks two FST binaries.
+ *   It emits JSONL.
+ *   This file holds editorial content: the inputs that pin each discrimination case and the reasons.
+ *   A row here carries no coordinates or bias numbers. The build measures those from primary data.
+ *   A curator can get the choice wrong. Review choices when changing the board.
  *
  *   `comma_free` is the register the FST prior was designed for: a two-toponym fragment with no
  *   punctuation to segment it. `comma_control` is its twin with the comma restored — same truth, same

@@ -60,8 +60,8 @@ def decode_all_spans(raw: str, label_ids: Sequence[int], id_to_label: Mapping[in
     whatever the model emitted.
 
     The whitespace-joined surfaces are there for the multi-token spans the typed registries carry:
-    the permit register's ``1층 141호`` is one ``unit`` field, and the model labels every character
-    of it ``unit`` except the space, which it reads as ``O``. The served projection joins adjacent
+    the permit register's ``1층 141호`` is one ``unit`` field. The model labels every non-space character
+    ``unit`` and labels the space ``O``. The served projection joins adjacent
     same-tag runs with the raw's own whitespace and reports ``unit: "1층 141호"``, so the read does
     the same.
     """

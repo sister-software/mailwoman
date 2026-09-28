@@ -28,8 +28,8 @@ describe("mapUnitProfile", () => {
 	})
 
 	it("normalizes by the weight actually present rather than assuming the percentages sum to 100", () => {
-		// A national build cannot assume percentages sum to 100, and dividing by a
-		// hard-coded 100 would silently under-report every share.
+		// A national build cannot assume percentages sum to 100.
+		// Dividing by 100 would silently under-report every share.
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(30, "Series", "2"), component(30, "Series", "3")])
 
 		expect(profile.classShares.get("2")).toBeCloseTo(0.5, 6)
@@ -70,8 +70,9 @@ describe("mapUnitProfile", () => {
 	it("treats a map unit whose components carry no weight at all as no mapping rather than as a rating", () => {
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(0, "Series", "2"), component(0, "Series", "3")])
 
-		// No component can be apportioned from an unweighted mixture, and an empty distribution would
-		// drop the delineation's area out of every share and break the sum-to-one relationship silently.
+		// No component can be apportioned from an unweighted mixture.
+		// An empty distribution would drop the delineation's area from every share
+		// and break the sum-to-one relationship.
 		expect(profile.noData).toBe(1)
 		expect(profile.classShares.size).toBe(0)
 	})

@@ -8,9 +8,10 @@
  *   process.
  *
  *   Elevation lives at the entry point. `storage prepare` writes a partition table and `/etc/fstab`, so
- *   it needs root — and acquiring root means re-exec'ing, which replaces the process. That is a property of an entry
- *   point, and a capability deep in a call graph should leave it alone. The wrapper resolves the
- *   privilege once, elevates if the requested operation declares a host write, and hands dispatch a plain boolean.
+ *   it needs root — and acquiring root means re-exec'ing. Re-exec replaces the process.
+ *   Re-execution belongs at an entry point. A capability deep in a call graph should not manage it.
+ *   The wrapper resolves the privilege once and elevates if the requested operation declares a host write.
+ *   It hands dispatch a plain boolean.
  */
 
 import { trackedFiles } from "@mailwoman/core/git"

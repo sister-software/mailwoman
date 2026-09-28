@@ -8,8 +8,7 @@
  *   region abbreviations, country display names, the currency backfill, the extract folds) discovers
  *   additional name keys for a place already in that map and stages a row against the same record.
  *   That keeps each candidate row denormalized without re-reading the source. A pass therefore needs
- *   exactly four things to stage: the key it found, the place, the id the row hangs on, and whether
- *   the key is the place's canonical name.
+ *   exactly four values: the key, place, row ID, plus a flag for the place's canonical name.
  */
 
 export interface PlaceAttrs {
@@ -28,7 +27,7 @@ export interface PlaceAttrs {
 	 *
 	 * NULL rather than zero.
 	 * `place_population` holds no zero, so an absent row is the only way a place has no number.
-	 * A zero written for those would be a count nobody made.
+	 * A zero written for those would be an unmeasured count.
 	 */
 	pop: number | null
 	neg: number
@@ -43,8 +42,8 @@ export interface PlaceAttrs {
 }
 
 /**
- * Stage one candidate row: a normalized name key, the place it belongs to, the source id
- * the row hangs on, and whether the key is that place's canonical name (`is_primary`).
+ * Stages one candidate row with a normalized name key, place, source ID,
+ * plus a canonical-name flag (`is_primary`).
  *
  * `sid` is passed separately rather than read off the place because an extract fold
  * and the alias pass stage rows for ids the admin `attrs` map never held.

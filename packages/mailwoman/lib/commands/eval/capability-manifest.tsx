@@ -5,7 +5,7 @@
  *
  *   `mailwoman eval capability-manifest` is the capability-manifest generator. It measures the
  *   per-tier × address-system × tag mask-off/mask-on F1 block the `createScorer` load-time delta
- *   check consults. A dry run prints the block, and `--write` inserts it into the model card,
+ *   check consults. A dry run prints the block. `--write` inserts it into the model card,
  *   refusing if a `capabilities` block already exists.
  */
 

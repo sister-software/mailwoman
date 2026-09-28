@@ -18,8 +18,8 @@
  *
  *   Output is the standard `postcode_locality` table, so the existing `postcode_area_resolution`
  *   resolver strategy consumes it unchanged (is_containing=1 for the name-matched municipality).
- *   The authoritative name data comes from the national postal file (JP = KEN_ALL, Japan Post), and
- *   points from GeoNames. Both are source material rather than prebuilt dumps.
+ *   The authoritative name data comes from the national postal file (JP = KEN_ALL, Japan Post).
+ *   GeoNames supplies the points. Both are source material rather than prebuilt dumps.
  *
  *   Usage (JP): node scripts/build-postcode-locality-cjk.ts --country JP\
  *   --postal-names $MAILWOMAN_DATA_ROOT/KEN_ALL_ROME/KEN_ALL_ROME.CSV\
@@ -92,8 +92,9 @@ async function loadKenall(path: string): Promise<Map<string, string>> {
 	const out = new Map<string, string>()
 
 	// `cp932` through iconv rather than `TextDecoder("shift_jis")`.
-	// Japan Post ships CP932, and Node's whatwg `shift_jis` reads 801 of CP932's 20,296 two-byte
-	// sequences differently, most yielding a different character rather than a replacement.
+	// Japan Post ships CP932.
+	// Node's whatwg `shift_jis` reads 801 of CP932's 20,296 two-byte sequences differently.
+	// Most differences produce another character instead of a replacement.
 	// The file is reissued monthly, so this must stay exact.
 	const text = decodeBytes(await readLocalBuffer(path), "cp932")
 

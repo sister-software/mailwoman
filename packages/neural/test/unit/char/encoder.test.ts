@@ -2,9 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The TypeScript character encoder produces the same `char_ids` and `attention_mask` as the Python
- *   `encode_row_units` for 56 rows the Python side encoded under the v8-cjk interface (S 96, W 7, ctx 3): 50 JP board
- *   rows, 4 CN board rows with a Latin tail, one row past S, and one row with an astral code point.
+ * @file The TypeScript character encoder matches Python `encode_row_units` for 56 rows encoded under the v8-cjk interface (S 96, W 7, ctx 3). The set contains 50 JP board rows, 4 CN board rows with a Latin tail, one row past S and one row with an astral code point.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

@@ -62,7 +62,7 @@ interface BuildArgs {
 	buildSHA: string
 	output: string
 	/**
-	 * Recover the street for points with no `addr:street` from the nearest named highway.
+	 * Recover the street for points with no `addr:street` from the nearest highway with a name.
 	 */
 	recover: boolean
 	recoverRadiusKm: number

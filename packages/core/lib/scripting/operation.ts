@@ -3,13 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The shape every operator capability takes. An operation has an id, a declared effect, typed input and output, and a
- *   `run`. It has no interface of its own: an adapter such as the private `mwops` CLI or an MCP server is a view over a
- *   registry of operations, and the adapter carries no logic of its own.
+ *   This module defines the shape of each operator capability.
+ *   An operation has an ID and a declared effect.
+ *   It accepts typed input and returns typed output.
+ *   Its `run` function performs the operation.
+ *   An adapter such as the private `mwops` CLI or an MCP server views a registry of operations.
+ *   The adapter carries no separate logic.
  *
- *   A family of operations (release, storage, shop) chooses its effect union and its context. The family binds both
- *   once through {@link operationDefiner}, so a call site infers its input and output types from the schemas it passes
- *   and receives the family's context in `run` without naming it.
+ *   An operation family chooses its effect union and context.
+ *   Release operations are one example. Storage and shop are two others.
+ *   The family binds its effect and context through {@link operationDefiner}.
+ *   A call site infers input and output types from its schemas.
+ *   The `run` function receives the family's context without the caller naming it.
  */
 
 import type { ZodType } from "zod"
@@ -17,7 +22,7 @@ import type { ZodType } from "zod"
 /**
  * What every operation receives beside its input, whatever its family.
  *
- * A family extends this with what its operations act on: a repository root, a privilege flag.
+ * A family extends this with the values its operations use, such as a repository root or privilege flag.
  */
 export interface OperationContext {
 	/**
@@ -39,7 +44,7 @@ export interface Operation<
 	Out = unknown,
 > {
 	/**
-	 * Dotted, stable, and the name an adapter exposes: `release.preflight`, `storage.prepare`.
+	 * A stable dotted name that an adapter exposes, such as `release.preflight` or `storage.prepare`.
 	 */
 	id: string
 	description: string

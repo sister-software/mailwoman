@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Form 499's `note1`/`note2`/`note3` columns are a structured lifecycle log rather than free text
- * (every note in the 2025-12-07 vintage's 19,852 filers matches one of eight templates), so they are
- * carried as a closed vocabulary plus the verbatim source string, never as a derived judgment, and a
- * note matching no template is counted in {@link Form499Lifecycle.unrecognized} while staying verbatim.
+ * Form 499's `note1`/`note2`/`note3` columns form a structured lifecycle log rather than free text.
+ * Every note among the 19,852 filers in the 2025-12-07 vintage matches one of eight templates.
+ * The parser stores a closed-vocabulary value beside the verbatim source string. It records a note
+ * matching no template in {@link Form499Lifecycle.unrecognized} while preserving the source string.
  */
 
 /**
@@ -20,13 +20,16 @@ export const Form499CessationReason = {
 	 */
 	NoLongerActive: "no-longer-active",
 	/**
-	 * `Replaced by filer <id>`, whose successor becomes {@link Form499Lifecycle.replacedByForm499ID}.
+	 * `Replaced by filer <id>`.
+	 *
+	 * The successor becomes {@link Form499Lifecycle.replacedByForm499ID}.
 	 */
 	ReplacedByFiler: "replaced-by-filer",
 	/**
-	 * The entity survives while only its telecom operation ended, which distinguishes
-	 * it from {@linkcode Form499CessationReason.OutOfBusiness} since one of these
-	 * companies can still be somebody's parent.
+	 * The entity survives while its telecom operation ends.
+	 *
+	 * This distinguishes it it from {@linkcode Form499CessationReason.OutOfBusiness}
+	 * since one of these companies can still be somebody's parent.
 	 */
 	ExitedTelecom: "exited-telecom",
 	/**
@@ -40,8 +43,8 @@ export const Form499CessationReason = {
 	AssetsSold: "assets-sold",
 	/**
 	 * `This legal entity accout has been closed because their Form 499 filing is now submitted on a
-	 * consolidated basis.`; `accout` is the source's own typo, matched verbatim, and the entity did not
-	 * cease but moved under a parent's filing.
+	 * consolidated basis.`; `accout` is the source's typo and the pattern matches it verbatim.
+	 * The entity moved under a parent's filing rather than ceasing operations.
 	 */
 	AccountConsolidated: "account-consolidated",
 	/**
@@ -79,8 +82,8 @@ export interface Form499Lifecycle {
 	/**
 	 * Every recognized reason, deduplicated, in the order first seen.
 	 *
-	 * A filer commonly carries two or three, since a date, a replacement,
-	 * and a reason are three separate notes on the same row.
+	 * Separate notes on one row can record a date and replacement.
+	 * Another note can record a reason.
 	 */
 	reasons: Form499CessationReasonValue[]
 	/**
@@ -112,8 +115,8 @@ const FIXED_NOTE_PATTERNS = [
 	[/^all assets of this company have been sold to another party\.$/i, Form499CessationReason.AssetsSold],
 	[
 		// `accout` is the source's typo and is matched as spelled.
-		// A tolerant `accou?nt` would silently admit a corrected future spelling,
-		// which should instead surface as an `unrecognized` count.
+		// A tolerant `accou?nt` pattern would silently admit a corrected future spelling.
+		// That spelling should instead increase the `unrecognized` count.
 		/^this legal entity accout has been closed because their form \d+ filing is now submitted on a consolidated basis\.$/i,
 		Form499CessationReason.AccountConsolidated,
 	],

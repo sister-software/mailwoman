@@ -5,17 +5,19 @@
  *
  *   Diff two parses of the same input, over spans rather than over the component map.
  *
- *   A map keyed by tag cannot represent a span that slid one token left — it looks identical to a span that was
- *   replaced — and two arms that both emit `locality` make no statement about whether the locality moved. Spans are
- *   therefore matched by overlap first and tag second, which tells four events apart:
+ *   A map keyed by tag cannot represent a span that slid one token left.
+ *   It looks identical to a span that was replaced.
+ *   Two arms that both emit `locality` do not show whether the locality moved.
+ *   The diff matches spans by overlap first and tag second. This distinguishes four events:
  *
  *   - `retagged`  — same text, different tag.
  *   - `moved`     — same tag, different span.
  *   - `removed` / `added` — a span with no counterpart at all.
  *   - `confidence` — same tag, same span, the model simply became more or less sure.
  *
- *   That last one is why the confidence delta is stored per span rather than as a headline: a row that did not change
- *   its answer but lost confidence on the deciding span is a row about to flip, and an aggregate cannot say so.
+ *   The diff stores confidence changes per span instead of as a headline.
+ *   A row can keep its answer while losing confidence on the deciding span.
+ *   That row may be about to flip. An aggregate cannot show the change.
  */
 
 import { flattenTreeNodes } from "#decoder/tree/shape"
@@ -53,8 +55,9 @@ export interface SpanDelta {
 	/**
 	 * Where the assertion came from — `rule`, `neural`, `resolver`.
 	 *
-	 * A span whose tag is unchanged but whose source moved from `resolver` to `neural`
-	 * lost its gazetteer backing, which no tag-level diff can show.
+	 * A span can keep its tag while its source moves from `resolver` to `neural`.
+	 * That change removes its gazetteer backing.
+	 * A tag-level diff cannot show it.
 	 */
 	sourceBefore?: string
 	sourceAfter?: string
@@ -114,8 +117,8 @@ function toFlat(tree: AddressTree | null | undefined): Flat[] {
 /**
  * How much of the shorter span the two share, in [0, 1].
  *
- * Overlap rather than equality because the interesting failures move a boundary by a token
- * or two, and an equality-keyed match reports those as a delete plus an insert.
+ * The overlap measure handles failures that move a boundary by one or two tokens.
+ * An equality-keyed match reports those failures as a deletion plus an insertion.
  */
 function overlap(a: Flat, b: Flat): number {
 	const lo = Math.max(a.start, b.start)

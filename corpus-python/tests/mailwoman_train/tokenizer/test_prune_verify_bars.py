@@ -17,7 +17,7 @@ from mailwoman_train.tokenizer.vocab.prune_verify import (
     feeds_for,
 )
 
-#: Original id -> pruned id. Id 3 was dropped, which is what -1 means to both bars.
+#: Original id -> pruned id. Both bars use -1 for a dropped id. This fixture drops id 3.
 OLD_TO_NEW = np.array([0, 1, 2, -1, 3, 4], dtype=np.int64)
 
 
@@ -36,7 +36,10 @@ class StubProcessor:
 
 @dataclass(frozen=True)
 class StubMeta:
-    """An ONNX input meta: a name, a declared type, and a shape with symbolic dimensions."""
+    """An ONNX input meta with a name and declared type.
+
+    The shape may contain symbolic dimensions.
+    """
 
     name: str
     type: str

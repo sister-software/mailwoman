@@ -10,7 +10,7 @@
 
 // Keep these static.
 // A dynamic-import destructure of this barrel gets tree-shaken by webpack's usedExports analysis.
-// Static named imports are fully analyzable.
+// Static imports with explicit bindings are fully analyzable.
 // Do not re-dynamize.
 import { type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
@@ -44,8 +44,7 @@ export function parseStageLabelsFor(hasResolver: boolean): string[] {
 export const DEFAULT_LOCALE = "en-us"
 
 /**
- * Address the demo opens on, which exercises house number, street, directional,
- * locality and region in one line.
+ * The demo address exercises a house number, street, directional, locality and region in one line.
  */
 export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
@@ -65,8 +64,8 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris", country: "fr" },
 	// GB dependent_locality.
-	// "Henbury" flips to dependent_locality via the en-gb pair-index prior, and the
-	// `country: "gb"` pin selects it even if the user edits away the postcode.
+	// "Henbury" flips to dependent_locality via the en-gb pair-index prior.
+	// The `country: "gb"` pin selects it even if the user edits away the postcode.
 	{
 		label: "Macclesfield (GB dependent_locality)",
 		address: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD",
@@ -122,16 +121,18 @@ export interface ClassifyStageResult {
 
 /**
  * Per-parse placetype-pair prior selector, the shape the web loader's
- * `LoadResult.selectPairIndexForText` exposes, which runs locale-check over the input
- * text shape (postcode format or script rather than place names) and returns the
- * matching loaded index or `undefined` when no loaded index matches, typed opaquely
- * because the docs bundle carries no neural type dependency.
+ * `LoadResult.selectPairIndexForText` exposes.
+ *
+ * It runs a locale check over the input text shape (postcode format or script rather than place names)
+ * and returns the matching loaded index or `undefined` when no loaded index matches,
+ * typed opaquely because the docs bundle carries no neural type dependency.
  */
 export type SelectPairIndex = (text: string, opts?: { country?: string }) => object | undefined
 
 export interface ClassifyStageDeps {
 	/**
-	 * The loaded neural classifier, which must be ready because the caller guards `null`.
+	 * The loaded neural classifier.
+	 * The caller checks for `null` before using it.
 	 */
 	classifier: MailwomanClassifierLike
 	/**
@@ -226,9 +227,10 @@ export async function runClassifyStage(
 }
 
 /**
- * Dual-role resolution shared by both parse paths, which reports whether the resolved pin
- * doubles as another admin tier and returns `undefined` for a placeless pin (`id === 0`),
- * a lookup with no `coincidentRolesFor`, an empty relation or a failed query.
+ * Dual-role resolution shared by both parse paths.
+ *
+ * It reports whether the resolved pin doubles as another admin tier and returns `undefined` for a
+ * placeless pin (`id === 0`), a lookup with no `coincidentRolesFor`, an empty relation or a failed query.
  */
 export async function resolveDualRoles(
 	lookup: MailwomanLookupLike,

@@ -24,8 +24,10 @@ export interface MatcherScaleOptions {
 	dup?: number
 
 	/**
-	 * Fits the Fellegi-Sunter m and u probabilities with EM at each size,
-	 * which is slower, and defaults to `false`.
+	 * Fits the Fellegi-Sunter m and u probabilities with EM at each size.
+	 *
+	 * This is slower.
+	 * The option defaults to `false`.
 	 */
 	em?: boolean
 
@@ -72,7 +74,8 @@ const sec = (ms: number) => `${(ms / 1000).toFixed(2)} s`
  * Measures entity-resolution time, candidate pairs and memory on synthetic records
  * of increasing size, all in one Node process.
  *
- * The Markdown report is printed to stdout, returned, and also written to `outMd` when that option is set.
+ * The function prints the Markdown report to stdout and returns it.
+ * It also writes to `outMd` when set.
  */
 export async function matcherScale(
 	options: MatcherScaleOptions = {},

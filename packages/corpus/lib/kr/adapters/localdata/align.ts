@@ -26,12 +26,13 @@ const LOT_NUMBER = /^산?\d+(?:-\d+)?(?:번지)?$/u
 const UNIT_TOKEN = /^(?:지하\s?)?(?:B?\d+(?:~\d+)?(?:층|호)|\d+층|B\d+|지하\d*층?|\d+동|[가-힣]?\d*호)(?:,)?$/u
 
 /**
- * The shortest either form can be — 시도, 시군구, and the road or the 법정동; anything shorter cannot carry the key.
+ * The shortest either form can be — 시도, 시군구 and the road or the 법정동.
+ * Anything shorter cannot carry the key.
  */
 const MINIMUM_TOKENS = 3
 
 /**
- * One aligned string: the spans that matched, and the key they matched under.
+ * One aligned string: the spans that matched and the key they matched under.
  */
 export interface Aligned {
 	raw: string
@@ -141,7 +142,8 @@ export function alignRoadAddress(text: string, index: KeyIndex): Aligned | null 
 		roadAt += 1
 	}
 
-	// A road name is one token, and a numbered branch (`대학로8길`) is part of that token in the register.
+	// A road name is one token.
+	// A numbered branch (`대학로8길`) is part of that token in the register.
 	if (roadAt + 1 >= tokens.length || !roads.has(tokens[roadAt]!)) return null
 
 	let numberAtToken = roadAt + 1

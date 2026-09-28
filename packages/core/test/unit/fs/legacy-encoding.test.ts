@@ -3,14 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file Why `@mailwoman/core` carries `iconv-lite` rather than calling `TextDecoder`, pinned so the dependency cannot be removed as redundant: Node's whatwg `euc-kr` implements EUC-KR proper (KS X 1001) and not the UHC extension CP949 adds in lead bytes 0x81–0xA0, and over every two-byte sequence Python's `cp949` accepts `TextDecoder('euc-kr')` reads 8,824 of 17,048 differently while `iconv-lite` matches all 17,048.
+ * @file Explains why `@mailwoman/core` uses `iconv-lite` instead of `TextDecoder`. Node's WHATWG `euc-kr` implements EUC-KR proper (KS X 1001). CP949 adds the UHC extension in lead bytes 0x81–0xA0. Across the 17,048 two-byte sequences accepted by Python's `cp949`, `TextDecoder('euc-kr')` reads 8,824 differently. `iconv-lite` matches all 17,048. These results keep the dependency from being removed as redundant.
  */
 
 import { decodeByteStream, decodeBytes } from "@mailwoman/core/fs/streams"
 import { describe, expect, it } from "vitest"
 
 /**
- * `더샾오피스텔` in CP949, whose `98 de` pair is the UHC extension `샾` that EUC-KR proper does not carry.
+ * `더샾오피스텔` in CP949.
+ *
+ * Its `98 de` pair encodes the UHC extension `샾`, which EUC-KR proper does not carry.
  */
 const THE_SHARP = Uint8Array.from([0xb4, 0xf5, 0x98, 0xde, 0xbf, 0xc0, 0xc7, 0xc7, 0xbd, 0xba, 0xc5, 0xda])
 

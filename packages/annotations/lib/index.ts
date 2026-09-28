@@ -108,7 +108,7 @@ export interface AnnotationSet {
 }
 
 /**
- * The input every annotator receives: a coordinate, and the resolved place when one is available.
+ * The input every annotator receives: a coordinate plus the resolved place when one is available.
  */
 export interface AnnotatorInput {
 	lat: number
@@ -118,11 +118,13 @@ export interface AnnotatorInput {
 	 */
 	place?: unknown
 	/**
-	 * ISO 3166-1 alpha-2 of the resolved country when known, which feeds country-reference annotators.
+	 * ISO 3166-1 alpha-2 of the resolved country when known.
+	 * Country-reference annotators use this value.
 	 */
 	countryCode?: string
 	/**
-	 * The resolved place's name (locality) when known, which feeds name-keyed annotators (UN/locode).
+	 * The resolved place's name (locality) when known.
+	 * Name-keyed annotators (UN/locode) use this value.
 	 */
 	placeName?: string
 	/**

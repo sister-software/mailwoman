@@ -42,8 +42,8 @@ const EXPECTED_US_PAIR_COUNT = 47_878
 /**
  * Known (child, parent) pairs probed after write, keyed by country code.
  *
- * Each country needs its own because probing another country's names verifies no name,
- * and the command throws for a country without an entry.
+ * Each country needs its own list because names from another country verify none of its names.
+ * The command throws when a country has no entry.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [city: string, district: string]>>> = {
 	gb: [
@@ -102,8 +102,10 @@ function splitPathList(value: string | undefined): string[] {
 }
 
 /**
- * The `--delta` flag has no default because its value comes from calibration,
- * and omitting the optional `--parent-delta` leaves the parent bias off.
+ * The `--delta` flag has no default.
+ *
+ * Its value comes from calibration.
+ * Omitting the optional `--parent-delta` leaves the parent bias off.
  */
 export const spec = {
 	name: "pair-index",
@@ -262,8 +264,9 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			...(banFileDigests.length ? [md5Hex(banFileDigests.join("\n"))] : []),
 		]
 
-		// An omitted flag writes no header key, and the reader treats an absent key
-		// as disabled, which differs from an explicit zero.
+		// An omitted flag writes no header key.
+		// The reader treats an absent key as disabled.
+		// That behavior differs from an explicit zero.
 		const pairIndexHeader: PairIndexHeaderInput = {
 			country,
 			delta: options.delta,

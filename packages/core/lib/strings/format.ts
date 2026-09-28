@@ -15,11 +15,14 @@ export function normalizeWhitespace(text: string): string {
 }
 
 /**
- * The text with its trailing slashes removed: an origin a path can be appended to by
- * concatenation, or a pathname with a trailing slash forgiven.
+ * Removes trailing slashes from a text value.
  *
- * A loop rather than `/\/+$/u`: a regex anchored after a repeated class backtracks in time quadratic
- * in the run of slashes it is handed, and the input is configuration or a URL the browser was given.
+ * The result can be an origin for path concatenation or a pathname without a trailing slash.
+ *
+ * The loop avoids `/\/+$/u`.
+ * A regex anchored after a repeated class backtracks quadratically in the run of slashes.
+ *
+ * The input comes from configuration or a URL the browser was given.
  */
 export function withoutTrailingSlashes(text: string): string {
 	let end = text.length

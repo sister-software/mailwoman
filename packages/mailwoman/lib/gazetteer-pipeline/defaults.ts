@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The canonical admin-gazetteer coverage recipe. It lives here, reviewed like code, while
- *   `data/gazetteer/wof-build-manifest.json` is a build log recording what ran, when, and the md5.
+ *   The canonical admin-gazetteer coverage recipe lives here and receives code review.
+ *   `data/gazetteer/wof-build-manifest.json` records the command, execution time, plus its MD5.
  *
- *   The lists map id ranges to sources: WOF rows (`id < 2e9`) are the priority countries, Overture
- *   divisions (`8e12 ≤ id < 9e12`) are the 86, and the GeoNames alias fold (`id ≥ 9e12`) is the 161.
+ *   The lists map id ranges to sources. WOF rows (`id < 2e9`) are the priority countries.
+ *   Overture divisions (`8e12 ≤ id < 9e12`) are the 86. The GeoNames alias fold (`id ≥ 9e12`) is the 161.
  *   See releasing.md "Rebuilding + swapping the canonical admin gazetteer".
  *
  * 	 TODO: Move most of this to JSON configuration files.
@@ -296,7 +296,8 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 /**
  * Pinned Overture release for the divisions theme.
  *
- * Rows churn between monthly releases, and two vintages must never mix inside one artifact.
+ * Rows churn between monthly releases.
+ * One artifact must use a single vintage.
  *
  * Overture deletes old releases, so a pin survives on the order of a month and
  * then the build fails with `No files found that match the pattern`.
@@ -331,9 +332,11 @@ export function geonamesAdminGapCountries(): string[] {
 /**
  * The country set a standalone fold re-derives.
  *
- * It is the same recipe `buildAdmin` bakes into the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}),
- * because the fold rewrites its whole id range, and a narrower list re-folds the front
- * of that range while other countries' name rows stay attached to the wrong places.
+ * It is the same recipe `buildAdmin` bakes into the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}).
+ * The fold rewrites its whole id range.
+ *
+ * A narrower list re-folds the front of that range while other countries' name
+ * rows stay attached to the wrong places.
  */
 export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
 
@@ -360,10 +363,14 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
 /**
  * The tail database's country set, in the frozen artifact's ingest order.
  *
- * Any change here re-freezes the artifact: rebuild, run the parity check against
- * the previous database, and rotate via the .prev workflow.
- * The first ten entries are order-critical and every later country must be appended,
- * because ids are positional in ingest order and inserting a country shifts every following id.
+ * Any change here re-freezes the artifact.
+ * Rebuild and run the parity check against the previous database.
+ *
+ * Then rotate via the .prev workflow.
+ * The first ten entries are order-critical.
+ *
+ * Append every later country, because ids are positional in ingest order
+ * and inserting a country shifts every following id.
  *
  * The parity check validates ids as well as counts for this reason.
  *
@@ -384,8 +391,8 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"BE",
 	"AD",
 	// AE is deliberately absent.
-	// GeoNames publishes 178,171 rows for it, every one a `nnnnn nnnnn` pair at Dubai-area
-	// coordinates, and those are Makani building codes rather than postcodes.
+	// GeoNames publishes 178,171 rows for it, every one a `nnnnn nnnnn` pair at Dubai-area coordinates.
+	// These are Makani building codes rather than postcodes.
 	// The United Arab Emirates has no postal code system and mail goes to PO boxes,
 	// so ingesting these as `placetype = 'postalcode'` would claim 178,171 postcodes for a
 	// country with none and every coverage figure taken from that tier would inherit the claim.

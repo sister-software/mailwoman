@@ -109,7 +109,7 @@ describe("fetchGeonamesDumps", () => {
 		const outRoot = scratch.path
 		const summary = await fetchGeonamesDumps({ outRoot, baseURL })
 
-		// The catalog is the denominator: three countries named, two published, one 404.
+		// The catalog is the denominator: three countries listed, two published, one 404.
 		expect(summary.fetched).toBe(2)
 		expect(summary.failedCodes).toEqual(["XX"])
 

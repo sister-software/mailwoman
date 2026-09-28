@@ -5,9 +5,12 @@
  *
  *   The coastal-erosion route on the geocode path, exercised through `geocodeAddress` with mock classifier and resolver deps and a fixture-built layer.
  *
- *   The first test is the one that matters: with the layer absent the geocode result must be identical to a run with the field never built, which is what makes rollback removing the argument.
+ *   The first test checks the rollback contract. With the layer absent, the geocode result must match a run where the field was never built.
+ *   Rollback satisfies that contract by removing the argument.
  *
- *   A designation becomes one additive marker naming the verdict's own top kind, and a location with no erosion polygon raises no marker — the inversion of the flood route, because ncerm publishes no definition under which silence is an advisory.
+ *   A designation becomes one additive marker that reports the verdict's top kind.
+ *   A location with no erosion polygon produces no marker.
+ *   Unlike the flood route, NCERM publishes no definition that treats silence as an advisory.
  */
 
 import { buildCoastalDatabase } from "@mailwoman/coastal/sdk/build-coastal"
@@ -202,7 +205,7 @@ describe("#1993: the coastal-erosion route on the geocode path", () => {
 			coastalErosionRoute: route,
 		})
 
-		// An advisory here would be a determination nobody made, so the refusal is named instead.
+		// An advisory here would be an unverified determination, so the response reports a refusal.
 		expect(result.intent_markers).toEqual([])
 
 		const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)

@@ -87,8 +87,8 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
  * in records from two different sources?
  *
  * Phone is not the join key, so a match is independent corroboration of one facility.
- * Entities where no two cross-source records both carry a phone are unknown,
- * and only checkable entities count.
+ * Entities without phone numbers on two cross-source records are unknown.
+ * Only checkable entities count.
  */
 function phoneEvidence(e: ResolvedEntity): "corroborated" | "contradicted" | "unknown" {
 	const bySource = new Map<string, Set<string>>()
@@ -177,8 +177,8 @@ async function measure(label: string, threshold: number | null, entities: Resolv
 }
 
 /**
- * Compare the FS baseline against the bundled GBT over a threshold sweep,
- * and emit the markdown report to stdout.
+ * Compare the FS baseline against bundled GBT over a threshold sweep.
+ * Emit the markdown report to stdout.
  */
 export async function crossSourceThresholdSweep(
 	options: CrossSourceThresholdSweepOptions,

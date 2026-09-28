@@ -122,8 +122,10 @@ describe("buildEmissionPriors", () => {
 })
 
 describe("buildEmissionPriors — SCOPED locality bias (2026-07-17 rebuild)", () => {
-	// The scoped rebuild fires only on a bare admin doubleton: no digits, abbreviation last,
-	// at most four preceding tokens, and a name that is not the region's own name.
+	// The scoped rebuild fires only on a bare admin doubleton.
+	// It requires no digits and a final abbreviation.
+	// At most four tokens may precede the abbreviation.
+	// The name must differ from the region's own name.
 	const bLoc = LABELS.indexOf("B-locality")
 	const iLoc = LABELS.indexOf("I-locality")
 

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Docusaurus runtime-asset staging and bundle-policy entry point: the sql.js worker the explainers resolve
- *   through, the MapLibre worker the dashboard map spawns, the webpack aliases and shim policy for the packages
- *   the explainers import, and the published data-bundle summary the data-products page reads as global data.
+ *   through. It also registers the MapLibre worker that the dashboard map spawns. The plugin configures webpack aliases
+ *   and shims for packages the explainers import. It exposes the published data-bundle summary as page-global data.
  */
 
 import type { LoadContext, Plugin } from "@docusaurus/types"

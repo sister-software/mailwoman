@@ -35,11 +35,13 @@ export const SoilReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * The survey mapped this location, assigned no rating, and reports every share as an absence share.
+	 * The survey mapped this location and assigned no rating.
+	 * Every share is reported as an absence share.
 	 */
 	DesignatedNoRating: "designated_no_rating",
 	/**
-	 * The layer has no coverage for this location, which never implies low capability.
+	 * The layer has no coverage for this location.
+	 * This does not imply low capability.
 	 */
 	Unknown: "unknown",
 } as const
@@ -75,7 +77,8 @@ export interface SoilCapabilityDistribution {
 	 */
 	otherShare: number
 	/**
-	 * The fraction of the cell that any delineation covers, which is below 1 at a survey-area edge.
+	 * The fraction of the cell covered by any delineation.
+	 * It falls below 1 at a survey-area edge.
 	 */
 	mappedShare: number
 	/**
@@ -107,7 +110,8 @@ export interface SoilSurveyAreaRecord {
 	 */
 	saverest: string
 	/**
-	 * The field survey date, which is usually much older than `saverest`.
+	 * The field survey date.
+	 * It can be much older than `saverest`.
 	 */
 	surveySourceDate: string | null
 	surveySourceTitle: string | null
@@ -296,9 +300,11 @@ export class SoilCapabilityLookup implements Disposable {
 	}
 
 	/**
-	 * Returns the first survey area whose bounding rectangle contains the coordinate. overlapping
-	 * rectangles may give the wrong area near a corner, affecting only the `surveyArea` label,
-	 * and the linear scan would need a spatial index for thousands of areas.
+	 * Returns the first survey area whose bounding rectangle contains the coordinate.
+	 * overlapping rectangles may give the wrong area near a corner.
+	 *
+	 * This affects only the `surveyArea` label.
+	 * A spatial index would be needed to avoid the linear scan for thousands of areas.
 	 */
 	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | undefined {
 		for (const [index, bounds] of this.#bounds.entries()) {

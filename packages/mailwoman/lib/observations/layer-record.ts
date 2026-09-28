@@ -111,7 +111,7 @@ export function describeLayerProvenance(layer: ObservationLayerRecord, options: 
 }
 
 /**
- * What a designation route decided about one coordinate: an observation, or a named silence.
+ * What a designation route decided about one coordinate: an observation or an explicit absence.
  */
 export type LayerDesignationDecision<Observation, Refusal extends string> =
 	| { fired: true; observation: Observation }
@@ -120,7 +120,7 @@ export type LayerDesignationDecision<Observation, Refusal extends string> =
 export interface CreateDesignationRouteOptions<Reading, Observation, Refusal extends string> {
 	read: (latitude: number, longitude: number) => Reading
 	/**
-	 * The named silence a reading maps to, or `undefined` where the reading fires.
+	 * The explicit absence a reading maps to, or `undefined` where the reading fires.
 	 */
 	refusalFor: (reading: Reading) => Refusal | undefined
 	/**
@@ -130,9 +130,12 @@ export interface CreateDesignationRouteOptions<Reading, Observation, Refusal ext
 }
 
 /**
- * The factory frame every designation route shares: the nullable-coordinate refusal
- * (a geocode result has `lat`/`lon` as nullable, and a coordinate-less answer is a named refusal here
- * rather than a caller's problem), the reading-shaped refusal, and the disposal that closes the lookup.
+ * The factory frame shared by every designation route includes the nullable-coordinate refusal.
+ *
+ * Geocode results have nullable `lat` and `lon`.
+ * This factory refuses coordinate-less answers.
+ *
+ * It also creates reading-shaped refusals and disposes the lookup.
  */
 export function createDesignationRoute<Identity, Reading, Observation, Refusal extends string>(
 	lookup: { identity: Identity } & Disposable,

@@ -1,12 +1,12 @@
-"""The Modal app every launcher function attaches to: the image, the volume, and the secrets.
+"""The Modal app every launcher function attaches to. It provides the image, volume and secrets.
 
 Import this, never redefine it. One `modal.App` object is what makes `modal run -m
 launch.train_remote::<name>` able to find a function defined in any module of this package, so a
 second app object here would produce functions that no launcher can call.
 
-The secrets read the local checkout at deploy time and the image pins the export/quant toolchain.
-Both are evaluated at import, in the container as well as locally, which is why each tolerates the
-container's empty environment rather than raising in it.
+The secrets read the local checkout at deploy time. The image pins the export/quant toolchain.
+The container and local process both evaluate them at import time. Each tolerates the container's
+empty environment.
 """
 
 from __future__ import annotations
@@ -55,17 +55,16 @@ training_image = (
         "onnx==1.22.0",
         "onnxruntime==1.29.0",
         "onnxscript==0.7.2",
-        # sentencepiece decides the token IDs the model trains on, and the shipped wasm runtime
-        # (@mailwoman/sentencepiece-wasm) is built from 0.2.2, so training pins to 0.2.2 to keep
-        # train and serve on one convention.
+        # SentencePiece determines the token IDs used in training. The shipped wasm runtime
+        # (@mailwoman/sentencepiece-wasm) is built from 0.2.2. Training also pins 0.2.2 so train
+        # and serve use one convention.
         "sentencepiece==0.2.2",
         "pyarrow>=15",
         "pyyaml>=6",
         "numpy>=1.26,<3",
         # The corpus is stored zstd-compressed at rest, so the loader imports this to read it.
-        # Floored rather than pinned: it decodes a format, it does not decide a token id or a
-        # graph, and a corpus part file written by one version reads back identically under any
-        # other.
+        # This dependency is floored because it only decodes a format. It does not decide token IDs
+        # or graph structure. A corpus part file written by one supported version reads under another.
         "zstandard>=0.23",
         "datasets>=2.19",
         "tqdm>=4.66",
@@ -77,9 +76,9 @@ training_image = (
         # the run config sets train.trackio_enabled (best-effort, see trackio_logging.py).
         "trackio",
     )
-    # Every launcher function lives in a module of this package, and Modal re-imports that module
-    # inside the container to run it. Without the package the container raises ModuleNotFoundError
-    # before any function body runs, which reads as a Modal fault rather than a missing file.
+    # Every launcher function lives in a module of this package. Modal re-imports that module inside
+    # the container. Without the package, the import raises ModuleNotFoundError before the function
+    # body runs. Modal reports that import failure as a Modal fault.
     .add_local_python_source("launch")
 )
 
@@ -101,7 +100,7 @@ def _env_file() -> str:
 
     `.env` is untracked and lives only in the main checkout, so walking `..` from this file lands a
     worktree on a path that does not exist. `--git-common-dir` answers the main checkout's `.git` from
-    inside any worktree, and its parent is the directory that holds `.env`. The plain relative path is
+    inside any worktree. Its parent is the directory that holds `.env`. The plain relative path is
     the fallback for a tarball or a checkout git cannot answer for.
     """
     fallback = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
@@ -119,7 +118,7 @@ def _env_file() -> str:
 
 
 def _read_env_keys(keys: tuple[str, ...]) -> dict[str, str]:
-    """Read the named keys from the .env file, letting os.environ override what the file says."""
+    """Read the keys listed in the .env file, letting os.environ override their values."""
     env: dict[str, str] = {}
     env_file = _env_file()
     if os.path.isfile(env_file):
@@ -153,8 +152,8 @@ def _load_r2_env() -> dict[str, str]:
     return env
 
 
-# Build the secret from the local checkout only: this module is imported inside every container,
-# where there is no .env, and raising unconditionally would crash every function that does not use R2.
+# The container has no `.env` file. Build the secret from the local checkout only. Raising
+# unconditionally would crash every function that does not use R2.
 r2_secret = modal.Secret.from_dict(_load_r2_env() if modal.is_local() else {})
 
 

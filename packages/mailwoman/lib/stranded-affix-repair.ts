@@ -15,9 +15,10 @@ import { type AddressNode, type AddressTree, collectNodes } from "@mailwoman/cor
 const STRANDED_AFFIX_TAGS: ReadonlySet<string> = new Set(["street_suffix", "street_prefix"])
 
 /**
- * Name-containing place tags a stranded affix may be absorbed into, whose surface
- * can legitimately end in a street-type word; `dependent_locality` belongs here
- * for the same reason as `locality` and `venue`.
+ * Name-containing place tags that can absorb a stranded affix.
+ *
+ * Their surfaces can legitimately end in a street-type word.
+ * `dependent_locality` belongs here for the same reason as `locality` and `venue`.
  */
 const ABSORBING_TAGS: ReadonlySet<string> = new Set(["locality", "venue", "dependent_locality"])
 
@@ -42,7 +43,8 @@ export function repairStrandedAffix(tree: AddressTree): boolean {
 		const absorber = all.find((node) => {
 			if (!ABSORBING_TAGS.has(node.tag)) return false
 
-			// The affix may lead or trail, and only whitespace may separate the two spans.
+			// The affix may lead or trail.
+			// Only whitespace may separate the two spans.
 			const between = affix.start >= node.end ? raw.slice(node.end, affix.start) : raw.slice(affix.end, node.start)
 
 			return between.trim() === "" && between.length <= 1

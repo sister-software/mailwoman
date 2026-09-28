@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Frozen definition and scoring for the absence-observation probe. Target rows expect the observation, and each
- *   control group expects silence, so the probe needs rows in every group to detect a route that fires everywhere.
+ *   Frozen definition and scoring for the absence-observation probe. Target rows expect an observation.
+ *   Each control group expects silence. Rows from every group let the probe detect a route that fires everywhere.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -85,7 +85,7 @@ export interface AbsenceProbeDefinition {
 }
 
 /**
- * Freeze record pinning the definition by ID, version, and hash.
+ * Freeze record pinning the definition's ID, version and hash.
  */
 export interface AbsenceProbeFreezeRecord {
 	definition: string
@@ -184,7 +184,8 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 }
 
 /**
- * Loads the frozen definition after checking its identity, its hash, and the audit.
+ * Loads the frozen definition after checking its identity and hash.
+ * It also checks the audit.
  */
 export async function loadAbsenceProbeDefinition(
 	definitionPath: string = ABSENCE_PROBE_DEFINITION_PATH,
@@ -281,7 +282,7 @@ export const ABSENCE_DECISIONS = ["HOLDS", "BREACHED"] as const
 export type AbsenceDecisionOutcome = (typeof ABSENCE_DECISIONS)[number]
 
 /**
- * Decision, counts, and failing rows for a probe run.
+ * Decision and counts for a probe run, with its failing rows.
  */
 export interface AbsenceVerdict {
 	decision: AbsenceDecisionOutcome

@@ -70,17 +70,22 @@ interface GenerateClientsReceipt {
 }
 
 /**
- * Options for {@link generateClients}; `outDir` defaults to `clients-build/` at the
- * repo root, and `skipVerify` skips the Python and Rust build checks.
+ * Options for {@link generateClients}.
+ *
+ * `outDir` defaults to `clients-build/` at the repo root.
+ * `skipVerify` skips the Python and Rust build checks.
  */
 export interface GenerateClientsOptions {
 	/**
-	 * The output root, which defaults to the gitignored `clients-build/` at the repo root.
+	 * The output root.
+	 *
+	 * The default is the gitignored `clients-build/` at the repo root.
 	 */
 	outDir?: PathBuilderLike
 
 	/**
-	 * Whether to skip the Python and Rust build checks, which makes the output unfit as a release proof.
+	 * Whether to skip the Python and Rust build checks.
+	 * Skipping them makes the output unfit as a release proof.
 	 */
 	skipVerify?: boolean
 	onPhase?: (phase: string, detail?: string) => void

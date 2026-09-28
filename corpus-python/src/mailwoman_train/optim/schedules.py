@@ -1,4 +1,4 @@
-"""Learning-rate schedules, and the restamp a resume needs.
+"""Build learning-rate schedules and restamp resumed runs.
 
 Three shapes, chosen by `train.lr_schedule`. The restamp exists because loading an optimizer state
 dict silently discards the live config's learning rates. See `restamp_resume_lrs`.
@@ -30,9 +30,9 @@ def linear_cooldown(optimizer: AdamW, cooldown_start: int, max_steps: int) -> La
     Resume a mid-schedule checkpoint at ``cooldown_start`` with the config's ``learning_rate`` set
     to that checkpoint's CURRENT (tail) LR: the multiplier holds 1.0 through the start, so the
     schedule-aware restamp continues the parent's LR exactly, then decays linearly to zero at
-    ``max_steps``. Approximates the matched-schedule endpoint of a mid-cosine checkpoint without a
-    full rerun (Hägele et al. 2024, arXiv:2405.18392, MiniCPM, arXiv:2404.06395, and Chinchilla's
-    schedule-matching finding).
+    ``max_steps``. This approximates the matched-schedule endpoint of a mid-cosine checkpoint without
+    a full rerun. See Hägele et al. 2024 (arXiv:2405.18392), MiniCPM (arXiv:2404.06395), plus
+    Chinchilla's schedule-matching finding.
     """
     span = max(1, max_steps - cooldown_start)
 
@@ -77,28 +77,27 @@ def restamp_resume_lrs(
 ) -> None:
     """Put the config's learning rates back after a resume has overwritten them.
 
-    Loading an optimizer checkpoint replaces every learning rate with the one the checkpoint was
-    saved with, and loading a scheduler checkpoint does the same to its base rates. So a resumed run
-    silently ignores any rate change in the config and trains at the old value, while the startup
+    Loading an optimizer checkpoint replaces every learning rate with the checkpoint's saved value.
+    Loading a scheduler checkpoint does the same to its base rates. A resumed run then ignores any
+    config rate change and trains at the old value. The startup
     log reports the new one as if it had taken effect. This puts the config's values back.
 
-    Two rates are involved and they are not the same number. The config specifies a PEAK rate, and a
-    group's current rate is that peak times wherever the schedule has got to. Writing the peak
+    Two rates are involved. The config specifies a PEAK rate. A group's current rate is that peak
+    times the schedule multiplier. Writing the peak
     directly gives the first resumed step a rate far above where the run left off — resuming a
     nearly-converged model at step 55,000 measured 8.808e-06 jumping to 5.000e-04 before the next
-    scheduler step pulled it back, a 57-fold spike. So the peak goes to the places that hold peaks,
-    and the current rate is computed from it by asking the scheduler for its multiplier at the step
-    being resumed.
+    scheduler step pulled it back, a 57-fold spike. Store the peak in the fields that hold peaks.
+    Compute the current rate from that peak by asking the scheduler for its multiplier at the resumed
+    step.
 
-    `live_lrs` must come from the fresh optimizer before the checkpoint is loaded, and `labels` must
-    be the list `build_optimizer` returned, unmodified. The two are positional: `labels[i]` names
-    `optim.param_groups[i]`. Building that list by hand instead would duplicate `build_optimizer`'s
-    carve-out order, and reordering there would make the printed attribution wrong while the rates
+    `live_lrs` must come from the fresh optimizer before the checkpoint is loaded. `labels` must be
+    the unmodified list returned by `build_optimizer`. The two are positional: `labels[i]` names
+    `optim.param_groups[i]`. Building that list by hand would duplicate `build_optimizer`'s carve-out
+    order. Reordering it would make the printed attribution wrong while the rates
     stayed correct. A length mismatch means the interface check failed, so the zip fails loudly
     rather than truncating.
 
-    Prints one line per group whose rate the checkpoint had changed, and no line when the checkpoint
-    already agreed with the config.
+    Prints one line for each group whose checkpoint rate differs from the config.
     """
     lr_lambdas = getattr(scheduler, "lr_lambdas", None)
     for i, (pg, live_lr, label) in enumerate(zip(optim.param_groups, live_lrs, labels, strict=True)):

@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The standing-board frame the digit and fragment boards share: load a jsonl fixture set, parse every row under the
- *   production configuration, tally per class, and print Wilson-intervalled rates with a miss sample. Each board owns
- *   its grading, its header, and its miss rendering. The frame owns everything else, so the two boards cannot drift
- *   on the half that makes their numbers comparable.
+ *   This module provides the shared frame for digit and fragment boards. It loads JSONL fixtures and parses every row
+ *   with the production configuration. It tallies results per class and prints Wilson-interval rates with miss samples.
+ *   Each board owns grading and headers. It also owns miss rendering. The shared frame keeps remaining behavior consistent.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -20,7 +19,7 @@ import { flattenNodes } from "#eval-harness/flatten-nodes"
 /**
  * Production parse configuration.
  *
- * The query-shape prior is fed on every path production parses on (safeClassify, and geocode-core).
+ * The query-shape prior runs on every production parse path, including `safeClassify` and `geocode-core`.
  *
  * See baselines.json $config.
  */
@@ -40,7 +39,7 @@ export function productionParseOptions(input: string): {
  * Wilson score interval, the reason the boards exist.
  *
  * The normal approximation collapses at the extremes
- * (it reports a negative lower bound on 0/400, and a zero-width interval on 400/400).
+ * (it reports a negative lower bound on 0/400. It reports a zero-width interval on 400/400.)
  * Wilson stays inside [0,1] and stays sane on the small, skewed cells that fragment classes produce.
  */
 export function wilson(successes: number, total: number, z = 1.96): { low: number; high: number } {
@@ -87,8 +86,10 @@ export interface SpanBoardSpec<Fixture extends SpanBoardFixture> {
 	name: string
 	defaultFixturesPath: string
 	/**
-	 * Grade one fixture from the parse's flattened nodes: whether the scored assertion held,
-	 * and what the parse put in the scored slot (carried into the miss sample).
+	 * Grade one fixture from the parse's flattened nodes.
+	 *
+	 * The result states whether the assertion held.
+	 * It also records the value in the scored slot for the miss sample.
 	 */
 	grade: (fixture: Fixture, nodes: ReturnType<typeof flattenNodes>) => { ok: boolean; got: string }
 	headerLines: (fixtureCount: number) => string[]

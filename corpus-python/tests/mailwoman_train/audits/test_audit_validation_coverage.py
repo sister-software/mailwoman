@@ -1,4 +1,4 @@
-"""The validation-coverage audit's two readings, and its refusal to read an unreadable split as one holding no rows."""
+"""Test the validation-coverage audit's two readings. Check its handling of unreadable splits."""
 
 from typing import Any
 

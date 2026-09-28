@@ -23,8 +23,8 @@
  *   existing candidate gazetteer, so a demo-ready DB falls out without a full rebuild. The database
  *   itself is the durable artifact for the canonical rebuild.
  *
- *   `--out` is written directly (the table is dropped and recreated in place on re-run), and
- *   `--fold-out` is a build-on-copy of `--fold-into`; neither uses an atomic temp-swap.
+ *   `--out` is written directly. The command drops and recreates its table in place on re-run.
+ *   `--fold-out` builds a copy of `--fold-into`. Neither option uses an atomic temp-swap.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

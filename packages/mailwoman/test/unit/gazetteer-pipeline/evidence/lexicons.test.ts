@@ -59,8 +59,8 @@ describe("three-law selectivity — pure units", () => {
 	})
 
 	it("law-3 guard: parent prominence never launders a person-name surface", () => {
-		// A neighbourhood named "Joseph" inside a metropolis (parent 0.9) is still the Rue-Joseph
-		// hazard — only own metropolis-tier importance clears a person-name surface.
+		// A neighbourhood bearing the name "Joseph" inside a metropolis (parent 0.9) is still the
+		// Rue-Joseph hazard — only own metropolis-tier importance clears a person-name surface.
 		expect(clearsProminenceFloor("joseph", 0.1, personNames, 0.9)).toBe(false)
 		expect(clearsProminenceFloor("joseph", PERSON_NAME_IMPORTANCE_FLOOR, personNames, 0)).toBe(true)
 		// Non-name neighbourhoods do inherit parent prominence (the Montmartre-class fix).
@@ -84,8 +84,8 @@ describe("three-law selectivity — pure units", () => {
 	it("law-1 directional closure (v5): the census flip surfaces are in the directional set", async () => {
 		const directionals = await loadDirectionalSurfaces()
 
-		// The v3.19 flip census: US neighbourhoods literally named these painted evidence onto
-		// street directionals ("3rd Ave East" → street "3rd", "Fargo" → locality "North").
+		// The v3.19 flip census: US neighbourhoods literally bearing these names painted evidence
+		// onto street directionals ("3rd Ave East" → street "3rd", "Fargo" → locality "North").
 		for (const s of ["east", "west", "north", "south", "northeast", "northwest", "southeast", "southwest"]) {
 			expect(directionals.has(s), s).toBe(true)
 		}

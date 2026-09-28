@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The verify step: re-read a build's manifest, recompute every output's SHA-256 and size, read each archive's
- *   `mailwoman:*` block back, and refuse on any difference. The publish runs this before it uploads anything.
+ *   The verify step rereads a build's manifest and recomputes each output's SHA-256 and size.
+ *   It reads each archive's `mailwoman:*` block and refuses any difference.
+ *   Publishing runs this check before upload.
  */
 
 import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"

@@ -5,10 +5,10 @@
  *
  * Mechanism accounts — per row, what the pipeline did, assembled from the facts it already exposes.
  *
- * Two commitments bind every line here: expectations pin outcomes rather than mechanisms, and every
- * account is recomputed from the current system on every call. Failure shapes are mechanism-states
- * rather than address shapes, so every predicate reads pipeline facts — channels, constraints, ranks,
- * lineage — and none reads what kind of address the row is.
+ * Two commitments bind every line here. Expectations pin outcomes rather than mechanisms.
+ * Each account is recomputed from the current system on every call. Failure shapes describe
+ * mechanisms rather than address forms. Each predicate reads pipeline facts: channels, constraints,
+ * ranks and lineage.
  *
  * Classification is v1: transparent predicates over recorded pipeline facts, with no calibration — every
  * result says so in its own `calibration` field — and a row that matches no shape while failing its
@@ -43,8 +43,8 @@ export { expectationCase, type ExpectationReading } from "#diagnose/expectation"
  *
  * `KnownFormatHit.confidence` is deliberately damped where postcode shapes overlap
  * (`fr_postcode` / `de_postcode` against `us_zip` is the documented case),
- * so a hit below this floor is the detector saying it cannot tell the shapes apart,
- * and disagreeing there would report that ambiguity as a defect.
+ * A hit below this floor means the detector cannot tell the shapes apart.
+ * Disagreement at that confidence would misreport ambiguity as a defect.
  */
 const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 
@@ -68,9 +68,10 @@ export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
 /**
  * The v1 shape vocabulary, in pipeline execution order — parse, evidence, retrieval, ranking, outcome.
  *
- * A row can match several, and the order is what makes a multi-match readable:
- * the earliest pipeline stage comes first, so `[retrieval_empty, wrong_instance_detected]`
- * reads as one story rather than two verdicts.
+ * A row can match several shapes.
+ * Their order makes a multi-match readable: the earliest pipeline stage comes first,
+ * so `[retrieval_empty, wrong_instance_detected]` reads as one story rather than two verdicts.
+ *
  * The two terminal states are mutually exclusive with everything, including each other.
  */
 export const DIAGNOSE_SHAPES = [
@@ -196,8 +197,10 @@ interface KnownFormatReading {
 	confidence: number
 	text: string
 	/**
-	 * The component tag this format asserts; `null` means the format maps to no
-	 * component, which is not a contradiction.
+	 * The component tag this format asserts.
+	 *
+	 * `null` means the format maps to no component.
+	 * A missing component assertion is not a contradiction.
 	 */
 	expects_component: string | null
 	matched: boolean
@@ -206,8 +209,10 @@ interface KnownFormatReading {
 export interface ParseFacts {
 	kind: { verdict: string; confidence: number } | null
 	/**
-	 * Why {@link ParseFacts.kind} is null, when it is: the classifier is skipped when a caller
-	 * pinned the register, which is a fact about the call rather than a zero-confidence verdict.
+	 * Why {@link ParseFacts.kind} is null.
+	 *
+	 * The classifier skips it when a caller pins the register.
+	 * This records the call configuration rather than a zero-confidence verdict.
 	 */
 	kind_absent_reason?: string
 	input_mode: string
@@ -250,11 +255,14 @@ export interface RetrievalFacts {
 	 * an empty array is the walk stating it performed no lookups, a different claim
 	 * the shapes must not read as retrieval failure.
 	 *
-	 * Coverage bound, required for every retrieval shape below: the trace records the walk's own
-	 * `#lookupAndPick` and no other method, while the resolver's post-walk recovery passes —
-	 * span-rescore and the postcode-compound recovery — query the backend directly and emit no record.
-	 * So a row can carry a resolved coordinate beside an empty lookup list,
-	 * and {@link RowAccount.resolved_without_recorded_lookup} states exactly that.
+	 * Coverage bound for every retrieval shape below: the trace records the
+	 * walk's own `#lookupAndPick` method.
+	 * It records no other method.
+	 *
+	 * The resolver's post-walk recovery passes — span-rescore and postcode-compound
+	 * recovery — query the backend directly and emit no record.
+	 * A row can therefore carry a resolved coordinate beside an empty lookup list.
+	 * {@link RowAccount.resolved_without_recorded_lookup} records that case.
 	 */
 	lookups: LookupFact[] | null
 	checks_fired: string[]
@@ -444,9 +452,10 @@ export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFact
 /**
  * Match the mechanism-state predicates.
  *
- * The terminal states are not decided here: `clean` vs `unclassified` needs the
- * row's expectation, and keeping that out of this function is what stops an
- * expectation from ever influencing a mechanism claim.
+ * This function does not decide the terminal states.
+ * The row's expectation determines `clean` or `unclassified`.
+ *
+ * Keeping that expectation outside this function prevents it from influencing a mechanism claim.
  */
 export function matchShapes(facts: {
 	parse: ParseFacts | null
@@ -469,9 +478,9 @@ export function matchShapes(facts: {
 		shapes.push("evidence_starved")
 	}
 
-	// A span is only empty AT the deciding site when no lookup resolved it:
-	// a `postcode_format_probe` and an `empty_admin_pick` both answer off an empty candidate table,
-	// and reading those as retrieval failure would report a working fallback as a defect.
+	// A span is only empty AT the deciding site when no lookup resolved it: Both
+	// `postcode_format_probe` and `empty_admin_pick` answer from an empty candidate table.
+	// Treating either as retrieval failure would report a working fallback as a defect.
 	const emptyDeciding = lookups.some(
 		(lookup) =>
 			lookup.n_candidates === 0 &&
@@ -518,8 +527,8 @@ function channelMark(reading: ChannelReading): string {
  * One line per row — the tool-kit renderer pattern.
  *
  * The structured account is what a diff reads.
- * This is what a human reads in a transcript without an agent paraphrasing it,
- * which is where detail goes missing.
+ * A human reads this in a transcript without an agent paraphrasing it.
+ * Agent paraphrases can omit details.
  */
 export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	const parts: string[] = [`${account.id} [${account.shapes.join(",")}]`, `tier=${account.outcome.tier}`]
@@ -605,8 +614,9 @@ export interface ShapeAggregate {
 /**
  * Per-shape counts and the rows in each class.
  *
- * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row matched is omitted
- * rather than reported as zero, because a table of zeros reads as a measurement of them.
+ * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable.
+ * A shape that no row matched is omitted rather than reported as zero,
+ * because a table of zeros reads as a measurement of them.
  */
 export function aggregateByShape(
 	accounts: ReadonlyArray<{ id: string; shapes: DiagnoseShape[] }>
@@ -636,8 +646,7 @@ export interface SettingTally {
 }
 
 /**
- * Per-setting counterfactual counts: how many rows the setting was tried on,
- * how many it moved, and how many it could not apply to.
+ * Per-setting counterfactual counts: rows tried, rows moved and rows where the setting did not apply.
  *
  * All three always, because a setting that changed no outcome on forty rows and one that
  * was never applicable are the same zero in a moved-only table but not the same fact.
@@ -676,8 +685,10 @@ export function aggregateCounterfactuals(
 
 /**
  * The in-vocabulary mis-tag refinement of `unclassified`: an expected component
- * tag the parse never produced, whose expected value occurs verbatim in the input
- * (the `Dhaka 1205` class, where the decode assigned in-vocabulary text to other tags).
+ * tag the parse never produced.
+ *
+ * Its expected value occurs verbatim in the input (the `Dhaka 1205` class,
+ * where the decode assigned in-vocabulary text to other tags).
  *
  * A tag that exists with a wrong value is a different fact and stays out,
  * because that failure has a component to interrogate.
@@ -698,7 +709,7 @@ function misTaggedInVocabulary(
 }
 
 /**
- * Assemble one row's account: the facts, the shapes they match, and the terminal state.
+ * Assemble one row's account from its facts, matching shapes and terminal state.
  */
 export function assembleAccount(
 	item: ResolvedInput,
@@ -742,8 +753,8 @@ export function assembleAccount(
 }
 
 /**
- * Run the diagnosis: one traced geocode per row, an account per row,
- * the counterfactual sweep, and aggregation by shape.
+ * Run one traced geocode and assemble one account per row.
+ * Then run the counterfactual sweep and aggregate by shape.
  */
 export async function runDiagnose(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }

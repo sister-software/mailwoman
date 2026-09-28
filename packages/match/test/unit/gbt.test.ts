@@ -13,8 +13,9 @@ import { describe, expect, it } from "vitest"
 /**
  * The Numerical-Recipes LCG, kept local on purpose.
  *
- * `@mailwoman/match` has no `@mailwoman/core` dependency, and taking one so a test can reach `makeLcg`
- * would pull core's ~11 MB of shipped data into a package that is otherwise pure comparator math.
+ * `@mailwoman/match` has no `@mailwoman/core` dependency.
+ * Taking one so a test can reach `makeLcg` would pull core's ~11 MB of shipped data
+ * into a package that is otherwise pure comparator math.
  * Same trade recorded in nuts-lookup and timezone-lookup.
  *
  * See core/utils/python-random.ts for the shared implementation.
@@ -23,7 +24,7 @@ function lcg(seed: number): () => number {
 	let s = seed >>> 0
 
 	return () => {
-		// oxlint-disable-next-line mailwoman/prefer-home -- `@mailwoman/match` carries no dependency on core, and this stream is pinned by the fixture expectations below
+		// oxlint-disable-next-line mailwoman/prefer-home -- `@mailwoman/match` carries no dependency on core. The fixture expectations pin this stream.
 		s = (s * 1_664_525 + 1_013_904_223) >>> 0
 
 		return s / 0x1_00_00_00_00
@@ -34,7 +35,7 @@ function lcg(seed: number): () => number {
  * A non-linearly-separable target: positive IFF x0 XOR x1.
  *
  * The interaction a linear model can't capture but a depth-2+ tree ensemble can. x0/x1 are binary
- * (matching the matcher's one-hot agreement-level features, which get clean midpoint splits);
+ * (matching the matcher's one-hot agreement-level features that get clean midpoint splits);
  * x2 is pure continuous noise that carries no signal, so the trees should ignore it.
  */
 function makeXor(n: number, seed: number): { X: number[][]; y: number[] } {

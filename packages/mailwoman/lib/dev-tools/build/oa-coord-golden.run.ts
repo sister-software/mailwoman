@@ -43,8 +43,8 @@ import { Globerator } from "spliterator/node/fs"
 /**
  * Approximates Python's default `csv.DictReader` dialect.
  *
- * `normalizeKeys: false` keeps the source's own header spelling, which is what the
- * row reader indexes by, since OpenAddresses ships all-caps headers.
+ * `normalizeKeys: false` keeps the source's own header spelling.
+ * The row reader indexes by that spelling because OpenAddresses ships all-caps headers.
  */
 const CSV_OPTIONS = {
 	normalizeKeys: false,
@@ -110,7 +110,8 @@ interface SampleOptions {
 	/**
 	 * Stop once this many rows are held.
 	 *
-	 * Ignored in reservoir mode, which has to see the whole stream.
+	 * Ignored in reservoir mode.
+	 * That mode must see the whole stream.
 	 */
 	target: number
 	/**

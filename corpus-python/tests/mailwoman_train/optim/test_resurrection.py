@@ -3,7 +3,7 @@
 Adam's update is gradient-scale-invariant, so a gradient hook on rows 7/8 cannot create an
 effective per-row LR — the carve-out must be a real param group over the whole classifier
 tensor (mirrors the shipped `span_head_learning_rate` mechanism). Row-level precision comes
-from `reinit_label_rows` resetting only the named rows to the live-row mean.
+from `reinit_label_rows` resetting only the selected rows to the live-row mean.
 """
 
 import torch

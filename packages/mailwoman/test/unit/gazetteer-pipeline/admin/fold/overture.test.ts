@@ -41,8 +41,8 @@ describe("assignSyntheticIDs", () => {
 	})
 
 	test("a place's id does not move when OTHER places join or leave the build", () => {
-		// An Overture release that adds divisions must not renumber the ones already shipped.
-		// only a collision can move an existing id, and then only its immediate neighbours.
+		// An Overture release that adds divisions must preserve shipped IDs.
+		// A collision can move an existing ID only when the colliding entries are immediate neighbours.
 		const before = assignSyntheticIDs(GERS)
 		const after = assignSyntheticIDs([...GERS, "08f6ef56a8b9cadb3c4d5e6f7a819203", "08f70f67b9cadbec4d5e6f7a81920314"])
 
@@ -59,8 +59,8 @@ describe("assignSyntheticIDs", () => {
 
 		for (const id of ids) {
 			expect(id).toBeGreaterThanOrEqual(OVERTURE_ID_BASE)
-			// The GeoNames alias fold owns everything from 9e12 up, and overlapping it would
-			// make one source's rows silently readable as the other's.
+			// The GeoNames alias fold owns IDs from 9e12 upward.
+			// An overlap would make one source's rows readable as the other's without an error.
 			expect(id).toBeLessThan(9_000_000_000_000)
 		}
 	})
@@ -141,8 +141,8 @@ describe("foldedPlacetype", () => {
 	})
 
 	test("leaves every other country's county alone, including the two that look like Singapore", () => {
-		// Kuwait's counties are underscore-joined ASCII names with Arabic on `locality`, and Qatar's
-		// are Doha zone numbers, so both clear a count test but would attest surfaces nobody writes.
+		// Kuwait's counties are underscore-joined ASCII names with Arabic on `locality`, and Qatar's are
+		// Doha zone numbers, so both clear a count test but would attest surfaces absent from the source.
 		expect(foldedPlacetype("county", "KW")).toBe("county")
 		expect(foldedPlacetype("county", "QA")).toBe("county")
 		expect(foldedPlacetype("county", "US")).toBe("county")

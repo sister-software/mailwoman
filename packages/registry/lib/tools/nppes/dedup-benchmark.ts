@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Build a varied multi-record set per NPI from real data, run the matcher blind to the NPI, and score the recovered clusters against the NPI grouping.
+ * Builds a varied multi-record set per NPI from real data.
+ * Runs the matcher without NPI values, then scores recovered clusters against the NPI grouping.
  *
  * Run: `mailwoman registry scorer-eval nppes-benchmark [--state TX] [--max-npis 300] [--wof <admin.db>] [--data-root <dir>] [--no-train-em] [--out-md docs/articles/evals/matcher-dedup/<date>-nppes-dedup-benchmark.md]`
  */
@@ -86,9 +87,9 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	h3Res?: number
 	/**
-	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of
-	 * the serial in-process path, which parallelizes the heavy per-row ONNX parse
-	 * and WOF SQLite work with identical coordinates.
+	 * Geocode the sample through a worker pool with {@linkcode geocodeStream}.
+	 *
+	 * The worker pool parallelizes the per-row ONNX parse and WOF SQLite work while preserving coordinates.
 	 */
 	parallelGeocode?: boolean
 	/**

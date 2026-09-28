@@ -2,11 +2,11 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The subsidiary-name→FRN match: which FRNs a canonical name collects, and what the score says about it.
+ * @file Tests which FRNs a canonical subsidiary name collects and the resulting match score.
  *
- *   The score ladder's whole point is that it is not flat, and a flattened one is invisible from the outside — every
- *   corroboration edge still gets written, still with a number in `match_score`. These pin the three rungs against
- *   the name pairs that produced them.
+ *   The score ladder must preserve its distinct levels.
+ *   A flattened ladder would still write every corroboration edge with a number in `match_score`.
+ *   These tests pin three score levels to the name pairs that produced them.
  */
 
 import {

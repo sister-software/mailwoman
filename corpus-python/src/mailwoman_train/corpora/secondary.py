@@ -1,7 +1,7 @@
 """Build the SECONDARY-ADDRESS recipe output (#1100 / #456, STAGE4 tags).
 
-The parser has no examples of the secondary-address vertical axis — units, levels (floors), buildings,
-and the EU entrance/staircase forms. This generator synthesizes labeled rows that emit the STAGE4
+The parser has no examples of secondary-address features such as units, floors, buildings, or the
+EU entrance/staircase forms. This generator synthesizes labeled rows that emit the STAGE4
 ``unit_designator`` / ``level_designator`` / ``level_id`` / ``building_designator`` / ``building_id`` /
 ``entrance`` / ``staircase`` tags (the existing ``unit`` tag carries the bare unit id, #456), each in a
 realistic full-address context so the surrounding street/admin tags stay anchored.
@@ -127,7 +127,7 @@ def _secondary_forms(rng: random.Random) -> list[list[tuple[str, str]]]:
     forms: list[list[tuple[str, str]]] = []
     # Unit: designator + bare id (the id keeps the existing STAGE3 `unit` tag).
     forms.append([("unit_designator", rng.choice(US_UNIT_DESIGNATORS)), ("unit", rng.choice(UNIT_IDS))])
-    # Level: designator + id, and the bare-ordinal "3F" form (id only).
+    # Level: designator + id. Bare ordinals such as "3F" use only the id.
     forms.append([("level_designator", rng.choice(US_LEVEL_DESIGNATORS)), ("level_id", rng.choice(LEVEL_IDS))])
     forms.append([("level_id", rng.choice(("3F", "B1", "2F", "1F")))])
     # Building: designator + id.

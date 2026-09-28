@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Publish a single workspace. Invoked by `@release-it-plugins/workspaces` once per non-private
- *   workspace, and by `publish.yml`'s per-workspace loop.
+ *   Publish a single workspace. `@release-it-plugins/workspaces` invokes this once per non-private
+ *   workspace. The per-workspace loop in `publish.yml` also invokes it.
  *
  *   Three-step flow:
  *
  *   1. `yarn pack -o <tmpfile>` — yarn 4 translates `workspace:*` deps to the concrete sibling version
- *        while building the tarball. npm's own publish step does not do this translation, and
- *        shipping `workspace:*` to consumers breaks `npm install` (eunsupportedprotocol).
+ *        while building the tarball. npm's publish step does not translate these dependencies.
+ *        Shipping `workspace:*` to consumers breaks `npm install` (eunsupportedprotocol).
  *   2. Derive the publish exports map from the dev map inside the tarball — every `node → .ts`
- *        condition is rewritten to emitted JavaScript (the repo runs source under node. consumers get `out/`). The dev
- *        `exports` in each workspace's package.json is the single source of truth. there is no
- *        hand-maintained `publishConfig.exports` (that duplication shipped a fully-broken v7.2.0
- *        when it was removed without a replacement, and this transform is the replacement). A guard
- *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points at a
+ *        condition is rewritten to emitted JavaScript. The repo runs source under Node. Consumers get `out/`.
+ *        The dev `exports` in each workspace's package.json is the single source of truth. There is no
+ *        hand-maintained `publishConfig.exports`. Removing that duplication shipped a fully broken v7.2.0.
+ *        This transform replaces it. A guard
+ *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points to a
  *        file the tarball doesn't contain.
  *   3. `npm publish <tmpfile>` — npm CLI is the right tool for the actual publish because it
  *        auto-detects GitHub Actions' OIDC environment and uses it for Trusted Publishing. Yarn's
@@ -31,9 +31,9 @@
  *   - RELEASE_IT_WORKSPACES_DRY_RUN: "true" / "false"
  *
  *   Per-workspace skip: MAILWOMAN_SKIP_WEIGHTS=1 makes this operation answer `skipped-weights` for the
- *   neural-weights-* workspaces, which keeps the monorepo version-synced in git while npm sees no
- *   weights tick. No workflow sets it: `publish.yml` publishes every release workspace, and the only
- *   weights variable it sets is MAILWOMAN_SKIP_WEIGHTS_COPY, which skips the data-root copy because the
+ *   neural-weights-* workspaces. Git versions remain synchronized while npm sees no weights tick.
+ *   No workflow sets it. `publish.yml` publishes every release workspace. Its only weights variable is
+ *   MAILWOMAN_SKIP_WEIGHTS_COPY. That skips the data-root copy because the
  *   binaries were fetched from Hugging Face earlier in the job. The skip is a local-run switch.
  */
 
@@ -87,8 +87,9 @@ export function releaseItWorkspaceEnvironment(): {
 export async function publishWorkspace(options: PublishWorkspaceOptions): Promise<PublishWorkspaceReport> {
 	const { repoRoot, workspacePath, log } = options
 
-	// Before anything is packed, and before the weights skip, so a held-out workspace is
-	// refused on every path into this function rather than on the ones that reach the npm call.
+	// Check before packing and before the weights skip.
+	// This refuses a held-out workspace on every path into the function,
+	// including paths that do not reach the npm call.
 	assertWorkspacePublishable(workspacePath)
 
 	const skipWeights = !!$public.MAILWOMAN_SKIP_WEIGHTS
@@ -175,8 +176,8 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 }
 
 // The tarball audit lives in verify-tarball.ts so both publish paths inherit it.
-// `bless-package` packs the first publish of a package and had no guard at all,
-// which is how neural-weights-en-in@8.6.0 shipped without the one binary it exists to carry.
+// `bless-package` packs a package's first publish.
+// It had no guard, so neural-weights-en-in@8.6.0 shipped without the binary it exists to carry.
 
 // dereferenceWorkspaceSymlinks lives in pack-workspace.ts so packWorkspaceForPublish
 // derefs for every caller (smoke included); the explicit call above stays as the

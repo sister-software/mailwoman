@@ -63,7 +63,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		await removePathIfPresent(out)
 
 		// @duckdb/node-api is an optional peer dep. Import it dynamically so merely loading this
-		// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when the peer isn't installed.
+		// command (e.g. `mailwoman --help`) does not fault when the peer is not installed. That command eagerly imports every command.
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 
 		console.error(`▸ aggregating ${parquet} (min-count ${minCount})`)

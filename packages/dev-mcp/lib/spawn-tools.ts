@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The tools that spawn the compiled CLI, and the one that polls them. Each writes its report to stdout, and stdout
- * here is the JSON-RPC channel. Each must therefore run as a child, which puts the compiled tree back on the path
- * and pays `assertCompiledFresh` and a full ~1.4 s cold start.
+ * These tools spawn the compiled CLI and poll its jobs. Each CLI writes its report to stdout.
+ * The JSON-RPC server also uses stdout, so each command runs as a child process. This lets the
+ * command verify the compiled tree with `assertCompiledFresh`. A child process adds a cold start
+ * of about 1.4 seconds.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -55,9 +56,10 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				n: z.number().int().positive().optional(),
 			}),
 			handler: async (args) => {
-				// The gauntlet writes its whole report to stdout, and stdout here is the JSON-RPC channel.
-				// It is therefore spawned, which puts the compiled tree back on the path, where a
-				// stale out/ would grade replaced code and report a verdict rather than an error.
+				// The gauntlet writes its report to stdout.
+				// Here stdout is the JSON-RPC channel, so the gauntlet runs as a child process.
+				// The child puts the compiled tree back on the path.
+				// A stale out/ directory could grade replaced code and report a verdict instead of an error.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 
 				const layer = (args["layer"] as string) ?? "regression"
@@ -71,8 +73,9 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					argv.push("--gazetteer-prior")
 				}
 
-				// The CLI spells the two directions as separate flags, and `undefined` must
-				// reach neither: unset means the production default the board grades.
+				// The CLI uses separate flags for the two directions.
+				// `undefined` reaches neither flag.
+				// Unset means the production default that the board grades.
 				if (args["postcode_country_coherence"] === true) {
 					argv.push("--postcode-country-coherence")
 				}
@@ -338,8 +341,9 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					// because a partial log is useful and a silent "not ready" is not.
 					partial: job.state === "running",
 					// A graded `fail` exits 1, so `state: "failed"` is what a completed-and-failing
-					// gauntlet looks like, which reads as a crash.
-					// The two need different responses.
+					// A completed failing gauntlet has `state: "failed"`.
+					// The status can resemble a crash, but callers need to distinguish a
+					// graded failure from a process crash.
 					...(job.state === "failed" && report.verdict
 						? {
 								job_outcome: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,

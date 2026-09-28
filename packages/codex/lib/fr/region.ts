@@ -7,9 +7,9 @@
  *
  *   The contrast with `de/bundesland.ts` and `us/state.ts`: France's regions were redrawn in the 2016
  *   reform that merged 22 metropolitan régions into 13 (Aquitaine + Limousin + Poitou-Charentes →
- *   Nouvelle-Aquitaine, etc.). So a French region is a large, recent amalgamation, and — like a
- *   German Bundesland — it is almost never written on an address line, which reads `code-postal
- *   commune`. The region is inferred from the département, which is inferred from the postcode (see
+ *   Nouvelle-Aquitaine, etc.). A French region is therefore a large, recent amalgamation.
+ *   Like a German Bundesland, it rarely appears on an address line. An address line reads `code-postal
+ *   commune`. The code infers the region from the département and the département from the postcode (see
  *   `code-postal.ts`).
  */
 

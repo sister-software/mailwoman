@@ -5,9 +5,9 @@
  *
  *   The corpus adapter-test harness — the sibling of `mailwoman/test-kit/`.
  *
- *   This directory is excluded from the published tarball by `corpus/package.json`'s `files` (the
- *   `!test-kit/**\/*` entry, which predates this file), which is why importing `vitest` here is safe
- *   — `mailwoman/test-kit/index.ts` imports it on the same grounds.
+ *   `corpus/package.json` excludes this directory from the published tarball.
+ *   That entry predates this file. The test harness can therefore import `vitest`.
+ *   `mailwoman/test-kit/index.ts` uses the same packaging boundary.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -18,8 +18,10 @@ import { afterEach, beforeEach } from "vitest"
 import type { CanonicalRow } from "#types"
 
 /**
- * A per-test scratch directory; `path` exists only inside a test body, and reading it
- * before the `beforeEach` or after the `afterEach` throws.
+ * A per-test scratch directory.
+ *
+ * `path` exists only inside a test body.
+ * Reading it before `beforeEach` or after `afterEach` throws.
  */
 export interface ScratchDir {
 	readonly path: PathBuilder

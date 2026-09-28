@@ -5,8 +5,8 @@
  *
  *   Streams the Department's bulk zoning export through ogr2ogr as reprojected WGS84 features.
  *
- *   The stream uses CSV with WKT geometry because the source marks holes by ring orientation, and GDAL's
- *   GeoJSON writer rewinds every ring to RFC 7946 order, which turns holes into zoned areas. The source is
+ *   The stream uses CSV with WKT geometry because the source marks holes by ring orientation. GDAL's
+ *   GeoJSON writer rewinds every ring to RFC 7946 order. That turns holes into zoned areas. The source is
  *   in EPSG:2157, declared in a legacy top-level `crs` member that GDAL honours.
  */
 
@@ -49,12 +49,15 @@ export interface ZoningSourceFeature {
 	localDescription: string | null
 	localCodeURL: string | null
 	/**
-	 * The `ZONE_GZT` value, which is the Department's national generic type for this polygon.
+	 * The `ZONE_GZT` value.
+	 *
+	 * It is the Department's national generic type for this polygon.
 	 */
 	crosswalkCode: string | null
 	crosswalkDescription: string | null
 	/**
-	 * The `SZO` value, which is the coarser national code, as published.
+	 * The `SZO` value.
+	 * It is the coarser national code as published.
 	 */
 	crosswalkRollup: string | null
 	/**
@@ -211,7 +214,8 @@ function blankToNull(value: string | undefined): string | null {
 /**
  * Streams the export through ogr2ogr as reprojected WKT and checks every vertex against the declared extent.
  *
- * The extent check catches swapped coordinate axes, which the projection check misses.
+ * The extent check catches swapped coordinate axes.
+ * The projection check misses that error.
  *
  * @throws {Error} When ogr2ogr fails, when a feature has no geometry or a blank local code, when
  * a reprojected vertex falls outside the declared extent, or when a feature's rings have no exterior.

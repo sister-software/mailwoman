@@ -8,8 +8,8 @@
  *   `venueStructureBiasScale` pushes venue-interior designators ("concourse", "terminal", "gate",
  *   "wing") toward `unit` harder than the postal designators they share a vocabulary with. That
  *   risks false units on surfaces where one of those words appears without being a designator: GB
- *   `-gate` street names, "Gate House" venues, "Terminal" industrial estates, "Wing" as a personal
- *   or business name, and designators used as street names.
+ *   `-gate` street names, "Gate House" venues, and "Terminal" industrial estates.
+ *   It also includes "Wing" as a personal or business name and designators used as street names.
  *
  *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the change was
  *   measured. Its bar is absolute, zero `unit` emissions, because every row is a surface where a
@@ -35,8 +35,8 @@ interface ConfoundRow {
 	/**
 	 * Set when a row is known to fail, carrying the reason.
 	 *
-	 * The row keeps running, and the inverted assertion below turns the suite red if it
-	 * ever starts passing, so a stale exemption cannot land silently.
+	 * The row continues through the test.
+	 * The inverted assertion fails if it starts passing, so a stale exemption cannot land silently.
 	 */
 	xfail?: string
 }

@@ -6,15 +6,15 @@
  *   The ingest's schema handling — the part the fixture rung structurally cannot reach, because a fixture is
  *   a feature list rather than a geodatabase.
  *
- *   the fourteen published layers do not share one schema, and the exception is one column on one layer.
+ *   the fourteen published layers do not share one schema. One layer differs by one column.
  *   `NCERM_SMP_2105_0CC` carries no `smp_name`; the other thirteen do. A builder that read the schema off a
  *   sibling — the survey read `NCERM_SMP_2105_95CC` — fails on the twelfth layer with
- *   `error 1: Unrecognized field name smp_name`, 66,000 features into a run. Loud, and only because ogr2ogr
- *   refuses an unknown column. a source that answered NULL instead would have shipped. So the `select` is
- *   built from the layer's own field list, and the tests below pin which columns may be absent and which may
+ *   `error 1: Unrecognized field name smp_name` after 66,000 features. ogr2ogr refuses an unknown column.
+ *   A source that returned NULL instead could have shipped. The `select` is built from the layer's own
+ *   field list. The tests below pin which columns may be absent and which may
  *   not.
  *
- *   the policy asymmetry is the other shape, and IT is regular rather than irregular. The six NFI layers omit
+ *   the policy asymmetry is the other shape. It is regular rather than irregular. The six NFI layers omit
  *   all four Shoreline Management Plan columns because under a no-intervention scenario there is no policy to
  *   record. That is a documented property of the product, so a layer disagreeing with its own scenario throws
  *   rather than being absorbed into a NULL.
@@ -51,8 +51,9 @@ function identityFor(layer: string, fields: readonly string[]): CoastalLayerIden
 
 /**
  * Drive the generator far enough to build and issue its `select`, and report what
- * it threw, or `null` where `ogr2ogr` was reached, which on a machine with no
- * geodatabase at the given path is a different failure.
+ * its error, or `null` when execution reached `ogr2ogr`.
+ *
+ * On a machine without a geodatabase at the given path, that produces a different failure.
  */
 async function selectFailure(scenarioKey: string, identity: CoastalLayerIdentity): Promise<string | null> {
 	const scenario = NCERM_SCENARIOS_BY_KEY.get(scenarioKey)!
@@ -102,8 +103,8 @@ describe("the per-layer SELECT", () => {
 	it("tolerates the one layer that publishes no smp_name, rather than refusing it", async () => {
 		// `NCERM_SMP_2105_0CC` is the real case.
 		// The `select` substitutes `NULL AS smp_name` and the ingest proceeds.
-		// The failure that reaches the caller here is ogr2ogr failing to open a path that
-		// does not exist, which is the proof that the query itself was built.
+		// The caller receives an ogr2ogr error because the path does not exist.
+		// This proves the query was built.
 		const fields = FULL_SMP_FIELDS.filter((field) => field !== "smp_name").map((field) =>
 			field === "smp2105_95" ? "smp2105_0" : field
 		)

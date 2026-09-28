@@ -102,8 +102,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// folds into candidate scoring, only when both coords are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
-			// No country constraint: the placer routes the query's own country, and forcing
-			// `US` here would resolve every non-US query to its US namesake.
+			// No country constraint lets the placer route the query's own country.
+			// Forcing `US` here would resolve every non-US query to its US namesake.
 			const result = await geocodeAddress(query, {
 				classifier,
 				resolver,
@@ -115,8 +115,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			})
 
 			if (result.lat == null || result.lon == null) return photonCollection([])
-			// Decorate from the resolved place — proper-cased ancestry names, the resolved country,
-			// and osm_key/value/type — with state/county only on an ancestry-capable backend.
+			// Decorate from the resolved place using proper-cased ancestry names,
+			// the resolved country and osm_key/value/type.
+			// Include state/county only on an ancestry-capable backend.
 			const country = matchCountry(result.countryCode)
 
 			// A rooftop or interpolated tier is house-grade: carry the parsed housenumber
@@ -140,8 +141,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			}
 
 			// Locality→postcode enrichment: an admin answer whose containing postcode is
-			// unambiguous (exactly one, keyed by the resolved place's WOF id) carries it,
-			// and a multi-postcode city gets none.
+			// unambiguous (exactly one, keyed by the resolved place's WOF ID) carries it.
+			// A multi-postcode city gets no postcode.
 			let enrichedPostcode: string | undefined
 
 			if (!result.postcode && !result.rooftop?.postcode) {

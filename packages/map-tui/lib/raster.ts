@@ -23,8 +23,9 @@ import type { RGB } from "#style"
  * A row-major rgba pixel buffer.
  *
  * Alpha starts at 0 (unlit/transparent) everywhere.
- * Drawing a pixel sets it to 255, which is how callers (including this module's own tests)
- * distinguish "lit" from "background".
+ * Drawing a pixel sets it to 255.
+ *
+ * Callers, including this module's own tests, distinguish "lit" from "background".
  */
 export class RGBAGrid {
 	readonly width: number
@@ -145,13 +146,13 @@ export function drawPolyline(
  * Fills one or more polygon rings with the even-odd rule: a pixel is interior
  * when a ray from it crosses an odd number of ring edges.
  *
- * Rings after the first behave as holes wherever they overlap the first ring,
- * and holes nested inside holes fill again, purely as a consequence of the parity count.
+ * Rings after the first behave as holes wherever they overlap the first ring.
+ * Holes nested inside holes fill again as a consequence of the parity count.
  * No explicit hole/outer distinction is tracked.
  *
- * Scanlines sample row centers (`y + 0.5`) rather than integer row coordinates,
- * which is what keeps horizontal edges and grid-aligned polygon boundaries from
- * producing degenerate (zero-width or doubled) intersections.
+ * Scanlines sample row centers (`y + 0.5`) rather than integer row coordinates.
+ * This keeps horizontal edges and grid-aligned polygon boundaries from producing
+ * degenerate (zero-width or doubled) intersections.
  *
  * Coordinates are floored to the grid via `setPixel`; edge math itself uses the ring vertices as given.
  */

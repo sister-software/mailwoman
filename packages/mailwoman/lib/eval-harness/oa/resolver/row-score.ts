@@ -18,7 +18,8 @@ import { mostSpecific } from "#eval-harness/oa/resolver/tree-hits"
 /**
  * Outcome for one row, with the resolved names that the `--errors-json` dump uses to classify misses.
  *
- * A wrong `resolvedLoc` points at resolver ranking, and a missing one points at coverage or parsing.
+ * A wrong `resolvedLoc` points to resolver ranking.
+ * A missing value points to coverage or parsing.
  */
 export interface RowScore extends ArmOutcome {
 	resolvedLoc?: string
@@ -29,8 +30,9 @@ export interface RowScore extends ArmOutcome {
 /**
  * Scores the resolved places for one row against the row's expected admin names and point.
  *
- * Matching is by name because OpenAddresses rows carry no WOF ID. {@linkcode LocalityMatcher}
- * decides the locality match, and `regionMatches` accepts a region name or abbreviation.
+ * Matching is by name because OpenAddresses rows carry no WOF ID.
+ * {@linkcode LocalityMatcher} decides the locality match.
+ * `regionMatches` accepts a region name or abbreviation.
  *
  * The locality lookup prefers a `locality` place and falls back to any placetype that
  * the resolver's `locality` filter expands to, such as `localadmin`.

@@ -21,7 +21,7 @@ PROBE_BUDGET = 8
 def sample_address_points(path: Path, count: int, rng: random.Random) -> list[AddressPoint]:
     """Sample by random rowid probe.
 
-    `ORDER BY RANDOM()` scans the whole table, and these tables are large enough that a scan costs
+    `ORDER BY RANDOM()` scans the whole table. These tables are large enough that a scan costs
     more than the sample is worth. A row missing any of the four fields is skipped rather than
     emitted partially filled.
     """

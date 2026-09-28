@@ -45,8 +45,8 @@ const [command, ...args] = positionals as [string, ...string[]]
 
 await makeDirectories(dirname(logPath))
 
-// A raw descriptor rather than a `WriteStream`, which opens lazily so its `fd`
-// is still null when `spawn` reads the stdio array.
+// Use a raw descriptor because `WriteStream` opens lazily.
+// Its `fd` is still null when `spawn` reads the stdio array.
 // Appending keeps a relaunch's output in the same file.
 const log = await open(logPath, "a")
 
@@ -59,8 +59,8 @@ const child = spawnProcess(command, args, {
 child.unref()
 
 // This process owns the handle.
-// The child holds its own copy across the fork, and leaving it open would keep the
-// event loop alive and defeat the point of `unref`.
+// The child keeps its own copy across the fork.
+// Leaving the parent copy open would keep the event loop alive and defeat the point of `unref`.
 await log.close()
 
 console.log(`launched pid ${child.pid} in its own session`)

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Generate French training rows that distinguish a département (`region`) from a commune
- *   (`locality`) in bare, comma-separated, and space-separated forms. Derive the département from
- *   each real BAN postcode. Input rows are tab-separated commune, postcode, longitude, and latitude.
+ *   (`locality`). Forms include bare, comma-separated and space-separated names.
+ *   Derive the département from each real BAN postcode. Input rows are tab-separated commune, postcode, longitude and latitude.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

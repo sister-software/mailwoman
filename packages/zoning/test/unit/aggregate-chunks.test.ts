@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The chunk merge, which is the part of the batched path a fixture build cannot reach.
+ *   The chunk merge is the part of the batched path a fixture build cannot reach.
  *
- *   two OF these merges produce A well-formed wrong artifact when they GO wrong, and neither would fail
+ *   These two merges produce a well-formed but wrong artifact when they fail. Neither would fail
  *   anything else.
  *
  *   1. coverage counts ADD rather than replace. A coverage cell straddles chunk boundaries, so taking the
  *      last chunk's value reports the cell as holding only the last range's polygons.
  *   2. crosswalk pairs merge AS A union. A mapping that is not a function can look like one inside any single
- *      chunk — Cork County Council's `Special Policy Area` takes 14 generic types across the county, and a
- *      chunk holding a prefix of its feature ids may well have seen one. A per-chunk verdict would report the
+ *      chunk — Cork County Council's `Special Policy Area` takes 14 generic types across the county.
+ *      A chunk holding a prefix of its feature IDs may have seen one. A per-chunk verdict would report the
  *      mapping as a function and license an edge table the publisher never authored.
  */
 
@@ -74,8 +74,8 @@ describe("aggregateChunks", () => {
 	})
 
 	it("keeps a local code that contains spaces intact across the merge", () => {
-		// The pair key joins two free-text values, and a local code routinely contains spaces —
-		// `Special Policy Area`, `RA - Rural Area`.
+		// The pair key joins two free-text values.
+		// A local code routinely contains spaces: `Special Policy Area`, `RA - Rural Area`.
 		// A key a reader had to split back apart would mangle exactly the vocabulary
 		// this layer carries verbatim.
 		const merged = aggregateChunks([

@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   No flags self-checks the shipped default, `--candidate` adds the held-out candidate-vs-prod z-test, and `--layer`
+ *   No flags self-checks the shipped default. `--candidate` adds the held-out candidate-vs-prod z-test. `--layer`
  *   runs a single layer with its own verdict and exit code. A non-zero exit blocks the ship (releasing.md).
  *
  *   `--layer ablation` is a measurement rather than a check: it deletes each asserted component from each corpus row and
  *   reports what the deletion cost per (component, locale), never joining the combined verdict or blocking a ship.
  *
  *   Each ablation variant is graded against a per-row graceful-degradation ladder rather than the undeleted anchor, so
- *   coarsening to a rung the surviving components still justify passes, abstaining under untenable ambiguity passes, and
+ *   coarsening to a rung the surviving components still justify passes. Abstaining under untenable ambiguity passes. The check also
  *   a substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
  */
 
@@ -90,8 +90,9 @@ const EvalGauntlet = harnessCommand(
 			await runGauntlet({
 				...rest,
 				weightsCacheRoot: options.weightsCache,
-				// An absent flag must stay absent (→ every ablatable tag), so an empty string never becomes an
-				// empty filter, which would silently measure no rows and print a map of one header row.
+				// An absent flag must stay absent (→ every ablatable tag), so an empty
+				// string never becomes an empty filter.
+				// That would silently measure no rows and print a map of one header row.
 				...(components ? { components: extractDelimited(components) } : {}),
 				// The schema supplies `false` for both halves of each tri-state pin,
 				// so an unset flag must stay `undefined` rather than pinning the change either way:
@@ -108,8 +109,9 @@ const EvalGauntlet = harnessCommand(
 					: spanRescoreRequireContextRemainderOff
 						? false
 						: undefined,
-				// Three readings rather than two states, so there is no off spelling: an absent flag is
-				// the production default, which takes a `placeID` at face value and never lifts the brake.
+				// Three readings rather than two states, so there is no off spelling:
+				// an absent flag is the production default.
+				// That default takes a `placeID` at face value and never lifts the brake.
 				...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
 			})
 		).exitCode

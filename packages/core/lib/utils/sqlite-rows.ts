@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The `node:sqlite` → typed-row boundary, in one place: `node:sqlite` types every result as
- *   `Record<string, SQLOutputValue>`, so every raw read needs an assertion, and it belongs here rather than at each
- *   query site because an inline cast is invisible to review and indistinguishable from one defeating a real check.
+ *   `Record<string, SQLOutputValue>`, so every raw read needs an assertion. The assertion belongs here rather than at
+ *   each query site. An inline cast is invisible to review and indistinguishable from one defeating a real check.
  *
  *   It lives in `core` because `@mailwoman/resolver-wof-sqlite` is an optional peer of `mailwoman`, and a static
  *   import from there would break installing the CLI without the gazetteer backend. The type-only import keeps

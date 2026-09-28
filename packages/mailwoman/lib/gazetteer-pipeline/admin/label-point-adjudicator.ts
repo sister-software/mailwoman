@@ -23,7 +23,7 @@ export const LABEL_GEOM_DISAGREEMENT_KM = 5
 export const ANCHOR_DECISIVE_RATIO = 2
 
 /**
- * Which point the adjudicator stored, and whether the anchor decided it.
+ * The point the adjudicator stored and whether the anchor decided it.
  */
 export type PointChoice = "lbl" | "geom" | "geom-by-anchor" | "lbl-by-anchor"
 
@@ -37,7 +37,8 @@ export interface AdjudicatedPoint extends GeoCoordinate {
 /**
  * Looks up the GeoNames coordinate for a `gn:id` concordance within a country.
  *
- * It returns `undefined` when there is no anchor, and the caller then keeps the label point.
+ * It returns `undefined` when there is no anchor.
+ * The caller then keeps the label point.
  */
 export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<GeoCoordinate | undefined>
 
@@ -74,7 +75,7 @@ export function choosePoint(
 }
 
 /**
- * The GeoNames country-file columns for ID, latitude, and longitude.
+ * The GeoNames country-file columns for ID, latitude and longitude.
  */
 const GN_COLUMN_ID = 0
 const GN_COLUMN_LAT = 4

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The inverse of the per-system postcode patterns: given a postcode string, which address systems
- *   could it belong to? Each codex address system owns its own postcode shape (`us` accepts
+ *   This function checks a postcode string against every address system's pattern. It returns the systems
+ *   the postcode could belong to. Each codex address system owns its postcode shape (`us` accepts
  *   `\d{5}(-\d{4})?`, `ca` accepts `A1A 1A1`, `jp` accepts `NNN-nnnn`, …); this is the single place
  *   that asks all of them at once and collects the matches.
  *
@@ -87,14 +87,20 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  *
  * The convention exists because most postal systems are area-class: an FR 5-digit zone is coarser
  * than the commune it contains, so promoting it would trade a good answer for a worse one.
- * Membership here is earned by measurement of the code's granularity, never by
- * "the code has letters in it": NL PC6 (`1012 LG`) covers roughly eight addresses,
- * GB unit (`N7 0BT`) roughly fifteen from OS Code-Point Open, and a CA urban LDU
- * (`M1J 1A8`) is a block face — each finer than the locality containing it.
+ * Membership here follows measured code granularity.
  *
- * A CA rural LDU is excluded: Canada Post puts a `0` in the second position of a rural
- * forward sortation area (`T0H 1M0`), and a rural LDU serves a delivery route that
- * measures like one — the `[1-9]` in the pattern below is that exclusion.
+ * NL PC6 (`1012 LG`) covers roughly eight addresses.
+ * GB unit (`N7 0BT`) covers roughly fifteen addresses in OS Code-Point Open.
+ *
+ * A CA urban LDU (`M1J 1A8`) covers a block face.
+ * Each area is finer than the locality containing it.
+ *
+ * A CA rural LDU is excluded.
+ * Canada Post puts a `0` in the second position of a rural forward sortation area (`T0H 1M0`).
+ *
+ * A rural LDU serves a delivery route with similar granularity.
+ * The `[1-9]` in the pattern below excludes those codes.
+ *
  * Averaging the two populations would hide it behind a single pooled number.
  *
  * Lives in codex (per-address-system postal reference) so the Node result assembly
@@ -105,7 +111,8 @@ export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 	// Restated from `@mailwoman/codex/gb`'s UK_POSTCODE_PATTERN so this module stays dependency-free
 	// within the package (the address-system modules import this, never the reverse).
 	/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i,
-	// The `[1-9]` excludes rural forward sortation areas, which carry a `0` in second position.
+	// Rural forward sortation areas carry a `0` in second position.
+	// `[1-9]` excludes them.
 	/^[A-Z][1-9][A-Z]\s?\d[A-Z]\d$/i,
 ]
 
@@ -116,10 +123,11 @@ export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
 
 /**
- * True when a resolved postcode is an exact hit on a unit-grade code, shared by the Node ladder
- * and the demo pin ranking: the parsed span is a full unit shape ({@link UNIT_GRADE_POSTCODE})
- * rather than a stem the user typed, the resolver's own hit is the full code
- * rather than a coarsened prefix, and — checked by the caller — a coordinate is present.
+ * Returns true when a resolved postcode exactly matches a unit-grade code.
+ *
+ * Both the parsed span and resolver result must contain the full code shape in {@link UNIT_GRADE_POSTCODE}.
+ * The caller must also confirm that a coordinate is present.
+ * The Node ladder and demo pin ranking share this check.
  */
 export function isUnitGradePostcodeHit(parsed: string, resolverName: string | undefined): boolean {
 	const value = parsed.trim()
@@ -133,20 +141,23 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * Address systems whose area-grade postal code is still finer than the locality containing it —
  * the third granularity tier, between {@link UNIT_GRADE_POSTCODE} and the locality-first default.
  *
- * Whether a postal zone is coarser than its locality is a fact about a country's
- * administrative geography rather than about its postal system, and code length does
- * not predict it: FR and DE are both 5-digit and land on opposite sides.
+ * Whether a postal zone is coarser than its locality depends on the country's administrative geography.
+ * Postal code length does not predict it.
+ *
+ * FR and DE both use five-digit codes, but those codes fall on opposite sides of this comparison.
  * France has ~35,000 communes and one code postal often spans several, so the commune is finer.
  *
  * A German Gemeinde can be enormous (Berlin is one WOF locality), so the PLZ is finer by a wide margin.
  *
- * Japan's postcode 町域 is finer than its municipality, and a six-digit Singapore
- * postcode names one building, so its code's point is the address.
+ * Japan's postcode 町域 is finer than its municipality.
+ * A six-digit Singapore postcode names one building, so its point represents the address.
  *
  * Membership is earned by a full-panel measurement against the locality-first default.
- * The US is absent on purpose: its rooftop cascade is US-only, so only the
- * rows it cannot place reach an admin decision, and those skew rural — exactly
- * where a locality centroid sits close and a ZIP zone is wide.
+ * The US is absent on purpose.
+ *
+ * Its rooftop cascade runs only for US addresses, so only rows it cannot place
+ * reach an administrative decision.
+ * Those rows skew rural, where a locality centroid sits close and a ZIP zone is wide.
  */
 export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE", "JP", "SG"])
 

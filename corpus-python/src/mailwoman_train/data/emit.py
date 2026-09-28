@@ -6,11 +6,11 @@ relabel must see the label-inheriting directional expansions augmentation produc
 that twice is what #2243 was: `data_loader` applied the exclusion and `audit_epoch_mixture` did not, so
 the audit reported an excluded source with the emitted count it would have had if it were augmented. The
 two call sites had matching augment probabilities and a matching call to `augment_row`; they diverged at
-the branch a shared constant cannot express, which is the failure mode AGENTS.md describes — when two
+the branch a shared constant cannot express. That is the failure mode AGENTS.md describes. When two
 copies must agree, share the FUNCTION.
 
-It cannot live in `augment.py`, because `relabel.py` imports that module and the cycle would close. It
-imports both instead, and every consumer imports it.
+It cannot live in `augment.py` because `relabel.py` imports that module and the cycle would close.
+This module imports both. Every consumer imports this module.
 
 `EmitPolicy` carries the decision rather than ten positional arguments, so a new policy reaches both
 call sites by construction instead of by someone remembering the second one.
@@ -33,8 +33,8 @@ class EmitPolicy:
 
     The seven probabilities are `augment_row`'s, in its argument order. `excluded_sources` names the
     sources that bypass augmentation entirely: copies of an oversampled source compound its repetition
-    without adding diversity (2026-08-10). The relabel still applies to an excluded source — the two
-    policies are independent, and that independence is the part a reimplementation loses.
+    without adding diversity (2026-08-10). The relabel still applies to an excluded source because
+    the two policies are independent. A reimplementation can lose that independence.
     """
 
     directional_prob: float = 0.0
@@ -64,7 +64,7 @@ class EmitPolicy:
         )
 
     def augments_source(self, source: str) -> bool:
-        """Whether a row from ``source`` is augmented, which is the check the audit used to skip."""
+        """Whether a row from ``source`` is augmented. The audit used this check to skip augmentation."""
         return self.augments and source not in self.excluded_sources
 
 

@@ -28,7 +28,8 @@ export interface BANExtracts extends Pick<RegionDatabases, "addressPoints" | "st
 }
 
 /**
- * Opens and caches per-country BAN rooftop lookups, which must be warmed before the first `for`.
+ * Opens and caches BAN rooftop lookups per country.
+ * Call `warm` before the first `for`.
  */
 export class BANRegionDatabaseProvider implements RegionDatabaseProvider<string, BANExtracts> {
 	readonly #dataRoot: PathBuilder

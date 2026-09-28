@@ -27,8 +27,8 @@ export interface ExhibitDocument {
  * Builds the archive folder URL for one accession.
  *
  * Uses `cik` unpadded (`Number(cik)` is what strips the zero-padding `CIK` always carries) —
- * edgar's archive paths spell the CIK bare (`.../data/18926/...`), the opposite
- * convention from {@linkcode submissionsURL} above, which zero-pads.
+ * EDGAR archive paths spell the CIK without leading zeroes (`.../data/18926/...`).
+ * {@linkcode submissionsURL} uses the opposite convention and zero-pads it.
  * Both are real edgar conventions and both appear in this file.
  *
  * A caller reaching for the wrong one gets a 404 rather than a wrong-but-plausible document.
@@ -54,14 +54,14 @@ export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
 const EXHIBIT_21_TYPE_PATTERN = /^ex-?21(\.\d+)?$/i
 
 /**
- * One `<TAG>value` line of edgar's sgml manifest, which is a tag-per-line header format
- * rather than nested markup.
+ * One `<TAG>value` line of an EDGAR SGML manifest.
+ * The header uses one tag per line rather than nested markup.
  *
  * `<type>`, `<sequence>` and `<filename>` have no closing tags at all.
  *
  * Matched against recovered text, never against markup: {@linkcode parseFilingDocuments}
- * reads the index page first, which is what turns `&lt.type&gt.` back into `<type>`
- * and removes the page's own `<a>`/`<br>` elements.
+ * reads the index page first.
+ * That recovers `&lt.type&gt.` as `<type>` and removes the page's own `<a>` and `<br>` elements.
  */
 const MANIFEST_FIELD_PATTERN = /^<([a-z][a-z-]*)>(.*)$/i
 
@@ -130,17 +130,16 @@ export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHT
  * Narrows one accession's full document manifest to its Exhibit 21 entries
  * (see {@linkcode EXHIBIT_21_TYPE_PATTERN} for the accepted spellings).
  *
- * Returns `[]` — never throws — when the manifest has no Exhibit 21 at all,
- * which is ordinary rather than exceptional: an absent exhibit is the filer's choice
- * (Consolidated Communications' and United States Cellular's latest 10-Ks both carry none)
- * rather than an upstream interface failure.
- * This is the opposite posture from {@linkcode parseCompanyTickers}/{@linkcode parseTenKFilings}
- * above, which throw on a malformed payload — those parse SEC's own documented API shapes.
+ * Returns `[]` when the manifest has no Exhibit 21.
+ * This reflects the filer's document selection.
+ *
+ * Consolidated Communications' and United States Cellular's latest 10-Ks both omit the exhibit.
+ * {@linkcode parseCompanyTickers} and {@linkcode parseTenKFilings} handle SEC's documented API shapes.
+ * Those functions throw when their payload is malformed.
  *
  * Therefore, a mismatch there means the upstream interface changed.
  *
- * A manifest with no Exhibit 21 hasn't broken any interface.
- * It's just a filer that didn't file one this cycle.
+ * A manifest without Exhibit 21 records that the filer omitted the exhibit for this cycle.
  */
 export function findExhibit21Documents(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {
 	return parseFilingDocuments(cik, accessionNumber, headerHTML).filter((document) =>

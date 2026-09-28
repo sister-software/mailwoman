@@ -20,8 +20,8 @@ function nowISO(): string {
 /**
  * Record a webhook event id.
  *
- * `"duplicate"` is Stripe redelivering an event this worker already acted on,
- * and the caller answers 200 with no further effect.
+ * `"duplicate"` means Stripe redelivered an event this worker already handled.
+ * The caller answers 200 and takes no further action.
  */
 export async function recordEventOnce(
 	ledger: Ledger,
@@ -65,7 +65,8 @@ export async function findLicense(ledger: Ledger, lid: string): Promise<LicenseR
 /**
  * Create the license row unless one already holds its subscription or Checkout Session.
  *
- * `"present"` is another caller's row, which the caller reads back by subscription.
+ * `"present"` means another caller inserted the row.
+ * The caller reads it by subscription.
  */
 export async function createLicenseIfAbsent(ledger: Ledger, row: NewLicense): Promise<"inserted" | "present"> {
 	const result = await ledger
@@ -106,9 +107,10 @@ export async function setLicenseState(
 /**
  * Read and clear the plaintext refresh secret so it is answered to exactly one claim.
  *
- * A read then a clear conditioned on the value read: two claims racing both read it,
- * but only the one whose clear lands a row answers it.
- * (`returning` on the update alone would answer the cleared column, which is null.)
+ * The function reads the secret and clears it only when the stored value still matches.
+ * Two racing claims can both read it, but only the claim whose clear updates a row returns it.
+ *
+ * (`returning` on the update alone would answer the cleared column. That value is null.)
  */
 export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Promise<string | undefined> {
 	const row = await ledger
@@ -146,8 +148,10 @@ export async function findTokenLid(ledger: Ledger, invoiceID: string): Promise<s
 }
 
 /**
- * Insert the token for an invoice unless one exists: the primary key is the idempotency the mint
- * relies on, and `"present"` tells the caller that another mint won the race and its row is the token.
+ * Insert the token for an invoice if none exists.
+ *
+ * The primary key makes minting idempotent.
+ * `"present"` tells the caller that another mint won the race and its row holds the token.
  */
 export async function insertTokenIfAbsent(ledger: Ledger, row: NewToken): Promise<"inserted" | "present"> {
 	const result = await ledger
@@ -233,8 +237,8 @@ export async function findLicenseByCheckoutSession(ledger: Ledger, sessionID: st
 /**
  * Every license, for the reconciliation pass.
  *
- * The table holds one row per subscription, so the pass reads it whole rather than
- * asking Stripe what changed, which its subscription list cannot answer.
+ * The table holds one row per subscription, so the reconciliation pass reads the whole table.
+ * Stripe's subscription list cannot report which rows changed.
  */
 export async function allLicenses(ledger: Ledger): Promise<LicenseRow[]> {
 	return ledger.selectFrom("licenses").selectAll().orderBy("created_at", "asc").execute()

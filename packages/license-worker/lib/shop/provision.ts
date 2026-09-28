@@ -3,7 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The provisioner finds each object by a catalog key, such as a lookup key, a metadata mark or a URL, and never by a stored Stripe ID. A Payment Link whose agreement version or consent collection differs is replaced, because Stripe fixes both at creation, while a Price amount or a webhook API version that differs is only reported as drift, and the signing secret Stripe returns only at creation appears only in the report.
+ * The provisioner finds objects by catalog keys such as lookup keys, metadata marks or URLs. It does not use stored Stripe IDs.
+ * Stripe fixes a Payment Link's agreement version and consent collection at creation, so the provisioner replaces a link when either differs.
+ * A Price amount or webhook API version mismatch is reported as drift. A signing secret returned by Stripe at creation appears only in the report.
  */
 
 import type Stripe from "stripe"
@@ -49,10 +51,16 @@ export interface ProvisionInput {
 }
 
 /**
- * The outcome for one object: `exists` matches the catalog or was left with reported drift,
- * `updated` was brought in line, `replaced` was deactivated for a successor, `created` is new,
- * `missing` does not exist and the run did not create it, and `blocked` was refused by
- * Stripe for a required setting such as consent collection before the terms URL is set.
+ * The outcome for one object.
+ *
+ * `exists` matches the catalog or retains reported drift.
+ * `updated` was brought in line.
+ *
+ * `replaced` was deactivated for a successor.
+ * `created` is new.
+ *
+ * `missing` was absent and the run left it absent.
+ * `blocked` means Stripe refused a required setting, such as consent collection before the terms URL is set.
  */
 const ProvisionActionSchema = z.enum(["exists", "updated", "replaced", "created", "missing", "blocked"])
 
@@ -77,7 +85,8 @@ const ProvisionedObjectSchema = z.object({
 export type ProvisionedObject = z.infer<typeof ProvisionedObjectSchema>
 
 /**
- * The provisioning report schema, which `mwops shop` validates its output against.
+ * The provisioning report schema.
+ * `mwops shop` validates its output against this schema.
  */
 export const ProvisionReportSchema = z.object({
 	/**
@@ -95,8 +104,9 @@ export const ProvisionReportSchema = z.object({
 		ProvisionedObjectSchema.extend({ url: z.string().optional(), consent: z.boolean(), promotionCodes: z.boolean() })
 	),
 	/**
-	 * The Customer Portal configuration, whose `url` is the login page
-	 * where customers change their card or plan, or cancel.
+	 * The Customer Portal configuration.
+	 *
+	 * Its `url` opens the login page where customers can change a card or plan or cancel.
 	 */
 	portal: ProvisionedObjectSchema.extend({ url: z.string().optional() }),
 	webhook: ProvisionedObjectSchema.extend({ url: z.string(), secret: z.string().optional() }).optional(),

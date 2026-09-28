@@ -5,15 +5,14 @@
  *
  *   The hole-role resolution, pinned against the convention it depends on.
  *
- *   the sign convention is A interface and IT is pinned first. `ringSignedAreaM2` signs clockwise positive,
- *   which is the opposite of the standard planar shoelace, and this resolver reads a ring's role off that
- *   sign. A change to the helper that flipped it would turn every exterior into a hole and every hole into an
- *   exterior — and the resulting polygons would still be well-formed, still answer containment questions, and
- *   still be wrong everywhere.
+ *   This test pins the sign convention used by `ringSignedAreaM2`. The helper signs clockwise rings positive.
+ *   The standard planar shoelace uses the opposite sign. This resolver reads each ring's role from that sign.
+ *   Flipping the helper would turn every exterior into a hole and every hole into an exterior. The resulting
+ *   polygons would remain well-formed and answer containment questions while reporting incorrect coverage.
  *
- *   the rest is the publisher'S encoding. This service puts each ring in its own `MultiPolygon` part on the
- *   features that carry holes that way, so a reader taking the arriving nesting at face value reads a hole as
- *   a second zoned area. Every case below arrives in that shape.
+ *   The test also covers the publisher's encoding. This service puts each ring in its own `MultiPolygon` part
+ *   for features with holes. A reader that trusts the incoming nesting would treat a hole as a second zoned
+ *   area. Every case below uses that shape.
  */
 
 import { pointInEncodedRings, encodeRings, ringAreaReadings, ringSignedAreaM2 } from "@mailwoman/spatial"
@@ -60,8 +59,8 @@ describe("resolveRingRoles", () => {
 	})
 
 	it("nests a hole arriving as its OWN MultiPolygon part, which is how this service publishes one", () => {
-		// The trap in one case: the source hands two single-ring parts, and a reader that
-		// kept the arriving nesting would store two zoned areas covering the same ground.
+		// The source hands the reader two single-ring parts.
+		// A reader that preserves this nesting would store two zoned areas covering the same ground.
 		const resolved = resolveRingRoles(
 			[
 				[exteriorRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + SIDE, ORIGIN.lat + SIDE)],
@@ -107,8 +106,8 @@ describe("resolveRingRoles", () => {
 		const { nested, allExterior } = ringAreaReadings(resolved.polygons)
 
 		expect(allExterior).toBeGreaterThan(nested)
-		// The raw signed sum is the hole-aware area under this convention, which is what makes
-		// the comparison against the publisher's own figure exact rather than approximate.
+		// Under this convention, the raw signed sum gives the hole-aware area.
+		// This makes the comparison with the publisher's figure exact.
 		expect(resolved.signedAreaM2).toBeCloseTo(nested, 3)
 	})
 
@@ -131,7 +130,9 @@ describe("resolveRingRoles", () => {
 	})
 
 	it("puts an island inside a hole on its own polygon, so a point in it reads INSIDE", () => {
-		// Three levels: an exterior, a hole in it, and a smaller exterior inside that hole.
+		// The ring sequence starts with an exterior.
+		// A hole follows it.
+		// A smaller exterior sits inside the hole.
 		// The even-odd rule handles this only when the island is its own polygon
 		// rather than a third ring of the first.
 		const resolved = resolveRingRoles(

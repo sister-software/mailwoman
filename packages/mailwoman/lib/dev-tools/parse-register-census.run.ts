@@ -11,7 +11,8 @@
  * dropout for either channel — so the share of input that classifies into `formatted`
  * is the share served without evidence the model always had while learning.
  *
- * That share is the quantity a dropout curriculum would exist to serve, and it has never been counted.
+ * That share is the quantity a dropout curriculum would serve.
+ * It has never been counted.
  * Read it before building the knob.
  *
  * The register comes from `deriveGeocodeRegister`, the same function the geocode path calls,
@@ -74,7 +75,7 @@ function count(tally: Tally, text: string): void {
 const populations: Record<string, Tally> = {}
 
 /**
- * The golden answer keys, which are the rows every per-tag F1 in the promotion battery is computed over.
+ * The golden answer keys contain the rows used to compute every per-tag F1 in the promotion battery.
  */
 for (const locale of ["us", "fr", "adversarial"]) {
 	const path = repoRootPath("data", "eval", "golden", "v0.1.3", "dev", `${locale}.jsonl`)
@@ -112,7 +113,7 @@ for (const panel of ["us", "us-shape-stratified"]) {
 }
 
 /**
- * A corpus sample, which is the distribution the model learned the channels under.
+ * A corpus sample gives the distribution under which the model learned the channels.
  *
  * `raw` is the rendered surface each training row presents to the tokenizer.
  */

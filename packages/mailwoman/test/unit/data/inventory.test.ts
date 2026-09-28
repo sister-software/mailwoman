@@ -5,10 +5,8 @@
  *
  *   The inventory's classifications, against a fixture data root.
  *
- *   The property under test throughout is that the four states stay distinct. A report that collapsed
- *   "has no manifest" into "could not be opened", or counted a third party's artifact as our debt, would
- *   still print a number. It would just print one nobody can act on, which is the failure mode this
- *   whole phase exists to fix.
+ *   These tests keep four artifact states distinct. They check manifest presence and read success separately.
+ *   They also check that third-party artifacts stay outside Mailwoman's inventory counts.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -67,8 +65,8 @@ describe("takeInventory — the four states stay distinct", () => {
 	it("separates manifested, unprovenanced, foreign and unreadable", async () => {
 		const root = await dataRoot()
 
-		// `db/<layer>/<file>.db`, three segments down, which is where the data root's
-		// database group puts every artifact.
+		// `db/<layer>/<file>.db` is three segments from the root.
+		// The data root's database group stores artifacts at that depth.
 		// Planting at two would pass whatever the walk's depth bound is.
 		await makeDirectories(root("db", "poi"))
 		await makeDirectories(root("db", "wof"))
@@ -97,9 +95,8 @@ describe("takeInventory — the four states stay distinct", () => {
 
 		const report = await takeInventory({ dataRoot: root })
 
-		// Counting a third party's build as our debt makes the number unimprovable,
-		// so it is skipped rather than classified, and the skip is reported,
-		// because a silently bounded walk reads as coverage.
+		// The inventory skips rather than classifies a third party's build.
+		// It reports the skip so the bounded walk remains visible in coverage results.
 		expect(report.skippedForeign).toBe(1)
 		expect(report.entries.some((e) => e.path.startsWith("pelias-rig"))).toBe(false)
 		expect(Object.keys(FOREIGN_ROOTS)).toContain("pelias-rig")
@@ -134,9 +131,8 @@ describe("takeInventory — the four states stay distinct", () => {
 
 	it("reaches a database at the depth the data root's db/ group puts it", async () => {
 		// `db/<layer>/<file>.db` is three segments from the root.
-		// The default bound was two, which stopped the walk at `db/<layer>/`
-		// and made the report describe a data root holding no database at all —
-		// a coverage reading produced by the walk rather than by the disk.
+		// A default depth bound of two stops at `db/<layer>/`.
+		// The report would then omit the database present on disk and understate coverage.
 		const root = await dataRoot()
 
 		await makeDirectories(root("db", "wof"))
@@ -181,7 +177,7 @@ describe("the reported rate", () => {
 
 		const sentence = inventorySentence(await takeInventory({ dataRoot: root }))
 
-		// 1 of 2 rather than 1 of 3: an artifact nobody can open is not a provenance gap someone can close.
+		// The inventory lists the unreadable artifact under read failures.
 		expect(sentence).toContain("1 of 2")
 		expect(sentence).toContain("could not be opened")
 	})
@@ -213,10 +209,9 @@ describe("rebuildHint", () => {
 
 describe("buildCommandGaps — a manifest is only worth its build command", () => {
 	it("flags a path the workspace regroup moved", async () => {
-		// Measured on the shipped osm databases: they record `node osm/out/scripts/build-rooftop-database.js`,
-		// which now lives under `packages/osm/`.
-		// The literal survived the move inside a built database, where no lint reaches it,
-		// and the artifact still passes every "has a manifest" check.
+		// A built database can retain `node osm/out/scripts/build-rooftop-database.js`
+		// after the source moves under `packages/osm/`.
+		// The inventory must report that stale path even when the database has a manifest.
 		const root = await dataRoot()
 
 		expect(await buildCommandGaps("node osm/out/scripts/build-rooftop-database.js", root)).toEqual([

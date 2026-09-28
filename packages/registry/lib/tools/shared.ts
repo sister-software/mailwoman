@@ -28,7 +28,10 @@ import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
 import type { Score } from "#tools/nppes/scoring"
 
 /**
- * One source a cross-source probe ingests: where it lives, the column mapping, and an in-state filter.
+ * One source a cross-source probe ingests.
+ *
+ * Its spec gives the path and column mapping.
+ * The spec also provides an in-state filter.
  */
 export interface SourceSpec {
 	source: string
@@ -517,8 +520,10 @@ const CROSS_SOURCE_HYPERPARAMS: GBTHyperparameters = { rounds: 120, depth: 3, lr
 const FIT_SPLIT_FRACTION = 0.8
 
 /**
- * One assembled input row for a cross-source trainer, whose `npi` carries the cross-system
- * join key (an NPI or a CCN) and rides `record.id` as the held-out label.
+ * One assembled input row for a cross-source trainer.
+ *
+ * Its `npi` field carries the cross-system join key (an NPI or a CCN).
+ * The trainer copies that key into `record.id` as the held-out label.
  */
 export interface CrossSourceRow extends Record<string, string> {
 	npi: string
@@ -603,8 +608,8 @@ export async function trainCrossSourceModel(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// Ingest each source separately so every record carries its literal provenance label,
-	// which the cross-source filter keys on.
+	// Ingest each source separately to retain its literal provenance label on every record.
+	// The cross-source filter uses that label.
 	const mappingFor = (source: string): ColumnMapping => ({
 		id: "npi",
 		name: "name",

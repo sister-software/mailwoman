@@ -28,8 +28,8 @@ const cleanOutput = z.object({
 })
 
 /**
- * `release.clean` — remove generated workspace output, build metadata,
- * and Docker's non-workspace TypeScript output.
+ * `release.clean` — remove generated workspace output and build metadata.
+ * Also remove Docker's non-workspace TypeScript output.
  *
  * A package name limits the cleanup to one registered workspace.
  */
@@ -70,8 +70,8 @@ export const cleanOperation = defineOperation({
 			fileTargets.push(resolvePath(context.repoRoot, "docker", "tsconfig.test.tsbuildinfo"))
 		}
 
-		// Retired workspaces are swept separately because `cleanDirectory` recreates what
-		// it empties, which would leave the empty shell this sweep exists to remove.
+		// `cleanDirectory` recreates the directory it empties.
+		// Sweep retired workspaces separately so their empty shells are removed.
 		const retired = input.workspace ? [] : await retiredWorkspaceDirectories(context.repoRoot)
 		const retiredRoots = retired.map((directory) => resolvePath(context.repoRoot, directory).toString())
 

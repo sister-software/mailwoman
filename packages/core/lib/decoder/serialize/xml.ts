@@ -3,21 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   XML projection of an address tree. Each component is one element. The element's direct text node
- *   holds the component's own value, and children nest as sub-elements for geographic or structural
+ *   This module projects an address tree into XML. Each component is one element.
+ *   The element's direct text node holds the component's value. Children nest as sub-elements for geographic or structural
  *   containment.
  *
  *   Attributes:
  *
  *   - `conf` holds the aggregated confidence in [0, 1] with two decimal places.
- *   - `start` / `end` hold character offsets in the raw input, which preserve source order beside
- *       the containment-derived element order.
- *   - `src` holds provenance for the assertion. The format is `<source>:<sourceID>` when both fields
- *       are present, `<source>` when only the broad category is set, and omitted when neither is.
+ *   - `start` / `end` hold character offsets in the raw input.
+ *       Those offsets preserve source order beside the containment-derived element order.
+ *   - `src` holds provenance for the assertion.
+ *       The format is `<source>:<sourceID>` when both fields are present.
+ *       It is `<source>` when only the broad category is set and omitted when neither is set.
  *   - `lat` / `lon` hold the resolver-supplied centroid. Emitted only when both are set.
- *   - `place` holds the resolver-supplied normalized place URI such as `wof:101751119`. Emitted only
- *       when `node.placeID` is set. Callers that want the bare place id without the vendor prefix
- *       read this attribute directly.
+ *   - `place` holds the resolver-supplied normalized place URI, such as `wof:101751119`.
+ *       The serializer emits it when `node.placeID` is set.
+ *       Callers that want the bare place ID without the vendor prefix can read this attribute.
  *   - Root `<address>` carries `raw`, the full input string for round-trip.
  *
  *   DOM failure mode: `element.textContent` on a mixed-content node returns the concatenation of
@@ -70,17 +71,17 @@ export interface SerializeXMLOpts {
 	 *
 	 * When set and `node.alternatives` is populated, each runner-up is emitted as a
 	 * self-closing element with `place`, `name`, `lat`, `lon`, `score` attributes.
-	 * Default false, which keeps the output libpostal-compat unless the caller asks.
+	 * Default false keeps the output libpostal-compatible unless the caller asks.
 	 */
 	includeAlternatives?: boolean
 	/**
-	 * Emit `<unknown start end>…</unknown>` elements for the all-O runs no node covers,
-	 * which is the input the model left unclassified.
+	 * Emit `<unknown start end>…</unknown>` elements for all-O runs that no node covers.
+	 * Those runs contain input the model left unclassified.
 	 *
 	 * Interleaved with the root components in source order, so the `<address>`
 	 * children tile the raw input exactly.
-	 * Default false, which keeps the output libpostal-compat unless the caller asks,
-	 * the same posture as {@link includeAlternatives}.
+	 * Default false keeps the output libpostal-compatible unless the caller asks.
+	 * {@link includeAlternatives} uses the same default.
 	 */
 	includeUnknown?: boolean
 }
@@ -89,7 +90,8 @@ export interface SerializeXMLOpts {
  * Escape XML metacharacters for double-quoted attribute values.
  *
  * Every attribute this serializer emits is double-quoted, so `'` needs no escape.
- * `escapeHTML` (`#strings/escape`) would escape the apostrophe, which changes shipped serialization bytes.
+ * `escapeHTML` (`#strings/escape`) would escape the apostrophe.
+ * That would change the serialized bytes shipped to callers.
  */
 function escapeXml(s: string): string {
 	return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")

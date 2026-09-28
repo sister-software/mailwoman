@@ -61,7 +61,8 @@ type PanelVersion = (typeof PANEL_VERSIONS)[number]
 /**
  * The golden splits.
  *
- * `dev` is the tuning split, and `full` includes the held-back rows.
+ * `dev` is the tuning split.
+ * `full` includes the held-back rows.
  */
 const GOLDEN_SPLITS = ["dev", "full"] as const
 
@@ -656,7 +657,8 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
 }
 
 /**
- * Resolves the parse-parity fixtures, which carry component expectations only.
+ * Resolves the parse-parity fixtures.
+ * They contain component expectations only.
  */
 async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Promise<ResolvedInputSet> {
 	const path = repoRootPath(PARITY_FIXTURES_RELATIVE_PATH)

@@ -2,13 +2,13 @@
 
 WHY THIS EXISTS. `301 College Ave, 101, Athens, GA 30601` is the second surface #2298 proposes to
 teach, where `101` is a secondary unit. Unlike the `#101` form it carries no token that decides the
-reading: the same surface — a digit group alone in its own comma segment — is already attested as a
-HOUSE NUMBER (`15, 07691 Portopetro, Illes Balears, Spain`) and as a POSTCODE. So the rule has to be
-read against the rows it would newly claim, and that is a count.
+reading. The same surface — a digit group alone in its own comma segment — is already attested as a
+HOUSE NUMBER (`15, 07691 Portopetro, Illes Balears, Spain`) as well as a POSTCODE. The rule therefore
+needs a count of the rows it would newly claim.
 
 LEADING AND NON-LEADING ARE SEPARATE COUNTS. A number opening the row is the house-number surface
-several recipes already emit and is not in competition with the proposed unit. a number in a LATER
-segment is the exact shape, and its current readings are the evidence the decision rests on.
+several recipes already emit. It is separate from the proposed unit. A number in a LATER segment has
+the exact shape under review. Its current readings are the evidence for the decision.
 
 The sampling mirrors `audit_epoch_mixture` and the other two censuses — same stream, same seed
 convention, same budget — so a count here is comparable with an exposure reported there.

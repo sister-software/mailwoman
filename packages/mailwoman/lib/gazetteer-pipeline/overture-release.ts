@@ -5,7 +5,7 @@
  *
  * Does a pinned Overture release still exist?
  *
- * Overture deletes releases from the bucket on roughly a monthly window, and every build that reads
+ * Overture deletes releases from the bucket on roughly a monthly window. Every build that reads
  * Overture carries its own pin, so each pin dies silently when its release is pruned. The cost of
  * finding out late is why this exists: the admin build reaches `fold-overture` only after the WOF
  * ingest, so a dead pin surfaced after ~30 minutes as an `IO Error` that reads like a network fault.
@@ -23,8 +23,9 @@ const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
  * What this function needs from an http client: one `fetch`.
  *
  * Narrower than {@link APIClient} on purpose.
- * A parameter shaped like the whole client makes a test double an assertion rather than
- * an object, and the assertion then survives a signature change that the double does not.
+ * A parameter shaped like the whole client makes a test double an assertion instead of an object.
+ *
+ * That assertion can survive a signature change the double does not.
  */
 export interface OvertureListingClient {
 	fetch(request: {
@@ -37,9 +38,9 @@ export interface OvertureListingClient {
 /**
  * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the truncation in `IsTruncated`.
  *
- * A reader that only matches `<Prefix>` cannot see that field, so a truncated first page
- * reads as the whole bucket, and every release past the truncation reads as pruned,
- * which is the one answer this module exists to give correctly.
+ * A reader that only matches `<Prefix>` cannot see that field.
+ * A truncated first page then reads as the whole bucket, so every later release appears pruned.
+ * This module exists to answer that question correctly.
  */
 const LISTING_PAGE_LIMIT = 100
 
@@ -68,7 +69,7 @@ export async function listOvertureReleases(client?: OvertureListingClient): Prom
 
 		const body = String(response.data)
 
-		// Every `<Prefix>` element, which includes the request echo `<Prefix>release/</Prefix>`
+		// Every `<Prefix>` element includes the request echo `<Prefix>release/</Prefix>`
 		// beside the `<CommonPrefixes>` entries.
 		// The echo reduces to an empty name and is dropped with any other.
 		for (const prefix of elementTexts(body, "Prefix", { xml: true })) {
@@ -104,8 +105,8 @@ export interface ReleaseCheck {
 	/**
 	 * `undefined` when the listing itself failed.
 	 *
-	 * An unreachable bucket is not evidence that a release was pruned, and a build
-	 * must not refuse to start because the network blinked.
+	 * An unreachable bucket does not show that a release was pruned.
+	 * A build must not refuse to start because the network blinked.
 	 */
 	reachable: boolean
 	message: string

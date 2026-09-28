@@ -67,8 +67,9 @@ export const NSUL_LICENSE = "OGL-UK-3.0"
 export const NSUL_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * Where ONS states the licence terms for its address products, and that Northern
- * Ireland (`BT`) postcode data is outside them.
+ * ONS states the licence terms for its address products on this page.
+ *
+ * Northern Ireland (`BT`) postcode data falls outside those terms.
  */
 export const NSUL_LICENSE_INFO_URL = "https://www.ons.gov.uk/methodology/geography/licences"
 
@@ -121,8 +122,10 @@ const PCDS_COLUMN = 3
  * English regions, Scotland and Wales.
  *
  * The archive is refused when its `Data/` members are not exactly this set.
- * A missing region is a truncated Britain and an extra one is a product change,
- * and neither may pass as a smaller or larger row count.
+ * A missing region means the archive truncates Britain.
+ *
+ * An extra region means the product changed.
+ * Neither case may pass as a smaller or larger row count.
  */
 export const NSUL_REGIONS = ["EE", "EM", "LN", "NE", "NW", "SC", "SE", "SW", "WA", "WM", "YH"] as const
 
@@ -577,7 +580,10 @@ interface IngestNSULSourcesOptions {
 }
 
 /**
- * The ingest loop: stream every region, classify every line, join the coordinate, write, and account.
+ * The ingest loop streams every region and classifies every line.
+ *
+ * It joins coordinates and writes rows.
+ * It also accounts for each result.
  *
  * @throws On header drift.
  * The caller owns the transaction and rolls it back.

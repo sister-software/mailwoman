@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   US ZIP (Zone Improvement Plan) codes: branded string types, the shape patterns, the first-digit →
- *   state geographic prior, and a state-plus-ZIP plucker.
+ *   This module defines US ZIP (Zone Improvement Plan) string types and validation patterns.
+ *   It also defines the first-digit state prior and a state-plus-ZIP plucker.
  */
 
 import type { Tagged } from "type-fest"
@@ -23,8 +23,8 @@ export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
  * a section of a street, a collection of streets, an establishment, structure,
  * or group of post office boxes, for the delivery of mail.
  *
- * - The first 3 digits of the ZIP code represent a specific central mail processing facility,
- *   which can be used to identify the locality and region of the address, i.e. the city and state.
+ * - The first three digits identify a central mail processing facility.
+ *   They can help identify the address's city and state.
  * - The last 2 digits of the ZIP code represent a specific post office or delivery area.
  *
  * ```txt
@@ -36,8 +36,8 @@ export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
  *           (City)
  * ```
  *
- * Note that ZIP codes are not areas, but rather a group of deliverable addresses,
- * which can and do change over time.
+ * A ZIP code identifies a group of deliverable addresses rather than a geographic area.
+ * The group can change over time.
  *
  * @category Delivery
  * @category Postal
@@ -66,8 +66,8 @@ export type ZipCode = Tagged<string, "ZipCode">
  *                (Post Office)
  * ```
  *
- * Note that ZIP codes are not areas, but rather a group of deliverable addresses,
- * which can and do change over time.
+ * A ZIP code identifies a group of deliverable addresses rather than a geographic area.
+ * The group can change over time.
  *
  * @category Delivery
  * @category Postal
@@ -89,8 +89,10 @@ export type ExtractStateFromZipCode<Zip extends ZipCode | ZipCodePlusFour> =
 /**
  * Record of US state abbreviations to their corresponding ZIP code prefix (the leading digit).
  *
- * A cheap geographic prior: a 5-digit code's first digit narrows it to a band of states,
- * which the parser can weigh against the surrounding city/state tokens.
+ * A cheap geographic prior.
+ * The first digit of a five-digit code narrows it to a band of states.
+ *
+ * The parser weighs that band against the surrounding city and state tokens.
  *
  * @internal
  * @see {@linkcode ZipCodePrefixAbbreviationMap} for the reverse mapping.

@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mailwoman:*` block every planetary archive carries in its PMTiles metadata: which body, which kind, which
- *   coordinate convention, which source and build. The app reads the block before it reads a tile, and the verify step
- *   reads it back after the build writes it.
+ *   Every planetary archive carries a `mailwoman:*` block in its PMTiles metadata. The block records the body, kind,
+ *   coordinate convention, source and build. The app reads the block before reading a tile.
+ *   The verify step reads it
+ *   back after the build writes it.
  */
 
 import { z } from "zod"

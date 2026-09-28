@@ -8,7 +8,7 @@
  *   The `hierarchy` array is assembled from independently resolved parse nodes: the parsed region
  *   resolves on its own and contributes its entry beside the locality winner, whether or not any
  *   place on earth has that containment chain. Silently mixing the winner's lineage with
- *   independently resolved fragments is the defect, and this module makes the mixing explicit.
+ *   independently resolved fragments is the defect. This module makes the mixing explicit.
  *
  *   Each entry gains a tri-state `in_winner_lineage`:
  *
@@ -79,8 +79,8 @@ const HIERARCHY_TAGS = [
 /**
  * The most-specific resolved admin node, the lineage anchor for tiers without an admin-ladder pick.
  *
- * Anchoring at the deepest resolved entry grades ancestors, which its chain does contain,
- * and can never falsely flag a descendant.
+ * Anchoring at the deepest resolved entry grades ancestors in its chain.
+ * It cannot falsely flag a descendant.
  */
 export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | undefined {
 	for (const tag of HIERARCHY_TAGS) {

@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   French postcodes (code postal): the branded type, the shape, normalization, and the
- *   first-two-digits → département mapping — the cleanest postcode→admin prior of the three
- *   systems.
+ *   French postcodes (code postal): the branded type and shape, plus normalization rules.
+ *   The module maps the first two digits to a département, the cleanest postcode-to-admin prior
+ *   among the three systems.
  *
  *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, and here:
  *
  *   - A US ZIP's first digit maps to a loose band of states.
  *   - A German PLZ's first digit maps to a Leitzone that crosses Bundesland borders.
  *   - A French code postal's first two digits are the département number directly (`75008` → 75, Paris;
- *       `13001` → 13, Bouches-du-Rhône). So the French prefix pins the actual admin unit, and the
- *       région follows from the département. It is the tightest of the three.
+ *       `13001` → 13, Bouches-du-Rhône). The French prefix identifies the admin unit directly.
+ *       The région follows from the département. This is the tightest of the three priors.
  *
  *   The exceptions are the interesting part: Corsica shares prefix `20` across two départements (`2A`
  *   Corse-du-Sud / `2B` Haute-Corse, resolved by the rest of the code), and the overseas DOM use a

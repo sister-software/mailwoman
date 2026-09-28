@@ -11,7 +11,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 // US regions with their USPS abbreviations (what add-region-abbrevs writes into `names`),
-// two same-named Sheldon towns (the Vermont one small and the Iowa one larger), and the ancestry
+// two towns called Sheldon (the Vermont one small and the Iowa one larger), and the ancestry
 // the wof:hierarchy backfill restores so the region constraint can reach the descendant town.
 function buildDB(): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
@@ -41,7 +41,7 @@ function buildDB(): DatabaseClient<WOFDatabase> {
 	// region, the gap the ancestry backfill bridges.
 	spr.run(20, 10, "Franklin County", "county", "US", 44.9, -72.9, 44.7, 45, -73.1, -72.5)
 	spr.run(21, 11, "O'Brien County", "county", "US", 43.1, -95.6, 43, 43.3, -95.9, -95.4)
-	// Two same-named localities, the bug's signature.
+	// Two localities called Sheldon, the bug's signature.
 	spr.run(30, 20, "Sheldon", "locality", "US", 44.9, -72.95, 44.85, 44.95, -73, -72.9)
 	spr.run(31, 21, "Sheldon", "locality", "US", 43.18, -95.85, 43.15, 43.2, -95.9, -95.8)
 	const pop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
@@ -56,7 +56,7 @@ function buildDB(): DatabaseClient<WOFDatabase> {
 	nm.run(13, "DC")
 	nm.run(14, "PR")
 
-	// Ancestry rows (self, county, region, and country) as backfill-ancestors-from-hierarchy restores them.
+	// `backfill-ancestors-from-hierarchy` restores ancestry rows for the place, county, region, plus country.
 	const anc = db.prepare(
 		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
 	)
@@ -108,7 +108,8 @@ describe("region-abbreviation resolution (#440/#441)", () => {
 	})
 
 	it("the constraint reaches a place whose direct parent is a county, not the region (the ancestry-backfill case)", async () => {
-		// Sheldon, VT has Franklin County (20) as its direct parent, and Vermont (10) is only an ancestor.
+		// Sheldon, VT has Franklin County (20) as its direct parent.
+		// Vermont (10) appears only in its ancestor chain.
 		// The constraint reaches it through the `ancestors` table, the linkage the backfill
 		// restores for multi-parent or ambiguous-parent places such as NYC (parent_id=-4).
 		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentID: 10, country: "US" })

@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pins each layout against the libaddressinput `fmt` it was transcribed from, so the table cannot drift from its
- *   source unnoticed: a transcription error reads as a plausible address from somewhere else, which a diff against
- *   the source catches and a reader does not.
+ *   Pins each layout against the libaddressinput `fmt` it came from. This catches drift from the source.
+ *   A transcription error can still read as a plausible address from somewhere else. The source diff exposes it.
  *
  *   The comparison is over the skeleton — the order of the fields and where the line breaks fall — not over the
  *   street line, because `%A` is one opaque field in the dataset and several tags here. A layout whose skeleton
@@ -54,8 +53,10 @@ const FIELD: Readonly<Record<string, string>> = {
 }
 
 /**
- * Countries whose layout departs from the dataset skeleton, and why: an entry here
- * is a decision, a departure without one is a transcription error.
+ * Countries whose layout departs from the dataset skeleton and the reason for each departure.
+ *
+ * Every entry records a decision.
+ * A departure without an entry is a transcription error.
  */
 const ACCEPTED_DEPARTURES: Readonly<Record<string, string>> = {
 	FR: "the lieu-dit line, which La Poste specifies and libaddressinput omits",
@@ -267,14 +268,17 @@ describe("a country that writes two orders carries both", () => {
 
 describe("the admin run keeps its tier order in every layout", () => {
 	/**
-	 * `layoutPrintsLargestFirst` asks whether a layout runs large to small overall,
-	 * and an inversion between two adjacent admin tiers leaves that answer unchanged:
+	 * `layoutPrintsLargestFirst` asks whether a layout runs large to small overall.
+	 *
+	 * An inversion between adjacent admin tiers leaves that answer unchanged:
 	 * a Hong Kong layout printing the district above the area is still largest-first.
 	 *
 	 * The sub-locality is the tier the generator authors wherever a `fmt` names no `%D`,
 	 * and the one relation it has to get right is which side of the locality it lands on.
-	 * Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality,
-	 * transcribed from the dataset rather than authored, and this check does not judge it.
+	 * Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality.
+	 *
+	 * The dataset supplies these orders.
+	 * This check does not judge them.
 	 */
 	const TABLES = {
 		hand: ADDRESS_LAYOUTS,

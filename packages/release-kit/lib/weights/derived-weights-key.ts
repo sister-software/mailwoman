@@ -95,7 +95,7 @@ export interface DerivedWeightsInput {
 }
 
 /**
- * Every input this checkout's key is computed over, named repo-relatively.
+ * Every input this checkout's key is computed over, listed relative to the repository root.
  */
 async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 	const root = repoRootPath()

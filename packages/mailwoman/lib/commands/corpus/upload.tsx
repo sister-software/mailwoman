@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A corpus that never reaches R2 cannot reach a GPU: `modal volume put` writes are visible to `modal volume ls/get`
- *   and not to containers, which is why every remote artifact travels local → R2 → container-side rclone.
+ *   A corpus must reach R2 before a GPU can access it. `modal volume put` writes are visible to
+ *   `modal volume ls/get`. Containers cannot read those writes. Every remote artifact therefore travels
+ *   from the local machine to R2, then through container-side rclone.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -55,8 +56,9 @@ export const spec = {
  * The fields this command reads from a built corpus version's top-level `MANIFEST.json`.
  *
  * Taken from `BuildCorpusManifest` so the field names cannot drift from what the build writes.
- * Both are optional because a manifest written before the build recorded them still parses,
- * and an absent `license_policy` then reads as unstated rather than as a policy that ran.
+ * Both are optional because a manifest written before the build recorded them still parses.
+ *
+ * An absent `license_policy` reads as unstated rather than as a policy that ran.
  */
 type UploadedCorpusManifest = Partial<Pick<BuildCorpusManifest, "licenses" | "license_policy">>
 
@@ -113,7 +115,7 @@ async function refuseShareAlike(version: string, manifestPath: PathBuilderLike, 
 
 	throw new Error(
 		`corpus ${version}: its license set holds ${findings.length} value(s) carrying or mentioning ` +
-			`share-alike over ${rows} rows, and the build ran under license policy ` +
+			`share-alike over ${rows} rows. The build ran under license policy ` +
 			`${manifest.license_policy ?? "unstated"}:\n${lines.join("\n")}\n` +
 			`Rebuild with \`mw corpus build --license-policy share-alike-free\`, or pass --allow-share-alike ` +
 			`to upload this set deliberately.`
@@ -245,7 +247,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 	})
 
 	// A thrown selection or credential error is the whole message.
-	// Rendering only the step list would print a bare header, which reads as a completed upload of zero files.
+	// Rendering only the step list would print a bare header.
+	// Readers could mistake it for a completed upload of zero files.
 	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	return (

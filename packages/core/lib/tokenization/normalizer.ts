@@ -10,7 +10,7 @@
 import regenerate from "regenerate"
 
 /**
- * A pattern matching combining diacritical marks, variation selectors, and other
+ * A pattern matching combining diacritical marks, variation selectors and other
  * characters that are often used in text normalization.
  */
 const CombiningDiacriticalPattern = regenerate()
@@ -41,7 +41,7 @@ export interface TextNormalizerInit {
 }
 
 /**
- * Normalizes text values, i.e. removes superfluous characters such as accents, hyphens, and spaces.
+ * Normalizes text values by removing superfluous characters such as accents, hyphens and spaces.
  */
 export class TextNormalizer implements TextNormalizerInit {
 	public readonly lowercase: boolean

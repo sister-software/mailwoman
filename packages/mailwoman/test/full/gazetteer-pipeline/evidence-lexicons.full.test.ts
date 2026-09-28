@@ -67,7 +67,7 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 
 		const j = await readLocalJSONFile<{ entries: Record<string, number> }>(tmp)
 
-		// Family F2b — directionals (neighbourhoods literally named these. law-1 closure):
+		// Family F2b — directionals (neighbourhoods that literally bear these names. law-1 closure):
 		for (const s of ["east", "west", "north", "south", "northeast", "southwest"]) {
 			expect(j.entries[s], s).toBeUndefined()
 		}

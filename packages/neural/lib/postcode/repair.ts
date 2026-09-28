@@ -19,7 +19,7 @@ import {
 } from "#span/repair"
 
 /**
- * Re-exports the shared span-repair result type, which {@link repairPostcodeLabels} returns.
+ * Re-exports the shared span-repair result type returned by {@link repairPostcodeLabels}.
  */
 export type { RepairResult } from "#span/repair"
 
@@ -30,8 +30,10 @@ export interface PostcodeMatch extends SpanMatch {
 	/**
 	 * How far the repair may go without an existing postcode label in the range.
 	 *
-	 * `numeric` may only snap an existing postcode span, `alnum` may also add a span over admin-area
-	 * labels, and `designated`, the digits after a postal marker, may overwrite any label.
+	 * `numeric` may only snap an existing postcode span.
+	 * `alnum` may also add a span over admin-area labels.
+	 *
+	 * `designated` means digits after a postal marker and may overwrite any label.
 	 */
 	kind: "alnum" | "numeric" | "designated"
 }
@@ -39,8 +41,8 @@ export interface PostcodeMatch extends SpanMatch {
 /**
  * Lists the per-country postcode shape patterns, most specific first.
  *
- * The table lives in `@mailwoman/codex/postcode-shapes` because the Python trainer
- * reads the same data, and the two copies must not drift.
+ * The table lives in `@mailwoman/codex/postcode-shapes` because the Python trainer reads the same data.
+ * The copies must stay aligned.
  */
 export const POSTCODE_PATTERNS: ReadonlyArray<{
 	label: string

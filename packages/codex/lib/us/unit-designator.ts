@@ -16,8 +16,8 @@
  *   leading ("Apt 4B"). Street suffixes trail.
  *
  *   `US_UNIT_DESIGNATOR_REQUIRES_RANGE` is Pub-28's own "Requires a Secondary Number" column. APT,
- *   bldg, dept, FL, hngr, KEY, LOT, pier, RM, slip, SPC, stop, STE, trlr, and unit must be followed
- *   by an identifier ("Apt 4B"). bsmt, frnt, lbby, lowr, OFC, PH, rear, side, and uppr may stand
+ *   bldg, dept, FL, hngr, KEY, LOT, pier, RM, slip, SPC, stop, STE, trlr and unit must be followed
+ *   by an identifier ("Apt 4B"). bsmt, frnt, lbby, lowr, OFC, PH, rear, side and uppr may stand
  *   alone. A separate deliverable is the per-locale *level-semantics* table (étage/RDC, EG/OG/UG,
  *   planta/piso/bajo, piano/terra, 階/F/B1, …). This module stays US/Pub-28 only.
  *
@@ -157,7 +157,7 @@ export interface UnitDesignatorRangeMatch {
 	 * Undefined when the designator appears standalone (e.g. a bare "Basement").
 	 * This module does not validate the range's own shape.
 	 *
-	 * Numeric, letter, and alphanumeric ranges are all USPS-valid.
+	 * Numeric, letter and alphanumeric ranges are all USPS-valid.
 	 */
 	range: string | undefined
 	/**

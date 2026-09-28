@@ -48,8 +48,10 @@ const LogLevelColors = {
 
 /**
  * Where diagnostics are written: under Node, a `Console` whose streams are both stderr,
- * because `console.debug`, `console.info` and `console.log` write to stdout there and would
- * land in the middle of any command whose stdout is data, and in a browser the one console.
+ * because `console.debug`, `console.info` and `console.log` write to stdout there.
+ *
+ * Those messages would interrupt any command whose stdout carries data.
+ * A browser uses its one console.
  */
 function diagnosticsSink(): Console {
 	// oxlint-disable-next-line sister-software/no-process-globals -- the stream object itself rather than configuration. a browser has no `process` and falls through

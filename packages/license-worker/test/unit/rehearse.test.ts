@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The rehearsal against a scripted Stripe and a scripted worker: the session it builds collects what the Payment Link
- *   collects, and the renewal half waits on the worker for each token, advances the clock between them, and holds the
- *   renewed expiry to the period end plus the grace.
+ *   Runs the rehearsal against scripted Stripe and worker services.
+ *   The session collects the same fields as the Payment Link.
+ *   The renewal step waits for each token and advances the clock between tokens.
+ *   The renewed expiry matches the period end plus the grace period.
  */
 
 import { readEnv } from "@mailwoman/license-worker/env"

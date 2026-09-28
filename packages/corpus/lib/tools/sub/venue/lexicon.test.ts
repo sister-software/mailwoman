@@ -50,8 +50,8 @@ const wikidataFixture = {
 				label: { value: "空港ターミナル" },
 				kind: { value: "label" },
 			},
-			// A second Japanese label, which makes the shared-substring derivation possible:
-			// a group of one has no peer to share with.
+			// A second Japanese label makes shared-substring derivation possible.
+			// A group of one has no peer to share with.
 			{
 				item: { value: "http://www.wikidata.org/entity/Q849706" },
 				lang: { value: "ja" },
@@ -242,8 +242,10 @@ test("extractAttestedPhrases attributes a hit to the record the PHRASE names, no
 		["west", "west", "modifier"],
 	])
 
-	// The row's own designator survives as context, which makes the confound board possible:
-	// a `hall` seen on a platform is a bus stop, a `hall` seen on a terminal is a hall.
+	// The row's own designator survives as context.
+	// This supports the confound board.
+	// A `hall` on a platform is a bus stop.
+	// A `hall` on a terminal is a hall.
 	expect(surfaces.every((s) => s.context["platform"] === 1)).toBe(true)
 })
 
@@ -314,8 +316,8 @@ test("extractAttestedPhrases harvests localized names under their own language t
 })
 
 test("extractAttestedPhrases stamps the source family it was given", () => {
-	// Overture needed a parameter rather than a row-shape adaptation: the shape fits,
-	// but the `osm:name` stamp did not, and a mislabelled ODbL provenance is not a cosmetic error.
+	// Overture needed a parameter because its row shape fits but its `osm:name` stamp does not.
+	// A mislabelled ODbL provenance changes the license record.
 	const index = buildSurfaceIndex([surface({ phrase: "concourse", recordID: "concourse" })])
 
 	const { surfaces } = extractAttestedPhrases([{ designatorID: "terminal", name: "Concourse B" }], index, {
@@ -367,7 +369,8 @@ test("deriveHeadNounSurfaces holds the cognate floor at five folded characters",
 })
 
 test("deriveHeadNounSurfaces finds the Japanese head by shared substring", () => {
-	// `ターミナル` is in none of the Wikidata labels on its own, and no other step in the pipeline can produce it.
+	// `ターミナル` appears in none of the Wikidata labels on its own.
+	// No other pipeline step can produce it.
 	const derived = deriveHeadNounSurfaces([
 		surface({ phrase: "ターミナルビル", recordID: "terminal", lang: "ja" }),
 		surface({ phrase: "旅客ターミナル", recordID: "terminal", lang: "ja" }),
@@ -499,8 +502,8 @@ test("buildSubVenueLexicon: proposed designators land unshipped and not modifier
 	const proposed = table.designators.filter((d) => !d.shipped)
 
 	expect(proposed.map((d) => d.id)).toEqual(["airport", "hall", "pier", "platform", "satellite", "station"])
-	// `hall` is the one to watch: the token appears in 3,273 named GB transport features and 3,204
-	// of them sit on a `public_transport=platform`, so promoting it for en-GB would be wrong.
+	// `hall` is the one to watch: the token appears in 3,273 GB transport features with names
+	// and 3,204 of them sit on a `public_transport=platform`, so promoting it for en-GB would be wrong.
 	expect(proposed.every((d) => !d.modifierEligible)).toBe(true)
 })
 
@@ -559,8 +562,9 @@ test("buildSubVenueLexicon: every surface points at a record that exists", () =>
 })
 
 test("buildSubVenueLexicon: a harvest can only match a phrase an EARLIER stage introduced", () => {
-	// Order is required and easy to break: head nouns are derived after Wikidata and
-	// before the harvests, and reordering silently empties the Japanese harvest.
+	// This order is required.
+	// The build derives head nouns after Wikidata and before the harvests.
+	// Reordering the steps silently empties the Japanese harvest.
 	const table = buildSubVenueLexicon({
 		wikidata: wikidataFixture,
 		harvests: [{ rows: [{ designatorID: "terminal", name: "第1ターミナル" }], source: "osm", region: "JP" }],

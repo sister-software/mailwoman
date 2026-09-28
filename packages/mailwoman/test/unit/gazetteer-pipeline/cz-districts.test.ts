@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixture-scale guard for the Prague districts database: the name selection, the A-feature preference,
- *   and the terms the artifact records about itself in both `database_meta` and `layer_manifest`.
+ *   Fixture-scale checks for Prague districts: name selection, A-feature preference, plus license terms.
+ *   The artifact records its terms in `database_meta` and `layer_manifest`.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -55,7 +55,8 @@ test("buildCZDistrictsDatabase: one row per district, and the artifact states it
 
 	const meta = db.prepare("SELECT value FROM database_meta WHERE key = 'license'").get() as { value: string }
 
-	// The prose the table has carried since the first build, which `readLicenseRecord` resolves.
+	// The table has used this license text since the first build.
+	// `readLicenseRecord` resolves it.
 	expect(meta.value).toBe("CC-BY-4.0, attribution GeoNames")
 
 	const manifest = await readLayerManifest(db)

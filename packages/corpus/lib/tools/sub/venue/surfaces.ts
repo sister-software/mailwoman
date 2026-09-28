@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file Surface-form primitives for the sub-venue lexicon: the normalizer every phrase passes through, the phrase → record index, and the operator that decides whether a feature's name contains a known designator.
+ * @file Surface-form primitives for the sub-venue lexicon. They normalize phrases and index records by phrase.
+ * They also decide whether a feature name contains a known designator.
  *
- * The two matching rules are script-conditional, and both narrowings are required.
+ * The two matching rules depend on script. Both narrowings are required.
  */
 
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
@@ -31,8 +32,8 @@ const CASE_FOLDING_SCRIPT = /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Gree
 const NON_SPACING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
 
 /**
- * Normalize a surface for the table: trim, collapse internal whitespace, and lowercase only
- * when the string is entirely in a bicameral script.
+ * Normalize a surface for the table by trimming, collapsing internal whitespace,
+ * then lowercasing only when the string is entirely in a bicameral script.
  */
 export function normalizeSurface(text: string): string {
 	const trimmed = normalizeWhitespace(text)
@@ -41,8 +42,8 @@ export function normalizeSurface(text: string): string {
 }
 
 /**
- * A phrase → record index keyed on the normalized phrase, which is how a matched
- * phrase is attributed to the record it names.
+ * A phrase-to-record index keyed by the normalized phrase.
+ * It attributes a matched phrase to its record.
  */
 export type SurfaceIndex = ReadonlyMap<string, { recordID: string; recordKind: "designator" | "modifier" }>
 

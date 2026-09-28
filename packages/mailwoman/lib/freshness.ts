@@ -5,13 +5,11 @@
  *
  *   Which data a running process is serving, read out of the artifacts themselves.
  *
- *   The stamp lives in the artifact, never beside it: a record kept next to a database goes stale on the
- *   first promotion, so the only source read here is each database's own `layer_manifest` row, written by
- *   its builder before the seal.
+ *   Each artifact stores its own freshness stamp. An adjacent record would become stale on promotion.
+ *   This reader uses the artifact's `layer_manifest` row. The builder writes that row before sealing.
  *
- *   An unstamped artifact reports its own absence: every artifact the caller names appears in the report,
- *   and one carrying no manifest says so rather than being omitted or given a date guessed from its mtime
- *   or filename.
+ *   The report includes every artifact the caller names. An artifact without a manifest reports that state explicitly.
+ *   The reader does not infer a date from file modification time or filename.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -22,11 +20,12 @@ import { probeManifest } from "#data/inventory"
 
 /**
  * Whether an artifact could state its own provenance — three states rather than two,
- * because "we could not open it" is not "it has no manifest".
+ * because an open failure and an artifact without a manifest are different results.
  */
 export const ManifestState = {
 	/**
-	 * A `layer_manifest` row was read, and it carries a build date this reader could parse.
+	 * A `layer_manifest` row was read.
+	 * It carries a build date this reader could parse.
 	 */
 	Present: "present",
 	/**
@@ -49,8 +48,8 @@ export type ManifestState = (typeof ManifestState)[keyof typeof ManifestState]
  */
 export interface ArtifactFreshness {
 	/**
-	 * The role this artifact plays for the running process (`gazetteer`, `reverse-admin`),
-	 * not its filename, which the caller can read off `path`.
+	 * The role this artifact plays for the running process, such as `gazetteer` or `reverse-admin`.
+	 * The caller can read its filename from `path`.
 	 */
 	name: string
 	/**
@@ -80,7 +79,7 @@ export interface ArtifactFreshness {
 	 * `layer_manifest.license` — the SPDX expression the build admitted, verbatim.
 	 *
 	 * A row written before the column existed leaves this undefined.
-	 * An absent expression states that nobody recorded the obligations
+	 * An absent expression states that the build recorded no obligations
 	 * rather than that the artifact carries none.
 	 *
 	 * This field makes the per-result rights record the subset of
@@ -110,7 +109,7 @@ export interface FreshnessReport {
 }
 
 /**
- * An artifact to report on: the role it plays, and where it is.
+ * An artifact to report on, with its role and path.
  */
 export interface FreshnessArtifact {
 	name: string
@@ -118,9 +117,10 @@ export interface FreshnessArtifact {
 }
 
 /**
- * Read one artifact's `layer_manifest` via `data-inventory`'s {@link probeManifest}, deliberately not
- * running the interface's `readLayerManifest` validator: that enforces spine-key and tier invariants,
- * and a layer with a wrong spine declaration still has a build date this surface can report.
+ * Reads one artifact's `layer_manifest` through `data-inventory`'s {@link probeManifest}.
+ *
+ * It skips the `readLayerManifest` validator because that validator enforces spine-key and tier invariants.
+ * This report can still include the build date from a layer with an incorrect spine declaration.
  */
 async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Promise<ArtifactFreshness> {
 	const path = artifactPath.toString()
@@ -144,7 +144,7 @@ async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Pr
 		}
 	}
 
-	// A stamp nobody can date is a freshness fault, so it is reported as Unreadable.
+	// An undated stamp is a freshness fault, so it is reported as Unreadable.
 	// Reporting it as absent would read as an artifact that was never stamped.
 	if (Number.isNaN(Date.parse(manifest.created_at))) {
 		return {

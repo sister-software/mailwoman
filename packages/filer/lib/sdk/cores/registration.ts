@@ -11,13 +11,14 @@ import type { FRN } from "#frn"
 /**
  * One cores registration record exactly as the detail page states it.
  *
- * Every field is optional because the page omits a row rather than emitting an empty one,
- * and no field is interpreted, derived or classified.
+ * Every field is optional because the page omits a row instead of emitting an empty one.
+ * The reader does not interpret, derive or classify fields.
  */
 export interface CORESRegistration {
 	frn: FRN
 	/**
-	 * The legal name the entity registered under, which is not necessarily the name anyone uses for it.
+	 * The legal name under which the entity registered.
+	 * People may use a different name.
 	 */
 	entityName?: string
 	/**
@@ -107,9 +108,10 @@ export function recaseUniform(value: string): string {
 }
 
 /**
- * Parses a cores `searchDetail.do` page into a {@linkcode CORESRegistration}, returning `null` —
- * never a stub and never a throw — when no recognizable table is present or the page's own `FRN:`
- * row disagrees with the requested FRN, which would otherwise silently write a false identity link.
+ * Parses a cores `searchDetail.do` page into a {@linkcode CORESRegistration},
+ * returning `null` — never a stub and never a throw — when no recognizable table is present
+ * or the page's own `FRN:` row disagrees with the requested FRN.
+ * A stub would silently write a false identity link.
  */
 export function parseCORESRegistration(frn: FRN, html: string): CORESRegistration | null {
 	const fields: Partial<Record<keyof CORESRegistration, string>> = {}

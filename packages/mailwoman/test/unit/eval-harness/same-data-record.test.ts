@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What the recorder withholds, which is what the withheld-gold stratum means.
+ *   What the recorder withholds defines the withheld-gold stratum.
  *
  *   `same-data-resolver-v1` withholds the ids the `gn:id` concordance linked. That leaves the gazetteer's
  *   second row for the same settlement answerable — 285,478 of 2,689,326 populated localities share a
@@ -11,8 +11,8 @@
  *   where no correct candidate exists, on 10 of that panel's 100 withheld rows.
  *
  *   `withholdEveryDenotingRow` is the corrected rule and it is off by default, because turning it on
- *   changes what the stratum means and the v1 arms have already run. These tests pin both halves: the
- *   default stays id-equality byte-for-byte, and the opt-in catches the twin without catching a real
+ *   changes what the stratum means after the v1 arms have run. These tests pin both halves.
+ *   The default stays id-equality byte-for-byte. The opt-in catches the twin without catching a real
  *   namesake at distance.
  */
 
@@ -23,8 +23,8 @@ import { recordFixture } from "mailwoman/eval-harness/same-data/record"
 import { describe, expect, it } from "vitest"
 
 /**
- * Troyes as the gazetteer carries it: the concorded `locality`, its `localadmin` twin
- * 0.6 km away, and a real namesake far enough off to be a different place.
+ * Troyes as the gazetteer carries it: a concorded `locality`, a `localadmin` twin 0.6
+ * km away, plus a real namesake far enough away to be a different place.
  */
 const TROYES: ResolvedPlace[] = [
 	{ id: 101_750_981, name: "Troyes", placetype: "locality", country: "FR", lat: 48.2973, lon: 4.0744, score: 5 },
@@ -109,8 +109,8 @@ describe("the same-data recorder's withholding rule", () => {
 		const ids = await recordedIDs(true)
 
 		// `Troyes` QC folds equal and sits thousands of km away.
-		// Withholding it would remove a candidate the stratum is entitled to offer,
-		// which is the `Batāla` case: same fold, 1,421 km apart.
+		// Withholding it would remove a candidate the stratum is entitled to offer.
+		// `Batāla` has the same fold, but lies 1,421 km away.
 		expect(ids.has("999")).toBe(true)
 	})
 })

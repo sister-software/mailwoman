@@ -6,8 +6,8 @@
  *   Browser-safe aggregate of this package. It is the main entry minus `./weights.ts` and
  *   `./scorer.ts` — the only two modules left that statically reach `node:fs`, and so the only two a
  *   browser graph cannot contain. Everything else here is reachable from a bundle by construction:
- *   `neural/onnx-runner` resolves to a throwing browser counterpart under the `browser` condition,
- *   and oxlint holds the rest to a no-`node:*` rule.
+ *   `neural/onnx-runner` resolves to a throwing browser counterpart under the `browser` condition.
+ *   oxlint enforces the no-`node:*` rule for the rest.
  *
  *   The soft-feature channels below are not optional decoration. A gazetteer-, country-, or
  *   pair-trained model requires its channel fed at inference. a zero-filled clue is a train/inference

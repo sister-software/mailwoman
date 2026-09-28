@@ -3,10 +3,10 @@
 Pins the loader-side interface:
 
 1. Rows from a span-schema parquet file stream the triple end-to-end — ``iter_rows`` carries it,
-   ``iter_encoded`` hands it to ``encode_row`` (which trains from the spans).
+   ``iter_encoded`` hands it to ``encode_row``. The encoder trains from the spans.
 2. Frozen pre-v0.5.0 files (no span columns) ride the legacy token path: no span keys appear.
 3. Corruption is loud, never a silent fallback: a file with a partial span-column set raises,
-   and a null span value inside a span-schema file raises naming the row.
+   A null span value inside a span-schema file also raises and includes the row identifier.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from mailwoman_train.data.loader import iter_encoded, iter_rows
 #: Stands in for the SentencePiece tokenizer in the tests below. Each of them replaces ``encode_row``,
 #: which is the only thing that would touch a tokenizer, so the object is never called — but
 #: ``iter_encoded`` refuses a None tokenizer on the SentencePiece path before it reaches the patched
-#: function, and refusing is correct: a None there crashes deeper in, with no row named.
+#: function. The tokenizer must be non-None because a None value crashes deeper without a row identifier.
 UNUSED_TOKENIZER = object()
 
 FULL_SCHEMA = pa.schema(

@@ -187,15 +187,15 @@ export function lookupDirectional(input: unknown): DirectionalMatch | null {
 
 /**
  * If the first whitespace-separated word of `street` is a known USPS directional (abbrev or name),
- * return the canonical name, its abbreviation, and the matched surface word.
+ * return the canonical name and its abbreviation. The result also includes the matched surface word.
  *
  * Null otherwise.
  * (The leading-end counterpart of {@link matchTrailingSuffix}; mirrors
  * unit-designator's `matchLeadingDesignator`.)
  *
  * Single-word only.
- * The spaced "north east" form is normalized to its one-word variant in real US streets,
- * which this matches via the lookup.
+ * Real US streets use the spaced "north east" form as a one-word variant.
+ * The lookup recognizes that spelling.
  */
 export function matchLeadingDirectional(
 	street: string

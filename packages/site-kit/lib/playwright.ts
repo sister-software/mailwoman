@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The Playwright configuration a static site's smoke runs under: `vite preview` over a fresh build, which serves
- *   `dist/` with the same SPA fallback Cloudflare applies, or a deployment when the named variable carries its URL.
+ *   `dist/` with the same SPA fallback Cloudflare applies, or a deployment when the environment variable carries its URL.
  */
 
 import { defineConfig, devices, type PlaywrightTestConfig } from "@playwright/test"

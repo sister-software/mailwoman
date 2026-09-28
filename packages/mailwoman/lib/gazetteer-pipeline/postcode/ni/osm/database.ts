@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Build `postalcode-ni-osm-<date>.db` — the Northern Ireland `BT` unit-postcode database from
- *   OpenStreetMap. It is partial by construction: OSM attests a minority of live NI postcodes, and
- *   an absent code abstains rather than fuzzy-matching, so the database is strictly additive.
+ *   OpenStreetMap. OSM attests a minority of live NI postcodes.
+ *   An absent code abstains from fuzzy matching, so the database is strictly additive.
  *
  *   ODbL 1.0 is share-alike on a Derived Database, so this artifact is build-local and never enters
  *   an npm tarball, an R2 publish, or the demo.
@@ -57,8 +57,9 @@ import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipe
 /**
  * ISO-3166-1 alpha-2 stamped on every row.
  *
- * Northern Ireland is part of the United Kingdom, and `pickExtractForPlacetype` routes on country,
- * so the NI-vs-GB distinction must live in the postcode area (`BT`) rather than here.
+ * Northern Ireland is part of the United Kingdom.
+ * `pickExtractForPlacetype` routes on country, so the postcode area (`BT`) must carry
+ * the distinction between Northern Ireland and Great Britain.
  */
 const COUNTRY = "GB"
 
@@ -343,9 +344,13 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 }
 
 /**
- * Check the identities no single counter implies: every tagged element is a point or an accounted
- * drop, districts and sectors stay within the national totals, and every record carries at
- * least one attestation so a zero means "not in OSM" rather than "in OSM with no evidence".
+ * Check identities that no single counter implies.
+ *
+ * Every tagged element is a point or an accounted drop.
+ * Districts and sectors stay within the national totals.
+ *
+ * Every record carries at least one attestation, so zero means "not in OSM"
+ * rather than "in OSM with no evidence".
  */
 function reconcile(
 	stats: NIOSMParseStats,
@@ -427,7 +432,8 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 		["source_query_md5", input.queryMD5],
 		["source_response_md5", input.responseMD5],
 		["source_retrieved_at", input.retrievedAt],
-		// The OSM extract date, which matters more than `source_retrieved_at` (when we asked).
+		// The OSM extract date.
+		// It matters more than `source_retrieved_at`, which records when we asked.
 		["source_osm_timestamp", input.osmTimestamp],
 		["license", OSM_LICENSE],
 		["license_url", OSM_LICENSE_URL],

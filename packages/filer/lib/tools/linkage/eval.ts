@@ -55,7 +55,8 @@ export interface LeakageCensus {
 	 */
 	ownershipEdges: number
 	/**
-	 * These are the rows the prediction scores, and they must number 0 in the withheld build.
+	 * These rows receive prediction scores.
+	 * The withheld build must contain zero such rows.
 	 */
 	scoredFamilyRows: number
 	nonOwnershipFamilyRows: number
@@ -85,9 +86,11 @@ const OWNERSHIP_BY_RELATIONSHIP = {
 } as const satisfies Record<FilerRelationship, boolean>
 
 /**
- * An unrecognized relationship counts as not ownership, and the {@linkcode isRecognizedRelationship}
- * guard is required because a bare lookup of a key such as `constructor` on the plain
- * `OWNERSHIP_BY_RELATIONSHIP` object returns an inherited function, which is truthy.
+ * An unrecognized relationship classifies as non-ownership.
+ *
+ * The {@linkcode isRecognizedRelationship} guard is required because a plain lookup of a
+ * key such as `constructor` on `OWNERSHIP_BY_RELATIONSHIP` returns an inherited function.
+ * That function is truthy.
  */
 function assertsOwnership(relationship: string): boolean {
 	return isRecognizedRelationship(relationship) && OWNERSHIP_BY_RELATIONSHIP[relationship as FilerRelationship]
@@ -186,8 +189,10 @@ async function readRegistrantFamilies(
 }
 
 /**
- * Records one truth-positive pair, two registrants whose `holdingCompany` values
- * put them in one family, and whether the run recovered it.
+ * Records one truth-positive pair.
+ *
+ * Two registrants whose `holdingCompany` values put them in one family form the pair.
+ * The outcome also records whether the run recovered it.
  */
 export interface TruthPositivePairOutcome {
 	a: FRN
@@ -261,8 +266,10 @@ export interface LinkageEvalPassOptions {
 }
 
 /**
- * Builds a scratch `filer.db` from one set of inputs, runs the shipped clustering,
- * takes the leakage census, reads each registrant's families, and scores the prediction.
+ * Builds a scratch `filer.db` from one set of inputs.
+ *
+ * Runs the shipped clustering and takes the leakage census.
+ * Reads each registrant's families and scores the prediction.
  */
 export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<LinkageEvalRun> {
 	const { inputs, registrants, truthGroupOf, label, holdingCompanyWithheld, injectEvidence } = options
@@ -279,7 +286,8 @@ export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<L
 		buildSHA: EVAL_BUILD_SHA,
 	})
 
-	// The builder leaves the artifact read-only, and `clusterFilers` must write `filer_cluster` and `filer_edge`.
+	// The builder leaves the artifact read-only.
+	// `clusterFilers` must write `filer_cluster` and `filer_edge`.
 	await changeMode(out, 0o644)
 
 	using db = new DatabaseClient<FilerDatabase>(out)
@@ -328,8 +336,8 @@ export interface FilerLinkageEvalOptions {
 	/**
 	 * Replaces the date in the report's H1.
 	 *
-	 * The date defaults to today, and scorecard regeneration and reproducibility
-	 * tests pin it through this option.
+	 * The date defaults to today.
+	 * Scorecard regeneration and reproducibility tests can pin it through this option.
 	 */
 	date?: string
 	printMarkdown?: boolean
@@ -347,8 +355,10 @@ export interface FilerLinkageEvalResult {
 }
 
 /**
- * Builds two scratch `filer.db` artifacts from one corpus, one with `holdingCompany` withheld
- * and one intact, scores each against the held-out truth, and renders the markdown scorecard.
+ * Builds two scratch `filer.db` artifacts from one corpus.
+ *
+ * One omits `holdingCompany` and one keeps it.
+ * The function scores both against held-out truth and renders a markdown scorecard.
  */
 export async function filerLinkageEval(
 	options: FilerLinkageEvalOptions = {},

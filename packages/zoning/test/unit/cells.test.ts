@@ -3,7 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index measurement, and the number it is chosen on: how many features the polyfill-only index would drop, which `classifyFeatureCells` cannot report because it refuses a feature that reaches no cell.
+ *   Measures the index and the feature count used to select its resolution.
+ *   It checks how many features a polyfill-only index would drop.
+ *   `classifyFeatureCells` cannot report that count because it refuses features that reach no cell.
  */
 
 import { classifyFeatureCells, featureCellRows } from "@mailwoman/spatial"

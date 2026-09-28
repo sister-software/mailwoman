@@ -2,8 +2,9 @@
  * Placetype-pair emission prior.
  *
  * Probes child/parent place-name pairs from the loaded index and writes BIO bias into an emission matrix.
- * It supports auto/segment/anchored/window probe modes, marker suppression, optional
- * transition adjustments, optional parent-tag bias, and optional census trace observability.
+ * It supports auto/segment/anchored/window probe modes and marker suppression.
+ *
+ * It also supports transition adjustments, parent-tag bias and census trace observability.
  *
  * No index means no-op: a zero matrix and no transition adjustments.
  */

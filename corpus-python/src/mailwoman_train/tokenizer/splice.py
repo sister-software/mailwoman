@@ -149,8 +149,8 @@ def verify_source_identical(base_tokenizer: Path, spliced_tokenizer: Path, probe
 def collect_sample_codepoints(sample_path: Path, *, cap_bytes: int = 4_000_000) -> set[str]:
     """The set of non-ASCII codepoints in a locale sample file (first ``cap_bytes``, utf-8, errors ignored).
 
-    Deliberately format-agnostic: the check needs a locale's character inventory rather than its
-    parse, and reading raw text keeps it free of per-format code.
+    Deliberately format-agnostic. The check needs a locale's character inventory rather than its
+    parse. Reading raw text keeps it free of per-format code.
     """
     raw = sample_path.read_bytes()[:cap_bytes].decode("utf-8", errors="ignore")
     return {c for c in raw if ord(c) >= 128}
@@ -163,7 +163,9 @@ def check_codepoint_overlap(
     *,
     accepted_overlap: set[str] | None = None,
 ) -> dict[str, list[str]]:
-    """The splice safety check: report the non-ASCII codepoints shared between the new pieces and each trained locale's inventory, and raise on an overlapping locale not in ``accepted_overlap``.
+    """Report non-ASCII codepoints shared by new pieces and each trained locale's inventory.
+
+    Raise when an overlapping locale is absent from ``accepted_overlap``.
 
     Accepting a locale is a commitment that a per-locale non-inferiority leg is pre-registered in
     the check spec before the first measurement.
@@ -279,8 +281,8 @@ def mean_init_onnx_embeddings(
     """Expand an exported ONNX model's token_embeddings to the spliced vocab (FVT mean-init), in place.
 
     ``inner.token_embeddings.weight`` is the only vocab-dependent tensor in this BIO token-classifier,
-    so growing that one initializer and mean-initializing the new rows matches a re-export
-    byte-for-byte, and every other node is untouched. For an int8 twin, the embedding is stored as a
+    so growing that initializer and mean-initializing its new rows matches a re-export byte-for-byte.
+    Every other node remains untouched. For an int8 twin, the embedding is stored as a
     per-tensor-quantized ``<emb>_quantized`` (uint8) plus scalar ``_scale`` / ``_zero_point``, and
     the new rows are quantized with those same params. Returns (old_vocab, new_vocab).
     """

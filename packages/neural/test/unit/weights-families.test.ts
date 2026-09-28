@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The family registry's own invariants: one family per locale, one family per routing script, and a
+ *   The family registry's own invariants: one family per locale, one family per routing script and a
  *   vocabulary artifact for every encoder.
  *
  *   The `weights-family` repository check reads `FAMILIES` against the checkout's manifests and cannot

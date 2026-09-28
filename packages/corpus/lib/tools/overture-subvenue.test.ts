@@ -174,7 +174,7 @@ test("readOvertureSubVenues stamps the CONTEXT designator from the category, not
 	const rows = await readOvertureSubVenues({ databasePath })
 	const byName = new Map(rows.map((row) => [row.name, row]))
 
-	// A campus building named "Cuddy Hall" is context `campus` — the row's category — even though
+	// A campus building called "Cuddy Hall" is context `campus` — the row's category — even though
 	// the phrase inside the name names `hall`; attribution by phrase is the lexicon builder's job.
 	expect(byName.get("Cuddy Hall")?.designatorID).toBe("campus")
 	expect(byName.get("North Terminal")?.designatorID).toBe("terminal")

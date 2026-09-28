@@ -44,9 +44,10 @@ const MIN_NAME_LENGTH = 4
 const MAX_ATTESTED_TOKENS = 4
 
 /**
- * Reports whether a name has a usable length, contains a letter, and lacks route punctuation.
+ * Reports whether a name has usable length and contains a letter.
+ * It also rejects route punctuation.
  *
- * The check also rejects a single lowercase token, which is usually a code.
+ * The check also rejects a single lowercase token because it represents a code in this source.
  */
 export function isCleanName(name: string): boolean {
 	if (name.length < MIN_NAME_LENGTH || name.length > MAX_VENUE_NAME_LENGTH) return false

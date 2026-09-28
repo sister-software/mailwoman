@@ -7,7 +7,7 @@
 /**
  * Defines the current class of a geographic entity.
  *
- * These codes can be found in the tiger/Line products, gazetteer files, and other products.
+ * These codes can be found in the tiger/Line products, gazetteer files and other products.
  *
  * @title MAF/tiger Feature Class Code
  */
@@ -20,7 +20,7 @@ export const TIGERClassCode = {
 	/**
 	 * An area of dry or relatively dry land surrounded by water or low wetland.
 	 *
-	 * (including archipelago, atoll, cay, hammock, hummock, isla, isle, key, moku, and rock)
+	 * (including archipelago, atoll, cay, hammock, hummock, isla, isle, key, moku and rock)
 	 */
 	Island: "C3023",
 
@@ -132,9 +132,11 @@ export const TIGERClassCode = {
 	/**
 	 * This feature represents sovereign states recognized by the U.S. Department of State.
 	 *
-	 * For Census Bureau purposes, the area for which the decennial census is conducted,
-	 * which is the United States, Puerto Rico, and the Island Areas (American Samoa, Guam,
-	 * the Commonwealth of the Northern Mariana Islands, and the U.S. Virgin Islands).
+	 * For Census Bureau purposes, decennial census covers the United States,
+	 * Puerto Rico and the Island Areas.
+	 * These areas include American Samoa, Guam, the Commonwealth of the Northern
+	 * Mariana Islands and the U.S. Virgin Islands.
+	 *
 	 * The feature may also include other sovereign states such as Canada and Mexico,
 	 * but currently does not do so.
 	 */
@@ -143,7 +145,7 @@ export const TIGERClassCode = {
 	/**
 	 * A grouping of states and the District of Columbia for the presentation of census data.
 	 *
-	 * The United States is subdivided into four Census Regions—Northeast, South, Midwest, and West.
+	 * The United States is subdivided into four Census Regions—Northeast, South, Midwest and West.
 	 */
 	CensusRegion: "G1100",
 
@@ -212,7 +214,7 @@ export const TIGERClassCode = {
 	 * off-reservation trust lands, or Oklahoma tribal statistical areas (OTSAs).
 	 *
 	 * These entities are internal units of self-government or administration that serve social,
-	 * cultural, and/or economic purposes for the American Indians on the reservations,
+	 * cultural and/or economic purposes for the American Indians on the reservations,
 	 * off-reservation trust lands, or OTSAs.
 	 */
 	TribalSubdivision: "G2300",
@@ -286,7 +288,7 @@ export const TIGERClassCode = {
 	 *
 	 * The District of Columbia is treated as a statistical equivalent of a state for
 	 * census purposes, as are Puerto Rico, American Samoa, Guam, the Commonwealth of
-	 * the Northern Mariana Islands, and the U.S. Virgin Islands.
+	 * the Northern Mariana Islands and the U.S. Virgin Islands.
 	 */
 	StateEquivalentFeature: "G4000",
 
@@ -294,8 +296,9 @@ export const TIGERClassCode = {
 	 * The primary division of a state or state equivalent area.
 	 *
 	 * The primary divisions of 48 states are termed County, but other terms are used such
-	 * as Borough in Alaska, Parish in Louisiana, and Municipio in Puerto Rico.
-	 * This feature includes independent cities, which are incorporated places that are not part of any county.
+	 * as Borough in Alaska, Parish in Louisiana and Municipio in Puerto Rico.
+	 * This feature includes independent cities.
+	 * They are incorporated places outside any county.
 	 */
 	CountyEquivalentFeature: "G4020",
 
@@ -303,9 +306,10 @@ export const TIGERClassCode = {
 	 * The primary divisions of counties and equivalent features for the reporting of Census Bureau data.
 	 *
 	 * The subtypes of this feature are Minor Civil Division, Census County
-	 * Division/Census Subarea, and Unorganized Territory.
-	 * This feature includes independent places, which are incorporated places that
-	 * are not part of any county subdivision.
+	 * Division/Census Subarea and Unorganized Territory.
+	 * This feature includes independent places.
+	 *
+	 * They are incorporated places that are not part of any county subdivision.
 	 */
 	CountySubdivision: "G4040",
 
@@ -341,8 +345,8 @@ export const TIGERClassCode = {
 	ConsolidatedCity: "G4120",
 
 	/**
-	 * A statistical area that is defined for a named concentration of population
-	 * and is the statistical counterpart of an incorporated place.
+	 * A statistical area defined around a concentration of population and is the
+	 * statistical counterpart of an incorporated place.
 	 */
 	CensusDesignatedPlace: "G4210",
 
@@ -350,7 +354,7 @@ export const TIGERClassCode = {
 	 * The lowest level of geographic area for presentation of some types of Economic Census data.
 	 *
 	 * It includes incorporated places, consolidated cities, census designated places (CDPs),
-	 * minor civil divisions (MCDs) in selected states, and balances of MCDs or counties.
+	 * minor civil divisions (MCDs) in selected states and balances of MCDs or counties.
 	 * An incorporated place, CDP, MCD, or balance of MCD qualifies as an economic
 	 * census place if it contains 2,500 or more residents, or 2,500 or more jobs,
 	 * according to the most current data available.
@@ -379,7 +383,7 @@ export const TIGERClassCode = {
 	 * A tabulation block boundary does not cross the boundary of any other geographic
 	 * area for which the Census Bureau tabulates data.
 	 *
-	 * The subtypes of this feature are Count Question Resolution (CQR), current, and tabulation census.
+	 * The subtypes of this feature are Count Question Resolution (CQR), current and tabulation census.
 	 */
 	TabulationBlock: "G5040",
 
@@ -388,7 +392,7 @@ export const TIGERClassCode = {
 	 *
 	 * Additional equivalent features exist for state equivalents with nonvoting
 	 * delegates or no representative.
-	 * The subtypes of this feature are 111th, 113th, 114th, 115th, 116th, 117th,
+	 * The subtypes of this feature are 111th, 113th, 114th, 115th, 116th, 117th
 	 * and 118th Congressional Districts, plus subsequent Congresses.
 	 */
 	CongressionalDistrict: "G5200",
@@ -397,10 +401,11 @@ export const TIGERClassCode = {
 	 * Areas established by a state or equivalent government from which members are elected
 	 * to the upper or unicameral chamber of a state governing body.
 	 *
-	 * The upper chamber is the senate in a bicameral legislature, and the unicameral
-	 * case is a single house legislature (Nebraska).
+	 * The upper chamber is the senate in a bicameral legislature.
+	 * The unicameral case is a single house legislature (Nebraska).
+	 *
 	 * The subtypes of this feature are legislative session year, such as 2010, 2012, 2014,
-	 * 2016, 2017, 2018, and so forth, with the year indicating the vintage of the district.
+	 * 2016, 2017, 2018 and later years, with the year indicating the district's vintage.
 	 */
 	StateLegislativeDistrictUpperChamber: "G5210",
 
@@ -410,13 +415,14 @@ export const TIGERClassCode = {
 	 *
 	 * The lower chamber is the House of Representatives in a bicameral legislature.
 	 * The subtypes of this feature are legislative session year, such as 2010, 2012, 2014,
-	 * 2016, 2017, 2018, and so forth, with the year indicating the vintage of the district.
+	 * 2016, 2017, 2018 and later years, with the year indicating the district's vintage.
 	 */
 	StateLegislativeDistrictLowerChamber: "G5220",
 
 	/**
-	 * The generic name for the geographic features, such as precincts, wards, and election districts,
-	 * established by state, local, and tribal governments for the purpose of conducting elections.
+	 * The generic name for geographic features established by state, local
+	 * and tribal governments to conduct elections.
+	 * Examples include precincts, wards and election districts.
 	 */
 	VotingDistrict: "G5240",
 
@@ -440,11 +446,11 @@ export const TIGERClassCode = {
 
 	/**
 	 * Statistical geographic areas defined for the tabulation and dissemination of American
-	 * Community Survey (ACS) and Puerto Rico Community Survey, Public Use Microdata Sample
-	 * (pums) data, as well as ACS period estimates, and decennial census data.
+	 * Community Survey (ACS) and Puerto Rico Community Survey, Public Use Microdata
+	 * Sample (pums) data, ACS period estimates and decennial census data.
 	 *
 	 * Nesting within states or equivalent entities, PUMAs cover the entirety of the
-	 * United States, Puerto Rico, Guam, and the U.S. Virgin Islands.
+	 * United States, Puerto Rico, Guam and the U.S. Virgin Islands.
 	 */
 	PublicUseMicrodataArea: "G6120",
 
@@ -489,7 +495,7 @@ export const TIGERClassCode = {
 	/**
 	 * A body of water partly surrounded by land.
 	 *
-	 * [includes arm, bight, cove, and inlet]
+	 * [includes arm, bight, cove and inlet]
 	 */
 	BayEstuaryGulfSound: "H2051",
 
@@ -510,7 +516,7 @@ export const TIGERClassCode = {
 	/**
 	 * A natural flowing waterway.
 	 *
-	 * [includes anabranch, awawa, branch, brook, creek, distributary, fork, kill, pup, rio, and run]
+	 * [includes anabranch, awawa, branch, brook, creek, distributary, fork, kill, pup, rio and run]
 	 */
 	StreamRiver: "H3010",
 
@@ -643,7 +649,7 @@ export const TIGERClassCode = {
 
 	/**
 	 * Land under the jurisdiction of the National Park Service, including National Parks,
-	 * most National Monuments, and certain other lands.
+	 * most National Monuments and certain other lands.
 	 */
 	NationalParkServiceLand: "K2181",
 
@@ -783,25 +789,25 @@ export const TIGERClassCode = {
 	/**
 	 * A manmade facility maintained for the use of aircraft.
 	 *
-	 * [including airstrip, landing field, and landing strip]
+	 * [including airstrip, landing field and landing strip]
 	 */
 	AirportAirfield: "K2451",
 
 	/**
 	 * A place where travelers can board and exit rail transit lines, including
-	 * associated ticketing, freight, and other commercial offices.
+	 * associated ticketing, freight and other commercial offices.
 	 */
 	TrainStationTrolleyMassTransitRailStation: "K2452",
 
 	/**
 	 * A place where travelers can board and exit mass motor vehicle transit,
-	 * including associated ticketing, freight, and other commercial offices.
+	 * including associated ticketing, freight and other commercial offices.
 	 */
 	BusTerminal: "K2453",
 
 	/**
 	 * A place where travelers can board and exit water transit or where cargo is handled,
-	 * including associated ticketing, freight, and other commercial offices.
+	 * including associated ticketing, freight and other commercial offices.
 	 */
 	MarineTerminal: "K2454",
 
@@ -828,14 +834,14 @@ export const TIGERClassCode = {
 	HelicopterLandingPad: "K2460",
 
 	/**
-	 * An institution for post-secondary study, teaching, and learning.
+	 * An institution for post-secondary study, teaching and learning.
 	 *
 	 * [including seminary]
 	 */
 	UniversityCollege: "K2540",
 
 	/**
-	 * An institution for preschool, elementary or secondary study, teaching, and learning.
+	 * An institution for preschool, elementary or secondary study, teaching and learning.
 	 */
 	SchoolAcademy: "K2543",
 
@@ -867,13 +873,13 @@ export const TIGERClassCode = {
 
 	/**
 	 * A facility in which terrestrial and/or marine animals are confined within enclosures
-	 * and displayed to the public for educational, preservation, and research purposes.
+	 * and displayed to the public for educational, preservation and research purposes.
 	 */
 	Zoo: "K2586",
 
 	/**
 	 * A sanctified place or structure where people gather for religious worship.
-	 * Examples include church, synagogue, temple, and mosque.
+	 * Examples include church, synagogue, temple and mosque.
 	 */
 	PlaceOfWorship: "K3544",
 
@@ -908,7 +914,7 @@ export const TIGERClassCode = {
 	/**
 	 * A very steep or vertical slope.
 	 *
-	 * [including bluff, crag, head, headland, nose, palisades, precipice, promontory, rim, and rimrock]
+	 * [including bluff, crag, head, headland, nose, palisades, precipice, promontory, rim and rimrock]
 	 */
 	CliffEscarpment: "L4125",
 
@@ -961,8 +967,8 @@ export const TIGERClassCode = {
 	IntermittentShoreline: "P0003",
 
 	/**
-	 * An edge that does not represent a legal/statistical boundary, and does not
-	 * correspond to a shoreline or other visible feature on the ground.
+	 * An edge that does not represent a legal/statistical boundary and does not correspond
+	 * to a shoreline or other visible feature on the ground.
 	 *
 	 * Many such edges bound area landmarks, while many others separate water features
 	 * from each other (e.g., where a bay meets the ocean).
@@ -970,8 +976,9 @@ export const TIGERClassCode = {
 	OtherNonVisibleEdge: "P0004",
 
 	/**
-	 * A fixed rail line, generally visible from the surface, which carries any type of rail
-	 * vehicle including railroad, off-street transit and mountain rail systems.
+	 * A fixed rail line is generally visible from the surface.
+	 *
+	 * It carries any type of rail vehicle, including railroad, off-street transit and mountain rail systems.
 	 */
 	RailFeature: "R1011",
 
@@ -990,8 +997,10 @@ export const TIGERClassCode = {
 	 * Secondary roads are main arteries that are not limited access, usually in the
 	 * U.S. Highway, state highway, or county highway systems.
 	 *
-	 * These roads have one or more lanes of traffic in each direction, may or may not be divided,
-	 * and usually have at-grade intersections with many other roads and driveways.
+	 * These roads have one or more lanes of traffic in each direction.
+	 * They may or may not be divided.
+	 *
+	 * They usually have at-grade intersections with many other roads and driveways.
 	 * They often have both a local name and a route number.
 	 */
 	SecondaryRoad: "S1200",
@@ -1024,7 +1033,7 @@ export const TIGERClassCode = {
 	 * A road, usually paralleling a limited access highway, that provides access to
 	 * structures and/or service facilities along the highway.
 	 *
-	 * These roads can be named and may intersect with other roads.
+	 * These roads can have names and may intersect with other roads.
 	 */
 	ServiceDrive: "S1640",
 
@@ -1067,8 +1076,9 @@ export const TIGERClassCode = {
 	ParkingLotRoad: "S1780",
 
 	/**
-	 * A type of seasonal trail, created and marked in snow, primarily traveled by snowmobiles
-	 * and dog sleds, and used to reach housing units and to connect communities.
+	 * This is a seasonal trail type created and marked in snow.
+	 *
+	 * Travelers use snowmobiles and dog sleds to reach housing units and connect communities.
 	 */
 	WinterTrail: "S1810",
 

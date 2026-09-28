@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The exclusion check refuses far more than it admits, and a fold is identified by what it computes.
+ * @file The exclusion check refuses more rows than it admits. A fold is identified by its computation.
  */
 
 import { CoverageBasis, foldIdentity, requireExclusionBasis, supportsExclusion } from "@mailwoman/evidence"
@@ -37,7 +37,8 @@ describe("requireExclusionBasis", () => {
 		expect(e!.scope.layer).toBe("os-open-uprn")
 	})
 
-	// The meaning-of-zero rule: a cell nobody surveyed is unknown, and unknown is not absence.
+	// An unsurveyed cell is unknown.
+	// Unknown does not mean that the layer is absent.
 	it("refuses when the cell is missing from layer_coverage", () => {
 		expect(requireExclusionBasis({ ...BASE, cell: undefined })).toBeNull()
 	})

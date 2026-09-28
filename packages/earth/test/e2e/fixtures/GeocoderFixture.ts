@@ -1,6 +1,6 @@
 /**
- * @file High-level page object for the geocoder page, encapsulating address input, submit, result read-back, theme
- * toggling, and example-button clicks. Assertions live in the spec files, so this class is purely action + state read.
+ * @file Page object for geocoder input, result read-back, and controls for themes and examples.
+ * Assertions live in the spec files. This class performs actions and reads state.
  */
 
 import { expect, type Page } from "@playwright/test"
@@ -101,8 +101,8 @@ export class GeocoderFixture {
 	}
 
 	async submit(): Promise<void> {
-		// Enter rather than a button: the search pill carries no submit control,
-		// and a `type="search"` field submits its form on Enter.
+		// The search pill has no submit control.
+		// A `type="search"` field submits its form when the user presses Enter.
 		await this.page.locator("#mw-pipeline-input").press("Enter")
 
 		// Block until the result panel renders so callers can immediately call `readResult()`;

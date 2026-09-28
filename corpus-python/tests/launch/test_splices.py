@@ -15,7 +15,7 @@ def test_no_two_splices_write_the_same_destination() -> None:
 
 @pytest.mark.parametrize("name", sorted(SPLICES))
 def test_each_splice_grows_rather_than_shrinks(name: str) -> None:
-    """A recorded pair must be an EXPANSION. A narrower target is a splice nobody meant to run."""
+    """A recorded pair must be an EXPANSION. A narrower target is an unintended splice."""
     entry = SPLICES[name]
     if entry.vocabulary is None:
         pytest.skip(f"{name} has no measured vocabulary pair")

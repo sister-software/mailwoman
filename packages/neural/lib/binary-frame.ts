@@ -74,7 +74,7 @@ export class ByteCursor {
 }
 
 /**
- * Serializes a binary frame header: the `u32` magic, the header length, and the header as UTF-8 JSON.
+ * Serializes a binary frame header containing the `u32` magic, header length and UTF-8 JSON header.
  *
  * Format serializers copy this frame to offset 0 and write their records after it.
  */

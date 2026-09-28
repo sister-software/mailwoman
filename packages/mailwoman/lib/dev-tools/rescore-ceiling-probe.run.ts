@@ -5,13 +5,13 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  *   Rescore-ceiling probe: sizes how much of the unresolved tail a parse and resolve rescoring
  *   loop could recover, against a true gazetteer coverage gap. For each coord-golden row: parse
  *   (the shipped model) -> resolveTree -> resolved? For each unresolved row, ask whether the gold
- *   locality is in the gazetteer (findPlace) and what the model emitted, and bucket the failure:
+ *   locality is in the gazetteer (findPlace) plus what the model emitted. Bucket each failure:
  *     - swap     : gold is in the gazetteer and the model emitted a different locality token,
  *                  so a constrained rescore that swaps in the gold token recovers it.
  *     - needsK   : gold is in the gazetteer and the model emitted no locality, so only a K-best
  *                  decode that surfaces the gold token could recover it.
- *     - emitUnres: model emitted the gold locality but resolveTree still didn't resolve, which
- *                  points at resolver ranking or a country filter.
+ *     - emitUnres: model emitted the gold locality but `resolveTree` still failed to resolve it.
+ *                  Resolver ranking or a country filter may explain that result.
  *     - covGap   : gold not in the gazetteer, so rescoring can't help.
  *   recoverable = swap + needsK. Same resolver for baseline and gold-check.
  *

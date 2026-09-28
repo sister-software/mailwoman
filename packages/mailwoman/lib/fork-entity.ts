@@ -127,7 +127,7 @@ export interface ForkEntityAnswerTarget {
 }
 
 /**
- * Writes the entity's coordinates, the venue tier, and the admin coherence report to the outcome.
+ * Writes the entity's coordinates, venue tier and admin coherence report to the outcome.
  */
 function applyForkEntityAnswer(
 	result: ForkEntityAnswerTarget,
@@ -246,9 +246,10 @@ export function probeVenueNearAnchor(
 }
 
 /**
- * Applies the fork-entity probe, then the optional near-anchor venue refinement. the
- * fork probe runs only for a declared fork with no coordinate, and the refinement only
- * when `poiVenueTier` is set and the current tier is `admin` or `street`.
+ * Applies the fork-entity probe, then the optional near-anchor venue refinement.
+ *
+ * The fork probe runs only for a declared fork with no coordinate.
+ * The refinement runs only when `poiVenueTier` is set and the current tier is `admin` or `street`.
  */
 export function applyEntityTiers(
 	result: ForkEntityAnswerTarget & {
@@ -305,8 +306,8 @@ export function applyEntityTiers(
 
 /**
  * Returns the head of a decorated venue name — the text before the first spaced dash,
- * with any trailing parenthetical removed — or `null` when no text was removed
- * or the head is a single word, which matches too broadly.
+ * with any trailing parenthetical removed — or `null` when no text was removed.
+ * A single-word head matches too broadly.
  */
 function venueHeadSegment(venueRaw: string): string | null {
 	let separator = -1

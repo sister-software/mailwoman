@@ -3,15 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `storage.prepare` — partition, format, mount, and set compression properties on the data-root volume, in one
- *   operation that ends by verifying its own work.
+ *   `storage.prepare` partitions and formats the data-root volume.
+ *   It mounts the volume and sets compression properties. It verifies its work before returning.
  *
- *   Destructive, and guarded accordingly: the device has to satisfy the operator's serial and transport claim, be
- *   unmounted, and not back the root filesystem. The guards run before anything is written, and a failure lists every
- *   reason rather than the first, so a mistyped invocation is corrected once.
+ *   This operation can erase a device. Before writing, guards verify the operator's serial and transport claims.
+ *   They also confirm that the device is unmounted and does not back the root filesystem. The guards list every
+ *   failure reason so the operator can correct all invocation problems at once.
  *
- *   `--dry-run` runs the guards and prints the steps without touching the device, which is the same verdict
- *   `storage.plan` gives.
+ *   `--dry-run` runs the guards and prints the steps. Its verdict matches `storage.plan`.
  */
 
 import { readFile, writeFile } from "node:fs/promises"
@@ -87,8 +86,8 @@ export const prepareOperation = defineOperation({
 		context.log(`preparing ${input.device} (${device.model} ${device.size}, serial ${device.serial})`)
 
 		// TRIM runs before mkfs.
-		// A drive arriving full of another filesystem has no free erase blocks, and the
-		// resulting read-modify-write collapse looks exactly like failing hardware.
+		// A drive filled by another filesystem has no free erase blocks.
+		// The resulting read-modify-write collapse resembles hardware failure.
 		const discard = await inspectDiscard(input.device)
 
 		if (!discard.maxBytes && discard.unmapSupported && (await enableUnmap(discard))) {

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_diff_parse` tool definition. The diff itself is `@mailwoman/core/decoder/parse-diff`; this file is the
- *   interface, and its job is to make the address the unit a reader sees.
+ *   The `mwdev_diff_parse` tool definition exposes the diff from `@mailwoman/core/decoder/parse-diff`.
+ *   It presents the address as the unit a reader sees.
  */
 
 import { diffParse, isChange, renderParseDiff } from "@mailwoman/core/decoder/parse-diff"
@@ -55,8 +55,9 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 			const a = await base.session.geocode(input)
 			const b = await candidate.session.geocode(input)
 
-			// `tree` hangs off the RUN rather than the result: `GeocodeResult` carries a flat
-			// component map and drops the spans, which is the lossy shape this tool exists to avoid.
+			// `tree` belongs to the RUN.
+			// `GeocodeResult` stores a flat component map without spans.
+			// This tool reads the run to preserve those spans.
 			// `localeCountry` is a property of the tree.
 			diffs.push(
 				diffParse(input, a.tree, b.tree, {

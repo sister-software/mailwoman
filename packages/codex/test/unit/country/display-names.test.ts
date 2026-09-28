@@ -12,7 +12,8 @@ import { describe, expect, it } from "vitest"
 
 describe("enumerateCountryDisplayNames", () => {
 	it("supplies the exact surfaces the bare-toponym probe could not resolve", () => {
-		// Left is the surface a user typed, and right is the country it means.
+		// Left is the surface a user typed.
+		// Right is the country it means.
 		const wanted: Array<[string, string]> = [
 			["格鲁吉亚", "GE"],
 			["沙特阿拉伯", "SA"],
@@ -53,7 +54,8 @@ describe("enumerateCountryDisplayNames", () => {
 	})
 
 	it("emits no row for a code ICU does not recognise", () => {
-		// `Intl.DisplayNames.of` echoes an unknown code, and the echo is the miss signal.
+		// `Intl.DisplayNames.of` echoes an unknown code.
+		// The echo signals a miss.
 		expect([...enumerateCountryDisplayNames()].some((r) => r.iso2 === "ZZ" && r.name === "ZZ")).toBe(false)
 	})
 
@@ -68,8 +70,9 @@ describe("enumerateCountryDisplayNames", () => {
 		const rows = [...enumerateCountryDisplayNames()]
 		const countries = new Set(rows.map((r) => r.iso2))
 
-		// Floors rather than equalities: an ICU upgrade may add names, and pinning
-		// exact counts would fail on a Node bump for no reason.
+		// These assertions check floors rather than equalities.
+		// An ICU upgrade may add names.
+		// Pinning exact counts would fail after a Node bump.
 		expect(countries.size).toBeGreaterThanOrEqual(240)
 		expect(rows.length).toBeGreaterThanOrEqual(3000)
 	})

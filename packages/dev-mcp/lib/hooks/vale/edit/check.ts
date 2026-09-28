@@ -4,9 +4,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Claude Code PostToolUse hook: run the file an Edit or Write just changed through the same Vale surface CI runs,
- *   and hand any findings straight back, rather than learning about a comment's semicolon at `yarn lint` minutes and
- *   several edits later.
+ *   Claude Code PostToolUse hook: run the file an Edit or Write just changed through the Vale surface CI runs.
+ *   Return any findings immediately so the author can fix them before `yarn lint`.
  *
  *   The surface follows the extension and is the one `config/vale/lint-prose.ts` already owns — this hook passes the
  *   path and reads the verdict rather than carrying its own copy of the pathspecs, the exclusions or the config choice.
@@ -56,7 +55,8 @@ function editedPath(payload: Record<string, unknown> | null): string | null {
 
 	const repoRelative = relative(repoRootPath(), resolvePath(filePath))
 
-	// A scratch file outside the checkout is not a prose surface, and `..` is how that reads after resolution.
+	// A scratch file outside the checkout is not a prose surface.
+	// After resolution, `..` marks a path outside the checkout.
 	return repoRelative.startsWith("..") ? null : repoRelative
 }
 

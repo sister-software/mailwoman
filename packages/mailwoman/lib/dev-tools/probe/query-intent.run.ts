@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   The end-to-end receipt for the ROAD_TO_V9 §4 intent vocabulary: run real queries through the
- *   real geocode cascade and print the answer and its markers side by side. It needs the ~9 GB
- *   database set because the question it answers is a property of the candidate table's
- *   populations, so it cannot live in CI, and it reads `$MAILWOMAN_DATA_ROOT` read-only with the
- *   dev weights linked (`node neural-weights-en-us/scripts/link-dev-weights.ts`, after `yarn compile`).
+ *   real geocode cascade. The probe prints each answer beside its markers.
+ *   It needs the ~9 GB database set to measure candidate-table populations. CI does not hold that data.
+ *   The probe reads `$MAILWOMAN_DATA_ROOT` in read-only mode.
+ *   Link the dev weights with `node neural-weights-en-us/scripts/link-dev-weights.ts` after `yarn compile`.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -16,8 +16,10 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 
 /**
- * The hard-case board's `bare_namesake` and `fst_out_of_reach` surfaces, plus three controls a
- * reader needs to trust the rest: a full address, a lowercase full address, and a route pair.
+ * The hard-case board's `bare_namesake` and `fst_out_of_reach` surfaces plus three controls.
+ *
+ * The controls include a full address and its lowercase form.
+ * The third control is a route pair.
  */
 const DEFAULT_BOARD = [
 	"Springfield",

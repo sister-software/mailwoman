@@ -255,8 +255,8 @@ describe("matchShapes", () => {
 	it("calls a lookup empty only when nothing recovered the span", () => {
 		const unresolved = { ...EMPTY, retrieval: collectRetrievalFacts([lookup()]) }
 
-		// A format probe answers off an empty candidate table, and reading that as
-		// retrieval failure would report a working fallback as a defect.
+		// A format probe answers even with an empty candidate table.
+		// Classifying that answer as retrieval failure would report a working fallback as a defect.
 		const fallbackAnswered = {
 			...EMPTY,
 			retrieval: collectRetrievalFacts([
@@ -434,9 +434,9 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("flags a coordinate when the resolver trace records no lookup", () => {
-		// The resolver trace records the walk's own lookups, so a famous name the model
-		// tagged `street` is never queried by the walk (`street` is not in the placetype map)
-		// and is answered by the post-walk span-rescore, which emits no record.
+		// The resolver trace records the walk's own lookups, so a famous name the model The
+		// walk never queries tagged `street` because it is absent from the placetype map.
+		// The post-walk span-rescore answers it without emitting a record.
 		const resolved = assembleAccount(ITEM, run({ trace: traceOf() }), NO_EXPECTATION)
 
 		const abstained = assembleAccount(

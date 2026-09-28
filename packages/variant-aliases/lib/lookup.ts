@@ -52,8 +52,8 @@ const INDEX: ReadonlyMap<string, ReadonlyArray<VariantAlias>> = (() => {
  * - `exact` (confidence 1) when the detected locale is one the record declares.
  * - `language` (confidence 0.5) when only the language subtag agrees — weaker on purpose,
  *   because regional variants are by definition regional.
- * - `null` otherwise, and for any scoped record when the locale is unknown:
- *   a phrasing declared regional cannot be reached without knowing the region.
+ * - `null` for every scoped record when the locale is unknown: a phrasing declared
+ *   regional cannot be reached without knowing the region.
  */
 export function resolveLocaleScope(
 	locales: ReadonlyArray<string> | undefined,

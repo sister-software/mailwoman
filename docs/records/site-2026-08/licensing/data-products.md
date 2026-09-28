@@ -7,7 +7,7 @@ hide_footer: true
 
 # Database products catalog
 
-Mailwoman consists of an engine and a set of databases. The engine is one npm install, and its terms are on the [licensing overview](./index.md). The databases are separate artifacts with their own provenance, sizes, and terms. Their terms differ because each database inherits obligations from the public register it was compiled from, which often surprises people.
+Mailwoman consists of an engine and a set of databases. The engine is one npm install, and its terms are on the [licensing overview](./index.md). The databases are separate artifacts with their own provenance, sizes, and terms. Their terms differ because each database inherits obligations from its source register. Maintainers who expect one license to cover every database can be surprised by those differences.
 
 This page lists the databases, with one entry per artifact. Each entry covers what the artifact contains, where the data came from, what the upstream license requires, whether we distribute the artifact or ship you the builder, and how current it is. If you are deciding what to load into a product, read this page alongside [data licensing & provenance](./data-provenance.md), which covers the same sources from the legal side.
 
@@ -115,7 +115,7 @@ This is layer #1 on the [spatial-layer interface](https://github.com/sister-soft
 
 **Approximate size.** 3.7 GB sealed.
 
-**Build.** `mailwoman gazetteer build poi --countries US,CA,MX,FR`. The [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx) is the full build/verify/publish procedure, including the Overture schema problems that first-time builders usually hit.
+**Build.** `mailwoman gazetteer build poi --countries US,CA,MX,FR`. The [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx) is the full build/verify/publish procedure, including Overture schema problems reported by first-time builders.
 
 :::info[The ODbL half of POI is a different artifact]
 

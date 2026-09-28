@@ -200,7 +200,8 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 	}
 
 	// The bands must partition the population range.
-	// An overlap counts a row twice, and a gap drops rows before the census can report them.
+	// An overlap counts a row twice.
+	// A gap drops rows before the census reports them.
 	const ordered = [...definition.populationBands].toSorted((left, right) => left.min - right.min)
 
 	for (const [index, band] of ordered.entries()) {
@@ -241,7 +242,7 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 }
 
 /**
- * Loads the frozen definition after checking its identity, hash, and audit.
+ * Loads the frozen definition after checking its identity, hash, plus audit.
  */
 export async function loadProminenceDefinition(): Promise<ProminenceFloorDefinition> {
 	return loadFrozenDefinition<ProminenceFloorDefinition>({

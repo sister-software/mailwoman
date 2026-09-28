@@ -98,7 +98,7 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 }
 
 /**
- * Great-circle distance on the named body. {@link haversine} is this function on Earth.
+ * Great-circle distance on the selected body. {@link haversine} is this function on Earth.
  * A caller with a body passes it here.
  *
  * The Null-Island sentinel of the object form applies: a `(0, 0)` input answers `NaN`.
@@ -137,8 +137,8 @@ export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: numb
 /**
  * Metres per degree of latitude.
  *
- * The scale {@link segmentDistanceMetres} reports in, and the constant the
- * bounding-box estimates in `#h3/polygon-cells` are built on.
+ * The scale used by {@link segmentDistanceMetres}.
+ * It is also the constant the bounding-box estimates in `#h3/polygon-cells` are built on.
  */
 export const METRES_PER_DEGREE = 111_320
 

@@ -21,7 +21,8 @@ export const GoogleGeocoderStatus = {
 	ZeroResults: "ZERO_RESULTS",
 	OverDailyLimit: "OVER_DAILY_LIMIT",
 	/**
-	 * Transient, and the one status here worth retrying.
+	 * Transient status.
+	 * This is the only status here worth retrying.
 	 */
 	OverQueryLimit: "OVER_QUERY_LIMIT",
 	RequestDenied: "REQUEST_DENIED",
@@ -89,7 +90,9 @@ export interface GoogleBounds {
 export interface GoogleGeometry {
 	location: GoogleLatLngLiteral
 	/**
-	 * Absent on some responses, which the tier mapping treats as unknown rather than defaulting.
+	 * Absent on some responses.
+	 *
+	 * The tier mapping treats absence as unknown rather than defaulting.
 	 */
 	location_type?: GoogleLocationType | string
 	viewport?: GoogleBounds
@@ -105,7 +108,7 @@ export interface GoogleGeometry {
 export interface GooglePlusCode {
 	global_code: string
 	/**
-	 * The shortened form relative to a named locality, present only when one exists.
+	 * The shortened form relative to a locality with a name, present only when one exists.
 	 */
 	compound_code?: string
 }
@@ -129,7 +132,8 @@ export interface GoogleGeocodeResult {
 	/**
 	 * Set only when Google could not match the query as given and fell back to something looser.
 	 *
-	 * Absent means exact, which `OracleGeocodeResult.partialMatch` coerces rather than passes through.
+	 * Absence means an exact match.
+	 * `OracleGeocodeResult.partialMatch` coerces that value rather than passing it through.
 	 */
 	partial_match?: boolean
 	/**

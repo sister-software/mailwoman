@@ -33,7 +33,8 @@ export function repoURL(org: string, repo: string): string {
 /**
  * The state of our fork of a repo.
  *
- * A `clean` fork has no commits ahead of upstream, and a `diverged` fork has at least one.
+ * A `clean` fork has no commits ahead of upstream.
+ * A `diverged` fork has at least one.
  */
 export type ForkState = "absent" | "clean" | "diverged"
 
@@ -44,7 +45,8 @@ export type ForkState = "absent" | "clean" | "diverged"
 export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
 
 /**
- * Resolves a WOF repo to our fork when the fork has diverged, and to upstream otherwise.
+ * Resolves a WOF repo to our fork when the fork has diverged.
+ * Otherwise, it resolves to upstream.
  *
  * A clean fork resolves to upstream because GitHub forks do not track their parent.
  * A probe failure also resolves to upstream and records the failure in `reason`.
@@ -83,8 +85,9 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
 /**
  * Probes our fork through the `gh` CLI.
  *
- * @returns `diverged` when GitHub's compare shows the fork ahead of upstream, `clean`
- * when the fork has no commits ahead, and `absent` when the fork lookup returns 404.
+ * @returns `diverged` when GitHub's compare shows the fork ahead of upstream,
+ * `clean` when the fork has no commits ahead.
+ * It returns `absent` when the fork lookup returns 404.
  * @throws Error when the fork lookup fails for another reason or the compare yields no `ahead_by`.
  */
 export const githubForkProbe: ForkProbe = async (org, repo) => {

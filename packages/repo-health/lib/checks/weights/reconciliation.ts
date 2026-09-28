@@ -32,8 +32,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 		for (const record of records) {
 			const file = `${record.workspace}/package.json`
 
-			// A base this repository does not publish cannot be resolved by a consumer either,
-			// and the overlay's inherited lineage reads unresolved rather than empty.
+			// A consumer cannot resolve a base that this repository does not publish.
+			// The overlay's inherited lineage reports it as unresolved instead of empty.
 			if (record.baseWeights && !versionByPackage.has(record.baseWeights)) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
@@ -95,8 +95,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 
 			const manifest = await readPackageJSON(resolvePath(context.repoRoot, record.workspace, "package.json"))
 
-			// A package declaring a base and shipping its own graph is two claims about
-			// where its rows are decoded, and `resolveWeights` reads one of them.
+			// Declaring a base and shipping a graph make conflicting claims about where rows are decoded.
+			// `resolveWeights` follows one of those claims.
 			if (record.baseWeights && Array.isArray(manifest.files) && manifest.files.includes("model.onnx")) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,

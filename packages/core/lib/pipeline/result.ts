@@ -17,8 +17,10 @@ import type {
 } from "#pipeline/types"
 
 /**
- * One stage crash the coordinator caught and degraded past: `runPipeline` still resolves,
- * and `tree` still carries whatever the remaining stages could prove.
+ * One stage crash that the coordinator caught and degraded past.
+ *
+ * `runPipeline` still resolves.
+ * `tree` carries whatever the remaining stages could prove.
  */
 export interface PipelineFault {
 	stage: PipelineFaultStage
@@ -61,8 +63,9 @@ export interface PipelineResult {
 	/**
 	 * Every stage crash the coordinator caught and degraded past, in order.
 	 *
-	 * The array is always present, so an empty one states that no stage faulted,
-	 * which is a different claim from a missing field.
+	 * The array is always present.
+	 * An empty array states that no stage faulted.
+	 * A missing field would make a different claim.
 	 */
 	faults: PipelineFault[]
 	/**
@@ -74,7 +77,10 @@ export interface PipelineResult {
 	 */
 	intentMarkers: QueryIntentMarker[]
 	/**
-	 * Which path the coordinator took: `"fast-path"` skipped stages 3-5, and `"poi"` took the intent branch.
+	 * The path the coordinator took.
+	 *
+	 * `"fast-path"` skipped stages 3-5.
+	 * `"poi"` took the intent branch.
 	 */
 	path: "fast-path" | "full" | "poi"
 }

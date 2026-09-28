@@ -5,8 +5,8 @@
  *
  *   The OSM rooftop extract provider, the injection point the geocode cascade consults for the opt-in
  *   international precision tier. Given a data root, it opens `osm/address-points-<cc>-<cc>.db`
- *   with the country's street-normalization locale, so probe-side keying matches the extract the
- *   builder wrote, and caches the open handle per country. Wire its bound `for` into
+ *   with the country's street-normalization locale. Probe-side keying then matches the extract the
+ *   builder wrote. The provider caches the open handle per country. Wire its bound `for` into
  *   `GeocodeDeps.osmExtracts`.
  *
  *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases. See `osm/readme.md` for the
@@ -32,9 +32,11 @@ export interface OSMExtracts extends Pick<RegionDatabases, "addressPoints"> {
 /**
  * Opens and caches per-country OSM rooftop lookups.
  *
- * `for` is synchronous, so on-disk existence is probed asynchronously once instead of
- * per call. {@linkcode warm} awaits `pathExists` for every supported country's extract
- * and records what exists, and `for` consults that record.
+ * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per
+ * call. {@linkcode warm} awaits `pathExists` for every supported country's extract.
+ * It records existing extracts.
+ *
+ * `for` consults that record.
  * Prefer {@linkcode OSMRegionDatabaseProvider.create}.
  * It constructs the provider and warms it before answering.
  *

@@ -31,7 +31,8 @@ export interface GeocoderPanelsOptions {
 	 */
 	handle: GeocoderRuntimeHandle
 	/**
-	 * Open the decode-path drawer on mount, which is what the `/debug` route does.
+	 * Open the decode-path drawer on mount.
+	 * The `/debug` route enables this option.
 	 */
 	debugDefault: boolean
 }
@@ -61,7 +62,8 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	const selectedVersion = runtime.selectedVersion ?? null
 	const selectedRelease: ReleaseInfo | undefined = releases.find((r) => r.version === selectedVersion)
 
-	// Null once the runtime is ready, which removes the status from the footer rather than leaving a stale label.
+	// Set this to null when the runtime is ready.
+	// The footer then removes the status label.
 	const loading = runtime.loading
 	const loadStatus = runtime.ready || !loading ? null : describeLoad(loading)
 

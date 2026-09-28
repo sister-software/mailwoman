@@ -3,13 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Reliability curves compare reported confidence with observed correctness. This module is pure, and surface-specific
- * confidence collection lives in `surfaces.ts`.
+ * Reliability curves compare reported confidence with observed correctness. This module contains pure calculations.
+ * `surfaces.ts` collects confidence values for each surface.
  */
 
 /**
- * One graded confidence; `strata` is free-form because each surface knows its own useful splits,
- * and a fixed field list would force every surface to carry the others empty.
+ * One graded confidence value.
+ *
+ * Each surface chooses useful `strata` for its own splits.
+ * A fixed field list would make every surface carry unused fields.
  */
 export interface Observation {
 	confidence: number
@@ -73,7 +75,8 @@ export interface ThresholdRow {
 	/**
 	 * Correct observations the eval turned away.
 	 *
-	 * This is the cost side of the trade, which a precision column alone hides.
+	 * This is the cost side of the trade.
+	 * A precision column alone hides it.
 	 */
 	correct_below: number
 }
@@ -161,8 +164,10 @@ export interface ErrorClass {
  * The confusions an eval at `threshold` lets through, most frequent first,
  * restricted to admitted errors because their cost is asymmetric.
  *
- * It requires `expected` and `predicted` strata, and a surface without them returns
- * no classes, which is absence rather than a clean confusion matrix.
+ * It requires `expected` and `predicted` strata.
+ * A surface without them returns no classes.
+ *
+ * That result indicates missing strata rather than a clean confusion matrix.
  */
 export function errorClasses(sample: readonly Observation[], threshold: number, limit: number): ErrorClass[] {
 	const tally = new Map<string, ErrorClass>()

@@ -44,7 +44,8 @@ const US_STATE_ABBREVIATION_BY_NAME: ReadonlyMap<string, string> = new Map(
 /**
  * Returns the region text to print.
  *
- * US state names become USPS codes, and other names pass through.
+ * The adapter converts US state names to USPS codes.
+ * Other names pass through.
  */
 function regionSurface(country: string, name: string): string {
 	if (country !== "US") return name
@@ -163,10 +164,10 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 
 			const ancestry = buildAncestorNameIndex(byID, placetypeToTag)
 
-			// The admin records were read only so that postcode ancestry resolves, and the index
-			// above now holds the three ancestor names each postcode's variants read.
-			// Dropping them here releases every admin record's `nameVariants` map
-			// before the emit pass, and `shouldEmit` skipped them anyway.
+			// The adapter read admin records so postcode ancestry resolves.
+			// The index above now holds the three ancestor names read by each postcode variant.
+			// Dropping them here releases every admin record's `nameVariants` map before the emit pass.
+			// `shouldEmit` skipped those records anyway.
 			for (const [id, record] of byID) {
 				if (placetypeToTag(record.placetype) !== "postcode") {
 					byID.delete(id)

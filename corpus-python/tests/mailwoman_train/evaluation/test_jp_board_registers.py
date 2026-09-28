@@ -1,4 +1,7 @@
-"""The per-register breakdown of the JP board score must partition the same outcomes and never change the overall ``acceptable / rows`` check, and a board without a ``register`` column scores the same with no breakdown."""
+"""The JP board's per-register breakdown must partition the same outcomes as the overall score.
+
+The breakdown must preserve the ``acceptable / rows`` check. A board without a ``register`` column must score the same when the breakdown is absent.
+"""
 
 from __future__ import annotations
 
@@ -51,7 +54,7 @@ def _predictor(correct_raws: set[str]):
     return predict
 
 
-# The board has four registers, and `native` holds the most rows, as on the real board.
+# The board has four registers. `native` has the most rows, as on the real board.
 ALL_ROWS = [
     _row("TOKYO", "CHIYODA", "1-2-3", "native", 139.75, 35.68),
     _row("TOKYO", "CHIYODA", "4-5-6", "native", 139.76, 35.69),
@@ -170,7 +173,7 @@ def test_resolve_tag_defaults_track_the_label_set():
 
 def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
     # The row has two `municipality` spans, as a KR address can have two `dependent_locality` spans. A model
-    # that labels both scores 2 of 2, and the first span still forms the centroid key.
+    # that labels both spans scores 2 of 2. The first span still forms the centroid key.
     raw = "TOKYO CHIYODA KANDA"
     row = {
         "raw": raw,
@@ -247,7 +250,7 @@ def test_municipality_macro_weights_each_held_out_municipality_once():
 
 
 #: A kana-register row whose predicted surface misses the centroid table while its `pref` and `muni`
-#: kanji fields match, which is what `gold_exact` reads.
+#: kanji fields match. `gold_exact` reads those fields.
 KANA_ROW = {
     **_row("とうきょう", "ちよだ", "1-2-3", "kana", 139.75, 35.68),
     "pref": "TOKYO",

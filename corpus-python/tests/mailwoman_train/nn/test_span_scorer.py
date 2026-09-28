@@ -1,4 +1,7 @@
-"""The semi-Markov span scorer, whose two DP routines (log-partition, Viterbi) are verified against brute-force enumeration over all valid segmentations rather than smoke-tested."""
+"""The semi-Markov span scorer.
+
+Brute-force enumeration over every valid segmentation verifies both dynamic-programming routines: log-partition and Viterbi.
+"""
 
 import torch
 

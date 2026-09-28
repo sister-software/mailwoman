@@ -111,8 +111,9 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 		if (options.out) {
 			await writeLocalFile(chart + "\n", options.out)
 		} else {
-			// Write Mermaid directly to stdout so Ink's <Text> renderer does not word-wrap
-			// long classDef / linkStyle lines, which Mermaid cannot parse.
+			// Write Mermaid directly to stdout so Ink's <Text> renderer does not
+			// word-wrap long classDef / linkStyle lines.
+			// Mermaid cannot parse wrapped definitions.
 			process.stdout.write(chart + "\n")
 		}
 

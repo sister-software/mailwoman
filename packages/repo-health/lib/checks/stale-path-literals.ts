@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Reports quoted repository paths in source that refer to a file that has moved.
  *
- *   The compiler catches a stale import specifier, but a path in a string is read only at run time, and the code that
- *   reads it often treats a missing file as a valid negative answer.
+ *   The compiler catches stale import specifiers.
+ *   Code reads path strings only at runtime and may treat a missing file as a valid negative answer.
  *
  *   A literal is reported when it has the shape of a repository path and git history shows that the repository once
  *   tracked it. The history test excludes paths that a script writes, uncommitted build artifacts and fixture paths.
@@ -33,7 +33,7 @@ const REPOSITORY_ROOTS = ["packages/", "docs/", "data/", "evals/", "corpus-pytho
 const SKIPPED_PREFIXES = ["docs/records/"]
 
 /**
- * Path segments that mark build output, which a clean checkout lacks.
+ * Path segments that mark build output absent from a clean checkout.
  */
 const DERIVED_SEGMENTS = ["/out/", "/dist/", "/node_modules/", "/build/", "/.yarn/", "/coverage/"]
 

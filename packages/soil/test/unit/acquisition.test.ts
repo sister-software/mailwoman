@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The acquisition side: the failure body Soil Data Access actually returns, the metadata that decides an
- *   artifact's vintage and its licence, and the farmland scope that decides whether two rows are comparable.
+ *   The acquisition tests cover the failure body returned by Soil Data Access and the metadata that determines an
+ *   artifact's vintage and licence. They also cover the farmland scope that determines whether two rows are comparable.
  *
- *   the exception fixture is the live service'S own body, captured from a query with a bad column name. Its
- *   twin — a query that exceeds the server's own timeout — returns the same document shape on an http 200,
- *   which is why the detection is on the body rather than on the status.
+ *   The exception fixture is the live service's own response body. It was captured from a query with a bad column
+ *   name. A query that exceeds the server timeout returns the same document shape with HTTP 200, so the test checks
+ *   the response body rather than the status.
  */
 
 import { readOGCServiceException as readServiceException } from "@mailwoman/core/api"
@@ -27,7 +27,8 @@ Invalid query: Invalid column name &#39;nosuchcolumn&#39;.</ServiceException>
 `
 
 /**
- * The same document a server-side timeout returns — on an http 200, which is the whole trap.
+ * The same document a server-side timeout returns with HTTP 200.
+ * This response can hide a failed query.
  */
 const TIMED_OUT = `<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <ServiceExceptionReport xmlns="http://www.opengis.net/ogc">
@@ -107,7 +108,7 @@ describe("readFGDCMetadata", () => {
 		const withoutGrant = FGDC.replace("This is public information and may be interpreted", "This is restricted and")
 
 		// That sentence is the grant this layer ships on.
-		// A build that absorbed its removal would ship an artifact under terms nobody checked.
+		// A build that absorbed its removal would ship an artifact under unverified terms.
 		expect(() => readFGDCMetadata(withoutGrant, "IA153")).toThrow(/public information/u)
 	})
 
@@ -118,9 +119,11 @@ describe("readFGDCMetadata", () => {
 	})
 
 	it("reads an unclosed element as unreadable, in one pass rather than by scanning for it", () => {
-		// What a truncated archive produces, and what a lazy-quantifier reader backtracks polynomially over.
-		// Every element after the truncation is unreadable, so the licence assertion —
-		// the first thing read — is what refuses, and the refusal doubles as the timing check.
+		// This is what a truncated archive produces.
+		// A lazy-quantifier reader backtracks polynomially over it.
+		// Every element after the truncation is unreadable.
+		// The licence assertion is the first read and refuses the input.
+		// That refusal also serves as the timing check.
 		const truncated = `${FGDC.slice(0, FGDC.indexOf("<pubdate>") + "<pubdate>".length)}${"9".repeat(200_000)}`
 		const started = performance.now()
 

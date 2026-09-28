@@ -321,7 +321,9 @@ export class PairIndexResolver {
 	}
 
 	/**
-	 * The header's ISO country code, which selects the postcode pattern the prior strips from parent segments.
+	 * The header's ISO country code.
+	 *
+	 * It selects the postcode pattern the prior strips from parent segments.
 	 */
 	get country(): string {
 		return this.header.country
@@ -343,7 +345,8 @@ export class PairIndexResolver {
 }
 
 /**
- * The subset of {@link PairIndexResolver} that the priors use, which test doubles can implement.
+ * The subset of {@link PairIndexResolver} used by priors.
+ * Test doubles can implement it.
  *
  * An absent `transitionBeta` means the index applies no transition bonus.
  */
@@ -355,7 +358,8 @@ export interface PairIndexLike {
 	/**
 	 * The parent bias magnitude.
 	 *
-	 * An absent value means no parent bias, and `PlacetypePairPriorOpts.parentDelta` overrides it.
+	 * An absent value means no parent bias.
+	 * `PlacetypePairPriorOpts.parentDelta` overrides it.
 	 */
 	readonly parentDelta?: number
 

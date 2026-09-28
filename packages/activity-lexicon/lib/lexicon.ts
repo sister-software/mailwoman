@@ -61,10 +61,13 @@ export function resolveActivityPhraseLocale(
  * Everything wrong with a lexicon that can be established without leaving this
  * package, one message per problem.
  *
- * The checks an entry's attestation invites but this package cannot make — that a committed
- * query row exists and ends in the phrase, that a referenced synonym carries the locales
- * the entry copied, that a cited description clause is really in the compiled concept —
- * belong to a consumer that holds those artifacts, and are made there.
+ * A consumer with the referenced artifacts must check attestations this package cannot verify.
+ * Those checks verify three facts.
+ *
+ * A committed query row must end in the phrase.
+ * A referenced synonym must use the entry's locales.
+ *
+ * A cited description clause must appear in the compiled concept.
  */
 export function auditActivityLexicon(lexicon: ActivityPhraseLexicon): string[] {
 	const problems: string[] = []
@@ -196,7 +199,8 @@ let committed: ActivityPhraseLexicon | undefined
  * Read the lexicon, refusing one the audit rejects.
  *
  * The committed read is memoized.
- * An explicit path is read fresh, which is what a test asserting a refusal needs.
+ * An explicit path is read fresh.
+ * A test uses this behavior to assert a refusal.
  */
 export async function readActivityLexicon(path: string = ACTIVITY_LEXICON_PATH): Promise<ActivityPhraseLexicon> {
 	if (path === ACTIVITY_LEXICON_PATH && committed) return committed

@@ -165,8 +165,9 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("--baseline severity check: candidate LOST where baseline only DEGRADED is a NEW (enforcing) violation, not pre-existing", async () => {
-		// A candidate verdict worse than the baseline's on the same (row, transform) must count
-		// as a new violation, which severity-blind matching would wrongly call pre-existing.
+		// A candidate verdict worse than the baseline's on the same (row, transform)
+		// must count as a new violation.
+		// Severity-blind matching would wrongly call it pre-existing.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
@@ -238,8 +239,8 @@ describe("runInvarianceSuite", () => {
 
 	it("wires abbreviation-swap through the canonicalizing comparator (typo-in-id dispatch regression guard)", async () => {
 		// Comparing raw values would flag a correctly echoed "Ave" as a false `lost`,
-		// so `compareForTransform` canonicalizes both sides to long form, and this test
-		// exercises the real transform id so a typo in that dispatch fails here.
+		// so `compareForTransform` canonicalizes both sides to long form.
+		// This test exercises the real transform id so a typo in that dispatch fails here.
 		const abbrevRow: InvarianceRow = {
 			id: "abbrev-wiring-row",
 			raw: "350 Fifth Avenue, New York, NY",
@@ -317,8 +318,9 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 	})
 
 	it("--baseline: a pair the candidate holds but the baseline violated is GAINED — reported, non-blocking", async () => {
-		// The baseline's original parse never emits the row's critical components, so the row is a
-		// gained capability, and this pair also flips candidate-invariant where baseline degraded.
+		// The baseline's original parse never emits the row's critical components,
+		// so the row is a gained capability.
+		// This pair also flips candidate-invariant where baseline degraded.
 		const row: InvarianceRow = {
 			id: "gb-quoted-gain",
 			raw: "The Grange, Fishburn, Stockton-on-Tees",

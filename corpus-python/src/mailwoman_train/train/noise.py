@@ -51,8 +51,8 @@ def perturb_anchor_confidence(conf: torch.Tensor, step: int, max_steps: int) -> 
 def perturb_gazetteer_confidence(conf: torch.Tensor, step: int, max_steps: int) -> torch.Tensor:
     """The same curriculum on the gazetteer clue — the v0.9.12 fix.
 
-    v0.9.12 lifted country, region and locality but cost US postcode 3.7 points, which is what
-    leaning on an always-on clue looks like: the model reallocated base competence toward it.
+    v0.9.12 raised the country and region scores. It also raised locality. US postcode fell by 3.7 points.
+    That drop shows the model reallocating base competence toward an always-on clue.
     Dropping the clue on a growing fraction of rows forces it to keep that competence both with
     the hint and without.
     """

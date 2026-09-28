@@ -19,7 +19,8 @@ import type { ComponentTag } from "#component"
  * The address-identifying components, in canonical key order.
  *
  * Venue / attention are intentionally excluded.
- * Those carry organization identity, which the record layer keys separately.
+ * Those fields represent organization identity.
+ * The record layer keys it separately.
  */
 const KEY_FIELD_ORDER = [
 	"po_box",
@@ -76,9 +77,11 @@ export interface FoldForKeyOptions {
 }
 
 /**
- * The shared fold behind every match key: nfkd-decompose and strip combining marks (so `é` → `e`),
- * lowercase, delete intra-token punctuation, expand or flatten connective punctuation per
- * {@linkcode FoldForKeyOptions}, space every remaining non-alphanumeric, and collapse whitespace.
+ * The shared fold behind every match key: nfkd-decompose and strip combining marks
+ * (so `é` → `e`), Lowercases text and deletes intra-token punctuation.
+ *
+ * It expands or flattens connective punctuation per {@linkcode FoldForKeyOptions}.
+ * The function replaces each remaining non-alphanumeric with a space, then collapses whitespace.
  *
  * Deterministic — the same input and options always yield the same output.
  */

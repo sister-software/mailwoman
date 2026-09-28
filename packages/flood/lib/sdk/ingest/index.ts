@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read the EA flood geodatabase as a stream of WGS84 features through ogr2ogr, which is build tooling
- *   only. The declared EPSG is asserted before any feature, every reprojected vertex is checked against
- *   the declared bounding box to catch a swapped axis order, and `OGR_GEOM_AREA` is compared with the
+ *   Read the EA flood geodatabase as a stream of WGS84 features through ogr2ogr. ogr2ogr is build tooling
+ *   only. The reader asserts the declared EPSG before reading any feature. It checks each reprojected vertex against
+ *   the declared bounding box to catch a swapped axis order. It compares `OGR_GEOM_AREA` with the
  *   encoded rings to check nesting and holes. Without the OSTN15 grid proj silently uses an approximate
  *   OSGB36 shift, so the identity read refuses the build.
  */
@@ -185,7 +185,8 @@ function toSourceFeature(
  */
 export interface FloodFeatureSource {
 	/**
-	 * The feature count the source declares, which the build checks when it streams a different total.
+	 * The feature count declared by the source.
+	 * The build checks it against the streamed total.
 	 */
 	declaredFeatureCount: number
 	layer: string

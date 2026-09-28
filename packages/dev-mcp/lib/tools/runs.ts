@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_runs` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the interface, and the description is the
+ *   The `mwdev_runs` tool definition provides the description an agent reads and its input schema.
+ *   It also provides the handler wiring. The measurement itself lives in the package root. This file is the interface.
+ *   The description is the
  *   required half of it.
  */
 
@@ -57,11 +58,12 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 
 		// One measurement often writes several runs in the same second against the same tool,
 		// input set and tree — a burst of arms rather than several comparisons.
-		// Listed row by row those fill the reply with rows that differ only in `run_id`
-		// and byte count, and push the older, genuinely different runs past the limit.
+		// Listed row by row, these fill the reply with rows that differ only in `run_id` and byte count.
+		// They push older runs with different results past the limit.
 		// Group them.
-		// The newest of each group is the one a {kind:"recorded"} arm would replay,
-		// and the rest are named by count and stay reachable through `get`.
+		// A {kind:"recorded"} arm would replay the newest run in each group.
+		// The response reports the remaining run count.
+		// Callers can retrieve each run through `get`.
 		const groups = new Map<string, typeof all>()
 
 		for (const run of all) {
@@ -87,8 +89,8 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 		const hidden = collapsed.slice(limit).length
 
 		return {
-			// Named rather than left as a bare truncation: a listing that silently showed
-			// the newest 25 of 200 reads as a store holding 25.
+			// Report the truncation explicitly: a listing that silently showed the
+			// newest 25 of 200 reads as a store holding 25.
 			summary:
 				`${all.length} stored run${all.length === 1 ? "" : "s"} in ${collapsed.length} group${collapsed.length === 1 ? "" : "s"} ` +
 				`(same tool + input set + tree + engine), ${sameTree} against the current tree ` +

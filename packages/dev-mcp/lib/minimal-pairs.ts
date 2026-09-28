@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Where along a ladder of near-identical inputs the answer changes, and which component changed first.
+ *   This module finds where answers change along a ladder of near-identical inputs. It reports which component changed first.
  *
- *   Every other measurement here varies the configuration and holds the input fixed. This varies the input and holds the
- *   configuration fixed, which is the only way to attribute a failure to a token rather than a setting.
+ *   Other measurements here vary the configuration while holding the input fixed. This measurement varies the input
+ *   while holding the configuration fixed. That isolates changes caused by a token from changes caused by a setting.
  *
- *   Rungs are the caller's: no code here generates them, because generating them means asserting a component order, and a
- *   generator silently wrong about order for one locale would produce a confident table about a ladder nobody wrote.
+ *   The caller supplies the rungs. Generating them here would assert a component order. A generator with the wrong
+ *   order for one locale would produce a table for an invalid ordering.
  *
- *   A tag absent on a rung is reported absent — gained, lost and changed are three different facts about a component,
- *   and collapsing them into "different" is what makes a diff table unreadable.
+ *   A tag absent on a rung is reported as absent. A component can be gained, lost, or changed. The table preserves
+ *   those separate facts instead of grouping all three under "different".
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -54,9 +54,11 @@ interface RungReading {
 	lon: number | null
 	tier: string
 	/**
-	 * The intent check's verdict, when it fired on this rung: a refused rung has no components
-	 * and no coordinate, and is otherwise indistinguishable from an input the parser could
-	 * make no sense of — but it is the opposite, because the eval discarded a completed tree.
+	 * The intent check's verdict, when it fired on this rung: a refused rung has
+	 * no components and no coordinate.
+	 *
+	 * The same result could indicate an input the parser could not interpret.
+	 * The `refused` field distinguishes a completed parse tree that the eval discarded.
 	 */
 	refused?: string
 	/**
@@ -130,8 +132,9 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 }
 
 /**
- * The rendering is the deliverable rather than a convenience: a reader deciding whether a defect
- * is real needs the addresses in view, and a JSON blob of component maps does not put them there.
+ * The rendering shows the addresses a reader needs to decide whether a defect is real.
+ *
+ * A JSON blob of component maps does not show those addresses.
  */
 function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 	const tags = [...new Set(reading.rungs.flatMap((rung) => Object.keys(rung.components)))].toSorted()

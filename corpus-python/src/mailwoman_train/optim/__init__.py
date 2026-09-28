@@ -1,1 +1,1 @@
-"""Optimization: parameter groups, learning-rate schedules, and the Fisher/EWC penalty."""
+"""Parameter groups and learning-rate schedules with Fisher/EWC support."""

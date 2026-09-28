@@ -9,8 +9,9 @@
  *   `https://tiles.mailwoman.ai/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
  *
  *   Uploads go through `rclone`: the `RCLONE_S3_*` variables are its s3-backend config (source the repo `.env` first:
- *   `set -a. . ./.env. set +a`). rclone handles multipart for large archives, and the anti-501 flags skip the post-PUT
- *   head and checksum operations R2 refuses. The worker reads the object through its R2 binding, so Content-Type and
+ *   `set -a. . ./.env. set +a`). rclone handles multipart for large archives.
+ *   The anti-501 flags skip post-PUT HEAD and checksum operations that R2 refuses.
+ *   The worker reads the object through its R2 binding, so Content-Type and
  *   Cache-Control do not matter.
  *
  *   credentials for the `nexus-assets` bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets` (403 on
@@ -25,8 +26,12 @@ import { CommandError } from "@mailwoman/core/scripting/command"
  * A transport that puts one local file at `bucket/key`.
  *
  * The default is rclone over the `RCLONE_S3_*` credentials.
- * A caller with another credential (the planetary pipeline uploads through wrangler and the account's API token)
- * injects its own, and the key layout, the size report and the served-at line stay shared.
+ * A caller with another credential can inject its own transport.
+ *
+ * The planetary pipeline uploads through wrangler.
+ * It uses the account's API token.
+ *
+ * All transports use the same key layout, size report, and served-at line.
  */
 export type UploadTransport = (target: { file: string; bucket: string; key: string }) => Promise<void>
 

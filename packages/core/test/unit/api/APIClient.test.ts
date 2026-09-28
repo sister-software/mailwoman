@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for {@linkcode APIClient} — pacing, the cooldown budget, bounded retry, and error mapping.
+ * @file Tests for {@linkcode APIClient}: pacing, cooldown budget, bounded retry and error mapping.
  */
 
 import { APIClient } from "@mailwoman/core/api/APIClient"
@@ -142,7 +142,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	it("still throttles a serial run", async () => {
 		// The cooldown is a full minute.
 		// A cooldown of `60000 / requestsPerMinute` would let a budget of 2 release 2,
-		// wait 30s, and release 2 more within the same minute.
+		// wait 30s and release 2 more within the same minute.
 		const COOLDOWN_MS = 60_000
 
 		const clock = new VirtualClock()

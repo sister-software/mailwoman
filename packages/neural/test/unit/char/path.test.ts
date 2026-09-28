@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The char path through the runtime: the card's `encoder` block, weights resolution without a
- *   tokenizer, the char feed packer, and a classifier that encodes per code point, feeds
+ * @file Tests the character path through the runtime: the card's `encoder` block, weights resolution without a
+ *   tokenizer, the char feed packer and a classifier that encodes per code point, feeds
  *   `inferChars`, and skips the SentencePiece word-consistency repair that folds a whitespace-free
  *   Japanese address into one municipality span.
  */

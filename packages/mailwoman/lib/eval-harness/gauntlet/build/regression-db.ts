@@ -9,8 +9,8 @@
  *   Row order in the DB is the loader's order (country dir, then case id) — not the pre-2026-08-05
  *   chronological array order. Checked rather than assumed: the regression runner reads every row. the ablation
  *   layer's `select` carries `.orderBy("id")`, so `--limit N` samples the same N rows either way. and
- *   `ablationBoardID` hashes a sorted fingerprint. What changes is the order the regression runner prints its
- *   per-case lines in, which is why the migration's graded receipt sorted before diffing.
+ *   `ablationBoardID` hashes a sorted fingerprint.
+ *   The regression runner changed the order of its per-case output, so the migration's graded receipt was sorted before diffing.
  *
  *   Run: mailwoman eval gauntlet-build regression-db
  */
@@ -47,8 +47,7 @@ export interface BuildRegressionDBOptions {
  * Build the curated regression DB from the committed seed and swap it into place.
  *
  * @throws When the loader resolves zero cases — see {@linkcode assertCorpusIsNonEmpty}.
- * A build that prints "built" over an empty corpus is the 2026-08-06 failure,
- * and it exits 0 today unless something refuses.
+ * A build over an empty corpus can print "built" and exit 0 unless a check refuses it.
  */
 export async function buildRegressionDB(options: BuildRegressionDBOptions = {}): Promise<void> {
 	const casesDir = options.casesDir ?? CASES_DIR

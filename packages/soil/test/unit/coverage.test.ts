@@ -76,7 +76,7 @@ function county(areaSymbol: string, minLon: number, maxLon: number, offsets: rea
 }
 
 /**
- * The west county: mapped soil up against the shared edge, and a second band well inside it.
+ * The west county has mapped soil at the shared edge and a second band well inside it.
  */
 function westCounty(): SurveyAreaInput {
 	return county("XX001", SHARED_EDGE_LON - 2 * COUNTY_HALF_WIDTH, SHARED_EDGE_LON, [0, -INTERIOR_BAND_OFFSET])
@@ -132,8 +132,8 @@ describe("the coverage footprint over adjacent survey areas", () => {
 		expect(westOnly).toBeGreaterThan(0)
 		expect(eastOnly).toBeGreaterThan(0)
 
-		// The excess is the border strip: cells wholly inside the union and neither county alone,
-		// which a per-area test cannot produce however many areas it is given.
+		// The excess is the border strip: cells inside the union but outside either county individually.
+		// A per-area test cannot produce these cells, regardless of the number of areas.
 		expect(both).toBeGreaterThan(westOnly + eastOnly)
 	})
 

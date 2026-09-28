@@ -1,8 +1,8 @@
 """The pre-registered read: one row at a time, folded into the blended totals and two breakdowns.
 
-The check is the blended fraction and no other figure. Every other figure here — the per-register
-split, the per-municipality macro, the gold-exact count — is a READING beside it, and none of them
-can move it. `predict` is injected so all of this runs without a checkpoint and without torch.
+The check is the blended fraction. Every other figure here — the per-register split, the
+per-municipality macro, the gold-exact count — is a READING beside it. Those figures cannot move
+the check. `predict` is injected so this code runs without a checkpoint or torch.
 """
 
 from __future__ import annotations
@@ -29,10 +29,10 @@ RESOLVE_TAGS: dict[str, tuple[str, str]] = {
 
 @dataclass(frozen=True)
 class RowOutcome:
-    """One board row's read: which of the three outcomes it is, and the two keys it is bucketed by.
+    """One board row's read: its outcome and the two keys used to bucket it.
 
-    `acceptable` and `unresolved` are mutually exclusive, and a row that is neither resolved to a
-    centroid within the accept radius nor unresolved is simply wrong. `gold_exact` never implies
+    `acceptable` and `unresolved` are mutually exclusive. A row outside both states is wrong when its
+    resolved centroid exceeds the accept radius. `gold_exact` never implies
     `acceptable`: it is reported beside the pre-registered number, never folded into it.
     """
 
@@ -54,7 +54,7 @@ def score_row(
     resolve_tags: tuple[str, str],
     accept_km: float,
 ) -> RowOutcome:
-    """Read one board row: the resolve outcome, the per-tag hits, and the buckets it belongs to."""
+    """Read one board row: its resolve outcome, per-tag hits, plus assigned buckets."""
     region_tag, locality_tag = resolve_tags
     raw = row["raw"]
     ids = list(predict(raw))[: len(raw)]
@@ -103,8 +103,8 @@ def score_row(
 class BoardTallies:
     """The blended totals and the two breakdowns, folded one row at a time.
 
-    The board holds out whole municipalities, and one of them carries 823 of 20,000 rows, so a
-    row-weighted number moves 2 pp on a single name. The macro over municipalities is reported
+    The board holds out whole municipalities. One holds 823 of 20,000 rows, so a single name can move
+    the row-weighted score by 2 percentage points. The macro over municipalities is reported
     beside the blended fraction. The pre-registered check stays the blended one.
     """
 

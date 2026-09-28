@@ -21,7 +21,7 @@
 
 /* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because this synthesizer
    refuses a non-US tuple outright (`if (base.country !== "US") return null`). A layout call would answer the same
-   string for the only country that reaches it, and would read as though the file served more. */
+   string for the only country that reaches it. The function would read as though the file served more. */
 
 import { isPresent } from "@mailwoman/core/objects"
 import { sample } from "@mailwoman/core/random"
@@ -35,9 +35,9 @@ import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 // Keep ~50 entries so the synthesis distribution doesn't overfit to a tiny vocabulary.
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+    output distribution. Reading the cascade top-to-bottom shows it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
+    extracted as constants above. */
 
 const STREET_NAMES = [
 	"Main",
@@ -238,9 +238,9 @@ export function synthesizeStreetRow(
 	const decomposed = decomposeStreet(fullStreet)
 
 	// note: country is intentionally omitted.
-	// We don't emit "USA" or "US" in the raw string, and the aligner's fuzzy
-	// match (edit distance 2) will spuriously match "US" against any 2-char token
-	// (e.g. A house number "45" is exactly 2 substitutions from "US").
+	// The raw string omits "USA" and "US".
+	// The aligner's fuzzy match (edit distance 2) will spuriously match "US" against any
+	// 2-char token (e.g. A house number "45" is exactly 2 substitutions from "US").
 	// The PO box synthesizer skips country for the same reason.
 	// Bare mode is guarded by `> 0` so the default (bareProb=0) consumes no RNG
 	// and reproduces the original full-address output byte-for-byte.

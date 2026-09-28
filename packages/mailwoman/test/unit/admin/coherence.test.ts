@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests the admin-coherence verdicts for region and country qualifiers, and their pass-through in
+ *   Tests the admin-coherence verdicts for region and country qualifiers plus their pass-through in
  *   `toGauntletResult`.
  */
 
@@ -13,7 +13,7 @@ import type { GeocodeResult } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 /**
- * A candidate-tier locality winner, which has a country code and no ancestry.
+ * A candidate-tier locality winner with a country code and no ancestry.
  */
 const weimarTexas: AdminCoherenceWinner = { tag: "locality", countryCode: "US" }
 
@@ -97,7 +97,8 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 	it("the mislabel bridge: a COUNTRY name in the region slot confirms against country-class evidence", () => {
 		// "Batumi, Georgia" parses "Georgia" as the region.
-		// The region ancestor (Adjara) does not match, and the country evidence does.
+		// The region ancestor (Adjara) does not match.
+		// The country evidence does.
 		// The bridge reads the same country keys as the country verdict.
 		const batumi: AdminCoherenceWinner = {
 			tag: "locality",

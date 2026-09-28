@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The data-root overlay rung and the artifact report that keeps it honest: a weights workspace carries
- *   no `model.onnx`, so before the rung a fresh checkout resolved the package, found it empty, and
- *   could not geocode at all.
+ *   Tests the data-root overlay rung and the artifact report that describes it. A weights workspace carries
+ *   no `model.onnx`. Before the rung, a fresh checkout resolved the package and found it empty.
+ *   It could not geocode.
  *
  *   Only `model` and `tokenizer` throw, while the sibling artifacts resolve
  *   `existsSync → undefined` by design, so a checkout that finds the two binaries parses while missing
@@ -69,8 +69,8 @@ describe("resolveWeights — the data-root overlay rung", () => {
 	it("refuses a half-populated overlay rather than resolving one binary", async () => {
 		const root = await scratch()
 
-		// A tokenizer without a model is broken rather than weaker, and the failure it
-		// would otherwise produce arrives much later, inside the ONNX session.
+		// A tokenizer without a model is broken.
+		// Without this check, failure arrives later inside the ONNX session.
 		await weightsDir(root, ABSENT, { "tokenizer.model": "sp" })
 
 		await expect(resolveWeights({ locale: ABSENT, overlayRoot: root })).rejects.toThrow(/Could not resolve/)
@@ -100,8 +100,9 @@ describe("resolveWeights — the data-root overlay rung", () => {
 			message = (error as Error).message
 		}
 
-		// An explicit candidate cache is an isolation boundary: it must name the failed cache package
-		// and must not report an overlay probe, which would mix installed artifacts into the candidate run.
+		// An explicit candidate cache is an isolation boundary.
+		// It must name the failed cache package.
+		// It must omit the overlay probe so installed artifacts do not enter the candidate run.
 		expect(message).toContain(cache.toString())
 		expect(message).toContain(`@mailwoman/neural-weights-${ABSENT}`)
 		expect(message).not.toContain(overlay(ABSENT).toString())
@@ -120,8 +121,8 @@ describe("resolveWeights — the artifact report", () => {
 		expect(by.get("model.onnx")?.origin).toBe(WeightsOrigin.Overlay)
 		expect(by.get("model-card.json")?.origin).toBe(WeightsOrigin.Overlay)
 
-		// An artifact the overlay does not carry is reported with a null origin rather than omitted,
-		// which would make "this checkout has no FST" and "this build never had one" the same shape.
+		// An artifact absent from the overlay is reported with a null origin.
+		// Omitting it would make "this checkout has no FST" indistinguishable from "this build never had one".
 		const fst = by.get("fst-xx-xx.bin")
 
 		expect(fst).toBeDefined()

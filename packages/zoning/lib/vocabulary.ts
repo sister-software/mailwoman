@@ -32,7 +32,9 @@ export const GZT_SERVICE_URL = `https://services.arcgis.com/${GZT_ORG_ID}/arcgis
 export const GZT_ITEM_URL = `https://www.arcgis.com/home/item.html?id=${GZT_ITEM_ID}`
 
 /**
- * The Department's zoning map viewer, which is the only place it publishes coverage detail.
+ * The Department's zoning map viewer.
+ *
+ * It is the only place the Department publishes coverage detail.
  */
 export const GZT_MAP_VIEWER_URL = "https://www.myplan.ie/zoning-map-viewer/"
 
@@ -68,9 +70,10 @@ export const GZT_LICENSE_CONTRADICTION =
 export const GZT_SOURCE_EPSG = 2157
 
 /**
- * The extent that the Department declares for the item, as `[minLon, minLat, maxLon, maxLat]`
- * in CRS84, which the ingest checks every reprojected vertex against to catch
- * the source's projected metres read as degrees.
+ * The extent that the Department declares for the item, as `[minLon, minLat, maxLon, maxLat]` in CRS84.
+ *
+ * The ingest checks every reprojected vertex against it to catch the source's
+ * projected metres read as degrees.
  */
 export const GZT_DECLARED_BBOX: readonly [number, number, number, number] = [
 	-10.54553193079905, 51.452765583177616, -5.947766999109422, 54.47387941831219,
@@ -205,8 +208,10 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 /**
  * The provenance grade of a zoning row.
  *
- * A caller must never present an `inferred` row as the authority's designation, each artifact
- * holds one grade only, and ODbL sources cannot be merged into this table without relicensing it.
+ * A caller must present an `inferred` row as an inference rather than as the authority's designation.
+ * Each artifact holds one grade.
+ *
+ * ODbL sources require relicensing before they can be merged into this table.
  */
 export const ProvenanceGrade = {
 	Authoritative: "authoritative",
@@ -225,8 +230,11 @@ export type ProvenanceGrade = (typeof ProvenanceGrade)[keyof typeof ProvenanceGr
 export const GZT_PROVENANCE_GRADE: ProvenanceGrade = ProvenanceGrade.Authoritative
 
 /**
- * The Department's own statements of what the product does not state, which every reading
- * includes and which report what a plan assigns at a location, never what may be built there.
+ * The Department's own statements define the product's limits.
+ *
+ * Every reading includes these statements.
+ * They report the plan's zoning assignment at a location.
+ * They do not establish what may be built there.
  */
 export const GZT_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"Myplan.ie data are not published here as legal definitions of the current actuality with regard to Local Authority zoning or their geographic extents.",
@@ -250,6 +258,7 @@ export const GZT_COVERAGE_LIMIT =
 /**
  * The local code with which an authority explicitly marks land as unzoned.
  *
- * Only a row with this code means unzoned, and a location with no row makes no statement about zoning.
+ * A row with this code means the location is unzoned.
+ * A location with no row makes no statement about zoning.
  */
 export const GZT_UNZONED_LOCAL_CODE = "UNZ - Unzoned"

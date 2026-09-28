@@ -7,9 +7,9 @@
  *   placetype statistics + hierarchy relationships from the unified admin DB (`spr` + `ancestors`).
  *
  *   Motivation (the `dependent_locality` dead-tag investigation): the trained model struggles with rare
- *   sub-locality tags because they have almost no WOF grounding, and we underuse WOF's statistical counts
+ *   sub-locality tags because they have little WOF grounding. We underuse WOF's statistical counts
  *   + parent/ancestor relationship chains. This surfaces, per placetype: the global row count, the
- *   distribution of its parent placetype (how the type relates upward), and its modal ancestor-placetype
+ *   distribution of its parent placetype (how the type relates upward) and its modal ancestor-placetype
  *   chain. Read-only. The `--json` payload is shaped to feed an "effective placetype" soft-prior later.
  */
 

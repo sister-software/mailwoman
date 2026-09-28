@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file The source-register build's reader for the three columns the research pass left unresolved.
  *
- *   The register declares `addressRole`, `upstreamLineage` and `coverage` unresolved, and the CSV carries a populated
- *   column for each. Those columns hold `varies` on all 389 rows and `country-specific` on all 389, which is the pass
- *   saying it did not determine the field per source. Carrying either onto a record would turn "nobody looked" into a
+ *   The register declares `addressRole`, `upstreamLineage` and `coverage` unresolved. The CSV carries a populated
+ *   column for each. Those columns hold `varies` on all 389 rows and `country-specific` on all 389.
+ *   The pass therefore did not determine the field per source. Carrying either onto a record would turn "uninspected" into a
  *   value `ingestEligibilityProblems` reads as an answer.
  */
 
@@ -32,8 +32,7 @@ describe("readUnresolvedColumn", () => {
 	})
 
 	it("refuses an address_role that is neither a placeholder nor a role", () => {
-		// The alternative is dropping it, which is how a column somebody filled in
-		// comes to read as a column nobody filled in.
+		// Dropping it would make a column someone filled in read as a column with no recorded value.
 		// The message names both repairs because either can be the right one.
 		expect(() => readUnresolvedColumn("head office", "address_role", 42)).toThrow(
 			/row 42: address_role "head office" is neither a declared placeholder nor an `AddressRole`/u

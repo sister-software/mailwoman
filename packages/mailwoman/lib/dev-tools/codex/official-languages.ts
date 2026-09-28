@@ -31,7 +31,9 @@ export interface GenerateOfficialLanguagesOptions {
 	 */
 	cldrVersion?: string
 	/**
-	 * Overrides the output path, which defaults to the committed `codex/country/official-languages.ts`.
+	 * Overrides the output path.
+	 *
+	 * The default is the committed `codex/country/official-languages.ts`.
 	 */
 	out?: string
 }

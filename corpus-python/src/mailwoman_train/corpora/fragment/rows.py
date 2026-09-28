@@ -1,10 +1,10 @@
 """Turning a harvested surface into a labeled row.
 
-Each renderer builds `raw` by joining pieces and the char offsets by advancing a cursor over the
-same pieces, so the two can disagree without anything downstream noticing. The char label array
-is painted from the offsets, and a row labelling the wrong characters still trains and still
-scores. `tests/mailwoman_train/corpora/test_fragment_rows.py` asserts the agreement: every span
-must cover the surface it claims, and the span tags must name the same fields as the BIO labels.
+Each renderer builds `raw` by joining pieces. It builds the character offsets by advancing a cursor
+over those same pieces. The two can disagree without anything downstream noticing. The character
+label array is painted from the offsets. A row labeling the wrong characters still trains and scores.
+`tests/mailwoman_train/corpora/test_fragment_rows.py` asserts that each span covers its claimed
+surface. The span tags must also match the BIO label fields.
 """
 
 from __future__ import annotations

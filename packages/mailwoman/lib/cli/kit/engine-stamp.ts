@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The process's engine stamp, resolved once. The `mailwoman` package alone can read its manifest and the
- *   configured key, and an http surface's app factory must not import it, so each bin builds the stamp and
- *   hands it to its app as an option value.
+ *   The process's engine stamp is resolved once. Only the `mailwoman` package can read its manifest and
+ *   configured key. An HTTP surface's app factory must not import it, so each bin builds the stamp and
+ *   passes it to the app as an option value.
  */
 
 import {

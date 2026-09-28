@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reading a delimited file compressed at rest must be indistinguishable from reading one that is not, which is the whole basis for storing the corpus as `.zst`.
+ *   Reading a delimited file compressed at rest must match reading an uncompressed file. This behavior lets the corpus be stored as `.zst`.
  */
 
 import { unzstd, zstd } from "@mailwoman/core/fs/compression"
@@ -103,8 +103,8 @@ describe("zstd round-trip", () => {
 
 describe("the count-then-read shape", () => {
 	// `readUnquotedTSVChecked` counts a file and then reads it, passing the same path twice.
-	// With a hoisted stream the second pass sees an exhausted iterator and reads no bytes,
-	// which that function reports as swallowed rows.
+	// With a hoisted stream the second pass sees an exhausted iterator and reads no bytes.
+	// The function reports the unread rows as swallowed rows.
 	it("survives two sequential passes when the source is built per call", async () => {
 		const count = async (path: string) => {
 			let n = 0

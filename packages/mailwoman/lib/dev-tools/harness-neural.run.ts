@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Neural test harness: the arena scorer behind `external-arenas.ts` and the pre-ship eval
- *   battery. Reads the 30+ `mailwoman/test/address.*.test.ts` files (and sibling
- *   intersection/venue/compound_street tests), extracts every `assert(input, ...expected)` call via
- *   TS AST, and grades each input's neural parse (`NeuralAddressClassifier`) against the expected
+ *   battery. It reads the 30+ `mailwoman/test/address.*.test.ts` files plus sibling
+ *   the intersection tests. It also reads the venue tests and the compound_street tests.
+ *   The tool extracts each assertion call via the TS AST.
+ *   It grades each input's neural parse (`NeuralAddressClassifier`) against the expected
  *   records. `--falsehoods <dir>` adds jsonl row files (the external arena fixtures).
  *
  *   Output: a markdown report on stdout + a JSON sidecar (`--out-json`) per-assertion containing
@@ -204,7 +205,7 @@ function localeFromFilename(file: string): string {
  * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS object.
  *
  * @returns `null` for anything that is not a literal-of-literals (we intentionally do not
- * try to evaluate variables or computed properties, and none of the test files use those).
+ * try to evaluate variables or computed properties. None of the test files use those forms).
  */
 function objectLiteralToRecord(node: ts.ObjectLiteralExpression): ClassificationRecord | null {
 	const out: Record<string, string[]> = {}

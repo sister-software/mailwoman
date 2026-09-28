@@ -239,7 +239,7 @@ type LookupRow = [Record<string, number>, number, number, string | null]
 export const ANCHOR_PILOT_COUNTRIES = ["DE", "FR", "US"] as const
 
 /**
- * The v2 anchor-lookup countries, which add countries with licence-clean postcode sources to the pilot set.
+ * The v2 anchor-lookup countries add locations with licence-clean postcode sources to the pilot set.
  *
  * The order sets centroid priority.
  * The pilot countries come first so their codes keep their centroids.
@@ -310,7 +310,8 @@ export interface AnchorLookupStats {
 	collisions: number
 
 	/**
-	 * The number of GB outward-district keys, which `total` already includes.
+	 * The number of GB outward-district keys.
+	 * `total` already includes them.
 	 */
 	gbOutwardKeys: number
 

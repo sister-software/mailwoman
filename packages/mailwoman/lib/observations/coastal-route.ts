@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Records only designated locations without changing the selected answer, and no designation is not evidence of safety because the source cannot distinguish inland from unmapped coast.
+ * Records designated locations without changing the selected answer.
+ * No designation does not establish safety because the source cannot distinguish inland locations from unmapped coast.
  */
 
 import {
@@ -54,13 +55,13 @@ export interface CoastalErosionObservation {
 }
 
 /**
- * Named reasons a coordinate produced no observation.
+ * Reasons a coordinate produced no observation.
  */
 export const COASTAL_REFUSALS = [
 	"no_coordinate",
 	/**
-	 * Not an absence claim: the location may be inland or on the coast outside the mapped
-	 * risk area, and ncerm publishes no data that tells those apart.
+	 * The location may be inland or on the coast outside the mapped risk area.
+	 * NCERM publishes no data that distinguishes those cases.
 	 */
 	"no_designation_here",
 ] as const
@@ -68,7 +69,7 @@ export const COASTAL_REFUSALS = [
 export type CoastalRefusal = (typeof COASTAL_REFUSALS)[number]
 
 /**
- * Observation or named refusal for one coordinate.
+ * Observation or explicit refusal for one coordinate.
  */
 export type CoastalDecision =
 	| { fired: true; observation: CoastalErosionObservation }
@@ -78,7 +79,7 @@ export interface CoastalErosionRoute extends Disposable {
 	identity: CoastalLayerIdentity
 	scenarioKey: string
 	/**
-	 * Read the layer for one coordinate, or return a named refusal for missing coordinates.
+	 * Read the layer for one coordinate, or return a reasoned refusal for missing coordinates.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => CoastalDecision
 }
@@ -88,7 +89,7 @@ export interface CoastalErosionRouteOptions {
 	 * The sealed layer to read.
 	 *
 	 * Required, because a route that guessed a default would report a designation
-	 * from an authority nobody asked about.
+	 * from an authority not configured for this request.
 	 */
 	databasePath: PathBuilderLike
 	/**

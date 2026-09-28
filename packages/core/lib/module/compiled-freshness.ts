@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Checks whether a workspace's compiled `out/` tree is older than its source.
  *
- *   The check compares against the newest emitted `.js` file. The `out/` directory's own mtime is unreliable because
- *   `tsc` overwrites files in place, and the directory mtime changes only when an entry is added or removed.
+ *   The check compares against the newest emitted `.js` file. The `out/` directory's own mtime is unreliable.
+ *   `tsc` overwrites files in place, so the directory mtime changes only when an entry is added or removed.
  *
  *   Emitted `.d.ts` files end in `.ts` and live under `out/`, so the source scan excludes them by extension and by path.
  *   Otherwise the emit would be compared against itself.

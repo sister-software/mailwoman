@@ -1,7 +1,7 @@
 """End-to-end tests of `train()` on CPU over a two-row corpus.
 
-Every interval is small enough to fire twice. The tests pin the CSV layout, the order of log, save
-and eval events, and the final per-parameter weight checksums, which capture the optimizer
+Every interval is small enough to fire twice. The tests pin the CSV layout and the order of log, save
+and eval events. They also pin the final per-parameter weight checksums to capture the optimizer
 trajectory.
 
 The checksums live in `train-loop-reference.json`. Regenerate them with
@@ -34,8 +34,7 @@ CONFIGS = paths.CONFIGS
 PROBE_2K = CONFIGS / "v8-cjk-full-2k.yaml"
 REFERENCE = Path(__file__).with_name("train-loop-reference.json")
 
-#: These settings make every interval fire twice, and the log, eval and save intervals coincide at
-#: steps 2 and 4.
+#: These settings make every interval fire twice. All three intervals run at steps 2 and 4.
 MAX_STEPS = 4
 LOG_EVERY = 2
 EVAL_EVERY = 2
@@ -78,7 +77,7 @@ def _probe_config(root: Path) -> Config:
     save_char_vocab(vocab, vocab_path)
 
     cfg = load_config(PROBE_2K)
-    # The loader rejects a positive weight for a source without rows, and the shipped weights list
+    # The loader rejects a positive weight for a source without rows. The shipped weights list
     # sources that this corpus lacks. Clearing them samples the two rows uniformly.
     cfg.data.source_weights = None
     cfg.data.corpus_dir = str(corpus)

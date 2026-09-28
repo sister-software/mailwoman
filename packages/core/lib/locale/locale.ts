@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Locale-profile types. A `LocaleProfile` declares everything locale-specific about
- *   classification: which weights package (if any) backs the neural classifier, which
- *   `ComponentTag`s the locale uses, and any per-component policy overrides.
+ *   classification: the optional weights package for the neural classifier, the locale's
+ *   supported `ComponentTag`s, plus its per-component policy overrides.
  *
- *   A profile is keyed by its `locale` field, and `InMemoryLocaleRegistry.get` returns it for that
- *   exact BCP-47 tag.
+ *   A profile is keyed by its `locale` field. `InMemoryLocaleRegistry.get` returns the profile
+ *   for that exact BCP-47 tag.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

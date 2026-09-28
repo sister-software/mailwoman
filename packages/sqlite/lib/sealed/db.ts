@@ -6,14 +6,14 @@
  *   The sealed-artifact invariant: every SQLite DB a build produces is a read-only asset. `sealDatabase`
  *   is the last step of every builder — checkpoint, freeze the journal, chmod 0444. `openBuiltClient`
  *   (`@mailwoman/sqlite/sealed`) is how anything opens a data artifact. a write-mode open of a sealed
- *   file throws a named error pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
+ *   file throws a descriptive error pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
  *   manual (`chmod u+w`), never programmatic — rebuild, don't mutate.
  *
- *   `swapDatabaseIntoPlace` is the other half of that invariant — the atomic publish step agents.md
- *   specifies in prose ("build it successfully, then move the previous version to a temp directory,
- *   and then move the new version into place"). It lives here because this module already owns the
- *   built-artifact lifecycle, and because a rule the project states in prose and implements more than
- *   once in code should be a function.
+ *   `swapDatabaseIntoPlace` is the atomic publish step agents.md
+ *   specifies in prose ("build it successfully. Move the previous version to a temp directory.
+ *   Move the new version into place."). It lives here because this module already owns the
+ *   built-artifact lifecycle. A rule stated in project prose and implemented by several builders belongs in a
+ *   shared function.
  */
 
 import type { DatabaseSync } from "node:sqlite"
@@ -33,9 +33,10 @@ type IntegrityProbe = Pick<DatabaseSync, "prepare">
 /**
  * `node:sqlite` via {@link process.getBuiltinModule} — invisible to bundlers.
  *
- * A static import here would ride the `@mailwoman/core/utils` barrel into every consumer,
- * and the docs' plugin loader (which transpiles `docusaurus.config` imports) can't
- * resolve `node:sqlite` (CI: "Cannot find module 'sqlite'").
+ * A static import here would ride the `@mailwoman/core/utils` barrel into every consumer.
+ * The docs' plugin loader transpiles `docusaurus.config` imports and cannot resolve
+ * `node:sqlite` (CI: "Cannot find module 'sqlite'").
+ *
  * The builtin accessor keeps `node:sqlite` out of the static import graph with zero resolve surface.
  */
 function sqlite(): typeof import("node:sqlite") {
@@ -105,8 +106,10 @@ export async function sealDatabase(path: PathBuilderLike): Promise<void> {
 /**
  * Verify a freshly-built database is not corrupt, immediately before it is sealed and published.
  *
- * Belongs beside {@link sealDatabase} for the same reason `swapDatabaseIntoPlace` does: the check
- * is part of the built-artifact lifecycle, and every builder was running it from its own copy.
+ * Belongs beside {@link sealDatabase} for the same reason `swapDatabaseIntoPlace` does.
+ * The check is part of the built-artifact lifecycle.
+ *
+ * Every builder previously ran its own copy.
  * `integrity_check` answers with the single row `{ integrity_check: "ok" }` on a healthy file
  * and one row per problem otherwise, so only the first matters.
  *
@@ -130,9 +133,9 @@ export function assertDatabaseIntegrity(db: IntegrityProbe, artifact: PathBuilde
  * The open itself lives in `@mailwoman/sqlite/sealed`.
  * `openBuiltClient`, which every caller uses.
  *
- * This half stays here because it is a filesystem predicate, and because this
- * module reaches `node:sqlite` through {@link process.getBuiltinModule} to keep
- * the `@mailwoman/core/utils` barrel free of it.
+ * This half stays here because it is a filesystem predicate.
+ * This module reaches `node:sqlite` through {@link process.getBuiltinModule} to
+ * keep the `@mailwoman/core/utils` barrel free of it.
  *
  * @throws {SealedArtifactError} When `path` is sealed.
  */
@@ -146,11 +149,13 @@ export async function assertUnsealedForWrite(path: PathBuilderLike): Promise<voi
  * The build writes to a temp path, so a mid-build crash never leaves a half-written DB at `finalPath`.
  * This moves any prior version aside, slots the new one in, then drops the old.
  *
- * The previous file stays intact until the replacement is committed, and the `-wal`/`-shm`
- * siblings of both paths are cleared so a stale journal can never be paired with a new main file.
+ * The previous file stays intact until the replacement is committed.
+ * The function clears the `-wal` and `-shm` siblings of both paths, so a stale
+ * journal cannot pair with a new main file.
  *
- * Sealing (`sealDatabase`) happens on the temp file before the swap: a sealed artifact
- * is what gets published, and 0444 does not prevent a rename.
+ * Sealing (`sealDatabase`) happens on the temp file before the swap.
+ * The published artifact is sealed.
+ * Mode 0444 still permits a rename.
  */
 export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath: PathBuilderLike): Promise<void> {
 	const tmpPathString = tmpPath.toString()

@@ -10,8 +10,9 @@ import { ResourceError } from "#errors/schema"
 /**
  * A trailing dot makes a hostname fully qualified.
  *
- * `www.sec.gov.` and `www.sec.gov` reach the same server, but only the latter is
- * in an allowlist, and the whatwg parser preserves the dot.
+ * Both hostnames reach the same server.
+ * The allowlist contains `www.sec.gov` without the final dot.
+ * The WHATWG parser preserves the dot.
  *
  * Stripped before the lookup so the fqdn form is admitted rather than rejected as an unknown host.
  */
@@ -31,7 +32,8 @@ export interface AssertAllowedHostOptions {
 	 * Exact hostnames this client may reach.
 	 *
 	 * Matching is a `Set` lookup, never a suffix check.
-	 * `host.attacker.example` must not match, and an `.endsWith(...)`-style test would admit it.
+	 * `host.attacker.example` must not match.
+	 * An `.endsWith(...)`-style test would admit it.
 	 */
 	allowed: ReadonlySet<string>
 	/**

@@ -66,7 +66,8 @@ const ADMITTED = new Set([
 	"xxd",
 	"gh",
 	"git",
-	// `mkdir` creates no file content and cannot overwrite a file, and git does not track an empty directory.
+	// `mkdir` creates no file content and cannot overwrite a file.
+	// Git does not track empty directories.
 	"mkdir",
 	"docker",
 	"duckdb",
@@ -116,7 +117,9 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 /**
  * Repository paths that hold only derived files: compiler output and installed dependencies.
  *
- * No tracked path matches, and `tsc -b` or `yarn install` restores any of them.
+ * No tracked path matches.
+ * `tsc -b` or `yarn install` restores any of them.
+ *
  * `.yarn/` is excluded because it holds the tracked yarn binary.
  *
  * Only {@link REMOVER} gets this exemption.
@@ -223,8 +226,8 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		// The stash stack is shared by every worktree, so a bare drop could remove another session's entry.
 		//
 		// `git apply` stays admitted.
-		// A patch fails instead of overwriting when its context does not match,
-		// and it can land a large mechanical change exactly.
+		// A patch fails when its context does not match, rather than overwriting files.
+		// It can also apply a large mechanical change exactly.
 		pattern: /(?:^|\s)(?:restore\b|stash\s+(?!list\b|show\b|drop\s+stash@\{\d+\}\s*$)|checkout\s+[^\n]*--\s)/u,
 		because: "this `git` subcommand overwrites the working tree",
 	},
@@ -309,11 +312,11 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 		// Redirects are removed so `2>&1` does not split on `&`. Their targets are checked later
 		// against the unmasked text.
 		.replaceAll(REDIRECT, " ")
-		// An opener starts a new command, and a closer does not. Otherwise `comm -12 <(sort a) b`
+		// An opener starts a new command. A closer does not. Otherwise `comm -12 <(sort a) b`
 		// would produce a segment headed by the filename `b`.
 		//
-		// A brace opens a group only when whitespace follows it, and closes one only after whitespace
-		// or a separator, as in bash. A brace glued to a word, as in `stash@{0}`, belongs to that word.
+		// A brace opens a group only when whitespace follows it. It closes one after whitespace or a separator, as in bash.
+		// A brace glued to a word, as in `stash@{0}`, belongs to that word.
 		.replaceAll(/\$\(|<\(|\(|\{(?=\s|$)|(?<=^|\s)\}/gu, " ; ")
 		.replaceAll(")", " ")
 

@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Allowlists for `check-docs-structure.ts`. Every entry carries a reason. An allowance without
- *   one is a bug rather than a policy. Adding an entry here is a reviewable act: prefer fixing the page,
- *   and allowlist only when the collision/orphan is deliberate or belongs to another workstream.
+ *   one is a bug rather than a policy. Review every addition. Prefer fixing the page. Add an allowance only when the
+ *   collision or orphan is deliberate or belongs to another workstream.
  *
- *   both lists are empty, and that is the intended steady state. The docs-reorg site has no
+ *   Both lists are empty. That is the intended steady state. The docs-reorg site has no
  *   orphans and no duplicate titles by construction. The three entries carried since 2026-08-03
  *   (docs-reorg Phase 0 task 2) were retired by tree surgery rather than by allowance: Task 4 moved
  *   `evals/` and `retrospectives/` to `docs/records/`, taking both `Retrospectives`-titled landing
@@ -16,7 +16,7 @@
  *   too, so the un-navved conference proposal is no longer a published page needing an exemption.
  *   See task-2-report.md, task-4-report.md and task-5-report.md for the before/after evidence.
  *
- *   Adding an entry back is a reviewable act, and the check guards against rot in the other
+ *   Adding an entry back requires review. The check also guards against stale allowances in the other
  *   direction as well: an allowance whose subject no longer exists is itself a failure.
  */
 
@@ -42,8 +42,9 @@ export interface OrphanAllowance {
 /**
  * Titles allowed to appear on more than one page.
  *
- * Each entry needs a reason — the check exists to catch accidental duplicates,
- * and an unexplained allowance defeats it.
+ * Each entry needs a reason.
+ * The check catches accidental duplicates.
+ * An unexplained allowance defeats that check.
  */
 export const allowedDuplicateTitles: DuplicateTitleAllowance[] = []
 

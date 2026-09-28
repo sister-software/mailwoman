@@ -26,7 +26,7 @@ Each term in that description has a specific meaning:
 
 ## Why it imploded — and what changed under it
 
-The v0 matcher was **string-first**. It classified the address into components, placed them in templates, and compared the strings. Strings are the wrong key for addresses. `Jyllandsgade 15` and `Jyllandsgade 75` differ by one character, with a Levenshtein similarity of **0.963**, and they are **650 meters apart** (Isaj et al., SSTD 2019). String similarity has the wrong _topology_. It pulls different buildings together and pushes different spellings of the same building apart. A matcher built on it produces many false pairs and misses real ones, and ours did.
+The v0 matcher was **string-first**. It classified the address into components, placed them in templates, and compared the strings. Strings are the wrong key for addresses. `Jyllandsgade 15` and `Jyllandsgade 75` differ by one character, with a Levenshtein similarity of **0.963**, and they are **650 meters apart** (Isaj et al., SSTD 2019). String similarity has the wrong _topology_. It pulls different buildings together and pushes different spellings of the same building apart. Our matcher produced false pairs and missed real ones.
 
 ![Two decision surfaces — string-first vs geocode-first — for P(match) over string similarity × geographic distance. String-first is a vertical wall blind to geography; geocode-first is a basin carved by distance, with the two canonical traps annotated.](./img/geocode-first-surface.png)
 
@@ -42,7 +42,7 @@ The matcher never compares formatted strings. It compares resolved places, so th
 
 ## Entity resolution is three problems rather than one
 
-Entity resolution projects often fail because they treat it as one large problem. It is three problems, and the architecture follows from separating them (Binette & Steorts, 2022; Papadakis et al., 2021):
+Entity resolution projects can fail when they treat matching as one large problem. It has three parts, and the architecture follows from separating them (Binette & Steorts, 2022; Papadakis et al., 2021):
 
 1. **Block.** Generate candidate pairs cheaply. Comparing all pairs is O(n²), and a million records produce a trillion comparisons. Geography does most of the work in this stage.
 2. **Match.** Score each candidate pair on whether both records are the same entity. This is the calibrated decision layer.
@@ -79,7 +79,7 @@ The classical core is v1. Models are added selectively where the evidence shows 
 - **Org-name embeddings** for fuzzy blocking and similarity. A regex cannot match `Comcast Cable Communications LLC` to `Xfinity` (a DBA) or tolerate OCR noise, and an embedding with an ANN index can. Embedding and ANN blocking helps _specifically_ on noisy text fields and is not a general replacement (DeepBlocker).
 - **A gradient-boosted matcher** over the comparison vector once labels exist. A tree over `{distance, name-sim, street-sim}` already reaches ~90% matched-class F1 in production (Grab). It is a strong, interpretable upgrade from hand-set weights that needs no neural model. **This scorer is shipped and on by default.** It is a pure-Node gradient-boosted tree over the agreement pattern plus the over-merge interaction (co-located × name-disagree), trained on the NPPES NPI-truth set. It beat the Fellegi-Sunter core by ~5pp dedup F1 on held-out data within a state and by ~+22pp on states it never trained on (TX→CA, TX→NY), and it reduced co-located over-merges. It therefore ships as the default with a calibrated link threshold, because its logit is not in FS-weight units. The model is trained on US NPPES data. For a very different domain, A/B test it or fall back to the hand-weighted core with `resolveEntities({ learnedScorer: false })`. We measured one important limitation. The GBT is calibrated for **dedup**, where "same address, different name" means distinct co-located providers, so it is trained to _reject_ that pattern. **Cross-dataset link discovery has the opposite objective.** Across sources, the same pattern typically indicates one facility under different operating names. The cross-dataset and reconciliation flows therefore pin the FS core (`learnedScorer: false`), because recall matters more there than over-merge precision. Choose the scorer according to the question being asked.
 - **An LLM for the gray zone, never for the easy 95%.** When the task is framed as in-context _clustering_ rather than all-pairs classification, an LLM uses ~5× fewer API calls and improves quality (LLM-CER, 2025). Use it only on the clerical-review band where the calibrated scorer abstained.
-- **An LLM for ingest.** Source data often arrives in awkward forms such as a SQLite dump, and an LLM handles this cheaply and well. It reads a header row and a few samples, infers the column-to-field mapping, and caches it. That is one call per _source schema_ rather than one per row, and it removes the most painful onboarding step.
+- **An LLM for ingest.** Source data arrives in forms such as a SQLite dump. An LLM reads a header row and a few samples, infers the column-to-field mapping, and caches it. That is one call per _source schema_ rather than one per row, and it removes the most painful onboarding step.
 
 ## Four rules, carried over
 
@@ -94,7 +94,7 @@ The matcher follows the same four rules as the geocoder:
 
 Two records at the same address might be the same clinic, or two of the forty providers on a hospital campus. The matcher's strongest precision feature is [inverse-address-frequency](./spatial-expectation-and-density.mdx). It down-weights a shared address by the number of distinct entities at it, so a rarely used address is strong evidence of identity and a crowded one is weak evidence. It is on by default.
 
-Rarity is only meaningful against a population. The feature counts how often each address appears in the records it receives. When you dedupe a _whole_ dataset, the input is the corpus and the feature works. With a thin sample, every address looks unique, the signal flattens, and the feature degrades to baseline without a warning. The fix is cheap. Building the frequency table is a string scan without parsing or geocoding. When matching a subset, build the table over the full source and pass it in. A single record with no comparison set cannot provide a rarity signal.
+Rarity is only meaningful against a population. The feature counts each address in the records it receives. When you dedupe a _whole_ dataset, the input is the corpus and the feature works. With a thin sample, every address looks unique, the signal flattens, and the feature degrades to baseline without a warning. The fix is cheap. Building the frequency table is a string scan without parsing or geocoding. When matching a subset, build the table over the full source and pass it in. A single record with no comparison set cannot provide a rarity signal.
 
 ## The layers
 

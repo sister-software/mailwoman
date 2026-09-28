@@ -2,7 +2,7 @@
 
 The sampler allocates draw share by weight normalised across sources. Row count never enters, so a
 source's per-row exposure is ``reps_per_row = (weight / total_weight) * total_samples / rows``, a unit
-nobody reasons in. ``source_reps`` lets a config name the exposure directly and have the weight derived
+configs do not express directly. ``source_reps`` lets a config set the exposure and derive the weight
 once the corpus is known.
 
 With ``W`` the sum of the fixed weights, ``S`` the run's total samples and ``D = sum(reps_i * rows_i)``
@@ -60,8 +60,8 @@ def derive_source_weights(
 
     missing = sorted(src for src in source_reps if not rows_by_source.get(src))
     if missing:
-        # An unreadable row count is an unknown exposure, and deriving a weight from it would silently
-        # change the mixture.
+        # An unreadable row count leaves the exposure unknown. Deriving a weight from it would
+        # silently change the mixture.
         raise ValueError(f"reps-targeted sources have no readable train rows in the corpus: {missing}")
 
     demanded = sum(reps * rows_by_source[src] for src, reps in source_reps.items())

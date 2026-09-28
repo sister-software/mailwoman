@@ -12,8 +12,9 @@ import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decod
 const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((system) => system.toUpperCase()))
 
 /**
- * Records which postcode spans {@link applyPostcodeShapeCoherence} confirmed, excluded
- * or abstained on, and the postcode systems of the first confirmed span.
+ * Records which postcode spans {@link applyPostcodeShapeCoherence} confirmed, excluded, or abstained on.
+ *
+ * It also records the postcode systems of the first confirmed span.
  */
 export interface PostcodeShapeVerdict {
 	/**
@@ -23,7 +24,7 @@ export interface PostcodeShapeVerdict {
 	narrowing?: string[]
 
 	/**
-	 * Postcode values whose shape fits a system named by a sibling country or region span.
+	 * Postcode values whose shape fits a system used by a sibling country or region span.
 	 */
 	confirmed: string[]
 
@@ -77,7 +78,7 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 
 /**
  * Checks each postcode span's shape against the postcode systems of the countries
- * and regions named in the same tree, without querying a backend.
+ * and regions listed in the same tree, without querying a backend.
  *
  * A span that fits none of those systems is excluded: an all-digit span is retagged
  * `house_number`, and any other span is stamped `postcode_shape_excluded`.
@@ -134,8 +135,9 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 }
 
 /**
- * Returns true for a postcode span that shape coherence excluded but could not retag,
- * which every postcode consumer in the resolver must skip.
+ * Returns true for a postcode span excluded by shape coherence when it could not be retagged.
+ *
+ * Every postcode consumer in the resolver must skip that span.
  */
 export function isShapeExcludedPostcode(node: AddressNode): boolean {
 	return node.tag === "postcode" && node.metadata?.["postcode_shape_excluded"] === true

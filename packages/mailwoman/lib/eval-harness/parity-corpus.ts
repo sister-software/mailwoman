@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Parity-corpus eval, which scores parser output against hand-written expectations with case and whitespace folded.
+ *   Parity-corpus eval scores parser output against hand-written expectations after folding case and whitespace.
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
@@ -28,7 +28,8 @@ const MIN_BUCKET_EXAMPLES = 8
 export const PARITY_FIXTURES_PATH = "packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
 /**
- * Repository-relative path of the original v1 corpus, which `--fixtures` can select.
+ * Repository-relative path of the original v1 corpus.
+ * `--fixtures` can select it.
  */
 export const PARITY_FIXTURES_V1_PATH = "packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.jsonl"
 
@@ -54,7 +55,8 @@ export interface ParityFixture {
 	/**
 	 * Reason the row was retired.
 	 *
-	 * The runner skips such rows, and the file keeps them for provenance.
+	 * The runner skips such rows.
+	 * The file keeps them for provenance.
 	 */
 	dropped?: string
 	/**
@@ -123,8 +125,9 @@ function loadFixtures(path: string): Promise<ParityFixture[]> {
 }
 
 /**
- * Runs the parity-corpus eval and prints per-label, precision, and per-country
- * tables with the floor verdict.
+ * Runs the parity-corpus eval.
+ *
+ * It prints per-label and per-country precision tables with the floor verdict.
  */
 export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
 	const fixtures = await loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)

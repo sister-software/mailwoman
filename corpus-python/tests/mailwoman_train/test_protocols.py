@@ -1,6 +1,6 @@
 """The declared interfaces match the code that implements them.
 
-A protocol nobody satisfies is decoration. These tests pin each one's members against the modules
+A protocol with no implementing class adds no behavior. These tests pin each one's members against the modules
 that already carry them, so a protocol cannot drift into describing a shape the tree does not have.
 """
 
@@ -48,7 +48,7 @@ def test_build_corpus_matches_the_signature_every_builder_already_has() -> None:
     Each builder reads more than a dozen settings off it. The JP one reads eighteen — so a
     narrower interface would either drop them or silently substitute defaults.
     """
-    # eval_str resolves the annotations, which `from __future__ import annotations` leaves as
+    # eval_str resolves annotations. `from __future__ import annotations` leaves them as
     # strings on both sides — comparing the strings would pass on a name that resolves to
     # something else entirely.
     declared = inspect.signature(protocols.CountryModule.build_corpus, eval_str=True)

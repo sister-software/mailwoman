@@ -11,8 +11,8 @@ import { isPresent } from "#objects"
 /**
  * A value that can be used as input to {@link simpleSHA3}.
  *
- * Values are converted to strings via {@link String}, trimmed, and empty
- * values are discarded before hashing.
+ * The function converts values to strings via {@link String} and trims them.
+ * It discards empty values before hashing.
  *
  * @internal
  */

@@ -5,8 +5,8 @@ three ``address_levels`` (縣市 / 鄉鎮市區 / 村里), a ``street`` that alr
 (``建國路三段``, ``文建街２０１巷``), a ``number`` (``２９８`` or ``２０１號``) and a ``unit`` that holds the
 sub-number and the floor (``之１號``, ``四樓``, ``四樓之２``). The rows come from the civil-affairs bureaus of 15
 of Taiwan's 22 縣市 through OpenAddresses (CC BY 4.0), redistributed by Overture under CDLA-Permissive-2.0. the
-build report lists the 15 agencies from the parquet's ``sources.dataset`` column, which the model card carries
-because the Taiwanese license voids the grant on a missing attribution.
+build report lists the 15 agencies recorded in the parquet's ``sources.dataset`` column. The model
+card carries that list because the Taiwanese license voids the grant when attribution is missing.
 
 Measured over a 1,486,679-row sample (12 of the row groups): street ends in 巷 33%, 路 23%, 街 16%, 段 13%, 弄 12%;
 ``number`` is ``N號`` in 89% and a bare ``N`` in 11%; ``unit`` is empty in 39%, a sub-number ``之N號`` in 6%, a floor

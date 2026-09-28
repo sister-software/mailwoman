@@ -27,12 +27,12 @@ APP_NAME = "mailwoman"
 def _platform_temp_root() -> Path:
     """The temp root, matching what `env-paths` answers on this platform.
 
-    MEASURED on Linux, and the reason this is not `platformdirs.user_runtime_dir`: `env-paths`
-    answers `/tmp/<user>/mailwoman` while `user_runtime_dir` answers `/run/user/<uid>/mailwoman`.
-    The other three roots agree between the two libraries. This one does not, and a TypeScript tool
-    writing to one while a Python tool reads the other finds no entry.
+    On Linux, `env-paths` returns `/tmp/<user>/mailwoman`. `platformdirs.user_runtime_dir` returns
+    `/run/user/<uid>/mailwoman`. This measurement explains why the function does not use the latter.
+    The other three roots agree between the libraries. The temp roots differ. A TypeScript tool
+    writing to one while Python reads the other finds no entry.
 
-    `env-paths` joins the username on Linux and omits it on macOS, which is mirrored here.
+    `env-paths` joins the username on Linux and omits it on macOS. This function mirrors that behavior.
     """
     base = Path(tempfile.gettempdir())
     if os.name == "posix" and not _is_macos():
@@ -73,8 +73,8 @@ class MissingEnvironmentError(RuntimeError):
 def _blank_as_absent(name: str) -> str | None:
     """Read a variable, treating a present-but-empty value as unset.
 
-    A blank variable is what a shell exports when an unset value is interpolated into an `env:`
-    block, and reading it as configured is how an empty string reaches a path join.
+    A shell exports a blank variable when an unset value is interpolated into an `env:` block.
+    Reading it as configured would pass an empty string to a path join.
     """
     value = os.environ.get(name)
     return value if value else None
@@ -83,9 +83,9 @@ def _blank_as_absent(name: str) -> str | None:
 def _require_data_root() -> Path:
     """The data root, or a raise naming the variable.
 
-    This one has no default, where the TypeScript side falls back to the platform data directory.
-    The asymmetry is deliberate: that fallback is a real location for a user install, and this
-    package is maintainer-only training code whose data root holds tens of gigabytes of corpus and
+    This variable has no default. The TypeScript side falls back to the platform data directory.
+    That fallback is a real location for a user install. This package is maintainer-only training
+    code whose data root holds tens of gigabytes of corpus and
     gazetteer. A platform cache directory is never where that lives, so defaulting to one would
     answer a wrong path confidently instead of saying what is unset.
     """

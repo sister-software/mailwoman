@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Shared utilities for the `wof-admin` / `wof-postalcode` GeoJSON-bundle adapters, which read the
+ * Shared utilities for the `wof-admin` / `wof-postalcode` GeoJSON-bundle adapters. They read the
  * per-record bundles published as `github.com/whosonfirst-data/whosonfirst-data-{admin,postalcode}-<cc>`
  * repos: a tree of `data/<3>/<3>/<3>/<wof-id>.geojson` files plus alternate-geometry siblings like
  * `<id>-alt-quattroshapes.geojson`, of which only the canonical record is consumed.
@@ -40,8 +40,10 @@ export interface WOFRecord {
 	/**
 	 * ISO 3166-1 alpha-2 from `wof:country`, upper-cased on read.
 	 *
-	 * The standard's codes are upper case and the publisher's spelling is not always,
-	 * and a consumer such as the `--country NL` filter compares the two strings directly.
+	 * The standard's codes are upper case.
+	 * The publisher's spelling can differ.
+	 *
+	 * A consumer such as the `--country NL` filter compares the two strings directly.
 	 */
 	country: string
 	/**
@@ -73,8 +75,10 @@ export function isCurrentFeature(props: Record<string, unknown>): boolean {
 /**
  * Pull `name:*` localized variants off a WOF feature's properties, lifting the first
  * non-empty string from the array WOF stores them in (`["Saint Petersburg"]`);
- * multiple-value variants (rare, usually historical aliases) are not split into separate rows,
- * and an adapter that needs them can iterate the underlying array.
+ * Multiple-value variants are rare and usually historical aliases.
+ *
+ * This function keeps them together.
+ * An adapter that needs separate values can iterate the underlying array.
  */
 export function extractNameVariants(props: Record<string, unknown>): Map<string, string> {
 	const out = new Map<string, string>()
@@ -165,8 +169,10 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
  * `repoDir` may be a single cloned `whosonfirst-data-*` repo or a parent holding several
  * (the corpus pipeline clones all four into a shared `wof/repos/` root).
  *
- * `-alt-` siblings are skipped as alternate-geometry exports rather than new records,
- * and per-file errors (unreadable, malformed JSON, missing properties) are swallowed
+ * `-alt-` siblings are skipped as alternate-geometry exports.
+ * They do not represent new records.
+ *
+ * Per-file errors (unreadable files, malformed JSON, or missing properties) are swallowed
  * so one bad file does not poison a multi-gigabyte walk.
  */
 export async function* walkFeatures(
@@ -214,7 +220,8 @@ export const ANCESTOR_NAME_TAGS = ["locality", "region", "country"] as const
 /**
  * The nearest ancestor's `wof:name` per tag in {@linkcode ANCESTOR_NAME_TAGS}.
  *
- * A tag with no ancestor carries no key, which is the state `ancestry.find(…) === undefined` used to express.
+ * A tag with no ancestor carries no key.
+ * `ancestry.find(…) === undefined` expresses that state.
  */
 export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], string>>
 
@@ -223,12 +230,14 @@ export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], 
  *
  * The predecessor index held one array of record references per record, so a run over the 13,274,691
  * admin records of `v0.7.0-de-holdout` allocated 13.3 million arrays alongside the record index.
- * This holds at most three strings per record instead, and each string is the same object the
- * ancestor already holds, so the index costs one small object per record without copying a name.
+ * This holds at most three strings per record instead.
+ *
+ * Each string is the same object the ancestor already holds, so the index costs
+ * one small object per record without copying a name.
  *
  * The adapter's second pass reads only this.
- * `wof-postalcode` keeps admin records in its record index solely so postcode ancestry
- * resolves, and it can release them once this index is built.
+ * `wof-postalcode` keeps admin records in its record index solely so postcode ancestry resolves.
+ * It can release them once this index is built.
  *
  * Nearest wins: the walk goes upward from the record's parent and the first ancestor
  * carrying a tag sets it, matching the `ancestry.find` the builders used.
@@ -243,7 +252,8 @@ export type AncestorNameIndex = Map<number, AncestorNames>
  * It is a parameter because `placetypeToTag` lives with the adapters and this module does not import them.
  *
  * The walk stops at the first `parent_id` absent from `byID`, and a cycle guard halts at any re-visit.
- * WOF data is acyclic by construction, and the guard keeps a corrupt fixture from looping the adapter.
+ * WOF data is acyclic by construction.
+ * The guard keeps a corrupt fixture from looping the adapter.
  *
  * A record whose ancestors are absent resolves the tags it can reach rather than failing.
  */

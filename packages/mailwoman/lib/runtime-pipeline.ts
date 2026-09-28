@@ -66,8 +66,9 @@ function buildSyncReverseGeocode(
 /**
  * Options for {@link createRuntimePipeline}.
  *
- * For `placeCountry`, `streetEvidence`, `fst` and `streetMorphology`, an undefined option
- * loads the bundled default on the first parse, and `false` disables the stage.
+ * For `placeCountry`, `streetEvidence`, `fst` and `streetMorphology`, an undefined
+ * option loads the bundled default on the first parse.
+ * `false` disables the stage.
  */
 export interface CreateRuntimePipelineOpts {
 	/**
@@ -104,8 +105,9 @@ export interface CreateRuntimePipelineOpts {
 	streetMorphology?: RuntimePipelineStages["streetMorphology"] | false
 
 	/**
-	 * A replacement for the default locale detector, which combines input structure,
-	 * `MW_LOCALE` and the machine preferences.
+	 * A replacement for the default locale detector.
+	 *
+	 * It combines input structure, `MW_LOCALE` and machine preferences.
 	 */
 	detectLocale?: RuntimePipelineStages["detectLocale"]
 
@@ -252,7 +254,7 @@ export function getMachinePreferences(): MachinePreferences {
 }
 
 /**
- * Creates the production parse function, which runs the full pipeline with the given stages.
+ * Creates a production parse function that runs the full pipeline with the given stages.
  *
  * Omitted stages use bundled defaults that load on the first call.
  * `hardPlaceCountry` is on unless the options or the call turn it off.

@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Organization-name canonicalization: removes legal designations and normalizes DBA clauses, punctuation,
- *   accents, connectives, and a leading article, with jurisdiction adding legal forms and domain protection
- *   keeping ambiguous terms from being stripped.
+ *   Canonicalizes organization names by removing legal designations. It normalizes DBA clauses plus punctuation and accents.
+ *   It also folds connectives and leading articles. Jurisdiction adds local legal forms. Domain rules preserve
+ *   ambiguous terms that could otherwise be stripped.
  */
 
 import { foldForKey } from "@mailwoman/codex/address-key"
@@ -33,8 +33,11 @@ export interface OrganizationName {
 }
 
 /**
- * A domain pack name: each guards the abbreviations meaningful in that domain from
- * being stripped as legal forms, and `general` guards no form.
+ * Names a domain pack.
+ *
+ * Each pack leaves domain-specific abbreviations in the organization name
+ * instead of stripping them as legal forms.
+ * The `general` pack adds no domain-specific abbreviations.
  */
 export type DesignationDomain = "general" | "healthcare"
 
@@ -43,14 +46,19 @@ export type DesignationDomain = "general" | "healthcare"
  */
 export interface CanonicalizeOptions {
 	/**
-	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction, adding that
-	 * country's legal forms to the strip-set.
-	 * Case-insensitive, and unknown codes add no pack.
+	 * ISO 3166-1 alpha-2 country code for the organization's jurisdiction.
+	 *
+	 * Its country pack adds that jurisdiction's legal forms to the strip set.
+	 * Matching is case-insensitive.
+	 * Unknown codes add no pack.
 	 */
 	jurisdiction?: string
 	/**
-	 * Ingest domain, which guards domain-meaningful abbreviations (e.g. `healthcare` guards
-	 * `pt` / `sca` / `scs`) from being stripped, overriding any jurisdiction pack.
+	 * Ingest domain that keeps domain-specific abbreviations in organization names.
+	 *
+	 * The `healthcare` domain leaves `pt` in the name.
+	 * It also leaves `sca` and `scs`.
+	 * These rules take precedence over jurisdiction packs.
 	 */
 	domain?: DesignationDomain
 }
@@ -206,8 +214,8 @@ function canonicalizeFragment(
  * Canonicalize an organization name: split off any `doing business as` clause,
  * then reduce the legal name to a designation-stripped key.
  *
- * Returns `null` for empty input, and {@link CanonicalizeOptions} resolves
- * the jurisdiction × domain collision.
+ * Returns `null` for empty input. {@link CanonicalizeOptions} resolves conflicts
+ * between jurisdiction and domain rules.
  */
 export function canonicalizeOrganizationName(
 	input: string | null | undefined,

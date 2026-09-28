@@ -86,8 +86,10 @@ const BARE_RACE_EXCLUDED_NAME_ROLES: readonly string[] = ["abbr", "gloss"]
  * (a foreign country row cannot outrank inside an explicit scope), while the
  * bare-locality posture's withheld scope leaves it worldwide.
  *
- * Exact matches only: the fuzzy tier exists for typo recovery on address spans,
- * and a fuzzy country is a guess this race must never promote.
+ * This race uses exact matches only.
+ * The fuzzy tier recovers typos in address spans.
+ *
+ * A fuzzy country match is a guess this race must never promote.
  *
  * Abbreviation/gloss alias rows never enter ({@link BARE_RACE_EXCLUDED_NAME_ROLES}).
  */
@@ -108,9 +110,9 @@ export async function bareCountryCandidate(
 		const top = hits[0]
 
 		// The placetype check is required.
-		// A backend that ignores the filter (several test stubs, and any future partial implementation)
-		// would otherwise hand this race a locality row wearing a country costume,
-		// and the repick would demote the real pick.
+		// A backend may ignore the filter, as test stubs or a partial implementation could.
+		// It could then hand this race a locality row wearing a country costume,
+		// The repick would then demote the real pick.
 		return top && top.placetype === "country" && top.exactMatch !== false ? top : null
 	} catch {
 		// A failed side race must never abort the primary lookup.
@@ -125,8 +127,12 @@ export async function bareCountryCandidate(
  * The sibling of {@link #bareCountryCandidate} for the US-state class
  * (bare "Georgia"/"Texas" the parser tags `locality`).
  *
- * Same interface: the locality query's own country filter bounds it, exact matches only
- * with abbreviation/gloss rows excluded, and the placetype check guards partial backends.
+ * Uses the same interface.
+ * The locality query's country filter bounds it.
+ *
+ * It accepts exact matches only with abbreviation and gloss rows excluded.
+ * The placetype check guards partial backends.
+ *
  * The `place_abbr`-staged region abbreviations (bare "TX"/"CA") are role-NULL
  * primaries and stay fully reachable.
  *

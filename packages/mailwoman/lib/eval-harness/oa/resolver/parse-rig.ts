@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The parse-and-resolve rig a run grades through: the ship-config scorer, the gazetteer backend
- *   behind the resolver, and the parse/resolve options the flags pin.
+ * @file The parse-and-resolve rig used for grading. It combines the ship-config scorer, the resolver's gazetteer
+ *   backend and the parse/resolve options pinned by the flags.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -15,15 +15,17 @@ import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 import type { LookupCensus } from "#eval-harness/oa/resolver/profile"
 
 /**
- * Assemble the scorer, the gazetteer-backed resolver and the per-call option bags
- * one run parses and resolves every row through.
+ * Assembles the scorer, gazetteer-backed resolver and per-call option bags used
+ * to parse and resolve every row in a run.
  *
- * `wofPaths` is threaded in rather than re-derived: database 0 is both the resolver's
- * admin gazetteer and the locality matcher's altname/ancestry source, and the two
- * must be the same file for a name-match allowance to mean anything.
+ * `wofPaths` is passed in directly.
+ * Database 0 supplies the resolver's admin gazetteer and the locality matcher's altname/ancestry data.
  *
- * Every tri-state pin below resolves to `undefined` when neither flag is passed,
- * which leaves the library default in force.
+ * Both consumers must use the same file for a name-match allowance to be meaningful.
+ *
+ * When neither flag is passed, each tri-state pin resolves to `undefined`.
+ * The library then uses its default.
+ *
  * A check leg that says which side it graded is the point of a tri-state.
  *
  * A silent config shift inside a check battery is what a tri-state prevents.
@@ -48,8 +50,8 @@ export async function buildParseRig(
 	const ablateToAnchor = options.ablateToAnchor ?? false
 	// `--anchor-off`: the sanctioned anchor ablation, `overrides.anchor=false` through
 	// createScorer (a loud warning rather than a throw).
-	// Replaces the old empty-anchor.json idiom, which the fail-closed check refuses
-	// (an empty lookup parses to size 0 → UnfedChannelError).
+	// Replaces the old empty-anchor.json idiom.
+	// The fail-closed check refuses it (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
 
 	const overrides: ScorerOverrides = {
@@ -115,13 +117,13 @@ export async function buildParseRig(
 		reportError(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
 	}
 
-	// Under `profileJSON` only: count the gazetteer queries one row costs,
-	// and how many of them repeat a key an earlier row already asked.
-	// That separates "the resolver is called often" from "the resolver answers the
-	// same question often", which are different fixes.
+	// Under `profileJSON`, count the gazetteer queries each row costs
+	// and the queries that repeat an earlier key.
+	// These counts distinguish a high call rate from repeated queries.
+	// The two patterns require different fixes.
 	// The proxy binds every method to the real backend.
-	// `WOFSQLitePlaceLookup` holds private fields, and a method invoked with the
-	// proxy as `this` cannot read them.
+	// `WOFSQLitePlaceLookup` holds private fields.
+	// Its methods cannot read them when called with the proxy as `this`.
 	const lookupCensus: LookupCensus | null = options.profileJSON || "" ? { calls: 0, keys: new Set<string>() } : null
 	const lookupMemo = (options.lookupMemo ?? false) ? new Map<string, Promise<unknown>>() : null
 
@@ -145,9 +147,9 @@ export async function buildParseRig(
 
 							if (!lookupMemo) return value.apply(target, args)
 
-							// The in-flight promise is memoized rather than its result:
-							// two rows can ask the same question before either answer lands,
-							// and caching the promise collapses those into one query.
+							// Memoize the in-flight promise.
+							// Two rows can ask the same question before either answer arrives.
+							// Caching the promise lets both rows share one query.
 							let pending = lookupMemo.get(key)
 
 							if (!pending) {
@@ -195,8 +197,8 @@ export async function buildParseRig(
  * Separate from {@link buildParseRig} so a test can assert the mapping without a model and a gazetteer.
  * A pin the rig silently ignores does not fail.
  *
- * It reports the library default's numbers under the arm's name, and a measuring
- * tool's false negative is indistinguishable from a real absence.
+ * It reports the library default's values under the arm's name.
+ * A measuring tool's false negative would look like a real absence.
  *
  * Every tri-state resolves to `undefined` when neither flag is passed, leaving the library default in force.
  */
@@ -234,8 +236,8 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 		// The pass is on by default and the cap is unbounded by default, so neither
 		// pin set leaves this eval byte-identical.
 		// The cap is passed through at zero as well as at a distance.
-		// Zero refuses every fall, which is the arm that separates the pass's
-		// re-pick from its coordinate fallback.
+		// Zero rejects every fall.
+		// This arm separates the pass's re-pick behavior from its coordinate fallback.
 		...((options.noPostcodeConsistency ?? false) ? { postcodeConsistency: false } : {}),
 		...(options.postcodeConsistencyMaxMoveKm !== undefined
 			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }

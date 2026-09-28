@@ -26,7 +26,8 @@ export { DEFAULT_SUITE_PATH, loadSuite, type InvarianceRow } from "#eval-harness
 /**
  * Verdict for one pair.
  *
- * `GAINED` means the candidate holds a pair that the baseline violated, and it never fails the check.
+ * `GAINED` means the candidate holds a pair that the baseline violated.
+ * It never fails the check.
  */
 export type OutcomeVerdict = Verdict | "GAINED"
 
@@ -58,7 +59,7 @@ export interface PairOutcome {
 }
 
 /**
- * Pair outcomes, counts, and the check verdict for a suite run.
+ * Pair outcomes, counts and the check verdict for a suite run.
  */
 export interface InvarianceReport {
 	outcomes: PairOutcome[]
@@ -178,7 +179,8 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		const rowLocale = localeForCountry(row.country)
 
 		for (const transformID of row.transforms) {
-			// `getTransform` throws on an unknown ID, which catches fixture typos.
+			// `getTransform` throws on an unknown ID.
+			// This catches fixture typos.
 			const transform = getTransform(transformID)
 			const transformedText: string | null = transformID === "idempotence" ? row.raw : transform.apply(row.raw)
 

@@ -22,7 +22,8 @@ import type { PathBuilderLike } from "path-ts"
 export const SPACE_SENTINEL = "▁"
 
 /**
- * The wasm module instantiates once per process, and every tokenizer instance shares it.
+ * The WASM module instantiates once per process.
+ * Every tokenizer instance shares it.
  */
 let modulePromise: Promise<SentencePieceModule> | null = null
 
@@ -62,8 +63,9 @@ export interface EncodeResult {
 /**
  * Map every UTF-8 byte boundary of `text` to its UTF-16 code-unit offset.
  *
- * The returned array is indexed by byte offset, and a hole at a non-boundary index carries
- * the containing character's start so a lookup cannot land outside the string.
+ * The returned array is indexed by byte offset.
+ * A hole at a non-boundary index carries the containing character's start,
+ * so a lookup cannot land outside the string.
  */
 function buildByteToUTF16Map(text: string): number[] {
 	// Walk once to size exactly rather than deriving a bound from the code-unit length.

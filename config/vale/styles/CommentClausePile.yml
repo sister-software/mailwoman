@@ -1,0 +1,14 @@
+## Mailwoman code-comment rule: flag comma-led clauses for review.
+##
+## This deliberately broad warning marks `, which`, `, whose`, and `, and` in
+## comments. These forms can start useful modifiers and lists. They can also
+## extend a sentence with another operation, explanation, or consequence.
+## Review the full sentence and split it when the added clause carries another
+## claim or causal step. The rule reports candidates; it does not decide that
+## every match is a style error.
+extends: existence
+message: "'%s' may extend the sentence with another claim or causal step — review the sentence and split it when each clause carries a separate thought."
+level: warning
+ignorecase: true
+tokens:
+  - ',\s+(?:which|whose|and)\b'

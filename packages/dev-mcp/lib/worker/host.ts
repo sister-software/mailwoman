@@ -53,12 +53,15 @@ export interface WorkerHostOptions {
 	/**
 	 * Milliseconds to wait for the handshake before declaring a boot failure.
 	 *
-	 * The worker's boot imports the whole mailwoman graph, which is seconds rather than milliseconds.
+	 * The worker imports the whole mailwoman graph during boot.
+	 * Boot takes seconds rather than milliseconds.
 	 */
 	handshakeTimeoutMs?: number
 	/**
-	 * Where the child's stdout/stderr are drained to, defaulting to the host process's stderr,
-	 * never stdout, which on the shim is the MCP channel.
+	 * Where the child's stdout/stderr are drained.
+	 *
+	 * The default is the host process's stderr.
+	 * On the shim, stdout carries the MCP channel.
 	 */
 	log?: NodeJS.WritableStream
 }
@@ -79,7 +82,7 @@ const CRASH_WINDOW_MS = 60_000
 const TERM_GRACE_MS = 5000
 
 /**
- * A job the restart killed, named so the caller can relaunch it.
+ * An ID for a job the restart killed, so the caller can relaunch it.
  *
  * The command is read from the worker before the kill, because afterwards the registry is gone
  * with the module graph and the loss is indistinguishable from a job id that never existed.
@@ -92,7 +95,7 @@ export interface KilledJob {
 }
 
 /**
- * What a restart reports: both boot fingerprints, whether the tool list changed,
+ * What a restart reports: both boot fingerprints, whether the tool list changed
  * and which calls and jobs died with the old worker.
  */
 export interface RestartReport {

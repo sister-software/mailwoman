@@ -48,8 +48,10 @@ export interface POIPhraseMatch {
 	 * A lookup returning several hits means two different things: a phrase index
 	 * returns the categories one typed phrase could name, the curated reading first
 	 * (`credit union` → the `bank` rollup its synonym redirects to), while an affordance
-	 * rung returns every entity kind that affords one activity in a stable enumeration that
-	 * is not a preference, and narrowing to the first would be an invented ordering.
+	 * rung returns every entity kind that affords one activity in a stable enumeration.
+	 * The enumeration does not express a preference.
+	 *
+	 * Selecting the first would invent an ordering.
 	 * Set on every member of such a set, so {@link matchPOISubject} carries them all
 	 * and the POI branch searches their union.
 	 *
@@ -63,8 +65,8 @@ export interface POIPhraseMatch {
 	 * A scope is a statement about establishments, so it is judged against the country of
 	 * the place being searched rather than the caller's locale: the locale is the lens the
 	 * phrase is read through and makes no statement about where the condition is true.
-	 * `matchPOISubject` carries the value untouched, and the POI intent stage
-	 * binds it once the anchor has resolved.
+	 * `matchPOISubject` carries the value unchanged.
+	 * The POI intent stage binds it once the anchor has resolved.
 	 */
 	countryScope?: readonly string[]
 }
@@ -124,9 +126,11 @@ export interface POISubjectMatch {
  *
  * Linear by construction (no polynomial ReDoS): neither alternative places an unbounded
  * whitespace quantifier before its required literal, the classic `js/polynomial-redos` shape.
- * The comma alternative starts at the literal `,`, the anchor alternative at a single `\s`
- * before a fixed anchor word, and every remaining quantifier is trailing, running only after
- * the required literal has matched, so each start offset does O(1) work and `matchAll` is O(n).
+ * The comma alternative starts at the literal `,`.
+ *
+ * The anchor alternative starts at one `\s` before a fixed anchor word.
+ * Every remaining quantifier is trailing and runs only after the required literal matches.
+ * Each start offset does O(1) work, so `matchAll` is O(n).
  *
  * Behaviour is byte-identical to the previous `\s*,\s*|\s+(?:…)\s+`, because `matchPOISubject`
  * trims both the subject and the remainder, so surrounding whitespace is redundant.
@@ -272,7 +276,7 @@ export function createScorePOIQuery(
  * POI query keeps scoring `poi_query` as before.
  *
  * The coordinator's POI branch accepts both kinds, so the routing is identical either way.
- * The split exists so the marker can say "you named a category and no place".
+ * The split exists so the marker can say "you supplied a category and no place".
  */
 const POI_CATEGORY_CONFIDENCE = 0.93
 
@@ -281,8 +285,10 @@ const POI_CATEGORY_CONFIDENCE = 0.93
  * to search: "tacos", "grocery store", "drinking fountain".
  *
  * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a category.
- * A brand (`kind: "brand"`) is excluded because `POIPhraseMatch.categoryID` then holds
- * the brand's display name, which would make the marker's `categoryID` evidence a lie.
+ * A brand (`kind: "brand"`) is excluded because `POIPhraseMatch.categoryID`
+ * then holds the brand's display name.
+ *
+ * That value would misrepresent the marker's `categoryID` evidence.
  */
 export function createScorePOICategory(
 	lookup: POIPhraseLookup,

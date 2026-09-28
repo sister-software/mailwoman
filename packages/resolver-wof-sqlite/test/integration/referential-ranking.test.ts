@@ -15,17 +15,16 @@
  *   | Saint-Denis, Aude                 | 101896431   | 418        | 0.5683       |
  *
  *   Encyclopedic importance ranks the 418-person Aude hamlet **4.8x above** the Paris suburb of 96,128.
- *   A geocoder that ranked on it would answer a bare "Saint-Denis" with a hamlet nobody means. The
+ *   A geocoder that ranked on it would answer a bare "Saint-Denis" with the wrong hamlet. The
  *   fixture below carries both scores in the gazetteer — the suburb's disadvantage on the encyclopedic
  *   column isn't withheld and asserts the suburb still wins.
  *
  *   The suburb wins because referential likelihood is what the ranking reads.
  * 	 There is no hand-written rule, pin, or safelist anywhere in the path.
  *
- *   The second half of the file is the D-rule measurement for the split (§2 R1's "expected resolver
- *   delta is zero"): every ranking assertion is run against a gazetteer without the encyclopedic
- *   column and one with it, and the two answer identically. If carrying the score could move a rank,
- *   this is where it would show.
+ *   The second half measures the D-rule prediction for the split (§2 R1's "expected resolver delta is zero").
+ *   Each ranking assertion runs against a gazetteer without the encyclopedic column and one with it.
+ *   Both gazetteers must return the same answers. This test would show a rank change caused by carrying the score.
  */
 
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
@@ -158,7 +157,7 @@ afterEach(() => {
 describe("Saint-Denis — ranking is referential", () => {
 	it("the encyclopedic column really does invert the truth (the premise this test rests on)", () => {
 		// Stated as an assertion rather than a comment: if the fixture's numbers ever stop
-		// disagreeing, every test below passes vacuously and nobody would notice.
+		// disagreeing, every test below passes vacuously without signaling the fixture change.
 		const suburb = SAINT_DENIS[0]!
 		const hamlet = SAINT_DENIS[1]!
 
@@ -242,12 +241,14 @@ describe("Saint-Denis — ranking is referential", () => {
 
 describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 	/**
-	 * §2 R1 predicts a resolver delta of zero: the split is schema + plumbing + a carry,
-	 * and the ranking key it names (population) is the one the resolver already used.
+	 * §2 R1 predicts a resolver delta of zero.
 	 *
-	 * Predicted is not measured, so this measures it.
-	 * Every query runs against a pre-split gazetteer and a post-split one,
-	 * and the returned id order must be identical.
+	 * The split changes the schema and data plumbing.
+	 * It includes a score while retaining population as the resolver's ranking key.
+	 *
+	 * The prediction remains unmeasured until this test runs.
+	 * Each query runs against a pre-split and post-split gazetteer.
+	 * The returned ID order must match between them.
 	 */
 	const QUERIES: ReadonlyArray<{ label: string; text: string }> = [
 		{ label: "bare namesake", text: "Saint-Denis" },

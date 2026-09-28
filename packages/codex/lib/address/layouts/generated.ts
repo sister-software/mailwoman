@@ -15,8 +15,8 @@
  *
  *   The Latin table below is the exception to that split. A hand-authored entry states one order per country, so a
  *   country whose two scripts disagree cannot carry its second order there — Hong Kong's hand-authored layout is the
- *   Latin one, which leaves the Chinese order with nowhere to live. The Latin skeletons are therefore generated for
- *   every country that has one, hand-authored or not.
+ *   Latin one. The Chinese order then has nowhere to live in that layout. The code therefore generates Latin
+ *   skeletons for every country that has one, including countries with hand-authored layouts.
  */
 
 // oxlint-disable max-lines -- one entry per country, each a template that reads in the order it prints
@@ -1573,8 +1573,8 @@ ${country}`,
 /**
  * Latin-script layouts, for the countries whose Latin print order differs from the one in their own script.
  *
- * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here writes
- * one order in both scripts, so its country-keyed layout serves both.
+ * Keyed by ISO 3166-1 alpha-2 and sparse on purpose: a country absent here writes one
+ * order in both scripts, so its country-keyed layout serves both.
  * The `lfmt` each was derived from is quoted above it.
  */
 export const GENERATED_LATIN_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
@@ -1650,8 +1650,10 @@ ${country}`,
  *
  * The `fmt` skeleton, emitted even where the country is hand-authored.
  *
- * A hand-authored entry states one order, and for Hong Kong that order is the Latin one,
- * so its own script's order has nowhere else to live.
+ * A hand-authored entry states one order.
+ * Hong Kong's entry states the Latin order.
+ *
+ * Its Chinese order has no other entry point.
  * Sparse for the same reason as the Latin table: a country absent here writes one order in both.
  */
 export const GENERATED_LOCAL_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {

@@ -10,16 +10,16 @@
  *   With no `region` node, the resolver cannot scope the locality to its state.
  *
  *   This is a legitimate atlas correction: the US states are a closed known gazetteer, so a state
- *   token the grammar missed can be retagged confidently. The module restructures the affected
- *   nodes into `region → locality` nesting, which the resolver's existing parent-scoping then
- *   constrains correctly without a resolver change. Two shapes are handled:
+ *   token the grammar missed can be retagged confidently. The module restructures affected nodes into
+ *   `region → locality` nesting. The resolver's existing parent-scoping then constrains them correctly without a
+ *   resolver change. The module handles two shapes:
  *
  *   - A `locality` whose whole value is a US state becomes a `region`, and sibling locality
  *     (city) nodes are nested under it.
  *   - A `locality` whose value is a merged `"City, ST"` is split into `region(ST) → locality(City)`.
  *
- *   US-scoped by design, since the gazetteer is US states. The long-term fix is the model
- *   recognizing the region, and this closes the gap for the bare `City, State` class.
+ *   This is US-scoped because the gazetteer contains US states. The long-term fix is for the model to recognize the
+ *   region. This handles the bare `City, State` class in the meantime.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -184,8 +184,8 @@ function splitMergedCityState(node: AddressNode): AddressNode | null {
 	const slug = usStateSlug(tail)
 
 	if (!slug || !head) return null
-	// Offsets: the region covers the tail's char span, and the locality covers
-	// the head's span relative to node.start.
+	// The region covers the tail's character span.
+	// The locality covers the head's span relative to node.start.
 	const tailStart = node.start + node.value.indexOf(tail, comma)
 	const region = makeRegionNode(tail, tailStart, node.end, node.confidence)
 
@@ -223,8 +223,10 @@ function correctNode(node: AddressNode): AddressNode {
  * ("Augusta" under both Maine and Messina) resolves the US state.
  *
  * Abbreviations only, deliberately.
- * A 2-letter "ME", "or" or "GA" in `City, ST` position is unambiguously the US state
- * (foreign collisions like Messina or Ourense lose in US-format context, and Georgia-the-country is "GE").
+ * A 2-letter "ME", "or", or "GA" in `City, ST` position identifies a US state.
+ *
+ * Messina and Ourense lose in US-format context.
+ * Georgia the country uses "GE".
  *
  * A full name is genuinely ambiguous ("Tbilisi, Georgia" is the country, "Atlanta, Georgia" the state),
  * so full-name tokens are left to resolve on their own name-match evidence and are never pinned.

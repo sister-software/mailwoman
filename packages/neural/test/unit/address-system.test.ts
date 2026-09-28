@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Interface tests for address-system detection and the conventions mask.
- *   Detection never acts below threshold or off-vocabulary, the mask removes forbidden tags from
- *   the decodable vocabulary, and a model without a locale head is a byte-identical no-op.
+ *   Detection never acts below threshold or off-vocabulary. The mask removes forbidden tags from
+ *   the decodable vocabulary. A model without a locale head is a byte-identical no-op.
  */
 
 import { conventionsForSystem } from "@mailwoman/codex"
