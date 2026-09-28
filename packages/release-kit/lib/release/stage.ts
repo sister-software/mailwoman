@@ -3,19 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The staging + audit half of the #1894 release preflight: materialize the release tree in an
- *   isolated staging root, then pack and audit every release workspace there — so a preflight can
- *   exercise the exact pack-and-verify path CI publishes with, without a tag, a registry write, or a
- *   dirty source checkout.
+ *   The staging + audit half of the release preflight: materialize the release tree in an isolated
+ *   staging root, then pack and audit every release workspace there, so a preflight exercises the
+ *   exact pack-and-verify path CI publishes with — no tag, no registry write, no dirty source
+ *   checkout.
  *
- *   Why staging is the mechanism and not try/finally: `packWorkspaceForPublish` edits the workspace
- *   manifest in place while packing (the injected `publishConfig.exports`) and restores it after — a
- *   killed process mid-pack leaves the manifest dirty. A staging tree built by `git archive head`
- *   contains tracked files only and lives outside the checkout, so an interrupted run leaves every
- *   tracked file byte-identical BY construction rather than by cleanup code that must survive kill
- *   signals. Measured on this tree: `yarn pack` runs in the staged copy against a symlinked
- *   `node_modules` (74 ms for `@mailwoman/spatial`) and translates `workspace:*` to the concrete
- *   sibling version exactly as the publish path does.
+ *   A staging tree built by `git archive head` holds tracked files only and lives outside the
+ *   checkout, so an interrupted run leaves every tracked file byte-identical by construction rather
+ *   than by cleanup code that must survive kill signals.
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -30,10 +25,6 @@ import { verifyTarball } from "#pack/verify-tarball"
 /**
  * The root workspaces that sit outside `.release-it.json`'s publish list,
  * each with the reason a reader can state.
- *
- * The identity check below fails on any absence not in this record — "expected 51,
- * found 50" sends someone counting.
- * Naming the unexpected workspace is the actionable version, and this record is the data the check owns.
  */
 export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	docs: "private Docusaurus site — never publishes",
@@ -57,20 +48,8 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 /**
  * Refuse to publish a workspace this repository holds out of the release, naming the recorded reason.
  *
- * Membership in {@link SANCTIONED_RELEASE_ABSENCES} was a reporting record: `checkReleaseListIdentity`
- * reads it so a missing workspace fails with a name rather than an arithmetic difference.
- * It stopped no publish.
- *
- * `packages/osm` is held out for a rights reason, and it is not `private`,
- * so no check between an operator and npm refused it.
- * `yarn npm publish` from that directory, or `mwops release publish-workspace --allow-unplanned`
- * naming it, would have published ODbL-derived extraction code that counsel has not signed off.
- *
- * Every entry is refused rather than the rights-held ones alone.
- * A private workspace reaching this path is a mistake too, and one rule cannot
- * drift from a classification it does not carry.
- *
- * Publishing a held-out workspace means removing its entry, which is an edit a reviewer sees.
+ * Every entry is refused rather than the rights-held ones alone, so one rule cannot drift from a
+ * classification it does not carry.
  */
 export function assertWorkspacePublishable(workspacePath: string): void {
 	const workspace = workspacePath.replace(/^\.\//, "").replace(/\/$/, "")
@@ -114,19 +93,15 @@ export interface ReleaseListIdentity {
 	/**
 	 * Workspaces in the root `workspaces` array but neither in the release list nor sanctioned.
 	 *
-	 * Each one is silently frozen at its last published version (the en-au class)
-	 * until someone answers for it.
+	 * Each one is silently frozen at its last published version until someone answers for it.
 	 */
 	unexpectedAbsences: string[]
 	/**
 	 * Sanctioned absences that no longer exist in the root `workspaces` array.
-	 *
-	 * A stale entry in {@link SANCTIONED_RELEASE_ABSENCES} that should be removed.
 	 */
 	staleSanctions: string[]
 	/**
 	 * Release-list entries missing from the root `workspaces` array.
-	 * A list naming a workspace that does not exist.
 	 */
 	danglingReleaseEntries: string[]
 	publishCount: number
@@ -135,8 +110,6 @@ export interface ReleaseListIdentity {
 /**
  * The named-absence identity: root `workspaces` minus the release list must
  * equal the sanctioned set exactly.
- *
- * Every discrepancy is reported by name, so the failure is actionable without counting.
  */
 export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promise<ReleaseListIdentity> {
 	const root = await readWorkspaceDirectories(repoRoot)
@@ -154,17 +127,12 @@ export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promi
 }
 
 /**
- * Materialize the release tree into `stagingRoot`:
+ * Materialize the release tree into `stagingRoot`, replacing any existing tree and leaving the
+ * caller to own its lifecycle.
  *
- * 1. `git archive head` — tracked files only, so the staging tree can never leak
- *    uncommitted work into an audit and the source checkout is never written to.
- * 2. Each release workspace's compiled `out/` copied in — tarballs ship compiled
- *    JS + `.d.ts`, and `out/` is gitignored.
- * 3. The checkout's `node_modules` symlinked in.
- *    `yarn pack` needs the project context, reads it, and never writes it.
- *
- * The caller owns `stagingRoot`'s lifecycle.
- * An existing tree at that path is replaced.
+ * `git archive head` supplies tracked files only, each release workspace's compiled `out/` is
+ * copied in because tarballs ship compiled JS + `.d.ts`, and the checkout's `node_modules` is
+ * symlinked because `yarn pack` needs the project context and never writes it.
  */
 export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilderLike): Promise<void> {
 	const staging = PathBuilder.from(stagingRoot)
@@ -189,28 +157,22 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilde
 /**
  * One workspace's pack-and-audit outcome.
  *
- * `failures` is empty on a clean pack.
- * A pack that could not even produce a tarball reports the thrown message as its
- * single failure rather than aborting the sweep.
+ * A pack that could not produce a tarball reports the thrown message as its single failure rather
+ * than aborting the sweep.
  */
 export interface WorkspaceAuditResult {
 	workspace: string
 	ok: boolean
 	failures: string[]
 	/**
-	 * Entry counts from the tarball audit, for the per-workspace report line.
-	 *
-	 * Absent when the pack or the audit failed.
+	 * Entry counts from the tarball audit, absent when the pack or the audit failed.
 	 */
 	counts?: { literalFiles: number; exportTargets: number; binTargets: number }
 }
 
 /**
- * Pack and audit every release workspace in the staged tree, collecting every failure.
- *
- * One run reports every broken package instead of stopping at the first
- * (the v9.2.0 tarball-guard failures surfaced one dispatch apart because the publish
- * loop's per-workspace isolation was the only sweep that existed).
+ * Pack and audit every release workspace in the staged tree, collecting every failure so one run
+ * reports every broken package instead of stopping at the first.
  */
 export async function auditStagedWorkspaces(
 	stagingRoot: PathBuilderLike,
@@ -223,17 +185,15 @@ export async function auditStagedWorkspaces(
 
 	const results: WorkspaceAuditResult[] = []
 
-	// Sequential, and awaited: the pack edits the workspace manifest in place and restores it,
-	// and it must have finished before the audit opens the tarball.
-	// An un-awaited pack audits a file that does not exist yet.
+	// Sequential and awaited: the pack edits and restores the workspace manifest, so it must finish
+	// before the audit opens the tarball.
 	for (const workspace of workspaces) {
 		const tarball = tarballDir(`${workspace.replaceAll("/", "__")}.tgz`)
 
 		try {
 			await packWorkspaceForPublish(staging(workspace), tarball)
 
-			// Throws with every violation listed when the tarball does not honor its manifest.
-			// The catch below is the collection point, so one sweep reports every broken package.
+			// Throws listing every violation; caught below so one sweep reports every broken package.
 			const audit = verifyTarball(tarball)
 
 			results.push({

@@ -31,20 +31,12 @@ import type { MapInstance, MapLayerMouseEvent } from "react-map-gl/maplibre"
 const LABEL_LAYER = /_label|^places_/
 
 /**
- * Properties a label carries its text under, in the order they are trusted.
- *
- * `name` is protomaps' own.
- * The localized variants appear on styles built for a specific script.
+ * Properties a label carries its text under, in trust order; `name` is protomaps' own, and the localized variants appear on script-specific styles.
  */
 const NAME_KEYS = ["name", "name:en", "name_en"] as const
 
 /**
- * The style's label layers, by id.
- *
- * A style with none answers an empty array, and the caller must treat that as "no
- * labels to pick" rather than passing it to `queryRenderedFeatures`.
- * An empty `layers` option is not the same as an absent one there, and the difference between
- * "this style has no labels" and "query everything" is the 64 ms this hook exists to avoid.
+ * The style's label layer ids; an empty result must stay unqueried, since an empty `layers` option is not the same as an absent one in `queryRenderedFeatures`.
  */
 function labelLayerIDs(map: MapInstance): string[] {
 	const layers = map.getStyle()?.layers ?? []
@@ -55,9 +47,7 @@ function labelLayerIDs(map: MapInstance): string[] {
 function labelNameAt(map: MapInstance, point: MapLayerMouseEvent["point"], layers: string[]): string | null {
 	if (!layers.length) return null
 
-	// `queryRenderedFeatures` answers in paint order with the topmost first,
-	// which is the label drawn over the others and.
-	// Therefore, the one a click landed on.
+	// `queryRenderedFeatures` answers topmost-first, so the first named feature is the one the click landed on.
 	for (const feature of map.queryRenderedFeatures(point, { layers })) {
 		for (const key of NAME_KEYS) {
 			const value = feature.properties?.[key]
@@ -70,18 +60,13 @@ function labelNameAt(map: MapInstance, point: MapLayerMouseEvent["point"], layer
 }
 
 export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) => void): void {
-	// The subscription depends on the MAP alone.
-	// `useGeocode` returns a fresh object every render, so a callback built from it is
-	// new every render too, with `onPick` in the dependency list these map listeners
-	// were torn down and re-added on every keystroke in the search field.
-	// `useEffectEvent` is the shape for exactly this: an event handler that always
-	// sees the latest props without being a reactive dependency.
+	// The subscription depends on the map alone; `onPick` is fresh every render, and `useEffectEvent` reads it without becoming a reactive dependency.
 	const pick = useEffectEvent((name: string) => onPick(name))
 
 	useEffect(() => {
 		if (!map) return
 
-		// Recomputed when the style swaps (a theme change, a version switch) and not once per pointer move.
+		// Recomputed when the style swaps, not once per pointer move.
 		let layers = labelLayerIDs(map)
 
 		const readLayers = () => {
@@ -106,8 +91,7 @@ export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) 
 
 				const canvas = map.getCanvas()
 
-				// The drag cursor belongs to the pan gesture.
-				// Overriding it mid-drag would fight the map for the pointer.
+				// The drag cursor belongs to the pan gesture; overriding it mid-drag would fight the map for the pointer.
 				if (canvas.style.cursor === "grabbing") return
 
 				canvas.style.cursor = labelNameAt(map, event.point, layers) ? "pointer" : ""

@@ -2,13 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Tests for the #942 postal-compound recovery — the knife-edge no-street query shape
- *   ("Kožljek 7, 1382 Kožljek") whose parse globs the trailing city into the postcode span. The
- *   fixture mirrors the real failure: the compound resolves to no place, the confident postcode
- *   span blocks its own city tokens, and the tree comes back empty. With the flag on, the code
- *   subset anchors the check, the residual city tokens become span material, and the failed
- *   postcode node gains a coordinate floor. Street blocking (the "Ave, France" guard) stays.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -21,9 +14,6 @@ import { backendNameKey } from "../helpers/backend-name-key.ts"
 
 const norm = backendNameKey
 
-/**
- * The SI shape: the village + its bare-code postcode row (the #920 name law — codes stored bare).
- */
 const PLACES: ResolvedPlace[] = [
 	{
 		id: 1,
@@ -36,8 +26,6 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{ id: 900, name: "1382", placetype: "postalcode", country: "SI", lat: 45.82, lon: 14.42, score: 1 },
-	// A distant same-named decoy in another country.
-	// The check + country constraint must hold.
 	{
 		id: 2,
 		name: "Kožljek",
@@ -73,9 +61,6 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value" | "
 	...over,
 })
 
-/**
- * The real failure shape: "Kožljek 7, 1382 Kožljek" — street+hn lead, globbed postcode trail.
- */
 function failingTree(): AddressTree {
 	const raw = "Kožljek 7, 1382 Kožljek"
 

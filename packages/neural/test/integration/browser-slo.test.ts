@@ -157,8 +157,7 @@ const CANDIDATE_PROBE_SQL =
 	`FROM candidate WHERE name_key = ? ORDER BY neg_rank ASC LIMIT ${CANDIDATE_PROBE_LIMIT}`
 
 /**
- * Artifact-conditional exactly like `weights.test.ts`: a checkout without the dev weights,
- * or without Playwright's browser, skips this suite rather than failing it.
+ * Artifact-conditional exactly like `weights.test.ts`: a checkout without the dev weights, or without Playwright's browser, skips this suite rather than failing it.
  */
 const requireFromHere = createRequire(import.meta.url)
 
@@ -171,10 +170,7 @@ async function tryResolveWeights(): Promise<ResolvedWeights | null> {
 }
 
 /**
- * Ask a package where one of its files lives.
- *
- * Never assemble a path into another package's install directory by hand.
- * The layout is its owner's to change.
+ * Ask a package where one of its files lives, never assembling a path into another package's install directory by hand.
  */
 async function tryResolveFile(specifier: string): Promise<string | null> {
 	try {
@@ -201,9 +197,7 @@ const haveModel = weights !== null && (await pathExists(weights.modelPath)) && (
 const haveBrowser = (await tryChromiumExecutable()) !== null
 
 /**
- * A locator for the onnxruntime-web asset directory rather than the file the runtime
- * will fetch: ORT picks its own `.wasm` variant at load time, and the whole directory
- * is mounted at `/ort/` so whichever it asks for is served and counted.
+ * A locator for the onnxruntime-web asset directory rather than the file the runtime will fetch: the whole directory is mounted at `/ort/` so whichever `.wasm` variant ORT picks is served and counted.
  */
 const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
 
@@ -214,18 +208,12 @@ const haveGazetteer = SQLJS_ENTRY_FILE !== null && (await pathExists(CANDIDATE_D
 const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null
 
 /**
- * Directory the browser entry is resolved from — the repo root, so `@mailwoman/neural/*`
- * and `onnxruntime-web` both resolve through the workspace's own module graph.
+ * Directory the browser entry is resolved from — the repo root, so `@mailwoman/neural/*` and `onnxruntime-web` both resolve through the workspace's own module graph.
  */
 const BUNDLE_RESOLVE_DIR = repoRootPath()
 
-// MARK: Static asset server
-
 /**
- * The class a served response is counted against.
- *
- * Byte accounting happens on the server rather than in the browser: the server sees exactly
- * what left the socket, encoding included, and cannot be fooled by a cache hit.
+ * The class a served response is counted against; byte accounting happens on the server rather than in the browser because the server sees exactly what left the socket and cannot be fooled by a cache hit.
  */
 type AssetClass = "model" | "tokenizer" | "ortWasm" | "sqliteRuntime" | "runtimeJS" | "evidence" | "gazetteerRanges"
 
@@ -285,11 +273,7 @@ const CONTENT_TYPES: Record<string, string> = {
 }
 
 /**
- * Extensions worth compressing.
- *
- * `.onnx`, `.model` and `.bin` are already entropy-dense.
- * The live demo serves them identity-encoded too, which is why the baseline's
- * model figure equals the file size on disk.
+ * Extensions worth compressing; `.onnx`, `.model` and `.bin` are already entropy-dense and the live demo serves them identity-encoded too.
  */
 const COMPRESSIBLE_EXTENSIONS = new Set([".html", ".js", ".mjs", ".json", ".wasm", ".map"])
 
@@ -319,10 +303,7 @@ interface RangeSpec {
 }
 
 /**
- * Parse a single-range `Range: bytes=a-b` header.
- *
- * Multi-range is deliberately unimplemented — sql.js-httpvfs never asks for one, and
- * half-answering a shape we do not serve would corrupt the measurement instead of failing it.
+ * Parse a single-range `Range: bytes=a-b` header; multi-range is deliberately unimplemented because sql.js-httpvfs never asks for one and half-answering a shape we do not serve would corrupt the measurement.
  */
 function parseRange(header: string | undefined, size: number): RangeSpec | null {
 	if (!header) return null

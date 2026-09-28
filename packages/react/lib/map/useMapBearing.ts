@@ -3,35 +3,29 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `useMapBearing` — the map's rotation as React state, for a compass that appears off north and fades back.
- *
- *   The map is an external store, so it is read through `useSyncExternalStore` rather than mirrored into state by an
- *   effect: the direction is a number, which makes a stable snapshot, and React experiences no tearing during a
- *   concurrent render.
- *
- *   It listens on `rotate` rather than `rotateend`, because the needle has to track the gesture rather than snap once
- *   the gesture is over. `move` is subscribed too: a `flyTo` or an `easeTo` carrying a direction rotates the map without
- *   firing a rotate event, and a compass that misses those stays pointing north over a turned map.
+ *   The map's rotation as React state, read through `useSyncExternalStore` and subscribed to `move` as well as `rotate`, since a `flyTo` or `easeTo` carrying a direction fires no rotate event.
  */
 
 import { useCallback, useSyncExternalStore } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"
 
+/**
+ * The map's bearing and a callback that returns the map to north.
+ */
 export interface UseMapBearing {
 	/**
-	 * Degrees off north, as MapLibre reports it.
-	 *
-	 * Zero while there is no map.
+	 * Degrees off north, as MapLibre reports it; zero while there is no map.
 	 */
 	bearing: number
 	/**
-	 * Rotate the map back to north.
-	 *
-	 * A no-op while there is no map.
+	 * Rotate the map back to north; a no-op while there is no map.
 	 */
 	resetNorth: () => void
 }
 
+/**
+ * Reads the live map bearing and exposes `resetNorth`.
+ */
 export function useMapBearing(map: MapInstance | null): UseMapBearing {
 	const subscribe = useCallback(
 		(onChange: () => void) => {
@@ -48,8 +42,7 @@ export function useMapBearing(map: MapInstance | null): UseMapBearing {
 		[map]
 	)
 
-	// The server snapshot is the same reading: there is no map during a server render,
-	// and north is what a compass shows when it has no bearing to report.
+	// The server snapshot is the same reading: no map during a server render, and north is what a compass shows with no bearing to report.
 	const readBearing = useCallback(() => map?.getBearing() ?? 0, [map])
 
 	const bearing = useSyncExternalStore(subscribe, readBearing, () => 0)
