@@ -40,14 +40,17 @@ SEED = 42
 #: The wire identifier every row of this recipe output carries, and the prefix of every `source_id`.
 #:
 #: `RECIPE_SOURCES` in `packages/corpus/lib/recipes/sources.ts` is the authority for both spellings of this
-#: source and records `fragment-assay` as the one it will carry after the rewrite. This constant holds the
-#: retired spelling, because `v0.6.0-register-surface` stores it and the configs that target that corpus key
-#: on it. Flip it in the same commit as the DuckDB rewrite over an assembly's staging files, so the rows and
-#: this generator never disagree.
+#: source and records `fragment-assay` as the current one. Python cannot import that table, so the two agree
+#: by hand: this constant carries the same value as the table's `current` field, and `WRITE_CURRENT_SOURCE_NAMES`
+#: in that file is the switch the TypeScript recipes read.
+#:
+#: `v0.6.0-register-surface` and the `.pre-rename` copy of the staging directory store the retired spelling
+#: `synth-fragment`, and the configs that target either corpus key on it. A run of this generator writes rows
+#: for a corpus assembled after the rewrite, so it writes the current spelling.
 #:
 #: Composed into `source_id` rather than written twice, because `push` stamps the id from this and a rename
 #: that changed one and not the other would make the id name a source no row carries.
-SOURCE = "synth-fragment"
+SOURCE = "fragment-assay"
 
 
 def collect_oa_pairs(

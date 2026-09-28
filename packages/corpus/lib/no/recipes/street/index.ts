@@ -19,6 +19,7 @@ import {
 	SYNTHETIC_TUPLE_LICENSE as LICENSE,
 	type CorpusRecipe,
 } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeNoStreetRow, type NoStreetBaseTuple } from "#synthesizers/no-street"
 import { SurfaceOrigin } from "#types"
 
@@ -49,7 +50,7 @@ export const noStreetRecipe: CorpusRecipe = {
 		if (!opts.input) throw new Error("no-street recipe requires --input <tuples.jsonl>")
 		// The legacy build script seeded the LCG via makeRandom(opts.seed) (s = seed).
 		const random = makeLcg(opts.seed)
-		const source = opts.sourceName ?? "synth-no-street"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-no-street")
 		let read = 0
 		let emitted = 0
 		let skipped = 0

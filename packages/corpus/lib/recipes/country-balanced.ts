@@ -18,6 +18,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
@@ -387,7 +388,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 		if (opts.count == null) throw new Error("country-balanced recipe requires --count <N>")
 		const count = opts.count
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-country"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-country")
 		const sources = opts.golden ? EVAL_SOURCES : SOURCES
 		// Reading three times the target leaves room for skipped rows.
 		const perSource = Math.ceil((count * 3) / sources.length)

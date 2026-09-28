@@ -11,10 +11,11 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { titleCaseIfUpper } from "spliterator"
 
 import { alignAndWrite, type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
-const SOURCE = "synth-sg-register"
+const SOURCE = defaultRecipeSource("synth-sg-register")
 
 /**
  * Street generics and their typed abbreviations.

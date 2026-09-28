@@ -22,7 +22,9 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import {
 	auditTrainingManifest,
 	ingestEligibilityProblems,
+	provenanceRefusals,
 	readAddressSourceRegister,
+	type EffectiveTrainingManifest,
 	type TrainingManifest,
 } from "@mailwoman/corpus/source-register"
 import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
@@ -144,9 +146,41 @@ export interface TrainingRecordAudit {
 		problems: string[]
 	} | null
 	/**
+	 * What one config's audited epoch actually drew from that corpus, when the repository holds the record.
+	 *
+	 * The frozen manifest states what the corpus holds.
+	 * This states what reached the trainer, and the two differ by the country filter, the source weights,
+	 * a zero weight, the sampler and every overlay merged after the frozen manifest was written.
+	 */
+	effective: {
+		config: string
+		seed: number
+		trainingSources: number
+		excludedSources: number
+		/**
+		 * Sources the epoch emitted that the frozen manifest does not name, and their row total.
+		 *
+		 * A non-zero count means the frozen manifest covers part of what trained the model.
+		 */
+		emittedButUnrecorded: number
+		emittedButUnrecordedRows: number
+		totalEmittedRows: number
+	} | null
+	/**
 	 * What stops this package's training inputs from being established.
 	 */
 	unresolved: string | null
+	/**
+	 * Why a release may not assert that this package's declared provenance equals what trained it.
+	 *
+	 * An empty array does not state agreement.
+	 * A model card's attribution entries are prose naming publishers, and an effective
+	 * manifest's entries are corpus source ids, so no field joins the two.
+	 *
+	 * The refusals below are the ones measurable without that join: no effective manifest
+	 * was read, or the one read covers part of the emitted set.
+	 */
+	provenanceRefusals: string[]
 }
 
 /**
@@ -324,6 +358,46 @@ async function readFrozenManifest(repoRoot: PathBuilderLike, corpusVersion: stri
 }
 
 /**
+ * The effective training manifest for a corpus, or `null` when the repository holds none.
+ *
+ * `effective-manifest.run.ts` writes one from the corpus's frozen manifest
+ * and an `audit_epoch_mixture` output.
+ * A read that fails for any reason returns `null`, and the caller records that no release
+ * read one rather than reporting a checkpoint whose training source set is empty.
+ */
+async function readEffectiveManifest(
+	repoRoot: PathBuilderLike,
+	corpusVersion: string
+): Promise<EffectiveTrainingManifest | null> {
+	try {
+		return await readLocalJSONFile<EffectiveTrainingManifest>(
+			resolvePath(repoRoot, FROZEN_MANIFESTS_DIRECTORY, `${corpusVersion}.effective.json`)
+		)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * One effective manifest reduced to the counts the report prints, or `null` when none was read.
+ */
+function effectiveRow(manifest: EffectiveTrainingManifest | null): TrainingRecordAudit["effective"] {
+	if (!manifest) return null
+
+	const unrecorded = Object.values(manifest.emittedButUnrecorded)
+
+	return {
+		config: manifest.config,
+		seed: manifest.seed,
+		trainingSources: manifest.trainingSources.length,
+		excludedSources: Object.keys(manifest.excludedSources).length,
+		emittedButUnrecorded: unrecorded.length,
+		emittedButUnrecordedRows: unrecorded.reduce((sum, rows) => sum + rows, 0),
+		totalEmittedRows: manifest.totalEmittedRows,
+	}
+}
+
+/**
  * What each package records about the records that trained it.
  */
 async function auditTraining(
@@ -340,22 +414,45 @@ async function auditTraining(
 				package: record.packageName,
 				corpusNamed: null,
 				manifest: null,
+				effective: null,
 				unresolved: record.inherited
 					? `ships no model graph and its card names no corpus; what trained ${record.inherited.package}'s graph is that package's row`
-					: "its model card names no corpus, so there is nothing to look a manifest up by",
+					: "its model card names no corpus, so a manifest lookup has no key",
+				// An empty list reads as agreement, and a card naming no corpus supports no comparison at all.
+				// The inherited case points at the package that owns the graph rather than repeating its refusal.
+				provenanceRefusals: record.inherited
+					? [
+							`${record.packageName}: its declared provenance is ${record.inherited.package}'s, and whether that ` +
+								`equals what trained the shared graph is that package's row.`,
+						]
+					: [
+							`${record.packageName}: its model card names no corpus, so which sources trained it is ` +
+								`unmeasured and no effective manifest can be looked up.`,
+						],
 			})
 
 			continue
 		}
 
 		const manifest = await readFrozenManifest(repoRoot, corpusNamed)
+		const effective = await readEffectiveManifest(repoRoot, corpusNamed)
+		// The card's attribution entries are prose naming publishers, so the
+		// comparison against the effective manifest's corpus source ids has no key
+		// and `provenanceRefusals` reports it as unmeasured.
+		const declared = null
 
 		if (!manifest) {
 			rows.push({
 				package: record.packageName,
 				corpusNamed,
 				manifest: null,
+				effective: effectiveRow(effective),
 				unresolved: `the card names corpus ${stringifyJSON(corpusNamed)} and no frozen manifest for it exists under ${FROZEN_MANIFESTS_DIRECTORY}, so which records reached this model is unrecorded`,
+				provenanceRefusals: provenanceRefusals({
+					manifest: effective,
+					declared,
+					packageName: record.packageName,
+				}),
 			})
 
 			continue
@@ -373,7 +470,13 @@ async function auditTraining(
 				totalRows: manifest.totalRows,
 				problems,
 			},
+			effective: effectiveRow(effective),
 			unresolved: problems.length ? `its frozen manifest fails its own audit: ${problems.join("; ")}` : null,
+			provenanceRefusals: provenanceRefusals({
+				manifest: effective,
+				declared,
+				packageName: record.packageName,
+			}),
 		})
 	}
 
@@ -426,6 +529,20 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 		unresolved.push(
 			`${withoutManifest.length} of ${training.length} packages have no frozen training manifest, so which records trained the model each one ships or inherits is unrecorded.`
 		)
+	}
+
+	const withEffective = training.filter((row) => row.effective)
+
+	if (withEffective.length) {
+		established.push(
+			`${withEffective.length} of ${training.length} packages name a corpus this repository holds an effective training manifest for, which records what one config's audited epoch drew rather than what the corpus holds.`
+		)
+	}
+
+	for (const row of training) {
+		for (const refusal of row.provenanceRefusals) {
+			unresolved.push(refusal)
+		}
 	}
 
 	const unlicensed = packages.reduce((total, entry) => total + entry.entriesNamingNoLicense, 0)
@@ -610,6 +727,16 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 				? `  ${row.package}: ${row.manifest.sources} sources, ${row.manifest.totalRows} rows, profile ${row.manifest.profile}`
 				: `  ${row.package}: ${row.unresolved}`
 		)
+
+		if (row.effective) {
+			lines.push(
+				`    effective under ${row.effective.config} at seed ${row.effective.seed}: ` +
+					`${row.effective.trainingSources} of the manifest's sources drew rows, ` +
+					`${row.effective.excludedSources} excluded, ` +
+					`${row.effective.emittedButUnrecorded} emitted sources the manifest does not name ` +
+					`(${row.effective.emittedButUnrecordedRows} of ${row.effective.totalEmittedRows} rows)`
+			)
+		}
 	}
 
 	lines.push("", `Data artifacts (mailwoman ${audit.data.version}):`)

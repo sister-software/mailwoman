@@ -1,6 +1,6 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { createSynthPoBoxAdapter, SYNTH_PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/synth-po-box/adapter"
+import { createSynthPoBoxAdapter, PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/synth-po-box/adapter"
 import { describe, expect, it } from "vitest"
 
 async function writeFixture(rows: Array<Record<string, unknown>>): Promise<string> {
@@ -29,7 +29,7 @@ describe("synth-po-box adapter", () => {
 
 		const rows = await collect(path)
 		expect(rows).toHaveLength(2)
-		expect(rows[0]!.source).toBe(SYNTH_PO_BOX_ADAPTER_ID)
+		expect(rows[0]!.source).toBe(PO_BOX_ADAPTER_ID)
 	})
 
 	it("US row produces en-US po_box variant", async () => {
@@ -144,7 +144,7 @@ describe("synth-po-box adapter", () => {
 		const rows = await collect(path)
 		const ids = new Set(rows.map((r) => r.source_id))
 		expect(ids.size).toBe(2)
-		expect([...ids].every((id) => id.startsWith(SYNTH_PO_BOX_ADAPTER_ID + "-"))).toBe(true)
+		expect([...ids].every((id) => id.startsWith(PO_BOX_ADAPTER_ID + "-"))).toBe(true)
 	})
 
 	it("MilitaryRatio emits a US military/diplomatic PO-box row per input", async () => {

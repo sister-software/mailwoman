@@ -27,6 +27,7 @@ import {
 	type CorpusRecipe,
 	recipeSourceID,
 } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 
 /**
@@ -55,8 +56,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 	mode: "tuples",
 	async run(opts, write) {
 		makeMulberry32(opts.seed)
-		const structuredSource = opts.sourceName ?? "synth-trailing-region-structured"
-		const bareSource = opts.sourceName ? `${opts.sourceName}-bare` : "synth-trailing-region"
+		const structuredSource = opts.sourceName ?? defaultRecipeSource("synth-trailing-region-structured")
+		const bareSource = opts.sourceName ? `${opts.sourceName}-bare` : defaultRecipeSource("synth-trailing-region")
 		let read = 0
 		let emitted = 0
 		let skipped = 0

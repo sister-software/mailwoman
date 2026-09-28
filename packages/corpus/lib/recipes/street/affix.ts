@@ -24,6 +24,7 @@ import { matchCase } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import { readCSVRecords, readOATuples, recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -369,7 +370,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 50_000
-		const source = opts.sourceName ?? "synth-affix"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-affix")
 		const multilocaleCount = opts.multilocaleCount ?? 0
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
 
@@ -562,7 +563,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 30_000
-		const source = opts.sourceName ?? "synth-suffix-boundary"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-suffix-boundary")
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
 
 		const venuePool = await readVenuePool(VENUE_POOL_CSV)

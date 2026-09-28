@@ -11,12 +11,19 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
 /**
  * Shared provenance for postcode-free BAN rows.
  */
+/**
+ * Resolved once, because `source_id` carries the source as its prefix and a pair that
+ * disagreed would name a source no row of this output declares.
+ */
+const FR_BARE_STREET_SOURCE = defaultRecipeSource("synth-fr-bare-street")
+
 const FR_BARE_STREET_PROVENANCE = {
 	register: SourceRegister.BaseAdresseNationale,
 	surface: SurfaceOrigin.Composed,
@@ -74,8 +81,8 @@ export const frBareStreetRecipe: CorpusRecipe = {
 						components: { street: fullStreet } as Record<string, string>,
 						country: "FR",
 						locale: "fr-FR",
-						source: "synth-fr-bare-street",
-						source_id: recipeSourceID("synth-fr-bare-street", {
+						source: FR_BARE_STREET_SOURCE,
+						source_id: recipeSourceID(FR_BARE_STREET_SOURCE, {
 							street: fullStreet,
 							f: "bare-nonvoie",
 							v: String(read),
@@ -124,14 +131,14 @@ export const frBareStreetRecipe: CorpusRecipe = {
 						? `${prefix} ${street}`
 						: `${number} ${prefixSurface} ${street} ${locality}`
 
-			const source_id = recipeSourceID("synth-fr-bare-street", { ...components, f: String(form), v: String(read) })
+			const source_id = recipeSourceID(FR_BARE_STREET_SOURCE, { ...components, f: String(form), v: String(read) })
 
 			const canonical = {
 				raw,
 				components,
 				country: "FR",
 				locale: "fr-FR",
-				source: "synth-fr-bare-street",
+				source: FR_BARE_STREET_SOURCE,
 				source_id,
 				corpus_version: "0.9.4",
 				license:

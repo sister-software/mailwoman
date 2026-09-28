@@ -430,10 +430,19 @@ export function provenanceDisagreement(
  * An empty array is the only value a caller may read as agreement, and it is reachable only
  * when the effective manifest covers every emitted source.
  * A `null` manifest means no release read one at all, which is reported rather than passed.
+ *
+ * `declared` is a list of corpus source ids.
+ * A caller holding a model card's attribution entries passes `null`.
+ *
+ * Those entries are prose naming publishers.
+ * Every field of the card carries prose rather than a source id, so comparing the two
+ * lists as strings reports every entry as a source the epoch never drew.
+ *
+ * The refusal list then carries the coverage refusal and one line recording the comparison as unmeasured.
  */
 export function provenanceRefusals(input: {
 	manifest: EffectiveTrainingManifest | null
-	declared: readonly string[]
+	declared: readonly string[] | null
 	packageName: string
 }): string[] {
 	if (!input.manifest) {
@@ -456,6 +465,16 @@ export function provenanceRefusals(input: {
 				`part of what trained the model. Those sources reached the corpus through an overlay merged after ` +
 				`the frozen manifest was written: ${unrecorded.map(([source]) => source).join(", ")}.`
 		)
+	}
+
+	if (input.declared === null) {
+		refusals.push(
+			`${input.packageName}: whether its declared provenance equals the ${input.manifest.trainingSources.length} ` +
+				`source(s) the audited epoch drew from is unmeasured. The model card states its attribution as prose ` +
+				`naming publishers, and an effective manifest states corpus source ids, so the two carry no common key.`
+		)
+
+		return refusals
 	}
 
 	const { declaredButNotTrained, trainedButNotDeclared } = provenanceDisagreement(input.manifest, input.declared)

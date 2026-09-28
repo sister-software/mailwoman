@@ -20,6 +20,12 @@ and the repository held no answer.
 `$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/` and `corpus/recipe-outputs-boundary-family/`, counted
 line by line rather than estimated from file size.
 
+Every name below is a filename on disk. A `synth-` filename keeps its name, because renaming a file
+breaks the command that reads it, and the `source` string those rows carry is a separate value:
+`packages/corpus/lib/recipes/sources.ts` maps each one to the operation spelling a corpus assembled
+from `v0.7.0-de-holdout` on stores, so `synth-unit-v30.jsonl` holds rows whose `source` reads
+`spliced-unit-v30`.
+
 | recipe output                                 |    rows |
 | --------------------------------------------- | ------: |
 | `synth-es-pedania-v1.jsonl`                   | 800,000 |

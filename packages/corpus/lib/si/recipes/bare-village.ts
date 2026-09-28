@@ -24,6 +24,7 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 
 /**
@@ -78,14 +79,17 @@ export const siBareVillageRecipe: CorpusRecipe = {
 				raw = `${postcode} ${village}, ${village} ${number}`
 			}
 
-			const source_id = recipeSourceID("synth-si-bare-village", { ...components, o: String(order), v: String(read) })
+			// One resolution for both, because `source_id` carries the source as its prefix
+			// and a pair that disagreed would name a source no row of this output declares.
+			const source = defaultRecipeSource("synth-si-bare-village")
+			const source_id = recipeSourceID(source, { ...components, o: String(order), v: String(read) })
 
 			const canonical = {
 				raw,
 				components,
 				country: "SI",
 				locale: "sl-SI",
-				source: "synth-si-bare-village",
+				source,
 				source_id,
 				corpus_version: "0.9.9",
 				license:

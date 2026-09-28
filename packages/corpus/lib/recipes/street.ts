@@ -11,6 +11,7 @@ import { makeLcg } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
 import { alignAndWrite, readTuples, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { SurfaceOrigin } from "#types"
 
@@ -20,6 +21,12 @@ import { SurfaceOrigin } from "#types"
  * No register asserts that this street runs through this locality, which is what makes
  * the row invented rather than a rendering of a published record.
  */
+/**
+ * Resolved once, because `source_id` carries the source as its prefix and a pair that
+ * disagreed would name a source no row of this output declares.
+ */
+const STREET_SOURCE = defaultRecipeSource("synth-street")
+
 const STREET_PROVENANCE = {
 	register: null,
 	surface: SurfaceOrigin.Invented,
@@ -73,8 +80,8 @@ export const streetRecipe: CorpusRecipe = {
 						components: synth.components,
 						country: tuple.country,
 						locale: synth.locale,
-						source: "synth-street",
-						source_id: stableSourceID("synth-street", {
+						source: STREET_SOURCE,
+						source_id: stableSourceID(STREET_SOURCE, {
 							locality: `${tuple.locality}#${v}`,
 							region: tuple.region,
 							postcode: tuple.postcode,

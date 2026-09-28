@@ -20,9 +20,9 @@
  *   property of the row and varies inside a source, and it never carries the register, which `requireRegister` makes
  *   a property of the invocation.
  *
- *   Recipes still stamp the retired spelling until each reads its default from this table. A corpus assembled after
- *   2026-09-26 carries the current spelling because the assembly rewrites the routed overlays through this table
- *   before `overlay-manifest` runs.
+ *   Every recipe reads its default `source` from this table through {@linkcode defaultRecipeSource}, and
+ *   {@linkcode WRITE_CURRENT_SOURCE_NAMES} decides which spelling it answers with. An assembly rewrites its routed
+ *   overlays through this table before `overlay-manifest` runs, so the rows and the recipe defaults move together.
  */
 
 /**
@@ -288,12 +288,9 @@ export function recipeSource(source: string): RecipeSource | null {
 /**
  * The spelling a recipe writes today, given the retired spelling it has always written.
  *
- * Every recipe's default `source` reads this rather than holding a literal, so the flip from
- * the retired vocabulary to the operation vocabulary is one constant rather than 26 files.
- * It returns the retired spelling while {@linkcode WRITE_CURRENT_SOURCE_NAMES} is false,
- * because a recipe output written under the new vocabulary would not match the corpus
- * it joins: the parquet rewrite that renames an assembly's rows runs in the same commit
- * that flips this, so the rows and the recipe defaults change together.
+ * Every recipe's default `source` reads this rather than holding a literal, so the vocabulary
+ * is one constant rather than 26 files. {@linkcode WRITE_CURRENT_SOURCE_NAMES} decides
+ * which spelling it answers with, and it has to agree with the corpus a recipe output joins.
  *
  * @throws When the table records no entry for `retired`.
  * A pass-through would let a typo become a source id on every row of a built corpus,
@@ -315,12 +312,20 @@ export function defaultRecipeSource(retired: string): string {
 /**
  * Whether a recipe writes the operation spelling or the retired one.
  *
- * Flipped in the same commit as the DuckDB rewrite over an assembly's staging files,
- * so a corpus and the recipes that feed it never carry two vocabularies at once.
- * `v0.6.0-register-surface` and `v0.7.0-de-holdout` are never rewritten in place,
- * and the configs that target them keep the spelling their corpus stores.
+ * True since 2026-09-28, because the rewrite has run.
+ * `v0.7.0-overlay-staging` carries 43 distinct sources, every one of them under an operation prefix.
+ *
+ * Its `source-names.json` records the mapping applied per file with the row count
+ * and the ordered-`source_id` digest verified on both sides.
+ * `v0.7.0-de-holdout/corpus-v0.7.0-de-holdout` is assembled from those bytes over 766 slices.
+ *
+ * A recipe writing the retired spelling from here on would produce an output
+ * disagreeing with the corpus it joins.
+ *
+ * `v0.6.0-register-surface` and the staging directory's `.pre-rename` copy are never rewritten in place.
+ * The configs that target them keep the spelling their corpus stores.
  */
-export const WRITE_CURRENT_SOURCE_NAMES = false
+export const WRITE_CURRENT_SOURCE_NAMES = true
 
 /**
  * The retired spelling of a recipe-output source given either spelling, or the value unchanged.

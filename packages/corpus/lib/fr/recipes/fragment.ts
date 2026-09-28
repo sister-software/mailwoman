@@ -17,6 +17,7 @@ import { TextSpliterator } from "spliterator"
 
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
@@ -24,6 +25,12 @@ import { SurfaceOrigin } from "#types"
  * The provenance for every row.
  * Street and commune names both come from BAN.
  */
+/**
+ * Resolved once, because `source_id` carries the source as its prefix and a pair that
+ * disagreed would name a source no row of this output declares.
+ */
+const FR_FRAGMENT_SOURCE = defaultRecipeSource("synth-fr-fragment")
+
 const FR_FRAGMENT_PROVENANCE = {
 	register: SourceRegister.BaseAdresseNationale,
 	surface: SurfaceOrigin.Composed,
@@ -174,7 +181,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 				klass = alnum ? "alnum-housenumber" : "street-housenumber"
 			}
 
-			const sourceID = recipeSourceID("synth-fr-fragment", { ...components, v: String(read) })
+			const sourceID = recipeSourceID(FR_FRAGMENT_SOURCE, { ...components, v: String(read) })
 
 			if (
 				alignAndWrite(
@@ -184,7 +191,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 						components,
 						country: "FR",
 						locale: "fr-FR",
-						source: "synth-fr-fragment",
+						source: FR_FRAGMENT_SOURCE,
 						source_id: sourceID,
 						corpus_version: "0.9.4",
 						license: "Synthetic — fr-fragment; (street, commune) from BAN (Base Adresse Nationale, Licence Ouverte)",
@@ -208,7 +215,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 		for (let i = 0; i < wanted && pool.length; i++) {
 			// The fragment evaluation board uses title-cased commune names.
 			const name = titleCaseFR(sample(pool, random))
-			const sourceID = recipeSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
+			const sourceID = recipeSourceID(FR_FRAGMENT_SOURCE, { locality: name, v: `neg-${i}` })
 
 			if (
 				alignAndWrite(
@@ -218,7 +225,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 						components: { locality: name },
 						country: "FR",
 						locale: "fr-FR",
-						source: "synth-fr-fragment",
+						source: FR_FRAGMENT_SOURCE,
 						source_id: sourceID,
 						corpus_version: "0.9.4",
 						license: "Synthetic — fr-fragment counter-distribution; commune from BAN (Licence Ouverte)",

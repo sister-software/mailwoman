@@ -19,6 +19,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
 import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { EVAL_SOURCE, TRAIN_SOURCES, type UnitSource } from "#recipes/unit/sources"
 import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
@@ -230,7 +231,7 @@ export const unitRecipe: CorpusRecipe = {
 		if (opts.count == null) throw new Error("unit recipe requires --count <N>")
 		const count = opts.count
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-unit"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-unit")
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
 
 		const pool: UnitTuple[] = []

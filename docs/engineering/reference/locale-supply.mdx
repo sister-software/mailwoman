@@ -22,39 +22,41 @@ on the `mailwoman-training` volume as `audits/locale-supply-<iso2>.json`.
 ## `synth-` is the retired spelling of a recipe-output source
 
 Read this before the table. A source id beginning `synth-` is a **locale recipe**, and every one of
-them renders real published address tuples through a template. The prefix was read as "synthetic",
-which the rows are not, so from the corpus assembled after 2026-09-26 on, a recipe-output source is
-spelled `<operation>-<tail>` with the tail unchanged: `rendered-german`, `fragment-fr`,
+them renders real published address tuples through a template. Readers took the prefix to mean the
+rows were fabricated. A recipe-output source is now spelled `<operation>-<tail>` with the tail
+unchanged, and the prefix states what the recipe did to attested data: `rendered-de`, `fragment-fr`,
 `spliced-unit-v30`, `invented-po-box-cedex`, `codex-bare-postcode`, `reviewed-postcode-tail`. The
-prefix states what the recipe did to attested data and never restates `surface` or the register.
+prefix never restates `surface` or the register.
 `packages/corpus/lib/recipes/sources.ts` records every source under both spellings, with the file
-that writes it. Every corpus assembled before that date, and every training config that targets one,
-keeps the `synth-` spelling, because a source id is the string stored on every row of a built corpus
-and a config keys on what its corpus stores. The table below uses the spelling the measured corpus,
-`v0.32.0-locality-shape`, stores:
+that writes it. `v0.7.0-de-holdout` is the first corpus whose rows store the current spelling. Every
+corpus assembled before it, and every training config that targets one, keeps the `synth-` spelling,
+because a source id is the string stored on every row of a built corpus and a config keys on what its
+corpus stores. The left column below uses the spelling the measured corpus,
+`v0.32.0-locality-shape`, stores, and the middle column gives the spelling a corpus assembled from
+`v0.7.0-de-holdout` on stores:
 
-| source     | reads                                                        |
-| ---------- | ------------------------------------------------------------ |
-| `synth-gb` | HM Land Registry Price Paid Data, `ppd/<date>/gb-tuples.csv` |
-| `synth-nl` | OpenAddresses NL `countrywide.csv`                           |
-| `synth-pt` | OpenAddresses PT `countrywide.csv`                           |
-| `synth-ch` | OpenAddresses CH `countrywide.csv`                           |
-| `synth-hr` | OpenAddresses HR `countrywide.csv`                           |
-| `synth-sk` | OpenAddresses SK `countrywide.csv`                           |
-| `synth-lu` | OpenAddresses LU `countrywide.csv`                           |
-| `synth-it` | OpenAddresses IT `countrywide.csv`                           |
-| `synth-es` | the CNIG export, read raw for the pedanía variant            |
-| `synth-nz` | a LINZ-derived OpenAddresses extract                         |
+| source     | stored now    | reads                                                        |
+| ---------- | ------------- | ------------------------------------------------------------ |
+| `synth-gb` | `rendered-gb` | HM Land Registry Price Paid Data, `ppd/<date>/gb-tuples.csv` |
+| `synth-nl` | `rendered-nl` | OpenAddresses NL `countrywide.csv`                           |
+| `synth-pt` | `rendered-pt` | OpenAddresses PT `countrywide.csv`                           |
+| `synth-ch` | `rendered-ch` | OpenAddresses CH `countrywide.csv`                           |
+| `synth-hr` | `rendered-hr` | OpenAddresses HR `countrywide.csv`                           |
+| `synth-sk` | `rendered-sk` | OpenAddresses SK `countrywide.csv`                           |
+| `synth-lu` | `rendered-lu` | OpenAddresses LU `countrywide.csv`                           |
+| `synth-it` | `rendered-it` | OpenAddresses IT `countrywide.csv`                           |
+| `synth-es` | `rendered-es` | the CNIG export, read raw for the pedanía variant            |
+| `synth-nz` | `rendered-nz` | a LINZ-derived OpenAddresses extract                         |
 
 Three columns record this, each answering one question. `recipe` names the code that produced the
 row, `register` names the publication its record came from, and `surface` says how the text was
 built: `attested` is the publisher's own string, `composed` is a template over one real record's
 fields, and `invented` names no published record.
 
-So `synth-gb` writes `recipe: gb`, `register: gb-hm-land-registry-ppd`, `surface: composed` — a
-Land Registry record in the recipe's order. `synth-po-box` writes `register: null`,
-`surface: invented`, because no register asserts that box exists. `synth-fragment`,
-`synth-sub-venue` and the other shape recipes divide the same way.
+So `rendered-gb` writes `recipe: gb`, `register: gb-hm-land-registry-ppd`, `surface: composed` — a
+Land Registry record in the recipe's order. `invented-po-box` writes `register: null`,
+`surface: invented`, because no register asserts that box exists. `fragment-assay`,
+`spliced-sub-venue` and the other shape recipes divide the same way.
 
 A single `synth_method` column used to answer both questions and was read as the second. It reported
 every Land Registry record as fabricated, which is why the split exists.

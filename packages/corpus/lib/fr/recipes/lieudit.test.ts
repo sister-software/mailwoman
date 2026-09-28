@@ -15,6 +15,7 @@ import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { frLieuditRecipe } from "@mailwoman/corpus/fr/recipes/lieudit"
 import type { RecipeOptions } from "@mailwoman/corpus/recipes/scaffold"
+import { defaultRecipeSource } from "@mailwoman/corpus/recipes/sources"
 import type { RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
@@ -60,7 +61,7 @@ describe("fr-lieudit recipe", () => {
 		expect(parsed.components!.dependent_locality).toBe("Le Bourg")
 		expect(parsed.components!.locality).toBe("Altier")
 		expect(parsed.raw).toBe("6 Route de Pomaret\nLe Bourg\n48800 Altier")
-		expect(parsed.source).toBe("synth-fr-lieudit")
+		expect(parsed.source).toBe(defaultRecipeSource("synth-fr-lieudit"))
 		// The dependent_locality line sits before the postcode+commune line.
 		const lieuIdx = parsed.raw.indexOf("Le Bourg")
 		const cityIdx = parsed.raw.indexOf("48800 Altier")
