@@ -3,21 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   One deterministic pass over everything the repository records about where its published artifacts came from, and
- *   what it does not record.
+ * One deterministic pass over everything the repository records about where its published artifacts came from, and
+ * what it does not record.
  *
- *   Seven repository checks already hold individual invariants: the notices agree, the rights documents name a
- *   licensor, the generated files equal their writer's output, the register's digest matches its contents. Each
- *   answers its own question and none of them answers the question a release asks, which is whether the chain from a
- *   source's terms to a published tarball closes.
+ * Seven repository checks already hold individual invariants: the notices agree, the rights documents name a
+ * licensor, the generated files equal their writer's output, the register's digest matches its contents. None of
+ * them answers the question a release asks, which is whether the chain from a source's terms to a published
+ * tarball closes, and this pass says exactly where it does not.
  *
- *   It does not close today, and the value of this pass is saying exactly where. The register holds 389 candidate
- *   sources and admits none of them. No corpus build has written a frozen `TRAINING_SOURCES.json`, so which records
- *   trained a published model is unrecorded rather than recorded-and-unreviewed. Both are reported as what they are.
- *
- *   No part of this report asserts clearance, and a clean report is not one. A section that establishes no fact says so, and the
- *   report separates what it observed from what it could not read. Reading this as permission is the misreading the
- *   whole rights record was built to refuse.
+ * No part of this report asserts clearance, and a clean report is not one. A section that establishes no fact says
+ * so, and the report separates what it observed from what it could not read. Reading this as permission is the
+ * misreading the whole rights record was built to refuse.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -41,9 +37,7 @@ import { weightsRightsRecords } from "#weights/rights/write"
 export interface SourceRegisterAudit {
 	sources: number
 	/**
-	 * Sources with no eligibility problem.
-	 *
-	 * Zero is the reading today and is a measurement rather than a placeholder.
+	 * Sources with no eligibility problem; zero is a measurement rather than a placeholder.
 	 */
 	eligible: number
 	/**
