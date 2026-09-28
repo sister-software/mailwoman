@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #861 server↔demo parity interface, pinned at the two properties that were not held when the Node reader and the
- *   browser byte-range twin each carried their own transcription of this re-rank. Both copies agreed on all four
- *   constants. They disagreed on which field the population term reads and on whether the combined value is written
- *   back — so a test that compares constants would have passed throughout.
+ * Tests for the proximity re-rank shared by the Node reader and the browser twin.
  */
 
 import {
@@ -32,19 +29,16 @@ function contestedPair(): ProximityRerankable[] {
 describe("applyProximityRerank", () => {
 	it("reads the penalized prominence, so a demoted alias does not ride population back over a primary", () => {
 		const [primary, demoted] = contestedPair()
-		// A viewport ~10 km off the alias — the ordinary case rather than the degenerate one.
-		// At distance 0 the nearness term saturates at BIAS_BOOST and outruns the whole
-		// population range either way, so the field the population term reads only
-		// decides the answer at real viewport distances.
-		// It decides it over a wide band: the alias wins out to ~59 km on raw score
-		// and only to ~2.6 km on the penalized value.
+		// A viewport about 10 km off the alias, the ordinary case rather than the degenerate one.
+		// At distance 0 the nearness term saturates and the two field choices agree. The field
+		// the population term reads only decides the answer at real viewport distances. The alias
+		// wins out to about 59 km on raw score and only to about 2.6 km on the penalized value.
 		const bias = [{ lat: 40.09, lon: -83 }]
 		const rawScorePopTerm = 4 * Math.min(1, demoted!.score / 6)
 		const penalizedPopTerm = 4 * Math.min(1, demoted!.prominence! / 6)
 		const proxTerm = combinedProminence(demoted!, bias) - penalizedPopTerm
 
 		expect(combinedProminence(demoted!, bias)).toBeLessThan(combinedProminence(primary!, bias))
-		// ...and the transcription this replaced, reading raw score, would have picked the alias.
 		expect(rawScorePopTerm + proxTerm).toBeGreaterThan(combinedProminence(primary!, bias))
 	})
 
@@ -62,9 +56,8 @@ describe("applyProximityRerank", () => {
 
 		applyProximityRerank(candidates, [{ lat: 40, lon: -83 }])
 
-		// The walk re-sorts by `prominence ?? score`.
-		// A re-rank that only returned bias order would leave these untouched
-		// and have its ordering discarded downstream.
+		// The walk re-sorts by `prominence ?? score`. A re-rank that only returned bias order
+		// would leave these untouched and have its ordering discarded downstream.
 		expect(candidates.map((c) => c.prominence)).not.toEqual(before)
 		expect(candidates.every((c) => typeof c.prominence === "number")).toBe(true)
 	})
@@ -73,7 +66,6 @@ describe("applyProximityRerank", () => {
 		const nowhere: ProximityRerankable = { lat: 0, lon: 0, score: 4, prominence: 4 }
 		const bias = [{ lat: 0.001, lon: 0.001 }]
 
-		// Population term only: 4 * (4 / 6).
 		expect(combinedProminence(nowhere, bias)).toBeCloseTo(4 * (4 / 6), 10)
 	})
 
