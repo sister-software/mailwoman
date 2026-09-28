@@ -3,9 +3,6 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Tests the weights-family check against the current tree and against fixture manifests.
- *
- *   The duplicate-claim branches read the `FAMILIES` constant instead of the checkout, so the registry's own test
- *   covers them.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -18,7 +15,6 @@ import { expect, test } from "vitest"
  * Writes a temporary checkout that holds only the given `neural-weights-*` manifests, keyed by locale.
  *
  * The directory is moved out of the disposal scope because the check reads it after this function returns.
- * No code deletes it afterwards.
  */
 async function fixtureContext(manifests: Record<string, unknown>): Promise<RepoContext> {
 	const temporary = (await temporaryDirectory("weights-family-")).move()
@@ -33,9 +29,6 @@ async function fixtureContext(manifests: Record<string, unknown>): Promise<RepoC
 	return { repoRoot: temporary.path.toString(), trackedFiles }
 }
 
-/**
- * These graph manifests match the registry, and each case below changes one field.
- */
 const LATIN_GRAPH = {
 	name: "@mailwoman/neural-weights-en-us",
 	files: ["model.onnx", "tokenizer.model", "model-card.json"],

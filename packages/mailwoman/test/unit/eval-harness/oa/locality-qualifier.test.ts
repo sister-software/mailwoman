@@ -3,11 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The OpenAddresses parenthetical strip, pinned at its edges (#2308).
- *
- *   The cases worth holding are the ones where the strip leaves a name alone: a parenthesis mid-name, and a surface
- *   that consists of a parenthetical alone. Both come back unchanged, which is what keeps the function a fallback the
- *   grader reaches for after an exact compare rather than a normalization that rewrites every expectation.
+ *   The strip stays conservative: a parenthesis mid-name and a parenthetical-only surface come back
+ *   unchanged, so it remains a fallback after an exact compare rather than a normalizer.
  */
 
 import { hasParentheticalQualifier, stripParentheticalQualifier } from "mailwoman/eval-harness/oa/locality-qualifier"

@@ -3,20 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Geofabrik extract URLs + a streaming downloader. Geofabrik is the OSM ecosystem's de-facto
- *   regional-extract host: a cascade of continent → country → sub-region `.osm.pbf` files
- *   (`europe/france/ile-de-france-latest.osm.pbf`). We pull per-country extracts (the ecosystem's
- *   default extract unit — matching Photon's per-country dumps and our own per-locale weights), and a
- *   smaller sub-region extract when we only need to smoke a build (Île-de-France for the Paris
- *   acceptance). The bytes are ODbL OpenStreetMap data — see `osm/readme.md`.
+ *   Geofabrik extract URLs and a streaming downloader for per-country and sub-region `.osm.pbf` files — the
+ *   bytes are ODbL OpenStreetMap data, see `osm/readme.md`.
  *
- *   RAW `fetch` here is deliberate. `agents.md` requires http clients to extend or instantiate
- *   `APIClient`, and that rule is about API requests — small bodies, repeated calls, rate-limited
- *   hosts, where its pacing, bounded retry, response caching and `ResourceError` mapping all earn
- *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
- *   would be nonsense at that size, pacing has no calls to pace (one request), and axios buffers a
- *   non-stream response type in memory. The primitive that fits a body this large is the one that
- *   never holds it: a web stream piped to a write stream.
+ *   RAW `fetch` is deliberate: `agents.md` requires HTTP clients to use `APIClient`, whose pacing, retry and
+ *   response caching earn their keep on small repeated API requests. A multi-gigabyte body streamed
+ *   straight to disk moves in a single pass, where pacing and retry add overhead.
  */
 
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
@@ -26,9 +18,7 @@ const GEOFABRIK_BASE = "https://download.geofabrik.de"
 
 /**
  * The URL of a Geofabrik `-latest.osm.pbf` extract for a region path like
- * `europe/france/ile-de-france` or `europe/germany`.
- *
- * Pass the path without the `-latest.osm.pbf` suffix.
+ * `europe/france/ile-de-france` or `europe/germany`, given without the suffix.
  */
 export function geofabrikURL(regionPath: string): string {
 	const clean = regionPath.replaceAll(/^\/+|\/+$/g, "")
@@ -40,7 +30,6 @@ export function geofabrikURL(regionPath: string): string {
  * Download a Geofabrik extract to `destPath`, streaming (these run to several GB for a whole country).
  *
  * @returns the byte count written.
- * The caller owns where the file lands (typically `$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/`).
  */
 export async function downloadExtract(regionPath: string, destPath: string): Promise<number> {
 	const url = geofabrikURL(regionPath)
@@ -56,8 +45,8 @@ export async function downloadExtract(regionPath: string, destPath: string): Pro
 		},
 	})
 
-	// Write to a `.tmp` sibling and rename, so an interrupted multi-gigabyte download never lands at
-	// the final path looking like a complete extract (the same discipline as tiger's downloadIfNeeded).
+	// Write to a `.tmp` sibling and rename, so an interrupted multi-gigabyte download
+	// never lands at the final path looking like a complete extract.
 	const tmpPath = destPath + ".tmp"
 
 	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), openWriteStream(tmpPath))

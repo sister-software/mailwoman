@@ -3,12 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it.
- *
- *   the two directions OF the meaning-OF-zero rule are the point OF this file. A point inside the
- *   authority's footprint and outside every polygon must read as the authority's Zone 1 designation, and a
- *   point outside the footprint must read `unknown`. Both are the same empty answer from the geometry, and
- *   a layer that could not tell them apart would report every unmapped location as low-hazard.
+ *   A point inside the authority's footprint but outside every polygon reads as the authority's Zone 1
+ *   designation, while a point outside the footprint reads as unknown — the same empty geometry answer
+ *   carrying opposite meanings.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers"
@@ -38,9 +35,6 @@ let databasePath: PathBuilder
 let result: BuildFloodResult
 let lookup: FloodZoneLookup
 
-/**
- * Build one artifact from a feature list, into its own scratch directory.
- */
 async function build(
 	features = fixtureFeatures(),
 	out = "flood.db"
@@ -107,11 +101,7 @@ describe("buildFloodDatabase", () => {
 	it("derives the footprint from the coverage statement, not from the polygon union", () => {
 		expect(lookup.identity.extent.statement).toBe(EA_COVERAGE_STATEMENT)
 
-		// The polygons occupy a few square kilometres.
-		// The statement's footprint is the whole outline, so the coverage cells vastly
-		// outnumber the cells any polygon reaches.
-		// A footprint taken from the polygons would be the other way round,
-		// and every Zone 1 location would read as unmapped.
+		// The statement's footprint is the whole outline, so its cells vastly outnumber those any polygon reaches.
 		expect(result.coverageCells).toBeGreaterThan(result.coverageCellsWithRows * 10)
 		expect(result.coverageCellsWithRows).toBeGreaterThan(0)
 	})
@@ -196,7 +186,6 @@ describe("FloodZoneLookup — the three readings", () => {
 	})
 
 	it("falls through to the ray cast at a boundary, and names the polygon it matched", () => {
-		// A point just inside the FZ3 square's western edge — inside the polygon, inside a cell the edge crosses.
 		const reading = lookup.lookup(FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2, FIXTURE_ORIGIN.lon + 0.00002)
 
 		expect(reading.kind).toBe(FloodReadingKind.Designated)
@@ -206,9 +195,7 @@ describe("FloodZoneLookup — the three readings", () => {
 	})
 
 	it("reads a point inside a polygon's HOLE as the designated absence, not as the polygon's zone", () => {
-		// Feature 3 is a square with a hole through its middle.
 		// The hole is inside the footprint and inside no polygon, so the authority's map assigns Zone 1 there.
-		// A hole read as an exterior ring would answer FZ3 instead.
 		const reading = lookup.lookup(FIXTURE_ORIGIN.lat + FIXTURE_SIDE * 2.5, FIXTURE_ORIGIN.lon + FIXTURE_SIDE * 0.5)
 
 		expect(reading.kind).toBe(FloodReadingKind.DesignatedAbsence)

@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Dev-weights linker for `@mailwoman/neural-weights-it-it` (hierarchy campaign R11).
- *
- *   The build itself lives in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker` — this overlay declares
- *   `mailwoman.baseWeights`, so it symlinks no weights and its only job is building the index that makes
+ *   Dev-weights linker for `@mailwoman/neural-weights-it-it`: it builds the index that makes
  *   `resolveWeights({locale: "it-it"})` surface `pairIndexPath` in local dev.
  *
  *   The index is inert without the `it` entries in `SEGMENT_PARENT_POSTCODE_SHAPES` and

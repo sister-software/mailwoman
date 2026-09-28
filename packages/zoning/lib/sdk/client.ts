@@ -3,33 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Department's ArcGIS item, its feature service and the Hub download job, read through
- *   {@linkcode APIClient}.
- *
- *   these are API requests and they GO through `APIClient`. Small bodies, repeated calls, a third-party
- *   host — the pacing, bounded retry, response caching and `ResourceError` mapping are exactly what they
- *   need. The 247 MB bulk export is not one of them: it is a file transfer, it streams to disk on raw
- *   `fetch`, and `download.ts` says so in place.
- *
- *   four measured client behaviors are encoded here rather than written down somewhere else.
- *
- *   1. The Hub download job answers with a `resultUrl` that 302s. `…/api/download/v1/items/<id>/geojson?
- *      redirect=false&layers=0` returns `{"status":"Completed","resultUrl":…}` in 249 bytes. the result URL
- *      itself redirects, so the transfer needs `redirect: "follow"`. A client that took the first response as
- *      the file writes a redirect page to disk and reports a successful download.
- *   2. the bulk export is epsg:2157 under A `crs` member RFC 7946 removed. The file's own header carries
- *      `"crs":{"type":"name","properties":{"name":"epsg:2157"}}` and its coordinates are Irish Transverse
- *      Mercator metres. A strict RFC 7946 reader ignores the member and places Ireland at latitude 735,435.
- *      gdal honours it, which is why `sdk/ingest.ts` reads the archive through ogr2ogr and asserts the
- *      reprojected result falls inside the Department's own declared extent.
- *   3. the publisher'S own area statistic is not IN the archive. `Shape__Area` is a service field and the
- *      GeoJSON export drops it, so the area cross-check has to come from {@linkcode readShapeAreaSum} — which
- *      makes it a genuine two-path check rather than the archive agreeing with itself. Measured:
- *      5,444,492,956.40 m² over 85,330 features.
- *   4. `GZT_LINK` points AT A host with no DNS record. All 85,330 rows link their generic type's definition to
- *      `viewer.myplan.ie`, which has no A or aaaa record, and three candidate replacements on the live host
- *      answer http 404. So `zoning_vocabulary.definition_url` cannot be populated from it and is left NULL
- *      rather than filled with a plausible one.
+ * The Department's ArcGIS item, its feature service and the Hub download job, read through {@linkcode APIClient}; the bulk export streams to disk on raw `fetch` instead.
  */
 
 import { APIClient, type APIClientConfig, assertNoArcGISError } from "@mailwoman/core/api"
@@ -39,8 +13,6 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
 
 import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "#vocabulary"
-
-// Re-exported so a caller branching on this client's failures needs exactly one import.
 
 /**
  * The ArcGIS Online sharing API, where the item's licence and attribution fields are readable.
@@ -53,24 +25,14 @@ export const ARCGIS_ITEM_API_BASE_URL = "https://www.arcgis.com/sharing/rest/con
 export const HUB_DOWNLOAD_API_BASE_URL = "https://hub.arcgis.com/api/download/v1/items"
 
 /**
- * Minimum spacing between requests to the Department's hosts, in milliseconds.
- *
- * The Department publishes no rate limit for this service, so this is courtesy pacing
- * rather than a published ceiling — stated as such rather than dressed up as a measured limit.
- * Two requests a second is far below anything a hosted ArcGIS feature service is
- * provisioned for and costs a build no measurable time: the acquisition path makes
- * single-digit numbers of calls and the verification a few dozen.
+ * Minimum spacing between requests to the Department's hosts, courtesy pacing
+ * because the Department publishes no rate limit for this service.
  */
 export const GZT_MIN_REQUEST_INTERVAL_MS = 500
 
 /**
- * How long a cached metadata response stays fresh.
- *
- * Six hours, chosen against the product's own cadence rather than a wall-clock intuition.
- * The Department publishes no maintenance-frequency statement at all.
- *
- * What is observable is that the item's `modified` date and the data's latest `UPLOAD_DATE`
- * move a handful of times a year, so a shorter TTL buys no fresher data.
+ * How long a cached metadata response stays fresh, six hours because the item's `modified` date
+ * and the data's latest `UPLOAD_DATE` move only a handful of times a year.
  */
 const GZT_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
@@ -91,9 +53,8 @@ export interface ZoningItemRecord {
 	 */
 	accessInformation: string
 	/**
-	 * `licenseInfo`, verbatim, with its markup stripped.
-	 *
-	 * Read rather than trusted from the constant, so a change in the terms is visible at build time.
+	 * `licenseInfo`, verbatim with its markup stripped, read rather than trusted from
+	 * the constant so a change in the terms is visible at build time.
 	 */
 	licenseInfo: string
 	/**
@@ -167,11 +128,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The feature count the service reports, and the epsg code it declares.
-	 *
-	 * The second path in the build's agreement check: the same authority, a different distribution channel.
-	 * An archive whose feature count disagrees with the live service is not a file
-	 * this build should be writing into a sealed artifact.
+	 * The feature count and EPSG code the service reports, the second path in the build's agreement check.
 	 */
 	public async readServiceIdentity(): Promise<{ featureCount: number; epsg: number; maxRecordCount: number }> {
 		const { data } = await this.fetch<{
@@ -205,14 +162,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The sum of the Department's own `Shape__Area` column, in square metres.
-	 *
-	 * The one number that settles the hole question, and it has to come from the service
-	 * because the bulk export drops the column.
-	 * Read with the holes the rings total 5,444.5 km²; read without them, 5,666.6 km².
-	 *
-	 * The difference is 4.1% of area and, far more importantly, a ray cast that
-	 * answers "inside" for every location a plan carved out.
+	 * The sum of the Department's own `Shape__Area` column in square metres, which has
+	 * to come from the service because the bulk export drops the column.
 	 */
 	public async readShapeAreaSum(): Promise<number> {
 		const { data } = await this.fetch<{ features?: Array<{ attributes?: Record<string, number> }> }>({
@@ -241,10 +192,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * Ask the Hub for a bulk GeoJSON export and return the URL it answers with.
-	 *
-	 * `redirect=false` asks for the job record rather than a redirect, so this call reads a small JSON body.
-	 * The URL it returns is the one that 302s — see {@link downloadZoningExport}.
+	 * Ask the Hub for a bulk GeoJSON export and return the result URL, a 302 that the caller has to follow.
 	 *
 	 * @throws {Error} When the job is not `Completed`, or names no result URL.
 	 * A partial job that answered with a status and no URL would otherwise present as an empty download.
@@ -270,12 +218,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The features the service publishes near a point — the verification's second path.
-	 *
-	 * `outSR=4326` on the query path, because the service answers in Irish Transverse Mercator
-	 * otherwise and the comparison is against coordinates this package reprojected itself.
-	 * The service answers a bounding box rather than a point, so the containment
-	 * decision is made against the returned rings by the caller.
+	 * The features the service publishes near a point, queried with `outSR=4326`
+	 * because it answers in Irish Transverse Mercator otherwise.
 	 */
 	public async readFeaturesNear(
 		latitude: number,
@@ -312,17 +256,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 }
 
 /**
- * Refuse an attribution the published item no longer matches.
- *
- * Read AT build time rather than trusted from the constant.
- * The constant is what the artifact is stamped with offline.
- *
- * This is the live value it is reconciled with when the network is available.
- *
- * The check is on the department'S credit line and on the Tailte Éireann clause separately,
- * because they are two different statements and the second is the one that holds this layer
- * at `build-local`: an item that dropped it would be a licence change worth hearing about,
- * and an item that dropped only the credit line would be a different one.
+ * Refuse an attribution the published item no longer matches, checking the Department's
+ * credit line and the Tailte Éireann clause separately.
  *
  * @throws {Error} When either half of {@link GZT_ATTRIBUTION} is no longer in the item's own fields.
  */

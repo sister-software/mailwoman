@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for the pipeline (parse + resolve) explorer. The model/gazetteer runtime is injected as a
- *   {@link PipelineRuntime}: this package owns the UI state machine + presentation, while the host
- *   (the docs site's RuntimeEmbed, or any app) owns loading ONNX/WOF and executing a parse. That keeps
- *   onnxruntime-web, sql.js-httpvfs, and node builtins entirely out of this package's browser graph.
+ *   Types for the pipeline (parse + resolve) explorer. The runtime is injected as a {@link PipelineRuntime},
+ *   keeping onnxruntime-web, sql.js-httpvfs, and node builtins out of this package's browser graph.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
@@ -20,16 +18,10 @@ export interface PipelineLoadingState {
 	stepLabels: string[]
 	stepIndex: number
 	/**
-	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1].
+	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1],
+	 * or `null` when no download is in progress or the response declares no length.
 	 *
-	 * `null` while no download is in progress or when the response declares no length.
-	 *
-	 * The step index alone cannot report this download.
-	 * The model is fetched before the first step is entered, so a step-derived
-	 * bar sits at one-third for the whole of a 38 MB transfer and then jumps,
-	 * which reads as a hung page rather than a loading one.
-	 *
-	 * This is the only channel that moves during the wait that actually takes the time.
+	 * The step index cannot report this download because the model is fetched before the first step begins.
 	 */
 	byteFraction?: number | null
 }
@@ -37,9 +29,8 @@ export interface PipelineLoadingState {
 /**
  * The injected parse runtime.
  *
- * The host implements `runParse` (compute shape → classify → resolve) and reports load progress + errors.
- * This package never imports the model or gazetteer.
- * It only calls this interface.
+ * The host implements this interface and supplies the model and gazetteer,
+ * keeping both imports out of this package.
  */
 export interface PipelineRuntime {
 	/**
@@ -66,19 +57,16 @@ export interface PipelineRuntime {
 }
 
 /**
- * Optional host-injected panels.
- *
- * Each is a function of the current parse result returning already-rendered content
- * (the docs site's SpanHighlight, TreeView, TimingPanel, …).
- * Kept as `ReactNode` thunks so this package needs neither those components nor their heavy data types.
+ * Optional host-injected panels, kept as `ReactNode` thunks so this package needs
+ * neither the host's components nor their data types.
  */
 export interface PipelinePanels {
 	/**
-	 * Rendered above the form (e.g. The docs "About this demo").
+	 * Rendered above the form.
 	 */
 	header?: ReactNode
 	/**
-	 * Rendered below everything (e.g. A guided tour).
+	 * Rendered below everything.
 	 */
 	footer?: ReactNode
 	/**

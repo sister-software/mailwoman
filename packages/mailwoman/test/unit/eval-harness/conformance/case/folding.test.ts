@@ -3,16 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The case-folding law's two guards, and the failure line a violation produces.
- *
- *   The required pair is `caseFoldKey` and `caseApplicability`, and the reason both exist is here in
- *   executable form: the key refuses a pair that changed anything besides case, and the applicability rules
- *   refuse a pair the key accepts but whose locale casts case differently. `İstanbul` clears the first and
- *   fails the second, which is the whole argument for having two.
- *
- *   Every exclusion is exercised against a real committed board row rather than a synthetic string — the
- *   Turkish street row and the native-script Japanese row are the two shapes the rules exist for, and a rule
- *   demonstrated only on an invented input has not been shown to apply to anything the repo actually holds.
+ *   The key and the applicability rule are two guards because `İstanbul` clears the first and fails the second, and every exclusion is exercised against a committed board row rather than a synthetic string.
  */
 
 import {
@@ -36,10 +27,8 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * Committed board inputs, verbatim.
- *
- * Quoted here rather than loaded so a test failure shows the exact text under discussion;
- * `case-folding-suite.test.ts` is what proves the suite's own rows still match the corpus.
+ * Quoted verbatim rather than loaded so a failure shows the exact text;
+ * `case-folding-suite.test.ts` proves these still match the corpus.
  */
 const TR_STREET = "Istiklal Avenue"
 const JP_NATIVE = "りんりん, 〒506-0025 岐阜県高山市天満町3丁目 57"
@@ -87,7 +76,7 @@ describe("case transformations", () => {
 describe("caseFoldKey", () => {
 	it("matches the German sharp s against its uppercase expansion", () => {
 		expect(caseFoldKey(DE_SHARP_S)).toBe(caseFoldKey("FRIEDRICHSTRASSE"))
-		// The reason this composition exists: a bare lowercase fold does not match them.
+		// A bare lowercase fold does not match the sharp s to its expansion.
 		expect(DE_SHARP_S.toLowerCase()).not.toBe("FRIEDRICHSTRASSE".toLowerCase())
 	})
 
@@ -150,9 +139,7 @@ describe("caseApplicability", () => {
 	)
 
 	it("reports the identity rule first when both bear on the same row", () => {
-		// The same Turkish row is already title case, so `mixed` changes no character.
-		// Both rules would exclude it.
-		// The one that fires is the one that says the pair could never have tested anything.
+		// The Turkish row is already title case, so `mixed` changes no character and the identity rule fires first.
 		expect(caseApplicability(TR_STREET, "mixed", "TR").rule).toBe("identity-transformation")
 	})
 
@@ -243,11 +230,8 @@ describe("auditCaseFoldingSuite", () => {
 
 describe("a seeded case regression", () => {
 	/**
-	 * The pipeline stand-in that fails only on the uppercase arm.
-	 * The shape both live findings take.
-	 *
-	 * Seeding the regression rather than waiting for one is what proves the failure
-	 * line carries enough to diagnose from.
+	 * Fails only on the uppercase arm, the shape both live findings take, so the failure
+	 * line is exercised without waiting for a real regression.
 	 */
 	const observe: ConformanceObserver = async (query) => {
 		const upper = query === query.toUpperCase()
@@ -281,11 +265,8 @@ describe("a seeded case regression", () => {
 
 		expect(pass).toBe(false)
 
-		// The committed row it came from.
 		expect(rendered).toContain("cases/fr/street-name-boundaries.jsonl#fr-street-name-rue-du-faubourg-saint-honore")
-		// The comparator and both relations.
 		expect(rendered).toContain("parse_whole_strict expected equivalent, observed diverges")
-		// The mechanism: which component moved, and how.
 		expect(rendered).toContain('locality: ∅ → "RUE"')
 		// The transformation, which the report line derives rather than storing.
 		expect(describeCaseTransformation(findings[0]!.fixture)).toBe("upper")

@@ -3,23 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ingest — turn messy tabular data (CSV, SQLite, hand-keyed spreadsheets) into normalized
- *   {@link SourceRecord}s, the front of the cascade.
- *
- *   Two concerns, kept separate:
- *
- *   1. **Column mapping + normalization** (this is pure): a {@link ColumnMapping} says which column(s)
- *        hold the name, organization, address, phone, email. each row is normalized with
- *        `@mailwoman/record` (parse the person name, canonicalize the org). This is deterministic
- *        and testable with no heavy runtime.
- *   2. **Geocoding** (the heavy part) is an injected dependency — a {@link GeocodeAddress} the caller provides.
- *        Ingest never imports the neural parser, the resolver, or the extracts. it just calls the
- *        call per address. {@link geocodeAddressVia} builds that geocoder from mailwoman's real parse +
- *        geocode primitives (which the CLI constructs with the model + data in hand), so the wiring
- *        is concrete and testable without pinning the heavy runtime into this package.
- *
- *   LLM-assisted column mapping (infer the mapping from a header + samples) is a documented
- *   fast-follow. the mapping is an explicit input here.
+ * Column mapping and normalization are pure. Geocoding is an injected dependency, so this package never imports the neural parser, resolver, or extracts.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -31,17 +15,14 @@ import { type AsyncSequence, CSVSpliterator, Delimiters } from "spliterator"
 import type { SourceRecord } from "#types"
 
 /**
- * Resolve a raw address string into a {@link PostalAddress}.
- *
- * The entry point to mailwoman's geocoder.
+ * Resolve a raw address string into a {@link PostalAddress}, the entry point to mailwoman's geocoder.
  */
 export type GeocodeAddress = (raw: string) => Promise<PostalAddress | null> | PostalAddress | null
 
 /**
  * The column delimiters a tabular source may declare, by name, each the spliterator's own byte.
  *
- * The `satisfies` clause keys every name to a member of spliterator's `Delimiters` const,
- * so a delimiter this map names that spliterator no longer ships is a compile error
+ * The `satisfies` clause makes a delimiter name spliterator no longer ships a compile error
  * rather than a silently parallel vocabulary.
  */
 const COLUMN_DELIMITERS = {
@@ -64,9 +45,8 @@ export function delimiterFor(path: string): Delimiter {
 /**
  * Stream a delimited file's rows lazily as header-keyed objects.
  *
- * @returns The spliterator's own {@linkcode AsyncSequence}: no file is opened until
- * something iterates, a `take` that is satisfied (or a `break` out of `for await`) closes
- * the file handle, and any `map`/`filter` a caller composes fuses into the same pull loop.
+ * @returns The spliterator's own {@linkcode AsyncSequence}, whose `map`/`filter`
+ * fuse into the same pull loop.
  * Wrapping this in an `async function*` would cost an async frame per row and take those operators away.
  */
 export function streamRows(
@@ -77,23 +57,19 @@ export function streamRows(
 
 	return CSVSpliterator.fromAsync<Record<string, string>>(path, {
 		columnDelimiter: COLUMN_DELIMITERS[opts.delimiter ?? delimiterFor(path)],
-		// A {@linkcode ColumnMapping} names columns in the publisher's spelling — `Facility Name`,
-		// not `facility_name` — so the keys must arrive as the file writes them.
+		// A {@linkcode ColumnMapping} holds columns in the publisher's spelling rather than a
+		// normalized key such as `facility_name`, so the keys must arrive as the file writes them.
 		// The reader's default normalizes.
 		normalizeKeys: false,
 	})
 }
 
 /**
- * Maps dataset columns to record fields.
- *
- * A field may draw from several columns (joined with spaces).
+ * Maps dataset columns to record fields, where a field may draw from several columns joined with spaces.
  */
 export interface ColumnMapping {
 	/**
-	 * Column holding a stable row id.
-	 *
-	 * Falls back to the row index.
+	 * Column holding a stable row id, falling back to the row index.
 	 */
 	id?: string
 	/**
@@ -106,25 +82,14 @@ export interface ColumnMapping {
 	phone?: string
 	email?: string
 	/**
-	 * Extra secondary-identifier fields → the column(s) to draw each from (joined with spaces).
-	 *
-	 * Land on `SourceRecord.attributes` under the same key, for the matcher's
-	 * `discriminators` (authorized-official name, taxonomy, license…).
+	 * Extra secondary-identifier fields mapped to the column(s) to draw each from, landing
+	 * on `SourceRecord.attributes` under the same key for the matcher's `discriminators`.
 	 */
 	attributes?: Record<string, string | string[]>
 }
 
 /**
- * Best-effort {@link ColumnMapping} inferred from a header row — the "point it at any CSV" convenience.
- *
- * Each column name is matched (case- and punctuation-insensitive, on whole tokens) to a field by
- * keyword, in a precedence that resolves the common ambiguities: a dedicated id / phone / email
- * column is claimed before the generic sweep, an org / facility column beats a person "name",
- * and address columns (street / city / state / zip…) collect into one multi-column field.
- * Imperfect on bespoke headers (an explicit mapping or the LLM-assisted inference #603 is the answer there),
- * but it nails tidy and semi-tidy files with no hand-mapping.
- *
- * Unmatched columns are left out.
+ * Best-effort {@link ColumnMapping} inferred from a header row, the "point it at any CSV" convenience.
  */
 export function inferMapping(header: readonly string[]): ColumnMapping {
 	// Pad to whole-token boundaries so "state" doesn't match inside "statement".
@@ -189,25 +154,12 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 export interface IngestOptions {
 	/**
 	 * The geocoding interface.
-	 *
-	 * Without it, records carry name/org but no resolved address.
+	 * Without it records carry name/org but no resolved address.
 	 */
 	geocodeAddress?: GeocodeAddress
 	/**
-	 * Separator for joining a multi-column address mapping (name/org always join with a space).
-	 *
-	 * Default `" "`.
-	 * Pass `", "` to give the parser delimited input (`"214 Main St, Austin, TX 78701"`)
-	 * instead of a concatenated run (`"214 Main St Austin TX 78701"`).
-	 *
-	 * The latter strips the parser's segmentation boundaries and is partly OOD
-	 * (it also breaks all-caps case-normalization; #694). **Default `", "` (#694 flip, validated).**
-	 * Comma-join is the correct shape for an address built from separate columns,
-	 * and #700 measured it at +15% cross-dataset rooftop (579→667) with no comma-less crater.
-	 * The dedup GBT was trained on the old space-joined coords, so this flip is
-	 * paired with a GBT re-validation (#694).
-	 *
-	 * Pass `" "` to restore the legacy space-join for a byte-stable A/B.
+	 * Separator for joining a multi-column address mapping, comma-join giving the parser delimited
+	 * input rather than a concatenated run (name/org always join with a space). @default ", "
 	 */
 	addressSeparator?: string
 }
@@ -229,12 +181,9 @@ export function pick(row: Record<string, string>, columns?: string | string[], s
 }
 
 /**
- * Normalize one tabular row into a {@link SourceRecord} under a {@link ColumnMapping}: parse the person
- * name, canonicalize the org, and (if `opts.geocodeAddress` is provided) geocode the joined address.
- *
- * `id` falls back to the caller-supplied row index.
- * Pure aside from the optional geocode interface, so the deterministic normalization can run
- * single-threaded (see {@link normalizeCSV}) while geocoding is offloaded (see `geocodeStream`).
+ * Normalize one tabular row into a {@link SourceRecord} under a {@link ColumnMapping},
+ * pure aside from the optional geocode interface so the deterministic normalization
+ * can run single-threaded while geocoding is offloaded.
  */
 export async function ingestRow(
 	row: Record<string, string>,
@@ -295,16 +244,8 @@ export async function ingestRows(
 }
 
 /**
- * Stream a delimited file as normalized {@link SourceRecord}s — `streamRows` +
- * {@link ingestRow} with **no geocoding**.
- *
- * This is the single-threaded, "fast enough" ergonomic core: column mapping, name parsing,
- * and org canonicalization for a multi-GB file, line by line.
- * Geocode separately by piping the output through `geocodeStream` (the only heavy step worth threading);
- * for a light file (e.g. One that already carries geo cells) just consume this and stop.
- *
- * Records come out in file order: the sequence's `map` settles each row before pulling the next,
- * and its counter is the row's index — the id a row without a mapped `id` column falls back to.
+ * Stream a delimited file as normalized {@link SourceRecord}s in file order with no geocoding.
+ * Geocode separately through `geocodeStream`.
  */
 export function normalizeCSV(
 	source: PathBuilderLike,
@@ -314,10 +255,8 @@ export function normalizeCSV(
 }
 
 /**
- * The subset of mailwoman's `GeocodeResult` the adapter consumes.
- *
- * Kept structural so this package never imports the heavy geocoder,
- * yet a real `GeocodeResult` maps straight in.
+ * The subset of mailwoman's `GeocodeResult` the adapter consumes, kept structural
+ * so this package never imports the heavy geocoder.
  */
 export interface RawGeocode {
 	lat: number | null
@@ -348,8 +287,8 @@ export interface GeocodeDepsBase {
 /**
  * Two independent calls: parse the address, then geocode it.
  *
- * Mailwoman's `geocodeAddress` re-parses internally, so this shape parses the address
- * twice — fine when the two callbacks don't share a parser.
+ * Mailwoman's `geocodeAddress` re-parses internally, so the address is read twice
+ * unless the two callbacks share a parser.
  */
 export interface TwoStepGeocodeDeps extends GeocodeDepsBase {
 	parse: (raw: string) => Promise<GeocodeComponents> | GeocodeComponents
@@ -357,11 +296,8 @@ export interface TwoStepGeocodeDeps extends GeocodeDepsBase {
 }
 
 /**
- * Parse the address once and answer both the components and the geocode.
- *
- * Use this when the parse is the expensive step you'd rather not pay for twice
- * (e.g. Share `parseForGeocode`'s tree between the PostalAddress and `geocodeAddress`'s `parsedTree`).
- * ~1.3× over the two-call shape on a real geocode pipeline.
+ * Parse the address once and answer both the components and the geocode, for
+ * when the parse is the expensive step you'd rather not pay for twice.
  */
 export interface OneStepGeocodeDeps extends GeocodeDepsBase {
 	parseAndGeocode: (raw: string) => Promise<{ components: GeocodeComponents; geo: RawGeocode | null }>
@@ -374,11 +310,8 @@ export interface OneStepGeocodeDeps extends GeocodeDepsBase {
 export type GeocodeAddressViaDeps = TwoStepGeocodeDeps | OneStepGeocodeDeps
 
 /**
- * Build a {@link GeocodeAddress} from mailwoman's real parse + geocode primitives
- * (injected — the CLI constructs the neural parser, resolver, and extracts and passes them in).
+ * Build a {@link GeocodeAddress} from injected parse and geocode primitives.
  *
- * Parse → components → {@link toPostalAddress} (which fills the canonical key + formatted form)
- * → attach the resolved coordinate.
  * When geocoding can't place the address, the parsed-but-unlocated address is still returned.
  */
 export function geocodeAddressVia(deps: GeocodeAddressViaDeps): GeocodeAddress {

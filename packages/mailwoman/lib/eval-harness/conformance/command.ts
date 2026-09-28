@@ -3,37 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   CLI-facing orchestration for `mailwoman eval conformance` — load the law suites, audit them, run every
- *   row through the Gauntlet's own deps, and report. Thin on purpose: it narrates and owns only the exit
- *   code, matching `eval invariance` and `eval promote`.
- *
- *   every committed suite runs BY default. {@linkcode CONFORMANCE_SUITES} is the register, and a default run
- *   is all of it: a default that named one suite would leave every later law executable only by someone who
- *   remembered to point `--suite` at it, and a law nobody runs reports as an absence rather than a failure.
- *   `--suite` narrows to a single file for an author iterating on one.
- *
- *   the audit runs before the engine loads. A law suite's rows can be wrong in ways no amount of geocoding
- *   reveals — a pair that differs by more than case still runs, still produces a reading, and still reports a
- *   violation, which a reader then attributes to the pipeline. Auditing first means an unrunnable suite costs
- *   a second rather than a model load, and costs nobody a wrong diagnosis.
- *
- *   A tracked row is RUN. The verdict splits by status the way the Gauntlet regression layer splits: `pass`
- *   rows check, tracked rows report, and a tracked row that starts holding prints a promotion instruction. A
- *   red row is never removed to make the exit code zero.
- *
- *   the observer is chosen from the rows. `candidate_admissibility` reads the resolver's interior, which the
- *   walk records only when a sink asks it to. the other five comparators read the assembled answer and would
- *   pay for bookkeeping nobody reads. So the run picks the traced observer exactly when a loaded row names
- *   that comparator, and says which one it picked.
- *
- *   an unmeasured row is not A quiet pass. It is printed in its own section with the window that stopped the
- *   reading, and it is removed from the row count the verdict is stated over — so the headline is a ratio of
- *   rows that were actually decided, and a suite that stops being able to decide anything reports a failure.
- *
- *   A LAW may report its own breadth. A hold count answers "did the rows the suite states hold", never "how
- *   much of the population could the suite have stated" — and for a law whose eligibility is a property of the
- *   query text those are different numbers. `ConformanceSuite.coverage` prints the second one beside the
- *   first. the committed corpus is read only for a run that includes such a law.
+ *   CLI-facing orchestration for `mailwoman eval conformance`: audit the law suites before loading the engine, then run every row through the Gauntlet's own deps.
  */
 
 import { type ConformanceFixture, loadConformanceFixtures } from "#eval-harness/conformance/fixture"
@@ -51,11 +21,8 @@ import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { buildGauntletDeps, type GauntletDepsOptions } from "#eval-harness/gauntlet/harness"
 
 /**
- * Load every named suite into one fixture list, refusing an id that two files both claim.
- *
- * The per-file loader already refuses a duplicate within its own file.
- * Ids name rows in failure output, so two suites sharing one would produce a
- * report line a reader cannot trace back to a file.
+ * Loads every named suite into one fixture list, refusing an id that two files both claim
+ * because ids name rows in failure output.
  */
 async function loadSuites(paths: readonly string[]): Promise<ConformanceFixture[]> {
 	const fixtures: ConformanceFixture[] = []
@@ -108,20 +75,15 @@ export interface ConformanceLawMeasurement {
 	tracked: number
 	unmeasured: number
 	/**
-	 * The law's breadth line, when its suite registers one.
-	 *
-	 * A hold count answers whether the stated rows held, never how much of the
-	 * population the suite could have stated.
+	 * The law's breadth line, when its suite registers one, answering how much of the
+	 * population the suite could have stated rather than whether the stated rows held.
 	 */
 	coverage?: string
 }
 
 /**
- * What one conformance run measured.
- *
- * `measured` is absent exactly when `problems` is non-empty.
- * A refused run has no findings, and reporting it as zero findings would read as a
- * suite that passed no case rather than a suite that ran no case.
+ * What one conformance run measured, with `measured` absent exactly when `problems` is
+ * non-empty so a refused run is not read as a suite that passed no case.
  */
 export interface ConformanceMeasurement {
 	laws: string[]
@@ -135,12 +97,8 @@ export interface ConformanceMeasurement {
 }
 
 /**
- * Load, audit and run the law suites, and return the counts without printing a verdict.
- *
- * Extracted so a second consumer — the phase-2 decision ruler (#1967), which reads
- * the laws as an inertness measurement — takes the numbers from the same run this
- * command narrates, rather than re-deriving them from a second orchestration free
- * to load a different suite set or a different observer.
+ * Loads, audits and runs the law suites, returning the counts without printing a verdict
+ * so a second consumer reads the same run rather than re-deriving it.
  */
 export async function measureConformance(options: ConformanceCommandOptions = {}): Promise<ConformanceMeasurement> {
 	const { suite, ...depsOptions } = options
@@ -166,15 +124,13 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 
 	console.error(`[conformance] suite audit clean (${laws.join(", ")})`)
 
-	// The corpus is read only when a law in this run registers a coverage reading.
-	// It is the population every law draws from, so a law whose eligibility is a property of
-	// the query text measures its own breadth against it — see `ConformanceSuite.coverage`.
+	// The corpus is read only when a law registers a coverage reading.
+	// It is the population every law draws from.
 	const wantsCoverage = laws.some((law) => suiteForLaw(law)?.coverage)
 	const corpusInputs = wantsCoverage ? (await loadRegressionCases()).map((seedCase) => seedCase.input) : []
 
-	// The resolver's trace bookkeeping is opt-in and the four answer-axis laws have
-	// no use for it, so the observer is chosen from the comparators the loaded rows
-	// actually name rather than turned on for every run.
+	// The resolver's trace bookkeeping is opt-in, so the observer is chosen from the
+	// comparators the loaded rows name rather than enabled for every run.
 	const wantsTrace = fixtures.some((fixture) => fixture.outcomeComparator === "candidate_admissibility")
 
 	if (wantsTrace) {
@@ -244,8 +200,7 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 			`${summary.tracked.length} tracked, ${summary.unmeasured.length} unmeasured) ===`
 	)
 
-	// Per law as well as pooled: a run that merges two suites into one verdict says whether something broke
-	// and not which law stopped holding, and the pooled count moves whenever either suite grows.
+	// Per law as well as pooled, because a merged verdict says something broke without saying which law stopped holding.
 	for (const law of perLaw) {
 		console.log(
 			`  ${law.law}: ${law.holds}/${law.decided} decided hold, ${law.tracked} tracked, ${law.unmeasured} unmeasured`

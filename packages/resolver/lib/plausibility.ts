@@ -38,9 +38,7 @@ export interface ResolvedCoordinate {
 
 /**
  * Returns the resolved coordinate at the finest granularity tier in the tree,
- * preferring the earliest node on a tie.
- *
- * @returns `null` when no node carries a `lat`/`lon`.
+ * preferring the earliest node on a tie, and `null` when no node carries a `lat`/`lon`.
  */
 export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate | null {
 	let best: ResolvedCoordinate | null = null
@@ -71,9 +69,7 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
 /**
  * Lists coarse per-country bounding boxes, as `[latMin, latMax, lonMin, lonMax]`,
  * for artifacts whose manifest declares none.
- *
- * Each box covers outlying territory rather than the populated core,
- * and a country without a box never trips the guard.
+ * A country without a box never trips the guard.
  */
 export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, number]>> = {
 	US: [18, 72, -180, -66],
@@ -101,9 +97,8 @@ export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, num
 }
 
 /**
- * Reports whether a coordinate lies outside the country's bounding box,
- * using `bboxes` in place of {@link COUNTRY_BBOX} when supplied.
- * A country with no box returns `false`.
+ * Reports whether a coordinate lies outside the country's bounding box, using `bboxes` in
+ * place of {@link COUNTRY_BBOX} when supplied and returning `false` for a country with no box.
  */
 export function outsideExpectedCountry(
 	countryCode: string,
@@ -135,10 +130,8 @@ export interface PlausibilityVerdict {
 	implausible: boolean
 
 	/**
-	 * Why the resolution is implausible, set only when `implausible` is true.
-	 *
-	 * `country-centroid` means no resolution finer than a country occurred, and
-	 * `outside-expected-country` means the coordinate falls outside the expected country's bounding box.
+	 * Why the resolution is implausible, set only when `implausible` is true:
+	 * `country-centroid` or `outside-expected-country`.
 	 */
 	reason?: "country-centroid" | "outside-expected-country"
 
@@ -154,10 +147,10 @@ export interface PlausibilityVerdict {
  */
 export interface PlausibilityOpts {
 	/**
-	 * The ISO 3166-1 alpha-2 country the resolution should land in, such as a locale hint or parsed country.
+	 * The ISO 3166-1 alpha-2 country the resolution should land in.
 	 *
-	 * Setting it enables the bounding-box check, which catches cross-country jumps
-	 * that the country-centroid check cannot.
+	 * Setting it enables the bounding-box check that catches cross-country jumps
+	 * the country-centroid check cannot.
 	 */
 	expectedCountry?: string
 
@@ -172,7 +165,7 @@ export interface PlausibilityOpts {
  * Decides whether a resolved tree's coordinate is implausible: a bare country centroid,
  * or a point outside `expectedCountry`'s bounding box.
  *
- * An unresolved tree is plausible, because it serves no coordinate.
+ * An unresolved tree is plausible because it serves no coordinate.
  */
 export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpts = {}): PlausibilityVerdict {
 	const coordinate = finestResolvedCoordinate(tree)

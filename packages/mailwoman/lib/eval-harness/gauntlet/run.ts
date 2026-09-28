@@ -3,39 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   the Gauntlet eval — runs all three layers and emits one combined verdict, so a model ship checks on the
- *   full-pipeline integration net rather than just per-tag F1 (the whole point of building it; #566 lesson):
+ *   The Gauntlet eval — runs all three layers and emits one combined verdict, so a model ship checks on the
+ *   full-pipeline integration net rather than just per-tag F1:
  *
- *     1. regression  — the curated executable bug log. a fixed bug must stay fixed (conditioned on status=pass).
- *     2. metamorphic — un-gameable INV/DIR relations. surface-form robustness (conditional minus tracked xfails).
- *     3. held-out    — candidate-vs-prod z-test on a fresh draw. the generalization check (only with --candidate).
+ *     1. regression  — the curated executable bug log. A fixed bug must stay fixed (conditioned on status=pass).
+ *     2. metamorphic — un-gameable INV/DIR relations. Surface-form robustness (conditional minus tracked xfails).
+ *     3. held-out    — candidate-vs-prod z-test on a fresh draw. The generalization check (only with --candidate).
  *
- *   Self-check (shipped default):  mailwoman eval gauntlet
- *   Promote check (a candidate):    mailwoman eval gauntlet --candidate ./out/v195/model.onnx [--source us]
- *   One layer only:                mailwoman eval gauntlet --layer regression|metamorphic|holdout …
- *   A resolver pin, both ways:   mailwoman eval gauntlet [--postcode-country-coherence]
- *   The required MAP:          mailwoman eval gauntlet --layer ablation [--components postcode,street]
+ *   `ablation` is a measurement layer reachable only via `--layer`, deliberately absent from the combined verdict because
+ *   its expectations are derived from the gazetteer at run time and a measurement that could fail a ship would invite
+ *   tuning the corpus instead of the parser.
  *
- *   That last one is not a check. `ablation` (2026-08-05) deletes each asserted component from each corpus row and
- *   measures what the deletion costs, per (component, locale) — the operator's "where does the pipeline falter when a
- *   part of the address is missing?" It is reachable only via `--layer` and is deliberately absent from the combined
- *   verdict below: its expectations are derived from the gazetteer at run time rather than stored, and a measurement
- *   that could fail a ship would invite tuning the corpus instead of the parser.
+ *   A layer that throws is caught, printed, and counted as a failed layer, preserving the old isolated-failure semantics
+ *   without a child process.
  *
- *   Derived rather than absent: a variant is graded against the row's degradation ladder (`ablation-expectation.ts`), so
- *   "correctly coarsened" and "abstained under untenable ambiguity" are passes and only the real defects are red.
- *
- *   The last of those is the resolver-pin pin (#42, added 2026-08-05). The check could swap the model under test but
- *   not the resolver configuration, so a resolver pin proposed for default-on had no way through the D-rule's
- *   standard instrument. It could only be argued from bespoke probes. Run the check unpinned and pinned and diff the
- *   verdicts. the layers stamp which configuration they graded, and the regression layer reports how many cases the
- *   pin actually fired on (an unchanged verdict from a mechanism that never ran is no evidence).
- *
- *   The retired `scripts/eval/gauntlet/run.ts` ran each layer in its own child process. the layers are
- *   in-process modules now. A layer that throws is caught, printed, and counted as a failed layer, preserving the
- *   old isolated-failure semantics without the spawn.
- *
- *   Wire into the release flow as a `before:release` check (releasing.md): a non-zero exit blocks the ship.
+ *   Wired into the release flow as a `before:release` check, where a non-zero exit blocks the ship.
  */
 
 import type { WeakResolutionReading } from "@mailwoman/core/resolver"
@@ -49,11 +31,9 @@ import { type GauntletLayerOptions, runRegressionLayer } from "#eval-harness/gau
 /**
  * The Gauntlet layers.
  *
- * The first three are checks and make up the combined verdict; `ablation` is a
- * measurement layer — reachable only via `--layer ablation`, deliberately absent from
- * the combined check below, and incapable of blocking a ship.
- * It produces the required map (what deleting each component costs, per locale), which is
- * a question about the corpus and the resolver rather than a pass/fail about a candidate.
+ * The first three are checks that make up the combined verdict, while `ablation`
+ * is a measurement layer reachable only via `--layer ablation`, absent from the
+ * combined check, and incapable of blocking a ship.
  */
 export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation"
 
@@ -68,15 +48,14 @@ export interface GauntletRunOptions {
 	 */
 	candidate?: string
 	/**
-	 * Held-out truth source (`fr` | `us`).
-	 *
-	 * Default `fr`.
+	 * Held-out truth source (`fr` | `us`); default `fr`.
 	 */
 	source?: string
 	/**
-	 * A tokenizer-splice candidate (#444/#884/#912) ships a new vocab — forward it
-	 * so the held-out layer pairs the candidate model with the candidate tokenizer
-	 * (and runs production through the shipped trio).
+	 * A tokenizer-splice candidate ships a new vocab.
+	 *
+	 * Forward it so the held-out layer pairs the candidate model with the candidate tokenizer
+	 * and runs production through the shipped trio.
 	 */
 	tokenizer?: string
 	/**
@@ -84,11 +63,9 @@ export interface GauntletRunOptions {
 	 */
 	card?: string
 	/**
-	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`) —
-	 * the #718-safe path for a splice/multisplice candidate.
-	 * Mirrors `eval parity --weights-cache`.
-	 *
-	 * Takes precedence over `candidate`/`tokenizer`.
+	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`)
+	 * for a splice/multisplice candidate, mirroring `eval parity --weights-cache`;
+	 * takes precedence over `candidate`/`tokenizer`.
 	 */
 	weightsCacheRoot?: string
 	/**
@@ -102,46 +79,35 @@ export interface GauntletRunOptions {
 	 */
 	n?: number
 	/**
-	 * Resolver-side pin pin (#42): force `postcodeCountryCoherence` on or off for every layer.
-	 *
-	 * `undefined` grades the shipped configuration.
-	 * It since the 2026-08-05 promotion is on.
-	 *
-	 * Therefore, the pin that carries evidence now is the off one.
-	 * Run the check both ways and diff the verdicts, which is what the D-rule asks of a default-on mechanism.
+	 * Force `postcodeCountryCoherence` on or off for every layer; `undefined`
+	 * grades the shipped configuration, which is on.
+	 * The off pin is the one that carries evidence.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
-	 * Resolver-side pin pin (#1497): feed the gazetteer FST prior to the parse.
+	 * Feed the gazetteer FST prior to the parse.
 	 *
-	 * Two-sided since the 2026-08-16 default-on promotion.
-	 * `undefined` means the production default, which is now on; `false` is a real pin that withholds it.
-	 *
-	 * Forwarding only the truthy half — as this did while the prior was opt-in — would silently discard
-	 * `--gazetteer-prior-off` and grade the default arm under a label saying the prior was off.
+	 * Production-default `undefined` is on, and `false` withholds it, because forwarding
+	 * only the truthy half would silently discard the off flag.
 	 */
 	gazetteerPrior?: boolean
 	/**
-	 * Resolver-side pin pin (#1717 stage 2): the admin-containment re-rank.
-	 *
-	 * Two-sided from day one (the #1706 one-sided-forwarding class): `undefined` grades the
-	 * production default (off), `true` is the evidence pin, and `false` pins the default
-	 * explicitly so a log labeled off really graded with the re-rank off.
+	 * The admin-containment re-rank; `undefined` grades the production default (off),
+	 * `true` is the evidence pin, and `false` pins the default explicitly
+	 * so a log labeled off really graded with the re-rank off.
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * Resolver-side pin (#2266): a span-rescore sub-span may drop context but never a word of the name.
-	 *
-	 * Two-sided like the two above.
-	 * `undefined` grades the production default (off), `true` is the evidence pin, `false` pins the
-	 * default explicitly so a log labeled off really graded with the remainder requirement off.
+	 * A span-rescore sub-span may drop context but never a word of the name; `undefined` grades
+	 * the production default (off), `true` is the evidence pin, and `false` pins the default
+	 * explicitly so a log labeled off really graded with the remainder requirement off.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
-	 * Resolver-side pin (#2264): which reading of a weak resolution lifts the #685 span-rescore brake.
+	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
-	 * Three readings rather than two states, so there is no off spelling to pair with.
-	 * `undefined` is the production default, which takes a `placeID` at face value.
+	 * Three readings exist so there is no off spelling, and `undefined` is the
+	 * production default that takes a `placeID` at face value.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
@@ -161,10 +127,9 @@ export interface GauntletRunOptions {
 }
 
 /**
- * The ablation layer's options: the shared model/pin ladder plus its own three.
+ * The ablation layer's options — the shared model/pin ladder plus its own three.
  *
- * Exported and pure for the same reason as {@linkcode runResolverPins}.
- * A dropped `--components` filter would silently run the whole corpus.
+ * Pure and exported so a dropped `--components` filter cannot silently run the whole corpus.
  */
 export function runAblationOptions(options: GauntletRunOptions): AblationLayerOptions {
 	return {
@@ -176,13 +141,9 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
 }
 
 /**
- * The resolver-pin pins a run's options describe, or undefined when no option
- * is pinned (→ production defaults).
- *
- * Pure and exported: the "a pin reaches every layer" interface is a mapping,
- * and a mapping is cheap to test.
- * The alternative is discovering a dropped pin from two identical pin logs,
- * which is the failure this whole surface exists to prevent.
+ * The resolver pins a run's options describe, or undefined when no option is pinned. pure
+ * and exported because the pin-reaches-every-layer mapping is cheap to test,
+ * and the alternative is discovering a dropped pin from two identical pin logs.
  */
 export function runResolverPins(options: GauntletRunOptions): GauntletResolverPins | undefined {
 	const pins: GauntletResolverPins = {
@@ -205,9 +166,8 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 }
 
 /**
- * The layer options a run's options describe — model selection plus the resolver pin pins.
- *
- * Exported for the same reason as {@linkcode runResolverPins}.
+ * The layer options a run's options describe — model selection plus the resolver pins —
+ * exported for the same reason as {@linkcode runResolverPins}.
  */
 export function runLayerOptions(options: GauntletRunOptions): GauntletLayerOptions {
 	const pins = runResolverPins(options)
@@ -223,7 +183,6 @@ export function runLayerOptions(options: GauntletRunOptions): GauntletLayerOptio
 
 /**
  * Run a single layer, mapping its result to an exit code.
- *
  * A throw prints and reads as exit 1.
  */
 async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Promise<number> {
@@ -247,9 +206,8 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 				})
 			).exitCode
 		case "ablation":
-			// Exit 0 unless the instrument produced no cell.
-			// The map grades the corpus + resolver rather than a candidate, so it can
-			// never block a ship — see the `GauntletLayer` docstring.
+			// Exit 0 unless the instrument produced no cell: the map grades the corpus
+			// and resolver rather than a candidate, so it can never block a ship.
 			return (await runAblationLayer(runAblationOptions(options))).pass ? 0 : 1
 	}
 }
@@ -269,8 +227,7 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 	const candidate = options.candidate || options.weightsCacheRoot || ""
 	const layers: GauntletLayer[] = ["regression", "metamorphic"]
 
-	// The held-out layer is candidate-vs-prod.
-	// It only runs when a candidate model is supplied.
+	// The held-out layer is candidate-vs-prod and runs only when a candidate model is supplied.
 	if (candidate) {
 		layers.push("holdout")
 	} else {
@@ -285,9 +242,8 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 		try {
 			results.push({ name: layer === "holdout" ? "held-out" : layer, pass: (await runLayer(layer, options)) === 0 })
 		} catch (error) {
-			// The old runner spawned each layer, so a crash was an isolated non-zero exit.
-			// Preserve that: print the failure and count the layer as failed
-			// rather than aborting the combined verdict.
+			// A crash must stay an isolated non-zero exit: print the failure and count the
+			// layer as failed rather than aborting the combined verdict.
 			console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
 
 			results.push({ name: layer === "holdout" ? "held-out" : layer, pass: false })
@@ -297,9 +253,8 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 	const allPass = results.every((r) => r.pass)
 
 	console.log(`\n════════════════ GAUNTLET ════════════════`)
-	// The pin line prints on every run, pinned or not.
-	// Two pin logs that differ only in a flag someone typed are not evidence about that flag
-	// unless each log says which configuration it graded.
+	// The pin line prints on every run, pinned or not, because two pin logs that differ
+	// only in a flag someone typed are not evidence about that flag.
 	console.log(`  ${describeResolverPins(runResolverPins(options))}`)
 
 	for (const r of results) {

@@ -3,26 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The live half of the phase-2 decision (#1967): load the frozen pre-registration, run the instruments its
- *   checks read, and emit one receipt carrying the arithmetic against every bar.
+ *   The live half of the phase-2 decision: load the frozen pre-registration, run the instruments its checks read,
+ *   and emit one receipt carrying the arithmetic against every bar.
  *
- *   this module decides only what IT read. Lanes, checks, denominators, bars, artifact pins and the one
- *   marker query all come from `decision-definition.json`, which {@linkcode loadPhase2Definition} refuses to
- *   hand over if its content hash has moved. The runner supplies measurements and no more.
+ *   This module decides only what it read. Lanes, checks, denominators, bars, artifact pins and the one marker
+ *   query all come from `decision-definition.json`, which {@linkcode loadPhase2Definition} refuses to hand over
+ *   if its content hash has moved. The runner supplies measurements and no more, and it runs the existing
+ *   instruments rather than re-deriving them.
  *
- *   IT runs the existing instruments rather than RE-deriving them. Both probe arms come from
- *   {@linkcode runSemanticUtilityProbe}, the asymmetry from {@linkcode runAbsenceObservationProbe}, the floors
- *   from {@linkcode runPOIBoard} and the laws from {@linkcode measureConformance} — the same call the
- *   `eval conformance` command narrates. A second orchestration free to load a different suite set or a
- *   different backend would report numbers that look like these and answer a different question.
+ *   The receipt records the artifact identity and the deviation: a run on a rebuilt `poi.db` or a bumped weights
+ *   package is still a run, but it is not comparable to the merged-PR receipts the ruler names as baselines, so
+ *   every difference is named and the verdict carries `comparability` as reported rather than a decision input.
  *
- *   The receipt records the artifact identity and the deviation. A run on a rebuilt `poi.db` or a bumped
- *   weights package is still a run. it is simply not comparable to the merged-PR receipts the ruler names as
- *   baselines. So the observed identity is recorded beside the pins, every difference is named, and the
- *   verdict carries `comparability` — reported, never a decision input.
- *
- *   the recording is the operator'S. The receipt states what the ruler maps to and carries `recorded: false`.
- *   No code here writes a verdict onto the issue.
+ *   The recording is the operator's — the receipt carries `recorded: false`.
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon/lexicon"
@@ -57,10 +50,9 @@ import { createSemanticObservationRoute, semanticObservationMarkers } from "#obs
 /**
  * The committed collision census the recognition lane's control checks read.
  *
- * Read rather than re-run on purpose: the census scans every `name_key` in the shipped `poi.db`
- * and takes about eleven minutes, and its own reader header says why the fast path is wrong.
- * Its recorded lexicon and layer identity are checked against the pins,
- * so a stale census is a named deviation instead of a silent one.
+ * It is read rather than re-run because the census scans every `name_key` in the shipped
+ * `poi.db` and takes about eleven minutes, and its recorded lexicon and layer identity
+ * are checked against the pins so a stale census becomes a named deviation.
  */
 export const COLLISION_CENSUS_PATH = "packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json"
 
@@ -78,8 +70,7 @@ interface CollisionCensus {
 export interface Phase2InstrumentRecord {
 	instrument: Phase2Instrument
 	/**
-	 * The instrument's own identity line.
-	 * The artifacts and the frozen ruler it read.
+	 * The instrument's own identity line — the artifacts and the frozen ruler it read.
 	 */
 	identity: string
 }
@@ -113,8 +104,7 @@ export interface Phase2LaneReport {
 	blockedReason?: string
 	/**
 	 * The rows a blocked lane will read once it is unblocked, and what each reads today.
-	 *
-	 * Present only on a blocked lane, and never counted anywhere.
+	 * present only on a blocked lane and never counted anywhere.
 	 */
 	plannedChecks?: { id: string; measures: string; todayReads: string }[]
 }
@@ -134,10 +124,7 @@ export interface Phase2Receipt {
 	checks: Phase2CheckOutcome[]
 	verdict: Phase2Verdict
 	/**
-	 * Always `false`.
-	 *
-	 * The ruler maps measurements onto one decision.
-	 * Recording it is the operator's, per #1967.
+	 * Always `false`; the ruler maps measurements onto one decision and recording it is the operator's.
 	 */
 	recorded: false
 	recordingNote: string
@@ -146,8 +133,7 @@ export interface Phase2Receipt {
 export interface Phase2RunOptions extends POIBoardOptions {
 	/**
 	 * Override the frozen pre-registration, for a test that wants a synthetic definition.
-	 *
-	 * A run with no override reads the committed one.
+	 * a run with no override reads the committed one.
 	 */
 	definitionPath?: string
 	freezePath?: string
@@ -162,14 +148,11 @@ export interface Phase2RunOptions extends POIBoardOptions {
 	coverageDatabasePath?: string
 	/**
 	 * The committed collision census.
-	 *
 	 * Absent reads the one in this repository.
 	 */
 	collisionCensusPath?: string
 	/**
-	 * Commit sha recorded in the receipt.
-	 *
-	 * Defaults to the checkout's own short head.
+	 * Commit sha recorded in the receipt, defaulting to the checkout's own short head.
 	 */
 	gitCommit?: string
 }
@@ -184,9 +167,8 @@ function matches(observed: string | number, pinned: string | number): number {
 
 /**
  * Run every instrument the registered checks read, and answer with one reading per measurement.
- *
- * Instruments are selected from the checks rather than run unconditionally: a definition that
- * registers no absence check must not need a build-local coverage layer to produce a receipt.
+ * instruments are selected from the checks rather than run unconditionally, so a definition
+ * that registers no absence check needs no build-local coverage layer to produce a receipt.
  */
 async function measure(
 	definition: Phase2DecisionDefinition,
@@ -382,11 +364,9 @@ async function measure(
 	let coverageVersion = "not measured"
 
 	if (needed.has("absence_observation_probe")) {
-		// `db` is deliberately not forwarded.
-		// The absence probe defaults the layer the executor queries to the coverage layer itself,
-		// and that default is the whole claim: an absence qualified by one layer's coverage
+		// `db` is deliberately not forwarded: the absence probe defaults the queried layer
+		// to the coverage layer itself, and an absence qualified by one layer's coverage
 		// while the answer came out of another is a statement about two artifacts nobody compared.
-		// A `--db` meant for the board would silently cross them.
 		const absence = await runAbsenceObservationProbe({
 			locale: options.locale,
 			weightsCacheRoot: options.weightsCacheRoot,
@@ -438,10 +418,9 @@ async function measure(
 	}
 
 	if (needed.has("poi_board")) {
-		// `quiet` because this receipt is the report: the board's own table would
-		// print 56 rows between two of this ruler's lines.
-		// `enforce` is left off deliberately.
-		// The floors are read as a measurement here, and a breach belongs in the verdict
+		// `quiet` because this receipt is the report.
+		// The board's own table would print 56 rows between two of this ruler's lines —
+		// and `enforce` is left off because a floor breach belongs in the verdict
 		// rather than in an exit code the ruler would have to interpret.
 		const { report } = await runPOIBoard({
 			...options,
@@ -567,11 +546,9 @@ async function measure(
 }
 
 /**
- * Every pinned artifact whose observed identity differs, named with both values.
- *
- * A measurement not taken is not a deviation: a definition registering no absence
- * check leaves the absence pins unmeasured, and reporting that as a difference would
- * turn "this ruler did not ask" into "the artifact moved".
+ * Every pinned artifact whose observed identity differs, named with both values. a measurement not
+ * taken is not a deviation, because a definition registering no absence check leaves the absence pins
+ * unmeasured and reporting that would turn "this ruler did not ask" into "the artifact moved".
  */
 function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts): string[] {
 	const deviations: string[] = []
@@ -605,9 +582,9 @@ function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts
  * Run the one frozen marker query and count the markers that reach a caller
  * with the registered code and mechanism.
  *
- * This is the only instrument that builds its own pipeline, and it needs one: the probe runner
- * grades an answer and never hands back the query-kind verdict a marker is attached to.
- * Everything the check reads comes from the definition — the query, the locale, the code and the mechanism.
+ * This is the only instrument that builds its own pipeline because the probe runner
+ * grades an answer but never hands back the query-kind verdict a marker is attached to,
+ * and everything the check reads comes from the definition.
  */
 async function measureMarker(
 	definition: Phase2DecisionDefinition,
@@ -696,8 +673,8 @@ export async function runPhase2Decision(options: Phase2RunOptions = {}): Promise
 /**
  * The human-readable report.
  *
- * Prints the frozen bar beside every measurement, so a reader never has to open the
- * definition to know what the number was compared against.
+ * It prints the frozen bar beside every measurement, so a reader never has to open
+ * the definition to know what the number was compared against.
  */
 export function printPhase2Receipt(receipt: Phase2Receipt): void {
 	console.log(`\nphase-2 decision ${receipt.decisionID} v${receipt.definitionVersion}`)

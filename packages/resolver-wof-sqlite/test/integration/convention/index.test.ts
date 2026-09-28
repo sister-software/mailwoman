@@ -12,14 +12,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Geographic Rule Engine convention model (Direction E, #289). Two layers of tests:
- *
- *   1. The pure engine — `mergeConventions` / `resolveConvention` / `SeedConventionSource`: deep-merge
- *        precedence over a country → region → locality ancestor chain (most-specific wins, weights
- *        merge key-by-key). This is the mechanism the EU locales never exercise (they ride
- *        WORLD_DEFAULT).
- *   2. Live dispatch — a `WOFSQLitePlaceLookup` with an injected convention, keyed by the country's WOF
- *        id, proving the merged convention actually reroutes `findPlace`'s strategy dispatch.
+ * Geographic Rule Engine convention model: the pure `mergeConventions`/`resolveConvention` engine and live `findPlace` dispatch through an injected convention.
  */
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -55,10 +48,6 @@ describe("convention engine — merge + resolve", () => {
 	})
 
 	it("deep-merges country → region → locality with most-specific winning", () => {
-		// country sets a base strategy list + pc weight.
-		// Region overrides the strategy list.
-		// Locality nudges name weight.
-		// The resolved convention reflects the most-specific value per field.
 		const source = new SeedConventionSource({
 			100: { candidateStrategies: ["postcode_area_resolution"], scoringWeights: { pc: 0.7 } }, // country (JP)
 			200: { candidateStrategies: ["grid_interpolation", "postcode_area_resolution"] }, // region (Hokkaido)
@@ -67,8 +56,8 @@ describe("convention engine — merge + resolve", () => {
 
 		// chain ordered most-general → most-specific
 		const out = resolveConvention(source, [100, 200, 300])
-		expect(out.candidateStrategies).toEqual(["grid_interpolation", "postcode_area_resolution"]) // region won
-		expect(out.scoringWeights).toEqual({ pc: 0.7, name: 0.4, pop: 0.1 }) // country pc + locality name + base pop
+		expect(out.candidateStrategies).toEqual(["grid_interpolation", "postcode_area_resolution"])
+		expect(out.scoringWeights).toEqual({ pc: 0.7, name: 0.4, pop: 0.1 })
 	})
 
 	it("SeedConventionSource returns rows by id and undefined for misses", () => {
@@ -77,8 +66,6 @@ describe("convention engine — merge + resolve", () => {
 		expect(src.get(99)).toBeUndefined()
 	})
 })
-
-// An injected convention reroutes findPlace through live dispatch.
 
 function buildDB(): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
@@ -114,22 +101,16 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	afterEach(() => {
-		// lookup[Symbol.dispose]() in each test closes db.
-		// No other cleanup is needed.
+		// The `using lookup` declaration in each test disposes the database.
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {
 		using lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
-		// "Plaun" won't FTS-match. postcode_area_resolution injects Plauen from the postcode.
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
 	})
 
 	it("an injected country convention that drops postcode_area_resolution reroutes dispatch", async () => {
-		// Key the convention by the DE country WOF id (90).
-		// Removing postcode_area_resolution from the strategy list means the typo no
-		// longer recovers Plauen — proof the merged convention controls findPlace dispatch
-		// through the live country → WOF-id → convention path.
 		using lookup = new WOFSQLitePlaceLookup({
 			database: db,
 			buildFTS: true,

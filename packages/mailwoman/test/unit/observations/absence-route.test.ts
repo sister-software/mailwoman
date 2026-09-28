@@ -3,18 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the coverage-qualified absence route (#1965): the conjunction, every named silence, the
- *   authority an observation carries, and the construction refusals.
+ *   Tests for the coverage-qualified absence route: the conjunction, every named silence, the authority an observation carries, and the construction refusals.
  *
- *   No pipeline. The route reads a finished `POIIntentOutcome` and a sealed coverage layer, and both are
- *   supplied here — synthetic outcomes against a scratch layer built through `@mailwoman/core/layers`'s own
- *   writers. That is what lets the asymmetry be stated at its sharpest: the same query, the same empty
- *   answer, two cells that differ only in `basis`, and opposite readings. The pilot layer cannot
- *   state it, because every one of its 290 cells is `surveyed`.
+ *   The route reads a finished `POIIntentOutcome` and a sealed coverage layer, both supplied here, so the asymmetry can be stated at its sharpest: the same query, the same empty answer, two cells differing only in `basis`, and opposite readings.
  *
- *   The committed pre-registration is asserted too. Its hash is what stops a row that failed from being
- *   rewritten into a row that passes, and a freeze that has drifted from its definition would let exactly
- *   that happen while the loader still reported a clean load.
+ *   The committed pre-registration is asserted too, because its hash is what stops a row that failed from being rewritten into a row that passes.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -78,10 +71,8 @@ async function readCommittedModel(): Promise<CompiledGeographicModel> {
 
 interface ScratchLayerOptions {
 	/**
-	 * The classes the layer holds.
-	 *
-	 * One is the ordinary case.
-	 * Two is what the pooled-completeness refusal is about.
+	 * The classes the layer holds: one is the ordinary case, two is what the
+	 * pooled-completeness refusal is about.
 	 */
 	categories?: string[]
 	cells?: { h3Cell: number; completeness: number; basis: CoverageBasis; observedRows: number }[]
@@ -93,8 +84,8 @@ afterAll(() => scratchRoot[Symbol.asyncDispose]())
 const built: PathBuilder[] = []
 
 /**
- * A sealed-shaped layer carrying exactly the interface tables the route reads, written through the
- * blessed writers so the scratch artifact and a real one differ in scale and no other respect.
+ * A sealed-shaped layer carrying exactly the interface tables the route reads,
+ * written through the blessed writers so it differs from a real artifact only in scale.
  */
 async function scratchLayer(options: ScratchLayerOptions = {}): Promise<PathBuilder> {
 	const path = scratchRoot.path(`layer-${built.length}.db`)
@@ -156,8 +147,8 @@ async function scratchLayer(options: ScratchLayerOptions = {}): Promise<PathBuil
 }
 
 /**
- * A finished POI answer, as the executor would have produced it: a category subject,
- * an anchor tree whose one node carries the resolved centroid, and the rows the search returned.
+ * A finished POI answer: a category subject, an anchor tree whose one node carries
+ * the resolved centroid, and the rows the search returned.
  */
 function answered(
 	categoryID: string,
@@ -256,10 +247,9 @@ describe("the conjunction's other half — the artifact", () => {
 		expect(decision).toEqual({ fired: false, refusal: "no_affordance_assertion" })
 	})
 
-	// The committed artifact affords `obtain_medication` from both wave-1 classes.
-	// The pilot layer surveys `pharmacy`.
-	// So `drugstore` is a class the artifact can speak about and the layer cannot,
-	// which is a different refusal from a class the artifact never heard of.
+	// The artifact affords `obtain_medication` from both `drugstore` and `pharmacy`,
+	// but the layer surveys only `pharmacy`, so `drugstore` is a different refusal
+	// from a class the artifact never heard of.
 	it("refuses a category the artifact affords but the layer never surveyed", async () => {
 		const route = await routeOver()
 
@@ -270,18 +260,15 @@ describe("the conjunction's other half — the artifact", () => {
 		expect(decision).toEqual({ fired: false, refusal: "category_not_surveyed" })
 	})
 
-	// The union: an activity afforded by two classes puts two classes in one search,
-	// and the layer's completeness covers one of them.
-	// "No establishment affording this activity is here" would then be a claim about
-	// premises the survey never looked for, so the whole searched set has to be the
-	// surveyed class or the cell is not decidable.
+	// An activity afforded by two classes puts both in one search while the layer's completeness
+	// covers one, so the whole searched set must be the surveyed class or the cell is not decidable.
 	it("refuses a searched union that reaches past the surveyed class", async () => {
 		const route = await routeOver()
 		const outcome = answered("pharmacy", POINTS.surveyedEmpty)
 
 		if (outcome.type !== "intent" || outcome.intent.subject.kind !== "category") throw new Error("unreachable")
 
-		// The same cell and the same answer, with the second class added to the search — the one difference.
+		// The same cell and answer, with the second class added to the search.
 		expect(await route.observe(outcome)).toMatchObject({ fired: true })
 
 		outcome.intent.subject.categoryIDs = ["drugstore", "pharmacy"]

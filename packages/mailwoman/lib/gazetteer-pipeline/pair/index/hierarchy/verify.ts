@@ -3,28 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ground-truth verifier for the (locality, region) pair-index probe artifacts written by
- *   `pair-index-hierarchy-probe.ts`. Deliberately a separate
- *   implementation from the builder — the expected pair set is re-derived here with one flat SQL
- *   query (CTE surface unions, SQL-side joins) instead of the builder's JS-side map joins, then
- *   folded and compared. Two independent code paths converging on the same set is the receipt. a
- *   shared extraction module would verify only the serialization round-trip.
+ * Ground-truth verifier for the (locality, region) pair-index probe artifacts written by
+ * `pair-index-hierarchy-probe.ts`. Deliberately a separate implementation from the builder: the
+ * expected pair set is re-derived here with one flat SQL query and compared, so two independent code
+ * paths converging on the same set is the receipt.
  *
- *   Checks, per country:
+ * Checks, per country: header sanity (country, `delta === 0`, `probeArtifact`, edge, versions);
+ * entry-count match against the re-derived set. Full membership sweep with tag `locality` and parent
+ * tag `region`; and named receipts including cross-country negative controls.
  *
- *   1. Header sanity — country, `delta === 0` (uncalibrated probe), `probeArtifact`, edge,
- *      fold/schema versions.
- *   2. Entry-count match — the binary's `pairCount` (read straight from the documented PIX1 layout)
- *      vs the re-derived expected set size.
- *   3. Full membership sweep — every expected folded pair must probe OK with tag `locality`; any
- *      resolver entry beyond the expected count would surface as a count mismatch in (2).
- *   4. Named receipts — ("Springfield", "Illinois") present in US; ("Springfield", "Bretagne")
- *      absent (cross-country negative control); FR communes under both their région (macroregion:
- *      "Bretagne") and département (WOF region: "Ille-et-Vilaine").
- *
- *   Throws (exits non-zero under `runIfScript`) on any failure.
- *
- *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-verify.ts [--countries us,fr] [--db <path>] [--dir <dir>]`
+ * Throws (exits non-zero under `runIfScript`) on any failure.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -47,8 +35,8 @@ import { PathBuilder } from "path-ts"
 import { resolveHierarchyRunInputs } from "#gazetteer-pipeline/pair/index/hierarchy/probe"
 
 /**
- * Mirror of the builder's per-country WOF parent-placetype sets — restated
- * here on purpose (see file header).
+ * Mirror of the builder's per-country WOF parent-placetype sets, restated here on purpose
+ * so the verifier does not share the builder's extraction code.
  */
 const PARENT_PLACETYPES_BY_COUNTRY: Readonly<Record<string, string[]>> = {
 	us: ["region"],
@@ -108,10 +96,8 @@ function expectedPairSet(
 	parentPlacetypes: string[]
 ): Map<string, [string, string]> {
 	// Explicitly numbered placeholders throughout: `?1` (country) and `?2..?N`
-	// (parent placetypes) are each reused across several clauses.
-	// Mixing `?1` with anonymous `?` silently mis-numbers the anonymous ones past the
-	// bound arguments (they bind NULL and the INs match no row).
-	// The first run of this verifier did exactly that and "verified" against an empty expected set.
+	// (parent placetypes) are each reused across clauses, and mixing `?1` with anonymous
+	// `?` silently mis-numbers the anonymous ones past the bound arguments.
 	const parentPlaceholder = parentPlacetypes.map((_, i) => `?${i + 2}`).join(",")
 	const wofCountry = country.toUpperCase()
 
@@ -199,7 +185,6 @@ async function main(): Promise<void> {
 
 		console.log(`\n${artifactPath} (${bytes.length.toLocaleString()} bytes)`)
 
-		// 1. Header sanity.
 		if (header.country !== country) {
 			fail(`header country "${header.country}" != "${country}"`)
 		}
@@ -243,7 +228,6 @@ async function main(): Promise<void> {
 				`namePolicy=${extended.source?.namePolicy} buildDate=${header.buildDate}`
 		)
 
-		// 2. Entry count vs re-derived ground truth.
 		const expected = expectedPairSet(db, country, parentPlacetypes)
 		const pairCount = readPairCount(bytes)
 
@@ -255,7 +239,6 @@ async function main(): Promise<void> {
 			fail(`artifact pairCount ${pairCount.toLocaleString()} != DB-derived ${expected.size.toLocaleString()}`)
 		}
 
-		// 3. Full membership sweep.
 		const resolver = new PairIndexResolver(bytes)
 		let misses = 0
 		let wrongTag = 0
@@ -269,9 +252,8 @@ async function main(): Promise<void> {
 			} else if (edge.tag !== "locality") {
 				wrongTag++
 			} else if (edge.parentTag !== "region") {
-				// PIX2: the sweep grades both ends.
-				// The probe builder declares a locality→region edge in its header, so an entry whose recorded
-				// parent tag is anything else is a builder bug the pre-PIX2 sweep could not have seen.
+				// PIX2: the sweep grades both ends, so an entry whose parent tag is anything
+				// else is a builder bug the pre-PIX2 sweep could not have seen.
 				wrongParentTag++
 			}
 		}
@@ -285,7 +267,6 @@ async function main(): Promise<void> {
 			)
 		}
 
-		// 4. Named receipts.
 		for (const probe of namedProbes) {
 			const edge = resolver.probe(normalizeFSTToken(probe.child), normalizeFSTToken(probe.parent))
 			const present = edge !== undefined

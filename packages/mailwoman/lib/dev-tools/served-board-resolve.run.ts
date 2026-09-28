@@ -2,26 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A coordinate board read through the resolver: board rows geocoded with the served weights and the candidate
- *   gazetteer, graded on the board's own coordinate (#2164 step 6, the half a parse board cannot read).
- *
- *   The parse board and this one answer different questions. A parse board decodes spans and looks a predicted
- *   (region, locality) pair up in a centroid table. this runs the pipeline a caller runs and grades the coordinate it
- *   returns. A locale can read well on the first and resolve no place on the second, so `scope.mdx`'s rule — a locale is
- *   claimed when a coordinate-graded eval exists for it — is answered here.
- *
- *   `--locale` and `--country` are flags rather than constants because every CJK board has the same shape and a tool
- *   named for one of them grows a copy per country instead of an argument.
- *
- *   Three things had to hold before a JP parse produced a coordinate at all, and this tool measured each: the placetype
- *   map routes `prefecture` / `municipality` / `district` (0 of 300 rows resolved without it), the admin ladder carries
- *   the JP rungs with `municipality` above `district` (202 vs 271 of 300 accepted @15 km), and the normalizer keeps the
- *   postal mark 〒 for the character path (171 vs 202 with the map and a district-first ladder). The resolver's scoped
- *   pair for a compound municipality (`compoundMunicipality`, #2175) then took 271 to 282 of 300. the same split
- *   applied unscoped before the walk had read 251, because a bare ward resolves a namesake in another city.
- *
- *   Usage: node packages/mailwoman/lib/dev-tools/served-board-resolve.run.ts [--board <jsonl>] [--locale ja-JP]
- *   [--country JP] [--rows 300] [--seed 42] [--normalize false] [--tolerance-km 15] [--trace 2] [--json <out>]
+ * @file A coordinate board read through the resolver: board rows geocoded with the served weights and
+ *   the candidate gazetteer, graded on the board's own coordinate.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -100,10 +82,8 @@ async function main(): Promise<void> {
 		.map((entry) => entry.row)
 
 	const locale = values.locale
-	// The country the board's rows are in, which scopes the resolve.
-	// It defaults from the locale's region subtag rather than a table: `zh-TW` is a
-	// Taiwanese board by construction, and a lookup keyed on locale would be one more
-	// per-country list to keep in step with the boards themselves.
+	// The country the board's rows are in is derived from the locale's region subtag
+	// rather than a per-country table, so it stays in step with the boards.
 	const country = (values.country ?? locale.split("-").at(-1) ?? "").toUpperCase()
 
 	if (country.length !== 2) {

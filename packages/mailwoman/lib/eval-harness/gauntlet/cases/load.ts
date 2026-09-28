@@ -5,21 +5,8 @@
  *
  *   Load the curated regression corpus from `cases/<cc>/*.jsonl`.
  *
- *   The corpus was one 3,530-line TS array until 2026-08-05. It is now one jsonl file per ISO-3166 alpha-2
- *   country dir — the per-`cc` layout the gazetteer database set already uses (`postalcode-<cc>-overture.db`) —
- *   because the array had reached the size where "does GB assert dependent_locality anywhere?" was a scroll
- *   rather than a listing.
- *
- *   order is defined rather than incidental: country dir ascending, then case `id` ascending within the file. The
- *   loader re-sorts rather than trusting file order, so a hand-appended row at the bottom of a file cannot
- *   change what the corpus is — only what a text diff looks like. No downstream step depends on the old
- *   chronological array order. the ablation board id hashes a sorted fingerprint (`ablation.ts`), and the
- *   regression runner grades per row.
- *
- *   What the prose migration cost, stated directly: jsonl carries no comments, so the 16 batch headers and 18
- *   per-case margin notes that lived between the array literals moved verbatim to `batch-notes.md`, keyed by
- *   the `source` value their rows carry. They are not lost, but they are no longer adjacent to their rows.
- *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
+ *   The loader re-sorts rather than trusting file order: country dir ascending, then case `id` ascending within
+ *   the file, so a hand-appended row at the bottom cannot change what the corpus is.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -31,38 +18,18 @@ import { Globerator } from "spliterator/node/fs"
 
 import { canonicalizeSeedCase, type SeedCase, SeedCaseSchema } from "#eval-harness/gauntlet/cases/seed-case"
 
-/**
- * An ISO-3166 alpha-2 country directory, lowercase — the layout key.
- *
- * Matches `postalcode-<cc>-overture.db` in `gazetteer-pipeline`, which is
- * where the repo's per-`cc` convention already lives.
- */
 const COUNTRY_DIR = /^[a-z]{2}$/
 
-/**
- * How much of an unparseable line to quote back.
- *
- * A corpus row is one JSON object per line and the longest here is ~1.4 kB of `note` prose —
- * echoing it whole buries the file:line that actually locates the problem.
- */
 const MALFORMED_EXCERPT_CHARS = 60
 
 /**
- * The committed corpus root.
- *
- * `new URL`-relative for the source tree with a compiled-tree fallback — tsc emits no `.jsonl`
- * into `out/`, so `mailwoman/out/eval-harness/gauntlet/cases/` reads the source-tree copy.
- * Same bridge as `baseline-assert.ts`'s `resolveBaselineFilePath`
- * and `promotion-eval.ts`'s `resolveThresholdSpecPath`.
+ * The committed corpus root, `new URL`-relative for the source tree with a compiled-tree fallback —
+ * `tsc` emits no `.jsonl` into `out/`, so the compiled tree reads the source-tree copy.
  */
 export const CASES_DIR: PathBuilder = resolvePackageDirectory("mailwoman")("lib", "eval-harness", "gauntlet", "cases")
 
 /**
- * A malformed corpus row, named by file and line.
- *
- * A bare `SyntaxError: Unexpected token }` over a 192-row corpus spread across 29 files is not a diagnosis.
- * Every throw out of {@linkcode loadRegressionCases} carries `<file>:<line>`
- * and, for a schema failure, the offending path.
+ * A malformed corpus row, named by file and line, and for a schema failure by the offending path.
  */
 export class CorpusRowError extends Error {
 	constructor(file: string, line: number, detail: string, options?: ErrorOptions) {
@@ -72,22 +39,16 @@ export class CorpusRowError extends Error {
 }
 
 /**
- * Read one `<cc>/*.jsonl` file.
- *
- * Blank lines are skipped.
- * The line counter still counts them, so the number in an error is the number your editor shows.
+ * Read one `<cc>/*.jsonl` file, skipping blank lines while counting them
+ * so line numbers in errors match the editor.
  */
 async function loadCorpusFile(source: PathBuilder, expectedCC: string): Promise<SeedCase[]> {
-	// Row errors carry the file as a string field.
 	const path = source.toString()
 	const rows: SeedCase[] = []
 	let line = 0
 
-	// `skipEmpty: false` is what makes the line number true.
-	// On the default (skip), the counter counts rows and silently under-reports
-	// by one per blank line above the failure.
-	// The report is then confidently wrong, which is worse than absent.
-	// Blank lines are dropped below, after they have been counted.
+	// `skipEmpty: false` makes the line number true.
+	// Blank lines are dropped below after they are counted.
 	for await (const text of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
 		line++
 
@@ -111,9 +72,7 @@ async function loadCorpusFile(source: PathBuilder, expectedCC: string): Promise<
 			throw new CorpusRowError(path, line, `does not match SeedCase — ${detail}`)
 		}
 
-		// The dir is the country claim.
-		// A row filed under the wrong `cc` still loads and still runs, so no downstream check would ever notice.
-		// The listing it was filed under would just be quietly wrong.
+		// A row filed under the wrong `cc` still loads and runs, so no downstream check would ever notice.
 		if (result.data.country.toLowerCase() !== expectedCC) {
 			throw new CorpusRowError(
 				path,
@@ -159,7 +118,6 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 			if (previous) {
 				// `id` is the regression DB's primary KEY, so a duplicate would fail the
 				// build with a constraint error naming neither file.
-				// Fail here instead, naming both.
 				throw new Error(`duplicate case id "${c.id}" — in ${previous.basename()} and cases/${cc}/`)
 			}
 
@@ -174,13 +132,8 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 /**
  * A content hash of a loaded corpus — canonical row keys, sorted, `sha256`.
  *
- * Order-independent on purpose: it answers "are these the same cases?",
- * never "were they read in the same order?".
- * `load.test.ts` pins it, and that pin is what carried the 2026-08-05 TS-array →
- * jsonl migration across the commit that deleted the array.
- *
- * The hash was measured against the array while both existed, so a later edit that
- * changes corpus content has to change the pin deliberately.
+ * Order-independent on purpose: it answers whether these are the same cases,
+ * independent of the order they were read in.
  */
 export function regressionCorpusHash(rows: readonly SeedCase[]): string {
 	return sha256Hex(

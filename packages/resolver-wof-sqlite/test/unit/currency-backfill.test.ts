@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The currency check's census mode: a dry run judges every dead row and stages no row, the dead-row query admits
- *   the placetypes it is told to, and the report splits outcomes by the dead row's placetype (#1746).
+ * @file The currency check's census mode: a dry run judges every dead row and stages no row, and the report splits outcomes by the dead row's placetype.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -40,9 +39,6 @@ function sourceDatabase(): DatabaseClient<WOFDatabase> {
 	return db
 }
 
-/**
- * A GeoNames dump with P-class attestors for both names inside 10 km, population above the floor.
- */
 function geonamesRow(name: string, lat: number, lon: number, population: number): string {
 	const columns = new Array<string>(19).fill("")
 
@@ -100,7 +96,6 @@ describe("resurrectCurrencyHoles — the census mode", () => {
 		expect(reports).toHaveLength(1)
 		expect(reports[0]).toMatchObject({ country: "GB", dumpPresent: true, judged: 1, blocked: 0, resurrected: 1 })
 		expect(Object.keys(reports[0]!.byDeadPlacetype)).toEqual(["locality"])
-		// A dry run counts and stages no rows.
 		expect(staged).toEqual([])
 		expect(total).toBe(1)
 	})

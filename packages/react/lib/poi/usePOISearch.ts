@@ -36,17 +36,15 @@ export interface UsePOISearchOptions {
 	runLiveSearch?: POILiveSearch
 
 	/**
-	 * Whether the probe can search for brand subjects by Wikidata ID.
-	 * It defaults to false.
-	 *
-	 * Enable it only for a server-side backend.
-	 * Fetching every row for a brand over an HTTP range-request database is too slow.
+	 * Whether the probe can search for brand subjects by Wikidata ID, defaulting to
+	 * false. enable it only for a server-side backend, since fetching every row for
+	 * a brand over an HTTP range-request database is too slow.
 	 */
 	brandLiveSearch?: boolean
 
 	/**
 	 * The delay in milliseconds before the text is classified.
-	 * It defaults to 250.
+	 * Defaults to 250.
 	 */
 	debounceMs?: number
 }
@@ -61,15 +59,13 @@ export interface UsePOISearch {
 	runtimeReady: boolean
 
 	/**
-	 * The classification for the current debounced text.
-	 *
-	 * It is null for empty text and while classification is pending.
+	 * The classification for the current debounced text, `null` for empty text
+	 * and while classification is pending.
 	 */
 	result: POIExplorerResult | null
 
 	/**
-	 * The live-search state for the current debounced text.
-	 * It stays `idle` until a search runs.
+	 * The live-search state for the current debounced text, `idle` until a search runs.
 	 */
 	liveSearch: LiveSearchState
 
@@ -112,11 +108,8 @@ function buildOverpass(
 /**
  * Classifies debounced query text as a POI category or brand request and runs live searches on demand.
  *
- * Each result is keyed to the query that produced it, so the hook never shows a stale result for newer text.
- * Live search requires a non-empty anchor.
- *
- * It is unavailable for categories that need a locally built layer.
- * It is available for brands only when `brandLiveSearch` is set and the brand has a Wikidata ID.
+ * Each result is keyed to the query that produced it, live search requires a non-empty
+ * anchor, and brands need `brandLiveSearch` plus a Wikidata ID.
  */
 export function usePOISearch({
 	text,

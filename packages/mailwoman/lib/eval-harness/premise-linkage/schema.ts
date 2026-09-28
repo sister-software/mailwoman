@@ -3,29 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The premise-linkage row and report interface (#1902) — fixed before any controlled data arrives, so
- *   a provider's file populates an adapter rather than reshaping the evaluation after results are
- *   seen.
+ *   The premise-linkage row and report interface, fixed before any controlled data arrives so a
+ *   provider's file populates an adapter rather than reshaping the evaluation after results are seen.
  *
- *   Two row types, and the split is the whole privacy design. {@link PremiseLinkageInputRow} is
- *   private: it carries the licensed address, the expected authoritative identifier, and the truth
- *   coordinate, and it exists only in memory for the length of one run.
- *   {@link PremiseLinkageResultRow} is what may be persisted: a salted case identifier, the shape
- *   class, the presence booleans, one outcome from a closed set, and a failure category from a closed
- *   set. There is no free-text field on the persistable row, because free text is how an address
- *   leaks.
+ *   The two row types are the privacy design: {@link PremiseLinkageInputRow} carries the licensed
+ *   address, the expected identifier, and the truth coordinate in memory only, while
+ *   {@link PremiseLinkageResultRow} persists a salted case identifier, shape class, presence booleans,
+ *   and closed-set outcomes with no free-text field for an address to leak through.
  *
- *   Every rate in {@link PremiseLinkageReport} is a {@link PremiseLinkageCount} — a numerator and its
- *   denominator as separate fields. No field here stores a precomputed ratio: a ratio cannot say
- *   whether it was measured over three rows or three thousand, and a reader who cannot see the
- *   denominator cannot tell a result from a rounding artifact.
+ *   Every rate is a numerator and denominator as separate fields. No field stores a precomputed ratio.
  */
 
 /**
  * How the input was shaped relative to the authoritative record it should link to.
  *
- * The reporting axis: a per-class table localizes an arm's effect to a register
- * instead of averaging wins and losses into one number.
+ * The reporting axis that localizes an arm's effect to a register instead of averaging wins and losses.
  */
 export const PremiseLinkageInputShapeClass = {
 	/**
@@ -65,10 +57,8 @@ export const PREMISE_LINKAGE_SHAPE_CLASSES: ReadonlyArray<PremiseLinkageInputSha
 ]
 
 /**
- * Which components the input actually carried.
- *
- * Booleans, never the values: "this row named a postcode" is a reporting axis,
- * "this row named SW1A 1AA" is a licensed field.
+ * Which components the input actually carried, as booleans rather than values:
+ * naming a postcode is a reporting axis, naming a full postcode is a licensed field.
  */
 export interface PremiseLinkagePresence {
 	hasUnit: boolean
@@ -79,10 +69,10 @@ export interface PremiseLinkagePresence {
 }
 
 /**
- * One authoritative identifier, named by the scheme it belongs to (`{ scheme: "uprn", id: "…" }`).
+ * One authoritative identifier, named by the scheme it belongs to.
  *
- * The scheme is carried per row rather than assumed, so a run against a non-UK register
- * grades against its own namespace without a second row type.
+ * The scheme is carried per row so a non-UK register grades against its own
+ * namespace without a second row type.
  */
 export interface PremiseLinkageObjectID {
 	scheme: string
@@ -90,10 +80,8 @@ export interface PremiseLinkageObjectID {
 }
 
 /**
- * Private.
- *
- * One controlled row as the adapter reads it — licensed fields included.
- * Held in memory for one run and never serialized: no code in this repository writes this type to disk.
+ * Private: one controlled row as the adapter reads it, licensed fields included,
+ * held in memory for one run and never serialized.
  */
 export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
 	/**
@@ -101,40 +89,30 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
 	 */
 	input: string
 	/**
-	 * The identifier the register holds for this premise.
-	 * The grading truth, held only while grading.
+	 * The identifier the register holds for this premise, held only while grading.
 	 */
 	expectedObjectID: PremiseLinkageObjectID
 	/**
 	 * Truth coordinate, when the row has one.
-	 *
-	 * Absent means unmeasured, never zero: a row without a truth coordinate is excluded
-	 * from the coordinate table rather than counted as a miss.
+	 * Absent means unmeasured, never zero.
 	 */
 	expectedLat?: number
 	expectedLon?: number
 	/**
 	 * Whether the provider's terms permit a coordinate error to appear in a published aggregate.
-	 *
-	 * False keeps the row in every identifier metric and out of every coordinate one.
+	 * false keeps the row in every identifier metric and out of every coordinate one.
 	 */
 	coordinatePublishable: boolean
 	inputShapeClass: PremiseLinkageInputShapeClass
 }
 
 /**
- * What one arm did with one row.
- *
- * `refused` and `ambiguous` are first-class, exactly as the #1901 interface makes them:
- * a refusal is an arm that declined to name a premise, and an ambiguous answer keeps its candidates.
- * Neither is ever recorded as `wrong`, and an ambiguous answer is never recorded as `exact`.
+ * What one arm did with one row: `refused` and `ambiguous` are first-class
+ * and never recorded as `wrong`, and an ambiguous answer is never `exact`.
  *
  * `errored` is not an outcome the arm produced.
- * It marks a row that could not be graded at all (a transport failure,
- * or a match that named no identifier in the graded scheme).
- *
- * It is excluded from every rate and reported as its own count, because folding an unreadable
- * row into a denominator turns "I could not measure this" into "there was none of it".
+ * It marks a row that could not be graded at all — and is excluded from every rate
+ * and reported as its own count.
  */
 export const PremiseLinkageOutcome = {
 	Exact: "exact",
@@ -147,18 +125,13 @@ export const PremiseLinkageOutcome = {
 export type PremiseLinkageOutcome = (typeof PremiseLinkageOutcome)[keyof typeof PremiseLinkageOutcome]
 
 /**
- * Why a row was not `exact`, from a closed set.
- *
- * Deliberately not free text: a free-text reason field is where an address,
- * a provider payload, or a stack trace carrying either one ends up.
+ * Why a row was not `exact`, from a closed set rather than free text that could
+ * carry an address or a provider payload.
  */
 export const PremiseLinkageFailureCategory = {
 	/**
-	 * The arm names no premise identifier at all.
-	 *
-	 * The open arm's structural state.
-	 * It has no authoritative namespace to answer in, which is the gap the authoritative
-	 * arm exists to measure rather than a failure of this row.
+	 * The arm names no premise identifier at all, the open arm's structural state
+	 * rather than a failure of this row.
 	 */
 	ArmAssertsNoIdentifier: "arm_asserts_no_identifier",
 	/**
@@ -179,9 +152,7 @@ export const PremiseLinkageFailureCategory = {
 	 */
 	SchemeAbsent: "scheme_absent",
 	/**
-	 * The provider threw: network, auth, timeout.
-	 *
-	 * Never a refusal.
+	 * The provider threw — network, auth, timeout — which is never a refusal.
 	 */
 	TransportError: "transport_error",
 } as const
@@ -190,10 +161,8 @@ export type PremiseLinkageFailureCategory =
 	(typeof PremiseLinkageFailureCategory)[keyof typeof PremiseLinkageFailureCategory]
 
 /**
- * Persistable.
- *
- * One arm's graded answer for one row, carrying no field that can be joined
- * back to a premise without the run's salt.
+ * Persistable: one arm's graded answer for one row, carrying no field that can be
+ * joined back to a premise without the run's salt.
  */
 export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	/**
@@ -206,17 +175,13 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	inputShapeClass: PremiseLinkageInputShapeClass
 	outcome: PremiseLinkageOutcome
 	/**
-	 * Carried so the report writer can refuse a coordinate on a row whose terms forbid one.
-	 *
-	 * A permission flag is not a licensed value.
-	 * The check it enables is only possible if the flag travels with the row.
+	 * Carried so the report writer can refuse a coordinate on a row whose terms
+	 * forbid one. a permission flag is not a licensed value.
 	 */
 	coordinatePublishable: boolean
 	/**
-	 * Great-circle error in meters between the truth coordinate and the coordinate this arm answered with.
-	 *
-	 * Present only when {@link coordinatePublishable} is true, the row carried a
-	 * truth coordinate, and the arm produced one.
+	 * Great-circle error in meters, present only when {@link coordinatePublishable} is true,
+	 * the row carried a truth coordinate, and the arm produced one.
 	 */
 	coordinateErrorM?: number
 	/**
@@ -229,10 +194,8 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 }
 
 /**
- * A numerator and the denominator it was measured against.
- *
- * Both are always stated.
- * Neither is ever inferred from the other.
+ * A numerator and the denominator it was measured against, both always stated
+ * and neither inferred from the other.
  */
 export interface PremiseLinkageCount {
 	n: number
@@ -240,16 +203,9 @@ export interface PremiseLinkageCount {
 }
 
 /**
- * Whether the registered evaluation policy required a unique answer.
- *
- * This is the only thing that moves a refusal into a denominator.
- * Under `abstain_ok` a refusal leaves the eligible set, because an arm that
- * declined was not asked to be right.
- *
- * Under `unique_required` it stays in the denominator, and it is still recorded
- * as `refused`, never rewritten to `wrong`.
- * The policy changes what a rate is measured over.
- * It never changes what an arm did.
+ * Whether the registered evaluation policy required a unique answer: under `abstain_ok`
+ * a refusal leaves the eligible set, and under `unique_required` it stays in the
+ * denominator while still being recorded as `refused`.
  */
 export const PremiseLinkagePolicy = {
 	UniqueRequired: "unique_required",
@@ -259,9 +215,8 @@ export const PremiseLinkagePolicy = {
 export type PremiseLinkagePolicy = (typeof PremiseLinkagePolicy)[keyof typeof PremiseLinkagePolicy]
 
 /**
- * Whether the run read controlled data or the shipped synthetic fixture.
- *
- * Stamped into the report so a synthetic self-check can never be read as a measurement of a real register.
+ * Whether the run read controlled data or the shipped synthetic fixture, stamped into the
+ * report so a self-check can never be read as a measurement of a real register.
  */
 export const PremiseLinkageMode = {
 	Synthetic: "synthetic",
@@ -271,11 +226,8 @@ export const PremiseLinkageMode = {
 export type PremiseLinkageMode = (typeof PremiseLinkageMode)[keyof typeof PremiseLinkageMode]
 
 /**
- * The four identifier rates, each with its own denominator.
- *
- * `exact` and `wrong` are measured over eligible rows (see {@link PremiseLinkagePolicy});
- * `refused` and `ambiguous` over all rows, so a reader can see how much of the run
- * each abstention class accounts for without reconstructing it.
+ * The four identifier rates: `exact` and `wrong` over eligible rows, `refused`
+ * and `ambiguous` over all rows.
  */
 export interface PremiseLinkageRates {
 	exactOverEligible: PremiseLinkageCount
@@ -285,10 +237,7 @@ export interface PremiseLinkageRates {
 }
 
 /**
- * One coordinate threshold and how many gradable rows met it.
- *
- * The denominator is rows carrying publishable coordinate truth, which is smaller than
- * the run — stated here rather than assumed equal to the row count.
+ * One coordinate threshold and how many gradable rows met it, over a denominator smaller than the run.
  */
 export interface PremiseLinkageCoordinateThreshold {
 	thresholdM: number
@@ -296,11 +245,8 @@ export interface PremiseLinkageCoordinateThreshold {
 }
 
 /**
- * One arm's aggregate.
- *
- * `perClass` is partial: a class with no rows is absent rather than reported as zero,
- * and a class suppressed for cell size is removed the same way.
- * An absent class means "not published here", which is what both cases are.
+ * One arm's aggregate; `perClass` is partial, so a class with no rows
+ * or a suppressed cell is absent rather than reported as zero.
  */
 export interface PremiseLinkageArmReport {
 	arm: string
@@ -314,11 +260,8 @@ export interface PremiseLinkageArmReport {
 }
 
 /**
- * The arm-to-arm movement, all three counted over all rows.
- *
- * `changed` counts rows whose outcome differs; `improved` and `regressed` are the directional halves of it.
- * Rows that could not be graded in both arms contribute to no numerator and stay in
- * the denominator, so the three numbers never add up to more than the run.
+ * The arm-to-arm movement over all rows: `changed` counts rows whose outcome differs and `improved`
+ * and `regressed` are its directional halves, with ungradable rows in the denominator and no numerator.
  */
 export interface PremiseLinkageComparison {
 	baselineArm: string
@@ -330,9 +273,7 @@ export interface PremiseLinkageComparison {
 
 /**
  * The publishable aggregate.
- *
- * Rows never appear here — the report is what leaves the controlled environment,
- * and the rows are what the report was computed from.
+ * Rows never appear here.
  */
 export interface PremiseLinkageReport {
 	mode: PremiseLinkageMode
@@ -340,15 +281,14 @@ export interface PremiseLinkageReport {
 	policy: PremiseLinkagePolicy
 	/**
 	 * The minimum agreed with the data provider.
-	 *
-	 * A per-class cell whose denominator falls below it is removed before publication.
+	 * A per-class cell below it is removed before publication.
 	 */
 	minCellSize: number
 	/**
 	 * How many cells the writer removed.
 	 *
-	 * Zero means none were removed, which is a different statement from "no cells were
-	 * small" only if you can see this number, which is why it is always present.
+	 * Zero means none were removed, which is distinct from no cells being small
+	 * only if this number is visible.
 	 */
 	suppressedCells: number
 	arms: PremiseLinkageArmReport[]

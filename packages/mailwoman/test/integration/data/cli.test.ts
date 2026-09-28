@@ -3,15 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   CLI integration tests for the `mailwoman data` command group itself (#1577) — the `index.tsx`
- *   landing page rather than `pull`/`status`. Runs the compiled CLI (`out/cli.js`, the standing "use the
- *   compiled CLI" rule) with an isolated empty data root so no test here depends on which layers this
- *   machine happens to have downloaded, and touches no network: both code paths are pure registry
- *   reads.
- *
- *   Also pins the `mw` bin alias, because the failure mode is silent: `bin` is a manifest field
- *   no part of the build reads, so dropping a name back to the string form (`"bin": "./out/cli.js"`)
- *   type-checks, tests, and publishes — and only the consumer who typed `mw` finds out.
+ *   Runs the compiled CLI with an isolated empty data root, and pins the `mw` bin alias because `bin` is a manifest field no part of the build reads.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -27,9 +19,8 @@ import { afterAll, describe, expect, test } from "vitest"
 const cliBin = await mailwomanCLIPath()
 
 /**
- * A directory that exists but holds no files.
- *
- * So `data --list` reports destinations under it without any bundle appearing installed.
+ * A directory that exists but holds no files, so `data --list` reports destinations
+ * under it without any bundle appearing installed.
  */
 const emptyDataRoot = await temporaryDirectory("mw-data-cli-")
 const emptyDataRootPath = emptyDataRoot.path.toString()
@@ -45,7 +36,6 @@ describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page
 
 		expect(stdout).toMatch(/mailwoman data pull/)
 		expect(stdout).toMatch(/mailwoman data status/)
-		// The #1577 ask: the landing page has to hand the reader off to doctor.
 		expect(stdout).toMatch(/mailwoman doctor/)
 		expect(stdout).toContain(emptyDataRootPath)
 	}, 60_000)
@@ -60,7 +50,7 @@ describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page
 			expect(stdout).toMatch(new RegExp(`^  ${name}$`, "mu"))
 		}
 
-		// Sizes read in GB at this scale — "41261.8 MB" was the pre-fix rendering and is unreadable.
+		// Sizes read in GB at this scale.
 		expect(stdout).toMatch(/41\.3 GB/)
 		expect(stdout).toContain(emptyDataRootPath)
 	}, 60_000)

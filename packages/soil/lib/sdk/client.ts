@@ -103,11 +103,8 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * Returns the map unit key the service's own geometry assigns at a point,
-	 * or `undefined` where it assigns none.
-	 *
-	 * It checks a built artifact against the same authority through a different channel
-	 * and geometry this package never processed.
+	 * Returns the map unit key the service's own geometry assigns at a point, or `undefined`,
+	 * as a cross-check against the authority through a channel this package never processed.
 	 */
 	public async mukeyAtPoint(latitude: number, longitude: number): Promise<string | undefined> {
 		const rows = await this.query(

@@ -3,16 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the US verified-coord held-out pool for the Gauntlet (C6). fdic BankFind publishes every insured
- *   bank branch (~78k) with a real street address and a geocoded LAT/LON — a clean US truth source that is
- *   not in mailwoman's training corpus (Overture/NAD/BAN), so it measures genuine US generalization, the
- *   complement to the FR/BAN draw. Public domain (US Government work).
- *
- *   Writes a semicolon CSV pool (address.city.state.zip.lat.lon) to $MAILWOMAN_DATA_ROOT/corpus/staging/
- *   fdic-us.csv, build-on-copy. The pool is the fast draw — holdout.ts reservoir-samples it in milliseconds
- *   instead of streaming the 5 GB BAN file. Re-run to refresh (fdic re-indexes ~monthly).
- *
- *   Run: mailwoman eval gauntlet-build fdic-holdout
+ * Build the US verified-coordinate held-out pool for the Gauntlet: fdic BankFind publishes every insured bank
+ * branch with a real street address and a geocoded lat/lon, a public-domain US truth source absent from
+ * mailwoman's training corpus, so it measures genuine US generalization. Writes a semicolon CSV pool to
+ * $MAILWOMAN_DATA_ROOT/corpus/staging/fdic-us.csv, build-on-copy, which holdout.ts reservoir-samples in
+ * milliseconds instead of streaming the 5 GB BAN file.
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
@@ -21,24 +16,9 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePath, movePath } from "@mailwoman/core/fs/writers"
 
-/**
- * Southern edge of the US including Puerto Rico and Hawaii.
- */
 const MIN_US_LATITUDE = 17
-
-/**
- * Northern edge of the US including Alaska.
- */
 const MAX_US_LATITUDE = 72
-
-/**
- * Western edge of the US including the Aleutians.
- */
 const MIN_US_LONGITUDE = -180
-
-/**
- * Eastern edge of the US including Maine and the Virgin Islands.
- */
 const MAX_US_LONGITUDE = -64
 
 const API = "https://banks.data.fdic.gov/api/locations"
@@ -55,7 +35,9 @@ interface Loc {
 }
 
 /**
- * Sane conus+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth.
+ * Sane conus+AK/HI/PR bbox.
+ *
+ * Drops null-island and mis-geocoded rows so the pool is clean truth.
  */
 function plausibleUs(lat: number, lon: number): boolean {
 	return (
@@ -69,14 +51,10 @@ function plausibleUs(lat: number, lon: number): boolean {
 }
 
 /**
- * Retry is on because the page loop below is all-or-none: it walks offsets until a page
- * comes back empty, and one throttled page in the middle aborted the whole build.
+ * Retry is on because the page loop is all-or-none: one throttled page aborted the whole build,
+ * and the tmp-then-rename tail discards a partial run rather than publishing it.
  *
- * The tmp-then-rename tail means a partial run is discarded rather than published,
- * so the cost of a transient failure was the entire download rather than a corrupt artifact.
- *
- * No `minRequestIntervalMs`: requests are strictly sequential and each returns {@link page} rows,
- * so the loop already paces itself at whatever the API takes to assemble 10,000 records.
+ * No `minRequestIntervalMs`, because strictly sequential 10,000-row pages already pace themselves.
  */
 const fdicClient = new APIClient({ displayName: "fdic", retry: true })
 
@@ -126,8 +104,7 @@ export async function buildFDICHoldout(): Promise<void> {
 				continue
 			}
 
-			// Semicolons can't appear in a US street address/city.
-			// No escaping needed.
+			// Semicolons cannot appear in a US street address or city, so no escaping is needed.
 			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
 
 			written++

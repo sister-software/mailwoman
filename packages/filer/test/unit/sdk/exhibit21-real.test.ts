@@ -4,23 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file {@linkcode parseExhibit21} against real SEC edgar Exhibit 21 documents.
  *
- *   `exhibit21.test.ts` covers hand-written fixtures — shapes chosen to exercise a rule. This file covers
- *   thirteen documents pulled off edgar on 2026-08-03 and vendored verbatim, including the sgml
- *   `<document>` envelope edgar's archive serves them inside. `test-fixtures/edgar/manifest.json` records
- *   where each came from.
- *
- *   The two suites answer different questions, and only this one answers "does it work". At the time this
- *   file was written, the hand-written suite was fully green while these thirteen documents — which state
- *   142 subsidiaries between them — yielded 45, of which 18 were fabricated: edgar's own sgml tokens
- *   (`EX-21.1`, the sequence number `3`, the filename `q42025exh211listofsubsidia.htm`), the html
- *   `<title>` text `Document`, table header labels (`Entity Name`, `Full Legal Name`), and twelve rows
- *   whose `name` was the bullet character `•` and whose `jurisdiction` was the actual company name.
- *
- *   **`test-fixtures/edgar/expected.json` is ground truth, and it was not produced by this parser.** It
- *   comes from an independent DOM-based reference implementation, read line by line against the source
- *   documents. An expectation copied from the implementation under test certifies whatever that
- *   implementation does — including the eight zero-yield documents and the eighteen fabrications above,
- *   every one of which the hand-written suite was happy with. Do not regenerate it from parser output.
+ * `test-fixtures/edgar/expected.json` is ground truth from an independent DOM-based reference implementation rather than from this parser — do not regenerate it from parser output.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -42,8 +26,8 @@ interface ExpectedFixtures {
 
 const FIXTURE_DIRECTORY = resolvePackageDirectory("@mailwoman/filer")("test-fixtures", "edgar")
 
-// parseJSONStrict rather than tryParsingJSON: a corrupt expected.json must fail the suite loudly
-// rather than degrade to a fallback, since it is the interface every assertion below is measured against.
+// A corrupt expected.json must fail the suite loudly rather than degrade to a fallback,
+// since it is the interface every assertion below is measured against.
 const expected = await readLocalJSONFile<ExpectedFixtures>(FIXTURE_DIRECTORY("expected.json"))
 
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
@@ -53,8 +37,8 @@ async function fixture(name: string): Promise<string> {
 }
 
 /**
- * The document as the parser's own preprocessing leaves it.
- * What the substring invariant is measured against.
+ * The document as the parser's own preprocessing leaves it, which the substring
+ * invariant is measured against.
  */
 function normalized(html: string): string {
 	return normalizeWhitespace(htmlToLayoutText(html))
@@ -62,11 +46,8 @@ function normalized(html: string): string {
 
 /**
  * `alti-global-2025.htm` separates its entries with only a double space,
- * so no name/jurisdiction boundary exists to be found.
- *
- * Abstaining entirely is the required answer for it — see `expected.json`'s comment.
- * Every other vendored document states a subsidiary list a reader can follow,
- * so zero is a parser failure there rather than an abstention.
+ * so abstaining entirely is its required answer, while zero subsidiaries from any
+ * other document is a parser failure rather than an abstention.
  */
 const EXPECTED_TO_ABSTAIN_ENTIRELY = new Set(["alti-global-2025.htm"])
 
@@ -104,10 +85,8 @@ describe("parseExhibit21 — real EDGAR filings", () => {
 
 describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 	/**
-	 * Each of these was emitted as a subsidiary name by the 2026-08-03 run.
-	 *
-	 * They are all literal substrings of their document, so the substring invariant admits
-	 * every one of them, which is exactly why this assertion exists separately from it.
+	 * These are all literal substrings of their documents, so the substring invariant admits
+	 * every one of them, which is why this assertion exists separately from it.
 	 */
 	const NEVER_A_SUBSIDIARY_NAME = [
 		/^ex-?21(\.\d+)?$/i,

@@ -3,15 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The half of the activity lexicon's audit that needs artifacts the vocabulary itself does not depend on.
- *
- *   `@mailwoman/activity-lexicon` declares zero dependencies, so it can check that a derived form's base is
- *   present and that a citation is not empty, and no more. The claims that matter most are the ones
- *   pointing outside it: a committed query row, a synonym in the committed POI taxonomy, a clause of the
- *   compiled concept's own description. Those are checked here, where all three artifacts are held.
- *
- *   An attestation nobody can check is indistinguishable from an invented one, which is the whole reason the
- *   lexicon replaced a table whose provenance read `authored FOR one experiment`.
+ *   `@mailwoman/activity-lexicon` declares zero dependencies, so the attestations that point at a committed query row, the POI taxonomy, or a compiled concept are checked here, where all three artifacts are held.
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
@@ -38,8 +30,6 @@ const overlay = await readLocalJSONFile<CuratedOverlay>(
 )
 
 /**
- * Split a `<file>#<record>` reference.
- *
  * Both halves are required: the file is what a reader greps, the record is what a test resolves.
  */
 function splitReference(reference: string): { file: string; record: string } {

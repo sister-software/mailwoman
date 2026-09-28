@@ -3,11 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the decision-6 layer-absent guards. The guards live in their own module rather than
- *   in `cli.ts` precisely because these three functions are pure, transport-independent
- *   logic: no code in them needs the stdio connection `cli.ts` opens at import time (the actual reason `cli.ts`
- *   itself can't be imported by vitest). Each guard gets its three branches exercised directly: path `undefined`,
- *   path set but the file missing, path set and the file present.
+ *   The layer-absent guards are pure and transport-independent, which is why they live outside `cli.ts`,
+ *   and each is exercised on its three branches: path `undefined`, path set but the file missing, and
+ *   path set with the file present.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -36,10 +34,8 @@ afterEach(() => {
 })
 
 /**
- * A valid, empty sqlite file on disk (read-write open + immediate close).
- *
- * `openBDCDatabaseIfPresent` and `assertBDCDatabaseExists` only ever re-open read-only and never query
- * anything in these tests, so a schema-less empty db is a faithful "file present" fixture for both.
+ * A schema-less empty db is a faithful "file present" fixture for both callers
+ * because they only re-open read-only and never query.
  */
 async function emptySqliteFile(name: string): Promise<PathBuilder> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")
@@ -51,11 +47,8 @@ async function emptySqliteFile(name: string): Promise<PathBuilder> {
 }
 
 /**
- * A minimal real poi.db — same fixture idiom as `bdc/sdk/nearest-infrastructure.test.ts`'s `buildPOIFixture`.
- *
- * `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search`
- * and queries `poi_category_codes` (see `poi-lookup.ts`), so an arbitrary empty file won't do.
- * `openPlausibilityPOIDeps`'s "file present" branch needs these tables to actually exist.
+ * `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search` and queries
+ * `poi_category_codes`, so the "file present" branch needs these tables to actually exist.
  */
 async function poiFixtureFile(name: string): Promise<PathBuilder> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")

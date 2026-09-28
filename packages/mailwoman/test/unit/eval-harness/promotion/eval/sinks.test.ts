@@ -3,21 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The de-shell migration's safety net (2026-08-06). When `promotion-eval.ts` spawned its battery as
- *   eight child processes, two things were true for free: a child's stdout arrived as bytes, and a
- *   child's non-zero exit was a number the check could branch on. In-process, both are things this
- *   code now has to GET right, and neither shows up in a type error if it is wrong. The check would
- *   simply write a subtly different `.md`, or tolerate a leg it used to abort on.
- *
- *   So this file pins the two invariants the migration rests on:
- *
- *   1. `renderLines` reproduces a child's stdout byte-for-byte from the sink's line records.
- *   2. The per-leg error-semantics table — which leg tolerates a failure, which aborts the run, and
- *        which merges stderr into its `.md` — as executable structure rather than a comment, checked
- *        against the shape each migrated module actually presents.
- *
- *   Weightless by construction (#582): no code here loads a model, so it runs in CI. The numeric
- *   equivalence proof is the twice-run check receipt rather than a unit test.
+ *   Because no code here loads a model, this layer runs in CI: `renderLines` must reproduce a child's
+ *   stdout byte-for-byte, and the per-leg error semantics must not move from what the spawns had.
  */
 
 import { deOrderEval } from "mailwoman/eval-harness/de-order-eval"
@@ -32,14 +19,12 @@ import { describe, expect, test } from "vitest"
 
 describe("renderLines — child stdout parity", () => {
 	test("one record per console.log call, each with its trailing newline", () => {
-		// What `console.log("a"); console.log("b")` put on a pipe.
 		expect(renderLines(["a", "b"])).toBe("a\nb\n")
 	})
 
 	test("a multi-line argument stays ONE record and gains ONE newline", () => {
-		// score-affix prints its table header as a single call containing an embedded
-		// newline: `console.log("| tag | … |\n| --- | … |")`.
-		// Recording it as two lines would add a byte.
+		// score-affix prints its table header in one call containing an embedded newline,
+		// so recording it as two lines would add a byte.
 		expect(renderLines(["| tag |\n| --- |"])).toBe("| tag |\n| --- |\n")
 	})
 
@@ -53,7 +38,6 @@ describe("renderLines — child stdout parity", () => {
 	})
 
 	test("a leading newline in the argument is preserved verbatim", () => {
-		// Several probes open a section with `console.log("\nbare failures:")`.
 		expect(renderLines(["\nbare failures:"])).toBe("\nbare failures:\n")
 	})
 
@@ -64,10 +48,7 @@ describe("renderLines — child stdout parity", () => {
 })
 
 /**
- * How a leg's failure reaches the runner, and what the check does about it.
- *
- * Each row is the behavior the child-process spawn had.
- * The migration must not change any of them.
+ * Each row records the behavior the former child-process spawn had, which the migration must not change.
  */
 const LEG_SEMANTICS = [
 	{
@@ -142,14 +123,8 @@ describe("error semantics — the per-leg table", () => {
 	})
 
 	test("the legs that merge stderr into their .md declare a SECOND sink", () => {
-		// A module that merges must accept (options, report, reportError);
-		// one that does not may take only (options, report).
-		// `Function.length` cannot see this.
-		// Every one of these parameters has a default.
-		// It zeroes it.
-		// Therefore, the check reads the declaration instead.
-		// Crude, but it fails loudly if someone drops the error sink, and losing
-		// it would silently halve a merged .md.
+		// `Function.length` cannot see a `reportError` parameter that has a default,
+		// so the check reads the declaration and fails loudly if someone drops the error sink.
 		for (const row of LEG_SEMANTICS) {
 			if (!row.mergesStderr) continue
 

@@ -3,23 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The release family of operations: its effect union and its context, bound to the shared `Operation` shape from
- *   `@mailwoman/core/scripting`. The private `mwops` CLI and the release MCP server are views over the registry in
- *   `registry.ts`, and neither carries release logic.
+ *   The release family of operations: its effect union and its context, bound to the shared `Operation` shape from `@mailwoman/core/scripting`.
  */
 
 import { type Operation, type OperationContext, operationDefiner } from "@mailwoman/core/scripting"
 
 /**
- * What a release operation does to the world, declared rather than inferred.
- *
+ * What a release operation does to the world, declared rather than inferred;
  * `external-write` names the operations that publish (npm, Hugging Face, R2)
- * and are therefore reachable only through the plan → execute interface.
+ * and are reachable only through the plan → execute interface.
  */
 export const OperationEffect = {
 	/**
-	 * Reads the checkout, the data root, or a registry.
-	 * Makes no change.
+	 * Reads the checkout, the data root, or a registry, and makes no change.
 	 */
 	Read: "read",
 	/**

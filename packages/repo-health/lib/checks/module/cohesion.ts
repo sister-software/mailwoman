@@ -2,10 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Reports modules whose top-level declarations fall into communities that share no imported dependency.
- *
- *   The companion check in `./surface.ts` measures module size. This check partitions the reference graph between
- *   declarations, so it finds a module that holds two unrelated responsibilities at any size.
+ * @file Reports modules whose top-level declarations fall into communities that share no imported dependency,
+ *   partitioning the reference graph between declarations so a module holding two unrelated responsibilities is
+ *   found at any size.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -44,8 +43,7 @@ const GAIN_EPSILON = 1e-9
 /**
  * One top-level declaration that holds a value.
  *
- * The graph omits type declarations because a type that every group references
- * would join all the groups into one.
+ * Type declarations are omitted because a type every group references would join all the groups into one.
  */
 interface ValueDeclaration {
 	name: string
@@ -111,9 +109,8 @@ function topLevelValues(source: ts.SourceFile): ValueDeclaration[] {
 }
 
 /**
- * Maps every value binding that an import introduces to its module specifier.
- *
- * Type-only imports are skipped because they are erased at compile time.
+ * Maps every value binding that an import introduces to its module specifier. type-only
+ * imports are skipped because they are erased at compile time.
  */
 function importedBindings(source: ts.SourceFile): Map<string, string> {
 	const bindings = new Map<string, string>()
@@ -151,10 +148,8 @@ function importedBindings(source: ts.SourceFile): Map<string, string> {
 }
 
 /**
- * Runs one level of Louvain over an unweighted undirected graph.
- *
- * Each pass moves every node to the neighbouring community that raises modularity most,
- * and passes repeat until no node moves.
+ * Runs one level of Louvain over an unweighted undirected graph, moving each node to
+ * the neighbouring community that raises modularity most until no node moves.
  */
 function partitionByModularity(adjacency: ReadonlyArray<ReadonlySet<number>>): {
 	modularity: number
@@ -308,10 +303,8 @@ function describe(community: DeclarationCommunity): string {
 }
 
 /**
- * The `module-cohesion` check.
- *
- * It warns when a module's declarations split into two groups with disjoint imports,
- * and the warning lists both groups and their dependencies.
+ * The `module-cohesion` check: a warning when a module's declarations split into two
+ * groups with disjoint imports, listing both groups and their dependencies.
  */
 export const moduleCohesionCheck: RepoCheck = {
 	id: "module-cohesion",

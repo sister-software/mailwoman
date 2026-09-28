@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Compose the geocoder's parse and resolution result from shared UI components.
- *   Hosts may inject diagnostics and additional visualizers.
  */
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
@@ -19,21 +16,12 @@ import { ComponentTable } from "../pipeline/ComponentTable.tsx"
 import { ResolvedPlace } from "../pipeline/ResolvedPlace.tsx"
 
 export interface ResultPanelProps {
-	/**
-	 * The parse+resolve result to render.
-	 */
 	result: ParseResult
 	/**
 	 * The selected candidate (falls back to the first), used for the resolved-place detail + copy payload.
 	 */
 	selectedCandidate: ResolvedPlaceView | null
-	/**
-	 * The selected candidate index, for the picker's active state.
-	 */
 	selectedCandidateIndex: number
-	/**
-	 * Fired when a candidate in the picker is chosen.
-	 */
 	onSelectCandidate: (index: number) => void
 	/**
 	 * Host-injected heavy visualizers (span highlight, tree, timing, …), rendered from the result.

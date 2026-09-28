@@ -3,33 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The GeoNames-postal tail database (`postalcode-geonames-tail-<date>.db`) — postcode coverage for the
- *   countries whose WOF `whosonfirst-data-postalcode-<cc>` repos don't exist (#920: FI/CZ/SK/SI/DK/
- *   no/HR/PL/SE, plus GB from the `GB_full` dump). Ingest the GeoNames postal dumps → self-ancestors
- *   → indexes → provenance `meta` → vacuum → FTS/bbox → seal.
- *
- *   this file is A reproducer, written after the fact. The shipped artifact (946 MB, 1,895,753 rows,
- *   md5-frozen 2026-07-03) was built by `build-unified-wof --placetypes postalcode
- *   --geonames-postal-countries FI,CZ,SK,SI,DK,no,HR,PL,SE` — a Phase-2d code path #1027 deleted,
- *   leaving the artifact with no way to rebuild it. Every piece of hard logic survived that deletion
- *   (`ingestGeonamesPostal` and its two #920 laws, `createUnifiedSchema`, `buildPlaceSearchFTS`,
- *   `sealDatabase`); what was lost was the invocation glue, which is what this module is. It is
- *   conditioned on per-country row-count parity with the frozen artifact — GB 1,839,678 · PL 20,299 ·
- *   SE 18,870 · no 5,132 · FI 3,576 · SK 3,480 · CZ 2,694 · DK 1,159 · SI 556 · HR 309.
- *
- *   Country order is required for id reproducibility rather than for correctness: `ingestGeonamesPostal`
- *   allocates ids from one counter at {@link GEONAMES_POSTAL_ID_BASE}, so
- *   {@link DEFAULT_GEONAMES_TAIL_COUNTRIES} is written in the frozen artifact's own ingest order
- *   (recovered from its per-country id ranges) and reproduces its ids exactly. File-level md5 identity
- *   is not expected — vacuum page ordering and an additive `names.official` column since 2026-07 both
- *   move bytes without moving a row.
- *
- *   Attribution the frozen artifact never carried, and the reason the `meta` table exists: GeoNames
- *   postal is CC-BY 4.0, and GB rides in from `GB_full`, whose upstream is Ordnance Survey Code-Point
- *   Open — OGL v3, which CC-BY cannot relax. See {@link GB_LICENSE_NOTE} for the receipts and for the
- *   two questions that stay open (the Northern Ireland rows. whether a downstream DB is "derived").
- *   Both licence statements, the per-file md5s, and the build date are baked into the artifact so a
- *   consumer reads them at open instead of trusting a runbook.
+ *   The GeoNames-postal tail database (`postalcode-geonames-tail-<date>.db`), postcode coverage for the
+ *   countries without a WOF `whosonfirst-data-postalcode-<cc>` repo, reproducing the frozen artifact's
+ *   ingest order so its ids stay comparable.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -62,15 +38,9 @@ import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipe
 export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
- * The terms the artifact's `layer_manifest` records for a given country list.
- *
- * GeoNames postal is CC-BY 4.0.
- * GB rides in from `GB_full`, whose England, Scotland and Wales rows are Code-Point Open under OGL v3
- * and whose Northern Ireland rows have no documented provenance, as {@link GB_LICENSE_NOTE} records.
- *
- * A build that ingests GB therefore carries an input nobody has declared terms for,
- * and that is a reason to withhold publication rather than a permissive grant, so the tier
- * is `build-local` and the expression carries `LicenseRef-Undeclared-Input` for that input.
+ * The terms the artifact's `layer_manifest` records for a given country list,
+ * carrying `LicenseRef-Undeclared-Input` at `build-local` because GB's Northern
+ * Ireland rows have no documented provenance.
  */
 export function geonamesTailTerms(countries: readonly string[]): { tier: LayerTier; license: string } {
 	if (countries.includes("GB")) {
@@ -84,24 +54,16 @@ export function geonamesTailTerms(countries: readonly string[]): { tier: LayerTi
 }
 
 /**
- * `meta` is the artifact's own provenance record.
- *
- * A key/value table read at open, so the licence obligation and the source fingerprints
- * travel with the database instead of in a document that can drift from it.
- */
-
-/**
- * Kysely read/write interface for the database's provenance table.
+ * Kysely read/write interface for the database's provenance table, read at open
+ * so the licence obligation and source fingerprints travel with the database.
  */
 export interface DatabaseMetaDatabase {
 	meta: ExtractMetaTable
 }
 
 /**
- * Create the provenance `meta` table.
- *
- * Co-located with {@link DatabaseMetaDatabase} per the schema-module convention:
- * a column added to one is a compile error against the other.
+ * Create the provenance `meta` table, co-located with {@link DatabaseMetaDatabase}
+ * so a column added to one is a compile error against the other.
  */
 export async function createDatabaseMetaTable<DB extends DatabaseMetaDatabase>(db: DatabaseClient<DB>): Promise<void> {
 	const kdb = db
@@ -115,11 +77,8 @@ export async function createDatabaseMetaTable<DB extends DatabaseMetaDatabase>(d
 }
 
 /**
- * Upsert provenance rows into a `meta` table the caller has already created.
- *
- * One implementation for every database and postcode-locality builder.
- * The column-list form, which is byte-equivalent to the bare `values (?,?)` some
- * builders used against the same two-column table.
+ * Upsert provenance rows into a `meta` table the caller has already created,
+ * one implementation for every database and postcode-locality builder.
  */
 export function writeMetaRows<DB>(db: DatabaseClient<DB>, rows: ReadonlyArray<readonly [string, string]>): void {
 	const insert = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
@@ -130,11 +89,8 @@ export function writeMetaRows<DB>(db: DatabaseClient<DB>, rows: ReadonlyArray<re
 }
 
 /**
- * What a source dump contributed, fingerprinted.
- *
- * `rows` is the distinct normalized-postcode count (the `spr` rows),
- * which is well below the dump's line count wherever GeoNames carries one row per
- * (postcode, settlement) — PL 72,899 lines → 20,299 codes.
+ * What a source dump contributed, fingerprinted, where `rows` is the distinct normalized-postcode
+ * count well below the dump's line count wherever GeoNames carries one row per (postcode, settlement).
  */
 export interface GeonamesPostalSourceFact {
 	country: string
@@ -145,40 +101,30 @@ export interface GeonamesPostalSourceFact {
 	/**
 	 * How many of those codes the dump carried on several rows that all named one coordinate.
 	 *
-	 * GeoNames computes a postal coordinate by matching the code against place names
-	 * and admin divisions, averaging neighbouring codes where the match fails,
-	 * so those rows are one value inherited N times rather than N settlements agreeing.
-	 * The centroid is still the best the source offers.
-	 *
-	 * The count is what tells a consumer how much of the country's coverage is that.
+	 * GeoNames averages that coordinate from neighbouring codes where a name match fails, so the
+	 * count tells a consumer how much of a country's coverage is inherited rather than agreed.
 	 */
 	singlePointRows: number
 }
 
 export interface BuildPostcodeGeonamesTailOptions {
 	/**
-	 * ISO-2 countries to fold, in ingest order.
-	 *
-	 * Default {@link DEFAULT_GEONAMES_TAIL_COUNTRIES}.
+	 * ISO-2 countries to fold, in ingest order, defaulting to {@link DEFAULT_GEONAMES_TAIL_COUNTRIES}.
 	 */
 	countries?: readonly string[]
 	/**
-	 * GeoNames postal dump dir holding `<CC>.txt` (download.geonames.org/export/zip).
-	 *
-	 * Default `<data-root>/geonames-postal`.
+	 * GeoNames postal dump dir holding `<CC>.txt` (download.geonames.org/export/zip),
+	 * defaulting to `<data-root>/geonames-postal`.
 	 */
 	postalDir?: PathBuilderLike
 	/**
-	 * Output artifact.
-	 *
-	 * Default `<data-root>/db/wof/postalcode-geonames-tail-<yyyy-MM-DD>.db` — a new dated path every build.
-	 * Promoting it over the shipped `postalcode-geonames-tail.db` is a deliberate, separate swap.
+	 * Output artifact, defaulting to `<data-root>/db/wof/postalcode-geonames-tail-<yyyy-MM-DD>.db`;
+	 * promoting it over the shipped `postalcode-geonames-tail.db` is a deliberate, separate swap.
 	 */
 	out?: PathBuilderLike
 	/**
-	 * Build clock, stamped into `meta.built_at` and the default output name.
-	 *
-	 * Passed in so the module never reads the clock implicitly (the `defaultGazetteerVersion` convention).
+	 * Build clock, stamped into `meta.built_at` and the default output name, passed in
+	 * so the module never reads the clock implicitly (the `defaultGazetteerVersion` convention).
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void
@@ -193,8 +139,8 @@ export interface BuildPostcodeGeonamesTailResult {
 	inserted: number
 	byCountry: Record<string, number>
 	/**
-	 * Countries whose `<CC>.txt` was absent — reported rather than fatal (a partial database
-	 * is still a valid database. The parity check is what decides whether it may be promoted).
+	 * Countries whose `<CC>.txt` was absent, reported rather than fatal because the
+	 * parity check decides whether the partial database may be promoted.
 	 */
 	missing: string[]
 	sources: GeonamesPostalSourceFact[]
@@ -206,8 +152,6 @@ export interface BuildPostcodeGeonamesTailResult {
 
 /**
  * Build the sealed GeoNames-postal tail database.
- *
- * See the module docstring for what this reproduces and why the country order matters.
  */
 export async function buildPostcodeGeonamesTail(
 	opts: BuildPostcodeGeonamesTailOptions = {}
@@ -252,12 +196,8 @@ export async function buildPostcodeGeonamesTail(
 		ingest = await ingestGeonamesPostal(db, countries, postalDir)
 		phase("ingest", `${ingest.inserted.toLocaleString()} distinct postcodes`)
 
-		// Every row's parent_id is -1 (GeoNames postal carries no hierarchy),
-		// so this writes the self row per place and no other row.
-		// It is not decorative: the resolver's parent-constraint scopes a lookup
-		// with `spr.id IN (select id from ancestors where ancestor_id = ?)`,
-		// and a place absent from `ancestors` can never satisfy it.
-		// The frozen artifact carries exactly one ancestor row per place for this reason.
+		// Every row's parent_id is -1, so this writes the self row per place.
+		// The resolver's parent-constraint reads `ancestors`, and a place absent from it can never satisfy it.
 		phase("ancestors")
 		ancestorRows = populateAncestors(db)
 		phase("ancestors", `${ancestorRows.toLocaleString()} rows`)
@@ -286,7 +226,7 @@ export async function buildPostcodeGeonamesTail(
 		phase
 	)
 
-	// The layer interface's manifest, beside the `meta` record.
+	// The layer interface's manifest beside the `meta` record.
 	// The candidate build reads its tier before folding the database.
 	phase("layer-manifest")
 
@@ -324,11 +264,8 @@ export async function buildPostcodeGeonamesTail(
 }
 
 /**
- * Fingerprint each present source dump.
- *
- * A country whose file is missing gets no fact row rather than a zeroed one.
- * The meaning-of-zero rule: `rows: 0` would read as "measured, empty",
- * which is a different claim from "never present".
+ * Fingerprint each present source dump, giving a missing country no fact row rather than
+ * a zeroed one because `rows: 0` would read as measured-empty rather than never present.
  */
 async function collectSourceFacts(
 	countries: readonly string[],
@@ -362,11 +299,9 @@ async function collectSourceFacts(
 const GEONAMES_ATTRIBUTION = "Contains data from GeoNames (geonames.org), © GeoNames contributors, CC-BY 4.0"
 
 /**
- * GB is not plain GeoNames provenance, and GeoNames' own labelling of it is incomplete (researched 2026-08-05).
- *
- * `download.geonames.org/export/zip/readme.txt` puts everything under CC-BY (linking the 3.0 deed while saying 4.0) and adds exactly one GB rider — `UK (GB_full.csv.zip): Contains Royal Mail data Royal Mail copyright and database right 2022` — naming neither Ordnance Survey, Code-Point Open, OGL, nor Crown copyright. GeoNames documents the real source elsewhere: its 2010 announcement (geonames.wordpress.com/2010/04/19/uk-open-public-data) says the GB full codes came from Code-Point Open, and `geonames.org/datasources` row 174 lists GB / Ordnance Survey under `OGLv3.0`. The shipped file agrees — every row carries accuracy 6 and ONS GSS codes.
- *
- * So the binding licence for the GB rows is OGL v3, which CC-BY cannot relax, and the OS attribution block is required of a redistributor. Two gaps stay open and are recorded rather than resolved: (1) GeoNames' GB_full also ships ~48,990 `BT` (Northern Ireland) rows plus IM/GY/JE, territories Code-Point Open does not cover. The 2010 post says only "we continue using the previous data", ONS's OGL grant for postcode products explicitly excludes Northern Ireland data, and commercial NI use needs a separate Land & Property Services licence; (2) whether a downstream database counts as "derived" for OGL purposes is a counsel question, the same posture `osm/` already sits in. This builder records the facts. It does not make the redistribution decision.
+ * GB is not plain GeoNames provenance: the GB rows derive from Ordnance Survey
+ * Code-Point Open under OGL v3, whose OS attribution block a redistributor must carry,
+ * while the ~48,990 `BT` rows plus IM/GY/JE have no documented provenance.
  */
 const GB_LICENSE_NOTE =
 	"GB rows come from the GeoNames GB_full dump, whose GB (England/Scotland/Wales) portion derives from Ordnance " +
@@ -388,9 +323,8 @@ interface DatabaseMetaInput {
 }
 
 /**
- * Bake the provenance record into the staging DB (pre-vacuum, pre-seal — a shipped DB is never patched).
- *
- * `sources` is stored as JSON so the per-file md5s stay machine-readable.
+ * Bake the provenance record into the staging DB before vacuum and seal, since a shipped DB
+ * is never patched, with `sources` stored as JSON so the per-file md5s stay machine-readable.
  */
 async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 	db: DatabaseClient<DB>,

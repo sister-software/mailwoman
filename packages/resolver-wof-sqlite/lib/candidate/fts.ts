@@ -3,42 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   FTS5-trigram fuzzy index over the candidate gazetteer's `name_key` — the typo-tolerant fallback
- *   the exact `name_key` B-tree probe structurally can't do (a misspelling breaks the normalized
- *   key, so the contiguous-probe lookup returns no candidate). It indexes the normalized key (not the
- *   raw `name`), so a diacritic-stripped query (`munchen`) trigram-matches the stored `munchen`
- *   rather than missing a raw `München`. The trigram tokenizer makes `match` a substring/fuzzy
- *   operation. the reader ({@link WOFCandidateTableLookup}) or's the query's trigrams to fetch a
- *   loose set, then re-ranks it with a word-level similarity. The trigram index is the candidate
- *   generator rather than the scorer — trigram Jaccard scores a true transposition correction below a wrong
- *   answer, because shared generic suffixes count as evidence and transpositions count against it.
- *   The receipts are on `candidate-lookup.ts`'s `FUZZY_FETCH` and `WORD_FUZZY_MIN`.
- *
- *   This is what unifies the two gazetteers: the candidate B-tree stays the common,
- *   byte-range-optimal fast path (the browser's contiguous probe), and FTS5 is consulted only on an
- *   exact+strip miss — so its scattered postings cost is rare/amortized, and one DB serves both the
- *   browser and the server.
- *
- *   Raw SQL on purpose: Kysely can't express `create virtual table … using fts5` (the repo's
- *   FTS5-stays-raw rule). Indexing distinct `name_key` keeps the index to unique normalized forms
- *   (a name_key fans out to many candidate rows — placetypes, regions, aliases — but the fuzzy
- *   fallback only needs to recover the name_key, then re-probes the B-tree for its rows).
+ *   FTS5-trigram fuzzy index over the candidate gazetteer's normalized `name_key`; raw SQL on purpose, since Kysely cannot express `create virtual table … using fts5`.
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
- * Name of the FTS5 trigram virtual table this module owns.
- *
- * The reader conditions its fuzzy fallback on it.
+ * Name of the FTS5 trigram virtual table this module owns, on which the reader
+ * conditions its fuzzy fallback.
  */
 export const CANDIDATE_FTS_TABLE = "candidate_fts"
 
 /**
- * Build (or rebuild) {@link CANDIDATE_FTS_TABLE} from the materialized `candidate` table.
- *
- * Call after the candidate B-tree is populated (build pipeline) or against an
- * existing candidate DB (migration).
+ * Build (or rebuild) {@link CANDIDATE_FTS_TABLE} from the materialized `candidate` table. call
+ * after the candidate B-tree is populated or against an existing candidate DB.
  */
 export function createCandidateFTS<DB>(db: DatabaseClient<DB>): void {
 	db.exec(`DROP TABLE IF EXISTS ${CANDIDATE_FTS_TABLE}`)

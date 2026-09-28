@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for `WOFSQLitePlaceLookup` against an in-memory fixture DB. The fixture mimics the shape of
- *   a real WOF SQLite distribution but with ~10 hand-picked places — enough to exercise the FTS,
- *   placetype + country + parent filters, and ranking heuristics. No checked-in binary.
- *
- *   Integration tests against a real WOF distribution will land in a follow-up PR once the WOF
- *   download is authorized (night-shift agent hit an auto-mode block on the data.geocode.earth
- *   fetch).
+ * Tests for `WOFSQLitePlaceLookup` against an in-memory fixture DB that mimics a real WOF SQLite distribution without a checked-in binary.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -33,18 +27,12 @@ interface FixturePlace {
 	 */
 	alt_names?: string[]
 	/**
-	 * Ancestor chain (not including self).
-	 *
-	 * Used to seed the `ancestors` table.
+	 * Ancestor chain without self, used to seed the `ancestors` table.
 	 */
 	ancestor_ids?: number[]
 }
 
-/**
- * A small but representative fixture covering the cases the tests assert against.
- */
 const FIXTURE: FixturePlace[] = [
-	// Countries
 	{ id: 85_633_147, parent_id: null, name: "United States", placetype: "country", country: "US", lat: 39.5, lon: -98 },
 	{ id: 85_633_723, parent_id: null, name: "France", placetype: "country", country: "FR", lat: 46.5, lon: 2.5 },
 	{
@@ -58,7 +46,6 @@ const FIXTURE: FixturePlace[] = [
 	},
 	{ id: 85_632_997, parent_id: null, name: "Canada", placetype: "country", country: "CA", lat: 56, lon: -96 },
 
-	// US regions
 	{
 		id: 85_688_489,
 		parent_id: 85_633_147,
@@ -90,7 +77,6 @@ const FIXTURE: FixturePlace[] = [
 		ancestor_ids: [85_633_147],
 	},
 
-	// CA regions
 	{
 		id: 85_682_077,
 		parent_id: 85_632_997,

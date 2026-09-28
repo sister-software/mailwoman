@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #920 — the GeoNames postal fold's two laws, as tests: (1) the name law (stored names match the
- *   sanitized-query token shape — spaced CZ and dashed PL forms measured broken/worse in the
- *   night-31 experiment), (2) medoid centroids (the member point, never an off-settlement mean —
- *   the p50-tax law).
+ * Tests for the GeoNames postal fold's two laws: stored names match the sanitized-query token shape, and centroids are medoids rather than off-settlement means.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -57,8 +54,7 @@ describe("ingestGeonamesPostal", () => {
 		await using dirDirectory = await temporaryDirectory("gn-postal-")
 		const dir = dirDirectory.path
 
-		// Three members of "110 00": two clustered at ~50.08, one outlier pulling the mean north.
-		// The medoid must be one of the real points (the cluster member nearest the mean), never the mean itself.
+		// The medoid must be one of the real member points, never the outlier-pulled mean.
 		await writeLocalTextFile(
 			[
 				"CZ\t110 00\tPraha 1\tPraha\t10\t\t\t\t\t50.08\t14.42\t4",
@@ -85,7 +81,6 @@ describe("ingestGeonamesPostal", () => {
 
 		expect(row.placetype).toBe("postalcode")
 		expect(row.id).toBeGreaterThanOrEqual(GEONAMES_POSTAL_ID_BASE)
-		// Medoid = a real member (50.09 is nearest the outlier-pulled mean), not the mean (~50.157).
 		expect([50.08, 50.09, 50.3]).toContain(row.latitude)
 		expect(row.latitude).toBe(50.09)
 
@@ -101,9 +96,6 @@ describe("ingestGeonamesPostal", () => {
 		await using dirDirectory = await temporaryDirectory("gn-postal-degenerate-")
 		const dir = dirDirectory.path
 
-		// TH 10230 verbatim: two Bangkok districts published at one coordinate ~90 km from either.
-		// The medoid has no basis for choosing between them, and the result must say
-		// so rather than presenting two rows as agreement.
 		await writeLocalTextFile(
 			[
 				"TH\t10230\tLat Phrao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
@@ -117,7 +109,6 @@ describe("ingestGeonamesPostal", () => {
 		const result = await ingestGeonamesPostal(db, ["TH"], dir)
 
 		expect(result.byCountry.TH).toBe(2)
-		// 10120 is a single row — one point by construction, and not what this counter is about.
 		expect(result.singlePointByCountry.TH).toBe(1)
 
 		const row = db.prepare("SELECT latitude, longitude FROM spr WHERE name = '10230'").get() as {

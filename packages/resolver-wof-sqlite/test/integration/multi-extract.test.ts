@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Multi-extract attach tests for `WOFSQLitePlaceLookup`.
- *
- *   Uses on-disk fixture DBs because attach requires file paths. Tests run unconditionally (the
- *   fixture DBs are built in-test via the same shape the real WOF distribution uses), so this
- *   doesn't check on the real WOF being present.
+ *   Multi-extract attach tests for `WOFSQLitePlaceLookup`; fixtures are on-disk because attach requires file paths.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -92,7 +88,6 @@ describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 		expect(localities[0]?.placetype).toBe("locality")
 		expect(localities[0]?.id).toBe(101)
 
-		// Postcode query → postalcode extract
 		const postcodes = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
 		expect(postcodes).toHaveLength(1)
 		expect(postcodes[0]?.placetype).toBe("postalcode")
@@ -149,8 +144,6 @@ describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 	test("placetype with no matching extract falls back to main", async () => {
 		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
 		buildAdminExtract(adminPath)
-		// Only admin extract — no postcode extract.
-		// A postalcode query falls back to main, returns no row because admin has no postalcodes.
 		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath] })
 
 		const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })

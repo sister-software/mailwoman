@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The pure half of `gazetteer build tw-districts`: the 縣市 → WOF region match and the 臺/台 name twins. The
- *   region rows below are the admin artifact's own Han names for the four regions whose names collide or drifted.
+ *   The pure half of `gazetteer build tw-districts`: the 縣市 → WOF region match and the 臺/台 name twins, over the admin artifact's own Han names for the four regions whose names collide or drifted.
  */
 
 import {
@@ -20,12 +19,6 @@ const TAOYUAN = 85_679_589
 const TAIPEI = 85_679_583
 const TAICHUNG = 85_679_617
 
-/**
- * As `names` has them: Hsinchu County lists 新竹市 as a variant beside its official 新竹縣;
- * Taoyuan's official name is still the pre-upgrade 桃園 with 桃園縣 beside it.
- *
- * Taipei's official spelling is 台北市 with 臺北市 as a variant.
- */
 const REGIONS: TaiwanRegionName[] = [
 	{ id: HSINCHU_CITY, name: "新竹市", official: true },
 	{ id: HSINCHU_CITY, name: "新竹", official: false },
@@ -57,7 +50,7 @@ describe("matchTaiwanRegion", () => {
 
 	test("a 縣市 no region answers to is an absence, not a guess", () => {
 		expect(matchTaiwanRegion("宜蘭縣", REGIONS)).toBeUndefined()
-		// The stem `新竹` names two regions, so it answers no region.
+		// The stem 新竹 names two regions, so it is ambiguous.
 		expect(matchTaiwanRegion("新竹", REGIONS)).toBeUndefined()
 	})
 })

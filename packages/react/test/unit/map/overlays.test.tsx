@@ -3,14 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Browser-mode render test for the declarative overlays. Mounts `<MapCanvas>` (offline stub style) with a
- *   `<ResolvedPlaceLayers>` (built from a fixture render spec) + an `<OverlayLayers>` (a host geojson
- *   overlay) as children, then asserts the outputs on the live map: the resolved-place fill/line layers
- *   and the host overlay layer exist in the style, and the marker element is in the DOM.
- *
- *   Same GL posture as `MapCanvas.test.tsx`: the component tree (`.mw-demo-map`) is asserted synchronously.
- *   everything that needs the WebGL surface (layers via the map ref, the marker element) is awaited
- *   best-effort so a Chromium without software WebGL skips those asserts rather than flaking.
+ *   Browser-mode render test for the resolved-place and host overlays. The component tree is asserted
+ *   synchronously and the WebGL-dependent assertions are awaited best-effort so a Chromium without software
+ *   WebGL skips them rather than flaking.
  */
 
 import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"
@@ -32,7 +27,7 @@ const STUB_STYLE: MapCanvasStyle = {
 }
 
 /**
- * A resolved place with a real-extent bbox → the spec draws a fill+line outline and a bounds camera.
+ * A resolved place with a real-extent bbox, so the spec draws a fill+line outline and a bounds camera.
  */
 const SPEC = computeMapPlaceRenderSpec({
 	id: 1,
@@ -45,7 +40,7 @@ const SPEC = computeMapPlaceRenderSpec({
 })
 
 /**
- * One host overlay: an (empty) geojson source + a fill layer, exercising the `<OverlayLayers>` path.
+ * One host overlay exercising the `<OverlayLayers>` path.
  */
 const OVERLAY: OverlaySpec = {
 	id: "coverage",
@@ -93,20 +88,20 @@ test("ResolvedPlaceLayers + OverlayLayers render marker + fill/line/overlay laye
 		</MapCanvas>
 	)
 
-	// Component tree — synchronous, independent of WebGL.
+	// Component tree: synchronous, independent of WebGL.
 	expect(container.querySelector(".mw-demo-map")).not.toBeNull()
 
-	// GL surface — best-effort.
-	// Its absence means no software WebGL here rather than a component fault.
+	// GL surface, best-effort: its absence means no software WebGL here rather than a component fault.
 	const mapEl = await settle(() => container.querySelector(".maplibregl-map"))
 
 	if (!mapEl) return
 
-	// The marker is a real DOM element react-map-gl mounts inside the map container.
+	// The marker is a DOM element react-map-gl mounts inside the map container.
 	const marker = await settle(() => container.querySelector(".maplibregl-marker"))
 	expect(marker).not.toBeNull()
 
-	// The declarative <Source>/<Layer>s land in the live style once it loads — assert via the map ref.
+	// The declarative `<Source>`/`<Layer>`s land in the live style once it loads.
+	// Assert via the map ref.
 	const getMap = () => mapRef?.getMap()
 	const fill = await settle(() => getMap()?.getLayer("mw-result-fill"))
 	expect(fill).toBeTruthy()
@@ -136,7 +131,7 @@ test("a null spec renders no marker and no result layers", async () => {
 	if (!mapEl) return
 
 	// Read the ref lazily: it is assigned in a callback TypeScript cannot see,
-	// so reading it directly here narrows it to `never`.
+	// so reading it directly narrows it to `never`.
 	const getMap = () => mapRef?.getMap()
 
 	// Give the style a beat to settle, then confirm no overlay was drawn.

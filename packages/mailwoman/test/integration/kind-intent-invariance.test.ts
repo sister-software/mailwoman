@@ -3,39 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   the zero-reclassification receipt for the ROAD_TO_V9 §4 intent vocabulary.
- *
- *   Four kinds were added to Stage 2.5. The D-rule obligation attached to that addition is that an
- *   address-shaped query behaves identically — and "identically" has to be a measurement rather than a
- *   claim, so this file states exactly what it pins and over what.
- *
- *   ## What actually reaches the parser
- *
- *   The kind classifier's verdict influences the rest of the pipeline through exactly three doors,
- *   and this file walks all three:
- *
- *   1. `deriveInputMode(kind)` — the register handed to `classifier.parse` on every geocode
- *       (`geocode-core.ts`'s `deriveGeocodeRegister`) and every `runPipeline` full-path parse. This
- *       is the one that would silently change a parse, because the evidence-bundle channels feed in
- *       `fragmented` and not in `formatted`.
- *   2. `canShortCircuit(kind, …)` — whether stages 3-5 run at all. Keyed on the TOP kind plus a
- *       0.95 confidence floor.
- *   3. The coordinator's POI branch — keyed on the top kind being `poi_query` or (now)
- *       `poi_category`.
- *
- *   A verdict whose top `kind` and `confidence` are unchanged cannot move any of the three. So the
- *   pin below is over `(kind, confidence, inputMode)` for every committed corpus row (the size test pins the count) in both
- *   registers, computed against a from-scratch replay of the PRE-§4 scorer set. That is a stronger
- *   receipt than a sample of parses would be. It is every row, it is exact rather than
- *   within-tolerance, and it needs no weights, so it runs in CI on every commit rather than on the
- *   days someone has the ~9 GB database set mounted.
- *
- *   ## Why the baseline is replayed rather than snapshotted
- *
- *   A committed golden file would drift silently the first time someone tuned an incumbent rule and
- *   regenerated it. Replaying the pre-§4 scorer list in-process means the baseline is derived from
- *   the same `rules.ts` the shipped classifier uses: this test can only fail because an intent kind
- *   displaced an incumbent, which is the exact thing it exists to forbid.
+ *   The baseline is replayed from the shipped rules rather than snapshotted, so this can only fail because an intent kind displaced an incumbent.
  */
 
 import { deriveInputMode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
@@ -61,10 +29,8 @@ import { poiTaxonomyLookup } from "mailwoman/poi"
 import { beforeAll, describe, expect, test } from "vitest"
 
 /**
- * The scorer set as it stood before ROAD_TO_V9 §4.
- *
- * A verbatim replay of `classify.ts`'s list at commit `4ebd955`, minus the three intent scorers
- * and the POI pair (which are lexicon-restricted and unreachable from `classifyKindSync`).
+ * The pre-intent scorer set `classifyKindSync` can reach, minus the intent scorers
+ * and the lexicon-restricted POI pair.
  */
 const PRE_INTENT_SCORERS: ReadonlyArray<{
 	kind: QueryKind
@@ -92,8 +58,6 @@ function classifyPreIntent(input: NormalizedInputLite, shape: QueryShapeLike): Q
 }
 
 /**
- * The tuple that decides everything downstream.
- *
  * Compared as a string so a failure prints the whole verdict rather than three separate assertion messages.
  */
 function routingKey(text: string, classify: (i: NormalizedInputLite, s: QueryShapeLike) => QueryKindResult): string {
@@ -114,16 +78,8 @@ beforeAll(async () => {
 })
 
 /**
- * A floor rather than the current count.
- *
- * The failure worth catching is a corpus that loads short.
- * A truncated read or a silently-filtered set makes every zero-reclassification
- * claim below vacuous while still passing.
- *
- * Growth is the normal operation: a board row lands most working days, and an exact pin
- * turns each one into a red build in a file nobody editing the board would think to open.
- *
- * Raise this only when the floor stops being a meaningful lower bound.
+ * A floor rather than the current count: a truncated read would make every
+ * zero-reclassification claim below vacuous, while corpus growth is normal.
  */
 const CORPUS_FLOOR = 550
 
@@ -138,8 +94,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 			const drift: Array<{ input: string; before: string; after: string }> = []
 
 			for (const raw of corpus) {
-				// The #1649 category-query rows are thing-queries — reclassifying is their entire point,
-				// and the address-shaped zero-reclassification claim never covered them.
+				// Category-query rows are thing-queries excluded from the address-shaped zero-reclassification claim.
 				if (CATEGORY_QUERY_INPUTS.has(raw)) continue
 				const text = register === "lowercase" ? raw.toLowerCase() : raw
 				const before = routingKey(text, classifyPreIntent)
@@ -155,10 +110,8 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	)
 
 	test("the LEXICON-WIRED classifier's top slot is byte-identical on every corpus row (#1649)", async () => {
-		// The geocode path now injects createKindClassifier({ poiLexicon }) for first refusal.
-		// An address-shaped row whose top kind flips to a poi kind would silently abstain from geocoding.
-		// The category-query rows themselves are excluded.
-		// They are thing-queries and flipping is their entire point (each one's id carries the -cat- infix).
+		// A lexicon-wired classifier that flipped an address-shaped row to a poi
+		// kind would silently abstain from geocoding.
 		const classify = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
 		const flipped: Array<{ input: string; sync: string; wired: string }> = []
 
@@ -201,36 +154,10 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	})
 
 	/**
-	 * The measured residual, pinned by name.
-	 *
-	 * `route_pair` cannot be separated from a two-token single place name by structure alone.
-	 * That separation needs to know Guatemala is a country and Jaya is not, which is a gazetteer fact.
-	 *
-	 * The morphology guard in `intent-rules.ts` (head particles, tail generics, reduplication) takes
-	 * the corpus population from 12 rows to these 4, and the rest is irreducible at Stage 2.5.
-	 *
-	 * That is not a defect being tolerated.
-	 * It is the reason ROAD_TO_V9 §4.3 specifies a declared fork rather than a router.
-	 *
-	 * All four rows keep their existing top kind (`locality_only`, asserted above),
-	 * keep their register, take the same path, and resolve to the same answer.
-	 *
-	 * The only thing that changed for them is that the result now says out loud
-	 * that the string reads two ways.
-	 *
-	 * The list is exhaustive and exact so that a future rule change which grows the
-	 * fork population fails here rather than passing quietly.
+	 * The measured residual, pinned by name: `route_pair` cannot be separated
+	 * from a two-token place name by structure alone, and the list is exhaustive
+	 * so a future rule change that grows the fork population fails here.
 	 */
-	// 2026-08-10: grew 4 → 19 with the operator-supplied street-name-boundaries
-	// and world-structures boards (306 → 514 cases).
-	// The 15 additions are all bare famous-street rows ('Avenida Alvear', 'Gran Vía' …) — single street-name
-	// surfaces with no structural anchor, exactly the declared-fork shape the marker exists for.
-	// Deliberate pin move, reviewed row-by-row.
-	// Not silent growth. 2026-08-11: corpus 514 → 523 with the bare-foreign-postcode board
-	// (#1589) — 9 postcode surfaces ('100 00', 'SW1A 1AA', 'N7 0BT', …), then 523 → 530
-	// with the #1585 fuzzy-scope board (bare toponyms + two exact-match controls).
-	// None are fork-shaped.
-	// The fork list is unchanged.
 	const EXPECTED_FORK_ROWS = [
 		"Antigua Guatemala",
 		"Avenida Alvear",
@@ -253,9 +180,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		const marked: Array<{ input: string; codes: string[]; kind: QueryKind }> = []
 
 		for (const raw of corpus) {
-			// The #1649 category-query rows carry intent markers by design.
-			// They are the thing-query board rather than the irreducible address-shaped
-			// fork this exhaustive list pins.
+			// Category-query rows carry intent markers by design and are excluded from this address-shaped fork list.
 			if (CATEGORY_QUERY_INPUTS.has(raw)) continue
 
 			for (const text of [raw, raw.toLowerCase()]) {
@@ -267,25 +192,14 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 			}
 		}
 
-		// Both registers of each row, and no other input.
-		// Compared as sets of inputs: the corpus may legitimately carry the same
-		// surface in two boards ('Rua Augusta' is a Lisbon case and a São Paulo case),
-		// and the population claim is about distinct inputs rather than case rows.
+		// Compared as sets of distinct inputs because the corpus may carry one surface in two boards.
 		expect([...new Set(marked.map((m) => m.input))].toSorted()).toEqual(
 			[...EXPECTED_FORK_ROWS, ...EXPECTED_FORK_ROWS.map((r) => r.toLowerCase())].toSorted()
 		)
 
-		// Every one is a declared fork, and every one kept its incumbent top kind.
-		// The second assertion is the answer-neutrality claim: a marker rode along and no row was rerouted.
 		expect(new Set(marked.flatMap((m) => m.codes))).toEqual(new Set(["declared_fork"]))
 
-		// `landmark` and `locality_only`, and the split is by register: `scoreVenueLandmark`
-		// requires a capital letter (`rules.ts`'s `/[A-Z]/` check) and scores 0.88,
-		// so "Diego Garcia" is a landmark and "diego garcia" is a locality.
-		// That is a PRE-existing case-keyed rule, unchanged here and recorded because it is
-		// exactly the kind of thing this receipt would otherwise be read as having introduced.
-		// What matters for the D-rule is that the same two kinds come out with and without §4,
-		// which the byte-identical routing test above already pinned.
+		// `scoreVenueLandmark` requires a capital letter, so the kinds split by register.
 		expect(new Set(marked.map((m) => m.kind))).toEqual(new Set<QueryKind>(["landmark", "locality_only"]))
 	})
 })

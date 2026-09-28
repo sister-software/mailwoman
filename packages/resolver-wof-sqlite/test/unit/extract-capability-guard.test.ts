@@ -2,20 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file #1791 — an extract that cannot serve a lookup should say so at construction rather than by going quiet.
- *
- *   Both ways it failed before were hard to read. An unroutable name returned zero hits, which is indistinguishable
- *   from "this country has no places": an extract reaches routing only through the name `deriveSchemaName` derives from
- *   its filename. Therefore, a file spelled one letter off the placetype it serves answers no rows while holding every
- *   row that was asked for. A routable name threw from deep inside a select instead.
- *
- *   The two `spr`-only fixtures below differ only in that prefix — `postalcode-x.db` routes, `postcode-x.db` does
- *   not — so each test isolates one of the two failure modes.
- *
- *   `postalcode-empty.db` is the third case and the one the first version missed. It carries no tables, so a guard
- *   keyed on `spr` alone reads it as "not claiming to be a place extract" and waves it through — after which every
- *   query routed to it by its name dies mid-select, which is the exact failure the guard exists to prevent. A
- *   zero-byte or truncated extract file is this shape, and one was on disk when the guard first shipped.
+ * @file An extract that cannot serve a lookup should say so at construction rather than by going quiet.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -27,9 +14,6 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let dir: TemporaryDirectory
 
-/**
- * A main extract complete enough to construct against.
- */
 const writeMain = (path: PathBuilderLike): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
@@ -45,9 +29,6 @@ const writeMain = (path: PathBuilderLike): void => {
 	`)
 }
 
-/**
- * An extract that claims to be a place extract — it carries `spr` — and cannot serve one.
- */
 const writeSprOnly = (path: PathBuilderLike): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
@@ -56,19 +37,10 @@ const writeSprOnly = (path: PathBuilderLike): void => {
 	)
 }
 
-/**
- * An extract with no data in it, under a name that routes.
- *
- * A truncated or zero-byte file reads exactly like this.
- */
 const writeEmpty = (path: PathBuilderLike): void => {
 	new DatabaseClient<WOFDatabase>(path).destroy()
 }
 
-/**
- * A relation-table extract, which never claims to be a place extract
- * and is part of the documented default set.
- */
 const writeRelationOnly = (path: PathBuilderLike): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
@@ -81,13 +53,9 @@ beforeAll(async () => {
 	dir = await temporaryDirectory("extract-guard-")
 
 	writeMain(dir.path("admin.db"))
-	// Routes by name (`postalcode_x` starts with `postalcode_`), so the old failure was a mid-query throw.
 	writeSprOnly(dir.path("postalcode-x.db"))
-	// Routes nowhere — spelled `postcode` where the placetype is `postalcode`.
 	writeSprOnly(dir.path("postcode-x.db"))
 	writeRelationOnly(dir.path("postcode-locality-intl.db"))
-	// Routes by name and carries no data at all.
-	// The shape `postalcode-fr.db` had on disk.
 	writeEmpty(dir.path("postalcode-empty.db"))
 })
 
@@ -114,7 +82,6 @@ describe("extract capability guard", () => {
 		}
 
 		expect(message).toMatch(/carries "spr" but no "place_search"/)
-		// The half that turns "zero hits" into a diagnosis: this extract would never have been queried anyway.
 		expect(message).toMatch(/matches no routed placetype/)
 		expect(message).toContain("postcode_x")
 	})
@@ -132,8 +99,6 @@ describe("extract capability guard", () => {
 	})
 
 	it("EXEMPTS a relation-table extract, which is in the documented default set", () => {
-		// `postcode-locality-<cc>.db` has no `spr`, so it never claims to be a place extract.
-		// Guarding on the filename rather than on the table would have broken the shipped default.
 		expect(
 			() => new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db"), dir.path("postcode-locality-intl.db")] })
 		).not.toThrow()
@@ -152,8 +117,6 @@ describe("extract capability guard", () => {
 			message = (error as Error).message
 		}
 
-		// The message must not assert a table the file does not have.
-		// That claim was false for this shape.
 		expect(message).not.toMatch(/carries "spr"/)
 		expect(message).toMatch(/named for a routed placetype/)
 		expect(message).toMatch(/die mid-SELECT/)

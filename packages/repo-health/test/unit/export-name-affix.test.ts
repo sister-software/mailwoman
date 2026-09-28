@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The affix finder and the doc-link finder over planted trees. Both exist because of the same session: a helper
- *   was written twice under a longer name, and a third was implemented from a doc link that named no file.
+ * @file The affix finder and the doc-link finder over planted trees.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

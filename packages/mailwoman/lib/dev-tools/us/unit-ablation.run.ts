@@ -1,23 +1,7 @@
 /**
- * The unit-designator ablation #2298 is decided on, with the private-mailbox arm beside it.
- *
- * One token isolates the defect: `301 College Ave Apt 101, Athens, GA 30601` reaches
- * the rooftop and `301 College Ave #101, Athens, GA 30601` answers a city centroid,
- * because the word designators are attested and the bare `#` is not.
- * The rows below hold everything else constant and vary only the designator.
- *
- * The private-mailbox ARM is not decoration.
- * `#` reads as a unit designator on a street address and as a private-mailbox leader
- * in `synthesizers/po-box.ts` — `US_PMB_LEADERS` excludes it for exactly that reason —
+ * Unit-designator ablation with the private-mailbox arm beside it: `#` reads
+ * as a unit designator on a street address and as a private-mailbox leader,
  * so teaching one reading can be paid for with the other.
- *
- * A run that reports the unit rows recovering and makes no statement about
- * `PMB 123` has measured half of the change.
- *
- * Run:
- *
- *     node packages/mailwoman/lib/dev-tools/us/unit-ablation.run.ts
- *     node packages/mailwoman/lib/dev-tools/us/unit-ablation.run.ts --out-json <path>
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -32,24 +16,11 @@ const { values } = parseArguments({
 })
 
 /**
- * The rooftop `301 College Ave` resolves to, and the radius a row has to land
- * inside to count as having reached it.
- *
- * Both from #2298: the address point is 33.959694 / -83.3763072, and the failing
- * rows answer the Athens label centroid 1,627 m away, so any bound between the two
- * separates them. 100 m is the loosest that still refuses the centroid.
+ * 100 m is the loosest radius that still refuses the Athens label centroid, 1,627 m from this point.
  */
 const ROOFTOP = { lat: 33.959694, lon: -83.3763072 } as const
 const ROOFTOP_RADIUS_M = 100
 
-/**
- * The six ablation rows, plus the three the issue's prose names as ruling out tokenization.
- *
- * `expectUnit` is what the row's designator should land in.
- * Null means the row carries no unit at all, which is the control.
- *
- * It is the same address without one, and it is what proves the rooftop is reachable.
- */
 const UNIT_ROWS: ReadonlyArray<{ input: string; expectUnit: string | null; note: string }> = [
 	{ input: "301 College Ave, Athens, GA 30601", expectUnit: null, note: "control — no unit" },
 	{ input: "301 College Ave #101, Athens, GA 30601", expectUnit: "#101", note: "the defect" },
@@ -63,10 +34,7 @@ const UNIT_ROWS: ReadonlyArray<{ input: string; expectUnit: string | null; note:
 ]
 
 /**
- * The private-mailbox arm.
- *
- * `PMB 123` answers `po_box` today and must keep it; `PMB #123` does not, and is here
- * so a change that fixes it is visible rather than silent.
+ * `PMB 123` must keep resolving to `po_box`, which a change that fixes `PMB #123` can break.
  */
 const PMB_ROWS: ReadonlyArray<{ input: string; expectPOBox: string }> = [
 	{ input: "PMB 123, 4400 Ashton Dr, Sarasota, FL 34233", expectPOBox: "PMB 123" },
@@ -75,8 +43,6 @@ const PMB_ROWS: ReadonlyArray<{ input: string; expectPOBox: string }> = [
 
 const METRES_PER_KM = 1000
 
-// A probe written to price a corpus change has to be able to point at the model that change produced.
-// Without this it can only ever grade the installed one, which is the arm the change is measured against.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const unitReport = []
 const pmbReport = []
@@ -102,9 +68,8 @@ for (const row of UNIT_ROWS) {
 
 for (const row of PMB_ROWS) {
 	const result = await deps.geocode(row.input, { defaultCountry: "US" })
-	// `components`, not the flat projection: the result promotes a subset of tags to top-level fields
-	// and `po_box` is not among them, so `result.po_box` is undefined on a row that carries one.
-	// Reading it there reported 0 of 2 private mailboxes lost when both were intact.
+	// `components`, not the flat projection: the result promotes a subset of tags
+	// to top-level fields and `po_box` is not among them.
 	const poBox = result.components?.po_box ?? null
 
 	pmbReport.push({

@@ -3,15 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #2292 — the fold admits an alternate name in any script.
- *
- *   The fold is the only path by which a place in a fold country acquires a name in its own writing, so an
- *   admission rule that tests script decides whether a whole country is reachable in its own script at all.
- *   Hong Kong is in the fold set and carried six Han lookup keys, every one of them the country row's own:
- *   `屯門` and `深水埗` name two of its eighteen districts and resolved to no place.
- *
- *   The display name stays Latin. Which names are reachable and which name a row renders are separate
- *   questions, and only the first one is this rule's.
+ * Tests for `ingestGeonamesAliases`, where the fold admits an alternate name in any script while the display name stays Latin.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -44,9 +36,6 @@ beforeAll(async () => {
 	dir = await temporaryDirectory("geonames-alias-script-")
 
 	const lines = [
-		// Tuen Mun, a Hong Kong district.
-		// Its `alternatenames` column carries the Chinese form beside the romanizations,
-		// exactly as the shipped HK dump does.
 		row({
 			0: "1818446",
 			1: "Tuen Mun",
@@ -59,7 +48,6 @@ beforeAll(async () => {
 			8: "HK",
 			14: "507900",
 		}),
-		// Sham Shui Po, whose only non-Latin spelling is the one people there type.
 		row({
 			0: "1818953",
 			1: "Sham Shui Po",
@@ -72,8 +60,6 @@ beforeAll(async () => {
 			8: "HK",
 			14: "431090",
 		}),
-		// The packing noise the admission rule still has to refuse — parenthesized asides
-		// and bracketed qualifiers GeoNames puts in the same column.
 		row({
 			0: "1818999",
 			1: "Noise Town",
@@ -143,13 +129,12 @@ test("the DISPLAY name stays Latin — reachability is not rendering", () => {
 test("packing noise is still refused, in every script", () => {
 	expect(namesFor("(( Noise Town ))")).toHaveLength(0)
 	expect(namesFor("Noise Town [old]")).toHaveLength(0)
-	// Admitting a script must not become admitting anything: the clean Han name on the same row still lands.
+	// Admitting a script must not admit packing noise: the clean Han name on the same row still lands.
 	expect(namesFor("噪音鎮")).toHaveLength(1)
 })
 
 test("the fold reports names REFUSED, so a script gap is visible in the build and not only in the artifact", () => {
 	const hk = events.find((e) => e.country === "HK")
 
-	// The two noise spellings, and no other entry on these rows.
 	expect(hk?.aliasesRefused).toBe(2)
 })

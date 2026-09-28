@@ -3,13 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two-path agreement check, driven against a scripted service.
- *
- *   The check's value is that it compares two verdicts rather than a file against itself, and its own logic
- *   is what decides which of three outcomes a point gets. A live run can only show that today's numbers
- *   came out. these cases show that a disagreement is reported as one, that a near-boundary difference is
- *   attributed to the channels rather than to the conversion, and — the half that matters most — that the
- *   negative check fails loudly on an artifact that would answer Zone 1 outside England.
+ *   The check compares two verdicts rather than a file against itself, and its negative half must fail an
+ *   artifact that would answer Zone 1 outside England.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -29,10 +24,8 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * A service that answers every point with one polygon carrying `zone`, drawn `offsetDegrees` away
- * from the fixture's own FZ3 square so the nearest-vertex distance is under this test's control.
- *
- * `null` answers with no polygon.
+ * The polygon is drawn `offsetDegrees` from the fixture's own FZ3 square so the
+ * nearest-vertex distance is under this test's control; `null` answers with no polygon.
  */
 function scriptedService(zone: string | null | undefined, offsetDegrees = 0): ServiceFeatureReader {
 	return async () =>
@@ -56,9 +49,6 @@ function scriptedService(zone: string | null | undefined, offsetDegrees = 0): Se
 				]
 }
 
-/**
- * A point well inside the fixture's FZ3 square.
- */
 const INSIDE_FZ3 = {
 	label: "inside FZ3",
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
@@ -107,9 +97,8 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("reports a disagreement as one when the service's polygon is nowhere near the point", async () => {
-		// The service's polygon sits a whole fixture square away, so the nearest vertex
-		// is far outside the boundary tolerance and the difference cannot be attributed
-		// to the two channels rendering the same edge.
+		// The service's polygon sits a whole fixture square away, so the difference cannot
+		// be attributed to the two channels rendering the same edge.
 		const result = await verifyFloodDatabase({
 			databasePath,
 			readServiceFeatures: scriptedService("FZ2", FIXTURE_SIDE * 4),
@@ -118,8 +107,7 @@ describe("verifyFloodDatabase", () => {
 
 		expect(result.disagreed).toBe(1)
 		expect(result.boundaryTolerance).toBe(0)
-		// The distance rides on the row even though it was not acted on.
-		// It is what triage starts from.
+		// The distance rides on the row even though it was not acted on, because triage starts from it.
 		expect(result.agreement[0]!.nearestEdgeMetres).toBeGreaterThan(0)
 	})
 
@@ -136,10 +124,8 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("reports a containing polygon with no zone label as service_unlabelled, never as agreement", async () => {
-		// The artifact reads FZ3 here.
-		// The service's polygon contains the point and makes no statement.
-		// Reading that as `null` would let it agree with an absence reading elsewhere,
-		// which is the manufactured Zone 1 the interface forbids.
+		// Reading a containing, unlabelled polygon as `null` would let it agree with an
+		// absence reading elsewhere — the manufactured Zone 1 the interface forbids.
 		const result = await verifyFloodDatabase({
 			databasePath,
 			readServiceFeatures: scriptedService(undefined),
@@ -177,9 +163,9 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("FAILS the negative half on a point the footprint does cover — the check has teeth", async () => {
-		// Inside the fixture's extent and outside every polygon, so the artifact answers the designated absence.
-		// The negative half must not pass on it: an artifact that answered a designation everywhere
-		// would slip through a check that only ever asked about places it happened to be silent.
+		// The negative half must not pass on a point the footprint covers: an artifact
+		// that answered a designation everywhere would slip through a check that only
+		// ever asked about places it happened to be silent.
 		const result = await verifyFloodDatabase({
 			databasePath,
 			readServiceFeatures: scriptedService(null),

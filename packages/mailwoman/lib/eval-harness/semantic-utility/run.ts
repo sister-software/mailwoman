@@ -3,25 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The live half of the semantic-utility probe (#1928): load the frozen pre-registration, run its target
- *   and control rows through the same pipeline construction the POI board uses, and emit a receipt.
+ *   The live half of the semantic-utility probe: load the frozen pre-registration, run its target and
+ *   control rows through the same pipeline construction the POI board uses, and emit a receipt.
  *
- *   this module decides only what IT read. Every row, every threshold and the baseline it compares
- *   against come from `probe-definition.json`, which {@linkcode loadProbeDefinition} refuses to hand over
- *   if its content hash has moved. The runner adds an ARM label and the measurements; #1929 supplies one
- *   semantic observation and runs the same command, and #1930 reads the two receipts.
+ *   This module decides only what it read — every row, threshold, and baseline comes from
+ *   `probe-definition.json`, which {@linkcode loadProbeDefinition} refuses to hand over if its content
+ *   hash has moved.
  *
- *   The receipt records the artifact identity as well as the numbers. A pass rate over an unnamed database and an
- *   unnamed weights package is not reproducible, and the two arms have to be shown to have run against the
- *   same ones. So the receipt records the poi.db path with its own `layer_manifest` row, the resolver
- *   backend that answered, and the weights package version — and when one of those cannot be read it says
- *   so in place rather than omitting the field.
+ *   The receipt records the artifact identity as well as the numbers, and names an unreadable field in
+ *   place rather than omitting it, because a pass rate over an unnamed database and unnamed weights is
+ *   not reproducible.
  *
- *   an ARM label is not A measurement OF what RAN. `semanticRoute` records whether the injected route was
- *   actually built, and what it was built from. A route dropped on the way in produces exactly the numbers
- *   a route that changed no behavior produces, and the two are opposite findings. Every firing is recorded
- *   beside its row as an observation carrying the assertion, its modality and every provenance record
- *   behind it, so the receipt states on whose authority each answered row's category was chosen.
+ *   A route dropped on the way in produces exactly the numbers a route that changed no behavior
+ *   produces, so `semanticRoute` records whether the injected route was actually built and what from,
+ *   and every firing is recorded beside its row with its provenance.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -59,9 +54,7 @@ import {
 } from "#observations/index"
 
 /**
- * Which arm produced a receipt.
- *
- * `baseline` is the pre-injection run this pre-registration commits; #1929 names its own.
+ * Which arm produced a receipt; `baseline` is the pre-injection run this pre-registration commits.
  */
 export type ProbeArm = string
 
@@ -75,15 +68,13 @@ export interface ProbeRowObservation extends SemanticObservation {
 }
 
 /**
- * What the run did about the injected semantic route.
- *
- * Read from the route that was built, never from the arm label.
+ * What the run did about the injected semantic route, read from the route that
+ * was built rather than from the arm label.
  */
 export interface ProbeSemanticRouteRecord extends Partial<SemanticRouteIdentity> {
 	/**
-	 * Whether a route was constructed and injected at all.
-	 *
-	 * `false` is the un-injected pipeline, whatever the arm is called.
+	 * Whether a route was constructed and injected at all; `false` is the un-injected
+	 * pipeline, whatever the arm is called.
 	 */
 	enabled: boolean
 }
@@ -97,16 +88,13 @@ export interface ProbeReceipt {
 	gitCommit: string
 	artifact: ProbeArtifactIdentity
 	/**
-	 * The injected route as built.
-	 *
-	 * Present on every receipt, including a run with no route: an omitted field would make
+	 * The injected route as built, present on every receipt so an omitted field cannot make
 	 * "no route was asked for" and "this receipt predates the field" the same reading.
 	 */
 	semanticRoute: ProbeSemanticRouteRecord
 	rows: ProbeRowOutcome[]
 	/**
 	 * Every firing of the injected route, in row order.
-	 *
 	 * Empty on an un-injected run.
 	 */
 	semanticObservations: ProbeRowObservation[]
@@ -120,9 +108,8 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 */
 	arm?: ProbeArm
 	/**
-	 * Override the frozen pre-registration, for a test that wants a synthetic definition.
-	 *
-	 * A run with no override reads the committed one.
+	 * Override the frozen pre-registration for a synthetic definition. a run with
+	 * no override reads the committed one.
 	 */
 	definitionPath?: string
 	freezePath?: string
@@ -137,20 +124,15 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 */
 	gitCommit?: string
 	/**
-	 * Build the one semantic observation route (#1929) and inject it into the pipeline this run constructs.
-	 *
-	 * Absent or `false` — the default — runs the un-injected pipeline, which is
-	 * what the frozen baseline was measured against.
+	 * Build the one semantic observation route and inject it into the pipeline this run constructs. absent
+	 * or `false` runs the un-injected pipeline, which the frozen baseline was measured against.
 	 */
 	semanticObservation?: boolean
 }
 
 /**
- * Run one arm of the probe.
- *
- * The control rows are read from the committed board file and matched against the
- * pre-registration's frozen copies, so a control that has been edited on the board
- * stops the run instead of quietly grading a different row.
+ * Run one arm of the probe, reading control rows from the committed board file and matching
+ * them against the pre-registration's frozen copies so an edited control stops the run.
  */
 export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}): Promise<ProbeReceipt> {
 	const definition = await loadProbeDefinition(options.definitionPath, options.freezePath)
@@ -207,9 +189,8 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 }
 
 /**
- * Take everything the route recorded while one row ran, addressed to that row.
- *
- * Empty when no route was injected.
+ * Take everything the route recorded while one row ran, addressed to that row. empty
+ * when no route was injected.
  */
 function drainObservations(route: SemanticObservationRoute | undefined, rowID: string): ProbeRowObservation[] {
 	if (!route) return []
@@ -239,10 +220,7 @@ async function gradeRow(
 }
 
 /**
- * The human-readable report.
- *
- * Prints the frozen bars beside every measurement, so a reader never has to open
- * the definition to know what the number was compared against.
+ * The human-readable report, printing the frozen bars beside every measurement.
  */
 export function printProbeReceipt(receipt: ProbeReceipt): void {
 	console.log(`\nsemantic-utility probe ${receipt.probeID} v${receipt.definitionVersion} — arm: ${receipt.arm}`)

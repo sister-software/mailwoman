@@ -3,23 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #1024 guard must not fail open.
- *
- *   `assertShippedModelMatchesCard` blocks the release when the model about to be graded disagrees with
- *   `model-card.json`'s `files_md5`. It only runs inside `if (existsSync(effModel))`, so whatever names
- *   `effModel` decides whether the guard runs at all — and it named
- *   `packages/neural-weights-en-us/model.onnx` outright.
- *
- *   That literal held only while the dev linker materialized binaries into that package. The moment they
- *   live anywhere else — a data-root overlay, the user weights cache, a consumer's node_modules — the path
- *   misses, `existsSync` is false, the whole block is skipped, and the check grades a model it never
- *   verified. The classifier below it resolves properly and loads the model regardless, so no error surfaces
- *   and no report is produced: a silent ungating, which is #1024's own failure mode reproduced by the fix's
- *   own path literal.
- *
- *   This is a source check rather than a behavioural one because the property is about how the path is
- *   obtained, and the failure is an absence. There is no wrong answer to assert against, only a check that
- *   quietly stopped happening.
+ *   Because the guard runs only when the model path exists, it must obtain the graded artifact from
+ *   `resolveWeights()`, never from a package path literal, or a missing path silently disables it.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -32,7 +17,6 @@ describe("the #1024 shipped-model guard", () => {
 	it("derives the graded model from the resolver, never from a package path literal", async () => {
 		const source = await readLocalTextFile(HARNESS)
 
-		// Any `neural-weights-<locale>/model.onnx` or `/tokenizer.model` spelled out in a path position.
 		// The card path is deliberately not matched: a model-card is committed to its package,
 		// so reading it there is a fact about the repo rather than an assumption about
 		// where binaries were materialized.
@@ -53,8 +37,8 @@ describe("the #1024 shipped-model guard", () => {
 	it("keeps the assertion reachable — it runs only for the SHIPPED default, and that branch still exists", async () => {
 		const source = await readLocalTextFile(HARNESS)
 
-		// A `--candidate` run grades a different artifact on purpose and is exempt.
-		// If that exemption ever widens to cover the default, the guard is off for every run
+		// A `--candidate` run is exempt on purpose.
+		// If that exemption widened to the default, the guard would be off for every run
 		// and no other check in the suite would notice.
 		expect(source).toContain("if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot)")
 		expect(source).toContain("assertShippedModelMatchesCard(md5)")

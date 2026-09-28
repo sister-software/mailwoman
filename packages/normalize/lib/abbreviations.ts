@@ -4,9 +4,6 @@
  * @author Teffen Ellis, et al.
  *
  *   Abbreviation expansion over the per-locale tables in `@mailwoman/codex/abbreviations`.
- *
- *   This is the inverse of the corpus synthesis pass, which produces `Ave` from `Avenue` for
- *   augmentation.
  */
 
 import { abbreviationDictionary } from "@mailwoman/codex/abbreviations"
@@ -20,15 +17,7 @@ export interface AbbreviationResult {
 }
 
 /**
- * Expand known abbreviations.
- *
- * Walks the input token-by-token (whitespace-delimited) and rewrites matching
- * tokens to their canonical long form.
- * The output map points every char of the expanded form to its position in the
- * original short form (first char of input token).
- *
- * Case rules: match case-insensitively.
- * Output form preserves the dictionary's canonical casing (`St` → `Street`, `st` → `Street`, `ST` → `Street`).
+ * Expand known abbreviations, mapping every expanded character back to its source token's first character.
  */
 export function expandAbbreviations(input: string, locale?: string): AbbreviationResult {
 	const dict = abbreviationDictionary(locale)
@@ -46,8 +35,7 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 
 	while (i < input.length) {
 		const ch = input[i]!
-		// Walk to end of token (non-whitespace, non-punctuation).
-		// Unicode-letter-aware so "République" stays one token instead of fragmenting on 'é'.
+		// Unicode-letter-aware so "République" is one token rather than fragmenting on 'é'.
 		const isTokenChar = (c: string) => /[\p{L}\p{N}'_-]/u.test(c)
 
 		if (!isTokenChar(ch)) {
@@ -78,8 +66,6 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 			continue
 		}
 
-		// Emit expansion.
-		// Map every char back to start of source token.
 		for (let k = 0; k < expansion.length; k++) {
 			out.push(expansion[k]!)
 			map.push(start + Math.min(k, token.length - 1))
@@ -91,7 +77,6 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 			at: { start, end: i, body: token },
 		})
 
-		// Skip the trailing period if we consumed an abbreviation with one (e.g. "St." → "Street").
 		if (i < input.length && input[i] === ".") {
 			i += 1
 		}

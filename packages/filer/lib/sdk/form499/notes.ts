@@ -2,58 +2,31 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Form 499's `note1`/`note2`/`note3` columns — the filer lifecycle log.
  *
- *   The Form 499 filer database ships three free-text note columns that no code in this crosswalk has ever
- *   read. They are not free text. Across the 2025-12-07 vintage's 19,852 filers, 11,533 carry at least one
- *   note and every note in the file matches one OF eight shapes — 3,085 distinct strings, eight templates,
- *   no stragglers. That makes them a structured lifecycle log wearing a prose costume.
- *
- *   Two of the eight are not annotations at all, they are data the schema already has columns for:
- *
- *   - `No longer active as of 9/8/2013` (9,706 rows) is a `valid_to`. Without it every ceased filer reads
- *     as open-ended, and a carrier dissolved in 2013 is presented in the present tense.
- *   - `Replaced by filer 821002` (2,826 rows) is a supersession edge between two filers. 99.8% of those
- *     targets resolve to a filer ID present in the same file, the chains run 1-5 deep, and none of them
- *     cycle. That is the identity chain the spine spec wanted, already written down.
- *
- *   The other six are cessation reasons, and they are the FCC's own words about a filer's status. They are
- *   carried as a small closed vocabulary plus the verbatim source string, never as a derived judgment of
- *   our own — `Form499Lifecycle.notes` always holds exactly what the file said. This matters most for
- *   {@linkcode Form499CessationReason.Bankruptcy}: it is a quoted federal record with provenance rather than a
- *   claim this project makes about a company.
- *
- *   **No code here infers.** A note that matches no shape is counted in
- *   {@link Form499Lifecycle.unrecognized} and kept verbatim in `notes`; it never becomes a guessed reason,
- *   and a future vintage that adds a ninth template shows up as a rising count rather than as silence.
+ * Form 499's `note1`/`note2`/`note3` columns are a structured lifecycle log rather than free text
+ * (every note in the 2025-12-07 vintage's 19,852 filers matches one of eight templates), so they are
+ * carried as a closed vocabulary plus the verbatim source string, never as a derived judgment, and a
+ * note matching no template is counted in {@link Form499Lifecycle.unrecognized} while staying verbatim.
  */
 
 /**
  * The cessation vocabulary, keyed to the eight note templates.
  *
- * A plain const object rather than an `enum` — `erasableSyntaxOnly` is on repo-wide.
+ * A plain const object because `erasableSyntaxOnly` is on repo-wide.
  */
 export const Form499CessationReason = {
 	/**
-	 * `No longer active as of <date>`.
-	 *
-	 * Carries the date, which becomes {@link Form499Lifecycle.ceasedAt}.
+	 * `No longer active as of <date>`, whose date becomes {@link Form499Lifecycle.ceasedAt}.
 	 */
 	NoLongerActive: "no-longer-active",
 	/**
-	 * `Replaced by filer <id>`.
-	 *
-	 * Carries the successor, which becomes {@link Form499Lifecycle.replacedByForm499ID}.
+	 * `Replaced by filer <id>`, whose successor becomes {@link Form499Lifecycle.replacedByForm499ID}.
 	 */
 	ReplacedByFiler: "replaced-by-filer",
 	/**
-	 * `This company still exists, however it is no longer providing telecommunications services.`
-	 *
-	 * The entity survives.
-	 * Only the telecom operation ended.
-	 *
-	 * Distinct from {@linkcode Form499CessationReason.OutOfBusiness} and the difference is required.
-	 * One of these companies can still be somebody's parent.
+	 * The entity survives while only its telecom operation ended, which distinguishes
+	 * it from {@linkcode Form499CessationReason.OutOfBusiness} since one of these
+	 * companies can still be somebody's parent.
 	 */
 	ExitedTelecom: "exited-telecom",
 	/**
@@ -61,18 +34,14 @@ export const Form499CessationReason = {
 	 */
 	OutOfBusiness: "out-of-business",
 	/**
-	 * `All assets of this company have been sold to another party.`
-	 *
-	 * The FCC does not name the party.
+	 * `All assets of this company have been sold to another party.`, with no field
+	 * for the party the FCC does not name.
 	 */
 	AssetsSold: "assets-sold",
 	/**
-	 * `This legal entity accout has been closed because their Form 499 filing is now submitted on a consolidated basis.`
-	 *
-	 * (`accout` is the source's own typo, matched verbatim below.)
-	 * The entity did not cease.
-	 *
-	 * Its filing moved under a parent's, which is a family signal rather than a death certificate.
+	 * `This legal entity accout has been closed because their Form 499 filing is now submitted on a
+	 * consolidated basis.`; `accout` is the source's own typo, matched verbatim, and the entity did not
+	 * cease but moved under a parent's filing.
 	 */
 	AccountConsolidated: "account-consolidated",
 	/**
@@ -80,11 +49,8 @@ export const Form499CessationReason = {
 	 */
 	AbsorbedByFiler: "absorbed-by-filer",
 	/**
-	 * `This company has filed for Chapter <n> bankruptcy protection.`
-	 *
-	 * A quoted federal record.
-	 * Never rendered as a status this project asserts, and never inferred from anything
-	 * but this exact sentence.
+	 * `This company has filed for Chapter <n> bankruptcy protection.`, a quoted federal
+	 * record never rendered as a status this project asserts.
 	 */
 	Bankruptcy: "bankruptcy",
 } as const
@@ -98,42 +64,30 @@ export interface Form499Lifecycle {
 	/**
 	 * Every non-empty note, verbatim and in column order.
 	 *
-	 * The source text is never discarded.
-	 * A reason code is a lossy summary of it, and an auditor asking "what did the FCC
-	 * actually say" must not have to refetch the workbook.
+	 * The source text is never discarded because a reason code is a lossy summary of it.
 	 */
 	notes: string[]
 	/**
-	 * ISO `yyyy-MM-DD` date this filer stopped being active, from `No longer active as of <date>`.
-	 *
-	 * Absent when no note stated one.
-	 *
-	 * ISO because this is destined for `valid_to`, which `assertISODate` enforces and
-	 * which every `asOf`-scoped read compares as a plain string.
-	 * The source states `M/D/yyyy`, which sorts wrong and fails that assertion.
+	 * ISO `yyyy-MM-dd` date this filer stopped being active, because `valid_to` is
+	 * enforced by `assertISODate` and the source's `M/D/yyyy` sorts wrong.
 	 */
 	ceasedAt?: string
 	/**
-	 * The Form 499 filer ID that superseded this one, from `Replaced by filer <id>`.
-	 *
-	 * A supersession edge rather than an ownership one: it says this registration became
-	 * that registration, and makes no statement about who owns either.
+	 * The Form 499 filer ID that superseded this one, a supersession edge rather than an ownership one.
 	 */
 	replacedByForm499ID?: string
 	/**
 	 * Every recognized reason, deduplicated, in the order first seen.
 	 *
-	 * A filer commonly carries two or three.
-	 * A date, a replacement, and a reason are three separate notes on the same row.
+	 * A filer commonly carries two or three, since a date, a replacement,
+	 * and a reason are three separate notes on the same row.
 	 */
 	reasons: Form499CessationReasonValue[]
 	/**
 	 * Notes matching none of the eight templates.
 	 *
-	 * Always `0` for the 2025-12-07 vintage.
-	 * A non-zero count in a later vintage means the FCC added a template and this file needs revisiting.
-	 *
-	 * Counted rather than silently dropped so that fact can be measured instead of assumed.
+	 * Counted rather than silently dropped, so the `0` this 2025-12-07 vintage shows
+	 * becomes a measured rise when a later vintage adds a ninth template.
 	 */
 	unrecognized: number
 }
@@ -142,11 +96,9 @@ const NO_LONGER_ACTIVE_PATTERN = /^no longer active as of (\d{1,2})\/(\d{1,2})\/
 const REPLACED_BY_FILER_PATTERN = /^replaced by filer (\d+)$/i
 
 /**
- * The six templates carrying no payload beyond their own meaning.
- *
- * Matched on the whole trimmed string, case-insensitively — never by keyword — for the
- * same reason `exhibit21.ts` matches whole header cells: a substring test for "bankruptcy"
- * or "sold" would fire on a sentence the FCC has not written yet.
+ * The six templates carrying no payload beyond their own meaning, matched on the
+ * whole trimmed string case-insensitively so a substring test for "bankruptcy"
+ * or "sold" cannot fire on a sentence the FCC has not written yet.
  */
 const FIXED_NOTE_PATTERNS = [
 	[
@@ -160,9 +112,8 @@ const FIXED_NOTE_PATTERNS = [
 	[/^all assets of this company have been sold to another party\.$/i, Form499CessationReason.AssetsSold],
 	[
 		// `accout` is the source's typo and is matched as spelled.
-		// A tolerant `accou?nt` would also admit a corrected future spelling, but silently.
-		// A vintage that fixes the typo should surface as an `unrecognized` count
-		// so the change is noticed rather than absorbed.
+		// A tolerant `accou?nt` would silently admit a corrected future spelling,
+		// which should instead surface as an `unrecognized` count.
 		/^this legal entity accout has been closed because their form \d+ filing is now submitted on a consolidated basis\.$/i,
 		Form499CessationReason.AccountConsolidated,
 	],
@@ -170,22 +121,13 @@ const FIXED_NOTE_PATTERNS = [
 	[/^this company has filed for chapter \d+ bankruptcy protection\.$/i, Form499CessationReason.Bankruptcy],
 ] as const satisfies ReadonlyArray<readonly [RegExp, Form499CessationReasonValue]>
 
-/**
- * Pad a 1-or-2-digit month/day to two digits.
- */
 function pad2(value: string): string {
 	return value.padStart(2, "0")
 }
 
 /**
- * Parse one filer's note cells into its lifecycle.
- *
- * Accepts the three raw cells in column order; `null`/`undefined`/blank entries are skipped,
- * and any number of cells is tolerated so a future vintage adding `note4` needs no signature change.
- *
- * Never throws.
- * A note this does not recognize is counted rather than guessed at —
- * see {@link Form499Lifecycle.unrecognized}.
+ * Parses one filer's note cells into its lifecycle, skipping blank cells and counting
+ * rather than guessing at a note it does not recognize.
  */
 export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefined>): Form499Lifecycle {
 	const notes: string[] = []
@@ -212,9 +154,8 @@ export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefi
 		if (active) {
 			const [, month, day, year] = active
 
-			// Last one wins if a row somehow states two dates: the notes are ordered
+			// Last one wins if a row somehow states two dates, since the notes are ordered
 			// and a later cell is the later statement.
-			// No such row exists in the 2025-12-07 vintage.
 			ceasedAt = `${year}-${pad2(month!)}-${pad2(day!)}`
 
 			addReason(Form499CessationReason.NoLongerActive)
@@ -258,12 +199,8 @@ export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefi
 
 /**
  * True when this filer's notes state it is no longer an active Form 499 filer.
- *
- * Deliberately not `reasons.length > 0`: {@linkcode Form499CessationReason.AccountConsolidated}
- * means the filing moved under a parent's and {@linkcode Form499CessationReason.ExitedTelecom}
- * means the company still exists — reading either as "this entity is gone" would
- * erase a live company that is somebody's parent.
- * A `ceasedAt` date, or an explicit out-of-business/absorbed/replaced statement, is what this reports on.
+ * deliberately not `reasons.length > 0`, because `AccountConsolidated` and `ExitedTelecom`
+ * leave a live company that can still be somebody's parent.
  */
 export function isCeasedFiler(lifecycle: Form499Lifecycle): boolean {
 	if (lifecycle.ceasedAt) return true

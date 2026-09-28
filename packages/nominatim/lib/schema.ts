@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Zod schemas for the Nominatim-compatible API. Key names and envelopes match Nominatim and must
- *   not change. The query schemas accept any string or string array and only shape the OpenAPI
- *   document. The handlers in `routes.ts` do the actual parsing.
+ *   Zod schemas for the Nominatim-compatible API. Key names and envelopes match Nominatim and must not
+ *   change, the query schemas shape only the OpenAPI document, and `routes.ts` does the parsing.
  */
 
 import { z } from "@hono/zod-openapi"
@@ -13,7 +12,6 @@ import { stampedResponseSchema } from "@mailwoman/api-kit"
 
 /**
  * The `addressdetails=1` breakdown with OSM-derived keys.
- * Extra keys are allowed.
  */
 export const NominatimAddressDetailsSchema = z
 	.object({
@@ -67,9 +65,6 @@ export const NominatimResultsSchema = z.array(NominatimResultSchema)
  */
 const BBox2DSchema = z.tuple([z.number(), z.number(), z.number(), z.number()])
 
-/**
- * One feature in the `format=geojson` envelope.
- */
 const NominatimFeatureSchema = z.object({
 	type: z.literal("Feature"),
 	properties: z.looseObject({}),
@@ -78,9 +73,8 @@ const NominatimFeatureSchema = z.object({
 })
 
 /**
- * The `format=geojson` envelope in Nominatim's shape.
- *
- * Result fields become feature properties, and the geometry may be a polygon.
+ * The `format=geojson` envelope in Nominatim's shape, with result fields as feature
+ * properties and a geometry that may be a polygon.
  */
 export const NominatimFeatureCollectionSchema = z
 	.object({
@@ -90,11 +84,10 @@ export const NominatimFeatureCollectionSchema = z
 	.openapi("NominatimFeatureCollection")
 
 /**
- * One database the deployment serves from, with the contents of its embedded `layer_manifest`.
+ * One served database with the contents of its embedded `layer_manifest`.
  *
- * `manifest: "absent"` marks a database built before layer manifests existed.
- * The status payload still lists it so that a reader can tell it apart from
- * a database that was never opened.
+ * A `manifest: "absent"` marks one built before layer manifests existed.
+ * The status still lists it so a reader can tell it apart from a database that was never opened.
  */
 const NominatimStatusArtifactSchema = z
 	.object({
@@ -109,10 +102,7 @@ const NominatimStatusArtifactSchema = z
 	.openapi("NominatimStatusArtifact")
 
 /**
- * The `/status` payload.
- *
- * The `mailwoman` block is an extension that upstream Nominatim lacks.
- * Clients that do not know it ignore it.
+ * The `/status` payload, whose `mailwoman` block is an extension upstream Nominatim lacks.
  */
 export const NominatimStatusSchema = z
 	.object({
@@ -133,10 +123,9 @@ export const ErrorSchema = z
 	.openapi("Error")
 
 /**
- * The schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node.
- *
- * It mirrors the `SchemaOrgGeoCoordinates` interface in `@mailwoman/annotations`.
- * Each API package defines its own schemas, so this one is written out here.
+ * The schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node,
+ * mirroring `SchemaOrgGeoCoordinates` in `@mailwoman/annotations`; each API package
+ * defines its own schemas, so this one is written out here.
  */
 export const SchemaOrgGeoCoordinatesSchema = z
 	.object({
@@ -147,8 +136,8 @@ export const SchemaOrgGeoCoordinatesSchema = z
 	.openapi("SchemaOrgGeoCoordinates")
 
 /**
- * The schema.org [`PostalAddress`](https://schema.org/PostalAddress) node.
- * It mirrors `SchemaOrgPostalAddress`.
+ * The schema.org [`PostalAddress`](https://schema.org/PostalAddress) node,
+ * mirroring `SchemaOrgPostalAddress`.
  */
 export const SchemaOrgPostalAddressSchema = z
 	.object({
@@ -163,9 +152,8 @@ export const SchemaOrgPostalAddressSchema = z
 	.openapi("SchemaOrgPostalAddress")
 
 /**
- * The `format=jsonld` output.
- *
- * It mirrors the `SchemaOrgPlace` interface that `nominatimResultToSchemaOrg` produces.
+ * The `format=jsonld` output, mirroring the `SchemaOrgPlace` interface that
+ * `nominatimResultToSchemaOrg` produces.
  */
 export const SchemaOrgPlaceSchema = z
 	.object({
@@ -180,15 +168,14 @@ export const SchemaOrgPlaceSchema = z
 /**
  * A jsonv2 or json result with the optional `engine` stamp.
  *
- * The schema has an OpenAPI name because it is a union member.
- * A generated client would otherwise label an inlined member by its position.
+ * It carries an OpenAPI name because a generated client would otherwise label
+ * an inlined union member by its position.
  */
 export const StampedNominatimResultSchema = stampedResponseSchema(NominatimResultSchema, "StampedNominatimResult")
 
 /**
- * The `format=geojson` FeatureCollection with the optional `engine` stamp.
- *
- * It has an OpenAPI name for the same reason as {@linkcode StampedNominatimResultSchema}.
+ * The `format=geojson` FeatureCollection with the optional `engine` stamp,
+ * named for the same reason as {@linkcode StampedNominatimResultSchema}.
  */
 export const StampedNominatimFeatureCollectionSchema = stampedResponseSchema(
 	NominatimFeatureCollectionSchema,
@@ -196,10 +183,8 @@ export const StampedNominatimFeatureCollectionSchema = stampedResponseSchema(
 )
 
 /**
- * The `/search` 200 response for the OpenAPI document.
- *
- * The response is a jsonv2 result array by default, a FeatureCollection for `format=geojson`,
- * or an array of schema.org `Place` objects for `format=jsonld`.
+ * The `/search` 200 response for the OpenAPI document: a jsonv2 result array by default, a
+ * FeatureCollection for `format=geojson`, or an array of schema.org `Place` objects for `format=jsonld`.
  */
 export const NominatimSearchResponseSchema = z
 	.union([
@@ -210,20 +195,17 @@ export const NominatimSearchResponseSchema = z
 	.openapi("NominatimSearchResponse")
 
 /**
- * The `/reverse` 200 response for the OpenAPI document.
- *
- * The response is a single jsonv2 result, `null` when no place resolves, a FeatureCollection
- * for `format=geojson`, or a schema.org `Place` for `format=jsonld`.
+ * The `/reverse` 200 response for the OpenAPI document: a single jsonv2 result, `null` when no place
+ * resolves, a FeatureCollection for `format=geojson`, or a schema.org `Place` for `format=jsonld`.
  */
 export const NominatimReverseResponseSchema = z
 	.union([StampedNominatimResultSchema, z.null(), StampedNominatimFeatureCollectionSchema, SchemaOrgPlaceSchema])
 	.openapi("NominatimReverseResponse")
 
 /**
- * The `/lookup` 200 response for the OpenAPI document.
- *
- * The response is a jsonv2 result array by default or a FeatureCollection for `format=geojson`.
- * The lookup handler returns the jsonv2 array for `format=jsonld`, so this union has no `Place` member.
+ * The `/lookup` 200 response for the OpenAPI document: a jsonv2 result array by default
+ * or a FeatureCollection for `format=geojson`; the handler returns the jsonv2 array
+ * for `format=jsonld`, so this union has no `Place` member.
  */
 export const NominatimLookupResponseSchema = z
 	.union([z.array(StampedNominatimResultSchema), StampedNominatimFeatureCollectionSchema])
@@ -231,7 +213,6 @@ export const NominatimLookupResponseSchema = z
 
 /**
  * A query parameter that accepts one value or a repeated value.
- * Each use sets its documented type with `.openapi()`.
  */
 const tolerantParam = z.union([z.string(), z.array(z.string())]).optional()
 

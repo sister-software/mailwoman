@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `postcode_locality` database interface: the shipped column shape (names, order, types rather than NULL),
- *   the `(postcode, country)` probe index, and the one thing the shared schema exists to prevent —
- *   the builders' positional insert drifting out of the DDL's column order.
- *
- *   Every database the resolver attaches — the polygon build and the three CJK builds — must present
- *   this exact shape, so these assertions are pinned to the values rather than derived from the module
- *   under test.
+ *   The `postcode_locality` interface every resolver-attached database must present: the shipped column shape, the `(postcode, country)` probe index, and the builders' positional insert staying in the DDL's column order.
  */
 
 import { allRows } from "@mailwoman/core/utils"
@@ -33,9 +27,6 @@ interface TableInfoRow {
 	pk: number
 }
 
-/**
- * A fresh in-memory database with both tables and the index.
- */
 async function buildDatabase(ifNotExists: boolean): Promise<DatabaseClient<PostcodeLocalityDatabase>> {
 	const kdb = DatabaseClient.temp<PostcodeLocalityDatabase>()
 
@@ -66,8 +57,7 @@ describe("createPostcodeLocalityTable", () => {
 			{ cid: 1, name: "country", type: "TEXT", notnull: 1 },
 			{ cid: 2, name: "locality_id", type: "INTEGER", notnull: 1 },
 			{ cid: 3, name: "locality_name", type: "TEXT", notnull: 1 },
-			// The only nullable column.
-			// A `|`-joined alt-name list the CJK builds may have no aliases for.
+			// The only nullable column: a `|`-joined alt-name list the CJK builds may have no aliases for.
 			{ cid: 4, name: "aliases", type: "TEXT", notnull: 0 },
 			{ cid: 5, name: "distance_km", type: "REAL", notnull: 1 },
 			{ cid: 6, name: "is_containing", type: "INTEGER", notnull: 1 },
@@ -95,7 +85,6 @@ describe("createPostcodeLocalityTable", () => {
 		await expect(createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })).resolves.toBeUndefined()
 
 		// Without the flag the same statement is an error.
-		// That is what makes a rebuild build a rebuild.
 		await expect(createPostcodeLocalityTable(kdb, { ifNotExists: false })).rejects.toThrow(/already exists/)
 	})
 })

@@ -3,31 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #617 NPPES dedup benchmark — the measurable proof of the record-matcher hypothesis.
+ * Build a varied multi-record set per NPI from real data, run the matcher blind to the NPI, and score the recovered clusters against the NPI grouping.
  *
- *   NPPES is NPI-keyed, so the NPI is a ground-truth entity id. We build a deliberately varied
- *   multi-record set per NPI from real data — the registry's primary record, each alternate
- *   organization name (`nppes_other-names`, name drift at the same place), and the mailing address
- *   where it differs from the practice location (address variation) — then run the matcher blind to
- *   the NPI (geocode → block → Fellegi-Sunter + EM → cluster) and score the recovered clusters
- *   against the NPI grouping (pairwise P/R/F1 + adjusted Rand).
- *
- *   Honest reading (per the epic): NPI-as-truth is conservative. A cluster that merges two NPIs is a
- *   candidate "same entity, two NPIs" surfaced for review rather than an error we adjudicate. and a single
- *   NPI split across two genuinely-distant addresses is geo-first behaving correctly, counted here
- *   as a recall miss. We resolve and report. interpretation is the consumer's.
- *
- *   Sample: a tractable, variation-rich subset — providers in one state (default TX) that have ≥1
- *   alternate name, so every entity has ≥2 records and the dedup is non-trivial. Streams the 4.8 GB
- *   registry via `streamRows` (#616), so no table loads whole.
- *
- *   The stages live in `./nppes/`: the sample, the scorer, the truth grains, the setting progression,
- *   the adjudication packet, and the report. This file is the orchestration — read it for the order
- *   of operations, the modules for what each stage does.
- *
- *   Run: `mailwoman registry scorer-eval nppes-benchmark [--state TX] [--max-npis 300]
- *   [--wof <admin.db>] [--data-root <dir>] [--no-train-em]
- *   [--out-md docs/articles/evals/matcher-dedup/<date>-nppes-dedup-benchmark.md]`
+ * Run: `mailwoman registry scorer-eval nppes-benchmark [--state TX] [--max-npis 300] [--wof <admin.db>] [--data-root <dir>] [--no-train-em] [--out-md docs/articles/evals/matcher-dedup/<date>-nppes-dedup-benchmark.md]`
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -64,10 +42,8 @@ import { stateOption } from "#tools/shared"
  */
 export interface NPPESDedupBenchmarkOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
-	 *
-	 * Model-swap overrides (`--model`/`--tokenizer`/`--model-card`) are the command's
-	 * factory config rather than tool options.
+	 * The injected geocoder factory, wired by the command to `mailwoman/geocode-core`; model-swap
+	 * overrides (`--model`/`--tokenizer`/`--model-card`) are its factory config rather than tool options.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -75,64 +51,48 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	geocodeStream?: EvalGeocodeStream
 	/**
-	 * Record-matcher sources directory.
-	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory, defaulting to `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * State filter.
-	 *
-	 * Default TX.
+	 * State filter, default TX.
 	 */
 	state?: string
 	/**
-	 * NPIs sampled.
-	 *
-	 * Default 300.
+	 * NPIs sampled, default 300.
 	 */
 	maxNpis?: number
 	/**
-	 * EM-train the FS arms (label-free).
-	 *
-	 * Default true; `--no-train-em` uses the seeds.
+	 * EM-train the FS arms (label-free), default true; `--no-train-em` uses the seeds.
 	 */
 	trainEm?: boolean
 	/**
-	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + `normalizeCase` off). Default off (the
-	 * validated flip: comma-join + #690 all-caps normalization).
-	 *
-	 * Same data + GBT, only the flip toggled.
-	 * So a delta here is attributable to the flip.
+	 * Reproduce the pre-flip ingest (space-joined address columns with `normalizeCase` off),
+	 * so that with the same data and GBT only the flip is toggled.
+	 * Default off.
 	 */
 	legacyJoin?: boolean
 	/**
-	 * Optional A/B: a path to a trained dedup-gbt TS module (exports DEDUP_GBT_MODEL + DEDUP_GBT_META) to
-	 * score alongside the shipped GBT at both truth levels — e.g. grade the #625 corroboration candidate.
+	 * Optional A/B: a path to a trained dedup-gbt TS module exporting DEDUP_GBT_MODEL +
+	 * DEDUP_GBT_META, scored alongside the shipped GBT at both truth levels.
 	 */
 	candidate?: string
 	/**
-	 * Write the #625 gold-set adjudication packet (org-name-grain over-merged clusters) here.
+	 * Write the gold-set adjudication packet of org-name-grain over-merged clusters here.
 	 */
 	dumpOvermerges?: string
 	/**
-	 * H3 resolution for the org-name-h3 truth grain.
-	 *
-	 * Default 11 (≈25 m edge).
+	 * H3 resolution for the org-name-h3 truth grain, default 11 (≈25 m edge).
 	 */
 	h3Res?: number
 	/**
-	 * Geocode the sample across a worker pool ({@linkcode geocodeStream})
-	 * instead of the serial in-process path.
-	 *
-	 * Heavy per-row work (ONNX parse + WOF SQLite) → threading pays.
-	 * Measured ~1.5× at 2 workers, coordinates identical.
+	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of
+	 * the serial in-process path, which parallelizes the heavy per-row ONNX parse
+	 * and WOF SQLite work with identical coordinates.
 	 */
 	parallelGeocode?: boolean
 	/**
-	 * Worker-pool concurrency for {@linkcode parallelGeocode}.
-	 *
-	 * Default 2 (geocode is I/O-bound).
+	 * Worker-pool concurrency for {@linkcode parallelGeocode}, default 2 (geocode is I/O-bound).
 	 */
 	geoConcurrency?: number
 	/**
@@ -142,9 +102,7 @@ export interface NPPESDedupBenchmarkOptions {
 }
 
 /**
- * The #617 NPPES dedup benchmark — see the module doc.
- *
- * Emits the markdown report to stdout.
+ * The NPPES dedup benchmark (see the module doc), emitting the markdown report to stdout.
  */
 export async function nppesDedupBenchmark(
 	options: NPPESDedupBenchmarkOptions,
@@ -160,7 +118,6 @@ export async function nppesDedupBenchmark(
 	const PARALLEL_GEOCODE = options.parallelGeocode ?? false
 	const GEO_CONC = options.geoConcurrency ?? 2
 
-	// Build the variation-rich sample and corpus-wide address-frequency table.
 	const { rows, keptNpis, npiPrimary, addressFrequency } = await buildNPPESSample(
 		{
 			registryPath: `${SOURCES}/nppes_npi-registry_20260607.tsv`,
@@ -171,10 +128,7 @@ export async function nppesDedupBenchmark(
 		report
 	)
 
-	// Geocode and ingest records, carrying the held-out NPI in record.id.
-	// Geocoder is injected (see ./eval-geocoder.ts); model-swap for a multi-version curve rides
-	// the command's factory config (--model/--tokenizer/--model-card. modelCardPath is mandatory
-	// when modelPath is set — without it a STAGE3 model silently mis-decodes into empty parses). ---
+	// Without `modelCardPath`, a STAGE3 model silently mis-decodes into empty parses when `modelPath` is set.
 	report?.("[C] building the geocoder + geocoding records…")
 
 	const mapping: ColumnMapping = {
@@ -182,8 +136,8 @@ export async function nppesDedupBenchmark(
 		name: "name",
 		organization: "org",
 		address: "address",
-		// `entityTruth` rides as an attribute purely for scoring (not a discriminator → never used in matching);
-		// it carries the site-level entity-level label alongside the NPI (record.id).
+		// `entityTruth` rides as an attribute purely for scoring, never as a discriminator
+		// in matching, carrying the site-level label alongside the NPI.
 		attributes: { authorizedOfficial: "auth", taxonomy: "taxonomy", entityTruth: "entityID" },
 		source: "nppes",
 	}
@@ -192,10 +146,8 @@ export async function nppesDedupBenchmark(
 	let records: SourceRecord[]
 
 	if (PARALLEL_GEOCODE) {
-		// Threaded geocode: normalize on the main thread, then hand records to a worker
-		// pool that each rebuild the classifier/resolver/extracts from config.
-		// `address` is a single pre-joined column here, so `--legacy-join` (a separator toggle)
-		// is a no-op for this path; `normalizeCase` follows the worker default (on).
+		// `address` is a single pre-joined column on this path, so `--legacy-join` is a no-op
+		// and `normalizeCase` follows the worker default (on).
 		if (!options.geocodeStream) {
 			throw new Error("parallelGeocode requires the injected geocodeStream (see ./eval-geocoder.ts)")
 		}
@@ -212,14 +164,13 @@ export async function nppesDedupBenchmark(
 			}
 		}
 
-		// geocodeStream yields in completion order.
-		// Restore input order so downstream cluster tie-breaks are byte-stable.
+		// Restore input order because `geocodeStream` yields in completion order
+		// and downstream cluster tie-breaks must be byte-stable.
 		geocoded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
 		records = geocoded
 	} else {
 		const geocoder = await options.createGeocoder({ normalizeCase: !LEGACY })
 
-		// Count placements at the boundary (parity with the retired in-script counter).
 		const countedGeocodeForIngest: GeocodeAddress = async (raw) => {
 			const g = await geocoder.geocodeAddress(raw)
 
@@ -240,16 +191,13 @@ export async function nppesDedupBenchmark(
 
 	report?.(`    geocoded ${geo}/${rows.length} (${((100 * geo) / rows.length).toFixed(1)}%)`)
 
-	// Score recovered clusters against each truth grain using the held-out NPI.
 	const N = records.length
 
 	// Every grain scores against the same record population, so the ARI expectation is fixed for the run.
 	const score = (entities: readonly ResolvedEntity[], labelOf: TruthLabel): Score => scoreEntities(entities, labelOf, N)
 
-	// Truth labels: NPI-level (the conservative held-out NPI = record.id) and entity-level
-	// (the site-level subpart-collapsed id that rides on attributes.entityTruth).
-	// Scoring the same clusters both ways isolates how much of the apparent over-merge
-	// is NPI over-segmentation rather than model error.
+	// Scoring the same clusters at NPI and entity level isolates how much of the apparent
+	// over-merge is NPI over-segmentation rather than model error.
 	const npiLabel = (rec: SourceRecord) => rec.id
 	const entityLabel = (rec: SourceRecord) => rec.attributes?.["entityTruth"] ?? rec.id
 	const orgNameLabel = buildOrgNameGrain(npiPrimary)
@@ -261,15 +209,10 @@ export async function nppesDedupBenchmark(
 	const H3_RES = options.h3Res ?? 11 // res 11 ≈ 25 m edge. res 10 ≈ 65 m (block scale)
 	const orgNameH3Label = buildOrgNameH3Grain(npiPrimary, npiCoord, H3_RES)
 
-	// Progressively enable comparison-model settings at the default threshold.
-	// Threshold to isolate its marginal effect, then sweep the link threshold on the
-	// best config (geocode once, resolve many — config is cheap). ---
 	report?.(`[D] resolving the setting progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
 
-	// learnedScorer:false throughout — this benchmark studies the FS comparison-model settings (#617/#625).
-	// The learned scorer is now default-on, so it must be pinned off here
-	// or every row would silently be the GBT.
-	// The learned scorer is measured separately (learned-scorer-clustering-eval / -crossstate-eval).
+	// The learned scorer is default-on, so it is pinned off here.
+	// Otherwise every row would silently be the GBT.
 	const progression = buildSettings(addressFrequency).map((l) => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0, ...l.config })
 
@@ -278,15 +221,9 @@ export async function nppesDedupBenchmark(
 
 	const bestSetting = progression.at(-1)! // the full setting stack
 
-	// The shipped out-of-box default (#86): no setting config at all → resolveEntities
-	// auto-computes an input-scoped address-frequency table + collapsed spatial.
-	// On this deliberately-sub-sampled corpus the auto table is sparse (few repeats),
-	// so the inverse-frequency signal is near-inert and F1 collapses to ≈baseline.
-	// That is not a regression, just the honest truth that IDF is a corpus statistic
-	// you can't synthesize from a sample.
-	// On a full-dataset dedup the input is the corpus and this default reaches the baseline.
-	// The CLI passes a corpus-wide table built from the full source files
-	// so even a geocoded sub-sample benefits.
+	// The shipped out-of-box default auto-computes an input-scoped address-frequency table.
+	// on this sub-sampled corpus it is sparse and F1 collapses to ≈baseline, because IDF is a
+	// corpus statistic, so the CLI passes a corpus-wide table built from the full source files.
 	const defaultRes = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
 	const defaultOutOfBox = score(defaultRes.entities, npiLabel)
 
@@ -320,11 +257,6 @@ export async function nppesDedupBenchmark(
 		`    default F1 ${(100 * base.score.f1).toFixed(1)}% → best F1 ${(100 * best.score.f1).toFixed(1)}% @ threshold ${best.t}`
 	)
 
-	// Score the same clusters against NPI-level and entity-level truth.
-	// Reveal how much of the apparent over-merge is NPI over-segmentation
-	// (one org / many subpart-NPIs, where merging is correct) rather than model error.
-	// Two production configs: the FS full setting stack and the shipped default
-	// (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
 	const entityCount = new Set(records.map((r) => entityLabel(r))).size
 	const orgCount = new Set(records.map((r) => orgNameLabel(r))).size
 	const fsNPI = bestSetting.score
@@ -334,18 +266,12 @@ export async function nppesDedupBenchmark(
 	const gbtNPI = score(gbtRes.entities, npiLabel)
 	const gbtEntity = score(gbtRes.entities, entityLabel)
 	const gbtOrg = score(gbtRes.entities, orgNameLabel)
-	// Tier 2D: the coordinate-co-location org-name truth (tighter lower bound).
 	const orgCoordCount = new Set(records.map((r) => orgNameCoordLabel(r))).size
 	const fsOrgCoord = score(bestSetting.res.entities, orgNameCoordLabel)
 	const gbtOrgCoord = score(gbtRes.entities, orgNameCoordLabel)
-	// #109: the H3-cell co-location truth — a robustness check on the haversine coord-grain.
 	const orgH3Count = new Set(records.map((r) => orgNameH3Label(r))).size
 	const gbtOrgH3 = score(gbtRes.entities, orgNameH3Label)
 
-	// The adjudication packet grades the shipped (GBT) clusters, because the residual
-	// over-merge is small and approaching the measured ~1.6% irreducible ceiling —
-	// per-pair human adjudication (same entity? Distinct co-located?) is the only
-	// instrument left that can separate model error from yardstick error.
 	const DUMP_OVERMERGES = options.dumpOvermerges || ""
 
 	if (DUMP_OVERMERGES) {
@@ -361,8 +287,6 @@ export async function nppesDedupBenchmark(
 		report?.(`    adjudication packet: ${clusters} over-merged clusters -> ${DUMP_OVERMERGES}`)
 	}
 
-	// Optional candidate A/B (--candidate): score a trained GBT module at both levels, at its own
-	// recommendedThreshold, alongside the shipped GBT — grades a new model (e.g. Corroboration features).
 	let cand: { label: string; npi: Score; entity: Score } | null = null
 
 	if (CANDIDATE) {

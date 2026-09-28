@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index measurement, and the number it is chosen on.
- *
- *   the point OF this file is the alternative index. `classifyFeatureCells` takes overlapping containment and
- *   refuses a feature that reaches no cell, so this index cannot produce a zero-cell feature. What it can
- *   report is how many features the obvious index — `polygonToCells`, cell-centre-in-polygon — would have
- *   returned no cell for, and every one of those would read downstream as an absence of zoning. On the real
- *   national set at resolution 9 that is most of them.
+ *   The index measurement, and the number it is chosen on: how many features the polyfill-only index would drop, which `classifyFeatureCells` cannot report because it refuses a feature that reaches no cell.
  */
 
 import { classifyFeatureCells, featureCellRows } from "@mailwoman/spatial"
@@ -20,8 +14,7 @@ import { describe, expect, it } from "vitest"
 const ORIGIN = { lon: -6.5, lat: 53.4 } as const
 
 /**
- * A square about 1.1 km on a side — several res-10 cells across, so it has a
- * real interior and a real fringe.
+ * A square about 1.1 km on a side, several res-10 cells across.
  */
 const BIG = [[exteriorRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + 0.01, ORIGIN.lat + 0.01)]]
 
@@ -68,8 +61,8 @@ describe("featureCellRows", () => {
 		expect(rows.some((row) => row.containment === "partial")).toBe(true)
 
 		// A cell is never both for one polygon.
-		// A compaction that produced a parent the partial set also names would put the same
-		// cell in twice, and the primary key would reject the second insert mid-build.
+		// A parent the partial set also names would duplicate it and the primary key
+		// would reject the second insert mid-build.
 		const cells = rows.map((row) => row.h3Cell)
 
 		expect(new Set(cells).size).toBe(cells.length)
@@ -105,9 +98,8 @@ describe("ZoningCellIndex", () => {
 
 		unmeasured.add(classifyFeatureCells(SLIVER, 9, "sliver", "zoning cells"))
 
-		// Absent rather than zero.
-		// A column reporting "0 dropped" when no measurement was taken is the meaning-of-zero
-		// mistake in miniature: it reads as the good news the measurement exists to establish.
+		// Absent rather than zero: a column reporting "0 dropped" with no measurement
+		// reads as the good news the measurement exists to establish.
 		expect(unmeasured.finish().polyfillZeroCellFeatures).toBeUndefined()
 	})
 

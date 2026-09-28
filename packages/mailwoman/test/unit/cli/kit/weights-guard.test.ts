@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Pure-implementation tests for the CLI weights guard (plan 3). The interactive component is exercised
- *   live under a pty in the plan's Task-4 verification. here we pin the npm invocation, the probe
- *   semantics against a cache layout, and the probe's rejection of metadata-only installs.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -14,15 +10,8 @@ import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { buildWeightsInstallArgs, probeWeights } from "mailwoman/cli-kit/weights-guard"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-// A locale with no weights package, which is the whole point: these cases assert the not-resolvable path.
-// Therefore, the locale must be one no package can resolve.
-// It was `de-DE` until 2026-08-02, when campaign R9 shipped `@mailwoman/neural-weights-de-de`
-// and silently invalidated the premise — `resolveWeights` started finding the real
-// workspace package and every "no package resolves" assertion inverted.
-//
-// `pt-BR` is the current choice because Brazil has no carrier package.
-// If one ever ships, this breaks the same way, and the fix is the same:
-// move to a locale that is still unclaimed.
+// Must be a locale no weights package can resolve.
+// This breaks if one is published.
 const LOCALE = "pt-BR"
 
 let cacheRoot: TemporaryDirectory

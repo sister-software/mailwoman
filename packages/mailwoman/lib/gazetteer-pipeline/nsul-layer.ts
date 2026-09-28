@@ -3,53 +3,30 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `nsul.db` — the GB **uprn → unit-postcode register**: the ONS National Statistics uprn Lookup
- *   (nsul) joined to the WGS84 point OS Open uprn publishes for the same uprn. Schema + the compact
- *   postcode derivation live in `@mailwoman/resolver-wof-sqlite/nsul`; the Node reader is `NSULLookup`
- *   in the same subpath. This is the GB artifact the physical-constraint design record decided on
- *   (`docs/superpowers/specs/2026-09-03-physical-constraint-prior-design.md`, section 2): the register
- *   is open, and the `PO`-area measurement on #1975 showed no reconstruction from centroids and
- *   footprints comes close to it, so the register is stored rather than inferred.
+ * Build `nsul.db` — the GB **uprn → unit-postcode register**: the ONS National Statistics uprn Lookup
+ * (nsul) joined to the WGS84 point OS Open uprn publishes for the same uprn. Schema and the compact
+ * postcode derivation live in `@mailwoman/resolver-wof-sqlite/nsul`, and the register is stored
+ * rather than inferred from centroids and footprints.
  *
- *   ## Acquisition
+ * The ONS portal item is acquired by hand into a vintage-dated
+ * `$MAILWOMAN_DATA_ROOT/db/nsul/<yyyy-MM>/` directory holding the zip, its `.md5` sidecar and the
+ * portal's `item.json`; a missing sidecar is recorded in words, never as an empty string.
  *
- *   nsul is published on the ONS Open Geography portal as an ArcGIS Hub "CSV Collection" item — a zip
- *   holding one CSV per nsul region (eleven for Great Britain) plus the user guide and code lists.
- *   There is no download step here: the item is acquired by hand into a vintage-dated
- *   `$MAILWOMAN_DATA_ROOT/db/nsul/<yyyy-MM>/` directory holding the zip, its `.md5` sidecar and the
- *   portal's `item.json` record, and the builder reads provenance from those three files. A missing
- *   sidecar is recorded in words (the Code-Point discipline), never as an empty string.
+ * The eleven CSVs total 10.2 GB uncompressed and are streamed straight out of the archive
+ * (`readZipEntry` → `TextSpliterator`) with only the inflate window and one line in memory, so the
+ * build never extracts to disk and never holds a region file whole.
  *
- *   ## Streaming
+ * The OSGB36 grid reference (`GRIDGB1E`/`GRIDGB1N`) is ignored: the row's uprn joins `uprn.db` and
+ * copies OS's own WGS84 `lat`/`lon` and the res-9 `h3_cell` verbatim. A uprn absent from `uprn.db`
+ * is counted `skipped-no-coordinate`, and a row whose `pcds` is empty is counted `skipped-no-postcode`.
  *
- *   The eleven CSVs total 10.2 GB uncompressed. each is streamed straight out of the archive
- *   (`readZipEntry` → `TextSpliterator`) with only the inflate window and one line in memory, so
- *   the build never extracts to disk and never holds a region file whole.
+ * The build is restricted by the archive md5 against the sidecar, an exact header match on every
+ * region file, the region set exactly the eleven GB regions, the accounting identity
+ * `read = inserted + malformed + duplicate + no-postcode + no-coordinate`, and a row floor.
  *
- *   ## Coordinates come from `uprn.db`, never from the grid reference
- *
- *   Each nsul row carries an OSGB36 grid reference (`GRIDGB1E`/`GRIDGB1N`). The build ignores it and
- *   joins the row's uprn to `uprn.db`, copying OS's own WGS84 `lat`/`lon` and the res-9 `h3_cell`
- *   verbatim — the same reason `uprn-layer.ts` takes OS's WGS84 columns over a Helmert reprojection.
- *   A uprn absent from `uprn.db` is counted `skipped-no-coordinate` and not written. a row whose
- *   `pcds` is empty (a postcode not in Code-Point Open) is counted `skipped-no-postcode` and not
- *   written.
- *
- *   ## Restricting
- *
- *   The archive md5 against the sidecar. an exact header match on every region file (schema drift
- *   fails loudly); the region set exactly the eleven GB regions (a missing or extra file fails loudly);
- *   the accounting identity `read = inserted + malformed + duplicate + no-postcode + no-coordinate`
- *   with malformed and duplicate expected zero. and a row floor (`NSUL_MINIMUM_PLAUSIBLE_ROWS`).
- *
- *   ## Coverage
- *
- *   GB only. ONS designates the register complete for GB (every uprn in AddressBase whose postcode is
- *   in Code-Point Open), so every res-6 cell holding rows is written `basis: designated,
- *   completeness: 1` — the same cells and basis `uprn.db` writes, so the two layers' coverage tables
- *   describe the same ground. Cells with no rows are left absent: without a GB polygon the builder
- *   cannot tell empty moorland from Northern Ireland or open sea, so per the meaning-of-zero rule it
- *   makes no claim there.
+ * GB only: ONS designates the register complete for GB, so every res-6 cell holding rows is written
+ * `basis: designated, completeness: 1`; cells with no rows are left absent because without a GB
+ * polygon the builder cannot tell empty moorland from Northern Ireland or open sea.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -754,7 +731,6 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const uprnPath = options.uprnDatabasePath ?? uprnDatabasePath("uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? NSUL_MINIMUM_PLAUSIBLE_ROWS
 
-	// Acquire and verify the archive against its sidecar, recording a missing sidecar explicitly.
 	let archiveMD5 = UNKNOWN_PROVENANCE
 	let archiveName = UNKNOWN_PROVENANCE
 	let vintage: NSULVintage
@@ -799,8 +775,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 
 	const { UPRN_H3_RESOLUTION } = await import("@mailwoman/resolver-wof-sqlite/uprn")
 
-	// Read the coordinate source and record its manifest version in metadata.
-	// Open uprn release each coordinate is from.
+	// Record which Open UPRN release the coordinates came from.
 	using uprnDB = new DatabaseClient<UPRNDatabase>(uprnPath, { readOnly: true })
 	const uprnLayerVersion = (await readLayerManifest(uprnDB)).version
 	const coordinateProbe = uprnDB.prepare("SELECT lat, lon, h3_cell FROM uprn WHERE uprn = ?")

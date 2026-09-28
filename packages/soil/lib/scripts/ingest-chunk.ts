@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   One chunk of the soil ingest, as its own process — spawned by `buildSoilDatabase`, never run by hand.
- *   The process boundary and the stdout interface live with `runIngestChunkScript`; what stays here is only
- *   this product's flags and its feature-source constructor.
+ *   One chunk of the soil ingest as its own process, spawned by `buildSoilDatabase` and never run by hand.
  */
 
 import { requiredArgument } from "@mailwoman/core/scripting/arguments"

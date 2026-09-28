@@ -2,16 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Elevation for the one `mwops` verb that needs it.
- *
- *   This is the only module in the package that reads the process, because elevation is a property of the entry point
- *   rather than of an operation: re-exec'ing replaces the process, which no code further down a call graph should be
- *   able to do. Operations receive the resulting privilege as a plain boolean on their context.
- *
- *   The re-exec resolves symlinks before handing argv to `sudo`, so the path matches the absolute one pinned in
- *   `/etc/sudoers.d/mailwoman-storage`. Invoking through a symlink on `PATH` produces an argv the NOPASSWD rule
- *   misses, and sudo then asks for a password. That defeats the unattended case the rule exists to serve.
  */
 
 import { realPath } from "@mailwoman/core/fs/readers/stat"
@@ -25,10 +15,8 @@ export function isRoot(): boolean {
 }
 
 /**
- * If not already root, re-exec this entry point under `sudo` and exit with the child's status.
- *
- * Resolves when the process already holds root.
- * Otherwise the process is replaced and never returns.
+ * If not already root, re-exec this entry point under `sudo` and exit with the child's status, resolving
+ * symlinks so the argv path matches the absolute one pinned in `/etc/sudoers.d/mailwoman-storage`.
  */
 export async function ensureRoot(): Promise<void> {
 	if (isRoot()) return

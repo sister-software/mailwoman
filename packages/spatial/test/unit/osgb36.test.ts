@@ -3,22 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two halves of the OSGB36 → WGS84 pipeline are tested separately and against different
- *   tolerances, because they fail differently. The projection is exact algebra and is held to
- *   sub-millimetre. the Helmert is an approximation to OSTN15 and is held to the ±5 m the module
- *   docstring promises. Collapsing them into one end-to-end assertion at 5 m would let a real
- *   projection bug hide inside the datum budget.
+ *   The projection and the Helmert are tested separately and against different tolerances, because
+ *   they fail differently.
  */
 
 import { osgb36GridToAiryLatLon, osgb36ToCoordinates2D, osgb36ToWGS84 } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
 
-/**
- * Degrees-minutes-seconds → decimal degrees.
- *
- * OS publishes its worked examples in DMS, and transcribing them by hand into decimals
- * is exactly the kind of step that silently eats a digit.
- */
 function dms(degrees: number, minutes: number, seconds: number): number {
 	return degrees + minutes / 60 + seconds / 3600
 }
@@ -26,8 +17,6 @@ function dms(degrees: number, minutes: number, seconds: number): number {
 /**
  * Rough metres-per-degree at GB latitudes, for turning an angular residual into
  * the metres the accuracy claim is stated in.
- *
- * Approximate on purpose — it is measuring a 3 m error against a 5 m bar rather than surveying.
  */
 function offsetMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
 	const dNorth = (a.latitude - b.latitude) * 111_132
@@ -37,50 +26,23 @@ function offsetMeters(a: { latitude: number; longitude: number }, b: { latitude:
 }
 
 /**
- * OS's Annexe C worked example for the National Grid projection, from "A Guide to
- * Coordinate Systems in Great Britain" (V3.6, © OS 2020) — the OSGB36 geodetic coordinates
- * and the eastings/northings they project to.
- *
- * C.1 runs it forwards, C.2 backwards.
- * We test the backwards direction, which is the one this module implements.
+ * OS's Annexe C worked example for the National Grid projection, giving the eastings/northings
+ * and the OSGB36 geodetic coordinates they project to (V3.6, © OS 2020).
  */
 const ANNEXE_C_GRID = { easting: 651_409.903, northing: 313_177.27 }
 const ANNEXE_C_OSGB36 = { latitude: dms(52, 39, 27.2531), longitude: dms(1, 43, 4.5177) }
 
 /**
- * OS's Annexe D worked example for the seven-parameter Helmert — a single point
- * carried all the way from ETRS89 geodetic to National Grid E/N.
- *
- * This is the test that pins the datum shift, and it is worth being precise
- * about what it can and cannot show.
- * Annexe D uses the same Helmert this module does, so agreement here proves the implementation —
- * the parameter signs, the Position-Vector rotation convention, the cartesian round trip.
- *
- * It makes no statement about how close the Helmert is to OSTN15 truth.
- * That is the separate 40-point test below.
+ * OS's Annexe D worked example for the seven-parameter Helmert, carried from ETRS89
+ * geodetic to National Grid E/N, which pins the datum shift.
  */
 const ANNEXE_D_GRID = { easting: 422_297.792, northing: 412_878.741 }
 const ANNEXE_D_OSGB36 = { latitude: dms(53, 36, 42.2972), longitude: -dms(1, 39, 46.5416) }
 const ANNEXE_D_ETRS89 = { latitude: dms(53, 36, 43.1653), longitude: -dms(1, 39, 51.992) }
 
 /**
- * A six-point span of OS's official OSTN15/OSGM15 developer-pack test vectors
- * (`OSTN15_OSGM15_TestInput_*`), each pairing a published OSGB36 easting/northing with
- * the published ETRS89 latitude/longitude of the same physical point.
- *
- * OSTN15 is the exact transformation.
- * These residuals therefore measure the Helmert approximation, which is the
- * number the module's ±5 m promise is about.
- *
- * Six of the forty are inlined — chosen to span the extremes rather than to sample evenly,
- * because the error is a smooth field and only its corners are informative.
- *
- * TP01 (Scilly) and TP31 (St Kilda) are the two worst points in the whole set.
- * TP08 (Bristol) and TP38 (Shetland waters) are among the best.
- *
- * The full 40-point distribution is recorded in the module docstring.
- *
- * OS OpenData, Open Government Licence v3.
+ * Six of OS's forty official OSTN15/OSGM15 developer-pack test vectors, chosen to span the
+ * extremes rather than sample evenly, under OS OpenData, Open Government Licence v3.
  */
 const OSTN15_POINTS = [
 	{ id: "TP01", easting: 91_492.146, northing: 11_318.804, latitude: 49.9222639373, longitude: -6.29977752014 },
@@ -94,31 +56,24 @@ const OSTN15_POINTS = [
 test("osgb36GridToAiryLatLon reproduces OS's Annexe C.2 worked example to sub-millimetre", () => {
 	const got = osgb36GridToAiryLatLon(ANNEXE_C_GRID)
 
-	// 1e-4 arc-seconds is ~3 mm of ground distance.
-	// The measured residual is ~1.3e-5 arcsec (~0.4 mm), which is the worked example's
-	// own rounding rather than our error — OS publishes to 0.0001".
+	// 1e-4 arc-seconds is ~3 mm of ground distance, matching the worked example's own published rounding.
 	expect(Math.abs(got.latitude - ANNEXE_C_OSGB36.latitude) * 3600).toBeLessThan(1e-4)
 	expect(Math.abs(got.longitude - ANNEXE_C_OSGB36.longitude) * 3600).toBeLessThan(1e-4)
 })
 
 test("the Helmert reproduces OS's Annexe D worked example to the centimetre", () => {
-	// Measured 8.4 mm end-to-end.
-	// The bar is 5 cm — loose enough to absorb the published DMS rounding (0.0001" is ~3 mm)
-	// and our discarded ellipsoidal height, tight enough that a wrong rotation sign
-	// or a Coordinate-Frame-vs-Position-Vector mixup (~20 m) cannot slip through.
+	// The bar is 5 cm — loose enough to absorb the published DMS rounding and our discarded
+	// ellipsoidal height, tight enough that a wrong rotation sign cannot slip through.
 	const got = osgb36ToWGS84(ANNEXE_D_GRID)
 
 	expect(offsetMeters(got, ANNEXE_D_ETRS89)).toBeLessThan(0.05)
 
-	// The projection half must land on Annexe D's OSGB36 intermediate too, so a failure
-	// above localizes to the datum shift rather than leaving both halves suspect.
 	const airy = osgb36GridToAiryLatLon(ANNEXE_D_GRID)
 
 	expect(Math.abs(airy.latitude - ANNEXE_D_OSGB36.latitude) * 3600).toBeLessThan(1e-3)
 	expect(Math.abs(airy.longitude - ANNEXE_D_OSGB36.longitude) * 3600).toBeLessThan(1e-3)
 
-	// And the shift must be a real correction rather than a no-op: OSGB36 and WGS84
-	// differ by ~70-120 m across GB, so a Helmert that silently left the coordinate
+	// OSGB36 and WGS84 differ by ~70-120 m across GB, so a Helmert that left the coordinate
 	// unchanged would still look close to the OSGB36 intermediate.
 	expect(offsetMeters(got, ANNEXE_D_OSGB36)).toBeGreaterThan(50)
 })
@@ -130,24 +85,15 @@ test("the Helmert stays inside 5 m of OSTN15 truth across the GB extremes", () =
 		expect(offsetMeters(got, { latitude, longitude }), id).toBeLessThan(5)
 	}
 
-	// The bar is a promise rather than a description.
-	// The mainland points are far better than it, and pinning that keeps a regression that
-	// doubles the mainland error from hiding under an offshore-sized budget.
+	// Pinning the mainland residual keeps a regression from hiding under an offshore-sized budget.
 	const bristol = OSTN15_POINTS.find((p) => p.id === "TP08")!
 
 	expect(offsetMeters(osgb36ToWGS84(bristol), bristol)).toBeLessThan(1)
 })
 
 test("osgb36ToWGS84 places known GB landmarks where they actually are", () => {
-	// Real Code-Point Open rows (eastings/northings verbatim from the 2026-05 CSVs)
-	// checked against the landmark each postcode is famous for.
-	// These catch the failure mode the Caister example cannot: a sign flip or axis swap that
-	// stays self-consistent at one point in Norfolk but puts London in the North Sea.
-	//
-	// The bar is 100 m because the two quantities are not the same thing.
-	// A Code-Point centroid is the mean of a postcode unit's delivery points,
-	// and the landmark is a single door.
-	// Buckingham Palace's grounds alone are wider than the residual being measured.
+	// The bar is 100 m because a Code-Point centroid is the mean of a postcode unit's
+	// delivery points while the landmark is a single door.
 	const cases = [
 		{ name: "SW1A 1AA (Buckingham Palace)", grid: { easting: 529_090, northing: 179_645 }, lat: 51.5014, lon: -0.1419 },
 		{ name: "SW1A 2AA (10 Downing Street)", grid: { easting: 530_047, northing: 179_951 }, lat: 51.5034, lon: -0.1276 },
@@ -167,10 +113,8 @@ test("osgb36ToWGS84 places known GB landmarks where they actually are", () => {
 })
 
 test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
-	// Redfearn's series is a truncated expansion in distance from the central meridian.
-	// It is well-behaved across GB but not everywhere.
-	// Pin the corners so a change to the series terms cannot quietly break the far south-west
-	// or the Northern Isles while London still looks right.
+	// Redfearn's series is a truncated expansion in distance from the central meridian,
+	// so pin the corners as well as London.
 	const scilly = osgb36ToWGS84({ easting: 90_000, northing: 10_000 })
 
 	expect(scilly.latitude).toBeGreaterThan(49.8)
@@ -184,11 +128,8 @@ test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
 })
 
 test("the grid origin is a real Atlantic coordinate, not a sentinel", () => {
-	// Code-Point Open writes 0,0 for its 865 no-coordinate rows, but 0,0 is a valid
-	// grid point (south-west of the Scillies).
-	// The module cannot detect the sentinel and must not try.
-	// This pins that interface so nobody "helpfully" adds a zero check here
-	// instead of filtering at the call site.
+	// Code-Point Open writes 0,0 for its no-coordinate rows, but 0,0 is a valid grid
+	// point the module must not treat as a sentinel.
 	const origin = osgb36ToWGS84({ easting: 0, northing: 0 })
 
 	expect(origin.latitude).toBeCloseTo(49.7668, 3)
@@ -202,7 +143,6 @@ test("osgb36ToCoordinates2D emits GeoJSON axis order", () => {
 	expect(longitude).toBe(direct.longitude)
 	expect(latitude).toBe(direct.latitude)
 
-	// The whole point of the helper — lon first.
-	// A swapped tuple puts GB in Somalia.
+	// The whole point of the helper — lon first, since a swapped tuple puts GB in Somalia.
 	expect(longitude).toBeLessThan(latitude)
 })

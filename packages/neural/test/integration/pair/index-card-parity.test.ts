@@ -3,23 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Every shipped `pair-index-<country>.bin` must agree with the model card that describes it.
+ *   Every shipped `pair-index-<country>.bin` must agree with the model card that describes it, with
+ *   the artifact as the arbiter: pair count and the calibrated `delta`/`transitionBeta` are compared
+ *   because a rebuild from the same sources reproduces them exactly, while the card's `md5` is not
+ *   compared because a PIX1 header embeds `buildDate` and identical sources produce different bytes
+ *   on every rebuild.
  *
- *   A model card is what a consumer, the release preflight and a future maintainer all read to learn
- *   what an artifact is. No other check compares the two, and a card can drift across several
- *   increments without any check noticing — leaving it not merely absent but confidently wrong. The
- *   artifact is the arbiter here. the card is graded against it.
- *
- *   what IT checks, and what IT deliberately does not. Pair count and the calibrated `delta` /
- *   `transitionBeta` are compared, because those are properties of the content and a rebuild from
- *   the same sources reproduces them exactly. The card's `md5` is not compared: a PIX1 header
- *   embeds `buildDate`, so identical sources produce different bytes on every rebuild, and asserting
- *   on it would fail constantly for a reason that is not a defect. The md5 documents the artifact
- *   staged for a release. the release-side check in `packages/release-kit/lib/release/verify-metadata.ts` is where
- *   staged bytes get checked.
- *
- *   Skips per-package when the binary is absent. These are derived artifacts, gitignored and built
- *   by each package's `link-dev-weights.ts`, so a lean checkout legitimately has none.
+ *   Skips per-package when the binary is absent, since a lean checkout legitimately has none.
  */
 
 import { readLocalBuffer, readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
@@ -28,14 +18,9 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 
 /**
- * Which weights package ships which country's index, and where that package's card describes it.
- *
- * The card key is spelled out per package rather than discovered, because the naming is
- * genuinely inconsistent across the four (`us_artifacts` / `fr_artifacts` / `gb_artifacts`
- * / `nz_artifacts`, each with its own `pair_index_<cc>_bin` child).
- * A guard that guessed the key would silently pass on a card whose block had been renamed
- * or dropped — the exact failure it exists to catch — so the mapping is explicit
- * and a missing block is a failure rather than a skip.
+ * Which weights package ships which country's index, and where that package's card describes it:
+ * the card key is spelled out per package because the naming is genuinely inconsistent, and a
+ * guard that guessed it would silently pass on a card whose block had been renamed or dropped.
  */
 const PACKAGES = [
 	{ pkg: "neural-weights-en-us", country: "us", cardKeys: ["us_artifacts", "pair_index_us_bin"] },
@@ -63,10 +48,8 @@ interface PairIndexFacts {
 }
 
 /**
- * Read a PIX1 binary's header and entry count without constructing a resolver.
- *
- * This test cares about what the file says, so it deliberately does not route
- * through the reader that a bug could also affect.
+ * Read a PIX1 binary's header and entry count without constructing a resolver,
+ * deliberately not routing through the reader a bug could also affect.
  */
 async function readPairIndexFacts(path: string): Promise<PairIndexFacts> {
 	const bytes = await readLocalBuffer(path)
@@ -111,12 +94,10 @@ describe("pair-index ↔ model-card parity", () => {
 
 			const facts = await readPairIndexFacts(binPath)
 
-			// Pair count is the required one: it is what changed, unnoticed, across three increments.
 			expect(block!.pairs, `${pkg}: card pairs != artifact pairs — rebuild the artifact or update the card`).toBe(
 				facts.pairs
 			)
 
-			// The calibrated magnitudes ride the header.
 			// A card claiming a delta the binary does not carry would misdescribe the
 			// shipped behaviour rather than just the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
@@ -132,14 +113,11 @@ describe("pair-index ↔ model-card parity", () => {
 				).toContain(String(facts.transitionBeta))
 			}
 
-			// The whole-edge parent bias (#46) is default-on for the locales that have a board,
-			// and off (no header key) for the ones that don't.
-			// Both directions are graded: a card that omits a shipped parentDelta misdescribes
-			// the behaviour, and a card that claims one the artifact lacks is worse.
-			// It reads as though the D-rule's per-locale check had been cleared when it hasn't.
-			// The assertion spells out `parentDelta=<n>` rather than the bare number
-			// because δ and β are both 5 today, so a substring match on "5" would pass
-			// on a card that never mentioned the parent at all.
+			// The whole-edge parent bias is default-on for locales that have a board and off
+			// (no header key) for those that do not, and both directions are graded: an omitted shipped
+			// parentDelta misdescribes the behaviour, while a claimed one the artifact lacks is worse.
+			// The assertion spells out `parentDelta=<n>` because δ and β are both 5 today,
+			// so a substring match on "5" would pass on a card that never mentioned the parent at all.
 			const parentClaim = `parentDelta=${facts.parentDelta}`
 
 			if (facts.parentDelta === undefined) {

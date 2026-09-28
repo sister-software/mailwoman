@@ -168,11 +168,8 @@ describe("tokenizeForClass", () => {
 
 describe("scriptForCodepoint", () => {
 	/**
-	 * Unicode's own script property, as the engine reports it.
-	 *
-	 * The hand ranges exist for speed — `computeQueryShape` promises microseconds and runs per
-	 * keystroke — and this is what keeps them honest as Unicode moves: every codepoint the table
-	 * claims is checked against `\p{Script=…}` rather than against a reading of the table.
+	 * Unicode's own script property, against which every codepoint the hand ranges
+	 * claim is checked, keeping the table honest as Unicode moves.
 	 */
 	const UNICODE_SCRIPT: ReadonlyArray<[ScriptCode, RegExp]> = [
 		["Hira", /\p{Script=Hiragana}/u],
@@ -204,27 +201,16 @@ describe("scriptForCodepoint", () => {
 	})
 
 	/**
-	 * The converse, and the direction the first version of this suite did not check.
+	 * The converse direction, what the table leaves uncovered, since asserting only
+	 * that claimed scripts are real says what the table misses.
 	 *
-	 * Asserting only that what we claim is a script really is one stops the table over-claiming
-	 * and makes no statement about what it misses, and a range cannot express an exception,
-	 * so a block holding two scripts gets drawn through.
-	 * Both of this file's misses were that: `COMMON_RANGES` took `0x3000..0x303f` whole,
-	 * and Unicode assigns 々 (U+3005) and 〇 (U+3007) inside it to Han.
-	 *
-	 * It took `0x3099..0x30a0` whole, and U+309D..309F are Hiragana.
-	 *
-	 * The allowance is per script rather than global, and each number is a measurement
-	 * of what is left uncovered rather than a target.
-	 * Tightening one is a change with its own evidence.
-	 *
-	 * A number that grows is a script the table stopped answering for.
+	 * The allowance is per script rather than global, each number is a measurement of the uncovered
+	 * remainder rather than a target, and a number that grows is a script the table stopped answering for.
 	 */
 	const UNCOVERED_ALLOWANCE: Readonly<Record<string, number>> = {
 		// Hentaigana, the historic hiragana variants, at U+1B002 and above.
 		Hira: 291,
-		// Circled and squared katakana words — U+32D0..
-		// And U+3300.., typographic rather than written.
+		// Circled and squared katakana words — U+32D0.. and U+3300.., typographic rather than written.
 		Kana: 157,
 		Hang: 0,
 		// Ideographic symbols and punctuation in the supplementary plane, U+16FE2 and U+16FF0..16FF6.
@@ -249,22 +235,21 @@ describe("scriptForCodepoint", () => {
 			}
 		}
 
-		// Equality rather than a ceiling: a table that covers more than recorded is a change
-		// someone should state, and the allowance is what says which direction the change went.
+		// Equality rather than a ceiling, so a table that covers more than recorded
+		// forces the allowance to be restated.
 		expect([code, uncovered]).toEqual([code, UNCOVERED_ALLOWANCE[code]])
 	})
 
 	it("reads the two characters that were drawn through a block boundary", () => {
 		// 々 in 代々木 and 佐々木, 〇 in an all-zero ward number, ゝ in a name written with the hiragana iteration mark.
-		// Each sat inside a range this file called Common because the block is mostly common.
 		expect(scriptForCodepoint(0x30_05)).toBe("Hani")
 		expect(scriptForCodepoint(0x30_07)).toBe("Hani")
 		expect(scriptForCodepoint(0x30_9d)).toBe("Hira")
 	})
 
 	it("calls a digit, a comma and a prolonged sound mark Common rather than guessing a script", () => {
-		// `ー` is the one that mattered: it sits inside the Katakana block, Unicode calls it Common,
-		// and reading it off the block made `ブロードウェイ` report a fifth of itself as an unrecognized script.
+		// `ー` sits inside the Katakana block but Unicode calls it Common,
+		// so reading it off the block would misreport `ブロードウェイ`.
 		expect(scriptForCodepoint(0x39)).toBe("Zyyy")
 		expect(scriptForCodepoint(0x2c)).toBe("Zyyy")
 		expect(scriptForCodepoint(0x30_fc)).toBe("Zyyy")
@@ -272,9 +257,8 @@ describe("scriptForCodepoint", () => {
 	})
 
 	it("says Zzzz for a script it has no ranges for, rather than folding it into a neighbour", () => {
-		// Devanagari ग.
-		// An address in a script this file does not carry is a script it cannot name,
-		// and saying so is what lets a consumer tell that apart from "no script here".
+		// Devanagari ग; an address in a script this file does not carry is a script it cannot
+		// name, which lets a consumer tell that apart from "no script here".
 		expect(scriptForCodepoint(0x09_17)).toBe("Zzzz")
 	})
 })
@@ -283,9 +267,8 @@ describe("scriptForRange", () => {
 	const CHINESE_UNIT = "逊克二分场四队, HEILONGJIANG, CHINA"
 
 	it("answers per segment, which is not what the whole string answers", () => {
-		// The string reads Latin, because the romanized province and country outweigh the Han unit.
-		// The unit reads Han.
-		// A rule about how to render or route the unit wants the second answer.
+		// The string reads Latin because the romanized province and country outweigh
+		// the Han unit, which itself reads Han.
 		const shape = computeQueryShape(CHINESE_UNIT)
 
 		expect(shape.scripts[0]!.script).toBe("Latn")
@@ -328,8 +311,8 @@ describe("classifyTokenScript", () => {
 
 describe("foldInputScripts", () => {
 	it("names both scripts of a mixed input, which the character class folds to one word", () => {
-		// `foldInputClass` answers `mixed` here, and `mixed` names no script at all .
-		// Therefore, the Han venue in a London address was invisible to every consumer reading the fold.
+		// `foldInputClass` answers `mixed`, which names no script, leaving the Han
+		// venue invisible to a consumer reading the fold.
 		const scripts = foldInputScripts("金龍酒家, 12 Gerrard Street, London WC2H 7JS")
 
 		expect(scripts.map((entry) => entry.script)).toEqual(["Latn", "Hani"])
@@ -353,8 +336,7 @@ describe("foldInputScripts", () => {
 	})
 
 	it("answers an empty list when nothing in the input names a script", () => {
-		// A bare postcode is not Latin.
-		// It is script-neutral, and an empty list says so where a default would not.
+		// A bare postcode is script-neutral, and an empty list says so where a default would not.
 		expect(foldInputScripts("10118")).toEqual([])
 	})
 

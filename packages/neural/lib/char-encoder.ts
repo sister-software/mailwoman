@@ -6,39 +6,24 @@ import { familyFallbackFor } from "#weights/families"
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The character encoder for char-path models — the runtime twin of `encode_row_units` in
- *   `corpus-python/src/mailwoman_train/char_tokenizer.py`, under the same interface (D1): one unit per Unicode code point,
- *   `char_ids (S, W)` where slot `j` of unit `[b, e)` is the code point at `b - ctx + j`, PAD outside the string or at
- *   and past `e + ctx`, UNK for a code point the sealed vocabulary lacks. the row truncated to S units and padded with
- *   all-PAD unit rows carrying attention 0. A CJK model never meets SentencePiece: this is its whole tokenizer.
- *
- *   Code points rather than UTF-16 units. Python indexes `str` by code point, so an astral character (𠮷) is one unit there
- *   and must be one unit here. iterating the string with `Array.from` is what keeps the two encoders producing the same
- *   `char_ids` for the same text, which `test/unit/char-encoder.test.ts` pins against a fixture the Python side wrote.
- *
- *   This module is on the browser bundle (the classifier imports it), so it reaches no `node:` module: the vocabulary
- *   file is read by the node-only loader and validated here.
+ * @file The character encoder for char-path models — one unit per Unicode code point rather than per
+ *   UTF-16 unit, so an astral character is one unit as in Python, and this module reaches no `node:`
+ *   module because the classifier imports it on the browser bundle.
  */
 
 /**
- * The padding id: every slot outside the string or the unit's window, and every all-padding unit row.
- *
- * Fixed at 0 by the trainer's `build_char_vocab`, which writes `<pad>` first.
+ * The padding id, fixed at 0 by the trainer's `build_char_vocab`, which writes `<pad>` first.
  */
 export const PAD_CHAR_ID = 0
 
 /**
- * The unknown id: a code point the sealed vocabulary lacks.
- *
- * Fixed at 1 by `build_char_vocab`, which writes `<unk>` second.
- * Every real character follows in code-point order.
+ * The unknown id, fixed at 1 by `build_char_vocab`, which writes `<unk>` second
+ * so every real character follows in code-point order.
  */
 export const UNK_CHAR_ID = 1
 
 /**
- * A sealed character vocabulary: code point → id.
- *
- * The JSON artifact (`char-vocab-*.json`) is this map verbatim.
+ * A sealed character vocabulary mapping code point to id, the `char-vocab-*.json` artifact verbatim.
  */
 export type CharVocabulary = ReadonlyMap<string, number>
 
@@ -51,9 +36,6 @@ export interface CharEncoderInterface {
 	 * W — slots per unit (`max_unit_width`); the unit's own code point plus `ctxChars` on each side.
 	 */
 	maxUnitWidth: number
-	/**
-	 * Context code points on each side of the unit (`char_ctx`).
-	 */
 	ctxChars: number
 }
 
@@ -85,9 +67,8 @@ export interface CharEncoding {
 }
 
 /**
- * Encode one string under the interface.
- *
- * Every real unit is one code point of `raw`; the first S of them are kept.
+ * Encodes one string under the interface, with every real unit one code point of `raw`
+ * and only the first S kept.
  */
 export function encodeCharUnits(
 	raw: string,
@@ -130,13 +111,9 @@ export function encodeCharUnits(
 }
 
 /**
- * Validate a parsed `char-vocab-*.json` artifact into a vocabulary.
- *
- * Refuses anything that is not a flat `{ character: integer }` map with the reserved
- * ids in place, because a malformed vocabulary would encode every character as UNK
- * and the model would answer confidently with no input signal.
- * Pure: the file read lives on the node-only loader, so this module stays on the
- * browser graph without a `node:` reach (#2168).
+ * Validates a parsed `char-vocab-*.json` into a vocabulary, refusing anything
+ * but a flat `{ character: integer }` map with the reserved ids in place
+ * because a malformed vocabulary encodes every character as UNK.
  */
 export function parseCharVocabulary(parsed: unknown, source: string): CharVocabulary {
 	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
@@ -161,10 +138,7 @@ export function parseCharVocabulary(parsed: unknown, source: string): CharVocabu
 }
 
 /**
- * How a weights package turns text into model input.
- *
- * Absent from a card means SentencePiece — every Latin bundle shipped
- * before the char path existed makes no statement here.
+ * How a weights package turns text into model input, absent from a card meaning SentencePiece.
  */
 export type EncoderDescriptor =
 	| { kind: "sentencepiece" }
@@ -181,13 +155,9 @@ export type EncoderDescriptor =
 	  }
 
 /**
- * Read a parsed card's `encoder` block (#2164).
- *
- * A char card names its vocabulary sibling and the `(S, W, ctx)` interface the model was trained under.
- * A runtime that guessed any of the three would encode every row differently from training and score
- * confidently on garbage, so a char card missing one of them is refused rather than defaulted.
- *
- * Pure, so the browser loader reads it from a fetched card and the node loader from a file.
+ * Reads a parsed card's `encoder` block, refusing a char card that omits the
+ * vocabulary sibling or the `(S, W, ctx)` interface rather than defaulting a value
+ * that would encode every row differently from training.
  */
 export function encoderDescriptorFromCard(
 	card: Record<string, unknown> | undefined,
@@ -229,18 +199,9 @@ export function encoderDescriptorFromCard(
 }
 
 /**
- * The base package a locale falls back to when it has no package of its own:
- * the CJK char-path base for Japanese, Chinese and Korean (#2164).
- *
- * Latin locales have no family base.
- * `en-us` is the Latin base, and the overlays name it through `mailwoman.baseWeights` instead.
- *
- * The mapping used to be three language subtags written here, which is the same claim
- * `#weights/families` makes about which locales the character family serves.
- * Two copies disagreed: this one answered `cjk` for `ko-KR`, `zh-TW` and `zh-HK`
- * while the registry listed only the packaged `ja-jp` and `zh-cn`.
- *
- * The registry now declares the languages and this delegates, so the answer has one home.
+ * Returns the base package a locale falls back to when it has no package of its own —
+ * the CJK char-path base for Japanese, Chinese and Korean — delegating to
+ * `#weights/families` so the language set has one home.
  */
 export function scriptFamilyBase(locale: string): string | undefined {
 	return familyFallbackFor(locale)

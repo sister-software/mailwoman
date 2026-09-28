@@ -3,28 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two-arm premise-linkage runner (#1902). Every controlled row goes through the same production
- *   `geocodeAddress` twice: once with the deps the shipped product uses, and once with those deps plus
- *   a configured authoritative provider (#1901). No other input differs between the arms, which is what
- *   makes the arm-to-arm delta attributable to the provider rather than to the harness.
+ *   The two-arm premise-linkage runner: every controlled row goes through the same production
+ *   `geocodeAddress` twice — once with the deps the shipped product uses, and once with those deps
+ *   plus a configured authoritative provider — so the arm-to-arm delta is attributable to the
+ *   provider rather than to the harness.
  *
- *   the open ARM refuses on identity, BY construction. It has no authoritative namespace to answer in,
- *   so its identifier outcome is `refused` on every row — recorded in the same vocabulary as the other
- *   arm, and never as `wrong`. That is the size of the gap the authoritative arm exists to close,
- *   stated rather than hidden: the open arm's comparable metric is the coordinate table, and grading
- *   its identity by distance instead would answer a different question than the one asked.
- *
- *   four distinctions the mapping keeps, all of them the #1901 interface's:
- *
- *   - A refusal is not a miss. It enters the eligible denominator only when the registered policy says
- *       a unique answer was required, and even then it stays `refused`.
- *   - An ambiguous answer is never `exact`. The provider declined to choose. collapsing to its first
- *       candidate would manufacture the certainty it withheld.
- *   - A transport failure is not a refusal. It is `errored`: out of every rate, reported as its own
- *       count.
- *   - A match that names no identifier in the graded scheme is not `wrong` either. It is ungradable —
- *       also `errored` — because reading "I could not check this" as "this was incorrect" is the
- *       measurement-boundary lie this repository keeps finding.
+ *   The open arm refuses on identity by construction: it has no authoritative namespace to answer
+ *   in, so its identifier outcome is `refused` on every row, never `wrong`. Its comparable metric
+ *   is the coordinate table. A refusal is not a miss, an ambiguous answer is never `exact`, a
+ *   transport failure is `errored` rather than refused, and a match naming no identifier in the
+ *   graded scheme is ungradable rather than `wrong`.
  */
 
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
@@ -66,30 +54,22 @@ export const AUTHORITATIVE_ARM_NAME = "authoritative"
 /**
  * What the open arm records in the provider slot.
  *
- * Not an empty string: an empty name reads as a provider whose name was lost, and this arm consulted none.
+ * An empty name would read as a provider whose name was lost, and this arm consulted none.
  */
 const OPEN_PROVIDER_NAME = "none"
 
 const METERS_PER_KM = 1000
 
 /**
- * Coordinate thresholds reported when the caller names none — a rooftop bar,
- * a parcel bar, and a building-block bar.
- *
- * Every one is stated in the report beside its own denominator, so a caller substituting
- * their own changes what is reported and not what is claimed.
+ * Coordinate thresholds reported when the caller names none: a rooftop bar, a parcel bar,
+ * and a building-block bar, each stated in the report beside its own denominator.
  */
 const DEFAULT_COORDINATE_THRESHOLDS_M: readonly number[] = [5, 25, 100]
 
 /**
- * The ladder improvement and regression are measured on.
- *
- * A confidently wrong identifier is the worst thing an arm can do — worse than
- * declining, because a consumer acts on it.
- * An abstention is worse than candidates, which at least narrow the answer.
- *
- * A committed correct identifier is best.
- * Ungradable rows have no rank: they are excluded from the comparison rather than assigned one.
+ * The ladder improvement and regression are measured on: a confidently wrong identifier
+ * ranks worst, an abstention next, candidates next, and a committed correct identifier
+ * best. ungradable rows have no rank and are excluded from the comparison.
  */
 const OUTCOME_RANK: Readonly<Record<string, number>> = {
 	[PremiseLinkageOutcome.Wrong]: 0,
@@ -108,9 +88,7 @@ export interface PremiseLinkageGrade {
 
 /**
  * Map one arm's authoritative block onto the outcome vocabulary.
- *
- * Pure, and the only place an outcome is decided.
- * Both arms are graded through it, so neither can acquire a private definition of `exact`.
+ * The only place an outcome is decided.
  */
 export function outcomeFor(
 	assertion: AuthoritativeAssertion | undefined,
@@ -163,13 +141,8 @@ export function outcomeFor(
 }
 
 /**
- * The coordinate this arm is graded on.
- *
- * The #1901 interface includes the provider's coordinate beside Mailwoman's own
- * and leaves the choice to the consumer.
- * This harness is that consumer, and the choice is stated here rather than implied: when the
- * provider committed to a premise, its coordinate is the one the authoritative arm asserted.
- * Everywhere else the arm's answer is Mailwoman's.
+ * The coordinate this arm is graded on: the provider's when it committed to a premise,
+ * Mailwoman's everywhere else.
  */
 function gradedCoordinate(
 	result: GeocodeResult,
@@ -191,9 +164,9 @@ function coordinateErrorFor(
 	result: GeocodeResult,
 	assertion: AuthoritativeAssertion | undefined
 ): number | undefined {
-	// Three independent absences, none of them a zero: terms that forbid publication,
-	// a row with no truth coordinate, and an arm that produced none.
-	// Each keeps the row out of the coordinate table entirely.
+	// Three independent absences — terms that forbid publication, a row with no
+	// truth coordinate, and an arm that produced none — each keep the row out of the
+	// coordinate table rather than counting as a zero.
 	if (!row.coordinatePublishable) return undefined
 
 	if (row.expectedLat === undefined || row.expectedLon === undefined) return undefined
@@ -253,14 +226,8 @@ function isErrored(row: PremiseLinkageResultRow): boolean {
 }
 
 /**
- * The rows an arm could have answered exactly.
- *
- * Ungradable rows always leave.
- * Refusals leave only under `abstain_ok`, because an arm that was permitted to
- * abstain was not asked to be right on those rows.
- *
- * Under `unique_required` they stay in the denominator and count against the exact rate,
- * while remaining `refused` in the row itself.
+ * The rows an arm could have answered exactly: ungradable rows always leave, and refusals
+ * leave only under `abstain_ok`, while remaining `refused` in the row itself.
  */
 function eligibleRows(
 	rows: readonly PremiseLinkageResultRow[],
@@ -324,7 +291,7 @@ function aggregateArm(
 	for (const shapeClass of PREMISE_LINKAGE_SHAPE_CLASSES) {
 		const classRows = rows.filter((row) => row.inputShapeClass === shapeClass)
 
-		// An absent class is absent rather than zero: a class nobody supplied rows for has no rate to report.
+		// A class nobody supplied rows for has no rate to report, which is absent rather than zero.
 		if (!classRows.length) continue
 
 		perClass[shapeClass] = ratesFor(classRows, policy)
@@ -355,8 +322,7 @@ function compareArms(
 	for (const before of baseline) {
 		const after = candidateByCase.get(before.caseID)
 
-		// A row ungradable in either arm contributes to no numerator and stays in the denominator:
-		// "we could not compare this" is not "this did not move".
+		// A row ungradable in either arm stays in the denominator and contributes to no numerator.
 		if (!after || isErrored(before) || isErrored(after)) continue
 
 		if (before.outcome === after.outcome) continue
@@ -385,15 +351,12 @@ function compareArms(
 /**
  * The pieces a controlled run supplies.
  *
- * A private config module exports these.
- * The synthetic self-check builds them from the shipped fixture.
+ * A private config module or the synthetic self-check builds them.
  */
 export interface PremiseLinkageRunConfig {
 	adapter: PremiseLinkageAdapter
 	/**
 	 * The deps the open arm runs on — the production pipeline and artifacts.
-	 *
-	 * The authoritative arm receives these plus the provider and no more.
 	 */
 	deps: GeocodeDeps
 	authoritativeProvider: AuthoritativeProvider
@@ -402,9 +365,7 @@ export interface PremiseLinkageRunConfig {
 
 export interface PremiseLinkageRunOptions extends PremiseLinkageRunConfig {
 	/**
-	 * The run's secret.
-	 *
-	 * Never persisted, never printed, and never reused between published runs.
+	 * The run's secret, never persisted, printed, or reused between published runs.
 	 */
 	salt: string
 	policy: PremiseLinkagePolicy
@@ -414,18 +375,13 @@ export interface PremiseLinkageRunOptions extends PremiseLinkageRunConfig {
 }
 
 /**
- * A run's output.
- *
- * The report is publishable after the writer's preflight; `rows` and `inputs` are not,
- * and exist so the writer can check what the report was computed from.
+ * A run's output: the report is publishable after the writer's preflight; `rows` and `inputs` are not.
  */
 export interface PremiseLinkageRunResult {
 	report: PremiseLinkageReport
 	rows: PremiseLinkageResultRow[]
 	/**
 	 * Every raw input the run read, held so the report writer can refuse a report containing one.
-	 *
-	 * Discarded with the run.
 	 */
 	inputs: string[]
 }
@@ -458,7 +414,7 @@ export async function runPremiseLinkage(options: PremiseLinkageRunOptions): Prom
 		policy: options.policy,
 		minCellSize: options.minCellSize,
 		// Set by the report writer, which is what removes cells.
-		// Zero here states "no cell has been removed yet".
+		// Zero here states no cell has been removed yet.
 		suppressedCells: 0,
 		arms: [
 			aggregateArm(OPEN_ARM_NAME, openRows, options.policy, thresholds),
@@ -479,9 +435,8 @@ function hasRunConfigShape(value: unknown): value is PremiseLinkageRunConfig {
 /**
  * Validate what a private config module exported, before a licensed file is opened.
  *
- * The module may export the configuration directly or a factory that builds it.
- * A real one needs the factory, because opening a gazetteer and a provider
- * connection at import time makes `--help` do both.
+ * A factory is accepted because opening a gazetteer and a provider connection
+ * at import time makes `--help` do both.
  */
 export async function resolvePremiseLinkageConfig(
 	exported: unknown,

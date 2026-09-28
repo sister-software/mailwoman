@@ -3,12 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The admin manifest, and the two claims it must not make.
- *
- *   A manifest is only worth its accuracy — `data inventory` already found three shipped artifacts whose
- *   `build_cmd` names a path the workspace regroup moved, and one naming a gitignored scratchpad script.
- *   Those pass every "has a manifest" check and document no build fact. So what is asserted here is not that the
- *   fields are populated but that each one is true of the build that produced it.
+ *   The manifest is only worth its accuracy, so each field must be true of the build that produced it
+ *   rather than merely populated.
  */
 
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
@@ -19,7 +15,6 @@ const BASE = { buildSHA: "abc1234", createdAt: "2026-08-17T00:00:00.000Z", versi
 
 describe("adminLayerManifest — source is derived from the run", () => {
 	it("names only the folds that actually ingested rows", () => {
-		// The #1015 lesson at its narrowest: the manifest that lagged recorded an intention.
 		// A build that read no Overture rows must not claim Overture, whatever the recipe lists.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 100, overture: 0, geonames: 0 } })
 
@@ -41,8 +36,7 @@ describe("adminLayerManifest — source is derived from the run", () => {
 	})
 
 	it("refuses to stamp a manifest on a gazetteer built from nothing", () => {
-		// An empty build is a failed build.
-		// A manifest would make the artifact look describable.
+		// An empty build is a failed build, and a manifest would make the artifact look describable.
 		expect(() => adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 0, geonames: 0 } })).toThrow(
 			/no source ingested/
 		)
@@ -51,20 +45,15 @@ describe("adminLayerManifest — source is derived from the run", () => {
 
 describe("adminLayerManifest — the license is a conjunction", () => {
 	it("ANDs every contributing source's terms rather than picking one", () => {
-		// Three sources, three different licenses, one file.
-		// Recording the most permissive — or the license of the largest contributor —
-		// would be a distribution claim nobody made.
+		// The most permissive license, or the largest contributor's, would be a distribution claim nobody made.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 1, geonames: 1 } })
 
 		expect(manifest.license).toBe("LicenseRef-WhosOnFirst-Mixed AND ODbL-1.0 AND CC-BY-4.0")
 	})
 
 	it("gives the Overture fold its Divisions grant rather than the Places theme's", () => {
-		// Overture licenses per theme.
-		// Its attribution page gives Divisions `License for theme: ODbL`,
+		// Overture licenses per theme: Divisions' grant is `License for theme: ODbL`,
 		// where `CDLA-Permissive-2.0` is the Places theme's grant.
-		// Recording Places' grant here named the wrong license for the one fold
-		// whose publisher states share-alike.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 5, geonames: 0 } })
 
 		expect(manifest.license).toBe("ODbL-1.0")
@@ -72,10 +61,8 @@ describe("adminLayerManifest — the license is a conjunction", () => {
 	})
 
 	it("records the Who's On First records as a LicenseRef rather than electing one of its 102 sources", () => {
-		// Who's On First states CC0 over "the format and structure", in those words,
-		// and that the records are a modification of 102 sources carrying their own terms.
-		// Recording CC0 would claim the records are public domain, and recording ODbL
-		// would claim a grant its text never states.
+		// Who's On First states CC0 over "the format and structure" while the records are a modification
+		// of sources with their own terms, so CC0 or ODbL would each claim a grant its text never states.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 3, overture: 0, geonames: 0 } })
 
 		expect(manifest.license).toBe("LicenseRef-WhosOnFirst-Mixed")
@@ -98,8 +85,7 @@ describe("adminLayerManifest — the license is a conjunction", () => {
 
 describe("adminLayerManifest — vintages", () => {
 	it("records a contributing source with no known vintage as unknown, not as blank", () => {
-		// A vintage nobody captured is a fact about the build.
-		// Omitting it would read as a source with no version rather than as a gap in what was recorded.
+		// Omitting an uncaptured vintage would read as a source with no version rather than as a gap in what was recorded.
 		const manifest = adminLayerManifest({
 			...BASE,
 			counts: { wof: 1, overture: 1, geonames: 0 },
@@ -122,8 +108,8 @@ describe("adminLayerManifest — vintages", () => {
 
 describe("adminLayerManifest — the fields a reader acts on", () => {
 	it("names a build command that is a real CLI verb, not a path", () => {
-		// `data inventory` flags a build_cmd whose path tokens do not resolve.
-		// A CLI verb has none, which is what makes it survive a workspace regroup.
+		// `data inventory` flags a build_cmd whose path tokens do not resolve,
+		// so a CLI verb is what survives a workspace regroup.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 0, geonames: 0 } })
 
 		expect(manifest.buildCmd).toBe("mailwoman gazetteer build admin")

@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The column groups every polygon layer's schema repeats, as schema-builder helpers — so the
- *   `without rowid`-versus-blob discipline is stated once, beside the columns it governs.
  */
 
 import type { CreateTableBuilder, Kysely } from "kysely"
@@ -12,8 +9,8 @@ import type { CreateTableBuilder, Kysely } from "kysely"
 /**
  * The subset of a Kysely handle a schema module's DDL touches.
  *
- * Kysely is invariant in its schema parameter, so naming only the member the
- * builders call lets a caller pass its own wider handle.
+ * Kysely is invariant in its schema parameter, so naming only this member lets
+ * a caller pass its own wider handle.
  */
 export type SchemaHandle<DB> = Pick<Kysely<DB>, "schema">
 
@@ -32,12 +29,12 @@ export function addBoundingBoxColumns<TB extends string, C extends string>(
 }
 
 /**
- * The unsimplified ring blob a polygon truth table carries, kept apart from {@link addBoundingBoxColumns}
- * because one layer stores its own ring-derived columns between the box and the blob,
- * and the stored column order of a sealed artifact is part of what its readers see.
+ * The unsimplified ring blob a polygon truth table carries, separate from
+ * {@link addBoundingBoxColumns} because one layer's stored column order between the box
+ * and the blob is part of what sealed-artifact readers see.
  *
- * A table taking this stays a plain rowid table, never `without rowid`: the `rings` blob is exactly
- * the payload clustering into the B-tree penalizes — every index page becomes a geometry page.
+ * A table taking this stays a plain rowid table, never `without rowid`: the `rings`
+ * blob is exactly the payload clustering into the B-tree penalizes.
  */
 export function addRingsColumn<TB extends string, C extends string>(
 	builder: CreateTableBuilder<TB, C>
@@ -57,13 +54,11 @@ export function addRingGeometryColumns<TB extends string, C extends string>(
 
 /**
  * The cell-index columns every polygon summary tier carries: the 48-bit short cell,
- * the resolution it was captured at (a short cell does not name its own, and a mixed-resolution
- * table cannot be probed without it), the key columns the row names — one, or several in
- * the order given, for a layer whose rows are keyed per scenario — and its containment.
+ * the resolution it was captured at, the key columns the row names, and its containment.
  *
- * Small fixed-width rows probed by their exact primary key are the `without rowid` shape.
- * The caller adds its own primary-key constraint and the raw `without rowid` modifier,
- * because the key differs per layer.
+ * Small fixed-width rows probed by their exact primary key are the `without rowid`
+ * shape. the caller adds its own primary-key constraint and the raw `without rowid`
+ * modifier because the key differs per layer.
  */
 export function addCellIndexColumns<TB extends string, C extends string, K extends string>(
 	builder: CreateTableBuilder<TB, C>,

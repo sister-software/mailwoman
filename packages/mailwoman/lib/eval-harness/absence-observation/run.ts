@@ -3,25 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The live half of the absence-observation probe (#1965): load the frozen row set, run every row through
- *   the same pipeline construction the POI board uses, ask the negative-evidence route what it makes of
- *   each answer, and emit a receipt.
- *
- *   this module decides no fact it did not read. Every row and its registered outcome come from
- *   `probe-definition.json`, which {@linkcode loadAbsenceProbeDefinition} refuses to hand over if its
- *   content hash has moved. The runner adds the measurements and the artifact identity.
- *
- *   the pipeline is unchanged, and that is the point. No route is injected into the runtime pipeline for
- *   the absence work: the pipeline answers, and the route reads the finished answer afterwards. The one
- *   route this runner does inject is the semantic phrase route (#1929), and only because the
- *   activity-phrased rows cannot reach a category without it — a row that never formed a POI intent would
- *   record a silence the absence route never caused.
- *
- *   The receipt records both identities. A silence over an unnamed coverage layer is not reproducible, and
- *   neither is a firing. So the receipt records the coverage layer's own manifest, the recovered coverage
- *   resolution, the exclusion-grade empty cell count, the compiled model version, the poi.db the executor
- *   queried, the resolver backend that answered and the weights version — and when one of those cannot be
- *   read it says so in place rather than omitting the field.
+ *   The live half of the absence-observation probe: no route is injected into the runtime pipeline, which
+ *   answers first, and the absence route then reads the finished answer.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -74,13 +57,7 @@ export interface AbsenceProbeReceipt {
 	generatedAt: string
 	gitCommit: string
 	artifact: AbsenceArtifactIdentity
-	/**
-	 * The negative-evidence route as built — the coverage layer, the recovered resolution, the model version.
-	 */
 	absenceRoute: AbsenceRouteIdentity
-	/**
-	 * Whether the semantic phrase route was injected for the activity-phrased rows.
-	 */
 	semanticRouteInjected: boolean
 	rows: AbsenceRowOutcome[]
 	observations: AbsenceRowObservation[]
@@ -90,33 +67,25 @@ export interface AbsenceProbeReceipt {
 
 export interface AbsenceProbeOptions extends POIBoardOptions {
 	/**
-	 * Override the frozen pre-registration, for a test that wants a synthetic definition.
-	 *
-	 * A run with no override reads the committed one.
+	 * Overrides the frozen pre-registration for a test that wants a synthetic definition,
+	 * while a run with no override reads the committed one.
 	 */
 	definitionPath?: string
 	freezePath?: string
 	/**
-	 * The sealed coverage layer whose cells qualify the absence.
-	 *
-	 * Absent resolves the definition's own `coverageLayerFile` under `$MAILWOMAN_DATA_ROOT/db/poi/`.
+	 * The sealed coverage layer whose cells qualify the absence, absent resolving the
+	 * definition's own `coverageLayerFile` under `$MAILWOMAN_DATA_ROOT/db/poi/`.
 	 */
 	coverageDatabasePath?: PathBuilderLike
 	/**
-	 * Commit sha recorded in the receipt.
-	 *
-	 * Defaults to the checkout's own short head.
+	 * Commit sha recorded in the receipt, defaulting to the checkout's own short head.
 	 */
 	gitCommit?: string
 }
 
 /**
- * Run the probe.
- *
- * The POI database the executor queries defaults to the coverage layer itself, and that
- * default is required: an absence qualified by one layer's coverage while the answer came
- * out of a different layer is a claim about two artifacts that were never compared.
- * Pass `db` explicitly only to measure that mismatch on purpose.
+ * Runs the probe, with the executor's POI database defaulting to the coverage layer itself
+ * so an absence is never qualified by one layer and answered from another.
  */
 export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = {}): Promise<AbsenceProbeReceipt> {
 	const definition = await loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)
@@ -129,9 +98,7 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 
 	using pipelineHandle = await createPOIBoardPipeline({
 		...options,
-		// After the spread, never before: `...options` carries an explicit `db: undefined`
-		// when the caller passed none, which would overwrite the default and send the
-		// executor to the data root's general poi.db.
+		// After the spread, never before: an explicit `db: undefined` in `...options` would overwrite the default.
 		db: options.db ?? coverageDatabasePath,
 		...(semanticRoute ? { poiSemanticLookup: semanticRoute.lookup } : {}),
 	})
@@ -180,10 +147,8 @@ async function gradeRow(
 	const runOpts: PipelineOpts = row.locale ? { locale: row.locale } : {}
 	const result = await pipeline(row.query, runOpts)
 
-	// The semantic route records a firing per probe of its lexicon rung.
-	// Draining keeps one row's firings from being attributed to the next.
-	// This probe does not report them — #1928's receipt owns that — but leaving them
-	// to accumulate would grow unbounded across a run.
+	// Drain the semantic route's per-row firings so they are neither attributed
+	// to the next row nor accumulated unbounded.
 	semanticRoute?.takeObservations()
 
 	const decision = await absenceRoute.observe(result.poiIntent)
@@ -191,9 +156,7 @@ async function gradeRow(
 
 	const poiOutcome = !result.poiIntent ? "none" : result.poiIntent.type === "abstain" ? "abstain" : "intent"
 
-	// The set the branch searched, after the anchor's country bound it (#1999).
-	// Compared as sets: the lookup's enumeration order states no preference,
-	// so the registration is code-point ordered and so is this.
+	// Compared as code-point-ordered sets: the lookup's enumeration order states no preference.
 	const searchedCategories =
 		result.poiIntent?.type === "intent" && result.poiIntent.intent.subject.kind === "category"
 			? [...result.poiIntent.intent.subject.categoryIDs].toSorted(compareByCodePoint)
@@ -236,10 +199,8 @@ async function gradeRow(
 }
 
 /**
- * The human-readable report.
- *
  * Prints each row's registered outcome beside the observed one, so a reader never
- * has to open the definition to know what the row was asserting.
+ * has to open the definition to know what the row asserted.
  */
 export function printAbsenceProbeReceipt(receipt: AbsenceProbeReceipt): void {
 	const route = receipt.absenceRoute

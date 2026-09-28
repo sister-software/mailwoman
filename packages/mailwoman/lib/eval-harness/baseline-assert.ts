@@ -3,49 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Harness baseline assertion — an eval refuses to produce a report when its instruments read
- *   wrong (#727 stage-2, Tier 0).
- *
- *   This is not a promotion eval. `promotion-eval.ts` asks "is this model good enough to ship";
- *   this asks "is this harness measuring what it thinks it is". An eval spec's floors are one-sided
- *   (higher is better, fail below); a baseline is two-sided. A metric 40% above its registered
- *   value is as loud a signal as 40% below, because the usual cause is that the number changed
- *   meaning rather than that the model got better. That two-sidedness is the whole point. a one-sided
- *   check would have passed both incidents below.
- *
- *   Why it exists — two verdicts nearly went out wrong in a single arc, both from a harness
- *   reporting confidently on a broken instrument:
- *
- *   - Phase 1 read street token@1 = 0.348 against a v264 known-good of 0.573 (-39%). Two bugs:
- *       a missing `map_location` in `from_pretrained()` and piece-concatenation welding words
- *       ("5thAve"). The number was reported before the cause was found.
- *   - Phase 4a measured a resolver rerank while the resolver reached street tier 0/267 times —
- *       no street databases were wired. The instrument was dark and the report read as a finding.
- *       The verdict was void. see `2026-07-16-phase4a-rerank-invalid-measurement.md`.
- *
- *   A registered baseline covers both shapes, because instrument-health preconditions register the
- *   same way headline metrics do — `paris.resolver.street_evidence_rate@ban-street-centroids` is a
- *   row like any other, and a dark resolver reading 0.000 deviates from it past its band.
- *
- *   Usage — declare what the harness depends on, pass observations, let it refuse:
- *
- *   ```ts
- *   const verdict = await assertBaselines([
- *   	{ id: "parity.street.token_at_1@v264", observed: streetTokenAt1 },
- *   	{ id: "paris.resolver.street_evidence_rate@ban-street-centroids", observed: withStreet / total },
- *   ])
- *   if (!verdict.ok) throw new BaselineDeviationError(verdict)
- *   // …or simply: await guardReport([...]) — which throws on your behalf.
- *   ```
- *
- *   A harness with several readings should use a profile instead (`assertProfile("v264", {…})`),
- *   which maps its own metric keys to ids in one declared place — see `baselines.json`.
- *
- *   Registering a baseline is a deliberate act: `baselines.json` demands a commit, a command, and
- *   a note saying what the number means. A baseline you can't reproduce from its own row isn't a
- *   baseline, it's a rumor. When a number legitimately moves (new fixture, new tokenizer, a real
- *   model change), RE-register it with a fresh row and a reason — never widen the tolerance to make
- *   a deviation quiet. That's the silent-check-drift failure wearing a different hat.
+ *   Baseline assertion: a harness refuses to report when its instruments read wrong, and the check is two-sided because a metric above its registered value is as loud a signal as one below.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -59,66 +17,31 @@ export interface RegisteredBaseline {
 	 * Stable identifier: `<fixture-or-scope>.<metric>@<model-or-artifact>`.
 	 */
 	id: string
-	/**
-	 * Which harness module reads this number.
-	 */
 	harness: string
-	/**
-	 * Human-readable metric name.
-	 */
 	metric: string
-	/**
-	 * Model / artifact label the number was measured on.
-	 */
 	model: string
-	/**
-	 * Fixture the number was measured over, when applicable.
-	 */
 	fixture?: string
-	/**
-	 * The registered value.
-	 */
 	value: number
 	/**
-	 * Allowed relative deviation, either direction.
-	 *
-	 * Defaults to the file's `default_tolerance_rel`.
-	 * Widening this to silence a real deviation is the drift failure — re-register instead.
+	 * Allowed relative deviation in either direction, defaulting to the file's `default_tolerance_rel`;
+	 * widening it to silence a real deviation is the drift failure, so re-register instead.
 	 */
 	tolerance_rel?: number
 	/**
-	 * Absolute tolerance.
-	 *
-	 * Takes precedence over `tolerance_rel` when declared.
-	 * Use it for small-count metrics whose relative band is meaningless
-	 * (one fixture out of 63 moves a rate of 1/63 by 100%).
-	 *
-	 * Required when `value` is 0, where relative deviation is undefined.
+	 * Absolute tolerance, taking precedence over `tolerance_rel` and required
+	 * when `value` is 0 where relative deviation is undefined.
 	 */
 	tolerance_abs?: number
-	/**
-	 * ISO date the row was registered.
-	 */
 	registered_at: string
-	/**
-	 * Commit the number was measured at.
-	 */
 	commit: string
-	/**
-	 * The command that reproduces it.
-	 */
 	command: string
-	/**
-	 * What the number means, and what a deviation would imply.
-	 */
 	note: string
 }
 
 /**
  * Maps a harness's own metric keys to baseline ids.
  *
- * Exists because the mapping isn't derivable: v264 has no span head, so oracle-k's segment decode
- * is the summed-BIO stand-in (`@v264-summed-bio`) while its token decode is the real thing (`@v264`).
+ * The mapping is not derivable because one model can carry both a real and a stand-in artifact id.
  */
 export interface BaselineProfile {
 	description: string
@@ -145,14 +68,13 @@ export interface BaselineObservation {
 export interface BaselineViolation {
 	id: string
 	/**
-	 * `unregistered` — no row exists, so the reading cannot be verified at all.
+	 * `unregistered` means no row exists, so the reading cannot be verified at all.
 	 */
 	kind: "deviation" | "unregistered"
 	observed: number
 	expected?: number
 	/**
-	 * Signed relative deviation.
-	 * Negative means the observation read low.
+	 * Signed relative deviation, negative when the observation read low.
 	 */
 	deviationRel?: number
 	tolerance?: number
@@ -168,7 +90,7 @@ export interface BaselineVerdict {
 let cachedFile: BaselineFile | undefined
 
 /**
- * Anchored at the package root — tsc does not emit `baselines.json` into `out/`,
+ * Anchored at the package root because tsc does not emit `baselines.json` into `out/`,
  * so the file is named from where the package starts rather than from where this module runs.
  */
 function resolveBaselineFilePath(): string {
@@ -215,10 +137,7 @@ export async function resolveProfile(name: string): Promise<BaselineProfile> {
 }
 
 /**
- * Check a harness's readings against a profile.
- *
- * Metric keys the profile doesn't map are ignored.
- * A profile declares what it can vouch for rather than everything a harness happens to compute.
+ * Checks a harness's readings against a profile, ignoring metric keys the profile does not map.
  */
 export async function assertProfile(name: string, readings: Record<string, number>): Promise<BaselineVerdict> {
 	const profile = await resolveProfile(name)
@@ -235,10 +154,7 @@ export async function assertProfile(name: string, readings: Record<string, numbe
 }
 
 /**
- * Check observations against the registry.
- *
- * An unregistered id is a violation rather than a pass.
- * An unverifiable reading is exactly the state both incidents were in.
+ * Checks observations against the registry, where an unregistered id is a violation rather than a pass.
  */
 export async function assertBaselines(observations: BaselineObservation[]): Promise<BaselineVerdict> {
 	const file = await loadBaselineFile()
@@ -255,11 +171,8 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 
 		const tolerance = baseline.tolerance_rel ?? file.default_tolerance_rel
 
-		// An absolute tolerance wins when declared.
-		// Small-count metrics (a street-evidence rate of 1/63) have a meaningless relative band —
-		// one fixture moves it 100% — so those rows opt out of relative checking entirely.
-		// A zero-valued row must declare one.
-		// Relative is undefined.
+		// An absolute tolerance wins when declared, and a zero-valued row must declare one
+		// because relative deviation is undefined.
 		if (baseline.tolerance_abs !== undefined || baseline.value === 0) {
 			const toleranceAbs = baseline.tolerance_abs ?? 0
 			const drift = Math.abs(observation.observed - baseline.value)
@@ -308,8 +221,7 @@ export class BaselineDeviationError extends Error {
 }
 
 /**
- * Render a verdict for a terminal.
- * The message a refusing harness prints instead of a report.
+ * Renders a verdict for a terminal, the message a refusing harness prints instead of a report.
  */
 export function formatVerdict(verdict: BaselineVerdict): string {
 	if (verdict.ok) return `baseline check: ${verdict.checked} observation(s) within tolerance`
@@ -360,9 +272,8 @@ export function formatVerdict(verdict: BaselineVerdict): string {
 }
 
 /**
- * Assert, or throw.
- *
- * The one-liner a harness puts before it prints anything.
+ * Asserts the observations and throws on a deviation, the one-liner a harness puts
+ * before it prints anything.
  */
 export async function guardReport(observations: BaselineObservation[]): Promise<void> {
 	const verdict = await assertBaselines(observations)

@@ -23,7 +23,7 @@ import {
 } from "#street/normalize"
 
 /**
- * The weighted centroid, extent and provenance that an aggregate probe returns.
+ * The weighted centroid, extent, and provenance an aggregate probe returns;
  * `lat` is null when no row matched.
  */
 interface AggRow {
@@ -48,8 +48,7 @@ const AGG_SELECT =
 	"MAX(source) AS source, MAX(release) AS release"
 
 /**
- * Returns half the bounding-box diagonal in metres, used as a coarse uncertainty
- * radius for a street centroid.
+ * Half the bounding-box diagonal in metres, used as a coarse uncertainty radius for a street centroid.
  */
 function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: number): number {
 	return Math.round(haversineKm(minLat, minLon, maxLat, maxLon) * 500)
@@ -58,10 +57,6 @@ function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: n
 /**
  * Finds a street's centroid and extent-based uncertainty by street name,
  * scoped by postcode and then by base commune.
- *
- * Each scope aggregates every matching row, so a commune probe returns one centroid
- * over all the postcodes and arrondissements the street spans.
- * Street matching is exact after normalization with the extract's `streetLocale`.
  */
 export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	readonly #db: DatabaseClient<StreetCentroidDatabase>
@@ -70,16 +65,14 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey], AggRow> | undefined
 
 	/**
-	 * @param dbPath Extract path.
-	 * @param opts.streetLocale The street-normalization locale the extract was built with.
-	 * A mismatch makes every key miss.
-	 * It defaults to `"fr"`.
+	 * The extract defaults to the `fr` street-normalization locale.
+	 * A mismatch with the extract's locale makes every key miss.
 	 */
 	constructor(dbPath: PathBuilderLike, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "fr"
 
-		// An extract without a `street_centroid` table, such as an interrupted build, makes every lookup miss.
+		// An extract without a `street_centroid` table makes every lookup miss.
 		if (hasTable(this.#db, "street_centroid")) {
 			this.#byPostcode = prepareGet(
 				this.#db,

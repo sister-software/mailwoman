@@ -16,7 +16,7 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * The file list of a published `@mailwoman/neural-weights-en-in` tarball that lacked its declared binary.
+ * The file list of a published `@mailwoman/neural-weights-en-in` tarball.
  */
 const EN_IN_SHIPPED = new Set(["./README.md", "./model-card.json", "./package.json", "./scripts/link-dev-weights.ts"])
 

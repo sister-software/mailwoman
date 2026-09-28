@@ -3,51 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index.
- *   Extracts per-country (locality, region) pairs from the WOF admin DB's `ancestors` table and
- *   writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`.
+ * Probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index. Extracts per-country
+ * (locality, region) pairs from the WOF admin DB's `ancestors` table and writes one PIX1 binary per
+ * country to `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`.
  *
- *   Lives in the gazetteer pipeline (the sanctioned home for builders — scripts/agents.md's closed
- *   drawer) but is not yet behind a `mailwoman gazetteer` command: it's a probe, runnable directly
- *   (`node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts`) via `runIfScript` so plain
- *   import stays side-effect-free. Graduation path (design doc): fold into `gazetteer pair-index`
- *   behind an `--edge` mode once either consumer is green-lit.
+ * Not a shipped-artifact build. Three safety properties keep an accidental wire-up inert: `delta: 0`,
+ * a filename that does not match the loader's auto-wire pattern, and output under the data root
+ * rather than any `neural-weights-*` workspace.
  *
- *   Not a shipped-artifact build. Three deliberate safety properties keep an accidental wire-up
- *   inert:
+ * Format is PIX1 verbatim, with extra header keys `edge`, `source` and `probeArtifact`; old readers
+ * parse the header and never consult them.
  *
- *   1. `delta: 0` — the soft-prior bias magnitude is zero, so even a loaded probe artifact biases
- *      no token (the calibration task owns any real value).
- *   2. The filename (`pair-index-locality-region-<cc>.bin`) does not match the loader's auto-wire
- *      pattern (`pair-index-<cc>.bin` as a weights-package sibling).
- *   3. The output lives under the data root rather than in any `neural-weights-*` workspace.
+ * Extraction: `spr` rows with `placetype = 'locality'`, `is_current = 1` and `is_deprecated = 0`;
+ * edges from `ancestors` with `ancestor_placetype` in the per-country parent set (US `region`; FR
+ * `region` + `macroregion`); surfaces from `spr.name` ∪ official `names`; folded with
+ * `normalizeFSTToken` on both sides under `foldVersion: 1`.
  *
- *   Format: PIX1 verbatim (`serializePairIndex` / `PairIndexResolver` — zero changes to `neural/`).
- *   The header rides the absence-tolerant JSON extension precedent set by `transitionBeta`
- *   (schema-owned fields are stamped by the serializer): extra keys `edge`, `source`, and `probeArtifact` describe the
- *   hierarchy edge in ComponentTag space, the WOF extraction provenance, and the uncalibrated-probe
- *   status. Old readers parse the header and never consult the extra keys.
- *
- *   Extraction policy (measured in the design doc):
- *
- *   - Child places: `spr` rows, `placetype = 'locality'`, `is_current = 1 and is_deprecated = 0`.
- *   - Edges: the `ancestors` table, `ancestor_placetype` in the per-country parent set — US `region`;
- *     FR `region` + `macroregion` (both the département and the région are `region`-tagged surfaces in
- *     FR addresses. WOF splits them across two placetypes).
- *   - Surfaces (name policy `spr-name+official-names-v1`): `spr.name` ∪ `names` rows with
- *     `official = 1`, for child and parent alike. The official-name union is what makes the FR
- *     artifact carry "Bretagne" (official fra) alongside the spr default "Brittany" — the #936
- *     precedent (official-language names are name-exact evidence).
- *   - Fold: `normalizeFSTToken` (nfkc, lowercase, strip punctuation/symbols) on both sides — the
- *     same single-sourced fold the GB/NZ register artifacts and the decode-side probe use
- *     (`foldVersion: 1`).
- *
- *   Self-verifying (the sealed-artifact spirit): after the temp-write + rename, the bytes are
- *   re-read through a fresh `PairIndexResolver` and known per-country pairs are probed, printing
- *   `probe OK`/`probe miss` receipts. The independent ground-truth sweep lives in
- *   `pair-index-hierarchy-verify.ts` — run it after this.
- *
- *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts [--countries us,fr] [--db <path>] [--out <dir>] [--skip-source-md5]`
+ * Self-verifying: the written bytes are re-read through a fresh `PairIndexResolver` and known
+ * per-country pairs are probed. The independent ground-truth sweep is `pair-index-hierarchy-verify.ts`.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -100,10 +73,9 @@ export const EDGE_SPEC_BY_COUNTRY: Readonly<
 }
 
 /**
- * Post-write self-check probes, PER country (the pair-index.tsx lesson: probing another country's
- * names against a fresh index prints reassuring `probe miss` lines that verify no name).
+ * Post-write self-check probes, per country.
  *
- * Raw surfaces — folded through `normalizeFSTToken` at probe time, exactly like a decode-time caller would.
+ * Raw surfaces folded through `normalizeFSTToken` at probe time, exactly like a decode-time caller would.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [child: string, parent: string]>>> = {
 	us: [
@@ -232,8 +204,6 @@ async function main(): Promise<void> {
 		const childPlaceholder = spec.childWOFPlacetypes.map(() => "?").join(",")
 		const parentPlaceholder = spec.parentWOFPlacetypes.map(() => "?").join(",")
 
-		// Phase 1: id-level edges — child place under parent place, self-edges excluded,
-		// both endpoints current + non-deprecated.
 		const edgeRows = allRows<EdgeRow>(
 			db.prepare(
 				`SELECT DISTINCT s.id AS child_id, a.ancestor_id AS parent_id
@@ -248,20 +218,14 @@ async function main(): Promise<void> {
 			...spec.childWOFPlacetypes
 		)
 
-		// Phase 2: surfaces.
-		// Country-scoping the parent side is sound.
-		// Every ancestor of a US locality is itself US.
-		// A parent outside the scope would simply have no surfaces and the edge is skipped.
+		// Phase 2: country-scoping the parent side is sound because every ancestor
+		// of a US locality is itself US.
+		// A parent outside the scope has no surfaces and its edge is skipped.
 		const childSurfaces = collectSurfaces(db, wofCountry, spec.childWOFPlacetypes)
 		const parentSurfaces = collectSurfaces(db, wofCountry, spec.parentWOFPlacetypes)
 
-		// Phase 3: fold + dedupe into PIX1 entries.
-		// Tag = the child's ComponentTag — what a decode hit resolves the child span to.
-		// `parentTag` (PIX2 / schema 3) = the parent's, which this builder knows from its own edge
-		// declaration rather than from the row: `edge.parent` below is `region`, and both WOF parent
-		// placetypes this spec selects (`region`, FR's `macroregion`) project onto that one ComponentTag.
-		// A département and a région are alike region-tagged surfaces in a French address,
-		// which is exactly why the spec pairs them.
+		// Phase 3: fold + dedupe into PIX1 entries; `tag` is the child's ComponentTag and
+		// `parentTag` (PIX2 / schema 3) is the parent's, known from this spec rather than the row.
 		const seen = new Map<string, PairIndexEntry>()
 		let surfacePairs = 0
 		let emptyChildFolds = 0
@@ -301,7 +265,6 @@ async function main(): Promise<void> {
 		const header: HierarchyPairIndexHeader = {
 			country,
 			// Uncalibrated probe — zero on purpose: even an accidentally-wired probe artifact biases no token.
-			// The calibration task owns any real value (the pair-index.tsx `--delta` discipline).
 			delta: 0,
 			foldVersion: 1,
 			sourceMD5s: [sourceMD5],

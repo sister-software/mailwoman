@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Where each attached spatial layer lives under the data root. The geocode session opens these paths and
- *   `mailwoman doctor` reports on the same set, so the list has one home: a layer the doctor describes is a layer the
- *   session would attach, and the reverse.
+ *   Where each attached spatial layer lives under the data root, one list shared by the geocode session and
+ *   `mailwoman doctor` so a layer the doctor describes is a layer the session would attach.
  */
 
 import { coastalDatabaseRoot } from "@mailwoman/coastal/paths"
@@ -17,10 +16,8 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * The layer databases the session attaches when present, keyed by the layer's short id.
- *
- * Each names its directory through the owning package's `paths` export
- * and the filename the session opens there.
+ * The layer databases the session attaches when present, keyed by the layer's short id
+ * and each naming its directory through the owning package's `paths` export.
  */
 const LAYER_DATABASES = {
 	flood: { label: "Flood zones (EA England)", directory: floodDatabaseRoot, filename: "flood.db" },
@@ -65,14 +62,8 @@ export function layerDatabases(dataRoot: PathBuilderLike): LayerDatabaseRef[] {
 }
 
 /**
- * The `.db` files in a layer's directory that are not the file the session attaches.
- *
- * A build that wrote the artifact under another name
- * (the Iowa soil pilot's `soil-ia.db` beside an expected `soil.db`).
- *
- * The session attaches no layer in that case, and the doctor reports the alternates
- * so the absence reads as a name mismatch rather than a coverage fact.
- * An absent directory answers an empty list.
+ * The `.db` files in a layer's directory that are not the file the session attaches,
+ * so the doctor reads an alternate name as a name mismatch rather than a coverage fact.
  */
 export async function layerDatabaseAlternates(dataRoot: PathBuilderLike, id: LayerID): Promise<string[]> {
 	const { directory, filename: canonical } = LAYER_DATABASES[id]

@@ -2,15 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `mailwoman data sources` over planted databases: the four answers it has to keep apart, and the one it must
- *   never give.
- *
- *   The one it must never give is an empty census presented as a result. A bundle whose artifacts carry no publisher
- *   column, a bundle nobody has downloaded, and a bundle whose every stamp matches the record all print no rows under
- *   a naive reader, and only the last is a clean check. Each has its own status here.
- *
- *   The live case this was written for is the `us` bundle, whose record named the Census Bureau and OpenAddresses
- *   while 68.2% of its 125,276,536 rows carried `overture:NAD`.
+ * @file `mailwoman data sources` over planted databases, keeping apart a bundle whose artifacts carry no publisher column, one nobody has downloaded, one whose every stamp matches the record, and one that could not be read.
  */
 
 import { databaseRootPath } from "@mailwoman/core/data-root"
@@ -26,11 +18,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * A bundle declaring one artifact per given local path, with a census over `address_point.source`.
- *
- * The rights declaration is required to compile, and an empty one makes no statement
- * rather than describing a bundle with no obligations.
- * The same fixture convention `bundles.test.ts` uses.
+ * A bundle declaring one artifact per given local path, with a census over
+ * `address_point.source` and a rights declaration required to compile.
  */
 function bundleOver(localPaths: readonly string[], census: DataBundle["sourceCensus"]): DataBundle {
 	return {
@@ -47,14 +36,11 @@ function bundleOver(localPaths: readonly string[], census: DataBundle["sourceCen
 	}
 }
 
-/**
- * Plant a database at `localPath` under a fresh data root, carrying one `address_point` row per stamp.
- */
 async function plant(rowsBySource: Record<string, number>, localPath = "points.db") {
 	const scratch = fixtures.use(await temporaryDirectory("mw-data-sources-"))
 	const dataRoot = scratch.path
-	// Plant through the same builder the census resolves with, so a change to the data
-	// root's database group moves the fixture and the reader together.
+	// Plant through the same builder the census resolves with, so a database-group
+	// change moves the fixture and the reader together.
 	const path = databaseRootPath(dataRoot)(localPath)
 
 	await makeDirectories(dirname(path))
@@ -95,7 +81,6 @@ describe("censusBundleSources", () => {
 		expect(result.status).toBe("none-recorded-in-the-artifacts")
 		expect(result.tallies).toEqual([])
 
-		// The distinction the status carries: this prints differently from a census that read rows and found none.
 		expect(renderSourceCensus(result, ["A Publisher"]).join("\n")).toContain("carry no publisher column")
 	})
 
@@ -119,9 +104,8 @@ describe("censusBundleSources", () => {
 
 		const rendered = renderSourceCensus(result, ["A Publisher"]).join("\n")
 
-		// A percentage over part of a bundle describes the part.
-		// Printing `100.0%` here would say the bundle carries one publisher,
-		// which a partial copy cannot establish.
+		// A percentage over part of a bundle describes only that part, so printing `100.0%`
+		// would claim something a partial copy cannot establish.
 		expect(rendered).toContain("the shares below are withheld")
 		expect(rendered).not.toContain("%")
 	})
@@ -152,8 +136,8 @@ describe("censusBundleSources", () => {
 
 		const result = await censusBundleSources(bundle, dataRoot)
 
-		// The interpolation artifact is a different shape rather than a missing or broken one,
-		// so it is neither absent nor a problem, and the shares stay printable.
+		// The interpolation artifact is a different shape rather than a missing
+		// or broken one, so it is neither absent nor a problem.
 		expect(result.artifactsOutOfScope).toBe(1)
 		expect(result.artifactsAbsent).toBe(0)
 		expect(result.problems).toEqual([])

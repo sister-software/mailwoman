@@ -3,12 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The source-conflict check, and the baseline it is measured against.
- *
- *   The property under test is the distinction the check exists to draw: fourteen countries are two-source
- *   today because someone traded duplication for coverage, and a fifteenth appearing is an accident. A check
- *   that refused all multi-source countries would refuse the trade. one that accepted all of them would
- *   never catch the accident. Both failures print a clean result.
+ *   The check must distinguish a measured two-source trade from an accidental third source: refusing all
+ *   multi-source countries would refuse the trade, and accepting all would never catch the accident.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -36,19 +32,16 @@ const LIVE = {
 
 describe("the shipped recipe", () => {
 	it("has no UNRECORDED multi-source country", () => {
-		// The regression this guards: a country cloned as a WOF repo, or moved between lists,
-		// without being removed from the one that served it.
-		// `verifyAdmin` tests floors, so the duplication moves every check number in
-		// the passing direction and the build ships.
+		// `verifyAdmin` tests floors, so a country cloned as a WOF repo or moved between lists
+		// without being removed ships with every check number moving in the passing direction.
 		const conflicts = sourceConflicts(countrySourceMap(LIVE))
 
 		expect(conflicts.map((c) => `${c.country}: ${c.sources.join("+")}`)).toEqual([])
 	})
 
 	it("still matches the measured baseline exactly", () => {
-		// Measured 2026-08-17 against both the lists and admin-global-priority.db:
-		// 14 two-source countries, all Overture + GeoNames.
-		// If this drifts, the baseline is stale and the number in the docstring is a claim nobody re-measured.
+		// The baseline is 14 two-source countries, all Overture + GeoNames.
+		// If this drifts the baseline is stale rather than the code wrong.
 		const multi = countrySourceMap(LIVE).filter((e) => e.sources.length > 1)
 
 		expect(multi.map((e) => e.country).toSorted()).toEqual([...ACCEPTED_TWO_SOURCE_COUNTRIES].toSorted())
@@ -74,17 +67,16 @@ describe("sourceConflicts", () => {
 	})
 
 	it("accepts a baseline country, because that trade was measured", () => {
-		// CZ: 9,800 of its 11,904 GeoNames names are already in Overture.
-		// Duplication, and deliberate.
-		// FI in the same set gains ~12,000 names Overture lacks, so dropping the fold is a coverage decision.
+		// CZ duplicates Overture deliberately, and FI in the same set gains names Overture
+		// lacks, so dropping the fold is a coverage decision.
 		expect(
 			sourceConflicts(countrySourceMap({ wofCountries: [], overtureCountries: ["CZ"], geonamesCountries: ["CZ"] }))
 		).toEqual([])
 	})
 
 	it("refuses a WOF clone that keeps its old list entry, EVEN for a baseline country", () => {
-		// The #267 case, and the reason the WOF check ignores the baseline: every accepted entry is
-		// Overture + GeoNames, so WOF appearing means a clone landed and the list was never edited.
+		// Every accepted entry is Overture + GeoNames, so WOF appearing means a clone landed
+		// and the list was never edited.
 		const conflicts = sourceConflicts(
 			countrySourceMap({ wofCountries: ["CZ"], overtureCountries: ["CZ"], geonamesCountries: [] })
 		)
@@ -125,8 +117,8 @@ describe("sourceSentence", () => {
 
 describe("the id-band literals in country-plan.ts", () => {
 	it("agree with the folds that mint them", async () => {
-		// `censusForCountry` spells the boundaries as SQL literals because a query cannot import a constant.
-		// This is what stops that duplication from drifting: a fold that moves its base moves this test.
+		// `censusForCountry` spells the boundaries as SQL literals because a query cannot
+		// import a constant, so a fold that moves its base must move this test.
 		const { GEONAMES_ID_BASE, OVERTURE_ID_BASE } = await import("@mailwoman/core/resolver/synthetic-id-ranges")
 
 		const source = await readLocalTextFile(
@@ -147,10 +139,8 @@ describe("planCountryMove", () => {
 	const census = (over: number, geo: number, wof = 0) => ({ country: "TR", wof, overture: over, geonames: geo })
 
 	it("writes BOTH halves of a move — add to the target, remove from the source", () => {
-		// The half no check enforced.
-		// Adding a country by cloning is half the job.
-		// The other half is removing it from whichever list serves it today,
-		// and the build ships either way because verifyAdmin tests floors.
+		// Removing the country from whichever list serves it today is the half no check
+		// enforced, because the build ships either way.
 		const plan = planCountryMove({
 			country: "tr",
 			target: AdminSource.WOF,
@@ -181,9 +171,7 @@ describe("planCountryMove", () => {
 	})
 
 	it("multiplies the packed size out to the checkout cost", () => {
-		// GitHub reports packed size.
-		// Quoting it is how 65 GB arrived unannounced.
-		// A --countries tr sync reported 83.4 MB and wrote 633 MB.
+		// GitHub reports packed size, which understates the checkout cost a sync actually writes.
 		const plan = planCountryMove({
 			country: "TR",
 			target: AdminSource.WOF,
@@ -227,9 +215,8 @@ describe("planCountryMove", () => {
 
 describe("planCountryMove — a move that is already done", () => {
 	it("plans nothing for a country the target already serves", () => {
-		// US is WOF-served with 259,485 rows.
-		// An "add DEFAULT_WOF_PRIORITY_COUNTRIES" here would have a reader edit a list the
-		// country is already on, so the plan would be describing work that is done.
+		// US is already WOF-served, so an add edit would have a reader touch a list
+		// the country is on and describe work that is done.
 		const plan = planCountryMove({
 			country: "US",
 			target: AdminSource.WOF,

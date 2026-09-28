@@ -3,15 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The turnkey admin-gazetteer build — every step of the runbook that used to live across one script
- *   plus four separately-remembered post-build steps (the #1015 rebuild missed two of them), in one
- *   verified, sealed pipeline:
+ *   The turnkey admin-gazetteer build — the runbook phases in one verified, sealed pipeline:
  *
  *   ingest-wof → fold-overture → fold-geonames → freeze → enrich → vacuum into → FTS → verify → seal.
  *
- *   A failed verify throws and leaves the artifact unsealed for inspection — do not swap it. On
- *   success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json` — a LOG rather than
- *   a recipe. the recipe is `../defaults.ts`).
+ *   A failed verify throws and leaves the artifact unsealed for inspection — do not swap it. On success
+ *   the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json`, a log rather
+ *   than a recipe. The recipe is `../defaults.ts`).
  */
 
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
@@ -97,7 +95,7 @@ export interface BuildAdminResult {
 /**
  * Run the full admin-gazetteer build.
  *
- * See the module docstring for the phase order and why it's fixed.
+ * The module docstring holds the phase order and why it is fixed.
  */
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
@@ -117,9 +115,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		await removePath(ingestPath)
 	}
 
-	// Before the WOF ingest rather than at `fold-overture` where the release is first read:
-	// a pruned pin is a one-request question, and discovering it after 2.9M records
-	// reads as a network fault rather than an expired pin.
+	// Checked before the WOF ingest rather than at `fold-overture`: a pruned pin is a one-request question,
+	// and discovering it after 2.9M records reads as a network fault rather than an expired pin.
 	const releaseCheck = await checkOvertureRelease(overtureRelease)
 
 	phase("preflight", releaseCheck.message)
@@ -154,7 +151,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			dataDir,
 			concurrency: opts.concurrency,
 			batchCommitSize: opts.batchCommitSize,
-			// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames consumes. A data root without them degrades to the plain label preference.
+			// GeoNames-anchored label-point adjudication.
+			// Reads the same per-country extracts fold-geonames consumes, and a data root
+			// without them degrades to the plain label preference.
 			anchorLookup: await createGeoNamesAnchorLookup(dataRootPath("geonames")),
 			onProgress: (processed, skipped, total) =>
 				phase(
@@ -172,7 +171,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
 		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
 
-		// #1026: the A-class admin fold for the zero-coverage locales — country + region nodes + locality ancestry. Scoped to the countries actually in this run's geonames set.
+		// The A-class admin fold for the zero-coverage locales — country + region nodes +
+		// locality ancestry — scoped to the countries actually in this run's geonames set.
 		const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
 		phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
 		folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet })
@@ -244,8 +244,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	await stampLayerManifest(
 		out,
 		adminLayerManifest({
-			// The counts the build actually produced rather than the lists it was given.
-			// A fold that ingested no places must not appear as a source — see manifest.ts.
+			// The counts the build actually produced rather than the lists it was given,
+			// so a fold that ingested no places does not appear as a source — see manifest.ts.
 			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
 			buildSHA: sha,
 			vintages: { overture: overtureRelease },
@@ -259,8 +259,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	phase("seal")
 	await sealDatabase(out)
 
-	// Build log — an auto-appended record (what ran, when, fingerprint), so the manifest
-	// can't lag the artifact again (#1015's reconstruct-from-artifact).
+	// Build log — an auto-appended record of what ran, when, and its fingerprint,
+	// so the manifest cannot lag the artifact.
 	// The recipe itself lives in defaults.ts.
 	const buildLogPath = opts.buildLogPath ?? repoRootPath("data", "gazetteer", "wof-build-manifest.json")
 

@@ -2,24 +2,19 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A `{@link}` or `{@linkcode}` naming a symbol with no declaration. The tag reads as a promise that the thing
- *   exists, and an agent following one implements the name instead of finding the code: `readPackageJSONFile` was
- *   never a declaration anywhere in this repository, only a `@see {@linkcode …}` target, and it was written twice
- *   before anyone noticed there was no declaration to find.
+ * @file A `{@link}` or `{@linkcode}` naming a symbol with no declaration. The tag reads as a promise that the
+ *   thing exists, and an agent following one implements the name instead of finding the code.
  *
- *   what IT checks. A bare identifier target — `{@link foo}`, `{@linkcode Foo.bar}` — against the set of names
- *   the tree declares or imports anywhere. A URL target, a path, and a `{@link foo | text}` label are all left alone.
- *   The name set is repository-wide rather than per-file on purpose: a link to a name declared in another package is
- *   correct and common, so a per-file rule would report thousands of them.
+ *   A bare identifier target — `{@link foo}`, `{@linkcode Foo.bar}` — is checked against every identifier the tree
+ *   declares or imports anywhere. A URL target, a path, and a `{@link foo | text}` label are left alone, and the name
+ *   set is repository-wide because a link to a name declared in another package is correct and common.
  *
- *   A backticked name inside a doc comment is read the same way when it is shaped like a declaration: a call such
- *   as `` `parse()` ``, or a camel-case name with at least two humps such as `` `readPackageJSONFile` ``. A short
- *   backticked word (`` `db` ``, `` `lat` ``, a CLI flag, a wire field) is prose and is not judged. A backticked name
- *   the tree never declares carries the same false promise as a link tag, and is reported the same way.
+ *   A backticked name inside a doc comment is read the same way when it is shaped like a declaration — a call such as
+ *   `` `parse()` ``, or a camel-case name with at least two humps such as `` `readPackageJSONFile` `` — while a short
+ *   backticked word such as `` `db` ``, `` `lat` ``, a CLI flag, or a wire field is prose and is not judged.
  *
- *   that width is the limit, and it is stated rather than hidden: a tag naming a symbol that exists somewhere but not
- *   where the reader can reach it still passes. What this refuses is the name that exists nowhere at all, which is the
- *   case that sends someone off to write it.
+ *   A tag naming a symbol that exists somewhere but not where the reader can reach it still passes. What this refuses
+ *   is the name that exists nowhere at all.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -41,9 +36,8 @@ const LINK_TAG = /\{@link(?:code|plain)?\s+(?<target>[^}\s|]+)/gu
 const BACKTICKED_NAME = /`(?<target>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\(\))?)`/gu
 
 /**
- * A capital that opens a new camel-case component: one after a lowercase letter or digit,
- * or one that closes a run of capitals before a lowercase letter.
- * `readPackageJSONFile` has three, `GeoCoordinate` one.
+ * A capital that opens a new camel-case component: one after a lowercase letter
+ * or digit, or one closing a run of capitals before a lowercase letter.
  */
 const HUMP = /(?<=[a-z0-9])[A-Z]|(?<=[A-Z])[A-Z](?=[a-z])/gu
 
@@ -67,15 +61,12 @@ function isJudgeable(target: string): boolean {
 const FILE_EXTENSION_TAIL = /\.[a-z0-9]{1,4}$/u
 
 /**
- * Whether a backticked name is shaped like a declaration: a camel-case name with at
- * least {@linkcode HUMP_FLOOR} humps, or a call with at least one.
+ * Whether a backticked name is shaped like a declaration: a camel-case name
+ * with at least {@linkcode HUMP_FLOOR} humps, or a call with at least one,
+ * judged by its head since the head is what resolves.
  *
- * A single word, called or not, is prose, and prose may spell anything:
- * `` `float()` `` is Python's and `` `hsl()` `` is CSS's.
- *
- * A dotted name is judged by its head, since the head is what resolves:
- * `` `str.isupper()` `` is a call on a word.
- * A name with no lowercase letter is a code such as a postcode.
+ * A single word, called or not, is prose and prose may spell anything, and a name
+ * with no lowercase letter is a code such as a postcode.
  */
 function isDeclarationShaped(target: string): boolean {
 	if (FILE_EXTENSION_TAIL.test(target)) return false
@@ -93,8 +84,8 @@ function isDeclarationShaped(target: string): boolean {
 /**
  * Every doc comment in the file, as its text.
  *
- * Line comments and plain block comments are left out: a doc comment describes a declaration,
- * and a name it backticks is read as a promise about the code.
+ * Line and plain block comments are left out because only a doc comment's
+ * backticked names read as promises about the code.
  */
 function docComments(text: string, file: string): Array<{ pos: number; text: string }> {
 	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)
@@ -160,11 +151,8 @@ function docTargets(text: string, file: string): DocTarget[] {
 }
 
 /**
- * Every identifier the file spells, in a declaration or a use.
- *
- * A name the code reaches on an external library (`toLowerCase`, `readFileSync`) is as
- * real as one the tree declares, and a doc comment may point at either.
- * This is the vocabulary a link in this repository may name.
+ * Every identifier the file spells, in a declaration or a use, including a name the code reaches
+ * on an external library, which a doc comment may point at as readily as a local declaration.
  */
 function spelledNames(text: string, file: string, into: Set<string>): void {
 	const source = ts.createSourceFile(
@@ -206,22 +194,17 @@ export interface DanglingLink {
 }
 
 /**
- * This module's own repo-relative path, excluded from the sweep it performs: the header has to spell
- * the tag shapes it looks for, and `{@link foo}` in an explanation is an example rather than a promise.
- *
- * `debt.ts` excludes itself from its own vocabulary count for the same reason.
+ * This module's own repo-relative path, excluded from the sweep it performs because the
+ * header spells the tag shapes it looks for and an example there is not a promise.
  */
 const SELF = "packages/repo-health/lib/checks/doc-link-targets.ts"
 
 /**
- * Declaration-shaped identifiers of another project that a doc comment may spell:
- * a library's export, a service's wire field, a compiler option.
+ * Declaration-shaped identifiers of another project that a doc comment may spell —
+ * a library's export, a service's wire field, a compiler option — keyed by the
+ * head of a dotted name, each entry stating its owner.
  *
- * Each entry states its owner, so a reader can tell it from a stale name of this repository.
- * The register is keyed by the head of a dotted name.
- *
- * An entry no judged doc comment spells any more is reported, so the register
- * cannot outlive the prose it admits.
+ * An entry no judged doc comment spells is reported, so the register cannot outlive the prose it admits.
  */
 export const EXTERNAL_DOC_NAMES: Readonly<Record<string, string>> = {
 	InferTupleMember: "@isp.nexus/core",
@@ -252,9 +235,8 @@ interface DocLinkSweep {
  * Every doc target the tree never declares, and every register entry the tree no longer needs.
  */
 async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
-	// The vocabulary is read from every tracked TypeScript file, tests and docs included,
-	// since a name a test spells is one the tree knows.
-	// Only a doc comment under packages/*/lib is judged against it.
+	// The vocabulary is read from every tracked TypeScript file, tests included,
+	// while only a doc comment under `packages/*/lib` is judged against it.
 	const paths = await trackedSourcePaths(context, { existingOnly: true })
 	const judged = /^packages\/[^/]+\/lib\/.*\.ts$/u
 
@@ -291,8 +273,8 @@ async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 
 			if (known.has(head) || isKeyword(head)) continue
 
-			// A language built-in is a legitimate target and belongs to no file.
-			// Asked of the runtime rather than kept as a list, which would go stale against the platform.
+			// A language built-in is a legitimate target and belongs to no file,
+			// asked of the runtime rather than kept as a list that would go stale.
 			if (head in globalThis) continue
 
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- counting newlines in a string already resident.
@@ -302,8 +284,7 @@ async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 		}
 	}
 
-	// The register lives in this file.
-	// A tree without it, such as a planted test tree, has no entry to judge.
+	// The register lives in this file, so a tree without it — a planted test tree — has no entry to judge.
 	const staleExternals = texts.has(SELF) ? Object.keys(EXTERNAL_DOC_NAMES).filter((name) => !admitted.has(name)) : []
 
 	return {
@@ -320,8 +301,8 @@ export async function findDanglingLinks(context: RepoContext): Promise<DanglingL
 }
 
 /**
- * The check: each dangling link as a warning, because a tag promising a symbol that
- * does not exist is how a name gets implemented instead of imported.
+ * Each dangling link as a warning, because a tag promising a symbol that does not
+ * exist is how a name gets implemented instead of imported.
  */
 export const docLinkTargetsCheck: RepoCheck = {
 	id: "doc-link-targets",

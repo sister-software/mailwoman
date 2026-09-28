@@ -95,10 +95,8 @@ describe("MapRenderer", async () => {
 	})
 
 	it("falls back to an ancestor tile where the archive has no native coverage", async () => {
-		// The provider has one z8 tile and no deeper tile — the shape of a spatially
-		// sparse deep band outside its mask.
-		// Without the ancestor walk a z12 viewport here renders blank.
-		// With it, the z8 fill rasterizes at the z12 projection.
+		// The provider has one z8 tile and no deeper tile, so without the ancestor
+		// walk this z12 viewport renders blank.
 		const sparse = new MapRenderer(stubProvider())
 		const center = worldPxToLonLat(1000.5 * TILE_SIZE, 1500.5 * TILE_SIZE, 12)
 
@@ -123,10 +121,8 @@ describe("MapRenderer", async () => {
 	})
 
 	it("paints native detail over the ancestor fallback where both cover a cell", async () => {
-		// Viewport straddles the edge between absent tile 999 (left half — falls back to the
-		// z8 parent's residential fill) and native tile 1000 (right half — commercial fill).
-		// Coarse tiles rasterize first, so the native fill must win its own cells
-		// while the fallback keeps the rest.
+		// The viewport straddles absent tile 999 on the left and native tile 1000 on the right,
+		// and coarse tiles rasterize first so the native fill wins its own cells.
 		const straddling = new MapRenderer(stubProvider({ native: true }))
 		const centerOnEdge = worldPxToLonLat(1000 * TILE_SIZE, 1500.5 * TILE_SIZE, 12)
 

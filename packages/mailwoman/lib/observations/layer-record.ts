@@ -3,22 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two records every layer designation carries on its way to a caller: which artifact answered, and what
- *   the coverage row said.
- *
- *   shared BY all four layer routes, because they are provenance rather than product. A reader holding a
- *   designation and not the artifact's identity cannot check the claim, and a reader holding a coverage
- *   magnitude without its basis cannot tell a cell an authority declares complete from one where a source
- *   happened to return rows. Four routes writing the same mapping is four places for one to drop the basis.
+ *   Shared by all four layer routes, because a coverage magnitude without its basis cannot distinguish a cell an authority declares complete from one where a source happened to return rows.
  */
 
 import type { LayerManifest } from "@mailwoman/core/layers"
 import type { CoverageBasis } from "@mailwoman/evidence"
 
 /**
- * Which artifact answered, and on what terms.
- *
- * Everything a reader needs to go and check the claim.
+ * Which artifact answered and on what terms, with everything a reader needs to check the claim.
  */
 export interface ObservationLayerRecord {
 	name: string
@@ -34,12 +26,8 @@ export interface ObservationLayerRecord {
 }
 
 /**
- * The coverage side of a designation, flattened for a marker's evidence.
- *
- * `basis` travels as a plain string because a marker's evidence is JSON a caller reads
- * rather than a typed value it branches on, but it is never omitted: `completeness`
- * alone is a magnitude, and the whole point of the interface's `basis` column is
- * that a magnitude cannot be acted on without it.
+ * The coverage side of a designation, with `basis` carried as a plain string because a
+ * marker's evidence is JSON a caller reads rather than a typed value it branches on.
  */
 export interface ObservationCoverageRecord {
 	h3Cell: number
@@ -69,10 +57,8 @@ export function observationLayerRecord(manifest: LayerManifest): ObservationLaye
 }
 
 /**
- * A reader's coverage row as the record a designation carries, or no record where the reading had none.
- *
- * Absent rather than zeroed where the layer holds no coverage row for the cell:
- * a missing row means unknown, and a record reading `completeness: 0` would say the opposite.
+ * A reader's coverage row as the record a designation carries, absent rather than zeroed
+ * where the layer holds no row for the cell because a missing row means unknown.
  */
 export function observationCoverageRecord(
 	coverage:
@@ -101,10 +87,8 @@ export function observationCoverageRecord(
 }
 
 /**
- * The coverage sentence a designation's one-line description carries.
- *
- * One wording for every layer, with the completeness term added only where the
- * layer's basis makes a completeness magnitude meaningful.
+ * The coverage sentence a designation's one-line description carries, adding the completeness
+ * term only where the layer's basis makes a completeness magnitude meaningful.
  */
 export function describeCoverage(
 	coverage: ObservationCoverageRecord | undefined,
@@ -118,10 +102,7 @@ export function describeCoverage(
 }
 
 /**
- * The provenance sentence: which artifact answered, in one wording.
- *
- * `tier` widens it for a layer whose tier is part of the claim
- * (zoning ships `build-local`, and a reader must see that on the line).
+ * The provenance sentence in one wording, widened with `tier` for a layer whose tier is part of the claim.
  */
 export function describeLayerProvenance(layer: ObservationLayerRecord, options: { tier?: boolean } = {}): string {
 	const terms = options.tier ? `tier ${layer.tier}, license ${layer.license}` : layer.license
@@ -137,9 +118,6 @@ export type LayerDesignationDecision<Observation, Refusal extends string> =
 	| { fired: false; refusal: Refusal | "no_coordinate" }
 
 export interface CreateDesignationRouteOptions<Reading, Observation, Refusal extends string> {
-	/**
-	 * Read the layer at one coordinate.
-	 */
 	read: (latitude: number, longitude: number) => Reading
 	/**
 	 * The named silence a reading maps to, or `undefined` where the reading fires.

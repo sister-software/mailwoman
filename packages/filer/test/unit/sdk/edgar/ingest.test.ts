@@ -4,9 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for the assembled edgar chain.
  *
- *   The Exhibit 21 documents are real vendored filings. the submissions payloads are minimal stubs carrying
- *   only what this module reads. No test performs a live request — the client is an object literal
- *   satisfying {@link SECIngestClient}.
+ * No test performs a live request. The client is an object literal satisfying {@link SECIngestClient}.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -33,10 +31,6 @@ const CABLE_ONE_HEADERS = `
 &lt;FILENAME&gt;a2025q4-exhibit211.htm
 &lt;/DOCUMENT&gt;`
 
-/**
- * Build a client over a per-registrant script: SIC, whether it has a 10-K,
- * and which exhibit fixture to serve.
- */
 async function stubClient(
 	script: Record<
 		string,
@@ -64,8 +58,8 @@ async function stubClient(
 		},
 		getDocument: (input: string | URL): Promise<string> => {
 			const url = String(input)
-			// The URL's filename comes from the scripted document manifest rather than from
-			// the fixture name, so match on the CIK in the archive path instead.
+			// The URL's filename comes from the scripted document manifest rather than the
+			// fixture name, so match on the CIK in the archive path instead.
 			const bare = /edgar\/data\/(\d+)\//.exec(url)?.[1] ?? ""
 			const entry = Object.values(script).find((candidate) => candidate.cikPath === bare) ?? Object.values(script)[0]
 
@@ -122,8 +116,6 @@ describe("collectEdgarSubsidiaryRows — the happy path", () => {
 
 describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 	it("drops a registrant SEC files outside the telecom range, however good the name score", async () => {
-		// This is the WideOpenWest -> WidePoint false match, at 0.886.
-		// Without the check it writes 9 rows.
 		const client = await stubClient({
 			"0001034760": {
 				cikPath: "1034760",
@@ -159,9 +151,8 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 	})
 
 	it("corroborates every candidate, not only the top-scoring one", async () => {
-		// The top name match is uncorroborated.
-		// A lower-scoring candidate is the real carrier.
-		// Scoring alone would stop at the first and report no match.
+		// Scoring alone would stop at the top name match, which is uncorroborated,
+		// while a lower-scoring candidate is the real carrier.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: WIDEPOINT, ticker: "WYY", title: "Cable One Holdings" },
 			{ cik: CABLE_ONE, ticker: "CABO", title: "Cable One, Inc." },

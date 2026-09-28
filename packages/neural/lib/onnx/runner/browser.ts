@@ -4,18 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Browser counterpart of `onnx-runner.ts`, selected by the `browser` export condition on
- *   `@mailwoman/neural/onnx-runner`.
+ *   `@mailwoman/neural/onnx-runner`, because `onnxruntime-node` is a native addon whose `.node`
+ *   binaries a browser graph cannot parse and resolution picks the module rather than the importer.
  *
- *   `onnxruntime-node` is a native addon: anything that follows a value import of the Node runner into a browser graph
- *   pulls its `.node` binaries along and fails parsing them. Resolution picks the module rather than the importer
- *   guarding the import, so a caller names one specifier and never has to know which runtime it is in.
- *
- *   note FOR bundler config: a webpack SSR compile resolves under the `node` condition rather than `browser` — correctly, since
- *   it targets Node — so a Docusaurus-style server bundle reaches the real runner unless its config aliases this module
- *   explicitly. That is a property of building FOR Node rather than a gap in this map.
- *
- *   Every export throws rather than no-opping. A browser caller reaching `ONNXRunner` wanted inference, and an inert
- *   object would surface as an empty parse far from its cause.
+ *   A webpack SSR compile resolves under the `node` condition rather than `browser` and so reaches
+ *   the Node runner unless its config aliases this module explicitly.
  */
 
 /**
@@ -35,8 +28,6 @@ const BROWSER_MESSAGE =
 
 /**
  * Shaped to match the Node class's static surface so an importer sees the same API either way.
- *
- * An object rather than a class because it needs no instantiation — every entry point throws.
  */
 export const ONNXRunner = {
 	create(): never {

@@ -3,36 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The heavy, threaded half of the parallel-ingest split: geocode a stream of normalized records across
- * worker threads (`spliterator.parallelMapWorkers`). Compose it after `@mailwoman/registry`'s `normalizeCSV`,
- * filtering on the main thread first so you only geocode the rows you care about:
- *
- * ```ts
- * import { normalizeCSV } from "@mailwoman/registry"
- * import { geocodeStream } from "mailwoman/geocode"
- *
- * const normalized = normalizeCSV("nppes.csv", { mapping })
- * for await (const rec of geocodeStream(normalized, { mapping, geocode })) sink.write(rec)
- * ```
- *
- * Each worker rebuilds the classifier / WOF lookup / resolver / databases from {@link GeocodeStreamConfig}
- * (paths + locale) at startup — only config crosses out, only the enriched record crosses back.
- * Records arrive in completion order. Worth threading only because geocoding is ms-scale per row
- * (~23ms measured) — far above the cross-thread cost. for light normalization, stop after normalizeCSV.
- *
- * **Concurrency is low on purpose.** Geocoding is latency/memory-bound rather than CPU-bound: each row makes
- * random reads into the multi-GB WOF SQLite, and the classifier already uses several cores per inference.
- * A measured NPPES sweep (single 4 GB DB, 16-core box) peaked at **2 workers (~1.4×)** and *degraded* from
- * there — 4 workers ≈ baseline, 6 ≈ no gain — because the shared DB + memory bandwidth is the ceiling rather than
- * the core count. So the default is small, and more is usually worse. Sweep it for your data/box rather
- * than reaching for `availableParallelism()`.
- *
- * **Threads are the only change, and `parallelMapWorkers` is the whole pool.** `onnxruntime-node`'s `session.run()`
- * blocks the JS thread instead of releasing to the libuv pool, and `node:sqlite` reads are synchronous —
- * so concurrency *within* one runtime measures 1.00× flat from 1 to 16 (`plan/reference/performance.mdx`).
- * A separate runtime per row is the only thing that provides anything, which is what a worker is. That also
- * bounds what a richer pool implementation could be worth here: the scarce resource is DB and memory
- * bandwidth at a concurrency of ~2 rather than task-dispatch implementation.
+ * The heavy, threaded half of the parallel-ingest split: geocode a stream of normalized records across worker
+ * threads (`spliterator.parallelMapWorkers`), composed after `@mailwoman/registry`'s `normalizeCSV`. Each worker
+ * rebuilds the classifier, WOF lookup, resolver, and databases from {@link GeocodeStreamConfig} at startup, and
+ * records arrive in completion order. Concurrency is low on purpose: geocoding is latency- and memory-bound, and
+ * a measured NPPES sweep peaked at 2 workers (~1.4x) and degraded past that, because the shared DB plus memory
+ * bandwidth is the ceiling rather than the core count. Threads are the only change available, because
+ * `onnxruntime-node`'s `session.run()` blocks the JS thread and `node:sqlite` reads are synchronous, so a
+ * separate runtime per row — a worker — is what provides concurrency.
  */
 
 import { availableParallelism } from "@mailwoman/core/utils/system"
@@ -41,13 +19,12 @@ import { parallelMapWorkers } from "spliterator"
 
 export interface GeocodeStreamConfig {
 	/**
-	 * Path to the WOF admin SQLite DB.
-	 *
-	 * Opened read-only per worker (shared OS page cache).
+	 * Path to the WOF admin SQLite DB, opened read-only per worker (shared OS page cache).
 	 */
 	wofDBPath: string
 	/**
-	 * Mailwoman data root (geometry databases live under here).
+	 * Mailwoman data root.
+	 * Geometry databases live under here.
 	 */
 	dataRoot: string
 	/**
@@ -62,21 +39,19 @@ export interface GeocodeStreamConfig {
 
 export interface GeocodeStreamOptions {
 	/**
-	 * The same {@link ColumnMapping} used to normalize — the worker recomputes the address from it.
+	 * The same {@link ColumnMapping} used to normalize.
+	 * The worker recomputes the address from it.
 	 */
 	mapping: ColumnMapping
 	/**
-	 * Serializable geocoder config the worker rebuilds its deps from.
+	 * Serializable geocoder config the worker rebuilds its dependencies from.
 	 */
 	geocode: GeocodeStreamConfig
 	/**
 	 * Worker pool size.
 	 *
-	 * Keep it small — geocoding is I/O/memory-bound, so throughput peaks at ~2 workers
-	 * and degrades past that (see the module doc).
-	 * Bounded by RAM too (each worker loads the model + opens the DB).
-	 *
-	 * @default Math.min(4, availableParallelism())
+	 * Keep it small, because throughput peaks at about 2 workers and degrades past that,
+	 * and each worker loads the model and opens the DB. @default Math.min(4, availableParallelism())
 	 */
 	concurrency?: number
 	/**
@@ -84,28 +59,23 @@ export interface GeocodeStreamOptions {
 	 */
 	batchSize?: number
 	/**
-	 * Override the worker module — tests inject a fake.
+	 * Override the worker module.
 	 *
+	 * Tests inject a fake.
 	 * Defaults to the real geocode worker.
 	 */
 	worker?: string | URL
 }
 
 /**
- * The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests).
- *
- * One spelling serves both, because `lib/` and `out/` are siblings: this module is `lib/geocode-stream.ts`
- * in source and `out/geocode-stream.js` compiled, so `../` is the package root either way.
- * The `import.meta.url` branch this replaced existed only because source used to
- * sit one level shallower than its own output.
+ * The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests):
+ * `lib/` and `out/` are siblings, so `../` is the package root either way.
  */
 const GEOCODE_WORKER_URL = new URL("../out/geocode-worker.js", import.meta.url)
 
 /**
  * Geocode `records` across a worker pool, yielding enriched {@link SourceRecord}s
  * (with `address` populated) in completion order.
- *
- * See the module doc for composition + the in-worker dep rebuild.
  */
 export function geocodeStream(
 	records: AsyncIterable<SourceRecord> | Iterable<SourceRecord>,

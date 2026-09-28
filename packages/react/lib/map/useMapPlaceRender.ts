@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `useMapPlaceRender` — the thin React memo wrapper over the pure {@link computeMapPlaceRenderSpec}. It
- *   recomputes the render spec only when the resolved place changes, so the declarative overlays render a
- *   stable spec object. The math lives in `place-render.ts` (pure, node-tested); this file adds no
- *   more than memoization, so it stays trivially correct. A `null` place (no result yet, or a result with no
- *   candidate) yields `null` — the overlays render no geometry.
+ *   The thin React memo wrapper over the pure {@link computeMapPlaceRenderSpec}; a `null` place yields `null`.
  */
 
 import { useMemo } from "react"

@@ -48,9 +48,6 @@ const RESULT = {
 	intent_markers: [],
 } as GeocodeResult
 
-/**
- * A trace shaped like the session's, with each evidence row given something distinguishable to say.
- */
 const TRACE = {
 	parse: {
 		text: RESULT.input,
@@ -101,10 +98,7 @@ const BASE_DATA = {
 }
 
 /**
- * Ink's raw write ends with a trailing "\n" (an empty final split element rather than an extra row).
- *
- * The string being split is one already-rendered terminal frame — small, bounded,
- * and never re-split or grown — so a spliterator offers no benefit.
+ * Ink's raw write ends with a trailing `\n` that is an empty final split element rather than an extra row.
  */
 function frameLines(text: string): string[] {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one small fixed-size rendered frame rather than a stream
@@ -136,7 +130,6 @@ describe("DebugFrame", () => {
 	it("the ribbon losslessly reconstructs the input, connector text included", () => {
 		const segments = ribbonSegments(TREE)
 
-		// #493 round trip: concatenating every segment's value reproduces the raw input exactly. The ", " between the street and the locality must survive as an `unknown` segment rather than vanish.
 		expect(segments.map((segment) => segment.value).join("")).toBe(TREE.raw)
 		expect(segments.some((segment) => segment.tag == null && segment.value.includes(","))).toBe(true)
 	})
@@ -147,12 +140,10 @@ describe("DebugFrame", () => {
 			140
 		)
 
-		// Each row's label, so the frame is asserted to have a place for the datum...
 		for (const label of ["system", "locale-head", "tokens", "channels", "decode"]) {
 			expect(text).toContain(label)
 		}
 
-		// ...and each row's value, so a label with no value behind it fails.
 		expect(text).toContain("us (auto)")
 		expect(text).toContain("mode formatted")
 		expect(text).toContain("US 0.95")
@@ -167,8 +158,8 @@ describe("DebugFrame", () => {
 			140
 		)
 
-		// The rows keep their place (the input area's height is fixed) and each says it has
-		// no evidence, never a fabricated system, an empty token list, or a zeroed channel.
+		// The rows keep their place and each says it has no evidence rather than a
+		// fabricated system, an empty token list, or a zeroed channel.
 		expect(text).toContain("locale-head")
 		expect(text).not.toContain("us (auto)")
 		expect(text).not.toContain("not fed")
@@ -176,8 +167,7 @@ describe("DebugFrame", () => {
 	})
 
 	it("renders the demo's result sections in the output pane", async () => {
-		// 40 rows so the whole list is inside the scroll window — at 30 the candidates
-		// section is legitimately below the fold, which the scroll test covers.
+		// 40 rows so the whole list is inside the scroll window, since at 30 the candidates section sits below the fold.
 		const text = await renderInkToString(
 			<DebugFrame
 				columns={140}
@@ -195,11 +185,9 @@ describe("DebugFrame", () => {
 
 		expect(text).toContain("house_number")
 		expect(text).toContain("structured_address")
-		// The component's own confidence, off the tree node — the demo's ConfidenceCell column.
 		expect(text).toContain("0.99")
 		expect(text).toContain("3.2 ms")
 		expect(text).toContain("wof:101715829")
-		// The runner-up candidate, which only the candidates section carries.
 		expect(text).toContain("43.66, -70.25")
 	})
 
@@ -220,7 +208,6 @@ describe("DebugFrame", () => {
 		const top = await render(0)
 		const scrolled = await render(3)
 
-		// The window advertises itself, and the first section scrolls out of view.
 		expect(top).toContain("1-")
 		expect(scrolled).toContain("4-")
 		expect(top).toContain("components")
@@ -250,10 +237,8 @@ describe("DebugFrame", () => {
 		const rows = 30
 		const cellSize = mapPaneCellSize(columns, rows)
 		const cellCount = cellSize.columns * cellSize.rows
-		// Every cell inked with a distinctive marker char, so a dropped frame row is visible directly
-		// (a naive total-line-count check can't tell "rendered" from "silently clipped" — Ink doesn't
-		// grow a Box past its declared `height` when children overflow it. It drops rows to fit,
-		// which keeps the outer line count unchanged and would pass a line-count-only assertion).
+		// Every cell inked with a distinctive marker char, because a total-line-count check
+		// cannot tell a rendered row from one Ink silently drops to fit its declared height.
 		const MARKER_CODEPOINT = "#".codePointAt(0)!
 
 		const frame = {
@@ -278,8 +263,8 @@ describe("DebugFrame", () => {
 		const lines = frameLines(text)
 		const markedLineCount = lines.filter((line) => line.includes("#")).length
 
-		// Every requested frame row actually rendered — an undercounted chrome budget clips rows
-		// (and/or the title) to fit MapPane's declared box height instead of growing past it.
+		// Every requested frame row actually rendered, since an undercounted chrome
+		// budget clips rows to fit MapPane's declared box height.
 		expect(markedLineCount).toBe(cellSize.rows)
 		expect(text).toContain("map")
 		expect(text).toContain("test attribution")
@@ -287,14 +272,11 @@ describe("DebugFrame", () => {
 	})
 
 	it("keeps the pane budgets in step with the frame's fixed chrome", async () => {
-		// The two exported budgets are the same arithmetic seen from two panes:
-		// input area (9) + footer (1) is what both subtract before their own chrome.
-		// Asserting the pair here is what catches a row added to the input area without
-		// the map viewport or the scroll window being told.
+		// The two exported budgets subtract the same input area (9) plus footer (1) before
+		// their own chrome, so asserting the pair catches a row added to one without the other.
 		expect(mapPaneCellSize(100, 30)).toEqual({ columns: 48, rows: 16 })
 		expect(outputPaneCapacity(30)).toBe(17)
 
-		// And the claim they encode: a frame sized to the map budget still fits the terminal exactly.
 		const text = await renderInkToString(
 			<DebugFrame columns={100} rows={30} focused={null} color={false} data={BASE_DATA} />,
 			100

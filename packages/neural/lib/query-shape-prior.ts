@@ -3,39 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Soft-prior emission biases derived from `QueryShape`.
+ *   Soft-prior emission biases derived from `QueryShape`: when the query-shape subsystem has
+ *   identified a known-format span (US ZIP, UK postcode, PO box, etc.) this module produces an
+ *   additive bias matrix that nudges the encoder's per-token emissions toward the matching BIO
+ *   label without overriding the encoder, which stays the authority on context-dependent calls.
  *
- *   When the QueryShape sub-system has identified a known-format span (US ZIP, UK postcode, PO box,
- *   etc.), this module produces an additive bias matrix that nudges the encoder's per-token
- *   emissions toward the matching BIO label. The biases compose with the structural BIO mask in the
- *   Viterbi decoder — confident encoder predictions still win, but uncertain ones get pulled toward
- *   the format-implied label.
- *
- *   Bitter-lesson-safe boundary: we don't override the encoder, just bias it. The encoder remains the
- *   authority on context-dependent calls (the "Buffalo Wild Wings, Buffalo, NY" disambiguation);
- *   the QueryShape prior helps on the easy cases (a 5-digit token is _probably_ a postcode).
- *
- *   retired 2026-07-17 — the locality bias (regionAbbreviations → boost B/I-locality on preceding
- *   tokens). The M1 stack ablation (docs/articles/evals/2026-07-17-m1-stack-ablation.md) measured the
- *   full prior at −2.3 micro / −7.8 locality on golden-us, and the three-arm sub-ablation attributed
- *   100% of the damage to the locality half: stripping it recovered locality exact-match 0.7822 →
- *   0.8546 (= the no-prior arm), while the known-format half was exactly neutral. The failure mode was
- *   venue/org absorption on registry-style rows ("danville health center, 26 Cedar Lane, Danville VT"
- *   → locality "danville health center"): the backward walk from a detected region abbreviation
- *   crossed comma gaps and dragged venue text into locality. The WOF bare-name over-emission it was
- *   built to counter no longer reproduces — the model outgrew it (same lifecycle as the #956-era
- *   near-postcode suppression, also measured negative in M1). The known-format boosts below remain.
- *
- *   Uses structural typing for the QueryShape value so a caller may pass any compatible object. The shape
- *   itself is never imported. The format-name convention is imported from its owner rather than restated,
- *   because a restated convention drops the formats added after it was restated and reports no error.
+ *   The `QueryShape` value is consumed structurally and the format-name convention is imported from
+ *   its owner rather than restated, because a restated convention drops the formats added after it.
  */
 
-/**
- * Minimal subset of `QueryShape` this module consumes.
- *
- * Compatible with `@mailwoman/query-shape`'s exported `QueryShape` type by shape — no import required.
- */
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
@@ -60,9 +36,8 @@ export interface KnownFormatHitLike {
 	format: string
 	span: { start: number; end: number }
 	/**
-	 * 0..1.
-	 *
-	 * Ambiguous patterns (e.g. 5-digit US/FR/DE overlap) score lower.
+	 * Confidence in 0..1.
+	 * Ambiguous patterns (5-digit US/FR/DE overlap) score lower.
 	 */
 	confidence: number
 }
@@ -78,9 +53,8 @@ export interface TokenLike {
 /**
  * The BIO label a non-postcode `KnownFormat` biases.
  *
- * Postcode formats are not listed here: they are decided by name through
- * {@linkcode isPostcodeFormat}, so a format added to the detector's table reaches this
- * prior on the day it is named and no second list has to be kept in step.
+ * Postcode formats are decided by name through {@linkcode isPostcodeFormat}, so a format
+ * added to the detector's table reaches this prior without a second list to keep in step.
  */
 const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_box"]])
 
@@ -88,8 +62,7 @@ const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_b
  * The BIO label {@linkcode buildEmissionPriors} biases for one format hit,
  * or `undefined` when the format names no label.
  *
- * A hit whose format the detector produces but no map entry covers contributes zero bias
- * and raises no error, so `formatCoverage` in the unit suite asserts every detector format resolves.
+ * An uncovered format contributes zero bias and raises no error.
  */
 function formatLabel(format: string): string | undefined {
 	return isPostcodeFormat(format) ? "B-postcode" : FORMAT_TO_LABEL.get(format)
@@ -97,30 +70,19 @@ function formatLabel(format: string): string | undefined {
 
 export interface BuildPriorsOpts {
 	/**
-	 * Maximum bias magnitude (in log-odds units).
-	 *
-	 * Default 1.0 — adds up to ~e^1 ≈ 2.7× odds to the favored label.
-	 * Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
+	 * Maximum bias magnitude in log-odds units, default 1.0 and scaled by hit confidence.
 	 */
 	biasScale?: number
 	/**
-	 * Raw input text — enables the scoped locality bias
-	 * (bare admin doubletons only. See `applyScopedLocalityBias`).
-	 *
-	 * Without it the digit guard cannot run, so the locality bias never fires.
+	 * Raw input text, without which the scoped locality bias's digit guard cannot run.
 	 */
 	inputText?: string
 }
 
 /**
- * Build a `[seqLen][numLabels]` matrix of additive log-bias to be added to
- * encoder emissions before Viterbi decoding.
- *
- * For each (token, format-hit) pair where the token's character span overlaps the hit's span,
- * the matrix entry for the format's mapped label receives `hit.confidence × biasScale`.
- * Tokens that don't overlap any hit, or for which no label mapping exists, get 0.
- *
- * @returns The all-zeros matrix if `shape.knownFormats` is empty — composes harmlessly.
+ * Build a `[seqLen][numLabels]` matrix of additive log-bias for encoder emissions before Viterbi
+ * decoding, where each token overlapping a format hit receives `hit.confidence × biasScale` on
+ * the format's mapped label and the matrix is all zeros when `shape.knownFormats` is empty.
  */
 export function buildEmissionPriors(
 	shape: QueryShapeLike,
@@ -162,30 +124,9 @@ export function buildEmissionPriors(
 }
 
 /**
- * The scoped locality bias — the 2026-07-17 rebuild of the retired backward-walk version (see the header).
- *
- * It fires only on the bare admin doubleton the original was built for
- * ("New York, NY", "Washington, DC" — a region-ambiguous city name before its state
- * abbreviation, the gauntlet `us-new-york-nyc` regression case) and structurally
- * cannot reach the venue/street inputs the old walk broke on.
- * Guards, in order:
- *
- * 1. No digits anywhere in the input.
- *    Any house number / postcode means this is not an admin-only query, and the M1
- *    failure class ("… 26 Cedar Lane, Danville VT") always carries digits.
- * 2. The abbreviation is the final token — the doubleton shape rather than a mid-sentence state mention.
- * 3. At most 4 tokens precede it ("Salt Lake City, UT" fits; "Community Health
- *    Service Inc - Grafton ND" does not).
- *
- * The retired version also carried a "name is the region" guard ("Washington, WA" stays region).
- * It was dead in production.
- *
- * The classifier passes tokenizer pieces whose spans include the trailing comma,
- * so the string comparison never matched (and "New York, NY", the gauntlet regression case,
- * needs the bias despite naming its own state).
- *
- * Deliberately dropped.
- * The bias is soft, so a confident region emission on a true state restatement still wins.
+ * The scoped locality bias, which fires only on the bare admin doubleton
+ * (a region-ambiguous name immediately before its abbreviation) and only when the input holds no digits,
+ * the abbreviation is the final token, and at most {@link MAX_PRIOR_CANDIDATES} tokens precede it.
  */
 function applyScopedLocalityBias(
 	matrix: number[][],
@@ -204,13 +145,10 @@ function applyScopedLocalityBias(
 	if (bLocCol === undefined) return
 
 	for (const abbrev of abbrevs) {
-		// Guard 2: no token may follow the abbreviation token.
 		if (tokens.some((tok) => tok.start > abbrev.start + abbrev.span.length)) continue
 
 		const candidates = tokens.map((tok, t) => ({ tok, t })).filter(({ tok }) => tok.end <= abbrev.start)
 
-		// Guard 3: the doubleton shape.
-		// A short leading name rather than a sentence.
 		if (!candidates.length || candidates.length > MAX_PRIOR_CANDIDATES) continue
 
 		for (let i = 0; i < candidates.length; i++) {
@@ -224,15 +162,11 @@ function applyScopedLocalityBias(
 
 /**
  * Log-odds bias for the scoped doubleton case.
- *
- * The retired version's strength, now reachable only by the doubleton.
  */
 const SCOPED_LOCALITY_BIAS = 2
 
 /**
- * Element-wise add two matrices of equal shape.
- *
- * @returns A new matrix.
+ * Element-wise add two matrices of equal shape, returning a new matrix.
  */
 export function addEmissionMatrix(emissions: number[][], priors: number[][]): number[][] {
 	if (!priors.length) return emissions.map((row) => row.slice())

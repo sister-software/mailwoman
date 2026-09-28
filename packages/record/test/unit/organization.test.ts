@@ -54,12 +54,10 @@ describe("canonicalizeOrganizationName", () => {
 
 describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#668)", () => {
 	it("byte-stable default: never strips collision-prone tokens without context", () => {
-		// pt / sca / scs are not in the universal base.
-		// The legacy behavior keeps them.
 		expect(canonicalizeOrganizationName("Lakeside PT")?.canonical).toBe("lakeside pt")
 		expect(canonicalizeOrganizationName("Lakeside PT")?.designations).toEqual([])
 		expect(canonicalizeOrganizationName("Cardiac SCA Clinic")?.canonical).toBe("cardiac sca clinic")
-		// base forms still strip with no options (unchanged).
+
 		expect(canonicalizeOrganizationName("Acme LLC")?.canonical).toBe("acme")
 	})
 
@@ -68,7 +66,6 @@ describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#6
 		expect(org?.canonical).toBe("maju bersama")
 		expect(org?.designations).toEqual(["pt"])
 
-		// explicit general domain guards no form — same result.
 		expect(canonicalizeOrganizationName("Maju Bersama PT", { jurisdiction: "ID", domain: "general" })?.canonical).toBe(
 			"maju bersama"
 		)
@@ -95,7 +92,6 @@ describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#6
 			"sca",
 		])
 
-		// but healthcare guards SCA even under FR jurisdiction.
 		expect(
 			canonicalizeOrganizationName("Cardiac SCA Clinic", { jurisdiction: "FR", domain: "healthcare" })?.canonical
 		).toBe("cardiac sca clinic")
@@ -103,7 +99,7 @@ describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#6
 
 	it("an unknown jurisdiction adds nothing (US keeps base behavior)", () => {
 		const org = canonicalizeOrganizationName("Lakeside PT LLC", { jurisdiction: "US" })
-		expect(org?.canonical).toBe("lakeside pt") // LLC stripped (base), PT kept (no US pack)
+		expect(org?.canonical).toBe("lakeside pt")
 		expect(org?.designations).toEqual(["llc"])
 	})
 })

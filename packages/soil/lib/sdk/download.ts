@@ -71,7 +71,7 @@ export interface SurveyAreaArchive {
  * Downloads and unzips one survey area into the cache, skipping steps already done,
  * and returns where its pieces are.
  *
- * The download goes through a `.part` file, so an interrupted transfer never looks like a complete archive.
+ * The download goes through a `.part` file so an interrupted transfer never looks like a complete archive.
  *
  * @throws {Error} When the host answers anything but 200, or when the extracted
  * tree lacks the `spatial` or `tabular` directory.

@@ -31,7 +31,6 @@ function clinic(
 	}
 }
 
-// Two records for the same clinic — different address strings, same place + name — and a distinct one far away.
 const records: SourceRecord[] = [
 	clinic("1", "Robert", "Smith", "123 main st", 45.5152, -122.6784, "123 Main St, Portland, OR"),
 	clinic("2", "Robert", "Smith", "123 main street apt 2", 45.5153, -122.6785, "123 Main Street Apt 2, Portland, OR"),
@@ -40,9 +39,6 @@ const records: SourceRecord[] = [
 
 describe("resolveEntities", () => {
 	it("merges the same-place duplicates and keeps the distinct record separate", () => {
-		// learnedScorer:false — this asserts the FS-baseline merge behaviour.
-		// The NPPES-trained GBT (now the default) is validated on real data + the #603
-		// tests below rather than on these 3 synthetic records.
 		const { entities, candidatePairs } = resolveEntities(records, { learnedScorer: false })
 
 		expect(candidatePairs).toBeGreaterThanOrEqual(1)
@@ -66,7 +62,6 @@ describe("resolveEntities", () => {
 	it("picks a representative and a coordinate per entity", () => {
 		const { entities } = resolveEntities(records, { learnedScorer: false })
 
-		// FS-baseline pipeline assertion
 		for (const entity of entities) {
 			expect(entity.representative).toBeDefined()
 			expect(entity.coordinate).toBeDefined()
@@ -74,24 +69,16 @@ describe("resolveEntities", () => {
 	})
 
 	it("the scorer hook overrides the FS weight and drives the clustering (#603)", () => {
-		// A learned scorer that rejects every pair → no merges, every record is its own entity.
 		const none = resolveEntities(records, { scorer: () => Number.NEGATIVE_INFINITY })
 		expect(none.entities).toHaveLength(records.length)
 		expect(none.entities.every((e) => e.records.length === 1)).toBe(true)
 
-		// A scorer that accepts every blocked pair → the blocked duplicates (1,2) merge
-		// on the learned weight rather than the FS weight.
-		// The far-away record (3) is never blocked with them, so it stays apart.
 		const merged = resolveEntities(records, { scorer: () => 100, threshold: 1 })
 		const big = merged.entities.find((e) => e.records.length > 1)
 		expect(big?.records.map((r) => r.id).toSorted()).toEqual(["1", "2"])
 	})
 
 	it("learnedScorer: true loads the bundled GBT model and resolves end-to-end (#603)", () => {
-		// The opt-in bundled model loads + scores every blocked pair without throwing.
-		// The result is a sane entity set (between fully-merged and fully-split).
-		// Behaviour on these synthetic records is the model's call — this guards the
-		// wiring (load → featurize → gbtScore → cluster), not a number.
 		const { entities } = resolveEntities(records, { learnedScorer: true })
 		expect(entities.length).toBeGreaterThanOrEqual(1)
 		expect(entities.length).toBeLessThanOrEqual(records.length)
@@ -102,8 +89,6 @@ describe("resolveEntities", () => {
 	})
 
 	it("an explicit scorer takes precedence over learnedScorer (#603)", () => {
-		// Both set → the explicit scorer wins.
-		// It rejects every pair, so no pair merges even though the bundled learned model is also requested.
 		const { entities } = resolveEntities(records, {
 			learnedScorer: true,
 			scorer: () => Number.NEGATIVE_INFINITY,
@@ -113,7 +98,6 @@ describe("resolveEntities", () => {
 	})
 })
 
-// Two distinct people at the same practice address — the co-located-providers over-merge case (#617).
 function coLocated(id: string, given: string, family: string): SourceRecord {
 	return {
 		id,
@@ -139,7 +123,6 @@ describe("address-frequency down-weighting (#617)", () => {
 
 		const plain = scorePair(buildDefaultModel(), a, b).weight
 
-		// A table marking this exact address as shared by half the corpus — agreement on it is near-worthless.
 		const crowded: TermFrequencyTable = {
 			total: 1000,
 			distinct: 1,
@@ -176,8 +159,6 @@ describe("phone corroboration rescues name drift (A3, #625)", () => {
 	it("merges a shared-address, name-drifted pair when they share a phone line", () => {
 		const a: SourceRecord = { ...coLocated("1", "Acme", "Health"), phone: "512-555-0100" }
 		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), phone: "(512) 555-0100" } // same line, drifted name
-		// The name/org-only check (A2) would block this.
-		// Phone (A3) is the secondary identifier that rescues it.
 		const res = resolveEntities([a, b], { threshold: -100, requireCorroboration: true, usePhone: true })
 		expect(res.entities).toHaveLength(1)
 	})
@@ -195,7 +176,6 @@ describe("secondary-identifier discriminators (#625)", () => {
 		const a: SourceRecord = { ...coLocated("1", "Acme", "Health"), attributes: { authorizedOfficial: "jane smith" } }
 		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), attributes: { authorizedOfficial: "jane smith" } }
 
-		// same registrant
 		const res = resolveEntities([a, b], {
 			threshold: -100,
 			requireCorroboration: true,
@@ -228,14 +208,10 @@ describe("exactDiscriminators — code-SET overlap (#625 A5)", () => {
 			attributes: { taxonomy: "207R00000X 208D00000X" },
 		}
 
-		// shared 208D
 		const b: SourceRecord = { ...coLocated("2", "Acme", "Health"), attributes: { taxonomy: "208D00000X" } }
 		const c: SourceRecord = { ...coLocated("3", "Acme", "Health"), attributes: { taxonomy: "207Q00000X" } } // disjoint
 		const shared = resolveEntities([a, b], { threshold: -100, exactDiscriminators: ["taxonomy"] })
 		expect(shared.entities).toHaveLength(1)
-		// The disjoint pair still merges here (same name+address dominate).
-		// The assertion is the model builds and the comparator runs.
-		// The weight-level separation is the benchmark's to measure.
 		const disjoint = resolveEntities([a, c], { threshold: -100, exactDiscriminators: ["taxonomy"] })
 		expect(disjoint.entities.length).toBeGreaterThanOrEqual(1)
 	})

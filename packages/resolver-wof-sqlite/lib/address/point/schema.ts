@@ -2,19 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Typed schema for the situs / rooftop address-point extracts (`address-points-<cc>-<slug>.db`, built
- *   by `mailwoman situs address-points` and by `@mailwoman/ban`'s `./scripts/build/address-point-database`
- *   — the #476/#567 national rooftop tier behind the demo's "type any US address, get the building").
- *   Two writers share one schema, which is why it lives here. Single source of truth for the columns shared
- *   by the builder and the reader ({@link AddressPointSqliteLookup}), so a column rename in one is a
- *   compile error in the other.
- *
- *   The builder's hot insert (tens of millions of rows per state) stays a positional prepared
- *   statement for throughput — but its column list is derived from {@link ADDRESS_POINT_COLUMNS}
- *   here, and its table comes from {@link createAddressPointTable}, so the positional order can't
- *   silently drift from what the reader expects. (Same convention as the candidate build: typed
- *   schema guards the interface. positional inserts keep the speed.)
  */
 
 import type { Kysely } from "kysely"
@@ -22,13 +9,8 @@ import type { Kysely } from "kysely"
 import type { NameKey, RouteKey, StreetKey } from "#street/normalize"
 
 /**
- * One rooftop address point.
- *
- * `(street_norm, number)` within a `postcode` (preferred) or `locality_norm` scope is
- * the lookup; `street_key` is the #483 route-fold key for interpolation.
- * Coordinates are non-null (the builder drops non-finite coords).
- *
- * `unit`/`postcode`/`locality_norm` are nullable (not every source carries all three).
+ * One rooftop address point; `(street_norm, number)` within a `postcode`
+ * or `locality_norm` scope is the lookup.
  */
 export interface AddressPointTable {
 	/**
@@ -36,9 +18,8 @@ export interface AddressPointTable {
 	 */
 	street_norm: StreetKey
 	/**
-	 * `canonicalizeRouteKey(street_norm)` — the route-fold key (#483 Method 2).
-	 *
-	 * Its own brand, so it cannot be interchanged with the plain `street_norm` above.
+	 * `canonicalizeRouteKey(street_norm)` — the route-fold key, branded
+	 * so it cannot be interchanged with `street_norm`.
 	 */
 	street_key: RouteKey
 	/**
@@ -51,9 +32,7 @@ export interface AddressPointTable {
 	 * Shared {@link normalizeLocalityForKey} of the locality — the fallback scope.
 	 */
 	locality_norm: NameKey | null
-	/**
-	 * The street as it appeared in the source (kept for display / debugging).
-	 */
+
 	street_raw: string
 	lat: number
 	lon: number
@@ -61,23 +40,16 @@ export interface AddressPointTable {
 	 * Provenance: the dataset this point came from (e.g. `overture:us`, `openaddresses`).
 	 */
 	source: string
-	/**
-	 * The pinned data release the point was ingested from.
-	 */
+
 	release: string
 	/**
-	 * The source register's stable administrative key for the point's commune
-	 * or municipality — BAN's `code_insee`.
-	 *
-	 * A display name (`locality_norm`) is not a key.
-	 * The coverage basis is computed per this key.
+	 * The source register's stable administrative key for the point's commune or municipality —
+	 * BAN's `code_insee`; the coverage basis is computed per this key.
 	 */
 	admin_code: string | null
 	/**
-	 * The register's own certification flag for the point (BAN `certification_commune`:
-	 * 1 certified by the commune, 0 not), or null for a source that states none.
-	 *
-	 * A basis is never inferred from a share of these.
+	 * The register's own certification flag for the point
+	 * (BAN `certification_commune`: 1 certified, 0 not), never inferred from a share.
 	 */
 	certified: number | null
 }
@@ -90,21 +62,13 @@ export interface AddressPointDatabase {
 }
 
 /**
- * The subset of a Kysely handle the `address_point` DDL touches.
- * The parameter type its builders take.
- *
- * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`),
- * so an extract that extends `AddressPointTable` — OSM adds `h3_cell` — cannot pass
- * its own handle to a `Kysely<AddressPointDatabase>` parameter.
- * Naming only `schema` lets it, and the DDL below needs no other member.
+ * The subset of a Kysely handle the DDL touches, narrowed to `schema`
+ * because Kysely is invariant in its schema parameter.
  */
 export type AddressPointSchemaHandle = Pick<Kysely<AddressPointDatabase>, "schema">
 
 /**
- * The `address_point` columns in insert order.
- *
- * The builder's positional prepared statement derives its placeholder list from this,
- * so the positional order can't drift from the DDL / the reader.
+ * The `address_point` columns in insert order, from which the builder derives its positional placeholders.
  */
 export const ADDRESS_POINT_COLUMNS = [
 	"street_norm",
@@ -129,7 +93,7 @@ export async function createAddressPointTable(db: AddressPointSchemaHandle): Pro
 	await db.schema
 		.createTable("address_point")
 		.addColumn("street_norm", "text", (c) => c.notNull())
-		// `street_key` = canonicalizeRouteKey(street_norm): the route-fold key (#483 Method 2).
+
 		.addColumn("street_key", "text", (c) => c.notNull())
 		.addColumn("number", "text", (c) => c.notNull())
 		.addColumn("unit", "text")
@@ -162,9 +126,7 @@ export async function createAddressPointIndexes(db: AddressPointSchemaHandle): P
 		.execute()
 
 	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
-	// Street-first index for the bbox scope (#247): OSM points often carry no postcode/locality, so the
-	// reader scopes a `(street_norm, number)` probe by the resolved locality's bbox (lat/lon between).
-	// The postcode/locality indexes lead with their scope column and can't serve this.
-	// US situs never probes by bbox so it simply carries one extra (cheap) index on a future rebuild.
+	// Street-first index for the bbox scope: OSM points often carry no postcode or locality,
+	// so the reader scopes a `(street_norm, number)` probe by the resolved locality's bbox.
 	await db.schema.createIndex("idx_ap_street").on("address_point").columns(["street_norm", "number"]).execute()
 }

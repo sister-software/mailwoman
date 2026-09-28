@@ -3,17 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Admin-gazetteer enrichment — the two post-build steps the #1015 rebuild missed because they lived
- *   as separate scripts, now unskippable pipeline steps:
+ *   Admin-gazetteer enrichment, the two post-build steps that must run in order:
  *
- *   1. **Region abbreviations** (ports `scripts/add-region-abbrevs.ts`): WOF region records carry only
- *      the full name ("Illinois"); `findPlace('IL')` returned no place, killing the parent-constraint
- *      the whole resolve walk depends on. Source of truth is the packaged chromium-i18n /
- *      libaddressinput dataset (`core/data/chromium-i18n/ssl-address/<CC>.json`): `sub_keys`
- *      (abbreviations) ↔ `sub_names` (full names), tilde-delimited and index-aligned.
- *   2. **`place_abbr`** (the `id → abbreviation` join table, from `build-slim.ts`): lets the resolver
- *      accept a 2-letter region abbreviation as an exact match. Derived from the step-1 rows, so this
- *      must run after them — and both must precede the FTS build (`place_search` concatenates `names`).
+ *   1. Region abbreviations: WOF region records carry only the full name, and `findPlace('IL')`
+ *      returns no place without the abbreviation, killing the parent constraint the resolve walk
+ *      depends on. The source of truth is the packaged chromium-i18n / libaddressinput dataset
+ *      (`core/data/chromium-i18n/ssl-address/<CC>.json`), whose tilde-delimited `sub_keys` and
+ *      `sub_names` are index-aligned.
+ *   2. `place_abbr`, the `id → abbreviation` join table that lets the resolver accept a 2-letter
+ *      region abbreviation as an exact match. Derived from the step-1 rows, so it must run after
+ *      them, and both must precede the FTS build.
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -24,8 +23,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 export interface EnrichAdminOptions {
 	/**
 	 * Chromium-i18n ssl-address spec dir.
-	 *
-	 * Default: the dataset packaged with `@mailwoman/core`.
+	 * Defaults to the dataset packaged with `@mailwoman/core`.
 	 */
 	specsDir?: PathBuilderLike
 }
@@ -37,8 +35,7 @@ export interface EnrichAdminResult {
 }
 
 /**
- * Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table.
- *
+ * Enrich an admin staging DB with region-abbreviation `names` rows and the `place_abbr` join table.
  * Idempotent.
  */
 export async function enrichAdmin<DB>(
@@ -49,10 +46,7 @@ export async function enrichAdmin<DB>(
 
 	db.exec("DELETE FROM names WHERE language = 'abbr'")
 
-	// idempotent re-run
-
 	// One read of every region row, bucketed by country.
-	// The per-country query it replaces was re-`prepare`d inside the loop, once for each of ~200 countries.
 	const regionsByCountry = new Map<string, Array<{ id: number; name: string }>>()
 
 	for (const row of db.prepare("SELECT id, name, country FROM spr WHERE placetype='region'").all() as Array<{
@@ -110,8 +104,7 @@ export async function enrichAdmin<DB>(
 		db.exec("COMMIT")
 	}
 
-	// `place_abbr` — the id → abbreviation join the resolver probes for 2-letter exact matches.
-	// Rebuilt from the rows above (the build-slim.ts recipe); dropped first so a re-run stays idempotent.
+	// `place_abbr` is rebuilt from the rows above and dropped first so a re-run stays idempotent.
 	db.exec("DROP TABLE IF EXISTS place_abbr")
 	db.exec("CREATE TABLE place_abbr (id INTEGER NOT NULL, abbr TEXT NOT NULL)")
 	db.exec("INSERT INTO place_abbr (id, abbr) SELECT id, name FROM names WHERE language = 'abbr'")

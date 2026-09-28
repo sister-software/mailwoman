@@ -3,32 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The six outcome comparators, and the one rule they all obey.
- *
- *   **This module owns no equality of its own.** Every judgment here is delegated to a grader that already
- *   exists and is already tested: `componentMatches` and `DEFAULT_TOL_M` from the Gauntlet's `check-case.ts`,
- *   `haversineKm` from `@mailwoman/spatial`, `compareComponents` from the invariance mini-suite,
- *   `accountRefinement` from `candidate-admissibility.ts`. What lives here is the part none of them has an
- *   opinion about — which axis a given law is stated on, and what `equivalent` / `refines` / `diverges` mean on
- *   that axis.
- *
- *   the axes are disjoint on purpose. `resolution_identity` never reads a coordinate and
- *   `assembled_coordinate` never reads a place id. That separation is the whole reason the comparator set is
- *   closed: an identity law that could fall back to distance would pass whenever two different places
- *   happened to sit inside the tolerance, which is precisely the failure the Gauntlet's own place-identity
- *   check was added for — Gaborone resolving to an Austrian hamlet came back with the right parsed locality
- *   and only a coordinate 8,045 km away to say. A namesake inside a 25 km bar would have had no evidence
- *   at all.
- *
- *   An axis absent on both sides is `undecidable`, never `equivalent`. Two runs that resolved no place agree
- *   about no fact. two empty parses agree about no fact. two outcomes carrying no mechanism account agree
- *   about no fact. Reporting agreement there would let a law pass on a pair of total failures, and the
- *   reading would be indistinguishable from a law that genuinely holds. The reading says what it read, and
- *   the runner counts `undecidable` as a violation with the reason attached.
- *
- *   A `mechanismShapes` of `[]` is a real reading — the account ran and matched no shape. `undefined` is the
- *   absence of an account. The two are kept apart for the same reason the mechanism-account design keeps an
- *   empty lookup list apart from a null one.
+ *   The six outcome comparators own no equality of their own and keep their axes disjoint. An identity law therefore never falls back to distance.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -46,52 +21,25 @@ import { compareComponents } from "#eval-harness/invariance/compare"
  */
 export interface ConformanceOutcome {
 	/**
-	 * The assembled result, projected through the Gauntlet's own `toGauntletResult`.
-	 *
-	 * Reusing that projection is what keeps this comparator set and the board's grader
-	 * from disagreeing about which field a component lives in.
+	 * The assembled result, projected through the Gauntlet's own `toGauntletResult`
+	 * so this comparator set and the board's grader agree on which field a component lives in.
 	 */
 	result: GauntletResult
 	/**
-	 * The mechanism-account shapes this run matched, in the account's own stage order.
-	 *
-	 * The vocabulary is `@mailwoman/dev-mcp`'s `DIAGNOSE_SHAPES`, and it is deliberately not
-	 * imported here: dev-mcp is a private maintainer workspace that depends on `mailwoman`,
-	 * so the dependency can only run in that direction, and a second copy of the
-	 * vocabulary would drift from the predicates that define it.
-	 * The observer supplies the labels.
-	 * This module compares them and reports what it was given.
-	 *
-	 * `undefined` means no account was attached.
-	 * See the module docstring for why that is not an empty account.
+	 * The mechanism-account shapes this run matched, in the account's own stage order,
+	 * where `undefined` means no account was attached and is not an empty account.
 	 */
 	mechanismShapes?: readonly string[]
 	/**
-	 * The resolver's interior for this run (#1721): one record per backend lookup, carrying the
-	 * candidate table, the fetch window it ran under, the `checks` that fired and the pick's provenance.
-	 *
-	 * Supplied by an observer that asked for a trace.
-	 * The walk does zero bookkeeping otherwise, so a comparator cannot turn one on for itself.
-	 *
-	 * `[]` is a real reading (the walk performed no lookup); `undefined` is the absence of a trace,
-	 * and {@linkcode compareOutcomes} keeps them apart the way `mechanismShapes` does.
+	 * The resolver's interior for this run, one record per backend lookup, where `[]` is
+	 * a real reading of no lookup and `undefined` the absence of a trace.
 	 */
 	candidates?: readonly ResolveNodeTrace[]
 }
 
 /**
- * What a comparator observed.
- *
- * `undecidable` is a first-class reading: the comparator could not read its axis,
- * and says so rather than reporting the agreement of two absences.
- *
- * `unmeasured` is the narrower one, and only `candidate_admissibility` can report it.
- * The comparator read its axis and found no entry that violates the law, but the observation
- * window was too small to prove the law either, so the reading is neither a hold nor a failure.
- *
- * Both are counted apart from the verdict by `summarizeConformanceRun`: an unmeasured
- * row leaves the denominator rather than joining the numerator, so a suite that stops
- * being able to measure anything reports as an absence instead of a pass.
+ * What a comparator observed, where `undecidable` means it could not read its axis
+ * and `unmeasured` that the axis was read but its window was too small to decide.
  */
 export type ObservedRelation = ConformanceRelation | "undecidable" | "unmeasured"
 
@@ -102,9 +50,8 @@ export interface ComparatorReading {
 	comparator: OutcomeComparatorName
 	observed: ObservedRelation
 	/**
-	 * What the comparator actually read on each side, stated whatever the verdict.
-	 *
-	 * The sentence that keeps an absence from being reported as an agreement.
+	 * What the comparator actually read on each side, stated whatever the verdict
+	 * so an absence is not reported as an agreement.
 	 */
 	basis: string
 	/**
@@ -114,9 +61,8 @@ export interface ComparatorReading {
 }
 
 /**
- * Populated component entries, dropping absent and blank values.
- *
- * A blank string is an absent component rather than a component whose value is the empty string.
+ * Populated component entries, dropping absent and blank values, since a blank string
+ * is an absent component rather than one whose value is the empty string.
  */
 function populatedComponents(result: GauntletResult): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -133,14 +79,8 @@ function populatedComponents(result: GauntletResult): Record<string, string> {
 // #region resolution_identity
 
 /**
- * The resolved admin chain as stable identity keys, finest first.
- *
- * A `placeID` is namespaced (`wof:1108826319`), so the source travels with the key:
- * two ids minted by different gazetteers can never compare equal by accident,
- * which is the provenance half of "stable identity".
- * An entry with no `placeID` is unverifiable, counted apart rather than folded in under its name.
- *
- * A name is not an identity, and counting it as one is how a namesake passes.
+ * The resolved admin chain as namespaced stable identity keys, finest first,
+ * with entries lacking a `placeID` counted apart because a name is not an identity.
  */
 function identityChain(result: GauntletResult): { keys: string[]; unverifiable: number } {
 	const keys: string[] = []
@@ -158,10 +98,8 @@ function identityChain(result: GauntletResult): { keys: string[]; unverifiable: 
 }
 
 /**
- * Is `outer` the same chain as `inner` extended at the fine end?
- *
- * `hierarchy` runs locality → country, so a refinement adds entries at the front
- * and leaves the tail untouched.
+ * Whether `outer` is the same chain as `inner` extended at the fine end,
+ * since `hierarchy` runs locality → country.
  */
 function extendsChain(inner: readonly string[], outer: readonly string[]): boolean {
 	if (outer.length <= inner.length) return false
@@ -265,10 +203,8 @@ function compareAssembledCoordinate(
 		}
 	}
 
-	// Inside tolerance is not enough.
-	// The Gauntlet grades tier strictly for the reason its own runner states — an `address_point`
-	// that drifts to `admin` is a regression even when the point barely moves — so a tier change
-	// is reported as a divergence with both tiers named rather than absorbed by the distance bar.
+	// Inside tolerance is not enough: a tier change is reported as a divergence with
+	// both tiers named rather than absorbed by the distance bar.
 	if (a.tier !== b.tier) {
 		return {
 			comparator: "assembled_coordinate",
@@ -325,9 +261,6 @@ function compareParseWholeStrict(base: ConformanceOutcome, variant: ConformanceO
 
 // #region component_map
 
-/**
- * Is every populated base component present in the variant with an equal value?
- */
 function containsAll(inner: Record<string, string>, outer: Record<string, string>): boolean {
 	return Object.entries(inner).every(([tag, value]) => {
 		const found = outer[tag]
@@ -351,9 +284,7 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 		}
 	}
 
-	// The invariance suite's severity reading, carried whatever branch is taken below.
-	// Its critical-tag rule (house_number / street / postcode) is the judgment this module must not
-	// re-invent, and a law that fails still wants to know whether the drift was `degraded` or `lost`.
+	// The invariance suite's severity reading, whose critical-tag rule this module must not re-invent.
 	const { verdict, diff } = compareComponents(a, b)
 	const basis = `compareComponents verdict ${verdict} · base {${aKeys.toSorted().join(", ") || "empty"}} · variant {${bKeys.toSorted().join(", ") || "empty"}}`
 
@@ -363,13 +294,8 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 
 	const added = bKeys.filter((tag) => a[tag] === undefined)
 
-	// A refinement law's variant carries more information, so `compareComponents`'s
-	// hallucination rule does not apply to it: that rule reads a gained critical tag as `lost`
-	// because its premise is that both sides were fed the same information.
-	// Containment plus at least one new component is the refinement reading,
-	// and the severity verdict above still travels with it.
-	// An invariance law reaches this branch too, sees `refines` where it expected `equivalent`,
-	// and fails with `lost` printed beside the gained tag.
+	// Containment plus at least one new component is the refinement reading, so an invariance
+	// law reaching this branch sees `refines` where it expected `equivalent`.
 	if (added.length && containsAll(a, b)) {
 		return {
 			comparator: "component_map",
@@ -422,8 +348,7 @@ function compareMechanismShape(base: ConformanceOutcome, variant: ConformanceOut
 		differences.push(`only in variant: ${onlyVariant.join(", ")}`)
 	}
 
-	// Same members, different order: the account emits shapes in pipeline-stage order, so the sequence
-	// carries which stage spoke first and a reordering is a real difference rather than a set equality.
+	// Same members in a different order is a real difference, because the account emits shapes in pipeline-stage order.
 	if (!differences.length) {
 		differences.push(`same shapes in a different boundary order: [${a.join(", ")}] → [${b.join(", ")}]`)
 	}
@@ -466,11 +391,10 @@ function compareCandidateAdmissibility(base: ConformanceOutcome, variant: Confor
 // #endregion
 
 /**
- * Read a pair of outcomes on the axis the fixture named.
+ * Reads a pair of outcomes on the axis the fixture named.
  *
- * @throws On a comparator name outside the closed set.
- * `loadConformanceFixtures` refuses one already, so reaching this means a caller built a
- * fixture by hand and skipped the loader — which is exactly the path that must not default.
+ * @throws On a comparator name outside the closed set, which can only come from
+ * a hand-built fixture that skipped the loader.
  */
 export function compareOutcomes(
 	fixture: ConformanceFixture,

@@ -29,9 +29,6 @@ const { values } = parseArguments({
 		arms: { type: "string", default: "none,pop,imp" },
 		board: { type: "string" },
 		"out-json": { type: "string" },
-		/**
-		 * Writes each row's outcomes as JSON lines to this path.
-		 */
 		"out-rows": { type: "string" },
 	},
 })
@@ -54,8 +51,6 @@ const locales = [...new Set(board.map((c) => c.locale))].toSorted()
 
 console.error(`[board] ${board.length} rows, locales=[${locales.join(", ")}]`)
 
-// #region Resolver + pipelines
-
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 const wofPaths = await existingWOFDatabasePaths()
 
@@ -70,11 +65,6 @@ for (const locale of locales) {
 	classifiers.set(locale, await NeuralAddressClassifier.loadFromWeights({ locale }))
 }
 
-/**
- * Holds one pipeline per arm and locale.
- *
- * When an arm has no FST file for a locale, that pair runs without the FST prior.
- */
 const pipelines = new Map<string, Map<string, ReturnType<typeof createRuntimePipeline>>>()
 
 for (const arm of arms) {
@@ -102,32 +92,12 @@ for (const arm of arms) {
 	pipelines.set(arm, byLocale)
 }
 
-// #endregion
-
-// #region Scoring
-
-/**
- * Holds one row's outcome under one arm.
- */
 interface Outcome {
-	/**
-	 * Reports whether the coordinate is within tolerance, or `null` when the row asserts no coordinate.
-	 */
 	coordOK: boolean | null
-	/**
-	 * Reports whether `expectPlaceID` or `expectPlaceName` matched, or `null` when the row asserts neither.
-	 */
 	placeOK: boolean | null
-	/**
-	 * Holds the great-circle error in kilometers, or `null` when no place resolved
-	 * or no coordinate is asserted.
-	 */
 	errKm: number | null
 	resolvedID: number | null
 	resolvedName: string | null
-	/**
-	 * Holds the verdict, which is `coordOK` when asserted and `placeOK` otherwise.
-	 */
 	pass: boolean
 }
 
@@ -173,13 +143,6 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 	}
 }
 
-// #endregion
-
-// #region Run
-
-/**
- * Holds one board row and its outcome under each arm.
- */
 interface RowResult {
 	id: string
 	class: string
@@ -220,10 +183,6 @@ for (const c of board) {
 		byArm,
 	})
 }
-
-// #endregion
-
-// #region Report
 
 function tally(rows: RowResult[], arm: string): { pass: number; total: number } {
 	return { pass: rows.filter((r) => r.byArm[arm]!.pass).length, total: rows.length }
@@ -271,7 +230,6 @@ emitRow(
 	results.filter((r) => r.fstReach === "out")
 )
 
-// Two arms tie when their pass/fail vectors over every row are identical.
 console.log(`\n### Discrimination\n`)
 
 const signatures = new Map<string, string>()
@@ -343,5 +301,3 @@ if (anyTie) {
 		`\n> At least one arm pair produced an IDENTICAL verdict vector. Per §3 that is a finding about the FST's reach, not a reason to grow the board — localize where the bias is being ignored before adding rows.`
 	)
 }
-
-// #endregion

@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   rendering for the ablation map — the markdown artifact and the two cell formatters, split out of `ablation.ts` so
- *   the runner stays a runner.
- *
- *   One rule governs every line here and it is the only one a reader of the finished table can be misled by: a cell
- *   nobody measured must never render as a zero. {@linkcode ABLATION_ABSENT} covers three distinct absences — no cell
- *   for that (component, locale) pair, a cell with zero support, and (since the expectation model) a cell with real
- *   support that no ladder could grade. A consumer that needs to tell them apart still can, in the JSON.
+ *   Rendering for the ablation map, where a cell nobody measured must never render as a zero and {@linkcode ABLATION_ABSENT} covers the three distinct absences.
  */
 
 import { toLinesText } from "@mailwoman/core/fs/writers"
@@ -26,11 +20,8 @@ import {
 export { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation/expectation"
 
 /**
- * Render one cell for the matrix: `broken/support` plus the p90 displacement.
- *
- * A missing cell or a zero-support one renders as {@linkcode ABLATION_ABSENT}, never `0`, never `0.0%`.
- * This is the meaning-of-zero rule at the only place a human reads the map and the
- * reason the renderer takes `AblationCell | undefined` rather than a number.
+ * Renders one cell as `broken/support`, with a missing or zero-support cell rendering
+ * as {@linkcode ABLATION_ABSENT} rather than a zero.
  */
 export function formatAblationCell(cell: AblationCell | undefined): string {
 	if (!cell || cell.support === 0) return ABLATION_ABSENT
@@ -39,14 +30,8 @@ export function formatAblationCell(cell: AblationCell | undefined): string {
 }
 
 /**
- * Render one cell under the expectation model: `trueFail/ladderGraded`.
- *
- * Absence has one more source here than in {@linkcode formatAblationCell}.
- * A cell can have real support and still have no case the ladder could grade
- * (no gazetteer, or an anchor that resolved no place id).
- *
- * That is `ladderGradedCount: 0`, and it renders as {@linkcode ABLATION_ABSENT}
- * rather than `0/0`, which would read as "no check failed here".
+ * Renders one cell under the expectation model as `trueFail/ladderGraded`, where a cell with real
+ * support but a zero `ladderGradedCount` renders as {@linkcode ABLATION_ABSENT} rather than `0/0`.
  */
 export function formatAblationLadderCell(cell: AblationCell | undefined): string {
 	if (!cell || cell.support === 0 || cell.ladderGradedCount === 0) return ABLATION_ABSENT
@@ -59,16 +44,13 @@ function cellKey(component: string, locale: string): string {
 }
 
 /**
- * Render the map: a global per-component summary, then the component × locale matrix over
- * the locales carrying at least `minLocaleRows` rows, then the tail locales in long form.
- *
- * The matrix is bounded on purpose — 29 countries × 9 components is a table nobody reads,
- * and folding the tail is only acceptable because it is printed rather than dropped.
+ * Renders the map: a global per-component summary, the component × locale matrix over
+ * locales with at least `minLocaleRows` rows, then the tail locales in long form.
  */
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
 	/**
-	 * The per-row outcomes behind `cells`. Needed because percentiles do not aggregate: a global p90 has to be taken over the pooled displacements rather than over the per-cell p90s. Pass `[]` to render the matrix alone.
+	 * The per-row outcomes behind `cells`, needed because a global p90 must pool displacements rather than aggregate per-cell p90s. Pass `[]` to render the matrix alone.
 	 */
 	rows: readonly AblationRowOutcome[],
 	meta: {
@@ -171,8 +153,7 @@ export function renderAblationMarkdown(
 	lines.push("")
 
 	// A zero-column matrix would render as a table with an empty header, which reads as
-	// a rendering bug rather than as "no locale cleared the threshold".
-	// Say the latter.
+	// a rendering bug rather than as no locale clearing the threshold.
 	if (!wide.length) {
 		lines.push(`No locale carries ${minLocaleRows} or more measured rows — every locale is in the tail below.`)
 	} else {
@@ -200,8 +181,7 @@ export function renderAblationMarkdown(
 		const byReason = new Map<string, number>()
 
 		for (const s of meta.skips) {
-			// Reasons carry the offending value inline.
-			// Bucket by the leading clause so the report counts classes.
+			// Reasons carry the offending value inline, so bucket by the leading clause to count classes.
 			const cls = s.reason.split(":")[0]!.split(" inside")[0]!
 
 			byReason.set(cls, (byReason.get(cls) ?? 0) + 1)

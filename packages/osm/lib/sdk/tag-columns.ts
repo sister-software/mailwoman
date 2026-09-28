@@ -8,10 +8,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
  */
 
 /**
- * Tag keys gdal's `osmconf.ini` promotes to real OGR fields, per layer.
- *
- * A promoted key is selected as a bare column and is removed from that layer's `other_tags` hstore,
- * so reading it through `hstore_get_value` answers NULL for every feature of the layer.
+ * Tag keys gdal's `osmconf.ini` promotes to real OGR fields, per layer: a promoted key is a bare column
+ * and is removed from that layer's `other_tags` hstore, so an hstore lookup answers NULL for it.
  */
 export type PromotedKeysByLayer = Readonly<Record<string, ReadonlySet<string>>>
 
@@ -27,9 +25,7 @@ export function tagAlias(key: string): string {
  * The SQL expression reading a tag's value on `layer`: a bare column when that layer
  * promotes the key, an `other_tags` hstore lookup otherwise.
  *
- * @throws on a layer with no promoted-key list.
- * Falling back to the hstore expression for an unknown layer would produce SQL that runs
- * and matches no row, which is the failure the table exists to prevent.
+ * @throws on a layer with no promoted-key list, where an hstore fallback would run and match no row.
  */
 export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: string, key: string): string {
 	const promoted = promotedKeysByLayer[layer]
@@ -45,33 +41,23 @@ export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: s
 }
 
 /**
- * OSM tag key/value shape: letters, digits, underscore, colon, dot, hyphen.
- *
- * The SQL builders interpolate rule keys/values directly into ogrsql strings,
- * and rule tables are public, caller-suppliable parameters.
- * So every token is checked against this allowlist before any of it reaches a template string.
- *
- * A hostile value such as `a' or 1=1 --` would otherwise close the `'...'`
- * literal early and inject arbitrary ogrsql.
- *
- * Rejecting outright is a stronger, simpler guarantee than trying to enumerate
- * escape rules for gdal's ogrsql dialect.
+ * OSM tag key/value shape — letters, digits, underscore, colon, dot, hyphen —
+ * which every token is checked against before it reaches an ogrsql template,
+ * since a value such as `a' or 1=1 --` would otherwise inject SQL.
  */
 const SAFE_TAG_TOKEN = /^[A-Za-z0-9_:.-]+$/
 
 /**
- * A tag-rule table entry as this module reads it: a conjunction (`and`) of `[key, value]` pairs.
- *
- * `or` across tags is expressed as multiple rules in the table.
+ * A tag-rule table entry as this module reads it: a conjunction (`and`) of `[key, value]`
+ * pairs, with `or` across tags expressed as multiple rules in the table.
  */
 export interface TagRuleLike {
 	all: ReadonlyArray<[key: string, value: string]>
 }
 
 /**
- * Throws if any rule in `rules` carries a key or value outside {@link SAFE_TAG_TOKEN} —
- * called at the top of each SQL builder, so it and the extractors built over it refuse
- * a hostile rule table before any string concatenation happens.
+ * Throws if any rule in `rules` carries a key or value outside {@link SAFE_TAG_TOKEN}, called at
+ * the top of each SQL builder so a hostile rule table is refused before any string concatenation.
  *
  * `label` names the refusing builder in the error.
  */

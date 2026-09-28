@@ -4,23 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   The freshness interface between the committed corpus (`cases/<cc>/*.jsonl`) and its built artifact
- *   (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`). The builder stamps what it wrote. every runner that
+ *   (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`): the builder stamps what it wrote, and every runner that
  *   grades against the DB refuses when the stamp disagrees with the corpus on disk right now.
  *
- *   measured failure, 2026-08-06: `eval gauntlet-build regression-db` was run from a compiled tree whose
- *   `out/` loader still contained the deleted pre-jsonl case array. It read that array, wrote a DB, and printed
- *   "[gauntlet] built … cases". The artifact was wrong, the exit code was 0, and the check that ran next
- *   reported a verdict about a corpus that no longer existed. No step in the pipeline could have said
- *   otherwise: a derived artifact carried no evidence of what it derived from. This module is that evidence,
- *   and it is the same answer #1488 gave for the FST binaries.
- *
- *   Two guards, deliberately different in kind:
- *
- *   - content — `corpus_hash` vs the live {@linkcode regressionCorpusHash}. Catches the artifact that is stale
- *       (or, equally, the working tree that moved after the build).
- *   - emptiness — the builder refuses a corpus of zero rows outright ({@linkcode assertCorpusIsNonEmpty}).
- *       A hash comparison alone cannot catch this, because an empty loader on both sides agrees with itself.
- *       That is precisely the stale-tree shape: the loader resolved no `.jsonl` at all.
+ *   Two guards deliberately differ in kind: content (`corpus_hash` against the live {@linkcode regressionCorpusHash})
+ *   catches a stale artifact, while emptiness refuses a zero-row corpus outright ({@linkcode assertCorpusIsNonEmpty}),
+ *   because an empty loader agrees with itself and a hash comparison cannot see it.
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -44,9 +33,8 @@ export type CorpusStamp = Pick<GauntletMetaTable, "corpus_hash" | "case_count" |
 /**
  * Refuse a corpus with no rows, naming the directory that produced none.
  *
- * The builder's own guard, and the one the hash cannot provide.
- * A compiled tree pointing at a `cases/` directory with no country dirs loads cleanly,
- * returns `[]`, and builds a perfectly valid empty DB, which then grades 0/0 and passes.
+ * A compiled tree pointing at a `cases/` directory with no country dirs loads cleanly
+ * and builds a valid empty DB that grades 0/0 and passes, which a hash comparison cannot catch.
  */
 export function assertCorpusIsNonEmpty(rows: readonly SeedCase[], dir: PathBuilderLike = CASES_DIR): void {
 	if (rows.length) return
@@ -59,9 +47,8 @@ export function assertCorpusIsNonEmpty(rows: readonly SeedCase[], dir: PathBuild
 }
 
 /**
- * Write (or replace) the one-row build stamp.
- *
- * Call inside the builder, against the same handle that wrote the cases.
+ * Write (or replace) the one-row build stamp, inside the builder and against
+ * the same handle that wrote the cases.
  */
 export async function writeCorpusStamp(
 	kdb: DatabaseClient<GauntletDatabase>,
@@ -80,13 +67,11 @@ export async function writeCorpusStamp(
 }
 
 /**
- * Read the stamp out of a built DB.
- *
- * `null` means the table is absent — a DB built before the stamp existed.
+ * Read the stamp out of a built DB; `null` means the table is absent,
+ * as in a DB built before the stamp existed.
  */
 export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Promise<CorpusStamp | null> {
-	// Presence probe first: selecting from a missing table throws a driver error whose
-	// message is the only thing distinguishing "no stamp" from "the DB is corrupt",
+	// Presence probe first: selecting from a missing table throws a driver error,
 	// and branching on error prose is how a guard starts lying.
 	const present = await sql<{
 		name: string
@@ -104,17 +89,13 @@ export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Pr
 }
 
 /**
- * Throw unless the DB's stamp matches the corpus committed on disk right now.
- *
- * Called by every runner before it grades anything.
- * The message names both hashes and the likely cause, because the two ways to
- * reach it need opposite fixes: an artifact older than the corpus wants a rebuild,
- * and a build made from a stale `out/` wants a recompile first.
+ * Throw unless the DB's stamp matches the corpus committed on disk right now. the message
+ * names both hashes and the likely cause, because an artifact older than the corpus
+ * wants a rebuild while a build from a stale `out/` wants a recompile first.
  *
  * @param kdb An open handle on the built DB.
  * @param liveRows The corpus as committed.
- * Injectable so a test can pose "state B" without touching the repo's own `cases/`;
- * the default reads the real corpus, which is what every caller in the product wants.
+ * Injectable so a test can pose a different state without touching the repo's own `cases/`.
  */
 export async function assertCorpusStampFresh(
 	kdb: DatabaseClient<GauntletDatabase>,

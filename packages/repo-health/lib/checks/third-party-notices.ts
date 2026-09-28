@@ -5,18 +5,14 @@
  * @file The three copies of the third-party notices agree on which modules are MIT-derived, and each named module
  *   says so in its own header.
  *
- *   Mailwoman began as a fork of Pelias Parser under the MIT license, and MIT conditions its grant on the copyright
- *   notice and the permission notice accompanying copies of the covered software. Discharging that depends on the
- *   notice being accurate about which modules it covers, and three files describe them: the repository notices, the
- *   documentation site's page, and the copy inside `@mailwoman/core` that npm ships to a consumer.
+ *   Mailwoman began as a fork of Pelias Parser under the MIT license, which conditions its grant on the copyright
+ *   notice and the permission notice accompanying copies of the covered software. Three files must describe the
+ *   covered modules: the repository notices, the documentation site's page, and the copy inside `@mailwoman/core`
+ *   that npm ships.
  *
- *   No check compared the three, and they drifted in both directions. Two named rule-based classifiers and a solver
- *   that were deleted in v7.0.0, which claims an obligation over code no package contains. None named the surviving
- *   modules by path, so a rename would have left a notice pointing nowhere with no error anywhere.
- *
- *   The check is mechanical. It reads the module paths each notice names, holds the three sets equal, requires each
- *   named file to exist, and requires each one's header to carry the derivation. It does not judge how derived a
- *   module is, which is not a question a repository check can answer.
+ *   The check is mechanical: it reads the module paths each notice names, holds the three sets equal, requires each
+ *   named file to exist, and requires each one's header to carry the derivation, without judging how derived a module
+ *   is.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -27,8 +23,8 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 /**
  * The three notice files, each with the audience that reads it.
  *
- * `packages/core/THIRD_PARTY_NOTICES.md` is the one in the `files` array of `@mailwoman/core`, so it
- * is the only copy that reaches somebody who installs the package rather than opening the repository.
+ * The `packages/core` copy is the only one in `@mailwoman/core`'s `files` array,
+ * so it is the one that reaches an installer.
  */
 const NOTICE_FILES: ReadonlyArray<readonly [path: string, audience: string]> = [
 	["THIRD_PARTY_NOTICES.md", "the repository's notices"],
@@ -37,48 +33,37 @@ const NOTICE_FILES: ReadonlyArray<readonly [path: string, audience: string]> = [
 ]
 
 /**
- * The package the MIT-derived modules live in.
- *
- * Their paths are written relative to it in every notice.
+ * The package the MIT-derived modules live in, relative to which every notice writes their paths.
  */
 const DERIVED_PACKAGE = "packages/core"
 
 /**
- * The module paths a notice names, as `lib/tokenization/<name>.ts`.
- *
- * Matching the path rather than a module name is what makes a rename fail the check: a moved
- * file stops existing at the path the notice prints, and the notice is what a licensee reads.
+ * The module paths a notice names, as `lib/tokenization/<name>.ts`; matching the path rather than
+ * a module name is what makes a rename fail the check, since the notice is what a licensee reads.
  */
 function derivedModulePaths(text: string): Set<string> {
 	return new Set(text.match(/lib\/tokenization\/[A-Za-z]+\.ts/gu))
 }
 
 /**
- * The sentence a header carries to record the derivation.
- *
- * A file's own header is where a reader of that file looks, and a notice
- * elsewhere in the tree does not reach them.
+ * The sentence a header carries to record the derivation, because a file's own header is
+ * where its reader looks and a notice elsewhere in the tree does not reach them.
  */
 const HEADER_MARKER = "Pelias Parser, MIT"
 
 /**
- * The condition MIT attaches to its grant, as the license states it.
- *
- * The copy that ships has to reproduce it rather than link to it, since a consumer
- * holds the tarball and not the upstream repository.
+ * The condition MIT attaches to its grant as the license states it, which the shipped copy must
+ * reproduce rather than link to, since a consumer holds the tarball and not the upstream repository.
  */
 const PERMISSION_NOTICE = "shall be included in all copies or substantial portions of the Software"
 
 /**
- * The text with its blockquote markers stripped and every whitespace run folded to one space.
+ * The text with its blockquote markers stripped and every whitespace run folded to one space,
+ * because the repository formatter rewraps the quoted license and matching the raw
+ * file would fail on a reflow that changed no text a licensee reads.
  *
- * The license text is quoted prose that the repository formatter rewraps to its
- * own width, so matching the license's sentence against the raw file would fail
- * on a reflow that changed no text a licensee reads.
- *
- * `@mailwoman/normalize`'s `collapseWhitespace` is a different operation: it keeps
- * newlines as segment separators and returns an offset map for address text.
- * This folds newlines away and returns a string.
+ * `@mailwoman/normalize`'s `collapseWhitespace` keeps newlines as segment separators
+ * and returns an offset map for address text, so it is a different operation.
  */
 function foldQuotedProse(text: string): string {
 	return text.replaceAll(/^[\t >]+/gmu, "").replaceAll(/\s+/gu, " ")

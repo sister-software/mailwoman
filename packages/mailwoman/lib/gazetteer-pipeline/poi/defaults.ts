@@ -3,47 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The POI build's tunable defaults, and no more — no imports, so the module is free to load.
- *
- *   They live apart from the builders that consume them so command specifications can interpolate the defaults without
- *   importing DuckDB, h3-js, or the resolver schema layer. The builders re-export the names, so callers need not know
- *   where the constants live.
+ *   The POI build's tunable defaults, kept import-free so command specifications can interpolate them
+ *   without loading DuckDB, h3-js, or the resolver schema layer.
  */
 
 /**
- * Pinned Overture release for the places-theme ingest.
- *
- * Matches `overture-ingest.tsx`'s own `DEFAULT_RELEASE` pin (the addresses-theme ingest)
- * as of this writing — a monthly Overture release covers every theme at once,
- * so the two pins move together in practice.
- * Kept as an independent constant here rather than imported from that `.tsx` command:
- * `gazetteer-pipeline/*.ts` must stay importable under plain `node` type-stripping (no JSX transform),
- * and `commands/**\/*.tsx` files are Ink presentation that require compiling (agents.md) —
- * pulling a value from a `.tsx` file into this pipeline layer would invert that dependency direction.
- *
- * If the pins drift, `--release` overrides either independently.
- *
- * Overture prunes old releases from the bucket — the 2026-08-19 listing held exactly one.
- * A stale pin therefore fails every default build outright (the S3 listing finds no release),
- * and a sealed artifact built from a pruned release can never be rebuilt.
- *
- * Bump this pin when a build reports the release missing.
- * Treat the bump as a new-vintage decision (row deltas ride along), never a routine chore.
+ * Pinned Overture release for the places-theme ingest, kept independent of the
+ * `.tsx` command's pin because `gazetteer-pipeline/*.ts` must stay importable under
+ * plain `node` type-stripping without a JSX transform.
  */
 export const DEFAULT_RELEASE = "2026-07-22.0"
 
 /**
- * `--min-rows` default — keeps the table to real chains rather than one-off name
- * collisions (~low-thousands of entries).
+ * `--min-rows` default, which keeps the table to real chains rather than one-off name collisions.
  */
 export const DEFAULT_MIN_ROWS = 25
 
 /**
- * `--dominance` default — a QID's modal name must cover at least this fraction of its total rows to qualify.
+ * `--dominance` default, the fraction of a QID's total rows its modal name must cover to qualify.
  *
- * Below the floor, the QID is systematically mistagged
- * (many unrelated chains sharing one Wikidata QID, e.g. Q4835981's "CVS" over ~20 unrelated chains)
- * rather than one real chain with noisy alias spellings — dropped entirely rather than
- * just demoted out of the alias list the way sub-noise-floor variants are.
+ * Below it the QID is dropped as systematically mistagged rather than demoted
+ * like a sub-noise-floor variant.
  */
 export const DEFAULT_DOMINANCE = 0.5

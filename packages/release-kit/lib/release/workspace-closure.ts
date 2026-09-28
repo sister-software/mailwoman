@@ -2,10 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `workspace:*` closure of a set of seed packages, computed from the manifests rather than copied into a list,
- *   and the pack step that turns a closure into `file:` tarball dependencies. Both clean-install smokes use these, so a
- *   fix to how a closure is walked or packed lands in one place. the un-awaited pack that broke the get-started harness
- *   had been fixed in the release smoke a day earlier because each carried its own copy.
+ * @file The `workspace:*` closure of a set of seed packages, computed from the manifests rather than copied into a
+ *   list, and the pack step that turns a closure into `file:` tarball dependencies. Both clean-install smokes use
+ *   these, so a fix to how a closure is walked or packed lands in one place.
  */
 
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
@@ -21,7 +20,6 @@ const DEPENDENCY_FIELDS = ["dependencies", "optionalDependencies", "peerDependen
  * with its repo-relative directory.
  */
 // repo-health-ignore export-name-affix -- keys the shared reader's answer by package name.
-// It adds the manifest read.
 export async function workspaceDirectories(repoRoot: PathBuilderLike): Promise<Map<string, string>> {
 	const byName = new Map<string, string>()
 
@@ -36,10 +34,8 @@ export async function workspaceDirectories(repoRoot: PathBuilderLike): Promise<M
 
 /**
  * The seeds plus every workspace they reach through a `workspace:` dependency,
- * optional or peer dependency, transitively.
- *
- * The set a consumer's `npm install` of the seeds pulls from the registry, computed
- * so a package added to a seed's graph is picked up without anyone editing a list.
+ * optional or peer dependency, transitively, computed so a package added to a
+ * seed's graph is picked up without editing a list.
  *
  * @throws When a seed or a reached dependency names no workspace: a `workspace:`
  * specifier that resolves nowhere is a broken manifest rather than an absence.
@@ -78,10 +74,8 @@ export async function walkWorkspaceClosure(
 }
 
 /**
- * Pack each workspace into `tarDir` with the derived publish map and answer the
- * `dependencies` block a throwaway consumer project installs from.
- *
- * Every entry a `file:` tarball, so no entry is resolved from the registry.
+ * Pack each workspace into `tarDir` with the derived publish map and answer the `dependencies`
+ * block a throwaway consumer project installs from, every entry a `file:` tarball.
  *
  * Sequential on purpose: each pack rewrites its own manifest while yarn reads its siblings.
  */

@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1735 pins. The rung's whole interface is its checks: it fires on the recorded contradiction (letter-digit postcode
- *   span, ≥0.9 shape confidence, only misread-family nodes wholly inside it) and on no other input. The veto cases are
- *   the tests that matter. Each one is an input the rung must leave byte-identical.
+ *   The rung fires on the recorded contradiction — a letter-digit postcode span at ≥0.9 shape confidence with only misread-family nodes wholly inside it — and on no other input. Every veto case must stay byte-identical.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -84,8 +82,7 @@ describe("repairPostcodeContradiction (#1735)", () => {
 		expect(repairPostcodeContradiction(po, computeQueryShape("PO33 4DE"))).toBe(true)
 		expect(tags(po)).toEqual(["postcode:PO33 4DE"])
 
-		// A genuine PO Box surface carries no letter-digit postcode span.
-		// The format check never opens.
+		// A genuine PO Box surface carries no letter-digit postcode span, so the format check never opens.
 		const box = tree("PO Box 123", [node("po_box", "PO Box 123", 0, 10)])
 
 		expect(repairPostcodeContradiction(box, computeQueryShape("PO Box 123"))).toBe(false)

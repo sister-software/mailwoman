@@ -3,29 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Running a conformance-law suite, and saying what a violation was.
- *
- *   no second harness. A fixture is graded by running the same pipeline the Gauntlet runs, through an
- *   observer the caller supplies — `gauntletObserver` wraps `buildGauntletDeps`'s own `geocode` and projects
- *   it with `toGauntletResult`, the projection the board's grader and the warm-engine tools already share. A
- *   law suite is therefore a Gauntlet layer's worth of implementation plus a fixture file rather than a parallel runner
- *   with its own model loading, its own weights ladder and its own idea of what a result is.
- *
- *   both sides are observed, every time. No code here caches by query, because a fixture whose base and
- *   variant are the same string is the identity law — two independent runs that must agree — and answering
- *   the second one from a cache would turn the strongest available nondeterminism check into a tautology.
- *
- *   `undecidable` is A violation. A comparator that could not read its axis has not found a law holding. it
- *   has found no violation, and a suite that counted it as a pass would report the same total as a suite that
- *   genuinely held.
- *
- *   `unmeasured` is neither, and leaves the denominator. It is the reading of a comparator that did read its
- *   axis and found the observation too small to decide — `candidate_admissibility` is the only one that can
- *   report it, when a candidate left a table already sitting at its fetch window. Counting it as a failure
- *   would report the observer's blind spot as the pipeline's defect. counting it as a hold would report a
- *   blind spot as evidence. So {@linkcode summarizeConformanceRun} puts it in its own bucket, removes it from
- *   the row count the verdict is stated over, and a suite that can measure no row at all reports `pass:
- *   false` for the same reason an empty suite does.
+ *   Running a conformance-law suite through the same pipeline the Gauntlet runs, with both sides observed every time and `undecidable` counted as a violation.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -36,11 +14,8 @@ import type { GauntletDeps } from "#eval-harness/gauntlet/harness"
 import { toGauntletResult } from "#eval-harness/gauntlet/harness"
 
 /**
- * Produce one side of a law: run `query` under `context` and return what the comparators read.
- *
- * The hook exists so a caller that can say more about a run than the assembled result —
- * `@mailwoman/dev-mcp`, which holds the trace and the mechanism-account predicates — attaches its
- * shapes here rather than this module reaching for a private workspace it must not depend on.
+ * Produces one side of a law, letting a caller attach trace and mechanism-account detail
+ * rather than this module reaching for a private workspace.
  */
 export type ConformanceObserver = (
 	query: string,
@@ -54,36 +29,22 @@ export interface ConformanceFinding {
 	fixture: ConformanceFixture
 	reading: ComparatorReading
 	/**
-	 * Did the observed relation match the expected one?
-	 *
-	 * `undecidable` never holds.
+	 * Whether the observed relation matched the expected one; `undecidable` never holds.
 	 */
 	held: boolean
 }
 
 /**
- * Wrap a Gauntlet `geocode` as an observer, projecting through `toGauntletResult`.
- *
- * Takes the function rather than the whole {@linkcode GauntletDeps} so a law suite can hand over a
- * warm session's geocode without this module acquiring an opinion about how the engine was built.
- * No mechanism account is attached.
- *
- * The shape vocabulary lives in the private dev-mcp workspace, and an observer
- * that wants shapes supplies its own.
+ * Wraps a Gauntlet `geocode` as an observer projecting through `toGauntletResult`,
+ * with no mechanism account attached.
  */
 export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceObserver {
 	return async (query, context) => ({ result: toGauntletResult(await geocode(query, context)) })
 }
 
 /**
- * The same observer with the resolver's interior attached.
- *
- * One trace record per backend lookup, which is what `candidate_admissibility` reads.
- *
- * A second observer rather than a flag on the first, because the walk's trace bookkeeping
- * is a real cost the four answer-axis laws have no use for.
- * `command.ts` chooses between them by reading the comparators the loaded rows actually name,
- * so a run that states no candidate law pays no cost.
+ * The same observer with one trace record per backend lookup attached, a second function
+ * rather than a flag because the bookkeeping is a real cost.
  */
 export function tracedGauntletObserver(geocodeTraced: GauntletDeps["geocodeTraced"]): ConformanceObserver {
 	return async (query, context) => {
@@ -94,11 +55,8 @@ export function tracedGauntletObserver(geocodeTraced: GauntletDeps["geocodeTrace
 }
 
 /**
- * Run every fixture and report which laws held.
- *
- * `pass` is true only when every fixture held.
- * A suite with no fixtures returns `pass: false`: an empty run is not a clean run,
- * and reporting one as passing is how a mis-pointed fixture path becomes a green check.
+ * Runs every fixture and reports which laws held, with an empty suite returning `pass: false`
+ * because reporting an empty run as passing is how a mis-pointed fixture path becomes a green check.
  */
 export async function runConformanceFixtures(
 	fixtures: readonly ConformanceFixture[],
@@ -123,7 +81,6 @@ export async function runConformanceFixtures(
 export interface ConformanceSummary {
 	/**
 	 * Findings from `status: pass` rows that were violated.
-	 *
 	 * These, and only these, decide {@linkcode pass}.
 	 */
 	failures: ConformanceFinding[]
@@ -132,40 +89,25 @@ export interface ConformanceSummary {
 	 */
 	tracked: ConformanceFinding[]
 	/**
-	 * Tracked rows whose law now holds.
-	 *
-	 * Printed as a promotion instruction: a tracked list nobody prunes stops being a
-	 * record of known defects and becomes a place rows go to be forgotten.
+	 * Tracked rows whose law now holds, printed as a promotion instruction because a
+	 * tracked list nobody prunes stops being a record of known defects.
 	 */
 	newlyHolding: ConformanceFinding[]
 	/**
-	 * Rows whose comparator read its axis and could not decide — today only `candidate_admissibility`,
-	 * when a candidate left a table that was sitting at its fetch window.
-	 *
-	 * These leave {@linkcode unmeasured} rather than joining {@linkcode failures}:
-	 * the run has no evidence the law broke, and no evidence it held.
-	 * Reported in full, never blocking, and never counted toward the hold ratio.
-	 *
-	 * A suite whose every row goes unmeasured therefore reports `pass: false`,
-	 * which is the reading that keeps a blind instrument from looking like a clean one.
+	 * Rows whose comparator read its axis but could not decide, left out of the hold ratio
+	 * because the run has no evidence the law broke or held.
 	 */
 	unmeasured: ConformanceFinding[]
 	/**
-	 * How many rows were admitted and decided.
-	 *
-	 * The denominator a reader needs before the pass count means anything.
+	 * How many rows were admitted and decided, the denominator the pass count needs before it means anything.
 	 */
 	decided: number
 	pass: boolean
 }
 
 /**
- * Split a run by row status, mirroring the Gauntlet regression layer's own three-way reading.
- *
- * `pass` is false on an empty findings list for the same reason {@linkcode runConformanceFixtures}
- * refuses an empty suite, and false on a suite with no enforcing rows at all:
- * a run whose every row is tracked has measured no fact that could fail, and reporting
- * it as a pass is how a suite quietly stops holding anything.
+ * Splits a run by row status, mirroring the Gauntlet regression layer,
+ * and reports `pass: false` when no enforcing row was decided.
  */
 export function summarizeConformanceRun(findings: readonly ConformanceFinding[]): ConformanceSummary {
 	const failures: ConformanceFinding[] = []
@@ -177,9 +119,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 	for (const finding of findings) {
 		const blocking = (finding.fixture.status ?? "pass") === "pass"
 
-		// Read before the status split, and on tracked rows too: a tracked row that went
-		// unmeasured has not started holding, and printing it as a promotion instruction
-		// would ask someone to promote a row nobody measured.
+		// Read before the status split and on tracked rows too, since an unmeasured tracked row has not started holding.
 		if (finding.reading.observed === "unmeasured") {
 			unmeasured.push(finding)
 
@@ -203,14 +143,8 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 }
 
 /**
- * Render one finding as the line a law suite prints.
- *
- * Names, in this order: the law, the fixture id, the committed row it was drawn from
- * when it has one, the comparator, the expected and observed relations, both queries,
- * what the comparator read, and every difference it found.
- * A violation reported without the row it came from is a claim about a synthetic pair.
- *
- * With it, a reader can go back to the population and ask how common the shape is.
+ * Renders one finding as the line a law suite prints, naming the row it came from
+ * so a violation is not a claim about a synthetic pair.
  */
 export function formatConformanceFinding(finding: ConformanceFinding): string {
 	const { fixture, reading, held } = finding

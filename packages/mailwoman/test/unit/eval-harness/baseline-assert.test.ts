@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the harness baseline assertion (#727 stage-2, Tier 0).
- *
- *   The two incidents this mechanism exists for are replayed verbatim as tests — Phase 1's
- *   token@1 0.348 against a v264 known-good of 0.573, and Phase 4a's dark resolver reading 0.000
- *   street evidence. If either ever passes, the mechanism is decorative.
+ *   The two baseline rows replay known-bad readings. If either ever passes, the mechanism is decorative.
  */
 
 import {
@@ -28,7 +24,6 @@ describe("baseline registry", () => {
 	})
 
 	it("demands a reproducible provenance on every row", async () => {
-		// A baseline you can't reproduce from its own row is a rumor.
 		for (const baseline of await listBaselines()) {
 			expect(baseline.commit, `${baseline.id} has no commit`).toBeTruthy()
 			expect(baseline.command, `${baseline.id} has no command`).toBeTruthy()
@@ -94,7 +89,6 @@ describe("assertBaselines", () => {
 	})
 
 	it("refuses an unregistered id rather than passing it", async () => {
-		// An unverifiable reading is exactly the state both incidents were in.
 		const verdict = await assertBaselines([{ id: "nope.not.a.baseline@v999", observed: 0.5 }])
 
 		expect(verdict.ok).toBe(false)
@@ -137,15 +131,9 @@ describe("profiles", () => {
 	})
 
 	it("never mixes harnesses within one profile", async () => {
-		// The bug this file shipped with on 2026-07-16: oracle-k's `v301` profile pointed its seg@1
-		// reading at a learned-span-decode row (0.5768) while oracle-k computes the summed-BIO
-		// stand-in (0.449) — two harnesses compared through one id, refusing on a healthy run.
-		// Caught by running it rather than by reading it.
-		// This test reads it.
-		//
-		// The token@1 row is the one legitimate crossover: every JS harness computes
-		// the same BIO argmax, so `js-ship-config` is shared.
-		// Anything else must be single-harness.
+		// A profile must not mix harnesses.
+		// The token@1 row is the one legitimate crossover, so `js-ship-config` is shared
+		// and everything else is single-harness.
 		for (const name of await listProfiles()) {
 			const profile = await resolveProfile(name)
 
@@ -162,8 +150,8 @@ describe("profiles", () => {
 	})
 
 	it("keeps the summed-BIO stand-in and the learned span decode on separate ids", async () => {
-		// They are different numbers on the same weights — 0.449 vs 0.5768 on v301.
-		// If a future edit collapses them, every span-head claim becomes uninterpretable.
+		// The summed-BIO stand-in and the learned span decode are different numbers on the same weights.
+		// Collapsing them would make every span-head claim uninterpretable.
 		const standIn = (await findBaseline("parity.street.seg_at_1@v301-summed-bio"))!
 		const learned = (await findBaseline("parity.street.seg_at_1@v301-span"))!
 

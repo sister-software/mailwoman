@@ -3,11 +3,6 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The country→locale guard over a planted tree: discovery, a missing shipping locale, a transposed pair.
- *
- *   The defect it was written for is the first case: `release.config.json` gains a locale under `charWeights`, the
- *   Latin-only census table is not touched, and every consumer reads the absence as a country with no weights
- *   package. The case that matters most for the shape is `finds a table nobody registered` — the check discovers
- *   its subjects, because a check that names them cannot see the one somebody adds.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -82,7 +77,6 @@ describe("findLocaleTables", () => {
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"] },
 			extra: {
-				// One locale pair among four entries: a table of something else that happens to carry one.
 				"packages/corpus/lib/mixed.ts": objectTable("SOURCE_BY_COUNTRY", [
 					["DE", "de-DE"],
 					["IT", "overture"],
@@ -99,10 +93,6 @@ describe("findLocaleTables", () => {
 
 describe("localeTablesCheck", () => {
 	it("no longer asks completeness of any table, because the one it bound is now derived", async () => {
-		// `WEIGHTS_PACKAGE_BY_COUNTRY` was a hand-written copy of `release.config.json`'s
-		// two lists, which is why it could omit `ja-jp` and `zh-cn`.
-		// `@mailwoman/core/release-config`'s `weightsPackageByCountry` derives it from that
-		// config now, and the invariant moved to that derivation's own test.
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"], charWeights: { cjk: { overlays: ["ja-jp", "zh-cn"] } } },
 			weights: [
@@ -141,7 +131,6 @@ describe("localeTablesCheck", () => {
 				["ES", "es-es"],
 			],
 			extra: {
-				// A subset of what ships, which is this table's interface.
 				[ROUTING]: objectTable("OVERLAY_LOCALE_BY_COUNTRY", [
 					["ES", "es-ES"],
 					["FR", "fr-FR"],
@@ -156,7 +145,6 @@ describe("localeTablesCheck", () => {
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"] },
 			extra: {
-				// `FST_LOCALE_BY_COUNTRY` carries `ko-kr` ahead of the Korean package.
 				// The ladder resolves an FST by path and returns no FST when the file is absent.
 				"packages/mailwoman/lib/eval-harness/autocomplete-ladder.ts": objectTable("FST_LOCALE_BY_COUNTRY", [
 					["US", "en-us"],

@@ -4,20 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Every number a published weights package states about itself agrees with the others.
  *
- *   A package carries four version-shaped facts across three files, and no check compared them. The manifest's
- *   `version`, the model card's `version`, the base package a `mailwoman.baseWeights` names and the version that base
- *   actually carries, and the digests a card records against the artifacts a manifest declares. Each is written by a
- *   different step, and a disagreement between any two is silent: the compiler reads none of them, and a tarball ships
- *   whatever the files say.
- *
- *   This check is the reconciliation P4 asks for. It refuses a disagreement rather than repairing one, because the
- *   repair differs by case: a stale card version is a release step that did not run, a base naming a package that does
- *   not exist is a manifest edit, and a digest against an artifact the manifest stopped declaring is a card that
- *   describes an older tarball.
- *
- *   It does not compare a card version against a manifest version. Those are two series by design — `en-us` ships npm
- *   10.0.0 carrying model 9.1.0 — and `docs/engineering/releases.mdx` records which release changed the model
- *   and which did not.
+ * A card version and a manifest version are two series by design, so this check does not compare them.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -89,12 +76,11 @@ export const weightsReconciliationCheck: RepoCheck = {
 				continue
 			}
 
-			// A digest against an artifact the manifest no longer declares describes a tarball this
-			// package stopped shipping, and a reader checking it would find no artifact to check.
+			// A digest for an artifact the manifest no longer declares describes a
+			// tarball this package stopped shipping.
 			//
-			// A `$`-prefixed key is the annotation convention these cards use throughout —
-			// `$comment`, `$comment_661` — and names no file.
-			// Reading one as a filename would report a defect in every card that documents itself.
+			// A `$`-prefixed key is the annotation convention these cards use and names no file,
+			// so reading one as a filename would report a defect in every card that documents itself.
 			for (const digested of Object.keys(card.files_md5 ?? {})) {
 				if (digested.startsWith("$")) continue
 

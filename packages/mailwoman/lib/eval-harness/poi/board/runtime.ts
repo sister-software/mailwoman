@@ -26,7 +26,7 @@ export interface POIBoardOptions {
 	fixturesPath?: string
 	/**
 	 * Sealed `poi.db` to query.
-	 * It defaults to the data-root POI layer path.
+	 * Defaults to the data-root POI layer path.
 	 */
 	db?: PathBuilderLike
 	/**
@@ -48,31 +48,24 @@ export interface POIBoardOptions {
 	 */
 	enforce?: boolean
 	/**
-	 * Extra phrase lookup that the pipeline consults after the committed lexicon
-	 * and the POI name lookup both find no entry.
-	 *
-	 * It is passed through as `CreateRuntimePipelineOpts.poiSemanticLookup`.
-	 *
-	 * A probe sets it so the injected route runs through the board's own pipeline construction.
+	 * Extra phrase lookup consulted after the committed lexicon and the POI name lookup
+	 * both find no entry, passed through as `CreateRuntimePipelineOpts.poiSemanticLookup`;
+	 * a probe sets it so the injected route runs through the board's own pipeline construction.
 	 */
 	poiSemanticLookup?: POIPhraseLookup
 	/**
-	 * Whether to build the semantic observation route and use it as {@linkcode poiSemanticLookup}.
-	 * It is ignored when `poiSemanticLookup` is set.
+	 * Whether to build the semantic observation route and use it as {@linkcode poiSemanticLookup},
+	 * ignored when `poiSemanticLookup` is set.
 	 *
-	 * It defaults to off, and the registered floors assume it is off because the
-	 * shipped pipeline omits the route.
-	 * Turning it on measures rows whose subject matches no committed lexicon entry.
+	 * It defaults to off and the registered floors assume that, because the shipped pipeline omits the route.
 	 */
 	semanticObservation?: boolean
 }
 
 /**
- * Builds the anchor resolver the same way as `tryLoadResolver` in `commands/poi.tsx`.
- *
- * It prefers the candidate-table backend, then the WOF FTS databases.
- * With neither available it returns `undefined`, and anchored cases abstain with `anchor_required`.
- *
+ * Builds the anchor resolver the same way as `tryLoadResolver` in `commands/poi.tsx`:
+ * it prefers the candidate-table backend, then the WOF FTS databases, and with neither
+ * available returns `undefined`, leaving anchored cases to abstain with `anchor_required`.
  * The caller must dispose the returned handle.
  */
 async function loadResolver(
@@ -116,7 +109,6 @@ async function loadResolver(
 /**
  * Backend that answered anchor resolution.
  *
- * The handle reports the backend that was built.
  * `createResolverBackend` can fall back to the default candidate path,
  * so the caller's options alone do not determine it.
  */
@@ -153,7 +145,7 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 	})
 
 	const resolverHandle = await loadResolver(options)
-	// A probe that passes its own lookup reads that lookup's firings afterwards, so a supplied lookup takes precedence.
+	// A probe that passes its own lookup reads its firings afterwards, so a supplied lookup takes precedence.
 	const semanticLookup = options.poiSemanticLookup ?? (await buildBoardSemanticLookup(options.semanticObservation))
 
 	const pipeline = createRuntimePipeline({
@@ -174,8 +166,7 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 /**
  * Returns the semantic observation route's lookup, or `undefined` when `semanticObservation` is off.
  *
- * The route module is imported dynamically so that a run with the option off
- * never loads its compiled artifact.
+ * The route module is imported dynamically so a run with the option off never loads its compiled artifact.
  */
 async function buildBoardSemanticLookup(semanticObservation?: boolean): Promise<POIPhraseLookup | undefined> {
 	if (!semanticObservation) return undefined

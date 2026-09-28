@@ -4,13 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file Per-leg wall time for one promotion run, written beside the run rather than into it.
  *
- *   The battery's own log times one leg — per-locale prints `us.jsonl: n=2660 … in 50.9s`. Everything else is
- *   unattributed, so a question like "where do the nine minutes go" is answered by extrapolating row counts, which is
- *   how the de-order row count came to be wrong by 6,000 rows in an earlier triage.
- *
- *   The recorder writes no file unless a path is given, and the path must name somewhere outside the promotion output
- *   directory: `comparePromotionOutputs` reads every file under it byte-for-byte, and a wall time differs between two
- *   runs of the same artifact.
+ *   The path must name somewhere outside the promotion output directory: `comparePromotionOutputs`
+ *   reads every file under it byte-for-byte, and a wall time differs between two runs of the same
+ *   artifact.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -29,11 +25,10 @@ export interface LegTiming {
 }
 
 /**
- * Collects one entry per timed leg, in completion order, and writes the ledger
- * when the scope holding it ends.
+ * Collects one entry per timed leg, in completion order, writing the ledger when the scope holding it ends.
  *
- * Hold it with `await using`: a battery that fails part way through is exactly when the timings are
- * worth reading, and disposal writes what was collected before the throw rather than discarding it.
+ * Hold it with `await using` so a battery that fails part way through still
+ * writes what it collected before the throw.
  */
 export class LegProfile implements AsyncDisposable {
 	readonly #timings: LegTiming[] = []
@@ -41,8 +36,7 @@ export class LegProfile implements AsyncDisposable {
 
 	/**
 	 * @param path Where to write the ledger.
-	 * An empty path writes no ledger, which is the default for every run that did not ask to be profiled.
-	 * A non-empty one must sit outside the battery's output directory — see the file header.
+	 * An empty path writes none, and a non-empty one must sit outside the battery's output directory.
 	 */
 	constructor(path: string) {
 		this.#path = path
@@ -51,8 +45,8 @@ export class LegProfile implements AsyncDisposable {
 	/**
 	 * Run `work`, record its wall time, and hand back whatever it returned.
 	 *
-	 * A leg that throws is still recorded, because the time it spent before failing
-	 * is the number a reader is looking for.
+	 * A leg that throws is still recorded, because the time it spent
+	 * before failing is the number a reader wants.
 	 */
 	async time<T>(leg: string, tag: string | undefined, work: () => Promise<T>): Promise<T> {
 		const startedAt = performance.now()
@@ -69,10 +63,8 @@ export class LegProfile implements AsyncDisposable {
 	}
 
 	/**
-	 * Write the ledger, or skip the write when the path is empty.
-	 *
-	 * `total_ms` sums the legs, which is less than the run's wall clock: the untimed remainder
-	 * is the verdict assembly, the spec read, and whatever else sits between legs.
+	 * Write the ledger, or skip the write when the path is empty; `total_ms` sums the legs
+	 * and so is less than the run's wall clock.
 	 */
 	async [Symbol.asyncDispose](): Promise<void> {
 		if (!this.#path) return

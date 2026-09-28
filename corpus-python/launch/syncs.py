@@ -1,19 +1,12 @@
 """Stage assets from R2 onto the training volume from inside a container.
 
-Files written by `modal volume put` do not become visible to a mounted container, even after
-`vol.reload()`. Container-side writes followed by `vol.commit()` do propagate, so every asset travels
-from the local machine to R2 and then to the volume through these functions.
+Files written by `modal volume put` do not become visible to a mounted container even after
+`vol.reload()`; container-side writes followed by `vol.commit()` do propagate, so every asset
+travels to R2 and then to the volume through these functions.
 
-    modal run -m launch.train_remote::sync --version v8cjk_kr
-    modal run -m launch.train_remote::sync_assets --corpus-versions v0.31.0-example
-
-`sync` stages a row of `launch/corpora.py`, which lists what the version stages and what must exist on
-the volume afterwards. `sync_assets` takes its paths from the command line and records no state. Use
-`sync_assets` for a trial corpus, and add a row to `launch/corpora.py` once other runs will repeat it.
-
-An overlay corpus ships only its own parquet files. Its MANIFEST refers to the base version's files by
-absolute `/data/...` path, so the base must already be on the volume. Neither function checks this.
-`audit_epoch_mixture` checks it and reports the missing file.
+An overlay corpus ships only its own parquet files, and its MANIFEST refers to the base version's
+files by absolute `/data/...` path, so the base must already be on the volume;
+`audit_epoch_mixture` reports a base that is missing.
 """
 
 from __future__ import annotations
@@ -52,10 +45,8 @@ def _run_transfers(transfers: list[Transfer]) -> None:
 
 
 def _clear_pycache(paths: list[str]) -> None:
-    """Delete each `__pycache__` directory in `paths`.
-
-    Python can load a stale `.pyc` instead of the freshly copied source beside it, so a run would
-    execute the previous code.
+    """Delete each `__pycache__` directory in `paths`, because Python can load a stale `.pyc`
+    instead of the freshly copied source beside it.
     """
     import shutil
 
@@ -66,10 +57,7 @@ def _clear_pycache(paths: list[str]) -> None:
 
 
 def _report_checks(paths: list[str]) -> None:
-    """Print whether each path exists and raise with the list of missing paths.
-
-    The function raises so that a half-staged volume stops the sync before a training run uses it.
-    """
+    """Print whether each path exists and raise with the list of missing paths."""
     missing = [path for path in paths if not (os.path.isfile(path) or os.path.isdir(path))]
     for path in paths:
         print(f"  {path}: {path not in missing}")
@@ -80,8 +68,8 @@ def _report_checks(paths: list[str]) -> None:
 def verify_staged(version: str) -> None:
     """Run the version's `verifier`, if it has one, and raise with the labels of failed checks.
 
-    The verifier module is imported from the volume's copy of the package. An ImportError therefore
-    means the training package was not staged.
+    The verifier module is imported from the volume's copy of the package, so an ImportError means
+    the training package was not staged.
     """
     import importlib
     import sys
@@ -147,22 +135,11 @@ def sync_assets(
     """Copy corpus versions, a tokenizer, the training code and extra files from R2 to the volume.
 
     Corpus versions land in the layout that `mailwoman corpus upload` writes:
-
-        :s3:{BUCKET}/corpus/<version>/  ->  {VOL_MOUNT}/corpus/versioned/<version>/corpus-<version>/
-
-    Args:
-        corpus_versions: Comma-separated version names, such as ``v0.24.0-trailing-region-structured``.
-        tokenizer: A subdirectory of ``models/tokenizer/``. An empty value skips the tokenizer.
-        code: Whether to copy ``corpus-python/src/``. Training runs import the volume's copy.
-        extras: Comma-separated ``<r2-path>><vol-subdir>`` pairs, such as gazetteer files or eval fixtures.
-
-    Usage:
-        modal run -m launch.train_remote::sync_assets \
-            --corpus-versions v0.24.0-trailing-region-structured
+    ``:s3:{BUCKET}/corpus/<version>/`` -> ``{VOL_MOUNT}/corpus/versioned/<version>/corpus-<version>/``.
+    ``extras`` is a comma-separated list of ``<r2-path>><vol-subdir>`` pairs.
     """
     vol.reload()
 
-    # These are the constructors that `launch/corpora.py` rows use, so both entry points share one layout.
     copies: list[Copy] = [corpus(name.strip(), WRAPPED) for name in corpus_versions.split(",") if name.strip()]
 
     if tokenizer:

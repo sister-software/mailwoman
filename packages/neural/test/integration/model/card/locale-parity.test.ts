@@ -3,16 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Locale-parity drift-guard (#721). `publish.yml` copies en-us's `model.onnx` into the fr-fr
- *   weights package ("one multi-locale model serves both"), so the published fr-fr package ships
- *   en-us's exact binary. Its model-card must therefore declare the same label geometry +
- *   ship-config — a drift (the #721 bug: fr-fr stuck at 21 labels while en-us shipped 33) means the
- *   card mis-describes its own weights and `createScorer` throws `model emits N logits ...
- *   configured with only M labels` at load.
+ *   Locale-parity drift guard: `publish.yml` copies en-us's `model.onnx` into the fr-fr weights
+ *   package ("one multi-locale model serves both"), so fr-fr's model-card must declare the same
+ *   label geometry and ship-config or the card mis-describes its own weights and `createScorer`
+ *   throws at load.
  *
  *   This guard fails the moment en-us's labels / components / requires change without fr-fr
- *   following. Pure JSON (no weights) → CI-safe. If fr-fr ever ships its own model, relax this to
- *   the shared subset and drop the `cp` in publish.yml.
+ *   following, and is pure JSON (no weights), so it is CI-safe.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -38,12 +35,9 @@ interface ModelCard {
 }
 
 /**
- * One evidence-lexicon channel as a card declares it.
- *
- * `lexicon` names the generation the model trained against, and declaring it
- * is what arms the #1510 mismatch guard.
- * `resolveEvidenceLexicon` only compares generations on the declared branch,
- * so an undeclared channel silently falls back to a legacy filename with no guard at all.
+ * One evidence-lexicon channel as a card declares it; `lexicon` names the generation
+ * the model trained against and is what arms the mismatch guard, so an undeclared
+ * channel silently falls back to a legacy filename with no guard at all.
  */
 interface EvidenceChannel {
 	required?: boolean
@@ -77,36 +71,24 @@ describe("fr-fr ↔ en-us model-card parity (#721 — fr-fr ships en-us's model 
 })
 
 /**
- * Every overlay shares the base `model.onnx` byte-for-byte, so the trained
- * ship-config is the base's and an overlay that declares a `requires` block at all
- * must declare the base's evidence channels within it.
+ * Every overlay shares the base `model.onnx` byte-for-byte, so an overlay that declares
+ * a `requires` block at all must declare the base's evidence channels within it:
+ * a declared block suppresses the graph-inference back-compat path, so a missing channel
+ * is not inferred and `required` defaulting to false means no check fails closed.
  *
- * The subset case is not a smaller claim, it is a wrong one.
- * A declared block suppresses the graph-inference back-compat path, so a missing channel is not inferred.
- *
- * It is dropped, and `required` defaulting to false means no check fails closed.
- *
- * That is how en-gb ran the whole bundle off on a model trained with it (#1511),
- * and the same gap was later found on fr-fr, en-au and en-nz.
- *
- * An overlay with no block is deliberately exempt: `ProductionScorer`
- * then infers the channels from the ONNX graph.
- * The base supplies the right set, so the overlay gets it for free.
+ * An overlay with no block is deliberately exempt, because `ProductionScorer`
+ * then infers the channels from the ONNX graph and the base supplies the right set.
  */
 const OVERLAYS_WITH_CARDS = ["fr-fr", "en-gb", "en-au", "en-nz", "de-de", "es-es", "it-it", "en-in"] as const
 
 /**
  * The channels whose declaration also names an artifact generation.
- *
- * These are the ones that drifted.
  */
 const EVIDENCE_CHANNELS = ["locality_surface", "street_type"] as const
 
 /**
- * Drop the `$`-prefixed annotation keys before comparing.
- *
- * They carry per-card history and are expected to differ.
- * The declaration they annotate is what has to match.
+ * Drop the `$`-prefixed annotation keys before comparing, since they carry per-card history
+ * and the declaration they annotate is what has to match.
  */
 function semanticFields(channel: EvidenceChannel | undefined): Record<string, unknown> | undefined {
 	if (!channel) return undefined
@@ -119,8 +101,8 @@ describe("overlay ↔ base evidence-channel parity (#1511 class — a declared b
 		for (const channel of EVIDENCE_CHANNELS) {
 			test(`${overlay} declares ${channel} as the base does, or declares no block at all`, async () => {
 				const card = await readCard(overlay)
-				// A card with no block is exempt by design (graph inference covers it), so the expected
-				// value is the base's declaration only when this overlay declares anything at all.
+				// A card with no block is exempt by design, so the expected value is the base's
+				// declaration only when this overlay declares anything at all.
 				const expected = card.requires ? semanticFields(enUs.requires![channel]) : undefined
 
 				expect(semanticFields(card.requires?.[channel])).toEqual(expected)

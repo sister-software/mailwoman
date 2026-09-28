@@ -3,18 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The postcode-shape record is read by two runtimes: this package's postcode repair, and the Python trainer, which
- *   paints the train-side anchor on the spans the repair finds. Held as two typed tables they drifted twice — the IE
- *   Eircode row was TypeScript-only for a month, the BR CEP row for five weeks — and each time the trainer painted one
- *   fewer shape than inference, with no test failing.
+ *   The postcode-shape record is data authored once in `@mailwoman/codex`; the Python trainer cannot
+ *   import that package, so it carries a byte-identical copy that this test checks against the
+ *   authored one.
  *
- *   The table is now data, authored once in `@mailwoman/codex`. The trainer cannot import that package (a Modal
- *   container receives only `corpus-python/src`), so it carries a byte-identical copy. The Python suite checks that
- *   copy against the authored one. this checks the same equality from the TypeScript side, so an edit made here is
- *   caught by `yarn test` rather than only by a suite somebody may not run.
- *
- *   It lives in this package rather than in codex, because codex is deliberately zero-dependency and the check needs a repo
- *   root resolver. The consumer is the right home for a cross-language interface the consumer depends on.
+ *   It lives in this package rather than codex because codex is deliberately zero-dependency and the
+ *   check needs a repo-root resolver.
  */
 
 import { POSTCODE_SHAPES, POSTCODE_SHAPES_VERSION } from "@mailwoman/codex/postcode-shapes"

@@ -12,8 +12,6 @@ import { fillPostcodeCentroids } from "mailwoman/gazetteer-pipeline/postcode/cen
 import { expect, test } from "vitest"
 
 test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordinates untouched", async () => {
-	// The staging database: two postcodes.
-	// One placeholder (parented), one already placed.
 	await using dirDirectory = await temporaryDirectory("centroid-fills-")
 	const dir = dirDirectory.path
 	const databasePath = dir("postalcode-tl.db")
@@ -27,7 +25,6 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 	ins.run(100, 9, "1000", "postalcode", "TL", 0, 0) // placeholder → should fill from parent 9
 	ins.run(101, 9, "2000", "postalcode", "TL", 5.5, 6.5) // real coordinate → must be untouched
 
-	// The admin gazetteer carrying the parent locality.
 	const adminPath = dir("admin.db")
 	using admin = new DatabaseClient<WOFDatabase>(adminPath)
 	await createUnifiedSchema(admin)
@@ -60,9 +57,8 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 })
 
 test("GeoNames postal names each postcode's delivery city, including territories filed under their own ISO code", async () => {
-	// A delivery city is not the geographic locality: 11201 is Brooklyn inside the locality
-	// New York, and Queens uses neighbourhood names rather than the borough.
-	// Both shapes are here on purpose.
+	// A delivery city is not the geographic locality: 11201 is Brooklyn inside New York,
+	// and Queens uses neighbourhood names.
 	await using dirDirectory = await temporaryDirectory("centroid-names-")
 	const dir = dirDirectory.path
 	const databasePath = dir("postalcode-us.db")
@@ -78,10 +74,8 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	ins.run(2, -1, "11375", "postalcode", "US", 40.72, -73.85) // Queens: a neighbourhood delivery city
 	ins.run(3, -1, "00601", "postalcode", "US", 0, 0) // Puerto Rico, filed as US in WOF
 
-	// GeoNames files a US territory under PR rather than US.
-	// The database files it under US.
-	// Reading only `US` rows leaves every territory postcode unnamed —
-	// 149 of them against the 2024 Census zcta list.
+	// GeoNames files a US territory under PR while the database files it under US,
+	// so reading only `US` rows leaves territory postcodes unnamed.
 	const geonamesDir = dir("geonames-postal")
 
 	await makeDirectories(geonamesDir)
@@ -112,8 +106,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 
 	expect(named("11201")).toEqual(["Brooklyn"])
 	expect(named("11375")).toEqual(["Forest Hills"])
-	// The country-alias case.
-	// Without it this is [] and the postcode also keeps its (0,0) placeholder.
+	// Without the country alias this is [] and the postcode keeps its (0,0) placeholder.
 	expect(named("00601")).toEqual(["Adjuntas"])
 
 	const pr = db.prepare("SELECT latitude FROM spr WHERE id = 3").get() as { latitude: number }
@@ -122,9 +115,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 })
 
 test("falls back to the combined dump for a country the per-country directory has no file for", async () => {
-	// The US case.
-	// `<data-root>/geonames-postal/` carries CZ, DK, FI and eight others and no US.txt, so without
-	// this branch the whole GeoNames pass short-circuits on existsSync and writes no postcode.
+	// The per-country directory carries no US.txt, so without this branch the GeoNames pass short-circuits on existsSync.
 	await using dirDirectory = await temporaryDirectory("centroid-combined-")
 	const dir = dirDirectory.path
 	const databasePath = dir("postalcode-us.db")
@@ -138,7 +129,6 @@ test("falls back to the combined dump for a country the per-country directory ha
 		)
 		.run()
 
-	// An empty per-country directory — the shape on disk that made this branch required.
 	const geonamesDir = dir("geonames-postal")
 
 	await makeDirectories(geonamesDir)

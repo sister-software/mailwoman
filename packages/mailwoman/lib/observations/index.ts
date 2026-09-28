@@ -3,18 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman/observations` — the opt-in observation surface: five routes that state on whose authority
- *   an answer was reached, and the one carrier that takes what they record to a caller.
- *
- *   no route here is on BY default, and presence is the switch. A caller constructs a route and hands it in;
- *   `createRuntimePipeline` with no `poiSemanticLookup` is the pipeline that shipped, the absence route
- *   reads a finished answer without being wired into a pipeline at all, and the authority-designation route
- *   reads a finished coordinate the same way. There is no boolean, because a boolean would make the caller
- *   construct the artifact reader itself and put world semantics — or a sealed spatial layer — on the
- *   default construction path.
- *
- *   rollback is removing the argument at the one call site. A consumer who never passed a route is
- *   unaffected by anything under this directory, which is the property the opt-in posture buys.
+ * The opt-in `mailwoman/observations` surface: no route is on by default, presence is the switch, and rollback is removing the argument at the one call site.
  */
 
 export type {

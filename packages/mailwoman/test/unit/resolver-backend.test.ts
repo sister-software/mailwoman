@@ -41,11 +41,6 @@ test("resolveCandidateDBPath: returns an explicit/env path only when it exists o
 test("resolveCandidateDBPath: falls back to the convention path under the data root, and 'none' pins the FTS backend", async () => {
 	// The fallback is what makes the candidate table the default backend, so the path
 	// it reaches has to be the one `data pull candidate` writes.
-	// This asserted `<root>/wof/candidate.db` while the 2026-09-15 regrouping moved
-	// the artifact to `<root>/db/wof/`, and the fixture carried the old layout too —
-	// so the pair agreed with each other and with no data root on disk.
-	// `resolveCandidateDBPath()` answered undefined on a host holding the file,
-	// and the resolver fell back to FTS without saying so.
 	const root = resolvePackagePath("mailwoman", "lib", "test-fixtures", "candidate-root")
 	const conventionPath = wofDatabaseRoot(root)("candidate.db").toString()
 
@@ -54,11 +49,10 @@ test("resolveCandidateDBPath: falls back to the convention path under the data r
 	expect(conventionCandidateDBPath()).toBe(conventionPath)
 	expect(await resolveCandidateDBPath()).toBe(conventionPath)
 
-	// An explicit path still outranks the convention.
 	expect(await resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE)
 
-	// `none` is the opt-out, and it has to beat the convention path.
-	// Otherwise there is no way back to the FTS backend on a machine that has pulled the gazetteer.
+	// `none` must beat the convention path, or there is no way back to the FTS
+	// backend on a machine that has pulled the gazetteer.
 	expect(await resolveCandidateDBPath("none")).toBeUndefined()
 	setEnv("MAILWOMAN_CANDIDATE_DB", "none")
 	expect(await resolveCandidateDBPath()).toBeUndefined()
@@ -102,13 +96,11 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 		repoPath
 	)
 
-	// Artifact wins when present.
 	const fromArtifact = await loadCapitalIndex({ candidateDB: artifactPath, path: repoPath })
 
 	expect(fromArtifact!.levelOfPlace("San José", "CR", 9.93, -84.08)).toBe(2)
 	expect(fromArtifact!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(0)
 
-	// An artifact without the table falls through to the repo file.
 	const barePath = dir("bare.db")
 
 	new DatabaseClient<CandidateDatabase>(barePath).destroy()

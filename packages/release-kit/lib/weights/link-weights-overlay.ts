@@ -6,11 +6,10 @@
  *   Populate `$MAILWOMAN_DATA_ROOT/weights/<locale>/` from `release.config.json` — the writer half of the
  *   overlay rung in `@mailwoman/neural`'s `resolveWeights`.
  *
- *   Why the data root and not the package. Materializing the same artifacts into tracked package
- *   directories causes four separate hazards: a git worktree starts empty and cannot geocode, `yarn test`
- *   mutates tracked directories as a side effect of `weights.test.ts`, `fs.copyFile` writes through a
- *   leftover symlink, and a publish tarball is refused for containing one (`YN0035`). Writing outside git
- *   removes the cause of all four. Symlinks are safe here precisely because no operation tars the data root.
+ *   The data root rather than the tracked package, because a worktree starts empty, `yarn test` would
+ *   mutate tracked directories, and `fs.copyFile` can write through a leftover symlink that a publish
+ *   tarball then refuses (`YN0035`); writing outside git removes all four hazards, and symlinks are
+ *   safe there because no operation tars the data root.
  *
  *   Run with `--plan` (or `--dry-run`) to see what it would do and make no change.
  *
@@ -58,13 +57,8 @@ export interface LinkWeightsOverlayReport {
  * The digest a weights package records for an artifact it ships, or `undefined`
  * when the package records none.
  *
- * Read from the package's committed `model-card.json`, which is the register the
- * release re-verifies against the published tarball .
- * Therefore, linking against it is checking the same claim the release checks rather than a second one.
- *
- * Measured across the ten workspaces: only `en-us` populates `files_md5`.
- * Every overlay's is empty, which is defensible for the shared base binaries
- * and is not defensible for the artifacts an overlay actually owns.
+ * Read from the package's committed `model-card.json`, the same register the release re-verifies
+ * against the published tarball, so linking against it checks the release's own claim.
  */
 async function recordedDigests(locale: string): Promise<Record<string, string>> {
 	const card = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
@@ -78,8 +72,6 @@ async function recordedDigests(locale: string): Promise<Record<string, string>> 
  * Link every release locale's artifacts into the data-root overlay.
  *
  * @throws On a digest mismatch.
- * The one failure that must stop a caller, because it means the recipe and the card disagree
- * about which model this is, which is the exact condition the 9.0.0 lockstep miss produced.
  */
 export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Promise<LinkWeightsOverlayReport> {
 	const { repoRoot, plan, log } = options
@@ -108,21 +100,13 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 
 		log(`\n${locale}  →  ${relative(dataRoot, dir)}`)
 
-		// The model card is the one artifact that comes from the checkout rather than the data root:
-		// it is committed, and `resolveFromPackageDir` reads it from whichever directory answered.
-		// Without it in the overlay the loader falls back to STAGE2_BIO_LABELS (21) against
-		// a 33-logit model and the first parse throws in `assertEmissionWidth`.
-		// So its absence is not a lean install, it is a broken one.
-		// Linking it does couple the overlay to the checkout that wrote it.
-		// The writer is idempotent, so re-running from another checkout re-points it.
+		// The model card is the one artifact from the checkout rather than the data root.
+		// without it the loader falls back to STAGE2_BIO_LABELS (21) against a 33-logit model
+		// and the first parse throws, so its absence is a broken install rather than a lean one.
 		const cardSource = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
 
-		// copied rather than linked.
-		// Every other overlay entry points at the data root, which outlives any checkout.
-		// A symlink to the card would make the whole overlay depend on one working tree
-		// still existing at that path, and a worktree removed after linking would leave
-		// the overlay resolving a dangling card, which degrades to STAGE2_BIO_LABELS
-		// against a 33-logit model rather than to an error.
+		// Copied rather than linked: a symlink would make the overlay depend on one working tree,
+		// and a worktree removed after linking would leave it resolving a dangling card.
 		if ((await pathExists(cardSource)) && !plan) {
 			await makeDirectories(dir)
 			await removePathIfPresent(resolvePath(dir, "model-card.json"))
@@ -163,18 +147,9 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 			log(`  ${plan ? "·" : "✓"} ${shippedName}${recorded ? "  digest ok" : "  (no recorded digest)"}`)
 		}
 
-		// Reported, never silently skipped.
-		// These are the channels the overlay will lack, and every one of them degrades
-		// to `undefined` at resolve time rather than failing.
-		// So absence here is only visible if it is said here.
-		// Reported, never linked.
-		// An earlier version symlinked a build output from the workspace into the overlay,
-		// and that inverted the whole point: the per-locale linkers then wrote through the
-		// symlink and their artifacts landed back in the tracked package.
-		// It is the `fs.copyFile`-follows-a-symlink hazard agents.md documents for the
-		// publish path, reappearing one directory over.
-		// The per-locale `link-dev-weights.ts` scripts build these into the overlay directly.
-		// This only says whether they have.
+		// Reported, never linked: the per-locale `link-dev-weights.ts` scripts build these
+		// into the overlay directly, and each channel degrades to `undefined` at resolve time,
+		// so absence is only visible if it is said here.
 		const buildable: BuildableArtifact[] = recipe.buildableFor(locale)
 
 		for (const { shippedName, buildCommand, inputPath } of buildable) {

@@ -2,13 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The three `DatabaseClient` construction forms, pinned.
- *
- *   The constructor discriminates at runtime (`typeof source === "string"`, then `"database" in source`), so the
- *   overload list proves no fact about which branch a call takes — every form below compiled before it worked.
- *   The no-options path is the one that failed: forwarding an absent second argument as an explicit `undefined` throws
- *   inside `node:sqlite`, which typechecks perfectly and breaks every caller that passes only a path.
  */
 
 import { DatabaseSync } from "node:sqlite"

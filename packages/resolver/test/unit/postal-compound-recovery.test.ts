@@ -2,13 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Tests for the #942 postal-compound recovery — the knife-edge no-street query shape
- *   ("Kožljek 7, 1382 Kožljek") whose parse globs the trailing city into the postcode span. The
- *   fixture mirrors the real failure: the compound resolves to no place, the confident postcode
- *   span blocks its own city tokens, and the tree comes back empty. With the flag on, the code
- *   subset anchors the check, the residual city tokens become span material, and the failed
- *   postcode node gains a coordinate floor. Street blocking (the "Ave, France" guard) stays.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -21,9 +14,6 @@ import { backendNameKey } from "../helpers/backend-name-key.ts"
 
 const norm = backendNameKey
 
-/**
- * The SI shape: the village + its bare-code postcode row (the #920 name law — codes stored bare).
- */
 const PLACES: ResolvedPlace[] = [
 	{
 		id: 1,
@@ -36,8 +26,6 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{ id: 900, name: "1382", placetype: "postalcode", country: "SI", lat: 45.82, lon: 14.42, score: 1 },
-	// A distant same-named decoy in another country.
-	// The check + country constraint must hold.
 	{
 		id: 2,
 		name: "Kožljek",
@@ -73,9 +61,6 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value" | "
 	...over,
 })
 
-/**
- * The real failure shape: "Kožljek 7, 1382 Kožljek" — street+hn lead, globbed postcode trail.
- */
 function failingTree(): AddressTree {
 	const raw = "Kožljek 7, 1382 Kožljek"
 
@@ -123,10 +108,9 @@ describe("postal-compound recovery (#942)", () => {
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 		expect(locality!.metadata?.span_rescore).toBe(true)
-		expect(locality!.metadata?.rescore_postcode_verified).toBe(true) // the code-subset anchor validated it
-		// The postcode node stays UNdecorated when a locality was recovered.
-		// Its medoid centroid is coarser than the village pin, and postcode-over-locality
-		// consumers must not trade down.
+		expect(locality!.metadata?.rescore_postcode_verified).toBe(true)
+		// The postcode node stays undecorated when a locality was recovered: its medoid centroid is
+		// coarser than the village pin, and postcode-over-locality consumers must not trade down.
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
 		expect(pc?.placeID).toBeFalsy()
@@ -134,8 +118,6 @@ describe("postal-compound recovery (#942)", () => {
 
 	it("flag ON: the postcode node gains the code-subset coordinate floor ONLY when no city matches", async () => {
 		const resolver = createWOFResolver(await makeBackend())
-		// "Neznano" is not in the gazetteer.
-		// The locality rescue misses, so the floor fires.
 		const raw = "Neznano 7, 1382 Neznano"
 
 		const tree: AddressTree = {
@@ -166,13 +148,11 @@ describe("postal-compound recovery (#942)", () => {
 		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
-		expect(pc).toBeUndefined() // no postcode synthesized
+		expect(pc).toBeUndefined()
 		expect(out.roots.filter((n) => n.placeID)).toHaveLength(1)
 	})
 
 	it("flag ON: street tokens stay blocked — no 'Ave, France' resurrection", async () => {
-		// A street-only failing parse: the street token equals a real place name,
-		// but street blocking must keep it out of recovery even with the flag on.
 		const resolver = createWOFResolver(await makeBackend())
 
 		const tree: AddressTree = {
@@ -189,23 +169,16 @@ describe("postal-compound recovery (#942)", () => {
 	})
 
 	it("check rejects a cross-border same-named decoy (unscoped)", async () => {
-		// No defaultCountry: the HR decoy is name-identical.
-		// The code-subset anchor (SI 1382) plus the 50km check must reject the 400+km decoy
-		// and accept the SI village.
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
 
-		// Both candidates surface.
-		// The check keeps only the SI one.
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 	})
 })
 
 describe("#961 joint country recovery — the locale-default trap", () => {
-	// The CLI's en-US locale default scoped both the anchor and the village probe to US,
-	// so the SI floor never fired through geocode-core.
 	// The joint pass probes spans unscoped and verifies each candidate against the postcode resolved in
 	// the candidate's own country — cross-country promotion only postcode-verified, never unrestricted.
 	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
@@ -219,8 +192,6 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 	})
 
 	it("rejects a cross-country namesake whose own country cannot verify the postcode", async () => {
-		// The HR decoy shares the name but HR holds no postcode "1382" → the joint pass must not promote it.
-		// With the SI row removed the tree stays unresolved rather than guessing.
 		const resolver = createWOFResolver(
 			await makeBackend(PLACES.filter((p) => !(p.placetype === "locality" && p.country === "SI")))
 		)

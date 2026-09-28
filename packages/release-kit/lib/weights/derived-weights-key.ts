@@ -5,17 +5,8 @@
  *
  *   The content key for the derived-weights store at `$MAILWOMAN_DATA_ROOT/derived/weights/<key>`.
  *
- *   why A local store: the `weights-*` actions/cache entry carried 76.3 MB of real files and took
- *   48–54s to restore on the two `mailwoman-data` legs — about 1.6 MB/s over the lab's degraded path
- *   to GitHub's cache service — to a host that already has the source model on local disk
- *   (`release.config.json` → `dataRoot`). Only `postcode-<cc>.bin` and `pair-index-<cc>.bin` are
- *   expensive to produce, so those are what the store holds. The runners are self-hosted, so the
- *   filesystem persists across runs and the store is durable.
- *
- *   why the generators are hashed: on 2026-08-02 the workflow key hashed `release.config.json` and
- *   `data/gazetteer/*` but not the extractor, so a currency-filter change produced new artifacts
- *   while the cache served old ones and the pair-index↔card parity guard failed with
- *   `expected 47878 to be 49033`. The generating code is part of the input rather than context around it.
+ *   The generating code is hashed along with the inputs it reads, so a change to the extractor
+ *   produces new artifacts rather than letting the store serve old ones under the old key.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -30,23 +21,12 @@ import { Globerator } from "spliterator/node/fs"
  * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer`
  * payload enumerated by {@link derivedWeightsInputs}.
  *
- * The first entry mirrors the retired workflow cache key.
- * The rest are what that key missed: the modules that generate the binaries — each source
- * module paired with its compiled counterpart, because the build spawns the compiled CLI.
+ * Each generating source module is paired with its compiled counterpart
+ * because the build spawns the compiled CLI.
+ * Hashing source alone lets a stale compile compute the fixed key and build with the broken code.
  *
- * Hashing source alone re-created the #1528 poisoning in cache form: a stale-compiled
- * builder under already-fixed source computes the fixed key, builds with the broken code,
- * and the store then serves that artifact to every fresh-compiled run forever.
- * With the compiled bytes in the key, a stale compile keys separately from a fresh one,
- * so its output can never be served to a checkout whose compiled tree differs.
- *
- * (Transitive compiled imports are deliberately not hashed, which would invalidate
- * the store on every unrelated commit and delete its reason to exist. The direct
- * builder modules are where both real incidents lived.)
- *
- * Add here whenever a new input starts feeding the build.
- * A key that omits an input serves stale artifacts silently, which is the
- * failure this list exists to prevent.
+ * Transitive compiled imports are deliberately excluded, or the store would
+ * invalidate on every unrelated commit.
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"release.config.json",
@@ -61,10 +41,8 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 ]
 
 /**
- * The `data/gazetteer` payload, matched the way the retired workflow key matched it (`*.json` + `*.jsonl`).
- *
- * Enumerated rather than hardcoded so a new extract is picked up without a code change.
- * The opposite trade from {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
+ * The `data/gazetteer` payload, enumerated rather than hardcoded so a new extract
+ * joins the key without a code change.
  */
 async function gazetteerDataPaths(): Promise<string[]> {
 	const dir = repoRootPathBuilder("data", "gazetteer")
@@ -77,9 +55,6 @@ async function gazetteerDataPaths(): Promise<string[]> {
 /**
  * The postcode pipeline modules the postcode-binary command calls into — source and compiled,
  * enumerated like the data payload so a new module joins the key without a code change.
- *
- * The #1527 fix lived here, one import below the command module the explicit list carried,
- * which is how the stale build escaped the key.
  */
 async function postcodePipelinePaths(): Promise<string[]> {
 	const root = repoRootPathBuilder()
@@ -110,15 +85,11 @@ async function postcodePipelinePaths(): Promise<string[]> {
 export interface DerivedWeightsInput {
 	/**
 	 * Repo-relative identity of the input.
-	 *
-	 * Hashed.
-	 * Must not vary by checkout location.
+	 * Hashed, and it must not vary by checkout location.
 	 */
 	name: string
 	/**
-	 * Absolute path to read.
-	 *
-	 * Not hashed — see {@link derivedWeightsKeyFrom}.
+	 * Absolute path to read, deliberately not hashed — see {@link derivedWeightsKeyFrom}.
 	 */
 	path: PathBuilderLike
 }
@@ -138,24 +109,15 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 }
 
 /**
- * Hash an explicit input list.
+ * Hash an explicit input list, sorted by name so the caller's ordering cannot change the key.
  *
  * Exported for testing.
  * Production callers want {@link derivedWeightsKey}.
  *
- * Sorted by name, so the caller's ordering cannot change the key.
- * Each entry contributes its name and its bytes.
- *
- * ⚠ The name is repo-relative and the absolute path is deliberately not hashed.
- * Hashing absolute paths was the first version's bug: every GitHub runner checks out to
- * its own work directory, so lab-1, lab-2, lab-3 and a local worktree each computed a
- * different key over byte-identical inputs and none of them ever saw another's work.
- *
- * It surfaced as four store directories holding the same eleven artifacts, and as a 41s
- * `pair-index-nz.bin` rebuild on a runner where that exact file was already on disk under a different key.
- *
- * A missing input contributes a `\0absent` marker rather than an empty contribution —
- * "the file is gone" and "the file is empty" must not collide.
+ * Only the repo-relative name is hashed, never the absolute path, so checkouts at
+ * different roots agree on the key over byte-identical inputs.
+ * A missing input contributes a `\0absent` marker rather than an empty contribution,
+ * so a gone file and an empty file do not collide.
  */
 export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): Promise<string> {
 	const hash = createHash("sha256")
@@ -178,10 +140,8 @@ export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput
 }
 
 /**
- * The key for this checkout's derived weights.
- *
- * Identical across checkouts with identical input content, wherever they live on disk.
- * That invariance is the whole point of the store.
+ * The key for this checkout's derived weights, identical across checkouts with
+ * identical input content wherever they live on disk.
  */
 export async function derivedWeightsKey(): Promise<string> {
 	return derivedWeightsKeyFrom(await derivedWeightsInputs())
@@ -197,22 +157,16 @@ export function derivedWeightsDir(key: string): string {
 /**
  * The reason a store entry must not be served (or stashed), or `null` when it looks like a product.
  *
- * The second net behind the build-time floors (#1509): the store once held a 10-byte empty
- * `postcode-gb.bin` a stale-compiled builder wrote, and served it as a HIT indefinitely (#1528).
  * A `postcode-<cc>.bin` is refused when its PCB1 header is malformed or its record count sits
- * below the lowest calibrated floor for that country, for GB that is the outward floor, so a
- * legitimate outward-granularity bin is never false-refused while the empty/collapsed class always is.
- *
+ * below the lowest calibrated floor for that country — for GB that is the outward floor,
+ * so a legitimate outward-granularity bin is never false-refused while an empty or collapsed one is.
  * The calibrated per-granularity check remains the builder's.
  * This one only has the header to read.
  *
- * Non-postcode entries (pair indexes) pass — their reader validates a typed header
- * on load, and no measured floor exists for them yet.
+ * Non-postcode entries pass, because their reader validates a typed header on load.
  */
 /**
- * Magic (4) + u32 recordCount (4) + u8 countryCount (1).
- *
- * The PCB1 prefix the serve check reads.
+ * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve check reads.
  * Anything shorter cannot carry a record count at all.
  */
 const PCB1_HEADER_BYTES = 9

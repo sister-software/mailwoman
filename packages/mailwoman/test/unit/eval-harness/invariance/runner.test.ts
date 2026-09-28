@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Smoke tests for the invariance mini-suite runner — weightless. `runInvarianceSuite` takes an
- *   injectable `ParseFn`, so these tests exercise the fixture-loading + comparison + summary + exit-code
- *   implementation with a fake parser instead of a real model (weight-dependent tests don't run in CI, #582).
+ *   `runInvarianceSuite` takes an injectable `ParseFn`, so these tests run weightless in CI with a fake
+ *   parser instead of a real model.
  */
 
 import {
@@ -21,7 +20,6 @@ describe("loadSuite", () => {
 	it("loads the shipped suite.jsonl, skipping the // header comment and blank lines", async () => {
 		const rows = await loadSuite()
 
-		// 19 base rows + 4 paired-punctuation rows = 23.
 		expect(rows.length).toBeGreaterThanOrEqual(16)
 		expect(rows.length).toBeLessThanOrEqual(25)
 
@@ -50,9 +48,8 @@ describe("loadSuite", () => {
 	})
 
 	it("every declared transform id is a real transform (no fixture typos)", async () => {
-		// loadSuite itself doesn't validate ids — runInvarianceSuite does, via getTransform.
-		// Exercise it here with a no-op parser so a fixture typo fails this test
-		// rather than a real grading run.
+		// `loadSuite` does not validate transform ids — `runInvarianceSuite` does — so exercising
+		// it with a no-op parser makes a fixture typo fail here rather than in a grading run.
 		const rows = await loadSuite()
 		const noop: ParseFn = async (): Promise<Record<string, string>> => ({})
 
@@ -81,12 +78,11 @@ describe("runInvarianceSuite", () => {
 		expect(result.exitCode).toBe(0)
 		expect(result.counts.lost).toBe(0)
 		expect(result.counts.degraded).toBe(0)
-		expect(result.outcomes).toHaveLength(3) // one per declared transform
+		expect(result.outcomes).toHaveLength(3)
 	})
 
 	it("fails (nonzero exit) on any LOST pair", async () => {
 		const parse: ParseFn = async (raw): Promise<Record<string, string>> => {
-			// The comma-drop variant loses the house number entirely — an injected `lost` case.
 			if (!raw.includes(",")) return { street: "Fake St", locality: "Faketown" }
 
 			return { house_number: "1", street: "Fake St", locality: "Faketown" }
@@ -105,7 +101,6 @@ describe("runInvarianceSuite", () => {
 		const parse: ParseFn = async (raw): Promise<Record<string, string>> => {
 			const base = { house_number: "1", street: "Fake St", locality: "Faketown" }
 
-			// The lowercased variant picks up a spurious unit tag — non-critical drift, `degraded` not `lost`.
 			if (raw === raw.toLowerCase() && raw !== "1 fake st, faketown".toUpperCase()) {
 				return { ...base, unit: "Apt 1" }
 			}
@@ -127,7 +122,6 @@ describe("runInvarianceSuite", () => {
 		const parse: ParseFn = async (): Promise<Record<string, string>> => {
 			call++
 
-			// Flip a value on the second call — simulated nondeterminism.
 			return call % 2 === 0 ? { house_number: "1", street: "Fake St" } : { house_number: "2", street: "Fake St" }
 		}
 
@@ -146,9 +140,9 @@ describe("runInvarianceSuite", () => {
 
 		const result = await runInvarianceSuite({ rows: [brokenRow], parse, baselineParse: parse })
 
-		expect(result.counts.lost).toBe(1) // still recorded
-		expect(result.newCounts.lost).toBe(0) // but not new — baseline has it too
-		expect(result.pass).toBe(true) // so the check passes
+		expect(result.counts.lost).toBe(1)
+		expect(result.newCounts.lost).toBe(0)
+		expect(result.pass).toBe(true)
 		expect(result.outcomes[0]?.preExisting).toBe(true)
 	})
 
@@ -163,8 +157,6 @@ describe("runInvarianceSuite", () => {
 			street: "Fake St",
 		})
 
-		// baseline holds
-
 		const result = await runInvarianceSuite({ rows: [brokenRow], parse: candidateParse, baselineParse })
 
 		expect(result.newCounts.lost).toBe(1)
@@ -173,50 +165,43 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("--baseline severity check: candidate LOST where baseline only DEGRADED is a NEW (enforcing) violation, not pre-existing", async () => {
-		// The case the severity check exists for: baseline drops `unit` on comma-drop
-		// (degraded — non-critical), candidate drops `house_number` on the same pair (`lost` — critical).
-		// Severity-blind matching (both sides merely "non-invariant") would wrongly
-		// call this pre-existing and let it through.
-		// A candidate verdict that is worse than the baseline's on the same (row, transform)
-		// must always count as a new violation.
+		// A candidate verdict worse than the baseline's on the same (row, transform) must count
+		// as a new violation, which severity-blind matching would wrongly call pre-existing.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
 			raw.includes(",")
-				? { street: "Fake St", locality: "Faketown", unit: "Apt 1" } // house_number dropped — lost
+				? { street: "Fake St", locality: "Faketown", unit: "Apt 1" }
 				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
 
 		const baselineParse: ParseFn = async (raw): Promise<Record<string, string>> =>
 			raw.includes(",")
-				? { house_number: "1", street: "Fake St", locality: "Faketown" } // unit dropped — DEGRADED
+				? { house_number: "1", street: "Fake St", locality: "Faketown" }
 				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
 
 		const result = await runInvarianceSuite({ rows: [brokenRow], parse: candidateParse, baselineParse })
 
 		expect(result.outcomes[0]?.verdict).toBe("LOST")
 		expect(result.outcomes[0]?.baselineVerdict).toBe("DEGRADED")
-		expect(result.outcomes[0]?.preExisting).toBe(false) // not pre-existing — the candidate is worse
-		expect(result.outcomes[0]?.gainedCapability).toBe(false) // baseline's original has criticals — not a gained row
+		expect(result.outcomes[0]?.preExisting).toBe(false)
+		expect(result.outcomes[0]?.gainedCapability).toBe(false)
 		expect(result.newCounts.lost).toBe(1)
-		expect(result.pass).toBe(false) // checks
+		expect(result.pass).toBe(false)
 	})
 
 	it("the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
-		// Same case as the severity-threshold test above
-		// (baseline `degraded`, candidate `lost` — a new, enforcing violation) — but this time
-		// asserting on the printed report line itself rather than just the structured outcome.
-		// A violation line that hardcodes "baseline held invariant" is false on its face here:
-		// the baseline was degraded, so the line has to read the baseline's actual verdict.
+		// A violation line that hardcodes "baseline held invariant" is false when the baseline
+		// was degraded, so the line must read the baseline's actual verdict.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
 			raw.includes(",")
-				? { street: "Fake St", locality: "Faketown", unit: "Apt 1" } // house_number dropped — lost
+				? { street: "Fake St", locality: "Faketown", unit: "Apt 1" }
 				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
 
 		const baselineParse: ParseFn = async (raw): Promise<Record<string, string>> =>
 			raw.includes(",")
-				? { house_number: "1", street: "Fake St", locality: "Faketown" } // unit dropped — DEGRADED
+				? { house_number: "1", street: "Fake St", locality: "Faketown" }
 				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
 
 		const lines: string[] = []
@@ -238,10 +223,10 @@ describe("runInvarianceSuite", () => {
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
 			raw.includes(",")
-				? { house_number: "1", street: "Fake St", locality: "Faketown" } // unit dropped — DEGRADED
+				? { house_number: "1", street: "Fake St", locality: "Faketown" }
 				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
 
-		const baselineParse = candidateParse // identical shape — both DEGRADED on the same pair
+		const baselineParse = candidateParse
 
 		const result = await runInvarianceSuite({ rows: [degradedRow], parse: candidateParse, baselineParse })
 
@@ -252,13 +237,9 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("wires abbreviation-swap through the canonicalizing comparator (typo-in-id dispatch regression guard)", async () => {
-		// Swapping "Avenue" -> "Ave" in the input makes a span-extraction model correctly echo "Ave"
-		// in its `street` output — that's the transform doing its job rather than a violation.
-		// Comparing RAW values would flag it as a false `lost` (street is critical);
-		// compareForTransform's abbreviation-swap branch canonicalizes both sides to long-form first.
-		// This test goes through the real "abbreviation-swap" transform id (not a fake one)
-		// so a typo'd id string in that dispatch fails this test with a spurious `lost`
-		// instead of staying silently dead.
+		// Comparing raw values would flag a correctly echoed "Ave" as a false `lost`,
+		// so `compareForTransform` canonicalizes both sides to long form, and this test
+		// exercises the real transform id so a typo in that dispatch fails here.
 		const abbrevRow: InvarianceRow = {
 			id: "abbrev-wiring-row",
 			raw: "350 Fifth Avenue, New York, NY",
@@ -270,8 +251,6 @@ describe("runInvarianceSuite", () => {
 			raw.includes("Avenue")
 				? { house_number: "350", street: "Fifth Avenue", locality: "New York", region: "NY" }
 				: { house_number: "350", street: "Fifth Ave", locality: "New York", region: "NY" }
-
-		// echoes the swap
 
 		const result = await runInvarianceSuite({ rows: [abbrevRow], parse })
 
@@ -316,16 +295,15 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 			},
 		]
 
-		// Transformed raws (lowercased, comma-dropped) won't equal any original raw, so key
-		// on a token each row's raw keeps under every transform (matched case-insensitively).
+		// Transformed raws will not equal any original raw, so key on a token each row
+		// keeps under every transform, matched case-insensitively.
 		const localeByToken = new Map([
 			["montmartre", "fr-FR"],
 			["the grange", "en-GB"],
 			["pennsylvania", "en-US"],
 		] as const)
 
-		// Same fake parser on both sides.
-		// This is a locale-threading test rather than a regression test.
+		// This is a locale-threading test rather than a regression test, so both sides use the same fake parser.
 		await runInvarianceSuite({ rows, parse, baselineParse: parse })
 
 		expect(calls.length).toBeGreaterThan(0)
@@ -339,9 +317,8 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 	})
 
 	it("--baseline: a pair the candidate holds but the baseline violated is GAINED — reported, non-blocking", async () => {
-		// The measured #1516 shape: the baseline's original parse never emits the row's critical
-		// components (the quoted venue's street), so the whole row is a gained capability.
-		// On top of that, this pair specifically flips — candidate invariant where baseline degraded.
+		// The baseline's original parse never emits the row's critical components, so the row is a
+		// gained capability, and this pair also flips candidate-invariant where baseline degraded.
 		const row: InvarianceRow = {
 			id: "gb-quoted-gain",
 			raw: "The Grange, Fishburn, Stockton-on-Tees",
@@ -349,13 +326,11 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 			transforms: ["case-fold"],
 		}
 
-		// Baseline: never parses the venue (no criticals anywhere); case-fold flips its region tag.
 		const baselineParse: ParseFn = async (raw): Promise<Record<string, string>> =>
 			raw === raw.toUpperCase()
 				? { region: "Stockton-on-Tees", locality: "The Grange Fishburn" }
 				: { locality: "The Grange Fishburn" }
 
-		// Candidate: holds the full address, invariant under case-fold.
 		const parse: ParseFn = async (): Promise<Record<string, string>> => ({
 			street: "The Grange",
 			dependent_locality: "Fishburn",
@@ -384,11 +359,8 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 	})
 
 	it("--baseline: violations on a row the baseline never parsed are gained-capability residuals — reported, non-blocking", async () => {
-		// The measured #1516 shape for gb-quoted-venue: the baseline (v4.0.1) never emits the
-		// venue's street in any register, so the row's baseline original has no critical components.
-		// The candidate (v4.2.0) gained the street in 7/8 registers and loses it only
-		// on the register-flat tail (quoted + comma-dropped).
-		// Those residual lost/degraded pairs are gains rather than regressions.
+		// The baseline never emits the venue's street in any register, so residual lost/degraded
+		// pairs on the register-flat tail are gains rather than regressions.
 		const row: InvarianceRow = {
 			id: "gb-quoted-residual",
 			raw: "The Grange, Fishburn, Stockton-on-Tees",
@@ -396,14 +368,11 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 			transforms: ["comma-drop", "case-fold"],
 		}
 
-		// Baseline: parses the row without any critical component, in every register.
 		const baselineParse: ParseFn = async (): Promise<Record<string, string>> => ({
 			region: "Stockton-on-Tees",
 			locality: "The Grange",
 		})
 
-		// Candidate: holds the street on the original, loses it on comma-drop (lost),
-		// flips the city tag on case-fold (degraded).
 		const parse: ParseFn = async (raw): Promise<Record<string, string>> => {
 			if (!raw.includes(",")) return { region: "Stockton-on-Tees", street: "The" }
 
