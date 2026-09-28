@@ -3,19 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generic in-process timing metrics (ported from `mailwoman/server/metrics.ts`, #485
- *   observability, for the api-kit plumbing layer — see the 2026-07-12 Phase 4a plan's
- *   dependency-arrow correction). Dependency-free: monotonic counters per string-keyed tier + a
- *   bounded reservoir of recent latencies for percentile estimation. Callers own their tier
- *   vocabulary (e.g. `mailwoman`'s `ResolutionTier`); this module only ever sees `string`.
- *   Surfaced by `GET /metrics`; reset on process restart (no persistence — scrape it). Per-process
- *   state: under `node:cluster` each worker reports its own snapshot — aggregate at the scraper.
+ *   Generic in-process timing metrics over string-keyed tiers and a bounded recent-latency reservoir.
  */
 
 import { percentileSorted } from "@mailwoman/core/stats"
 
 /**
- * Recent-latency reservoir size. ~2k samples gives stable p99 without unbounded memory.
+ * Recent-latency reservoir size, roughly 2k samples for a stable p99 within bounded memory.
  */
 const MAX_SAMPLES = 2048
 
@@ -23,7 +17,7 @@ const latencies: number[] = []
 let writeIdx = 0
 
 /**
- * Null-prototype: tier keys are created lazily on first use rather than eagerly pre-populated.
+ * A null-prototype record whose tier keys are created lazily on first use.
  */
 const tierCounts: Record<string, number> = Object.create(null)
 let total = 0
@@ -31,9 +25,8 @@ let errors = 0
 const startedAt = Date.now()
 
 /**
- * Record one completed timed operation: its wall-clock latency and which tier produced it (or `"error"`).
- *
- * Tier keys are created on first use; "error" is reserved and counts toward errors instead of a tier.
+ * Record one completed timed operation and its wall-clock latency, with the reserved `"error"` tier
+ * counting toward errors.
  */
 export function recordTimed(latencyMs: number, tier: string): void {
 	total++
@@ -53,10 +46,7 @@ export function recordTimed(latencyMs: number, tier: string): void {
 }
 
 /**
- * A latency percentile as milliseconds on a wire format: two decimals.
- *
- * The caller sorts once per snapshot and guarantees a non-empty sample,
- * so `percentileSorted`'s `null` is a caller error here, never a reading.
+ * A latency percentile in milliseconds with two decimals, where an empty sample is a caller error.
  */
 function latencyPercentile(sorted: readonly number[], p: number): number {
 	const value = percentileSorted(sorted, p)
@@ -72,10 +62,7 @@ export interface MetricsSnapshot {
 		total: number
 		errors: number
 		/**
-		 * Per-tier counts.
-		 *
-		 * Keys are created lazily on the first `recordTimed` call for that tier.
-		 * A tier never recorded is absent rather than zero.
+		 * Per-tier counts, absent for a tier that was never recorded.
 		 */
 		tiers: Record<string, number>
 		latency_ms: { p50: number; p90: number; p99: number; max: number } | null
@@ -84,7 +71,7 @@ export interface MetricsSnapshot {
 }
 
 /**
- * Current metrics snapshot — sorted-reservoir percentiles + counters.
+ * The current metrics snapshot, with sorted-reservoir percentiles and counters.
  */
 export function metricsSnapshot(): MetricsSnapshot {
 	const sorted = [...latencies].toSorted((a, b) => a - b)

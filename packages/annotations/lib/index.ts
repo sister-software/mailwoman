@@ -3,14 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/annotations` — the composer for the OpenCage-style enrichment block.
- *
- *   {@link AnnotationSet} is the native, typed, camelCase representation. Each recipe package
- *   (timezone, un-locode, coordinate formats in `@mailwoman/spatial`, country reference in
- *   `@mailwoman/codex`) implements the {@link Annotator} interface and fills part of it.
- *   {@link composeAnnotators} runs a set of annotators and merges their output. {@link toOpenCage}
- *   serializes to OpenCage's documented key names for the compat APIs; {@link toNative} returns our
- *   own shape. One schema, two serializers (the hybrid decision).
+ *   The composer for the OpenCage-style enrichment block.
  */
 
 /**
@@ -75,11 +68,7 @@ export interface NUTS {
 }
 
 /**
- * The native enrichment set.
- *
- * Every field is optional.
- * An annotator fills the fields it owns. camelCase throughout, structured sub-objects —
- * the internal representation the serializers map from.
+ * The native enrichment set the serializers map from.
  */
 export interface AnnotationSet {
 	dms?: DMS
@@ -125,19 +114,19 @@ export interface AnnotatorInput {
 	lat: number
 	lon: number
 	/**
-	 * The resolved place (ancestry, country, region…); shape owned by the resolver.
+	 * The resolved place (ancestry, country, region and so on), whose shape belongs to the resolver.
 	 */
 	place?: unknown
 	/**
-	 * ISO 3166-1 alpha-2 of the resolved country, when known — feeds country-reference annotators.
+	 * ISO 3166-1 alpha-2 of the resolved country when known, which feeds country-reference annotators.
 	 */
 	countryCode?: string
 	/**
-	 * The resolved place's name (locality), when known — feeds name-keyed annotators (UN/locode).
+	 * The resolved place's name (locality) when known, which feeds name-keyed annotators (UN/locode).
 	 */
 	placeName?: string
 	/**
-	 * The queried date for time-dependent annotations (sun times); defaults to "now" per annotator.
+	 * The queried date for time-dependent annotations (sun times), defaulting to "now" per annotator.
 	 */
 	date?: Date
 }
@@ -148,13 +137,7 @@ export interface AnnotatorInput {
 export type Annotator = (input: AnnotatorInput) => Partial<AnnotationSet> | Promise<Partial<AnnotationSet>>
 
 /**
- * Compose a set of annotators into a single runner.
- *
- * Calling the returned function runs all annotators (concurrently) over one input
- * and merges their results into one {@link AnnotationSet}.
- * Later annotators win on key collisions.
- *
- * An annotator that throws is skipped, so one failing enrichment never sinks the rest.
+ * Compose a set of annotators into a runner that merges their fields, skipping any annotator that throws.
  */
 export function composeAnnotators(annotators: Annotator[]): (input: AnnotatorInput) => Promise<AnnotationSet> {
 	return async (input) => {
@@ -194,9 +177,7 @@ export interface OpenCageAnnotations {
 }
 
 /**
- * Serialize the native set to OpenCage's `annotations` key names + casing, for the compat APIs.
- *
- * Only the populated fields are emitted.
+ * Serialize the native set to OpenCage's `annotations` key names and casing, emitting only populated fields.
  */
 export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 	const out: OpenCageAnnotations = {}
@@ -307,11 +288,9 @@ export function toNative(set: AnnotationSet): AnnotationSet {
 	return set
 }
 
-// MARK: schema.org JSON-LD projection
-
 /**
- * A schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node —
- * the resolved coordinate, embedded under a {@link SchemaOrgPlace}'s `geo`.
+ * A schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node holding the resolved
+ * coordinate, embedded under a {@link SchemaOrgPlace}'s `geo`.
  */
 export interface SchemaOrgGeoCoordinates {
 	"@type": "GeoCoordinates"
@@ -320,15 +299,8 @@ export interface SchemaOrgGeoCoordinates {
 }
 
 /**
- * A schema.org [`PostalAddress`](https://schema.org/PostalAddress) node.
- *
- * Only populated fields are emitted (never `null`).
- * `streetAddress` is a single opaque line.
- *
- * The house-number/street/unit distinction is intentionally collapsed
- * (schema.org has no structured slots for them).
- *
- * `addressCountry` is ISO-3166 alpha-2.
+ * A schema.org [`PostalAddress`](https://schema.org/PostalAddress) node that emits only populated
+ * fields and collapses the house-number, street and unit distinction into one opaque `streetAddress` line.
  */
 export interface SchemaOrgPostalAddress {
 	"@type": "PostalAddress"
@@ -344,10 +316,8 @@ export interface SchemaOrgPostalAddress {
 }
 
 /**
- * A schema.org [`Place`](https://schema.org/Place) node with an embedded `PostalAddress` +
- * `GeoCoordinates` — the JSON-LD projection returned by {@link toSchemaOrg}.
- *
- * Its `@context` makes the object valid linked data on its own.
+ * A schema.org [`Place`](https://schema.org/Place) node with an embedded `PostalAddress` and
+ * `GeoCoordinates`, returned as valid linked data by {@link toSchemaOrg}.
  */
 export interface SchemaOrgPlace {
 	"@context": "https://schema.org"
@@ -358,21 +328,13 @@ export interface SchemaOrgPlace {
 }
 
 /**
- * The neutral resolved-address input {@link toSchemaOrg} serializes.
- *
- * Every field is optional.
- * An absent field is omitted from the output entirely (no `null`s).
- *
- * Mirrors the {@link OpenCageAnnotations} precedent: one native shape,
- * a dedicated serializer per wire format.
+ * The neutral resolved-address input {@link toSchemaOrg} serializes, omitting every absent field.
  */
 export interface SchemaOrgInput {
 	lat?: number | null
 	lon?: number | null
 	/**
-	 * The resolved POI / venue name, when one exists.
-	 *
-	 * Omitted for a bare street address.
+	 * The resolved POI or venue name when one exists, omitted for a bare street address.
 	 */
 	name?: string
 	/**
@@ -390,20 +352,14 @@ export interface SchemaOrgInput {
 	region?: string
 	postalCode?: string
 	/**
-	 * ISO-3166 alpha-2 (any case); emitted uppercased as `addressCountry`.
+	 * ISO-3166 alpha-2 in any case, emitted uppercased as `addressCountry`.
 	 */
 	countryCode?: string
 }
 
 /**
- * Collapse parsed street parts into one opaque `streetAddress` line — the schema.org
- * lossy-by-design collapse (house number + street + unit → a single space-joined string).
- *
- * Parts are number-first, correct for the shipped en-US / fr-FR tiers.
- * Callers with `@mailwoman/formatter` render locale-aware (e.g. de-DE number-last) instead.
- *
- * Blank parts are dropped.
- * An all-empty input yields `""`.
+ * Collapse parsed street parts into one space-joined `streetAddress` line, dropping blank parts and
+ * yielding `""` for an all-empty input.
  */
 export function composeStreetAddress(parts: { houseNumber?: string; street?: string; unit?: string }): string {
 	return [parts.houseNumber, parts.street, parts.unit]
@@ -413,18 +369,8 @@ export function composeStreetAddress(parts: { houseNumber?: string; street?: str
 }
 
 /**
- * Serialize a resolved address into a schema.org `Place` JSON-LD object —
- * `Place { geo: GeoCoordinates, address: PostalAddress }` (#1052).
- *
- * An output projection, lossy by design: `streetAddress` is one opaque string,
- * and tiers/confidence/provenance don't fit the core vocabulary, so they're dropped
- * rather than shoehorned into an extension property.
- * Only populated fields are emitted — absent fields are omitted entirely (never `null`).
- *
- * `addressCountry` is ISO-3166 alpha-2 (uppercased).
- * `geo` is emitted only when both coordinates are finite.
- *
- * The `address` block only when at least one address field is present.
+ * Serialize a resolved address into a schema.org `Place` JSON-LD object, emitting only populated
+ * fields and the `address` block only when at least one address field is present.
  */
 export function toSchemaOrg(input: SchemaOrgInput): SchemaOrgPlace {
 	const place: SchemaOrgPlace = { "@context": "https://schema.org", "@type": "Place" }

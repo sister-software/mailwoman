@@ -61,14 +61,14 @@ test("toOpenCage: maps native fields to OpenCage key names + casing", () => {
 
 	const oc = toOpenCage(set)
 
-	expect(oc.DMS).toEqual({ lat: "38° 53′ 51″ N", lng: "77° 02′ 11″ W" }) // lon -> lng
+	expect(oc.DMS).toEqual({ lat: "38° 53′ 51″ N", lng: "77° 02′ 11″ W" })
 	expect(oc.geohash).toBe("dqcjqcp84")
 	expect(oc.Mercator).toEqual({ x: -8_575_528, y: 4_707_174 })
 	expect(oc.qibla).toBe(58.4)
 	expect(oc.callingcode).toBe(1)
-	expect(oc.currency).toEqual({ iso_code: "USD", symbol: "$" }) // isoCode -> iso_code
+	expect(oc.currency).toEqual({ iso_code: "USD", symbol: "$" })
 	expect(oc.flag).toBe("🇺🇸")
-	expect(oc.timezone).toEqual({ name: "America/New_York", offset_sec: -18_000 }) // offsetSec -> offset_sec
+	expect(oc.timezone).toEqual({ name: "America/New_York", offset_sec: -18_000 })
 	expect(oc.FIPS).toEqual({ county: "11001" })
 })
 
@@ -82,14 +82,10 @@ test("toNative: returns the native set unchanged", () => {
 	expect(toNative(set)).toEqual(set)
 })
 
-// schema.org Place / PostalAddress / GeoCoordinates JSON-LD projection (#1052)
-
 test("composeStreetAddress: collapses housenumber + street + unit into one number-first line", () => {
 	expect(composeStreetAddress({ houseNumber: "8", street: "Boulevard du Palais" })).toBe("8 Boulevard du Palais")
-	// The lossy collapse: unit rides the same opaque string (schema.org has no unit slot).
+	// The unit rides the same opaque string, since schema.org has no unit slot.
 	expect(composeStreetAddress({ houseNumber: "350", street: "5th Ave", unit: "Apt 4B" })).toBe("350 5th Ave Apt 4B")
-	// Blank parts drop out.
-	// An all-empty input is "".
 	expect(composeStreetAddress({ street: "5th Ave" })).toBe("5th Ave")
 	expect(composeStreetAddress({ houseNumber: "  ", street: "" })).toBe("")
 })
@@ -102,7 +98,7 @@ test("toSchemaOrg: full Place with geo + PostalAddress, ISO-3166 alpha-2 country
 		locality: "Paris",
 		region: "Île-de-France",
 		postalCode: "75001",
-		countryCode: "fr", // lowercase in → uppercase out
+		countryCode: "fr",
 	})
 
 	expect(place["@context"]).toBe("https://schema.org")
@@ -126,7 +122,6 @@ test("toSchemaOrg: omits absent fields entirely (never null)", () => {
 	expect(place.address?.streetAddress).toBeUndefined()
 	expect(place.address?.postalCode).toBeUndefined()
 	expect(place.address?.addressRegion).toBeUndefined()
-	// No null-valued keys anywhere in the JSON.
 	expect(JSON.stringify(place)).not.toContain("null")
 	expect(place.address).toEqual({ "@type": "PostalAddress", addressLocality: "Philadelphia", addressCountry: "US" })
 })

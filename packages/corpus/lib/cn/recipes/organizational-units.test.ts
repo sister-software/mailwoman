@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `cn-organizational-units` (#2034) — the issue's own rows, labeled by the suffix grammar: the whole ordinal chain
- *   is one `locality_unit`, the named head is `dependent_locality`, and a row with no chain is skipped rather than
- *   guessed at.
  */
 
 import {
@@ -67,7 +64,6 @@ describe("labelCNOrganizationalRow", () => {
 		expect(labelCNOrganizationalRow("苗辽林场 Zhejiang China")).toBeNull()
 		expect(labelCNOrganizationalRow("红卫大队 Zhejiang")).toBeNull()
 		expect(labelCNOrganizationalRow("淮海农场梁庄分场")).toBeNull()
-		// A named team (`机耕队`, the machine-tillage team) under a named brigade: no ordinal, so no chain.
 		expect(labelCNOrganizationalRow("胜利大队机耕队, Inner Mongolia")).toBeNull()
 	})
 
@@ -100,7 +96,6 @@ describe("the recipe", () => {
 			country: "China",
 		})
 
-		// One token per Han character: the chain is seven characters, so seven labels, B- then I-.
 		const unitLabels = zhaoguang!.labels!.filter((label) => label.endsWith("locality_unit"))
 
 		expect(unitLabels).toEqual([

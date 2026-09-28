@@ -3,17 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tree-shape predicates over an `AddressTree` — the one stack walk behind the pipeline's bare-tree
- *   guards and the "lone bare toponym" conditions. Two quantifiers cover every consumer:
+ *   Tree-shape predicates over an `AddressTree`, the shared stack walk behind the pipeline's
+ *   bare-tree guards and the lone bare toponym conditions.
  *
- *   - {@link isBareTreeOf} — every value-containing node carries the given tag (several allowed). The
- *     #912 / #1589 posture guards (`isBareLocalityTree`, `isBarePostcodeTree`) are this with the tag
- *     bound.
- *   - {@link loneValueNode} — the tree has exactly one value-containing node. The street-miss
- *     fallback and the resolver's bare-country race bind the tag at the call site.
- *
- *   The distinction is required: a two-segment parse can satisfy the first and never the second,
- *   and both behaviors are pinned by their consumers' boards.
+ *   - {@link isBareTreeOf} holds every value-containing node to the given tag. Several tags are
+ *     allowed.
+ *   - {@link loneValueNode} answers with the tree's single value-containing node.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -23,12 +18,10 @@ import { walkNodes } from "#decoder/tree/walk"
 import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
- * True when every node in the tree either carries `tag` or bears no value —
- * i.e. the only evidence in the parse is `tag`-shaped.
+ * True when every node in the tree either carries `tag` or bears no value.
  *
- * A tag-matching node counts even when its value is empty
- * (the guard asks "did the parser emit this shape", not "is the span non-blank");
- * any other tag with a non-empty value disqualifies.
+ * A tag-matching node counts even when its value is empty. The guard asks whether the parser
+ * emitted this shape. Any other tag with a non-empty value disqualifies.
  * False for a tree with no `tag` node at all.
  */
 export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
@@ -76,24 +69,22 @@ export interface FlatTreeNode {
 	start: number
 	end: number
 	/**
-	 * Where the assertion came from — `rule`, `neural`, `resolver`.
+	 * Where the assertion came from, one of `rule`, `neural`, `resolver`.
 	 *
-	 * Carried because a span that keeps its tag, its text and its confidence
-	 * while its source moves from `resolver` to `neural` has lost its gazetteer backing,
-	 * and a projection that drops this reports that span as unchanged.
+	 * Carried because a span that keeps its tag, its text and its confidence while its source moves
+	 * from `resolver` to `neural` has lost its gazetteer backing. A projection that drops this
+	 * reports that span as unchanged.
 	 */
 	source?: string
 	sourceID?: string
 	/**
 	 * The resolver's answer for this span, when one won.
 	 *
-	 * Carried for the same reason `source` is: a projection that keeps only the text
-	 * and the tag cannot tell a span that resolved to a different place from one that did
-	 * not move at all, and those are a ranking problem and a non-event respectively.
+	 * Carried for the same reason `source` is. A projection that keeps only the text and the tag
+	 * cannot tell a span that resolved to a different place from one that did not move at all.
 	 * `alternatives` is reduced to its length.
-	 *
-	 * The retrieval breadth is what a consumer reads, and handing over the candidate
-	 * objects invites a walk this projection exists to have already done.
+	 * The retrieval breadth is what a consumer reads, and handing over the candidate objects invites
+	 * a walk this projection exists to have already done.
 	 */
 	placeID?: string
 	lat?: number
@@ -102,20 +93,12 @@ export interface FlatTreeNode {
 }
 
 /**
- * Flatten a tree to its nodes in source order — sorted by `start`,
- * the same order `decodeAsTuples` means by it.
+ * Flatten a tree to its nodes in source order, sorted by `start`, the order `decodeAsTuples` means.
  *
- * A traversal-order walk (depth-first onto a stack, then reversed) is the obvious implementation
- * and is wrong here: it coincides with source order only while every parent's span precedes
- * its children's, and the decoder does not promise it — measured, the two orders disagree
- * on **7 of 10** ordinary addresses, always with a child ahead of its parent:
- *
- *     Queen Street, Bristol              street_suffix@6 before street@0
- *     Via Roma, 5, 50123 Firenze, …      house_number@10 before street@0
- *     30 St Mary Axe …, London EC3A 8BF  postcode@37     before locality@30
- *
- * Sorting is what the tuple projection already does, so this makes a rendered span list
- * and `decodeAsTuples` agree by construction rather than by luck.
+ * A traversal-order walk is the obvious implementation and is wrong here. It coincides with source
+ * order only while every parent's span precedes its children's, and the decoder does not promise
+ * that. Sorting is what the tuple projection already does, so this makes a rendered span list and
+ * `decodeAsTuples` agree by construction.
  */
 export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 	if (!tree) return []

@@ -3,28 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   G-NAF (Australia) corpus adapter — the parser-teaching half of #208.
+ * G-NAF (Australia) corpus adapter.
  *
- *   The model mis-parses Australian addresses in their native postcode-first / house-number-last
- *   order: it tags a leading 4-digit postcode as a house number (its US/EU prior) and swaps street
- *   ↔ locality with it. `scripts/eval/au-order-probe.ts` proved this is a word-order coverage gap rather than capability — the same addresses parse perfectly in canonical order (65% → 87% @25km if the
- *   parse were order-robust). EU survives the same eval because its postcodes are
- *   format-distinctive (a hyphenated `26-300` reads as a postcode anywhere); a bare AU `3053` only
- *   disambiguates by position.
- *
- *   So this adapter renders each assembled G-NAF tuple (from {@link ./assemble}) in one of three real
- *   AU layouts — real-AU canonical (number-first, postcode-trailing), postcode-first,
- *   locality-first — rotated by row index (`i % 3`), so the locality + postcode each land in every
- *   position across the corpus. This is the exact mechanism that fixed #148's v1.9.0 order-overfit
- *   for the 16 EU locales (`scripts/rerender-overture-multiorder.mjs`, v1.9.1 → shipped v4.13.0);
- *   AU was simply never in that train (`country_weights` had no AU, and `data_loader.py` excludes
- *   unlisted countries). Rotating one order per row (rather than emitting all three) keeps this a
- *   clean single-variable extension of the proven recipe + matches its source-mass structure. The
- *   corpus aligner BIO-labels each (every component surface form occurs verbatim in `raw`, so
- *   alignment lands).
- *
- *   Input: the assembled component jsonl (one `{house_number,street,locality,region,postcode}` per
- *   line). Open G-NAF licence — attribute "Geoscape Australia".
+ * The model mis-parses Australian addresses in their native postcode-first and house-number-last
+ * order, where it tags a leading four-digit postcode as a house number and swaps street against
+ * locality. This adapter renders each assembled G-NAF tuple (see {@link ./assemble}) in three real
+ * AU layouts, rotated by row index, so the locality and postcode each land in every position across
+ * the corpus. Input is the assembled component jsonl, one tuple per line. Open G-NAF licence
+ * requires attribution to "Geoscape Australia".
  */
 
 /* oxlint-disable mailwoman/prefer-home -- this adapter reads Australia's national register and writes AU surfaces
@@ -98,11 +84,8 @@ export function createGNAFAdapter(): CorpusAdapter {
 			let emitted = 0
 			let idx = 0
 
-			// Input is the assembled component jsonl (one tuple per line).
 			// TextSpliterator auto-disposes on loop completion and on an early `break`
-			// (abort / limit), so the old explicit handle teardown is gone.
-			// The reader trims each line and skips blank ones.
-			// The render order rotates (i % 3), matching v1.9.1's rerender.
+			// (abort / limit).
 			for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
@@ -127,15 +110,14 @@ export function createGNAFAdapter(): CorpusAdapter {
 					postcode: t.postcode,
 				}
 
-				// region (state) rides only the canonical render (order 0); the postcode-leading layouts omit it (matching the eval's serialization) so it never breaks verbatim alignment.
+				// `region` rides only the canonical render, and the postcode-leading layouts omit it
+				// so verbatim alignment never breaks.
 				if (order === 0 && t.region) {
 					components.region = t.region
 				}
 
-				// `raw` here is one of three deliberate word orders, two of which no layout prints —
-				// the postcode-leading forms this adapter exists to teach.
-				// So the question is containment against a string this adapter built
-				// rather than what a layout would have printed.
+				// `raw` is one of three deliberate word orders, two of which no layout prints.
+				// Containment is therefore checked against the string this adapter built.
 				const aligned = componentsPresentIn(components, raw)
 
 				if (!Object.keys(aligned).length) continue

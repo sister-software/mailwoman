@@ -3,36 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Corpus linter. Compares a new recipe output (one parquet file) against pre-computed corpus
- *   statistics and flags patterns that would cause the class of failure we hit with v0.6.2's
- *   "5th Avenue Theatre" adversarial venue templates.
+ * Corpus linter. Compares a new recipe output (one parquet file) against pre-computed corpus statistics and
+ * flags token-label distribution outliers, label-vacuum tokens, bigram-label collisions, anti-pattern rule
+ * matches, and basic sanity problems.
  *
- *   Per DeepSeek turn 9 design (2026-05-29). v1 checks:
- *
- *   1. **Token-label distribution outliers.** For each token in the new recipe output, compare the
- *        output's majority label to the corpus's majority label. Flag when the corpus has a
- *        confidently-established majority (>66%) and the output's majority differs and both have
- *        non-trivial counts (output ≥ 50, corpus ≥ 200).
- *   2. **Label-vacuum tokens.** Token labeled with a tag that has zero instances in the corpus for that
- *        token, despite the token being well-represented in the corpus. Stronger signal than #1 —
- *        we're introducing a novel association rather than shifting a distribution.
- *   3. **Bigram-label collisions.** Identical (token_bigram, label_bigram) appears in the output while
- *        the same token_bigram has a different majority label_bigram in the corpus. The "5th Avenue"
- *        with [B-venue, I-venue] vs corpus's [B-house_number, I-street] case.
- *   4. **Common-form anti-pattern rules.** Applies `lint-rules.json` — token-regex → forbidden-labels
- *        mappings — flagging matches.
- *   5. **Basic sanity.** Truncated rows (tokens.length !== labels.length), all-O rows >90% of the output.
- *
- *   Output: markdown report on stdout, optional JSON sidecar via `outJSON`. The command exits 0 if
- *   no errors, 1 if any errors (warnings don't refuse). Per the design, the manifest entry for a
- *   flagged recipe output should require `lint_acknowledged: true` before training consumes it.
- *
- *   Usage: mailwoman dev lint corpus-slice\
- *   --database <new-recipe-output.parquet>\
- *   --stats <corpus-stats.json>\
- *   [--rules <rules.json>]\
- *   [--out-md /tmp/lint-report.md]\
- *   [--out-json /tmp/lint-report.json]
+ * The markdown report goes to stdout, with optional markdown and JSON sidecars. The command exits 0 when no
+ * errors are found and 1 when any are, because warnings do not refuse. A flagged recipe output should carry
+ * `lint_acknowledged: true` in its manifest before training consumes it.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -48,8 +25,7 @@ import {
 } from "#utils/cooccurrence-stats"
 
 /**
- * Occurrences of a forbidden label before it is reported.
- * One or two are noise, five is a pattern.
+ * Occurrences of a forbidden label before it is reported: one or two are noise, five is a pattern.
  */
 const FORBIDDEN_LABEL_REPORT_THRESHOLD = 5
 
@@ -59,9 +35,7 @@ const FORBIDDEN_LABEL_REPORT_THRESHOLD = 5
 const MAX_LISTED_EXAMPLES = 20
 
 /**
- * Calibrated thresholds (DeepSeek turn 9).
- *
- * These can be tuned over time if new failure modes surface that the current numbers miss.
+ * Calibrated thresholds, tunable if new failure modes surface that the current numbers miss.
  */
 const CORPUS_CONFIDENCE_FLOOR = 0.66
 const OUTPUT_MIN_COUNT = 50
@@ -434,8 +408,7 @@ function renderReport(
 }
 
 /**
- * Lint a recipe output against corpus stats + the anti-pattern rules.
- * Print the markdown report to stdout.
+ * Lint a recipe output against corpus stats and the anti-pattern rules, printing the markdown report to stdout.
  */
 export async function lintRecipeOutput(
 	options: LintRecipeOutputOptions,

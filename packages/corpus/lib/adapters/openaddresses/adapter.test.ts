@@ -31,9 +31,6 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		// The adapter admits the CC-BY-SA-4.0 row by default, so the fixture yields 6.
-		// Refusing a share-alike row is a deliberate build-level act under
-		// `--license-policy share-alike-free` rather than a silent adapter default (#26).
 		expect(manifest.yielded).toBe(6)
 		const rows = await loadRows()
 		expect(rows).toHaveLength(6)
@@ -51,14 +48,12 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 		const rows = await loadRows()
 
-		// Per-row licenses from the fixture
 		const byHash = new Map(rows.map((r) => [r.source_id, r] as const))
 		expect(byHash.get("openaddresses-a1b2c3d4e5f60718")?.license).toBe("CC-BY-4.0")
 		expect(byHash.get("openaddresses-c3d4e5f607182930")?.license).toBe("PDDL-1.0")
 		expect(byHash.get("openaddresses-d4e5f60718293041")?.license).toBe("CC0-1.0")
 		expect(byHash.get("openaddresses-e5f6071829304152")?.license).toBe("CC-BY-SA-4.0")
 
-		// The Austin fixture row has no LICENSE property → default fallback
 		expect(byHash.get("openaddresses-f60718293041526a")?.license).toBe(OPENADDRESSES_DEFAULT_LICENSE)
 	})
 
@@ -137,7 +132,6 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	})
 
 	it("source_id prefers `hash`; falls back to `id`; then to a content hash", async () => {
-		// Build a tiny fixture with one of each shape inline.
 		const inline = scratch.path("edge.geojsonl")
 
 		const lines = [
@@ -191,8 +185,6 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		expect(rows).toHaveLength(3)
 		expect(rows[0]!.source_id).toBe("openaddresses-deadbeefcafef00d")
 		expect(rows[1]!.source_id).toBe("openaddresses-us-fallback-id")
-		// Content-hashed fallback: 12-hex prefix of sha256 from stableSourceID.
-		// Stable across runs.
 		expect(rows[2]!.source_id).toMatch(/^openaddresses-[0-9a-f]{12}$/)
 	})
 
@@ -254,8 +246,6 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	})
 
 	it("admits share-alike by default and drops it only on an explicit allowShareAlike: false (#26)", async () => {
-		// The CC-BY-SA-4.0 row (e5f6…) is present under the default, which drops no row silently.
-		// Refusing one is a deliberate build-level act under `--license-policy share-alike-free`.
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
@@ -265,7 +255,6 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 		expect((await loadRows()).find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeDefined()
 
-		// The explicit adapter-scoped drop still works (vestigial fallback. Build-level is the norm).
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: false }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },

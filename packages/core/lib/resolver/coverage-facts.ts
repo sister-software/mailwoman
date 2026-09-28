@@ -3,22 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What a loaded gazetteer artifact declares about its own country coverage, and the one derivation the
- *   reader and the build share. A country absent from a coverage map was never measured — never measured and
- *   failed. the failed case is present with `hardFilterSafe: false`.
+ *   What a loaded gazetteer artifact declares about its own country coverage, and the one derivation
+ *   the reader and the build share. A country absent from a coverage map was never measured. A
+ *   measured-and-failed country is present with `hardFilterSafe: false`.
  */
 
 /**
  * One country's measured hard-filter coverage fact, as recorded at a promote eval.
  *
- * Facts about the gazetteer artifact live IN the artifact
- * (the `country_coverage` table the gazetteer build emits) — code constants are
- * only the fallback for artifacts that predate the manifest.
+ * Facts about the gazetteer artifact live in the artifact, in the `country_coverage` table the
+ * gazetteer build emits. Code constants are the fallback for artifacts that predate the manifest.
  *
- * Meaning-of-zero discipline: a country absent from the coverage map was never
- * measured, never "measured and failed".
- * A measured-and-failed country is present with `hardFilterSafe: false` (e.g. FI at 69.5% hard-resolve),
- * so the negative result is a first-class record, distinguishable from ignorance.
+ * A country absent from the coverage map was never measured. A measured-and-failed country is
+ * present with `hardFilterSafe: false`, so the negative result is a first-class record.
  */
 export interface CountryCoverageFact {
 	/**
@@ -26,12 +23,11 @@ export interface CountryCoverageFact {
 	 */
 	country: string
 	/**
-	 * The promotion-eval verdict: hard-filtering this country is a pure win
-	 * (a hard-filter miss is almost always a genuine non-match rather than a coverage gap).
+	 * The promotion-eval verdict that hard-filtering this country is a pure win. A hard-filter miss is
+	 * almost always a genuine non-match.
 	 *
-	 * Stored as a verdict — not re-derived from `hardResolveRate` at read time — because the
-	 * check is a judgment over a panel rather than a pure rate function (CA cleared at the #928
-	 * promote on the postcode-format-prior rationale despite a sub-95% panel resolve rate).
+	 * Stored as a verdict rather than re-derived from `hardResolveRate` at read time, since it is a
+	 * judgment over a panel.
 	 */
 	hardFilterSafe: boolean
 	/**
@@ -74,33 +70,34 @@ export interface CountryBBoxFact {
  * Facts a loaded gazetteer artifact declares about itself.
  *
  * Read from the artifact's own manifest tables at open time, carried on the
- * {@link ResolverBackend}/{@link Resolver} handle so consumers read the facts from
- * the artifact they are actually resolving against.
+ * {@link ResolverBackend}/{@link Resolver} handle so consumers read the facts from the artifact they
+ * are actually resolving against.
  *
- * `undefined` on the handle = the artifact predates the manifest → consumers fall
- * back to the code constants (byte-identical legacy behavior).
+ * `undefined` on the handle means the artifact predates the manifest, and consumers fall back to the
+ * code constants, which keeps the legacy behavior byte-identical.
  */
 export interface GazetteerArtifactCoverage {
 	/**
-	 * Country → measured coverage fact.
-	 * Absence = never measured (meaning-of-zero), never "failed".
+	 * Country to measured coverage fact.
+	 * Absence means the country was never measured.
 	 */
 	countryCoverage: ReadonlyMap<string, CountryCoverageFact>
 	/**
-	 * Country → guard-B bbox.
+	 * Country to guard-B bbox.
 	 *
-	 * Absence = no box → the plausibility guard fails open for that country.
+	 * Absence means no box, so the plausibility guard fails open for that country.
 	 */
 	countryBBoxes: ReadonlyMap<string, CountryBBoxFact>
 	/**
-	 * Derived at load: the countries whose fact says `hardFilterSafe` — the artifact's hard-country safelist.
+	 * Derived at load. The countries whose fact says `hardFilterSafe`, the artifact's hard-country
+	 * safelist.
 	 */
 	hardCountrySafelist: ReadonlySet<string>
 }
 
 /**
- * Derive the hard-country safelist from coverage facts — the one derivation
- * both the reader and the build share.
+ * Derive the hard-country safelist from coverage facts, the one derivation both the reader and the
+ * build share.
  */
 export function hardCountrySafelistFromCoverage(facts: Iterable<CountryCoverageFact>): ReadonlySet<string> {
 	const out = new Set<string>()

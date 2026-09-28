@@ -3,27 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Assemble a sampled, component-labeled Australian address set from G-NAF (the Geocoded National
- *   Address File — Geoscape Australia, Open G-NAF licence. any derived artifact must attribute
- *   "Geoscape Australia"). G-NAF is a relational PSV distribution (~16.9M addresses);
- *   reconstructing a street address joins three tables — ADDRESS_DETAIL (number, postcode, the
- *   PIDs) → STREET_LOCALITY (street name + type) → locality (suburb). State is the per-file prefix
- *   (ACT/NSW/…).
+ * Assemble a sampled, component-labeled Australian address set from G-NAF (the Geocoded National
+ * Address File, Geoscape Australia, Open G-NAF licence). Any derived artifact must attribute
+ * "Geoscape Australia". G-NAF is a relational PSV distribution whose street address reconstructs
+ * by joining ADDRESS_DETAIL (number, postcode, the PIDs) to STREET_LOCALITY (street name and type)
+ * and then to locality (suburb). State is the per-file prefix (ACT/NSW/…).
  *
- *   Streaming + in-memory join via the house {@link PSVSpliterator} (pipe-separated. header names key each row) — not
- *   raw `read_csv` SQL, which a flat-file join doesn't need and
- *   which the #183–190 cleanup retired. The two lookup tables (STREET_LOCALITY ~765k rows, locality
- *   ~16k) fit as Maps. ADDRESS_DETAIL is streamed once and reservoir-sampled, so memory stays
- *   bounded (the OOM lesson from the Overture ingest).
+ * The two lookup tables load as Maps. ADDRESS_DETAIL streams once and is reservoir-sampled, so
+ * memory stays bounded.
  *
- *   No coordinates: the output feeds the parser ({@link ../gnaf/adapter}, #208) — teaching the model
- *   AU's postcode-first / house-number-last word order, the gap `scripts/eval/au-order-probe.ts`
- *   pinned (65%→87% if the parse were order-robust). The parser needs the address string +
- *   component labels rather than lat/lon.
- *
- *   Output: component tuples as jsonl, consumed by the `gnaf` corpus adapter (which renders them in
- *   multiple orders + the corpus aligner BIO-labels them). An optional held-out eval set is
- *   excluded by (street, locality, postcode) so the training corpus never overlaps the benchmark.
+ * No coordinates. The output feeds the parser, which needs the address string and its component
+ * labels. Output is component tuples as jsonl. An optional held-out eval set is excluded by
+ * (street, locality, postcode) so the training corpus never overlaps the benchmark.
  */
 
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"

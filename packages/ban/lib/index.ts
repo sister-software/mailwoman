@@ -3,14 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/ban` — Base Adresse Nationale (France) rooftop address-point ingestion. The FR
- *   counterpart of the 50-state US situs layer (#1012): the national government address register (26M
- *   addresses) that closes the rooftop gap OSM-FR (~1.1M points) can't. permissive code only — this
- *   workspace contains no BAN data bytes. It reads the open `adresses-<dept>.csv` dumps
- *   (adresse.data.gouv.fr, Licence Ouverte/Etalab) and writes a national FR extract on the shared situs
- *   schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`), so the existing
- *   `AddressPointSqliteLookup` reads it with zero changes. See `./sdk` for the ingestion surface and
- *   `./scripts/build/address-point-database` for the build CLI.
+ *   `@mailwoman/ban` ingests the Base Adresse Nationale (France) rooftop address-point register.
+ *   This workspace holds permissive code only and no BAN data bytes.
  */
 
 export * from "#sdk/index"

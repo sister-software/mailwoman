@@ -167,8 +167,7 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.region = province
 	}
 
-	// A street alone is not an address row: 41,000 of Vietnam's 70,069 rows carry no
-	// component above the street, and the coarse adapters already teach bare names.
+			// A street alone is not an address row, and the coarse adapters already teach bare names.
 	if (Object.keys(components).length === 1) return null
 
 	return components
