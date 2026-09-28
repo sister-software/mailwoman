@@ -274,8 +274,6 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		exit(fatalError instanceof Error ? fatalError : new CommandError(messageOf(fatalError)))
 	}, [phase, fatalError, exit])
 
-	// #endregion
-
 	useEffect(() => {
 		if (!run) return
 
@@ -341,8 +339,6 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			frameRequestRef.current++
 		}
 	}, [run, viewport, resources, size.columns, size.rows])
-
-	// #endregion
 
 	// Stable across a keystroke so the memoized input field is too; a fresh handler identity
 	// would drag the whole frame with it.
@@ -468,8 +464,6 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		{ isActive: phase === "ready" || phase === "busy" }
 	)
 
-	// #endregion
-
 	// Memoized because `DebugFrame`'s panes are memoized; the scroll offset deliberately rides
 	// its own prop so scrolling leaves `data` identical.
 	const data = useMemo<DebugData | null>(
@@ -518,8 +512,6 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			inputField={inputField}
 		/>
 	)
-
-	// #endregion
 }
 
 /* oxlint-enable react-hooks/exhaustive-deps */
