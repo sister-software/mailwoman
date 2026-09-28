@@ -208,7 +208,6 @@ describe("readWeightsRightsRecords", () => {
 			expect(document.inherited_lineage?.attribution).toHaveLength(1)
 			expect(document.inherited_lineage?.note).toContain("contributed none of these rows")
 
-			// A graph package inherits no lineage.
 			expect(records[0]!.inherited).toBeNull()
 		} finally {
 			await tree.dispose()
@@ -377,9 +376,8 @@ describe("the records this repository holds today", () => {
 
 		expect(records).toHaveLength(12)
 
-		// `pair-index-gb.bin` ships here, and its OGL v3.0 attribution used to sit in `en-us`'s card,
-		// so a consumer who installed the overlay alone received the artifact without it.
-		// The entry now travels with the artifact.
+		// `pair-index-gb.bin` ships here with its OGL v3.0 attribution, so a consumer who installs
+		// the overlay alone receives the attribution with the artifact.
 		const gb = records.find((record) => record.packageName === "@mailwoman/neural-weights-en-gb")
 
 		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0"])

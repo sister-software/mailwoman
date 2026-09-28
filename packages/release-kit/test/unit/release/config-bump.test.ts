@@ -2,11 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The #1891 regression pin: bumping `release.config.json#version` changes exactly the version line — the
- *   `weights` block (the model identity, which a code-only release must never move) stays byte-equivalent. v9.2.0
- *   shipped while this file read 9.1.0 because no operation bumped it (#1024's drift class); the bump is a targeted
- *   textual replacement because the file is oxfmt-formatted and a parse-then-stringify write would reformat it
- *   wholesale (measured: the single-line `locales` array expands to eleven lines).
+ * @file The regression pin: bumping `release.config.json#version` changes exactly the version line — the
+ *   `weights` block, the model identity a code-only release must never move, stays byte-equivalent. The bump
+ *   is a targeted textual replacement because the file is oxfmt-formatted and a parse-then-stringify write
+ *   would reformat it wholesale.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -50,9 +49,6 @@ describe("release.config.json under the prepare bump", () => {
 		const rootManifestPath = resolvePath(repoRootPath(), "package.json")
 		const root = await readPackageJSON(rootManifestPath)
 
-		// The v9.2.0 incident: the root moved and this file did not.
-		// The prepare bump now writes both, and its pre-write sync check refuses drift.
-		// This assertion is the standing regression check.
 		expect(currentVersion).toBe(root.version)
 	})
 })

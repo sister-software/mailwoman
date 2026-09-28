@@ -95,46 +95,37 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 
 	/**
-	 * Loads the asset bundle for one release and reports progress through `ctx`.
-	 * The hook calls it on every version or `forceWASM` change.
-	 *
-	 * The hook reports a rejection through `errorMessage`.
-	 * It disposes a result that resolves after `ctx.signal` aborts.
+	 * Loads the asset bundle for one release and reports progress through `ctx`; the hook calls it on every version
+	 * or `forceWASM` change, reports a rejection through `errorMessage`, and disposes a result that resolves after
+	 * `ctx.signal` aborts.
 	 */
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
 
 	/**
-	 * Releases resources that the garbage collector does not own, such as an ONNX
-	 * session's WASM heap or a GPU buffer.
-	 *
-	 * The hook calls it for a replaced bundle, for a bundle that resolved
-	 * after its load was aborted, and on unmount.
-	 * Without it, every reload leaves a model resident.
+	 * Releases resources the garbage collector does not own, such as an ONNX session's WASM heap or a GPU buffer;
+	 * the hook calls it for a replaced bundle, a bundle that resolved after abort, and on unmount, and without it
+	 * every reload leaves a model resident.
 	 */
 	disposeAssets?: (assets: TAssets) => void | Promise<void>
 
 	/**
-	 * The progress line shown before the manifest arrives.
-	 * It defaults to `Loading releases…`.
+	 * The progress line shown before the manifest arrives; defaults to `Loading releases…`.
 	 */
 	initialProgress?: string
 }
 
 /**
- * The release-loading state that {@link useReleaseRuntime} returns.
- *
- * A host pairs it with its map surface to build a `GeocoderRuntime`.
+ * The release-loading state that {@link useReleaseRuntime} returns; a host pairs it with its map surface to
+ * build a `GeocoderRuntime`.
  */
 export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * The releases manifest.
-	 * It is `null` until it loads or when none is available.
+	 * The releases manifest, `null` until it loads or when none is available.
 	 */
 	manifest: ReleaseManifest<TRelease> | null
 
 	/**
-	 * The selected version.
-	 * It is `null` before the manifest loads.
+	 * The selected version, `null` before the manifest loads.
 	 */
 	selectedVersion: string | null
 
@@ -144,43 +135,37 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	selectedRelease: TRelease | null
 
 	/**
-	 * The asset bundle for the selected version.
-	 * It is `null` while the bundle loads.
+	 * The asset bundle for the selected version, `null` while it loads.
 	 */
 	assets: TAssets | null
 
 	ready: boolean
 
 	/**
-	 * The load progress line.
-	 * It is empty once loading finishes or fails.
+	 * The load progress line, empty once loading finishes or fails.
 	 */
 	loadingProgress: string
 
 	/**
-	 * The zero-based loader step index.
-	 * It is `-1` before the first step.
+	 * The zero-based loader step index, `-1` before the first step.
 	 */
 	loadingStepIndex: number
 
 	loadingStepLabels: string[]
 
 	/**
-	 * The fraction of the current download received so far, in [0, 1].
-	 *
-	 * It is `null` when no download is in progress or the length is unknown.
+	 * The fraction of the current download received so far, in [0, 1], or `null` when no download is in progress
+	 * or the length is unknown.
 	 */
 	loadingByteFraction: number | null
 
 	/**
-	 * A manifest or asset load error.
-	 * It is separate from any parse error that a consumer tracks.
+	 * A manifest or asset load error, separate from any parse error a consumer tracks.
 	 */
 	errorMessage: string | null
 
 	/**
-	 * The backend that the neural runtime resolved to, such as `webgpu (27 MB int8)`.
-	 * It is `""` before the backend is known.
+	 * The backend the neural runtime resolved to, such as `webgpu (27 MB int8)`; it is `""` before the backend is known.
 	 */
 	activeBackend: string
 
@@ -190,25 +175,20 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	forceWASM: boolean
 
 	/**
-	 * Switches to another version.
-	 * It clears any error and reloads the asset bundle.
+	 * Switches to another version, clearing any error and reloading the asset bundle.
 	 */
 	selectVersion: (version: string) => void
 
 	/**
-	 * Forces or releases the CPU WASM backend.
-	 * Either change reloads the asset bundle.
+	 * Forces or releases the CPU WASM backend; either change reloads the asset bundle.
 	 */
 	setForceWASM: (forceWASM: boolean) => void
 }
 
 /**
- * Loads the release manifest on mount.
- *
- * It then loads the selected release's assets whenever the version or `forceWASM` changes.
- *
- * Each reload aborts the previous load and disposes the old assets.
- * `ready` becomes true only after the new assets have fully loaded.
+ * Loads the release manifest on mount and the selected release's assets whenever the version or `forceWASM`
+ * changes; each reload aborts the previous load and disposes the old assets, and `ready` becomes true only after
+ * the new assets fully load.
  */
 export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = ReleaseBase>(
 	config: ReleaseRuntimeConfig<TAssets, TRelease>

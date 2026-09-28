@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Downloads a region's soil survey areas and turns them into builder inputs.
- *
- *   The catalogue's `saverest` date decides which archive to download and also appears in the archive's
- *   filename. The download host rejects `HEAD` and ignores `Range`, so it cannot answer freshness cheaply.
+ *   Downloads a region's soil survey areas and turns them into builder inputs; the catalogue's `saverest` date picks the archive and the host rejects `HEAD` and ignores `Range`.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -23,9 +20,7 @@ import { readSurveyAreaAttributes, readSurveyAreaOutline } from "#sdk/survey-are
 export interface AcquireRegionOptions {
 	client: SoilDataAccessClient
 	/**
-	 * The survey-area symbol prefix.
-	 *
-	 * A state code such as `IA` selects a whole state, and a full symbol such as `IA153` selects one area.
+	 * The survey-area symbol prefix, where a state code such as `IA` selects a whole state and a full symbol such as `IA153` selects one area.
 	 */
 	prefix: string
 	/**
@@ -33,8 +28,7 @@ export interface AcquireRegionOptions {
 	 */
 	cacheRoot: PathBuilderLike
 	/**
-	 * The symbols to build from the catalogue's results.
-	 * When it is absent, every symbol is built.
+	 * The symbols to build from the catalogue's results, defaulting to every symbol.
 	 */
 	only?: ReadonlyArray<string>
 	onProgress?: (message: string) => void

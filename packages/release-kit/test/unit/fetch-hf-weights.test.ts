@@ -70,7 +70,6 @@ describe("fetch-hf-weights — character-path families", () => {
 		const cjkPlanned = plans.some((plan) => plan.workspace === CJK)
 
 		expect(cjkPlanned).toBe(released.has(CJK))
-		// Every Latin plan reads from the base directory the version names.
 		const latin = await hfVersionBase(repoRoot, "9.9.9")
 
 		const family = new Set([CJK, "packages/neural-weights-ja-jp", "packages/neural-weights-zh-cn"])

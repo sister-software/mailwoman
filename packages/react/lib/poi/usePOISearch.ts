@@ -24,29 +24,23 @@ export interface UsePOISearchOptions {
 	text: string
 
 	/**
-	 * The loader that the hook calls once on mount.
-	 * It defaults to `loadPOIRuntime`.
+	 * The loader that the hook calls once on mount; it defaults to `loadPOIRuntime`.
 	 */
 	loadRuntime?: LoadPOIRuntime
 
 	/**
-	 * The live-search probe.
-	 * Live search is unavailable when it is absent.
+	 * The live-search probe; live search is unavailable when it is absent.
 	 */
 	runLiveSearch?: POILiveSearch
 
 	/**
-	 * Whether the probe can search for brand subjects by Wikidata ID.
-	 * It defaults to false.
-	 *
-	 * Enable it only for a server-side backend.
-	 * Fetching every row for a brand over an HTTP range-request database is too slow.
+	 * Whether the probe can search for brand subjects by Wikidata ID, defaulting to false; enable it only for a
+	 * server-side backend, since fetching every row for a brand over an HTTP range-request database is too slow.
 	 */
 	brandLiveSearch?: boolean
 
 	/**
-	 * The delay in milliseconds before the text is classified.
-	 * It defaults to 250.
+	 * The delay in milliseconds before the text is classified; defaults to 250.
 	 */
 	debounceMs?: number
 }
@@ -61,9 +55,7 @@ export interface UsePOISearch {
 	runtimeReady: boolean
 
 	/**
-	 * The classification for the current debounced text.
-	 *
-	 * It is null for empty text and while classification is pending.
+	 * The classification for the current debounced text, `null` for empty text and while classification is pending.
 	 */
 	result: POIExplorerResult | null
 
