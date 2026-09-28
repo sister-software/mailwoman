@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The parse-and-resolve rig a run grades through — the ship-config scorer, the gazetteer backend behind the
- *   resolver, and the parse/resolve options the flags pin.
+ * @file The parse-and-resolve rig a run grades through: the ship-config scorer, the gazetteer backend
+ *   behind the resolver, and the parse/resolve options the flags pin.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -26,28 +26,28 @@ import type { LookupCensus } from "#eval-harness/oa/resolver/profile"
  * which leaves the library default in force.
  * A check leg that says which side it graded is the point of a tri-state.
  *
- * A silent config shift inside a check battery is the #718 sin.
+ * A silent config shift inside a check battery is what a tri-state prevents.
  */
 export async function buildParseRig(
 	options: OAResolverEvalOptions,
 	wofPaths: string[],
 	reportError: (line: string) => void
 ) {
-	// Full ship-config via the canonical ProductionScorer (#722): createScorer reads the model-card's
-	// `requires` block and feeds every declared channel — anchor + gazetteer + conventions(=auto) +
-	// suppress-gaz-near-postcode — and fails closed (strict) if a declared channel can't be fed.
-	// This grades the parse the library + server actually ship rather than the
+	// Full ship-config via the canonical ProductionScorer: createScorer reads the model-card's
+	// `requires` block and feeds every declared channel (anchor, gazetteer, conventions=auto,
+	// suppress-gaz-near-postcode), and fails closed (strict) if a declared channel cannot be fed.
+	// This grades the parse the library and server actually ship rather than the
 	// hand-built anchor-only classifier this eval used before.
 	// `--model-anchor-lookup` still pins the anchor source
-	// (else createScorer's default /mnt pilot + the repo gazetteer lexicon).
-	// `--ablate-to-anchor` drops back to anchor-only (gazetteer + conventions off)
-	// for the #722 before/after comparison.
+	// (else createScorer's default /mnt pilot and the repo gazetteer lexicon).
+	// `--ablate-to-anchor` drops back to anchor-only (gazetteer and conventions off)
+	// for the before/after comparison.
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const modelAnchorPath = options.modelAnchorLookup || ""
 	const ablateToAnchor = options.ablateToAnchor ?? false
-	// `--anchor-off` (#887): the sanctioned anchor ablation — `overrides.anchor=false`
+	// `--anchor-off`: the sanctioned anchor ablation, `overrides.anchor=false`
 	// through createScorer (a loud warning rather than a throw).
-	// Replaces the pre-#718 empty-anchor.json idiom, which the fail-closed check now
+	// Replaces the old empty-anchor.json idiom, which the fail-closed check
 	// refuses (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
 
@@ -86,7 +86,7 @@ export async function buildParseRig(
 	// This is the "CLI matches demo" check: run the eval both ways and confirm US
 	// locality/coord don't regress before defaulting the CLI to it.
 	const candidateDB = options.candidateDB || ""
-	// `--postal-city-alias-db <db>` (#475) attaches the opt-in postal-city alias scorer on
+	// `--postal-city-alias-db <db>` attaches the opt-in postal-city alias scorer on
 	// the FTS path: a user-typed postal city resolves to its geographic locality.
 	// Run the eval with and without to measure the difference.
 	// No-op on the candidate backend (it folds aliases at build time).
@@ -167,7 +167,9 @@ export async function buildParseRig(
 
 	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 
-	// #690/#895: normalizeCase is tri-state so an eval leg can pin either side of the library default (on at the classifier since #895). `--normalize-case` pins it on, `--raw-case` pins it off, neither = the library default. Silent config shifts in a check battery are the #718 sin — pin explicitly in pre-registered legs.
+	// normalizeCase is tri-state so an eval leg can pin either side of the library default.
+	// `--normalize-case` pins it on, `--raw-case` pins it off, neither = the library default.
+	// Pin explicitly in pre-registered legs.
 	const normalizeCase = (options.normalizeCase ?? false) ? true : (options.rawCase ?? false) ? false : undefined
 
 	const parseOpts = {
@@ -177,9 +179,9 @@ export async function buildParseRig(
 
 	// `defaultCountry` is the hard country filter applied to admin lookups
 	// when the parse carries no resolved country node.
-	// It must match the dataset's locale — hardcoding "US" silently filters a non-US
+	// It must match the dataset's locale, since hardcoding "US" silently filters a non-US
 	// eval to US places (a German "Berlin" then loses to a tiny US Berlin).
-	// Settable via `--default-country <ISO|none>`; `none` disables the filter so ranking alone decides.
+	// Settable via `--default-country <ISO|none>`, and `none` disables the filter so ranking alone decides.
 	const dc = options.defaultCountry || "US"
 	const resolveOpts = resolveOptsFrom(options, dc)
 
@@ -198,9 +200,9 @@ export async function buildParseRig(
  * Every tri-state resolves to `undefined` when neither flag is passed, leaving the library default in force.
  */
 export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: string): Record<string, unknown> {
-	// `--hierarchy-completion` (#405, generalizes #387's `--city-state-fallback`): recover the
+	// `--hierarchy-completion` (generalizing the `--city-state-fallback` alias): recover the
 	// locality the parser drops for a dual-role place (city-state or capital-seat province),
-	// via the precomputed coincident-roles relation (#403).
+	// via the precomputed coincident-roles relation.
 	// Opt-in, default-off → by default this eval is byte-identical.
 	// Pass it to measure the before/after.
 	// Applied to both the neural and rules resolve paths (they share `resolveOpts`),
@@ -208,11 +210,14 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 	// `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion = options.hierarchyCompletion ?? false
 
-	// #895: adminCoherence is on by default in the resolver now (drift D1 settled). Tri-state pin for check legs: `--admin-coherence` pins it on, `--no-admin-coherence` pins it off, neither = the library default.
+	// adminCoherence is on by default in the resolver, so the pin is tri-state for check legs:
+	// `--admin-coherence` pins it on, `--no-admin-coherence` pins it off, neither = the library default.
 	const adminCoherence =
 		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined
 
-	// #42: on by default in the resolver since 2026-08-05, so the pin is a full tri-state like adminCoherence's — `--postcode-country-coherence` pins it on, `--postcode-country-coherence-off` pins it off, neither = the library default.
+	// postcodeCountryCoherence is on by default in the resolver, so the pin is a full tri-state
+	// like adminCoherence's: `--postcode-country-coherence` pins it on,
+	// `--postcode-country-coherence-off` pins it off, neither = the library default.
 	const postcodeCountryCoherence =
 		(options.postcodeCountryCoherence ?? false)
 			? true
@@ -225,14 +230,17 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 		...(adminCoherence !== undefined ? { adminCoherence } : {}),
 		...(postcodeCountryCoherence !== undefined ? { postcodeCountryCoherence } : {}),
-		// #370 is on by default and #2301's cap is unbounded by default, so neither pin set leaves this eval byte-identical. The cap is passed through at zero as well as at a distance — zero refuses every fall, which is the arm that separates the pass's re-pick from its coordinate fallback.
+		// The pass is on by default and the cap is unbounded by default, so neither pin set
+		// leaves this eval byte-identical. The cap is passed through at zero as well as at a
+		// distance. Zero refuses every fall, which is the arm that separates the pass's re-pick
+		// from its coordinate fallback.
 		...((options.noPostcodeConsistency ?? false) ? { postcodeConsistency: false } : {}),
 		...(options.postcodeConsistencyMaxMoveKm !== undefined
 			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }
 			: {}),
-		// #2266 is default-off in the library, so an unset pin leaves this eval byte-identical.
+		// Default-off in the library, so an unset pin leaves this eval byte-identical.
 		...((options.spanRescoreRequireContextRemainder ?? false) ? { spanRescoreRequireContextRemainder: true } : {}),
-		// #2264 has no off spelling: unset is the shipped brake, so only a named reading pins it.
+		// This one has no off spelling: unset is the shipped brake, so only an explicit reading pins it.
 		...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
 	}
 }

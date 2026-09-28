@@ -2,7 +2,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
- *   #148 diagnostic — dump-and-read why v1.9.0 (multi-locale retrain) regressed EU resolve. For each
+ *   Dump-and-read tool for a two-model locality comparison. For each
  *   golden row, parse with two models (baseline + candidate), extract the emitted `locality` span, and
  *   resolve each tree → record whether it resolved + the emitted locality. Lets us see whether the
  *   candidate emits a different locality string (grain mismatch) or the same string that stopped
@@ -20,7 +20,6 @@ import { resolvePath } from "path-ts"
 
 import { loadGoldenRows } from "#dev-tools/two-model-probe"
 
-// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
 	options: {
 		base: { type: "string" },

@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The admin build's Freeze phase, extracted from `scripts/build-unified-wof.ts`: WAL checkpoint →
- *   journal freeze → ancestors closure → `ancestors(id)` index (before the −4 backfill — without it
- *   the backfill's per-candidate lookups full-scan the 13M-row table each time and the build stalls
- *   for hours, #1015) → `wof:hierarchy` −4 backfill (WOF ids only) → coincident_roles → indexes →
- *   analyze → integrity check. Runs IN place on the staging DB. the caller `vacuum into`s the final
- *   artifact afterwards.
+ *   The admin build's Freeze phase: WAL checkpoint, journal freeze, ancestors closure, an
+ *   `ancestors(id)` index before the −4 backfill, the `wof:hierarchy` −4 backfill for WOF ids only,
+ *   coincident_roles, indexes, analyze, and an integrity check. The `ancestors(id)` index comes first
+ *   because the backfill's per-candidate lookups otherwise full-scan the 13M-row table and the build
+ *   stalls for hours. Runs in place on the staging DB, and the caller `vacuum into`s the final artifact
+ *   afterwards.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -20,10 +20,10 @@ import type { PathBuilderLike } from "path-ts"
 
 export interface FreezeAdminOptions {
 	/**
-	 * Repos root for the `wof:hierarchy` −4 backfill (#440/#832 — NYC/London-class multi-parent orphans).
+	 * Repos root for the `wof:hierarchy` −4 backfill, which reaches NYC/London-class multi-parent orphans.
 	 *
-	 * Omit only in fixture tests.
-	 * A real build without it leaves those metros unreachable by the region-descendant filter.
+	 * Omit only in fixture tests. A real build without it leaves those metros unreachable by the
+	 * region-descendant filter.
 	 */
 	dataDir?: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
@@ -50,7 +50,7 @@ export async function freezeAdmin(
 	const { createUnifiedIndexes, populateAncestors } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const phase = opts.onPhase ?? (() => {})
 
-	// An in-memory fixture has no WAL to checkpoint (journal_mode reports `memory`); skip the freeze pragmas there.
+	// An in-memory fixture has no WAL to checkpoint (journal_mode reports `memory`). Skip the freeze pragmas there.
 	const journal = (db.prepare("PRAGMA journal_mode").get() as { journal_mode: string }).journal_mode
 
 	if (journal !== "memory") {
@@ -72,9 +72,9 @@ export async function freezeAdmin(
 	phase("ancestors", "parent_id closure")
 	const ancestorRows = populateAncestors(db)
 
-	// Index `ancestors(id)` now — before the −4 backfill probes it.
+	// Index `ancestors(id)` before the −4 backfill probes it.
 	// `createUnifiedIndexes` (below) builds this same index, but it runs after the backfill.
-	// Without it here the backfill's per-candidate lookups full-scan the closure table each time (#1015).
+	// Without it here the backfill's per-candidate lookups full-scan the closure table each time.
 	// `if not exists` keeps the later createUnifiedIndexes a no-op.
 	phase("ancestors-index")
 	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_id ON ancestors(id)")
@@ -92,9 +92,8 @@ export async function freezeAdmin(
 			)
 		} else {
 			// Only real WOF places have `wof:hierarchy` geojson.
-			// Synthetic Overture/GeoNames rows (ids >= OVERTURE_ID_BASE) never do,
-			// and probing millions of them across every repo root turned this step into
-			// a ~40-min stall on the wide-coverage build (#1015).
+			// Synthetic Overture/GeoNames rows (ids >= OVERTURE_ID_BASE) never do, and probing
+			// millions of them across every repo root stalls the step for ~40 minutes.
 			// Their ancestry comes from the parent_id closure.
 			const bf = await backfillAncestorsFromHierarchy(db, geojsonRoots, { maxID: OVERTURE_ID_BASE })
 			backfillPlacesFixed = bf.placesFixed
@@ -102,9 +101,9 @@ export async function freezeAdmin(
 		}
 	}
 
-	// Dual-role-place relation (#403, epic #402) — needs `ancestors` + `spr` bbox +
-	// `place_population`, all present by now.
-	// Drives the resolver's hierarchy completion (on by default).
+	// The dual-role-place relation needs `ancestors`, `spr` bbox, and `place_population`,
+	// all present by now.
+	// It drives the resolver's hierarchy completion (on by default).
 	phase("coincident-roles")
 	const roles = buildCoincidentRoles(db)
 

@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Honest-eval harness (#371 leakage-free geographic split + #373 PIP-containment).
+ *   Honest-eval harness (leakage-free geographic split + PIP-containment).
  *
  *   The yardstick the rest of the roadmap is graded on. Random OA evaluation flatters us: the model
  *   trains on a corpus that covers the same streets OA tests, and the legacy locality name-match
  *   metric is blind to picking the right name in the wrong place. This harness measures only the
  *   leakage-free held-out set (OA rows in corpus-held-out geography the model never trained on) and
  *   reports the NON-gameable coordinate truth: region-match, coordinate error (p50/p90), and
- *   PIP-containment (gold OA point inside the resolved WOF polygon) — the last reported with a
+ *   PIP-containment (gold OA point inside the resolved WOF polygon), the last reported with a
  *   polygon-coverage denominator, since WOF point-geometry localities can never PIP-contain and
  *   would otherwise count as silent failures.
  *
- *   Per DeepSeek (2026-06-08): lead the scorecard with region-match + coord p50/p90 (100% checkable,
- *   transparent to polygon coverage); treat locality-PIP as a coverage-adjusted secondary. See
+ *   Lead the scorecard with region-match + coord p50/p90 (fully checkable, transparent to polygon
+ *   coverage). Treat locality-PIP as a coverage-adjusted secondary. See
  *   docs/articles/evals/experiments/2026-06-08-honest-eval.md.
  *
  *   Held-out sets (corpus SPLIT_MANIFEST defaultHoldouts): US = VT/WY/ND, FR = Corse/
@@ -47,7 +47,6 @@ import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 const PIP_CONTAINMENT_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "pip-containment.run.ts")
 
 async function main() {
-	// zx: capture output ourselves and trim/parse in JS the way the bash awk/jq/grep pipes did.
 	$.verbose = false
 
 	let MODEL = "packages/neural-weights-en-us/model.onnx"
@@ -112,11 +111,9 @@ async function main() {
 	const US_HELD_REGIONS = ["VT", "WY", "ND"] // corpus defaultHoldouts() for US
 	const TRUST_FLOOR = 1000
 
-	// Build the leakage-free US held-out set.
 	const US_HELD_OUT = `${TMP}/us-heldout.jsonl`
 	await writeLocalTextFile("", US_HELD_OUT)
 
-	// : > "$US_HELD_OUT"
 	for (const st of US_HELD_REGIONS) {
 		const r = await $({ nothrow: true })`jq -c --arg st ${st} ${"select((.state|ascii_upcase) == $st)"} ${US_SAMPLE}`
 
@@ -142,7 +139,6 @@ async function main() {
 
 		const resolved = `${TMP}/${tag}.json`
 
-		// In-process: the markdown the runner prints is captured line by line, exactly as the child's stdout was.
 		const evalLines: string[] = []
 		const logLines: string[] = []
 

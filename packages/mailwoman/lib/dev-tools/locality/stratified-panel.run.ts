@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Write a coordinate panel that draws evenly across a country's regions (#2311).
+ *   Write a coordinate panel that draws evenly across a country's regions.
  *
  *   The default US panel `$MAILWOMAN_DATA_ROOT/eval/coord/us.jsonl` carries 2,000 rows over 7 of the 50 states and DC,
  *   and five of those seven are the five regions `synth-suffix-boundary` draws from. A rate measured on it is a rate
- *   for those regions. The 97.7-point interior spread #2311 is about is invisible there, and no tool in the repository
+ *   for those regions. The 97.7-point interior spread is invisible there, and no tool in the repository
  *   built the panel that exposed it.
  *
  *   The draw: GeoNames' postal export through `readTriplesFromGeonames`, which applies the known-locality filter and
@@ -16,7 +16,7 @@
  *   source holds fewer rows for contributes what it has, and the run reports which regions came up short.
  *
  *   The coordinate is the postcode's, straight from the export's own columns. It is good enough to place a row on a
- *   map and to reject a gross mis-geocode. it is not a locality centroid, so a probe grading rooftop distance against
+ *   map and to reject a gross mis-geocode. It is not a locality centroid, so a probe grading rooftop distance against
  *   it is grading the wrong thing. Each row says so in `coordinate_basis`.
  *
  *   Run:
@@ -58,14 +58,14 @@ const { values } = parseArguments({
 		/**
 		 * What the even draw is taken across: `region`, `shape` (the locality name's shape), or `region-shape`.
 		 *
-		 * Region answers #2311's interior spread.
+		 * Region answers the interior spread.
 		 * Shape answers a different question, and one the region draw cannot: measured on
 		 * `candidate.db`, 34.7% of the 86,063 distinct US locality names end in a USPS
 		 * street suffix (`Orland Park`, `Saxtons River`), while the default US panel draws
 		 * that shape at 12.8% and the corpus recipe teaches it at 9.7%.
 		 *
 		 * A rate measured on a draw that under-samples the shape it fails on reports
-		 * the easy population (#2329).
+		 * the easy population.
 		 */
 		stratify: { type: "string", default: "region" },
 	},
@@ -137,8 +137,8 @@ function seededOrder(size: number): (a: unknown, b: unknown) => number {
 /**
  * Keyed by the stratum the draw is even across.
  *
- * The region form is the one the panel writes out — GeoNames publishes `California`,
- * never `CA`, and the surface under test is the code — so folding here keeps the
+ * The region form is the one the panel writes out, since GeoNames publishes `California`
+ * and never `CA`, and the surface under test is the code. Folding here keeps the
  * shortfall report and the rows speaking the same vocabulary.
  */
 const byStratum = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()
@@ -207,7 +207,7 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 			country: triple.cc,
 			expected: { locality: triple.locality, region: triple.written, postcode: triple.postcode },
 			/**
-			 * Named on every row because a consumer that grades distance needs to know
+			 * Every row carries this because a consumer that grades distance needs to know
 			 * it is holding a postcode centroid.
 			 */
 			coordinate_basis: "geonames-postcode-centroid",

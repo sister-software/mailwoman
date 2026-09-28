@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #42 coverage bound: for which countries can the postcode-country coherence pass see a postcode AT all, on a given
+ *   Coverage bound: for which countries can the postcode-country coherence pass see a postcode at all, on a given
  *   backend? That bounds where default-on could ever matter, independently of how well the mechanism works.
  *
  *   Two things are measured, because one without the other misleads:
  *
- *   1. rows — `placetype = 'postalcode'` counts per country, read straight off the backend's own table. A count is not
+ *   1. rows: `placetype = 'postalcode'` counts per country, read straight off the backend's own table. A count is not
  *      reachability (an indexed row the query path never returns is still zero evidence), so it is reported as a bound rather than as coverage.
- *   2. reachability — one real (postcode, locality) pair per codex system, run through the same `findPlace` calls the
+ *   2. reachability: one real (postcode, locality) pair per codex system, run through the same `findPlace` calls the
  *      pass itself makes, reporting whether the postcode resolved, whether an exact same-named locality came back, and
  *      whether the pair was therefore coherent. This is the number that decides whether the pass can speak.
  *
- *   The candidate SET is bounded by codex rather than by the gazetteer: `candidateSystemsForPostcode` only knows the systems
+ *   The candidate set is bounded by codex rather than by the gazetteer: `candidateSystemsForPostcode` only knows the systems
  *   in `SYSTEM_CODES`, so a country with no codex address system can never be proposed however many rows it has. The
  *   probe
  *   therefore walks exactly those systems, one real pair each.
@@ -34,7 +34,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { conventionCandidateDBPath, existingWOFDatabasePaths } from "#resolver-backend"
 
 /**
- * One real pair per codex system — a postcode that exists and the locality it belongs to.
+ * One real pair per codex system, a postcode that exists and the locality it belongs to.
  *
  * The pass needs both halves, so a system whose postcodes are present but whose localities
  * are not still reads as unreachable, which is correct: the mechanism would abstain there.

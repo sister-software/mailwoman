@@ -6,24 +6,20 @@
  *   Error analysis framework for the neural address parser. Runs the model against the golden eval
  *   set and produces a categorized failure report.
  *
- *   Categories (per DeepSeek taxonomy):
+ *   Categories:
  *
- *   1. Span-boundary errors — tag is correct but boundaries are off
- *   2. Missed entities — ground-truth span has zero correct tokens
- *   3. Hallucinated entities — predicted span overlaps no ground truth
- *   4. Near-class confusion — city↔state, street↔venue swaps
- *   5. Structural violations — illegal BIO transitions (I after O)
+ *   1. Span-boundary errors, where the tag is correct but boundaries are off
+ *   2. Missed entities, where the ground-truth span has zero correct tokens
+ *   3. Hallucinated entities, where the predicted span overlaps no ground truth
+ *   4. Near-class confusion, such as city against state or street against venue
+ *   5. Structural violations, the illegal BIO transitions (I after O)
  *
- *   This is the pre-publish 2pp promote eval (night-shift skill: "run the full per-tag error analysis
- *   and compare against the current default release. abort the upload if any tag regresses >2pp").
- *   It therefore builds the classifier via the canonical `createScorer`
- *   (`@mailwoman/neural/scorer`, #718) in strict mode, so the model is fed the full ship-config it
- *   was trained against — anchor + gazetteer + conventions, per the model-card's `requires` block.
- *   The prior `--model` path built a raw `new NeuralAddressClassifier` with no anchor/gazetteer, so
- *   a freshly-trained STAGE3 checkpoint was graded anchor-off (admin tags collapse) while the
- *   no-`--model` default (loadFromWeights) was anchor-on. The candidate was scored OOD against an
- *   in-distribution baseline, the #566/#685 trap this very check exists to prevent. `--no-strict`
- *   warns-and-continues for ad-hoc/legacy (pre-anchor) models instead of failing closed.
+ *   This is the pre-publish 2pp promote eval: run the full per-tag error analysis and compare against
+ *   the current default release, then abort the upload if any tag regresses by more than 2pp. It
+ *   therefore builds the classifier via the canonical `createScorer` in strict mode, so the model is
+ *   fed the full ship-config it was trained against (anchor, gazetteer and conventions, per the
+ *   model-card's `requires` block). A candidate is graded in-distribution, and `--no-strict`
+ *   warns-and-continues for ad-hoc or legacy pre-anchor models instead of failing closed.
  *
  *   Usage: mailwoman eval error-analysis\
  *   --golden data/eval/golden/v0.1.2 Grade a candidate: ... --model ./out/v.../model.onnx --tokenizer
@@ -77,14 +73,14 @@ export interface ErrorAnalysisOptions {
 	 */
 	postcodeRepair?: boolean
 	/**
-	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`, 2026-07-15).
+	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`).
 	 *
 	 * Off by default so pre-flip baselines stay reproducible.
 	 * Pass it to grade the shipped pipeline configuration.
 	 */
 	wordConsistency?: boolean
 	/**
-	 * Strict ship-config feed (#718): fail closed if a model-card-declared channel can't be fed.
+	 * Strict ship-config feed: fail closed if a model-card-declared channel can't be fed.
 	 *
 	 * Default true.
 	 */
@@ -102,7 +98,7 @@ async function loadGolden(dir: string): Promise<GoldenEntry[]> {
 				entries.push(entry)
 			}
 		} catch {
-			// file may not exist
+			// A missing golden file is not an error.
 		}
 	}
 
@@ -150,11 +146,11 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1])
 		: undefined
 
-	// Full ship-config via the canonical ProductionScorer (#718) — feed the
-	// anchor + gazetteer + conventions channels the model was trained against
-	// (per the model-card `requires` block) so a `--model` candidate is graded in-distribution,
-	// the same as the dev-weights default. createScorer fails closed in strict mode if
-	// a declared channel can't actually be fed; `--no-strict` opts out.
+	// Full ship-config via the canonical ProductionScorer: feed the anchor, gazetteer and
+	// conventions channels the model was trained against (per the model-card `requires` block)
+	// so a `--model` candidate is graded in-distribution, the same as the dev-weights default.
+	// createScorer fails closed in strict mode if a declared channel can't actually be fed, and
+	// `--no-strict` opts out.
 	const resolved = options.model
 		? { modelPath: options.model, tokenizerPath: options.tokenizer!, modelCardPath: options.modelCard! }
 		: await resolveWeights({ locale: "en-us" })
@@ -176,7 +172,6 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	let correct = 0
 	let total = 0
 
-	// Per-tag stats: { tag → { expected_count, correct_count, missed_count, boundary_count, confused_count } }
 	interface TagStats {
 		expected: number
 		correct: number
@@ -290,7 +285,6 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 	const elapsed = ((performance.now() - t0) / 1000).toFixed(1)
 
-	// Output markdown report
 	console.log("# Error Analysis Report")
 	console.log("")
 	console.log(`**Golden set:** ${golden.length} entries`)
@@ -308,7 +302,6 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	console.log(`| Hallucinated tags | ${hallucinated.total} | — |`)
 	console.log("")
 
-	// Per-tag breakdown
 	console.log("## Per-tag breakdown")
 	console.log("")
 	console.log("| Tag | Expected | Correct | Missed | Boundary | Confused | Hallucinated | Recall |")

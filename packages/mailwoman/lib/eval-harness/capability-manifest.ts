@@ -15,7 +15,7 @@
  *   Tiers:
  *
  *   - `server`: anchor and gazetteer channels fed (the production default `createScorer` builds).
- *   - `pocket`: anchor fed, gazetteer ablated (the lighter on-device feed, not yet a serving target).
+ *   - `pocket`: anchor fed, gazetteer ablated (the lighter on-device feed, reserved for a future serving target).
  *
  *   For each tier, locale and mask setting we run the model and compute unfolded exact-match per-tag F1
  *   (the same implementation as `score-affix.ts`, which splits `street_prefix`, `street` and
@@ -91,22 +91,20 @@ export interface CapabilityManifestOptions {
 	write?: boolean
 }
 
-// #region Tier + locale matrix
-
 /**
- * Serving tiers and their channel feed (vs the model-card ship-config, expressed as overrides).
+ * Serving tiers and their channel feed, expressed as overrides against the model-card ship-config.
  */
 const TIERS: Record<string, ScorerOverrides> = {
-	// Production default — anchor + gazetteer both fed (no override needed. createScorer's defaults).
+	// Production default: anchor and gazetteer both fed (no override needed, createScorer's defaults).
 	server: {},
-	// On-device lighter feed — anchor on, gazetteer ablated.
-	// `overrides.gazetteer:false` warns loudly (a declared ablation), which is correct:
-	// pocket is a deliberate below-ship-config tier.
+	// On-device lighter feed: anchor fed, gazetteer ablated. `overrides.gazetteer:false`
+	// warns loudly (a declared ablation), which is correct, since pocket is a deliberate
+	// below-ship-config tier.
 	pocket: { gazetteer: false },
 }
 
 /**
- * The per-tag vocabulary scored, unfolded (street parts split — mirrors score-affix.ts).
+ * The per-tag vocabulary scored, unfolded, with the street parts split to mirror `score-affix.ts`.
  */
 const TAGS = UNFOLDED_ADDRESS_TAGS
 
@@ -122,12 +120,8 @@ const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
 
-// #endregion
-
-// #region Build the manifest
-
 /**
- * `{ maskOffF1, maskOnF1? }` — maskOnF1 present only for forbidden-set tags the model emits.
+ * `{ maskOffF1, maskOnF1? }`, where maskOnF1 is present only for forbidden-set tags the model emits.
  */
 interface TagCapability {
 	maskOffF1: number
@@ -155,13 +149,13 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-			// The generator constructs its scorers while the card's `capabilities` block may not yet exist.
-			// The loader's delta check is a no-op until the block is written.
-			// After a `--write`, regenerating uses the already-written block, but mask-off construction never
-			// trips the check (it only fires for a forbidden certified tag, and mask-off forbids none).
-			// `inputMode: "formatted"`: certification probes are formatted postal addresses,
-			// whose production path disables evidence-bundle channels.
-			// The mask-regression check grades the same mode (#2048), so the two report one number for one row.
+			// The generator constructs its scorers while the card's `capabilities` block may not yet exist,
+			// and the loader's delta check is a no-op until the block is written. After a `--write`,
+			// regenerating uses the already-written block, but mask-off construction never trips the check
+			// (it fires only for a forbidden certified tag, and mask-off forbids none).
+			// `inputMode: "formatted"` because certification probes are formatted postal addresses, whose
+			// production path disables evidence-bundle channels. The mask-regression check grades the same
+			// mode, so the two report one number for one row.
 			const { off, on } = await scoreConventionsMaskOffOn(
 				rows,
 				TAGS,
@@ -195,7 +189,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 
 			capabilities[tier]![spec.system] = perTag
 
-			// Diagnostic: surface the forbidden-tag deltas (the decisive rows).
+			// Diagnostic: surface the forbidden-tag deltas.
 			for (const t of FORBIDDEN_TAGS) {
 				if (perTag[t]) {
 					const delta = (perTag[t]!.maskOffF1 - (perTag[t]!.maskOnF1 ?? 0)).toFixed(1)
@@ -209,13 +203,8 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 	return capabilities
 }
 
-// #endregion
-
-// #region Entry
-
 /**
- * Measure the per-tier × system × tag capability manifest.
- * Optionally patch it into the model card.
+ * Measure the per-tier, system and tag capability manifest, optionally patching it into the model card.
  */
 export async function generateCapabilityManifest(options: CapabilityManifestOptions = {}): Promise<void> {
 	const paths: ResolvedPaths = {
@@ -244,12 +233,11 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 			"conventions row forbids a tag with maskOffF1 − maskOnF1 > 0.05 (the mask provably destroys a " +
 			"real capability). Generated by `mailwoman eval capability-manifest` against the v1.5.0 int8."
 
-		// surgical insert (not a JSON round-trip): the shipped card hand-formats compact
-		// inline objects (`"anchor": { "required": true }`) that a `JSON.stringify`
-		// would expand, spuriously reordering a shipped artifact.
-		// Instead, append one new top-level key, byte-preserving everything else.
-		// The card is validated JSON, so its tail is `…\n}\n` (root close); we splice `,\n\t"capabilities":…`
-		// before that final brace, one indent level deep (each block line tab-prefixed).
+		// Insert surgically, because the shipped card hand-formats compact inline objects
+		// (`"anchor": { "required": true }`) that a `JSON.stringify` would expand, spuriously
+		// reordering a shipped artifact. Append one new top-level key, byte-preserving everything
+		// else. The card is validated JSON, so we splice the `capabilities` key before the final
+		// brace, one indent level deep (each block line tab-prefixed).
 		const original = await readLocalTextFile(paths.modelCard)
 		const lastBrace = original.lastIndexOf("}")
 
@@ -273,7 +261,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 			.join("\n")
 
 		const before = original.slice(0, lastBrace).replace(/\s*$/, "")
-		const after = original.slice(lastBrace) // the final "}\n"
+		const after = original.slice(lastBrace)
 		await writeLocalTextFile(`${before},\n\t"capabilities": ${block.trimStart()}\n${after}`, paths.modelCard)
 
 		console.error(`\nSurgically inserted the \`capabilities\` block into ${paths.modelCard}`)
@@ -281,5 +269,3 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		console.error("\n(dry run — pass --write to patch the model card)")
 	}
 }
-
-// #endregion

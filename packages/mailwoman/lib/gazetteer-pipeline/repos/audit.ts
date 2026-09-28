@@ -3,25 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What is actually cloned in the WOF repos root — the other half of `country-plan`.
+ *   What is actually cloned in the WOF repos root, the other half of `country-plan`.
  *
- *   `country-plan` reads the built artifact, which answers "what source serves this country". It cannot
- *   answer "what is on disk waiting to be built", and for the WOF leg those are different questions:
- *   `ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list, so the directory is
- *   the recipe. A clone that landed is coverage the next build will pick up whether or not anyone declared
- *   it, and a declaration with no clone is coverage that will silently not appear.
+ *   `country-plan` reads the built artifact, which answers what source serves this country. It
+ *   cannot answer what is on disk waiting to be built, and for the WOF leg those are different
+ *   questions: `ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list, so
+ *   the directory is the recipe. A clone that landed is coverage the next build will pick up whether
+ *   or not anyone declared it, and a declaration with no clone is coverage that will silently not
+ *   appear.
  *
- *   two layouts coexist, and a repo present in both is one of two different things — which is why this
- *   distinguishes them rather than counting paths. Measured 2026-08-17 in the lab root:
- *
- *   - `admin-jp` and `admin-kr` are two independent checkouts, at identical commits today.
- *   - `admin-us` is one checkout reachable twice: the nested path is a symlink to the flat one. Comparing
- *       `ls` output calls this a duplicate, and it is not — a directory cannot diverge from itself.
- *
- *   Only the independent copies carry the further hazard. The moment they diverge — one pulled, one not —
- *   the ingested value is last-writer-wins over filesystem enumeration order, which nobody stated and
- *   `verifyAdmin` cannot catch because it tests floors. An alias can never reach that state, so reporting
- *   the two as one number would either overstate the risk or hide it.
+ *   Two layouts coexist, and a repo present in both is one of two different things, which is why
+ *   this distinguishes them rather than counting paths. A repo can be two independent checkouts, or
+ *   one checkout reachable twice through a symlink, and only the independent copies carry the
+ *   hazard. The moment they diverge, after only one is pulled, the ingested value is last-writer-wins
+ *   over filesystem enumeration order. `verifyAdmin` cannot catch that because it tests floors. An
+ *   alias can never reach that state, so reporting the two as one number would either overstate the
+ *   risk or hide it.
  */
 
 import { entryLeadsToDirectory, pathExists, realPath } from "@mailwoman/core/fs/readers"
@@ -34,11 +31,11 @@ import { Globerator } from "spliterator/node/fs"
  */
 export const CloneLayout = {
 	/**
-	 * `<root>/<name>` — what the postcode build read before #1727 taught it both.
+	 * `<root>/<name>`.
 	 */
 	Flat: "flat",
 	/**
-	 * `<root>/<owner>/<name>` — what `gazetteer inspect sync` writes.
+	 * `<root>/<owner>/<name>`, the layout `gazetteer inspect sync` writes.
 	 */
 	Nested: "nested",
 } as const
@@ -49,7 +46,8 @@ export interface ClonedRepo {
 	name: string
 	layouts: CloneLayout[]
 	/**
-	 * True when the layouts resolve to the same directory — a symlink rather than a second checkout.
+	 * True when the layouts resolve to the same directory through a symlink rather than a second
+	 * checkout.
 	 *
 	 * The ingest does not follow the alias, and one directory can never diverge from itself.
 	 */
@@ -62,8 +60,8 @@ export interface ClonedRepo {
 	 */
 	commits: Partial<Record<CloneLayout, string>>
 	/**
-	 * The ISO-2 country the repo name encodes, or `undefined` for a repo that
-	 * names none (`whosonfirst-placetypes`).
+	 * The ISO-2 country the repo name encodes, or `undefined` for a repo with no country
+	 * (`whosonfirst-placetypes`).
 	 */
 	country?: string
 	theme?: string
@@ -75,19 +73,19 @@ export interface ReposAudit {
 	/**
 	 * Repos present in both layouts as independent checkouts.
 	 *
-	 * Named separately because the count is the finding.
+	 * Reported separately because the count is the finding.
 	 */
 	duplicated: ClonedRepo[]
 	/**
-	 * Repos reachable through both layouts via a symlink — one physical copy.
+	 * Repos reachable through both layouts via a symlink, one physical copy.
 	 *
-	 * The ingest skips the symlinked layout, and the directory cannot diverge in
-	 * the way {@link ReposAudit.duplicated} can.
+	 * The ingest skips the symlinked layout, and the directory cannot diverge in the way
+	 * {@link ReposAudit.duplicated} can.
 	 */
 	aliased: ClonedRepo[]
 	/**
-	 * Duplicated repos whose two copies are at different commits — the state
-	 * where the ingest's result depends on enumeration order.
+	 * Duplicated repos whose two copies are at different commits, the state where the ingest's
+	 * result depends on enumeration order.
 	 *
 	 * Empty is the good case and is reported as such.
 	 */
@@ -183,9 +181,8 @@ export async function auditReposRoot(
 			continue
 		}
 
-		// An owner directory.
-		// Its children are the nested layout.
-		// A name that is itself a repo was handled above.
+		// An owner directory whose children are the nested layout. A name that is itself a repo was
+		// handled above.
 		for await (const child of Globerator.from("*", { cwd: full, withFileTypes: true, onlyFiles: false })) {
 			const childPath = full(child.name)
 
