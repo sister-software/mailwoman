@@ -2,6 +2,19 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Typed schema for the situs / rooftop address-point extracts (`address-points-<cc>-<slug>.db`, built
+ *   by `mailwoman situs address-points` and by `@mailwoman/ban`'s `./scripts/build/address-point-database`
+ *   — the #476/#567 national rooftop tier behind the demo's "type any US address, get the building").
+ *   Two writers share one schema, which is why it lives here. Single source of truth for the columns shared
+ *   by the builder and the reader ({@link AddressPointSqliteLookup}), so a column rename in one is a
+ *   compile error in the other.
+ *
+ *   The builder's hot insert (tens of millions of rows per state) stays a positional prepared
+ *   statement for throughput — but its column list is derived from {@link ADDRESS_POINT_COLUMNS}
+ *   here, and its table comes from {@link createAddressPointTable}, so the positional order can't
+ *   silently drift from what the reader expects. (Same convention as the candidate build: typed
+ *   schema guards the interface. positional inserts keep the speed.)
  */
 
 import type { Kysely } from "kysely"
@@ -9,7 +22,13 @@ import type { Kysely } from "kysely"
 import type { NameKey, RouteKey, StreetKey } from "#street/normalize"
 
 /**
- * One rooftop address point; `(street_norm, number)` within a `postcode` or `locality_norm` scope is the lookup.
+ * One rooftop address point.
+ *
+ * `(street_norm, number)` within a `postcode` (preferred) or `locality_norm` scope is
+ * the lookup; `street_key` is the #483 route-fold key for interpolation.
+ * Coordinates are non-null (the builder drops non-finite coords).
+ *
+ * `unit`/`postcode`/`locality_norm` are nullable (not every source carries all three).
  */
 export interface AddressPointTable {
 	/**
@@ -17,8 +36,11 @@ export interface AddressPointTable {
 	 */
 	street_norm: StreetKey
 	/**
-	 * `canonicalizeRouteKey(street_norm)` — the route-fold key, branded so it cannot be interchanged with `street_norm`.
+	 * `canonicalizeRouteKey(street_norm)` — the route-fold key (#483 Method 2).
+	 *
+	 * Its own brand, so it cannot be interchanged with the plain `street_norm` above.
 	 */
+	street_key: RouteKey
 	/**
 	 * House number, normalized lower-case (kept text — "123-A", "12 1/2" must survive).
 	 */
@@ -29,6 +51,10 @@ export interface AddressPointTable {
 	 * Shared {@link normalizeLocalityForKey} of the locality — the fallback scope.
 	 */
 	locality_norm: NameKey | null
+	/**
+	 * The street as it appeared in the source (kept for display / debugging).
+	 */
+	street_raw: string
 	lat: number
 	lon: number
 	/**
@@ -36,11 +62,24 @@ export interface AddressPointTable {
 	 */
 	source: string
 	/**
-	 * The source register's stable administrative key for the point's commune or municipality — BAN's `code_insee`; the coverage basis is computed per this key.
+	 * The pinned data release the point was ingested from.
 	 */
+	release: string
 	/**
-	 * The register's own certification flag for the point (BAN `certification_commune`: 1 certified, 0 not), never inferred from a share.
+	 * The source register's stable administrative key for the point's commune
+	 * or municipality — BAN's `code_insee`.
+	 *
+	 * A display name (`locality_norm`) is not a key.
+	 * The coverage basis is computed per this key.
 	 */
+	admin_code: string | null
+	/**
+	 * The register's own certification flag for the point (BAN `certification_commune`:
+	 * 1 certified by the commune, 0 not), or null for a source that states none.
+	 *
+	 * A basis is never inferred from a share of these.
+	 */
+	certified: number | null
 }
 
 /**
