@@ -3,29 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Does the GB postcode-anchor binary actually fire on the gb-golden board, and by which route?
- *
- *   The instrument `docs/records/evals/2026-08-05-en-gb-anchor-off.md` used ("anchor fired on 106/120
- *   rows") replayed `buildAnchorFeatures`'s default recognizer — alphanumeric run → `lookup.get(upper)`.
- *   A model trained against the widened anchor-v2 lookup serves under `span_mode: "shaped"` instead, so
- *   this replays that recognizer: `collectMatches` shape spans, keyed
- *   `span.replaceAll(" ", "").toUpperCase()`, with `buildAnchorFeatures`'s GB outward fallback.
- *
- *   Reported per register, because the shape detector reads the raw text and the register is the first
- *   thing that could silently cost a span. Three failure modes are distinguished, and they have
- *   different diagnoses: no shaped span (the detector never proposed one — a `collectMatches` gap),
- *   span but no KEY (the detector proposed one and the lookup does not carry it — a coverage gap, e.g.
- *   a Northern Ireland `BT` code Code-Point Open does not carry), and a hit via the outward fallback
- *   rather than the unit (the unit is absent but its district anchors the span).
+ *   Reports whether the GB postcode-anchor binary fires on the gb-golden board and by which route,
+ *   replaying the `collectMatches` shaped recognizer that `parse` uses. Each register is reported
+ *   separately, and three failure modes are kept apart: no shaped span, a span whose key the lookup
+ *   does not carry, and a hit through the GB outward fallback.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/gb-anchor-fire.run.ts --bin <postcode-gb.bin>
  */
 
 // `@mailwoman/neural` exports no `./postcode-repair` subpath, and `collectMatches` is the
-// exact span source `buildAnchorFeatures`'s shaped mode reads; `normalizeInputCase` is what
-// the text has been through by the time the anchor sees it (#690, default-on in `parse`).
-// Re-implementing either is the one thing that must not drift, so this repo-local
-// diagnostic imports the same modules `parse` does.
+// exact span source `buildAnchorFeatures`'s shaped mode reads. `normalizeInputCase` is what
+// the text has been through by the time the anchor sees it, and `parse` applies it by default.
+// These must not drift from `parse`, so this repo-local diagnostic imports the same modules.
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -58,11 +47,9 @@ const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<s
 ).toArray()
 
 /**
- * `parse` builds anchors from case-normalized text.
- *
- * Normalization restores postcode casing, so lowercase input still matches
- * the uppercase-only shape patterns.
- * Probe normalized text to match production behavior.
+ * `parse` builds anchors from case-normalized text. Normalization restores postcode casing, so
+ * lowercase input still matches the uppercase-only shape patterns. Probe normalized text to match
+ * production behavior.
  */
 const NORMALIZE_CASE = true
 

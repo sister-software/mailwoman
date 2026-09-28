@@ -3,12 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The prominence-floor benchmark (#2264) — does a `minWinningScore` floor reduce invented selections at
+ *   The prominence-floor benchmark: does a `minWinningScore` floor reduce invented selections at
  *   every population band, or only where the gold is large enough to clear it?
- *
- *   The same-data benchmark measured this floor and could not answer. All 453 of its gold entities carry
- *   population above 15,151, so a floor of 4.0 — population 10,000 — admits every correct answer it contains
- *   by construction. This panel draws gold from 1 to millions, so the floor meets small places too.
  *
  *   Four phases, run separately so the expensive one happens once:
  *
@@ -67,7 +63,7 @@ const { values, positionals } = parseArguments({
 
 const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
- * The FTS gazetteer, read for its `concordances` + `spr` tables — the identity join.
+ * The FTS gazetteer, read for its `concordances` and `spr` tables, the identity join.
  *
  * The candidate backend below carries no concordance table, which is why the
  * two are separate flags rather than one.

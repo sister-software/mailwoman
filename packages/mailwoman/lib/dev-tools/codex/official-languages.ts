@@ -23,8 +23,7 @@ const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "of
  */
 export interface GenerateOfficialLanguagesOptions {
 	/**
-	 * Reads `cldr-territoryInfo.json` and `cldr-aliases.json` from this directory when set, so no
-	 * fetch is needed.
+	 * Reads `cldr-territoryInfo.json` and `cldr-aliases.json` from this directory instead of fetching them.
 	 */
 	cldrDir?: PathBuilderLike
 	/**

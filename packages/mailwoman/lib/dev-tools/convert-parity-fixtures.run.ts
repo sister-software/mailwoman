@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Parity-corpus rescue (#1093, spec §Parity-corpus rescue): convert the extracted v1 parity
+ *   Parity-corpus rescue (spec §Parity-corpus rescue): convert the extracted v1 parity
  *   assertions (`parity-inputs.jsonl`, legacy-Classification-keyed) into ComponentTag-keyed eval
- *   fixtures for `mailwoman eval parity`. Top-solution gold only (`expected[0]` — the positional
- *   alternatives were rules-ranking artifacts); cases whose gold carries an unmapped legacy tag
- *   (given_name, surname, personal_title, …) or no expectation at all become tombstones — kept in
- *   the fixture file with a `dropped` reason so provenance survives, skipped by the runner.
+ *   fixtures for `mailwoman eval parity`. Top-solution gold only (`expected[0]`). The positional
+ *   alternatives were rules-ranking artifacts. Cases whose gold carries an unmapped legacy tag
+ *   (given_name, surname, personal_title, …) or no expectation at all become tombstones, kept in
+ *   the fixture file with a `dropped` reason so provenance survives and skipped by the runner.
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/convert-parity-fixtures.run.ts`
  */
 
@@ -120,9 +120,8 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 		continue
 	}
 
-	// A case whose gold is entirely unmappable tombstones.
-	// A partially-mappable one keeps its mapped gold (dropping e.g. `unit_designator` must not discard
-	// the case's house_number/street expectations. The AU unit patterns are campaign targets).
+	// A partially-mappable case keeps its mapped gold. Dropping an unmapped tag such as `unit_designator`
+	// must not discard the case's house_number or street expectations.
 	if (!Object.keys(expect).length) {
 		fixtures.push({ ...fixture, dropped: `unmapped legacy tags: ${unmapped.join(", ")}` })
 
