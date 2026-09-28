@@ -167,7 +167,7 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.region = province
 	}
 
-			// A street alone is not an address row, and the coarse adapters already teach bare names.
+	// A street alone is not an address row, and the coarse adapters already teach bare names.
 	if (Object.keys(components).length === 1) return null
 
 	return components

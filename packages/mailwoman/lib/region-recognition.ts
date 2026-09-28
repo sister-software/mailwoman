@@ -155,8 +155,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 
 		if (n.tag === "locality") {
 			region.children.push(n)
-		}
-		else {
+		} else {
 			out.push(n)
 		}
 	}

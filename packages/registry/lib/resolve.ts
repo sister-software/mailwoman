@@ -230,7 +230,7 @@ export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunter
 			similarityComparison<SourceRecord>({
 				name: `attr:${key}`,
 				extract: (r) => r.attributes?.[key],
-					similarity: codeSetOverlap,
+				similarity: codeSetOverlap,
 				levels: CODE_SET_LEVELS,
 			})
 		)

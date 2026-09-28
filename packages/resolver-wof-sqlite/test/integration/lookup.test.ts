@@ -96,8 +96,8 @@ const FIXTURE: FixturePlace[] = [
 		country: "FR",
 		lat: 48.85,
 		lon: 2.34,
-			// The canonical name also lives in `names` in a real WOF distribution, which the
-			// exact-match tier reads.
+		// The canonical name also lives in `names` in a real WOF distribution, which the
+		// exact-match tier reads.
 		alt_names: ["Paris", "Pari", "París", "パリ", "巴黎"],
 		ancestor_ids: [85_633_723],
 	},
@@ -174,8 +174,8 @@ const FIXTURE: FixturePlace[] = [
 		country: "US",
 		lat: 40.64,
 		lon: -73.95,
-			// The canonical name also lives in `names` in a real WOF distribution, which the
-			// exact-match tier reads.
+		// The canonical name also lives in `names` in a real WOF distribution, which the
+		// exact-match tier reads.
 		alt_names: ["Brooklyn"],
 		ancestor_ids: [85_633_147],
 	},

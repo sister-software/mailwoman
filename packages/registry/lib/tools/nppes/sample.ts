@@ -121,8 +121,8 @@ export async function buildNPPESStateSamples(
 
 	report?.(`    ${altNames.size} NPIs with ≥1 alternate name`)
 
-		// One full registry pass builds the global address-frequency table and collects every state's
-		// sample. Counting every row keeps the sharing structure corpus-wide rather than sample-biased.
+	// One full registry pass builds the global address-frequency table and collects every state's
+	// sample. Counting every row keeps the sharing structure corpus-wide rather than sample-biased.
 	report?.(`[B] full registry pass: address-frequency table + ${maxNpisPerState} × ${states.join("/")} sample…`)
 
 	const byState = new Map<string, NPPESStateSample>(
@@ -148,7 +148,7 @@ export async function buildNPPESStateSamples(
 			addrTotal++
 		}
 
-			// No early break here, since the table needs the full pass.
+		// No early break here, since the table needs the full pass.
 		const npi = norm(r[C.npi])
 		const bucket = byState.get(norm(r[C.pState]).toUpperCase())
 

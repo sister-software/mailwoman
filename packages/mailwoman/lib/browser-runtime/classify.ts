@@ -37,7 +37,6 @@ export function parseStageLabelsFor(hasResolver: boolean): string[] {
 		: ["Analyzing input shape…", "Running neural classifier…"]
 }
 
-
 /**
  * Locale the demo opens on.
  */
@@ -89,9 +88,6 @@ export function pairCountryForInput(input: string): string | undefined {
 
 	return EXAMPLE_ADDRESSES.find((ex) => ex.address.trim() === trimmed)?.country
 }
-
-
-
 
 /**
  * A source-order parsed node, as {@link flattenTreeNodes} yields it.
@@ -243,5 +239,3 @@ export async function resolveDualRoles(
 		return undefined
 	}
 }
-
-

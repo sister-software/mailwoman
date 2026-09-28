@@ -77,7 +77,7 @@ interface HardPair {
 	sameTaxonomy: boolean
 	bothSubpartSameParent: boolean
 	programmaticVerdict: "same-entity" | "distinct"
-	adjudication: null,
+	adjudication: null
 }
 
 /**
@@ -121,7 +121,7 @@ export async function goldSetSample(
 			sameAuthorizedOfficial: sameAuth,
 			sameTaxonomy: sameTax,
 			bothSubpartSameParent: false,
-				// The verdict records what an entity-level rule would say, so adjudication can grade it.
+			// The verdict records what an entity-level rule would say, so adjudication can grade it.
 			programmaticVerdict: sameAuth ? "same-entity" : "distinct",
 			adjudication: null,
 		})

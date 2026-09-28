@@ -16,7 +16,6 @@
  * The canonical address component tag union, ordered by phase and locale.
  */
 export const COMPONENT_TAGS = [
-
 	"country",
 	"region",
 	"locality",

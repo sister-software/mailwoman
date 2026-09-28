@@ -82,9 +82,9 @@ export interface DemoCascadeSmokeOptions {
 	 * Default `data/eval/external/demo-cascade-smoke.jsonl`.
 	 */
 	file?: string
-/**
- * Write the sidecar here, where the check verdict reads `summary.pass_rate_pct` for `cascade.demo_smoke`.
- */
+	/**
+	 * Write the sidecar here, where the check verdict reads `summary.pass_rate_pct` for `cascade.demo_smoke`.
+	 */
 	json?: string
 	/**
 	 * Per-row parse + hit narration on the error sink.

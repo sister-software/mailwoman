@@ -29,7 +29,6 @@ import {
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
-
 interface BfsItem {
 	stateID: number
 	depth: number
@@ -157,7 +156,6 @@ function legacyDedupeByName(suggestions: AutocompleteSuggestion[]): Autocomplete
 	return out
 }
 
-
 /**
  * Option sets every query runs under.
  */
@@ -180,7 +178,6 @@ function expectParity(matcher: FSTMatcher, queries: readonly string[]): void {
 	}
 }
 
-
 describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 	const place = (
 		wofID: number,
@@ -199,10 +196,10 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 		...extra,
 	})
 
-		// Synthetic trie: new, san, chic, chicago, springfield.
-		// The behavior matrix covers a referential tie, a state denser than PER_BRANCH,
-		// encyclopedic present and absent, crossCountryBranches, a deep parent chain, one
-		// wofID reachable at several depths, and a complete edge that is also a prefix.
+	// Synthetic trie: new, san, chic, chicago, springfield.
+	// The behavior matrix covers a referential tie, a state denser than PER_BRANCH,
+	// encyclopedic present and absent, crossCountryBranches, a deep parent chain, one
+	// wofID reachable at several depths, and a complete edge that is also a prefix.
 	const nodesMatcher = deserializeThroughBytes([
 		{
 			edges: new Map([
@@ -287,7 +284,6 @@ function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>
 	return deserializeFST(serializeFST(new FSTMatcher(nodes)))
 }
 
-
 /**
  * Locale surfaces worth pinning by name, beyond the derived battery: high-traffic capitals,
  * the multi-token and partial shapes, and (es) the Portopetro pair from the promotion battery.
@@ -306,7 +302,7 @@ for (const locale of ["en-gb", "es-es", "it-it"]) {
 		it("answers identically across the derived + curated battery", async () => {
 			const stamp = await peekFSTStampFields(artifactPath)
 
-				// v5 is the two-score split, asserted so the leg cannot pin against a stale-format file.
+			// v5 is the two-score split, asserted so the leg cannot pin against a stale-format file.
 			expect(stamp?.formatVersion).toBe(5)
 
 			const matcher = deserializeFST(await readLocalBuffer(artifactPath))

@@ -50,7 +50,6 @@ function blockCentroids(geoid: string): { lat: number; lon: number } | undefined
 	return CENTROIDS[geoid]
 }
 
-
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [
 		{
@@ -64,7 +63,6 @@ function fixtureRows(): BDCAvailabilityRow[] {
 			business_residential_code: "R",
 		},
 		{
-
 			geoid: GEOID_SF,
 			provider_id: 130_077,
 			technology_code: 50,
@@ -95,7 +93,6 @@ function fixtureRows(): BDCAvailabilityRow[] {
 			business_residential_code: "X",
 		},
 		{
-
 			geoid: GEOID_UNKNOWN,
 			provider_id: 130_080,
 			technology_code: 40,
@@ -286,7 +283,6 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("moves an existing artifact aside before the new build takes its place", async () => {
-
 		const second = await buildBDCDatabase({
 			rows: fixtureRows(),
 			out,

@@ -18,7 +18,6 @@ export interface AbbreviationEntry {
 }
 
 const EN_US_DICT: ReadonlyArray<AbbreviationEntry> = [
-
 	{ from: "N", to: "North" },
 	{ from: "S", to: "South" },
 	{ from: "E", to: "East" },
