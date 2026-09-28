@@ -92,7 +92,14 @@ export const siBareVillageRecipe: CorpusRecipe = {
 					"Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "si-bare-village", SI_BARE_VILLAGE_PROVENANCE)) {
+			// Per row rather than on the shared literal, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed carries none, and `null` says so.
+			if (
+				alignAndWrite(write, canonical, "si-bare-village", {
+					...SI_BARE_VILLAGE_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

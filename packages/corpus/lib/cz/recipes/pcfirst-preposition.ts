@@ -99,7 +99,15 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 					"Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "cz-pcfirst-preposition", CZ_PCFIRST_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed carries none,
+			// and `null` says the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "cz-pcfirst-preposition", {
+					...CZ_PCFIRST_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

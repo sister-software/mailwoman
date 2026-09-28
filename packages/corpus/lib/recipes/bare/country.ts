@@ -8,6 +8,8 @@ import { SurfaceOrigin } from "#types"
 const BARE_COUNTRY_PROVENANCE = {
 	register: SourceRegister.Codex,
 	surface: SurfaceOrigin.Attested,
+	// The codex table is the record, and its rows carry no `source_id` of their own.
+	baseSourceID: null,
 }
 
 const MIN_NAME_LENGTH = 4

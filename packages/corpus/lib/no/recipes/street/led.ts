@@ -130,7 +130,15 @@ export const noStreetLedRecipe: CorpusRecipe = {
 					"Synthetic — no-street-led; (street, number, postcode, city) from OpenAddresses NO (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "no-street-led", NO_STREET_LED_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed carries none,
+			// and `null` says the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "no-street-led", {
+					...NO_STREET_LED_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

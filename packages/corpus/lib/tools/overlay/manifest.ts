@@ -351,6 +351,14 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 			test: base.counts.test + addedRows.test,
 		},
 		total_rows: base.total_rows + addedRows.train + addedRows.val + addedRows.test,
+		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
+		// Saying so in the artifact is what keeps a reader from deriving an attribution
+		// table from `slices` and treating the base build's set as the whole.
+		// The overlay sources named here carry their own terms, recorded per source in
+		// `packages/corpus/lib/recipes/sources.ts` and per row in the `license` column itself.
+		licenses_cover:
+			`no license set is measured here. The base build's MANIFEST.json covers the rows it aligned, and ` +
+			`these ${added.length} added file(s) carry their own: ${[...new Set(args.files.map((file) => file.source))].toSorted().join(", ")}.`,
 	}
 
 	const out = newDir("MANIFEST.json")

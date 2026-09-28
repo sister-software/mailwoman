@@ -29,6 +29,8 @@ import { SurfaceOrigin } from "#types"
 const PO_BOX_PROVENANCE = {
 	register: null,
 	surface: SurfaceOrigin.Invented,
+	// An invented row has no underlying record to name.
+	baseSourceID: null,
 }
 
 /**

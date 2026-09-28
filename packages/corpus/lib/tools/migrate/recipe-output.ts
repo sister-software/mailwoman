@@ -14,6 +14,7 @@ import { once } from "@mailwoman/core/utils/events"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { retiredSourceName } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
@@ -87,7 +88,10 @@ export interface MigrationSummary {
  * The surface for one source id, refusing a source the table does not name.
  */
 export function surfaceForSource(source: string): SurfaceOrigin {
-	const surface = RECIPE_SURFACES[source]
+	// The table keys on the retired spelling.
+	// A corpus rewritten to the current spelling would otherwise refuse on every row it carries,
+	// which reads as an unrecorded surface rather than a renamed source.
+	const surface = RECIPE_SURFACES[retiredSourceName(source)]
 
 	if (!surface) {
 		throw new Error(

@@ -286,6 +286,61 @@ export function recipeSource(source: string): RecipeSource | null {
 }
 
 /**
+ * The spelling a recipe writes today, given the retired spelling it has always written.
+ *
+ * Every recipe's default `source` reads this rather than holding a literal, so the flip from
+ * the retired vocabulary to the operation vocabulary is one constant rather than 26 files.
+ * It returns the retired spelling while {@linkcode WRITE_CURRENT_SOURCE_NAMES} is false,
+ * because a recipe output written under the new vocabulary would not match the corpus
+ * it joins: the parquet rewrite that renames an assembly's rows runs in the same commit
+ * that flips this, so the rows and the recipe defaults change together.
+ *
+ * @throws When the table records no entry for `retired`.
+ * A pass-through would let a typo become a source id on every row of a built corpus,
+ * which is the failure `wire-identifiers` exists to catch later and this catches at the call.
+ */
+export function defaultRecipeSource(retired: string): string {
+	const entry = BY_RETIRED.get(retired)
+
+	if (!entry) {
+		throw new Error(
+			`RECIPE_SOURCES records no source ${retired}. A recipe's default \`source\` is a wire identifier ` +
+				`stored on every row it writes, so add the entry with its operation and producer before writing it.`
+		)
+	}
+
+	return WRITE_CURRENT_SOURCE_NAMES ? entry.current : entry.retired
+}
+
+/**
+ * Whether a recipe writes the operation spelling or the retired one.
+ *
+ * Flipped in the same commit as the DuckDB rewrite over an assembly's staging files,
+ * so a corpus and the recipes that feed it never carry two vocabularies at once.
+ * `v0.6.0-register-surface` and `v0.7.0-de-holdout` are never rewritten in place,
+ * and the configs that target them keep the spelling their corpus stores.
+ */
+export const WRITE_CURRENT_SOURCE_NAMES = false
+
+/**
+ * The retired spelling of a recipe-output source given either spelling, or the value unchanged.
+ *
+ * `RECIPE_SURFACES` and `OVERLAY_REGISTERS` key on the retired spelling,
+ * and both refuse a source they do not name.
+ * A corpus rewritten to the current spelling would therefore make each of
+ * them throw on every row it carries.
+ *
+ * Callers of those two tables resolve the key through this, so a lookup answers under
+ * either spelling and a genuinely unknown source still refuses.
+ *
+ * The value is returned unchanged for a source outside the table — an adapter id,
+ * or a carried overlay name — because those tables are keyed by whatever the producer emits.
+ */
+export function retiredSourceName(source: string): string {
+	return BY_CURRENT.get(source)?.retired ?? source
+}
+
+/**
  * Every recipe-output and carried source spelling this table knows.
  *
  * Adapter ids are not here.

@@ -58,19 +58,22 @@ describe("OvertureNationalDatabaseProvider", () => {
 		expect(() => licenseForOvertureCountry("kr")).toThrow(/COUNTRY_LICENSES/)
 	})
 
-	it("refuses Taiwan's grant, because two documents name different licenses over the same rows", () => {
-		// Two documents name different licenses over the same municipal 門牌 rows,
-		// so recording the stricter one would state a grant nobody established.
-		expect(() => licenseForOvertureCountry("tw")).toThrow(/unsettled: CC-BY-4\.0 or OGDL-Taiwan-1\.0/)
-		expect(() => licenseForOvertureCountry("tw")).toThrow(/counsel-dossier/)
+	it("gives Taiwan both grants, because the two documents describe two grants over the same rows", () => {
+		// Overture's attribution page states the terms Overture redistributes under,
+		// and the counsel dossier reads the originating agencies' own licence.
+		// A consumer of a row that came through Overture is bound by both, and each identifier
+		// carries Attribution alone, so the conjunction adds no obligation either one lacks
+		// while asserting one alone would drop the other's conditions.
+		expect(licenseForOvertureCountry("tw")).toBe("CC-BY-4.0 AND OGDL-Taiwan-1.0")
 	})
 
-	it("reports Taiwan's candidates without throwing, for a caller reasoning about the grant", () => {
+	it("reports Taiwan's evidence beside its expression, so a reader sees which document gave which grant", () => {
 		const taiwan = overtureCountryLicense("TW")
 
-		expect(taiwan?.expression).toBeUndefined()
-		expect(taiwan?.candidates).toEqual(["CC-BY-4.0", "OGDL-Taiwan-1.0"])
+		expect(taiwan?.expression).toBe("CC-BY-4.0 AND OGDL-Taiwan-1.0")
 		expect(taiwan?.evidence).toHaveLength(2)
+		expect(taiwan?.evidence[0]).toContain("Overture attribution page")
+		expect(taiwan?.evidence[1]).toContain("counsel-dossier")
 		expect(taiwan?.register).toBe("OpenAddresses/<bureau> Civil Affairs")
 
 		expect(overtureCountryLicense("es")?.expression).toBe("CC-BY-4.0")

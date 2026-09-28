@@ -11,7 +11,6 @@
  */
 
 import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
@@ -20,7 +19,7 @@ import { dRuleCountries, readScopeConfig, tieredCountries } from "@mailwoman/cor
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
-import type { PathBuilder } from "path-ts"
+import { epochMixtureAuditPath } from "@mailwoman/corpus/source-register"
 
 import { admittedByShippedGraphs, resolveTrainingConfig } from "#coverage/census"
 import { censusCoverage, newestManifest } from "#coverage/index"
@@ -50,25 +49,6 @@ const { values } = parseArguments({
 interface EpochMixtureAudit {
 	emitted_level?: { by_country?: Record<string, number> }
 	meta?: { config?: string }
-}
-
-/**
- * Where an `audit_epoch_mixture` output for one config is looked for when `--mixture-audit` is absent.
- *
- * Under the data root rather than committed, because the file is a measurement of
- * one corpus with one seed and runs about ten minutes.
- * Naming it by the config keeps two training arms' audits apart, which is the
- * mismatch `readMixtureAudit` refuses.
- */
-function defaultMixtureAuditPath(configPath: string): PathBuilder {
-	return dataRootPath(
-		"corpus",
-		"epoch-mixture",
-		`${configPath
-			.split("/")
-			.at(-1)
-			?.replace(/\.ya?ml$/u, "")}.json`
-	)
 }
 
 /**
@@ -124,7 +104,7 @@ const report = await censusCoverage({
 	casesRoot: repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"),
 })
 
-const mixtureAuditPath = values["mixture-audit"] ?? defaultMixtureAuditPath(configPath).toString()
+const mixtureAuditPath = values["mixture-audit"] ?? epochMixtureAuditPath(configPath).toString()
 const mixtureAuditPresent = await pathExists(mixtureAuditPath)
 
 if (!mixtureAuditPresent) {

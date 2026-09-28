@@ -114,7 +114,15 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 					"Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "nl-postcode", NL_POSTCODE_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed carries none,
+			// and `null` says the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "nl-postcode", {
+					...NL_POSTCODE_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

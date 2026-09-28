@@ -77,15 +77,24 @@ const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
 	[
 		"tw",
 		{
-			// Two documents describe the same municipal 門牌 rows and name different grants.
-			// Overture's attribution page gives CC-BY-4.0 for each of the 18 Civil Affairs bodies.
-			// The counsel dossier reads OGDL-Taiwan-1.0, whose attribution failure voids the
-			// grant ab initio and whose §5.2 permits an agency to withdraw data.
-			// Recording either one asserts a reading nobody has made.
-			candidates: ["CC-BY-4.0", "OGDL-Taiwan-1.0"],
+			// Two documents describe the same municipal 門牌 rows, and they describe two grants
+			// rather than disagreeing about one.
+			// Overture's attribution page states the terms under which Overture redistributes
+			// the rows, CC-BY-4.0 on each of the 18 Civil Affairs entries.
+			// The counsel dossier reads the originating agencies' own licence,
+			// OGDL-Taiwan-1.0, whose attribution failure voids the grant ab initio
+			// and whose §5.2 permits an agency to withdraw data.
+			// A consumer of a row that came through Overture is bound by both,
+			// so the expression is their conjunction.
+			//
+			// The conjunction is also the safe direction: each identifier carries Attribution alone
+			// in `KNOWN_OBLIGATIONS`, so asserting both adds no obligation that either one lacks,
+			// while asserting one alone would drop the other's conditions.
+			// `foldLayerManifest` already expects this shape for the Taiwan fold.
+			expression: "CC-BY-4.0 AND OGDL-Taiwan-1.0",
 			evidence: [
-				"Overture attribution page, Taiwan section, read 2026-09-25: CC BY 4.0 on all 18 entries",
-				"docs/superpowers/plans/counsel-dossier.md §6: OGDL-Taiwan-1.0 over the municipal 門牌 data",
+				"Overture attribution page, Taiwan section, read 2026-09-25: CC BY 4.0 on all 18 entries — the terms Overture redistributes under",
+				"docs/superpowers/plans/counsel-dossier.md §6: OGDL-Taiwan-1.0 over the municipal 門牌 data — the originating agencies' own grant",
 			],
 			register: "OpenAddresses/<bureau> Civil Affairs",
 		},

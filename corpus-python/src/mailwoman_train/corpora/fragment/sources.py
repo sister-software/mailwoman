@@ -37,6 +37,18 @@ OA_LOCALES: dict[str, tuple[str, str, bool]] = {
 PER_LOCALE_CAP = 4000
 SEED = 42
 
+#: The wire identifier every row of this recipe output carries, and the prefix of every `source_id`.
+#:
+#: `RECIPE_SOURCES` in `packages/corpus/lib/recipes/sources.ts` is the authority for both spellings of this
+#: source and records `fragment-assay` as the one it will carry after the rewrite. This constant holds the
+#: retired spelling, because `v0.6.0-register-surface` stores it and the configs that target that corpus key
+#: on it. Flip it in the same commit as the DuckDB rewrite over an assembly's staging files, so the rows and
+#: this generator never disagree.
+#:
+#: Composed into `source_id` rather than written twice, because `push` stamps the id from this and a rename
+#: that changed one and not the other would make the id name a source no row carries.
+SOURCE = "synth-fragment"
+
 
 def collect_oa_pairs(
     oa_root: Path,

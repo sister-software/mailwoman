@@ -15,10 +15,11 @@
  *   Emits warnings to stderr and the audit table to stdout. never throws on an empty corpus.
  */
 
-import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { basename, type PathBuilderLike, resolvePathBuilder } from "path-ts"
-import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
+
+import { readConfigView } from "#source-register/effective-manifest"
 
 /**
  * Share of the sampled mix one source may hold before the mix is flagged as dominated by it.
@@ -71,51 +72,17 @@ interface ParsedConfig {
 }
 
 /**
- * Try parsing a training YAML's source_weights as a minimal regex-based extract.
+ * Read a training config's `source_weights`, or `null` when the file is absent.
  *
- * We don't pull in a YAML lib for this script.
- * The syntax is so small that a regex over the source_weights block is
- * sufficient + keeps the script dep-free.
+ * The scan lives in `readConfigView`, which the effective-manifest reader also calls,
+ * so one reading of the hand-written config subset serves both.
+ * This wrapper keeps the absent-file case a `null` rather than a throw, because
+ * `corpus audit` reports a corpus without a config rather than refusing to audit it.
  */
 async function parseConfig(configPath: PathBuilderLike): Promise<ParsedConfig | null> {
 	if (!(await pathExists(configPath))) return null
-	const weights: Record<string, number> = {}
-	let inBlock = false
-	let blockIndent = -1
 
-	// The block is indentation-delimited, so leading whitespace is data here.
-	for (const raw of TextSpliterator.from(await readLocalBuffer(configPath), { trim: false })) {
-		const sourceWeightsMatch = raw.match(/^([\t ]*)source_weights:\s*$/)
-
-		if (sourceWeightsMatch) {
-			inBlock = true
-			blockIndent = sourceWeightsMatch[1]!.length
-
-			continue
-		}
-
-		if (!inBlock) continue
-
-		// Skip blank lines and comments.
-		if (/^[\t ]*(#|$)/.test(raw)) continue
-		// Lines indented more than `source_weights:` are entries.
-		// Lines with ≤ indent end the block.
-		const indent = raw.match(/^[\t ]*/)![0].length
-
-		if (indent <= blockIndent) {
-			inBlock = false
-
-			continue
-		}
-
-		const m = raw.match(/^[\t ]+([\w-]+):\s*([\d.]+)/)
-
-		if (m) {
-			weights[m[1]!] = Number.parseFloat(m[2]!)
-		}
-	}
-
-	return { sourceWeights: weights }
+	return { sourceWeights: readConfigView(await readLocalTextFile(configPath)).sourceWeights }
 }
 
 /**

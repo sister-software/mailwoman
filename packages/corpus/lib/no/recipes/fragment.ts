@@ -116,6 +116,10 @@ export const noFragmentRecipe: CorpusRecipe = {
 		const NO_FRAGMENT_PROVENANCE = {
 			register: requireRegister(opts, "no-fragment"),
 			surface: SurfaceOrigin.Composed,
+			// `emit` is a closure over the run rather than over one tuple, so this cannot name a per-row record.
+			// The tuples file carries no `sourceID` either.
+			// Populating this needs both (#2359).
+			baseSourceID: null,
 		}
 
 		for await (const tuple of readTuples(opts.input!)) {

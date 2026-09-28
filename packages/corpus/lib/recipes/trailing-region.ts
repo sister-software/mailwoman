@@ -146,7 +146,15 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				license: "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
 			}
 
-			if (alignAndWrite(write, canonical, "trailing-region", TRAILING_REGION_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed carries none,
+			// and `null` says the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "trailing-region", {
+					...TRAILING_REGION_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

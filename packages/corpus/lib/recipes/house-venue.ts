@@ -31,6 +31,8 @@ import { SurfaceOrigin } from "#types"
 const HOUSE_VENUE_PROVENANCE = {
 	register: null,
 	surface: SurfaceOrigin.Invented,
+	// An invented row has no underlying record to name.
+	baseSourceID: null,
 }
 
 /**

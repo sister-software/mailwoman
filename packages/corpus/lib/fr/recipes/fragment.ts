@@ -27,6 +27,9 @@ import { SurfaceOrigin } from "#types"
 const FR_FRAGMENT_PROVENANCE = {
 	register: SourceRegister.BaseAdresseNationale,
 	surface: SurfaceOrigin.Composed,
+	// The BAN record behind each row exists, and the tuples file this reads carries no `sourceID` to name it.
+	// Populating this needs the extraction to emit one (#2359).
+	baseSourceID: null,
 }
 
 /**

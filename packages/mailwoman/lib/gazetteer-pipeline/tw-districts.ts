@@ -56,15 +56,14 @@ import { licenseForOvertureCountry } from "#geocode/national-overture"
  *
  * Both artifacts are built from one input, the pinned Overture addresses parquet for Taiwan,
  * so one grant covers both and one entry records it.
- * `COUNTRY_LICENSES` in `#geocode/national-overture` holds Taiwan's as two candidate
- * readings rather than a settled expression, because Overture's attribution page and
- * `docs/superpowers/plans/counsel-dossier.md` §6 name different grants over the same municipal 門牌 rows.
+ * `COUNTRY_LICENSES` in `#geocode/national-overture` gives Taiwan `CC-BY-4.0 AND OGDL-Taiwan-1.0`.
  *
- * So this build stops until one is settled.
- * Stamping a candidate would record a grant nobody established, and the artifact
- * would carry that claim for as long as it exists.
+ * Two documents describe these municipal 門牌 rows and they describe two grants:
+ * Overture's attribution page states the terms Overture redistributes under, and
+ * `docs/superpowers/plans/counsel-dossier.md` §6 reads the originating agencies' own licence.
+ * A consumer of a row that came through Overture is bound by both.
  *
- * @throws Through `licenseForOvertureCountry`, naming both candidates and their evidence.
+ * @throws Through `licenseForOvertureCountry` when no entry is registered for the country.
  */
 export function twDistrictsLicense(): string {
 	return licenseForOvertureCountry("tw")
@@ -73,8 +72,9 @@ export function twDistrictsLicense(): string {
 /**
  * Compose the artifact's `layer_manifest` from the settled grant and the release it reproduces.
  *
- * Both candidate readings of the grant carry attribution and no share-alike term, so the tier is `shipped`.
- * A reading that carried more would fail `assertTierMatchesLicense` here rather than reach the artifact.
+ * Both identifiers in the grant carry Attribution and no share-alike term, so the tier is `shipped`.
+ * An identifier that carried more would fail `assertTierMatchesLicense` here
+ * rather than reach the artifact.
  */
 export function twDistrictsLayerManifest(input: {
 	license: string
