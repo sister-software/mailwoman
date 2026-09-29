@@ -39,7 +39,13 @@ import {
 	resolveGradeMode,
 	withheldVerdict,
 } from "#compare/helpers"
-import { crossEngineReading, worktreePairReading, worktreeTreeDelta } from "#confound"
+import {
+	artifactSetWarnings,
+	crossEngineReading,
+	VariableIsolation,
+	worktreePairReading,
+	worktreeTreeDelta,
+} from "#confound"
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "#external-arm"
 import {
@@ -192,6 +198,16 @@ async function compareMailwomanArms(
 	)
 
 	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds } = arms
+
+	// A channel one arm resolved and the other omitted is a confound the configuration keys omit.
+	// The summary sentence quotes the isolation state.
+	// This check therefore runs first.
+	const artifactWarnings = artifactSetWarnings(provenanceA, provenanceB)
+
+	if (artifactWarnings.length) {
+		confounds.warnings.push(...artifactWarnings)
+		confounds.variable_isolation = VariableIsolation.Ambiguous
+	}
 
 	const fingerprint = await registry.fingerprint()
 

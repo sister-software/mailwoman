@@ -5,6 +5,7 @@
  */
 
 import {
+	artifactSetWarnings,
 	assertComparableField,
 	VariableIsolation,
 	checkConfounds,
@@ -131,5 +132,100 @@ describe("worktreePairReading", () => {
 		const reading = worktreePairReading("worktree:main", "worktree:WORKTREE", [], null)
 
 		expect(reading.warnings[0]).toContain("different geocoders over different indexes")
+	})
+})
+
+describe("artifactSetWarnings", () => {
+	const locale = (name: string, artifacts: Array<[string, string | null]>) => ({
+		locale: name,
+		artifacts: artifacts.map(([artifact, path]) => ({
+			name: artifact,
+			path,
+			origin: path === null ? null : "cache",
+		})),
+	})
+
+	it("stays silent when both arms resolved the same artifact names", () => {
+		const armA = {
+			artifacts_by_locale: [
+				locale("en-US", [
+					["model.onnx", "/a/model.onnx"],
+					["fst-en-us.bin", "/a/fst.bin"],
+				]),
+			],
+		}
+
+		const armB = {
+			artifacts_by_locale: [
+				locale("en-US", [
+					["model.onnx", "/b/model.onnx"],
+					["fst-en-us.bin", "/b/fst.bin"],
+				]),
+			],
+		}
+
+		expect(artifactSetWarnings(armA, armB)).toEqual([])
+	})
+
+	it("names the channels one arm fed that the other left unresolved", () => {
+		// The shape that made 24 of 1029 board rows differ under byte-identical model graphs
+		// (#2396): the workspace rung contained 13 of its 15 declared artifacts.
+		// The two FST channels therefore resolved on one side only.
+		const workspaceArm = {
+			artifacts_by_locale: [
+				locale("en-US", [
+					["model.onnx", "/repo/model.onnx"],
+					["fst-en-us.bin", null],
+					["fst-street-morphology.bin", null],
+				]),
+			],
+		}
+
+		const cacheArm = {
+			artifacts_by_locale: [
+				locale("en-US", [
+					["model.onnx", "/cache/model.onnx"],
+					["fst-en-us.bin", "/cache/fst-en-us.bin"],
+					["fst-street-morphology.bin", "/cache/fst-street-morphology.bin"],
+				]),
+			],
+		}
+
+		const warnings = artifactSetWarnings(workspaceArm, cacheArm)
+
+		expect(warnings).toHaveLength(1)
+		expect(warnings[0]).toContain("en-US: arm B fed fst-en-us.bin, fst-street-morphology.bin")
+		expect(warnings[0]).toContain("stage-weights-cache")
+	})
+
+	it("treats an artifact absent from both arms as agreement rather than divergence", () => {
+		// Every routed arm gives `crf-transitions.json` a null path, because CRF is inference-only.
+		const armA = { artifacts_by_locale: [locale("de-DE", [["crf-transitions.json", null]])] }
+		const armB = { artifacts_by_locale: [locale("de-DE", [["crf-transitions.json", null]])] }
+
+		expect(artifactSetWarnings(armA, armB)).toEqual([])
+	})
+
+	it("reports a locale only one arm routed", () => {
+		const armA = { artifacts_by_locale: [locale("en-US", [["model.onnx", "/a/model.onnx"]])] }
+
+		const armB = {
+			artifacts_by_locale: [
+				locale("en-US", [["model.onnx", "/b/model.onnx"]]),
+				locale("de-DE", [["model.onnx", "/b/model.onnx"]]),
+			],
+		}
+
+		expect(artifactSetWarnings(armA, armB)[0]).toContain("de-DE is routed by arm B alone")
+	})
+
+	it("states no artifact difference for an arm whose provenance records none", () => {
+		// External geocoders and oracles have no routed artifact record.
+		// Runs recorded before the record existed have no such record either.
+		const external = { engine: "pelias", endpoint: "http://127.0.0.1:4000" }
+		const routed = { artifacts_by_locale: [locale("en-US", [["model.onnx", "/a/model.onnx"]])] }
+
+		expect(artifactSetWarnings(external, routed)).toEqual([])
+		expect(artifactSetWarnings(routed, external)).toEqual([])
 	})
 })

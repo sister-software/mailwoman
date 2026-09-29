@@ -181,6 +181,135 @@ export function assertComparableField(field: string): void {
 	}
 }
 
+interface ResolvedArtifact {
+	name: string
+	path: string | null
+	origin: string | null
+}
+
+function readArtifacts(value: unknown): ResolvedArtifact[] | null {
+	if (!Array.isArray(value)) return null
+
+	const artifacts: ResolvedArtifact[] = []
+
+	for (const entry of value) {
+		if (typeof entry !== "object" || entry === null) return null
+
+		const record = entry as Record<string, unknown>
+		const name = record["name"]
+
+		if (typeof name !== "string") return null
+
+		artifacts.push({
+			name,
+			path: typeof record["path"] === "string" ? record["path"] : null,
+			origin: typeof record["origin"] === "string" ? record["origin"] : null,
+		})
+	}
+
+	return artifacts
+}
+
+/**
+ * Reads the artifact names one routed arm resolved for each locale, paired with the rung that supplied each.
+ *
+ * Returns `null` when an arm's provenance has no routed artifact record.
+ * External geocoders, oracles.
+ *
+ * Runs recorded before the record existed have no such record.
+ */
+function resolvedArtifactsByLocale(provenance: unknown): Map<string, Map<string, string>> | null {
+	if (typeof provenance !== "object" || provenance === null) return null
+
+	const byLocale = (provenance as Record<string, unknown>)["artifacts_by_locale"]
+
+	if (!Array.isArray(byLocale)) return null
+
+	const locales = new Map<string, Map<string, string>>()
+
+	for (const entry of byLocale) {
+		if (typeof entry !== "object" || entry === null) return null
+
+		const record = entry as Record<string, unknown>
+		const locale = record["locale"]
+		const artifacts = readArtifacts(record["artifacts"])
+
+		if (typeof locale !== "string" || artifacts === null) return null
+
+		const resolved = new Map<string, string>()
+
+		for (const artifact of artifacts) {
+			if (artifact.path === null) continue
+
+			resolved.set(artifact.name, artifact.origin ?? "unstated")
+		}
+
+		locales.set(locale, resolved)
+	}
+
+	return locales
+}
+
+function pronounFor(artifacts: string[]): string {
+	return artifacts.length === 1 ? "it" : "them"
+}
+
+/**
+ * Warns when the two arms fed the model different weights artifacts.
+ *
+ * `resolveWeights` admits each artifact by existence.
+ * A weights directory holding part of the concrete set its `files` array declares
+ * therefore resolves the artifacts present and omits the rest without failing.
+ *
+ * Two arms can run the same model graph over different channels.
+ * A row difference caused by those channels belongs to the artifact set rather than the declared pin.
+ *
+ * A workspace directory takes precedence over the data-root overlay.
+ * This is how one arm acquires a channel its counterpart lacks.
+ *
+ * Returns an empty list when both arms resolved the same names for every locale or
+ * when either arm's provenance reports no routed artifacts.
+ */
+export function artifactSetWarnings(provenanceA: unknown, provenanceB: unknown): string[] {
+	const armA = resolvedArtifactsByLocale(provenanceA)
+	const armB = resolvedArtifactsByLocale(provenanceB)
+
+	if (!armA || !armB) return []
+
+	const divergences: string[] = []
+
+	for (const locale of [...new Set([...armA.keys(), ...armB.keys()])].toSorted()) {
+		const a = armA.get(locale)
+		const b = armB.get(locale)
+
+		if (!a || !b) {
+			divergences.push(`${locale} is routed by arm ${a ? "A" : "B"} alone.`)
+
+			continue
+		}
+
+		const onlyA = [...a.keys()].filter((name) => !b.has(name)).toSorted()
+		const onlyB = [...b.keys()].filter((name) => !a.has(name)).toSorted()
+
+		if (onlyA.length) {
+			divergences.push(`${locale}: arm A fed ${onlyA.join(", ")} and arm B left ${pronounFor(onlyA)} unresolved.`)
+		}
+
+		if (onlyB.length) {
+			divergences.push(`${locale}: arm B fed ${onlyB.join(", ")} and arm A left ${pronounFor(onlyB)} unresolved.`)
+		}
+	}
+
+	if (!divergences.length) return []
+
+	return [
+		`The arms resolved different weights artifacts, so a row difference here can belong to the channels ` +
+			`rather than to the declared pin. ${divergences.join(" ")} Stage both arms from the same package ` +
+			`declaration with \`mwops release stage-weights-cache\` and pin \`weights_cache\` on both sides, ` +
+			`which makes the model graph the only difference between them.`,
+	]
+}
+
 /**
  * Counts the commits and changed files between two worktree arms' recorded commits.
  *
