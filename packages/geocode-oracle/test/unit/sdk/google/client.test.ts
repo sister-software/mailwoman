@@ -151,9 +151,6 @@ describe("createGoogleGeocoderClient", () => {
 
 		expect(params?.components).toBe("country:NZ")
 		expect(params?.language).toBe("en")
-		// The isp-nexus original hardcoded a contiguous-US bounding box on every
-		// forward geocode, with no way to turn it off.
-		// There is no default here.
 		expect(params?.bounds).toBeUndefined()
 	})
 })

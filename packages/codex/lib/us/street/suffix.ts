@@ -86,7 +86,7 @@ export function matchTrailingSuffix(street: string): { canonical: USStreetSuffix
 }
 
 /**
- * The USPS suffix record under its original isp-nexus name, aliasing {@link US_STREET_SUFFIX_VARIANTS}.
+ * The USPS suffix record.
  */
 export const StreetSuffixAbbreviationRecord = US_STREET_SUFFIX_VARIANTS
 

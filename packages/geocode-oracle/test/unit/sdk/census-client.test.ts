@@ -105,7 +105,7 @@ describe("buildStreetComponents", () => {
 		})
 	})
 
-	it("keeps preDirection, which the isp-nexus interface omitted entirely", () => {
+	it("keeps preDirection", () => {
 		expect(buildStreetComponents(addressComponents({ preDirection: "SW" })).street_prefix).toBe("SW")
 	})
 

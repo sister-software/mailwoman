@@ -3,20 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   USPS PO Box recognition + normalization to the surface forms that actually occur
- *   (case-insensitive, punctuated "P.O. Box", spelled-out "Post Office Box", bare "Box"). A PO box
- *   isn't a closed vocabulary like street suffixes — it's a designator phrase + a box id — so the
- *   API is a detector ({@link isPOBox}), a normalizer ({@link normalizePOBox}), and an extractor
- *   ({@link matchPOBox}) the corpus po_box synth/parsing can reuse instead of re-deriving the
- *   regex.
+ * USPS PO Box detection and normalization.
+ *
+ * Supports common forms like "P.O. Box", "Post Office Box", and "Box".
+ * Exposes helpers to detect ({@link isPOBox}), normalize ({@link normalizePOBox}),
+ * and extract ({@link matchPOBox}) PO Box values.
+ *
  * @see {@link https://pe.usps.com/text/pub28/28c2_012.htm USPS Pub 28 §29 (PO Box / Caller service)}
  */
 
 /**
- * USPS designator phrases that introduce a post-office-box identifier, longest-first
- * so the matcher prefers the most specific phrase ("Post Office Box" before "Box").
+ * USPS phrases that can introduce a PO Box ID.
  *
- * Each is matched case-insensitively with flexible internal punctuation/spacing.
+ * Ordered longest-first so specific phrases match before broad ones.
  */
 export const US_PO_BOX_DESIGNATORS = [
 	"POST OFFICE BOX",
@@ -34,8 +33,7 @@ export type USPoBoxDesignator = (typeof US_PO_BOX_DESIGNATORS)[number]
 /**
  * Recognition patterns for {@link US_PO_BOX_DESIGNATORS}.
  *
- * The surface grammar stays next to the canonical designator to prevent the
- * exported lexicon and matcher from drifting apart.
+ * Keep regex patterns next to canonical designators.
  */
 const PO_BOX_DESIGNATOR_PATTERNS: ReadonlyArray<readonly [USPoBoxDesignator, string]> = [
 	["POST OFFICE BOX", String.raw`post\s+office\s+box`],
@@ -49,9 +47,9 @@ const PO_BOX_DESIGNATOR_PATTERNS: ReadonlyArray<readonly [USPoBoxDesignator, str
 ]
 
 /**
- * One standalone matcher per USPS designator.
+ * One matcher per USPS designator.
  *
- * The id is alphanumeric with optional dashes (USPS caller/firm ids exist).
+ * Ids are alphanumeric and may include dashes.
  */
 const PO_BOX_MATCHERS = PO_BOX_DESIGNATOR_PATTERNS.map(([designator, pattern]) => ({
 	designator,
@@ -60,50 +58,42 @@ const PO_BOX_MATCHERS = PO_BOX_DESIGNATOR_PATTERNS.map(([designator, pattern]) =
 }))
 
 /**
- * True when `input` is a USPS PO-box designator without its box identifier.
+ * Returns true when `input` is only a USPS PO Box designator phrase.
  *
- * This is useful to consumers that compose a phrase and need to distinguish USPS vocabulary
- * from their own locale-specific aliases (for example, the corpus's `POB` training variant).
+ * Useful when callers need to separate USPS terms from local aliases.
  */
 export function isUSPoBoxDesignator(input: unknown): input is string {
 	return typeof input === "string" && PO_BOX_MATCHERS.some(({ designatorRe }) => designatorRe.test(input))
 }
 
 /**
- * Type-predicate: does the input look like a standalone PO Box address?
+ * Returns true when input looks like a PO Box address.
  *
- * Case-insensitive and tolerant of "P.O.
- * Box", "Post Office Box", "Box 12", "PMB"-style ids.
- *
- * (Widens the original isp-nexus `/^PO BOX [\d-]+$/`, which only matched all-caps "PO BOX 123".)
+ * Matching is case-insensitive and tolerant of punctuation/spacing differences.
  */
 export function isPOBox(input: unknown): boolean {
 	return matchPOBox(input) !== null
 }
 
 /**
- * Result of a PO-box parse: the matched designator phrase and the box identifier.
+ * Parsed PO Box parts.
  */
 export interface PoBoxMatch {
 	/**
-	 * The designator phrase as it appeared, e.g. "P.O.
-	 *
-	 * Box", "Post Office Box".
+	 * Designator phrase as written in input, like "P.O.
+	 * Box".
 	 */
 	matched: string
 	/**
-	 * The box identifier, e.g. "123", "12-A".
+	 * Box id, like "123" or "12-A".
 	 */
 	id: string
 }
 
 /**
- * If `input` is a PO-box phrase ("PO Box 123", "P.O. Box 12-A", "Post Office Box 7"),
- * return the designator phrase and the id.
+ * If `input` is a PO Box phrase, return the matched phrase and id.
  *
- * Null otherwise.
- * Useful for the corpus po_box extract (split the designator from the number)
- * and for resolver/parsing reuse.
+ * Returns null when there is no match.
  */
 export function matchPOBox(input: unknown): PoBoxMatch | null {
 	if (typeof input !== "string") return null
@@ -118,10 +108,9 @@ export function matchPOBox(input: unknown): PoBoxMatch | null {
 }
 
 /**
- * Normalize any recognized PO-box phrase to the canonical USPS "PO BOX <id>" form.
+ * Normalize recognized PO Box phrases to "PO BOX <id>".
  *
- * @returns The input unchanged if it isn't a PO box.
- * (The isp-nexus normalizer collapsed only the "P.O. BOX" spelling. It preserved the original id and casing.)
+ * @returns Original input when no PO Box is found.
  */
 export function normalizePOBox(input: string): string {
 	const m = matchPOBox(input)

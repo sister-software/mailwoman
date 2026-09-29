@@ -3,14 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   codex → corpus-python bridge: emit the authoritative country surface forms as JSON so the Python
- *   extract generators can synthesize address tails ("…, USA" / "…, United States of America") without
- *   re-deriving the country name/alias data. `@mailwoman/codex` stays the single source of truth
- *   (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME, salvaged from isp-nexus spatial/countries); this writes a
- *   snapshot the language boundary can't import directly.
+ *   Exports country names and aliases as JSON for the Python extract generators.
+ *   `@mailwoman/codex` remains the source of truth; this writes a snapshot for Python.
  *
- *   Regenerate: `node packages/mailwoman/lib/dev-tools/codex/export-country-surfaces.ts` (writes the corpus-python
- *   data file).
+ *   Regenerate with: `node packages/mailwoman/lib/dev-tools/codex/export-country-surfaces.ts`
  */
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "@mailwoman/codex/country"
@@ -18,9 +14,8 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 
-// Merge: rich surface forms where the codex curates them, else the canonical
-// English name for every ISO 3166-1 alpha-2.
-// Canonical-name-first (the codex's own ordering) so the common form leads.
+// Use curated forms when available, otherwise use the canonical English name.
+// Keep the codex's order so the common form comes first.
 const surfaces: Record<string, string[]> = {}
 
 for (const [iso2, forms] of Object.entries(COUNTRY_SURFACE_FORMS)) {

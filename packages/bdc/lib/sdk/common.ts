@@ -13,9 +13,6 @@ import type { BroadbandTechnologyCode } from "#sdk/technologies"
 /**
  * Unique identifier for an FCC BDC broadband provider.
  *
- * Re-homed locally as `Tagged<number, ...>` — the Nexus original imported this from
- * `@isp.nexus/fcc` (`BroadbandProvider.ts`), where it's defined identically.
- *
  * @category BDC
  * @category FCC
  */
@@ -171,8 +168,6 @@ export interface RawBDCFile {
 	 * 2-digit state or territory FIPS code.
 	 *
 	 * Loosely typed as `string` for now.
-	 * The Nexus original was `AdminLevel1Code` (via `@isp.nexus/tiger`); this port drops
-	 * that dependency, same as `data-collection.ts`'s `FCCStateID`.
 	 *
 	 * Tighten it against `@mailwoman/tiger` if a downstream dictionary ever needs the literal union.
 	 *
