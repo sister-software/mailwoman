@@ -326,7 +326,25 @@ function droppedRow(run: GeocodeRun): string[] {
 	]
 }
 
-function refusalRow(run: GeocodeRun): string[] {
+/**
+ * Renders the query-intent advisories a run attached.
+ *
+ * A `QueryIntentMarker` leaves the selected answer unchanged, which its own
+ * declaration in `@mailwoman/core/pipeline` states.
+ * A marker therefore reports something about the answer rather than replacing or withholding it,
+ * and `declared_coarser_answer` in particular sits beside a coordinate the run still returned.
+ *
+ * The row names each marker and its evidence.
+ * The reason a component below is empty lies in the parse or the resolver walk,
+ * which the rows around this one report.
+ *
+ * An earlier version of this row called every marker a refusal and attributed
+ * every empty component to the #1649 tier check.
+ * That sentence appeared on rows whose components were populated and on markers with
+ * no connection to that check, such as `poi_category` and `authority_designation`,
+ * and a reader acting on it attributed a parse failure to a stage that had not run.
+ */
+function intentAdvisoryRow(run: GeocodeRun): string[] {
 	const markers = (run.result as { intent_markers?: QueryIntentMarker[] }).intent_markers
 
 	if (!markers?.length) return []
@@ -335,14 +353,11 @@ function refusalRow(run: GeocodeRun): string[] {
 		.map((marker) => {
 			const evidence = marker.evidence ? ` ${stringifyJSON(marker.evidence)}` : ""
 
-			return `${marker.kind} via ${marker.mechanism}${evidence}`
+			return `${marker.code} via ${marker.mechanism}${evidence}`
 		})
 		.join(", ")
 
-	return [
-		`intent: REFUSED as ${named} — the #1649 check discarded a completed parse rather than the parse failing. ` +
-			"Every empty component below follows from that decision, not from the model.",
-	]
+	return [`intent advisories (the answer below is unchanged by these): ${named}`]
 }
 
 /**
@@ -365,7 +380,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 			channelsRow(run.trace),
 			localeHeadRow(run.trace),
 			decodeRow(run.trace),
-			...refusalRow(run),
+			...intentAdvisoryRow(run),
 			...droppedRow(run),
 			...resolverRows(run.trace),
 		],

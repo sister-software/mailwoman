@@ -17,7 +17,13 @@ interface FakeResult {
 	lat: number | null
 	lon: number | null
 	resolution_tier: string
-	intent_markers?: Array<{ kind: string }>
+	/**
+	 * `code` is the stable identifier a reader branches on.
+	 *
+	 * `kind` is the query kind that produced the marker, so a fixture that supplies
+	 * only `kind` cannot exercise a reader of `code`.
+	 */
+	intent_markers?: Array<{ kind: string; code: string }>
 }
 
 /**
@@ -163,15 +169,15 @@ describe("minimal-pair ladders", () => {
 		expect(rendered).toContain("diverges at")
 	})
 
-	it("names a #1649 REFUSAL on the rung, so it does not read as a parse that found nothing", async () => {
+	it("reports an intent advisory beside the components the rung resolved", async () => {
 		const registry = fakeRegistry({
 			"St Mary's, Oxford": { components: { locality: "Oxford" }, lat: 51.7, lon: -1.2, resolution_tier: "admin" },
 			"Cafe at St Mary's, Oxford": {
-				components: {},
-				lat: null,
-				lon: null,
+				components: { locality: "Oxford" },
+				lat: 51.7,
+				lon: -1.2,
 				resolution_tier: "admin",
-				intent_markers: [{ kind: "poi_category" }],
+				intent_markers: [{ kind: "poi_query", code: "poi_category" }],
 			},
 		})
 
@@ -179,9 +185,11 @@ describe("minimal-pair ladders", () => {
 			ladders: [{ rungs: ["St Mary's, Oxford", "Cafe at St Mary's, Oxford"] }],
 		})
 
-		expect(result.ladders[0]!.rungs[1]!.refused).toBe("poi_category")
-		expect(result.ladders[0]!.rendered).toContain("REFUSED as poi_category")
-		expect(result.ladders[0]!.rendered).toContain("parse discarded, not failed")
+		// A marker leaves the answer in place, so the rung reports the advisory
+		// beside the components it resolved.
+		// `poi_category` describes an answer the run returned.
+		expect(result.ladders[0]!.rungs[1]!.advisories).toBe("poi_category")
+		expect(result.ladders[0]!.rendered).toContain("advisories: poi_category")
 	})
 
 	it("refuses an empty ladder list rather than reporting zero of zero", async () => {
