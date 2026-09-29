@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Exports country names and aliases as JSON for the Python extract generators.
- *   `@mailwoman/codex` remains the source of truth; this writes a snapshot for Python.
+ *   `@mailwoman/codex` remains the source of truth. This writes a snapshot for Python.
  *
  *   Regenerate with: `node packages/mailwoman/lib/dev-tools/codex/export-country-surfaces.ts`
  */

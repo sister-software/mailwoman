@@ -69,7 +69,7 @@ export function isUSPoBoxDesignator(input: unknown): input is string {
 /**
  * Returns true when input looks like a PO Box address.
  *
- * Matching is case-insensitive and tolerant of punctuation/spacing differences.
+ * The matcher ignores case and accepts punctuation or spacing differences.
  */
 export function isPOBox(input: unknown): boolean {
 	return matchPOBox(input) !== null

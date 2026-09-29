@@ -10,7 +10,7 @@
  *
  *   - **state** — 2-letter region prefix (`tx`, `ca`, ...), from input state or ZIP; `xx` if unknown.
  *   - **H3 cell** — coarse location from coordinates (`latLngToCell` at {@link ADDRESS_H3_RESOLUTION}).
- *   - **hash** — hash of the normalized address text; this is the identity part.
+ *   - **hash** — hash of the normalized address text. This part identifies the address.
  *
  */
 
@@ -56,7 +56,9 @@ export interface CreatePostalAddressIDInput {
 	address: string
 	/**
 	 * 2-letter state/region prefix.
-	 * If missing, derived from ZIP; else `xx`.
+	 *
+	 * Derive it from ZIP when omitted.
+	 * Use `xx` when no state can be derived.
 	 */
 	state?: string
 	/**
@@ -78,7 +80,9 @@ export interface ParsedPostalAddressID {
 /**
  * Canonicalize address text for hashing.
  *
- * Normalize, uppercase, and trim so common format differences hash the same.
+ * The function normalizes and uppercases the text.
+ * It then trims the ends.
+ * These steps make common format differences hash the same.
  */
 function canonicalizeForHash(address: string): string {
 	return normalize(address).normalized.toUpperCase().trim()

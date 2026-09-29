@@ -21,9 +21,10 @@ export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "#country/c
  * Common address spellings by ISO alpha-2.
  *
  * First item is the preferred display form.
- * Matching is case-insensitive.
+ * The matcher ignores case.
  *
- * This is a curated subset; ISO names/codes still cover all countries.
+ * This is a curated subset.
+ * ISO names and codes still cover all countries.
  */
 export const COUNTRY_SURFACE_FORMS = {
 	US: ["United States", "USA", "US", "U.S.A.", "U.S.", "United States of America", "America"],
@@ -130,7 +131,8 @@ function probeCountry(token: string): string | undefined {
 /**
  * Result of a country match.
  *
- * Contains alpha-2 code, canonical name, and matched input.
+ * Contains the alpha-2 code and canonical name.
+ * It also records the matched input.
  */
 export interface CountryMatch {
 	iso2: string

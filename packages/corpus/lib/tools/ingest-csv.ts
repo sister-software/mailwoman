@@ -5,9 +5,9 @@
  *
  * CSV → SQLite ingest tool.
  *
- * Reads a CSV, guesses column types from sample rows, creates a SQLite table,
- * and imports all rows. Handles quoted fields, null-like values, and duplicate
- * column names.
+ * The tool reads a CSV and samples rows to infer column types.
+ * It creates a SQLite table and imports all rows.
+ * It handles quoted fields, null-like values and duplicate column names.
  *
  * ## Usage
  *
@@ -40,7 +40,8 @@ import { CSVSpliterator } from "spliterator"
 // #region Column name normalization
 
 /**
- * @deprecated Keep for now; this likely belongs in core.
+ * @deprecated This helper may belong in core.
+ * Keep it here until then.
  */
 function normalizeColumnName(raw: string): string {
 	return (
@@ -232,7 +233,8 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	let imported = 0
 	let headerSkipped = false
 
-	// node:sqlite has no transaction helper; use BEGIN/COMMIT.
+	// node:sqlite has no transaction helper.
+	// The code uses BEGIN/COMMIT.
 	const doInsert = () => {
 		db.exec("BEGIN")
 
