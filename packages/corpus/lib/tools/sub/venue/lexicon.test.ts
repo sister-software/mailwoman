@@ -7,6 +7,8 @@
  * Everything here runs over synthetic inputs, because the builder is a pure function of parsed data.
  */
 
+import { expect, test } from "vitest"
+
 import {
 	applyPromotions,
 	buildSubVenueLexicon,
@@ -22,9 +24,8 @@ import {
 	serializeSubVenueLexicon,
 	type SubVenueSurface,
 	surfacesFromWikidata,
-} from "@mailwoman/corpus/tools/sub-venue-lexicon"
-import { SUBVENUE_PROMOTIONS } from "@mailwoman/corpus/tools/sub-venue-promotions"
-import { expect, test } from "vitest"
+} from "#tools/sub/venue/lexicon"
+import { SUBVENUE_PROMOTIONS } from "#tools/sub/venue/promotions"
 
 /**
  * A minimal sparql envelope in the exact shape wdqs serves.

@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ortsteilSurface } from "@mailwoman/corpus/de/recipes/locale"
 import { describe, expect, it } from "vitest"
+
+import { ortsteilSurface } from "#de/recipes/locale"
 
 describe("ortsteilSurface", () => {
 	it("takes the German name whose fold equals the ASCII spr label, not a co-located feature's", () => {

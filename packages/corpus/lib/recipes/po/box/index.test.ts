@@ -7,10 +7,11 @@
  *   and no other variant.
  */
 
-import { poBoxRecipe } from "@mailwoman/corpus/recipes/po/box/index"
-import { defaultRecipeSource } from "@mailwoman/corpus/recipes/sources"
-import { recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
+
+import { poBoxRecipe } from "#recipes/po/box/index"
+import { defaultRecipeSource } from "#recipes/sources"
+import { recipeRunner } from "#test-kit/corpus-recipe"
 
 const run = recipeRunner("po-box", poBoxRecipe, 517)
 

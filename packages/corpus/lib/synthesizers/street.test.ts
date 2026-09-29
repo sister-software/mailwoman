@@ -5,8 +5,9 @@
  */
 
 import { makeLcg } from "@mailwoman/core/random"
-import { synthesizeStreetRow } from "@mailwoman/corpus/synthesizers/street"
 import { describe, expect, it } from "vitest"
+
+import { synthesizeStreetRow } from "#synthesizers/street"
 
 describe("synthesizeStreetRow", () => {
 	it("emits all required components", () => {

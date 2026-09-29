@@ -5,12 +5,9 @@
  */
 
 import { makeLcg } from "@mailwoman/core/random"
-import {
-	type HouseVenueBaseTuple,
-	hasHouseNumberAndVenue,
-	synthesizeHouseVenueRow,
-} from "@mailwoman/corpus/synthesizers/house-venue"
 import { describe, expect, it } from "vitest"
+
+import { type HouseVenueBaseTuple, hasHouseNumberAndVenue, synthesizeHouseVenueRow } from "#synthesizers/house-venue"
 
 const TUPLE: HouseVenueBaseTuple = {
 	locality: "Boston",

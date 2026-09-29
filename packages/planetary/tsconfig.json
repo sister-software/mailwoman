@@ -9,7 +9,15 @@
 		"types": ["vite/client", "vite-plugin-pwa/client"]
 	},
 	"include": ["./lib/**/*"],
-	"exclude": ["./out/**/*", "./dist/**/*", "./test/**", "./vite.config.ts", "./playwright.config.ts"],
+	"exclude": [
+		"./out/**/*",
+		"./dist/**/*",
+		"./test/**",
+		"./**/*.test.ts",
+		"./**/*.test.tsx",
+		"./vite.config.ts",
+		"./playwright.config.ts"
+	],
 	"references": [
 		{ "path": "../ancestrie" },
 		{ "path": "../astrogeology" },

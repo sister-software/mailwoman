@@ -5,15 +5,11 @@
  */
 
 import { mulberry32 } from "@mailwoman/core/utils"
-import { defaultRecipeSource } from "@mailwoman/corpus/recipes/sources"
-import {
-	abbreviateSGStreet,
-	isBuildingName,
-	renderSGRegister,
-	sgRegisterRecipe,
-} from "@mailwoman/corpus/sg/recipes/register"
-import { type RecipeRow, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
+
+import { defaultRecipeSource } from "#recipes/sources"
+import { abbreviateSGStreet, isBuildingName, renderSGRegister, sgRegisterRecipe } from "#sg/recipes/register"
+import { type RecipeRow, recipeRunner } from "#test-kit/corpus-recipe"
 
 const run = recipeRunner("sg-register", sgRegisterRecipe, 7)
 

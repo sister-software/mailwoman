@@ -10,8 +10,9 @@
  *   value `ingestEligibilityProblems` reads as an answer.
  */
 
-import { readUnresolvedColumn } from "@mailwoman/corpus/tools"
 import { describe, expect, it } from "vitest"
+
+import { readUnresolvedColumn } from "#tools"
 
 describe("readUnresolvedColumn", () => {
 	it("reads a declared placeholder as unresolved, whatever its case", () => {

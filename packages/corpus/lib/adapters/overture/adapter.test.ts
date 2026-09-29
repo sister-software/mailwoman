@@ -6,16 +6,17 @@
 
 import { removePathIfPresent, writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilder } from "path-ts"
+import { describe, expect, it } from "vitest"
+
 import {
 	OVERTURE_ADAPTER_ID,
 	OVERTURE_DEFAULT_LICENSE,
 	createOvertureAdapter,
 	unitFieldIsDesignator,
-} from "@mailwoman/corpus/adapters/overture/adapter"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import type { PathBuilder } from "path-ts"
-import { describe, expect, it } from "vitest"
+} from "#adapters/overture/adapter"
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("ov")
 

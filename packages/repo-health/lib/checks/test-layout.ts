@@ -2,100 +2,86 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Enforce tests as external consumers of workspace package interfaces.
+ * @file Enforce that each test sits beside the module it covers.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, relative, resolvePath, sep } from "path-ts"
-import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
-import { moduleSpecifiers } from "#ts-ast"
 
-const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
-const vitestSuites = new Set(["full", "integration", "unit"])
-const COLOCATED_TEST_WORKSPACES = new Set(["packages/corpus"])
+const vitestTestPattern = /\.test\.tsx?$/u
+const playwrightSpecPattern = /\.spec\.tsx?$/u
+const moduleSourcePattern = /\.(?:ts|tsx|mts|js|mjs)$/u
+
 /**
- * A workspace with `playwright.config.ts` also runs Playwright suites.
+ * Playwright suites under `test/` in a workspace that has a `playwright.config.ts`.
  *
- * These suites live beside the Vitest suites.
- * `browser` holds page specs.
- *
- * `build` holds a build-health project.
- * `e2e` holds shared fixtures.
- *
- * Vitest's root configs exclude those directories, so the two runners never collect each other's files.
+ * `browser` holds page specs, `build` holds a build-health project and `e2e` holds shared fixtures.
  */
-const playwrightSuites = new Set([...vitestSuites, "browser", "build", "e2e"])
+const playwrightSuites = new Set(["browser", "build", "e2e"])
 
 /**
- * The `test-interface` check: one error per test file outside its workspace's
- * declared test layout and per relative import a test makes.
+ * The `test-layout` check.
  *
- * Corpus tests live next to their modules under `lib/`; other workspaces
- * use `test/{unit,integration,full}/`.
+ * A Vitest file (`<name>.test.ts`) sits beside the module it covers.
+ * The `.integration.test.ts` and `.full.test.ts` suffixes select the slow and full suites.
+ *
+ * A Playwright spec (`<name>.spec.ts`) sits under `test/{browser,build,e2e}/`.
+ * Only a workspace with a `playwright.config.ts` holds one.
  */
 export const testLayoutCheck: RepoCheck = {
-	id: "test-interface",
-	description:
-		"Workspace tests use their declared layout and import the package by its interface; a relative import names a test helper only.",
+	id: "test-layout",
+	description: "Each test sits beside the module it covers; Playwright specs sit under test/{browser,build,e2e}/.",
 	async run(context) {
 		const root = context.repoRoot
 		const diagnostics: Diagnostic[] = []
 		const sources = await trackedSourcePaths(context, { existingOnly: true })
+		const moduleDirectories = new Set<string>()
+
+		for (const filePath of sources) {
+			if (!moduleSourcePattern.test(filePath) || vitestTestPattern.test(filePath)) continue
+
+			if (playwrightSpecPattern.test(filePath) || filePath.endsWith(".d.ts")) continue
+
+			moduleDirectories.add(dirname(filePath))
+		}
 
 		for (const workspace of await readWorkspaceDirectories(root)) {
 			const workspaceRoot = resolvePath(root, workspace)
-			const colocatedTests = COLOCATED_TEST_WORKSPACES.has(workspace)
 			const runsPlaywright = await pathExists(resolvePath(workspaceRoot, "playwright.config.ts"))
-			const allowedSuites = runsPlaywright ? playwrightSuites : vitestSuites
 
 			for (const filePath of sources) {
-				if (!filePath.startsWith(`${workspaceRoot}/`) || !testPattern.test(filePath)) continue
+				if (!filePath.startsWith(`${workspaceRoot}/`)) continue
 
-				const workspaceRelative = relative(workspaceRoot, filePath).split(sep)
 				const file = relative(root, filePath)
 
-				const isInDeclaredLayout = colocatedTests
-					? workspaceRelative[0] === "lib"
-					: workspaceRelative[0] === "test" && allowedSuites.has(workspaceRelative[1] ?? "")
+				if (vitestTestPattern.test(filePath)) {
+					if (!moduleDirectories.has(dirname(filePath))) {
+						diagnostics.push({
+							severity: DiagnosticSeverity.Error,
+							message: "a test belongs beside the module it covers; this directory holds no module",
+							file,
+						})
+					}
 
-				if (!isInDeclaredLayout) {
-					diagnostics.push({
-						severity: DiagnosticSeverity.Error,
-						message: colocatedTests
-							? "corpus tests belong beside their modules under lib/"
-							: `tests belong under test/${runsPlaywright ? "{unit,integration,full,browser,build,e2e}" : "{unit,integration,full}"}/`,
-						file,
-					})
+					continue
 				}
 
-				const sourceText = await readLocalTextFile(filePath)
-				const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
+				if (playwrightSpecPattern.test(filePath)) {
+					const [top, suite] = relative(workspaceRoot, filePath).split(sep)
 
-				// Type-only specifiers count here: tests are consumers of the package interface, types included.
-				// A relative specifier that stays inside `test/` names a test helper.
-				// That helper has no package interface to bypass.
-				// A relative specifier that leaves `test/` reaches package source by location.
-				// `mailwoman/no-private-import-in-test` refuses the `#` map in tests.
-				// The module therefore needs an `exports` entry.
-				const testRoot = resolvePath(workspaceRoot, "test")
-
-				for (const specifier of moduleSpecifiers(sourceFile, { includeTypeOnly: true })) {
-					if (!specifier.startsWith(".")) continue
-
-					const target = resolvePath(dirname(filePath), specifier)
-
-					if (target.startsWith(`${testRoot}${sep}`)) continue
-
-					diagnostics.push({
-						severity: DiagnosticSeverity.Error,
-						message: `relative module import ${stringifyJSON(specifier)} leaves test/ and bypasses the package interface`,
-						file,
-					})
+					if (!runsPlaywright || top !== "test" || !playwrightSuites.has(suite ?? "")) {
+						diagnostics.push({
+							severity: DiagnosticSeverity.Error,
+							message: runsPlaywright
+								? "a Playwright spec belongs under test/{browser,build,e2e}/"
+								: "a .spec.ts file needs a playwright.config.ts in its workspace; a Vitest file is named .test.ts",
+							file,
+						})
+					}
 				}
 			}
 		}

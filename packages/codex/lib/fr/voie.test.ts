@@ -1,0 +1,51 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { describe, expect, it } from "vitest"
+
+import { isFrenchStreetWord } from "#fr/index"
+
+describe("isFrenchStreetWord", () => {
+	it("matches canonical voie words, case- and accent-insensitive", () => {
+		expect(isFrenchStreetWord("Rue")).toBe(true)
+		expect(isFrenchStreetWord("avenue")).toBe(true)
+		expect(isFrenchStreetWord("Boulevard")).toBe(true)
+		expect(isFrenchStreetWord("Allée")).toBe(true)
+		expect(isFrenchStreetWord("allee")).toBe(true) // unaccented
+		expect(isFrenchStreetWord("Impasse")).toBe(true)
+	})
+
+	it("matches common abbreviations", () => {
+		expect(isFrenchStreetWord("bd")).toBe(true)
+		expect(isFrenchStreetWord("av")).toBe(true)
+		expect(isFrenchStreetWord("pl")).toBe(true)
+		expect(isFrenchStreetWord("rte")).toBe(true)
+	})
+
+	it("matches the boulevard, passage and sentier variants a writer actually uses", () => {
+		// `@mailwoman/resolver`'s street-centroid tier recognized these.
+		// This table did not.
+		// That difference put the two lists out of step.
+		// They are abbreviations of a canonical type, so they belong here rather than in the recognizer.
+		expect(isFrenchStreetWord("bld")).toBe(true)
+		expect(isFrenchStreetWord("bvd")).toBe(true)
+		expect(isFrenchStreetWord("pas")).toBe(true)
+		expect(isFrenchStreetWord("sente")).toBe(true)
+	})
+
+	it("matches the whole token, so a non-voie word is not caught", () => {
+		// French types lead the name and are matched as whole tokens rather than suffixes.
+		// So neither a surname nor a commune that happens to contain a voie substring is flagged.
+		expect(isFrenchStreetWord("Paris")).toBe(false)
+		expect(isFrenchStreetWord("Bordeaux")).toBe(false)
+		expect(isFrenchStreetWord("Larue")).toBe(false) // contains "rue" but isn't it
+	})
+
+	it("rejects non-strings", () => {
+		expect(isFrenchStreetWord(42)).toBe(false)
+		expect(isFrenchStreetWord(null)).toBe(false)
+	})
+})

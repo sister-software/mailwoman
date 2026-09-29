@@ -7,14 +7,15 @@
 import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { describe, expect, it } from "vitest"
+
 import {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,
 	createOpenaddressesAdapter,
-} from "@mailwoman/corpus/adapters/openaddresses/adapter"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { describe, expect, it } from "vitest"
+} from "#adapters/openaddresses/adapter"
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("oa")
 

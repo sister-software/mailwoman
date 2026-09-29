@@ -15,9 +15,10 @@ import type { AddressInfo } from "node:net"
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { fetchGeonamesPostal } from "@mailwoman/corpus/tools"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+import { fetchGeonamesPostal } from "#tools"
 
 const fixtures = new AsyncDisposableStack()
 

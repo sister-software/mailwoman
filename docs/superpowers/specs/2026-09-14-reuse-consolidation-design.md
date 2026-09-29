@@ -164,9 +164,9 @@ interface at 895 lines, and every layer already depends on `core`, but an ingest
 the package everything depends on. A new `@mailwoman/layer-kit` workspace is cleaner and costs the seven-register
 registration that `AGENTS.md` documents. Decide before writing code.
 
-**The acceptance tests already exist.** Each layer carries a `test/unit/build.test.ts` that drives the full build to
+**The acceptance tests already exist.** Each layer carries a `lib/sdk/build.test.ts` that drives the full build to
 a sealed database from hand-built fixture geometry, without network access or GDAL. Those four suites plus the four
-`packages/mailwoman/test/unit/observations/*-route.test.ts` must pass unchanged. A test that needs editing to
+`packages/mailwoman/lib/observations/*-route.test.ts` must pass unchanged. A test that needs editing to
 accommodate the kit is a behavior change, and it stops the lane until explained.
 
 ### Lanes C, E, G, H

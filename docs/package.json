@@ -6,7 +6,6 @@
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"imports": {
 		"#docs-sub-header": "./src/components/DocsSubHeader/index.tsx",
-		"#unit/*": "./test/unit/*.ts",
 		"#glossary-plugin": "./plugins/glossary/plugin.ts",
 		"#components/*": "./src/components/*.tsx",
 		"#contexts/*": "./src/contexts/*.tsx",

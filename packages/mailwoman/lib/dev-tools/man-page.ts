@@ -9,8 +9,8 @@
  *   supplies its own section. npm links `package.json#man` on a global install.
  *   That link makes `man mailwoman` answer.
  *
- *   Committed-artifact discipline: the page is generated into the tree and committed (the freshness test under
- *   `test/unit/` re-renders and fails on drift), matching the sentencepiece-wasm single-file-ESM precedent — consumers
+ *   Committed-artifact discipline: the page is generated into the tree and committed (the freshness test
+ *   `man-page.test.ts` re-renders and fails on drift), matching the sentencepiece-wasm single-file-ESM precedent — consumers
  *   get the artifact, CI proves it fresh.
  *
  *   Run: `mailwoman dev generate man-page` (after `yarn compile` — it spawns the compiled CLI, the same binary consumers

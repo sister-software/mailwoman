@@ -318,11 +318,11 @@ jobs:
           if [ "$CONFORMANCE" = "true" ]; then
             yarn ci:test:slow
           else
-            yarn ci:test:slow --exclude '**/test/integration/conformance-*.test.ts'
+            yarn ci:test:slow --exclude '**/eval-harness/conformance/*.integration.test.ts'
           fi
 
   # This hosted job decides whether unit-slow runs the live-pipeline conformance suites
-  # (`test/integration/conformance-*.test.ts`). A PR that leaves the parse path alone excludes them.
+  # (`eval-harness/conformance/*.integration.test.ts`). A PR that leaves the parse path alone excludes them.
   # The `*-suite.test.ts` files in unit-fast still check the same laws against fixture rows. Keep
   # the path filter broad, because a missed path silently stops the suites from running.
   conformance-scope:

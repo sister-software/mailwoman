@@ -9,9 +9,10 @@ import type { AddressInfo } from "node:net"
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { fetchStateHISchools } from "@mailwoman/corpus/tools"
 import { afterAll, beforeAll, expect, test } from "vitest"
 import writeXlsxFile, { type SheetData } from "write-excel-file/node"
+
+import { fetchStateHISchools } from "#tools"
 
 const HEADER = ["code", "name", "address", "city", "zip"]
 

@@ -352,8 +352,6 @@ const FUNCTION_NODE_TYPES = new Set([
  */
 const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
 
-const MOCKING_FUNCTIONS = new Set(["mock", "doMock", "importActual", "importMock", "unmock", "doUnmock"])
-
 const noSyncFSInAsyncRule: Rule = {
 	meta: {
 		name: "no-sync-fs-in-async",
@@ -432,68 +430,6 @@ const noRelativeDynamicImportRule: Rule = {
 						"`imports` map instead (`#<path-from-package-root>`, without an extension) — it resolves `.ts` under `node` and " +
 						"`out/*.js` everywhere else, and moves with the file.",
 				})
-			},
-		}
-	},
-}
-
-/**
- * Prevent tests from importing package-private `#` aliases.
- */
-const noPrivateImportInTestRule: Rule = {
-	meta: {
-		name: "no-private-import-in-test",
-		type: "suggestion",
-		schema: [],
-	},
-	create(context: RuleContext) {
-		const report = (node: AstNode, specifier: string) => {
-			context.report({
-				node,
-				message:
-					`${stringifyJSON(specifier)} is the package's private \`imports\` map. A test imports the package under ` +
-					"test through its public exports (`@mailwoman/<pkg>/<subpath>`); a module no export names gets an " +
-					"`exports` entry, and only a helper under `test/` is imported by relative path.",
-			})
-		}
-
-		const checkSource = (node: AstNode) => {
-			const specifier = literalDelimiter(node.source)
-
-			if (specifier !== null && specifier.startsWith("#")) {
-				report(node, specifier)
-			}
-		}
-
-		return {
-			ImportDeclaration: checkSource,
-			ExportNamedDeclaration: checkSource,
-			ExportAllDeclaration: checkSource,
-			ImportExpression: checkSource,
-			TSImportType(node: AstNode) {
-				const specifier = literalDelimiter(node.argument)
-
-				if (specifier !== null && specifier.startsWith("#")) {
-					report(node, specifier)
-				}
-			},
-			CallExpression(node: AstNode) {
-				// Vitest mock helpers take the module specifier as the first argument.
-				const callee = node.callee
-
-				if (callee?.type !== "MemberExpression" || callee.object?.name !== "vi") return
-
-				const calleePropertyName = callee.property?.name
-
-				if (!calleePropertyName || !MOCKING_FUNCTIONS.has(calleePropertyName)) {
-					return
-				}
-
-				const specifier = literalDelimiter(node.arguments?.[0])
-
-				if (specifier !== null && specifier.startsWith("#")) {
-					report(node, specifier)
-				}
 			},
 		}
 	},
@@ -1048,7 +984,6 @@ const mailwomanPlugin: Plugin = {
 		"no-database-handle-cast": noDatabaseHandleCastRule,
 		"no-import-meta-dirname-walk": noImportMetaDirnameWalkRule,
 		"no-import-meta-resolve": noImportMetaResolveRule,
-		"no-private-import-in-test": noPrivateImportInTestRule,
 		"no-relative-dynamic-import": noRelativeDynamicImportRule,
 		"no-sync-fs-in-async": noSyncFSInAsyncRule,
 		"prefer-home": preferHomeRule,

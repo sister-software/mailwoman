@@ -9,10 +9,11 @@
  *   convention the US/FR-trained model never learned.
  */
 
-import { type LocaleBaseTuple, renderGermanRow, renderLocaleRow } from "@mailwoman/corpus/surfaces/locale"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
+
+import { type LocaleBaseTuple, renderGermanRow, renderLocaleRow } from "#surfaces/locale"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 const BERLIN: LocaleBaseTuple = {
 	house_number: "27",

@@ -4,14 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { WOFRecord } from "@mailwoman/corpus/utils/wof-json"
-import {
-	buildAncestorNameIndex,
-	extractNameVariants,
-	isCurrentFeature,
-	normalizeNameKey,
-} from "@mailwoman/corpus/utils/wof-json"
 import { expect, test } from "vitest"
+
+import type { WOFRecord } from "#utils/wof-json"
+import { buildAncestorNameIndex, extractNameVariants, isCurrentFeature, normalizeNameKey } from "#utils/wof-json"
 
 // `walkFeatures` (filesystem stream) and the private `recordFromFeature` it drives are out of scope here.
 // These are the pure object→value / map→map helpers.

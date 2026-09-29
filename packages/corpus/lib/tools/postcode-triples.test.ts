@@ -7,6 +7,12 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
+import { afterAll, describe, expect, it } from "vitest"
+
 import {
 	applyCountryBudget,
 	applyLocalityQuota,
@@ -17,12 +23,7 @@ import {
 	readTriplesFromGeonames,
 	readTriplesFromParentJoin,
 	regionWrittenForms,
-} from "@mailwoman/corpus/tools/postcode-triples"
-import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilder } from "path-ts"
-import { afterAll, describe, expect, it } from "vitest"
+} from "#tools/postcode-triples"
 
 const TAB = String.fromCharCode(9)
 const root = await temporaryDirectory("mw-postcode-triples-")

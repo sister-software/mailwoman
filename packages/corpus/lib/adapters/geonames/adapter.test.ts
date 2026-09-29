@@ -6,14 +6,11 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import {
-	createGeonamesAdapter,
-	GEONAMES_ADAPTER_ID,
-	GEONAMES_DEFAULT_LICENSE,
-} from "@mailwoman/corpus/adapters/geonames/adapter"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
+
+import { createGeonamesAdapter, GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE } from "#adapters/geonames/adapter"
+import type { CanonicalRow } from "#types"
 
 const fixtures = new AsyncDisposableStack()
 

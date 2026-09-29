@@ -14,10 +14,11 @@ import type { AddressInfo } from "node:net"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { fetchGeonamesDumps, looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
 import ADMZip from "adm-zip"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+import { fetchGeonamesDumps, looksLikeGazetteerDump, parseCountryInfo } from "#tools"
 
 let server: Server
 let baseURL: string

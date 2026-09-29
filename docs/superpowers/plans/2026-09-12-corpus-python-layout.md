@@ -1461,7 +1461,7 @@ grep -rn 'modal/train_remote\.py\|corpus-python/modal' --include='*.ts' --includ
   --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=.git --exclude-dir=docs/records
 ```
 
-Rewrite each hit. The known set: `REPRODUCIBILITY.md:28,31`, `packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts:24`, `launch/AGENTS.md`, and the fixture strings in `packages/dev-mcp/test/unit/bash-write-guard.test.ts:85-89,95,154,204`.
+Rewrite each hit. The known set: `REPRODUCIBILITY.md:28,31`, `packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts:24`, `launch/AGENTS.md`, and the fixture strings in `packages/dev-mcp/lib/hooks/bash/write/bash-write-guard.test.ts:85-89,95,154,204`.
 
 Leave `docs/records/` alone. Those files are dated records and keep the path that was correct when they were written.
 

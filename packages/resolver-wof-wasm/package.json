@@ -27,6 +27,7 @@
 	"type": "module",
 	"sideEffects": false,
 	"imports": {
+		"#test/*": "./test/*.ts",
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",

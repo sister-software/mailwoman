@@ -7,11 +7,12 @@
 import { pathExists, readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { FingerprintSet } from "@mailwoman/corpus/fingerprints"
-import { DedupStore, runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
-import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "@mailwoman/corpus/types"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
+import { FingerprintSet } from "#fingerprints"
+import { DedupStore, runAdapter, type RunnerProgress } from "#runner"
+import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 function makeAdapter(opts: {
 	id?: string

@@ -1,0 +1,87 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { expect, test } from "vitest"
+
+import {
+	countrySurfaceForms,
+	formatAsCountryISO2,
+	isAlpha2CodeShape,
+	isCountryToken,
+	matchCountry,
+} from "#country/index"
+
+test("matchCountry: resolves alpha-2, alpha-3, and name (case-insensitive) to the iso2", () => {
+	expect(matchCountry("US")?.iso2).toBe("US")
+	expect(matchCountry("usa")?.iso2).toBe("US") // alpha-3, lower-case
+	expect(matchCountry("DE")?.iso2).toBe("DE")
+	expect(matchCountry("DEU")?.iso2).toBe("DE") // alpha-3
+	expect(matchCountry("  gb ")?.iso2).toBe("GB") // trimmed
+})
+
+test("matchCountry: returns the canonical name + the matched surface; null when unknown", () => {
+	const m = matchCountry("US")
+	expect(m).not.toBeNull()
+	expect(typeof m!.canonical).toBe("string")
+	expect(m!.canonical!.length).toBeGreaterThan(0)
+	expect(matchCountry("  US ")?.matched).toBe("US") // matched is the trimmed surface
+
+	expect(matchCountry("Narnia")).toBeNull()
+	expect(matchCountry("")).toBeNull()
+	expect(matchCountry(null)).toBeNull()
+	expect(matchCountry(undefined)).toBeNull()
+})
+
+test("countrySurfaceForms: curated forms round-trip back through matchCountry", () => {
+	const forms = countrySurfaceForms("US")
+	expect(forms.length).toBeGreaterThan(0)
+
+	for (const form of forms) {
+		expect(matchCountry(form)?.iso2).toBe("US")
+	}
+
+	// unknown / uncurated iso2 → empty
+	expect(countrySurfaceForms("ZZ")).toEqual([])
+})
+
+test("isCountryToken: true for any recognized form, false otherwise", () => {
+	for (const tok of ["US", "usa", "DE", "deu", "GB"]) {
+		expect(isCountryToken(tok)).toBe(true)
+	}
+
+	for (const tok of ["Narnia", "", 7, null, undefined]) {
+		expect(isCountryToken(tok)).toBe(false)
+	}
+})
+
+test("formatAsCountryISO2 normalizes an explicit code and rejects other input", () => {
+	expect(formatAsCountryISO2(" us ")).toBe("US")
+	expect(() => formatAsCountryISO2("USA")).toThrow(/ISO 3166-1 alpha-2/)
+	expect(() => formatAsCountryISO2("XX")).toThrow(/ISO 3166-1 alpha-2/)
+})
+
+test("isAlpha2CodeShape admits the two codes the corpus keys on that ISO does not list", () => {
+	// This is why it exists beside `formatAsCountryISO2`, which rejects both.
+	// `XK` is Kosovo, in the source register and the `operational-non-iso-codes` regime.
+	// `ZZ` is what a corpus fragment row stores when its country is undetermined.
+	expect(isAlpha2CodeShape("XK")).toBe(true)
+	expect(isAlpha2CodeShape("ZZ")).toBe(true)
+	expect(() => formatAsCountryISO2("XK")).toThrow(/ISO 3166-1 alpha-2/)
+	expect(() => formatAsCountryISO2("ZZ")).toThrow(/ISO 3166-1 alpha-2/)
+})
+
+test("isAlpha2CodeShape refuses a case or length a country filter would match nothing with", () => {
+	// WOF record 1141959953 publishes `Nl`.
+	// A filter comparing it against a row's `NL` selects zero rows.
+	expect(isAlpha2CodeShape("Nl")).toBe(false)
+	expect(isAlpha2CodeShape("nl")).toBe(false)
+	expect(isAlpha2CodeShape("NLD")).toBe(false)
+	expect(isAlpha2CodeShape("N")).toBe(false)
+	expect(isAlpha2CodeShape(" NL")).toBe(false)
+	expect(isAlpha2CodeShape("")).toBe(false)
+	expect(isAlpha2CodeShape(undefined)).toBe(false)
+	expect(isAlpha2CodeShape(42)).toBe(false)
+})

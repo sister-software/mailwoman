@@ -1,0 +1,91 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Tests the health route's five report fields and `no-store` header.
+ *   It checks that the email field reports a failure after one hour and stays clear for a fresh failure.
+ */
+
+import { env } from "cloudflare:workers"
+import { beforeAll, expect, test } from "vitest"
+
+import { createLicenseWorkerApp } from "#app"
+import { readEnv } from "#env"
+import { openLedger } from "#ledger/client"
+import { createLicenseIfAbsent, insertTokenIfAbsent } from "#ledger/licenses"
+import { applyMigrations } from "#test/support/migrations"
+
+const NOW = Date.UTC(2026, 9, 1, 12)
+const HOUR = 60 * 60 * 1000
+
+beforeAll(async () => {
+	await applyMigrations(env.LICENSE_LEDGER)
+})
+
+function app(now: () => number = () => NOW) {
+	// Pin the time.
+	// Sandbox variables change with the deployment.
+	return createLicenseWorkerApp(readEnv({ ...env, ISSUANCE_ENABLED: "false" }), {
+		signingStatus: () => "unchecked",
+		ledger: openLedger(env.LICENSE_LEDGER),
+		email: { send: async () => ({ messageID: "msg_unused" }) },
+		now,
+	})
+}
+
+test("GET /health answers issuance, the environment's mode, a reachable ledger, the email word, and no-store", async () => {
+	const res = await app().request("/health")
+
+	expect(res.status).toBe(200)
+	expect(res.headers.get("cache-control")).toBe("no-store")
+
+	expect(await res.json()).toEqual({
+		issuance: false,
+		liveMode: false,
+		signing: "unchecked",
+		ledger: "ok",
+		email: "ok",
+	})
+})
+
+test("the email word turns failing on a failed email older than an hour, and stays ok on a fresh failure", async () => {
+	const ledger = openLedger(env.LICENSE_LEDGER)
+
+	await createLicenseIfAbsent(ledger, {
+		lid: "lic_health",
+		subscription_id: "sub_health",
+		customer_id: "cus_health",
+		checkout_session_id: "cs_health",
+		plan_code: "commercial-monthly-v1",
+		agreement_version: "commercial-2026-10",
+		licensee: "Health Ltd",
+		email: "health@example.com",
+		refresh_secret_sha256: "x".repeat(64),
+		refresh_secret_pending: null,
+	})
+
+	const token = (invoiceID: string, minutesAgo: number) => ({
+		invoice_id: invoiceID,
+		lid: "lic_health",
+		issued: "2026-10-01",
+		expires: "2026-11-15",
+		payload_json: "{}",
+		token: `mwl1.${invoiceID}.sig`,
+		email_state: "failed" as const,
+		email_message_id: null,
+		created_at: new Date(NOW - minutesAgo * 60 * 1000).toISOString(),
+	})
+
+	await insertTokenIfAbsent(ledger, token("in_fresh", 10))
+
+	expect(await (await app().request("/health")).json()).toMatchObject({ email: "ok" })
+
+	await insertTokenIfAbsent(ledger, token("in_stale", 90))
+
+	expect(await (await app().request("/health")).json()).toMatchObject({ email: "failing" })
+
+	// The same ledger read two hours later shows that the fresh one has aged into the alert too.
+	// One is enough either way.
+	expect(await (await app(() => NOW + 2 * HOUR).request("/health")).json()).toMatchObject({ email: "failing" })
+})

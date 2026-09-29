@@ -5,8 +5,9 @@
  */
 
 import { totalMemoryBytes } from "@mailwoman/core/utils/system"
-import { DUCKDB_MEMORY_SHARE, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { describe, expect, it } from "vitest"
+
+import { DUCKDB_MEMORY_SHARE, openDuckDB } from "#parquet/duckdb"
 
 /**
  * One setting as DuckDB reports it back.

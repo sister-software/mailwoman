@@ -4,6 +4,8 @@ import type { AddressInfo } from "node:net"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
 import {
 	attachmentFilename,
 	cookieHeader,
@@ -16,8 +18,7 @@ import {
 	streamBodyToFile,
 	withRetries,
 	writeManifest,
-} from "@mailwoman/corpus/tools/fetch/download"
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
+} from "#tools/fetch/download/index"
 
 let server: Server
 let base: string

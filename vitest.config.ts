@@ -118,7 +118,7 @@ export default defineConfig({
 			"**/docs/test/browser/**",
 			// Exclude Playwright tests in packages too.
 			"**/packages/*/test/browser/**",
-			"**/packages/*/test/e2e/**",
+			"**/packages/*/test/e2e/**/*.spec.ts",
 			"**/docs/test/build/**",
 			"**/docs/test/e2e/**",
 			// A worktree holds a full repository copy.

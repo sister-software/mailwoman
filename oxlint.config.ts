@@ -231,21 +231,6 @@ export default {
 			},
 		},
 		{
-			// Tests import the package through its public exports.
-			// The `#` import map is private to `lib/`.
-			files: [
-				"packages/*/test/**/*.ts",
-				"packages/*/test/**/*.tsx",
-				"packages/corpus/lib/**/*.test.ts",
-				"packages/corpus/lib/**/*.test.tsx",
-				"docs/test/**/*.ts",
-				"docs/test/**/*.tsx",
-			],
-			rules: {
-				"mailwoman/no-private-import-in-test": "error",
-			},
-		},
-		{
 			// This file wraps `node:child_process` for the rest of the repo.
 			files: ["packages/core/lib/process.ts"],
 			rules: {
@@ -296,9 +281,9 @@ export default {
 				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"docs/static/examples/mailwoman-server.mjs",
 				"docs/plugins/runtime-assets/workspace/resolution.ts",
-				"packages/map-tui/test/unit/tile-source.test.ts",
-				"packages/neural/test/integration/browser-slo.test.ts",
-				"packages/resolver-wof-sqlite/test/integration/lookup-readonly-open.test.ts",
+				"packages/map-tui/lib/tile-source.test.ts",
+				"packages/neural/lib/web/browser-slo.integration.test.ts",
+				"packages/resolver-wof-sqlite/lib/lookup-readonly-open.integration.test.ts",
 				"packages/tiger/lib/tools/serve-range.ts",
 			],
 			rules: {
