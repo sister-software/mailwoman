@@ -21,8 +21,15 @@ import { trackedSourcePaths } from "#tracked-sources"
 
 /**
  * Matches one Vale `--output line` record of the form `path:line:col:Rule:message`.
+ *
+ * Vale prefixes a rule with the style package that holds it, and `config/vale/.vale-code-census.ini`
+ * sets that package to `styles` on its `BasedOnStyles = styles` line.
+ * A pattern naming another package matches no record, so `collectHits` returns
+ * an empty array for a tree that has hits.
+ *
+ * The `POSITIVE_CONTROL` check exists for that failure and reports it as a run that measured no rows.
  */
-const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
+const HIT_PATTERN = /^(.*?):(\d+):(\d+):styles\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
  * Matches an interface-tied token.
