@@ -69,6 +69,9 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 		buildDeps: vi.fn(async () => gauntlet),
 		resolveWeights: vi.fn(async ({ locale }) => resolved(locale)),
 		realpath: async (path) => path.toString(),
+		// The default digest is the path, so a test that cares about bytes overrides it
+		// and every other test reads a stable value without writing a file.
+		sha256File: async (path) => `digest-of:${path.toString()}`,
 		runOne: vi.fn(async () => EMPTY_RESULT),
 		...overrides,
 	}
@@ -94,6 +97,48 @@ describe("buildRoutedMailwomanArm", () => {
 		expect(deps.resolveWeights).toHaveBeenCalledWith({ locale: "de-DE", cacheRoot: "/candidate" })
 		expect(arm.provenance.routes).toEqual({ GB: "en-GB", DE: "de-DE", US: "en-US" })
 		expect(arm.provenance.artifacts_by_locale).toHaveLength(3)
+	})
+
+	it("records a digest for every artifact it resolved, so a comparison reads the bytes", async () => {
+		const deps = fakeDeps()
+
+		const arm = await buildRoutedMailwomanArm(
+			{ weights_cache: "/candidate" },
+			[{ id: "us", input: "90210", country: "US" }],
+			deps
+		)
+
+		const artifacts = arm.provenance.artifacts_by_locale[0]!.artifacts
+		const card = artifacts.find((artifact) => artifact.name === "model-card.json")!
+
+		expect(card.digest).toBe(`digest-of:${card.path}`)
+		expect(artifacts.every((artifact) => (artifact.path === null) === (artifact.digest === null))).toBe(true)
+	})
+
+	it("digests one path once, so several locales sharing a base artifact read it a single time", async () => {
+		// Every routed locale resolves the same en-US `model.onnx`, so a digest per
+		// locale would read the shared bytes once per route.
+		const seen: string[] = []
+
+		const deps = fakeDeps({
+			sha256File: async (path) => {
+				seen.push(path.toString())
+
+				return `digest-of:${path.toString()}`
+			},
+		})
+
+		await buildRoutedMailwomanArm(
+			{ weights_cache: "/candidate" },
+			[
+				{ id: "gb", input: "SW1A 1AA", country: "GB" },
+				{ id: "de", input: "99423 Weimar", country: "DE" },
+				{ id: "us", input: "90210", country: "US" },
+			],
+			deps
+		)
+
+		expect(seen).toHaveLength(new Set(seen).size)
 	})
 
 	it("forwards the row country as the Gauntlet route", async () => {

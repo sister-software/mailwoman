@@ -8,6 +8,7 @@
  */
 
 import { realPath } from "@mailwoman/core/fs/readers"
+import { sha256File } from "@mailwoman/core/hash"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural/weights"
 import {
 	buildGauntletDeps,
@@ -34,13 +35,31 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"poi_venue_tier",
 ])
 
+/**
+ * One artifact an arm resolved, with the digest of the bytes it read.
+ *
+ * `resolveWeights` reports a name, a path and an origin.
+ * Two arms can resolve one name from one origin and read different bytes, so a comparison
+ * of names alone cannot establish that the arms were fed the same artifact.
+ * The digest is what settles it.
+ *
+ * `digest` is `null` only when the artifact resolved to no path, which states that
+ * this arm fed no such artifact rather than that its bytes are unknown.
+ */
+export interface RoutedArtifactRecord {
+	name: string
+	path: string | null
+	origin: string | null
+	digest: string | null
+}
+
 export interface RoutedArtifactProvenance {
 	locale: string
 	source: string
 	package_dir: string
 	model_path: string
 	tokenizer_path: string
-	artifacts: ResolvedWeights["artifacts"]
+	artifacts: RoutedArtifactRecord[]
 }
 
 export interface RoutedMailwomanProvenance {
@@ -60,6 +79,10 @@ export interface RoutedMailwomanArmDeps {
 	buildDeps(options: GauntletDepsOptions): Promise<GauntletDeps>
 	resolveWeights(options: { locale: string; cacheRoot?: string }): Promise<ResolvedWeights>
 	realpath(path: PathBuilderLike): Promise<string>
+	/**
+	 * Reads one artifact's content digest, so a test supplies bytes without writing a file.
+	 */
+	sha256File(path: PathBuilderLike): Promise<string>
 	runOne(
 		input: string,
 		deps: GauntletDeps,
@@ -71,6 +94,7 @@ const DEFAULT_DEPS: RoutedMailwomanArmDeps = {
 	buildDeps: buildGauntletDeps,
 	resolveWeights,
 	realpath: realPath,
+	sha256File,
 	runOne,
 }
 
@@ -101,10 +125,35 @@ async function assertInsideCache(
 	return target
 }
 
+/**
+ * Digests every artifact that resolved to a path, resolving each path once.
+ *
+ * The memo is keyed by the realpath, so a base artifact several locales share is read once per arm.
+ */
+async function digestArtifacts(
+	artifacts: ResolvedWeights["artifacts"],
+	memo: Map<string, Promise<string>>,
+	deps: RoutedMailwomanArmDeps
+): Promise<RoutedArtifactRecord[]> {
+	return await Promise.all(
+		artifacts.map(async (artifact) => {
+			if (!artifact.path) return { name: artifact.name, path: null, origin: artifact.origin, digest: null }
+
+			const path = await deps.realpath(artifact.path)
+			const held = memo.get(path) ?? deps.sha256File(path)
+
+			memo.set(path, held)
+
+			return { name: artifact.name, path, origin: artifact.origin, digest: await held }
+		})
+	)
+}
+
 async function preflightLocale(
 	locale: string,
 	cacheRoot: string,
-	deps: RoutedMailwomanArmDeps
+	deps: RoutedMailwomanArmDeps,
+	digests: Map<string, Promise<string>>
 ): Promise<RoutedArtifactProvenance> {
 	const resolved = await deps.resolveWeights({ locale, cacheRoot })
 
@@ -127,12 +176,17 @@ async function preflightLocale(
 		package_dir: await deps.realpath(resolved.packageDir),
 		model_path: await deps.realpath(resolved.modelPath),
 		tokenizer_path: await deps.realpath(resolved.tokenizerPath),
-		artifacts: resolved.artifacts,
+		artifacts: await digestArtifacts(resolved.artifacts, digests, deps),
 	}
 }
 
-async function resolveLocale(locale: string, cacheRoot: string | undefined, deps: RoutedMailwomanArmDeps) {
-	if (cacheRoot) return await preflightLocale(locale, cacheRoot, deps)
+async function resolveLocale(
+	locale: string,
+	cacheRoot: string | undefined,
+	deps: RoutedMailwomanArmDeps,
+	digests: Map<string, Promise<string>>
+) {
+	if (cacheRoot) return await preflightLocale(locale, cacheRoot, deps, digests)
 
 	const resolved = await deps.resolveWeights({ locale })
 
@@ -144,7 +198,7 @@ async function resolveLocale(locale: string, cacheRoot: string | undefined, deps
 		package_dir: await deps.realpath(resolved.packageDir),
 		model_path: await deps.realpath(resolved.modelPath),
 		tokenizer_path: await deps.realpath(resolved.tokenizerPath),
-		artifacts: resolved.artifacts,
+		artifacts: await digestArtifacts(resolved.artifacts, digests, deps),
 	}
 }
 
@@ -171,7 +225,9 @@ export async function buildRoutedMailwomanArm(
 	)
 
 	const locales = ["en-US", ...Object.values(routes)].filter((locale, index, all) => all.indexOf(locale) === index)
-	const artifacts = await Promise.all(locales.map(async (locale) => resolveLocale(locale, cacheRoot, deps)))
+	// One memo per arm, so an artifact several locales share is digested once.
+	const digests = new Map<string, Promise<string>>()
+	const artifacts = await Promise.all(locales.map(async (locale) => resolveLocale(locale, cacheRoot, deps, digests)))
 	const baseModelPath = artifacts[0]!.model_path
 	const mismatched = artifacts.filter((artifact) => artifact.model_path !== baseModelPath)
 

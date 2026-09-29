@@ -228,4 +228,54 @@ describe("artifactSetWarnings", () => {
 		expect(artifactSetWarnings(external, routed)).toEqual([])
 		expect(artifactSetWarnings(routed, external)).toEqual([])
 	})
+
+	/**
+	 * A digested artifact record, which the routed arm writes for every artifact it resolves.
+	 */
+	const digested = (name: string, artifacts: Array<[string, string | null, string | null]>) => ({
+		locale: name,
+		artifacts: artifacts.map(([artifact, path, digest]) => ({
+			name: artifact,
+			path,
+			origin: path === null ? null : "cache",
+			digest,
+		})),
+	})
+
+	it("reports one name resolved from different bytes on each arm", () => {
+		// A model card resolved from the data-root overlay on one arm and the workspace on
+		// the other can declare a different lexicon under the same filename.
+		const overlayArm = {
+			artifacts_by_locale: [digested("de-DE", [["model-card.json", "/overlay/de-de/model-card.json", "aaaa1111"]])],
+		}
+
+		const workspaceArm = {
+			artifacts_by_locale: [digested("de-DE", [["model-card.json", "/repo/de-de/model-card.json", "bbbb2222"]])],
+		}
+
+		const warnings = artifactSetWarnings(overlayArm, workspaceArm)
+
+		expect(warnings).toHaveLength(1)
+		expect(warnings[0]).toContain("de-DE: both arms fed model-card.json and the bytes differ")
+		expect(warnings[0]).toContain("aaaa1111")
+		expect(warnings[0]).toContain("bbbb2222")
+	})
+
+	it("stays silent when one name resolves from the same bytes at different paths", () => {
+		// Two staged caches hold the same artifact at their own paths, which is the
+		// ordinary shape of a candidate comparison rather than a confound.
+		const armA = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/a/model.onnx", "same-digest"]])] }
+		const armB = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/b/model.onnx", "same-digest"]])] }
+
+		expect(artifactSetWarnings(armA, armB)).toEqual([])
+	})
+
+	it("reports no byte difference when either arm recorded no digest", () => {
+		// A run recorded before the digest existed carries none.
+		// Reporting agreement there would state that the bytes match, which the record cannot support.
+		const withDigest = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/a/model.onnx", "aaaa1111"]])] }
+		const without = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/b/model.onnx", null]])] }
+
+		expect(artifactSetWarnings(withDigest, without)).toEqual([])
+	})
 })

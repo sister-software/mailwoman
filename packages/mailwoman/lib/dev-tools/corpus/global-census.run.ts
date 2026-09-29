@@ -42,7 +42,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools"
-import { readAdmittedCountries } from "mailwoman/coverage"
+
+import { readAdmittedCountries } from "#coverage/census"
 
 const { values } = parseArguments({
 	options: {

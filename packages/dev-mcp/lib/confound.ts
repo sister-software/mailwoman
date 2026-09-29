@@ -185,7 +185,20 @@ interface ResolvedArtifact {
 	name: string
 	path: string | null
 	origin: string | null
+	/**
+	 * The digest of the bytes the arm read, or `null` when the arm recorded none.
+	 *
+	 * Two recorded digests that differ make isolation ambiguous.
+	 * A `null` on either side leaves the comparison unable to say whether the bytes agree,
+	 * which is a different reading from agreement.
+	 */
+	digest: string | null
 }
+
+/**
+ * One locale's resolved artifacts, keyed by artifact name.
+ */
+type ResolvedByName = Map<string, Pick<ResolvedArtifact, "origin" | "path" | "digest">>
 
 function readArtifacts(value: unknown): ResolvedArtifact[] | null {
 	if (!Array.isArray(value)) return null
@@ -204,6 +217,7 @@ function readArtifacts(value: unknown): ResolvedArtifact[] | null {
 			name,
 			path: typeof record["path"] === "string" ? record["path"] : null,
 			origin: typeof record["origin"] === "string" ? record["origin"] : null,
+			digest: typeof record["digest"] === "string" ? record["digest"] : null,
 		})
 	}
 
@@ -218,14 +232,14 @@ function readArtifacts(value: unknown): ResolvedArtifact[] | null {
  *
  * Runs recorded before the record existed have no such record.
  */
-function resolvedArtifactsByLocale(provenance: unknown): Map<string, Map<string, string>> | null {
+function resolvedArtifactsByLocale(provenance: unknown): Map<string, ResolvedByName> | null {
 	if (typeof provenance !== "object" || provenance === null) return null
 
 	const byLocale = (provenance as Record<string, unknown>)["artifacts_by_locale"]
 
 	if (!Array.isArray(byLocale)) return null
 
-	const locales = new Map<string, Map<string, string>>()
+	const locales = new Map<string, ResolvedByName>()
 
 	for (const entry of byLocale) {
 		if (typeof entry !== "object" || entry === null) return null
@@ -236,12 +250,16 @@ function resolvedArtifactsByLocale(provenance: unknown): Map<string, Map<string,
 
 		if (typeof locale !== "string" || artifacts === null) return null
 
-		const resolved = new Map<string, string>()
+		const resolved: ResolvedByName = new Map()
 
 		for (const artifact of artifacts) {
 			if (artifact.path === null) continue
 
-			resolved.set(artifact.name, artifact.origin ?? "unstated")
+			resolved.set(artifact.name, {
+				origin: artifact.origin ?? "unstated",
+				path: artifact.path,
+				digest: artifact.digest ?? null,
+			})
 		}
 
 		locales.set(locale, resolved)
@@ -297,6 +315,22 @@ export function artifactSetWarnings(provenanceA: unknown, provenanceB: unknown):
 
 		if (onlyB.length) {
 			divergences.push(`${locale}: arm B fed ${onlyB.join(", ")} and arm A left ${pronounFor(onlyB)} unresolved.`)
+		}
+
+		// An artifact both arms resolved under one name can still hold different bytes,
+		// which the name comparison above reads as agreement.
+		for (const name of [...a.keys()].filter((key) => b.has(key)).toSorted()) {
+			const left = a.get(name)!
+			const right = b.get(name)!
+
+			if (!left.digest || !right.digest) continue
+
+			if (left.digest !== right.digest) {
+				divergences.push(
+					`${locale}: both arms fed ${name} and the bytes differ — arm A ${left.digest.slice(0, 12)} at ` +
+						`${left.path}, arm B ${right.digest.slice(0, 12)} at ${right.path}.`
+				)
+			}
 		}
 	}
 
