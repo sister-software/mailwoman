@@ -567,8 +567,13 @@ declare global {
 
 const BROWSER_ENTRY_SOURCE = [
 	'import * as ort from "onnxruntime-web/webgpu"',
-	'import { MailwomanTokenizer } from "#tokenizer"',
-	'import { WebONNXRunner } from "#web/onnx-runner"',
+	// These two lines are the bundled entry's source, which esbuild resolves from
+	// `BUNDLE_RESOLVE_DIR`, the repository root.
+	// A `#` specifier resolves against the nearest `package.json`, so it reads
+	// the root manifest there and fails.
+	// The entry therefore imports the package's public subpaths.
+	'import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"',
+	'import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"',
 	"",
 	"// Pinned so the warm number names one arm. Without cross-origin isolation ORT would settle on a",
 	"// single thread anyway; stating it removes the dependence on that inference.",
