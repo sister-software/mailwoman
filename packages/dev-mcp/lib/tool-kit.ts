@@ -329,8 +329,9 @@ function droppedRow(run: GeocodeRun): string[] {
 /**
  * Renders the query-intent advisories a run attached.
  *
- * A `QueryIntentMarker` leaves the selected answer unchanged. Its declaration
- * in `@mailwoman/core/pipeline` states this behavior.
+ * A `QueryIntentMarker` leaves the selected answer unchanged.
+ * Its declaration in `@mailwoman/core/pipeline` states this behavior.
+ *
  * A marker therefore reports something about the answer rather than replacing or withholding it,
  * and `declared_coarser_answer` sits beside a coordinate the run returned.
  *

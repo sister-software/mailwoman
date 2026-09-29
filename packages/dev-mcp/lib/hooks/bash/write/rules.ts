@@ -120,12 +120,14 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
  * No tracked path matches.
  * `tsc -b` or `yarn install` restores `out`, `dist` and `node_modules`.
  *
- * `scratchpad/` holds one-off notes and scripts. `scratchpad/AGENTS.md` describes
- * those files as temporary and outside the main codebase.
+ * `scratchpad/` holds one-off notes and scripts.
+ * `scratchpad/AGENTS.md` describes those files as temporary and outside the main codebase.
+ *
  * Git tracks no path there, so a removal discards only uncommitted scratch work,
  * and the hook deletes a stale document permanently.
  *
- * A build restores the three directories above. A removal from `scratchpad/` stays permanent.
+ * A build restores the three directories above.
+ * A removal from `scratchpad/` stays permanent.
  *
  * `.yarn/` is excluded because it holds the tracked yarn binary.
  *
