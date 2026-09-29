@@ -49,6 +49,8 @@ def token_f1(
     f1 = 2 * precision * recall / (precision + recall + 1e-9)
     per_label = {bio_labels[c]: float(f1[c]) for c in range(num_labels)}
     per_label_support = {bio_labels[c]: int(support[c]) for c in range(num_labels)}
+    per_label_pred = {bio_labels[c]: int(tp[c] + fp[c]) for c in range(num_labels)}
+    per_label_fp = {bio_labels[c]: int(fp[c]) for c in range(num_labels)}
 
     supported = [c for c in range(num_labels) if bio_labels[c] != "O" and support[c] > 0]
     macro = sum(float(f1[c]) for c in supported) / len(supported) if supported else 0.0
@@ -60,6 +62,10 @@ def token_f1(
         i_f1 = per_label.get(f"I-{tag}", 0.0)
         result[f"f1_tag.{tag}"] = (b_f1 + i_f1) / 2.0
         result[f"support_tag.{tag}"] = per_label_support.get(f"B-{tag}", 0) + per_label_support.get(f"I-{tag}", 0)
+        # `pred` and `fp` carry the reading a support of zero cannot: a tag the sample never attests
+        # and the model predicts anyway reads `support 0, pred > 0` rather than as an absent key.
+        result[f"pred_tag.{tag}"] = per_label_pred.get(f"B-{tag}", 0) + per_label_pred.get(f"I-{tag}", 0)
+        result[f"fp_tag.{tag}"] = per_label_fp.get(f"B-{tag}", 0) + per_label_fp.get(f"I-{tag}", 0)
     return result
 
 
@@ -117,10 +123,13 @@ def per_locale_tag_f1(
     percent of the sample cannot move ``macro_f1``. A change confined to one locale is invisible
     there. The regression board then reports it first.
 
-    A locale whose sample contains no true instance of a tag is omitted rather than scored 0.0,
-    because a zero reads as a measured failure rather than an absent denominator. ``rows.<locale>``
-    states the row count each locale's scores were taken over, so a score on eight rows cannot be
-    mistaken for a score on eight thousand.
+    ``support``, ``pred`` and ``fp`` are emitted for every locale and tag, and the F1 ratio only where
+    support exceeds zero. A ratio over an empty denominator would read as a measured failure, while a
+    tag the sample never attests and the model predicts anyway reads ``support 0, pred > 0`` and stays
+    visible. Omitting the whole pair would hide that prediction from every reported diagnostic.
+
+    ``rows.<locale>`` states the row count each locale's scores were taken over, so a score on eight
+    rows cannot be mistaken for a score on eight thousand.
     """
     if row_locale_ids is None:
         return {}
@@ -137,11 +146,14 @@ def per_locale_tag_f1(
         scored = token_f1(preds[selected], labels[selected], num_labels=num_labels, bio_labels=bio_labels)
 
         for tag in tags:
-            if int(scored.get(f"support_tag.{tag}", 0)) == 0:
-                continue
+            tag_support = float(scored.get(f"support_tag.{tag}", 0))
 
-            out[f"f1_tag.{tag}.{locale}"] = scored[f"f1_tag.{tag}"]
-            out[f"support_tag.{tag}.{locale}"] = float(scored[f"support_tag.{tag}"])
+            out[f"support_tag.{tag}.{locale}"] = tag_support
+            out[f"pred_tag.{tag}.{locale}"] = float(scored.get(f"pred_tag.{tag}", 0))
+            out[f"fp_tag.{tag}.{locale}"] = float(scored.get(f"fp_tag.{tag}", 0))
+
+            if tag_support > 0:
+                out[f"f1_tag.{tag}.{locale}"] = scored[f"f1_tag.{tag}"]
 
     return out
 

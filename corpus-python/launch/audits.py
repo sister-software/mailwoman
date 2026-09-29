@@ -231,10 +231,12 @@ def audit_validation_coverage(
     `v0.32.0-locality-shape`. US held 1,839,635 rows in each split. Current run output does not report
     those counts.
 
-    A recipe declaring `data.required_validation_coverage` fails this function before a GPU is
-    allocated, the way `required_corpus_receipts` fails `audit_epoch_mixture`. The report is written
-    and committed to the volume first, so a failed floor leaves the numbers behind rather than only
-    the fact that it failed.
+    `train()` runs this same audit in its preflight when a recipe declares
+    `data.required_validation_coverage`, the way it runs `audit_epoch_mixture` for
+    `required_corpus_receipts`, so a declared floor that a split misses raises before the GPU is
+    allocated. This function is the standalone entry point for auditing a corpus without launching a
+    run. The report is written and committed to the volume first either way, so a failed floor leaves
+    the numbers behind rather than only the fact that it failed.
     """
     import sys
     from pathlib import Path

@@ -89,14 +89,37 @@ def test_reports_each_locale_row_count_as_the_denominator():
     assert per_locale["rows.GB"] == 1.0
 
 
-def test_omits_a_tag_the_locale_sample_never_carries():
-    # DE's rows hold a locality and no street. A 0.0 here would read as a measured street failure.
+def test_reports_no_f1_for_a_tag_the_locale_sample_never_carries():
+    # DE's rows hold a locality and no street. A 0.0 F1 here would read as a measured street failure.
     true = torch.cat([_ids("B-street", "I-street"), _ids("B-locality", "I-locality")])
     per_locale = per_locale_tag_f1(true.clone(), true, _locales("US", "DE"), num_labels=NUM)
 
     assert per_locale["f1_tag.street.US"] == 1.0
     assert "f1_tag.street.DE" not in per_locale
+    assert per_locale["support_tag.street.DE"] == 0.0
     assert per_locale["rows.DE"] == 1.0
+
+
+def test_a_predicted_tag_the_sample_never_attests_stays_visible():
+    # DE's row holds a locality and the model predicts street over it. Omitting the pair on zero
+    # support would hide that prediction from every reported diagnostic.
+    true = torch.cat([_ids("B-street", "I-street"), _ids("B-locality", "I-locality")])
+    pred = torch.cat([_ids("B-street", "I-street"), _ids("B-street", "I-street")])
+    per_locale = per_locale_tag_f1(pred, true, _locales("US", "DE"), num_labels=NUM)
+
+    assert per_locale["support_tag.street.DE"] == 0.0
+    assert per_locale["pred_tag.street.DE"] == 2.0
+    assert per_locale["fp_tag.street.DE"] == 2.0
+    assert "f1_tag.street.DE" not in per_locale
+
+
+def test_pred_and_fp_separate_a_correct_prediction_from_a_phantom_one():
+    true = torch.cat([_ids("B-street", "I-street")])
+    per_locale = per_locale_tag_f1(true.clone(), true, _locales("US"), num_labels=NUM)
+
+    assert per_locale["support_tag.street.US"] == 2.0
+    assert per_locale["pred_tag.street.US"] == 2.0
+    assert per_locale["fp_tag.street.US"] == 0.0
 
 
 def test_answers_an_empty_mapping_without_locale_ids():
