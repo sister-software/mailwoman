@@ -116,6 +116,24 @@ export interface ResolveWeightsOpts {
 	 * The data-root overlay directory to probe instead of the default one.
 	 */
 	overlayRoot?: PathBuilderLike
+
+	/**
+	 * Resolve as though no weights package were installed in the workspace.
+	 *
+	 * The ladder admits an artifact by existence, and the workspace package sits
+	 * ahead of the overlay and the cache.
+	 * A checkout where `mwops release copy-weights` has run resolves from the workspace.
+	 *
+	 * That is correct for that machine, and it leaves the later rungs unreachable.
+	 *
+	 * A measurement of one of those later rungs cannot establish its own precondition without this option.
+	 * `overlayRoot` redirects the overlay rung rather than skipping the rung ahead of it,
+	 * and `cacheRoot` confines resolution to the cache and no other rung.
+	 *
+	 * A test or a diagnostic that asserts which rung answered sets this.
+	 * A serving path leaves it unset, so an installed package keeps its precedence.
+	 */
+	ignoreInstalledPackage?: boolean
 }
 
 /**
@@ -362,17 +380,19 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 
 	let emptyPackageDir: PathBuilder | undefined
 
-	try {
-		return await resolveFromPackageDir(
-			resolvePackageDirectory(packageName),
-			locale,
-			opts,
-			`package:${packageName}`,
-			tried
-		)
-	} catch (error) {
-		if (error instanceof Error && error.message.includes("missing model files")) {
-			emptyPackageDir = resolvePackageDirectory(packageName)
+	if (!opts.ignoreInstalledPackage) {
+		try {
+			return await resolveFromPackageDir(
+				resolvePackageDirectory(packageName),
+				locale,
+				opts,
+				`package:${packageName}`,
+				tried
+			)
+		} catch (error) {
+			if (error instanceof Error && error.message.includes("missing model files")) {
+				emptyPackageDir = resolvePackageDirectory(packageName)
+			}
 		}
 	}
 

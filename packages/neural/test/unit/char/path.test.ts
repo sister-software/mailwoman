@@ -225,11 +225,41 @@ describe("script-family fallback", () => {
 			cjk("model-card.json")
 		)
 
-		const resolved = await resolveWeights({ locale: "ja-JP", overlayRoot: root })
+		// The family-base step re-enters the ladder for `cjk`, where the workspace
+		// package sits ahead of the overlay.
+		// A checkout that has run `copy-weights` holds binaries there and resolves from them.
+		// That is correct for that machine, and it would leave this assertion reading the workspace path.
+		const resolved = await resolveWeights({ locale: "ja-JP", overlayRoot: root, ignoreInstalledPackage: true })
 
 		expect(resolved.encoder.kind).toBe("char")
 		expect(resolved.modelPath).toBe(cjk("model.onnx").toString())
 		expect(resolved.source).toContain("script-family base for ja-jp")
+	})
+
+	it("reaches the overlay rung under ignoreInstalledPackage and the workspace rung without it", async () => {
+		// The option's only effect is which rung answers.
+		// `en-US` ships an installed package on every checkout, so the pair states the
+		// precedence rather than depending on this machine's artifacts.
+		const root = fixtures.use(await temporaryDirectory("overlay-precedence-")).path
+		const overlay = root("en-us")
+
+		await writeLocalTextFile("not-a-real-graph", overlay("model.onnx"))
+		await writeLocalTextFile("not-a-real-tokenizer", overlay("tokenizer.model"))
+
+		await writeLocalTextFile(
+			stringifyJSON({ encoder: "sentencepiece", labels: LABELS, version: "0.0.0-overlay-precedence" }),
+			overlay("model-card.json")
+		)
+
+		const fromOverlay = await resolveWeights({ locale: "en-US", overlayRoot: root, ignoreInstalledPackage: true })
+
+		expect(fromOverlay.modelPath).toBe(overlay("model.onnx").toString())
+		expect(fromOverlay.source).toContain("overlay")
+
+		const fromPackage = await resolveWeights({ locale: "en-US", overlayRoot: root })
+
+		expect(fromPackage.modelPath).not.toBe(overlay("model.onnx").toString())
+		expect(fromPackage.source).toContain("package")
 	})
 
 	it("has no family base for a Latin locale", () => {
