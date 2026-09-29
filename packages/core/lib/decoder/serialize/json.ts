@@ -31,7 +31,7 @@ import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
  */
 export interface DroppedSpan {
 	/**
-	 * The tag the span carried.
+	 * The tag stored on the span.
 	 *
 	 * It is always one already present in the output, because a drop happens only when the slot was taken.
 	 */

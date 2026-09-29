@@ -26,7 +26,7 @@ export interface ExhibitDocument {
 /**
  * Builds the archive folder URL for one accession.
  *
- * Uses `cik` unpadded (`Number(cik)` is what strips the zero-padding `CIK` always carries) —
+ * Uses `cik` unpadded (`Number(cik)` is what strips the zero-padding in `CIK`) —
  * EDGAR archive paths spell the CIK without leading zeroes (`.../data/18926/...`).
  * {@linkcode submissionsURL} uses the opposite convention and zero-pads it.
  * Both are real edgar conventions and both appear in this file.
@@ -34,7 +34,7 @@ export interface ExhibitDocument {
  * A caller reaching for the wrong one gets a 404 rather than a wrong-but-plausible document.
  * `accessionNumber` is accepted either dashed (`"0000018926-26-000014"`,
  * the form every edgar-facing field spells it) or already undashed.
- * The archive path itself never carries the dashes.
+ * The archive path itself never includes the dashes.
  */
 export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
 	return `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accessionNumber.replaceAll("-", "")}`
@@ -73,12 +73,13 @@ const MANIFEST_FIELD_PATTERN = /^<([a-z][a-z-]*)>(.*)$/i
  * The manifest is edgar's own sgml, html-escaped inside the index page
  * (`<document>` is written `&lt.document&gt.`) and interleaved with that page's `<a>`
  * and `<br>` elements — the Lumen 2025 accession states 163 of them across 161 documents.
- * Reading the page as text decodes the manifest back to itself and drops the page markup,
+ * A text read of the page decodes the manifest back to itself and drops the page markup,
  * so the field patterns below never have to match one markup language through another's escaping.
  *
- * A manifest block missing either its `type` or its `filename` line is dropped rather than emitted
- * with a guessed value or a `url` ending in a bare slash — decision 6's "abstain, never guess"
- * posture, carried from `exhibit21.ts`, applied to a manifest row instead of a subsidiary row.
+ * A manifest block missing either its `type` or its `filename` line is dropped
+ * rather than emitted with a guessed value or a `url` ending in a bare slash —
+ * decision 6's "abstain, never guess" posture, inherited from `exhibit21.ts`,
+ * applied to a manifest row instead of a subsidiary row.
  */
 export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {
 	const archiveURL = accessionArchiveURL(cik, accessionNumber)

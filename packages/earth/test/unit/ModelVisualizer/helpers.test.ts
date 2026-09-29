@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pure-function tests for the ModelVisualizer render helpers. Rendering itself is validated
+ *   Pure-function tests for the ModelVisualizer render helpers. The browser suite validates rendering
  *   via Storybook (ModelVisualizer.stories.tsx) against the committed fixture.
  */
 
@@ -84,7 +84,7 @@ describe("ModelVisualizer helpers", () => {
 		}
 
 		if (trace.localeLogits) {
-			// Self-describing axis: the trace carries the country order its logits mean —
+			// Self-describing axis: the trace records the country order its logits mean —
 			// the gauge (and this test) key off it rather than a hardcoded class count.
 			expect(trace.localeCountries).toBeDefined()
 			expect(trace.localeLogits).toHaveLength(trace.localeCountries!.length)

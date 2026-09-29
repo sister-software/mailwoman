@@ -61,7 +61,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	}
 
 	/**
-	 * Lazily probe (once) whether the slim DB carries the `place_population` aux table.
+	 * Lazily probe (once) whether the slim DB contains the `place_population` aux table.
 	 */
 	#hasPopulation(): boolean {
 		if (this.#hasPopulationCache === undefined) {
@@ -72,7 +72,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	}
 
 	/**
-	 * Lazily probe (once) whether the slim DB carries the `place_abbr` aux table that build-slim adds.
+	 * Lazily probe (once) whether the slim DB contains the `place_abbr` aux table that build-slim adds.
 	 */
 	#hasPlaceAbbr(): boolean {
 		if (this.#hasPlaceAbbrCache === undefined) {
@@ -186,7 +186,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		const normQuery = foldQueryText(text)
 		// Exact-abbreviation ids: region and state abbreviations live in the slim DB's
-		// `place_abbr` table, carried by build-slim before `names` is dropped.
+		// `place_abbr` table, added by build-slim before `names` is dropped.
 		// A candidate whose abbreviation equals the query is an exact match, the same tier
 		// as an exact name match, so "VT" reaches Vermont ahead of a foreign region that
 		// merely token-matches "VT" through a multilingual name fragment.
@@ -253,7 +253,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 	/**
 	 * Dual-role localities coincident with an admin id, from the `coincident_roles`
-	 * relation carried into the slim DB by build-slim.
+	 * relation added to the slim DB by build-slim.
 	 *
 	 * Backs the resolver's hierarchy completion in the browser and
 	 * mirrors `WOFSQLitePlaceLookup.coincidentLocalitiesFor`.

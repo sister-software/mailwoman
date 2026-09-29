@@ -5,9 +5,9 @@
  *
  * Tests for the `no-street-led` recipe's board split.
  *
- * The recipe must not train on its own eval set, and the diacritic split is the invariant that
+ * The recipe must not train on its own eval set. The diacritic split is the invariant that
  * matters. The Norwegian digit board keeps diacritics in its surface key (`tømmerlien`) while
- * fr-fragment's normalizer strips them. Reusing fr-fragment's `norm` would fold `Tømmerlien` to
+ * fr-fragment's normalizer strips them. The `fr-fragment` `norm` function would fold `Tømmerlien` to
  * `tommerlien`, never match the reserved `tømmerlien`, and leak the surface into training while
  * every check reported success. `tømmerlien` therefore gets a test with a diacritic surface.
  */

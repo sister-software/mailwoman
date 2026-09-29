@@ -24,8 +24,9 @@ export interface HookOutput {
 }
 
 /**
- * Run `hookPath` over `payload`; a payload given as a string is sent verbatim,
- * which is how a malformed one is tested.
+ * Run `hookPath` over `payload`.
+ *
+ * A string payload is sent verbatim. which is how a malformed one is tested.
  */
 export function runHook(hookPath: string, payload: unknown): HookOutput {
 	const stdout = runFileSync("node", [hookPath], {

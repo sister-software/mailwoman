@@ -13,7 +13,7 @@
  *
  *   `--delta` is deliberately optional and unset by default, unlike the pair index's required one: the
  *   census ships as data, a loader and an offline probe. It has no decode wiring.
- *   Writing an unmeasured delta now would put a bias into a shipped artifact.
+ *   An unmeasured delta would bias a shipped artifact.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -28,7 +28,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 /**
  * Known parents probed after write, per country.
  *
- * Probing another country's names against a freshly built census prints
+ * A probe of another country's names against a freshly built census prints
  * reassuring-looking misses that verify no name.
  */
 const PROBE_PARENTS_BY_COUNTRY: Readonly<Record<string, readonly string[]>> = {

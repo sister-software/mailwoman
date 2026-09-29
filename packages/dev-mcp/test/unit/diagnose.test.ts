@@ -179,7 +179,7 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 
 	it("keeps a trace with no resolver records apart from a walk that performed no lookups", () => {
 		// One is a trace that predates the records and the other the walk stating it had no entry to resolve.
-		// Folding them together would let an old trace read as a retrieval failure.
+		// A combined value would let an old trace read as a retrieval failure.
 		expect(collectRetrievalFacts(undefined).lookups).toBeNull()
 		expect(collectRetrievalFacts([]).lookups).toEqual([])
 	})
@@ -256,7 +256,7 @@ describe("matchShapes", () => {
 		const unresolved = { ...EMPTY, retrieval: collectRetrievalFacts([lookup()]) }
 
 		// A format probe answers even with an empty candidate table.
-		// Classifying that answer as retrieval failure would report a working fallback as a defect.
+		// That classification would report a working fallback as a retrieval defect.
 		const fallbackAnswered = {
 			...EMPTY,
 			retrieval: collectRetrievalFacts([

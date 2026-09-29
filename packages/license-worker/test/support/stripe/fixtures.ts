@@ -94,7 +94,7 @@ export interface CheckoutSessionInit {
 	consent?: "accepted" | null
 	mode?: "subscription" | "payment"
 	/**
-	 * The agreement version the Payment Link carried; `null` omits the metadata, as a link without it would.
+	 * The agreement version the Payment Link included; `null` omits the metadata, as a link without it would.
 	 */
 	agreementVersion?: string | null
 }

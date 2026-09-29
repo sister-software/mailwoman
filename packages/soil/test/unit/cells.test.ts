@@ -15,7 +15,7 @@ const { lat, lon } = FIXTURE_ORIGIN
 
 describe("SoilCellIndex", () => {
 	it("gives a sub-cell delineation only partial cells, which is why the index answers nothing alone", () => {
-		// About 11 m across — far smaller than a resolution-9 cell, which is the typical size.
+		// About 11 m across — far smaller than a resolution-9 cell, the typical size.
 		const tiny = [[rectangleRing(lon, lat, lon + 0.0001, lat + 0.0001)]]
 		const index = new SoilCellIndex(9)
 

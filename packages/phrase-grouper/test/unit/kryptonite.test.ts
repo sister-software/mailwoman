@@ -8,7 +8,7 @@
  *   boundaries wrong and produced cascading classification errors.
  *
  *   The phrase grouper's job here is the easier half of the eventual joint decode: propose the right
- *   phrase boundaries with a structural kind hypothesis. Disambiguating which proposal wins when
+ *   phrase boundaries with a structural kind hypothesis. The reconciler selects which proposal wins when
  *   several overlap is Stage 5 reconcile's job (Thread D); this file asserts only that the grouper
  *   surfaces the correct proposals at usable confidence ranges.
  *
@@ -156,8 +156,8 @@ describe("kryptonite catalogue — 350 5th Ave, New York, NY 10118 (canonical)",
 
 	it("the STREET_PHRASE EXCLUDES the house number (5th Ave, not 350 5th Ave) — #565", () => {
 		// The house number lives in its own numeric proposal.
-		// Bundling it into STREET_PHRASE is what let the reconciler fuse "350 5th
-		// Ave" into one node and drop the street (#566).
+		// The bundled STREET_PHRASE let the reconciler fuse "350 5th Ave" into one node
+		// and drop the street (#566).
 		// Keep them separate.
 		const streetPhrases = out.filter((p) => p.kindHypothesis === "STREET_PHRASE")
 		expect(streetPhrases.find((p) => p.span.body === "5th Ave")).toBeDefined()

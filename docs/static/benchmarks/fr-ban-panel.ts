@@ -98,7 +98,8 @@ if (!dataRoot) {
 	// oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset
 	process.exit(1)
 
-	// Throwing states the branch's end, since `process.exit` is typed `never` only when the checker can see it.
+	// This throw satisfies the control-flow check because the checker sees
+	// `process.exit` as `never` only in some contexts.
 	throw new Error("unreachable")
 }
 

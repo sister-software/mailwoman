@@ -13,7 +13,7 @@
  *   blend live in `@mailwoman/resolver-wof-sqlite/place-importance-schema` — read it before changing
  *   either score.
  *
- *   The table is added to the `--db` in place. The WOF DB must already carry `concordances` and
+ *   The table is added to the `--db` in place. The WOF DB must already contain `concordances` and
  *   `place_population` for the fallback. Run `mailwoman gazetteer build admin` first.
  *
  *   A Wikidata id can map to more than one current WOF place. The join is not a function.
@@ -38,7 +38,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import type { FanoutCandidate } from "#gazetteer-pipeline/importance-fanout"
 
 /**
- * Columns a Wikidata concordance row needs before it carries a usable mapping.
+ * Columns a Wikidata concordance row needs before it contains a usable mapping.
  */
 const MIN_WIKIDATA_COLUMNS = 5
 
@@ -90,7 +90,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		try {
 			// Join `spr` for the geometry and population the fan-out guard needs.
 			// Restrict rows to `is_current = 1` so a dead row cannot win a fan-out group.
-			// Use DISTINCT because `concordances` carries duplicate (id, other_id) rows.
+			// Use DISTINCT because `concordances` contains duplicate (id, other_id) rows.
 			const stmt = kdb.prepare(
 				`SELECT DISTINCT c.other_id AS other_id, s.id AS id, s.placetype AS placetype,
 				        s.latitude AS lat, s.longitude AS lon, COALESCE(p.population, 0) AS population
@@ -219,7 +219,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		// Referential is population-anchored and independent of the Wikipedia join,
-		// so every place with a population carries one whether or not it has an article.
+		// so every place with a population has one whether or not it has an article.
 		const wofReferential = new Map<number, number>()
 
 		try {

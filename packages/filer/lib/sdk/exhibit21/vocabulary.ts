@@ -11,8 +11,9 @@
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
- * Matches a cell value made only of punctuation and whitespace, which no legal entity
- * name can be (a decorative rule row such as `"----"` or `"======="`).
+ * Matches a cell value made only of punctuation and whitespace.
+ *
+ * No legal entity name can be (a decorative rule row such as `"----"` or `"======="`).
  */
 const DECORATIVE_ONLY_PATTERN = /^[^a-z0-9]*$/i
 
@@ -119,8 +120,8 @@ export function isHeaderOrDecorationRow(values: readonly string[]): boolean {
 export const FOOTNOTE_MARKER_PATTERN = /^[([]?\d{1,3}[)\]]?$|^\*{1,3}$/
 
 /**
- * True when `value` carries a corporate legal designation ("Inc.", "LLC", "Limited"); used only
- * alongside a second condition, because a jurisdiction can carry one (Charter writes `"Delaware
+ * True when `value` contains a corporate legal designation ("Inc.", "LLC", "Limited"); used only
+ * alongside a second condition, because a jurisdiction can contain one (Charter writes `"Delaware
  * limited liability company"`).
  */
 export function carriesLegalDesignation(value: string): boolean {
@@ -128,9 +129,10 @@ export function carriesLegalDesignation(value: string): boolean {
 }
 
 /**
- * True when one cell holds several entity values the source kept in separate blocks. a block
- * boundary alone is not enough because exporters emit soft line wraps as block boundaries, so both
- * cumulative sides must carry their own legal designation before the cell reads as multiple entities.
+ * True when one cell holds several entity values the source kept in separate blocks.
+ * a block boundary by itself is not enough because exporters emit soft line wraps as
+ * block boundaries, so both cumulative sides must contain their own legal designation
+ * before the cell reads as multiple entities.
  */
 export function isMultiValueCell(blocks: readonly string[]): boolean {
 	for (let split = 1; split < blocks.length; split++) {

@@ -1,6 +1,6 @@
 """`smoke` — the whole pipeline at tiny scale on CPU: train, eval, export, quantize, package.
 
-This validates the WIRING. It does not produce shippable weights. Every bundle it writes says so in
+This validates the WIRING. It does not produce shippable weights. Every bundle it writes records that in
 its card and README.
 """
 

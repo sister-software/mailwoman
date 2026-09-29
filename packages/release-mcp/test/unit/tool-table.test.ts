@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The release tool table over a synthetic registry: which operations become tools, what they are called, what a
- *   writing tool gains, and what a call answers.
+ *   writing tool gains and what a call answers.
  */
 
 import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/release-kit"

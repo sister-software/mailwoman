@@ -9,7 +9,7 @@
  *   It injects the geocoder into the matcher's `GeocodeAddress` interface, so `@mailwoman/registry` never
  *   imports the runtime.
  *
- *   Blocking uses geography, so textual variants of the same place land in one block. The real run
+ *   Geographic blocking puts textual variants of the same place in one block. The real run
  *   needs the weights and databases in hand, so it is operator-verifiable.
  */
 

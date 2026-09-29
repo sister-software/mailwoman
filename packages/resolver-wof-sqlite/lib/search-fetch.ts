@@ -67,7 +67,7 @@ export interface RawSearchRow {
 	max_longitude: number | null
 	population: number | null // from the place_population aux table. null when missing
 	/**
-	 * From `place_importance.encyclopedic` when the extract's table carries the two-score split columns.
+	 * From `place_importance.encyclopedic` when the extract's table includes the two-score split columns.
 	 *
 	 * NULL means the place has no Wikipedia article, or the extract predates the split.
 	 * Either case records an absence.
@@ -114,7 +114,7 @@ export function fetchSearchRows<DB>(options: {
 	// case the `exactMatchTiering` docstring flags.
 	// The exact-abbrev holder's BM25 is poor, so under the normal `limit * 4` window it
 	// drops out of the candidate pool before tiering can promote it.
-	// Widening the window for short queries keeps the exact match present to be tiered.
+	// A wider window for short queries keeps the exact match available for tiering.
 	// Cross-country abbrev collisions ("VT" is both Vermont and Viterbo) still need a country
 	// or postcode signal to disambiguate, so this only rescues the window-drop class.
 	const ftsLimit =
@@ -178,7 +178,7 @@ export function fetchSearchRows<DB>(options: {
 		? `LEFT JOIN ${sch}.${PLACE_POPULATION_TABLE} ON ${PLACE_POPULATION_TABLE}.id = spr.id`
 		: ""
 
-	// The encyclopedic score is carried and never ranked on (ROAD_TO_V9 §2).
+	// The encyclopedic score is returned and never ranked on (ROAD_TO_V9 §2).
 	// It appears in the select and in no order BY, here or in the companion fetch below.
 	// It is conditioned on the split column, so a pre-split extract emits a literal NULL
 	// and builds no join at all.
@@ -234,7 +234,7 @@ export function fetchSearchRows<DB>(options: {
 
 	const rawRows = allRows<RawSearchRow>(stmt, ...params)
 
-	// Companion fetch: the same `match`, ordered by population alone.
+	// Companion fetch: the same `match`, ordered only by population.
 	// For name floods ("Paris" matches thousands of gap-fill villages) the bm25-based
 	// window above cannot admit the famous holder, because its bm25 is length-poisoned
 	// by the row's alias bulk (measured ~15 pts, against a +4.0 boost cap).

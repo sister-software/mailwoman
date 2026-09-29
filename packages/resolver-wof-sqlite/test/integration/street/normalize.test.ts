@@ -215,7 +215,7 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 
 describe("normalizeStreetForKeyLocale — the es branch (Spanish rooftop keying)", () => {
 	it("es: KEEPS the leading type, which Spain needs more than Italy does", () => {
-		// Dropping a recognized type merges 7.977% of Spain's distinct (municipio, street)
+		// The removal of a recognized type merges 7.977% of Spain's distinct (municipio, street)
 		// pairs against Italy's 3.941%, and `Calle Mayor` with `Plaza Mayor` is why.
 		expect(normalizeStreetForKeyLocale("Calle Mayor", "es")).toBe("calle mayor")
 		expect(normalizeStreetForKeyLocale("Plaza Mayor", "es")).toBe("plaza mayor")
@@ -229,9 +229,9 @@ describe("normalizeStreetForKeyLocale — the es branch (Spanish rooftop keying)
 	})
 
 	it("es: leaves c/, av and pl unexpanded, since each names two stored tokens", () => {
-		// The register carries `calle` beside `carrer`, `avenida` beside `avinguda`,
+		// The register includes `calle` beside `carrer`, `avenida` beside `avinguda`,
 		// and `plaza` beside `plaça`.
-		// Expanding to one would key a query to the wrong token in the other region,
+		// A broader key would point a query to the wrong token in the other region,
 		// so an abbreviation misses instead.
 		// `streetKeyVariants` is where a one-to-many key belongs.
 		expect(normalizeStreetForKeyLocale("C/ Mayor", "es")).toBe("c/ mayor")
@@ -250,8 +250,8 @@ describe("normalizeStreetForKeyLocale — the es branch (Spanish rooftop keying)
 
 describe("normalizeStreetForKeyLocale — the it branch (ANNCSU rooftop keying)", () => {
 	it("it: KEEPS the leading type, where pl drops it", () => {
-		// Dropping a recognized type merges 3.941% of Italy's distinct (comune, street)
-		// pairs against 0.131% of Poland's.
+		// The removal of a recognized type merges 3.941% of Italy's distinct
+		// (comune, street) pairs against 0.131% of Poland's.
 		// These are two of Italy's.
 		expect(normalizeStreetForKeyLocale("Via Bevegni", "it")).toBe("via bevegni")
 		expect(normalizeStreetForKeyLocale("Salita Bevegni", "it")).toBe("salita bevegni")

@@ -77,8 +77,8 @@ export type RowGrade = "improved" | "regressed" | "neutral" | "ungradeable"
 /**
  * `checkCase` returns the list of issues, so fewer is better.
  *
- * Comparing counts rather than text is deliberate, because an arm that trades one
- * wrong component for a different wrong one has not improved.
+ * Count comparison is deliberate because an arm that trades one wrong component
+ * for a different wrong one has not improved.
  */
 export function gradeRow(
 	seed: SeedCase | undefined,

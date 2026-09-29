@@ -11,7 +11,7 @@
  *   The same geometries classify in milliseconds in a fresh process. A build that completes only when
  *   fragmentation stays low is not reproducible. {@linkcode buildSoilDatabase} bounds each process to a range
  *   of the shapefile's FIDs. Each range gets a separate process with a fresh heap. Iowa's 99 survey areas
- *   contain far more delineations together than each area contains alone. The bound therefore applies per range.
+ *   contain far more delineations together than each area contains by itself. The bound therefore applies per range.
  *
  *   The chunk appends rows to a database created by the parent. The parent seals that database and adds up
  *   the counts returned by each chunk. Chunks run one at a time against the file, so only one writer uses it.
@@ -29,7 +29,7 @@ import type { SoilFeatureSource } from "#sdk/ingest/index"
  * Rows per bulk-insert transaction.
  *
  * Chosen for the geometry table.
- * Each row carries a blob.
+ * Each row contains a blob.
  *
  * A larger transaction grows the write-ahead file without improving throughput.
  */
@@ -62,7 +62,7 @@ export interface SoilChunkResult {
 	 *
 	 * Separate from the total because the coverage rule depends on this value.
 	 * A cell reached only by `notcom` or access-denied polygons lies inside a published
-	 * survey area and carries no digitized soil mapping.
+	 * survey area and contains no digitized soil mapping.
 	 *
 	 * Section 3.2 of the survey specification assigns no row to that cell.
 	 */

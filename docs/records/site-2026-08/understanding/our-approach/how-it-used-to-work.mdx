@@ -92,7 +92,7 @@ Notice the two `locality` candidates. The solver returns multiple ranked solutio
 
 ## Step 4 — Resolve
 
-Parsing answered "what kind of thing is each part of this string?". Resolving answers "where is the resulting place?". The resolver looks up the parsed components in a gazetteer (Who's On First, in Mailwoman's case), and the gazetteer returns coordinates, a stable place ID, and optionally a bounding box.
+The parser answered "what kind of thing is each part of this string?". The resolver answers "where is the resulting place?". It looks up the parsed components in a gazetteer (Who's On First, in Mailwoman's case), and the gazetteer returns coordinates, a stable place ID, and optionally a bounding box.
 
 The resolver is a separate concern from the parser. Read about it in [`concepts/resolver-and-wof.md`](../../concepts/resolver-and-wof.mdx).
 
@@ -100,7 +100,7 @@ The resolver is a separate concern from the parser. Read about it in [`concepts/
 
 - **Determinism.** A rule classifier produces the same answer on the same input every time, without retraining or randomness.
 - **Explainability.** When the parser is wrong, you can read the rule and see why.
-- **Fast iteration on a single bug.** Fixing "the postcode pattern misses Canadian H1A-X9X" is a one-line code change.
+- **Fast iteration on a single bug.** A one-line code change can fix "the postcode pattern misses Canadian H1A-X9X."
 
 ## What this approach is bad at
 

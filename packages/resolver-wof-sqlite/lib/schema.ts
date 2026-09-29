@@ -35,7 +35,7 @@ export interface PlaceSearchTable {
  *
  * The resolver's main lookup table.
  *
- * Lifecycle flags carry two conventions, both meaning "currently valid": `is_current = -1`
+ * Lifecycle flags use two conventions, both meaning "currently valid": `is_current = -1`
  * for modern Who's On First and `is_current = 1` for the legacy Mapzen era.
  * Only `is_current = 0` means "not current".
  *
@@ -135,7 +135,7 @@ export interface AncestorsTable {
  * Written by the build/augment ingest + the GeoNames backfill.
  * Read by the candidate build's `neg_rank`.
  *
- * WOF carries population for ~15% of localities.
+ * WOF records population for ~15% of localities.
  * Absent = unknown rather than zero.
  */
 export interface PlacePopulationTable {
@@ -194,7 +194,7 @@ export interface CoincidentRolesTable {
  * The build and augment writers adopt it so a column rename is a compile error on both sides.
  */
 /**
- * The provenance row every built extract carries: source fingerprints travelling with
+ * The provenance row every built extract includes: source fingerprints stored with
  * the database rather than in a document that can drift from it.
  *
  * Written by the postcode builders in `mailwoman/gazetteer-pipeline`.

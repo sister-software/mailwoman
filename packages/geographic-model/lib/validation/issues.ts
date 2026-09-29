@@ -6,8 +6,8 @@
  * The issue vocabulary and the primitive field readers `./validate.ts` is built from.
  *
  * Every reader appends issues to the supplied list and returns `undefined` when it cannot read a field.
- * Throwing would end the pass at the first defect.
- * Substituting a default would turn an unreadable field into a value and invent data at the validation boundary.
+ * The pass records each defect and continues.
+ * A default would turn an unreadable field into a value and invent data at the validation boundary.
  */
 
 /**
@@ -23,7 +23,7 @@ export const ValidationIssueCode = {
 	 */
 	EmptyValue: "empty_value",
 	/**
-	 * A list that must carry entries was empty.
+	 * A list that must contain entries was empty.
 	 */
 	EmptyList: "empty_list",
 	UnknownField: "unknown_field",

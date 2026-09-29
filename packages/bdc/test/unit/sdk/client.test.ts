@@ -228,7 +228,7 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 		// Arrivals are timestamped inside the adapter.
 		// `clock.sleepCalls` records the grant schedule.
 		// The rate limiter sees request arrivals.
-		// Asserting only sleep calls would let a burst hide behind correctly spaced grants.
+		// A burst could hide behind correctly spaced grants if the test checked only sleep calls.
 		// `runUntilSettled` is required because the throttle sits downstream of the on-disk
 		// cache lookup, so each request spends real event-loop turns in `readFile` first.
 		const FAN_OUT = 12
@@ -538,7 +538,7 @@ describe("createBDCClient: the binary download path", () => {
 	it("copies out of a POOLED buffer rather than handing over its neighbours' bytes", async () => {
 		// Node pools small `Buffer.allocUnsafe` allocations.
 		// A short body arrives as a view at a non-zero `byteOffset` into a shared 8 KiB backing store.
-		// Returning `.buffer` directly would hand the caller the whole pool.
+		// The caller would receive the whole pool if this code returned `.buffer` directly.
 		// `Buffer.concat` makes an exactly-sized allocation past the pool threshold.
 		// A real multi-hundred-megabyte download uses that allocation, so the zero-copy branch is correct.
 		const pool = Buffer.alloc(64, 0xaa)

@@ -50,7 +50,7 @@ const { values } = parseArguments({
 })
 
 /**
- * A repo-relative path, so a generated page carries no reader's home directory.
+ * A repo-relative path, so a generated page contains no reader's home directory.
  */
 const relativeToRepo = (path: PathBuilderLike): string => relative(repoRootPath(), path)
 
@@ -128,7 +128,7 @@ const notAdmitted = sorted.filter((code) => measured.has(code) && !shippedFamili
 /**
  * The corpus holds rows for these jurisdictions, but no shipped graph admits them.
  *
- * Closing the gap takes a `country_weights` entry.
+ * A `country_weights` entry closes the gap.
  * A jurisdiction with no data requires data acquisition.
  */
 const droppedWithRows = withRows.filter((code) => !shippedFamilies.has(code))

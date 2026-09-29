@@ -191,7 +191,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	})
 
 	it("keeps a refused source out of the synthetic rows fanned from it", async () => {
-		// An augmentation carries its ancestor's `source`, so the eligibility check must run
+		// An augmentation inherits its ancestor's `source`, so the eligibility check must run
 		// before `synthesizeRow` for the ancestor's refusal to cover the fan-out.
 		const withSynth = await buildCorpus({
 			outputDir: scratch.path("release-eligible-synth"),

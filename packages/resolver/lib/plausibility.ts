@@ -38,7 +38,8 @@ export interface ResolvedCoordinate {
 
 /**
  * Returns the resolved coordinate at the finest granularity tier in the tree,
- * preferring the earliest node on a tie, and `null` when no node carries a `lat`/`lon`.
+ * preferring the earliest node on a tie.
+ * It returns `null` when no node has a `lat`/`lon`.
  */
 export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate | null {
 	let best: ResolvedCoordinate | null = null
@@ -149,8 +150,8 @@ export interface PlausibilityOpts {
 	/**
 	 * The ISO 3166-1 alpha-2 country the resolution should land in.
 	 *
-	 * Setting it enables the bounding-box check that catches cross-country jumps
-	 * the country-centroid check cannot.
+	 * A set `expectedCountry` enables the bounding-box check that catches cross-country
+	 * jumps the country-centroid check cannot.
 	 */
 	expectedCountry?: string
 

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Finalizing a `postcode_locality` table stamps the terms the table has always carried in `meta` into a
- *   `layer_manifest` as well, and a second finalize replaces that manifest rather than failing on it, because
+ *   The finalizer stamps terms already recorded in `meta` into a `postcode_locality` table and its
+ *   `layer_manifest`. A second finalize replaces that manifest rather than failing because
  *   the table accumulates across country runs.
  */
 

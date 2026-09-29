@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Admin-match predicates: does a resolved place count as the row's expected locality or region?
  *
- *   OpenAddresses carries no WOF id, so matching uses names. OpenAddresses and WOF can write those names differently:
+ *   OpenAddresses has no WOF id, so matching uses names. OpenAddresses and WOF can write those names differently:
  *   a USPS abbreviation can correspond to a canonical state name, or a district-qualified gold locality to WOF's bare name.
  *   Each allowance uses the place's recorded names or ancestry as provenance. It adds credit only to an already-correct place.
  */
@@ -20,7 +20,7 @@ import type { Resolved } from "#eval-harness/oa/resolver/tree-hits"
 import { normalizeComponent } from "#eval-harness/per/tag-f1"
 
 /**
- * Shortest token distinctive enough to carry matching weight.
+ * Shortest token distinctive enough to contribute matching weight.
  * Shorter ones are articles and directionals.
  */
 const MIN_DISTINCTIVE_TOKEN_LENGTH = 4
@@ -133,7 +133,7 @@ export type LocalityMatcher = (expected: string | undefined, locNode: Resolved |
  * ancestry (`Plauen Vogtl` → Plauen).
  * Plauen's county is Vogtlandkreis.
  *
- * Different WOF ids carry disjoint name sets, so Saint Albans never matches St. Johnsbury.
+ * Different WOF ids have disjoint name sets, so Saint Albans never matches St. Johnsbury.
  *
  * The matcher opens the admin database read-only.
  * It caches both lookups and runs them only after a near-miss.
@@ -147,7 +147,7 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 	// place's WOF `names` rows (normalized) rather than only its single canonical name.
 	// This credits forms WOF records as the same place (Butte ↔ Butte-Silver Bow,
 	// Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) without loosening genuine wrong-place misses.
-	// Different WOF ids carry disjoint name sets, so Saint Albans never matches St. Johnsbury.
+	// Different WOF ids have disjoint name sets, so Saint Albans never matches St. Johnsbury.
 	// The admin db (database 0) opens read-only.
 	// Its `names` table is indexed on id.
 	// Cached lookups run only after a near-miss.
@@ -185,7 +185,7 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 	// credit the qualifier only when it matches the resolved place's own WOF ancestry:
 	// `Vogtl`→county `Vogtland`, `Sachs`→region `Sachsen`.
 	// List-free and non-gameable.
-	// A genuinely wrong place won't carry the gold's qualifier among its ancestors.
+	// A genuinely wrong place will not have the gold's qualifier among its ancestors.
 	// `und` and non-latin ancestor names normalize to empty under normName
 	// (Cyrillic and CJK are stripped), so the token set is latin-only without a language filter.
 	const ancestorNamesStmt = adminDB.prepare(
@@ -221,10 +221,10 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 		if (!e) return false
 
 		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
-		// Gold carries the source's own parenthetical delivery marker (`Manilla (Rural)`),
+		// Gold includes the source's own parenthetical delivery marker (`Manilla (Rural)`),
 		// which normalizes to a bare trailing word.
-		// It therefore reaches the ancestry near-miss below, where no county carries the token `Rural`.
-		// Compared after the raw surfaces because a gazetteer name can carry a parenthetical too.
+		// It therefore reaches the ancestry near-miss below, where no county includes the token `Rural`.
+		// Compared after the raw surfaces because a gazetteer name can include a parenthetical too.
 		// See `../locality-qualifier.ts`.
 		const withoutQualifier = normName(stripParentheticalQualifier(expected))
 

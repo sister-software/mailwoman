@@ -33,7 +33,7 @@ The highest-value geospatial layers for address NER:
 
 Most state ArcGIS Hubs publish data under CC-BY or equivalent open terms. Check each dataset.
 
-## Licensing reality
+## License constraints
 
 State records are not "public domain" in the IP sense, but factual data (name + address) is not copyrightable under _Feist v. Rural Telephone_. Some caveats apply:
 
@@ -76,7 +76,7 @@ GeoNames postal is therefore the cheap CC-BY fill for ES/IT and for roughly half
 
 Overture Maps is a Meta/Microsoft/AWS/TomTom consortium (2023+, newer than the corpus catalog below). Its **Places** theme is a large open POI dataset, and its **Addresses** theme includes OpenAddresses. It therefore covers two of our three gaps in one source, with stable **GERS** entity IDs. It is distributed as cloud parquet (DuckDB/S3). Probe it before committing to per-source OSM imports.
 
-### Licensing gradient
+### License gradient
 
 For an AGPL product, license terms matter more than coverage:
 
@@ -115,7 +115,7 @@ carries the current state.
 
 ### Integrity discipline
 
-Attach supplemental data as **attributes on WOF-keyed entities** (such as a centroid or a popularity score) rather than importing entities with foreign ids. WOF remains the anchor and provides the eval keys, while the coordinates and the long tail come from other sources. Using Overture's GERS ids (or any parallel id space) as primary keys would break the WOF-id-keyed resolver evals. That is the reason for the rule "extend the custom WOF build, never a prebuilt dump". OA centroid aggregation meets this requirement because the postcode keeps its WOF id, and only its coordinate comes from OA.
+Attach supplemental data as **attributes on WOF-keyed entities** (such as a centroid or a popularity score) rather than importing entities with foreign ids. WOF remains the anchor and provides the eval keys, while the coordinates and the long tail come from other sources. Overture's GERS ids (or any parallel id space) would break WOF-id-keyed resolver evals as primary keys. That is the reason for the rule "extend the custom WOF build, never a prebuilt dump". OA centroid aggregation meets this requirement because the postcode keeps its WOF id, and only its coordinate comes from OA.
 
 ---
 
@@ -161,7 +161,7 @@ Attach supplemental data as **attributes on WOF-keyed entities** (such as a cent
 - **New Hampshire** — NH DOE Bureau of Education Statistics — https://www.education.nh.gov/who-we-are/division-of-educator-and-analytic-resources/bureau-of-education-statistics/schools-and-sau-information — Public, chartered, non-public school directories.
 - **New Jersey** — NJ School Directory — https://homeroom6.doe.state.nj.us/directory/ — Public + nonpublic directory. Data portal: https://www.nj.gov/education/doedata/.
 - **New Mexico** — NMPED Public Schools Directory — https://web.ped.nm.gov/new-mexico-public-schools-directory/ — Downloadable CSV opens in Excel/Sheets.
-- **New York** — NYSED SEDREF Public Reports — https://www.p12.nysed.gov/irs/schoolDirectory/ — Downloadable Excel/XLS reports of public, nonpublic, charter, BOCES, state-operated schools/districts. Landing: https://www.nysed.gov/content/directory-public-and-non-public-schools-and-administrators-new-york-state.
+- **New York** — NYSED SEDREF Public Reports — https://www.p12.nysed.gov/irs/schoolDirectory/ — Downloadable Excel/XLS reports of public, nonpublic, charter, BOCES, state-operated schools/districts. Source page: https://www.nysed.gov/content/directory-public-and-non-public-schools-and-administrators-new-york-state.
 - **North Carolina** — NC DPI Education Directory (EDDIE) — https://ncpublicschools.org/nceddirectory — Districts, schools, charters, special/federal, postsecondary with addresses + downloads.
 - **North Dakota** — NDDPI Districts/Schools — https://www.nd.gov/dpi/districtsschools — LEA/School directory MIS01/MIS02 framework. Bulk download not linked from main page; investigate STARS reports.
 - **Ohio** — Ohio Educational Directory System (OEDS) — https://education.ohio.gov/Topics/Data/Ohio-Educational-Directory-System-OEDS — Public org search + DataExtract at https://oeds.ode.state.oh.us/dataextract — Excel exports.
@@ -234,7 +234,7 @@ Attach supplemental data as **attributes on WOF-keyed entities** (such as a cent
 - **Tennessee** — TSLA Public Library Directory — https://tnsos.net/TSLA/PLD/index.php — Searchable by county/region/city.
 - **Texas** — TSLAC Library Development & Networking — https://www.tsl.texas.gov/ldn — TSLAC houses accreditation, directory & statistics. Use IMLS PLS for bulk Texas public library addresses.
 - **Utah** — Utah State Library Division Directory — https://library.utah.gov/directory/ — Bookmobiles, public, tribal, special; supports CSV export. Public-only: https://library.utah.gov/directory/categories/public/.
-- **Vermont** — VT Department of Libraries Public Library Directory — https://libraries.vermont.gov/sites/libraries/files/documents/PublicLibraryDirectory.pdf — Quarterly-updated PDF directory. Landing: https://libraries.vermont.gov/find-vermont-libraries. Reporting portal: https://vtlibreports.vermont.gov/.
+- **Vermont** — VT Department of Libraries Public Library Directory — https://libraries.vermont.gov/sites/libraries/files/documents/PublicLibraryDirectory.pdf — Quarterly-updated PDF directory. Source page: https://libraries.vermont.gov/find-vermont-libraries. Reports portal: https://vtlibreports.vermont.gov/.
 - **Virginia** — Library of Virginia Public Library Directory — https://www.lva.virginia.gov/services/public-libraries/directory — Headquarters mailing list + lookup by county/city.
 - **Washington** — WA State Library Directory of Washington Libraries — https://www.directory.walibraries.org/ — Maintained by WA State Library (Office of Secretary of State) with IMLS funding.
 - **West Virginia** — WV Library Commission Library Directory — https://librarycommission.wv.gov/library_map/Pages/LibraryDirectory.aspx — Statewide directory with addresses + phone numbers.

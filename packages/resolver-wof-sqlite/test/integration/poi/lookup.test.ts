@@ -390,7 +390,7 @@ describe("POILookup", () => {
 			.get("poi_brand_wikidata") as { sql: string } | undefined
 
 		expect(found).toBeDefined()
-		// partial: the DDL carries the `where brand_wikidata is not NULL` predicate.
+		// partial: the DDL includes the `where brand_wikidata is not NULL` predicate.
 		expect(found!.sql.toLowerCase()).toContain("where")
 		expect(found!.sql.toLowerCase()).toContain("brand_wikidata")
 	})

@@ -1,1 +1,1 @@
-"""Where a run reports itself. Logging here is best-effort: its failure never stops a run."""
+"""This module reports run status and continues if a logging call fails."""

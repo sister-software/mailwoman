@@ -89,7 +89,8 @@ describe("freezeTrainingManifest", () => {
 
 	it("records a null decision for a license the register never carried", () => {
 		// An adapter stamping its own label — `CC0-1.0`, `Public Domain` — matches no register decision.
-		// A null says that, where omitting the source would make the build look as though it never read one.
+		// A null records that case, where omitting the source would make the build look as
+		// though it never read one.
 		const manifest = freeze({
 			rowsBySource: new Map([["wof-admin", { rows: 10, license: "CC0-1.0" }]]),
 		})

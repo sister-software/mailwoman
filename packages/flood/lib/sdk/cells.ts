@@ -41,7 +41,7 @@ export interface CellIndexMeasurement {
 	 */
 	touchedCells: number
 	/**
-	 * Cells answered by the index alone, before compaction.
+	 * Cells answered using only the index, before compaction.
 	 */
 	wholeCells: number
 	/**
@@ -52,7 +52,7 @@ export interface CellIndexMeasurement {
 	 * `partialCells / touchedCells`.
 	 *
 	 * The number the resolution is chosen on: it is the share of in-layer probes
-	 * that cannot be answered from the index alone.
+	 * that the index by itself cannot answer.
 	 */
 	partialShare: number
 	/**
@@ -150,7 +150,7 @@ export class FloodCellIndex {
 	 * It is applied to the whole set only.
 	 *
 	 * A partial cell's parent includes area outside that cell.
-	 * Compacting it would claim the fringe covers that ground.
+	 * A compacted cell would claim the fringe covers that ground.
 	 */
 	finish(): {
 		zoneCells: Array<{ h3Cell: number; resolution: number; zoneCode: string; containment: "whole" | "partial" }>

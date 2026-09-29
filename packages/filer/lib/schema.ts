@@ -38,7 +38,7 @@
  * See {@link FilerFamilyTable}.
  *
  * `filer_family` also carries `assertion` and `match_score`. Criterion 2 requires inferred rows to remain distinct
- * from authoritative rows. Enforcing it only on `filer_edge` would miss inferred family memberships written by Edgar.
+ * from authoritative rows. A check on `filer_edge` alone would miss inferred family memberships written by Edgar.
  * `source` cannot represent the distinction because `edgar-exhibit-21` writes both grades under one source name.
  */
 
@@ -421,8 +421,8 @@ export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise
 		.addPrimaryKeyConstraint("filer_family_pk", ["node_id", "family_id", "naming_node_id", "source", "valid_from"])
 		.addCheckConstraint("filer_family_relationship_not_blank", sql`trim(relationship) != ''`)
 		.addCheckConstraint("filer_family_assertion_not_blank", sql`trim(assertion) != ''`)
-		// Use sql.lit because SQLite DDL cannot carry a bound parameter. Deriving the literal from FilerEdgeAssertion
-		// keeps the constraint aligned with the constant.
+		// Use sql.lit because SQLite DDL cannot carry a bound parameter. The literal comes from FilerEdgeAssertion.
+		// This keeps the constraint aligned with the constant.
 		.addCheckConstraint(
 			"filer_family_match_score_inferred_only",
 			sql`match_score is null or assertion = ${sql.lit(FilerEdgeAssertion.Inferred)}`

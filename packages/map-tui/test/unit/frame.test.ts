@@ -119,7 +119,8 @@ describe("blitFrame", () => {
 		expect(read()).toContain("\u001B[38;2;255;0;0m")
 	})
 
-	// `MapFrame` marks an empty cell with codepoint 0, which is not a character a terminal can be asked to draw.
+	// `MapFrame` marks an empty cell with codepoint 0.
+	// Terminals cannot draw that codepoint as a character.
 	it("writes a space where the frame has no codepoint", () => {
 		const frame: MapFrame = {
 			columns: 1,

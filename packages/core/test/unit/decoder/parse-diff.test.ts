@@ -90,7 +90,7 @@ describe("diffParse", () => {
 
 	it("does not relate two spans that merely touch at the edges", () => {
 		// Below the overlap floor these spans are unrelated.
-		// Calling them `moved` would invent a relationship the parse never asserted.
+		// A `moved` label would invent a relationship the parse never asserted.
 		const before = tree(["street", "Minories", 19, 27, 0.9])
 		const after = tree(["locality", "London", 29, 35, 0.9])
 

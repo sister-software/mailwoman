@@ -6,8 +6,9 @@
  *   The sealed-artifact invariant: every SQLite DB a build produces is a read-only asset. `sealDatabase`
  *   is the last step of every builder — checkpoint, freeze the journal, chmod 0444. `openBuiltClient`
  *   (`@mailwoman/sqlite/sealed`) is how anything opens a data artifact. a write-mode open of a sealed
- *   file throws a descriptive error pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
- *   manual (`chmod u+w`), never programmatic — rebuild, don't mutate.
+ *   file throws a descriptive error pointing at the rebuild command instead of a cryptic SQLITE_READONLY.
+ *   A caller can restore write permission only with manual `chmod u+w`; the program never changes permissions.
+ *   Rebuild the artifact to make changes.
  *
  *   `swapDatabaseIntoPlace` is the atomic publish step agents.md
  *   specifies in prose ("build it successfully. Move the previous version to a temp directory.
@@ -25,8 +26,7 @@ import { basename, type PathBuilderLike } from "path-ts"
 /**
  * The one capability {@link assertDatabaseIntegrity} needs.
  *
- * Narrowing to it rather than naming a handle type lets a `DatabaseClient` satisfy
- * the parameter with no import and no cast.
+ * A narrow callback type lets a `DatabaseClient` satisfy the parameter with no import and no cast.
  */
 type IntegrityProbe = Pick<DatabaseSync, "prepare">
 
@@ -58,7 +58,7 @@ export class SealedArtifactError extends Error {
 }
 
 /**
- * True when the artifact exists and carries no write bits (the sealed state {@link sealDatabase} leaves).
+ * True when the artifact exists and has no write bits (the sealed state {@link sealDatabase} leaves).
  */
 export async function isSealed(path: PathBuilderLike): Promise<boolean> {
 	return (await pathExists(path)) && ((await statPath(path)).mode & 0o222) === 0
@@ -153,7 +153,7 @@ export async function assertUnsealedForWrite(path: PathBuilderLike): Promise<voi
  * The function clears the `-wal` and `-shm` siblings of both paths, so a stale
  * journal cannot pair with a new main file.
  *
- * Sealing (`sealDatabase`) happens on the temp file before the swap.
+ * The code seals (`sealDatabase`) the temp file before the swap.
  * The published artifact is sealed.
  * Mode 0444 still permits a rename.
  */

@@ -5,7 +5,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Coordinate-first locality resolution for a `locality` query that carries a `postcode`.
+ * Coordinate-first locality resolution for a `locality` query that includes a `postcode`.
  */
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"

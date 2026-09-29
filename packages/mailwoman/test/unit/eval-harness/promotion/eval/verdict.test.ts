@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the arena summary parser in promotion-eval-verdict.ts. The arena table has two shapes
- *   since the v0 comparison columns were dropped, and `arenaColumn` must read the `neural` score by
+ *   since the v0 comparison columns were dropped. `arenaColumn` must read the `neural` score by
  *   header on both so a check run on the current tree does not misread `fail` as `neural`.
  */
 

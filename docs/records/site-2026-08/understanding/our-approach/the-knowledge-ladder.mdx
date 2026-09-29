@@ -11,7 +11,7 @@ tags:
 
 # The knowledge ladder
 
-The staged pipeline divides the work **by what each layer knows**. Each stage owns one kind of information. Pushing work to the wrong stage produces fragile systems that try to learn from data what they could have looked up, or look up what they could have learned. This article catalogues the layers, what each one knows, and the two layers we don't ship yet but should.
+The staged pipeline divides the work **by what each layer knows**. Each stage owns one kind of information. Work assigned to the wrong stage produces fragile systems that try to learn from data what they could have looked up, or look up what they could have learned. This article catalogues the layers, what each one knows, and the two layers we don't ship yet but should.
 
 Read [The pipeline interface](../../concepts/staged-pipeline-interface.mdx) first for the runtime mechanics. This article is its conceptual companion. It explains _why_ the layers are arranged this way and where the design has gaps.
 
@@ -83,7 +83,7 @@ The grouper's question ("do these tokens belong together?") is separate from "is
 
 ### Token classify — per-token semantic type
 
-This layer is the neural classifier, which does per-token BIO tagging today. It learns from training how tokens distribute over tag classes. It does **not** know the world (which countries contain which regions), and it cannot easily learn the gazetteer from corpus statistics. Asking it to do so wastes capacity that could be spent on type discrimination.
+This layer is the neural classifier, which does per-token BIO tagging today. It learns from training how tokens distribute over tag classes. The classifier has no world knowledge (such as which countries contain which regions), and corpus statistics do not readily teach it the gazetteer. A gazetteer task would consume capacity that could be spent on type discrimination.
 
 v0.5.0's classifier (Thread C) ships two architectural changes to fit the wider ladder. **Phrase-prior conditioning:** the input layer takes a per-token feature row (BIE markers + `PhraseKind` one-hot from the Stage 2.7 phrase grouper), concatenates it onto the token+position embedding, and projects the result back to `hidden_size`. Boundary discovery moves to Stage 2.7. The classifier conditions on those proposals and answers the simpler question "what type is this proposed span?" It can still disagree when its evidence outweighs the grouper's confidence. **Top-k inference (`predict_top_k`):** the inference path emits the K most-probable tag sequences with calibrated log-probability scores under the CRF distribution, rather than the single argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses. Both sit behind config flags (`use_phrase_priors`, `predict_top_k(k=...)`) so the v0.4.0-style argmax-only encoder still works for ablation studies and back-compat.
 
@@ -112,7 +112,7 @@ Three properties make this the right place to give the model knowledge of place 
 - **The multi-hot encoding gives homograph awareness for free.**
   A token whose candidate set has more than one entry ("Georgia" → `[country, region]`) is marked as ambiguous by construction,
   and the model learns that context decides the tag.
-- **Training, rather than architecture, handles the over-reliance risk.**
+- **The training data addresses the over-reliance risk.**
   The measured failure mode of closed-vocab tags is a model that echoes a cheap correlation,
   such as the country retrain that learned "trailing token ⇒ country."
   Homograph-contrast training rows label the same surface `country` in one context and `region` in another, with the clue firing both times.
@@ -141,7 +141,7 @@ The detected system selects a row in the codex conventions,
 that row's forbidden tags are removed from the Viterbi vocabulary outright,
 and the system's postcode shape enables the snap-only repair pass.
 Like the gazetteer anchor, this layer keeps its knowledge outside the weights.
-Adding a `de` or `gb` row to `codex/address-system-conventions.ts` applies the constraint without a retrain.
+A new `de` or `gb` row in `codex/address-system-conventions.ts` applies the constraint without a retrain.
 Detection is threshold-conditional (0.8), so the mask never fires on a guess, and an undetected system parses exactly as before.
 The planned next steps ([#478](https://github.com/sister-software/mailwoman/issues/478)) are per-system _transition_ masks
 and, eventually, conventions as a second candidate emitter into Stage 5.
@@ -179,7 +179,7 @@ The bitter lesson says that "general methods that use computation" win in the lo
 
 We want to learn two things from data: the per-token semantic type distribution (Stage 3) and structural transition validity (Stage 4, if a learned CRF replaces the structural mask).
 
-We should look up the world's place hierarchy (Stage 6, the gazetteer). Forcing the model to memorize WOF wastes capacity.
+We should look up the world's place hierarchy (Stage 6, the gazetteer). A model that memorizes WOF wastes capacity.
 
 We should compose input shape priors (Stages 2, 2.5, 2.7) and output coherence (Stage 5). When the components have clean interfaces, decomposition with joint decoding beats a single end-to-end model.
 
@@ -187,7 +187,7 @@ We should compose input shape priors (Stages 2, 2.5, 2.7) and output coherence (
 
 The v0.4.0 ablation campaign's failure modes mapped almost directly to two missing information layers. v0.5.0 added both:
 
-| v0.4.0 failure                                                              | Missing layer                                                      | v0.5.0 fix                                                                              |
+| v0.4.0 failure                                                              | Absent layer                                                       | v0.5.0 fix                                                                              |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
 | **65% empty_pred** on mid-position postcodes (`Paris 75008`)                | Phrase grouper (Stage 2.7) — no boundary prior                     | `@mailwoman/phrase-grouper` proposes `75008` as a coherent unit before classification   |
 | **6% bio_slip** on `", 22220"` for `22220`                                  | Phrase grouper (Stage 2.7) — boundary-trimming is a downstream fix | Phrase grouper proposes `22220` as a span; the classifier never sees the `, `           |

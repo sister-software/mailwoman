@@ -200,7 +200,8 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 			`${summary.tracked.length} tracked, ${summary.unmeasured.length} unmeasured) ===`
 	)
 
-	// Per law as well as pooled, because a merged verdict says something broke without saying which law stopped holding.
+	// Per law as well as pooled, because a merged verdict reports a failure without
+	// identifying which law stopped holding.
 	for (const law of perLaw) {
 		console.log(
 			`  ${law.law}: ${law.holds}/${law.decided} decided hold, ${law.tracked} tracked, ${law.unmeasured} unmeasured`

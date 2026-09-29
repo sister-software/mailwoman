@@ -198,8 +198,7 @@ describe("ancestorIdentity — the four states", () => {
 
 describe("candidateLayerManifest", () => {
 	it("records the ancestor as its source, not the ancestor's sources", async () => {
-		// Restating "whosonfirst+overture+geonames" here would be true of the ancestor
-		// and unfalsifiable of this file.
+		// The ancestor's sources are "whosonfirst+overture+geonames". and unfalsifiable of this file.
 		// It could not say which admin build this came from.
 		const root = await scratch()
 
@@ -270,7 +269,7 @@ describe("candidateLayerManifest", () => {
 
 	it("marks a fold that declares no terms, rather than omitting it from the expression", async () => {
 		// Measured 2026-09-27: 28 of the 28 postcode and locality databases on the lab host
-		// carry no `layer_manifest`, and 26 of them carry no `meta.license` either.
+		// have no `layer_manifest`, and 26 of them have no `meta.license` either.
 		// An expression that simply left them out would read as a complete list of the artifact's terms.
 		const root = await scratch()
 

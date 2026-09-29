@@ -114,7 +114,7 @@ async function rewriteFile(repoRoot: string, file: string, edits: readonly TextE
 }
 
 /**
- * Moves files with `git mv` and rewrites planned specifiers, manifest targets, and path literals.
+ * Moves files with `git mv` and rewrites planned specifiers, manifest targets and path literals.
  * It then resolves each rewritten specifier again.
  *
  * The function throws before touching anything when the plan has an unresolved specifier.

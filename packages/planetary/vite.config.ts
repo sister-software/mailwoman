@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The planetary build: one source, compiled per body. `PLANETARY_BODY` is read here, under Node, and compiled into
+ *   The planetary build: one source, compiled per body. Node reads `PLANETARY_BODY` here and compiles it into
  *   the client as `__PLANETARY_BODY__`. the body's icon set is the public directory. the PWA identity is the body's.
  *   There is no server side. every output is a static asset Cloudflare serves without invoking a Worker.
  */

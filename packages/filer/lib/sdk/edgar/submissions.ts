@@ -9,7 +9,7 @@ import type { CIK, SECGetClient } from "#sdk/edgar/cik"
  * Uses `cik` zero-padded (`CIK` is always the 10-digit padded form — see the type's own docstring) —
  * this is SEC's documented submissions API shape (`CIK0000320193.json`, never `CIK320193.json`).
  *
- * Contrast {@linkcode accessionArchiveURL} below, whose archive paths use the unpadded form instead.
+ * {@linkcode accessionArchiveURL} below uses the unpadded form in archive paths.
  * Both conventions are real and both appear in this file.
  */
 export function submissionsURL(cik: CIK): string {

@@ -149,7 +149,7 @@ export async function buildHillshadePMTiles(
 
 	// Average the elevations while resampling.
 	// Later stages use encoded bytes, where averaging is meaningless.
-	// Resizing to the requested zoom's pixel grid sets the tiling zoom.
+	// The requested zoom's pixel grid sets the tiling zoom during resampling.
 	// The MBTiles driver reads that zoom from the source resolution.
 	const width = TILE_PIXELS * 2 ** options.maxZoom
 

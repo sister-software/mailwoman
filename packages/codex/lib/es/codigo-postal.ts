@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Spanish postcodes (código postal): the branded type, the shape, and the province prior.
+ *   Spanish postcodes (código postal): the branded type, shape and province prior.
  *
  *   The contrast with a German PLZ matters here. A PLZ's leading digit maps to a Leitzone
  *   that deliberately crosses state borders, so it cannot tell you the Bundesland. A Spanish código

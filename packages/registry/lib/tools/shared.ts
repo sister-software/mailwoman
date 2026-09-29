@@ -54,8 +54,8 @@ export interface SourceSpec {
 export const norm = (s: string | undefined): string => (s ?? "").trim()
 
 /**
- * Corporate-form suffixes and function words that carry no identity — dropped from an organization
- * name before its tokens are compared, so the domain words include the distinguishing signal.
+ * Corporate-form suffixes and function words that add no identity — dropped from an organization name
+ * before its tokens are compared, so the domain words include the distinguishing signal.
  */
 const ORGANIZATION_STOP_WORDS = new Set([
 	"llc",
@@ -113,7 +113,7 @@ export const std = (xs: readonly number[]): number => {
 export const pct = (x: number): string => (100 * x).toFixed(1)
 
 /**
- * Sign prefix for a signed delta: `"+"` for a non-negative value, since a negative one carries its own sign.
+ * Sign prefix for a signed delta: `"+"` for a non-negative value, since a negative one includes its sign.
  */
 export const sgn = (x: number): string => (x >= 0 ? "+" : "")
 
@@ -198,7 +198,7 @@ export const LR_L2 = 1e-3
 
 /**
  * L2-regularized logistic regression by batch gradient descent over {@link TRAINING_EPOCHS}
- * epochs, where `w` carries per-sample class weights, returning the logit rather than
+ * epochs, where `w` stores per-sample class weights, returning the logit rather than
  * the probability so it is threshold-comparable across a fixed feature layout.
  */
 export function trainLogisticRegression(
@@ -332,7 +332,7 @@ export interface ColocatedProvider {
 	 */
 	address: string
 	/**
-	 * Strict last-10-digit phone key; `""` when the column carries fewer than 10 digits.
+	 * Strict last-10-digit phone key; `""` when the column contains fewer than 10 digits.
 	 */
 	phone: string
 	/**
@@ -522,7 +522,7 @@ const FIT_SPLIT_FRACTION = 0.8
 /**
  * One assembled input row for a cross-source trainer.
  *
- * Its `npi` field carries the cross-system join key (an NPI or a CCN).
+ * Its `npi` field contains the cross-system join key (an NPI or a CCN).
  * The trainer copies that key into `record.id` as the held-out label.
  */
 export interface CrossSourceRow extends Record<string, string> {

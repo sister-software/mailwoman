@@ -79,7 +79,7 @@ describe("decodeAsXML (nested mixed-content)", () => {
 	test("emits root <address> with @raw and nested components with @start/@end/@conf", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const xml = decodeAsXML(tree)
-		// Root attribute carries the raw input.
+		// Root attribute contains the raw input.
 		expect(xml).toContain(`<address raw="1600 Pennsylvania Avenue NW, Washington, DC 20500">`)
 		// Region wraps locality wraps street/postcode.
 		expect(xml).toContain(`<region start="41" end="43" conf="1.00">DC`)
@@ -87,7 +87,7 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		expect(xml).toContain(`<street start="5" end="27" conf="1.00">Pennsylvania Avenue NW`)
 		expect(xml).toContain(`<house_number start="0" end="4" conf="1.00">1600</house_number>`)
 		expect(xml).toContain(`<postcode start="44" end="49" conf="1.00">20500</postcode>`)
-		// Closing tags balance.
+		// The output's tags balance.
 		expect(xml).toContain(`</street>`)
 		expect(xml).toContain(`</locality>`)
 		expect(xml).toContain(`</region>`)
@@ -184,7 +184,7 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const xml = decodeAsXML(tree, { includeAlternatives: true })
 		expect(xml).not.toContain("<alternative")
-		// Existing structure still well-formed.
+		// The existing structure remains well-formed.
 		expect(xml).toContain("<address raw=")
 	})
 })

@@ -123,7 +123,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	 */
 	readonly #hasPopulationIndex: Map<string, boolean>
 	/**
-	 * Per-extract select term and left join for the two-score split's `encyclopedic` carry,
+	 * Per-extract select term and left join for the two-score split's `encyclopedic` value,
 	 * probed and built once at construction.
 	 */
 	readonly #encyclopedicClauses: Map<string, { select: string; join: string }>
@@ -215,7 +215,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		}
 
 		// An extract is guarded when its path identifies a routed placetype
-		// or it carries `spr`, and must then carry `place_search`; testing only one of
+		// or it contains `spr`, and must then contain `place_search`; testing only one of
 		// those would let an empty file through or exempt a build input.
 		for (const s of this.#extracts) {
 			if (s.schemaName === "main") continue
@@ -268,7 +268,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		this.#postalCityAliases = opts.postalCityAliases ?? null
 
 		// Precedence: explicit `opts.conventions` wins, else an attached build-from-source
-		// convention asset, else empty so EU rides `WORLD_DEFAULT`.
+		// convention asset, else empty so EU uses `WORLD_DEFAULT`.
 		const conventionExtract =
 			this.#extracts.find((s) => this.#extractHasTable(s.schemaName, ADDRESS_CONVENTION_TABLE))?.schemaName ?? null
 

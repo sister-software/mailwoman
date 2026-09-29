@@ -84,7 +84,7 @@ const UPPERCASE_TOKENS = new Set(["llc", "lc", "lp", "llp", "pllc", "pc", "pa", 
 
 /**
  * Title-cases a value that arrived uniformly cased, leaving mixed-case values
- * and values containing `:`, `@`, `(`, `)` or `-` alone.
+ * and values containing `:`, `@`, `(`, `)` or `-` without changing them.
  *
  * It is a display-level tidy, so anything joining on these values must still
  * go through `canonicalizeOrganizationName`.

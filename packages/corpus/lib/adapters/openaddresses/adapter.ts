@@ -6,9 +6,9 @@
  * `openaddresses`: line-delimited GeoJSON adapter for openaddresses.io exports.
  *
  * Country must be explicit because OpenAddresses organizes files by country while the row data
- * carries no country code. A per-row `LICENSE` property wins where present and the configured
- * `defaultLicense` covers the remaining rows. `district` stays unmapped because US data carries a borough or county there.
- * Mapping that field would inflate alignment quarantine.
+ * has no country code. A per-row `LICENSE` property wins where present and the configured
+ * `defaultLicense` covers the remaining rows. `district` stays unmapped because US data uses it for a borough or county.
+ * The adapter omits that field because mapping it would inflate alignment quarantine.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -27,8 +27,8 @@ import { createLicenseVerdictCache, LicensePolicy } from "#utils"
  */
 export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
 /**
- * License carried by this source (CC-BY-4.0), attached to each row so downstream
- * consumers inherit the terms rather than having to look them up.
+ * License assigned to each row from this source (CC-BY-4.0), so downstream consumers
+ * inherit the terms rather than having to look them up.
  */
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
@@ -97,7 +97,7 @@ export interface OpenaddressesAdapterOptions {
 	defaultLicense?: string
 
 	/**
-	 * Whether this adapter emits a row whose per-file license carries share-alike.
+	 * Whether this adapter emits a row whose per-file license requires share-alike.
 	 *
 	 * The default is `true`.
 	 * `buildCorpus({ licensePolicy })` and `mw corpus build --license-policy share-alike-free`
@@ -105,7 +105,7 @@ export interface OpenaddressesAdapterOptions {
 	 *
 	 * The policy reads the obligations of every adapter's rows under one policy and records what it refused.
 	 *
-	 * Pass `false` only for an adapter-scoped drop, such as a fixture that must carry one license.
+	 * Pass `false` only for an adapter-scoped drop, such as a fixture that must use one license.
 	 */
 	allowShareAlike?: boolean
 }
@@ -114,7 +114,7 @@ export interface OpenaddressesAdapterOptions {
  * Build an OpenAddresses adapter.
  *
  * The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
- * known to carry a single license throughout (e.g. A pddl-only state extract).
+ * known to use a single license throughout (e.g. a PDDL-only state extract).
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE
@@ -144,8 +144,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 			const country = adapterOpts.country
 
-			// Passing the path string lets the library own and dispose the file handle,
-			// including on an early `break`.
+			// The path string lets the library own and dispose the file handle, including on an early `break`.
 			const lines = TextSpliterator.fromAsync(adapterOpts.inputPath)
 
 			let emitted = 0

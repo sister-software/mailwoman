@@ -48,7 +48,7 @@ interface GNAFTuple {
  * The address layouts an AU address actually arrives in.
  *
  * The model already handles postcode-trailing (canonical); the two postcode-leading
- * forms are the ones it fails, so they carry the change.
+ * forms are the ones it fails, so they show the change.
  * We keep the canonical form too so the retrain doesn't forget it.
  */
 function renderOrders(c: GNAFTuple): string[] {
@@ -109,8 +109,8 @@ export function createGNAFAdapter(): CorpusAdapter {
 					postcode: t.postcode,
 				}
 
-				// `region` rides only the canonical render, and the postcode-leading layouts
-				// omit it so verbatim alignment never breaks.
+				// `region` appears only in the canonical render.
+				// The postcode-leading layouts omit it so verbatim alignment never breaks.
 				if (order === 0 && t.region) {
 					components.region = t.region
 				}

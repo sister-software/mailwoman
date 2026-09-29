@@ -27,7 +27,7 @@ const UNIT_TOKEN = /^(?:지하\s?)?(?:B?\d+(?:~\d+)?(?:층|호)|\d+층|B\d+|지�
 
 /**
  * The shortest either form can be — 시도, 시군구 and the road or the 법정동.
- * Anything shorter cannot carry the key.
+ * No shorter value can contain the key.
  */
 const MINIMUM_TOKENS = 3
 
@@ -135,7 +135,7 @@ export function alignRoadAddress(text: string, index: KeyIndex): Aligned | null 
 	let roadAt = 1 + width
 	let eupmyeonAt: number | null = null
 
-	// In an 읍/면 area the road form carries the 읍/면 between the 시군구 and the road
+	// In an 읍/면 area the road form includes the 읍/면 between the 시군구 and the road
 	// (`기장군 기장읍 기장해안로 205`); the register lists those names beside the 동 of the same unit.
 	if (roadAt + 2 < tokens.length && dongs.has(tokens[roadAt]!) && roads.has(tokens[roadAt + 1]!)) {
 		eupmyeonAt = roadAt

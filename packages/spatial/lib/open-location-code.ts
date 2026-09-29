@@ -27,7 +27,7 @@ export interface DecodedPlusCode {
 /**
  * Returns true for a full plus code of exactly 8 digits, `+`, and 2 or 3 digits.
  *
- * It rejects the padded and longer forms the spec allows, since addresses carry only the 10–11 digit form.
+ * It rejects the padded and longer forms the spec allows, since addresses use only the 10–11 digit form.
  */
 export function isFullPlusCode(token: string): boolean {
 	return /^[23456789CFGHJMPQRVWX]{8}\+[23456789CFGHJMPQRVWX]{2,3}$/i.test(token)

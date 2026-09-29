@@ -1,4 +1,4 @@
-"""Staging the registries corpus from the LOCAL checkout, when the bucket cannot be reached.
+"""This command stages the registries corpus from the LOCAL checkout when the bucket cannot be reached.
 
 The normal path is `launch/syncs.py`: local -> R2 -> a container-side rclone -> the volume. This is
 the same container-side write and commit with no bucket in between, for when the R2 token answers
@@ -20,8 +20,8 @@ from .corpora import CORPUS_VERSIONS
 from .plan import corpus_versions
 from .syncs import verify_staged
 
-#: The corpora this path stages, READ OFF the row the bucket path would have transferred. Retyping
-#: the list here explains why the two spellings disagree. The disagreement is silent: a
+#: The corpora this path stages, read from the row the bucket path would have transferred. A separate list
+#: explains why the two spellings disagree. The disagreement is silent: a
 #: corpus omitted from this list is never copied. The run later fails on a missing parquet file.
 V8CJK_REGS_CORPORA = tuple(corpus_versions(CORPUS_VERSIONS["v8cjk_regs"]))
 

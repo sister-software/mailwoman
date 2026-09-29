@@ -5,8 +5,8 @@
  *
  *   `pk-register` and `bd-register` recipes, the typed forms of Pakistan and Bangladesh the country
  *   templates do not render, over the OpenStreetMap corpus jsonl the `osm` adapter reads. The
- *   adapter's own rows carry the template shape (`4 38th Street, DHA Phase 6, Karachi`) and
- *   (`24 Road 104, Dhaka - 1207`). These two carry the register:
+ *   adapter's own rows use the template shape (`4 38th Street, DHA Phase 6, Karachi`) and
+ *   (`24 Road 104, Dhaka - 1207`). These two represent the register:
  *
  *   - the house line, `House 4, Street 25, F-7/2, Islamabad` and `House 34, Road 4, Sector 9, Uttara,
  *     Dhaka 1230`, with `House` in front of the number (untagged, the same rule as Singapore's `Blk`),
@@ -14,7 +14,7 @@
  *   - the plain line with the trailing postcode and no dash, `58 Kalabagan 1st Ln, Dhaka 1205`, which
  *     is what a person types where the template writes `Dhaka - 1205`
  *
- *   Islamabad's sector codes (`F-7/2`, `G-10/3`) are the one synthesized value. The register carries
+ *   Islamabad's sector codes (`F-7/2`, `G-10/3`) are the one synthesized value. The register contains
  *   them on a handful of rows, mostly inside `addr:city` (`F7/2 Islamabad`), so a row whose city is
  *   Islamabad and whose scheme is unknown draws one from the capital's grid. Every other value is the
  *   row's own. The components are the `osm` adapter's mapping (`componentsForOSMRow`), so the two
@@ -118,7 +118,7 @@ export function renderSouthAsiaRegister(
 }
 
 function makeRecipe(name: string, country: "PK" | "BD", locale: string, description: string): CorpusRecipe {
-	// Composed rather than written out, and read through the table rather than from the composition,
+	// The value is composed and read through the table rather than written out in the composition.
 	// so the vocabulary flip is one constant and a name the table does not record refuses here.
 	const source = defaultRecipeSource(`synth-${name}`)
 
@@ -185,7 +185,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 					// The components come from the OpenStreetMap corpus jsonl the `osm` adapter wrote.
 					// This recipe re-orders them into the typed forms, so the address is real
 					// and the line is the recipe's.
-					// The OSM record is what `baseSourceID` names when the tuples file carries its id.
+					// The OSM record is what `baseSourceID` names when the tuples file includes its id.
 					{
 						register: SourceRegister.OpenStreetMap,
 						surface: SurfaceOrigin.Composed,

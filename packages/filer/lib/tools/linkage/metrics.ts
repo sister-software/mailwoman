@@ -5,7 +5,7 @@
  *
  * Pairwise grouping precision/recall/F1 over unordered id pairs.
  *
- * A zero denominator reports `null` rather than `0`, because "the prediction made no positive calls" and "every positive call was wrong" are different facts, and `f1` propagates that `null` rather than collapsing it.
+ * A zero denominator reports `null`. "The prediction made no positive calls" and "every positive call was wrong" are different facts. `f1` propagates `null` rather than collapsing it.
  */
 
 /**

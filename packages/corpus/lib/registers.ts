@@ -10,7 +10,8 @@
  * The publications this repository reads, keyed by stable id.
  *
  * A row's `source` identifies the adapter or recipe that emitted it.
- * A row's `register` identifies the publication behind its record, which determines the governing terms.
+ * A row's `register` identifies the publication behind its record.
+ * That publication determines the governing terms.
  *
  * Built corpora store these ids on every row, so an existing id must never change.
  *
@@ -23,7 +24,7 @@ export const SourceRegister = {
 	 */
 	OpenAddresses: "openaddresses",
 	/**
-	 * Overture Maps addresses, an aggregator whose rows carry a per-record source and license.
+	 * Overture Maps addresses, an aggregator whose rows include a per-record source and license.
 	 */
 	Overture: "overture",
 	/**

@@ -365,7 +365,7 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 		createdAt: row.created_at,
 		// NULL and a missing column both mean the build recorded no count.
 		// The key stays absent for either.
-		// Resolving them to `{}` would read as a build that counted its publishers and found none.
+		// An empty object would make the build appear to have counted its publishers and found none.
 		...(row.source_records === null || row.source_records === undefined
 			? {}
 			: { sourceRecords: parseJSONStrict<Record<string, number>>(row.source_records) }),

@@ -39,7 +39,7 @@ export interface Form499LifecycleContext {
 }
 
 /**
- * Running totals across every row's lifecycle writes, mutated in place by
+ * The totals across every row's lifecycle writes are mutated in place by
  * {@linkcode processForm499Lifecycle} and read once into {@link BuildFilerResult}.
  */
 export interface Form499LifecycleTotals {

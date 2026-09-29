@@ -29,7 +29,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 	it("resolves nothing from the ENV overlay under a bogus dataRoot", async () => {
 		// Weights resolution is a ladder.
 		// Only its overlay rung is governed by `dataRoot`.
-		// A checkout whose workspace packages or weights cache carry binaries
+		// A checkout whose workspace packages or weights cache contain binaries
 		// (CI links them into its checkout) resolves the FST from those rungs,
 		// while a checkout without them rejects outright.
 		// Both are in-interface, so this pin asserts that whatever the ladder answers is never a path

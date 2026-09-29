@@ -9,9 +9,9 @@
  *
  *   1. the split with a diacritic surface. The board keeps diacritics. a diacritic-stripping norm
  *      would leak `Tømmerlien` silently. Pinned in both directions.
- *   2. the counter-distribution. Teaching bare `{street} {number}` alone lets the model flip its
+ *   2. the counter-distribution. A model that sees only bare `{street} {number}` can flip its
  *      default from "bare -> locality" to "bare -> street", and stop emitting postcode to win the
- *      digit. The bare-locality and bare-postcode counter rows must both exist and carry no street.
+ *      digit. The bare-locality and bare-postcode counter rows must both exist and have no street.
  */
 
 import { noFragmentRecipe } from "@mailwoman/corpus/no/recipes/fragment"
@@ -51,8 +51,8 @@ describe("no-fragment", () => {
 
 	it("emits the SIGNAL — a street with NO postcode/locality partner", async () => {
 		// counterProb 0 so every non-reserved row is a street fragment. bareStreetProb 0
-		// so it carries its number.
-		// The point of the recipe: the street stands alone.
+		// so it includes its number.
+		// The point of the recipe: the street appears without another field.
 		const { rows } = await run(TUPLES, ["nonexistent-surface"], { counterProb: 0, bareProb: 0 })
 		const signal = rows.filter((r) => r.components!.street)
 
@@ -84,7 +84,8 @@ describe("no-fragment", () => {
 		expect(kinds.has("loc")).toBe(true)
 		expect(kinds.has("pc")).toBe(true)
 
-		// A counter row never carries a street — else it is not a counter.
+		// A counter row has no street.
+		// A street would make it a different row type.
 		for (const r of rows) {
 			expect(r.components!.street).toBeUndefined()
 		}

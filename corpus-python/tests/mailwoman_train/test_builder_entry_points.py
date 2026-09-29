@@ -1,6 +1,6 @@
 """Every module that runs as `python -m` imports. Its usage string identifies its path.
 
-Discovery uses the `__main__` guard instead of a fixed list. Existing checks then cover new builders.
+Discovery uses the `__main__` guard instead of a fixed list. The checks then cover newly added builders.
 """
 
 from __future__ import annotations

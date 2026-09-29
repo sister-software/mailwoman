@@ -5,7 +5,7 @@
  * @file The working tree's own git state: head, the current branch, dirty tracked files, tracked paths.
  *
  *   Every reader here is one `git` invocation with its output shaped for the caller, so the seven sites that each
- *   spelled `git rev-parse head` through their own wrapper share one. Cloning and pulling a resource repository is a
+ *   spelled `git rev-parse head` through their own wrapper share one. A resource repository clone and pull is a
  *   different concern and lives in `resources/git.ts`.
  */
 
@@ -122,7 +122,7 @@ export async function trackedFiles(
 }
 
 /**
- * Every path in the working tree that git would carry, repo-relative: the tracked ones
+ * Every path in the working tree that Git includes, repo-relative: the tracked ones
  * and the untracked ones an ignore rule does not cover, optionally narrowed by git pathspecs.
  *
  * This is the set a checker over repository contents needs. {@linkcode trackedFiles}
@@ -158,7 +158,7 @@ export async function workingTreeFiles(
  *
  * The old path never appears, so the result contains only paths that still exist.
  *
- * Turning detection off reports every move as a deletion of the old path.
+ * Disabled rename detection reports every move as a deletion of the old path.
  * That is the path a stale literal holds.
  *
  * Measured on this repository: 11,696 paths over 4,398 commits in 205 ms,

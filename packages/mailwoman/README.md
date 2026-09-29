@@ -152,7 +152,7 @@ await parse("350 5TH AVE, NEW YORK, NY 10118", {
 })
 ```
 
-## Geocoding
+## Geocode addresses
 
 Resolution turns parsed components into a Who's On First place ID and coordinate. It needs a
 gazetteer SQLite database — build one with `mailwoman gazetteer build admin` +
@@ -215,7 +215,7 @@ package is the umbrella that wires them together as a single `npm install`.
 | `@mailwoman/kind-classifier`      | Stage 2.5: query kind classification               |
 | `@mailwoman/phrase-grouper`       | Stage 2.7: phrase boundary discovery               |
 | `@mailwoman/codex`                | Postal reference data                              |
-| `@mailwoman/corpus`               | Training corpus pipeline                           |
+| `@mailwoman/corpus`               | Corpus training pipeline                           |
 | `@mailwoman/spatial`              | Spatial utilities                                  |
 | `@mailwoman/formatter`            | Address formatting + match key                     |
 | `@mailwoman/record`               | Record schema + normalizers                        |

@@ -17,7 +17,7 @@
  *
  *   **What this establishes and what it does not.** The counts come from one audited epoch at one seed.
  *   A source drawn zero times here is one the sampler did not reach in that epoch. The measurement does not show
- *   that no epoch can reach it. The audit reports its seed and draw count. This record carries both. A source the corpus holds
+ *   that no epoch can reach it. The audit reports its seed and draw count. This record stores both. A source the corpus holds
  *   and the config omits is excluded by construction. The record reports that exclusion instead of a zero draw.
  */
 
@@ -172,11 +172,11 @@ export interface EffectiveTrainingManifest {
 	 * so its rows are in the corpus and outside that manifest.
 	 *
 	 * Measured over `v0.6.0-register-surface` on 2026-09-28: the frozen manifest names 11 sources
-	 * and the audited epoch emitted 48, of which 39 carry no entry in it.
+	 * and the audited epoch emitted 48, of which 39 have no entry in it.
 	 * Those 39 account for 890,666 of the 1,000,000 rows emitted, 89.1%, so the frozen
 	 * manifest's license set covers 10.9% of what trained the model.
 	 *
-	 * Reporting the set is what keeps this record from reading as a complete one.
+	 * The set keeps this record from reading as a complete one.
 	 * A release assertion over it has to treat a non-empty value as an unread input
 	 * rather than as an absence of rows.
 	 */
@@ -185,7 +185,7 @@ export interface EffectiveTrainingManifest {
 	/**
 	 * The three stages a source passes through, for each source in {@linkcode emittedButUnrecorded}.
 	 *
-	 * The entries above give the emitted rows alone.
+	 * The entries above give only the emitted rows.
 	 * These give the rows the corpus holds, the rows the epoch drew and the rows
 	 * it emitted after augmentation.
 	 *
@@ -220,8 +220,8 @@ export interface EpochMixtureAudit {
 		 * Per-source detail the audit computes from the corpus files rather than from the corpus manifest.
 		 *
 		 * `rows` is how many rows of that source the corpus holds.
-		 * It is the only place a source outside the frozen manifest carries a corpus row count, so it is
-		 * what lets a reader read a source's rows in the corpus beside the rows one epoch drew and emitted.
+		 * It is the only place a source outside the frozen manifest has a corpus row count, so it is what
+		 * lets a reader read a source's rows in the corpus beside the rows one epoch drew and emitted.
 		 */
 		per_source?: Record<string, { rows?: number; draws?: number }>
 	}
@@ -250,7 +250,7 @@ export interface EffectiveConfigView {
  * YAML 1.1 coerces the bare key `NO` to boolean false.
  * Norway is a `country_weights` key, so a parser would drop it.
  *
- * @throws When the text carries no `source_weights` block.
+ * @throws When the text contains no `source_weights` block.
  * That map decides which sources the sampler considers.
  * A config without one is a truncated file rather than a config drawing from every source.
  */
@@ -317,7 +317,7 @@ export function readConfigView(text: string): EffectiveConfigView {
 }
 
 /**
- * The digest a manifest should carry, computed over the manifest with its digest field emptied.
+ * The digest a manifest should include, computed over the manifest with its digest field emptied.
  */
 export function effectiveManifestDigest(manifest: EffectiveTrainingManifest): string {
 	return sha256Hex(stringifyJSON({ ...manifest, contentDigest: "" }))
@@ -326,10 +326,10 @@ export function effectiveManifestDigest(manifest: EffectiveTrainingManifest): st
 /**
  * Derive what reached the trainer from the corpus's frozen manifest, one audited epoch and the config.
  *
- * @throws When the audit carries no `emitted_level.totals`.
+ * @throws When the audit contains no `emitted_level.totals`.
  * That field answers the question.
  * An audit without it is either a different report or a truncated one.
- * Deriving from `draw_level` alone would attribute rows augmentation removed.
+ * A derivation from only `draw_level` would attribute rows augmentation removed.
  * @throws When the audit ran under a different config file than the one supplied, because the two are
  * two training arms and one record over both would report a source one of them never weighted.
  */
@@ -481,10 +481,10 @@ export function provenanceDisagreement(
  * A caller holding a model card's attribution entries passes `null`.
  *
  * Those entries are prose naming publishers.
- * Every field of the card carries prose rather than a source id, so comparing the two
+ * Every field of the card contains prose rather than a source id, so comparing the two
  * lists as strings reports every entry as a source the epoch never drew.
  *
- * The refusal list then carries the coverage refusal and one line recording the comparison as unmeasured.
+ * The refusal list then records the coverage refusal and one line recording the comparison as unmeasured.
  */
 export function provenanceRefusals(input: {
 	manifest: EffectiveTrainingManifest | null

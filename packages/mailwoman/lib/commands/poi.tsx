@@ -134,7 +134,7 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
 		const { categoryIDs } = intent.subject
 		// Every member needs a tag rather than just one: a union emitted from the subset that
-		// happens to carry `osmTag` is a narrower query than the one the POI branch ran.
+		// happens to include `osmTag` is a narrower query than the one the POI branch ran.
 		// The printed result would hide that difference.
 		const untagged = categoryIDs.filter((id) => !getPOICategory(id)?.osmTag)
 
@@ -153,8 +153,8 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
  * coarsest-last (the hierarchy's own deepest-first order reversed), skipping other
  * placetypes (county, neighbourhood, …) to keep the table narrow.
  *
- * Empty string when `ancestry` is absent (no reverse geocoder wired) or carries none
- * of those three tiers (e.g. open-ocean/approximate misses).
+ * Empty string when `ancestry` is absent (no reverse geocoder wired) or contains no
+ * entries of those three tiers (e.g. open-ocean/approximate misses).
  */
 function formatAncestrySuffix(ancestry: POIResult["ancestry"]): string {
 	if (!ancestry || !ancestry.length) return ""

@@ -6,7 +6,7 @@
  *   Tests for the `fr-lieudit` recipe: end-to-end over a small fixture BAN département directory
  *   (mirroring `ban/sdk/ban.test.ts`'s header/row shape), verifying the dependent_locality/locality
  *   mapping, the own-line raw rendering, junk-row exclusion (delegated to `ban/sdk`'s `cleanLieuDit`),
- *   determinism under a fixed seed, and the `--country-fraction` append.
+ *   determinism under a fixed seed. It also tests the `--country-fraction` append.
  */
 
 import { gzip } from "@mailwoman/core/fs/compression"

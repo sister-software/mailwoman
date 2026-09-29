@@ -41,8 +41,8 @@ describe("gradedBaseOnly (#2223)", () => {
 
 	it("clears a country that declares no overlay, because the base package IS its production path", () => {
 		// FR routes through en-US by design.
-		// Calling that base-only would withhold a promote suggestion the run is entitled
-		// to make, which is the opposite of this predicate's purpose.
+		// A base-only result would withhold a promote suggestion the run is entitled to make.
+		// This predicate serves the opposite purpose.
 		expect(gradedBaseOnly("FR", new Set(["en-GB", "es-ES"]))).toBe(false)
 		expect(gradedBaseOnly(undefined, new Set(["en-GB"]))).toBe(false)
 	})

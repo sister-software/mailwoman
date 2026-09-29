@@ -11,7 +11,7 @@
  * Schema: `PARQUET_COLUMNS` from `#parquet/schema`, the same list the native writer uses.
  *
  * Every row must contain the span triple. A row without it came from a producer that has not migrated.
- * Writing that row would silently drop the character-offset labels. Fail loudly and report the row number.
+ * The writer would silently drop the character-offset labels if it wrote that row. Fail loudly and report the row number.
  */
 
 import { delimitedSource } from "@mailwoman/core/fs/delimited"
@@ -110,7 +110,7 @@ export async function jsonlToParquet(
 		throw new Error(`rowGroupSize must be a positive integer (got ${stringifyJSON(rowGroupSize)})`)
 	}
 
-	// Streaming keeps memory O(1) on the Node side.
+	// The Node-side writer uses O(1) memory by streaming rows.
 	// The staging directory owns the write stream, so it is closed before the directory is removed.
 	// A mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")

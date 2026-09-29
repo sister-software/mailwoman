@@ -16,7 +16,7 @@
   <img alt="node version" src="https://img.shields.io/node/v/@mailwoman/codex?color=339933">
 </p>
 
-Printing an address takes more than string concatenation. Germany puts the house number after
+Address formatting takes more than string concatenation. Germany puts the house number after
 the street and the postcode before the city. Spain separates the street from the number with a
 comma. Japan writes the largest unit first, opens with a postal mark, and joins the whole admin
 run without spaces. A formatter that gets any of these wrong produces a plausible address from
@@ -69,7 +69,7 @@ yarn add @mailwoman/codex
 > [!IMPORTANT]
 > Requires Node.js ≥ 24.18.0. Pure ESM.
 
-## Formatting
+## Format addresses
 
 ### `formatAddress(components, countryCode, options?)`
 
@@ -205,7 +205,7 @@ candidateSystemsForPostcode("SW1A 1AA") // → ["gb"]
 
 The first call returns three systems. This function tests the code's **shape** and does not
 check gazetteer membership, so returning all three is correct. The caller's country scope
-narrows the list. Picking one locale here would present a guess as a fact.
+narrows the list. The code returns every locale because it has no evidence for choosing one.
 
 ### Postcode granularity: three tiers, each earned by measurement
 
@@ -255,8 +255,7 @@ A layout says how to print an address, so a country needs one before it can be s
 conventions row says what is ungrammatical in that system, and the decoder applies it as a hard
 mask before Viterbi. A wrong row therefore breaks parses that currently work. Each row carries
 the measurement that justified it. An absent row means "no constraints known" and never "no
-constraints exist". Adding a country to the layouts is ordinary work, but adding a conventions
-row requires a measured receipt.
+constraints exist". Contributors can add a country to the layouts directly. A conventions row requires a measured receipt.
 
 ### Postal regimes the country code does not name
 
@@ -266,7 +265,7 @@ code. codex cannot express any of them today
 
 - **One code, several postal regimes.** `SH` covers Saint Helena, Ascension Island and Tristan da
   Cunha, which format addresses differently.
-- **Routing that is not geography.** BFPO identifiers are routing instructions and not a GB
+- **BFPO identifiers.** BFPO identifiers are routing instructions and do not represent a GB
   locality plus postcode. The American half of this family is modeled in
   `lib/us/military-address.ts`, which covers APO/FPO/DPO and the `AA`/`AE`/`AP` pseudo-states. The
   British half is not modeled.
@@ -283,9 +282,7 @@ backlog and not about how Chileans write an address. That information lives in
 
 ## What this package does not do
 
-This package does not **parse**. Turning `"1600 Amphitheatre Pkwy, Mountain View CA"` into
-components is a sequence-labeling problem, which [`mailwoman`](https://www.npmjs.com/package/mailwoman)
-solves with a small transformer encoder that is installed separately. This package does not
+This package does not **parse**. The [`mailwoman`](https://www.npmjs.com/package/mailwoman) parser uses sequence labeling to turn `"1600 Amphitheatre Pkwy, Mountain View CA"` into components. A separately installed small transformer encoder solves that task. This package does not
 geocode either. It covers the inverse direction and the reference tables, and it stays
 dependency-free so that a consumer who only wants to print an address does not download a model.
 
@@ -316,8 +313,8 @@ separate:
   evidence-lexicon curation laws, street decomposition for training gold, and the street-morphology
   FST.
 
-Adding descriptive forms to codex would corrupt formatting. Narrowing the descriptive lists to
-normative forms would weaken the evidence guards. The two vocabularies answer different
+Descriptive forms in codex would corrupt formatting. A descriptive list limited to normative forms
+would weaken the evidence guards. The two vocabularies answer different
 questions, so they stay in different tables.
 
 ## Related

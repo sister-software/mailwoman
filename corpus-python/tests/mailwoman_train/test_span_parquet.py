@@ -1,7 +1,7 @@
 """Parquet round-trip check for the v0.5.0 span columns (#519, rebuild-plan step 1).
 
 The recipe-output pipeline is JSONL (builders, via ``alignRow``) → converter →
-parquet → this package's PyArrow readers. JSONL has carried the span triple since #527. this
+parquet → this package's PyArrow readers. JSONL has stored the span triple since #527. this
 test pins the two properties the parquet leg must now hold:
 
 1. **Round-trip identity** — ``span_starts``/``span_ends``/``span_tags`` written by the real
@@ -96,7 +96,7 @@ def _convert(tmp_path: Path, rows: list[dict]) -> subprocess.CompletedProcess:
 def test_span_columns_round_trip(tmp_path: Path) -> None:
     rows = [
         _row(source_id="t-multi"),
-        # Intra-span punctuation — offsets the token columns structurally cannot carry.
+        # Intra-span punctuation — offsets the token columns cannot represent structurally.
         _row(
             source_id="t-pobox",
             raw="P.O. Box 19",

@@ -154,9 +154,10 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	})
 
 	/**
-	 * The measured residual, pinned by name: `route_pair` cannot be separated
-	 * from a two-token place name by structure alone, and the list is exhaustive
-	 * so a future rule change that grows the fork population fails here.
+	 * The measured residual, pinned by name: `route_pair` cannot be separated from
+	 * a two-token place name by structure only.
+	 *
+	 * The list is exhaustive so a future rule change that grows the fork population fails here.
 	 */
 	const EXPECTED_FORK_ROWS = [
 		"Antigua Guatemala",
@@ -180,7 +181,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		const marked: Array<{ input: string; codes: string[]; kind: QueryKind }> = []
 
 		for (const raw of corpus) {
-			// Category-query rows carry intent markers by design and are excluded from this address-shaped fork list.
+			// Category-query rows include intent markers by design and are excluded from this address-shaped fork list.
 			if (CATEGORY_QUERY_INPUTS.has(raw)) continue
 
 			for (const text of [raw, raw.toLowerCase()]) {
@@ -192,7 +193,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 			}
 		}
 
-		// Compared as sets of distinct inputs because the corpus may carry one surface in two boards.
+		// Compared as sets of distinct inputs because the corpus may include one surface in two boards.
 		expect([...new Set(marked.map((m) => m.input))].toSorted()).toEqual(
 			[...EXPECTED_FORK_ROWS, ...EXPECTED_FORK_ROWS.map((r) => r.toLowerCase())].toSorted()
 		)

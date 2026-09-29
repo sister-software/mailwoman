@@ -217,7 +217,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 		// The Taiwanese register stores `14之12` and `30附40` as numbers `14` and `30`.
 		// It stores the rest in `unit`.
-		// A query number that still carries the sub-number falls back to the base number.
+		// A query number that still includes the sub-number falls back to the base number.
 		// That result is approximate.
 		if (!row && this.#locale === "zh") {
 			const base = /^(\d+)(?:[之附]\d+)+$/u.exec(number)?.[1]

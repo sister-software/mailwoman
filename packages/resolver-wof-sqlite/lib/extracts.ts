@@ -100,7 +100,7 @@ const SQLITE_IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/u
 /**
  * Whether a `databasePath` entry is a path or an {@link ExtractConfig}.
  *
- * A builder is a `String` object, so `typeof` alone reads it as an object.
+ * A builder is a `String` object, so `typeof` by itself reads it as an object.
  */
 function isPathBuilderLike(value: unknown): value is PathBuilderLike {
 	return typeof value === "string" || value instanceof PathBuilder
@@ -198,7 +198,7 @@ export function pickExtractsForPlacetype(
 /**
  * Pick the extract to route a query to given the requested placetype(s).
  *
- * Routing rules, in order:
+ * The resolver applies these routing rules in order:
  *
  * 1. If any extract has explicit `placetypes` that includes the requested placetype, use it.
  * 2. Otherwise, if a non-main extract's `schemaName` matches the placetype
@@ -244,7 +244,7 @@ export function pickExtractForPlacetype(
 	for (const s of extracts) {
 		if (s.schemaName === "main" || matches.includes(s)) continue
 
-		// Substring match: `postalcode_us` matches `postalcode`.
+		// A substring match lets `postalcode_us` match `postalcode`.
 		// Conservative, requiring the placetype at a word boundary in the schema name
 		// to avoid false hits like `region` matching `arboregion`.
 		if (

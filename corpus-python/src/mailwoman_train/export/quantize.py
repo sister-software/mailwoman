@@ -21,7 +21,7 @@ then REJECTS with ``[ShapeInferenceError] ... (384) vs (768)``. The annotations 
 (onnx re-infers them), so we strip ``graph.value_info`` before quantizing — onnx then infers
 clean shapes and quantization succeeds. This is why the Jun-6 v0.9.3 int8 built fine on the
 older toolchain but a Jun-8 re-export of the same checkpoint did not (drift rather than a model change).
-Pinning the export/quant deps is the deeper fix. this strip makes quantization resilient to the drift.
+    Pinned export and quantization dependencies address the version drift. This strip also lets quantization proceed across versions.
 """
 
 from __future__ import annotations

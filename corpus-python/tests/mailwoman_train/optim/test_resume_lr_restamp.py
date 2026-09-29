@@ -136,7 +136,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
 def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_path, capsys):
     """Set both override LRs and verify that three groups receive the matching labels.
 
-    Each label must identify the group that carries its override.
+    Each label must identify the group that receives its override.
     """
     m1 = TinySpanClassifierModel()
     optim1, labels1 = build_optimizer(
@@ -150,7 +150,7 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
     assert labels1 == ["base", "span_head_learning_rate", "classifier_learning_rate"]
 
     # Each label's group must hold that override's params as well as the right LR, because a
-    # positional check on the LR alone could pass by coincidence.
+    # A positional check on the LR by itself could pass by coincidence.
     expected_params_by_label = {
         "base": {id(p) for n, p in m1.named_parameters() if n.startswith("encoder.")},
         "span_head_learning_rate": {id(p) for n, p in m1.named_parameters() if n.startswith("span_scorer.")},

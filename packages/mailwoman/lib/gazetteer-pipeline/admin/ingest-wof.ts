@@ -247,7 +247,7 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		absolute: true,
 		exclude,
 		// A data root can expose one checkout both directly and through a symlink.
-		// Skipping symlinks ingests each record once.
+		// The ingester reads each record once when it skips symlinks.
 		followSymlinks: false,
 	}).toArray()
 

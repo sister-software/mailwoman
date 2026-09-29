@@ -75,7 +75,7 @@ export interface AgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * Every row carries this distance.
+	 * Every row includes this distance.
 	 * It separates a real defect from a difference caused by the two channels
 	 * rendering the same edge differently.
 	 *
@@ -347,7 +347,7 @@ export function sampleAgreementPoints(
 
 	// Sort by authority so the stride samples across the 30 authorities
 	// instead of sampling one authority repeatedly.
-	// A stride over `area_id` alone would follow the publisher's feature numbering.
+	// A stride over `area_id` by itself would follow the publisher's feature numbering.
 	// That numbering is grouped by authority, so the stride would select only the
 	// authorities that fall on its positions.
 	const areaIDs = (

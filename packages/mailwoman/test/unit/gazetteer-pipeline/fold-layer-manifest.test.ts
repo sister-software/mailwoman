@@ -100,7 +100,7 @@ describe("codePointLayerManifest", () => {
 
 describe("twDistrictsLayerManifest", () => {
 	it("records the settled grant at tier shipped", () => {
-		// The expression the lab host's `localities-tw-districts.db` carries in `database_meta`, measured 2026-09-27.
+		// The expression recorded in the lab host's `localities-tw-districts.db` `database_meta`, measured 2026-09-27.
 		const manifest = twDistrictsLayerManifest({
 			license: "CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0",
 			release: "2026-08-20.0",

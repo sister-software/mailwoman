@@ -115,7 +115,7 @@ Run `yarn lint` for lint, formatting, prose, dependency, and repository-health c
 `yarn typecheck` for build and test type checking. Run the narrow package tests during iteration and
 the affected workspace's complete tests before handoff. Do not claim a command passed unless it ran.
 
-## Sweeping a word across the tree
+## Vocabulary rules across the tree
 
 A vocabulary rule governs how this repository writes prose. It does not govern a string the repository
 stores, quotes, or sends. Before applying one beyond the file in front of you, decide which of those
@@ -136,7 +136,7 @@ and `packages/corpus/data/PROVENANCE.md` records which of those inputs are not c
 `config/vale/styles/` holds the rules and their repairs. `lint-prose.ts` reads `.ts`, `.tsx`, `.py`,
 `.yaml`, `.yml`, `.md` and `.mdx`, so a JSON or JSONL file it changed was changed by hand.
 
-## Moving a workspace
+## Workspace moves
 
 After moving a workspace, search quoted path literals whose first segment is the old workspace name.
 The compiler does not inspect CI commands, CLI defaults, hook patterns, and test skip conditions. Keep

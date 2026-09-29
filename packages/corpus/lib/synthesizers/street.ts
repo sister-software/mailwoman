@@ -9,7 +9,7 @@
  *
  *   Why this exists: tiger/NAD/BAN adapter changes (committed earlier tonight) emit decomposed
  *   components from raw source data, but the v0.4.0 parquet files on Modal were built before those
- *   changes. Rebuilding the full corpus requires downloading raw tiger/NAD/BAN data and re-running
+ *   changes. A full-corpus rebuild requires downloading raw tiger/NAD/BAN data and re-running
  *   adapters end-to-end — out of scope for a single night shift. This synthesizer takes (locality,
  *   region, postcode) tuples and produces freshly-decomposed Stage 3 training rows, same shape as
  *   the PO box pipeline.
@@ -35,7 +35,7 @@ import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 // Keep ~50 entries so the synthesis distribution doesn't overfit to a tiny vocabulary.
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
-    output distribution. Reading the cascade top-to-bottom shows it. Naming each cutoff
+   output distribution. The cascade shows each weight from top to bottom. A separate constant for each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
     extracted as constants above. */
 

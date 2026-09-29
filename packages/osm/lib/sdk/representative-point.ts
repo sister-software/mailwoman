@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The one geometry-to-point reduction shared by OSM address, POI, and sub-venue extractors.
+ * @file The one geometry-to-point reduction shared by OSM address, POI and sub-venue extractors.
  */
 
 export interface OSMGeometryLike {

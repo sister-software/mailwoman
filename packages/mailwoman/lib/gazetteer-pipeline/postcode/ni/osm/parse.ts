@@ -34,7 +34,7 @@ import type { OverpassElement, OverpassResponse } from "#gazetteer-pipeline/post
  * The `[A-Z0-9]?` slot cannot fire for a real BT district (they are `BT1`–`BT94`, all-numeric),
  * and is kept rather than tightened to `[0-9]?` so the pattern stays recognisably the national one.
  *
- * Narrowing it would encode a fact about today's district list into a format check.
+ * A narrower check would encode today's district list into the format validation.
  */
 export const NI_UNIT_POSTCODE = /^BT[0-9][A-Z0-9]?\s[0-9][A-Z]{2}$/
 
@@ -149,8 +149,8 @@ export function normalizeOSMPostcode(raw: string): string {
 }
 
 /**
- * Read an element's coordinate: nodes carry `lat`/`lon` directly, ways and relations
- * carry `center` because the query asked for `out center`.
+ * Read an element's coordinate: nodes provide `lat`/`lon` directly, while ways
+ * and relations provide `center` because the query asked for `out center`.
  *
  * @returns Null when neither is usable.
  */
@@ -173,7 +173,7 @@ function elementPoint(element: OverpassElement): PostcodePoint | null {
  * Insertion order would also be deterministic given a fixed response file,
  * but it would be deterministic through the file's element order.
  *
- * Sorting makes the database's synthetic ids a function of the postcode set alone,
+ * The sort makes the database's synthetic ids a function only of the postcode set,
  * so a rebuild of OSM that adds one building does not renumber every place after it.
  */
 export function parseNIPostcodes(response: OverpassResponse, stats: NIOSMParseStats): NIPostcodeRecord[] {

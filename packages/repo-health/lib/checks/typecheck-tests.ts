@@ -7,9 +7,9 @@
  *
  *   `tsc -b` deliberately skips them: the build project excludes tests because anything it includes is emitted into
  *   `out/` and then published. That `exclude` suppressed the emit and the checking, so for most of this repo's life
- *   test files were compiled by vitest's esbuild transform, which strips types without looking at them.
+ *   test files were compiled by vitest's esbuild transform. It strips types without checking them.
  *
- *   Each workspace carries a `tsconfig.test.json` — non-emitting, referencing its own build project so siblings resolve
+ *   Each workspace has a `tsconfig.test.json` — non-emitting, referencing its own build project so siblings resolve
  *   through their built `.d.ts`. This runs them all and reports one diagnostic per `tsc` error line.
  */
 
@@ -36,7 +36,7 @@ const TEST_PROJECT = /^(?:packages\/)?[^/]+\/tsconfig\.test\.json$/
 /**
  * Run `tsc` against one workspace's test project.
  *
- * A non-zero exit carries the diagnostics on stdout, so a rejected promise is
+ * A non-zero exit includes the diagnostics on stdout, so a rejected promise is
  * the normal path for a workspace with errors.
  */
 async function* typecheck(workspace: string, repoRoot: string): AsyncGenerator<Diagnostic, void, unknown> {

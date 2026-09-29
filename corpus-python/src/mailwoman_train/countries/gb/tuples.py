@@ -13,14 +13,14 @@ from ...paths import data_root_path
 TUPLES_CSV_PARTS = ("ppd", "2026-07-22", "gb-tuples.csv")
 
 #: Plain or letter-suffixed house numbers (`9`, `45A`). Range generation belongs to the
-#: synthesizer, so a range in the source is skipped rather than carried through.
+#: synthesizer, so a range in the source is skipped rather than passed through.
 NUMBER_PATTERN = re.compile(r"^\d+[A-Za-z]?$")
 
 
 def iter_tuples(count: int, rng: random.Random) -> Iterator[dict[str, Any]]:
     """Reservoir-sample the derived CSV in one streaming pass.
 
-    The file is 25.7M rows, so it is read once and never held in memory. `region` is carried
+    The file is 25.7M rows, so it is read once and never held in memory. The recipe copies `region`
     because the recipe guard requires the field. The GB address tail omits it and uses
     `locality postcode`.
     """

@@ -26,7 +26,7 @@ It is an **H3 hexbin** tileset. Each cell carries **two baked fog values** in `[
 
 The demo's two fill layers (`coverage-opt-fog`, `coverage-honest-fog`) just point `fill-opacity` at one prop or the other — **no rebake needed to switch readings**. Each H3 resolution is baked in its own non-overlapping zoom band; the finest is baked at a single tile-max zoom and MapLibre **overzooms** above it (hexes are identical geometry at every zoom).
 
-**Serving is XYZ via the tile worker — NOT client-side PMTiles.** The `.pmtiles` archive lives at `nexus-assets/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.mailwoman.ai/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — **that was wrong and was removed** (`524f78a8`). Don't bring it back.
+**The tile worker serves XYZ. Client-side PMTiles is not the serving path.** The `.pmtiles` archive lives at `nexus-assets/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.mailwoman.ai/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — that path was removed (`524f78a8`). Don't bring it back.
 
 The **global holes layer** is decoupled from the US rooftop pipeline (its own DuckDB stage, US-excluded) but rides the SAME `coverage` source-layer + `fog`/`fog_opt` props, so the demo's two fill layers render it with zero wiring changes. It emits res-domain hexes at `[onset…max]` + a res-4 low-zoom rollup; the US tiers are untouched.
 
@@ -98,7 +98,7 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s) from `results.openaddresses.io/latest/run/us/<st>/<source>.zip`, then `mailwoman situs address-points --state <ST> --oa-csv <csv1>,<csv2>,…`. The new state database is picked up automatically on the next `coverage build`.
 
-## Tuning knobs (`coverage build`)
+## Build options (`coverage build`)
 
 | Flag                         | Default                  | Effect                                                                                          |
 | ---------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------- |

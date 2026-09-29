@@ -1,7 +1,7 @@
 """Pin one seeded Korea build end to end.
 
 The receipt covers both corpora, both boards plus the report. The four passes share one
-`random.Random` and feed each other. Moving a stage changes later passes' inputs.
+`random.Random` and feed each other. A moved stage changes the inputs to later passes.
 """
 
 from __future__ import annotations
@@ -318,7 +318,7 @@ def test_the_report_matches_the_committed_reference(built: dict[str, Any]) -> No
 
 
 def test_every_span_covers_the_text_it_claims(built: dict[str, Any]) -> None:
-    """Holds for any input, so it says something when it stops holding."""
+    """Holds for any input. The test fails when it stops."""
     for section in ("label", "registry", "board"):
         for row in built[section]:
             raw = row["raw"]

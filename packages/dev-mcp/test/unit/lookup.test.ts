@@ -107,8 +107,8 @@ describe("lookupNormalize", () => {
 
 describe("loadFSTArtifact", () => {
 	it("reports an unresolved path as unavailable rather than as an empty source", async () => {
-		// A source whose artifact is missing answers "no" to everything, which reads as
-		// absence for every query and must never be reported silently.
+		// A source whose artifact is missing answers "no" to everything.
+		// That reads as absence for every query and must never be reported silently.
 		expect(await loadFSTArtifact(undefined, () => stubFST({}))).toEqual({
 			unavailable: "No artifact path was resolved for this source.",
 		})

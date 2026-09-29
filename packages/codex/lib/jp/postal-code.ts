@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Japanese postcodes (郵便番号, yūbin-bangō): the branded type, shape, and normalization, plus the
+ *   Japanese postcodes (郵便番号, yūbin-bangō): the branded type, shape and normalization. It also defines the
  *   first-digit → coarse-region prior.
  *
  *   This file is the far end of a spectrum whose other end is `us/zipcode.ts`. A US address leans on
@@ -29,7 +29,7 @@ import type { Tagged } from "type-fest"
  * conventionally written after the 〒 mark (`〒100-0001`).
  *
  * Branded so a normalized code is distinct from an arbitrary string.
- * The 7-digit shape alone does not prove a code is real, only well-formed.
+ * The 7-digit shape by itself shows that a code is well-formed, but not that it is real.
  *
  * @category Postal
  * @type string

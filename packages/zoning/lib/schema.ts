@@ -13,7 +13,8 @@ import { sql, type Kysely } from "kysely"
  */
 export const ZoningCellContainment = {
 	/**
-	 * Every point in the cell is inside the zone, answered from the index alone with no geometry read.
+	 * Every point in the cell is inside the zone.
+	 * The index answers this without reading geometry.
 	 */
 	Whole: "whole",
 	/**
@@ -81,7 +82,7 @@ export interface ZoningAreaTable {
 	 */
 	crosswalk_description: string | null
 	/**
-	 * `SZO` — a coarser code from the same authority, carried as published rather than derived.
+	 * `SZO` — a coarser code from the same authority, stored as published rather than derived.
 	 */
 	crosswalk_rollup: string | null
 	/**
@@ -131,7 +132,7 @@ export interface ZoningPlanTable {
 	 */
 	valid_to: string | null
 	/**
-	 * `CURRENT_PLAN`, carried as published.
+	 * `CURRENT_PLAN`, stored as published.
 	 *
 	 * `1` means the publisher has not superseded the plan.
 	 * `valid_to` records whether it remains in force today.
@@ -165,8 +166,8 @@ export interface ZoningVocabularyTable {
 	/**
 	 * The publisher's own words.
 	 *
-	 * For an observed-but-undeclared code this is the description the data carries on its rows,
-	 * or the code itself where the data carries none, never a label this package wrote.
+	 * For an observed-but-undeclared code this is the description stored on its rows,
+	 * or the code itself where the data stores none, never a label this package wrote.
 	 */
 	label: string
 	/**
@@ -183,11 +184,11 @@ export interface ZoningVocabularyTable {
 	 * `1` where the publisher declares this code in its own domain, `0`
 	 * where the code appears only in the data.
 	 *
-	 * Folding the two would hide a source-schema change or invent a declaration.
+	 * A merged value would hide a source-schema change or invent a declaration.
 	 */
 	declared: number
 	/**
-	 * How many rows of this artifact carry the code.
+	 * How many rows of this artifact contain the code.
 	 *
 	 * A census a reader checks a closed domain against, rather than a claim about the world.
 	 */
@@ -308,7 +309,7 @@ export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<voi
 		.addColumn("signed_area_m2", "real", (c) => c.notNull())
 
 	await addRingsColumn(bounded)
-		// `not NULL` alone accepts `''`, so the value set and the blank are refused separately.
+		// `not NULL` by itself accepts `''`, so the value set and the blank are refused separately.
 		.addCheckConstraint(
 			"zoning_area_provenance_grade_declared",
 			sql`provenance_grade in ('authoritative', 'inferred') and trim(provenance_grade) != ''`

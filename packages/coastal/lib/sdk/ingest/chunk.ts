@@ -11,7 +11,8 @@
  *   fragmentation happens to stay low is not reproducible.
  *
  *   The domain checks run here and throw: an unknown policy, policy interpretation or defence type is a
- *   source-schema change. Coercing it to a nearest neighbour or null converts "the source changed" into
+ *   source-schema change. The ingest step must reject it instead of mapping it to a nearest neighbour or null,
+ *   which would convert "the source changed" into
  *   "there is no data here". The defence check compares case-folded and stores the source's own string for the
  *   source's inconsistent capitalization.
  *
@@ -251,7 +252,7 @@ export async function ingestCoastalChunk(
 			)
 
 			// Ground instability is a different hazard and has no cell rows.
-			// Leaving it out of the index keeps it from reaching an erosion probe.
+			// The index excludes it, so the erosion probe cannot query it.
 			instabilityFeatures++
 
 			batch.rowWritten()

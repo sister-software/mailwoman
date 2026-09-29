@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `fetchGeonamesDumps` — catalog-driven coverage, the zip→txt extraction, and the two presence traps: a country
+ * @file `fetchGeonamesDumps` — catalog-driven coverage, the zip→txt extraction and the two presence traps: a country
  *   the source does not publish (404 ≠ transfer failure, the geonames-postal lesson) and a present `<CC>.txt` that is
  *   not a gazetteer dump at all (GeoNames' postal exports share the basename. seven tier-1 postal files sat at these
  *   paths reading as coverage until the capitals build found them capital-less).

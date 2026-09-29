@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `traceParse` carries two readings of a token. `logits` is the model's raw emission.
+ *   `traceParse` returns two readings of a token. `logits` is the model's raw emission.
  *   `emissions` is what viterbi decoded after every prior wrote into it. A row whose raw
  *   emission already refuses the locality is a training result while one whose raw emission
  *   favours it and whose post-prior matrix does not favour it reveals the prior that took it.
@@ -142,8 +142,8 @@ interface GroupMargins {
 	decodedMargin: number
 	priorsApplied: Map<string, number>
 	/**
-	 * What won at the first locality piece instead: the margin says how far the
-	 * locality came behind, this says what it came behind.
+	 * What won at the first locality piece instead: the margin reports how far the locality came behind.
+	 * This field identifies what ranked ahead.
 	 */
 	decodedAs: Map<string, number>
 	unlocated: number

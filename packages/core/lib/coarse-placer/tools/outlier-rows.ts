@@ -31,7 +31,7 @@ export interface AssembleOutlierOptions {
 	locality: (row: Record<string, unknown>) => string
 	/**
 	 * Drop raw-coord-only / PO-box-ish noise (the OA failure mode): without a street,
-	 * the locality must carry a real word character.
+	 * the locality must contain a real word character.
 	 */
 	requireLetterLocality?: boolean
 }

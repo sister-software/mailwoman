@@ -375,7 +375,7 @@ async function buildStateDatabase(
 	}
 
 	// The segment count appears on stdout and the county count on stderr.
-	// The patterns have no line anchors because the summary lines carry a render prefix.
+	// The patterns have no line anchors because the summary lines include a render prefix.
 	const stdout = stripAnsi(result.stdout ?? "")
 	const stderr = stripAnsi(result.stderr ?? "")
 	const combined = `${stdout}\n${stderr}`

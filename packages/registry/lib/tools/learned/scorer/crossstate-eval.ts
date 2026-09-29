@@ -7,7 +7,7 @@
  *   within-state A/B showed the GBT beats the FS baseline on clustering, so this trains on one state and
  *   evaluates clustering F1 on a different state the model never saw.
  *
- *   One registry pass builds the global address-frequency table, a train-state sample, and an
+ *   One registry pass builds the global address-frequency table, a train-state sample and an
  *   eval-state sample. Both samples are geocoded. The GBT and LR train on the train state's pairs and
  *   cluster the eval state's records through the same `resolveEntities` pipeline, with best F1 over a
  *   fine per-scorer threshold sweep.

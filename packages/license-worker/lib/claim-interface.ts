@@ -11,7 +11,8 @@ import { z } from "zod"
 
 /**
  * The lifecycle states are `pending` until the first invoice is paid, `revoked`
- * after a full refund or dispute, and `issued` once the token is minted.
+ * after a full refund or dispute.
+ * The state becomes `issued` once the token is minted.
  */
 export const ClaimResponseSchema = z.discriminatedUnion("status", [
 	z.object({ status: z.literal("pending") }),

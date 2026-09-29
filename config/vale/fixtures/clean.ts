@@ -14,6 +14,17 @@
  *   IS NULL OR valid_to > asOf), placetype='postalcode' AND country_id = ?. A code sense of a two-letter word stays
  *   quiet too: Portland, OR 97215, Whitby ON (128,377), Berlin (BE) and Saxony (SN), a weight of 1.0 with BE: on the
  *   next line.
+ * Anything after this point has a stable shape.
+ * Everything here uses the same framing.
+ * String values preserve their original spelling.
+ * Sibling nodes share the parent identifier.
+ * Meaning depends on the surrounding record.
+ * During a retry, the client reuses its request id.
+ * Versioning follows the package release.
+ * Hugging Face publishes the model artifacts.
+ * Birling Gap is a place name.
+ * Wyoming is a state name.
+ * Nursing is a source category.
  */
 
 /**
@@ -27,3 +38,5 @@ export const clean = 1
 // Each row has exactly one provenance grade.
 // The grades never merge.
 // Each artifact contains rows of one provenance grade only.
+// The parser reads the manifest before it validates each row.
+// The client retries the request after following a redirect.

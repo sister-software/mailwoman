@@ -8,7 +8,7 @@
 
 /* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because every tuple this
    synthesizer draws from is `US_TUPLES`, a hardcoded US list. The comma-less arm deliberately malforms that order.
-   A layout cannot express it. The arm stresses the segmentation cue carried by commas. */
+ A layout cannot express it. The arm stresses the segmentation cue created by commas. */
 
 import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
 import { sample } from "@mailwoman/core/random"
@@ -17,7 +17,7 @@ import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
-   output distribution. Reading the cascade top-to-bottom shows it. Naming each cutoff
+   output distribution. The cascade shows each weight from top to bottom. A separate constant for each cutoff
    would hide the distribution behind identifiers. The genuine thresholds in these files are
     extracted as constants above. */
 
@@ -288,7 +288,7 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Springfield", region: "MA", postcode: "01108", country: "US" },
 ]
 
-// French rows carry no region component.
+// French rows have no region component.
 const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Paris", region: "", postcode: "75003", country: "FR" },
 	{ locality: "Marseille", region: "", postcode: "13016", country: "FR" },

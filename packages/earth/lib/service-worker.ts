@@ -6,7 +6,7 @@
  * The Earth service worker. `vite-plugin-pwa` injects the precache manifest into this file — the app shell, its
  * hashed assets, the icons and the manifest — and no code here precaches a model, a database or a tile.
  *
- * The worker also carries the range-chunk cache for the byte-range databases the resolver reads from the data
+ * The worker also stores the range-chunk cache for the byte-range databases the resolver reads from the data
  * origin: every validated 64 KB range chunk of a versioned, immutable URL is stored in Cache Storage. The URL
  * and offset form its key. Each chunk's body length is checked against its Content-Range because Mobile Safari's HTTP cache
  * can hand back a torn chunk (a truncated body for a 206) that reaches SQLite as "database disk image is

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Collects BDC filings and nearby infrastructure as evidence for one broadband claim.
- *   The evidence can support a claim. Missing coverage produces an abstention or lower confidence.
+ *   The evidence can support a claim. An absent coverage region produces an abstention or lower confidence.
  *
  *   The filing channel uses `geoid` when present and otherwise approximates the block with the point's
  *   H3 cell. The physical channel needs a coordinate, so a geoid-only claim skips it. Only fiber and

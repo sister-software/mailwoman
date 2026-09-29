@@ -10,7 +10,7 @@
  *
  *   The fixture matches on the query's normalized form or a declared component value, deliberately simple
  *   string keys because it tests how provider answers pass through result surfaces rather than
- *   matching quality. No fixture row may carry licensed data. Synthetic UPRN-shaped identifiers use the
+ *   matching quality. No fixture row may contain licensed data. Synthetic UPRN-shaped identifiers use the
  *   reserved 0-prefix range no real uprn occupies.
  */
 

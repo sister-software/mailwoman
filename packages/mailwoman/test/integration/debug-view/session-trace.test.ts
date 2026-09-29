@@ -69,8 +69,8 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(trace.parse.pieces.length).toBeGreaterThan(0)
 				expect(trace.parse.tokens).toHaveLength(trace.parse.pieces.length)
 
-				// And the decode it recorded is the decode behind the tree: every component the tree
-				// carries at the top level appears as a label the trace's tokens actually produced.
+				// And the decode it recorded is the decode behind the tree: every component the
+				// tree appears at the top level as a label the trace's tokens actually produced.
 				const decoded = new Set(trace.parse.tokens.map((token) => token.label.replace(/^[BI]-/u, "")))
 
 				for (const root of withTrace.tree.roots) {
@@ -82,7 +82,7 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(trace.kind?.kind).toBe("structured_address")
 				expect(trace.locale).toBe(options.locale)
 
-				// Timing is measured on both paths.
+				// Both paths report timing.
 				// The traced path includes its extra decode.
 				expect(withTrace.timing.total).toBeGreaterThan(0)
 				expect(withTrace.timing.trace).toBeGreaterThan(0)

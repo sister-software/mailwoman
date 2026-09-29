@@ -60,7 +60,7 @@ const usStateAbbrevs = new Set<string>(US_STATE_ABBREVIATIONS as readonly string
 /**
  * Curated single-token country surfaces that are common words.
  *
- * A surface in this set keeps its `country_surface` bit and also carries `country_ambiguous`.
+ * A surface in this set keeps its `country_surface` bit and also includes `country_ambiguous`.
  */
 const COMMON_WORD_AMBIGUOUS = new Set(["america", "england", "britain", "turkey", "chad", "jordan", "jersey", "guinea"])
 

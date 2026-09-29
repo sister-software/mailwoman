@@ -6,7 +6,7 @@
  *   Builds the sealed `soil.db` polygon layer from NRCS soil survey areas.
  *
  *   The builder streams cell touches into a temporary SQL table so that memory stays flat as the row
- *   count grows. Absent data has no row in any table. Land outside a survey area, and coverage cells that
+ *   count grows. Absent data has no row in any table. Land outside a survey area and coverage cells that
  *   only `notcom` or access-denied polygons reach, get no coverage row.
  */
 
@@ -257,7 +257,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 		},
 		ingest: async (kdb) => {
 			// The attributes are written first because the ingest needs the map units that have no soil mapping.
-			// Writing them first also makes a delineation with a missing map unit fail early.
+			// The build writes them first so a delineation with a missing map unit fails early.
 			writeAttributes(kdb, options.areas)
 
 			if (!options.inProcess) return undefined
@@ -660,7 +660,7 @@ function buildCoverageCells(
  * Returns an outline's polygons in `MultiPolygon` coordinate form.
  *
  * @throws {TypeError} When the outline is not a polygon or multipolygon.
- * Skipping it would silently drop that survey area's coverage.
+ * The build would silently drop that survey area's coverage if it skipped the outline.
  */
 function outlinePolygons(outline: ParsedGeometry): MultiPolygonRings {
 	const polygons = arealPolygons(outline)

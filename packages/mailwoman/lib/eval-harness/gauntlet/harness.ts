@@ -111,7 +111,7 @@ export interface GauntletDepsOptions {
  * Resolver-side pins a gauntlet run can PIN — the counterpart to the model-side
  * `modelPath`/`tokenizerPath` swaps.
  *
- * Following `eval oa-resolver`'s idiom, a pin is a default-override rather than a new mechanism:
+ * The `eval oa-resolver` idiom treats a pin as a default override rather than a new mechanism:
  * Every field maps 1:1 onto a {@linkcode geocodeAddress} dependency of the same name.
  * An absent field leaves the production default in force.
  * `undefined` also means the production default.
@@ -128,14 +128,14 @@ export interface GauntletResolverPins {
 	/**
 	 * Feed the gazetteer FST prior to the parse.
 	 *
-	 * Unlike the boolean pins this one carries an artifact, so the harness loads it
+	 * Unlike the boolean pins this one selects an artifact, so the harness loads it
 	 * rather than `resolverPinDeps`, and only an explicit `false` withholds it.
 	 */
 	gazetteerPrior?: boolean
 	/**
 	 * The admin-containment re-rank: a parsed region qualifier participates in
-	 * locality-candidate selection through the candidate gazetteer's ancestors sidecar.
-	 * default off, so `true` is the pin that carries evidence.
+	 * locality-candidate selection through the candidate gazetteer's ancestors
+	 * sidecar. default off, so `true` enables the evidence.
 	 */
 	adminContainmentRerank?: boolean
 	/**
@@ -162,7 +162,7 @@ export interface GauntletResolverPins {
 	poiVenueTier?: boolean
 	/**
 	 * A span-rescore sub-span may drop context but never a word of the name. default off,
-	 * so `true` is the pin that carries evidence.
+	 * so `true` enables the evidence.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
@@ -236,7 +236,7 @@ export function describeResolverPins(pins: GauntletResolverPins | undefined): st
 }
 
 /**
- * Per-query resolution priors a case can carry (forwarded verbatim to {@linkcode geocodeAddress}).
+ * Per-query resolution priors a case can pass to {@linkcode geocodeAddress}.
  */
 export interface GauntletGeocodeOpts {
 	defaultCountry?: string
@@ -247,7 +247,7 @@ export interface GauntletGeocodeOpts {
 	 * NZ selects en-NZ's pair-index.
 	 *
 	 * An absent country selects en-US.
-	 * Grading every row through the bare en-US package silently drops the dependent-locality prior.
+	 * The bare en-US package silently drops the dependent-locality prior when it grades every row.
 	 */
 	caseCountry?: string
 	/**
@@ -480,8 +480,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		if (!opts.forceQueryKind) return verdict
 
 		// Only `kind` moves.
-		// Rewriting confidence, alternatives or intent markers would change more than the verdict under test.
-		// The coordinator routes on the top kind alone.
+		// A confidence, alternative or intent-marker rewrite would change more than the verdict under test.
+		// The coordinator routes on only the top kind.
 		return { ...verdict, kind: opts.forceQueryKind }
 	}
 
@@ -533,10 +533,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const pinDeps = resolverPinDeps(opts.pins)
 
-	// This pin carries an artifact rather than a boolean.
+	// This pin selects an artifact rather than a boolean value.
 	// The artifact is PER classifier.
-	// The FST ships beside the weights, so the en-GB package carries `fst-en-gb.bin`
-	// and the base carries `fst-en-us.bin`.
+	// The FST ships beside the weights: the en-GB package includes `fst-en-gb.bin`,
+	// and the base package includes `fst-en-us.bin`.
 	// They hold different places: reading the path off the base classifier would feed every
 	// overlay case a gazetteer for the wrong country, a pairing production never runs.
 	// Cached per resolved path, because the overlay classifiers are themselves cached
@@ -556,7 +556,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 		if (!fstPath) {
 			// Loud, once per locale: a prior-on run against an overlay with no FST silently
-			// grades the base model for those rows while the pins line still says `on`.
+			// grades the base model for those rows while the pins line still records `on`.
 			if (!warnedMissingPriorFST.has(label)) {
 				warnedMissingPriorFST.add(label)
 
@@ -703,7 +703,7 @@ export interface GauntletResult {
 	/**
 	 * The parsed unit / sub-venue span, asserted by the sub-venue cases.
 	 *
-	 * No result field carried it before, so `componentOf` threw until it was added.
+	 * No result field exposed it before, so `componentOf` threw until it was added.
 	 */
 	unit: string | null
 	/**

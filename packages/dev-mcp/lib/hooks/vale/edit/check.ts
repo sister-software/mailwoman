@@ -72,8 +72,8 @@ async function main(): Promise<void> {
 
 	const linter = repoRootPathBuilder("config", "vale", "lint-prose.ts")
 
-	// Vale exits non-zero when it has error-severity findings, so the REPORT is on
-	// stdout in both cases and the exit code carries no separate signal.
+	// Vale exits non-zero when it has error-severity findings, so the REPORT is on stdout
+	// in both cases and the exit code provides no separate signal.
 	const report = await runFile(process.execPath, [linter, surface, filePath], {
 		cwd: repoRootPathBuilder(),
 		maxBuffer: 8 * 1024 * 1024,

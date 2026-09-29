@@ -126,7 +126,7 @@ export async function createAddressPointIndexes(db: AddressPointSchemaHandle): P
 		.execute()
 
 	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
-	// Street-first index for the bbox scope: OSM points often carry no postcode or locality,
+	// Street-first index for the bbox scope: OSM points often have no postcode or locality,
 	// so the reader scopes a `(street_norm, number)` probe by the resolved locality's bbox.
 	await db.schema.createIndex("idx_ap_street").on("address_point").columns(["street_norm", "number"]).execute()
 }

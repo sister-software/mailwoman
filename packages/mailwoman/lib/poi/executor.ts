@@ -47,8 +47,10 @@ export interface POIExecutorOpts {
 	resolveOvertureCategories?: (categoryID: string) => string[]
 
 	/**
-	 * Looks up a result's WOF ancestry, deepest first, and must be synchronous. results
-	 * get no `ancestry` key when it is missing or returns no entries.
+	 * Looks up a result's WOF ancestry, deepest first.
+	 *
+	 * The lookup must be synchronous.
+	 * Results get no `ancestry` key when it is missing or returns no entries.
 	 */
 	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
 }
@@ -169,7 +171,7 @@ export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; l
 
 /**
  * Returns the uppercase country code of the POI search center, or `null`
- * when neither that node nor the roots carry one.
+ * when neither that node nor the roots contain one.
  */
 export function resolvePOIAnchorCountry(intent: POIIntent): string | null {
 	const tree = intent.anchor?.tree

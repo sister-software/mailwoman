@@ -12,7 +12,7 @@
  *   This reads the published workbook directly: 122 columns, a real header row, 19,852 filers in the
  *   2025-12-07 vintage. The 17-column TSV path stays for the artifacts already produced against it.
  *
- *   **What the workbook has that the TSV never did**, and why each matters:
+ *   **What the workbook has that the TSV never did and why each item matters:**
  *
  *   - `note1`/`note2`/`note3` record the filer lifecycle. Of 19,852 rows, 11,533 contain at least one note. The notes
  *     parse to an eight-template vocabulary with zero unrecognized values (`form499-notes.ts`). Two templates map to
@@ -21,7 +21,7 @@
  *     exactly one state, 1,780 in fifty or more.
  *   - `coresid` — the FRN, under a name the 17-column tuple called `frn`.
  *
- *   **Three mappings would corrupt data if done naively**, which is the real argument for a reader rather
+ *   **Three mappings would corrupt data if done naively.** These cases make the case for a reader rather
  *   than a spreadsheet export:
  *
  *   1. `LastFiling` uses `M/D/yyyy` and becomes `valid_from`. `assertISODate` rejects that format. `build-filer.ts`
@@ -98,7 +98,7 @@ const NOTE_KEYS = ["note1", "note2", "note3"] as const
 /**
  * USPS codes for the workbook's 59 jurisdiction columns, keyed by the normalized header name.
  *
- * Territories and the Pacific atolls are included because the workbook carries them.
+ * Territories and the Pacific atolls are included because the workbook lists them.
  * Johnston and Midway have no USPS code of their own.
  *
  * This map records their FIPS-adjacent conventional abbreviations.
@@ -208,8 +208,8 @@ const US_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
  * An unconverted date therefore fails the build at the write point.
  * The error identifies the filer.
  *
- * Emitting the raw `M/D/yyyy` here would fail the same assertion.
- * Emitting a guess would not fail at all.
+ * The raw `M/D/yyyy` value here would fail the same assertion.
+ * A guessed value would pass the assertion.
  */
 export function toISOFilingDate(value: string): string {
 	// A workbook whose cells are real dates rather than text arrives pre-converted by `cell`.
@@ -253,7 +253,7 @@ export function toForm499Row(row: WorkbookRow): Form499Row {
 		form499ID: cell(row, keys.form499ID),
 		frn: toFRN(cell(row, keys.frn)),
 		lastFiledAt: toISOFilingDate(cell(row, keys.lastFiling)),
-		// The workbook says Yes/No where the row shape is documented as "true iff the raw value is true".
+		// The workbook records Yes/No where the row shape is documented as "true iff the raw value is true".
 		// Both spellings are accepted so this reader stays correct if the export ever switches back.
 		usfContributor: ["yes", "true"].includes(cell(row, keys.usfContributor).toLowerCase()),
 		legalNameOfCarrier: cell(row, keys.legalName),

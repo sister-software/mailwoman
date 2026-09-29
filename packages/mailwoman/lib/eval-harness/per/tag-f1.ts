@@ -250,12 +250,12 @@ export interface LocaleEvalSpec {
  * One eval spec per locale that has an eval set, shared by the capability-manifest
  * generator and the mask-regression release check.
  *
- * The eval rows carry split street parts so the affix capability
+ * The eval rows include split street parts so the affix capability
  * (`street_prefix`/`street_suffix`) is measurable.
  * The folded `per-locale-f1.ts` cannot see it.
  *
  * FR uses the dedicated street-prefix eval set rather than the broad golden dev set
- * because golden FR carries only ~7 `street_prefix` rows against ~1535 without it,
+ * because golden FR has only ~7 `street_prefix` rows against ~1535 without it,
  * so the unfolded `street_prefix` F1 there is dominated by absent-gold rows.
  */
 export const MASK_EVAL_LOCALES: LocaleEvalSpec[] = [

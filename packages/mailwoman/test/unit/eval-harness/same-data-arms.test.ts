@@ -128,7 +128,7 @@ describe("same-data synthetic smoke (#2261)", () => {
 
 	it("records a replay miss as an ERROR, never as an abstention", async () => {
 		const panel = panelFor("smoke-miss", [101], true)
-		// Removing the locality lookup leaves exactly one query unanswered.
+		// The locality lookup answers exactly one query.
 		const starved = fixtureFor("smoke-miss", [SPRINGFIELD_IL])
 
 		starved.lookups = starved.lookups.filter((lookup) => lookup.query.placetype !== "locality")

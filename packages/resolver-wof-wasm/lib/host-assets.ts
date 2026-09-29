@@ -6,7 +6,7 @@
  *   What a host must stage to serve the httpvfs readers: sql.js-httpvfs's UMD bundle, its worker and its wasm, loaded
  *   at run time by URL (the UMD via a classic script tag, the worker and wasm handed to `createDbWorker`), so no bundler
  *   ever sees them. Node-side, a build step, never the browser. `syncArtifact` is the idempotent copy every staged asset
- *   goes through: a size-identical destination is left alone so a dev server watching it sees no change.
+ *   goes through: a size-identical destination remains unchanged so a dev server watching it sees no change.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -86,12 +86,12 @@ export async function stageSQLJSAssets(destDir: PathBuilderLike): Promise<boolea
 		const dest = resolvePath(destDir, f)
 
 		// Idempotent stage — syncArtifact skips a size-identical copy.
-		// This runs in loadContent(), which the Docusaurus dev server (`yarn start`)
-		// re-invokes on reload, and `destDir` lives under the watched `static/` tree.
+		// This runs in loadContent(), which the Docusaurus dev server (`yarn start`) re-invokes on reload.
+		// `destDir` lives under the watched `static/` tree.
 		// An unconditional copy rewrites the file (fresh mtime) even when the bytes are identical,
 		// the watcher sees a "change" and reloads, loadContent() re-runs and re-copies… a
 		// reload loop that shows up as the /demo page flickering during `start`.
-		// Skipping the no-op copy breaks the cycle.
+		// A no-op copy breaks the cycle when the host does not skip it.
 		// (Prod `build` runs loadContent once, so the loop is a dev-server-only hazard.)
 		if (await syncArtifact(src, dest, `sql.js-httpvfs ${f}`)) {
 			copied++

@@ -111,7 +111,7 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("VE renders locality-then-postcode and KEEPS the region after it (#1821)", () => {
-		// VE carries the region after the postcode, as in `…, Barcelona 6001, Anzoátegui,
+		// VE places the region after the postcode, as in `…, Barcelona 6001, Anzoátegui,
 		// Venezuela`. This tail differs from GB's (which drops the region) and from the
 		// default (which puts the region before the code).
 		const veTuple: HouseVenueBaseTuple = {
@@ -138,8 +138,9 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("leaves every non-VE country's tail exactly as it was", () => {
-		// The branch is country-restricted, and the `house-venue` recipe output carries FR
-		// and US rows only, so this addition cannot move an existing row.
+		// The branch is country-restricted.
+		// The `house-venue` recipe output contains FR and US rows only,
+		// so this addition cannot move an existing row.
 		for (const [country, pattern] of [
 			["US", /Boston, MA 02101/],
 			["FR", /75005 Paris/],

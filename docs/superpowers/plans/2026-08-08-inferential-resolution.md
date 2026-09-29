@@ -37,7 +37,7 @@ not have crossed an ocean. The constraint that was already in hand went unused.
    establishes that a magnitude never carries its own absence, which is exactly the distinction
    this depends on.
 
-3. **Structural affinity.** Naming schemes are real and mineable. A neighborhood whose streets are
+3. **Structural affinity.** Address-name patterns are real and mineable. A neighborhood whose streets are
    all US presidents admits an unknown `Garfield Ave` on family membership rather than string similarity.
    The same shape generalizes: an unknown hydronym against known hydrology, an unknown toponym
    against a region's morphology (the `-ton`/`-by`/`-thorpe` families in GB, `-ville` in FR).
@@ -135,7 +135,7 @@ supplies the fit; the fit's error on held-out regions is the confidence attached
 ## Precompute
 
 The relationships should be mined ahead of time rather than derived per query. The resolver ladder is
-synchronous and per-keystroke. Naming families, per-locality street-set completeness, terrain
+synchronous and per-keystroke. Name families, per-locality street-set completeness, terrain
 exclusion masks and fitted CPT parameters are all build-time artifacts keyed to the existing H3/WOF
 spine. This is the same pattern as the candidate table and the postcode bins, and it belongs to
 the targeted-precompute change already filed as

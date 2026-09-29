@@ -17,7 +17,7 @@
  *   This is the pre-publish 2pp promote eval: run the full per-tag error analysis and compare against
  *   the current default release, then abort the upload if any tag regresses by more than 2pp. It
  *   therefore builds the classifier via the canonical `createScorer` in strict mode, so the model is
- *   fed the full ship-config it was trained against (anchor, gazetteer, and conventions).
+ *   fed the full ship-config it was trained against (anchor, gazetteer and conventions).
  *   The model card's `requires` block specifies these channels.
  *   A candidate is graded against that configuration.
  *   `--no-strict`

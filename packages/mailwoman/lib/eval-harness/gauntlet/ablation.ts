@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Gauntlet ablation layer — the required map. For every corpus row that asserts a component, delete that component
- * from the input and re-run the full pipeline: the displacement from the row's own undeleted anchor says what the
+ * from the input and re-run the full pipeline: the displacement from the row's own undeleted anchor shows what the
  * component was worth, aggregated per (component, locale).
  *
  * This layer measures component ablations and does not contribute to the combined verdict. It stores no expected
@@ -86,8 +86,9 @@ export {
 } from "#eval-harness/gauntlet/ablation/types"
 
 /**
- * How many substitutions the console summary lists before it truncates: a terminal-legibility cap only,
- * because the full list is always in the artifact's `rows` and the summary says how many it withheld.
+ * How many substitutions the console summary lists before it truncates:
+ * a terminal-legibility cap only, because the full list is always in the artifact's `rows`
+ * and the summary reports how many it withheld.
  */
 const SUBSTITUTION_PRINT_LIMIT = 60
 
@@ -154,17 +155,17 @@ export function deleteSpan(input: string, at: number, length: number): string {
  * 1. `empty` — the asserted value is the empty string.
  *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty.
  *    An empty asserted value gives the ablation no text to remove.
- *    Counting it as a deletion would create support.
+ *    A deletion count would create support.
  * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the
  *    resolved value, e.g. `country: "United States"` against an input saying `USA`).
- *    Deleting it would require guessing which span it came from.
+ *    A deletion would require guessing which span it came from.
  * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value
  *    asserted for a second component.
  *    Neither case attributes a deletion to one component.
  *    This map measures component-level deletions.
  * 4. `nested` — the value is a proper substring of another asserted component's
  *    value (`York` inside `New York`).
- *    Deleting it damages the neighbour, so the row would measure a two-component
+ *    Its deletion damages the neighbour, so the row would measure a two-component
  *    deletion under one component's name.
  */
 export function ablationVariants(
@@ -612,7 +613,7 @@ export async function runAblationLayer(
 
 	// This instrument measures rows rather than checking them.
 	// A map of zero cells means the run measured no row.
-	// Printing "pass" over an empty map would report success when the run measured no rows.
+	// A "pass" over an empty map would report success when the run measured no rows.
 	return { pass: cells.length > 0, outDir: outDir.toString(), cells }
 }
 

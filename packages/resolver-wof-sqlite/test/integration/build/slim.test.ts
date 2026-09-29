@@ -195,7 +195,7 @@ describe("buildSlimWOFDatabase", () => {
 		buildFixtureWOF(source)
 
 		const result = await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
-		// The report still carries the pre-drop names count (informative), even though the table is gone.
+		// The report still includes the pre-drop names count (informative), even though the table is gone.
 		expect(result.rowCounts.names).toBeGreaterThan(0)
 		expect(result.rowCounts.placeSearch).toBe(6)
 

@@ -49,7 +49,7 @@ describe("addressIDBlockingKey", () => {
 		const c = record("3", "1 Infinite Loop, Cupertino, CA 95014", 37.3318, -122.0312)
 		const { pairs } = block([a, b, c], [addressIDBlockingKey()])
 		// a + b share the address-id → one candidate pair.
-		// C is alone.
+		// C has no matching member.
 		expect(pairs).toHaveLength(1)
 		expect([pairs[0]![0].id, pairs[0]![1].id].toSorted()).toEqual(["1", "2"])
 	})

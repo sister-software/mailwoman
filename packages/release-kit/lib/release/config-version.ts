@@ -8,7 +8,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *   The `release.config.json` version bump as a purely textual replacement. The file is
  *   oxfmt-formatted, with single-line arrays and an order the generic parse-then-stringify write
  *   path would reformat wholesale. Its `weights` block is the model identity a code-only release
- *   must never touch. So the bump edits exactly one line, and refuses anything it cannot do
+ *   must never touch. The bump edits exactly one line. It refuses anything it cannot do
  *   exactly.
  */
 

@@ -44,7 +44,7 @@ describe("checkReleaseListIdentity", () => {
 
 		await writeLocalJSONFile({ workspaces: ["packages/a", "packages/b", "packages/frozen-one"] }, root("package.json"))
 
-		// Every workspace in the field must carry a manifest.
+		// Every workspace in the field must include a manifest.
 		// The reader refuses a literal without one.
 		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
 			await makeDirectories(root(workspace))
@@ -60,7 +60,7 @@ describe("checkReleaseListIdentity", () => {
 
 		const identity = await checkReleaseListIdentity(root)
 
-		// A workspace outside the release list with no stated reason is frozen,
+		// A workspace outside the release list with no stated reason is frozen.
 		// and the failure reports its name.
 		expect(identity.unexpectedAbsences).toEqual(["packages/frozen-one"])
 		expect(identity.publishCount).toBe(2)
@@ -75,7 +75,7 @@ describe("assertWorkspacePublishable", () => {
 	it("refuses the release-it workspace path shape, which carries a leading ./", () => {
 		// `@release-it-plugins/workspaces` passes `./<workspace>`
 		// through RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE.
-		// Matching the record's keys literally would admit that spelling while refusing the bare one.
+		// A literal key check would admit that spelling while refusing the bare one.
 		expect(() => assertWorkspacePublishable("./packages/osm")).toThrow(/ODbL counsel sign-off pending/)
 		expect(() => assertWorkspacePublishable("./packages/osm/")).toThrow(/ODbL counsel sign-off pending/)
 	})

@@ -74,7 +74,7 @@ resolved by operator pins — the tie is real collision between two registrants
 with identical canonical names, and a pin is the decision about which one is
 in scope.
 
-## Running it yourself
+## Run it yourself
 
 ```bash
 mailwoman filer edgar-ingest \
@@ -119,6 +119,6 @@ The artifact is at `$MAILWOMAN_DATA_ROOT/filer/filer.db`.
 The cessation numbers are the first time `valid_to` has been set on anything. The
 3,992 abstentions are the 3,916 filers whose stated cessation date PREDATES their last
 filing (an annual form — a carrier that ceased September 2013 still files April 2014)
-plus 76 same-day filers. Closing those unconditionally would write inverted windows
+plus 76 same-day filers. If the system closed those unconditionally, it would write inverted windows
 that match nothing under `valid_from <= t < valid_to`; open is visibly incomplete,
 inverted is invisible.

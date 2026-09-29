@@ -11,7 +11,7 @@
  *   five primary territories — substantially better US street-name coverage than OSM, especially in
  *   rural areas.
  *
- *   Following the `wof-admin` / `wof-postalcode` pattern, this adapter consumes a SQLite database the
+ *   Like the `wof-admin` / `wof-postalcode` adapters, this adapter consumes a SQLite database the
  *   operator pre-builds from the raw tiger shapefiles (see the readme for the schema and a
  *   suggested `ogr2ogr` pipeline). The mailwoman side does not parse Shapefile binary directly —
  *   keeping the adapter narrow lets the operator pick their own ingestion tool (ogr2ogr / shp2pgsql
@@ -27,7 +27,7 @@
  *       consistency).
  *   - `packages/corpus/lib/us/fips-state.ts` — the FIPS → `{abbreviation, name}` lookup table
  *       (originally `tiger/state.ts`, AGPL-3.0 → AGPL-3.0). The full isp-nexus tiger module ships a
- *       TypeORM-backed service layer. mailwoman only needs the lookup data so we don't carry the
+ *       TypeORM-backed service layer. mailwoman only needs the lookup data so we don't include the
  *       service layer over.
  *
  *   License: stamped `"Public Domain"` per Census Bureau guidance on tiger/Line. No per-row override
@@ -50,7 +50,7 @@ import { lookupFipsState } from "#us/fips-state"
  */
 export const TIGER_ADAPTER_ID = "tiger"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const TIGER_DEFAULT_LICENSE = "Public Domain"
@@ -59,7 +59,7 @@ export const TIGER_DEFAULT_LICENSE = "Public Domain"
  * The country surface form used in `formatAddress` for US.
  *
  * Matches the canonical OpenCage US template output so reconciliation doesn't strip it
- * when the row carries `country` explicitly.
+ * when the row includes `country` explicitly.
  */
 const US_COUNTRY_DISPLAY = "United States of America"
 

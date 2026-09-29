@@ -65,7 +65,7 @@ describe("extractDeclaredSymbols", () => {
 
 	it("ignores a constant that is not a function", () => {
 		// A duplicated table or literal is a different problem.
-		// Reporting it would bury the duplicated logic this test detects.
+		// A finding would bury the duplicated logic this test detects.
 		expect(extractDeclaredSymbols('const MAX_SAMPLES = 1024\nconst NAME = "x"')).toEqual([])
 	})
 })
@@ -133,7 +133,7 @@ describe("readWriteIntent", () => {
 
 	it("reads only the replacement text from an Edit", () => {
 		// The surrounding file is not the author's current intent.
-		// Scanning it would report every existing declaration against itself.
+		// A scan would report every existing declaration against itself.
 		const intent = readWriteIntent({
 			tool_name: "Edit",
 			tool_input: { file_path: "/repo/a.ts", old_string: "x", new_string: "function percentile() {}" },

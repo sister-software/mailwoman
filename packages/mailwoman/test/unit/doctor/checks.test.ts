@@ -368,7 +368,7 @@ describe("obligationPostureCheck (informational)", () => {
 	})
 
 	it("degraded when a layer carries the refused class, naming the identifier", () => {
-		// The lab host's candidate.db, whose expression carries ODbL-1.0.
+		// The lab host's candidate.db has an ODbL-1.0 expression.
 		const check = obligationPostureCheck({
 			refuse: ["share-alike"],
 			layers: [{ subject: "candidate", expression: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0" }],

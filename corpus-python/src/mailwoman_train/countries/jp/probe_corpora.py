@@ -18,7 +18,7 @@ Pre-registered shape (2026-07-18-v8-jp-char-encoder-design §d):
 - Stratified per-prefecture reservoir (47 prefectures, each with its own seeded reservoir), then a
   round-robin draw to the target count — Tokyo cannot drown Tottori.
 - Held-out board: municipalities whose bucket hash lands in the board range never appear in
-  train/val. board rows carry the gold fields + coordinate for the resolve-side scoring.
+  train/val. Board rows store the gold fields and coordinate for resolve-side scoring.
 - Sanity checks (the JSON-hides-gaps scar): no all-O row, per-char BIO coverage printed, >= 45
   prefectures in train, board∩train municipality overlap must be empty — violations RAISE.
 
@@ -72,7 +72,7 @@ SCHEMA = pa.schema(
     ]
 )
 
-# The canonical 47 prefectures. Overture address_levels[0] carries occasional junk variants
+# The canonical 47 prefectures. Overture address_levels[0] contains occasional junk variants
 # ("東京都1", 2 rows of 19.6M) — anything outside this set is dropped and counted.
 JP_PREFECTURES = frozenset(
     "北海道 青森県 岩手県 宮城県 秋田県 山形県 福島県 茨城県 栃木県 群馬県 埼玉県 千葉県 東京都 神奈川県 "
@@ -168,7 +168,7 @@ class Reservoirs:
     """What one pass over the parquet keeps: the per-prefecture pool and the held-out board.
 
     Both are reservoir samples drawn from the same `random.Random`, so the two branches consume
-    draws in the order the rows arrive. Splitting the pass in two — board first, pool second —
+    draws in the order the rows arrive. The builder splits the pass in two — board first, pool second —
     would sample different addresses from the same seed.
     """
 
@@ -180,7 +180,7 @@ class Reservoirs:
 
 @dataclass
 class PostcodeJoin:
-    """The KEN_ALL join as it ran: the counts the build report carries."""
+    """The KEN_ALL join as it ran: the counts the build report includes."""
 
     hit: int = 0
     miss: int = 0
@@ -206,7 +206,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def fill_reservoirs(args: argparse.Namespace, rng: random.Random) -> Reservoirs:
     """One streaming pass over the parquet, filling both reservoirs.
 
-    Each prefecture carries its own reservoir so Tokyo cannot drown Tottori, capped at three times
+    Each prefecture has its own reservoir so Tokyo cannot drown Tottori, capped at three times
     a prefecture's share of the target. A municipality whose bucket lands in the board range goes
     to the board instead. This keeps board municipalities out of train and val.
     """
@@ -326,7 +326,7 @@ def write_splits(
 
     An all-O row cannot occur by construction — the raw is concatenated from the labeled fields —
     so one means the build is broken rather than the data thin. The printed char coverage is the
-    JSON-hides-gaps guard: a fraction well under 1 says spans stopped covering the raw.
+    JSON-hides-gaps guard: a fraction well under 1 means spans omit part of the raw.
     """
     for split, rows in splits:
         enc = encode_rows(rows, kenall=kenall, join=join, rng=rng, postcode_fraction=postcode_fraction)
@@ -396,11 +396,11 @@ def write_board(
 
 
 def seal_char_vocab(out_dir: Path) -> dict[str, int]:
-    """Build the char vocabulary from the TRAIN split alone, at min_count=2.
+    """Build the char vocabulary from only the TRAIN split, at min_count=2.
 
-    Reading it back off the written parquet rather than from the in-memory rows is what makes it
-    sealed against the split that ships: a vocabulary built from val or board would let a character
-    the model never trained on carry an id.
+    The probe reads it back from the written parquet rather than from in-memory rows. This keeps it
+    sealed against the split that ships: a vocabulary built from val or board could assign ids to
+    characters absent from training data.
     """
     train_table = pq.read_table(out_dir / "train" / "part-0000.parquet", columns=["raw"])
     vocab = build_char_vocab((r for r in train_table["raw"].to_pylist()), min_count=2)

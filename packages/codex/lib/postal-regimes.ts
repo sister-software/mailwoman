@@ -46,7 +46,7 @@ export const RegimeKind = {
 	 */
 	SplitJurisdiction: "split-jurisdiction",
 	/**
-	 * Routing codes shaped like geography, such as a military pseudo-state or a forces number.
+	 * Geographic-looking codes include a military pseudo-state and a forces number.
 	 */
 	Routing: "routing",
 	/**
@@ -59,7 +59,7 @@ export const RegimeKind = {
 	Narrative: "narrative",
 	/**
 	 * A code that appears in real data outside ISO 3166-1.
-	 * Accepting it makes no claim about sovereignty.
+	 * This accepted code makes no claim about sovereignty.
 	 */
 	Operational: "operational",
 } as const

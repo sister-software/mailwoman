@@ -6,7 +6,7 @@
  *   This module implements numerically stable softmax and log-sum-exp for the coarse-placer's linear model.
  *   Always-resident inference ({@link CoarsePlacer.predict}) uses it.
  *   The SGD trainer uses it. Open-set score comparison uses it too.
- *   The implementation finds maxima with loops. Spreading an array near 65k features risks a stack overflow.
+ *   The implementation finds maxima with loops. A spread of an array near 65k features risks a stack overflow.
  *   The loop also keeps floating-point evaluation order identical across callers.
  */
 

@@ -7,7 +7,7 @@
  *   each under its 시/도 (the first tier). 249 pairs over 226 distinct names. a compound city is
  *   one name (`성남시분당구`), the way the register keys it. 세종특별자치시 has no second tier and is absent.
  *
- *   Why a register: a character model closes a `subregion` span where the training set taught it names end, and a
+ *   Why a register: a character model closes a `subregion` span where the training set taught it names end. A
  *   name it never saw (`해운대구`, held out of the training corpus by the board's design and unseen by the shipped
  *   model for the same reason) closes early, at `해` or `해운대`. The register states every boundary outright, so the
  *   decode-time repair in `@mailwoman/neural` extends a run to the one name the following characters spell.
@@ -27,7 +27,7 @@ export interface KoreanSigungu {
 }
 
 /**
- * The register: every (시/도, 시군구) pair the road-name address register carries, in register order.
+ * The register: every (시/도, 시군구) pair in the road-name address register, in register order.
  */
 export const KR_SIGUNGU: readonly KoreanSigungu[] = [
 	{ region: "강원도", city: "강릉시" },

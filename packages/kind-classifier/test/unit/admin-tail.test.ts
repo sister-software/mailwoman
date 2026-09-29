@@ -40,8 +40,8 @@ describe("withoutPostcodeSpans", () => {
 
 	it("returns input carrying no postcode unchanged", () => {
 		// No text was removed, so no separator was orphaned and none is collapsed.
-		// Returning the input verbatim also keeps the length `scoreLocalityOnly`
-		// measures identical to before this rule existed.
+		// The returned input keeps the length `scoreLocalityOnly` measures identical to
+		// before this rule existed.
 		const text = "Thomas, WV"
 
 		expect(withoutPostcodeSpans(text, computeQueryShape(text))).toBe(text)

@@ -32,7 +32,7 @@ gap is a missing config section rather than a missing tool.
 
 ## Decisions taken
 
-**Landing strategy: one sweep, then hard enforcement.** The plan uses neither a ratchet counter nor a
+**The strategy applies one sweep, then enables hard enforcement.** The plan uses neither a ratchet counter nor a
 per-file baseline. Every violation is fixed, and then every rule is switched on everywhere outside the
 dated-records exemption. The operator chose this over a ratchet after the risk of unreviewable diffs was
 stated.
@@ -54,7 +54,7 @@ A per-site rewrite without a census can strip a docstring of its meaning. This r
 invariants and measured numbers that a careless reword destroys. The census is therefore the first
 deliverable.
 
-Grouping hits by the word that modifies `check` finds 519 distinct constructions, most appearing once.
+When grouped by the word modifying `check`, the results contain 519 distinct constructions; most appear once.
 `scripts/vocab-census.ts` classifies every hit by the action it needs, and the three actions differ in
 cost by an order of magnitude. Measured at `9996e8f60` over 2,638 tracked `.ts`/`.tsx`/`.py` files:
 

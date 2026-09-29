@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The coordinate-level `differed` predicate reads a row's own tolerance, and a tier change is its own flag.
+ * @file The coordinate-level `differed` predicate reads a row's own tolerance. A tier change is its own flag.
  *
  *   The row that set these: `4900 Airport Pkwy, Addison TX 75001` (`us-addison-zip-75001`, tolerance 100 m, tier
  *   `address_point`). A reader change moved its answer from the rooftop to an interpolated point 198 m away. both arms
- *   were hits at 1 km, so the protocol thresholds alone read the pair as identical.
+ *   were hits at 1 km, so the protocol thresholds by themselves read the pair as identical.
  */
 
 import { armsDiffered, tierDiffered } from "@mailwoman/dev-mcp/compare/helpers"

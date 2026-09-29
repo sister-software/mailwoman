@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The pinned fetch. A source lands under `$MAILWOMAN_DATA_ROOT/astrogeology/<body>/source/` and its byte count and
- *   SHA-256 go into `sources.lock.json`, which is committed and which this module alone writes. A cached file whose
+ *   SHA-256 go into `sources.lock.json`, which is committed and which only this module writes. A cached file whose
  *   size differs from the lock, a product whose size differs from the source table, or a re-fetch whose hash differs
  *   from the lock all refuse, naming both values: no pin drifts silently.
  *

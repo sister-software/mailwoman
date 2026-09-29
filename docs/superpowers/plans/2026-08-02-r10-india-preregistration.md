@@ -73,7 +73,7 @@ live pair counts were identical across old and new, and India went from 0 to 86,
 
 ## What the scorecard says after the rebuild, and why it still says "locality"
 
-Regenerating `gazetteer granularity` against the swapped artifact changes India's `source` column
+The regenerated `gazetteer granularity` report against the swapped artifact changes India's `source` column
 from `overture (rebuild pending)` to `wof-repo` and fills its dependent-locality rung with **88,142
 nodes**. The scorecard still reports that India's coverage stops at `locality`. That is correct and
 does not come from stale data:

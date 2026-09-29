@@ -34,7 +34,7 @@ links vs FS's 27 (+22%)** at 3,239 entities (above the 3,019 no-collapse floor),
 one-link noise at n=32 (the harness's own caveat: the phone proxy "corroborates but isn't decisive").
 No dedup-GBT collapse signature (its arms sit at 106 entities or 0 links).
 
-**Reading:** the org-cross-GBT is the first scorer to EXCEED FS's link discovery on the org flows
+**Result:** the org-cross-GBT is the first scorer to EXCEED FS's link discovery on the org flows
 without over-merging. It misses STRICT dominance only on the noisy proxy's rate. Recommendation:
 un-pin FS for the org-level cross-dataset flows as an operator decision (the flip is a config default rather than this eval's to make); alternatively hold FS pinned and re-judge after widening the label set with
 the other Care Compare families (dialysis/hospice/SNF/HHA), which should tighten the proxy's n.

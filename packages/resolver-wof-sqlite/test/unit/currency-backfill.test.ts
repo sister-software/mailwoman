@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The currency check's census mode: a dry run judges every dead row and stages no row, and the report splits outcomes by the dead row's placetype.
+ * @file The currency check's census mode: a dry run judges every dead row and stages no row. The report splits outcomes by the dead row's placetype.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

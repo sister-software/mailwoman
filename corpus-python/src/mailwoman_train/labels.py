@@ -89,12 +89,12 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 #   "Eingang 2"   -> entrance="Eingang 2" ; "Stiege 4" -> staircase="Stiege 4"
 #
 # The existing STAGE3 ``unit`` tag stays the bare unit-id role rather than being renamed to
-# ``unit_id``, because a rename would rewrite every ``unit``-labeled corpus row. Renaming the tag and
+# ``unit_id``, because a rename would rewrite every ``unit``-labeled corpus row. A tag rename and
 # reconciling the JP ``building_number``/``building_name`` declarations against
 # ``building_designator``/``building_id``, is a version-conditional batch for the activation bump
 # rather than piecemeal here.
 #
-# Bumping ACTIVE_* to STAGE4 widens the model head 33 → 47 labels, so activation requires a retrain
+# An ACTIVE_* bump to STAGE4 widens the model head from 33 to 47 labels, so activation requires a retrain
 # (from-scratch or an output-head expansion) and a same-commit extension of the JS ``COMPONENT_TAGS``
 # union in ``core/types/component.ts`` (the decoder maps model indices → labels through it, so they
 # must move together). Until then active stays STAGE3 and these tags collapse to ``O`` at load, so
@@ -147,8 +147,8 @@ STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
 
 # region CN fine tags (the organizational ladder)
 
-# One tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
-# carry below the settlement ``三分场八队`` (No. 3 sub-farm, No. 8 production team, the xpcc
+# One tag, ``locality_unit``, for the whole ordinal chain below the settlement ``三分场八队``
+# (No. 3 sub-farm, No. 8 production team, the xpcc
 # ``一四三团十二连``, and the villager group ``民权三组``). Which rung each generic names is a deterministic
 # reading of the suffix (``分场``/``大队``/``队``/``连``/``团``/``组``), done after decode by
 # ``@mailwoman/core``'s CN unit reader, so the label set does not grow with every ladder found.
@@ -253,7 +253,7 @@ IGNORE_INDEX: Final[int] = -100
 #
 # Stable order: never reorder, only append, so a checkpoint's locale-head ids stay reproducible. A
 # row whose ``country`` is absent from this map maps to IGNORE_INDEX and contributes no gradient to
-# the aux loss. The head still carries a slot for every entry here.
+# the aux loss. The head still has a slot for every entry here.
 LOCALE_COUNTRIES: Final[tuple[str, ...]] = (
     "US",
     "FR",

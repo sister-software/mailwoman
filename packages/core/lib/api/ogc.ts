@@ -56,7 +56,7 @@ const EXCEPTION_OPEN = "<ServiceException"
  * The tag name must end at the match.
  * `<ServiceExceptionReport xmlns="…">` shares the prefix.
  *
- * Matching that tag would capture the entire report as the message.
+ * The entire report would become the message if the parser matched that tag.
  * An unclosed element reads as unreadable rather than as empty.
  */
 function exceptionText(body: string): string | undefined {
@@ -98,7 +98,7 @@ export function readOGCServiceException(body: string): string | undefined {
 	if (!body.includes("ServiceExceptionReport")) return undefined
 
 	// A body remains an exception report when its exception element cannot be read.
-	// Reporting it as a successful empty answer is the failure this function prevents.
+	// A successful empty answer would misrepresent this exception report.
 	return decodeXML((exceptionText(body) ?? "the report carried no readable ServiceException element").trim())
 }
 
@@ -237,7 +237,7 @@ export async function readWFSFeatureCount(
 
 	// WFS 2.0 permits `numberMatched="unknown"`, which is the server declining to count
 	// rather than a count of zero.
-	// Reporting "no attribute" would name the wrong fact.
+	// The message must say that the attribute could not be read.
 	// Returning 0 would invent a count.
 	if (!/^\d+$/u.test(numberMatched)) {
 		throw new Error(

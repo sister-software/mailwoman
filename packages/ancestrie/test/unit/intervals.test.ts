@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests the pre/post interval truth table for ancestor, descendant, sibling, self, and disjoint cases.
+ *   Tests the pre/post interval truth table for ancestor, descendant, sibling, self and disjoint cases.
  *   It also tests descendant range scans, the DAG primary-parent rule, declared-but-absent parents,
  *   plus cycle rejection at seal.
  */

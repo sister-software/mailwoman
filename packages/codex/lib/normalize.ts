@@ -5,9 +5,9 @@
  *
  *   Name-normalization primitives shared across the codex tables and the lexicon builders that read
  *   them. They live here rather than in `core` or `normalize` because codex is the
- *   zero-runtime-dependency reference package and everything matching a name against a codex table
- *   already depends on it. Keeping the folding rules beside the tables they fold stops a lookup and
- *   its table from disagreeing about what counts as the same name.
+ *   zero-runtime-dependency reference package, and every lookup that matches a name against a codex table
+ *   already depends on it. The package keeps folding rules beside the tables they fold. This placement prevents a
+ *   lookup and its table from disagreeing about what counts as the same name.
  */
 
 /**

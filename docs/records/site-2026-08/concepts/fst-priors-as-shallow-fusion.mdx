@@ -158,9 +158,9 @@ A bias of +3.0 multiplies the candidate label's probability by
 pass then normalizes across labels per position and picks the best
 global sequence.
 
-This is fundamentally different from masking. Masking sets a label's
+This is fundamentally different from a mask. A mask sets a label's
 probability to zero (or very close); the model can't recover from it.
-Additive bias is soft. The encoder's strong opinion can still override
+A bias is soft. The encoder's strong opinion can still override
 a wrong bias if the evidence is clear enough.
 
 ## When the priors compose (not conflict)

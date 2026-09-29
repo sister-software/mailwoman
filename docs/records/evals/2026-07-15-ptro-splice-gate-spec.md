@@ -111,7 +111,7 @@ level:
 
 **But v267 is a different candidate with a wider blast surface**: its lowercase pieces overlap
 `fr` (`é`), `it` (`ã`), and `pl` (`ó`) — on top of cz/es/nl. FR is the largest trained locale and is
-exactly what the v5.1.0 "net-positive by luck" incident ran through. Accepting six locales requires a
+exactly what the v5.1.0 "net-positive by luck" incident ran through. A six-locale acceptance requires a
 fresh pre-registration with six legs, graded before promotion; that is a new check spec rather than an
 amendment to this one, and it is deliberately not rushed to fit a shift boundary. Artifacts staged
 for it: `scratchpad/v267-cache` (package-shaped, vocab 75,207), int8 39.9 MB (v264: 39.8 MB, +0.3%).

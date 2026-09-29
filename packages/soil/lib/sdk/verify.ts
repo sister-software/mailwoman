@@ -40,7 +40,7 @@ export interface SoilAgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of the delineation the artifact matched.
 	 *
-	 * Carried on every row because it separates a real defect from two channels
+	 * Included on every row because it separates a real defect from two channels
 	 * rendering the same edge differently.
 	 */
 	nearestEdgeMetres?: number
@@ -238,7 +238,7 @@ function localDelineationAt(
 /**
  * Metres from a point to the nearest edge of an encoded ring set.
  *
- * Decoding here is acceptable because this runs per verification rather than per geocode.
+ * This function decodes here because it runs once per verification rather than once per geocode.
  */
 function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number {
 	const { polygons } = decodeRings(blob)

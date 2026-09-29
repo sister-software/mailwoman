@@ -40,7 +40,7 @@ const IMPERATIVES = /^(?:see|read|revisit|compare|note|use|prefer|check|run|trea
  * `not` is deliberately absent.
  * The `Negation` rule rejects that comma pattern at error level.
  *
- * `CommentDashJoint` leaves a dash before a noun phrase alone.
+ * `CommentDashJoint` leaves a dash before a noun phrase unchanged.
  * The dash therefore stays.
  */
 const COMMA_OPENERS =
@@ -73,7 +73,7 @@ const SENTENCE_CLAUSE_FLOOR = 5
 const STARRED_BLOCK_LINES = 3
 
 /**
- * A line that carries its own layout, in `mailwoman/comment-reflow`'s own terms.
+ * A line that defines its own layout, in `mailwoman/comment-reflow`'s own terms.
  *
  * The rule's test is copied here rather than approximated.
  * A line it treats as structural is one it will never re-wrap, so a paragraph this script joins
@@ -103,7 +103,7 @@ const LEAD_TAG = /^(Returns|Throws)\b\s+/
 const IDENTIFIER = /[._/]|[a-z][A-Z]/
 
 /**
- * Capitalise a clause that is becoming a sentence, unless its first word names something.
+ * Capitalize a clause that will become a sentence, unless its first word names something.
  */
 function openClause(clause: string): string {
 	const [first = ""] = clause.split(/\s+/)
@@ -111,7 +111,7 @@ function openClause(clause: string): string {
 	if (!/^[a-z]/.test(first)) return clause
 
 	// `foo`, foo.bar, fooBar and foo_bar are names.
-	// Capitalising one would name something that does not exist.
+	// Capitalized text would refer to a name that does not exist.
 	if (/^[`[(]/.test(first) || IDENTIFIER.test(first)) return clause
 
 	return first.charAt(0).toUpperCase() + clause.slice(1)
@@ -200,7 +200,7 @@ function sweepParagraph(text: string): string {
  *
  * A list item owns the indented lines beneath it, so its continuation is folded
  * into the item rather than read as a paragraph of its own.
- * Everything structural passes through untouched.
+ * The function passes every structural block through unchanged.
  */
 function sweepBody(lines: readonly string[]): string[] {
 	const output: string[] = []
@@ -263,7 +263,7 @@ function sweepBody(lines: readonly string[]): string[] {
 }
 
 /**
- * Lift a trailing `Returns …` or `Throws …` sentence into the tag that already carries that meaning.
+ * Move a trailing `Returns …` or `Throws …` sentence into the tag that already expresses that meaning.
  *
  * A block that already has the tag keeps its prose, since lifting it would say the same thing twice.
  * A block whose whole description is that one sentence keeps it too,
@@ -295,7 +295,7 @@ function liftTagSentence(body: readonly string[], tags: readonly string[]) {
  *
  * A generator that emits `// TODO(…)` inside a template literal has comment-shaped
  * text that is not a comment.
- * Rewriting it changes what the program prints.
+ * A rewrite changes what the program prints.
  * Only a parse tells the two apart.
  */
 function literalSpans(source: string, fileName: string): Array<[number, number]> {

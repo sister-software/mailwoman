@@ -5,7 +5,7 @@
  *
  *   Country recognition for the `country` parity change. The ISO 3166-1 base (names + alpha-2/alpha-3)
  *   is salvaged from isp-nexus `spatial/countries` ({@link ./names.ts}, {@link ./codes.ts}); this
- *   adds the layer ISO doesn't carry — the **surface forms** addresses actually use (endonyms +
+ *   adds the layer ISO omits — the **surface forms** addresses actually use (endonyms +
  *   common abbreviations: "USA"/"United States"/"U.S."; "Deutschland"/"Germany"; "España"/"Spain")
  *   — plus a {@link matchCountry} resolver the corpus country-extract + parsing reuse. Same shape as
  *   the other codex matchers (street-suffix, directional, po-box).
@@ -164,7 +164,7 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
 
 /**
  * The ISO 3166-1 alpha-2 code to key a layout or a per-country table by, from whatever
- * surface a declared country field carries — `ES`, `ESP` or `Spain`.
+ * surface form of a declared country field — `ES`, `ESP` or `Spain`.
  *
  * Two resolvers, in this order, because they answer different questions.
  * A two-letter value is taken as the code: {@link matchCountry} deliberately refuses `AR`

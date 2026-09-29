@@ -16,7 +16,8 @@ export function foldCaseWhitespace(input: string): string {
 }
 
 /**
- * Combining marks removed after NFD decomposition: `é` → `e`, `ł` unchanged (it is not a base plus a mark).
+ * This function removes combining marks after NFD decomposition: `é` → `e`,
+ * `ł` stays unchanged because it is not a base plus a mark.
  *
  * Case and whitespace are untouched.
  */

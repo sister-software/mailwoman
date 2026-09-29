@@ -249,7 +249,7 @@ export function assertFamilySchemaVersion(schemaVersion: number, readerName: str
 export interface FamilyMemberRow {
 	node_id: string
 	/**
-	 * Naming node used to derive `family_id`.
+	 * The node whose name supplies `family_id`.
 	 */
 	naming_node_id: string
 	relationship: string

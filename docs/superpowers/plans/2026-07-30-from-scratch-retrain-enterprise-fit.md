@@ -33,7 +33,7 @@ harness becomes the per-customer acceptance battery.
 3. **The QA harness is the acceptance battery.** The v8.2.0 arc built, run by run, exactly what a
    customer fine-tune needs at delivery: pre-registered checks, the ablated-vs-fed columns, canary
    fixtures with receipts, replay dosing, the misroute-cost measurement, the pre-ship gauntlet.
-   Productizing B11 is largely _packaging this harness_ — per-customer canaries from their own
+   B11 productization largely means _packaging this harness_ — per-customer canaries from their own
    golden rows, the same check sheet, the same verdict discipline. The retrain is the first
    consumer of the packaged form (dogfooding the acceptance battery on our own base).
 
@@ -54,7 +54,7 @@ harness becomes the per-customer acceptance battery.
 | Evidence bundle as a fine-tune graft              | channels added at 6k-step fine-tunes, over-trust curricula bolted on | channels + curricula in the base objective from step 0 (the over-trust pattern may not form at all) |
 | Capability manifest / calibration drift           | carried-forward blocks, re-anchors                                   | regenerated from one run                                                                            |
 
-## Sequencing recommendation
+## Recommended sequence
 
 1. **Pre-work (no GPU, this week if desired):** the char-encoder decision memo (CharCNN vs
    byte-fallback status quo — the v8 design notes in the scratchpad archive carry the candidates);

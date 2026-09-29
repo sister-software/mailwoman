@@ -560,7 +560,7 @@ Reference, however the FIRM DB template will not have dashes". The December 2020
 
 **The schema consequence.** `zone_code` holds the source's value as published. The builder carries the
 authority's declared domain as a closed set and **throws** on a value outside it. An unknown code
-means the source schema changed, which a reader most needs to know. Coercing it to a nearest neighbour
+means the source schema changed, which a reader most needs to know. Conversion to a nearest neighbour
 or to null would turn "the source changed" into "there is no data here".
 
 ### 4.2 Tables
@@ -752,7 +752,7 @@ the reader itself and opens a layer on the default construction path. The flag l
 change as its row in the [runtime-flag register](../../engineering/reference/runtime-flags.mdx),
 because SCOPE invariant 5 treats a flag without a register row as a defect.
 
-**Ranking is unchanged, and byte-stability is the evidence.** The same query, with and without the
+**Byte-stability shows the layer preserves rank order.** The same query, with and without the
 layer attached, returns an identical result plus one advisory. That follows from how the carrier is
 constructed: it reads no candidate, coordinate or ordering, and a test pins that.
 
@@ -794,14 +794,14 @@ location outside its jurisdiction, an area it has not mapped, or a designation t
 undetermined — the caller receives that fact rather than a reassuring one, and an unmapped area is
 never reported as a low-hazard area. The observation states what the map assigns at a location and
 never whether a property will flood, because the authorities themselves decline that second statement.
-Ranking, abstention and every existing result field are unchanged; the observation is additive,
+The layer preserves rank order, abstention and every existing result field; the observation is additive,
 attributed, and default off.
 
 ## 7. The builder-issue outline
 
 The builder issue is not filed here. This outline is for the issue that lands against this survey.
 
-**Shape.** Following `bdc`, a workspace holds acquisition, parsing and the layer reader, and the CLI is
+**Shape.** As in `bdc`, a workspace holds acquisition, parsing and the layer reader, and the CLI is
 thin wiring. `gazetteer build bdc` takes `--state` as a FIPS code, which is the precedent for a
 region-scoped build; the EA equivalent takes the product version and an optional administrative area
 for the smoke rung.
@@ -903,8 +903,8 @@ These items are recorded as gaps rather than filled in.
 **Environment Agency.**
 
 - **The area-of-interest download flow's mechanics** for RoFRS, RoFSW and the Surface Water Spatial
-  Planning products: whether it uses a bounding box, a tile grid or an administrative picker, which
-  formats it offers, and how large the files are. The `/explore/{id}?download=true` page is a
+  The survey did not determine whether planning products use a bounding box, a tile grid or an administrative picker, which
+  formats the site offers, or how large the files are. The `/explore/{id}?download=true` page is a
   client-side application that returns only its shell, and three candidate JSON endpoints returned the
   same shell. Consequently **no file sizes exist for those six datasets** either.
 - **Whether an account is required** for that download flow. The platform header offers "Create an

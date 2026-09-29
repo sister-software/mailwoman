@@ -75,7 +75,8 @@ export interface POISearchOpts {
 	/**
 	 * The number of H3 rings to search outward from the center, defaulting to 6.
 	 *
-	 * A smaller default missed ordinary nearby clusters, and the Node reader searches further by default.
+	 * A smaller default missed ordinary nearby clusters.
+	 * The Node reader searches further by default.
 	 */
 	maxRings?: number
 	limit?: number
@@ -100,7 +101,7 @@ const DEFAULT_LIMIT = 10
  * Finds the POIs of a category nearest to `opts.center` by probing H3 cells ring by ring
  * until `limit` hits are found or `maxRings` is reached.
  *
- * A category the database does not carry returns `[]` rather than throwing.
+ * A category absent from the database returns `[]` rather than throwing.
  */
 export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearchOpts): Promise<POISearchHit[]> {
 	const limit = Math.max(1, opts.limit ?? DEFAULT_LIMIT)

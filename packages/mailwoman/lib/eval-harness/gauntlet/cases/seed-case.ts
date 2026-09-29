@@ -144,7 +144,7 @@ export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof See
 
 /**
  * Compile-time check that {@linkcode SEED_CASE_KEY_ORDER} lists every
- * {@linkcode SeedCase} key; `satisfies` alone checks only that each entry is valid,
+ * {@linkcode SeedCase} key; `satisfies` by itself checks only that each entry is valid,
  * so a missing key would drop that field from every emitted row.
  */
 export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<

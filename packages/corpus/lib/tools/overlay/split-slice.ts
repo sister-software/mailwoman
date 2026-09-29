@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Route an already-written overlay parquet through the holdout policy.
  *
- * A parquet row carries no `components` map, so each component is read back from `raw` over the `span_starts` /
+ * A parquet row has no `components` map, so each component is read back from `raw` over the `span_starts` /
  * `span_ends` / `span_tags` triple that `alignRow` wrote.
  */
 

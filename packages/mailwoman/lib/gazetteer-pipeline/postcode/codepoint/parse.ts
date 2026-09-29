@@ -15,7 +15,7 @@ import { normalizePostcodeDisplay } from "#gazetteer-pipeline/postcode/display-f
 /**
  * The positional quality indicator for a row with no coordinate.
  *
- * These rows carry zero eastings and northings.
+ * These rows have zero eastings and northings.
  * Conversion would place them at a real but wrong location.
  */
 export const PQI_NO_COORDINATE = 90
@@ -132,7 +132,7 @@ export function postcodeArea(postcode: string): string {
  * Splits one CSV record into fields with RFC 4180 quoting.
  *
  * @deprecated Use `CSVSpliterator` directly.
- * Streaming callers should use {@linkcode readCodePointCSV}.
+ * Callers that stream records should use {@linkcode readCodePointCSV}.
  */
 export function splitCSVLine(line: string): string[] {
 	return CSVSpliterator.from<string[]>(line, { header: false }).next().value ?? []
@@ -196,7 +196,7 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
  * Normalizes Code-Point postcode spacing to the single-space display form.
  *
  * The product specification uses a fixed seven-character field that pads short postcodes with extra spaces.
- * Normalizing keeps a padded postcode from becoming a separate entry.
+ * Normalization keeps a padded postcode from becoming a separate entry.
  */
 export function normalizeCodePointSpacing(raw: string): string {
 	return normalizePostcodeDisplay(raw)

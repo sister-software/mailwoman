@@ -51,7 +51,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("contradicted on a cross-language variant form — the stated v1 bound", () => {
-		// Folding cannot equate "Thüringen" with "Thuringia", and the check does not read the alias table.
+		// Unicode folding cannot equate "Thüringen" with "Thuringia", and the check does not read the alias table.
 		const winner: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "DE",

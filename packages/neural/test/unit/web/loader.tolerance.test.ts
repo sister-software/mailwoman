@@ -101,7 +101,7 @@ const MODEL_URL = "https://cdn.example/mailwoman/v9/model.onnx"
 const TOKENIZER_URL = "https://cdn.example/mailwoman/v9/tokenizer.model"
 
 /**
- * A fake `fetch` whose per-URL status is decided by `statusFor`. 200 responses carry real
+ * A fake `fetch` whose per-URL status is decided by `statusFor`. 200 responses contain real
  * bytes: a decodable single-record postcode binary for the `.bin` URLs, dummy bytes for
  * model/tokenizer (the ORT session + tokenizer are mocked, so the content is irrelevant).
  */

@@ -43,7 +43,7 @@ export function foldQueryText(input: string): string {
  * A bag without {@link ALIAS_SEPARATOR} is a legacy space-joined bag without alias boundaries.
  * For such a bag, the function checks word-bounded containment only when no candidate matched strictly.
  *
- * Containment alone would promote fragments such as "York" inside "New York City".
+ * Containment by itself would promote fragments such as "York" inside "New York City".
  *
  * @param altNames The `alt_names` bag from `place_search`, or null when the row has no aliases.
  * @param normalizedQuery The query folded by {@link foldQueryText}.
@@ -130,7 +130,7 @@ export interface BuildPlaceSearchFTSOpts {
 
 	/**
 	 * Receives each build phase as it begins.
-	 * Populating a planet-scale build takes minutes.
+	 * A planet-scale build takes minutes to populate.
 	 */
 	onProgress?: (
 		phase: "checking" | "dropping" | "creating" | "populating" | "creating-bbox" | "populating-bbox" | "done",

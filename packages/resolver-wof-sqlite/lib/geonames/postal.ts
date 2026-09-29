@@ -12,8 +12,8 @@
  *      every non-letter and non-number stripped. `sanitizeFTSQuery` reduces the parsed token to
  *      that shape at lookup time. A stored `"110 00"` or `"11-041"` can never match the
  *      query `"11000"` or `"11041"`. The display form is preserved as an alt row in `names`.
- *   2. The medoid law. A postcode whose rows carry scattered points has no single true centre.
- *      Averaging them puts the code somewhere no address is. The medoid is the member point
+ *   2. The medoid law. A postcode whose rows contain scattered points has no single true centre.
+ *      Their average puts the code somewhere no address is. The medoid is the member point
  *      nearest the group's mean.
  *
  *   `build-unified-wof --geonames-postal-countries`, standalone folds and the `mailwoman
@@ -61,7 +61,8 @@ export type PostcodePoint = readonly [number, number]
  * `@mailwoman/evidence`'s `EpistemicStatus` vocabulary belongs to the answering path.
  *
  * `epistemicStatusFor` derives it there.
- * Naming these fields `observed` or `derived` here would give those words a second, local meaning.
+ * These fields cannot use `observed` or `derived` here because that would give
+ * those words a second, local meaning.
  */
 export interface MedoidSupport {
 	/**
@@ -121,7 +122,7 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
  * and a multi-member group is one of its members.
  * The bound applies only while the members are distinct, so duplicate points are collapsed first.
  *
- * Counting N rows at one coordinate separately would weight that value by how many settlements
+ * Separate counts for N rows at one coordinate would weight that value by how many settlements
  * inherited it. {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.
  *
  * Distance is squared-Euclidean in degrees rather than haversine.
@@ -191,7 +192,7 @@ export interface GeonamesPostalIngestResult {
 	 */
 	byCountry: Record<string, number>
 	/**
-	 * Per-country count of inserted codes the dump carried on several rows that all refer to one point.
+	 * Per-country count of inserted codes the dump listed on several rows that all refer to one point.
 	 *
 	 * The coordinate rests on a single value no matter how many settlements sit under the code.
 	 * Reported because the point is still the best the source offers.

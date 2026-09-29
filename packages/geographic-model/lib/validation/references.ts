@@ -59,7 +59,7 @@ interface EdgeCheck {
 
 /**
  * Resolve one subject–relation–object edge and check it against the relation's declared domain
- * and range kinds, shared by authored assertions, source observations, and derived facts.
+ * and range kinds shared by authored assertions, source observations and derived facts.
  */
 function checkEdge(issues: ValidationIssue[], edge: EdgeCheck, tables: ReferenceTables): void {
 	const relation = edge.relationID === undefined ? undefined : tables.relations.get(edge.relationID)

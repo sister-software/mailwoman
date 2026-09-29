@@ -88,8 +88,9 @@ describe("the committed corpus", () => {
 
 describe("the row schema", () => {
 	it("rejects an unknown key rather than ignoring it", () => {
-		// A typo'd `expectLon` that parses as "coordinate not asserted" still runs and passes
-		// while asserting half the row, which is what the strictness is for.
+		// A typo'd `expectLon` that parses as "coordinate not asserted" still runs
+		// and passes while asserting half the row.
+		// That is what the strictness is for.
 		const result = SeedCaseSchema.safeParse({ ...SAMPLE, expectLonn: 2.3 })
 
 		expect(result.success).toBe(false)

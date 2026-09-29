@@ -110,8 +110,8 @@ const GEOMETRY_CACHE_ENTRIES = 200_000
 /**
  * Reduces the touch table into `soil_capability_cell`.
  *
- * It reads the touch table because `soil_map_unit_cell` is compacted, and a compacted
- * parent cell hides the index cells that the reduction must answer.
+ * It reads the touch table because `soil_map_unit_cell` is compacted.
+ * A compacted parent cell hides the index cells that the reduction must answer.
  */
 export function reduceCells(
 	database: DatabaseClient<SoilDatabase>,

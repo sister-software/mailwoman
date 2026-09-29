@@ -228,8 +228,8 @@ describe("parseGoogleGeocodeResult", () => {
 	})
 
 	it("mints an address ID that its own parser can read back", () => {
-		// The `state` prefix guard keeps a non-two-letter region such as `Île-de-France`
-		// out of the key, which `isPostalAddressID` would otherwise reject.
+		// The `state` prefix guard keeps a non-two-letter region such as `Île-de-France` out of the key.
+		// `isPostalAddressID` would otherwise reject it.
 		expect(parseGoogleGeocodeResult(paris).addressID).toMatch(/^[a-z]{2}\.[0-9a-f]+\.[0-9a-f]{16}$/)
 	})
 

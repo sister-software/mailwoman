@@ -9,9 +9,9 @@
  * `extractBANAddrPoints`, which surfaces a cleaned `lieuDit` per record. Only rows carrying a clean
  * lieu-dit survive into the pool.
  *
- * Mapping: lieu-dit to `dependent_locality`, commune to `locality`. Rendered to match the
+ * The recipe maps lieu-dit to `dependent_locality` and commune to `locality`. It renders to match the
  * formatter's FR `place`-slot convention. House and street go on line 1.
- * The lieu-dit goes alone on line 2. Postcode and commune go on line 3.
+ * The lieu-dit appears by itself on line 2. Postcode and commune go on line 3.
  * This follows French postal convention (La Poste's line 5).
  *
  * The pool is read in full and Fisher-Yates shuffled with the seeded prng before slicing to
@@ -204,8 +204,8 @@ export const frLieuditRecipe: CorpusRecipe = {
 				components.postcode = t.postcode
 			}
 
-			// The envelope form is the house and street line, the lieu-dit alone on its
-			// own line, then the postcode and commune line.
+			// The envelope form is the house and street line, the lieu-dit by itself on
+			// its own line, then the postcode and commune line.
 			// That is La Poste's line 5.
 			let raw = formatAddress(components, "FR")
 

@@ -6,7 +6,7 @@
  *   Stream the address-containing features of a Geofabrik `.osm.pbf` extract to the per-country corpus jsonl the
  *   `@mailwoman/corpus` `osm` adapter reads.
  *
- *   ⚠ ODbL: the output is derived from OpenStreetMap and carries the share-alike obligation.
+ *   ⚠ ODbL: the output is derived from OpenStreetMap and has the share-alike obligation.
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
@@ -41,7 +41,7 @@ export interface OSMCorpusJSONLStats {
 	 */
 	read: number
 	/**
-	 * Rows written: features that also carry an `addr:street`.
+	 * Rows written: features that also have an `addr:street`.
 	 */
 	written: number
 	/**

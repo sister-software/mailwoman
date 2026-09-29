@@ -21,8 +21,9 @@ interface FakeResult {
 }
 
 /**
- * A registry whose engine answers from a table keyed by input and throws for anything
- * unnamed, which is how the errored-rung path is exercised.
+ * A registry whose engine answers from a table keyed by input.
+ *
+ * It throws for unnamed inputs to exercise the errored-rung path.
  */
 function fakeRegistry(answers: Record<string, FakeResult>): EngineRegistryLike {
 	return stubEngineRegistry({

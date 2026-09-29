@@ -20,7 +20,7 @@ only an `active` entry of the shipped register passes the self-test.
 
 ## Bindings
 
-| Binding                                              | Kind       | Meaning                                                                                                                                                                           |
+| Worker variable                                      | Kind       | Purpose                                                                                                                                                                           |
 | ---------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `STRIPE_SECRET_KEY`                                  | secret     | a restricted key with read scope on checkout sessions, subscriptions, invoices, invoice payments, disputes                                                                        |
 | `STRIPE_WEBHOOK_SECRET`                              | secret     | the webhook destination's signing secret                                                                                                                                          |
@@ -158,7 +158,7 @@ invoice id.
 
 Public status answers carry no reason, name, or date.
 
-## Running it locally
+## Run it locally
 
 `yarn dev` runs the worker on the local Workers runtime with a local D1 and the sandbox rate limiters, and it needs
 no Cloudflare credential. Secrets and overrides come from `.dev.vars`, which is gitignored and follows the shape of

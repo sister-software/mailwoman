@@ -35,7 +35,7 @@ export interface SweepArm {
 }
 
 /**
- * Everything the report reads.
+ * Inputs consumed by the report.
  */
 export interface NPPESReportInput {
 	state: string

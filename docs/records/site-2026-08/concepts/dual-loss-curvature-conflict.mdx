@@ -78,17 +78,17 @@ The 0.41 boundary is specific to this data and architecture. Different corpora, 
 
 Three recipe changes that should address this failed in mailwoman's v0.5.0 attempts:
 
-- **Lowering `crf_loss_weight`** from 0.1 to 0.05 produced the v0.4.0-shipped weights. Those weights still showed early signs of the same fingerprint: postcode regressed and full-parse exact match fell. The gradient-norm asymmetry is too large for the weight to compensate. At `crf_loss_weight=0.05`, CRF still contributes 0.05 × 16 = 0.8× CE in optimization.
+- **A reduction in `crf_loss_weight`** from 0.1 to 0.05 produced the v0.4.0-shipped weights. Those weights still showed early signs of the same fingerprint: postcode regressed and full-parse exact match fell. The gradient-norm asymmetry is too large for the weight to compensate. At `crf_loss_weight=0.05`, CRF still contributes 0.05 × 16 = 0.8× CE in optimization.
 - **Per-token CRF normalization** (§1) was meant to make CRF NLL magnitude comparable to per-token CE. The probe shows that the _gradient_ magnitudes still differ widely after the _loss_ magnitudes are normalized. Balanced loss magnitudes do not imply balanced gradient magnitudes.
-- **Global gradient clipping** to norm 1.0 applies to the combined gradient after the dual-loss sum. Clipping preserves the _relative_ dominance, so CRF keeps its 16× share.
+- **Global gradient clipping** to norm 1.0 applies to the combined gradient after the dual-loss sum. The operation preserves the _relative_ dominance, so CRF keeps its 16× share.
 
-Scaling loss values does not correct asymmetric _curvature_. Below the cooperative-regime boundary, small parameter changes produce large CRF NLL gradients on this data. Multiplicative weighting cannot balance that against the gentler CE surface.
+Loss-value scaling does not correct asymmetric _curvature_. Below the cooperative-regime boundary, small parameter changes produce large CRF NLL gradients on this data. A multiplier cannot balance those gradients against the gentler CE surface.
 
 ## The repair
 
 Remove the CRF NLL loss term from training. Keep the CRF as an inference-time structural decoder with its frozen transition mask and Viterbi decoding.
 
-The CRF's structural benefits come from the **transition mask**. Training the transition matrix through NLL does not provide them. Those benefits are the absence of orphan I-tags and of `Saint → Petersburg` clipping bugs from BIO-invalid spans. The mask is hand-encoded in `crf.py`. It forbids `O → I-locality` and every other BIO-invalid transition by setting those entries to `-inf` at initialization. The training-side NLL added a learned refinement on top of the mask, and that learned refinement is what conflicts with CE.
+The **transition mask** provides the CRF's structural benefits. NLL training of the transition matrix adds none. The mask prevents orphan I-tags and `Saint → Petersburg` clipping bugs from BIO-invalid spans. `crf.py` encodes the mask by setting `O → I-locality` and every other BIO-invalid transition to `-inf` at initialization. Training-side NLL adds a learned refinement on top of the mask, and that refinement conflicts with CE.
 
 ```python
 # Before — the v0.4.0 train loop
@@ -102,7 +102,7 @@ else:
     loss = ce_loss
 ```
 
-The `self.crf_loss_weight > 0` condition keeps the change backward-compatible. Existing recipes that ship with `crf_loss_weight: 0.05` still compute the CRF loss. The new behavior applies only when a recipe sets `crf_loss_weight: 0.0`. The change adds no config field, so two flags cannot disagree.
+The `self.crf_loss_weight > 0` condition keeps the change backward-compatible. Recipes shipped with `crf_loss_weight: 0.05` still compute the CRF loss. The new behavior applies only when a recipe sets `crf_loss_weight: 0.0`. The change adds no config field, so two flags cannot disagree.
 
 Inference is unchanged. The runtime still calls `model.crf.decode(emissions, mask)` to run Viterbi over the frozen mask. Output stays structurally valid, and training no longer has the opposing-curvature conflict.
 
@@ -137,7 +137,7 @@ Mailwoman's training combines two scoring systems, called **Voice A** and **Voic
 - **Voice A** (cross-entropy loss) asks: "How good are your guesses for each individual word? Did you tag '350' correctly as a house number? Did you tag 'NY' correctly as a region?"
 - **Voice B** (CRF loss) asks: "How sensible is your overall pattern? Is your sequence of tags structurally valid? Does it look like a real address?"
 
-A working address parser needs both per-word accuracy and sensible patterns. Training combined both voices and scaled Voice B down to 5% of Voice A's contribution, on the assumption that Voice B would act as a light structural correction.
+An address parser needs per-word accuracy and sensible patterns. The training run combined both voices and scaled Voice B down to 5% of Voice A's contribution, on the assumption that Voice B would act as a light structural correction.
 
 ### The cooperative regime
 
@@ -157,11 +157,11 @@ Voice B pulled the model away from the basin Voice A was guiding it toward. Voic
 
 **Remove Voice B from training.** Keep it for inference, when the trained model parses addresses. At inference the frozen CRF mask enforces its structural rules, which forbid orphan tags and invalid BIO sequences. During training, Voice A guides the model alone.
 
-The change is one configuration line: `crf_loss_weight = 0.0`. The structural guarantees come from the hand-encoded mask. Training the transition matrix added no strength to those guarantees and was the part that conflicted with Voice A.
+One configuration line makes the change: `crf_loss_weight = 0.0`. The hand-encoded mask provides the structural guarantees. Transition-matrix training added no strength to those guarantees and conflicted with Voice A.
 
 ### Three lessons that generalise
 
-1. **Adding two weighted losses can fail badly.** Two loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. Scaling the loss value does not balance their contributions to the optimizer.
+1. **Two weighted losses can fail badly.** Two loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A loss-value multiplier does not balance their contributions to the optimizer.
 2. **Run cheap diagnostics first.** The gradient-norm probe took 5 minutes and answered a question that more than a month of retraining experiments had not. Exhaust the diagnostics that need no GPU before a retrain.
 3. **ML debugging resembles ordinary program debugging.** It uses the same steps: bisect, isolate, instrument, hypothesize, and test. The hard part is describing what happens inside the model precisely enough. Those steps make the remaining bug easier to locate.
 

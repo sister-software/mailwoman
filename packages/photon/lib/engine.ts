@@ -90,7 +90,7 @@ export interface PhotonReverseParams {
  * Each method is optional.
  * A missing one answers `501`.
  *
- * The real implementation backs `/api` with the FST autocomplete tier + parse→resolve,
+ * The real implementation backs `/api` with the FST autocomplete tier + parse→resolve.
  * and `/reverse` with the `WOFReverseGeocoder`.
  */
 export interface PhotonEngine {

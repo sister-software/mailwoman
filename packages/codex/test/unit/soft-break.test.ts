@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests soft breaks, which render as a line break in multi-line output and as a space in single-line output.
+ *   Tests soft breaks. They render as a line break in multi-line output and as a space in single-line output.
  *
  *   Great Britain prints the post town and postcode on separate lines, but its single-line form is
  *   `27 Minories, London EC3N 1DE`.

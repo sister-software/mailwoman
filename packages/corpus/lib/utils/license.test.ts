@@ -104,7 +104,7 @@ describe("operator-named prefixes", () => {
 		expect(licenseExcluded("ODbL-1.0", p)).toBe(true)
 		expect(licenseExcluded("odbl-1.0", p)).toBe(true)
 		expect(licenseExcluded("CC-BY-SA-3.0", p)).toBe(true)
-		// The prefix is anchored, so a CC-BY-SA exclusion leaves CC-BY alone.
+		// The prefix is anchored, so a CC-BY-SA exclusion leaves CC-BY unchanged.
 		expect(licenseExcluded("CC-BY-4.0", p)).toBe(false)
 		expect(licenseExcluded("Licence Ouverte 2.0", p)).toBe(false)
 	})

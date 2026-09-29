@@ -33,7 +33,7 @@ const MINIMUM_REASON_LENGTH = 20
  * and path-ts's, in bare or `path.` qualified form, plus the `TemporaryDirectory`
  * builder called as `scratch.path("node_modules", …)`.
  *
- * The check is on the name alone, so a rename-import (`join as pathJoin`) slips past,
+ * The check is on the name by itself, so a rename-import (`join as pathJoin`) slips past,
  * the accepted hole that closing would require resolving imports.
  */
 const PATH_BUILDERS = new Set(["join", "path", "resolve", "resolvePath", "resolvePathBuilder"])

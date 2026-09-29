@@ -47,7 +47,7 @@ function duplicateKey(file: string, symbols: KnipSymbol[]): string {
 
 /**
  * The `exports` check: one error per unused export, type, enum member or namespace member
- * knip reports, and per duplicate export outside the reviewed compatibility aliases.
+ * knip reports and per duplicate export outside the reviewed compatibility aliases.
  */
 export const exportsCheck: RepoCheck = {
 	id: "exports",

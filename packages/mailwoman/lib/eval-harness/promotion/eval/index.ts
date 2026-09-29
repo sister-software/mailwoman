@@ -52,7 +52,7 @@ interface ThresholdSpec {
 	 * Answer-key path for per-locale grading, spec-declared for comparability.
 	 *
 	 * When omitted, the run uses the per-locale-f1 default.
-	 * Changing this path requires fresh measurements to re-anchor the floors.
+	 * A path change requires fresh measurements to re-anchor the floors.
 	 */
 	golden_dir?: string
 	floors?: Record<string, unknown>
@@ -105,7 +105,7 @@ export interface PromotionEvalOptions {
 	/**
 	 * Package-shaped INT8 directory with the same layout as {@linkcode PromotionEvalOptions.weightsCache}.
 	 *
-	 * Pairing requires `weightsCache` and excludes `--model` and `--int8`.
+	 * This paired run requires `weightsCache` and excludes `--model` and `--int8`.
 	 * It makes floors and fp32/int8 deltas valid in one run.
 	 */
 	int8WeightsCache?: string

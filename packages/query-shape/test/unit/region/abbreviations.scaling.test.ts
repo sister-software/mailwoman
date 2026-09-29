@@ -11,7 +11,7 @@
  *
  *   Correctness tests cannot distinguish quadratic and linear implementations because both return the same results.
  *   The growth curve distinguishes them, so this test compares elapsed-time ratios instead of a millisecond budget.
- *   Absolute timing would make the test unstable on CI. Doubling input size gives quadratic code about 4x the work
+ *   Absolute timing would make the test unstable on CI. An input twice as large gives quadratic code about 4x the work
  *   and linear code about 2x. The 3x threshold tolerates a loaded runner and catches the quadratic behavior.
  */
 
@@ -21,13 +21,13 @@ import { expect, test } from "vitest"
 /**
  * One "City, ST ZIP" record.
  *
- * Repeating it grows segments and tokens together.
+ * Each repetition grows segments and tokens together.
  * That pairing made the original algorithm quadratic.
  */
 const UNIT = "123 Main St, Springfield, IL 62701, "
 
 /**
- * Timing samples per size.
+ * Each size has timing samples.
  *
  * Five keeps the minimum honest against back-to-back load spikes
  * (three let one through on 2026-08-05 — see the threshold note below) without making the test slow.
@@ -55,7 +55,8 @@ function timeAt(input: string): number {
  *
  * A block design would apply that drift to only one side of the ratio.
  *
- * Interleaving gives both sizes an equal draw from every load regime, so the two minimums are comparable.
+ * An interleaved order gives both sizes an equal draw from every load regime,
+ * so the two minimums are comparable.
  */
 function bestOfBoth(smallReps: number, largeReps: number): { small: number; large: number } {
 	const smallInput = UNIT.repeat(smallReps)

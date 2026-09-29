@@ -55,7 +55,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 					locality: "stub",
 					region: null,
 					// Required on `GeocodeResult`, and a stated identity so the tri-state pin
-					// below checks the one-sided comparison: the mailwoman arm carries place_ids
+					// below checks the one-sided comparison: the mailwoman arm includes place_ids
 					// and the external arm cannot, making the rows incomparable rather than "same".
 					hierarchy: [{ tag: "locality", value: "stub", name: "stub", placeID: "wof:101" }],
 				},

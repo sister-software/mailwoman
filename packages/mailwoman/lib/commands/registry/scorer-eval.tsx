@@ -58,7 +58,7 @@ export const spec = {
 		seed: numberOption("PRNG seed"),
 		seeds: numberOption("Splits averaged"),
 		split: numberOption("Train fraction"),
-		"train-state": stringOption("Training state"),
+		"train-state": stringOption("State used for model fitting"),
 		"eval-state": stringOption("Evaluation state"),
 		"train-em": { type: "boolean", default: true, description: "EM-train FS arms" },
 		"legacy-join": { type: "boolean", default: false, description: "Use legacy join" },

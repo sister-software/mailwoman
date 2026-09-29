@@ -46,8 +46,7 @@ const FIELD: Readonly<Record<string, string>> = {
 /**
  * Two slots are authored rather than transcribed, so the skeleton comparison omits them.
  *
- * Including either slot would mark every country that carries it as a departure
- * without testing transcription:
+ * Either slot would mark every country that carries it as a departure without testing transcription:
  *
  * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's
  *   consumers add the destination country themselves.

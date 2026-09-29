@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   A locality miss has two causes that a rate cannot distinguish.
- *   Ranking means the right place is in the candidate set but was outranked.
- *   Reachability means the right place carries no row
+ *   A ranking miss means the right place is in the candidate set but was outranked.
+ *   Reachability means the right place has no row
  *   under the asked key so no ranking could have reached it at any position.
  */
 
@@ -29,7 +29,7 @@ const { values } = parseArguments({
 		"weights-cache": { type: "string" },
 		"candidate-db": { type: "string", default: wofDatabasePath("candidate.db").toString() },
 		eval: { type: "string", default: dataRootPath("eval", "coord", "us.jsonl").toString() },
-		// The country a panel row belongs to when the panel carries none per row.
+		// The country a panel row belongs to when the panel has no country per row.
 		// It selects the codex layout the row is written through before it is a scope decision.
 		country: { type: "string", default: "US" },
 		limit: { type: "string" },

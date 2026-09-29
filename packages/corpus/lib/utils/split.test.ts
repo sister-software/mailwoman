@@ -207,7 +207,7 @@ describe("defaultHoldouts", () => {
 
 describe("the holdout predicate reaches a row whose source emits no region (#2353)", () => {
 	/**
-	 * BAN street rows carry a postcode and locality.
+	 * BAN street rows include a postcode and locality.
 	 *
 	 * They have no region.
 	 * This shape covers 96.9% of FR training rows.

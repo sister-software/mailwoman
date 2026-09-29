@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fog of war: each cell carries `fog = 1 − coverage` in [0,1] (0 clear, 1 gray), plus
+ *   Fog of war: each cell has `fog = 1 − coverage` in [0,1] (0 clear, 1 gray), plus
  *   `fog_opt = fog ** OPTIMISTIC_GAMMA` for the demo's optimistic toggle.
  *
  *   DuckDB is a dynamic import so the published CLI does not force a heavy native dependency on

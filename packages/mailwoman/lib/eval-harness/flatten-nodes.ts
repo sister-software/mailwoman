@@ -2,20 +2,16 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Depth-first flatten of a decoded parse tree, for the boards that grade spans rather than a resolved answer.
+ * @file Depth-first flatten of a decoded parse tree for span-based grading.
  */
 
 import { walkNodes } from "@mailwoman/core/decoder"
 
 /**
- * The node shape the boards walk.
+ * Minimal node shape used by grading boards.
  *
- * Deliberately looser than `AddressNode`: a board reads a tree back out of a decoder result,
- * so it needs the three fields it grades on and the recursion rather than the full interface.
- * Naming the recursion is what keeps the walk cast-free.
- *
- * A `children?: unknown` forces every push through an assertion, and the assertion is
- * where a wrong shape stops being a type error.
+ * This is intentionally looser than `AddressNode` and keeps only the fields
+ * needed for span grading plus recursion.
  */
 export interface FlatNode {
 	tag: string
@@ -25,7 +21,7 @@ export interface FlatNode {
 }
 
 /**
- * Every node in the tree, parents before children.
+ * Returns every node in depth-first order (parents before children).
  */
 export function flattenNodes(nodes: readonly FlatNode[]): FlatNode[] {
 	const out: FlatNode[] = [...walkNodes(nodes)]

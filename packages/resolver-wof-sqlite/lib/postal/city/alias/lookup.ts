@@ -8,7 +8,7 @@
  *   {@link WOFSQLitePlaceLookup}'s coordinate-first locality scorer: a user-typed postal city
  *   ("Antioch", postcode 37013) becomes a name-match alias for the geographic locality the postcode
  *   actually sits in ("Nashville"), so the right place tiers to the top instead of a place with the same name
- *   town in another state. Opt-in — the lookup is only constructed when a path is supplied, and
+ *   town in another state. Opt-in — the lookup is only constructed when a path is supplied.
  *   absent it the resolver is byte-identical.
  *
  *   The reader returns RAW divergent rows for a postcode. normalization + name-matching against the
@@ -48,7 +48,7 @@ export interface PostalCityAlias {
  * Reader over `postal_city_alias`.
  *
  * The only query is a postcode-scoped probe for divergent rows
- * (where the postal name differs from the geographic name — the rows that carry alias signal),
+ * (where the postal name differs from the geographic name — the rows that provide alias signal),
  * issued via the typed Kysely query builder against {@link PostalCityAliasDatabase}.
  */
 export class WOFPostalCityAliasLookup extends SQLiteLookup<PostalCityAliasDatabase> {

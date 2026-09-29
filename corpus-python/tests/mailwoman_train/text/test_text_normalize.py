@@ -44,7 +44,7 @@ def test_int_to_kanji_inverts_kanji_to_int() -> None:
 
 
 def test_normalize_text_strips_an_ideographic_space() -> None:
-    # 135 street values carry U+3000 as a rendering artifact of the source. the written form closes
+    # 135 street values contain U+3000 as a rendering artifact of the source. the written form closes
     # it up. `str.split()` treats U+3000 as whitespace, so normalization needs no explicit replace.
     assert normalize_text("西与賀町　字今津乙") == "西与賀町字今津乙"
 

@@ -13,7 +13,7 @@ import { ABLATION_GRADES, type AblationGrade, emptyGrades } from "#eval-harness/
 /**
  * The component classes this runner deletes.
  *
- * Adding one means adding the field to `GauntletResult` first.
+ * Each new component needs a field in `GauntletResult` first.
  */
 export const ABLATABLE_COMPONENTS = [
 	"postcode",
@@ -46,7 +46,7 @@ export interface AblationCell {
 	 */
 	locale: string
 	/**
-	 * Board rows that carry this component in this locale.
+	 * Board rows that include this component in this locale.
 	 *
 	 * `support: 0` means unmeasured here rather than a zero score.
 	 */

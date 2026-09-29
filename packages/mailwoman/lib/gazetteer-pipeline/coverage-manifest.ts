@@ -87,7 +87,7 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	},
 	// AU joined with the AU placer class.
 	// The hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20).
-	// The receipt carries no single-rate number, so there is no `hardResolveRate` (never invent a magnitude).
+	// The receipt has no single-rate number, so there is no `hardResolveRate` (never invent a magnitude).
 	{
 		country: "AU",
 		hardFilterSafe: true,

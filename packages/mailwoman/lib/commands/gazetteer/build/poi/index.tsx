@@ -13,7 +13,7 @@
  *   Overture path — same command, same `buildPOIDatabase` entry point, different inputs. It streams
  *   `@mailwoman/osm/sdk`'s `extractOSMPOIs` over a Geofabrik `.osm.pbf` extract (telecom-infrastructure
  *   categories only), stamps the invocation's `--country` onto every row (a bare OSM feature
- *   carries no country property — see `extract-poi.ts`'s module docstring), and derives res-6 coverage
+ *   has no country property — see `extract-poi.ts`'s module docstring), and derives res-6 coverage
  *   by polyfilling the extract's declared `--bbox` (`bboxCoverageCells`, decision 5) rather than only
  *   the cells rows happened to land in — an infra-only extract is sparse by category, so "no plant in a
  *   well-surveyed cell" needs its own zero-observed-rows coverage row rather than silent absence. The manifest
@@ -123,7 +123,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk")
 
 			for await (const row of extractOSMPOIs(pbf)) {
-				// extractOSMPOIs yields `country: ""` (a bare OSM feature carries no country property) —
+				// extractOSMPOIs yields `country: ""` (a bare OSM feature has no country property) —
 				// stamp the invocation's --country before buildPOIDatabase ever sees the row.
 				rows.push({ ...row, country })
 			}

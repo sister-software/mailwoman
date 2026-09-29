@@ -58,8 +58,9 @@ describe("SUB_LOCALITY_RUNGS", () => {
  * The same approach `placetype-census.test.ts` uses.
  *
  * Shape: GB has two locality parents (London, Quiet Town).
- * London carries a borough and a neighbourhood child, which must count as one
- * covered parent for dependent_locality rather than two.
+ * London has a borough and a neighbourhood child.
+ *
+ * The two must count as one covered parent for dependent_locality rather than two.
  *
  * IE has one locality parent and no children at all — a country that bottoms out at locality.
  * One Overture-backfilled locality proves the source split.
@@ -121,7 +122,7 @@ describe("buildGranularityLadder", () => {
 		const rows = buildGranularityLadder(ladderFixtureDB())
 		const gb = rows.find((row) => row.country === "GB")
 
-		// GB has two locality parents (London, Quiet Town); one carries a dependent locality.
+		// GB has two locality parents (London, Quiet Town); one has a dependent locality.
 		expect(gb?.localityParents).toBe(2)
 		expect(gb?.rungs.dependent_locality?.parentCoverage).toBeCloseTo(0.5, 6)
 	})

@@ -1,7 +1,7 @@
 """Count what a row's OPENING token teaches, at both the draw level and the emitted level.
 
 A count is only comparable when its definition and sampling level travel with it, so the narrow
-the token list lives here and is counted at both levels. Changing the opening-token definition can
+the token list lives here and is counted at both levels. A new opening-token definition can
 reverse the answer. Whole-row counters show the difference.
 
 The two levels disagree: pass 1 counts rows straight off the sampler, while pass 2 expands the same
@@ -45,8 +45,8 @@ def _opening_counts(tokens: list[str], labels: list[str]) -> list[str]:
 
     three_then_two = len(tokens) >= 2 and len(first) == 3 and _digits(tokens[1]) and len(tokens[1]) == 2
 
-    # A row of exactly two tokens is the shape the failing input has and the corpus never carried: the
-    # opening is shared with every in-context row that starts on its postcode, so an opening count alone
+    # A row of exactly two tokens matches the failing input. The corpus never included it, so the
+    # opening is shared with every in-context row that starts on its postcode, so its count by itself
     # cannot separate `100 00` from `100 00 Praha, Czechia`. Row length is what separates them.
     whole_row = len(tokens) == 2
 

@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Allowlists for `check-docs-structure.ts`. Every entry carries a reason. An allowance without
+ *   Allowlists for `check-docs-structure.ts`. Every entry includes a reason. An allowance without
  *   one is a bug rather than a policy. Review every addition. Prefer fixing the page. Add an allowance only when the
  *   collision or orphan is deliberate or belongs to another workstream.
  *
  *   Both lists are empty. That is the intended steady state. The docs-reorg site has no
- *   orphans and no duplicate titles by construction. The three entries carried since 2026-08-03
+ *   orphans and no duplicate titles by construction. The three entries retained since 2026-08-03
  *   (docs-reorg Phase 0 task 2) were retired by tree surgery rather than by allowance: Task 4 moved
  *   `evals/` and `retrospectives/` to `docs/records/`, taking both `Retrospectives`-titled landing
  *   pages and the `plan/migrate-v7-rules-excision` orphan out of `collectDocPages()`'s scan (it only
@@ -16,7 +16,7 @@
  *   too, so the un-navved conference proposal is no longer a published page needing an exemption.
  *   See task-2-report.md, task-4-report.md and task-5-report.md for the before/after evidence.
  *
- *   Adding an entry back requires review. The check also guards against stale allowances in the other
+ *   Review every proposed entry before adding it back. The check also guards against stale allowances in the other
  *   direction as well: an allowance whose subject no longer exists is itself a failure.
  */
 

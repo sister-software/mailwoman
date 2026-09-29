@@ -86,7 +86,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// only under `includeBuildLocalFolds`.
 	"postalcode-ni-osm.db",
 	// Japan's 7-digit codes from WOF.
-	// The candidate fold skips the 48,216 rows that carry the 0,0 unlocated sentinel.
+	// The candidate fold skips the 48,216 rows whose coordinates equal the 0,0 unlocated sentinel.
 	"postalcode-jp.db",
 	// The GeoNames-postal tail database: ten countries in ingest order.
 	"postalcode-geonames-tail.db",
@@ -215,7 +215,7 @@ export interface FoldOptions {
 	 */
 	alternateDir?: PathBuilderLike
 	/**
-	 * Override to proceed even when `adminIn` already carries alias rows for countries this run does not list.
+	 * Override to proceed when `adminIn` already contains alias rows for countries this run does not list.
 	 *
 	 * The fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
 	 */
@@ -235,7 +235,8 @@ export interface FoldResult {
 	placeSearchRows: number
 	bboxRows: number
 	/**
-	 * Countries whose alias rows `adminIn` already carried — the fold re-derives every one of them.
+	 * Countries whose alias rows `adminIn` already contained.
+	 * The fold re-derives each country's rows.
 	 */
 	refoldedCountries: string[]
 }
@@ -248,9 +249,9 @@ export interface FoldResult {
  * The fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale.
  *
  * Each synthetic id is a position in the run.
- * Folding a narrower country set than what `adminIn` already carries drops the difference.
+ * A fold over fewer countries than `adminIn` represents drops the remaining countries.
  *
- * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
+ * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} permits the loss.
  */
 export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResult> {
 	if (opts.adminIn.toString() === opts.adminOut.toString()) {
@@ -357,7 +358,7 @@ export interface BuildOptions {
 	/**
 	 * Fold a database whose own tier permits no publication, for a gazetteer built for local use.
 	 *
-	 * Off by default, so a build that could reach a publish carries only folds whose tier allows it.
+	 * Off by default, so a build that could reach a publish includes only folds whose tier allows it.
 	 * The manifest records how many such folds were included, as `build-local-folds`.
 	 */
 	includeBuildLocalFolds?: boolean
@@ -399,8 +400,8 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 			? undefined
 			: (opts.currencyBackfillCountries ?? DEFAULT_WOF_PRIORITY_COUNTRIES)
 
-	// Carry the committed capitals reference in-artifact so `capital_tier` works for npm
-	// consumers who pulled candidate.db (published packages do not ship the repo file).
+	// Include the committed capitals reference in the artifact so `capital_tier` works for
+	// npm consumers who pulled candidate.db (published packages do not ship the repo file).
 	const capitalsPath = repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")
 
 	const capitals = (await pathExists(capitalsPath))

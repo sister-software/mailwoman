@@ -101,7 +101,7 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * A rural LDU serves a delivery route with similar granularity.
  * The `[1-9]` in the pattern below excludes those codes.
  *
- * Averaging the two populations would hide it behind a single pooled number.
+ * A single pooled number would hide the difference between the two populations.
  *
  * Lives in codex (per-address-system postal reference) so the Node result assembly
  * (`mailwoman/geocode-core`) and the demo's pin ranking consume one tier definition.

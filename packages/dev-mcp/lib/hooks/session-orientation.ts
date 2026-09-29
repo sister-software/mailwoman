@@ -6,7 +6,7 @@
  *
  *   SessionStart hook that lists each workspace and its export subpaths.
  *
- *   The listing omits signatures to stay small, and `mwdev_symbol` answers the details. The hook swallows every
+ *   The listing omits signatures to stay small. `mwdev_symbol` answers the details. The hook swallows every
  *   error so a failure never blocks a session from starting.
  */
 

@@ -256,7 +256,7 @@ async function readLatestLegalNames(db: Kysely<FilerDatabase>): Promise<Map<stri
 /**
  * Builds a candidate record for each Form 499 node whose legal name has a non-empty canonical form.
  *
- * Each record carries the identifiers of its whole authoritative cluster.
+ * Each record includes the identifiers of its whole authoritative cluster.
  */
 async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRecord[]> {
 	const nodeInfo = await readNodeInfo(db)

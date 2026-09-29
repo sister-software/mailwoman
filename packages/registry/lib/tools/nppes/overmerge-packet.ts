@@ -41,8 +41,8 @@ export interface OvermergePacketInput {
 /**
  * Writes the adjudication packet and returns the number of over-merged clusters in it.
  *
- * A cluster is over-merged when its members carry more than one org-name truth label.
- * A reviewer marks each cluster as one real entity or as distinct providers,
+ * A cluster is over-merged when its members have more than one org-name truth label.
+ * A reviewer marks each cluster as one real entity or as distinct providers.
  * which separates model error from truth-label error.
  */
 export async function writeOvermergePacket(path: PathBuilderLike, input: OvermergePacketInput): Promise<number> {

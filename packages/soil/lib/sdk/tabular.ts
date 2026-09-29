@@ -9,7 +9,7 @@
  *   The files have no headers. The archive supplies their schema. `mstab.txt` maps each logical table name to a
  *   filename (`component` → `comp.txt`, `sacatalog` → `sacatlog.txt`). The filenames cannot be inferred. `mstabcol.txt`
  *   gives each column's ordinal position. The reader looks up those positions instead of hard-coding them.
- *   {@link readTable} throws when a requested column is absent from the shipped dictionary. Returning `undefined`
+ *   {@link readTable} throws when a requested column is absent from the shipped dictionary. An `undefined` result
  *   for a renamed column would turn a source change into an apparent absence. That would corrupt the measurement.
  *
  *   Quote handling affects the parsed result. `sacatlog.txt` contains 594 newline bytes and one record. Its
@@ -17,8 +17,8 @@
  *   dictionary, contains 913 newlines and 865 records. A line-splitting reader would create 594 malformed rows from
  *   the one-row `sacatlog.txt` file. Each malformed row would still look valid enough to process.
  *
- *   The archive also supplies its declared domains. Reading them avoids transcribing values by hand.
- *   `msdomdet.txt` carries every `Choice` column's members and the authority's prose definition. It includes
+ *   The archive also supplies its declared domains. Those values remove the need to transcribe them by hand.
+ *   `msdomdet.txt` lists every `Choice` column's members and the authority's prose definition. It includes
  *   capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, 28 conditional farmland classifications and six
  *   component kinds. The layer stores and validates those values.
  */
@@ -37,7 +37,7 @@ export type TabularRow = ReadonlyArray<string>
  * Read one pipe-delimited export file into rows.
  *
  * Quote-aware parsing preserves embedded newlines; `header: false` keeps the first record
- * because these files carry no header.
+ * because these files have no header.
  */
 async function readPipeDelimited(path: PathBuilderLike): Promise<TabularRow[]> {
 	const rows: TabularRow[] = []
@@ -85,7 +85,7 @@ const MSTABCOL_COLUMN_NAME = 2
  * Declared widths of the two bootstrap files, asserted before either is read as a dictionary.
  *
  * A different width means the metadata format changed.
- * Reading positions from the changed format could misread every column.
+ * Changed-format positions could misread every column.
  */
 const MSTAB_WIDTH = 5
 const MSTABCOL_WIDTH = 14
@@ -277,7 +277,7 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
  * The shipped `sacatlog.txt` writes the same instant as `09/09/2025 13:57:25`.
  *
  * The download URL needs `2025-09-09`.
- * Parsing to a date rather than slicing the string is what makes both channels agree.
+ * Both channels agree only when the code parses the value as a date instead of slicing the string.
  *
  * @throws {Error} When the value is not one of those shapes.
  * An incorrect freshness date requests a nonexistent file.

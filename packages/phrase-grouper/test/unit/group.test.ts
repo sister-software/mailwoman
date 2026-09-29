@@ -318,7 +318,8 @@ describe("scoreLocalityPhrase", () => {
 		const bodies = scoreLocalityPhrase(tokenizeSegment("Via Trento", 0), "Via Trento", false).map((p) => p.span.body)
 		expect(bodies).not.toContain("Via")
 		expect(bodies).not.toContain("Via Trento")
-		// The street name alone may still surface as a locality candidate, and the reconciler arbitrates.
+		// The street name by itself may still surface as a locality candidate.
+		// The reconciler arbitrates.
 		expect(bodies).toContain("Trento")
 	})
 })

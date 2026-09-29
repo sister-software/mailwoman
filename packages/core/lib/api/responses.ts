@@ -235,9 +235,9 @@ function responseReason(status: number): string {
  * `status`, a `(source, kind, reason)` URN on `name`, and the originating `AxiosError` on `cause`.
  * A non-Axios error is rethrown untouched.
  *
- * What changed, measured rather than recalled — a differential against `98c4dda1`
- * across 18 failure shapes in the exact `TileAPI` configuration found **16 of
- * them changed**, not the two originally claimed:
+ * What changed, measured rather than recalled: a differential against `98c4dda1` across
+ * 18 failure shapes in the exact `TileAPI` configuration found 16 of them changed,
+ * where the original claim named two.
  *
  * - Every responseless failure (`ERR_NETWORK`, `econnrefused`, `econnreset`, `econnaborted`,
  *   `etimedout`, `ERR_CANCELED`) used to collapse into a uniform 500.
@@ -254,7 +254,7 @@ function responseReason(status: number): string {
  * a misclassified 500 rather than a `TypeError` at the caller.
  * The `return` arms remained reachable through a constructed error shape.
  *
- * Reaching the `switch` required a response to be present.
+ * A response had to be present to enter the `switch`.
  * An error carrying both a `response` and `econnaborted` did resolve with `undefined`.
  *
  * Stock adapters never pair those, but this repo's own `axiosLikeError(message, code, config, response)`
@@ -324,8 +324,7 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 		// and no test could reach it: deleting the whole branch caused 0 of 269 failures,
 		// The hermetic no-live-network harness also failed to detect it.
 		// The probe swallowed its synchronously-throwing `fetch` stub into `false`.
-		// Making the probe incapable of throwing is exactly what made it invisible
-		// to the guard meant to catch it.
+		// The guard could catch the probe failure only if the probe preserved the thrown error.
 		// Both branches produce the same classification: network-class and transient.
 		// The connectivity probe changed only the message string.
 		throw taggedResourceError(

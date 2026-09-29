@@ -50,7 +50,7 @@ export interface CandidateManifestInput {
 	 */
 	adminDBPath: PathBuilderLike
 	/**
-	 * Every postcode and locality database whose rows this candidate carries.
+	 * Every postcode and locality database whose rows this candidate includes.
 	 *
 	 * Their paths compose the manifest's license expression.
 	 * Their count reaches `sourceVintage`.
@@ -68,7 +68,7 @@ export interface CandidateManifestInput {
 	version: string
 	createdAt: string
 	/**
-	 * Each fold's rows and places on the table this build wrote, from {@linkcode censusFolds}.
+	 * Each fold's row and place counts on the table this build wrote, from {@linkcode censusFolds}.
 	 *
 	 * A caller that passes none records `fold-census=unmeasured` rather than a set of zeroes, because a
 	 * later reader cannot tell a fold that contributed zero rows from a census that the build skipped.
@@ -97,7 +97,7 @@ export const FoldTermsRecord = {
 export type FoldTermsRecord = (typeof FoldTermsRecord)[keyof typeof FoldTermsRecord]
 
 /**
- * What one contributing database says about its own publication.
+ * What one contributing database records about its own publication.
  */
 export interface FoldTerms {
 	path: string
@@ -135,7 +135,7 @@ export interface FoldCensusRow {
 /**
  * Count each fold's rows and distinct places in a built candidate table.
  *
- * A fold's share of a published artifact is recoverable from the artifact alone only
+ * A fold's share of a published artifact is recoverable from the artifact itself only
  * while the upstream release is still served.
  * Overture prunes a release from its bucket.
  *
@@ -144,7 +144,7 @@ export interface FoldCensusRow {
  *
  * The bounds come from `SYNTHETIC_ID_RANGES`, the same registry each builder mints its
  * place ids from, so a range added there reaches this census without a second list.
- * Rows below the first base carry Who's On First's own ids and are reported under `wof`.
+ * Rows below the first base contain Who's On First's own ids and are reported under `wof`.
  */
 export function censusFolds(candidateDBPath: PathBuilderLike): FoldCensusRow[] {
 	using db = new DatabaseClient<layerschemadatabase>(candidateDBPath, { readOnly: true })
@@ -256,7 +256,7 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 
 	const adminTerms = await readFoldTerms(input.adminDBPath)
 	const foldTerms = await Promise.all(contributing.map((path) => readFoldTerms(path)))
-	// The ancestor is not a fold, so the count reads the contributing databases alone.
+	// The ancestor is not a fold, so the count reads only the contributing databases.
 	const buildLocal = foldsRefusingPublication(foldTerms).length
 
 	for (const terms of [adminTerms, ...foldTerms]) {
@@ -279,7 +279,7 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		name: "candidate",
 		version: input.version,
 		schemaVersion: 1,
-		// Never `shipped`: the admin ancestor is `build-local`, and this file carries its rows.
+		// Never `shipped`: the admin ancestor is `build-local`, and this file includes its rows.
 		// The postcode folds add share-alike sources.
 		tier: LayerTier.BuildLocal,
 		license: [...identifiers].toSorted().join(" AND "),
@@ -292,7 +292,7 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 			`locality-databases=${input.contributingDatabases.localities.length} ` +
 			`undeclared-folds=${undeclared} build-local-folds=${buildLocal} importance=${input.importance ? "yes" : "no"}` +
 			// Each fold's rows and places, measured on the built table. Recorded here because a fold's share
-			// is recoverable from the artifact alone only while its upstream release is still served.
+			// is recoverable from the artifact itself only while its upstream release is still served.
 			(input.foldCensus?.length
 				? ` ${input.foldCensus.map((fold) => `${fold.fold}=${fold.rows}/${fold.places}`).join(" ")}`
 				: " fold-census=unmeasured (the builder passed none)"),

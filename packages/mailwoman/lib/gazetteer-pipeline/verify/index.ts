@@ -50,7 +50,7 @@ export function loadDefaultBaseline(): VerifyBaseline {
 const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
 
 /**
- * Runs the structural checks against an open admin database using SQL alone.
+ * Runs the structural checks against an open admin database using only SQL.
  */
 export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline): VerifyResult {
 	const checks: VerifyCheckResult[] = []

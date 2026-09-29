@@ -189,7 +189,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 				expect(designation.provenanceGrade).toBe("authoritative")
 			}
 
-			// The one-line description carries the authority, the code and the plan,
+			// The one-line description includes the authority, the code and the plan,
 			// so a receipt cannot lose which of them spoke.
 			expect(describeZoningDesignation(decision.observation)).toMatch(/Fixture County Council/u)
 			expect(describeZoningDesignation(decision.observation)).toMatch(/R2 - Existing Residential/u)

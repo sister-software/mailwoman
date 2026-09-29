@@ -133,7 +133,7 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	 *
 	 * Absent → the candidate renders as a bare point (marker + a mid-zoom fly-to).
 	 *
-	 * Returning `null` also renders no overlay.
+	 * A `null` result also renders no overlay.
 	 */
 	resolveMapPlace?: (candidate: ResolvedPlaceView, result: ParseResult) => ResolvedMapPlace | null
 

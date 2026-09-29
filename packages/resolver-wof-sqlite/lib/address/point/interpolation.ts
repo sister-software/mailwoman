@@ -12,7 +12,7 @@
  *   The matching key is `street_key`, the shared normalizer plus the route fold
  *   (`canonicalizeRouteKey`), identical at build time (`mailwoman situs address-points`) and query
  *   time by construction. Scope is postcode-first like the segment tier. A query without a postcode
- *   goes straight to the fallback, which carries its own statewide-ambiguity abstention.
+ *   goes straight to the fallback. The fallback has its own statewide-ambiguity abstention.
  *
  *   Neighbor candidates never include the queried number itself, so production never overrides an
  *   on-file number and grading against the same extract is non-circular.
@@ -21,7 +21,7 @@
  *       below and above. `uncertaintyM` is half the distance between them.
  *   - Single-sided (`bracket: "single"`): linear extrapolation along the two nearest known numbers
  *       on that side, capped at one pair-span beyond the nearest point (`t ≤ 2`, past which the line
- *       carries no evidence and the query falls through). `uncertaintyM` is the pair distance plus
+ *       provides no evidence and the query falls through). `uncertaintyM` is the pair distance plus
  *       the extrapolated overshoot, larger than the both-sided radius.
  *   - No bracket, meaning no neighbors, a single known number, or past the extrapolation cap: fall
  *       through to the tiger fallback when configured, else null.
@@ -41,7 +41,7 @@ import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/
  * Extrapolation cap for a single-sided bracket: at most one pair-span beyond
  * the nearest known point (`t = 2`).
  *
- * Past it, the two-point line carries no evidence about the query number.
+ * Past it, the two-point line provides no evidence about the query number.
  */
 const MAX_EXTRAPOLATION_T = 2
 

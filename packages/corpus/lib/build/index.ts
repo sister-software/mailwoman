@@ -104,7 +104,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	opts.onProgress?.("parquet", "writing parquet files")
 
 	// Each split gets its own generator seeded from one base, so a split's row order does
-	// not depend on how many rows the splits before it happened to carry.
+	// not depend on how many rows the earlier splits happened to contain.
 	const shuffled = (path: PathBuilderLike, salt: number) =>
 		shuffleWithinWindow(streamJSONL<LabeledRow>(path), makeMulberry32(shuffleSeed + salt), shuffleWindow)
 

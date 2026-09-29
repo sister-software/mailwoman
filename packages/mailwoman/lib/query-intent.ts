@@ -43,7 +43,8 @@ interface RankedPlaceLike {
 	 *
 	 * On the candidate backend it equals `-effectiveNegRank`, so a difference of
 	 * two prominences is a log10 population margin.
-	 * On the FTS backend it is a capped log population plus a proximity term, which is a different unit.
+	 * On the FTS backend it is a capped log population plus a proximity term.
+	 * The result uses a different unit.
 	 */
 	prominence?: number
 	score?: number

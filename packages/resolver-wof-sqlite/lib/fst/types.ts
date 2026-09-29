@@ -110,7 +110,7 @@ export interface FSTProvenance {
 	 * The MD5 of the source database's bytes at build time.
 	 * The freshness check compares it.
 	 *
-	 * `sourceDB` alone cannot detect staleness.
+	 * `sourceDB` by itself cannot detect staleness.
 	 * A rebuild replaces the admin database at the same path.
 	 *
 	 * The field is `undefined` for artifacts built before the stamp existed.

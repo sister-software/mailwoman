@@ -155,7 +155,7 @@ for (const s of SWEEP_ROWS) {
 	// Sweep rows grade under the base package: no overlay ships for these countries.
 	const locale = "en-us"
 	// Measured, never declared: the arm loads the FST by locale rather than by answer-country,
-	// so a hard-coded zero would hide the bias these surfaces carry.
+	// so a hard-coded zero would hide the bias in these surfaces.
 	const { pop, imp } = await matchers(locale)
 	const popTags = biasOf(pop, s.probeSurface)
 	const impTags = biasOf(imp, s.probeSurface)

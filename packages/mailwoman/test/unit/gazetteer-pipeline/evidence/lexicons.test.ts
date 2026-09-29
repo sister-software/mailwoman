@@ -90,7 +90,7 @@ describe("three-law selectivity — pure units", () => {
 			expect(directionals.has(s), s).toBe(true)
 		}
 
-		// The set stays out of the shipped FST policy — loadDegenerateSurfaces alone must not carry
+		// The set stays out of the shipped FST policy — loadDegenerateSurfaces by itself must not include
 		// "northeast" (policy separation: degenerate-surface-exclusion v1.1 is baked into FST trailers).
 		expect((await loadDegenerateSurfaces(undefined, painterFold)).surfaces.has("northeast")).toBe(false)
 	})
@@ -111,7 +111,7 @@ describe("three-law selectivity — pure units", () => {
 	it("law 4 (v7): DE region vocabulary excludes the territorial Länder but keeps the city-states", () => {
 		const region = loadDERegionVocabulary()
 
-		// The 13 territorial-state names — native, exonym, and the everyday aliases —
+		// The 13 territorial-state names — native, exonym and the everyday aliases —
 		// are region vocabulary ("bayern" as locality evidence teaches the v3.19 rotation class).
 		for (const s of [
 			"bayern",
@@ -184,7 +184,7 @@ describe("street-type lexicon build", () => {
 		const j = await readLocalJSONFile<StreetTypeLexicon>(tmp)
 
 		// "mountain WAY WY 82601" / "susie CT WY 83101".
-		// The state token must carry no street evidence.
+		// The state token must provide no street evidence.
 		for (const code of ["WY", "CT", "KY", "MT", "PR"]) {
 			expect(j.code_entries[code], code).toBeUndefined()
 		}

@@ -162,7 +162,7 @@ export async function relabelGoldenDirectory(
 
 			if (!name.name.endsWith(".jsonl")) {
 				// manifest is rewritten below.
-				// Everything else (readme, split-manifest) rides forward.
+				// Everything else (readme, split-manifest) moves forward.
 				if (name.name !== "MANIFEST.json") {
 					await writeLocalFile(await readLocalBuffer(from), to)
 				}
@@ -289,7 +289,7 @@ export async function relabelGoldenDirectory(
  * (those are the ones asking for a ruling), then the classes the tool left folded by name,
  * then a sample of the ordinary corrections.
  *
- * The jsonl sibling carries every row.
+ * The jsonl sibling contains every row.
  * This file is the one a human reads.
  */
 function renderDeckMarkdown(deck: GoldenRelabelDeckEntry[], parent: string, version: string): string {

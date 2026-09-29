@@ -126,7 +126,7 @@ export function requireExclusionBasis(input: RequireExclusionInput): Exclusion |
  * Inputs a fold identity is computed over, each exercising an axis folds can differ on word-internal
  * diacritics, hyphens, periods, apostrophes, case, whitespace collapsing and non-Latin scripts.
  *
- * Adding an input changes every identity.
+ * Each new input changes every identity.
  * The order is load-bearing because identity is order-dependent.
  */
 export const FOLD_PROBE_CORPUS: readonly string[] = [

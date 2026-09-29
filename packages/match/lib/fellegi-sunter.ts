@@ -6,7 +6,7 @@
  *   The Fellegi-Sunter scorer — the matcher's decision layer.
  *
  *   Each field comparison assigns a record pair to an _agreement level_: exact, high, low, different, or missing.
- *   Each level carries two probabilities. `m` is P(this level | the pair really matches).
+ *   Each level has two probabilities. `m` is P(this level | the pair really matches).
  *   `u` is P(this level | the pair does not match). Their ratio is a Bayes factor. Its
  *   log is the level's contribution to the total match weight in bits:
  *

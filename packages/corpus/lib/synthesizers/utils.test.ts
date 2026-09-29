@@ -91,7 +91,7 @@ describe("universal augmentations", () => {
 		expect(out.components.locality).toBe("Paris")
 		expect(out.components.country).toBe("France")
 
-		// Substring invariant: every component value must appear in raw.
+		// Every component value must appear in `raw`.
 		for (const v of Object.values(out.components)) {
 			if (v) {
 				expect(out.raw).toContain(v)
@@ -532,7 +532,7 @@ describe("registry + defaults", () => {
 
 describe("augmented copies keep intra-span punctuation (#519)", () => {
 	/**
-	 * Apply the augmentation, align the copy, and return the labeled row (asserting both steps).
+	 * Apply the augmentation, align the copy and return the labeled row (asserting both steps).
 	 */
 	const augmentAndAlign = (id: string, row: CanonicalRow) => {
 		const out = AUGMENTATIONS[id]!(row)

@@ -91,7 +91,7 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
 /**
  * What this client actually paces at — deliberately one below {@linkcode SEC_MAX_REQUESTS_PER_SECOND}.
  *
- * Pacing exactly at the ceiling puts every grant on a schedule with zero slack.
+ * A grant schedule at the ceiling has zero slack.
  * SEC measures arriving requests rather than the grant schedule.
  *
  * Measured end-to-end through {@linkcode createSECClient} on real timers, a 40-call
@@ -125,7 +125,7 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
  * Measured after the ceil: 9 arrivals per sliding second, 3/3 runs.
  * Apply the same treatment to future rates that do not divide 1000 evenly.
  *
- * Keeping the ceil at the single construction site makes that policy explicit.
+ * The single `Math.ceil` call makes that policy explicit.
  */
 export const SEC_DEFAULT_REQUESTS_PER_SECOND = 9
 
@@ -181,13 +181,13 @@ const SEC_ARCHIVE_PATH_PATTERN = /^\/Archives\/edgar\/data\//
  * A correction is a new filing at a new path — so a document fetched today
  * reads identically a year from now.
  *
- * Caching these effectively forever is the correct, deliberate choice: it saves a network
- * round-trip (and rate-limit budget) on every re-run with zero staleness risk.
+ * An effectively permanent cache for these documents saves a network round-trip
+ * and rate-limit budget on every rerun, with zero staleness risk.
  *
  * Every other endpoint this client is asked to reach — the submissions index
  * (`/submissions/CIK##########.json`), the ticker map (`/files/company_tickers.json`), and the classic
  * browse-edgar CGI — is a live index that changes as new filings land or tickers get reassigned.
- * Caching those forever would be the wrong choice
+ * A permanent cache for those indexes would be the wrong choice
  * (a stale submissions index would silently hide a company's newest 10-K from tasks 6-8),
  * so entries for URLs this returns `false` for expire after `cacheTTLMs` instead.
  */
@@ -202,8 +202,8 @@ export function isImmutableArchiveURL(url: URL): boolean {
  * This is the designated SEC edgar client.
  * Its configured User-Agent carries a real contact address.
  *
- * Sending that anywhere a caller happens to point it (or in cleartext) would leak
- * it outside SEC's fair-access program for no benefit.
+ * A caller-supplied host or a cleartext connection would expose the User-Agent
+ * outside SEC's fair-access program without benefit.
  *
  * `sec.gov` (the apex) and `efts.sec.gov` (edgar full-text search — the Exhibit 21 discovery path)
  * are included alongside the two hosts decision 5 names.
@@ -303,7 +303,7 @@ export interface CreateSECClientOptions {
 	 *
 	 * The test injection point: every test in `sec-client.test.ts` passes an `adapter` here,
 	 * so no test ever performs a live network call (decision 5).
-	 * Overriding `headers` wholesale would drop the User-Agent, so don't.
+	 * A wholesale `headers` override would drop the User-Agent.
 	 */
 	axios?: APIClientConfig["axios"]
 }
@@ -519,7 +519,7 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 			}),
 			ttl: (response) => responseTTL(response, cacheTTLMs),
 			// SEC sends its own `Cache-Control`.
-			// Honoring it would override the archive-vs-index rule above.
+			// SEC's header would override the archive-vs-index rule above.
 			// That rule is the reason for this cache configuration.
 			interpretHeader: false,
 			// Never cache a failure: the default predicate admits 3xx too.

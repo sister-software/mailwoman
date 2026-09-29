@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Host-owned: the state these carry (geolocation permission, the calibrated view, the dev-mode drawer) is a host concern rather than a package one.
+ *   Host-owned: the state these controls manage (geolocation permission, the calibrated view, the dev-mode drawer) belongs to the host rather than the package.
  */
 
 import type React from "react"
@@ -13,8 +13,9 @@ import type { GeoBiasError } from "#runtime/use/geo-bias"
 import styles from "./panels.module.css"
 
 /**
- * Short enough to sit beside the chip, and each message tells the visitor what to do next
- * rather than restating that something went wrong.
+ * Short enough to sit beside the chip.
+ *
+ * Each message tells the visitor what to do next rather than restating that something went wrong.
  */
 const GEO_BIAS_MESSAGE: Record<GeoBiasError, string> = {
 	denied: "Location is blocked for this site — allow it in your browser's site settings, then press again.",

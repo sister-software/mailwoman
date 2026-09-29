@@ -77,8 +77,9 @@ export class RequestPacer {
 	 * The grant time is reserved synchronously, before any `await`.
 	 * `#nextGrantAt` is read and bumped in the same synchronous step that computes this call's own wait.
 	 *
-	 * Moving the `#nextGrantAt` update to after the `await` (i.e. "compute the wait, sleep,
-	 * then update state") reopens the concurrency bug this pacer exists to close.
+	 * The pacer reopens its concurrency bug if it updates `#nextGrantAt`
+	 * after the `await` (i.e. "compute the wait, sleep, then update state") reopens
+	 * the concurrency bug this pacer exists to close.
 	 * N callers invoked in the same synchronous turn would all read the same
 	 * stale `#nextGrantAt` before any of them updates it, compute the same wait,
 	 * They would all be released together instead of one interval apart.

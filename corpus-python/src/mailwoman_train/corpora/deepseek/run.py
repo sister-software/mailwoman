@@ -1,12 +1,12 @@
-"""Running a batch of generation requests, checkpointed and concurrent.
+"""This module runs a batch of generation requests with checkpoints and concurrency.
 
 Both modes had their own copy of this loop. The copies had already diverged because only one noticed
 a truncated completion. They now share this function. Each mode supplies a worker. This function
 handles the resume/output/reporting workflow.
 
-A worker answers `(batch_id, stats)`. Prefixing the id with `!RETRY:` leaves the batch PENDING. Its
-parsed rows are still written. Deterministic source IDs deduplicate re-emitted rows. The next run
-asks for the rest. This lets a completion truncated at `max_tokens` recover the rows it dropped.
+A worker returns `(batch_id, stats)`. The `!RETRY:` prefix keeps the batch PENDING while the sink
+writes its parsed rows. Deterministic source IDs deduplicate re-emitted rows. The next run requests
+the remaining rows. The next run can recover rows dropped by a completion truncated at `max_tokens`.
 """
 
 from __future__ import annotations

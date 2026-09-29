@@ -5,7 +5,7 @@
  *
  *   Admin-gazetteer enrichment, the two post-build steps that must run in order:
  *
- *   1. Region abbreviations: WOF region records carry only the full name. `findPlace('IL')`
+ *   1. Region abbreviations: WOF region records contain only the full name. `findPlace('IL')`
  *      returns no place without the abbreviation, killing the parent constraint the resolve walk
  *      depends on. The source of truth is the packaged chromium-i18n / libaddressinput dataset
  *      (`core/data/chromium-i18n/ssl-address/<CC>.json`), whose tilde-delimited `sub_keys` and

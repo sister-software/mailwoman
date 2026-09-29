@@ -148,7 +148,7 @@ export function stableSourceIDFromParts(
 }
 
 /**
- * Leading house number on a US-style street line: digits, an optional hyphenated range
+ * A leading house number on a US-style street line contains digits and an optional hyphenated range
  * (Queens `40-12`), an optional single alpha suffix (`101A`), then whitespace, then the rest.
  *
  * This decides where the house number ends and the street begins for every US CSV adapter,
@@ -157,7 +157,7 @@ export function stableSourceIDFromParts(
  * The remainder must stay `(\S.*)` and must not become `(.+)`: `\s+` and `.` both match a tab,
  * so `\s+(.+)$` lets the engine split a run of tabs between the two groups every possible way
  * before failing — quadratic backtracking on attacker-shaped input.
- * Requiring a non-space start removes the overlap.
+ * The required non-space start removes the overlap.
  *
  * Group 2 is trimmed by the caller either way, so the two forms are indistinguishable on real input.
  * Only the failure cost differs.
@@ -182,9 +182,9 @@ export interface SplitStreetLine {
  * numbering. Hawaii uses it island-wide — `"47-470 Hui Aeko Place"`).
  *
  * @returns `null` for blank input.
- * Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC 1"`)
- * becomes a single `street` value rather than being mangled — the model sees the
- * original surface form and downstream classifiers pick it up.
+ * Other inputs, including `"PO Box 1234"`, `"RR 2 Box 67"`, and `"HC 1"`, do not
+ * match the prefix shape becomes a single `street` value rather than being mangled —
+ * the model sees the original surface form and downstream classifiers pick it up.
  * Callers that need those forms recognized as something other than a street
  * (see `usgov-irs-bmf`) test for them before calling this.
  */
@@ -240,7 +240,7 @@ export async function loadLibpostalDictionary(language: string, filename: string
  * License and provenance fields are excluded, so two adapters emitting the
  * same address produce the same key.
  * That does not make the corpus deduplicated across adapters: `runAdapter` holds its key store as a local
- * and discards it when the adapter returns, so each adapter is deduplicated against itself alone.
+ * and discards it when the adapter returns, so each adapter is deduplicated only against itself.
  *
  * A cross-adapter pass would hold keys from every adapter at once.
  * It would choose which adapter's address copy survives.
@@ -262,7 +262,7 @@ export function canonicalDedupKey(row: CanonicalRow): string {
 }
 
 /**
- * Streaming SHA-256 hasher.
+ * This function creates a streaming SHA-256 hasher.
  *
  * The runner feeds every jsonl line into one of these so the per-adapter checksum can
  * be recorded in `manifest.json` without a second pass over the jsonl.

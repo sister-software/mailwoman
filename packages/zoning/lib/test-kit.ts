@@ -47,7 +47,7 @@ export const FIXTURE_AUTHORITY = { code: "Fx", name: "Fixture County Council" } 
 
 /**
  * The two plans the fixture set uses, shaped like the real product's, with dates
- * carried as published in the source's own RFC 1123 form.
+ * preserved as published in the source's own RFC 1123 form.
  */
 export const FIXTURE_PLANS = {
 	development: {

@@ -24,7 +24,7 @@ import { epistemicStatusFor } from "#geocode/epistemic-status"
 const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{2,3})(?=[\s,]|$)/i
 
 /**
- * Plus-code override: when the query carries an Open Location Code,
+ * Plus-code override: when the query contains an Open Location Code,
  * the code is the user's most precise claim.
  *
  * Google prints these on every place card.

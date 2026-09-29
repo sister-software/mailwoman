@@ -9,7 +9,7 @@
  *   answers per region and excludes the country-wide `regional` list. That list can include languages official in other
  *   regions but not in the current one.
  *
- *   Spain is the only country with a per-region table so far. Other countries return their official languages alone.
+ *   Spain is the only country with a per-region table so far. Other countries return only their official languages.
  *   For GB and FR, those are the languages already used in source addresses. The same applies to DE, IT, NL and PT.
  */
 

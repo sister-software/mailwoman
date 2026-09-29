@@ -1,14 +1,14 @@
 /**
  * How often each parse register fires, across the populations the model is trained and graded on.
  *
- * The name carries `parse-` because `register` means two unrelated things in this directory:
+ * The name includes `parse-` because `register` means two unrelated things in this directory:
  * `register-board.ts` projects a query into a letter case (`asis`, `lower`, `upper`), while this
  * counts the `fragmented` / `formatted` register that decides which evidence the decoder is fed.
  *
  * The register decides whether the decoder is fed `streetTypeLexicon` and `localitySurfaceLexicon`
  * (`packages/neural/lib/classifier/index.ts`): `fragmented` feeds both, `formatted` withholds both.
- * Training feeds them on every row — `corpus-python/src/mailwoman_train/` carries no
- * dropout for either channel — so the share of input that classifies into `formatted`
+ * The training data feeds them on every row — `corpus-python/src/mailwoman_train/` contains
+ * no dropout for either channel — so the share of input that classifies into `formatted`
  * is the share served without evidence the model always had while learning.
  *
  * That share is the quantity a dropout curriculum would serve.
@@ -84,7 +84,7 @@ for (const locale of ["us", "fr", "adversarial"]) {
 
 	const tally = emptyTally()
 
-	// The golden rows carry the surface as `raw`; the coordinate panels carry it as `input`.
+	// The golden rows store the surface as `raw`; the coordinate panels store it as `input`.
 	for await (const row of JSONSpliterator.fromAsync<{ raw?: string; input?: string }>(path)) {
 		count(tally, row.raw ?? row.input ?? "")
 	}

@@ -70,7 +70,8 @@ export const TileRoute = WorkerRoute.GET(
 // #region Metadata Lookup
 
 /**
- * Serves a tile set's TileJSON metadata, which clients read before requesting tiles.
+ * Serves a tile set's TileJSON metadata.
+ * Clients read it before requesting tiles.
  */
 export const TileMetadataRoute = WorkerRoute.GET(
 	"/:tileSetName([a-zA-Z0-9_\\-]+).json",

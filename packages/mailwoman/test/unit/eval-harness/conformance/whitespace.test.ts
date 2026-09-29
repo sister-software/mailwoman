@@ -281,8 +281,7 @@ describe("a seeded whitespace regression", () => {
 	 * The pipeline stand-in that fails only on the tabbed arm.
 	 * The shape the live finding takes.
 	 *
-	 * Seeding the regression rather than waiting for one is what proves the failure
-	 * line carries enough to diagnose from.
+	 * A seeded regression shows whether the failure line includes enough detail to diagnose the failure.
 	 */
 	const observe: ConformanceObserver = async (query) => {
 		const tabbed = query.includes("\t")

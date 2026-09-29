@@ -8,7 +8,7 @@
  *   output: coordinate within tolerance, resolution tier, resolved place identity and
  *   admin components (case-insensitive). A fixed bug must stay fixed. Any drift fails the run.
  *   This corpus is deliberately small because curated-set capture is the Pelias trap. The
- *   metamorphic and held-out layers carry breadth.
+ *   metamorphic and held-out layers provide breadth.
  *
  *   The grading itself lives in `check-case.ts` (pure, unit-tested), and the freshness refusal
  *   that runs before any of it lives in `corpus-stamp.ts`.
@@ -84,7 +84,7 @@ export interface GauntletLayerOptions {
 
 /**
  * The {@linkcode buildGauntletDeps} argument a layer's options describe, the model-selection ladder
- * (weights-cache → model[+tokenizer/card] → shipped default) with the resolver pins carried alongside.
+ * (weights-cache → model[+tokenizer/card] → shipped default) with the resolver pins listed alongside.
  *
  * Shared by every layer so a new pin cannot reach one layer and silently miss another.
  */
@@ -133,7 +133,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	// not attributable to the production path.
 	const withheld: string[] = []
 	let counted = 0
-	// Firing receipts.
+	// The receipts record whether the mechanism fired.
 	// An unchanged verdict means "harmless" only if the mechanism actually ran on some row.
 	// Otherwise it means "never reached", and the two are indistinguishable without this count.
 	const overrides: string[] = []
@@ -178,7 +178,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 			// The overlay this row routes to did not load, so the row graded without
 			// its pair index and dependent-locality prior.
 			// That is not the production path, so a pass on it is not evidence the production path passes.
-			// Promoting it would write a base-only result into the board as a regression guard.
+			// Promotion would write a base-only result into the board as a regression guard.
 			// Reported rather than dropped, since an invisible withholding is indistinguishable
 			// from a row that simply kept failing.
 			withheld.push(`  · ${c.id} [${c.status}${ref}] passes, but ${overlayCountry} graded BASE-ONLY — not promotable`)
@@ -206,7 +206,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	}
 
 	// Printed whenever the pass could have fired, except when it is explicitly pinned off.
-	// Keying this on the enabled pin would hide the firing count on the standard unpinned run.
+	// An enabled-pin key would hide the firing count on the standard unpinned run.
 	// The pass is now enabled by default.
 	if (options.pins?.postcodeCountryCoherence !== false) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Opening a built data artifact.
+ *   Open a built data artifact.
  *
  *   This is the other half of the sealed-artifact invariant in `../utils/sealed-db.ts`: that module owns the
  *   filesystem side (seal, unseal-refusal, atomic swap) and stays free of a static `node:sqlite` import, because it
- *   rides the `@mailwoman/core/utils` barrel into consumers that cannot resolve one. The open lives here, where
+ *   flows through the `@mailwoman/core/utils` barrel into consumers that cannot resolve one. The open lives here, where
  *   `DatabaseClient` is already imported and the cost is paid. The open is asynchronous: the write branch awaits the
  *   seal check against the filesystem before the handle is constructed.
  */
@@ -21,8 +21,9 @@ import { assertUnsealedForWrite } from "#sealed/db"
 /**
  * Open a built data artifact.
  *
- * Read-only by default; `write: true` is for builders working on UNsealed staging,
- * and throws `SealedArtifactError` against a sealed file.
+ * Read-only by default.
+ * Builders set `write: true` when working on UNsealed staging.
+ * A sealed file raises `SealedArtifactError`.
  *
  * Together with `new DatabaseClient(path)` this is the whole set of ways a connection comes into being.
  * `DatabaseSync` is constructed in exactly one place, inside `DatabaseClient`,

@@ -128,7 +128,7 @@ interface Delta {
 	 */
 	delta: number
 	/**
-	 * Whether this tag is even in scope (any gold row carries it under this locale).
+	 * Whether this tag is even in scope (any gold row includes it under this locale).
 	 */
 	inScope: boolean
 }
@@ -169,7 +169,7 @@ export async function maskRegressionCheck(
 		// The rows are formatted postal addresses.
 		// On those, the production pipeline derives `formatted` and runs the
 		// evidence-bundle channels off as a declared ablation.
-		// Grading them in the bare-library default measures a path production never takes on these inputs.
+		// A bare-library default would measure a path production never takes on these inputs.
 		const { off, on } = await scoreConventionsMaskOffOn(
 			rows,
 			TAGS,

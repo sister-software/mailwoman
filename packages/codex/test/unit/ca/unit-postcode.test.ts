@@ -39,7 +39,7 @@ describe("CA urban LDU", () => {
 		expect(isUnitGradePostcodeHit("M1J 1A8", "M1J1A8")).toBe(true)
 		// The resolver answered with the FSA.
 		// The resolver returned the area class.
-		// Promoting it is the trade the epoch convention forbids.
+		// Promoting it would violate the epoch convention.
 		expect(isUnitGradePostcodeHit("M1J 1A8", "m1j")).toBe(false)
 		expect(isUnitGradePostcodeHit("M1J 1A8", undefined)).toBe(false)
 	})

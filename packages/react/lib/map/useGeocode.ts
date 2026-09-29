@@ -8,7 +8,7 @@
  *   concerns the geocoder adds over the base explorer:
  *
  *     1. Viewport bias — when the runtime exposes `runParseWithBias`, the current map center (read through
- *        an injected `getBias`, itself reading the `MapRef`) rides along as a soft proximity prior. The
+ *        an injected `getBias`, itself reading the `MapRef`) supplies a soft proximity prior. The
  *        bias is injected by deriving a `runParse` that binds it, so `useParsePipeline` is reused verbatim.
  *     2. The map render place — the selected candidate, enriched by the host's `resolveMapPlace` into the
  *        richer {@link ResolvedMapPlace} the declarative overlays consume (bbox / tier / polygon). Absent

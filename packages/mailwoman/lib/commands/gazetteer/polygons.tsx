@@ -10,7 +10,7 @@
  *   Source: the per-id WOF GeoJSON repos at
  *   `<repos>/whosonfirst-data-admin-<cc>/data/<id-per-region>/<id>.geojson`, where the database path is
  *   the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson). Only admin placetypes
- *   carry polygons. Postcodes resolve to a point marker and are skipped. In-scope ids are pulled
+ *   contain polygons. Postcodes resolve to a point marker and are skipped. In-scope ids are pulled
  *   straight from the already-built points/admin DB so the two stay in lockstep.
  *
  *   Each ring is Douglas-Peucker simplified (default tol ~0.004° ≈ 400 m) to keep the file shippable,

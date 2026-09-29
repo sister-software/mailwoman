@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the sync planner. The planner is where every decision about someone's working tree is made, so these pin
- *   the refusals above all — a plan that fast-forwards over unpushed corrections destroys the only copy, and the whole
+ *   the refusals above all — a plan that fast-forwards over unpushed corrections destroys the only copy. The whole
  *   reason the fork exists is that corrections are authored in these directories.
  */
 
@@ -121,7 +121,7 @@ describe("planRepoSync", () => {
 	it("does not refuse a clone that is level with its fork — the post-repoint state a naive @{u} read mistakes for unpushed work", () => {
 		// What the GB checkout looked like the moment its remote was re-pointed:
 		// level with `origin`, 35 ahead of the remote it was moved away from.
-		// Reading the latter refuses to sync a perfectly clean clone, permanently.
+		// The latter prevents a clean clone from syncing.
 		expect(planRepoSync(forkOrigin, DIR, clone({ ahead: 0, behind: 0 })).action).toBe(SyncAction.UpToDate)
 	})
 

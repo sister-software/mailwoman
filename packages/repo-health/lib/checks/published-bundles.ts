@@ -9,7 +9,7 @@
  *   `packages/mailwoman/data/published-bundles.json` records the bucket's `content-length`
  *   for those artifacts on a stated date. The two sources drifted apart once without a check noticing.
  *   The docs site then restated the stale figure to customers. This check reports an artifact
- *   the snapshot does not cover, an artifact the registry no longer names, and a size the snapshot could
+ *   the snapshot does not cover, an artifact the registry no longer names and a size the snapshot could
  *   not read. It also reports a size mismatch between the registry and snapshot.
  */
 

@@ -48,7 +48,7 @@ export interface PostcodeCountryScope {
 	locality: string
 
 	/**
-	 * The evidence that carried the verdict.
+	 * The evidence that supported the verdict.
 	 */
 	evidence: PostcodeCountryScopeEvidence
 

@@ -155,7 +155,7 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 	}
 
 	// Smallest containing exterior, so a hole inside an island inside a hole lands on the island.
-	// Sorting once makes the choice deterministic on a tie.
+	// One sort makes the choice deterministic on a tie.
 	const bySize = [...exteriors].toSorted((left, right) => left.area - right.area)
 
 	let nestedHoles = 0

@@ -158,7 +158,7 @@ test("buildAncestorNameIndex: a cycle is broken rather than looping forever", ()
 })
 
 test("buildAncestorNameIndex: a placetype outside the three tags contributes no name", () => {
-	// 3 → 2 (county, which maps to `subregion`) → 1 (region).
+	// 3 → 2 (county maps to `subregion`) → 1 (region).
 	const byID = new Map<number, WOFRecord>([
 		[1, rec(1, null, "Oregon", "region")],
 		[2, rec(2, 1, "Multnomah County", "county")],

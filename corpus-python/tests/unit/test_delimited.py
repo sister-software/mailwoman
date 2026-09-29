@@ -1,4 +1,4 @@
-"""Reading a compressed part file must be indistinguishable from reading a plain one."""
+"""A compressed part file must produce the same rows as a plain one."""
 
 from __future__ import annotations
 
@@ -56,7 +56,7 @@ def test_prefer_compressed_picks_the_sibling_when_present(tmp_path: Path) -> Non
 
 
 def test_read_jsonl_prefers_the_compressed_sibling(tmp_path: Path) -> None:
-    """Asking for the plain name must read the compressed file when that is what exists."""
+    """The plain filename must resolve to the compressed file when that is the available version."""
     plain, compressed = _write_pair(tmp_path)
     plain.unlink()
 

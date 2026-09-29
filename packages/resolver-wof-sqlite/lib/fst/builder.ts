@@ -97,7 +97,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 
 	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table,
 	// read in chunked `IN (…)` batches once.
-	// Ordering is county → region → country, with `id` leading so one pass groups the rows.
+	// Sort IDs in county → region → country order so one pass groups the rows.
 	const ancestorsByID = new Map<number, number[]>()
 
 	try {
@@ -173,7 +173,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	// Referential is always population-anchored and never read out of a legacy
 	// `place_importance` column, because a legacy row that got a Wikipedia score overwrote
 	// whatever population would have said and the two are indistinguishable afterwards.
-	// Encyclopedic rides along for consumers and is never handed to the decoder.
+	// Encyclopedic importance remains available to consumers and is never handed to the decoder.
 	// `loadImportanceSplit` handles all four schema generations.
 	// Provenance records the source so the artifact identifies the schema it read.
 	progress("importance", "Loading referential + encyclopedic scores")
@@ -242,7 +242,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	// Surface-ambiguity classes are per-surface facts, so clone the entry for each
 	// insertion and attach that surface's count.
 	// The same place under "nyc" and "new york city" records a separate ambiguity count for each surface.
-	// An absent map means entries carry no count for back-compat bytes.
+	// An absent map means entries have no count for back-compat bytes.
 	const surfaceCountryCounts = opts.surfaceCountryCounts
 
 	function insertName(tokens: string[], entry: PlaceEntry): boolean {
@@ -296,8 +296,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			name: row.name,
 			parentChain,
 			referential: split.referential.get(row.id) ?? 0,
-			// Spread rather than assigned, so a place with no Wikipedia article
-			// carries no field instead of a zero.
+			// Spread rather than assigned, so a place with no Wikipedia article has no field instead of a zero.
 			// The serializer's per-place presence bit reads `!== undefined`.
 			...(encyclopedic === undefined ? {} : { encyclopedic }),
 			lat: row.latitude,
@@ -332,7 +331,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const matcher = FSTMatcher.fromNodes(nodes)
 
 	// The build stamp.
-	// `sourceDB` alone cannot tell a reader whether this artifact matches the database
+	// `sourceDB` by itself cannot tell a reader whether this artifact matches the database
 	// at that path, because the admin database is sealed and replaced by a rebuild
 	// so the path is constant across every generation.
 	// `sourceIdentity` lets a caller that already knows the digest, or is building

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The Open uprn builder's interface: line-parser behavior at the input tail (truncated fields,
- *   `Number("")`-shaped traps), the versions.txt parse, and a full fixture build through
+ *   `Number("")`-shaped traps), the versions.txt parse and a full fixture build through
  *   `buildUPRNLayer` — DDL, checks, coverage, manifest, seal — verified by reading the sealed
  *   artifact back through the production reader.
  */

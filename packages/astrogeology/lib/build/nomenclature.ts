@@ -98,7 +98,7 @@ export function minZoomForDiameter(diameterKm: number | undefined): number {
 }
 
 /**
- * The tippecanoe layer every nomenclature archive carries.
+ * The tippecanoe layer in every nomenclature archive.
  */
 export const NOMENCLATURE_LAYER = "nomenclature"
 

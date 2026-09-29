@@ -34,7 +34,7 @@ export {
 
 /**
  * Parses GDAL's `other_tags` hstore text (`"key"=>"value",...`) into a plain object.
- * Missing input yields an empty object.
+ * The parser returns an empty object for missing input.
  *
  * The parser scans quoted strings because OSM values such as names often contain commas.
  */
@@ -144,7 +144,8 @@ export interface SubVenueSourceRow {
 	/**
 	 * The `name` tag.
 	 *
-	 * It is `null` for an unnamed feature, which is common for a gate with only a `ref`.
+	 * It is `null` for an unnamed feature.
+	 * Gates with only a `ref` often have no name.
 	 */
 	name: string | null
 
@@ -169,7 +170,7 @@ export interface SubVenueSourceRow {
 	/**
 	 * The country code.
 	 *
-	 * The extractor always leaves it empty because a PBF feature does not carry its country.
+	 * The extractor always leaves it empty because a PBF feature does not include its country.
 	 * The caller fills it in.
 	 */
 	country: string
@@ -275,7 +276,7 @@ export interface WriteSubVenueJSONLOptions {
 
 	/**
 	 * The ISO 3166-1 alpha-2 code written onto every row.
-	 * The features do not carry a country.
+	 * The features do not include a country.
 	 */
 	country?: string
 	rules?: SubVenueTagRule[]

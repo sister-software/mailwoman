@@ -14,7 +14,7 @@
  *   `street_types.txt`, with entries mapped to the synthetic `street_affix` placetype (see
  *   `resolver-wof-sqlite/street-morphology-fst-builder.ts` for the trie construction and the
  *   `minVariantLength` collision guard). Build provenance (locales ingested, counts, source dir)
- *   rides the artifact trailer via `serializeFST`, readable back with `readFSTProvenance` and
+ *   appears in the artifact trailer via `serializeFST`, readable back with `readFSTProvenance` and
  *   `readFSTProvenanceWeb`.
  *
  *   Output defaults to `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`, staged beside the
@@ -79,7 +79,7 @@ export async function buildStreetMorphologyArtifact(
 		onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
 	})
 
-	// Provenance rides the artifact trailer (locales-as-countries, counts, sourceDB = the dictionaries dir).
+	// Provenance appears in the artifact trailer (locales-as-countries, counts, sourceDB = the dictionaries dir).
 	const bytes = serializeFST(result.matcher, result.provenance)
 
 	await makeDirectories(dirname(outPath))

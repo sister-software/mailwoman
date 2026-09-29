@@ -9,7 +9,7 @@
  *   actually ingested, so a build that reads no Overture rows does not claim Overture as a source.
  *
  *   The license is a conjunction: three sources with three different terms fold into one file, so the
- *   field carries an SPDX-style `AND` expression naming exactly the contributing folds. Each term is
+ *   field contains an SPDX-style `AND` expression naming exactly the contributing folds. Each term is
  *   the publisher's own grant read from that publisher's text.
  */
 
@@ -32,7 +32,7 @@ export interface IngestCounts {
  * Overture's identity is a release tag.
  * GeoNames' identity is a dump date.
  *
- * Inventing one shared format would record a precision none of them has.
+ * One shared format would record precision that none of the sources provides.
  */
 const SOURCE_TERMS = {
 	// Who's On First states CC0 over "the format and structure", in those words.
@@ -91,9 +91,8 @@ export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 		name: "admin-global-priority",
 		version: input.version,
 		schemaVersion: 1,
-		// Never `shipped`: Overture's Divisions theme is share-alike ODbL and the Who's
-		// On First records carry terms for 102 sources without per-source review,
-		// either one enough to keep the artifact local.
+		// Never `shipped`: Overture's Divisions theme is share-alike ODbL and the Who's On First records
+		// terms for 102 sources without per-source review, either one enough to keep the artifact local.
 		tier: LayerTier.BuildLocal,
 		license: contributing.map((key) => SOURCE_TERMS[key].license).join(" AND "),
 		attribution: contributing.map((key) => SOURCE_TERMS[key].name).join(", "),

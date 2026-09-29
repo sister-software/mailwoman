@@ -105,8 +105,9 @@ describe("outputLines", () => {
 	})
 
 	it("reads the resolved place off the DEEPEST hierarchy entry, not the candidate head", () => {
-		// On a rooftop tier the candidate head is the resolver's primary node, often the region,
-		// and the resolved place sits deeper in the hierarchy.
+		// On a rooftop tier the candidate head is the resolver's primary node.
+		// It is often the region.
+		// The resolved place sits deeper in the hierarchy.
 		const result = {
 			...RESULT,
 			candidates: [

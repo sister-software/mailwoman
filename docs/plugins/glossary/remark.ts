@@ -107,7 +107,7 @@ function applyGuards(tree: Node, noAutoLink: readonly string[]): void {
 		const display = displayChild?.type === "text" ? displayChild.value : ""
 		const term = attributeValue(node, "term")
 
-		// Guard 2 runs first: it keys on the surface alone, so neither the term's casing
+		// Guard 2 runs first: it keys only on the surface, so neither the term's casing
 		// nor the neighboring words matter to it.
 		if (isSuppressedSurface(display, noAutoLink)) {
 			const replacement: TextNode = { type: "text", value: display }

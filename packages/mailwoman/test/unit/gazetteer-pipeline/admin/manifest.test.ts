@@ -36,7 +36,8 @@ describe("adminLayerManifest — source is derived from the run", () => {
 	})
 
 	it("refuses to stamp a manifest on a gazetteer built from nothing", () => {
-		// An empty build is a failed build, and a manifest would make the artifact look describable.
+		// An empty build is a failed build.
+		// A manifest would make the artifact look describable.
 		expect(() => adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 0, geonames: 0 } })).toThrow(
 			/no source ingested/
 		)
@@ -85,7 +86,7 @@ describe("adminLayerManifest — the license is a conjunction", () => {
 
 describe("adminLayerManifest — vintages", () => {
 	it("records a contributing source with no known vintage as unknown, not as blank", () => {
-		// Omitting an uncaptured vintage would read as a source with no version rather than as a gap in what was recorded.
+		// An uncaptured vintage would make the source appear to have no version, hiding the gap in the record.
 		const manifest = adminLayerManifest({
 			...BASE,
 			counts: { wof: 1, overture: 1, geonames: 0 },

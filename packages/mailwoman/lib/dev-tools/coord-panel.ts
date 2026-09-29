@@ -20,9 +20,9 @@ export interface CoordRow {
 	lat?: number
 	lon?: number
 	/**
-	 * The row's own country, when the set carries one.
+	 * The row's own country, when the set includes one.
 	 *
-	 * A single-locale set carries none and takes the reader's default.
+	 * A single-locale set has none and takes the reader's default.
 	 */
 	country?: string
 	expected?: { locality?: string; region?: string; postcode?: string }
@@ -39,7 +39,7 @@ export interface PanelLocality {
 	lat: number
 	lon: number
 	/**
-	 * The set's own `input` string for this place, carried so a probe that needs a
+	 * The set's own `input` string for this place, retained so a probe that needs a
 	 * real street takes it from the row rather than inventing one.
 	 */
 	input: string
@@ -51,7 +51,7 @@ export interface PanelLocality {
 export interface CoordPanel {
 	localities: PanelLocality[]
 	/**
-	 * Rows whose expected locality carried a trailing parenthetical, stripped before grading,
+	 * Rows whose expected locality included a trailing parenthetical, stripped before grading,
 	 * counted so a caller can see how much of the panel the normalizer changed.
 	 */
 	qualifiersStripped: number

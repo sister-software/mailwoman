@@ -42,7 +42,7 @@ const failures: string[] = []
 
 // Mirrors gauntlet/harness.ts today: GB has a shipped overlay.
 // JP still grades through the base model until its package-shaped sibling model is wired into the gauntlet.
-// Keeping that limitation visible is part of this board.
+// This board keeps that limitation visible.
 const localeForCountry = (country: string): string => (country === "GB" ? "en-GB" : "en-US")
 
 for (const locale of new Set(fixtures.map((row) => localeForCountry(row.country)))) {

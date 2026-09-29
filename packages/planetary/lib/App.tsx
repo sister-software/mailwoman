@@ -52,7 +52,7 @@ function WrongBody({ message }: { message: string }) {
 }
 
 /**
- * A search hit as a selection; `diameterKm` rides along because the camera frames by it.
+ * A search hit as a selection; `diameterKm` accompanies it because the camera frames by it.
  */
 function featureFromHit(hit: SearchHit): SelectedFeature {
 	return {
@@ -71,7 +71,7 @@ export function App() {
 	const config = BODY_CONFIGS[body]
 
 	const [route, setRoute] = useState<PlanetaryRoute | null>(() => routeForPath(location.pathname))
-	// The feature most recently picked: a click carries the archive's whole record.
+	// The feature most recently picked: a click selects the archive's whole record.
 	// The artifact lacks that record, so it is kept beside the route rather than re-read.
 	const [picked, setPicked] = useState<SelectedFeature | null>(null)
 	const search = useSearchIndex(config.artifacts.searchIndexURL)

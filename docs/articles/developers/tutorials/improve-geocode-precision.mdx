@@ -300,7 +300,7 @@ hierarchy:
 
 An FR result is therefore rooftop or city, with no intermediate tier, so branch on `resolution_tier` rather
 than on `uncertainty_m` being small, and treat an `admin` answer in France as a miss to re-check rather
-than as a coarse hit. Parsing French addresses well is a separate download,
+than as a coarse hit. The French address model requires a separate download,
 `@mailwoman/neural-weights-fr-fr`; [What ships today](../status.mdx) has the per-locale picture.
 
 ## What you have now

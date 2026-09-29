@@ -21,7 +21,7 @@
  * No index can answer that query.
  * Cost scales with the probes and rows: 19 probes over 13.68M names.
  *
- * Reaching for a ranked FTS read instead makes it fast and makes it wrong.
+ * A ranked FTS read would make the result faster and incorrect.
  * See `CensusPOIReader`.
  */
 

@@ -33,8 +33,8 @@ Every word matters:
   token classification — the named-entity-recognition lineage
   (BiLSTM-CRF → BERT token classification → this). It is not an LLM and
   no part of it is generative. For a closed label set over short strings,
-  this is the most boring, battle-proven architecture in NLP. Boring is a
-  feature.
+  this is a well-tested architecture for NLP. Its suitability comes from the
+  closed label set and short inputs.
 - **Microlanguage.** Addresses are a language in the strict sense: a
   grammar (regional, conventional, frequently violated) over a vocabulary
   that's partly open (street names, venue names) and partly a finite atlas
@@ -63,7 +63,7 @@ This one sentence is the architecture. Everything in the pipeline is the
 model (grammar), a knowledge base (world), or evidence routing between the
 two. The two halves scale independently — corpus and compute grow the
 grammar; data builds grow the atlas — and neither requires the other to
-retrain. Asking a model to memorize the world's place names burns capacity it doesn't
+retrain. A model that memorizes the world's place names spends capacity it could use elsewhere.
 have to spend; asking a database to understand "Friedrichstraße 43-45, 10117
 Berlin-Mitte" written four different ways asks it to do what rule systems have
 always failed at. Each side does the job the other is structurally bad at.
@@ -89,7 +89,7 @@ input doesn't get a hedged answer; it gets a hole.
 
 A calibrated model inverts this. Mailwoman doesn't ask _"which of my patterns
 does this string match?"_ — it asks _"what is the most probable reading of
-this string as an address, given what the atlas says exists?"_ Parsing as
+this string as an address, given what the atlas says exists?"_ This approach treats parsing as
 inference instead of template matching. The practical consequence is that
 uncertainty becomes an actionable measurement: the resolver can
 abstain on it, soft-score with it, or fall back to rules because of it. The
@@ -143,7 +143,7 @@ cost, and that's the one worth defending.
 Two failure modes can un-make this architecture, and both have names
 in our history:
 
-- **The override.** Letting a lookup table seize the wheel from the model
+- **The override.** A lookup table takes precedence over the model
   because it scored well on a friendly eval. We did this once, for `country`,
   and reversed it within a day when the homograph eval caught the sieve
   sneaking back in. Knowledge informs; it never overrides.

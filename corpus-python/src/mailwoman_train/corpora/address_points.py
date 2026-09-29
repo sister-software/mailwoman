@@ -1,4 +1,4 @@
-"""Sampling an `address_point` table, whichever country's database holds it.
+"""This module samples an `address_point` table from any country's database.
 
 FR's BAN extract and each US state's situs database share this schema, so the sampler is shared and
 the country modules supply the path and the rendering.

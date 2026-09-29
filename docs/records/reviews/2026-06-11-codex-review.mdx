@@ -186,7 +186,7 @@ The main remaining parser-parity gaps look like this:
    po_box, cedex, and intersections are the clearest examples. These are not conceptually hard for the model, but they need enough real or high-fidelity rows to stop being dead labels. v4.4.0 is aimed directly at this.
 
 2. Adjacent-boundary instability
-   Fixing one boundary can loosen the next one. v4.3.0 closed affixes, but exposed glue/post-directional/unit-junction wobble: NY14201, Pennsylvania Ave NW, Main St Apt #456. That is the current parity frontier: not “can the model parse
+   A fix to one boundary can loosen the next one. v4.3.0 closed affixes, but exposed glue/post-directional/unit-junction wobble: NY14201, Pennsylvania Ave NW, Main St Apt #456. That is the current parity frontier: not “can the model parse
    streets,” but “can it hold all neighboring boundaries simultaneously under degraded input.”
 
 3. Locale convention leakage
@@ -204,7 +204,7 @@ The main remaining parser-parity gaps look like this:
 My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary check resolves directly, or after one more tightly scoped corrective if v4.4.0 fails for a named class. I would not wait for perfect parser
 parity.
 
-The reason is that the model already exceeds v0 in the situations that matter most for a modern geocoder: noisy, partial, degraded, mixed-format, and user-entered queries. Continuing to polish parser tail cases has diminishing returns unless
+The reason is that the model already exceeds v0 in the situations that matter most for a modern geocoder: noisy, partial, degraded, mixed-format, and user-entered queries. Further polish on parser tail cases has diminishing returns unless
 the resolver/geocoder side can turn those better parses into better coordinates.
 
 I would sequence it like this:

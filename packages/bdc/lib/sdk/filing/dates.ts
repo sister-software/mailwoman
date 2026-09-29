@@ -26,7 +26,7 @@ interface ListAsOfDatesResponseBody {
 
 export interface RetrieveFilingDatesParams {
 	/**
-	 * Filing type to select from the API response.
+	 * The filing type to select from the API response.
 	 */
 	filingType: BDCFilingDataType
 	/**

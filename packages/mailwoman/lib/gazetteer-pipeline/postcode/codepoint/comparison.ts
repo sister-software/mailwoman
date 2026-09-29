@@ -81,7 +81,7 @@ export interface ProbeResult {
 /**
  * The "only in the incumbent" set, split into the three things it actually contains.
  *
- * Reporting it as one number is what makes a swap look like a 92,704-postcode regression.
+ * One number makes a swap look like a 92,704-postcode regression.
  * The split is what makes it a decision.
  */
 export interface IncumbentOnlyBreakdown {
@@ -107,8 +107,8 @@ export interface IncumbentOnlyBreakdown {
 	 * Diffuse across every area (top: B, W, M, GU, SW…), which is the shape of churn
 	 * rather than of a coverage hole.
 	 *
-	 * Losing them is a currency improvement rather than a regression, though a
-	 * consumer geocoding historical addresses would feel it.
+	 * The currency-related drop is an improvement rather than a regression,
+	 * though a consumer geocoding historical addresses would feel it.
 	 */
 	terminated: number
 }
@@ -134,8 +134,8 @@ export interface CodePointCheckReport {
 		codepointBTRows: number
 	}
 	/**
-	 * Non-GB Crown-dependency areas the incumbent carries and Code-Point does
-	 * not (Isle of Man, Guernsey, Jersey).
+	 * Non-GB Crown-dependency areas covered by the incumbent and absent from
+	 * Code-Point not (Isle of Man, Guernsey, Jersey).
 	 *
 	 * Same licensing shape as the NI rows and worth separating for the same reason.
 	 */
@@ -174,7 +174,7 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * Both databases agree there to within 3 m.
  *
  * `CF99 1SN` is not a typo: the Senedd's postcode changed from `CF99 1NA`
- * and the incumbent GeoNames snapshot still carries the retired one.
+ * and the incumbent GeoNames snapshot still lists the retired one.
  * This is a small example of the terminated-postcode residual.
  */
 export const CODEPOINT_PROBES = [

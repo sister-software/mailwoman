@@ -82,7 +82,7 @@ const STATE_FIPS: Record<string, string> = {
 /**
  * The command specification for `mailwoman situs interpolation-database`:
  * each address-carrying road edge yields one row per side, because the left
- * and right sides carry independent ranges and ZIP codes.
+ * and right sides have independent ranges and ZIP codes.
  */
 export const spec = {
 	name: "interpolation-database",
@@ -235,7 +235,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 
 					if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
 
-					// Rounding to 1e-6 degrees (about 0.1 m) drops noise digits that would bloat the JSON.
+					// The formatter rounds to 1e-6 degrees (about 0.1 m) to remove noise digits that would bloat the JSON.
 					const polyline = stringifyJSON(
 						geom.coordinates.map(([lon, lat]) => [Math.round(lon! * 1e6) / 1e6, Math.round(lat! * 1e6) / 1e6])
 					)

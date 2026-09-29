@@ -117,7 +117,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 				raw = `${postcode} ${city}, ${street} ${number}`
 			}
 
-			// One resolution for both, because `source_id` carries the source as its prefix
+			// One resolution for both, because `source_id` includes the source as its prefix
 			// and a pair that disagreed would name a source no row of this output declares.
 			const source = defaultRecipeSource("synth-no-street-led")
 			const source_id = recipeSourceID(source, { ...components, o: String(order), v: String(read) })

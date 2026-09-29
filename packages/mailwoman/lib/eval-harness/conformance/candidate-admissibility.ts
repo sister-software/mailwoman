@@ -435,7 +435,8 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
  * Compares the candidate tables of a base query and its refinement.
  *
  * Both arguments are records from the resolver's `ResolveOpts.traceSink`.
- * `base` holds the coarser query's records, and `variant` holds the refined query's records.
+ * `base` holds the coarser query's records.
+ * `variant` holds the refined query's records.
  */
 export function accountRefinement(
 	base: readonly ResolveNodeTrace[],

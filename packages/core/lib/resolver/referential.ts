@@ -8,7 +8,7 @@
  *
  *   the policy. "The importance of a knowledge-base article is not the probability that this is the
  *   place the user means." A geocoder ranks by referential likelihood.
- *   Encyclopedic importance is carried as data and never serves as a ranking key.
+ *   Encyclopedic importance is stored as data and never serves as a ranking key.
  *   Saint-Denis demonstrates the distinction.
  *   The Seine-Saint-Denis suburb (population 96,128) has encyclopedic importance 0.1173.
  *   The Aude hamlet (population 418) has importance 0.5683.
@@ -42,7 +42,7 @@ export const REFERENTIAL_LOG2_SCALE = 14
  * Above this the score clamps, so two megacities that population would order
  * (Tokyo ~37 M vs Delhi ~33 M) tie at 1.0.
  *
- * Any ranking keyed on referential alone must break that tie with raw population.
+ * Any ranking keyed only on referential must break that tie with raw population.
  * This preserves the population-first ordering. {@link compareReferential} provides that
  * tiebreak so callers do not repeat a bare subtraction at each call site.
  */
@@ -56,7 +56,7 @@ export const REFERENTIAL_SATURATION_POPULATION = (2 ** REFERENTIAL_LOG2_SCALE - 
  *
  * `gazetteer importance` uses the same formula for fallback rows.
  *
- * Defining it here keeps three values identical by construction.
+ * This declaration keeps three values identical by construction.
  * The shared values are the decode-bias artifact's values and the gazetteer's `referential` column.
  * The resolver uses the same value as its ranking key.
  *
@@ -64,7 +64,7 @@ export const REFERENTIAL_SATURATION_POPULATION = (2 ** REFERENTIAL_LOG2_SCALE - 
  * Zero means "no population evidence".
  * The ranking treats it as no boost, never a penalty.
  *
- * WOF carries population for roughly 15% of localities, so absence is the common case and must stay cheap.
+ * WOF records population for roughly 15% of localities, so absence is the common case and must stay cheap.
  */
 export function referentialFromPopulation(population: number | null | undefined): number {
 	if (population === null || population === undefined || population <= 0) return 0

@@ -653,7 +653,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 
 	const graded = rows.filter((row) => row.grade !== "ungradeable")
 	const differed = rows.filter((row) => row.differed)
-	// Include coordinate, identity-only, and tier-only changes.
+	// Include coordinate, identity-only and tier-only changes.
 	const changedRows = rows.filter((row) => row.differed || row.identity_differed === true || row.tier_differed === true)
 
 	const withTruth = rows.filter((row) => row.truth_lat !== null).length

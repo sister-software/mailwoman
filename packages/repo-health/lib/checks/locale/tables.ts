@@ -36,8 +36,8 @@ const LOCALE_TAG = /^[a-z]{2}-[A-Za-z]{2}$/u
  * Those entries must comprise at least half of the declaration.
  *
  * Both conditions are required.
- * Two pairs alone could match an unrelated table with two pairs.
- * The ratio alone could match any two-entry map.
+ * Two pairs by themselves could match an unrelated table with two pairs.
+ * The ratio by itself could match any two-entry map.
  */
 const MINIMUM_LOCALE_PAIRS = 2
 

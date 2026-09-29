@@ -26,9 +26,9 @@ class CountryModule(Protocol):
     def build_corpus(self, args: argparse.Namespace) -> dict[str, Any]:
         """Write this country's parquet parts and answer the build's own statistics.
 
-        The argument is a parsed `Namespace` because the builders read a dozen or more settings off
-        one — source paths, row budgets, the seed, the augmentation fractions. Answering a plain row
-        count would discard the per-register alignment rates the recipes are judged on.
+            The argument is a parsed `Namespace` because the builders read a dozen or more settings off
+        one — source paths, row budgets, the seed, the augmentation fractions. A plain row
+            count would discard the per-register alignment rates the recipes are judged on.
         """
         ...
 

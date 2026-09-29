@@ -80,7 +80,7 @@ async function parse(): Promise<BuildArgs> {
 
 	const country = (values.country ?? "fr").toLowerCase()
 	// This call throws for an unsupported country.
-	// Continuing would select incorrect street keys.
+	// The caller would then select incorrect street keys.
 	streetLocaleForBANCountry(country)
 	const source = resolvePath(values.source ?? banDatabasePath(`address-points-${country}.db`))
 
@@ -124,7 +124,7 @@ async function main(): Promise<void> {
 
 	// SQLite passes the argument as `unknown`.
 	// The value is `locality_norm`, which the schema declares a `NameKey`, so the cast restores the brand.
-	// Folding it again could change the key.
+	// A second normalization pass could change the key.
 	src.function("ban_base_commune", { deterministic: true }, (loc: unknown): string =>
 		typeof loc === "string" && loc ? stripArrondissement(loc as NameKey) : ""
 	)
@@ -142,7 +142,7 @@ async function main(): Promise<void> {
 		)
 
 		// The point count weights the reader's average across groups.
-		// Calling `ban_base_commune` in the select list runs it once per group instead of once per point.
+		// The SELECT list runs `ban_base_commune` once per group instead of once per point.
 		const agg = src.prepare(
 			`SELECT street_norm,
 			        postcode,

@@ -22,7 +22,7 @@ import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest/index
 import { GZT_CROSSWALK_SCHEME, GZT_PROVENANCE_GRADE, GZT_ROLLUP_SCHEME, localSchemeFor } from "#vocabulary"
 
 /**
- * Rows per bulk-insert transaction, chosen for the geometry table whose rows carry a blob
+ * Rows per bulk-insert transaction, chosen for the geometry table whose rows contain a blob
  * because a larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
@@ -136,7 +136,7 @@ export async function ingestZoningChunk(
 
 	// Keyed on a NUL-joined pair and never split back apart, because a local code is
 	// free text that routinely contains spaces and a key a reader had to re-split
-	// would mangle the vocabulary this layer carries verbatim.
+	// would mangle the vocabulary this layer preserves verbatim.
 	const vocabulary = new Map<string, { scheme: string; code: string; label: string; rows: number }>()
 	const crosswalkPairs = new Map<string, { authorityCode: string; localCode: string; codes: Set<string> }>()
 

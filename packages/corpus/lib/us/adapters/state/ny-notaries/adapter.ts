@@ -6,7 +6,7 @@
  *   `state-ny-notaries`: New York Commissioned Notaries CSV consumer.
  *
  *   The New York Department of State publishes a registry of commissioned notaries public. Each row
- *   optionally carries a business name and business address (~1-5% fill rate).
+ *   optionally includes a business name and business address (~1-5% fill rate).
  *
  *   The adapter consumes the CSV the operator pre-downloads via `fetch-state-sources.ts`. Column
  *   names match the data.ny.gov export header (note: some columns have leading spaces).
@@ -30,7 +30,7 @@ import { lookupStateAbbreviation } from "#us/fips-state"
  */
 export const STATE_NY_NOTARIES_ADAPTER_ID = "state-ny-notaries"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const STATE_NY_NOTARIES_DEFAULT_LICENSE = "Public Domain"

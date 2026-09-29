@@ -8,7 +8,7 @@ verified-with: mailwoman 8.7.0
 # Swap in a drop-in for an existing client
 
 You have a service that already calls a geocoder. It builds Photon query strings, reads Nominatim's
-`jsonv2` result array, or posts to libpostal's `/parse`. Rewriting that caller to use Mailwoman's own
+`jsonv2` result array, or posts to libpostal's `/parse`. Change that caller to use Mailwoman's own
 `/v1` API would be extra work.
 
 Three packages accept those request formats instead. By the end of this page you will have the
@@ -29,7 +29,7 @@ Read the last two items before you start. They determine whether this page can a
 - **The default ports conflict with the servers you are replacing.** The defaults are 2322 for Photon,
   8080 for Nominatim and 8081 for libpostal, which are the same ports your existing servers use. This
   page moves two of them with `--port`, because ports 2322 and 8080 were in use on the machine used to
-  verify it. Running the drop-in next to the original on a spare port is a good approach for a swap
+  verify it. Run the drop-in next to the original on a spare port to test a swap
   anyway, because you can compare the two answers before you switch.
 - **`/reverse` needs a database this page does not download.** Reverse geocoding on the Photon and
   Nominatim drop-ins runs point-in-polygon over a full WOF distribution at
@@ -76,7 +76,7 @@ PASS (1/1 checks)
 The paths in the transcripts on this page use the data root from the verification machine, so yours
 will differ. The file is saved at `<data-root>/db/wof/candidate.db`, and every entry point finds it
 there automatically, including the drop-ins, `mailwoman geocode` and `mailwoman serve`. The `export`
-line that the pull prints is left over from `8.6.0`, when only the drop-ins had that fallback. Running
+line that the pull prints is left over from `8.6.0`, when only the drop-ins had that fallback. Run
 it has no effect. Pass `--candidate-db <path>` if your copy is stored elsewhere.
 
 Re-running the pull is safe. If the file is already on disk, it reports `already present … skipped`
@@ -433,7 +433,7 @@ one.
 
 ## 8. Stop them
 
-Press `Ctrl-C` in each server's terminal. Serving writes no files to the data root, so a restart
+Press `Ctrl-C` in each server's terminal. The servers write no files to the data root, so a restart
 continues from the same state.
 
 ## What you have now

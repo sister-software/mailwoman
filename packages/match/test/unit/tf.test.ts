@@ -76,7 +76,8 @@ describe("withTermFrequency + scorePair", () => {
 	})
 
 	it("leaves a non-agreeing pair unadjusted (TF only fires on the exact level)", () => {
-		// Different names land in the 'different' level, which the adjustment does not touch.
+		// Different names land in the 'different' level.
+		// The adjustment leaves that level unchanged.
 		const score = scorePair(model, { given: "Smith" }, { given: "Jones" })
 		expect(score.contributions[0]!.level).toBe("different")
 	})

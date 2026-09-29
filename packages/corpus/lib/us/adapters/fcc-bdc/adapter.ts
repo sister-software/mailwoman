@@ -8,13 +8,13 @@
  *   The first member of Phase 1.6's "adversarial sources" class. BDC ships the public-domain US
  *   broadband-serviceable-location (BSL) fabric: ~120M addresses keyed by stable `location_id`,
  *   carrying `address_primary` + `city` + `state` + `zip` + `zip_suffix`. Compared to the clean
- *   gazetteer rows from WOF / tiger / BAN, BDC carries the chaos of address data that has passed
+ *   gazetteer rows from WOF / tiger / BAN, BDC contains the variation in address data that has passed
  *   through several layers of human entry + automated geocoding + revision: abbreviation drift,
  *   inconsistent unit designators, "RR" / "HC" / "PSC" rural-route shapes, embedded apartment /
  *   suite numbers that did not survive the address parser cleanly. This is the highest-signal,
  *   hardest-to-normalize address corpus in the federal public-domain catalog.
  *
- *   Following the `tiger` / `wof-admin` pattern, this adapter consumes a SQLite database the operator
+ *   Like the `tiger` / `wof-admin` adapters, this adapter consumes a SQLite database the operator
  *   pre-builds via the isp-nexus BDC ETL (`/srv/isp-nexus/sync/fcc/bdc/`) or any equivalent
  *   host-side pipeline. The mailwoman side does not download or parse the raw CSV/ZIP distribution
  *   directly. That keeps the adapter narrow and the BDC ingest pluggable.
@@ -50,7 +50,7 @@ import { lookupStateAbbreviation } from "#us/fips-state"
  */
 export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const FCC_BDC_DEFAULT_LICENSE = "Public Domain"
@@ -72,7 +72,7 @@ interface BdcLocationRow {
 /**
  * Combine `zip` + optional `zip_suffix` into the canonical USPS postcode surface form.
  *
- * NTIARecord doc is ambiguous about whether `zip_suffix` is the 4-digit extension alone
+ * NTIARecord doc is ambiguous about whether `zip_suffix` is only the 4-digit extension
  * or the full ZIP+4 string.
  * This handles both:
  *

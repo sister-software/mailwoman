@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The consult `./lookup.ts`'s docstring instructs: "callers building negative evidence must consult
- *   `readLayerCoverage`, not this reader alone." A bare `null` from `nearestUPRN` is two different facts — no uprn here,
+ *   `readLayerCoverage`, not this reader by itself." A bare `null` from `nearestUPRN` is two different facts — no uprn here,
  *   or an unsurveyed area — and this is the only place that separates them. It answers an {@link Exclusion} or `null`,
  *   so a caller cannot read an unsurveyed cell as an empty one by accident.
  *
@@ -23,8 +23,8 @@ import { UPRN_COVERAGE_H3_RESOLUTION, UPRN_H3_RESOLUTION, uprnH3Cell } from "#up
  * The identity fold, on purpose: this probe keys on a coordinate rather than a name,
  * so there is no string folding for the builder and the probe to disagree about.
  *
- * Passing the same identity as both `probeFold` and `layerFold` records that the fold
- * axis is not in play here, rather than silently omitting the check.
+ * The same identity in both `probeFold` and `layerFold` records that the fold axis
+ * is not in play here, rather than silently omitting the check.
  * It is not a stub.
  */
 export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
@@ -55,8 +55,10 @@ export interface UPRNAbsenceInput {
 }
 
 /**
- * The coverage cell a coordinate falls in, derived from its stored res-9 cell exactly as the builder
- * derives it, never from the centroid, which lands in a different parent for a fraction of cells.
+ * The coverage cell a coordinate falls in, derived from its stored res-9 cell exactly
+ * as the builder derives it rather than from the centroid.
+ *
+ * The centroid lands in a different parent for a fraction of cells.
  */
 export function uprnCoverageCell(latitude: number, longitude: number): number {
 	return shortCellToParentInt(uprnH3Cell(latitude, longitude), UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)

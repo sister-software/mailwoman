@@ -53,8 +53,10 @@ export const SSURGO_USE_CONSTRAINTS =
 	"responsible for the appropriate application."
 
 /**
- * The limitations NRCS states for SSURGO, quoted verbatim and carried by every reading,
- * which describes the map unit covering a point rather than a site-specific determination.
+ * NRCS states these SSURGO limitations verbatim.
+ *
+ * Every reading includes them.
+ * They describe the map unit covering a point rather than a site-specific determination.
  */
 export const SSURGO_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"The depicted soil boundaries, interpretations, and analysis derived from them do not eliminate the need for onsite sampling, testing, and detailed study of specific sites for intensive uses. Thus, these data and their interpretations are intended for planning purposes only.",
@@ -157,8 +159,8 @@ export const COINTERP_OVERALL_RULE_DEPTH = "0"
 /**
  * The code of the area-times-component-percentage weighting that produced the per-cell shares.
  *
- * Component percentages have no location, so a share says how much of a cell lies
- * in rated map units and not where the rating applies.
+ * Component percentages have no location, so a share indicates how much of a cell
+ * lies in rated map units and not where the rating applies.
  */
 export const SOIL_SHARE_WEIGHTING = "cell_area_x_comppct_r"
 

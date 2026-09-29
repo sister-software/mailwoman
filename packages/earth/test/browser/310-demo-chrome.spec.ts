@@ -78,7 +78,7 @@ test.describe("Chrome — the floating controls", () => {
 	})
 
 	test("a pointer move never queries every layer in the style", async ({ page }) => {
-		// The real basemap, because the canned runtime's style carries no label layers
+		// The real basemap, because the canned runtime's style has no label layers
 		// (the hook returns before querying, so a pass there would prove no defect);
 		// the basemap arrives well before the model, so this waits on the style having layers
 		// rather than on the geocoder being ready.
@@ -104,7 +104,8 @@ test.describe("Chrome — the floating controls", () => {
 
 		// The minifier collapses two declarations carrying the same value and keeps the last,
 		// so a standard property written before its `-webkit-` twin is dropped from the output
-		// while the source still reads correctly, and this is the only place that difference is visible.
+		// while the source still reads correctly.
+		// This is the only place that difference is visible.
 		const href = await page.locator('link[rel="stylesheet"]').first().getAttribute("href")
 
 		expect(href, "the page links a stylesheet").not.toBeNull()

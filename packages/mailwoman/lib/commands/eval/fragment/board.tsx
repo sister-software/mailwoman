@@ -8,7 +8,7 @@
  *   standing boards. `eval parity` is the first (the global "do no harm" floor).
  *
  *   A change ships when the `eval parity` floors still pass and this board's failure-class rates
- *   improve. Neither is a verdict alone.
+ *   improve. Neither gives a verdict by itself.
  *   Informational (always exits 0). The standing floors stay on `eval parity`.
  */
 

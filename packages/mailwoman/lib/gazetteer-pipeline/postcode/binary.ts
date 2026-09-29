@@ -121,7 +121,7 @@ export function postcodeBinaryKey(country: string, name: string): string {
  * Returns GB outward district from a unit postcode key.
  *
  * Accepts spaced or unspaced forms.
- * Anything outside the GB unit shape returns `null`.
+ * Every string outside the GB unit shape returns `null`.
  */
 export function gbOutwardFromKey(name: string): string | null {
 	const key = postcodeBinaryKey("GB", name)

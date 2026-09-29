@@ -167,7 +167,7 @@ describe("shuffleWith", () => {
 
 		// And the sampler is why: handing the same generator to `shuffleWith`,
 		// which scales a float instead, does not reproduce it.
-		// Routing this call site through the float sampler would have silently moved the split.
+		// The float sampler would silently move the split if this call site used it.
 		const mixed = (20_260_913 * 2_654_435_761 + 1) & 0xff_ff_ff_ff
 		const scaled = makeGlibcLcgFloat64(mixed)
 		const viaFloat = Array.from({ length: 64 }, (_, index) => index)

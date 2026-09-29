@@ -1,4 +1,4 @@
-"""Turning a checkpoint into the artifact that ships: fp32 ONNX, int8 and the way back out.
+"""This module converts a checkpoint into the shipping artifact: fp32 ONNX, int8 and the way back out.
 
     modal run -m launch.train_remote::export_onnx --output-dir=/data/output-<run> --step=40000
     modal run -m launch.train_remote::quantize_onnx --fp32-path=… --int8-path=…
@@ -73,7 +73,7 @@ def export_onnx(
     export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
     print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
 
-    # A span-scorer model's ONNX carries a `span_scores` output. The JS k-best decoder also needs
+    # A span-scorer model's ONNX export includes a `span_scores` output. The JS k-best decoder also needs
     # the segment-transition table for decoding. The graph does not contain this table. Write it as
     # a sidecar next to model.onnx. A span-less model returns None and keeps the export unchanged.
     import json as _json
@@ -139,7 +139,7 @@ def push_artifact_r2(volume_path: str, r2_subpath: str) -> None:
     """Push a volume artifact (e.g. an exported model.onnx) OUT to R2, container-side.
 
     This copies `<volume_path>` to `:s3:mailwoman-assets/<r2_subpath>`; pull it down locally with
-    `rclone copy`. Rides R2's intermittent 501s with retries.
+    `rclone copy`. Retry intermittent R2 501 responses.
 
     Usage: modal run -m launch.train_remote::push_artifact_r2 \\
              --volume-path /data/output-v140-charoffset-s42/model.onnx \\

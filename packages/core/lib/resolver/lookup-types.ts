@@ -7,7 +7,7 @@
  *   The ladder checks address points and interpolation results.
  *   It also checks street centroids and postcode prefixes.
  *   These interfaces stay synchronous because `@mailwoman/neural` calls into the ladder.
- *   Making one member asynchronous would require asynchronous implementers and package boundaries.
+ *   An asynchronous member would require asynchronous implementers and package boundaries.
  */
 
 /**
@@ -28,13 +28,13 @@ export interface AddressPointHit {
 	 */
 	release: string
 	/**
-	 * The point's own scope tags, when the extract row carries them.
+	 * The point's own scope tags, when the extract row contains them.
 	 *
 	 * These hold the register's locality in normalized key form and its postcode.
 	 *
 	 * The resolver can then decorate a rooftop answer with the commune and postcode attested by the register.
-	 * A query that never carried those values cannot supply them.
-	 * Optional, because not every source carries both.
+	 * A query that never contained those values cannot supply them.
+	 * Optional, because some sources omit one or both.
 	 */
 	localityNorm?: string
 	postcode?: string
@@ -56,7 +56,7 @@ export interface AddressPointLookup {
 		locality?: string
 		/**
 		 * The parse's `region` and `subregion` spans, for a register whose rows
-		 * carry neither postcode nor locality.
+		 * contain neither postcode nor locality.
 		 *
 		 * The Taiwanese register scopes a point by 縣市 and 鄉鎮市區 (`臺北市` / `中正區`),
 		 * which the parse tags `region` and `subregion`.
@@ -69,8 +69,8 @@ export interface AddressPointLookup {
 		/**
 		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried after postcode and locality.
 		 *
-		 * For extracts whose points carry no postcode or locality of their own
-		 * (many OSM addr nodes do not) but do carry a coordinate, the resolved locality's
+		 * For extracts whose points contain no postcode or locality of their own
+		 * (many OSM addr nodes do not) but include a coordinate, the resolved locality's
 		 * bounding box scopes the `(street, number)` probe instead.
 		 * US situs never passes it, so the Latin path stays byte-stable.
 		 */
@@ -144,7 +144,7 @@ export interface InterpolationLookup {
 	 * so it ships in the artifact.
 	 * The resolver applies it as the default whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
 	 *
-	 * `undefined` means the artifact carries no multiplier.
+	 * `undefined` means the artifact defines no multiplier.
 	 * An implementation without the property also reports no multiplier.
 	 *
 	 * Extracts built before the metadata table existed use that behavior.
@@ -207,7 +207,7 @@ export interface PostcodePrefixAncestor {
  * A PFX1 postcode-prefix node, the partial-code prior's payload ({@link ResolveOpts.postcodePrefixPrior}).
  *
  * The coordinate is optional and its absence is meaningful.
- * An ancestry-only tier such as Northern Ireland's BT districts carries `ancestors` and no `lat`/`lon`.
+ * An ancestry-only tier such as Northern Ireland's BT districts includes `ancestors` and no `lat`/`lon`.
  *
  * The type represents that omission as absence.
  * `radiusP95Km` is mandatory whenever a coordinate is present, because a 1-digit US band

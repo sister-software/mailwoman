@@ -19,8 +19,8 @@ import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 
 /**
- * Resolved once, because `source_id` carries the source as its prefix and a pair that
- * disagreed would name a source no row of this output declares.
+ * Resolved once, because `source_id` includes the source as its prefix and a pair
+ * that disagreed would name a source no row of this output declares.
  */
 const NO_FRAGMENT_SOURCE = defaultRecipeSource("synth-no-fragment")
 
@@ -124,8 +124,8 @@ export const noFragmentRecipe: CorpusRecipe = {
 			register: requireRegister(opts, "no-fragment"),
 			surface: SurfaceOrigin.Composed,
 			// `emit` is a closure over the run rather than over one tuple, so this cannot name a per-row record.
-			// The tuples file carries no `sourceID` either.
-			// Populating this needs both (#2359).
+			// The tuples file has no `sourceID` either.
+			// Both inputs are required to populate this field (#2359).
 			baseSourceID: null,
 		}
 

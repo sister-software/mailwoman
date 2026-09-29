@@ -17,7 +17,7 @@ import {
 import { getResolution } from "h3-js"
 
 /**
- * The label this layer's classifier failures carry.
+ * The label assigned to this layer's classifier failures.
  */
 export const SOIL_CELL_LABEL = "soil cells"
 
@@ -51,7 +51,7 @@ export interface SoilCellIndexMeasurement {
 	partialCells: number
 	/**
 	 * `partialCells / touchedCells`, the share of in-layer probes that cannot
-	 * be answered from the index alone.
+	 * be answered using only the index.
 	 */
 	partialShare: number
 	/**
@@ -64,7 +64,7 @@ export interface SoilCellIndexMeasurement {
 	 */
 	cellDelineationPairs: number
 	/**
-	 * The mean number of delineations reaching a cell, which measures how mixed a cell is
+	 * The mean number of delineations reaching a cell measures how mixed a cell is
 	 * before any rating is read and rises as the resolution coarsens.
 	 */
 	meanDelineationsPerCell: number
@@ -90,7 +90,7 @@ export class SoilCellIndex {
 	readonly #touched = new Set<string>()
 	/**
 	 * `cell → delineation ids` for every touched cell, so the mean is over the
-	 * real population rather than the fringe alone.
+	 * real population rather than only the fringe.
 	 */
 	readonly #byCell = new Map<string, Set<string>>()
 

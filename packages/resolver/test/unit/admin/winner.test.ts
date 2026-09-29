@@ -43,7 +43,8 @@ const NL_PC6 = { value: "1012 LG", resolverName: "1012LG" }
 /**
  * A German PLZ is an ordinary 5-digit code.
  *
- * Shape checks classify it as unit-grade, and its system warrants priority.
+ * Shape checks classify it as unit-grade.
+ * Its system warrants priority.
  */
 const DE_PLZ = { value: "12623", resolverName: "12623" }
 

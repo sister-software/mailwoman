@@ -7,7 +7,7 @@ tags: [evals, international, geocoding, resolver]
 
 Our geocoder had beaten Nominatim across the United States by fifteen points, so we ran the same benchmark on Europe and expected a similar result. Europe produced a double-digit loss.
 
-Losing to Nominatim was acceptable, because Nominatim covers the whole planet on community-contributed data and is the standard to beat. The problem was that we could not explain the loss. We knew our parser was not ten points worse in Europe than in America, so we investigated what the gap consisted of.
+A loss to Nominatim would have been acceptable, because Nominatim covers the whole planet on community-contributed data and is the standard to beat. We could not explain the loss, though. We knew our parser was not ten points worse in Europe than in America, so we investigated what the gap consisted of.
 
 This post covers the cause, the fixes, and the problems the fixes did not solve. For the European comparison we added a third system: Pelias, through geocode.earth, which hosts Pelias on Elasticsearch. Pelias turned out to be the stronger competitor, and this post states where it still beats us.
 

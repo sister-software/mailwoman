@@ -9,7 +9,7 @@
  *   It also has `dev/adversarial.jsonl`. This script loads the neural classifier once and scores each country file.
  *   It reports per-locale component-F1 and exact-match. It also reports macro-F1 spread across locales.
  *
- *   Scoring mirrors `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the Stage-3 street
+ *   The score follows `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the Stage-3 street
  *   parts (`street_prefix`/`street`/`street_suffix` → `street`, `intersection_a`/`_b` → `street`) into the
  *   golden component vocab, then compare case-folded strings per tag.
  *
@@ -251,7 +251,7 @@ export interface TagMetric {
 }
 
 /**
- * One locale file's scores, carried in {@linkcode PerLocaleF1Result.reports} and written to `--out-json`.
+ * One locale file's scores, stored in {@linkcode PerLocaleF1Result.reports} and written to `--out-json`.
  */
 export interface FileReport {
 	file: string
@@ -493,7 +493,7 @@ export async function perLocaleF1(
 				queryShape: rowShape,
 				// Absent, the classifier reads the register as `fragmented` and feeds
 				// both evidence lexicons to every row.
-				// Production feeds them only where the kind verdict says so.
+				// Production feeds them only where the kind verdict requires them.
 				...(args.productionRegister ? { inputMode: deriveGeocodeRegister(row.raw, rowShape) } : {}),
 				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
 				// `--raw-case` disables the all-caps title-case shim.

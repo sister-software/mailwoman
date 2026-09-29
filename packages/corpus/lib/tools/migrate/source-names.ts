@@ -6,7 +6,7 @@
  *
  *   A recipe-output `source` is a wire identifier. Every row of every corpus carrying it stores the value.
  *   Every training config that weights it keys on it. Every model card trained on it quotes it. The
- *   retired `synth-*` spelling says a row is fabricated where most of these rows are attested records a
+ *   retired `synth-*` spelling labels a row fabricated where most of these rows are attested records a
  *   recipe rendered, spliced or fragmented. `RECIPE_SOURCES` in `#recipes/sources` holds both spellings and
  *   the operation each recipe performed.
  *
@@ -38,7 +38,7 @@ export interface SourceNameRewrite {
 	/**
 	 * The mapping applied, keyed by the retired spelling.
 	 *
-	 * A file whose rows already carry current spellings is reported with an empty map and left untouched.
+	 * A file whose rows already use current spellings is reported with an empty map and left untouched.
 	 */
 	renamed: Record<string, string>
 	/**
@@ -76,8 +76,8 @@ async function readSourceFacts(
 /**
  * Rewrite one parquet file's `source` column in place, through a temporary output.
  *
- * @throws When a row carries a `source` the table does not name under either spelling.
- * An unknown value is refused rather than carried, because carrying it would leave one
+ * @throws When a row has a `source` the table does not name under either spelling.
+ * An unknown value is refused rather than preserved, because preserving it would leave one
  * file holding both spellings and no later reader could tell which rows were rewritten.
  * @throws When the row count, the distinct `source` count or the ordered-`source_id`
  * digest differs after the rewrite.

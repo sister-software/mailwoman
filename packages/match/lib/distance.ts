@@ -50,7 +50,7 @@ export function distanceComparison<R>(config: {
 }
 
 /**
- * Provides default distance levels at building, block, and area scales.
+ * Provides default distance levels at building, block and area scales.
  * Their `m` and `u` values seed EM re-estimation.
  */
 export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [

@@ -449,7 +449,7 @@ export const TIGERClassCode = {
 	 * Community Survey (ACS) and Puerto Rico Community Survey, Public Use Microdata
 	 * Sample (pums) data, ACS period estimates and decennial census data.
 	 *
-	 * Nesting within states or equivalent entities, PUMAs cover the entirety of the
+	 * PUMAs nest within states or equivalent entities and cover the entirety of the
 	 * United States, Puerto Rico, Guam and the U.S. Virgin Islands.
 	 */
 	PublicUseMicrodataArea: "G6120",
@@ -944,8 +944,8 @@ export const TIGERClassCode = {
 	Coastline: "L4150",
 
 	/**
-	 * A nonvisible feature defining the route used to carry or convey people
-	 * or cargo back and forth over a waterbody in a boat.
+	 * A nonvisible feature defining the route used to transport people or cargo back
+	 * and forth over a waterbody in a boat.
 	 */
 	FerryCrossing: "L4165",
 
@@ -978,7 +978,8 @@ export const TIGERClassCode = {
 	/**
 	 * A fixed rail line is generally visible from the surface.
 	 *
-	 * It carries any type of rail vehicle, including railroad, off-street transit and mountain rail systems.
+	 * It transports any type of rail vehicle, including railroad, off-street transit
+	 * and mountain rail systems.
 	 */
 	RailFeature: "R1011",
 

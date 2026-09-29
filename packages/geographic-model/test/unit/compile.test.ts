@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The compiler, its derivations, and the artifact's two determinism properties.
+ * The compiler, its derivations and the artifact's two determinism properties.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"

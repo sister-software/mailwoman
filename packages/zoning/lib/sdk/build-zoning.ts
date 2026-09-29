@@ -526,8 +526,7 @@ function assertAreaAgreement(
 	const signedKM2 = streamed.area.signedM2 / M2_PER_KM2
 
 	// The publisher's figure is absent rather than defaulted.
-	// Filling it with this build's own reading would make the receipt print "0.000%
-	// apart" for a check that never ran.
+	// This build's own reading would make the receipt print "0.000% apart" for a check that never ran.
 	const reading = areaAgreementFrom(
 		{ nestedM2: streamed.area.nestedM2, allExteriorM2: streamed.area.allExteriorM2 },
 		expectedSourceAreaM2
@@ -549,7 +548,7 @@ function assertAreaAgreement(
  *
  * @throws {Error} When a chunk exits non-zero or prints no result line.
  * A chunk that died mid-range has written a partial set of rows.
- * Continuing would seal an artifact missing features without stable identifiers.
+ * The parent must stop before sealing that partial artifact.
  */
 async function runBatchedIngest(
 	tmpPath: string,

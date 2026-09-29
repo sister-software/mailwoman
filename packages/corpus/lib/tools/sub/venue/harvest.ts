@@ -19,9 +19,9 @@
  *   when it contains a phrase already in the surface index. `Terminal E (Untere Ebene)` qualifies. The full
  *   venue name `Otto Lilienthal Flughafen Berlin Tegel` does not.
  *
- *   **The matched phrase determines which record receives the surface.** Attributing every hit to
+ *   **The matched phrase determines which record receives the surface.** Every hit attributed to
  *   `row.designatorID`, the rule that matched the feature, produced `west → platform`, `hall → platform`, and
- *   `biggin → platform` on the GB extract. A bus stop tagged `public_transport=platform` can carry the label
+ *   `biggin → platform` on the GB extract. A bus stop tagged `public_transport=platform` can have the label
  *   "Village Hall" or "West Kensington". Of 133 OSM-derived surfaces, 108 referred to records other than the
  *   ones identified by the phrases. Attribution now follows the surface index. The row's designator stays in `context`.
  *   A confound board can then distinguish `hall` found on a platform from `hall` found on a terminal.
@@ -53,7 +53,7 @@ export interface SubVenueHarvestRow {
 	 *
 	 * Not necessarily the record a matched phrase names.
 	 * See this file's header on phrase attribution.
-	 * Carried into {@link SubVenueSurface.context}.
+	 * Passed into {@link SubVenueSurface.context}.
 	 */
 	designatorID: string
 	/**
@@ -168,7 +168,7 @@ export function extractAttestedPhrases(
 	for (const row of rows) {
 		if (row.name) {
 			for (const hit of nameContainsSurfaces(row.name, index)) {
-				// `und` — the default `name` tag carries no language.
+				// `und` — the default `name` tag has no language.
 				// Overture's `name` is the same: a primary name in whatever language the place uses, untagged.
 				note(hit, "und", `${source}:name`, row.designatorID)
 			}

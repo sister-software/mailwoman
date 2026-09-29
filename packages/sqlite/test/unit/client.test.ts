@@ -31,7 +31,8 @@ describe("DatabaseClient construction", () => {
 	})
 
 	it("forwards native options from the path form", async () => {
-		// readOnly on a fresh :memory: database has no file to open, which is exactly how we observe the option arriving.
+		// readOnly on a fresh :memory: database has no file to open.
+		// This lets us observe the option arriving.
 		expect(() => new DatabaseClient<FixtureDatabase>(":memory:", { readOnly: true }).destroy()).not.toThrow()
 	})
 

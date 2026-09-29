@@ -12,7 +12,7 @@
  *   Bundesland borders** (Leitzone 6 covers Frankfurt in Hessen, Saarbrücken in Saarland and Mainz
  *   in Rheinland-Pfalz). The PLZ prior narrows geography to a postal routing region.
  *   It does not identify a Bundesland as a US ZIP does. Code must not derive a German region from a postcode
- *   alone.
+ *   by itself.
  */
 
 import type { Tagged } from "type-fest"

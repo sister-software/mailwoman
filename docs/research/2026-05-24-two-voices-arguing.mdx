@@ -91,7 +91,7 @@ To find a bug in a program, you typically narrow it down by ruling out parts of 
 
 For weeks we'd been ruling out hypotheses:
 
-- Is the learning rate too high? No. Lowering it only delayed the climb.
+- Is the learning rate too high? No. A lower rate only delayed the climb.
 - Is the model too small? No. We made it bigger, and the same thing happened.
 - Is a new feature we added destabilising it? No. We turned it off, and the problem remained.
 - Does the data have a bug? We couldn't rule this out, because it was expensive to check.
@@ -142,11 +142,11 @@ The fix follows directly: **remove Voice B from training**, so it contributes no
 
 Voice B still encodes useful structural rules, such as forbidding orphan tags and invalid BIO sequences. We therefore keep Voice B for **inference**, when we use the trained model to parse an address, and leave it out of training.
 
-The code change is one line: when Voice B's weight is 0, the loop skips computing it. Training then runs purely on Voice A's gradient, which had behaved well throughout.
+The code change is one line: when Voice B's weight is 0, the loop skips computing it. The run then uses only Voice A's gradient, which had behaved well throughout.
 
 ## What we tell ourselves we learned
 
-1. **Adding two weighted losses together sounds simple, but it can fail badly.** Two loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. Scaling a loss by a constant does not balance its contribution to the optimiser. Watching the loss values misled us for nine training runs.
+1. **The two weighted losses looked simple to combine, but their gradients caused failure.** The loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A constant multiplier does not balance a loss's contribution to the optimiser. We watched the loss values and drew the wrong conclusion for nine training runs.
 2. **The five-minute diagnostic was more valuable than the previous month of retraining experiments.** Each experiment that changed a knob and retrained cost hours. The gradient-norm probe cost five minutes and gave a sharper answer than any of them, because it measured what the model was responding to instead of the end result.
 3. **ML debugging is more like programming debugging than the field admits.** Once you have words for what's happening, the techniques are familiar: bisect, isolate, instrument, hypothesise, test. The hard part is finding words for _what's happening inside the model_. After that, the bug is typically findable.
 4. **Run cheap experiments first.** A 5-minute probe should always run before a 25-hour retrain. We didn't run the probe earlier because we didn't know about it.

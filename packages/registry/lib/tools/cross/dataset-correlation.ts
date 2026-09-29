@@ -56,7 +56,7 @@ export interface CrossDatasetCorrelationOptions {
 	 * It defaults to true.
 	 *
 	 * The scan reads the full source files, including the multi-gigabyte NPPES file.
-	 * When it is false, `resolveEntities` computes frequencies from the sample alone.
+	 * When it is false, `resolveEntities` computes frequencies from the sample only.
 	 */
 	corpusFrequency?: boolean
 
@@ -120,8 +120,8 @@ const commitmentsSpec = (S: string, STATE: string): SourceSpec => ({
 })
 
 /**
- * Geocodes a sample of each source dataset in one state, resolves the records into
- * entities across sources, and returns a Markdown report of the cross-source links.
+ * Geocodes a sample of each source dataset in one state, resolves the records into entities across sources.
+ * It returns a Markdown report of the cross-source links.
  *
  * Progress lines go to `report`.
  * The function also writes the report and GeoJSON when `outMd` or `outGeojson` is set.

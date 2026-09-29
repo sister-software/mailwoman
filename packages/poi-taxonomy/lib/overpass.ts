@@ -17,7 +17,7 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
  *   `mailwoman/poi-overpass.ts` is a thin re-export of this module, kept for backward compatibility.
  *
  *   Two escaping contexts: the category branch and the `area["name"="…"]` anchor scope are string
- *   equality, so `escapeQL` alone is correct. The brand/name branches interpolate into a `~"…"`
+ *   equality, so `escapeQL` by itself is correct. The brand/name branches interpolate into a `~"…"`
  *   regex context, so they need `escapeQLRegex` to neutralize regex metacharacters first.
  */
 
@@ -33,7 +33,7 @@ export interface OverpassIntentLike {
 		| { kind: "brand"; name: string; wikidata?: string; matched: string }
 		| { kind: "name"; text: string }
 	/**
-	 * Spatial anchor: the split-off remainder text and its parse, when the query carried one.
+	 * Spatial anchor: the split-off remainder text and its parse, when the query included one.
 	 */
 	anchor?: {
 		text?: string
@@ -68,8 +68,8 @@ export interface EmitOverpassOpts {
 	 * in the subject's own order.
 	 *
 	 * A subject reaching several categories emits an OverpassQL union over them.
-	 * Overpass answers the same set the POI branch searches, and the emitter
-	 * states no preference between the members.
+	 * Overpass answers the same set the POI branch searches.
+	 * The emitter states no preference between the members.
 	 */
 	osmTags?: string[]
 	/**

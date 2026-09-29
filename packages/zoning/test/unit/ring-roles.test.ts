@@ -7,7 +7,7 @@
  *
  *   This test pins the sign convention used by `ringSignedAreaM2`. The helper signs clockwise rings positive.
  *   The standard planar shoelace uses the opposite sign. This resolver reads each ring's role from that sign.
- *   Flipping the helper would turn every exterior into a hole and every hole into an exterior. The resulting
+ *   A flipped helper would turn every exterior into a hole and every hole into an exterior. The resulting
  *   polygons would remain well-formed and answer containment questions while reporting incorrect coverage.
  *
  *   The test also covers the publisher's encoding. This service puts each ring in its own `MultiPolygon` part
@@ -193,7 +193,7 @@ describe("resolveRingRoles", () => {
 	it("carries a hole that shares its parent's boundary rather than dropping it, and counts it", () => {
 		// The residual case, measured at 9 of 3,516 holes nationally and every one a
 		// sliver under 1.7 m²: a ring whose vertices sit on the exterior.
-		// Dropping it would add ground the plan carved out.
+		// Its removal would add ground the plan carved out.
 		// The count is on the receipt so a reader sees the number rather than assuming it is zero.
 		const resolved = resolveRingRoles(
 			[
@@ -213,8 +213,8 @@ describe("resolveRingRoles", () => {
 		// Measured at exactly one feature of 85,330: a three-vertex sliver enclosing 3.0 × 10⁻⁷ m²,
 		// whose winding is floating-point noise rather than something the publisher stated.
 		// It reads clockwise in the source's own metres and counter-clockwise after reprojection.
-		// Refusing would fail the build on the publisher's own data.
-		// Skipping the feature would invent an absence.
+		// A refusal would fail the build on the publisher's own data.
+		// A skipped feature would invent an absence.
 		const resolved = resolveRingRoles([[holeRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + SIDE, ORIGIN.lat + SIDE)]], "9")
 
 		expect(resolved.exteriorCount).toBe(1)

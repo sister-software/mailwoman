@@ -324,7 +324,7 @@ export interface ExtractOpenUPRNResult {
 	csvBytes: number
 
 	/**
-	 * The full text of the archive's `licence.txt`, which a redistributor must carry.
+	 * The full text of the archive's `licence.txt`, which a redistributor must include.
 	 *
 	 * The text is decoded as strict UTF-8 with a Latin-1 fallback.
 	 */
@@ -451,7 +451,7 @@ export interface BuildUPRNLayerOptions {
 
 	/**
 	 * Pre-extracted input, such as a test fixture.
-	 * Setting it skips download and extraction.
+	 * This setting skips download and extraction.
 	 *
 	 * Provenance still comes from `acquisition.json` in `sourceDir` when that file exists.
 	 */

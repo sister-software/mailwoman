@@ -108,7 +108,8 @@ describe("every bundle states its terms before it is pulled", () => {
 	})
 
 	it("prints what the recorded expression implies, beside the prose", () => {
-		// The candidate's expression carries ODbL-1.0, which is what `--refuse share-alike` declines on.
+		// The candidate's expression includes ODbL-1.0.
+		// `--refuse share-alike` declines that license.
 		const lines = describeBundleRights(BUNDLES["candidate"]!)
 		const recorded = lines.find((line) => line.startsWith("recorded expression:"))
 

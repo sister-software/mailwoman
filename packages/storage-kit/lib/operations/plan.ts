@@ -31,7 +31,7 @@ const planOutput = z.object({
 })
 
 /**
- * `storage.plan` — the steps `storage.prepare` would run, and every guard that would stop it.
+ * `storage.plan` — the steps `storage.prepare` would run and every guard that would stop it.
  */
 export const planOperation = defineOperation({
 	id: "storage.plan",

@@ -45,7 +45,7 @@ navbar that does not exist outside Docusaurus.
 ### Two shipped styles request a glyph stack the bucket does not serve
 
 `packages/cartographer/lib/planetary/layers.ts:93` and `packages/cartographer/lib/base/buildings.ts:117`
-both set `"text-font": ["Fira Sans Regular"]`. Probing `https://public.mailwoman.ai/protomaps/fonts/<stack>/0-255.pbf`:
+both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mailwoman.ai/protomaps/fonts/<stack>/0-255.pbf` returned:
 
 | Stack                                                                 | Result            |
 | --------------------------------------------------------------------- | ----------------- |
@@ -78,7 +78,7 @@ The source resolves, and then no layer requests tiles from it. Everything downst
 worker answers `mars.json` and every tile with 200 and an `access-control-allow-origin` that echoes the
 app origin. The tiles carry features at every zoom: 314 in `z0/0/0`, 111 in `z2/1/1`, 53 in `z3/2/3`.
 
-Testing the style directly ruled it out. The exact object `createPlanetaryStyle` composes was loaded into
+A direct style test ruled it out. The exact object `createPlanetaryStyle` composes was loaded into
 a bare `maplibre-gl` 6.7.0 page (the version the repo pins) under globe projection, at the app's own
 opening camera. It rendered **131 labels** from 591 source features, with all four layers present, 6 tile
 requests, 2 glyph requests and no error events. The spaced-capital region treatment rendered as intended.
@@ -260,7 +260,7 @@ it.
 ## Typography
 
 Type is organized on two axes so the face can be swapped. A rule never refers to a font family. It refers
-to a scale role, and each scale role maps to a face role. Changing the typeface edits five tokens.
+to a scale role, and each scale role maps to a face role. A typeface change edits five tokens.
 
 ### Face roles
 
@@ -274,7 +274,7 @@ to a scale role, and each scale role maps to a face role. Changing the typeface 
 
 Iosevka Nexus satisfies all five today, with its mono variant covering number, code and glyph. That is
 why using a single face has caused no problems yet, and also why no record currently states which role a
-rule wanted. Binding the roles now makes a future swap an edit to `font.family.*` and no other token.
+rule wanted. The role bindings make a future swap an edit to `font.family.*` and no other token.
 
 ### Scale roles
 
@@ -352,7 +352,7 @@ takes the cool ramp, Mars the warm oxide ramp. The two bodies stop being the sam
 A star field sits behind the globe, matching the reference: small light points at varied opacity on the
 body's space color. It renders behind a transparent map canvas so it does not rotate with the body.
 
-### Framing
+### Frame design
 
 `framingZoom` is capped at the hillshade's own maximum zoom, so a selected feature is sharp
 rather than the upsampled blur at zoom 7. The selected feature draws a label and a marker, so the panel

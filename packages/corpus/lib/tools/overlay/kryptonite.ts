@@ -133,7 +133,7 @@ export async function buildKryptoniteOverlay(
 		total_rows: base.total_rows + newManifest.total_rows,
 	}
 
-	// The v0.3.0 files carry no `source`: they mix sources, so audit.ts falls back to its
+	// The v0.3.0 files have no `source`: they mix sources, so audit.ts falls back to its
 	// first_source_id-prefix inference for them (it re-derives on its own when `source` is absent).
 	const combinedPath = corpusDir("MANIFEST.json")
 	await writeLocalJSONFile(combined, combinedPath)

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Whitespace invariance suite, which asserts that edge spaces, internal runs and comma spacing do not change a parse.
+ *   Whitespace invariance suite. It asserts that edge spaces, internal runs and comma spacing do not change a parse.
  *   The space inside a structured postcode such as `SW1A 1AA` is never rewritten.
  */
 
@@ -20,7 +20,7 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * Law identifier that every suite row carries.
+ * Law identifier included in every suite row.
  */
 export const WHITESPACE_LAW = "whitespace-invariance"
 

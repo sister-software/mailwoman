@@ -32,7 +32,8 @@ describe("the license-state policy", () => {
 		["lapsed", "active", false, PAST_GRACE, "active"],
 		["revoked", "active", false, WITHIN_GRACE, "revoked"],
 		["revoked", "canceled", false, PAST_GRACE, "revoked"],
-		// A review outlives the token's date: the standing choice, and the one row an operator may want to change.
+		// A review outlives the token's date.
+		// The standing choice is the row an operator may want to change.
 		["review", "canceled", false, PAST_GRACE, "review"],
 		["review", "active", false, WITHIN_GRACE, "review"],
 	] as const)(

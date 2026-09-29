@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The street tiers probe `(street, house_number)` pairs nearest-first and stamp the pair the register answered
  *   for. `Bar 1802, 22 Rue Pascal, 75005 Paris, France` parses two house numbers; `22` sits beside `Rue Pascal`, so it
- *   is probed first, and when the register has it, `22` is the number the result names.
+ *   is probed first. When the register has it, `22` is the number the result names.
  */
 
 import type { BIOLabel } from "@mailwoman/codex/component"

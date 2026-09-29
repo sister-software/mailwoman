@@ -59,15 +59,15 @@ export interface Hit {
 	/**
 	 * The word immediately before the hit.
 	 *
-	 * When this word carries meaning, it identifies the intended check.
+	 * When this word has meaning, it identifies the intended check.
 	 */
 	modifier: string
 }
 
 /**
- * Preceding words that carry no meaning include articles and pronouns.
+ * Articles and pronouns are examples of preceding words that add no meaning.
  *
- * Comment markers also carry no meaning.
+ * Comment markers also add no meaning.
  * A hit after any of them is a bare reference.
  */
 const EMPTY_MODIFIERS = new Set([
@@ -214,7 +214,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
 	// Vale must run from the repository root because its paths are repo-relative.
-	// A process error carries the expected output when Vale exits non-zero for alerts.
+	// A process error includes the expected output when Vale exits non-zero for alerts.
 	// The function rethrows every other error instead of treating it as zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,

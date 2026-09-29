@@ -14,7 +14,7 @@ import type { BuildableBodyID } from "#bodies"
 import { type PlanetaryNomenclatureFeature, PlanetaryNomenclatureFeatureSchema } from "#schema/nomenclature"
 
 /**
- * One shapefile row as the GeoJSON transport carries it.
+ * One shapefile row as represented by the GeoJSON transport.
  *
  * An absent text attribute arrives as `""` from some rows and as `null` from others
  * (the Mars archive writes `null` for a missing `quad_name`); both mean absence.
@@ -63,7 +63,7 @@ export interface NormalizedBBox {
 const FULL_TURN_DEGREES = 360
 
 /**
- * Half a turn in degrees: the east edge of the −180..180 range every artifact carries.
+ * Half a turn in degrees: the east edge of the −180..180 range every artifact uses.
  */
 const HALF_TURN_DEGREES = 180
 

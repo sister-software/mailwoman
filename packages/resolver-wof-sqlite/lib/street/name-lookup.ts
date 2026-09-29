@@ -85,7 +85,7 @@ export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements
 
 		if (!norm) return false
 
-		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode.
+		// Scoped lookups tighten precision when the hypothesis includes a locality/postcode.
 		// A scoped miss falls back to the unscoped probe.
 		// The scope column may be incomplete, so a miss there does not establish absence.
 		if (

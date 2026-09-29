@@ -1,0 +1,7 @@
+## Flag carry, carries, and carried in comments and docstrings for review.
+extends: existence
+message: "'%s' may obscure the data or behavior; name what the code stores or does."
+level: warning
+ignorecase: true
+tokens:
+  - '\b(?:carry|carries|carried)\b'

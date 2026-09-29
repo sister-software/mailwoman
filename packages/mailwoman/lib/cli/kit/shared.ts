@@ -211,7 +211,7 @@ export interface CommandTaskResultProps<T> {
 	state: CommandTaskState<T>
 	/**
 	 * Content shown while the task runs.
-	 * Omitting it renders no element.
+	 * The renderer displays no element when this value is absent.
 	 */
 	running?: React.ReactNode
 	/**

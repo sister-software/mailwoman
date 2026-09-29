@@ -16,10 +16,10 @@ const config = createOxlintConfig({
 	headers: false,
 	restrictProcessGlobals: true,
 	// A number used as a comparison threshold needs a name.
-	// `no-magic-numbers` stays off so that data tables are left alone.
+	// `no-magic-numbers` stays off so that data tables remain unchanged.
 	unnamedThresholds: true,
 	// Only exported constants need a JSDoc block.
-	// A local constant's name usually says enough.
+	// A local constant's name provides enough context.
 	constantDocs: {
 		scope: "exported",
 		// Command modules export these as framework metadata.
@@ -315,7 +315,7 @@ export default {
 		"guard-for-in": "error",
 		// The shared base only warns.
 		// The shared tsconfig disables `noUnusedLocals`, so this rule is an error here.
-		// Setting a severity alone would drop the base's options, so they are repeated here.
+		// The local override repeats the base options because a severity-only entry would drop them.
 		// Prefix a deliberately unused binding with `_`.
 		"no-unused-vars": [
 			"error",
@@ -378,7 +378,7 @@ export default {
 		// The wrapper returns the fallback for non-string input, so convert a buffer with `.toString()` first.
 		//
 		// An override lifts one entry by calling `restrictedPropertiesExcept` with that entry.
-		// Setting the rule to `"off"` would lift every entry.
+		// An `"off"` value would lift every entry.
 		"no-restricted-properties": restrictedPropertiesExcept(),
 		"typescript/no-explicit-any": "error",
 		"unicorn/no-new-array": "off",

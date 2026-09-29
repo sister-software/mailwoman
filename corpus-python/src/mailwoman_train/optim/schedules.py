@@ -77,13 +77,13 @@ def restamp_resume_lrs(
 ) -> None:
     """Put the config's learning rates back after a resume has overwritten them.
 
-    Loading an optimizer checkpoint replaces every learning rate with the checkpoint's saved value.
-    Loading a scheduler checkpoint does the same to its base rates. A resumed run then ignores any
+    An optimizer checkpoint replaces every learning rate with the checkpoint's saved value.
+    A scheduler checkpoint does the same to its base rates. A resumed run then ignores any
     config rate change and trains at the old value. The startup
     log reports the new one as if it had taken effect. This puts the config's values back.
 
     Two rates are involved. The config specifies a PEAK rate. A group's current rate is that peak
-    times the schedule multiplier. Writing the peak
+    times the schedule multiplier. The code writes the peak
     directly gives the first resumed step a rate far above where the run left off — resuming a
     nearly-converged model at step 55,000 measured 8.808e-06 jumping to 5.000e-04 before the next
     scheduler step pulled it back, a 57-fold spike. Store the peak in the fields that hold peaks.
@@ -92,8 +92,8 @@ def restamp_resume_lrs(
 
     `live_lrs` must come from the fresh optimizer before the checkpoint is loaded. `labels` must be
     the unmodified list returned by `build_optimizer`. The two are positional: `labels[i]` names
-    `optim.param_groups[i]`. Building that list by hand would duplicate `build_optimizer`'s carve-out
-    order. Reordering it would make the printed attribution wrong while the rates
+    `optim.param_groups[i]`. A hand-built list would duplicate `build_optimizer`'s carve-out
+    order. A different order would make the printed attribution wrong while the rates
     stayed correct. A length mismatch means the interface check failed, so the zip fails loudly
     rather than truncating.
 

@@ -9,9 +9,8 @@
  *   key on the bare-toponym class). This module only matches and never ranks. It is pure and
  *   platform-free.
  *
- *   Matching requires three conditions: same country, within {@link CAPITAL_MATCH_RADIUS_KM} of the reference point,
- *   and the candidate's folded name in
- *   member of the reference entry's folded name set (name + romanization + the source's alternate
+ *   A match requires the same country and a distance within {@link CAPITAL_MATCH_RADIUS_KM} of the reference point.
+ *   The candidate's folded name must also appear in the reference entry's folded name set (name + romanization + the source's alternate
  *   names, so exonym rows such as "Vienna" for Wien still match). The name set is what makes the
  *   radius a centroid-drift allowance rather than a catchment.
  */
@@ -42,7 +41,7 @@ export type CapitalLevel = (typeof CAPITAL_LEVEL)[keyof typeof CAPITAL_LEVEL]
 export const CAPITAL_MATCH_RADIUS_KM = 25
 
 /**
- * One reference entry, as `data/gazetteer/capitals-v1.json` carries it (`entries[]`).
+ * One reference entry, as recorded in `data/gazetteer/capitals-v1.json` (`entries[]`).
  */
 export interface CapitalPoint {
 	/**

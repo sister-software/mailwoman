@@ -95,7 +95,7 @@ export const weightsReconciliationCheck: RepoCheck = {
 
 			const manifest = await readPackageJSON(resolvePath(context.repoRoot, record.workspace, "package.json"))
 
-			// Declaring a base and shipping a graph make conflicting claims about where rows are decoded.
+			// A declared base and a shipped graph make conflicting claims about where rows are decoded.
 			// `resolveWeights` follows one of those claims.
 			if (record.baseWeights && Array.isArray(manifest.files) && manifest.files.includes("model.onnx")) {
 				diagnostics.push({

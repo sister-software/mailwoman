@@ -24,7 +24,7 @@ class CSVMetricsCallback:
         self._log_every = max(1, cfg.train.log_every_steps)
         self._tags = resolve_label_set(cfg.data.label_set).tags
         # A resumed run appends to the run's existing CSV. a fresh one starts the file and writes
-        # the header. Appending to a file that is not there would lose the header entirely.
+        # the header. A missing file would lack the header if the writer only appended.
         self._append = resume_step > 0 and self._path.is_file()
         self._handle: IO[str] | None = None
         self._writer: Any = None

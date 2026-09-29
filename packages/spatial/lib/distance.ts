@@ -163,8 +163,9 @@ export const M2_PER_KM2 = 1_000_000
  * That is the difference between "two channels rendered the same edge slightly
  * differently" and "the conversion is wrong".
  *
- * The longitude scaling matters at the same scale: comparing raw degrees treats a degree of
- * longitude as a degree of latitude, which at 54°N overstates east-west distance by 70%.
+ * The longitude scaling matters at the same scale: comparing raw degrees treats
+ * a degree of longitude as a degree of latitude.
+ * At 54°N, this overstates east-west distance by 70%.
  *
  * @category Position
  */
@@ -191,7 +192,7 @@ export function segmentDistanceMetres(
 /**
  * Metres from a point to the nearest ring edge of an areal geometry.
  *
- * `Infinity` when the geometry bounds no area or carries no segment.
+ * `Infinity` when the geometry bounds no area or contains no segment.
  *
  * To the edge rather than to the nearest vertex: a point a centimetre from a long edge can
  * be metres from every vertex of it, so a vertex distance overstates the gap without bound.

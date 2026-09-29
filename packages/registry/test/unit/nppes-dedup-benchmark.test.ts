@@ -96,7 +96,8 @@ describe("scoreEntities", () => {
 		const entities = [entity("e1", [record("a-1"), record("a-2"), record("b-1"), record("b-2")])]
 		const s = scoreEntities(entities, npiLabel, 4)
 
-		// The cluster predicts 6 pairs, and 2 of them are the only true pairs.
+		// The cluster predicts 6 pairs.
+		// Two are the only true pairs.
 		expect(s.precision).toBeCloseTo(2 / 6, 12)
 		expect(s.recall).toBe(1)
 		expect(s.f1).toBeCloseTo(0.5, 12)

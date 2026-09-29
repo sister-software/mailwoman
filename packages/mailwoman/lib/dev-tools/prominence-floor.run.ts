@@ -65,7 +65,7 @@ const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
  * The FTS gazetteer supplies the `concordances` and `spr` tables for the identity join.
  *
- * The candidate backend below carries no concordance table.
+ * The candidate backend below has no concordance table.
  * The tool therefore accepts separate flags for the two databases.
  */
 const GAZETTEER = values.gazetteer || wofDatabasePath("admin-global-priority.db")
@@ -92,7 +92,7 @@ const SCORE_PATH = `${OUT}/prominence-floor-report.md`
  * These conditions appear in `benchmark-definition.json`.
  * The constants hold these thresholds because the benchmark definition is already frozen.
  *
- * Adding them to that definition would change the content hash pinned by the freeze record.
+ * Their inclusion in that definition would change the content hash pinned by the freeze record.
  */
 const REQUIRED_FALSE_SELECTION_DROP_POINTS = 10
 const ALLOWED_ACCURACY_COST_POINTS = 5
@@ -101,7 +101,7 @@ const ALLOWED_ACCURACY_COST_POINTS = 5
  * Every arm's `ResolveOpts`, in the definition's order.
  *
  * The default arm's empty bag is listed explicitly.
- * Omitting it would remove a replay key.
+ * Its omission would remove a replay key.
  *
  * `replayBackend` would then raise when the benchmark compares against the default arm.
  */
@@ -257,7 +257,7 @@ async function scorePhase(): Promise<void> {
 
 	// A raised floor changes what the walk asks next, so each arm loses a different
 	// set of rows to replay misses.
-	// Scoring each arm over its own survivors would compare rates whose denominators moved.
+	// Per-arm survivor scores would compare rates whose denominators moved.
 	const errored = new Set(results.filter((result) => result.error).map((result) => result.rowID))
 	const scored = results.filter((result) => !errored.has(result.rowID))
 	const survivors = new Map([...panelByID].filter(([id]) => !errored.has(id)))

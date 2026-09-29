@@ -45,7 +45,7 @@ const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) mailwoman-corpus-fetch"
 export type FetchHoujinJPOptions = BaseFetchOptions
 
 /**
- * The nationwide row of the "CSV形式・Unicode" table carries the file number in its `doDownload(N)` handler.
+ * The nationwide row of the "CSV形式・Unicode" table stores the file number in its `doDownload(N)` handler.
  */
 function nationwideUnicodeFileNumber(html: string): string | undefined {
 	const start = html.indexOf('id="csv-unicode"')

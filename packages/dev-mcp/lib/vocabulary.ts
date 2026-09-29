@@ -49,7 +49,7 @@ export interface VocabularyReport {
 		 * Byte fallbacks as a share of pieces.
 		 *
 		 * The headline number is meaningless without a comparison arm, so pass `control`
-		 * so the reply carries one.
+		 * so the reply includes one.
 		 */
 		byteFallbackShare: number
 	}
@@ -99,7 +99,7 @@ function total(lines: readonly VocabularyLine[]): VocabularyReport["totals"] {
 /**
  * Which letters in `texts` the vocabulary can express on their own, judged one character at
  * a time: a character that falls back inside a word might merely be an unlucky segmentation,
- * while one that falls back alone is absent from the vocabulary.
+ * while one that falls back by itself is absent from the vocabulary.
  */
 function characterCoverage(
 	tokenizer: Tokenizer,

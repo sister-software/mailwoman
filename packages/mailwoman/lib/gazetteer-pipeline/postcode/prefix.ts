@@ -440,7 +440,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 
 	for (const row of rows) {
 		// A non-postcode row has no prefix to contribute.
-		// Letting it vote would mark a real unit sharing its coordinate as a placeholder.
+		// A non-postcode row would mark a real unit sharing its coordinate as a placeholder if it voted.
 		if (!isZipCode(row.name)) continue
 
 		if (row.latitude === 0 && row.longitude === 0) continue
@@ -463,7 +463,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	for (const row of rows) {
 		// Use a shape guard rather than a length check.
 		// Place names reach a postcode table.
-		// At least one of those names carries a real coordinate.
+		// At least one of those names has a real coordinate.
 		if (!isZipCode(row.name)) {
 			excluded.notAPostcode++
 

@@ -41,7 +41,7 @@ const GZT_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 export type CreateZoningClientOptions = CreatePacedCachedClientOptions
 
 /**
- * What the item says about the product.
+ * What the item reports about the product.
  */
 export interface ZoningItemRecord {
 	itemID: string

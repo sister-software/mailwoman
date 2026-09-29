@@ -146,7 +146,8 @@ function retryAfterFrom(error: AxiosError): number | null {
  *
  * A caller-initiated cancel (`ERR_CANCELED`, i.e. the caller's own `AbortSignal` fired) is not retryable.
  * The caller asked us to stop.
- * Retrying would defy that request.
+ *
+ * The retry classification treats caller cancellation as terminal.
  *
  * Axios reports its own `timeout` config as `econnaborted`/`etimedout`, so the two are distinguishable.
  */
@@ -172,7 +173,7 @@ export function classifyAxiosFailure(error: unknown): RetryDirective {
  * An `APIClient` without this option makes exactly one attempt.
  *
  * The existing `TileAPI` consumer uses that behavior.
- * Turning it on repo-wide would silently multiply every caller's failure latency.
+ * A repo-wide default would silently multiply every caller's failure latency.
  */
 export interface RetryOptions {
 	/**

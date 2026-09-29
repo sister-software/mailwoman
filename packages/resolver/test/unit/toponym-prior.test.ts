@@ -138,7 +138,7 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 
 	it("does NOT band cross-country pairs — Windsor's 0.0042 gap still flips to GB", () => {
 		// The band must never compare across countries: any width covering Springfield's
-		// 0.0164 gap also covers Windsor's, which would regress the accepted flips.
+		// The 0.0164 gap also covers Windsor's accepted flips.
 		expect(rankByImportance(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
 	})
 
@@ -152,7 +152,8 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("chains adjacent gaps transitively — a run of near-ties is ONE cluster", () => {
-		// Chaining is deliberate: without it the cluster boundary would depend on which pair the sort compared first.
+		// The algorithm chains adjacent gaps into one cluster.
+		// Otherwise, the boundary would depend on which pair the sort compared first.
 		const run = [
 			place({ id: 1, name: "X", country: "US", prominence: 3, importance: 0.6 }),
 			place({ id: 2, name: "X", country: "US", prominence: 4, importance: 0.585 }),

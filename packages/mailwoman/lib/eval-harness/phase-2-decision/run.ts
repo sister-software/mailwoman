@@ -15,7 +15,7 @@
  *   baselines. The report shows every difference. The verdict reports `comparability` without using it as a decision
  *   input.
  *
- *   The recording is the operator's — the receipt carries `recorded: false`.
+ *   The recording is the operator's — the receipt sets `recorded: false`.
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon/lexicon"
@@ -370,7 +370,7 @@ async function measure(
 
 	if (needed.has("absence_observation_probe")) {
 		// Leave `db` unset so the absence probe uses the coverage layer as the queried layer.
-		// Qualifying an answer from one layer with another layer's coverage would
+		// A qualification of one layer's answer using another layer's coverage would
 		// compare artifacts from different runs.
 		const absence = await runAbsenceObservationProbe({
 			locale: options.locale,
@@ -627,7 +627,7 @@ async function measureMarker(
 		}
 	} finally {
 		// The runtime pipeline never opens the artifact reader itself, so the route owns no resource to close.
-		// Draining keeps one query's firings from being attributed to the next.
+		// The drain keeps one query's firings from being attributed to the next.
 		route.takeObservations()
 	}
 }

@@ -115,7 +115,7 @@ case-insensitive anyway). `lat`/`lon` are OA's point coordinate (the ground
 truth). `expected` carries only the **admin-level** fields the resolver
 produces — `locality`/`region`/`postcode` (no street geometry).
 
-### Sampling method
+### How we selected the samples
 
 - Only a **selected set of specific OA source files** is downloaded rather than the
   multi-GB US collection), stratified across dense-urban / suburban / rural so
@@ -237,7 +237,7 @@ mailwoman corpus slice locale --country ES --count 1500 --seed 7 --golden \
   --output data/eval/external/openaddresses-es-golden.jsonl   # IT/NL alike
 ```
 
-## Running the arenas
+## Run the arenas
 
 All three arenas run through one push-button script:
 

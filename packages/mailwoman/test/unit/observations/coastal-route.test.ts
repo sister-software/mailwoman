@@ -176,7 +176,7 @@ describe("#1993: the coastal-erosion route on the geocode path", () => {
 		expect(nfiDecision.observation.designations[0]!.distanceM).toBe(12)
 		expect(smpDecision.observation.designations[0]!.distanceM).toBe(310)
 
-		// The one-line description carries the scenario too, so a receipt cannot lose which question was answered.
+		// The one-line description includes the scenario too, so a receipt cannot lose which question was answered.
 		expect(describeCoastalErosion(nfiDecision.observation)).toMatch(/NFI_2055_0CC/u)
 		expect(describeCoastalErosion(smpDecision.observation)).toMatch(/SMP_2105_95CC/u)
 	})

@@ -84,7 +84,7 @@ export interface MapCanvasProps {
 	 */
 	style?: CSSProperties
 	/**
-	 * Remaining `<Map>` props MapCanvas does not surface explicitly.
+	 * Other `<Map>` props that MapCanvas does not surface explicitly.
 	 */
 	mapProps?: MapCanvasExtraProps
 }

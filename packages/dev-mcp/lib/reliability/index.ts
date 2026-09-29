@@ -11,7 +11,7 @@
  * One graded confidence value.
  *
  * Each surface chooses useful `strata` for its own splits.
- * A fixed field list would make every surface carry unused fields.
+ * A fixed field list would make every surface include unused fields.
  */
 export interface Observation {
 	confidence: number
@@ -76,7 +76,7 @@ export interface ThresholdRow {
 	 * Correct observations the eval turned away.
 	 *
 	 * This is the cost side of the trade.
-	 * A precision column alone hides it.
+	 * A precision column by itself hides it.
 	 */
 	correct_below: number
 }
@@ -130,8 +130,8 @@ export function reliabilityCurve(sample: readonly Observation[], binCount: numbe
  * What a confidence floor at each threshold would actually buy, since a well-calibrated
  * surface can still have no threshold worth setting.
  *
- * Both columns of the trade are reported because a precision figure alone hides
- * the correct answers the check throws away.
+ * Both columns of the trade are reported because a precision figure by itself
+ * hides the correct answers the check throws away.
  */
 export function thresholdTable(sample: readonly Observation[], thresholds: readonly number[]): ThresholdRow[] {
 	const correctTotal = sample.filter((o) => o.correct).length

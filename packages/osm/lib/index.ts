@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `@mailwoman/osm` — OpenStreetMap rooftop address-point ingestion. Permissive code. the ODbL
- *   obligation rides on the built per-country extracts, never on this package. See `./sdk` for the
+ *   obligation applies to the built per-country extracts, never to this package. See `./sdk` for the
  *   ingestion surface and `./scripts/build-rooftop-database` for the build CLI.
  */
 

@@ -66,7 +66,7 @@ teaching discrimination.
 
 **No — it's a canonical-order bar applied to a reordered-order problem.** The evidence:
 
-| Setting                                   | House-number / number-field accuracy                        | Source                                         |
+| Policy                                    | House-number / number-field accuracy                        | Source                                         |
 | ----------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
 | Clean, canonical, US single-order         | **99–100% F1** (house*number is the \_easiest* field)       | Yin et al. 2023 (US geocoding benchmark)       |
 | Hard, flexible-order, non-Latin (Chinese) | **HOUSENO F1 89.83–91.30%** (numeric tail is the weak spot) | Li et al., NAACL 2019                          |
@@ -91,8 +91,7 @@ It means: if we lower the floor, do it as a _stated, reasoned_ decision anchored
 The research shifts my earlier "hold" lean. The direct reading:
 
 - **The shipped v4.5.0 is the weaker model for this stratum (54.5%).** v1.5.0 (87.4%) is a large, direct
-  improvement that sits at the literature frontier for reordered house numbers. Holding it back against
-  a bar that the SOTA itself can't clear is hard to justify.
+  improvement that sits at the literature frontier for reordered house numbers. The published SOTA cannot clear this bar, so the team has little reason to hold v1.5.0 back.
 - **So the defensible path is: re-baseline the `fr.house_number` floor to a literature-anchored
   ~88–90% (stated + reasoned in the check config + ledger), and ship v1.5.0** — _while_ opening the
   targeted-change work below as the real fix. This is the operator's call to make explicitly; the
@@ -115,7 +114,7 @@ The research shifts my earlier "hold" lean. The direct reading:
    transformers, and the confusion is also token-identity (both are digit strings), which RoPE doesn't
    fix. Only if 1–3 fail.
 
-- **Missing change DeepSeek surfaced:** gazetteer-conditional disambiguation — concatenate a
+- **Another change DeepSeek surfaced:** gazetteer-conditional disambiguation — concatenate a
   "gazetteer-locality-hit-in-same-utterance" flag so the model learns "5-digit number before a known
   locality = postcode." Leverages an existing component; directly targets the confusion pair.
 

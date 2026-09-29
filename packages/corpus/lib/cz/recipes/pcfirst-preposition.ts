@@ -78,11 +78,11 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 				raw = `${city}, ${postcodeSurface}, ${street} ${number}`
 			} else {
 				// The street-less form `«city» «pc», Česko` omits street and number from the
-				// components because the surface does not carry them.
+				// components because the surface does not include them.
 				raw = `${city} ${postcodeSurface}, Česko`
 			}
 
-			// One resolution for both, because `source_id` carries the source as its prefix
+			// One resolution for both, because `source_id` includes the source as its prefix
 			// and a pair that disagreed would name a source no row of this output declares.
 			const source = defaultRecipeSource("synth-cz-pcfirst-preposition")
 
@@ -106,8 +106,8 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 			}
 
 			// Per row, because the id names this tuple's record.
-			// A tuples file written before `sourceID` existed carries none.
-			// `null` says the recipe had no id to forward.
+			// A tuples file written before `sourceID` existed has none.
+			// `null` means the recipe had no id to forward.
 			if (
 				alignAndWrite(write, canonical, "cz-pcfirst-preposition", {
 					...CZ_PCFIRST_PROVENANCE,

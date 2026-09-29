@@ -5,7 +5,7 @@
  *
  *   Test/story mocks — a fake POI runtime, so the POI explorer exercises its full state machine with no
  *   network, db, model, or taxonomy load. The fake geocoder runtime is a public subpath, `map/fake-runtime`. The shapes are cast through
- *   `unknown` because the real runtimes carry far more surface than these hooks touch.
+ *   `unknown` because the real runtimes expose far more surface than these hooks touch.
  */
 
 import type { CategoryRecord, POILiveSearch, POIRuntime, TaxonomyLookup } from "@mailwoman/react"
@@ -40,7 +40,7 @@ export function makePOIRuntime(): POIRuntime {
  * A fake taxonomy-runtime that classifies everything as a POI query
  * and matches "chevron" as a brand (QID Q319642).
  *
- * No category record — brands carry a name + QID rather than a taxonomy id.
+ * No category record — brands have a name + QID rather than a taxonomy id.
  */
 export function makeBrandPOIRuntime(): POIRuntime {
 	const lookup = {

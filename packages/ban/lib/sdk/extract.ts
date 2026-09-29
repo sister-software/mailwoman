@@ -114,7 +114,7 @@ const LIEU_DIT_PLACEHOLDER_PATTERN = /^_[0-9]+$/
  * raw-label use (survey: 3,709 rows, 0.2% of filled).
  *
  * Dropped here rather than mis-emitted as a literal lieu-dit surface.
- * Parsing this bucket into its own signal is deferred, unscoped work.
+ * This bucket has no separate signal parser in the current scope.
  */
 const LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN = /^ancienne commune\s*:/i
 

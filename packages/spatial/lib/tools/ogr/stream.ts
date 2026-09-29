@@ -82,7 +82,7 @@ export function spawnOGR2OGR(args: readonly PathBuilderLike[], context: string):
  * `.trim()` leaves U+001E intact.
  *
  * The parser strips it first because `tryParsingJSON` would otherwise skip each RS-prefixed record.
- * Skipping every record would make an empty extract look like a real absence.
+ * If the code skipped every record, an empty extract would look like a real absence.
  *
  * A malformed record is tolerated (skipped) rather than thrown.
  * A non-zero exit throws after the stream drains.

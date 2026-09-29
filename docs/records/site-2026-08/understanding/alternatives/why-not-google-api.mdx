@@ -17,7 +17,7 @@ Google's Geocoding API is the default choice for geocoding. It is fast, globally
 
 Google's Geocoding API converts an address string into a latitude/longitude, a formatted address, and a set of address components (street number, route, locality, administrative area, country, postcode). The API does parsing, resolving, and formatting in a single call. There is no separate parser or gazetteer — Google's model handles everything.
 
-### Pricing (as of 2026)
+### Rates (as of 2026)
 
 | Tier     | Cost per 1,000 requests | Monthly free quota          |
 | -------- | ----------------------- | --------------------------- |
@@ -76,7 +76,7 @@ Google's address component types (route, sublocality, administrative_area_level_
 | `administrative_area_level_2` | `subregion`          | US county, French département |
 | `sublocality`                 | `dependent_locality` | Neighborhood, borough         |
 | `route`                       | `street`             | Street name without number    |
-| `street_number`               | `house_number`       | Building number               |
+| `street_number`               | `house_number`       | Street number                 |
 
 If your application uses a different address model, you must translate Google's output into your schema. The translation is lossy — Google may return components that have no equivalent in your model, or omit components your model considers required.
 
@@ -93,7 +93,7 @@ For these use cases, the API's speed and coverage outweigh its lock-in costs.
 
 ## When owning your parser is the right choice
 
-Owning your parser is the right choice when:
+Your own parser is the right choice when:
 
 - **You geocode the same addresses repeatedly.** A one-time geocoding cost, cached locally, amortizes the infrastructure investment over time.
 - **You need auditable results.** When correctness matters (delivery routing, emergency services, government compliance), being able to trace a geocode back to its source data is non-negotiable.

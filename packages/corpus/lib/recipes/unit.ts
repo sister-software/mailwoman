@@ -121,7 +121,7 @@ const VENUES: readonly string[] = [
 /**
  * Share of tails that write a comma before the postcode.
  *
- * A bare number alone in a later comma segment appears nowhere else in the mixture,
+ * A bare number by itself in a later comma segment appears nowhere else in the mixture,
  * so this is the only counter-evidence for that segment.
  */
 const COMMA_POSTCODE_WEIGHT = 0.15
@@ -259,8 +259,9 @@ export const unitRecipe: CorpusRecipe = {
 			const base = pool[Math.floor(random() * N)]!
 			const unit = makeUnit(random, base.oaUnit)
 			const { raw, components } = renderUnit(random, base, unit)
-			// The rendered component rather than the designator form handed in: `full-comma-bare` writes the
-			// identifier alone, so checking the pre-render string would refuse every row of that layout.
+			// The rendered component rather than the designator form handed in:
+			// `full-comma-bare` writes the identifier by itself, so checking the pre-render
+			// string would refuse every row of that layout.
 			const rendered = components.unit
 
 			// The unit must survive verbatim in raw, else alignment can't label it.

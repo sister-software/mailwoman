@@ -161,7 +161,7 @@ export interface ReconciliationReportOptions {
 
 /**
  * Renders a Markdown reconciliation report with the bucket counts, the enrolled rate,
- * a spot-check of `eligible-not-enrolled` entities, and a fixed caveat.
+ * a spot-check of `eligible-not-enrolled` entities and a fixed caveat.
  *
  * The report presents the enrolled rate as a floor because incomplete resolution can only miss links.
  */

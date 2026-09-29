@@ -56,8 +56,8 @@ import { buildAncestorNameIndex, walkFeatures, type AncestorNames, type WOFRecor
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
  *
- * Per-adapter deliberately (the postalcode adapter carries its own): each table is a
- * record filter for its adapter's emission set rather than a shared vocabulary.
+ * Per-adapter deliberately (the postalcode adapter has its own): each table is a record
+ * filter for its adapter's emission set rather than a shared vocabulary.
  */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {
@@ -201,7 +201,7 @@ export const WOF_ADMIN_ADAPTER_ID = "wof-admin"
  * Construct the wof-admin JSON-bundle adapter.
  *
  * The adapter is stateless across runs.
- * Calling this twice with the same input directory produces byte-identical `canonical.jsonl`
+ * Two calls with the same input directory produce byte-identical `canonical.jsonl`
  * (records are emitted in sorted `wof:id` order to be insensitive to filesystem walk ordering).
  */
 export function createWOFAdminAdapter(): CorpusAdapter {

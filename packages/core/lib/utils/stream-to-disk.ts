@@ -38,9 +38,9 @@ export interface StreamToDiskOptions {
  * Download one file to `destination`, returning the bytes received.
  *
  * Follows redirects: a job endpoint that answers with a generated result URL routinely redirects again.
- * Stopping at the redirect would write a redirect page to disk and report success.
+ * The downloader would write a redirect page to disk and report success if it stopped at the redirect.
  *
- * @throws {Error} When the response is not OK or carries no body.
+ * @throws {Error} When the response is not OK or contains no body.
  * A partial file is removed on any failure.
  */
 export async function streamToDisk(options: StreamToDiskOptions): Promise<number> {

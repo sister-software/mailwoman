@@ -104,7 +104,7 @@ export interface SubVenueSurface {
 	/**
 	 * Whether a human has approved this surface for parsing use in its region.
 	 *
-	 * Everything machine-derived starts `false` and only a matching {@link SubVenuePromotion}
+	 * Machine-derived entries start `false`; only a matching {@link SubVenuePromotion}
 	 * flips it, so a consumer that gates a parse must filter on this.
 	 */
 	curated: boolean
@@ -115,8 +115,8 @@ export interface SubVenueSurface {
 	 */
 	observations: number
 	/**
-	 * The rule-assigned designator of the features that carried this phrase, with a count
-	 * each (`platform:3205 campus:49` for GB's `hall`); empty for vocabulary sources.
+	 * The rule-assigned designator of the features that had this phrase, with a count each
+	 * (`platform:3205 campus:49` for GB's `hall`); empty for vocabulary sources.
 	 *
 	 * Without it an `observations` count is a magnitude with no sign (`hall` on a `platform` row is a
 	 * British bus stop called after a village hall. On a `terminal` row it is a real German departure hall).
@@ -128,7 +128,7 @@ export interface SubVenueSurface {
  * The measured shape of a designator's identifier half — what follows `Gate`/`Terminal` in real data.
  *
  * Derived from OSM `ref` values.
- * Each of Berlin's 26 `aeroway=gate` features carries a `ref` and has no name.
+ * Each of Berlin's 26 `aeroway=gate` features has a `ref` and no name.
  *
  * The extractor renders `Gate A12` from `<designator> <ref>`.
  * Generation requires the identifier distribution.

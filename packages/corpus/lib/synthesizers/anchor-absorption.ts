@@ -15,7 +15,7 @@ import { sample } from "@mailwoman/core/random"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches defines the
-   output distribution. Reading the cascade top-to-bottom shows it. Naming each cutoff
+   output distribution. The cascade shows each weight from top to bottom. A separate constant for each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
     extracted as constants above. */
 
@@ -98,6 +98,7 @@ const STREET_NAMES = [
 	"Crescent Meadow",
 ]
 
+// TODO: Derive this from the US codex package exports
 const STREET_TYPES = ["St", "Ave", "Rd", "Dr", "Ln", "Blvd", "Ct", "Way", "Road", "Drive"]
 
 const US_TUPLES: ReadonlyArray<AnchorAbsorptionBaseTuple> = [

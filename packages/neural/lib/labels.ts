@@ -10,7 +10,7 @@
  *   15 indices are identical, so reading a v0.2.0 (Stage 1) model with the Stage 2 label vocabulary
  *   stays correct. the extra entries are unused.
  *
- *   Runtime loading: as of v0.4.0 the trained label vocabulary is carried in `model-card.json`'s
+ *   Runtime loading: as of v0.4.0 the trained label vocabulary is stored in `model-card.json`'s
  *   `labels` field and read by `loadFromWeights` (see `weights.readLabelsFromModelCard`). These
  *   constants remain the compile-time fallback for legacy bundles whose cards predate the field —
  *   safe because such bundles are by construction Stage 1 or Stage 2. Stage 2 prefix-extends

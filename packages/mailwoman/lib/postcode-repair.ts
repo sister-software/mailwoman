@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The postcode-contradiction repair rung, firing only on a high-confidence letter-digit postcode shape whose span carries no postcode node and whose every node is a wholly-contained street/house-number-family misread.
+ *   The postcode-contradiction repair rung, firing only on a high-confidence letter-digit postcode shape whose span has no postcode node and whose every node is a wholly-contained street/house-number-family misread.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -45,11 +45,10 @@ function within(node: AddressNode, start: number, end: number): boolean {
 }
 
 /**
- * Repairs the tree in place when a high-confidence letter-digit postcode span carries no
+ * Repairs the tree in place when a high-confidence letter-digit postcode span has no
  * postcode node and every node inside it is a street/house-number-family misread.
  *
- * A span that already carries a postcode node never repairs, so the
- * alternate-register retry cannot double-fire.
+ * A span that already has a postcode node never repairs, so the alternate-register retry cannot double-fire.
  *
  * @returns `true` when a repair was applied.
  */

@@ -6,7 +6,7 @@ then held — so a channel's basin forms before the noise starts arguing with it
 They teach different failures. The confidence perturbation teaches ABSENCE: a clue that sometimes
 is not there, so the model keeps its competence without one. The evidence noise teaches FALSE
 PRESENCE: a clue that is there and wrong, so the model treats painted evidence as a hint rather
-than an instruction. Absence alone is what the v3.19/v3.20 golden-US verdicts showed to be
+than an instruction. Absence by itself is what the v3.19/v3.20 golden-US verdicts showed to be
 insufficient — in training, painted evidence was almost always truthful, so a street-type word
 inside a street NAME still commanded the parse.
 """
@@ -53,7 +53,7 @@ def perturb_gazetteer_confidence(conf: torch.Tensor, step: int, max_steps: int) 
 
     v0.9.12 raised the country and region scores. It also raised locality. US postcode fell by 3.7 points.
     That drop shows the model reallocating base competence toward an always-on clue.
-    Dropping the clue on a growing fraction of rows forces it to keep that competence both with
+    The schedule drops the clue on a growing fraction of rows, forcing the model to keep that competence both with
     the hint and without.
     """
     return perturb_anchor_confidence(conf, step, max_steps)
@@ -66,7 +66,7 @@ def perturb_evidence_noise(
 
     With probability ``p_noise`` per row per channel:
 
-    - a row that carries evidence has its (features, confidence) pair rolled by a random offset, so
+    - a row that includes evidence has its (features, confidence) pair rolled by a random offset, so
       a real painted pattern lands on the wrong tokens — the collision shape;
     - an evidence-free row gets a synthetic one-token hit at a random position — a false positive
       on a clean row.

@@ -223,8 +223,8 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				// Only that one worker prints.
 				// The rest exit silently.
 				// Chosen over a primary-side pre-fork check
-				// (the primary doesn't otherwise call createServeEngine() at all. Duplicating its
-				// import/db-existence check there just to avoid forking would change more code)
+				// (the primary doesn't otherwise call createServeEngine() at all. An import
+				// and database-existence check there just to avoid forking would change more code)
 				// and over routing the message back through the primary's cluster "exit" handler
 				// (would require an IPC round-trip for what's a one-line dedupe).
 				if (cluster.worker?.id === 1) {
@@ -235,7 +235,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 			}
 
 			// 2 MiB body cap (accommodates a full /v1/batch up to MAILWOMAN_BATCH_MAX addresses)
-			// is createMailwomanAPI's own default — carried from the express
+			// is createMailwomanAPI's own default — inherited from the express
 			// server's `express.json({ limit: "2mb" })`.
 			const engineStamp = await resolveEngineStamp()
 

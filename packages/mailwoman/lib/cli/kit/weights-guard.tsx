@@ -16,8 +16,8 @@
  *   - `"unavailable"` — weights absent + non-interactive stdin and no flag. the caller keeps its
  *       legacy fallback chain (pre-v7 behavior interface).
  *
- *   Installs `@latest` rather than pinning the CLI version. Resolving `mailwoman/package.json` from
- *   both the source and compiled trees triggers the `__isCompiledTree` trap. The post-install probe
+ *   Installs `@latest` rather than pinning the CLI version. A lookup of `mailwoman/package.json` from
+ *   A lookup of `mailwoman/package.json` from both the source and compiled trees triggers the `__isCompiledTree` trap. The post-install probe
  *   already catches the metadata-only-tarball case. The durable pin is the `weights-latest` dist-tag
  *   (board issue filed with this plan).
  */
@@ -84,7 +84,7 @@ export interface DownloadWeightsOpts {
  * (spawned as our own child. No pattern kills anywhere near this).
  *
  * Success requires npm to exit 0 and the post-install probe to resolve.
- * A metadata-only tarball (code-only release) installs "successfully" but carries no binaries.
+ * A metadata-only tarball (code-only release) installs "successfully" but includes no binaries.
  * Report the install as a failure with an actionable message.
  */
 export function downloadWeights(

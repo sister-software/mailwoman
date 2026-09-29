@@ -38,7 +38,7 @@ catastrophe was **invisible for weeks** because every eval grades **raw neural**
 never the assembled pipeline. That is the single most important input to this spec:
 
 > **An arbitration layer that "can't score below v0 by construction" is only true if you GRADE THE
-> ASSEMBLED PIPELINE against truth. Grading raw-neural per-tag F1 will hide an arbitration regression
+> ASSEMBLED PIPELINE against truth. Raw-neural per-tag F1 hides an arbitration regression
 > exactly as it hid the reconcile one.**
 
 So #478's pre-registered check, as originally written (arena re-run), is necessary but **not sufficient**.
@@ -69,7 +69,7 @@ priored by input shape, decided on calibrated confidence, with abstention as a f
 
 The two arbitration _sites_ — the `AddressParser` proposal-pipeline (rule/neural via the policy registry)
 and the `runtime-pipeline` (neural reconcile/argmax) — should converge on **one** registry-driven
-arbitration applied to the union of candidates. Unifying them is the bulk of the remaining wiring.
+arbitration applied to the union of candidates. The remaining wiring must unify them.
 
 ## The check (pre-registered, corrected)
 
@@ -85,7 +85,7 @@ Re-run with arbitration on, **grading the assembled pipeline** (not raw neural):
 Re-promoting reconcile to default is blocked on this — specifically the precondition row, the one the
 original re-check (#427) omitted.
 
-## Sequencing
+## Sequence
 
 1. **Land the repair-divergence fix** (shared `buildTokens()`) so `parseWithLogits` repairs like
    `parse()`. Prerequisite for any reconcile re-promotion.
@@ -95,7 +95,7 @@ original re-check (#427) omitted.
 
 ## Scope guard (unchanged)
 
-No retrain. No new classifiers. Wiring + tests + config over implementation that exists. The coarse-placer
+No retrain. No new classifiers. The work covers wiring, tests, and config for existing implementation. The coarse-placer
 (#244) is the one new model and it is already built (M1+M2); here it is consumed as a routing
 signal rather than trained.
 

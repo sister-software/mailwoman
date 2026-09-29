@@ -23,7 +23,7 @@ export interface SpanRescoreOptions {
 	 */
 	country?: string
 	/**
-	 * Sibling postcode — used both as the backend disambiguation hint and the consistency-check anchor.
+	 * The sibling postcode serves as the backend disambiguation hint and the consistency-check anchor.
 	 */
 	postcode?: string
 	/**
@@ -131,7 +131,7 @@ function tokenizeRaw(raw: string): RawTok[] {
 
 /**
  * The code-shaped (digit-containing) token subset of a postcode string — "1382 Kožljek"
- * → "1382" — and an empty string when no token carries a digit.
+ * → "1382" — and an empty string when no token contains a digit.
  */
 export function postcodeCodeSubset(postcode: string): string {
 	return postcode
@@ -183,7 +183,7 @@ function resolvedWeakly(node: AddressNode, reading: WeakResolutionReading): bool
 }
 
 /**
- * True if any node in the tree already carries a resolved place id — the brake on span rescore.
+ * True if any node in the tree already has a resolved place id — the brake on span rescore.
  * with `weakReading`, a node whose resolution is weak under that reading does not hold it.
  */
 export function hasResolvedPlace(
@@ -423,8 +423,8 @@ export async function findRescoreCandidate(
 		const key = foldName(sp.text)
 
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
-		// `wholeSpan` alone decides the alias tier, while the soft-country prior also
-		// needs an unqualified tree and a caller country.
+		// `wholeSpan` by itself decides the alias tier, while the soft-country prior
+		// also needs an unqualified tree and a caller country.
 		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
 
 		// A sub-span that drops a word of the name is a corruption rather than a

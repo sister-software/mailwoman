@@ -30,7 +30,7 @@ export interface ProviderListRow {
 	/**
 	 * Holding-company name, or `null` when empty.
 	 *
-	 * Rows for the same provider ID can carry different names.
+	 * Rows for the same provider ID can list different names.
 	 */
 	holdingCompany: string | null
 }

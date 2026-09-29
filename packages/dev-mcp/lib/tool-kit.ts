@@ -236,7 +236,7 @@ export interface DevTool {
 
 /**
  * The maximum number of diffs rendered as text.
- * Beyond it, results carry only the structured list.
+ * Beyond it, results include only the structured list.
  */
 export const RENDERED_DIFF_LIMIT = 40
 

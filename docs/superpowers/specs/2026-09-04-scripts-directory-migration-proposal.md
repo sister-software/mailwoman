@@ -1,4 +1,4 @@
-# Moving out of `scripts/` — proposal
+# Proposal to move tools out of `scripts/`
 
 Status: proposal, revised after operator review on 2026-09-04. The diagnosis (sections 1 and 2) is
 unchanged, and the destination model (sections 3 to 7) is the revised one. No file moves until section 8's decisions
@@ -117,7 +117,7 @@ A file added beside the registry appears in neither, and knip reports it.
 
 ## 5. External writes are plan → execute
 
-Publishing uses credentials and has irreversible effects, so no adapter runs it in one step. CI and
+The publish command uses credentials and has irreversible effects, so no adapter runs it in one step. CI and
 agents share this interface:
 
 ```
@@ -247,7 +247,7 @@ tool per registered operation, named after the operation's id. Every description
 declared `effect`, the writers accept `dry_run`, and a `release_operations` tool lists the whole
 registry. The operator decided that the two `external-write` operations are hidden from the tool list
 by default. They appear only when the server starts with `--allow-external-write`, and they still run
-the plan → execute interface the operations enforce. Packaging follows `ops-cli` (its own private
+the plan → execute interface the operations enforce. The package follows `ops-cli` (its own private
 workspace with a `bin`), which settles decision 2's `bin` question for the MCP view. `release-kit` itself
 has no bin.
 

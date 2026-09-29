@@ -46,7 +46,7 @@ const CorpusIngestCSV: CommandComponent<typeof spec> = ({ options }) => {
 		const { ingestCSV } = await import("@mailwoman/corpus/tools")
 		// `out` is the CLI's spelling.
 		// `ingestCSV` expects the option `output`.
-		// Spreading `rest` would pass an unread key and silently omit the destination.
+		// The command would pass an unread key and silently omit the destination if it spread `rest`.
 		const { header, out, ...rest } = options
 
 		return ingestCSV({ ...rest, output: out, noHeader: !header })

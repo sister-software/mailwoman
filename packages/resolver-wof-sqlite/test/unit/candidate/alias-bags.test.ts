@@ -22,7 +22,7 @@ import { describe, expect, test } from "vitest"
 
 /**
  * The separator `fts.ts` joins the bag with, space-padded and trailing,
- * exactly as a real `place_search` row carries it.
+ * exactly as a real `place_search` row contains it.
  */
 
 function bag(...aliases: string[]): string {

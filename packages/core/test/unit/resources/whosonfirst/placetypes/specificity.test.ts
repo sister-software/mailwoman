@@ -167,7 +167,7 @@ describe("agreement with PLACETYPE_DEPTH", () => {
 
 		// Strictly increasing, because the ladder is coarsest-first and this scale is higher-is-finer.
 		// A TIE would be a silent disagreement: `PLACETYPE_DEPTH` separates all eleven, so a tie here
-		// reverses no pair but does make `isStrictlyFiner` answer false where containment says true.
+		// reverses no pair but does make `isStrictlyFiner` answer false where containment indicates true.
 		const disagreements = ranked
 			.slice(1)
 			.map((current, i) => ({ current, previous: ranked[i]! }))

@@ -26,7 +26,7 @@ import {
 } from "#eval-harness/gauntlet/schema"
 
 /**
- * The stamp a built `regression.db` carries, or `null` when the DB predates the stamp entirely.
+ * The stamp stored in a built `regression.db`, or `null` when the DB predates the stamp entirely.
  */
 export type CorpusStamp = Pick<GauntletMetaTable, "corpus_hash" | "case_count" | "built_at">
 
@@ -73,7 +73,7 @@ export async function writeCorpusStamp(
  */
 export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Promise<CorpusStamp | null> {
 	// Probe for presence first because selecting from a missing table throws a driver error.
-	// Branching on error prose would make the guard unreliable.
+	// Error prose varies, so the guard cannot branch on it reliably.
 	const present = await sql<{
 		name: string
 	}>`select name from sqlite_master where type = 'table' and name = ${GAUNTLET_META_TABLE}`.execute(kdb)

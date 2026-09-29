@@ -2,7 +2,7 @@
 
 WHY THIS IS ITS OWN MODULE. Two policies apply between the sampler and the consumer — augmentation
 (with a per-source opt-out) and affix relabelling — and they have to be applied in that ORDER, because
-relabel must see the label-inheriting directional expansions augmentation produces (#511). Expressing
+    relabel must see the label-inheriting directional expansions augmentation produces (#511). This representation
 that twice is what #2243 was: `data_loader` applied the exclusion and `audit_epoch_mixture` did not, so
 the audit reported an excluded source with the emitted count it would have had if it were augmented. The
 two call sites had matching augment probabilities and a matching call to `augment_row`; they diverged at
@@ -12,7 +12,7 @@ copies must agree, share the FUNCTION.
 It cannot live in `augment.py` because `relabel.py` imports that module and the cycle would close.
 This module imports both. Every consumer imports this module.
 
-`EmitPolicy` carries the decision rather than ten positional arguments, so a new policy reaches both
+`EmitPolicy` stores the decision rather than ten positional arguments, so a new policy reaches both
 call sites by construction instead of by someone remembering the second one.
 """
 

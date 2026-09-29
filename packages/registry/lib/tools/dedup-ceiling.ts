@@ -65,7 +65,8 @@ export interface DedupCeilingOptions {
 }
 
 /**
- * Measure the irreducible over-merge of co-located providers, and emit the markdown report to stdout.
+ * Measure the irreducible over-merge of co-located providers.
+ * Emit the markdown report to stdout.
  */
 export async function dedupCeiling(
 	options: DedupCeilingOptions = {},

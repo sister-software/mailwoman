@@ -199,12 +199,12 @@ def score_board(
 ) -> dict[str, Any]:
     """Run the pre-registered read over ``rows``, plus the per-register split of the same outcomes.
 
-    ``predict(raw) -> per-character label ids`` is injected so the arithmetic is testable without a
-    checkpoint (and without importing torch). ``main`` supplies the real argmax decoder.
+        ``predict(raw) -> per-character label ids`` is injected so the arithmetic is testable without a
+        checkpoint (and without importing torch). ``main`` supplies the real argmax decoder.
 
-    The blended ``fraction`` is computed exactly as the pre-registered definition states —
-    ``acceptable / len(rows)``, an unresolved pair counting as unacceptable. ``per_register`` is the
-    same per-row outcomes bucketed by the board's ``register`` column and carries no bar.
+        The blended ``fraction`` is computed exactly as the pre-registered definition states —
+        ``acceptable / len(rows)``, an unresolved pair counting as unacceptable. ``per_register`` is the
+    same per-row outcomes bucketed by the board's ``register`` column and has no threshold.
     """
     tallies = BoardTallies()
     for row in rows:

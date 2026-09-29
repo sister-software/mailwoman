@@ -20,9 +20,9 @@ curl -s -X POST localhost:3000/v1/parse \
   -d '{"address":"350 5th Ave, New York, NY 10118"}'
 ```
 
-The parser needs only the included weights, so it answers immediately. Geocoding needs a gazetteer.
+The parser needs only the included weights, so it answers immediately. A gazetteer is required for geocoding.
 Until one is mounted, `/v1/geocode` and `/v1/batch` return a `503` (`{"error":"geocoder not
-available", ...}`) instead of crashing. Parsing always works, and mounting data enables geocoding.
+available", ...}`) instead of crashing. Address parsing always works, and mounting data enables geocoding.
 
 ## Full geocoding — mount the gazetteer read-only
 

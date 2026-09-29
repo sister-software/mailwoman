@@ -142,7 +142,7 @@ describe.skipIf(!haveGolden)("resolveInputSet — golden", () => {
 
 describe("resolveInputSet — parity", () => {
 	it("skips tombstones, matching the harness's own live count", async () => {
-		// Resolving all 376 would feed fixtures a neural parser must not be graded against
+		// The parity fixtures contain 376 rows, including tombstones without expected parses.
 		// into the denominator, so `parity-corpus.ts` filters `!dropped && expect`.
 		const set = await resolveInputSet({ kind: "parity" })
 

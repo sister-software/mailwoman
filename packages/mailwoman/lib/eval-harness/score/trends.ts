@@ -6,13 +6,13 @@
  *   Per-tag score trends from the eval ledger — the version × tag matrix behind
  *   `docs/records/evals/score-trends.md`, which `docs/records/evals/index.mdx` links as the answer to
  *   the scorecards' standing "see the latest". Reads `evals/scores-by-version.json` in every shape the
- *   ledger has carried across eras and emits one table per locale.
+ *   ledger has retained across eras and emits one table per locale.
  *
  *   Lives beside `ledger-append` because it is that command's second half: a row appended to the
  *   ledger is not visible in the docs until this regenerates the page.
  *
  *   The number formatting reproduces Python's `%g` and round-half-to-even to the digit, inherited from
- *   the retired Python generator that wrote the committed page's earlier columns. Rounding "correctly"
+ *   the retired Python generator that wrote the committed page's earlier columns. A different rounding method
  *   instead would rewrite cells whose underlying score never changed, so every regen would land as
  *   diff noise across a table spanning every release.
  */
@@ -25,8 +25,8 @@ import { repoRootPath } from "@mailwoman/core/paths"
 /**
  * Tags in report order.
  *
- * Anything the ledger carries that is absent here still appears, sorted, after the listed
- * ones — a new tag shows up on its own rather than waiting for this list to grow.
+ * Every ledger item absent here still appears, sorted, after the listed ones —
+ * a new tag shows up on its own rather than waiting for this list to grow.
  */
 const TAG_ORDER = [
 	"micro",
@@ -48,8 +48,8 @@ const TAG_ORDER = [
 /**
  * Locales with a trend table, in report order.
  *
- * Also the discriminator for the v4.4.0-era ledger shape, which put the locale
- * dict straight at the top of `metrics`.
+ * Also the discriminator for the v4.4.0-era ledger shape.
+ * That shape put the locale dict straight at the top of `metrics`.
  */
 const LOCALES = ["us", "fr", "de"]
 
@@ -108,7 +108,7 @@ type LocaleScores = Record<string, Record<string, number>>
 
 /**
  * One ledger run → `{locale: {tag: score}}` on the percent scale, across every era the
- * ledger has carried: a `per_component*` container, a bare locale dict (the v4.4.0 era),
+ * ledger has retained: a `per_component*` container, a bare locale dict (the v4.4.0 era),
  * or the pre-locale flat `tag → {f1}` map on the 0–1 scale.
  */
 function normalize(run: Record<string, unknown>): LocaleScores {

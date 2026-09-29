@@ -15,8 +15,8 @@
  *   join is not coherent is dropped before sampling with the count reported, because that count describes
  *   the gazetteer and reporting it keeps a coverage hole from reading as a panel choice.
  *
- *   Half the homograph rows carry a bearer that is not the most populous. A panel whose gold is always the
- *   largest bearer would be satisfied by a population prior alone. The benchmark tests that prior.
+ *   Half the homograph rows have a bearer that is not the most populous. A panel whose gold is always the
+ *   largest bearer would be satisfied by a population prior by itself. The benchmark tests that prior.
  */
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
@@ -82,7 +82,7 @@ export interface GeoNamesCity {
  * `header: false` matches the headerless dump.
  * A spliterator that assumes a header would consume the first row.
  *
- * A per-country dump (`FR.txt`) carries the same columns and parses here unchanged.
+ * A per-country dump (`FR.txt`) contains the same columns and parses here unchanged.
  */
 export async function readCities(path: string): Promise<GeoNamesCity[]> {
 	const rows: GeoNamesCity[] = []
@@ -128,9 +128,9 @@ export async function readCountryNames(path: string): Promise<Map<string, string
 /**
  * The first postcode seen for each `(country, admin1)` pair, from `allCountries-postal.txt`.
  *
- * Taking the first makes the choice a property of the source instead of a second
+ * The first row makes the choice a property of the source instead of a second
  * seeded draw absent from the registry.
- * The file carries 1.8 million rows, so it is streamed and only the index is held.
+ * The file contains 1.8 million rows, so it is streamed and only the index is held.
  */
 export async function readPostcodeByAdmin(path: string): Promise<Map<string, string>> {
 	const byAdmin = new Map<string, string>()

@@ -34,7 +34,7 @@ export const OracleProvider = {
 } as const
 
 /**
- * The provider names an {@linkcode OracleGeocodeResult} can carry.
+ * The provider names an {@linkcode OracleGeocodeResult} can include.
  */
 export type OracleProvider = (typeof OracleProvider)[keyof typeof OracleProvider]
 
@@ -92,7 +92,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
  *
  * `createPostalAddressID` interpolates `state` into the key unvalidated while `parsePostalAddressID`
  * and `isPostalAddressID` require `^[a-z]{2}\.`, so only a bare two-letter code passes
- * and an ID that cannot be read back is worse than one that says `xx`.
+ * and an ID that cannot be read back is worse than one that reports `xx`.
  *
  * Lives here rather than in either parser because both need it and neither owns it.
  */

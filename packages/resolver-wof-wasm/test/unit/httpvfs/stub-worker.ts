@@ -6,7 +6,7 @@
  *
  *   Wraps a node:sqlite-backed {@link DatabaseClient} as the minimal httpvfs worker the browser
  *   readers consume — async `exec` answering the sql.js result shape (`[]` on no rows, else
- *   `[{columns, values}]`) plus a zero `bytesRead` counter. Shared by the street-tier, candidate,
+ *   `[{columns, values}]`) plus a zero `bytesRead` counter. Shared by the street-tier and candidate
  *   and parity suites so the stub cannot drift between them, alongside the per-test
  *   DisposableStack fixture those suites open their synthetic databases into.
  */

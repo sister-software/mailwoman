@@ -38,7 +38,8 @@ export const CENSUS_DEFAULT_REQUESTS_PER_MINUTE = 60
 const MS_PER_MINUTE = 60_000
 
 /**
- * Cache lifetime of one week, which bounds reuse across Census address-range refreshes.
+ * Cache lifetime of one week.
+ * This bounds reuse across Census address-range refreshes.
  */
 const DEFAULT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -272,7 +273,7 @@ export function createCensusGeocoderClient(options: CreateCensusGeocoderClientOp
 		displayName: "US Census Geocoder",
 		benchmark: CensusBenchmarkName.Current,
 		// The minimum interval spaces requests evenly.
-		// The per-minute budget alone would allow bursts.
+		// The per-minute budget by itself would allow bursts.
 		requestsPerMinute,
 		minRequestIntervalMs: Math.ceil(MS_PER_MINUTE / requestsPerMinute),
 		retry: {

@@ -8,7 +8,7 @@
  *   `@mailwoman/zoning/sdk`.
  *
  *   The artifact is built locally and never shipped: three published statements disagree about the source's
- *   licence. The manifest carries `tier: build-local` and `license: noassertion`. The SDK refuses a
+ *   licence. The manifest records `tier: build-local` and `license: noassertion`. The SDK refuses a
  *   `shipped` tier while that holds.
  *
  *   `--measure-resolutions` measures without building. The index resolution is a measurement this layer takes
@@ -119,7 +119,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		if (!exportPath) {
 			// The vintage is required here and not earlier because it keys the download cache
 			// and stamps the manifest.
-			// Demanding one earlier would make an offline measurement over an on-disk export impossible.
+			// An earlier requirement would prevent offline measurement of an on-disk export.
 			if (!vintage) {
 				throw new Error(
 					"gazetteer build zoning: no product vintage — pass --source-vintage, or drop --offline so the item can be read. " +

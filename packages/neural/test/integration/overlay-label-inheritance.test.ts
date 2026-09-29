@@ -14,7 +14,7 @@
  *   labels reach it. The shared base emits 33 logits per token. The first parse then throws inside
  *   `assertEmissionWidth`. The package is inoperable at runtime.
  *
- *   Checking for a card alone is insufficient. `resolveWeights` already fell back to the
+ *   A card check by itself is insufficient. `resolveWeights` already fell back to the
  *   base card when the overlay's was absent, but four scaffolded carriers had a card that existed and simply had no
  *   `labels` key. Existence and completeness are different questions.
  */
@@ -58,9 +58,9 @@ describe("weights overlays inherit their base's label vocabulary", () => {
 		test.skipIf(!HAVE_WEIGHTS.get(locale))(`${locale} decodes with the model's full vocabulary`, async () => {
 			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
 
-			// Reaching into `labels` rather than asserting on a parse: a wrong
-			// vocabulary throws on the first parse.
-			// A thrown assertion says less than a count comparison.
+			// A direct `labels` check rather than a parse assertion: a wrong vocabulary
+			// throws on the first parse.
+			// A thrown assertion reports less than a count comparison.
 			const labels = classifier["labels"]
 
 			expect(labels, `${locale} resolved ${labels.length} labels; en-US resolves ${baseline?.length}`).toHaveLength(

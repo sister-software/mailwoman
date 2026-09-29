@@ -25,18 +25,18 @@ role: explanation
 5. **What it costs.** Where the design gives something up, and to whom.
 6. **Related.** Links to the reference pages that keep the interface valid.
 
-## Opening move
+## Start here
 
 Open with the question a reader arrived with, in their words, and answer it in the second paragraph rather
 than the last.
 
 ## Exemplar paragraph
 
-> Reading an address by hand involves two questions. First you decide where the pieces start and stop. For
+> A person reading an address by hand answers two questions. First, they decide where the pieces start and stop. For
 > example, `1600 Amphitheatre Parkway` is one piece and `Mountain View` is another. Only then do you decide
 > what each piece is. The phrase grouper (stage 2.7) is the first of those questions on its own. It proposes
 > spans with a kind hypothesis and a confidence, so the model at stage 3 answers "what type is this proposed
-> span?" instead of discovering boundaries and types at once. Splitting the two costs a page of plumbing and
+> span?" instead of discovering boundaries and types at once. The separation costs a page of plumbing and
 > provides a smaller question at the point where errors are expensive, because a boundary the grouper proposes
 > can be reconsidered, while a boundary a joint decoder has already committed to cannot.
 

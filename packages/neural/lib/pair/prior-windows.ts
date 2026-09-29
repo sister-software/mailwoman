@@ -134,7 +134,7 @@ export function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: num
  * Compute the segment index of every entry in `nonEmptyGroups`, by counting literal `,` and newline
  * characters in `inputText` that fall strictly before each group's first piece's start offset.
  *
- * Counting offsets rather than piece text is unaffected by how the tokenizer
+ * Offset counts, rather than piece-text counts, are unaffected by how the tokenizer
  * attaches a piece to its neighbouring word group.
  * Without `inputText`, every group falls in segment 0.
  */

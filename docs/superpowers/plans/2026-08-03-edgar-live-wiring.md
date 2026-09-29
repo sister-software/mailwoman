@@ -12,7 +12,7 @@
 
 - **Decision 6 applies everywhere: abstain, never guess.** A row or line that cannot be confidently reduced to a subsidiary name is counted in `unparseable` and dropped. Every new rule below either abstains or aligns columns, and none of them invents a value.
 - **Every emitted value must be a substring of the document.** Each emitted `name`/`jurisdiction` must appear in the document as a contiguous string after tags are stripped, entities decoded and whitespace collapsed. This check is necessary but not sufficient. `exhibit21-real.test.ts` has fabrication assertions because the 2026-08-03 run emitted `"EX-21.1"`, `"3"`, `"q42025exh211listofsubsidia.htm"` and `"•"` as subsidiary names, and all of them pass the substring check.
-- **`filer/test-fixtures/edgar/expected.json` is the interface, and it was not derived from `parseExhibit21`.** It came from an independent DOM-based reference implementation and was hand-checked against the source documents. Do not edit it to match implementation output. If you believe an expectation is wrong, say so in your report and stop. Editing it without saying so would turn the regression suite into a record of whatever the code does.
+- **`filer/test-fixtures/edgar/expected.json` is the interface, and it was not derived from `parseExhibit21`.** It came from an independent DOM-based reference implementation and was hand-checked against the source documents. Do not edit it to match implementation output. If you believe an expectation is wrong, say so in your report and stop. An unreported edit would turn the regression suite into a record of whatever the code does.
 - Do not use `enum` (`erasableSyntaxOnly`). Acronyms are whole components in identifiers (`CIK`, `SEC`, `HTML`, `SGML`, `URL`).
 - Use tabs for indentation and double quotes, and omit semicolons, matching the surrounding file exactly.
 - `yarn typecheck:tests` must pass alongside `yarn vitest run filer/`, because neither vitest nor `tsc -b` checks `satisfies` pins in test files.
@@ -161,13 +161,13 @@ git commit -m "fix(filer): parse the exhibit rather than EDGAR's SGML envelope a
 
 - [ ] **Step 1: Read all top-level tables rather than the outermost one**
 
-Replace `extractOutermostTableHTML` with a function returning every depth-0 `<table>…</table>` block in document order. Nesting handling is unchanged: a table nested inside a cell belongs to its parent and is not returned separately, and an unclosed final table still yields everything after its opening tag. Rows are then classified per table, and the results concatenated.
+Replace `extractOutermostTableHTML` with a function returning every depth-0 `<table>…</table>` block in document order. Nested tables behave as before: a table inside a cell belongs to its parent and is not returned separately, and an unclosed final table still yields everything after its opening tag. Classify rows per table, then concatenate the results.
 
 - [ ] **Step 2: Drop columns that are blank in every row of a table**
 
 Per table, right-pad every row to the table's maximum cell count, then drop each column index whose value is blank in every row. `cable-one-2025.htm`'s rows go from `["Bluffton Telephone Company, LLC", "", "South Carolina"]` to `["Bluffton Telephone Company, LLC", "South Carolina"]`.
 
-Do this per table and by column, never per row. Filtering blanks row by row loses the fact that a row's leading cell was blank. That blank cell is what distinguishes an indented child row from a subsidiary row, and the parser cannot tell them apart from one row alone.
+Do this per table and by column, never per row. A row-by-row blank filter loses the fact that a row's leading cell was blank. That blank cell distinguishes an indented child row from a subsidiary row, and the parser cannot tell them apart from one row alone.
 
 - [ ] **Step 3: Extend the header/decoration label list**
 
@@ -382,7 +382,7 @@ git commit -m "feat(filer): find a filing's Exhibit 21 from its SGML document ma
 
 ### Task 5: Collapse duplicate CIKs in candidate resolution
 
-**Status: complete.** This task landed on this branch, and the three tests below are in `edgar-filings.test.ts`. Mutation testing verified the collapse in both directions. Removing it makes these tests fail, and keying it on the company name instead of the CIK makes the 3a namesake tests fail.
+**Status: complete.** This task landed on this branch, and the three tests below are in `edgar-filings.test.ts`. Mutation testing verified the collapse in both directions. These tests fail when the collapse is removed, and the 3a namesake tests fail when the code uses the company name instead of the CIK.
 
 **Files:**
 

@@ -167,7 +167,7 @@ export const frOrderRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Golden output carries parse truth without corpus metadata.
+			// Golden output includes parse truth without corpus metadata.
 			if (opts.golden) {
 				write(stringifyJSON({ raw, components, country: "FR" }))
 

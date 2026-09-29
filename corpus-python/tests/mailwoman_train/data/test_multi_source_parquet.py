@@ -1,10 +1,10 @@
 """A parquet file carrying more than one source is indexed under every one of them.
 
 The writer caps a file at ``rowsPerFile`` rows. A source boundary can fall anywhere, so a file can contain multiple
-sources. In ``v0.31.0-region-code-and-unit``, 8 of 718 train files carry two sources and one file carries four.
+sources. In ``v0.31.0-region-code-and-unit``, 8 of 718 train files list two sources and one file lists four.
 Two of those sources appear in no other file.
 
-Taking the first row's source as the whole file lost those sources in three places. ``_index_by_source`` never saw
+The old code treated the first row's source as the whole file and lost the other sources in three places. ``_index_by_source`` never saw
 them. As a result, ``_apply_source_weights`` could not raise for a source omitted from the config. The function's
 unnamed-source guard exists to catch that omission. ``source_row_counts`` also attributed each whole file to its
 first source. Reps per row is a ratio. An overstated numerator therefore understates the reps this audit checks.

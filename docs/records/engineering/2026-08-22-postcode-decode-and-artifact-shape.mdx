@@ -46,7 +46,7 @@ Most of the implementation is built. The gap is narrower than it looks.
 | generic prefix-walk trie                     | `@mailwoman/ancestrie`               | shipped, unused for postcodes                 |
 
 `candidateSystemsForPostcode` is already overlap-aware: `62701` is accepted by the US, DE and FR
-shapes, and it returns all three. Resolving that ambiguity by picking one locale up front is the
+shapes, and it returns all three. A locale choice made up front would erase that ambiguity and is the
 failure to avoid. The caller's country scope is what narrows it.
 
 ## The granularity spectrum is the design constraint
@@ -228,7 +228,7 @@ carries the answer: `T0H 1M0` is rural, `M1J 1A8` is not. The urban half shipped
 `UNIT_GRADE_POSTCODE`; the rural half is excluded by that one character.
 
 **The pooled number would have been a trap.** Across both populations CA reads 0.10 km p50, which
-looks like a uniform win and is not one. Blocking on the character beats promoting the country
+looks like a uniform win and is not one. The character-level block beats promotion of the country
 _measurably_ — the shipped result now beats blanket postcode-first on every percentile (p90 1.88 km
 vs 3.26, ≤1 km 86.2% vs 82.3%), because rural keeps the locality.
 
@@ -319,7 +319,7 @@ cannot say.** Concretely —
    correlate rather than an answer, and #1786 now makes that absence visible rather than a Gulf-of-Guinea
    coordinate.
 
-Answering it properly needs a source with a retirement date. USPS publishes one and licenses it;
+A proper answer needs a source with a retirement date. USPS publishes one and licenses it;
 HUD's quarterly USPS crosswalk is free and covers active codes; neither has been evaluated here.
 
 ## What the artifact should assert
@@ -414,7 +414,7 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
   It was two numbers rather than one: urban 78 m, rural 2.08 km. The urban half shipped into the unit tier.
   FSA/LDU still maps onto PFX1 unchanged — FSA is the prefix tier (~1,650 nodes, analogous to GB
   outward), LDU the unit tier — and no FSA index has been built.
-- **Feeding the decode back into span confidence.** `postcode_prefix_ancestors` records what a prefix
+- **The decode can feed back into span confidence.** `postcode_prefix_ancestors` records what a prefix
   asserts, as metadata on a resolved node. No mechanism lets it raise or lower confidence that a
   neighboring span is really a locality. This is the piece that does not exist, and it is
   what the Pelias observation addresses.

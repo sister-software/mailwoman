@@ -15,7 +15,8 @@ import type { LocaleBaseTuple } from "#surfaces/locale"
 /**
  * One labelled piece of a row.
  *
- * Pieces inside a group are joined with a space, and groups are joined with the register's separator.
+ * Pieces inside a group are joined with a space.
+ * Groups are joined with the register's separator.
  */
 export interface Piece {
 	text: string

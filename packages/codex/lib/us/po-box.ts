@@ -34,7 +34,7 @@ export type USPoBoxDesignator = (typeof US_PO_BOX_DESIGNATORS)[number]
 /**
  * Recognition patterns for {@link US_PO_BOX_DESIGNATORS}.
  *
- * Keeping the surface grammar next to the canonical designator prevents the
+ * The surface grammar stays next to the canonical designator to prevent the
  * exported lexicon and matcher from drifting apart.
  */
 const PO_BOX_DESIGNATOR_PATTERNS: ReadonlyArray<readonly [USPoBoxDesignator, string]> = [

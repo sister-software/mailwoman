@@ -103,11 +103,11 @@ const { values: args } = parseArguments({
  * That scale ranks `postalcode` above `locality`.
  *
  * This convention rejects that preference.
- * Swapping in the specificity scale would reinstate it.
+ * A specificity scale would reinstate it.
  *
- * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s
- * `adminPriority` switches per row, leading with `postcode` only when `isUnitGradePostcodeHit`
- * says the code is street-block-class (a GB unit postcode, an NL PC6) and with `locality` otherwise.
+ * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s `adminPriority`
+ * switches per row, leading with `postcode` only when `isUnitGradePostcodeHit` identifies the
+ * code as street-block-class (a GB unit postcode, an NL PC6) and with `locality` otherwise.
  * This table is the second arm, flattened.
  *
  * It gives the right result for the FR rows it grades.
@@ -119,7 +119,7 @@ const { values: args } = parseArguments({
  * It differs on one axis: it ranks `postalcode` (5) above `localadmin`/`borough` (4), where the
  * shared scale puts an area-grade code below the whole `PLACETYPE_FILTER_GROUPS.locality` tier.
  *
- * Migrating changes this eval's verdict on any row that resolves a `localadmin`
+ * A migration changes this eval's verdict on any row that resolves a `localadmin`
  * or `borough`, so it needs that count on this eval's own panel first.
  * A promoted convention does not move on an argument.
  */

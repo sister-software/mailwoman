@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Corpus operator tools — the `run()`-style modules behind `mailwoman corpus …` commands. No argv,
- *   no `process.exit`: commands own parsing, rendering, and exit codes.
+ *   no `process.exit`: commands own parsing, rendering and exit codes.
  */
 
 export * from "#tools/align-canonical"

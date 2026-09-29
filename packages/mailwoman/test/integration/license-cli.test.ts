@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The compiled CLI ships its register, so no test can hand it a trusted key. Every refusal is asserted by its word, and no file may be written on one.
+ *   The compiled CLI ships its register, so no test can hand it a trusted key. Every refusal is asserted by its word. No test may write a file on refusal.
  */
 
 import { serveNode } from "@mailwoman/api-kit"

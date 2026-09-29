@@ -72,7 +72,7 @@ const CENTROID_SF = { lat: 37.7749, lon: -122.4194 }
 const CENTROID_NY = { lat: 40.7128, lon: -74.006 }
 const CENTROID_DIVERGENT = { lat: 37.119, lon: -79.6658 }
 // Never registered in `blockCentroids`: a coordinate the test uses to prove that area's
-// res-6 cell carries no coverage row at all, an independent check on the fixture's honesty.
+// res-6 cell has no coverage row, an independent check on the fixture's honesty.
 const CENTROID_NEVER_SURVEYED = { lat: 41.8781, lon: -87.6298 }
 
 const CENTROIDS: Record<string, { lat: number; lon: number }> = {
@@ -202,7 +202,7 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		using db = openFixture()
 		const schemadb = db
 
-		// Independent honesty check on the fixture: an area never fed to the builder carries no
+		// Independent honesty check on the fixture: an area never fed to the builder has no
 		// coverage row at all, proving the absence below is real rather than a query artifact.
 		const neverSurveyedRes6 = shortCellToInt(
 			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 6) as H3Cell
@@ -461,8 +461,8 @@ describe("speed bucket boundaries", () => {
 			expect(result.unknown_block_count).toBe(0)
 
 			// {0,24} -> under-25 (2), {25,99} -> 25-100 (2), {100,999} -> 100-1000 (2), {1000} ->
-			// gigabit (1): the SQL case's exclusive `<` comparisons land where
-			// speedBucketForDownloadSpeed says they should, for every boundary value at once.
+			// gigabit (1): the SQL case's exclusive `<` comparisons land where speedBucketForDownloadSpeed
+			// classifies them as expected, for every boundary value at once.
 			const expectedGroups = new Map<string, number>()
 
 			for (const speed of BOUNDARY_SPEEDS) {

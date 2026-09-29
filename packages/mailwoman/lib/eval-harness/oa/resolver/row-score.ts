@@ -30,7 +30,7 @@ export interface RowScore extends ArmOutcome {
 /**
  * Scores the resolved places for one row against the row's expected admin names and point.
  *
- * Matching is by name because OpenAddresses rows carry no WOF ID.
+ * The comparison uses names because OpenAddresses rows contain no WOF ID.
  * {@linkcode LocalityMatcher} decides the locality match.
  * `regionMatches` accepts a region name or abbreviation.
  *

@@ -30,7 +30,7 @@ test.describe("Demo — resolution cascade", () => {
 
 	test("German address — postcode 10115 country-restricts into Berlin rather than New York", async ({ demo }) => {
 		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US ZIP.
-		// The gazetteer now carries US + DE/FR/EU postcodes.
+		// The gazetteer now includes US + DE/FR/EU postcodes.
 		// The locality must resolve first (Berlin → DE by population) and country-restrict the
 		// postcode, so it resolves to the DE 10115 point — IN Berlin — never the NYC ZIP.
 		// Grade the coordinate (postcode-precise now): Berlin ≈ 52.5, 13.4 rather than Manhattan ≈ 40.8, -74.0.

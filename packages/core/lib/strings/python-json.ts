@@ -17,7 +17,7 @@ import { stringifyJSON } from "#json"
  *        pairs for astral chars). `JSON.stringify` emits raw UTF-8. We replicate Python's default
  *        (`ensureASCII: true`) and allow `ensure_ascii=False` (`ensureASCII: false`).
  *
- *   String escaping of ascii (quote, backslash, `\n`/`\t`/`\r`/`\b`/`\f`, other control -> `\u00xx`)
+ *   ASCII string escaping (quote, backslash, `\n`/`\t`/`\r`/`\b`/`\f`, other control -> `\u00xx`)
  *   is identical between `JSON.stringify` and Python's json, so we delegate per-string base
  *   escaping to `JSON.stringify` and only post-escape the non-ascii range when `ensureASCII` is
  *   on.

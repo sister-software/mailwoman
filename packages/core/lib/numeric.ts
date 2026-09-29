@@ -36,7 +36,7 @@ export function clamp(value: number, min: number, max: number): number {
 const ROUND_HALF_DIGIT = 5
 
 /**
- * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
+ * Increment a non-negative decimal-digit string, propagating the overflow (e.g. "999" → "1000").
  */
 export function incDecimalString(s: string): string {
 	const a = s.split("")

@@ -1,9 +1,9 @@
 """Probe 0b (parity campaign, night-1): fit CRF transition log-probs by counting label bigrams.
 
-The shipped decoder applies ``crf-transitions.json`` when the weights package carries one
+The shipped decoder applies ``crf-transitions.json`` when the weights package includes one
 (``neural/weights.ts`` ``readCrfTransitions`` -> ``classifier.ts`` Viterbi potentials), but CRF
 TRAINING diverged long ago (``crf_loss_weight=0.0`` since v0.5.0) and no bundle ships the file —
-decode runs on the structural BIO mask alone. This fits transitions the cheap way: Laplace-smoothed
+decode uses only the structural BIO mask. This fits transitions the cheap way: Laplace-smoothed
 bigram counts over a training corpus's gold ``labels`` sequences, emitted in the exact label order
 of a model-card's ``labels`` array (index-aligned with the model's logit heads).
 

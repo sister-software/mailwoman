@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The national Overture rooftop provider answers a `zh`-keyed lookup for a registered country with its database on disk, and `{}` for one without a database or unregistered.
+ *   The national Overture rooftop provider answers a `zh`-keyed lookup for a registered country with its database on disk. It returns `{}` when the database is missing or the country is unregistered.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

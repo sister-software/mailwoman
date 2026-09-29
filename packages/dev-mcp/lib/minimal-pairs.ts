@@ -8,7 +8,7 @@
  *   Other measurements here vary the configuration while holding the input fixed. This measurement varies the input
  *   while holding the configuration fixed. That isolates changes caused by a token from changes caused by a setting.
  *
- *   The caller supplies the rungs. Generating them here would assert a component order. A generator with the wrong
+ *   The caller supplies the rungs. A local generator would assert a component order. A generator with the wrong
  *   order for one locale would produce a table for an invalid ordering.
  *
  *   A tag absent on a rung is reported as absent. A component can be gained, lost, or changed. The table preserves
@@ -115,7 +115,7 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 		}
 	}
 
-	// A null coordinate on either side is not distance zero: abstention is its own outcome and the tier fields carry it.
+	// A null coordinate on either side is not distance zero: abstention is its own outcome and the tier fields record it.
 	const moved =
 		previous.lat !== null && previous.lon !== null && current.lat !== null && current.lon !== null
 			? haversineKm(previous.lat, previous.lon, current.lat, current.lon)

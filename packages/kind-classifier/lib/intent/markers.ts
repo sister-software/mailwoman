@@ -6,11 +6,11 @@
  * Marker derivation for the ROAD_TO_V9 §4 intent vocabulary. This code is pure and synchronous. It is the only place the
  * classifier turns a fired rule into something a caller reads.
  *
- * Three of the four intent kinds can raise their marker here from the string alone. The fourth,
- * Stage 2.5 cannot raise `bare_toponym`'s `declared_ambiguity` from the string alone.
+ * Three of the four intent kinds can raise their marker here from the string by itself. The fourth,
+ * Stage 2.5 cannot raise `bare_toponym`'s `declared_ambiguity` from the string by itself.
  * Its trigger is the dominance margin of the resolved candidate list. `mailwoman/query-intent.ts` raises it
  * after the resolve against `DECISIVE_MARGIN_LOG10`. This module therefore never emits
- * `declared_ambiguity`, since a marker asserting ambiguity from the string alone would declare every
+ * `declared_ambiguity`, since a marker asserting ambiguity from the string by itself would declare every
  * bare city name ambiguous.
  */
 

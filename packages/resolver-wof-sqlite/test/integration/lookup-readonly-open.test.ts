@@ -9,7 +9,7 @@
  * mounts forbid write-mode opens.
  *
  * SQLite silently downgrades a write-mode open to read-only on an owned read-only file, so a 0444
- * open succeeds under a write-mode option too. Recording the readOnly option passed to DatabaseSync
+ * open succeeds under a write-mode option too. The test records the `readOnly` option passed to DatabaseSync
  * is the reliable signal.
  */
 
@@ -50,9 +50,9 @@ vi.mock("node:sqlite", async (importOriginal) => {
 // per worker, so `node:sqlite` or `./lookup.ts` may already sit in the cache,
 // evaluated with the real DatabaseSync by an earlier file.
 // The mock factory would never run for a cached module and the construction spy would stay empty.
-// Reset on the way in so the chain re-evaluates against the mock, and on the way out
-// so the next file never inherits our RecordingDatabaseSync. so the next file in this
-// fork never inherits our RecordingDatabaseSync from the cache.
+// Reset on the way in so the chain re-evaluates against the mock.
+// Reset it on the way out so the next file never inherits our RecordingDatabaseSync.
+// so the next file in this fork never inherits our RecordingDatabaseSync from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 

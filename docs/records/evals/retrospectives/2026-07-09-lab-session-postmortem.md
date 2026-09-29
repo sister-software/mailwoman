@@ -18,12 +18,12 @@ lost its `é` at the parser, missed a rooftop the data held, and rendered as a l
 | **v5.9.0** | **v241 model promotion**: `v2.4.1-fr-nsplice-ft` (init_from fine-tune on the `v0.8.0-fr-nsplice` spliced tokenizer) + #1046 street-centroid tier (2.2M streets derived from the sealed BAN artifact, voies 0/8→7/8) + #1043 house-grade decoration + #1047/#1048 tooling  |
 
 v241 check table (full version on #444): mangle 23.5→**17.7%** int8, Honoré+René fixed, held-out
-FR z=+0.90 / US z=+0.29, non-FR drift ~0. Training: 12k steps, constant lr 5e-5, ~33 min A100.
+FR z=+0.90 / US z=+0.29, non-FR drift ~0. The run used 12k steps, constant lr 5e-5, and ~33 min A100.
 
 ## Falsified (the night's real product)
 
 1. **#1039 LocaleHint-as-country-prior** — locale-hint is script+postcode by design; `en-US/0.30`
-   fallback on 34/36 no-postcode-tail inputs. Wiring it would be inert-to-harmful. Surviving
+   fallback on 34/36 no-postcode-tail inputs. Its integration would be inert-to-harmful. The surviving
    changes: street-type-morphology prior, confidence floor.
 2. **Training-free FR vocab-splice (#444/#1047)** — mean-init inherits `é`'s strongly-trained
    O-signal; mangle got WORSE (23.5→26.4%). Prior art (#884/#912) held only under weak-diacritic
@@ -40,7 +40,7 @@ FR z=+0.90 / US z=+0.29, non-FR drift ~0. Training: 12k steps, constant lr 5e-5,
   the endpoint bump — poll the tarball URL rather than `npm view`, before declaring a publish consumable.
 - **Trackio was silently CSV-only for every run** (reserved `_legend` key) — found+fixed at the
   v241 launch; unknown how many prior runs went untracked live.
-- Judging tier behavior from Photon `properties` misled twice (#1041/#1050) — decoration lags the
+- Photon `properties` misled the tier assessment twice (#1041/#1050) — decoration lags the
   resolution ladder by one release; verify tier via repro script rather than wire labels.
 
 ## Open / next

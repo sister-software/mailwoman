@@ -15,8 +15,8 @@ import { describe, expect, it, vi } from "vitest"
 describe("attributionReport", () => {
 	it("reads the installed weights packages rather than the source register", async () => {
 		// The register lists the sources research resolved.
-		// The installation carries its own set.
-		// Reporting the register here would claim attribution for rows the operator does not have.
+		// The installation includes its own set.
+		// A register report here would claim attribution for rows the operator does not have.
 		const report = await attributionReport("AGPL-3.0-only OR LicenseRef-Commercial")
 
 		expect(report.engineLicense).toBe("AGPL-3.0-only OR LicenseRef-Commercial")

@@ -26,7 +26,7 @@ export type RecipeEditResult =
  *
  * @returns The source offsets of the array body so a caller can splice inside it without
  * touching anything else in the file, including the docstring above the list.
- * Every list carries that docstring.
+ * Every list includes that docstring.
  */
 function listBody(source: string, listName: string): { start: number; end: number } | undefined {
 	const header = new RegExp(`export const ${listName}\\s*=\\s*\\[`, "u").exec(source)

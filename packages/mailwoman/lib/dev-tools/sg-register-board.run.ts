@@ -73,7 +73,7 @@ interface RegisterRow {
 /**
  * Draws about `N` rows split across the registers, seeding DuckDB so the same seed draws the same rows.
  *
- * Building-led rows come from rows whose `unit` is a building name.
+ * The building register draws rows whose `unit` is a building name.
  * The other registers draw from all rows.
  */
 async function drawRows(): Promise<Map<SGRegister, RegisterRow[]>> {
@@ -149,7 +149,7 @@ for (const register of REGISTERS) {
 	}
 }
 
-// Grading sets each row's `status` to `pass` or `improvement_target` from the shipped pipeline's result.
+// The grade sets each row's `status` to `pass` or `improvement_target` from the shipped pipeline's result.
 if (!values["skip-grade"]) {
 	const graded = await gradeSeedCases(cases)
 

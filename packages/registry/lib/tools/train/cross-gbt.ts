@@ -10,7 +10,7 @@
  *
  *   The pipeline assembles NPPES and Open Payments TX records for the same NPI population, then the
  *   shared `trainCrossSourceModel` geocodes through the standard ingest and blocks the union. It keeps only
- *   cross-source candidate pairs, and trains the shipped model into
+ *   cross-source candidate pairs. It trains the shipped model into
  *   `registry/models/crosssource-gbt-en-us.ts`.
  *
  *   Sources (both public domain, `.notes/data-sources.md`):
@@ -78,7 +78,7 @@ export interface TrainCrossSourceGBTOptions {
 	 */
 	precisionBar?: number
 	/**
-	 * Training date stamped into the meta.
+	 * The training date stored in the metadata.
 	 *
 	 * Default today.
 	 */

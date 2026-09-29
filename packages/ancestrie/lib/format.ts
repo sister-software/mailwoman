@@ -61,8 +61,8 @@
  *   canonical output: the serializer is deterministic and insertion-order-independent. Strings are
  *   interned in sorted order. trie states are numbered by a pre-order DFS that visits edges in
  *   sorted-token order (root = 0); entry ordinals follow the interval forest's pre-order (roots and
- *   sibling lists sorted by id ascending). Sealing the same entry set twice — in any add order —
- *   yields identical bytes.
+ *   sibling lists sorted by id ascending). The same entry set yields identical bytes after sealing,
+ *   regardless of add order.
  */
 
 /**

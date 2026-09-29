@@ -185,8 +185,8 @@ export function rgbToPacked(color: RGB): number {
 /**
  * Codepoint written for a cell the frame left empty.
  *
- * `MapFrame` stores 0 there; `AsciifyTerminal` expects a real character,
- * and normalizes a space to the inkless color itself.
+ * `MapFrame` stores 0 there.
+ * `AsciifyTerminal` expects a real character. and normalizes a space to the inkless color itself.
  */
 const SPACE_CODEPOINT = 0x20
 

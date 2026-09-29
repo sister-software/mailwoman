@@ -65,7 +65,7 @@ async function wofPaths(): Promise<string[]> {
 
 /**
  * A boot preflight message that a stranger's first `mailwoman serve` reads:
- * it says exactly what data is missing and the one command that fixes it.
+ * it reports exactly what data is missing and the one command that fixes it.
  */
 function buildPreflightMessage(): string {
 	return buildNoGazetteerMessage({
@@ -82,7 +82,7 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 	}
 
 	try {
-		// `@mailwoman/neural-weights-*` packages carry no `exports` map.
+		// `@mailwoman/neural-weights-*` packages have no `exports` map.
 		// The subpath resolves as a plain file inside the package.
 		// `import.meta.resolve` realpaths through the workspace symlink.
 		// It throws only for an unresolvable package and resolves a missing file inside one.
@@ -127,7 +127,7 @@ async function countDatabases(subdir: string, prefix: string): Promise<number> {
  */
 async function buildHealthData(): Promise<HealthData> {
 	const card = await readModelCard()
-	// This field drops env-supplied paths that are not on disk, so "what's deployed" carries no phantom paths.
+	// This field drops env-supplied paths that are not on disk, so "what's deployed" lists only existing paths.
 	const wofDBs: string[] = []
 
 	for (const p of await wofPaths()) {
@@ -253,9 +253,10 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	}
 
 	const paths = await wofPaths()
-	// A candidate DB alone (no WOF admin database) is a valid boot configuration.
+	// A candidate DB by itself (without a WOF admin database) is a valid boot configuration.
 	// The preflight therefore checks both.
-	// This check governs geocode/batch/resolveTree/reload only, and `parse` is already wired above.
+	// This check governs geocode/batch/resolveTree/reload.
+	// `parse` is already wired above.
 	const candidateDB = await resolveCandidateDBPath()
 
 	if (!paths.length && !candidateDB) {

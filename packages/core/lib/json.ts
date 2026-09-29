@@ -52,7 +52,7 @@ export function prettyJSON<T = unknown>(input: T, newline = true, space: string 
  * Two call sites need the allowlist.
  * A cache key must omit the API key and keep the remaining keys in a fixed order.
  * A regenerated seed file must diff only when a value changes.
- * Passing the list here keeps both call sites on the branded printer.
+ * The list keeps both call sites on the branded printer.
  *
  * @returns A string containing the JSON representation of the input object.
  * @see {@linkcode prettyJSON} for human-friendly JSON output.
@@ -112,7 +112,7 @@ export function parseJSONStrict<T = unknown>(input: string): T {
 }
 
 /**
- * A JSON array carried inside a string field.
+ * A JSON array encoded inside a string field.
  *
  * `undefined` answers `[]`; a value that parses to anything but an array throws,
  * because a non-array there is a schema change at the source rather than something to coerce.

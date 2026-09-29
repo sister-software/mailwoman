@@ -8,9 +8,8 @@
  *   Operator ruling: **a flag with no test is either up for removal or needs a test.**
  *   Both cases require action. This check prevents the question from going unanswered because a manual sweep becomes stale.
  *
- *   Matching is deliberately loose: a flag name appearing anywhere in a test file counts, including in prose, because
- *   the job is to catch a flag with no connection to the suite at all rather than to grade the quality of the coverage
- *   it finds.
+ *   A test counts when its name appears anywhere in the file, including in prose.
+ *   This check finds flags with no connection to the test suite. Other checks assess coverage quality.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

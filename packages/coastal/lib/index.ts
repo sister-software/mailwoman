@@ -143,7 +143,7 @@ export interface CoastalErosionReading {
 	/**
 	 * Every polygon of the scenario that contains the point, ordered by `area_id`.
 	 *
-	 * Overlapping frontages can yield several.
+	 * One frontage can yield several entries when frontages overlap.
 	 * The list is empty for an `unknown` reading.
 	 */
 	designations: CoastalDesignation[]

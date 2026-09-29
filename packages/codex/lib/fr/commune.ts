@@ -9,7 +9,7 @@
 import { titleCase } from "spliterator/casing"
 
 /**
- * Joining particles that stay lowercase inside a commune name: `Saint-Jean-de-Luz`, `Méry-sur-Oise`.
+ * These particles stay lowercase inside a commune name: `Saint-Jean-de-Luz`, `Méry-sur-Oise`.
  *
  * A leading particle is not a joiner and is capitalized (`Le Mans`).
  */

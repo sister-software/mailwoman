@@ -75,7 +75,7 @@ export interface LoadedStreetMorphologyFST {
 	 */
 	path?: PathBuilderLike
 	/**
-	 * Build provenance, read from the artifact trailer or carried fresh off the fallback build.
+	 * Build provenance, read from the artifact trailer or copied from the fallback build.
 	 */
 	provenance?: FSTProvenance
 }

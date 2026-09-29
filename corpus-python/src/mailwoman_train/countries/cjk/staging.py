@@ -25,7 +25,7 @@ REGISTRIES_CORPUS = "v8-cjk-regs-2026-09-08"
 
 
 def _overlay_files(versioned: str, corpus: str) -> dict[str, bool]:
-    """The three files every CJK overlay carries, whichever countries are in it."""
+    """The three files every CJK overlay includes, whatever countries it contains."""
     overlay = f"{versioned}/{corpus}"
     return {
         "overlay manifest": os.path.isfile(f"{overlay}/MANIFEST.json"),

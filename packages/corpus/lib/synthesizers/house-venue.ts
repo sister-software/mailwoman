@@ -60,7 +60,7 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Maple Leaf Cafe",
 	"Riverside Garden Center",
 	"Tech Solutions Inc",
-	// French addresses carry both English and French venue names, so the pool includes both.
+	// French addresses include both English and French venue names, so the pool includes both.
 	"Café de la Poste",
 	"Boulangerie Saint-Michel",
 	"Le Petit Bistrot",

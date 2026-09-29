@@ -1223,7 +1223,7 @@ git commit -m "refactor(train): key per-country code by country under countries/
 - Consumes: every role module.
 - Produces: `cli.main(argv=None)`, and one `cli/commands/<name>.py` per subcommand, each exporting `add_parser(subparsers) -> None` and `run(args) -> int`.
 
-`scripts/verify_toolchain.py` does not move. It imports only the standard library (`importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib`), and `.husky/pre-commit:63` and `package.json:54` invoke it as bare `python3` without `uv run`. Folding it into the CLI would make the pre-commit hook depend on a synced venv.
+`scripts/verify_toolchain.py` does not move. It imports only the standard library (`importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib`), and `.husky/pre-commit:63` and `package.json:54` invoke it as bare `python3` without `uv run`. A move into the CLI would make the pre-commit hook depend on a synced venv.
 
 - [ ] **Step 1: Write the failing test**
 

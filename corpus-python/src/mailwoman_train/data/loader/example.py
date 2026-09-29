@@ -1,4 +1,4 @@
-"""What one encoded row carries into a batch."""
+"""The values one encoded row provides to a batch."""
 
 from __future__ import annotations
 

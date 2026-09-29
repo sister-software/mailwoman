@@ -58,7 +58,7 @@ function fogFill(id: string, fogProperty: "fog" | "fog_opt"): FillLayerSpecifica
 		layout: { visibility: "none" },
 		paint: {
 			"fill-color": COVERAGE_FOG_COLOR,
-			// Missing coverage values render as clear.
+			// Rows without coverage values render as clear.
 			"fill-opacity": ["*", ["coalesce", ["to-number", ["get", fogProperty]], 0], COVERAGE_MAX_FOG_OPACITY],
 		},
 	}

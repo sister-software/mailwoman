@@ -14,12 +14,12 @@ import { PathBuilder } from "path-ts"
 import { lintReply, type ValeAlert } from "#hooks/vale/check-core"
 
 /**
- * Opening marker for the task list owned by the task-intake workflow.
+ * Marker that begins the task list owned by the task-intake workflow.
  */
 export const TODO_SYNC_BEGIN = "<!-- todo-sync:begin -->"
 
 /**
- * Closing marker for the task list owned by the task-intake workflow.
+ * End marker for the task list owned by the task-intake workflow.
  */
 export const TODO_SYNC_END = "<!-- todo-sync:end -->"
 

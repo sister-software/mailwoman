@@ -11,7 +11,7 @@
  *
  *   It preserves remote configuration. It leaves dirty trees and local commits intact.
  *   It preserves shallow clone depth.
- *   The plan carries the shallowness because a shallow
+ *   The plan records the shallowness because a shallow
  *   checkout has no history to diff against.
  */
 
@@ -230,7 +230,7 @@ export async function inspectClone(directory: string): Promise<CloneState> {
  * Plan the sync for a set of repos without touching anything.
  *
  * `fetchFirst` updates remote-tracking refs so `behind` is measured against the remote's actual tip.
- * Skipping it would report a stale clone as up-to-date.
+ * A stale clone would appear up-to-date without that fetch.
  * It defaults on.
  */
 export async function planReposSync(options: {

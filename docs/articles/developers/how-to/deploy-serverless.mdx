@@ -109,7 +109,7 @@ import 102 ms | load 789 ms | first parse 193 ms | total 1085 ms | rss 407 MB
 import  99 ms | load 844 ms | first parse 195 ms | total 1138 ms | rss 376 MB
 ```
 
-Adding the gazetteer and geocoding an address instead of parsing it:
+To add the gazetteer and geocode an address instead of parsing it:
 
 ```
 import 191 ms | model 791 ms | open db 1 ms | first geocode 223 ms | total 1207 ms | rss 425 MB
@@ -121,11 +121,11 @@ import 192 ms | model 690 ms | open db 1 ms | first geocode 226 ms | total 1109 
 
 Three things to take from that.
 
-**Opening the gazetteer costs 1 ms.** A 2.88 GB SQLite file is memory-mapped rather than read, so the file's
-size does not appear in the cold start at all. Geocoding adds about 100 ms of cold start over parsing,
+**The gazetteer opens in 1 ms.** The operating system memory-maps the 2.88 GB SQLite file instead of reading it, so the file's
+size does not appear in the cold start at all. A geocoding call adds about 100 ms of cold start over parsing,
 and all of it is the extra module graph rather than the database.
 
-**Loading the model is 70% of the cold start and cannot be moved.** It is one ONNX session build over a
+**Model loading takes 70% of the cold start.** One ONNX session build processes a
 39 MB graph. Warm requests do not pay it, so the change is instance lifetime rather than code.
 
 **Resident set lands near 375 MB parse-only and 425 MB with a resolver.** Size the instance above that

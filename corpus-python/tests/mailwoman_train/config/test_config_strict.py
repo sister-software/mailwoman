@@ -22,7 +22,7 @@ def test_unknown_nested_key_raises_with_dotted_path_and_file(tmp_path):
     with pytest.raises(KeyError) as excinfo:
         load_config(path)
     message = str(excinfo.value)
-    # The message carries the full dotted key and the config file name.
+    # The message includes the full dotted key and the config file name.
     assert "train.reinit_label_rowz" in message
     assert "probe.yaml" in message
 

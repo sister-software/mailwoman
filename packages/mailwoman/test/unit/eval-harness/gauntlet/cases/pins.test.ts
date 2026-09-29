@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The pin implementation: the committed constants read back exactly, a rewrite touches only
- *   the three constant lines, a same-values rewrite is a no-op, and a reshaped test file refuses
+ *   the three constant lines. A same-values rewrite is a no-op. A reshaped test file refuses
  *   rather than being partially rewritten.
  */
 

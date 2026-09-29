@@ -5,7 +5,7 @@
  *
  *   The worktree arm's interface, exercised against a throwaway git repo rather than this one.
  *
- *   This test does not geocode. Building an engine takes minutes and requires the data root, so a test that ran one
+ *   This test does not geocode. An engine build takes minutes and requires the data root, so a test that ran one
  *   would be a slow integration test. The test checks the worktree-arm implementation.
  *   A ref arm runs the ref's source. A `worktree` arm runs the uncommitted source.
  *   Reported commits identify dirty trees. Both arms leave the caller's tree unchanged.
@@ -125,7 +125,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 
 		expect(result.answers[0]!.tier).toBe("uncommitted")
 		// A dirty tree is not its head.
-		// Reporting the bare sha would let a result claim a commit it did not run.
+		// A bare sha would let a result claim a commit it did not run.
 		expect(result.commit).toContain("+dirty")
 	})
 

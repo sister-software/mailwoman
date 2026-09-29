@@ -44,7 +44,7 @@ export interface ProviderFilingSummary {
 }
 
 /**
- * Filing summary for a query, stamped with `layer_manifest.sourceVintage`.
+ * The filing summary for a query includes `layer_manifest.sourceVintage`.
  *
  * `unknown_block_count` counts blocks without coverage and makes no statement about
  * whether providers file there.
@@ -146,7 +146,7 @@ export async function filingLandscape(
 		throw new Error("filingLandscape: `geoids`/`h3Cells` must not be an empty array")
 	}
 
-	// Reading the manifest first fails fast on a database without one.
+	// The manifest read fails fast when the database has no manifest.
 	const manifest = await readLayerManifest(db)
 
 	const requestedUnits: ReadonlyArray<string | number> = query.geoids ?? query.h3Cells!

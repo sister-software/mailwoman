@@ -9,6 +9,7 @@
 
 /// <reference types="node" />
 
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workingTreeFiles } from "@mailwoman/core/git"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/process"
@@ -40,7 +41,7 @@ async function pathspecsFor(value: Surface): Promise<string[]> {
  * The file list split into one slice per core for concurrent Vale processes.
  *
  * Vale reads an explicit file list on a single core.
- * Handing each core its own slice brings the same work down to a few seconds.
+ * Each core processes its own slice, and the full run takes a few seconds.
  */
 function chunkFiles(files: readonly string[], chunkCount: number): string[][] {
 	return Array.from(chunks(files, Math.max(1, Math.ceil(files.length / chunkCount))))
@@ -83,14 +84,14 @@ const SUMMARY_LINE = /^[✔✖] (\d+) errors?, (\d+) warnings? and (\d+) suggest
 /**
  * A chunk's output with Vale's closing summary line removed and its counts returned.
  */
-function splitSummary(stdout: string): { body: string; counts: number[] } {
+function splitSummary(stdout: string): { body: string; counts: [number, number, number, number] } {
 	const match = SUMMARY_LINE.exec(stdout)
 
 	if (!match) return { body: stdout, counts: [0, 0, 0, 0] }
 
 	return {
 		body: stdout.slice(0, match.index) + stdout.slice(match.index + match[0].length),
-		counts: match.slice(1).map(Number),
+		counts: [Number(match[1]), Number(match[2]), Number(match[3]), Number(match[4])],
 	}
 }
 
@@ -115,7 +116,7 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 	let exitCode = 0
 
 	for (const results of await Promise.all(runs)) {
-		const totals = [0, 0, 0, 0]
+		const totals: [number, number, number, number] = [0, 0, 0, 0]
 
 		for (const { stdout, stderr, exitCode: code } of results) {
 			const { body, counts } = splitSummary(stdout)
@@ -123,7 +124,10 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 			process.stdout.write(body)
 			process.stderr.write(stderr)
 
-			counts.forEach((count, index) => (totals[index] = (totals[index] ?? 0) + count))
+			totals[0] += counts[0]
+			totals[1] += counts[1]
+			totals[2] += counts[2]
+			totals[3] += counts[3]
 			exitCode = Math.max(exitCode, code)
 		}
 
@@ -138,7 +142,13 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 
 async function lint(surface: Surface, narrowing: readonly string[]) {
 	const resolvedPathSpecs = await pathspecsFor(surface)
-	const surfaceFiles = await workingTreeFiles(resolvedPathSpecs)
+	const listedFiles = await workingTreeFiles(resolvedPathSpecs)
+
+	const existence = await Promise.all(
+		listedFiles.map(async (file) => ((await pathExists(repoRootPathBuilder(...file.split("/")))) ? file : null))
+	)
+
+	const surfaceFiles = existence.filter((file): file is string => file !== null)
 
 	if (!surfaceFiles.length) {
 		throw new Error(`No files in the working tree matched the ${surface} Vale surface`)

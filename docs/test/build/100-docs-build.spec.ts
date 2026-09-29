@@ -38,7 +38,7 @@ const processEnv = process.env
  * Build into a throwaway dir rather than the workspace `build/`.
  *
  * The Playwright webServer serves `build/` for the browser specs.
- * Building the health check there too would clobber the served site.
+ * A health-check build there would clobber the served site.
  */
 const CHECK_OUT_DIR = tempRootPath("mailwoman-docs-build-check")
 

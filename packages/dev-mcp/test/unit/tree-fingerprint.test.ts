@@ -114,7 +114,7 @@ describe("staleEngineMessage", () => {
 describe("computeTreeFingerprint — dirty files", () => {
 	it("reports a modified path whole, including the first one", async () => {
 		// `git status --porcelain` writes an unstaged modification as " M path".
-		// Trimming the whole output before splitting removes column one of the first line only.
+		// A whole-output trim before splitting removes column one of the first line only.
 		// A fixed-width read then takes the path's leading character too.
 		// The field reports a nonexistent file.
 		// This affects only the first path.

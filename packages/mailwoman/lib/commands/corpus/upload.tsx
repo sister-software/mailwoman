@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A corpus must reach R2 before a GPU can access it. `modal volume put` writes are visible to
- *   `modal volume ls/get`. Containers cannot read those writes. Every remote artifact therefore travels
- *   from the local machine to R2, then through container-side rclone.
+ * Corpus data must be uploaded to R2 before GPU containers can use it.
+ * Container-side sync then pulls from R2.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -37,7 +36,7 @@ const DEFAULT_BUCKET = "mailwoman-assets"
 const R2_RETRIES = ["--low-level-retries", "30", "--retries", "8"]
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * CLI command definition used by the filesystem router.
  */
 export const spec = {
 	name: "upload",
@@ -68,12 +67,10 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The fields this command reads from a built corpus version's top-level `MANIFEST.json`.
+ * Fields this command reads from a version's top-level `MANIFEST.json`.
  *
- * Taken from `BuildCorpusManifest` so the field names cannot drift from what the build writes.
- * Both are optional because a manifest written before the build recorded them still parses.
- *
- * An absent `license_policy` reads as unstated rather than as a policy that ran.
+ * Derived from `BuildCorpusManifest` to keep names in sync with the build output.
+ * Optional so older manifests still parse.
  */
 type UploadedCorpusManifest = Partial<
 	Pick<BuildCorpusManifest, "licenses" | "license_policy" | "licenses_cover" | "total_aligned_rows">
@@ -241,8 +238,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// rclone reads `:s3:` credentials from the environment.
-		// Pointing RCLONE_CONFIG at an empty path keeps its absent-config notice from being read as a failure.
+		// rclone uses `:s3:` credentials from env vars.
+		// Empty `RCLONE_CONFIG` avoids noisy missing-config output.
 		const env = childEnv({
 			RCLONE_CONFIG: "",
 			RCLONE_S3_PROVIDER: "Cloudflare",
@@ -329,8 +326,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			setSteps((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
 
 		for (const [index, job] of jobs.entries()) {
-			// An absent source is reported here because rclone's own error arrives buried under
-			// the config notice, where "this version does not exist here" reads as a broken R2.
+			// Handle missing local sources here for clearer errors than rclone's output.
 			if (!(await pathExists(job.source))) {
 				update(index, { status: "error", detail: `not found locally: ${job.source}` })
 
@@ -353,9 +349,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 		}
 	})
 
-	// A thrown selection or credential error is the whole message.
-	// Rendering only the step list would print a bare header.
-	// Readers could mistake it for a completed upload of zero files.
+	// For setup/selection failures, show only the command error output.
 	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	return (

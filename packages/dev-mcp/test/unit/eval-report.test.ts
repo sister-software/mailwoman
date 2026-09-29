@@ -52,7 +52,7 @@ describe("readEvalReport", () => {
 
 	it("distinguishes an unmeasured floor from one that missed the bar", async () => {
 		// The eval marks an unmeasured floor failing so it cannot pass by default.
-		// Reading that as "missed the bar" sends someone tuning a metric that never ran.
+		// That interpretation would send someone to tune a metric that never ran.
 		const report = await readEvalReport(
 			await outDir({
 				...PASSING,

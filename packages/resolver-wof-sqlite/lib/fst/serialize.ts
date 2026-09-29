@@ -9,7 +9,7 @@
  *   - Header, 32 bytes: magic `FST\0`, version u16, flags u16 (bit 0 means `crossCountryBranches` is present),
  *     The header stores five u32 counts (stateCount, edgeCount, placeCount, stringCount, stringBytes).
  *     Its provenance offset is u32. The value 0 means the trailer is absent.
- *   - String table: `stringCount + 1` u32 offsets, the last being a sentinel, followed by the UTF-8 data.
+ *   - The string table contains `stringCount + 1` u32 offsets, with the final offset as a sentinel, followed by the UTF-8 data.
  *   - State table, 16 bytes per state: edgeStart u32, placeStart u32, edgeCount u32, placeCount u32. Before version
  *     4 the entry is 12 bytes with u16 counts.
  *   - Edge table, 8 bytes per edge: stringIdx u32, targetState u32.
@@ -117,7 +117,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const buf = Buffer.alloc(totalSize)
 	let pos = 0
 
-	// Flag bit 0 marks that place rows carry `crossCountryBranches`.
+	// Flag bit 0 marks that place rows include `crossCountryBranches`.
 	// Readers of a file without it report `undefined`.
 	const hasAmbiguity = nodes.some((n) => n.places.some((p) => p.crossCountryBranches !== undefined))
 	MAGIC.copy(buf, pos)

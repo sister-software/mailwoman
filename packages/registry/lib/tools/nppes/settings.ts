@@ -35,8 +35,8 @@ export interface Setting {
  *
  * Every row sets both `collapseSpatial` and `addressFrequency` explicitly,
  * because the proven settings are default-on in `resolveEntities`.
- * Leave either implicit and the flipped default silently rides the inverse-address-frequency
- * row, which makes the delta read as 0.
+ * Leave either implicit and the flipped default silently follows the inverse-address-frequency row.
+ * That makes the delta read as 0.
  *
  * Every row is fed the corpus-wide table, the realistic deployment, so the zero-config
  * default with its input-scoped table has to be measured separately.

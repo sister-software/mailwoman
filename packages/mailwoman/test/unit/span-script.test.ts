@@ -9,7 +9,7 @@
  *   A router needs the Han script on the venue span rather than the script of the full input.
  *
  *   The test uses hand-built trees because parsing requires the roughly 9 GB database set and an ONNX bundle.
- *   It checks the script stamp returned for each span and its indexed text. Running the model would also test model tagging.
+ *   It checks the script stamp returned for each span and its indexed text. A model run would also test model tagging.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -103,7 +103,7 @@ describe("stampSpanScripts — the script each span is written in", () => {
 
 	it("answers the script that writes MOST of a mixed span, not the first codepoint's", () => {
 		// 丸の内 is two Han and one Hiragana, so the span is Hani.
-		// Reading the leading codepoint agrees here by accident and disagrees on の丸内.
+		// The leading codepoint agrees here by accident and disagrees on の丸内.
 		// The fold therefore weights the span's characters.
 		const raw = "東京都千代田区丸の内1-9-1"
 

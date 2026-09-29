@@ -197,7 +197,7 @@ export async function buildOutlierExposure(
 		report?.(`  ${lang}: ${kept}`)
 	}
 
-	// Sorting by hash shuffles deterministically before the 80/10/10 split.
+	// Hash sorting shuffles rows deterministically before the 80/10/10 split.
 	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	const nVal = Math.floor(pool.length * 0.1)
 	const nTest = Math.floor(pool.length * 0.1)

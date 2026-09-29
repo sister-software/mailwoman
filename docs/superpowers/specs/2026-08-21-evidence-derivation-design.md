@@ -143,7 +143,7 @@ derivation.ts   DerivationGraph + project()
 ```
 
 Zero dependencies is a requirement. `@mailwoman/bdc`, `@mailwoman/resolver`, `@mailwoman/filer` and
-later `@mailwoman/match` all need this package. Routing it through `@mailwoman/core` would add core's
+later `@mailwoman/match` all need this package. A dependency on `@mailwoman/core` would add core's
 ~11 MB of shipped data to every leaf consumer. The same cost is why `nuts-lookup` and
 `timezone-lookup` keep local ray-casts today rather than depend on `@mailwoman/spatial`.
 
@@ -190,7 +190,7 @@ The type enforces these rules:
 | Today    | present, doing both jobs                                            | **does not exist anywhere in the tree**                   |
 
 A UPRN-matched rooftop is `address_point` + `designated`. An OSM-matched rooftop is `address_point` +
-`observed`. The mechanism is the same and the authority differs. Collapsing the two would upgrade a
+`observed`. The mechanism is the same and the authority differs. A merged value would upgrade a
 source's observation into an authority's designation without saying so, and the companion plan
 identifies that as the error to avoid.
 
@@ -278,7 +278,7 @@ capability. It shows that the vocabulary accepts any record type, including reco
 ### 4.4 FR lexical negative mode — probe-conditional
 
 The measured board cases are concentrated here, but `street-centroids-fr.db` has no `layer_coverage`
-at all. Writing one requires answering an empirical question first:
+at all. A new value requires an answer to an empirical question first:
 
 > **Probe:** does BAN's own data support a per-commune designation claim?
 

@@ -94,7 +94,7 @@ describe("the authored pharmacy records", () => {
 		expect(mapping?.vocabulary).toBe(ExternalVocabulary.POITaxonomy)
 		expect(mapping?.externalID).toBe(POI_CATEGORY)
 
-		// Reading the id through the vocabulary owner catches an identifier the taxonomy does not carry.
+		// The vocabulary owner rejects an identifier the taxonomy does not define.
 		// Such a mapping would otherwise appear to work inside this package.
 		const category = getPOICategory(String(POI_CATEGORY))
 
@@ -203,7 +203,7 @@ describe("the wave-1 records", () => {
 		expect(assertion?.target).toBe(OBTAIN_MEDICATION)
 
 		// `necessary` would overstate the evidence.
-		// The attested material says a US drugstore characteristically dispenses.
+		// The attested material records that a US drugstore characteristically dispenses.
 		// A locale-scoped synonym and a row count each fall short of a dispensing census.
 		expect(assertion?.modality).toBe(Modality.StronglyExpected)
 
@@ -226,7 +226,7 @@ describe("the wave-1 records", () => {
 		expect(mapping?.provenance.source).toBe("mailwoman-curated")
 		expect(mapping?.provenance.sourceRecord).toContain("taxonomy.json")
 
-		// Reading the category through the vocabulary owner catches an identifier that stopped resolving.
+		// The vocabulary owner rejects a category that stopped resolving.
 		// Without this check, the mapping would translate into no category and other checks would miss it.
 		const category = getPOICategory(String(DRUGSTORE_CATEGORY))
 
@@ -271,8 +271,9 @@ describe("reading the record set through the runtime lookups", () => {
 		expect(index.derivedFactsAbout(toConceptID("chemist"))).toBeUndefined()
 	})
 
-	// `derivedFactsAbout` returning `[]` reads like an unmapped external lookup, so the empty answer is
-	// asserted beside the non-empty ones that show the model carries the concept and translates its id.
+	// `derivedFactsAbout` returning `[]` reads like an unmapped external lookup,
+	// so the empty answer is asserted beside the non-empty ones that show the model
+	// recognizes the concept and translates its id.
 	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 

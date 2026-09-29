@@ -8,11 +8,11 @@
  *   postal-city/geographic-city split that the resolver's coordinate-first soft-scorer currently
  *   approximates geometrically.
  *
- *   The signal: 45.9M US rows carry both `postal_city` (what the postal system calls the place — USPS
+ *   The signal: 45.9M US rows contain both `postal_city` (what the postal system calls the place — USPS
  *   "acceptable city names", vanity cities) and a geographic locality (`address_levels[2]`). 16.0M
  *   of them (34.9%) diverge. Aggregated per `(postcode, postal_city, geo_locality)` with observed
- *   counts, that divergence is the alias evidence: "postcode 10954's mail says Nanuet. the polygon
- *   says Clarkstown".
+ *   counts, that divergence is the alias evidence: "postcode 10954's mail lists Nanuet. the polygon
+ *   lists Clarkstown".
  *
  *   sibling table by design (`postal_city_alias`, its own sqlite) — never mixed into the PIP-derived
  *   `postcode_locality` rows: one table = one provenance class (feedback-no-irrelevant-trivia). A

@@ -254,7 +254,7 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Returns the share of `parent`'s counted children that carry `tag`.
+	 * Returns the share of `parent`'s counted children that have `tag`.
 	 *
 	 * It returns `0` when the parent is unknown or has no children with the tag.
 	 * A `0` means only that this artifact offers no support.

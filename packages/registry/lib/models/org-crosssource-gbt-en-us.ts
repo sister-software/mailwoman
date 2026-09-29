@@ -12,8 +12,8 @@
 import type { GBT } from "@mailwoman/match"
 
 /**
- * Training provenance for {@link ORG_CROSS_SOURCE_GBT_MODEL}: seed, split and scores,
- * so a shipped model can be traced back to the run that produced it.
+ * Metadata records the training provenance for {@link ORG_CROSS_SOURCE_GBT_MODEL}: seed,
+ * split and scores, so a shipped model can be traced back to the run that produced it.
  */
 export const ORG_CROSS_SOURCE_GBT_META = {
 	version: "1.0.0",

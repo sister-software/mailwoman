@@ -36,7 +36,7 @@ describe("verifyTrainingProvenance", () => {
 	})
 
 	it("refuses a card whose training section records an empty attribution list", async () => {
-		// A card can carry a full training section — corpus, recipe, hardware —
+		// A card can include a full training section — corpus, recipe, hardware —
 		// and still state no fact about where the rows came from.
 		const card = await cardWith({
 			training: { corpus_version: "v0.32.0-locality-shape", data_attribution: [] },

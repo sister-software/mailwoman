@@ -84,7 +84,7 @@ export const VENUE_STRUCTURE_MODIFIERS: readonly string[] = [
  * a subset of {@link VENUE_STRUCTURE_DESIGNATORS} that excludes `gate` and `building`, which form
  * ordinary street names in the modifier+designator shape ("East Gate", "Building Society Place").
  *
- * Adding an entry claims no street uses the name "<modifier> <entry>".
+ * An entry claims that no street uses the name "<modifier> <entry>".
  * Check before you add it.
  */
 export const MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS: readonly string[] = [

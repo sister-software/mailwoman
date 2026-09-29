@@ -36,7 +36,7 @@ export interface DecodedRings {
 
 /**
  * Pack a GeoJSON `MultiPolygon`/`Polygon` coordinate tree into the stored blob, throwing
- * when the geometry carries no ring or a ring carries fewer than four positions.
+ * when the geometry has no ring or a ring has fewer than four positions.
  */
 export function encodeRings(polygons: MultiPolygonRings): Uint8Array {
 	const entries: Array<{ pointCount: number; polygonIndex: number }> = []

@@ -52,7 +52,7 @@ export interface PlacetypeGraph {
  * WOF placetypes form a DAG with heavy descendant sharing.
  *
  * For example, `installation` is a leaf reachable from many parents.
- * Projecting that DAG to a nested tree duplicates every shared subtree under every parent path
+ * A nested tree duplicates every shared subtree under every parent path in that DAG
  * and blows up exponentially for roots like `planet` (~165 MB for the full hierarchy).
  *
  * The graph shape stays O(nodes + edges) regardless.

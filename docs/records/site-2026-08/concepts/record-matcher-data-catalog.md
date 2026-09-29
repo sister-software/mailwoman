@@ -61,7 +61,7 @@ Carried alongside the primaries, used for enrichment rather than as primary reco
 | `txhhsc_nursing-facility-closures_20260608.tsv`         | TX HHSC closed nursing facilities                     |
 | `txhhsc_hospital-based-nursing-facilities_20260611.tsv` | TX HHSC hospital-based nursing facilities             |
 
-## Refreshing a snapshot
+## Refresh a snapshot
 
 The datasets are published on a rolling basis. To refresh: download the new per-program file, keep the `…_YYYYMMDD.tsv` naming (the date is the snapshot of record), drop it under the source root, and update the `snapshot` / `rows` fields in `registry/configs/record-matcher-sources.json`. The column mappings are stable across snapshots unless a publisher renames a column — if a run's geocode rate drops, check the header against the committed mapping first.
 

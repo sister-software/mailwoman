@@ -9,7 +9,7 @@
  *
  *   The reverse geocoder and `WOFSQLitePlaceLookup.ancestors()` share this walk. Placetype
  *   specificity lives here in `PLACETYPE_DEPTH`, a single TypeScript map that extends below
- *   `localadmin` so locality, borough, neighbourhood, and microhood rank correctly. Forward
+ *   `localadmin` so locality, borough, neighbourhood and microhood rank correctly. Forward
  *   resolution rarely sees those as ancestor placetypes, while reverse geocoding always does.
  */
 

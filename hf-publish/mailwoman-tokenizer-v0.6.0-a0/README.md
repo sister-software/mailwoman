@@ -26,7 +26,7 @@ Multi-script SentencePiece tokenizer trained for address parsing. Achieves **0% 
 - **Source**: https://github.com/sister-software/mailwoman
 - **License**: AGPL-3.0
 
-## Training data
+## Data used for training
 
 2.19 million place-name records from Who's On First across 7 countries:
 
@@ -83,4 +83,4 @@ pieces = tokenizer.encode_as_pieces("東京都新宿区西新宿2-8-1")
 | ----------------- | ------------------------------------------------------------------ |
 | `tokenizer.model` | SentencePiece binary (load with `spm.SentencePieceProcessor.load`) |
 | `tokenizer.vocab` | Plain-text vocabulary listing (one piece per line, with score)     |
-| `model_card.json` | Training provenance metadata (SHA256, training lines, etc.)        |
+| `model_card.json` | Metadata about training provenance (SHA256, training lines, etc.)  |

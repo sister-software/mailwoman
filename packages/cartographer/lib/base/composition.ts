@@ -61,8 +61,8 @@ export const PROTOMAPS_GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts
 /**
  * The Earth sprite.
  *
- * It must match the basemap schema version: the v4 sprite carries the icons the v4 theme's layers
- * reference by name, so a style over a different basemap version needs a different sprite.
+ * It must match the basemap schema version: the v4 sprite includes the icons the v4 theme's
+ * layers reference by name, so a style over a different basemap version needs a different sprite.
  */
 export const PROTOMAPS_SPRITE_URL = "https://public.mailwoman.ai/protomaps/sprites/v4/light"
 

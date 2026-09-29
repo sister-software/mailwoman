@@ -195,7 +195,7 @@ export interface BuildCoastalResult {
  *
  * The ring area is spherical and the source area is planar in British National Grid,
  * so they differ by a few tenths of a percent.
- * Reading holes as exterior rings produces a gap of several percent.
+ * The conversion produces a gap of several percent if it reads holes as exterior rings.
  */
 const AREA_TOLERANCE = 0.01
 

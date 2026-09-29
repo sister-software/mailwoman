@@ -53,7 +53,7 @@ collects it without a single training step.
 - Measured on the **v301 span-head artifact** (the archived `feat/727-span-head` branch's k-best
   surface) — the only model with exported span scores. The JS decoder is not on main; this result is
   the consumer that justifies merging it.
-- **FR only** — the one locale with a complete street-name index on hand. Generalizing needs
+- **FR only** — the one locale with a complete street-name index on hand. Generalization needs
   per-country name sources (US TIGER/situs, NO Kartverket, PT/RO BAN-equivalents) behind one
   `StreetLocalityEvidence` interface (P1's spec).
 - The index is BAN and the board fixtures are BAN-derived — not circular (the index is a lookup rather than the model; production carries the same index and the eval surfaces are real streets), but the

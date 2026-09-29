@@ -48,7 +48,7 @@ export interface TIGERCountySubdivision {
 	 */
 	COUSUBNS: string
 	/**
-	 * Concatenation of current state FIPS code, county FIPS code, and county subdivision FIPS code.
+	 * Concatenation of current state FIPS code, county FIPS code and county subdivision FIPS code.
 	 *
 	 * @title County Sub-division Identifier
 	 * @minLength 10

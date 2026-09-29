@@ -11,7 +11,7 @@
  *
  *   `mcnemarExactP` builds its terms by ratio rather than forming a factorial, so the cases check it
  *   against the binomial directly: a 6/0 split is 2 × 2⁻⁶, a 5/0 split is 2 × 2⁻⁵ and does not
- *   reject, and 12/3 is 2 × (1 + 15 + 105 + 455) / 2¹⁵.
+ *   reject. The arithmetic is 12/3 = 2 × (1 + 15 + 105 + 455) / 2¹⁵.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

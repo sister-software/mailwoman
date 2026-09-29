@@ -156,7 +156,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 		pos += encoded.length
 	}
 
-	// Write state, edge, and place tables.
+	// Write state, edge and place tables.
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateTableSize
 	const placeTableStart = edgeTableStart + edgeTableSize
@@ -365,7 +365,7 @@ const PROVENANCE = {
 }
 
 test("readFSTProvenanceWeb: returns undefined for versions below 3 (no trailer support)", () => {
-	// A v2 buffer never carries provenance the reader will read — version check is `< 3`.
+	// A v2 buffer never includes provenance the reader will read — version check is `< 3`.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 2, provenance: PROVENANCE })
 	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
 })

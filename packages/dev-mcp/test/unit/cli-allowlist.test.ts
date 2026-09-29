@@ -65,7 +65,7 @@ describe("checkCLIAllowlist", () => {
 	})
 
 	it("does not let a prefix match a longer unrelated verb", () => {
-		// `gazetteer stats` is allowed; `gazetteer` alone is not, because the allowed thing is the pair.
+		// `gazetteer stats` is allowed; `gazetteer` by itself is not, because the allowed thing is the pair.
 		expect(checkCLIAllowlist(["gazetteer"]).allowed).toBe(false)
 	})
 

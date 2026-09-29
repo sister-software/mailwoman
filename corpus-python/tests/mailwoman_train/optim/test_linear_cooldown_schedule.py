@@ -1,8 +1,8 @@
 """The WSD-style cooldown branch (2026-08-10 recipe review, change 11).
 
 Every v4.3.3 checkpoint was graded mid-cosine at 26–93% of peak LR. Schedule-matching literature
-(Chinchilla schedule-matching, Hägele et al. 2024, MiniCPM) says these evaluations understate the
-finished model. Decaying a mid-run checkpoint's LR to zero over a short branch recovers approximately
+(Chinchilla schedule-matching, Hägele et al. 2024, MiniCPM) report that these evaluations understate the
+finished model. A short branch that decays a mid-run checkpoint's LR to zero recovers approximately
 the matched-schedule endpoint.
 
 Interface pinned here: ``lr_schedule: linear_cooldown`` with ``cooldown_start_step`` holds

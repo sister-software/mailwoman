@@ -38,7 +38,7 @@ import { describe, expect, it } from "vitest"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK the resolver — see the module docstring and `v1-parse-eval.test.ts`, which carries the incident.
+		// ASK the resolver — see the module docstring and `v1-parse-eval.test.ts`, which records the incident.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false

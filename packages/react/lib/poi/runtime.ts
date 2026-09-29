@@ -50,7 +50,7 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 }
 
 /**
- * Default example queries for the POI explorer — a mix of category, build-local, and chain-brand subjects.
+ * Default example queries for the POI explorer — a mix of category, build-local and chain-brand subjects.
  */
 export const POI_PRESETS = [
 	{ label: "Drinking fountain", value: "drinking fountain near Springfield" },

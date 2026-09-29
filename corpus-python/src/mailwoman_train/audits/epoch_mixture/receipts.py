@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class CorpusReceiptError(ValueError):
-    """Report a failed receipt audit and carry the full report so the caller can save it."""
+    """Report a failed receipt audit and include the full report so the caller can save it."""
 
     def __init__(self, message: str, report: dict[str, Any]):
         super().__init__(message)
@@ -79,7 +79,7 @@ def verify_corpus_receipt_report(
 def component_sequence(labels: list[str]) -> list[str]:
     """Collapse BIO token labels to their ordered component-span sequence.
 
-    A malformed or orphan label raises. Skipping it would make a parse failure look like a corpus
+    A malformed or orphan label raises. The audit reports that label so a parse failure cannot look like a corpus
     shortfall.
     """
     sequence: list[str] = []

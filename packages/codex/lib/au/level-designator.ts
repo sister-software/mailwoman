@@ -43,7 +43,7 @@ export interface AuLevelDesignator {
 /**
  * The AS 4590.1-2017 level-type table.
  *
- * Matching tries rows in this order, so the most common types come first.
+ * The matcher tries rows in this order, so the most common types come first.
  */
 export const AU_LEVEL_DESIGNATORS = [
 	{ code: "L", name: "LEVEL", abbreviation: "L", requiresNumber: true },

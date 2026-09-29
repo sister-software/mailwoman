@@ -25,8 +25,9 @@ import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetc
 import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below
- * which a "download" is an error page rather than data.
+ * Bytes per KiB — the divisor for human-readable sizes.
+ *
+ * It is the floor below which a "download" is an error page rather than data.
  */
 
 export type FetchStateSourcesOptions = BaseFetchOptions

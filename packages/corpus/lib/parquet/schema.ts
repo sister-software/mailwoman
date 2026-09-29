@@ -47,7 +47,7 @@ export type ParquetSchemaDefinition<T> = Record<Extract<keyof T, string>, Parque
 /**
  * A single Parquet row shape.
  *
- * The index signature allows callers to carry source fields before projection.
+ * The index signature allows callers to retain source fields before projection.
  *
  * Optional fields are represented as null in the Arrow table and read back as null.
  */
@@ -120,13 +120,13 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
 	base_source_id: "VARCHAR",
 }
 
-/* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member rather than a text-encoding identifier. Lowercasing it does not type-check against ParquetSchemaDefinition.
+/* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member rather than a text-encoding identifier. A lowercase spelling does not type-check against ParquetSchemaDefinition.
    The rule cannot distinguish the enum member from a text-encoding identifier. */
 
 /**
  * Parquet schema for `LabeledRow`.
  *
- * Optional fields carry `optional: true`.
+ * Optional fields set `optional: true`.
  * Repeated UTF8 columns capture the tokens and labels arrays.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
@@ -157,7 +157,7 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
  * The span triple is required because `alignRow` emits it on every labeled row.
  * A row without it came from a producer that has not migrated.
  *
- * Writing that row would drop the labels from the file.
+ * The writer would drop the labels from the file if it wrote that row.
  * A thrown error identifies the row instead.
  */
 export function rowToParquet(row: LabeledRow): ParquetRow {
@@ -183,7 +183,7 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 
 	// The runner stamps the adapter's `surface` on every row that omits one, so an absent
 	// value here means the row reached parquet by a path that bypassed it.
-	// Writing a default would record every such row as the publisher's own string.
+	// A default would record every such row as the publisher's own string.
 	if (!row.surface) {
 		throw new Error(
 			`rowToParquet: row carries no surface ` +

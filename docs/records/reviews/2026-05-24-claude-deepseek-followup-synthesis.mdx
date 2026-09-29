@@ -9,7 +9,7 @@ The conversation refined four parts of the original reviews and named three blin
 | Area                                       | Original review position                                                                                   | After conversation                                                                                                                                                                                                                               |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Capacity-wall hypothesis                   | DeepSeek listed as one of two unexamined hypotheses                                                        | Falsifiable in 5 minutes via gradient-norm ratio probe; demoted to "rule out, don't pursue" until probe results land                                                                                                                             |
-| Ordering of joint-reconcile vs bisect      | Both reviews put joint-reconcile after training experiments (Codex Step 3, DeepSeek Step 2 after Step 0.5) | Joint-reconcile **first** — zero GPU, can run against v0.4.0 weights today, measures the architectural thesis independent of training stability. DeepSeek conceded the reordering.                                                               |
+| Order of joint-reconcile vs bisect         | Both reviews put joint-reconcile after training experiments (Codex Step 3, DeepSeek Step 2 after Step 0.5) | Joint-reconcile **first** — zero GPU, can run against v0.4.0 weights today, measures the architectural thesis independent of training stability. DeepSeek conceded the reordering.                                                               |
 | Top-k integration for v0.4.0 weights       | Implicit assumption: needs a TS beam decoder port or synthetic top-k                                       | **Option C**: expose per-token logits from ONNX (already emitted, currently discarded), aggregate softmax across phrase-grouper spans for per-span top-k. ~100 lines, real model confidences, code path matches the eventual production runtime. |
 | Fine-tuning DistilBERT control             | DeepSeek Step 0.5 — high priority, ahead of bisect                                                         | Demoted to "nuclear option" — only run if CE-only training also diverges. The dual-loss decoupling probe + CE-only repair is cheaper and more diagnostic.                                                                                        |
 | Go/no-go decision rule for joint-reconcile | Both reviews listed 10+ metrics but no decision rule                                                       | Two-axis matrix: **+15pp kryptonite exact-match** AND **≤1pt golden v0.1.2 macro_F1 regression** as the blocking conditions. Combined exact-match on `kryptonite ∪ golden` as the single headline number.                                        |
@@ -130,7 +130,7 @@ The gradient-norm ratio probe ran a few hours after this synthesis was written. 
 
 Two v0.5.0-diverged checkpoints sampled, five batches each, eff_batch=128, same loader the production training uses:
 
-| Checkpoint             | Training phase                        | `‖∇_CE‖` | `‖∇_CRF‖` | **ratio**       |
+| Checkpoint             | Model phase                           | `‖∇_CE‖` | `‖∇_CRF‖` | **ratio**       |
 | ---------------------- | ------------------------------------- | -------- | --------- | --------------- |
 | `v3-ablation/step-500` | reached loss 0.63, right before climb | 7.2–17.0 | 149–275   | **median 16.2** |
 | `phrase-off/step-1500` | deep in climb at loss 1.92            | 3.9–5.3  | 30–46     | **median 8.0**  |
@@ -143,14 +143,14 @@ DeepSeek's predicted signature: ratio drops below ~0.01 → CRF gradient has col
 
 A second six-turn conversation reframed the diagnosis: not "dual-loss decoupling" but **"CRF as aggressor"**. The story that fits all the data:
 
-- **Cooperative regime, loss &gt; 0.41.** Model starts at high entropy; both CE and CRF point downhill toward the same broad basin ("become less random"). Training descends directly.
+- **Cooperative regime, loss &gt; 0.41.** Model starts at high entropy; both CE and CRF point downhill toward the same broad basin ("become less random"). The loss descends directly.
 - **Conflict regime, loss &gt; 0.41.** Model exits the high-entropy basin and enters fine-grained per-token decisions. CE and CRF now point in opposing directions on this data. CRF's 8–20× gradient magnitude wins. The optimiser follows CRF; CE is dragged uphill.
 
 The 0.41 boundary isn't a magic number — it's where the cooperative-vs-conflict transition happens on this specific architecture + corpus. The structure of the failure is the key observation rather than the threshold.
 
 ### Why standard repairs don't fix this
 
-- **Lowering `crf_loss_weight`** scales loss values rather than gradient magnitudes. At `crf_loss_weight=0.05` with the observed ratio, the effective optimiser mix is still roughly 1:0.8 CE:CRF.
+- **A lower `crf_loss_weight`** scales loss values rather than gradient magnitudes. At `crf_loss_weight=0.05` with the observed ratio, the effective optimiser mix is still roughly 1:0.8 CE:CRF.
 - **Per-token CRF normalization (§1)** made the _loss_ magnitudes comparable. The probe shows _gradient_ magnitudes are still wildly asymmetric.
 - **Global gradient clipping** preserves the relative dominance — CRF's 16× share survives clipping.
 

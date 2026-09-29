@@ -444,7 +444,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		await db
 			.insertInto("filer_edge")
 			.values([
-				// The provider carries two FRN edges, more than `bdc_provider` can hold.
+				// The provider has two FRN edges, more than `bdc_provider` can hold.
 				{
 					from_node_id: PROVIDER_NODE,
 					to_node_id: FRN_EARLY_NODE,

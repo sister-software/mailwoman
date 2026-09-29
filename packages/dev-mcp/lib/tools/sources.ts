@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_sources` tool definition — the description an agent reads, the input schema, and the handler wiring.
+ *   The `mwdev_sources` tool definition provides the description, input schema and handler wiring an agent reads.
  *   The census itself lives in `../source-census.ts`; this file is the interface.
  */
 

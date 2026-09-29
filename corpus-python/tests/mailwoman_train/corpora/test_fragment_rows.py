@@ -55,7 +55,7 @@ def test_every_span_covers_the_text_it_claims(name: str) -> None:
 
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_the_spans_reconstruct_the_row_in_order(name: str) -> None:
-    """Concatenating the covered surfaces in span order returns every token in order, catching a cursor that advances by the wrong separator width while still producing spans inside `raw`."""
+    """Concatenate covered surfaces in span order to return every token and catch cursors that advance by the wrong separator width while keeping spans inside `raw`."""
     row = CASES[name]
     raw = row["raw"]
     covered = [raw[start:end] for start, end in zip(row["span_starts"], row["span_ends"], strict=True)]

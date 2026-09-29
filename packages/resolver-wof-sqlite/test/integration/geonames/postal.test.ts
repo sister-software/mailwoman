@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Tests for the GeoNames postal fold's two laws: stored names match the sanitized-query token shape, and centroids are medoids rather than off-settlement means.
+ * Tests two GeoNames postal-fold rules: stored names match the sanitized-query token shape. Centroids are medoids rather than off-settlement means.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

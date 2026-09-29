@@ -75,7 +75,7 @@ const ROWS: FixtureRow[] = [
 	{ category: "pier", name: "Pier 39", country: "US" },
 	{ category: "airport_lounge", name: "Delta Sky Club Concourse A", country: "US" },
 	{ category: "gas_station", name: "Holiday Station", country: "US" },
-	// Unnamed rows exist in the layer and carry no name a lexicon can learn from.
+	// Unnamed rows exist in the layer and have no name a lexicon can learn from.
 	{ category: "airport_terminal", name: null, country: "US" },
 ]
 
@@ -196,8 +196,8 @@ test("readOvertureSubVenues filters by country when asked", async () => {
 })
 
 test("a row from the reader satisfies SubVenueHarvestRow with no adaptation", async () => {
-	// The harvest row shape is source-neutral: `designatorID` and `name` are all the
-	// builder needs, and `ref` and `localizedNames` are optional.
+	// The harvest row shape is source-neutral: `designatorID` and `name` are all the builder needs.
+	// `ref` and `localizedNames` are optional.
 	const [row] = await readOvertureSubVenues({ databasePath, countries: ["CA"] })
 
 	expect(row).toBeDefined()

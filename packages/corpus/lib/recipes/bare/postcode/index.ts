@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `bare-postcode` — a postcode standing alone in the country's format. The address has no other component.
+ * `bare-postcode` — a postcode without another address component, in the country's format.
  * Every surface the recipe renders is run through `detectKnownFormats` and refused unless the detector
  * calls it a postcode, so the rendering table and `known-formats.ts`'s patterns must agree.
  */
@@ -30,15 +30,16 @@ import { SurfaceOrigin } from "#types"
  * national postcode file, so the register is the codex.
  */
 /**
- * Resolved once, because `source_id` carries the source as its prefix and a pair that
- * disagreed would name a source no row of this output declares.
+ * Resolved once, because `source_id` includes the source as its prefix and a pair
+ * that disagreed would name a source no row of this output declares.
  */
 const BARE_POSTCODE_SOURCE = defaultRecipeSource("synth-bare-postcode")
 
 const BARE_POSTCODE_PROVENANCE = {
 	register: SourceRegister.Codex,
 	surface: SurfaceOrigin.Attested,
-	// The codex table is the record, and its rows carry no `source_id` of their own.
+	// The codex table is the record.
+	// Its rows have no `source_id` of their own.
 	baseSourceID: null,
 }
 
@@ -130,7 +131,7 @@ function spacedThree(compact: string): string[] {
 /**
  * Choose distinct postcodes without inheriting the publisher's row order.
  *
- * Sorting first makes the result independent of input order.
+ * A prior sort makes the result independent of input order.
  * The seeded sample spreads reproducibly across the complete set.
  */
 export function selectPostcodes(codes: Iterable<string>, limit: number, seed: number): string[] {
@@ -155,7 +156,7 @@ export async function findMissingPostcodeSources<P extends PathBuilderLike>(
 
 /**
  * Every surface a country writes for one postcode, spaced form first, or `[]`
- * when this recipe carries no form for that country or the code does not fit.
+ * when this recipe defines no form for that country or the code does not fit.
  *
  * Exported so a test can pin that every rendered surface is one {@linkcode detectedAsPostcode} accepts.
  */

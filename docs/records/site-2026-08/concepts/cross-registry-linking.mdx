@@ -28,7 +28,7 @@ and a compliance team ends up with two provider universes that never reconcile.
 Mailwoman's record matcher doesn't try to make the strings agree. It resolves each record to a
 **place** — parse the address with the neural parser, geocode it, take the coordinate and the
 canonical key — and then asks a smaller, better question: _of the records at (or near) this place,
-which are the same entity?_ Blocking happens on the map rather than on the text. Therefore, "STE 200" versus no
+which are the same entity?_ Candidate blocking happens on the map rather than on the text. Therefore, "STE 200" versus no
 suite, "Dr" versus "Drive", ZIP versus ZIP+4 stop mattering before the comparison even starts.
 
 What's left is a scoring problem: same place, similar-enough name — one provider or two? For
@@ -38,7 +38,7 @@ typically means two co-located providers, so it rejects exactly the drifted-text
 join wants to keep. Objectives rather than thresholds — a lesson we measured the hard way before fixing it
 properly.
 
-## Training on truth nobody had to label
+## Learn from unlabeled records
 
 This part is worth stealing. The two registries share the NPI column — an external key the
 matcher's features never see. Join NPPES to Open Payments on NPI and you get thousands of
@@ -52,7 +52,7 @@ one machine, with no API keys and no per-row geocoding invoice.
 ## Numbers
 
 Texas, one afternoon, one machine. 1,954 practitioners present in both registries (the NPI join),
-3,908 records — **100% geocoded**. Blocking produced 175,200 cross-registry candidate pairs, 1.1%
+3,908 records — **100% geocoded**. The blocking pass produced 175,200 cross-registry candidate pairs, 1.1%
 of them true same-provider pairs by the NPI key.
 
 | held-out (unseen NPIs)                       | value                                |

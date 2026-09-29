@@ -83,7 +83,7 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 
 	// Greedy left-to-right: for each pair (sorted by earliest possible position),
 	// claim the next free occurrence past the cursor.
-	// Sorting by first-occurrence keeps multi-value order sane.
+	// First-occurrence sorting keeps multi-value order sane.
 	pairs.sort((a, b) => {
 		const ia = raw.toLowerCase().indexOf(a.value.toLowerCase())
 		const ib = raw.toLowerCase().indexOf(b.value.toLowerCase())

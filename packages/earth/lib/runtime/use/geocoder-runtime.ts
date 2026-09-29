@@ -73,7 +73,7 @@ const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix
 
 /**
  * Per-state street lookups loaded together, lazily by region.
- * National (country) extracts carry no interp.
+ * National (country) extracts have no interpolation.
  */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup

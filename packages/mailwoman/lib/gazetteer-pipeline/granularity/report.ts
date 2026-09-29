@@ -34,7 +34,7 @@ function sourceClass(country: CountryGranularity): string {
 	const observed =
 		synthetic === 0 ? "wof-repo" : locality.geonamesBackfilled > locality.overtureBackfilled ? "geonames" : "overture"
 
-	// The recipe promises WOF rows the artifact does not yet carry: a rebuild has not run since the recipe changed.
+	// The recipe promises WOF rows the artifact does not yet contain: a rebuild has not run since the recipe changed.
 	if (recipeSaysWOF && observed !== "wof-repo") return `${observed} (rebuild pending)`
 
 	return observed

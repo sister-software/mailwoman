@@ -206,7 +206,7 @@ describe("readers", () => {
 	it("countParquetRows counts without reading, and raises rather than answering zero for an absent file", async () => {
 		// A missing file and a file with no rows represent different states.
 		// A count is a measurement.
-		// Missing input raises instead of returning a data-looking zero.
+		// The reader raises on missing input instead of returning a data-looking zero.
 		expect(await countParquetRows(await written([labeled({ source_id: "r-4" }), labeled({ source_id: "r-5" })]))).toBe(
 			2
 		)
@@ -324,7 +324,7 @@ describe("writeParquetSplits", () => {
 				span_ends: [4, 24, 36, 40, 46],
 				span_tags: ["house_number", "street", "locality", "region", "postcode"],
 			}),
-			// Intra-span punctuation — the offsets the token columns structurally cannot carry.
+			// Intra-span punctuation — information the token columns structurally cannot represent.
 			labeled({
 				source_id: "t-pobox",
 				raw: "P.O. Box 19",
@@ -361,7 +361,7 @@ describe("writeParquetSplits", () => {
 		expect(pobox.span_ends).toEqual([11])
 		expect(pobox.span_tags).toEqual(["po_box"])
 
-		// Normalize an empty repeated field to [] and assert the row carries no spurious spans.
+		// Normalize an empty repeated field to [] and assert the row has no spurious spans.
 		const allO = back.find((r) => r.source_id === "t-all-o")!
 		expect(allO.span_starts ?? []).toEqual([])
 		expect(allO.span_ends ?? []).toEqual([])

@@ -66,7 +66,7 @@ export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<st
  * Tally several paths at once.
  *
  * Each tally's counts sum to `rows.length`.
- * Missing paths form a bucket so their rows stay in the denominator.
+ * A missing-path bucket keeps those rows in the denominator.
  */
 export function tallyPaths(
 	rows: ReadonlyArray<unknown>,

@@ -53,7 +53,7 @@ export interface CurrencyBackfillCountryReport extends CurrencyBackfillOutcomes 
 const REPORT_SAMPLE_SIZE = 25
 
 /**
- * The placetypes a dead row may carry to be judged at all; `locality` is the shipped default.
+ * The placetypes a dead row may have to be judged at all; `locality` is the shipped default.
  */
 export const DEFAULT_DEAD_PLACETYPES: readonly string[] = ["locality"]
 

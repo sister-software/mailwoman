@@ -1,9 +1,9 @@
-"""Turning a row's labels into a per-piece BIO array.
+"""Turn a row's labels into a per-piece BIO array.
 
-Two label sources reach the same projection. A pre-v0.5.0 row carries whitespace tokens with a
-parallel BIO list. a v0.5.0 row carries char-offset spans. Both build a per-character array and
+Two label sources reach the same projection. A pre-v0.5.0 row stores whitespace tokens with a
+parallel BIO list. A v0.5.0 row stores char-offset spans. Both build a per-character array and
 both hand it to `project_char_labels_to_pieces`, so the two generations cannot drift in how a
-label lands on a piece — only in which characters carry one.
+label lands on a piece. They differ only in which characters receive a label.
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ def char_label_array_from_spans(
     The v0.5.0 corpus stores labels as the parallel triple ``span_starts[]/span_ends[]/span_tags[]``
     — char ranges over ``raw``, [start, end) exclusive-end. This is the spans-native sibling of
     ``char_label_array``: no whitespace-token indirection, so intra-span punctuation chars (the
-    ``P.O.`` periods) carry the span's label instead of falling to ``O``.
+    ``P.O.`` periods) receive the span's label instead of falling to ``O``.
 
     Validates the triple's manifest invariants loudly (equal lengths, sorted ascending by start,
     non-overlapping, in-bounds) — a violation means a corrupt corpus row, never something to paper
@@ -154,7 +154,7 @@ def realign_spans_to_pieces(
 
     Same projection as ``realign_labels_to_pieces`` (shared ``project_char_labels_to_pieces``);
     only the per-char array construction differs — built from the spans, so every covered char
-    (punctuation included) carries its span's label.
+    (punctuation included) receives its span's label.
     """
     return project_char_labels_to_pieces(
         raw, char_label_array_from_spans(raw, span_starts, span_ends, span_tags), pieces

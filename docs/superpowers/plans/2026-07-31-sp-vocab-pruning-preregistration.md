@@ -2,7 +2,7 @@
 
 **Claim under test** (2026-07-30 tokenizer survey): the embedding table is about 72% of model
 parameters (`token_embeddings.weight_quantized [73143, 384]`, 28.1M of 39.26M), and vocab
-utilization is at most 24%. Pruning pieces that never fire would then shrink the int8 artifact
+utilization is at most 24%. Pieces that never fire would then reduce the int8 artifact
 substantially with **zero behavior change** on every input whose segmentation never used a pruned
 piece.
 
@@ -23,7 +23,7 @@ piece.
    identical by construction for any input whose best path avoided `P`.
 4. **ONNX surgery directly on the INT8 artifact:** row-gather `weight_quantized` by the old→new id
    map. Never prune and then requantize. Requantization changes the scale globally and loses
-   bit-parity. Selecting rows of a quantized tensor with unchanged scale and zero-point keeps every
+   bit-parity. Row selection from a quantized tensor with unchanged scale and zero-point keeps every
    kept row byte-identical.
 
 ## Bars (pass/fail, pre-registered)
@@ -46,7 +46,7 @@ piece.
 ## What this probe is NOT
 
 This probe does not ship anything. The deliverable is the verdict, the staged artifact pair and
-this record. Shipping a pruned pair is a model-artifact change and an operator decision. It would
+this record. A pruned pair is a model-artifact change and an operator decision. It would
 go out on a release train with its own model-card updates (files_md5, link-dev pins), HF/R2
 staging, and the browser loader's size expectations. The WASM runtime (task #26) is unaffected,
 because the pruned tokenizer.model is a standard SP proto that the same runtime loads.

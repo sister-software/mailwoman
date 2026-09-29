@@ -40,7 +40,7 @@ export interface AddressSystemConventions {
 export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSystemConventions>> = {
 	/**
 	 * France (La Poste / afnor NF Z 10-011): the street type is a leading particle labeled `street_prefix`
-	 * ("Rue de Rivoli"), and French addresses never carry a trailing USPS-style `street_suffix`.
+	 * ("Rue de Rivoli"), and French addresses never have a trailing USPS-style `street_suffix`.
 	 *
 	 * Postcode: exactly five digits (NF Z 10-011, documented in fr/code-postal).
 	 */

@@ -17,7 +17,7 @@ Mailwoman's engine is AGPL and stays AGPL. The commercial license sells release 
 copyleft condition, and it does not sell access to the code. Neither costs us anything on a recurring basis, so pricing
 only those two things would mean selling a perpetual grant against a one-time build.
 
-The recurring cost is the **data**. Rebuilding the admin gazetteer takes a ten-minute build on top
+The recurring cost is the **data**. The admin gazetteer takes a ten-minute build on top
 of a multi-hour ingest, a verify check, a swap, and a publish. poi.db is a four-country DuckDB
 pass over a 13.68M-row Overture release, and the situs extracts are a 50-state ingest. Somebody has to
 run those builds, grade them, and pay the R2 bill. That work repeats, so a subscription fits it.
@@ -72,7 +72,7 @@ customer-facing:
   every Monday." The catalog page should give each artifact's verified source cadence in one column.
 - **No implementation backs the cadence claim yet.** Today the gazetteer is rebuilt whenever
   the operator rebuilds it (`RELEASING.md`: "Rebuilt periodically as WOF upstream changes"), and
-  the HF dataset card has not changed since 2026-05-28. Publishing a weekly commitment
+  the HF dataset card has not changed since 2026-05-28. A weekly commitment
   without a scheduled build would be a promise we would break immediately. §7 makes the scheduled
   build a prerequisite rather than a follow-up.
 
@@ -226,7 +226,7 @@ Two caveats are mandatory:
 
 The reasoning is stated once here so that it is not argued again for each artifact. ODbL share-alike on a
 Derivative Database means every recipient may redistribute it under the same terms. A paid access check
-on such an artifact cannot be enforced. Charging for it would also tell the
+on such an artifact cannot be enforced. A charge for it would also tell the
 buyer they had bought something exclusive, when they had bought a copy of something they
 are obliged to pass on. The `build-local` tier exists to avoid that, and it
 stays the answer.
@@ -306,7 +306,7 @@ Steps 1–4 are ours and need no lawyer. Steps 5–7 are the ones likely to stal
 
 - [Database products catalog](../../records/site-2026-08/licensing/data-products.md) — the artifact
   inventory this policy applies to (D2).
-- [Pricing](../../articles/pricing.mdx) — the published tiers and the OEM band.
+- See [Pricing](../../articles/pricing.mdx) for the published tiers and OEM band.
 - [Data licensing & provenance](../../records/site-2026-08/licensing/data-provenance.md) — the per-source
   license table and the ODbL boundary this document's §5 rule is derived from.
 - [Spatial-layer interface](../../engineering/reference/layer-interface.mdx) — the

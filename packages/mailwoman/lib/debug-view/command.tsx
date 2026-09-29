@@ -125,8 +125,8 @@ function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOpti
 			const session = render(<DebugSessionApp initialInput={props.input} options={props.options} />, {
 				alternateScreen: true,
 				incrementalRendering: true,
-				// No code in the session logs through `console`; leaving the native methods alone
-				// keeps the resolver's own stderr banner out of Ink's re-render path.
+				// No code in the session logs through `console`; leaving the native methods
+				// unchanged keeps the resolver's own stderr banner out of Ink's re-render path.
 				patchConsole: false,
 			})
 

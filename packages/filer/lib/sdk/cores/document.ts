@@ -17,8 +17,8 @@ const CORES_BASE_URL = "https://apps.fcc.gov"
  *
  * One method, so a test can substitute a trivial stub instead of building an axios harness.
  *
- * Mirrors `exhibit21.ts`'s `SECDocumentClient` precedent, and a real
- * `createCORESClient()` instance satisfies it structurally.
+ * Mirrors `exhibit21.ts`'s `SECDocumentClient` precedent.
+ * A real `createCORESClient()` instance satisfies it structurally.
  */
 export interface CORESDocumentClient {
 	getDocument(input: string | URL): Promise<string>

@@ -4,20 +4,19 @@
  * @author Teffen Ellis, et al.
  *
  *   The authoritative-provider interface defines a typed boundary for structured queries to external reference services.
- *   Results carry the provider's identity, licensing and provenance.
+ *   Results include the provider's identity, licensing and provenance.
  *   This keeps provider assertions separate from Mailwoman's inferences.
  *
  *   An absent provider field remains `undefined`; the interface uses no substitute value such as `false`, `0`, or `""`.
  *   Refusal and ambiguity are explicit outcomes.
- *   Provider assertions do not overwrite Mailwoman's answer. The response carries both for the consumer to compare.
+ *   Provider assertions do not overwrite Mailwoman's answer. The response contains both for the consumer to compare.
  *   Provider product names stay out of this interface. Product-specific mapping belongs in an adapter package.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 
 /**
- * One parsed component carries a tag and surface text.
- * It also carries the span it came from.
+ * One parsed component has a tag, surface text and source span.
  */
 export interface AuthoritativeQueryComponent {
 	tag: ComponentTag
@@ -63,7 +62,7 @@ export const AuthoritativeMatchStatus = {
 export type AuthoritativeMatchStatus = (typeof AuthoritativeMatchStatus)[keyof typeof AuthoritativeMatchStatus]
 
 /**
- * One place the provider asserted, with every field carried verbatim as the
+ * One place the provider asserted, with every field copied verbatim as the
  * provider's claim rather than a Mailwoman inference.
  */
 export interface AuthoritativeMatch {
@@ -103,7 +102,7 @@ export interface AuthoritativeMatch {
  */
 export const AuthoritativeResponseStatus = {
 	/**
-	 * The provider committed to `matches[0]`, alone.
+	 * The provider committed only to `matches[0]`.
 	 */
 	Matched: "matched",
 	/**
@@ -131,8 +130,8 @@ export interface AuthoritativeResponse {
 	 */
 	attribution?: string
 	/**
-	 * License or terms identifier for downstream display, carried so a consumer can keep
-	 * provider-derived records under the provider's terms from the result alone.
+	 * License or terms identifier for downstream display, retained so a consumer can keep
+	 * provider-derived records under the provider's terms using this result.
 	 */
 	license?: string
 	/**

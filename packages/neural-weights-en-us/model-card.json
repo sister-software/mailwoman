@@ -448,8 +448,8 @@
 			]
 		},
 		"check_2026_06_19_fr_admin_split": {
-			"promotion_eval": "FR centroid check PASS — surpasses v1.5.0 on the SHIPPED assembled anchor-ON coordinate (held-out FR golden, 3000 disjoint communes): coord p50 42.5→2.2 km, mean 175→105.5 km (−40%), région-emit 39.6→99.6%. US assembled coordinate FLAT (oa-resolver-eval, 2000 OA-US rows: locality-match 97.5→97.6, p50 3.3=3.3). Two label deltas trip the 2pp pre-publish check, BOTH coordinate-invisible and operator-approved (#728): us.locality −2.2 (precision-only, 0 recall misses) and fr.country −3.5 (resolver given --default-country FR). No silent drift — both stated here + on #728 + the night postmortem.",
-			"promotion_eval_doc": "docs/records/evals/night-shifts/2026-06-19-night-postmortem.md",
+			"promotion_eval": "FR centroid check PASS — surpasses v1.5.0 on the SHIPPED assembled anchor-ON coordinate (held-out FR golden, 3000 disjoint communes): coord p50 42.5→2.2 km, mean 175→105.5 km (−40%), région-emit 39.6→99.6%. US assembled coordinate FLAT (oa-resolver-eval, 2000 OA-US rows: locality-match 97.5→97.6, p50 3.3=3.3). Two label deltas trip the 2pp pre-publish check, BOTH coordinate-invisible and operator-approved (#728): us.locality −2.2 (precision-only, 0 recall misses) and fr.country −3.5 (resolver given --default-country FR). No silent drift — both stated here and on #728.",
+			"promotion_eval_doc": "docs/engineering/releases.mdx",
 			"bridge_retired": true,
 			"flagged_deltas_coordinate_invisible": [
 				"us.locality -2.2 (precision-only — 0 recall misses, spurious-FP on gold-locality-absent rows)",

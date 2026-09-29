@@ -1,4 +1,4 @@
-"""Counting what the corpus on the volume actually teaches, to settle an open question.
+"""This module counts what the corpus on the volume teaches to settle an open question.
 
     modal run -m launch.train_remote::diagnose_corpus --corpus-dir=…
     modal run -m launch.train_remote::country_census_raw --corpus-dir=…
@@ -72,8 +72,8 @@ def diagnose_corpus(
     paths = _parquet_paths(corpus_root, "train")
     print(f"\n_parquet_paths returned {len(paths)} train parquet files")
 
-    # A file counts under every source it carries. That matches the loader's index.
-    # Counting each file once under its first row's source hides sources that never open a file.
+    # A file counts under every source it contains. That matches the loader's index.
+    # A single count under each file's first-row source omits sources that never open a file.
     by_source: Counter[str] = Counter()
     rows_by_source: Counter[str] = Counter()
     multi = 0
@@ -140,7 +140,7 @@ def country_census_raw(
     shape worth recognising: downstream, the loader cannot distinguish a country whose rows the
     filter drops from a country the corpus never had. Only dropped rows indicate a filter bug.
 
-    The shape that produced it: `country_weights` in 44 configs carried an unquoted `NO: 1.0`. YAML
+    The shape that produced it: `country_weights` in 44 configs held an unquoted `NO: 1.0`. YAML
     1.1 parses the bare token `NO` as the BOOLEAN false, so the dict key is `False`, and the loader's
     `country_weights.get("NO")` answers None — every Norwegian row silently dropped.
     """
@@ -230,7 +230,7 @@ def digit_prior(
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
     reflects it. The prior the model actually sees is the weighted multinomial over ~700 parquet
     files, after the country filter, the coarse filter and the augmentations. `augment_glue_prob`
-    alone rewrites token boundaries. This census pulls rows through `iter_rows`, the same entry point
+    The only augmentation here that rewrites token boundaries is `augment_glue_prob`. This census pulls rows through `iter_rows`, the same entry point
     the trainer uses, with the config's own weights. It does not reimplement the sampler.
 
     Reports P(tag | token) for two families:
@@ -554,7 +554,7 @@ def locale_supply_census(
 
     A row count answers neither question a locale-isolated graph turns on. The sampler restarts an
     exhausted source with a fresh shuffled pass, so a small source is presented many times and its
-    row count reads as supply it does not have. A corpus can carry one street rendered a hundred
+    row count reads as supply it does not have. A corpus can contain one street rendered a hundred
     ways. Those rows represent one street.
 
     So this counts four things a row count cannot give, over a full scan rather than a sample, since
@@ -566,15 +566,15 @@ def locale_supply_census(
     - **distinct `source_id`s**, the underlying records. `SourceProvenance.source_id` is documented
     stable across reruns so dedup and holdout manifests are reproducible. The stable ID supplies the
     independent-record count. Surfaces over source IDs show how many ways one record is rendered.
-    - **distinct component sequences**, the tuple of `span_tags` a row carries. This is the shape
-      vocabulary the country teaches: a corpus of 800,000 rows carrying four sequences teaches four
+    - **distinct component sequences**, the tuple of `span_tags` a row lists. This is the shape
+      vocabulary the country teaches: a corpus of 800,000 rows with four sequences teaches four
       forms.
 
     Digests rather than strings in the two large sets: a full GB scan holds roughly 15.6 million raw
     surfaces. Eight-byte digests keep the sets inside this function's memory. Their collision rate is
     far below the precision any decision here needs.
 
-    Rows are counted by `surface`, the field that says how the text was produced. `attested` is the
+    Rows are counted by `surface`, the field that records how the text was produced. `attested` is the
     publisher's own string. `composed` is a template over one real record's fields. `invented` has no
     published record behind it. `register` identifies the publication each row's record came from.
     Supply is countable per register rather than per adapter.
@@ -681,7 +681,7 @@ def locale_supply_census(
             "distinct_surfaces": len(surfaces),
             "distinct_source_ids": len(record_ids),
             "distinct_component_sequences": len(sequences),
-            # Record every sequence carried by the split. The receipt asks which shapes a country
+            # Record every sequence in the split. The receipt asks which shapes a country
             # never teaches. A truncated list cannot answer that question. The cap bounds the receipt
             # for a country with a large vocabulary.
             "component_sequences": dict(sequences.most_common(SEQUENCE_RECEIPT_CAP)),

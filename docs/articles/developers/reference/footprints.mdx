@@ -20,7 +20,7 @@ each table are given, so you can re-run them rather than trust this page.
 Runtime memory and build-time disk are not re-measured here. They were measured by the tutorials that
 run those workloads, and this page links them.
 
-## Installing
+## Install the packages
 
 The number that surprises people first: a full install of the entry package is 707 MB, and 523 MB of
 that is the ONNX runtime. A different host gets different numbers for the same install —
@@ -159,13 +159,13 @@ Four state pairs account for 31.9% of that total: California at 4.25 GB, Florida
 
 These were measured by the tutorials that run the workloads, and are not re-measured here.
 
-| Workload                               | Envelope                                | Measured in                                                   |
-| -------------------------------------- | --------------------------------------- | ------------------------------------------------------------- |
-| Geocoding a CSV against `candidate.db` | 3 GB of free disk for the download path | [Geocode a CSV](../tutorials/geocode-a-csv.mdx)               |
-| Building one US state, Vermont         | 8.94 GB of disk, 8 GB of free RAM       | [Build the US dataset](../tutorials/build-the-us-dataset.mdx) |
-| The same build, peak resident memory   | 7.45 GiB, by `/usr/bin/time -v`         | [Build the US dataset](../tutorials/build-the-us-dataset.mdx) |
-| A whole-planet gazetteer build         | Tens of gigabytes, hours of wall clock  | [Full planet build](../tutorials/full-planet-build.mdx)       |
-| Parsing in a browser                   | The model over the network, then WebGPU | [Parse in the browser](../tutorials/parse-in-the-browser.mdx) |
+| Workload                             | Envelope                                | Measured in                                                   |
+| ------------------------------------ | --------------------------------------- | ------------------------------------------------------------- |
+| A CSV geocode against `candidate.db` | 3 GB of free disk for the download path | [Geocode a CSV](../tutorials/geocode-a-csv.mdx)               |
+| One US state build, Vermont          | 8.94 GB of disk, 8 GB of free RAM       | [Build the US dataset](../tutorials/build-the-us-dataset.mdx) |
+| The same build, peak resident memory | 7.45 GiB, by `/usr/bin/time -v`         | [Build the US dataset](../tutorials/build-the-us-dataset.mdx) |
+| A whole-planet gazetteer build       | Tens of gigabytes, hours of wall clock  | [Full planet build](../tutorials/full-planet-build.mdx)       |
+| Browser parsing                      | The model over the network, then WebGPU | [Parse in the browser](../tutorials/parse-in-the-browser.mdx) |
 
 Parse latency is not a footprint and is not on this page. It is measured per host and reported by
 `mailwoman parse --benchmark <n>`, which prints per-stage percentiles and a heap delta.
@@ -182,7 +182,7 @@ Parse latency is not a footprint and is not on this page. It is measured per hos
 ## Rationale
 
 The gazetteer stays outside npm because it is 2.88 GB, and a registry tarball that size would be paid
-for by every consumer who wanted only the parser. Splitting it into a download makes parsing a 74 MB
+for by every consumer who wanted only the parser. A separate download makes parsing a 74 MB
 proposition and geocoding an explicit second decision.
 
 The model ships quantized because the accuracy cost was small and the size cost was not: int8 took the

@@ -89,7 +89,7 @@ export interface LoadResult {
 	 * Returns a `placetypePair` option for the loaded index whose country matches the
 	 * country detected from `text`, or `undefined` when none matches.
 	 *
-	 * Passing `opts.country` as a locale or country code skips detection for that call.
+	 * A locale or country code in `opts.country` skips detection for that call.
 	 */
 	selectPairIndexForText: (text: string, opts?: { country?: string }) => PlacetypePairPriorOpts | undefined
 }

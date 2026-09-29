@@ -191,7 +191,8 @@ describe("reconciliation", () => {
 
 		const canceled = await fixture("10", { subscriptionStatus: "canceled", listInvoices: false })
 
-		// After the token's date: within its grace the license stays active, which the fulfil test covers.
+		// After the token's date, the license stays active within its grace.
+		// The fulfil test covers this case.
 		const report = await reconcileLedger(
 			canceled.worker,
 			{ stripe: canceled.stripe, ledger: canceled.ledger, email: email.provider, now: () => Date.UTC(2026, 10, 20) },

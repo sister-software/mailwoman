@@ -113,7 +113,7 @@ export async function putRun(run: StoredRun, dir: PathBuilderLike = RUN_STORE_DI
 
 /**
  * Persist a run and apply retention without failing the measurement that produced it,
- * returning a sentence the caller carries into its warnings when the store is unwritable.
+ * returning a sentence the caller includes in its warnings when the store is unwritable.
  */
 export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date): Promise<string | null> {
 	try {

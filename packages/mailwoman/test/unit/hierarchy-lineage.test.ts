@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The field is tri-state, and the absent states are the interface. A missing sidecar or a place-less
+ *   The field is tri-state. The absent states are the interface. A missing sidecar or a place-less
  *   entry must stay ungraded, because `false` is a measured contradiction and never a default.
  */
 

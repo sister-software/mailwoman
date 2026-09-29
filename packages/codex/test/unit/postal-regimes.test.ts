@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The postal-regime table's own shape, and the reading it exists to make legible: every regime it names is unmodeled
+ *   The postal-regime table's shape and the reading it makes legible: every regime it names is unmodeled
  *   or partial today.
  *
  *   That last assertion is the one worth keeping. When a regime starts being modeled, this test fails and whoever

@@ -134,11 +134,11 @@ venue or street span; 2 are identity misses (Plougonvelin by name, Tonopah by sa
 
 ### Per arm
 
-| Arm                               | Missed rows with street + resolved locality | unit in source | silent | fires, truth survives | fires, truth absent | fires, no truth | Passing rows, unit in source | false fires on passing rows |
-| --------------------------------- | ------------------------------------------: | -------------: | -----: | --------------------: | ------------------: | --------------: | ---------------------------: | --------------------------: |
-| FR commune (BAN)                  |                                           5 |              5 |      2 |             **0 / 5** |                   3 |               0 |                           30 |          **3 / 30 (10.0%)** |
-| US county (TIGER)                 |                                          13 |             11 |      7 |            **0 / 11** |                   3 |               1 |                           26 |          **6 / 26 (23.1%)** |
-| US locality (NAD, counterfactual) |                                          13 |              6 |      4 |             **0 / 6** |                   0 |               2 |                           17 |          **4 / 17 (23.5%)** |
+| Arm                               | Missed rows with street + resolved locality | unit in source | silent | fires, truth survives | fires, truth absent | fires, no truth | Rows that pass, unit in source | false fires on passing rows |
+| --------------------------------- | ------------------------------------------: | -------------: | -----: | --------------------: | ------------------: | --------------: | -----------------------------: | --------------------------: |
+| FR commune (BAN)                  |                                           5 |              5 |      2 |             **0 / 5** |                   3 |               0 |                             30 |          **3 / 30 (10.0%)** |
+| US county (TIGER)                 |                                          13 |             11 |      7 |            **0 / 11** |                   3 |               1 |                             26 |          **6 / 26 (23.1%)** |
+| US locality (NAD, counterfactual) |                                          13 |              6 |      4 |             **0 / 6** |                   0 |               2 |                             17 |          **4 / 17 (23.5%)** |
 
 Two US missed rows fall outside the county source: Southington, CT (WOF carries the pre-2022 county,
 TIGER2023 keys Connecticut by planning region) and the second Bristol row (no county ancestor with a
@@ -215,11 +215,11 @@ pairs are clustered at p < 0.05, and the family's median share is ≥ 2%.
 - numbered: 48.0% / 67.4% / 0.30% — fails the share bar; and the pre-registration excluded it from
   carrying F2 alone.
 
-**F2 passes, on trees.** Naming families are real and clustered at roughly eleven times the null
+**F2 passes, on trees.** Name-based families are real and clustered at roughly eleven times the null
 rate (55.3% vs 5%); the family's streets sit at 73% of the distance random streets of the same
 locality would.
 
-## Reading
+## How to read the results
 
 Observation: the board's US/FR misses are precision and span misses rather than identity misses. Thirteen
 of 26 land in the right locality at the wrong tier or a few kilometers off and 7 more miss on a

@@ -15,7 +15,7 @@ export const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", 
 /**
  * The EU expansion.
  *
- * The v0.5.0 corpus carries zero rows for these locales, so they are drawn from the
+ * The v0.5.0 corpus contains zero rows for these locales, so they are drawn from the
  * Overture per-country addresses theme (the same source build-eu-eval-set.ts uses).
  *
  * These become first-class in-map countries so the soft country prior can pin them.

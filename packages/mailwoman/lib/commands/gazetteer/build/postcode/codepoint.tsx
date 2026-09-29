@@ -8,8 +8,8 @@
  *   OS's published md5. It converts OSGB36 eastings/northings to WGS84 and writes a sealed database to a new
  *   dated path. Promotion into `DEFAULT_POSTCODE_DATABASES` is a separate, deliberate step.
  *
- *   Coverage is England, Scotland and Wales. Northern Ireland is not in this product and the database says
- *   so in its own `meta`; see the pipeline module for the licensing reason.
+ *   Coverage is England, Scotland and Wales. Northern Ireland is outside this product.
+ *   The database records that scope in its own `meta`; see the pipeline module for the licensing reason.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer.

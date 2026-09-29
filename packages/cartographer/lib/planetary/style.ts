@@ -39,7 +39,7 @@ export interface PlanetaryStyleOptions {
 }
 
 /**
- * Creates a planetary-body style with space, optional hillshade, labels, and selection layers.
+ * Creates a planetary-body style with space, optional hillshade, labels and selection layers.
  */
 export function createPlanetaryStyle(options: PlanetaryStyleOptions): StyleSpecification {
 	const palette = PALETTES[options.body]

@@ -17,7 +17,7 @@ The first retrain taught the model both word orders. It moved the model's intrin
 
 Across all three, one number sat there glowing and we kept not looking at it: the median coordinate error was about **6 kilometers**. Six kilometers is city-centroid accuracy. That is not what a "collapse" looks like. A model that couldn't parse German addresses at all would be putting them in the wrong country rather than six kilometers from the front door. The geography was fine the whole time while the locality-match score fell. When your accuracy metric drops and your distance-to-truth doesn't, the metric is the thing that's broken.
 
-## Measuring the thing that can't be gamed
+## Geographic accuracy against place boundaries
 
 So we measured it. PIP-containment: forget whether the resolved name _string_ matches the gold string — is the address's real GPS point physically _inside the polygon_ of the place we resolved it to? You cannot game that with a string trick. It either lands in the right place or it doesn't.
 

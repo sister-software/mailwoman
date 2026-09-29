@@ -1,5 +1,5 @@
 /**
- * @file Console and page-error capture fixture. It buffers console messages, page errors, and failed requests matching
+ * @file Console and page-error capture fixture. It buffers console messages, page errors and failed requests matching
  *   the policy for the test's lifetime. Test bodies call `assertNoFailEvents()` to enforce both policy lists
  *   defined in `console-policy.ts`. They can inspect the raw `events` array directly.
  *   The pattern comes from

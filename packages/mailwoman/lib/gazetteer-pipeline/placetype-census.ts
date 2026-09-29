@@ -9,7 +9,7 @@
  *   projection"), and {@link buildPlacetypeCensus}, which counts each parent's children through that
  *   projection.
  *
- *   The census counts what the source can actually answer. `admin-global-priority.db` carries nine
+ *   The census counts what the source can actually answer. `admin-global-priority.db` contains nine
  *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
  *   those. The projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
@@ -33,7 +33,7 @@ import type { PathBuilderLike } from "path-ts"
 
 /**
  * The complete Who's on First placetype vocabulary (35 as of 2026-08-02). {@link PLACETYPE_PROJECTION}
- * must carry a key for every entry — a test asserts it — so a placetype can never reach
+ * must contain a key for every entry — a test asserts it — so a placetype can never reach
  * {@link buildPlacetypeCensus} unmapped and turn a build into a throw at the worst moment.
  *
  * Sorted to keep the diff readable when WOF grows the vocabulary.
@@ -122,11 +122,11 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	postalcode: "postcode",
 	venue: "venue",
 	// Venue sub-structure.
-	// A WOF `building`/`campus` place carries a venue name ("Empire State Building", "MIT Campus");
-	// the interior subdivisions carry a unit designator ("Concourse B", "Terminal 4", "West Wing").
+	// A WOF `building`/`campus` place has a venue name ("Empire State Building", "MIT Campus");
+	// the interior subdivisions have a unit designator ("Concourse B", "Terminal 4", "West Wing").
 	// The admin build stocks none of these today.
 	// That is the ingest allowlist (`ADMIN_PLACETYPES`), not the source.
-	// Measuring the difference is what `mailwoman gazetteer granularity` exists for.
+	// The `mailwoman gazetteer granularity` command measures the difference.
 	building: "venue",
 	campus: "venue",
 	arcade: "unit",
@@ -196,8 +196,8 @@ export interface PlacetypeCensusBuildResult {
  * Read-only against the admin DB.
  * The child and parent must share a country.
  *
- * A cross-border ancestor link (WOF carries some) would attribute a child's
- * evidence to the wrong locale's artifact.
+ * A cross-border ancestor link (WOF has some) would attribute a child's evidence
+ * to the wrong locale's artifact.
  */
 export function buildPlacetypeCensus(adminDBPath: PathBuilderLike, country: string): PlacetypeCensusBuildResult {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
@@ -248,7 +248,7 @@ export function buildPlacetypeCensus(adminDBPath: PathBuilderLike, country: stri
 	const nodes: PlacetypeCensusNode[] = []
 
 	for (const [parent, counts] of byParent) {
-		// The inclusion rule: locality-only parents carry no discriminative mass (see the module header).
+		// The inclusion rule: locality-only parents provide no discriminative mass (see the module header).
 		const discriminative = Object.entries(counts).some(([tag, n]) => tag !== "locality" && (n ?? 0) > 0)
 
 		if (!discriminative) continue
@@ -262,7 +262,7 @@ export function buildPlacetypeCensus(adminDBPath: PathBuilderLike, country: stri
 }
 
 /**
- * Turn country-wide per-tag child counts into the shares `PlacetypeCensusHeader.baseRates` carries.
+ * Turn country-wide per-tag child counts into the shares stored in `PlacetypeCensusHeader.baseRates`.
  */
 export function toBaseRates(
 	countryTotals: Partial<Record<ComponentTag, number>>

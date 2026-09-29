@@ -169,8 +169,8 @@ export const SchemaOrgPlaceSchema = z
 /**
  * A jsonv2 or json result with the optional `engine` stamp.
  *
- * It carries an OpenAPI name because a generated client would otherwise label
- * an inlined union member by its position.
+ * It has an OpenAPI name because a generated client would otherwise label an
+ * inlined union member by its position.
  */
 export const StampedNominatimResultSchema = stampedResponseSchema(NominatimResultSchema, "StampedNominatimResult")
 

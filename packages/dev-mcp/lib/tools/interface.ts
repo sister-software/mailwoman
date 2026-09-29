@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_interface` tool definition — the description an agent reads, the input schema, and the handler wiring.
+ *   The `mwdev_interface` tool definition provides the description, input schema and handler wiring an agent reads.
  *   The measurement lives in `../interface-report.ts`.
  */
 

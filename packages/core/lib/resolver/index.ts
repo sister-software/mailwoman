@@ -6,7 +6,7 @@
  *   The resolver type interface. This module holds the lookup interfaces, the placetype map and
  *   small helpers.
  *
- *   Keeping the implementation out of `core` leaves it a dependency-free leaf, so `core/pipeline`
+ *   The implementation stays outside `core` to keep it a dependency-free leaf, so `core/pipeline`
  *   can compose the resolver structurally without a cycle. The implementation (`createWOFResolver`,
  *   `RemoteResolver`, span-rescore) lives in `@mailwoman/resolver`, which depends on this module
  *   plus `@mailwoman/spatial` and `@mailwoman/codex`.

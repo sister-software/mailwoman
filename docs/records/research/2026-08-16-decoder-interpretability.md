@@ -6,7 +6,7 @@ made with evidence channels silent" and to say _where_ a labeling decision forme
 confidence implementation fits classifying failures into a discrete, human-triaged, slowly-evolving
 diagnosis vocabulary?
 
-Grounding read: `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` (calibrated,
+Source read: `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` (calibrated,
 retrieval-augmented sequence labeler; channels are soft features, never overrides) and
 `packages/neural/lib/soft-features.ts` (the channel choreography: anchor, gazetteer, country,
 street-type channels, each `features[][]` + `confidence[]`, fed alongside `input_ids`; the
@@ -16,7 +16,7 @@ went as follows. Every channel row was zero, and the token-embedding pathway alo
 that the current implementation cannot detect.
 
 Verification key: **[S]** = verified via web search this session; **[M]** = from memory (high
-confidence unless hedged). Anything 2025-or-newer is flagged inline.
+confidence unless hedged). Work from 2025 onward is flagged inline.
 
 ---
 
@@ -56,7 +56,7 @@ side _would_ have produced had it known the place, and measure the logit/label d
 is the direct "evidence sensitivity" measurement.
 
 **Pitfalls.** Choice of corruption distribution changes conclusions (Gaussian-noise vs.
-counterfactual-token patching disagree; discussed across the patching literature [M]). Patching
+counterfactual-token patching disagree; discussed across the patching literature [M]). Such interventions
 finds _sufficient mediators_ rather than unique stories; backup/redundant circuits can hide behind each
 other (the hydra effect [M]). For BIO tagging, patch metrics should be per-token label logit
 deltas rather than sequence loss, or Viterbi coupling smears the localization.
@@ -133,7 +133,8 @@ the labels came out right.
 
 **What they are.** Dictionary-learning decompositions of activations into overcomplete sparse
 "monosemantic" features: Anthropic's line — Bricken et al. 2023, _Towards Monosemanticity:
-Decomposing Language Models With Dictionary Learning_ [S]; Templeton et al. 2024, _Scaling
+<!-- vale off -->Decomposing Language Models With Dictionary Learning<!-- vale on -->_ [S]; Templeton et al. 2024, _Scaling
+
 Monosemanticity_ [M] — plus architecture successors: TopK SAEs (Gao et al. 2024, _Scaling and
 evaluating sparse autoencoders_, OpenAI [S]), Conditional and JumpReLU SAEs (Rajamanoharan et al. 2024,
 DeepMind [M]), Gemma Scope's released SAE suites (Lieberum et al. 2024 [M]), crosscoders (Anthropic
@@ -155,10 +156,10 @@ library (Gemma-2-2B / Llama-3.2-1B / Qwen3-4B) [S].
   Canonical Units of Analysis_ (2025) [S, title from aggregate — moderate confidence on authors].
 - Related-but-different: OpenAI Nov 2025, _Weight-sparse transformers have interpretable circuits_
   (arXiv 2511.13653) + the Dec 2025 `circuit-sparsity` release [S] — train the _model_ sparse
-  instead of decomposing a dense one; circuits ~16× smaller at matched loss. Interesting for us
+  instead of decomposing a dense one; circuits ~16× smaller at matched loss. This is relevant to our
   only as a _retraining_ option (we own training) rather than as post-hoc analysis.
 
-**Cost/feasibility at our scale.** Training cost is a non-issue: d_model of a few hundred, a
+**Cost/feasibility at our scale.** At our scale, training cost is a non-issue: d_model of a few hundred, a
 dictionary of 4–16k features, activations harvested over the corpus — an SAE per layer trains in
 well under an hour on the lab GPU; the full stack in an evening, Modal not required. The real cost
 is the _human_ loop: naming and validating thousands of features, building tooling to browse them,
@@ -214,7 +215,8 @@ garbage. The bypass produced the correct parse. The failure happened downstream,
 implementation _flags_ bypass decisions instead of preventing them.
 
 **Right for the right reasons.** Ross, Hughes & Doshi-Velez 2017, _Right for the Right Reasons:
-Training Differentiable Models by Constraining their Explanations_ (IJCAI) [S]: penalize input
+<!-- vale off -->Training Differentiable Models by Constraining their Explanations<!-- vale on -->_ (IJCAI) [S]: penalize input
+
 gradients on features the model _shouldn't_ use (or reward gradients on ones it should). Directly
 implementable in corpus-python as a `∂logits/∂channel` regularizer — but note the sign: our
 problem is under-reliance on channels only when channels are _present and correct_; when they're
@@ -231,14 +233,15 @@ small residual subspace to the country variable. The model then exposes that var
 readable value, and a per-decision explanation becomes a read of that subspace instead of a
 forensic investigation.
 
-**Measuring reliance (auditing without retraining).** Our architecture allows a direct
+**Measure reliance (audit without retraining).** Our architecture allows a direct
 measurement. Feed paired inputs that differ only in their channels (the same token string with a
 different simulated "world"). The output delta is the causal channel reliance. It can be measured
 per tag, per locale, and per checkpoint as a standing board metric. This is an input-level
 interchange intervention and requires no changes to the model. Related
 framings: permutation-style model reliance (Fisher, Rudin & Dominici 2019, _All Models are Wrong,
 but several are Useful_, JMLR [M]); shortcut-learning auditing (Geirhos et al. 2020, _Shortcut
-Learning in Deep Neural Networks_, Nature MI [M]); rationale-faithfulness metrics —
+<!-- vale off -->Learning in Deep Neural Networks<!-- vale on -->_, Nature MI [M]); rationale-faithfulness metrics —
+
 comprehensiveness/sufficiency from ERASER (DeYoung et al. 2020 [S]; rationale extraction lineage
 Lei et al. 2016, _Rationalizing Neural Predictions_ [S]) transfer directly: "sufficiency of the
 channels" = performance parsing from channels alone; "comprehensiveness" = performance drop with
@@ -263,15 +266,15 @@ actual failure a machine-checkable contradiction.
 
 ## 4. Confidence implementation for error-shape classification
 
-Setting: a classifier (or human-in-the-loop triage assistant) that maps a failure case to a
+Assume a classifier (or human-in-the-loop triage assistant) that maps a failure case to a
 discrete _diagnosis_ — an error shape like "evidence-silent parse", "resolver country flip",
 "postcode anchor override" — calibrated against a human-triaged ledger, with abstention, where the
 diagnosis vocabulary itself evolves as new shapes are discovered.
 
 **Calibration.** Guo et al. 2017, _On Calibration of Modern Neural Networks_ (ICML) [S]:
 temperature scaling — one parameter fit on held-out data — fixes most overconfidence; ECE is the
-standard metric (use adaptive binning — Nixon et al. 2019, _Measuring Calibration in Deep
-Learning_ [M] — because a triage ledger is small and imbalanced). Temperature scaling never changes
+standard metric (use adaptive binning — Nixon and colleagues' 2019 paper, _<!-- vale off -->Measuring Calibration in Deep
+Learning<!-- vale on -->_ [M] — because a triage ledger is small and imbalanced). Temperature scaling never changes
 the argmax; when per-class miscalibration differs (it will, with rare diagnoses), Dirichlet
 calibration (Kull et al. 2019, _Beyond temperature scaling_, NeurIPS) [S] is the multiclass
 upgrade. Minderer et al. 2021, _Revisiting the Calibration of Modern Neural Networks_ [S] for the
@@ -326,7 +329,7 @@ from adjacent literatures:
 4. Alternative posterior implementation — evidential deep learning (Sensoy et al. 2018, _Evidential
    Deep Learning to Quantify Classification Uncertainty_, NeurIPS [S]; survey Ulmer et al.,
    _Prior and Posterior Networks_ [S]) gives a Dirichlet over classes whose total evidence is an
-   abstention signal in one head. Tempting, but its epistemic-uncertainty claims have known
+   abstention signal in one head. This option is tempting, but its epistemic-uncertainty claims have known
    theoretical soft spots [M — critique line c. 2022–2024, moderate confidence], and it needs the
    classifier retrained under a special loss; conformal wraps _any_ scorer, ledger-sized data is
    its native regime, and the interval calculation remains valid when the classifier is a heuristic. Recommendation:
@@ -374,7 +377,7 @@ that class existed, emitted a novelty p-value telling the triager to mint it.
    string, injected vs. silent channels) over the dev board; per-tag, per-locale reliance shares;
    ERASER-style sufficiency/comprehensiveness of channels as two numbers per checkpoint. This is
    the standing "feature-reliance audit" and catches reliance drift across retrains.
-4. **Patching forensics tool** (a week, lab GPU): exhaustive activation-patch sweep as an on-demand
+4. **Activation-patch forensics tool** (a week, lab GPU): exhaustive activation-patch sweep as an on-demand
    `mwdev`-style tool for any board row — the "WHERE did this decision form" answer. Exhaustive is
    affordable _only because_ the model is 4–6 layers; no AtP approximation needed.
 5. **Optional, conditional experiments**: IIT country register (one ~1-hour retrain + D-rule check); a

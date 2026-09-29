@@ -135,11 +135,11 @@ evidence is usable only when the scope is present in the input.
 ### Tier C — the famous-street-as-place trap
 
 WOF carries admin polygons. It also carries famous streets **as places**, and `rue`,
-`boulevard`, and `place` are gazetteer entries themselves. Reading a WOF hit as evidence
-that a street exists reverses its meaning. `Rue Montmartre` then looks like evidence for
+`boulevard`, and `place` are gazetteer entries themselves. A WOF hit shows that the street name
+is a gazetteer entry. It does not prove that a street exists. `Rue Montmartre` then looks like evidence for
 `locality`, which is the error this work is trying to fix.
 
-This was measured. Walking the shipped FST (`fst-global-priority.bin`) over the Paris
+This was measured. The shipped FST (`fst-global-priority.bin`) returns the following when run over the Paris
 fixtures returns 43 distinct surfaces, and 37 of them would fire an emission bias:
 
 | surface        | placetype : importance                  |
@@ -157,7 +157,7 @@ The French particles produce the strongest hits in the table. `la` scores 0.850 
 locality inside street phrases like `Rue de la Paix`, and bare house numbers match
 localadmin places. The conditions for the trap are present.
 
-**The measured effect is zero.** Turning the prior on leaves the Paris target class
+**The measured effect is zero.** The Paris target class is unchanged with the prior on:
 unchanged: 33/63 with it off and 33/63 with it on, with two fixtures changing in opposite
 directions. The prior is therefore not what causes these addresses to fail today. The model
 produces the locality reading on its own, because it learned from a corpus where bare
@@ -176,7 +176,7 @@ OSM has the best coverage available for gap analysis and for experiments that ne
 Source quality, licensing, and attribution decide what can ship. `@mailwoman/osm` itself is
 unpublished until ODbL counsel signs off.
 
-## Training: phenomenon recipes
+## Train on phenomenon recipes
 
 Each locale samples these recipes from its Tier A register:
 

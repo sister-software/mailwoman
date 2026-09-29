@@ -87,7 +87,7 @@ export interface FloodZoneReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not cover, in the authority's own words, carried on every reading
+	 * What the product does not cover, in the authority's own words, included in every reading
 	 * because a Zone 1 answer is silent about surface water, groundwater and defended-area residual risk.
 	 */
 	limits: ReadonlyArray<string>

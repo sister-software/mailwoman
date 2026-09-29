@@ -1012,7 +1012,7 @@ describe("§7-3b criteria", () => {
 		})
 
 		// `readAuthoritativeGroups` must follow only `same_entity` edges.
-		// Following `HoldingCompany` edges would merge the three filers into one cluster.
+		// `HoldingCompany` edges would merge the three filers into one cluster.
 		it("REAL builder + REAL clusterAuthoritativeComponents: 3 FRNs sharing one holding company yield 3 distinct entity clusters and 1 shared family — never merged", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.path("filer.db")
@@ -1644,8 +1644,8 @@ describe("§7-3b criteria", () => {
 			const rollup = await familyRollup(db, { familyID: cikNodeID, asOf })
 			expect(rollup).toHaveLength(1)
 
-			// The `source` alone cannot mark the row as inferred because the EDGAR source
-			// also writes an authoritative disclosure edge.
+			// The `source` by itself cannot mark the row as inferred because the EDGAR
+			// source also writes an authoritative disclosure edge.
 			expect(rollup[0]?.members).toEqual([
 				{
 					node_id: `${FilerIdentifierType.FRN}:${FRN_SUBSIDIARY}`,

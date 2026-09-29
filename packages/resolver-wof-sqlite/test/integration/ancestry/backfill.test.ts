@@ -175,13 +175,13 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	using db = DatabaseClient.temp<WOFDatabase>()
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
-	// Production always carries ancestors_by_id (unified-schema.ts) and the freeze
+	// Production always includes ancestors_by_id (unified-schema.ts) and the freeze
 	// runs its index phase before this backfill.
 	// Without it the correlated not exists is quadratic over 33k rows.
 	db.exec("CREATE INDEX ancestors_by_id ON ancestors(id)")
 
 	// node:sqlite caps a statement at 32,766 bound variables.
-	// The 2026-08-04 wide-coverage admin build carried 67,521 country-less candidates.
+	// The 2026-08-04 wide-coverage admin build contained 67,521 country-less candidates.
 	// 33,000 self-only places reproduce the overflow.
 	const insertSpr = db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')")
 	const insertAnc = db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)")

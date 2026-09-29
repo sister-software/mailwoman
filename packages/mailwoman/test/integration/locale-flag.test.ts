@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   CLI `--locale` flag validation. Confirms the parse command's options schema accepts BCP-47 tags
- *   and rejects bad input, and that a model-independent fast-path input runs through the compiled CLI.
+ *   and rejects bad input. A model-independent fast-path input also runs through the compiled CLI.
  */
 
 import { runFile } from "@mailwoman/core/process"

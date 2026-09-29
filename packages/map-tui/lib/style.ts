@@ -7,7 +7,7 @@
 /**
  * Protomaps-basemap style table for the map-tui debug view.
  *
- * Defines fill, line, and label styles for the nine Protomaps basemap layers, restricted by zoom level.
+ * Defines fill, line and label styles for the nine Protomaps basemap layers, restricted by zoom level.
  * Color palette calibrated for dark-terminal rendering: dim fills
  * (read as stipple density via dithering), bright lines and labels.
  */
@@ -51,7 +51,7 @@ const ROAD_WIDTH_THRESHOLD = 14
 const roadWidth = (zoom: number) => (zoom >= ROAD_WIDTH_THRESHOLD ? 2 : 1)
 
 // At braille scale, each road is one dot wide and each fill is stippled.
-// Color carries class information: arteries brighten toward amber and paths dim toward vegetation green.
+// Color encodes class information: arteries brighten toward amber and paths dim toward vegetation green.
 // Urban land use is warmer and brighter than vegetation, so cities read as denser texture.
 // Luminance is required — asciify's ordered dither turns it into stipple density.
 const VEGETATION_KINDS = [

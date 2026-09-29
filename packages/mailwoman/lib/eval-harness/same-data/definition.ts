@@ -204,7 +204,7 @@ export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition)
 }
 
 /**
- * Loads the frozen definition after checking its identity, hash, and audit.
+ * Loads the frozen definition after checking its identity, hash and audit.
  */
 export async function loadSameDataDefinition(): Promise<SameDataBenchmarkDefinition> {
 	return loadFrozenDefinition<SameDataBenchmarkDefinition>({

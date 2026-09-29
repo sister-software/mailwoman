@@ -9,7 +9,7 @@
  *   Mirrors `bdc.tsx`'s progress (stderr) / summary (stdout) split.
  *
  *   `--measure-resolutions` does not build. The index resolution is measured for this layer.
- *   Running the measurement is a separate mode because it costs a full pass
+ *   The measurement runs as a separate mode because it costs a full pass
  *   over 813,627 polygons per candidate and produces a table rather than an artifact.
  *
  *   `--limit` selects the smoke rung. It stops the ingest after N features and builds a real artifact over a
@@ -153,9 +153,9 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			]
 		}
 
-		// The outline is a second authority's artifact: the EA says its mapping covers
+		// The outline is a second authority's artifact: the EA states its mapping covers
 		// all of England and does not publish where England is.
-		// Which outline was used rides in `flood_map_extent`.
+		// `flood_map_extent` records which outline was used.
 		const outline = options.boundary
 			? outlineFromGeoJSON(await readLocalJSONFile<unknown>(options.boundary), options.boundary)
 			: (await createONSBoundaryClient().readCountryGeometry(EA_COVERAGE_COUNTRY)).geometry

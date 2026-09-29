@@ -146,9 +146,9 @@ export interface layerschemadatabase {
  * The incompatibility comes from `transaction()` and `with()`.
  * The interface never calls those methods.
  *
- * Naming only the members it does call lets a layer pass its own handle directly.
- * The alternative — a cast at every call site — does not merely skip one check:
- * it disarms every column-level guarantee these two tables carry, including any added later.
+ * A layer can pass its own handle directly when it declares only the members it calls.
+ * The alternative — a cast at every call site — does not merely skip one check: it disarms
+ * every column-level guarantee these two tables provide, including any added later.
  */
 export type layerschemahandle = Pick<Kysely<layerschemadatabase>, "insertInto" | "schema" | "selectFrom">
 

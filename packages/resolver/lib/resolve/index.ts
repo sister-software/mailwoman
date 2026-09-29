@@ -102,7 +102,7 @@ class WOFResolver implements Resolver {
 	 */
 	readonly artifactCoverage: Resolver["artifactCoverage"]
 	/**
-	 * Missing optional backend capabilities.
+	 * Optional backend capabilities that the implementation lacks.
 	 */
 	readonly capabilityGaps: readonly BackendCapabilityGap[]
 

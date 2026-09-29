@@ -61,7 +61,7 @@ describe("deriveEffectiveTrainingManifest", () => {
 		expect(bySource.get("drawn")?.excludedBecause).toBeNull()
 
 		// The three reasons are different facts.
-		// Reporting them as one absence would read as three sources the sampler failed to reach,
+		// A single absence would read as three sources the sampler failed to reach,
 		// where two were excluded by the config before any draw.
 		expect(manifest.excludedSources).toEqual({
 			unweighted: ExclusionReason.UnweightedSource,
@@ -73,8 +73,8 @@ describe("deriveEffectiveTrainingManifest", () => {
 	it("reports an emitted source the corpus manifest does not name rather than dropping it", () => {
 		const manifest = derive()
 
-		// `overlay` is emitted and absent from the frozen manifest, which is what an
-		// overlay merged after the build looks like.
+		// `overlay` is emitted and absent from the frozen manifest.
+		// That is what an overlay merged after the build looks like.
 		// Over `v0.6.0-register-surface` that set is 39 sources and 890,666 of 1,000,000 rows.
 		expect(manifest.emittedButUnrecorded).toEqual({ overlay: 200 })
 		expect(manifest.trainingSources).toEqual(["drawn"])

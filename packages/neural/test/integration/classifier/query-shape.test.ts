@@ -106,7 +106,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 			logits.push(row)
 		}
 
-		// QueryShape says "10118" is a postcode, but with smaller magnitude than the encoder's 5.0 locality boost.
+		// QueryShape classifies "10118" as a postcode, but with smaller magnitude than the encoder's 5.0 locality boost.
 		const zipStart = text.indexOf("10118")
 		const zipEnd = zipStart + 5
 

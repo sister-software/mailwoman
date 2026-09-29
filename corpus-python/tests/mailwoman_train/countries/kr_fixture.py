@@ -45,7 +45,7 @@ class JusoRegion:
     road: str
     road_code: str
     serial: str
-    #: 도로명코드's 읍면동구분: "0" is an 읍/면 the road address itself carries, "1" a 동.
+    #: 도로명코드's 읍면동구분: "0" is an 읍/면 contained in the road address, "1" a 동.
     kind: str
     lot_code: str
     addresses: list[JusoAddress] = field(default_factory=list)
@@ -107,7 +107,7 @@ SEOUL = JusoRegion(
     addresses=[JusoAddress(address_id="11110000000001", main="00094", dong="청운동", building="청운빌딩")],
 )
 
-#: An 읍/면 area: the road address carries the 면 and the parenthetical is the 리.
+#: An 읍/면 area: the road address contains the 면 and the parenthetical is the 리.
 GANGWON = JusoRegion(
     region="강원특별자치도",
     sigungu="원주시",

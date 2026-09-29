@@ -147,8 +147,8 @@ v5.0.0 (134 countries)                     37         35    2   185/649
 v5.1.0 (130, CJK dropped)                  37         43   -6   193/649
 ```
 
-D-rule: v5.0.0 FR 2 / GB 4 / DE 1 → v5.1.0 **FR 3 / GB 13 / DE 0**. Dropping the street-less
-countries did not clear the regressions — GB got worse. **The admission hypothesis is falsified**,
+D-rule: v5.0.0 FR 2 / GB 4 / DE 1 → v5.1.0 **FR 3 / GB 13 / DE 0**. The v5.1.0 run excluded
+countries without streets but did not clear the regressions — GB got worse. **The admission hypothesis is falsified**,
 per the pre-registered clause, and no re-weight follows.
 
 Two facts survive the falsification, and they are the yield of the arc:

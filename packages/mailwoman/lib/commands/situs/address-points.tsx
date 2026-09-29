@@ -59,7 +59,7 @@ const BBOX_FIELDS = 4
  * `--state` builds one US state from the Overture addresses parquet.
  * `--country` builds one national database for `OvertureNationalDatabaseProvider`.
  *
- * `--oa-csv` builds from OpenAddresses CSVs for states that Overture does not carry.
+ * `--oa-csv` builds from OpenAddresses CSVs for states that Overture does not cover.
  *
  * Keys come from the shared normalizer in `@mailwoman/resolver-wof-sqlite`,
  * which the lookup tier also applies at query time.
@@ -374,7 +374,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			schemaVersion: 1,
 			tier: LayerTier.BuildLocal,
 			// The manifest accepts only an SPDX expression that the obligations table knows.
-			// The attribution lists the kept datasets because each allow-list carries different terms.
+			// The attribution lists the kept datasets because each allow-list has different terms.
 			license: COUNTRY ? licenseForOvertureCountry(COUNTRY) : "CDLA-Permissive-2.0",
 			attribution: `Overture addresses (${(allowedDatasets.size ? [...allowedDatasets] : sortedDatasets.map(([dataset]) => dataset)).toSorted().join(", ")})`,
 			source: "overture-addresses",

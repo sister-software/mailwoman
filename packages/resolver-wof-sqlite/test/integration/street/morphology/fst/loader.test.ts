@@ -7,7 +7,7 @@
  *
  *   - Artifact round-trip: build → serialize → load via the loader → identical matches to the
  *     in-process build on street-type probes ("rue", "avenue", "straße")
- *   - Provenance rides the trailer through the loader
+ *   - Provenance passes through the trailer and loader
  *   - Web-deserializer parity: `deserializeFSTWeb` over the same artifact bytes matches
  *   - Degrade path: a missing or unreadable explicit artifact falls back to the dictionary build
  *     (warning, never a throw)

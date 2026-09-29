@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The evidence rows' vocabulary against a hand-built trace, guarding the meaning-of-zero discipline: an unfed channel, a channel that fired on no token, and a bundle with no locale head are three different statements.
+ *   The evidence rows' vocabulary against a hand-built trace. The meaning-of-zero discipline distinguishes an unfed channel, a channel that fired on no token and a bundle with no locale head.
  */
 
 import { ABSENT, channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"

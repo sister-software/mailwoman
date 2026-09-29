@@ -41,7 +41,7 @@ export interface BuildTreeOpts {
 	source?: string
 	sourceID?: string
 	/**
-	 * Addressing system to decode under, selecting the containment hierarchy via `containmentFor`.
+	 * Address system to decode under, selecting the containment hierarchy via `containmentFor`.
 	 *
 	 * Stamped onto the returned `AddressTree.system`.
 	 * Omit for the default Western hierarchy.
@@ -77,13 +77,13 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 // that aren't letters or numbers.
 // The model's tag attribution is correct, only the boundary is fuzzy: BIO span boundaries
 // occasionally include a preceding comma and space or a trailing punctuation token.
-// Trimming produces a clean canonical value and clean start/end offsets so downstream
+// The trim produces a clean canonical value and clean start/end offsets so downstream
 // consumers slicing raw[start:end] get the same string as node.value.
 //
 // Exception: a trailing period directly adjacent to a word character is an
 // abbreviation marker ("Str." / "St." / "Ave.").
 // The model includes these in the span correctly.
-// Stripping them loses the abbreviation suffix.
+// The output loses the abbreviation suffix if it strips those characters.
 // We preserve the period when it is immediately preceded by \p{L}\p{N} and not separated by whitespace.
 // The slip pattern we guard against is ", 22220" / "Paris 75004," / wrapping quotes,
 // where the punctuation is isolated from the word body.
@@ -92,8 +92,8 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 	let e = end
 	const isWordChar = (i: number): boolean => /[\p{L}\p{N}]/u.test(raw[i] ?? "")
 
-	// Leading trim: skip punctuation not part of an abbreviation prefix
-	// (e.g. Leading "." before a word char is rare but symmetric — preserve it).
+	// The start trim skips punctuation outside an abbreviation prefix.
+	// The code preserves a leading "." before a word character, a rare symmetric case.
 	while (s < e && !isWordChar(s)) {
 		if (raw[s] === "." && s + 1 < e && isWordChar(s + 1)) {
 			// Abbreviation-dot prefix: ".com" style — preserve.
@@ -103,7 +103,7 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 		s++
 	}
 
-	// Trailing trim: skip punctuation, but preserve a trailing abbreviation period.
+	// The end trim skips punctuation but preserves a final abbreviation period.
 	while (e > s && !isWordChar(e - 1)) {
 		if (raw[e - 1] === "." && e - 2 >= s && isWordChar(e - 2)) {
 			// Abbreviation-dot suffix: "Str." / "Ave." — adjacent to the last word char, preserve.
@@ -153,7 +153,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// emits a standalone `▁` word-boundary marker between words and the model labels it
 			// `O` (e.g. "Saint Paul" → "▁Saint"[B-loc], "▁"[O, zero-width], "Paul"[B-loc]).
 			// It is not a real component boundary, so it must not flush the open span.
-			// Keeping the span alive lets the following same-tag `B-` token merge in
+			// The span stays open so the following same-tag `B-` token can merge in
 			// (see the spurious-boundary repair below).
 			// A non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.
 			if (open !== null && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue

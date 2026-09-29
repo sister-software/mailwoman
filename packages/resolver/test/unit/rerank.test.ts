@@ -9,7 +9,7 @@ import { rerankByResolution } from "@mailwoman/resolver/rerank"
 import { describe, expect, it, vi } from "vitest"
 
 /**
- * A tree whose finest resolved node carries `tag`.
+ * A tree whose finest resolved node has `tag`.
  * `country` is what the guard vetoes.
  */
 function resolvedTree(tag: string, raw = "x"): AddressTree {
@@ -84,7 +84,7 @@ describe("rerankByResolution", () => {
 	})
 
 	it("falls back to the model's rank-1 when EVERY candidate is implausible", async () => {
-		// "All my evidence says these are all bad" is not grounds to invent a different answer.
+		// "All my evidence identifies these as bad" is not grounds to invent a different answer.
 		const resolve = vi.fn(async () => resolvedTree("country"))
 
 		const out = await rerankByResolution(

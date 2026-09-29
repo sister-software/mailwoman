@@ -7,7 +7,7 @@
  *   issues in traversal order and return either the complete valid document or the full issue list.
  *
  *   Validate record shapes first, then whole-table references such as duplicate IDs, inheritance cycles, relation
- *   constraints, inverses, and derivation inputs.
+ *   constraints, inverses and derivation inputs.
  */
 
 import { isPlainObject } from "@mailwoman/core/objects"

@@ -21,7 +21,7 @@ const ORIGIN = { lon: -6.5, lat: 53.4 } as const
 const BIG = [[exteriorRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + 0.01, ORIGIN.lat + 0.01)]]
 
 /**
- * A square about 5.5 m on a side — smaller than a res-11 cell, let alone a res-9 one.
+ * A square about 5.5 m on a side — smaller than a res-11 cell and much smaller than a res-9 one.
  */
 const SLIVER = [[exteriorRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + 0.00005, ORIGIN.lat + 0.00005)]]
 

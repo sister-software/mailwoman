@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The volume spec every storage operation shares: which disk, mounted where, and which subtrees opt out of
+ *   The volume spec every storage operation shares: which disk, mounted where and which subtrees opt out of
  *   compression.
  *
  *   btrfs compresses in 128 KiB extents while a SQLite page read is 4 KiB, so a random page read decompresses the

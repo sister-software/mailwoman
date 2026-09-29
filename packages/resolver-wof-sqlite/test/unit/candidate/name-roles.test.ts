@@ -8,7 +8,7 @@
  *
  *   Each case is one of the checks the detectors are made of, because the failure mode is a check
  *   quietly widening: `gloss` is an anomaly signal that must never reach a place with measured
- *   prominence or an admin placetype (a country legitimately carries a name in every language), and
+ *   prominence or an admin placetype (a country legitimately has a name in every language), and
  *   `abbr` is a provenance signal that must never reach a variant recorded in a language the country
  *   does not speak. Both stamp non-primary rows only.
  */
@@ -312,7 +312,8 @@ describe("stampNameRoles: the key-tail census", () => {
 		)
 
 		// Toledo is below the threshold, so it is not in the denominator.
-		// New York is, and carries no role.
+		// New York is present.
+		// It has no role.
 		expect(keyTailPlaces).toBe(2)
 		expect(keyTailWithRole).toBe(1)
 	})

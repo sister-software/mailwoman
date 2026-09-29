@@ -26,7 +26,7 @@ export interface ChromiumPageOptions {
  * Launch headless Chromium (SwiftShader WebGL), open one page at `deviceScaleFactor: 2`,
  * collect console + page errors, run `fn`, and dispose the browser.
  *
- * The callback owns navigation, waits, and the screenshot.
+ * The callback owns navigation, waits and the screenshot.
  */
 export async function withChromiumPage<T>(
 	options: ChromiumPageOptions,

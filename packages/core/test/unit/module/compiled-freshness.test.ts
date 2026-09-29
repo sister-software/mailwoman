@@ -97,7 +97,7 @@ describe("checkCompiledFreshness", () => {
 
 	it("ignores emitted .d.ts on the source side, so a compile is not an edit", async () => {
 		// Declaration output lands in out/ and is newer than everything by construction.
-		// Counting it as source would make the check permanently unsatisfiable.
+		// The check would remain unsatisfiable if it counted this as source.
 		const { root, workspace } = await checkout()
 
 		await writeLocalTextFile("export const x = 1\n", workspace("thing.ts"))

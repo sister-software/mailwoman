@@ -1,4 +1,4 @@
-"""Running one selected splice: the Modal half of `launch/splices.py`.
+"""This command runs one selected splice: the Modal half of `launch/splices.py`.
 
     modal run -m launch.train_remote::mean_init --splice ptro
 

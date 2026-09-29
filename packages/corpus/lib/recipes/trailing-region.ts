@@ -74,7 +74,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const country = String(t.country ?? "").trim()
 			const dependentLocality = String(t.dependentLocality ?? "").trim()
 
-			// A pair whose region equals its locality carries no signal about the boundary this recipe teaches.
+			// A pair whose region equals its locality provides no signal about the boundary this recipe teaches.
 			if (!locality || !region || locality === region) {
 				skipped++
 
@@ -148,8 +148,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			}
 
 			// Per row, because the id names this tuple's record.
-			// A tuples file written before `sourceID` existed carries none,
-			// and `null` says the recipe had no id to forward.
+			// A tuples file written before `sourceID` existed contains no id.
+			// and `null` means the recipe had no id to forward.
 			if (
 				alignAndWrite(write, canonical, "trailing-region", {
 					...TRAILING_REGION_PROVENANCE,

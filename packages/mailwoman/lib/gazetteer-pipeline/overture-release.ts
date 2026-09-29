@@ -6,7 +6,7 @@
  * Does a pinned Overture release still exist?
  *
  * Overture deletes releases from the bucket on roughly a monthly window. Every build that reads
- * Overture carries its own pin, so each pin dies silently when its release is pruned. The cost of
+ * Overture uses its own pin, so each pin dies silently when its release is pruned. The cost of
  * finding out late is why this exists: the admin build reaches `fold-overture` only after the WOF
  * ingest, so a dead pin surfaced after ~30 minutes as an `IO Error` that reads like a network fault.
  *
@@ -118,7 +118,8 @@ export interface ReleaseCheck {
  * A failed listing reports `reachable: false` and `present: true` — deliberately permissive.
  * This is a pre-flight whose only job is to turn a 30-minute failure into an immediate one.
  *
- * Letting it block a build on its own network trouble would trade a slow failure for a spurious one.
+ * A build should not block on a network failure from this check.
+ * That would trade a slow failure for a spurious one.
  */
 export async function checkOvertureRelease(release: string, client?: OvertureListingClient): Promise<ReleaseCheck> {
 	let available: string[]

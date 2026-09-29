@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Answering the identity law's second side from the first would turn the strongest nondeterminism check available into a tautology, so both sides are observed independently.
+ *   The test would turn the strongest available nondeterminism check into a tautology if it derived the identity law's second side from the first. It observes both sides independently.
  */
 
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"

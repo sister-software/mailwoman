@@ -51,7 +51,7 @@ describe("decideArc", () => {
 
 	it("REFUSES to attribute when the self-control is dirty", () => {
 		// A rig that disagrees with itself cannot be asked about a candidate.
-		// Its numbers are still reported but the verdict says they are not evidence.
+		// Its numbers are still reported but the verdict classifies them as evidence-free.
 		const arc = decideArc(
 			leg("control", 0, 3, { differed: 3 }),
 			leg("null", 5, 10),

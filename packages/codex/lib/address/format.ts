@@ -68,7 +68,7 @@ function separatorFor(country: string, script: AddressScript, opts: FormatAddres
  *
  * An explicit `separator` overrides both.
  * A caller-supplied separator applies between every pair of lines.
- * Returning two separators would ignore the requested value.
+ * Two separators would ignore the requested value.
  */
 function softSeparatorFor(opts: FormatAddressOptions): string {
 	if (opts.separator !== undefined) return opts.separator
@@ -102,7 +102,7 @@ function carriesNonLatinLetter(value: string): boolean {
 // repo-health-ignore export-name-affix -- core's `scriptOf` takes a codepoint
 // and answers its ISO 15924 script.
 // This takes a dict and answers which of a country's two orders it is written for.
-// Importing it is also impossible because this package has no runtime dependencies.
+// This package cannot import it because it has no runtime dependencies.
 // The core package adds 11 MB of shipped data.
 export function scriptOfComponents(components: ComponentDict): AddressScript | undefined {
 	for (const tag of SCRIPT_WITNESSES) {

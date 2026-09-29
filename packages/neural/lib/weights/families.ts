@@ -73,7 +73,7 @@ export type RouteSource = (typeof RouteSource)[keyof typeof RouteSource]
  * A router's decision for one input and the rule behind it.
  *
  * The rule and abstention reason let a caller measure a router.
- * The family alone cannot support that measurement.
+ * The family by itself cannot support that measurement.
  */
 export interface RoutingDecision {
 	/**
@@ -241,7 +241,7 @@ export function familyForScript(script: string): WeightsFamily | undefined {
  * It catches a Han line followed by a Latin province without a comma, such as `六分场七队 Hunan`,
  * which {@linkcode carriesFamilySegmentFor} misses.
  *
- * A venue name such as `Far East Chinese 口福羊汤` starts with Latin words, so the rule leaves it alone.
+ * A venue name such as `Far East Chinese 口福羊汤` starts with Latin words, so the rule leaves it unchanged.
  * Tokens without a script (`Zyyy`), such as numbers and postal marks, are skipped.
  */
 export function leadsWithFamilyScriptFor(

@@ -111,12 +111,12 @@ function headerColumnMapping(
  * Distinctness is the separating condition: a jurisdiction column repeats
  * (Charter 0.07, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26) while a second
  * name column does not (IDT 1.00), and Charter's `"Delaware limited liability company"`
- * makes 135 of 135 values carry a designation on a genuine jurisdiction list.
+ * makes all 135 values include a designation on a genuine jurisdiction list.
  */
 const MINIMUM_NAME_OVER_NAME_ROWS = 4
 
 /**
- * More than half the second values must carry a legal designation. A genuine jurisdiction column is
+ * More than half the second values must include a legal designation. A genuine jurisdiction column is
  * 0/N except where the filer spells the entity type out (Charter's `"Delaware limited liability
  * company"`, 135/135), which {@linkcode DISTINCT_SECOND_VALUE_RATIO} separates.
  */
@@ -172,7 +172,7 @@ function isSingleColumnNameList(rows: readonly TableCell[][], rawWidth: number):
 
 /**
  * Turns one top-level table's extracted rows into subsidiaries, returning the mapping
- * in force at the end so the caller can carry it to the next sibling.
+ * in force at the end so the caller can pass it to the next sibling.
  */
 function subsidiariesFromTable(
 	extractedRows: readonly TableCell[][],
@@ -195,7 +195,7 @@ function subsidiariesFromTable(
 
 	for (const [rowIndex, row] of rows.entries()) {
 		// Asked of the row as extracted, because right-padding adds `<td>` blanks that
-		// carry no information about the row's markup.
+		// provide no information about the row's markup.
 		if (present[rowIndex]!.every((cell) => cell.tag === "th")) continue
 
 		const values = row.map((cell) => cell.text)
@@ -289,9 +289,9 @@ function subsidiariesFromTable(
 }
 
 /**
- * Classifies every top-level table in document order and carries each table's column
- * mapping forward to its siblings until another header row replaces it, because edgar
- * splits one logical table across page-break tables and only the first carries the header.
+ * Classifies every top-level table in document order and passes each table's column mapping
+ * forward to its siblings until another header row replaces it, because edgar splits one
+ * logical table across page-break tables and only the first includes the header.
  */
 function subsidiariesFromTableRows(tables: readonly TableCell[][][]): ParsedExhibit21 {
 	const subsidiaries: ParsedSubsidiary[] = []
@@ -510,10 +510,9 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 
 /**
  * True when every extracted cell of every extracted row is blank, marking a decorative
- * border/spacer table that carries no subsidiary data.
+ * border/spacer table that contains no subsidiary data.
  *
- * Committing to the table strategy the instant any `<table>` tag exists would
- * otherwise silence a list stated outside one.
+ * A table strategy triggered by any `<table>` tag would otherwise silence a list stated outside one.
  */
 function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
 	return tables.every((rows) => rows.every((row) => row.every((cell) => cell.text === "")))

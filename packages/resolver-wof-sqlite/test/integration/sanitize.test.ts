@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the FTS5 sanitizer, which is not exported and is driven through real `findPlace` calls.
+ *   Tests for the FTS5 sanitizer. It is driven through real `findPlace` calls.
  */
 
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"

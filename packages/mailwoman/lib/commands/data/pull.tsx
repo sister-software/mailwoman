@@ -11,7 +11,7 @@
  *   `Content-Length`, seals it and swaps it into place. A crash during download cannot corrupt an existing install.
  *
  *   A successful `candidate` pull prints the `export MAILWOMAN_CANDIDATE_DB=...` line. Candidate database
- *   resolution requires this environment variable, so writing the file alone does not configure it.
+ *   resolution requires this environment variable, so writing the file by itself does not configure it.
  */
 
 import type { APIClient } from "@mailwoman/core/api"
@@ -152,7 +152,7 @@ async function observeArtifactTerms(
 }
 
 /**
- * Every refused obligation the bundle carries, in its recorded expression and in each artifact on disk.
+ * Every refused obligation listed in the bundle's recorded expression and in each artifact on disk.
  */
 function bundleRefusals(
 	bundle: DataBundle,
@@ -222,7 +222,7 @@ async function probeRemote(
 /**
  * A plain GET with no `Range` header against the live bucket returns Cloudflare's
  * 403 block page while a ranged GET returns 206 and streams the whole object,
- * so every transfer here carries `Range: bytes=0-`.
+ * so every transfer here includes `Range: bytes=0-`.
  */
 async function downloadToDisk(url: string, destPath: string): Promise<number> {
 	return await streamToDisk({
@@ -294,7 +294,7 @@ async function pullBundles(
 			continue
 		}
 
-		// What the artifacts on disk say for themselves, beside what the registry says.
+		// What the artifacts on disk record, beside what the registry records.
 		const observations = await observeArtifactTerms(dataRoot, manifest, artifacts)
 
 		for (const line of describeArtifactTerms(bundle, observations)) {

@@ -9,7 +9,7 @@
  *   CI is a flake generator.
  *
  *   It lives in `test/full` because it needs two staged weights caches under
- *   `$MAILWOMAN_TEMP_ROOT`. CI checkouts do not carry those caches. Importing the test into the fast leg
+ *   `$MAILWOMAN_TEMP_ROOT`. CI checkouts do not contain those caches. A test import in the fast leg
  *   would pull the onnxruntime web graph into the shared module graph during collection.
  */
 
@@ -64,7 +64,7 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 		console.log(`  delta           : ${(b.ms - a.ms).toFixed(2)} ms (${((100 * (b.ms - a.ms)) / a.ms).toFixed(1)}%)`)
 		console.log(`  NOTE: v301 unflattens spans on EVERY infer here — the full cost, not logits-only.\n`)
 
-		// Timing is reported rather than asserted, being machine-dependent.
+		// The test reports timing without asserting a value because machine performance varies.
 		// The invariant under test is that v264 emits no span scores and v301 does.
 		expect(a.spans).toBe(false)
 		expect(b.spans).toBe(true)

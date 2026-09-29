@@ -37,7 +37,7 @@ const LOG = $public.LOG ?? tempRootPath("stage1-train.log")
 const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml"
 /**
  * Verbatim passthrough to `python -m mailwoman_train train`. parseArgs cannot collect undeclared flags.
- * Reconstructing them from tokens would be lossy.
+ * Token-by-token reconstruction would lose information.
  */
 const ADDITIONAL_COMMAND_LINE_ARGS = passThroughCLIArguments()
 

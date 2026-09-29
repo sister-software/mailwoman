@@ -5,7 +5,7 @@
  *
  *   Build `localities-cz-districts.db`, the Prague municipal-district locality database. The `Praha 9`
  *   pair rung needs a locality row to cohere with.
- *   WOF carries almost none of Prague's městské části, so this database supplies that half.
+ *   WOF contains almost none of Prague's městské části, so this database supplies that half.
  *
  *   Source and license: the GeoNames CZ places file (`<data-root>/geonames/CZ.txt`, CC-BY 4.0,
  *   attribution GeoNames), keeping rows whose name matches `Praha \d+` (the 22 administrative
@@ -141,7 +141,7 @@ export async function buildCZDistrictsDatabase(
 		foldLayerManifest({
 			name: "localities-cz-districts",
 			version: isoDate(now),
-			// CC-BY 4.0 carries attribution and no share-alike term, so the artifact is published.
+			// CC-BY 4.0 requires attribution and has no share-alike term, so the artifact is published.
 			tier: LayerTier.Shipped,
 			license: CZ_DISTRICTS_LICENSE,
 			attribution: "GeoNames",

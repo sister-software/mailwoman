@@ -13,7 +13,7 @@ import type { ResolvedPlace } from "@mailwoman/core/resolver"
 import type { CoordinateOptionalPlace } from "#postcode/prefix"
 
 /**
- * A resolved node carries a real coordinate (placeID set + non-zero lat/lon).
+ * A resolved node has a real coordinate (placeID set + non-zero lat/lon).
  */
 export function isResolvedWithCoord(n: AddressNode): boolean {
 	return !!(n.placeID && typeof n.lat === "number" && typeof n.lon === "number" && (n.lat !== 0 || n.lon !== 0))

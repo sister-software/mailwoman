@@ -128,7 +128,7 @@ swapping it out after measuring would be exactly the row selection this pre-regi
 prevent. It is the reason the diagnostic baseline is 1 rather than 0, and therefore the reason the
 diagnostic delta bar is +2 rather than +3.
 
-## Reproducing
+## Reproduce the probe
 
 ```bash
 yarn compile

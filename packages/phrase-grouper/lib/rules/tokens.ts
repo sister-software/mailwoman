@@ -32,8 +32,8 @@ export const NEUTRAL_PROPOSAL_CONFIDENCE = 0.55
 /**
  * Single-token US state/territory names, derived from the codex roster.
  *
- * Single-token scope on purpose: the non-tail region-name penalty below reads one token at a time,
- * and a multi-word name ("New York", "North Carolina") can never match a single token —
+ * Single-token scope is deliberate: the non-tail region-name penalty below reads one token at a
+ * time. and a multi-word name ("New York", "North Carolina") can never match a single token —
  * deriving only the single-token names keeps the set equal to what the check can ever see.
  */
 export const US_REGION_NAMES: ReadonlySet<string> = new Set(
@@ -45,7 +45,7 @@ export const US_REGION_NAMES: ReadonlySet<string> = new Set(
  *
  * Offsets are absolute into the original input (caller supplies the segment's `start` offset).
  * Deliberately not `@mailwoman/query-shape`'s tokenizer: that one yields code-point
- * class runs for the whole input, while this one carries segment-relative → absolute span math for the proposal spans —
+ * class runs for the whole input, while this one handles segment-relative → absolute span math for the proposal spans —
  * the two disagree on what a token boundary is.
  */
 /**

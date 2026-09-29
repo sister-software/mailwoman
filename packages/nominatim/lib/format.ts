@@ -46,7 +46,7 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 	for (const r of results) {
 		// `toNominatimResult` writes "" for a missing coordinate, never null,
 		// so emptiness is the condition that matters.
-		// A `== null` check alone lets a coordinate-less row through as Point [0, 0],
+		// A `== null` check by itself lets a coordinate-less row through as Point [0, 0],
 		// a real place in the Gulf of Guinea rather than an absence.
 		if (!r.lat || !r.lon) continue
 		const { lat, lon, boundingbox, geojson, ...properties } = r

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_parse_compare` tool definition — the description an agent reads, the input schema, and the handler
- *   wiring. The measurement lives in `#parse/compare/report`.
+ *   The `mwdev_parse_compare` tool definition provides the description and input schema an agent reads.
+ *   It also wires the handler. The measurement lives in `#parse/compare/report`.
  */
 
 import { z } from "zod"

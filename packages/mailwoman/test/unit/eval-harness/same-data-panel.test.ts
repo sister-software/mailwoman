@@ -6,7 +6,7 @@
  *   Tests the same-data panel builder.
  *
  *   The homograph gold alternates between the largest bearer and a smaller one. If the gold were
- *   always the largest bearer, a population prior alone would pass the panel.
+ *   always the largest bearer, a population prior by itself would pass the panel.
  *
  *   Strata draw from disjoint pools, so no place appears on both sides of a paired comparison.
  */
@@ -78,7 +78,8 @@ describe("same-data panel builder (#2261)", () => {
 
 		expect(homographs).toHaveLength(1)
 
-		// One eligible name yields one row at index 0, and its gold is the largest bearer.
+		// One eligible name yields one row at index 0.
+		// Its gold is the largest bearer.
 		expect(homographs[0]!.gold.geonameid).toBe("9000001")
 		expect(homographs[0]!.query).toBe("Springfield, United States")
 	})

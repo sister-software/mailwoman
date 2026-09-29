@@ -7,7 +7,7 @@
  *
  *   The output mixes designator-led streets with bare commune names as counterexamples.
  *   Some streets include a house number.
- *   `--exclude-surfaces` is required so that streets on the fragment evaluation board stay out of training. Training on
+ *   `--exclude-surfaces` keeps streets on the fragment evaluation board out of training. A model trained on
  *   these rows needs the French `street_prefix` loss mask disabled.
  */
 
@@ -27,8 +27,8 @@ import { SurfaceOrigin } from "#types"
  * Street and commune names both come from BAN.
  */
 /**
- * Resolved once, because `source_id` carries the source as its prefix and a pair that
- * disagreed would name a source no row of this output declares.
+ * Resolved once, because `source_id` includes the source as its prefix and a pair
+ * that disagreed would name a source no row of this output declares.
  */
 const FR_FRAGMENT_SOURCE = defaultRecipeSource("synth-fr-fragment")
 

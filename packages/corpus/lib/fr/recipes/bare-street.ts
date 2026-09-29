@@ -19,8 +19,8 @@ import { SurfaceOrigin } from "#types"
  * Shared provenance for postcode-free BAN rows.
  */
 /**
- * Resolved once, because `source_id` carries the source as its prefix and a pair that
- * disagreed would name a source no row of this output declares.
+ * Resolved once, because `source_id` includes the source as its prefix and a pair
+ * that disagreed would name a source no row of this output declares.
  */
 const FR_BARE_STREET_SOURCE = defaultRecipeSource("synth-fr-bare-street")
 

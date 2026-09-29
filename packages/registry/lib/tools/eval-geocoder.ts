@@ -26,7 +26,7 @@ export interface EvalGeocodeResult {
 }
 
 /**
- * A constructed geocoder: the matcher's ingest interface, the raw geocode, and the handle release.
+ * A constructed geocoder: the matcher's ingest interface, the raw geocode and the handle release.
  */
 export interface EvalGeocoder extends Disposable {
 	/**

@@ -10,7 +10,7 @@
  * Generated files match their writer's output. The register digest matches its contents. Those checks do not answer
  * whether a source's terms can be traced to a published tarball. This pass identifies gaps in that chain.
  *
- * This report does not establish clearance. A clean report also does not establish clearance. Each section says when
+ * This report does not establish clearance. A clean report also does not establish clearance. Each section states when
  * it establishes no fact. The report separates observations from unreadable records. The rights record does not grant
  * permission to use data.
  */
@@ -58,7 +58,7 @@ export interface SourceRegisterAudit {
  * Without this the license refusal never appears: every one of the 389 sources points
  * at its own license id, so the message is 389 distinct strings of one source each
  * and a report showing the largest refusals omits the blocker that covers every row.
- * `example` carries one message unaltered, so a reader still sees the real wording.
+ * `example` includes one message unaltered, so a reader still sees the real wording.
  */
 function refusalShape(message: string): string {
 	return message.replaceAll(/"[^"]*"/gu, "<id>")
@@ -99,7 +99,7 @@ export interface PackageRightsAudit {
 	 * The records do not establish whether the source trained the model.
 	 * That differs from a record stating the source did not train it.
 	 *
-	 * Combining those cases would report missing evidence as a measurement.
+	 * A combined result would report missing evidence as a measurement.
 	 */
 	entriesStatingNoUse: number
 	/**
@@ -117,7 +117,7 @@ export interface PackageRightsAudit {
 	 */
 	lineageUnresolved: string | null
 	/**
-	 * Whether the manifest's `files` array carries both generated rights filenames.
+	 * Whether the manifest's `files` array includes both generated rights filenames.
 	 *
 	 * A file committed and not listed never reaches a consumer.
 	 */
@@ -233,7 +233,7 @@ export interface DataBOMAudit {
 	withoutExpression: number
 
 	/**
-	 * Every distinct expression the document carries, with the component count under each.
+	 * Every distinct expression in the document, with the component count under each.
 	 */
 	expressions: Array<{ expression: string; components: number }>
 }
@@ -636,8 +636,8 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 /**
  * Read the committed data bill of materials for the version being released.
  *
- * The document is generated rather than hand-written, so this audit reports
- * what it says instead of re-deriving it.
+ * The document is generated rather than hand-written, so this audit reports its
+ * recorded value instead of re-deriving it.
  * An absent document goes into `unresolved` as a missing record.
  * A release decision reads that field.
  */
@@ -731,9 +731,9 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 		)
 
 		// The chain starts with the package itself.
-		// Showing that entry helps readers see its origin.
+		// That entry helps readers see its origin.
 		// This line describes the base.
-		// Repeating the package name would make the chain appear circular.
+		// A repeated package name would make the chain appear circular.
 		if (entry.lineage.length > 1) {
 			lines.push(`    decodes through ${entry.lineage.slice(1).join(" → ")}`)
 		}

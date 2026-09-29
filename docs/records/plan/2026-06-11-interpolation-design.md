@@ -30,7 +30,7 @@ The same per-county shapefiles the real-intersection eval already reads
 `www2.census.gov/geo/tiger/TIGER2023/EDGES/tl_2023_<countyfips>_edges.zip` into
 `/tmp/tiger-edges/`). Each road edge carries:
 
-| Field               | Meaning                                                      |
+| Field               | Definition                                                   |
 | ------------------- | ------------------------------------------------------------ |
 | `FULLNAME`          | Street name as TIGER spells it (`State Route 12`, `Main St`) |
 | `LFROMADD`/`LTOADD` | House-number range on the LEFT side, walking from→to node    |
@@ -83,9 +83,9 @@ CREATE INDEX idx_seg_postcode ON street_segment (postcode, street_norm, min_hn);
 CREATE INDEX idx_seg_street   ON street_segment (street_norm, min_hn);
 ```
 
-Keying reuses `resolver-wof-sqlite/street-normalize.ts`, the same function the
+The key uses `resolver-wof-sqlite/street-normalize.ts`, the same function the
 address-point extract and lookup use. There is one normalizer, never two, as the PLACETYPE_ORDER
-bug showed. Keying also uses `canonicalizeRouteKey`, a route-designator fold applied by both the
+bug showed. The key also uses `canonicalizeRouteKey`, a route-designator fold applied by both the
 builder and the lookup. The fold is needed because TIGER spells routes `State Rte 100` / `US Hwy 5`
 where E911/Overture say `VT ROUTE 100` / `US ROUTE 5`. That mismatch was the largest street-name
 miss class in the VT eval, and the fold alone added +3.1pp coverage without a tail cost. The
@@ -94,7 +94,7 @@ rebuild (follow-up). Geometry is a plain JSON polyline: segments are short, the 
 cost is small at state scale, and the reader stays dependency-free. Revisit the encoding
 only if a national build makes the size a problem.
 
-**Scoping is postcode-first, like the address-point tier.** TIGER edges carry no
+**The scope starts with the postcode, as the address-point tier does.** TIGER edges carry no
 locality name, so locality scope cannot be matched directly against this table. This is a known
 limitation of this increment (see open questions). Queries without a postcode fall back to a
 statewide street-name match, which is direct but ambiguous for common names ("Main
@@ -122,13 +122,13 @@ Given `{ street, number, postcode? }`:
    because the most specific range is the best evidence.
 5. **Interpolate:** `t = (n − from_hn) / (to_hn − from_hn)` (0.5 when the range is a
    single number), clamped to [0, 1], then walk the polyline by cumulative haversine arc
-   length to the point at fraction `t`. Descending ranges need no special case: `t` is
+   length to the point at fraction `t`. A descending range needs no special case: `t` is
    computed against the raw from/to, which already encodes direction.
 6. **Answer:** `{ lat, lon, interpolated: true, parityMatched, uncertaintyM, source,
 release }` where `uncertaintyM` is half the segment's polyline length in meters.
 
 This increment applies no side-of-street offset. It reports the TIGER centerline point with
-half-segment uncertainty. Offsetting perpendicular by ~10 m to the matched side is a cheap
+half-segment uncertainty. A perpendicular offset of ~10 m to the matched side is a cheap
 follow-up if the eval shows the centerline is the dominant error term. Currently, range
 uniformity is the dominant term.
 
@@ -230,7 +230,7 @@ Method 2 clear the check on its bracketed stratum?
 | all hits (ladder)                     | 4883 |     53 m / 191 m |   4982 |     42 m / 62 m |
 | tiger-alone, same sample (baseline)   | 4100 |     66 m / 249 m |   4389 |     41 m / 79 m |
 
-- **Coverage: VT 82.0% → 97.7%, Cook 87.8% → 99.6%.** Bracketing answers most of TIGER's
+- **Coverage: VT 82.0% → 97.7%, Cook 87.8% → 99.6%.** The bracketed range answers most of TIGER's
   name-absent/range-gap miss classes because the neighbor points carry the E911/Overture names.
 - **Check on the bracketed stratum: Cook pass (42/61). VT miss: p50 50.5 m (over by 0.5 m),
   p90 182 m.** Method 2 moved VT's bracketed p90 249 → 182 m and its p50
@@ -257,7 +257,7 @@ Method 2 clear the check on its bracketed stratum?
    reporting measures this. If fallback hits dominate the error tail in a denser
    state, revisit before national rollout.
 3. **Locality scope.** TIGER carries ZIPs rather than locality names. A locality-only query
-   (without a postcode) currently uses the statewide fallback + abstention. Joining ZIP →
+   (without a postcode) currently uses the statewide fallback + abstention. The ZIP →
    locality via the postcode extract (or place ancestry) would restore locality scoping
    in a follow-up after the pilot.
 4. **ZIP+4 snapping:** deferred to #525 (needs the ZCTA work as a prior), per scoping.

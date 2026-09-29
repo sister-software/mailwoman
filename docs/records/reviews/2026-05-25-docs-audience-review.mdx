@@ -76,12 +76,12 @@ This page should be the first thing linked from the "Docs" navbar. It replaces t
 
 The docs mix at least four distinct audiences without clear boundaries:
 
-| Audience                           | What they need                                                                                 | Where they find it now                                                                    |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| **Curious software engineer**      | Understand the problem, see if the approach is credible, maybe try the demo                    | Tier 0 + blog posts (works well, but the blog assumes serial reading)                     |
-| **Potential integrator**           | Know what ships, what the API looks like, what accuracy to expect, how to install              | Nowhere consolidated. `how-it-works-now.md` is closest but doesn't give API surface.      |
-| **ML practitioner / peer project** | Architecture decisions, training methodology, corpus pipeline, eval discipline                 | Plan/reference docs + concept articles (good depth, but status confusion hurts)           |
-| **Operator / contributor**         | Training recipes, smoke discipline, corpus build commands, GPU provisioning, release checklist | `OPERATIONS.md`, `TRAINING_ENV.md`, `VERDICT_SMOKES.md`, phase files — good but scattered |
+| Audience                           | What they need                                                                                       | Where they find it now                                                                    |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Curious software engineer**      | Understand the problem, see if the approach is credible, maybe try the demo                          | Tier 0 + blog posts (works well, but the blog assumes serial reading)                     |
+| **Potential integrator**           | Know what ships, what the API looks like, what accuracy to expect, how to install                    | Nowhere consolidated. `how-it-works-now.md` is closest but doesn't give API surface.      |
+| **ML practitioner / peer project** | Architecture decisions, training methodology, corpus pipeline, eval discipline                       | Plan/reference docs + concept articles (good depth, but status confusion hurts)           |
+| **Operator / contributor**         | Model training recipes, smoke discipline, corpus build commands, GPU provisioning, release checklist | `OPERATIONS.md`, `TRAINING_ENV.md`, `VERDICT_SMOKES.md`, phase files — good but scattered |
 
 The current structure — `understanding/`, `concepts/`, `plan/`, `evals/`, `retrospectives/` — maps loosely to these audiences but doesn't signpost the mapping. A reader in the "potential integrator" bucket has to read `SCHEMA.md` and `VERDICT_SMOKES.md` to find the npm install command.
 
@@ -89,7 +89,7 @@ The current structure — `understanding/`, `concepts/`, `plan/`, `evals/`, `ret
 
 > **Who this is for:** ML engineers evaluating the training approach. If you want to install the parser, see [Getting started](/docs/getting-started).
 
-### 3. Naming conventions are a decoder ring
+### 3. Names act as a decoder ring
 
 The project uses **Tier**, **Stage**, **Phase**, and **Thread** as organizational concepts. A reader encounters all four within the first 20 minutes of reading:
 
@@ -154,11 +154,11 @@ A reader trying to understand "what went wrong with v0.4.0/v0.5.0 training" has 
 
 **Fix:** Consolidate into a single "training divergence investigation" document that references the blog posts and the reviews as historical artifacts but presents the current understanding in one place. The reviews can remain as-is with date stamps — they're useful as a record of the thinking — but add a README in `reviews/` that says "start here for the current state of understanding."
 
-### 8. Missing pages
+### 8. Required pages are absent
 
 There are several pages a new reader would expect that don't exist:
 
-- **Getting started / Installation.** There's no page that says "here's how to install Mailwoman and parse your first address." The npm package is referenced (`@mailwoman/neural-weights-en-us`) but the actual install command and a 5-line code example are nowhere in the docs.
+- **Installation guide.** The docs have no page that says "here's how to install Mailwoman and parse your first address." The npm package is referenced (`@mailwoman/neural-weights-en-us`) but the actual install command and a 5-line code example are nowhere in the docs.
 - **API reference.** The staged pipeline interface and schema are documented, but there's no page that says "here's the `parse()` function signature, here's the return type, here's what `AddressNode` contains."
 - **What you can use today.** A reader evaluating the project needs to know: can I install this and parse US addresses right now? What accuracy should I expect? What doesn't work? The answer is "yes, with caveats" — but that answer isn't the result shows stated anywhere.
 - **Demo explanation.** The demo page (`/demo`) runs in the browser with no explanation of what it's doing, what model it's using, or what the confidence numbers mean. A short "About this demo" section would bridge the gap.
@@ -219,7 +219,7 @@ There are several pages a new reader would expect that don't exist:
 
 ### Review documents — collective notes
 
-- **Good:** The Codex and DeepSeek reviews are unusually thorough. Publishing them is direct and useful for anyone evaluating the project's self-awareness.
+- **Good:** The Codex and DeepSeek reviews are unusually thorough. Their publication gives readers direct evidence of the project's self-assessment.
 - **Issue:** The three 2026-05-24 reviews (Codex, DeepSeek, follow-up) cover overlapping territory. The follow-up is the most current but references both predecessors. A reader needs to read all three to follow the thread.
 - **Issue:** The reviews reference specific blog posts, concept articles, plan docs, and code files by relative path — fragile if the docs are reorganized.
 

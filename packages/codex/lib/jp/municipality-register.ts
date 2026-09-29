@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The towns whose own name carries the city marker 市 (shi) before the town suffix 町 / 村 (chō / son).
+ *   The towns whose own name includes the city marker 市 (shi) before the town suffix 町 / 村 (chō / son).
  *
  *   A Japanese municipality span closes at 市 in the ordinary case (`富山市`, `神戸市西区`), and a character model
  *   learns that boundary from 1,700 cities. A town whose name contains 市 defeats it: `中新川郡上市町` reads as the

@@ -1,15 +1,15 @@
 ---
-title: Decoding and the best path
+title: How the decoder chooses a path
 description: How per-piece scores become one reading — the legality table, best-path search, and why the transition scores here are constraints rather than learned weights.
 role: explanation
 ---
 
-# Decoding and the best path
+# How the decoder chooses a path
 
 ## The question
 
 At the end of scoring, every piece of the input carries a number for each of the 33 available labels.
-Taking each piece's highest-scoring label is the obvious next move, and it is wrong. It produces
+If you take each piece's highest-scoring label, you get the obvious next move, and it is wrong. It produces
 sequences that are not readings of anything, like a "continues the locality" label with no locality
 open in front of it. The standard symptom is `Saint Petersburg, FL` coming back with a locality of
 `Petersburg`.
@@ -54,8 +54,8 @@ followed by `B-postcode` and `B-region` followed by `B-locality` are both legal,
 them identically, even though real addresses use the first far more.
 
 That is deliberate, and it is the answer to a question the label space raises. `I-locality` without a
-`B-locality` is not an unlikely reading, it is not a reading. Encoding it as a hard constraint means
-the orphan cannot appear in any candidate, so no downstream stage has to defend against it.
+`B-locality` is not an unlikely reading, it is not a reading. A hard constraint excludes it from every
+candidate, so no downstream stage has to defend against the orphan.
 
 ## Best path
 
@@ -96,7 +96,7 @@ learned from data.
 Mailwoman decodes with Viterbi over a transition table, so the shape is a conditional random field's.
 The transition table is not. It is built from the label list at startup, holds only legality, and is
 never updated by training. No shipped weights package supplies a learned transition
-matrix; the decoder has a slot for one and every published bundle leaves it empty. Training scores
+matrix; the decoder has a slot for one and every published bundle leaves it empty. The training objective scores
 each piece's label on its own — cross-entropy per position, with no sequence-level term — which is
 what the model card records as training without a conditional random field and decoding with one.
 

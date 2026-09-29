@@ -132,7 +132,8 @@ export async function expectNothingUnderTheFooter(page: Page): Promise<void> {
 }
 
 /**
- * Asserts that `opener` opens one side sheet, and that both the sheet's close button and `opener` close it.
+ * Asserts that `opener` opens one side sheet.
+ * Both the sheet's close button and `opener` close it.
  *
  * On a phone the sheet covers its opener, so the sheet needs its own close button.
  * On a wide screen the opener stays visible, so it must also toggle the sheet closed.

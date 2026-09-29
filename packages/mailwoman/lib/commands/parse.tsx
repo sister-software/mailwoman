@@ -508,8 +508,8 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		pipelineOpts.resolveOpts = resolveOpts
 	}
 
-	// Passing `undefined` keeps the pipeline's default street-evidence rerank.
-	// Passing `false` disables it.
+	// The `undefined` value keeps the pipeline's default street-evidence rerank.
+	// A `false` value disables it.
 	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
 
 	const { createRuntimePipeline } = await import("#index")
@@ -765,7 +765,7 @@ async function runNeural(
 		const filtered = filterByPolicy(proposals, policy, options.locale)
 		tree = proposalsToTree(input, filtered)
 	} else {
-		// Parsing through the decoder keeps containment nesting.
+		// The decoder preserves containment nesting.
 		tree = await neural.parse(input, { inputMode: options.inputMode })
 	}
 

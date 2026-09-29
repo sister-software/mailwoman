@@ -162,7 +162,7 @@ export function fixtureDomains(): SurveyAreaAttributes["domains"] {
 }
 
 /**
- * The fixture delineations include mixed, class-8, water, and unrated squares, plus a `notcom` square.
+ * The fixture delineations include mixed, class-8, water and unrated squares, plus a `notcom` square.
  * They sit left to right, each on its own ground area.
  */
 export function fixtureDelineations(areaSymbol = "XX001"): SoilDelineation[] {

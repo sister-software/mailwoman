@@ -1,7 +1,7 @@
 """The declared interfaces match the code that implements them.
 
 A protocol with no implementing class adds no behavior. These tests pin each one's members against the modules
-that already carry them, so a protocol cannot drift into describing a shape the tree does not have.
+that already include them, so a protocol cannot drift into describing a shape the tree does not have.
 """
 
 from __future__ import annotations

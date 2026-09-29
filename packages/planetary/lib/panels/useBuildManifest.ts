@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fetches the body's build manifest, which lists the archives a build read, their digests and the
+ *   Fetches the body's build manifest. It lists the archives a build read, their digests and the
  *   nomenclature snapshot date.
  */
 

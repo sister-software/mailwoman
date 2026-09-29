@@ -394,8 +394,8 @@ describe("lookupCodex", () => {
 
 describe("lookupPostcodeAnchor", () => {
 	/**
-	 * Rounded values from shipped binaries: `10118` has a centroid, `01477` is one of 414
-	 * US keys without one, and `SW1A2AA` is a GB key missing from the US bundle.
+	 * Rounded values from shipped binaries: `10118` has a centroid, `01477` is one of 414 US keys without one.
+	 * `SW1A2AA` is a GB key missing from the US bundle.
 	 */
 	const resolver = {
 		lookup: (postcode: string) =>

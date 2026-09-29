@@ -73,7 +73,7 @@ export interface StreetCentroidTable {
 	 * The type is a plain string because `foldStreetSurface` differs from the
 	 * {@link NameKey} fold that other `name_key` columns use.
 	 *
-	 * Branding it as a `NameKey` would allow a probe with the wrong fold.
+	 * A `NameKey` type would allow a probe with the wrong fold.
 	 */
 	name_key: string
 }

@@ -124,7 +124,7 @@ def test_outputs_differing_in_one_bit_count_as_a_difference() -> None:
 
 
 def test_an_unmapped_id_raises_rather_than_scoring() -> None:
-    """Feeding a graph inputs it cannot represent would score the surgery against no reference."""
+    """Inputs a graph cannot represent would score the surgery against no reference."""
     orig = StubProcessor({"gone": [1, 3]})
     session = StubSession(METAS, {})
 

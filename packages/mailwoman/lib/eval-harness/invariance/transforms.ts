@@ -178,7 +178,7 @@ function wrapInQuotes(raw: string): string | null {
 
 /**
  * Appends an irrelevant parenthetical.
- * Existing components must remain unchanged.
+ * Keep existing components unchanged.
  */
 function addParenthetical(raw: string): string | null {
 	return `${raw} (main entrance)`

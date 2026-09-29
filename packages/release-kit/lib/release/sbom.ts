@@ -12,7 +12,7 @@
  *   An SBOM documents what a consumer installs: concrete versions and the production dependency
  *   closure. The operation runs `npm pack` on the released version, then installs and inspects its tarball.
  *
- *   The published `mailwoman` package.json carries one devDependency: `@mailwoman/osm`.
+ *   The published `mailwoman` package.json includes one devDependency: `@mailwoman/osm`.
  *   This internal dev-only workspace is never published, so a clean install would return 404.
  *   Consumers do not install a dependency's devDependencies. A production SBOM excludes them by
  *   definition, so the operation strips devDependencies before installation. It renames the extracted

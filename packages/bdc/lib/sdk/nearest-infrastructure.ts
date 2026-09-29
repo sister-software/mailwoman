@@ -12,13 +12,12 @@
  *
  *   The shapes below follow the interfaces in `poi-lookup.ts` and `@mailwoman/core/layers`:
  *
- *   - **`poiLookup` is an already-open {@link POILookup}, not a `POILookupOpts` this function
- *     constructs itself.** `POILookup`'s constructor eagerly loads the poi-taxonomy category dictionary
+ *   - **`poiLookup` is an already-open {@link POILookup}.** The caller constructs it from `POILookupOpts` before calling this function. `POILookup`'s constructor eagerly loads the poi-taxonomy category dictionary
  *     and prepares three statements (see `poi-lookup.ts`) — reconstructing that per call would mean
  *     re-opening the SQLite handle and re-running the dictionary `select` on every single
- *     `nearestInfrastructure` invocation. A scorer calling this once per filing candidate wants to open
- *     `poi.db` once and reuse the same `POILookup` — this wrapper takes that shape: the caller owns
- *     `POILookup`'s open/dispose lifecycle (`using poiLookup = new POILookup(...)`), we just call
+ *     `nearestInfrastructure` invocation. A scorer calls this once per filing candidate. It opens
+ *     `poi.db` once and reuses the same `POILookup`. This wrapper accepts that shape: the caller owns
+ *     `POILookup`'s open/dispose lifecycle (`using poiLookup = new POILookup(...)`). The wrapper calls
  *     `.search()` on it.
  *   - **`nearestInfrastructure` is `async`, not sync.** `readLayerCoverage`
  *     (`@mailwoman/core/layers`) is `Promise`-returning. Every layer-interface read in this codebase is
@@ -115,7 +114,7 @@ export async function nearestInfrastructure(
 	for (const hit of hits) {
 		if (hit.categoryID === null) {
 			// `categoryIDs` above always constrains the k-ring probe to real (non-zero) category ids
-			// (see POILookup#searchKRing), so a hit here always carries the category it was found under.
+			// (see POILookup#searchKRing), so a hit here always includes the category it was found under.
 			// This can't happen without a corrupted poi.db.
 			// Guard rather than silently coerce to "".
 			throw new Error(`nearestInfrastructure: hit ${stringifyJSON(hit.name)} has no categoryID`)

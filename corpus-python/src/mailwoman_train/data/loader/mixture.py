@@ -1,8 +1,8 @@
-"""Sampling across sources so the observed mix matches `source_weights`.
+"""Sample across sources so the observed mix matches `source_weights`.
 
 The mixture is STATIONARY for the whole epoch. An exhausted source restarts with a fresh shuffled
 pass rather than leaving the multinomial. The epoch ends once every source has completed at least
-one full pass. Held-out splits use a separate branch with no mixture to steer. Bucketing a
+    one full pass. Held-out splits use a separate branch with no mixture to steer. The sampler buckets a
 mixed-source validation file by its first row would drop every later source.
 """
 
@@ -31,7 +31,7 @@ def _stream_held_out(
 ) -> Iterator[dict[str, Any]]:
     """Every filter-accepted row of every parquet file, file order shuffled, with no source bucketing.
 
-    Bucketing identifies a file's source from its first row and filters every row to it — correct for
+    The sampler identifies a file's source from its first row and filters every row to it — correct for
     the source-segregated train corpus, but a mixed-source validation file silently loses its
     later-source rows. Held-out streams have no source mixture to steer.
     """
@@ -39,7 +39,7 @@ def _stream_held_out(
     rng.shuffle(order)
     for s in order:
         # Keep a --golden misuse check here. A label-less golden file used for val would produce
-        # garbage metrics. `file_source_counts` raises on the non-string cell such a file carries.
+        # garbage metrics. `file_source_counts` raises on the non-string cell such a file contains.
         try:
             file_source_counts(s)
         except TypeError as exc:
@@ -58,10 +58,10 @@ def _stream_held_out(
 
 
 def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
-    """Bucket parquet files by every `source` they carry.
+    """Bucket parquet files by every `source` they list.
 
-    Index a file under every source it carries. `_file_row_iter` filters for the requested source.
-    A file carrying two sources is read twice. Each pass yields only that source's rows.
+    Index a file under each source it lists. `_file_row_iter` filters for the requested source.
+    A file listing two sources is read twice. Each pass yields only that source's rows.
     `packages/corpus/lib/parquet/writers.ts` closes a part at `rowsPerFile` rows, including between
     sources. One source can end midway through a part. The next can begin there.
 
@@ -110,7 +110,7 @@ def _apply_source_weights(
     """Drop sources with zero weight. Refuse sources absent from the weights.
 
     A source with zero weight is the config declining it deliberately. A source absent from the weights
-    is an oversight. The sampler cannot see that source. The run log carries no trace.
+    is an oversight. The sampler cannot see that source. The run log contains no trace.
     Raise on the split whose recipe claims coverage when a source is unnamed. The
     A regenerated source may take a ``-vNN`` suffix. If the config keeps the old key, training
     silently continues on the superseded vintage.

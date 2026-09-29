@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Canonical-form invariance suite, which asserts that NFC and NFD spellings of an address parse equivalently.
+ *   Canonical-form invariance suite. It asserts that NFC and NFD spellings of an address parse equivalently.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -18,7 +18,7 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * Law identifier that every suite row carries.
+ * Law identifier included in every suite row.
  */
 export const CANONICAL_FORM_LAW = "canonical-form-invariance"
 

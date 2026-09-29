@@ -423,7 +423,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 		try {
 			const straddle = await lookup2.findPlace({ text: "York New", placetype: "locality" })
 			expect(straddle.some((c) => c.exactMatch === true)).toBe(false)
-			// A single alias still warrants the exact tier from the bag alone.
+			// A single alias still warrants the exact tier from the bag by itself.
 			const alias = await lookup2.findPlace({ text: "New City", placetype: "locality" })
 			expect(alias[0]).toMatchObject({ id: 999_000_001, exactMatch: true })
 		} finally {
@@ -480,7 +480,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		let ro: WOFSQLitePlaceLookup | undefined
 
 		try {
-			// Omitting buildFTS opens the 0444 file read-only.
+			// The default `buildFTS` setting opens the 0444 file read-only.
 			// A write-mode open would throw here.
 			ro = new WOFSQLitePlaceLookup({ databasePath: dbPath })
 			const candidates = await ro.findPlace({ text: "Paris", country: "US" })

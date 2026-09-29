@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests the data-root overlay rung and the artifact report that describes it. A weights workspace carries
+ *   Tests the data-root overlay rung and the artifact report that describes it. A weights workspace contains
  *   no `model.onnx`. Before the rung, a fresh checkout resolved the package and found it empty.
  *   It could not geocode.
  *
@@ -122,7 +122,7 @@ describe("resolveWeights — the artifact report", () => {
 		expect(by.get("model-card.json")?.origin).toBe(WeightsOrigin.Overlay)
 
 		// An artifact absent from the overlay is reported with a null origin.
-		// Omitting it would make "this checkout has no FST" indistinguishable from "this build never had one".
+		// Its omission would make "this checkout has no FST" indistinguishable from "this build never had one".
 		const fst = by.get("fst-xx-xx.bin")
 
 		expect(fst).toBeDefined()

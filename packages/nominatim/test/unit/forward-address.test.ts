@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The forward address block reads the JP tiers into Nominatim's keys from the resolved ancestry, and leaves a
- *   slot the parse filled alone.
+ * @file The forward address block reads the JP tiers into Nominatim's keys from the resolved ancestry. It leaves a
+ *   slot the parse filled by itself.
  */
 
 import { forwardToResolved } from "@mailwoman/nominatim/forward-address"

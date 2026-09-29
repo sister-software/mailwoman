@@ -66,7 +66,7 @@ const INJECTED_FAMILY_ID = "cik:0001234567"
 let cached: Promise<FilerLinkageEvalResult> | undefined
 
 async function runEval(): Promise<FilerLinkageEvalResult> {
-	// Caching the promise keeps concurrent callers from starting a second run.
+	// A cached promise keeps concurrent callers from starting a second run.
 	cached ??= filerLinkageEval({ date: PUBLISHED_LINKAGE_EVAL_DATE, printMarkdown: false })
 
 	return await cached
@@ -168,8 +168,8 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 	})
 
 	it("gives every registrant in one truth component the SAME label, including ids only a sibling named", () => {
-		// Sibling one names only Ridgeway.
-		// Sibling two names Ridgeway and Fernbank.
+		// The first sibling names only Ridgeway.
+		// The second sibling names Ridgeway and Fernbank.
 		// Ridgeway joins them into one component, so both labels must list both parents.
 		const base = buildLinkageEvalForm499Rows()
 
@@ -280,7 +280,7 @@ describe("hashLinkageEvalInputs", () => {
 	})
 
 	it("matches the SHA published in the committed scorecard", () => {
-		// Editing the corpus without regenerating the scorecard fails here.
+		// A corpus edit without a regenerated scorecard fails here.
 		expect(hashLinkageEvalInputs(buildFilteredEvalInputs())).toBe(PUBLISHED_WITHHELD_INPUTS_SHA256)
 		expect(hashLinkageEvalInputs(buildControlEvalInputs())).toBe(PUBLISHED_CONTROL_INPUTS_SHA256)
 	})
@@ -528,7 +528,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const providerRows = buildLinkageEvalProviderRows()
 
 		// These are the edges an EDGAR importer writes.
-		// The family readers use only `filer_family`, so edges alone leave recall at zero.
+		// The family readers use only `filer_family`, so edges by themselves leave recall at zero.
 		const injected = await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),

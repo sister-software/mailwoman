@@ -75,7 +75,7 @@ export interface RefreshCredentials {
  * Read the refresh credentials, created 0600.
  *
  * @returns The credentials, or `null` when the file is absent.
- * @throws when the file is present but does not carry a lid and a secret.
+ * @throws when the file is present but has no lid or secret.
  */
 export async function readRefreshCredentials(): Promise<RefreshCredentials | null> {
 	const path = licenseRefreshFilePath()

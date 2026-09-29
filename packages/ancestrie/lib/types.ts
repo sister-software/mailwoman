@@ -44,7 +44,8 @@ export interface AncestrieEntry {
 	parentIDs: readonly number[]
 
 	/**
-	 * Ranking score, higher surfaced first, stored as an ieee-754 float32.
+	 * A higher rank score surfaces first.
+	 * The score is stored as an ieee-754 float32.
 	 */
 	rank: number
 

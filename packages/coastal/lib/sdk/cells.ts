@@ -48,7 +48,7 @@ export interface ScenarioCellMeasurement {
 	 */
 	touchedCells: number
 	/**
-	 * Cells answered by the index alone, before compaction.
+	 * Cells the index answers without reading geometry, before compaction.
 	 */
 	wholeCells: number
 	/**
@@ -58,7 +58,7 @@ export interface ScenarioCellMeasurement {
 	/**
 	 * `partialCells / touchedCells`.
 	 *
-	 * The share of in-layer probes that cannot be answered from the index alone.
+	 * The share of in-layer probes the index cannot answer without reading geometry.
 	 */
 	partialShare: number
 	/**
@@ -202,7 +202,7 @@ export class CoastalCellIndex {
 /**
  * The per-scenario measurement as markdown table rows.
  *
- * What a build receipt carries, one line per element so a caller printing them
+ * What a build receipt contains, one line per element so a caller printing them
  * never has to split a joined string back apart.
  */
 export function formatScenarioMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {

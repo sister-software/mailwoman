@@ -13,7 +13,7 @@ import type { PathBuilderLike } from "path-ts"
 import { openReadStream } from "#fs/streams"
 
 /**
- * Streaming SHA-256 of a file, hex-encoded.
+ * The stream produces a file's SHA-256 hash in hexadecimal.
  */
 export async function sha256File(path: PathBuilderLike): Promise<string> {
 	const hash = createHash("sha256")
@@ -35,7 +35,7 @@ export function sha256Hex(data: string | NodeJS.ArrayBufferView | string[]): str
 }
 
 /**
- * Streaming MD5 of a file, hex-encoded.
+ * The stream produces a file's MD5 hash in hexadecimal.
  *
  * MD5 is used for build-provenance fingerprints that follow an existing convention.
  * The HM Land Registry PPD snapshot ships an `.md5` sibling.

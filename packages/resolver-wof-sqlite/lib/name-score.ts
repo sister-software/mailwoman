@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Soft name matching for locality ranking: case/diacritic folding, padded character trigrams, and the
+ *   Soft name matching for locality ranking: case/diacritic folding, padded character trigrams and the
  *   trigram-Jaccard score built on them. Shared by the FTS lookup and the candidate-table backend so
  *   both rank the same typo identically — the whole reason this is one module rather than two copies.
  */

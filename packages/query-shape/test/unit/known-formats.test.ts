@@ -96,9 +96,10 @@ describe("detectKnownFormats — postcodes", () => {
 	})
 
 	it("does not admit a postal mark in front of another country's postcode shape", () => {
-		// The optional mark belongs to the JP pattern alone.
-		// A five-digit group behind it is not a Japanese postcode, and admitting one would
-		// route a US or FR address on a character the input merely happens to carry.
+		// The optional mark belongs only to the JP pattern.
+		// A five-digit group behind it is not a Japanese postcode.
+		// A five-digit group would route a US or FR address based on a character
+		// that happens to appear in the input.
 		expect(formatsOf("〒10118")).not.toContain("jp_postcode")
 		expect(formatsOf("〒SW1A 1AA")).not.toContain("uk_postcode")
 	})

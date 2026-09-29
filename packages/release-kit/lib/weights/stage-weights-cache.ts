@@ -8,8 +8,8 @@
  *   layout `resolveWeights`' cache rung finds and the posture `score-anchor-v2-boards.run.ts` and
  *   `overlay-channel-smoke.ts` both take.
  *
- *   A model includes more than its `.onnx` file. The card declares required channels. Sibling artifacts provide them.
- *   Replacing only the model file would score it with the shipped bundle's channels.
+ *   A model includes more than its `.onnx` file. The card declares required channels. Other bundle artifacts provide them.
+ *   A model-file-only replacement would score it with the shipped bundle's channels.
  *
  *   The default uses symlinks, so it copies no files and leaves the data root untouched.
  *   `--from` seeds the layout. `--file`, `--omit`, and `--card` then change it for an A/B comparison.
@@ -95,7 +95,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 			// Stage files only.
 			// A loader does not read package directories as artifacts.
-			// Symlinking a directory into the layout could make its walk stale.
+			// A symlinked directory in the layout could make its walk stale.
 			if (await isFile(source)) {
 				staged.set(entry, source)
 			}

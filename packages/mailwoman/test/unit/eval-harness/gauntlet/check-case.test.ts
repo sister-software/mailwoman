@@ -300,8 +300,8 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("leaves a SAME-script concatenation failing — the plus-code row's error must stay visible", () => {
-		// A model that types the Open Location Code as `postcode` emits two spans next to the
-		// real 14200, and with no interface listing them the exact comparison must keep failing.
+		// A model that types the Open Location Code as `postcode` emits two spans next to the real 14200.
+		// With no interface listing them, the exact comparison must keep failing.
 		const c = storedCase({ expect_components: stringifyJSON({ postcode: "14200" }) })
 
 		expect(checkCase(c, result({ postcode: "WWF9+6H6 14200" }))).toEqual([`postcode "WWF9+6H6 14200" ≠ "14200"`])

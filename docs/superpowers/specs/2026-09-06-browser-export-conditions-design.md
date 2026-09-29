@@ -49,7 +49,7 @@ stubs and zero aliases for `@mailwoman/*`, and the Earth `vite.config.ts` carrie
 ### Inventory first
 
 Before any edit, list the `@mailwoman/*` subpaths the docs client bundle reaches. For each, record the
-Node builtin it pulls in and the import that pulls it in. Running `esbuild` with
+Node builtin and the import that introduces it. A run of `esbuild` with
 `conditions: ["browser"]`, `platform: "browser"` and `bundle: true` over each subpath, with the stubs
 removed, reports the exact chain in its error output. The inventory is a table in the PR description
 rather than a comment in code.
@@ -110,4 +110,4 @@ that `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-
 
 ## Out of scope
 
-Moving any file out of `docs/src/` and renaming anything are out of scope. Both belong to the Earth design.
+The Earth design owns file moves out of `docs/src/` and renames.

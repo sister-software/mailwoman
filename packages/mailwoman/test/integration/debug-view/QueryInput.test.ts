@@ -126,7 +126,7 @@ describe("applyKey", () => {
 
 	it("steps and deletes by whole codepoints, not UTF-16 units", () => {
 		// The house emoji is a surrogate pair.
-		// Stepping by one UTF-16 unit would leave a lone surrogate.
+		// A one-unit UTF-16 step would leave a lone surrogate.
 		const HOUSE = "St 🏠"
 
 		expect(HOUSE).toHaveLength(5)
@@ -151,7 +151,8 @@ describe("applyKey", () => {
 			cursor: 28,
 		})
 
-		// CRLF becomes one space, and a control character inside the paste is dropped.
+		// CRLF becomes one space.
+		// A control character inside the paste is dropped.
 		expect(applyKey({ value: "", cursor: 0 }, "a\r\nb\u0000c", key())).toEqual({ value: "a bc", cursor: 4 })
 	})
 

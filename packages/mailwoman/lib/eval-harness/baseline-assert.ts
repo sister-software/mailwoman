@@ -42,7 +42,7 @@ export interface RegisteredBaseline {
 /**
  * Maps a harness's own metric keys to baseline ids.
  *
- * The mapping is not derivable because one model can carry both a real and a stand-in artifact id.
+ * The mapping is not derivable because one model can include both a real and a stand-in artifact id.
  */
 export interface BaselineProfile {
 	description: string

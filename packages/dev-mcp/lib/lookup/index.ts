@@ -82,7 +82,7 @@ export interface LookupRow {
 	 */
 	entries: unknown[] | null
 	/**
-	 * A reading of this row in words, for the cases where the shape alone misleads.
+	 * A reading of this row in words, for cases where the shape by itself misleads.
 	 */
 	note?: string
 }
@@ -104,7 +104,7 @@ export interface LookupResult {
 	/**
 	 * Present instead of `rows` for a sweep.
 	 *
-	 * A locale whose artifact is missing carries its own `unavailable_reason` rather than dropping
+	 * A locale whose artifact is missing includes its own `unavailable_reason` rather than dropping
 	 * out, because a locale absent from the map would read as one the source did not know.
 	 */
 	by_locale?: Record<string, { artifact?: string; rows: LookupRow[]; unavailable_reason?: string }>

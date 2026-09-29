@@ -73,7 +73,7 @@ describe("OracleMeter — google", () => {
 	})
 
 	it("refuses a run larger than the remaining cap BEFORE spending any of it", () => {
-		// Refusing part way through would leave a partial arm that can still be graded as a whole one.
+		// A refusal part way through would leave a partial arm that could still be graded as a complete one.
 		const meter = new OracleMeter({ google: { enabled: true, maxCallsPerDaemonLifetime: 100 } })
 		const admission = meter.admit(OracleProviderName.Google, 420)
 
@@ -104,7 +104,7 @@ describe("OracleMeter — google", () => {
 
 	it("counts every issued query, cache hit or not", () => {
 		// The client does not report which answers came from disk, so the meter over-counts a warm run.
-		// Refusing a run the cap could have afforded is the right direction to be wrong in.
+		// A false refusal is the safer error when the cap could have afforded the run.
 		const meter = new OracleMeter({ google: { enabled: true } })
 
 		meter.recordGoogleCalls(3)

@@ -17,7 +17,7 @@ Belgium also suits a bilingual test. Five Brussels streets appear twice, once in
 French, such as `Wetstraat` and `Rue de la Loi` or `Grote Markt` and `Grand-Place`. Each pair tests
 whether two surface forms of one street reach the same place.
 
-The main result is that six of the 30 rows do not land in Belgium with default settings. Setting one
+The main result is that six of the 30 rows do not land in Belgium with default settings. Set one
 option fixes all six.
 
 ## Method
@@ -100,7 +100,7 @@ French package _through_ to the base package. The French package is a data-only 
 no `model.onnx`, only French postcode, pair-index and FST siblings, and the pipeline consults none of
 them for a Belgian postcode. Belgium has no tier, and choosing the nearest tier does not give it one.
 
-**Pinning the country fixes every failure.** `country-pinned` scores 30 out of 30 on all six
+**A country pin fixes every failure.** `country-pinned` scores 30 out of 30 on all six
 resolution measures. That result comes from one option in the call, and the next section describes
 the failures it repairs.
 
@@ -129,7 +129,7 @@ sankt vith  → Sankt Vith/BE pop=9481
 
 The Belgian answer is present and ranked first in each case. A 102,275-person Belgian city loses to a
 zero-population Dutch hamlet of the same name, and a 197,013-person Belgian city loses to a
-238-person French commune. Ranking did not decide these rows.
+238-person French commune. The ranker did not decide these rows.
 
 The country prior decided them. The six failures were re-run with the country filter disabled, using
 the same weights, gazetteer and input strings:
@@ -230,7 +230,7 @@ three arms took 4,273 ms together, excluding model load.
 
 - [France — 100 addresses from the BAN](./france-ban.mdx) — the same implementation where a national
   register does exist.
-- [Reading our numbers](./reading-our-numbers.mdx) — why the resolve rate and the precision are
+- [How to read our numbers](./reading-our-numbers.mdx) — why the resolve rate and the precision are
   different numbers.
 - [Locales and tiers](../../developers/reference/locales-and-tiers.mdx) — which countries are measured.
 - [Runtime flags](../../developers/reference/runtime-flags.mdx) — the country prior and its filter.

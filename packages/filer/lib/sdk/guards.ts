@@ -16,7 +16,8 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
  * Temporal columns need ISO dates because `asOf` queries compare them as strings.
  * A vintage label such as "2026-Q2" would sort after every ISO date in its year.
  */
-// repo-health-ignore export-name-affix -- The function rejects malformed input, which `isoDate` does not do.
+// repo-health-ignore export-name-affix -- The function rejects malformed input.
+// `isoDate` does not.
 export function assertISODate(value: string, context: string, caller = "buildFilerDatabase"): string {
 	if (!ISO_DATE_PATTERN.test(value)) {
 		throw new Error(

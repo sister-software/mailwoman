@@ -94,7 +94,7 @@ export const CHECKOUT_SIZE_RATIO = 7
 /**
  * One edit to a source list in `defaults.ts` that a move requires.
  *
- * The plan prints edits for a person to apply, because the list entries carry
+ * The plan prints edits for a person to apply, because the list entries include
  * explanatory prose that an automatic rewrite would lose.
  */
 export interface RecipeEdit {

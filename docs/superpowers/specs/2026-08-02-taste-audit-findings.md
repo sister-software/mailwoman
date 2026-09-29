@@ -186,7 +186,7 @@ mulberry32". One caller uses it: `scripts/eval/build-oa-coord-golden.ts:149`.
 
 **Diagnosis: the home exists, but its shape does not fit.** `SeededRandom` is a class you call
 `.random()` on. Every call site above wants `() => number`, because the synthesizers and
-samplers take that shape as an injected `random` option. The authors likely knew about the home. Writing a copy was the
+samplers take that shape as an injected `random` option. The authors likely knew about the home. A copy was still the
 cheapest way to get the shape the call site needs.
 
 **Proposed fix:** export a thunk form (`mulberry32(seed): () => number`) from
@@ -234,7 +234,7 @@ rule is not enforced.
 a re-fetch. **Low** for the one-shot tools.
 **Cost of fixing it: medium.** `APIClient` is axios-based, so each migration is a real rewrite.
 
-### A5. Hashing — `core/utils/hash.ts` exists; 10 files call `createHash` directly
+### A5. Hash utilities — `core/utils/hash.ts` exists; 10 files call `createHash` directly
 
 `sha256File` / `sha256Hex` / `md5File` are exported. Direct `createHash` callers:
 
@@ -331,7 +331,7 @@ home", and the missing PIP function makes that claim untrue.
 `readonly` GeoJSON types.
 
 > **Corrected on implementation.** Only the resolver moved. `nuts-lookup` and `timezone-lookup` each
-> carry exactly one dependency (the zero-dependency `@mailwoman/annotations`). Importing spatial to reach the
+> carry exactly one dependency (the zero-dependency `@mailwoman/annotations`). A direct spatial import to reach the
 > ray cast would pull `@mailwoman/core` and its ~11 MB of shipped data into two leaf packages. That
 > is a weight increase of three orders of magnitude for fifteen lines, so both packages keep their copies, with the
 > measurement recorded in place. The audit priced the duplication but not the dependency, and reading the
@@ -354,7 +354,7 @@ corpus/src/adapters/state-tx-notaries/adapter.ts:38              corpus/src/adap
 `usgov-samhsa-treatment-locator:125`).
 
 **Cost of leaving it: medium.** This regex decides where the house number ends and the street begins
-for ten corpus sources. Fixing a parsing edge case means finding all ten, and none of the copies refers
+for ten corpus sources. A parsing-edge fix requires finding all ten, and none of the copies refers
 to the others.
 **Cost of fixing it: lowest in the audit.** The fix is a mechanical extraction without any semantics to reconcile.
 **Proposed home:** `corpus/src/adapters/shared.ts`, or `@mailwoman/normalize` if the split belongs to
@@ -561,7 +561,7 @@ list. Another sweep would not last.
 occurrences of the opposite form in the same repo.
 **Cost of fixing it: low** for `Poi`/`Crf`/`Gbt`, which are internal, so no public export moves. `Nz*` and
 `Nuts*` are **public exports of published packages** (`@mailwoman/codex`, `@mailwoman/nuts-lookup`,
-`@mailwoman/annotations`). Renaming them breaks consumers, so the renames belong in a major release, following the precedent
+`@mailwoman/annotations`). Those renames break consumers, so they belong in a major release, following the precedent
 `AGENTS.md` records for the v5.0.0 batch.
 
 ## D — altitude (observation rather than a verdict)
@@ -581,7 +581,7 @@ with a quick characterization of each file's shape:
 
 `geocode-core.ts` is the outlier, with seventeen exported symbols and eleven functions in a thousand
 lines. A broad exported surface suggests that a module serves several callers for
-several reasons. **This is a prompt for a closer read rather than a finding.** Confirming it needs the per-file read I did
+several reasons. **This is a prompt for a closer read rather than a finding.** Confirmation needs the per-file read I did
 not do.
 
 ## Appendix — rejected candidates
@@ -594,7 +594,7 @@ them again.
    `greatCircleKm`. Its docstring says so. It is not a second implementation.
 
 2. **The whole great-circle cluster.** Grep found lat/lon trigonometry in seven files outside
-   `spatial/`. Reading showed that `resolver-wof-sqlite/geo.ts:23` **re-exports** spatial's function,
+   `spatial/`. The file showed that `resolver-wof-sqlite/geo.ts:23` **re-exports** spatial's function,
    `mailwoman/gazetteer-pipeline/postcode-locality/{base,jp,kr,tw}.ts` all **import** it (`base.ts:45`,
    `tw.ts:59`), and `match/distance.ts` is the adapter above. **The audit's first and
    most promising candidate set produced zero findings.**
@@ -605,7 +605,7 @@ them again.
 
 4. **`api-kit/metrics.ts:52 percentile`** is a different function despite the name. It takes a
    **pre-sorted** array, returns `0` instead of `null` on empty input, and rounds to two decimals. It was written for a hot
-   metrics path. Merging it into `core/utils/stats.ts` needs a judgment call about the interface, so it
+   metrics path. A merge into `core/utils/stats.ts` needs a judgment call about the interface, so it
    stays out of A2's mechanical sweep.
 
 5. **`libpostal` / `nominatim` / `photon` error envelopes** have `{ error: "…" }` shapes that look like

@@ -66,7 +66,7 @@ export interface POIBoardFixture {
 	 */
 	rowRef?: string
 	/**
-	 * Authoring note.
+	 * A note for the board author.
 	 * The board does not grade it.
 	 */
 	note?: string
@@ -331,7 +331,7 @@ export interface CasePartition {
  * Splits grades by their fixture's status, matching grades to fixtures by ID.
  *
  * @throws When a grade's ID matches no fixture.
- * Dropping it would shrink the board and inflate the pass rate.
+ * Its removal would shrink the board and inflate the pass rate.
  */
 export function partitionCases(fixtures: readonly POIBoardFixture[], grades: readonly CaseGrade[]): CasePartition {
 	const byID = new Map(fixtures.map((fixture) => [fixture.id, fixture]))
@@ -409,7 +409,7 @@ export interface FloorLine {
 	 */
 	met: boolean
 	/**
-	 * Passing and total rows as `pass/total`.
+	 * The number of passing and total rows as `pass/total`.
 	 */
 	fraction: string
 }

@@ -10,7 +10,7 @@
  *   - US — the type is a trailing word with a standardized abbreviation (`Main Street` → `ST`).
  *   - German — the type is a fused trailing suffix (`Hauptstraße`).
  *   - French — the type is a leading standalone word (`Rue de la Paix`, `Avenue des Champs-Élysées`).
- *       It carries common abbreviations (`bd`, `av`, `pl`) but no single national standard like
+ *       It includes common abbreviations (`bd`, `av`, `pl`) but no single national standard like
  *       USPS Pub-28.
  *
  *   So French detection is "is this token a known voie word", position-first — which is why

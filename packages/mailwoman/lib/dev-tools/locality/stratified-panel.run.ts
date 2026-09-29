@@ -5,7 +5,7 @@
  *
  *   Write a coordinate panel that draws evenly across a country's regions.
  *
- *   The default US panel `$MAILWOMAN_DATA_ROOT/eval/coord/us.jsonl` carries 2,000 rows over 7 of the 50 states plus DC.
+ *   The default US panel `$MAILWOMAN_DATA_ROOT/eval/coord/us.jsonl` contains 2,000 rows over 7 of the 50 states plus DC.
  *   Five of the 7 states are the five regions `synth-suffix-boundary` draws from. A rate measured on it is a rate
  *   for those regions. The 97.7-point interior spread is invisible there. No tool in the repository
  *   built the panel that exposed it.
@@ -18,7 +18,7 @@
  *
  *   The coordinate is the postcode's, straight from the export's own columns. It is good enough to place a row on a
  *   map and to reject a gross mis-geocode. It is not a locality centroid, so a probe grading rooftop distance against
- *   it is grading the wrong thing. Each row says so in `coordinate_basis`.
+ *   it is grading the wrong thing. Each row records that in `coordinate_basis`.
  *
  *   Run:
  *
@@ -142,7 +142,7 @@ function seededOrder(size: number): (a: unknown, b: unknown) => number {
  * The panel writes the region form because GeoNames publishes `California`, never `CA`.
  * The surface under test is the code.
  *
- * Folding here keeps the shortfall report and the rows speaking the same vocabulary.
+ * This fold keeps the shortfall report and the rows in the same vocabulary.
  */
 const byStratum = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()
 
@@ -151,8 +151,8 @@ let keptSourceForm = 0
 for (const triple of quotaed) {
 	if (!coordinateOf.has(triple.postcode)) continue
 
-	// A country whose subdivisions codex does not carry keeps the source's form, counted
-	// so the run says how much of the panel that is rather than writing two kinds of row silently.
+	// A country whose subdivisions codex does not list keeps the source's form, counted so the
+	// run reports how much of the panel that is rather than writing two kinds of row silently.
 	const subdivision = matchSubdivisionIn(triple.cc, triple.region)
 
 	if (!subdivision) {
@@ -186,7 +186,7 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 		short.push(`${stratum} ${bucket.length}`)
 	}
 
-	// Taking the head of the bucket samples source order.
+	// The bucket head preserves source order.
 	// The source orders postcodes within each state.
 	// For a region stratum that is harmless.
 	// The stratum already fixes the state.
@@ -211,7 +211,7 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 			country: triple.cc,
 			expected: { locality: triple.locality, region: triple.written, postcode: triple.postcode },
 			/**
-			 * Every row carries this because a consumer that grades distance needs to
+			 * Every row includes this because a consumer that grades distance needs to
 			 * know it is holding a postcode centroid.
 			 */
 			coordinate_basis: "geonames-postcode-centroid",

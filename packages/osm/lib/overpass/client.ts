@@ -19,8 +19,8 @@ export function fetchOSMElementViaOverpassAPI(input: PolygonLiteral): Promise<OS
 	url.searchParams.set("data", `[out:json];(node['addr:housenumber'](${filter}););out body;>;out skel qt;`)
 
 	// Overpass is a free shared endpoint that answers a throttle with 429 + `Retry-After`.
-	// `retry: true` is what reads that header, which is the server stating its own limit
-	// rather than this file guessing one.
+	// `retry: true` reads that header.
+	// The server states its own limit rather than this file guessing one.
 	// `ResourceError` now arrives from the client instead of being assembled here.
 	return overpassClient
 		.fetch<OSMOverpassResponseBody>({ url: url.toString() })

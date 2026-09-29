@@ -18,7 +18,7 @@ import type { CoverageCell } from "#layers/manifest"
  * There is no zero-row cell here and there cannot be one, because a `source_present` layer
  * publishes no evidence that would let an empty cell be distinguished from unmapped ground.
  *
- * A layer whose absence carries meaning (flood's Zone 1) emits its rows from the designated extent instead.
+ * A layer whose absence has meaning (flood's Zone 1) emits its rows from the designated extent instead.
  */
 export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>): CoverageCell[] {
 	const cells: CoverageCell[] = []
@@ -110,7 +110,7 @@ export function assertCoverageNotEmpty(rowCount: number, context: string, indist
  *
  * Such a cell has no ancestor chain from a probe's own cell, so `cellToParent`
  * would throw mid-query on some coordinates and not others.
- * Refusing at open time treats the disagreement as the build defect it is.
+ * The open operation rejects the mismatch as a build defect before a query begins.
  */
 export function assertNoCellsFinerThanIndex(
 	cellResolutions: readonly number[],
@@ -130,7 +130,7 @@ export function assertNoCellsFinerThanIndex(
  * The measurement knobs every layer's resolution instrument shares.
  *
  * Each product keeps its own driver loop because products differ in stream output and scenario partitions.
- * Their reports also carry different fields.
+ * Their reports also include different fields.
  */
 export interface ResolutionMeasurementOptions {
 	/**
@@ -219,7 +219,7 @@ export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number
  * A reading with no witness has no figure to disagree with and passes through.
  * Its type is what keeps that from reading as a pass.
  *
- * The message carries the hole-blind total beside the nested one, because the gap between them
+ * The message includes the hole-blind total beside the nested one, because the gap between them
  * is the diagnosis: a hole read as an exterior ring answers "inside" for every point in it.
  *
  * @param scope Names the builder in the error, e.g. `coastal build`.

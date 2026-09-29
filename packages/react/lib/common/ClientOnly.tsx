@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `ClientOnly` — a portable SSR boundary that renders `fallback` on the server and the first client paint, then swaps to `children()` once mounted, keeping timers, clipboard, and dynamic imports off the server render.
+ * `ClientOnly` — a portable SSR boundary that renders `fallback` on the server and first client paint. It swaps to `children()` after mounting, keeping timers, clipboard and dynamic imports off the server render.
  */
 
 import { type ReactNode, useSyncExternalStore } from "react"

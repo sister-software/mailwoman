@@ -14,10 +14,10 @@
  *   `min(1, log2(1 + pop/1000) / 14)`: strictly increasing up to `REFERENTIAL_SATURATION_POPULATION`
  *   (16,383,000) and clamped to 1.0 above it. Two places that both clear that line score identically
  *   on referential while population would still separate them. A comparator keyed on referential
- *   alone would therefore re-order the world's largest cities — so `compareReferential` carries a raw
+ *   by itself would therefore reorder the world's largest cities — so `compareReferential` includes a raw
  *   population tiebreak. This probe checks whether the tiebreak makes the orderings agree.
  *   It measures how much of the live gazetteer sits in the regime where the tiebreak matters. A
- *   claim about the saturated tail is exactly the kind of claim agents.md says to spend one command on
+ *   claim about the saturated tail is exactly the kind of claim AGENTS.md directs us to spend one command on
  *   rather than reason about.
  *
  *   two measurements:
@@ -59,7 +59,7 @@ if (!(await pathExists(adminPath))) {
 } else {
 	using db = new DatabaseClient<WOFDatabase>(adminPath, { open: true })
 
-	// `!` because the outer count(*) carries no group BY, so SQLite always returns exactly one row.
+	// `!` because the outer count(*) has no group BY, so SQLite always returns exactly one row.
 	const saturated = getRow<{ c: number }>(
 		db.prepare("SELECT count(*) AS c FROM place_population WHERE population >= ?"),
 		REFERENTIAL_SATURATION_POPULATION
@@ -67,7 +67,7 @@ if (!(await pathExists(adminPath))) {
 
 	// The configuration where the tiebreak is required: two current places sharing a name,
 	// both clamped to referential 1.0.
-	// Anything less than this cannot produce a differing order.
+	// No smaller value can produce a differing order.
 	// Same one-row guarantee: the group BY is inside the subquery, the outer count(*) has none.
 	const collidingPairs = getRow<{ c: number }>(
 		db.prepare(

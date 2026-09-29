@@ -53,7 +53,7 @@ PlaceEntry {
 }
 ```
 
-Tokenization is whitespace-split with punctuation stripping. The FST edge label is the normalized token. Accepting states carry all valid interpretations — "New York" ends at a state with entries for both NYC (locality) and NY state (region). The FST never picks; the neural model + reconciler do.
+Tokenization splits on whitespace and strips punctuation. The FST edge label is the normalized token. Each accepting state carries every valid interpretation — "New York" ends at a state with entries for both NYC (locality) and NY state (region). The FST never picks; the neural model + reconciler do.
 
 ### Build pipeline
 

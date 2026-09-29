@@ -56,7 +56,7 @@ export interface TagRuleLike {
 }
 
 /**
- * Throws if any rule in `rules` carries a key or value outside {@link SAFE_TAG_TOKEN}, called at
+ * Throws if any rule in `rules` includes a key or value outside {@link SAFE_TAG_TOKEN}, called at
  * the top of each SQL builder so a hostile rule table is refused before any string concatenation.
  *
  * `label` names the refusing builder in the error.

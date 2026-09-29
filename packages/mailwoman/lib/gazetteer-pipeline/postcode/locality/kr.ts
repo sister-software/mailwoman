@@ -11,12 +11,12 @@
  *
  *   Japan is name-primary. KEN_ALL supplies the municipality name. GeoNames supplies the point.
  *   The builder matches the name with a proximity tiebreak against romanized `spr.name`. Korea is
- *   point-primary: the GeoNames postal file already carries postcode to (place_name, admin1, lat,
- *   lon) in one source. `spr.name` is romanized, but the WOF `names` table carries Hangul (`kor`
+ *   point-primary: the GeoNames postal file already maps postcode to (place_name, admin1, lat,
+ *   lon) in one source. `spr.name` is romanized, but the WOF `names` table contains Hangul (`kor`
  *   plus Hangul-containing `und`) variants, so the nearest locality point resolves the postcode and
  *   the Hangul name confirms it where it exists.
  *
- *   Tiering (same schema and semantics as the JP builder):
+ *   These tiers use the same schema and semantics as the JP builder:
  *
  *   - Is_containing=1 : Hangul name-confirmed locality, the precise tier
  *   - Is_containing=0 : point-nearest fallback, with the province and coordinate correct
@@ -30,7 +30,7 @@
  *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/dbs-per-country/admin-kr.db\
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-kr.db
  *
- *   With no polygons there is no point-in-polygon step. Matching is point-nearest through
+ *   With no polygons there is no point-in-polygon step. The matcher uses point-nearest distance through
  *   `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python), with
  *   proximity-constrained Hangul name confirmation. The output is written directly to
  *   `--output` as a full single-country rebuild.
@@ -151,7 +151,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	 *
 	 * Many Korean localities share a name across the country, so a Hangul name
 	 * match must be constrained to nearby candidates.
-	 * Matching globally and then taking the nearest homonym lands hundreds of km away.
+	 * A global match followed by nearest-homonym selection can land hundreds of km away.
 	 */
 	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> =>
 		grid.nearby(lat, lon, MATCH_RADIUS_KM).map(({ d, entry }) => ({ d, pid: entry.pid }))

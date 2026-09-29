@@ -27,7 +27,7 @@ const PARITY_FIXTURES_RELATIVE_PATH = "packages/mailwoman/lib/eval-harness/fixtu
 /**
  * A reference to one input set, discriminated by `kind`.
  *
- * A `literal` set must carry `why`, the rationale for the hand-picked inputs.
+ * A `literal` set must include `why`, the rationale for the hand-picked inputs.
  */
 export type InputSetRef =
 	| { kind: "board"; country?: string; address_kind?: string; status?: string }

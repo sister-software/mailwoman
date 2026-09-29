@@ -83,7 +83,7 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
 	new Set(e.records.map((r) => r.source).filter((s): s is string => !!s))
 
 /**
- * Label-free precision proxy: does this cross-source entity carry the same phone
+ * Label-free precision proxy: does this cross-source entity have the same phone
  * in records from two different sources?
  *
  * Phone is not the join key, so a match is independent corroboration of one facility.

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Typed schema for the convention asset — the `address_convention` table `SqliteConventionSource` probes, plus the
- *   `meta` provenance row every sealed artifact here carries. The interface is the read/write interface and
+ *   `meta` provenance row every sealed artifact here includes. The interface is the read/write interface and
  *   {@link createAddressConventionTable} creates the table, so a column added to one is a compile error against the
  *   other.
  */
@@ -54,8 +54,8 @@ export type ConventionSchemaHandle = Pick<Kysely<ConventionDatabase>, "schema">
 /**
  * Create `address_convention`.
  *
- * The table name comes from {@link ADDRESS_CONVENTION_TABLE} so the build script,
- * the runtime source, and the extract auto-detect cannot drift apart.
+ * The table name comes from {@link ADDRESS_CONVENTION_TABLE} so the build script, the runtime source.
+ * The extract auto-detect stays aligned with it.
  */
 export async function createAddressConventionTable(db: ConventionSchemaHandle): Promise<void> {
 	await db.schema

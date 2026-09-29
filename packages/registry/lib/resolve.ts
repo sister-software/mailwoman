@@ -5,8 +5,7 @@
  *
  *   The resolve pipeline wires the matching modules over concrete contact and organization records.
  *
- *   Geocoding is assumed already done upstream, so each `address` carries its coordinate and
- *   canonical key.
+ *   The upstream pipeline geocodes each `address` and supplies its coordinate and canonical key.
  */
 
 import {
@@ -105,7 +104,7 @@ function codeSetOverlap(a: string, b: string): number {
 /**
  * Last-10-digit normalization for phone agreement, dropping country code, punctuation and extensions.
  *
- * A shorter digit string is kept as-is, since partial agreement still carries
+ * A shorter digit string is kept as-is, since partial agreement still contributes
  * weight in the comparison model.
  * `null` means no digits at all.
  */
@@ -134,7 +133,7 @@ export function normalizePhoneStrict(raw: string | null | undefined): string {
  * The identity-corroborating comparisons: person name, organization and phone.
  *
  * At least one must positively agree before a pair may link, since a shared
- * address alone carries no identity evidence.
+ * address provides no identity evidence by itself.
  * Phone is the secondary identifier that rescues a true same-entity link across name drift.
  */
 const CORROBORATING_FIELDS = new Set(["given", "family", "organization", "phone"])
@@ -187,7 +186,7 @@ export interface DefaultModelOptions {
 	 * This is set overlap rather than string similarity, since `207R00000X`
 	 * and `207Q00000X` are different specialties despite near-identical text.
 	 *
-	 * String similarity mis-scores that case.
+	 * Similarity scores mis-rank that case because the codes identify different specialties.
 	 * The over-merge separator: two co-located records of one entity nearly always share
 	 * a code, while two distinct co-located providers usually do not.
 	 */
@@ -305,13 +304,13 @@ export function defaultBlockingKeys(): BlockingKey<SourceRecord>[] {
  */
 export interface ResolveConfig {
 	/**
-	 * Scoring model.
+	 * The model used to score candidate pairs.
 	 *
 	 * Default {@link buildDefaultModel}.
 	 */
 	model?: FellegiSunterModel<SourceRecord>
 	/**
-	 * Blocking keys (their union).
+	 * The blocking keys whose union forms the candidate set.
 	 *
 	 * Default {@link defaultBlockingKeys}.
 	 */
@@ -351,8 +350,8 @@ export interface ResolveConfig {
 	 */
 	collapseSpatial?: boolean
 	/**
-	 * Require positive name or organization corroboration ({@link CORROBORATING_FIELDS})
-	 * for a link, so a shared address alone cannot merge two records.
+	 * Require positive name or organization corroboration ({@link CORROBORATING_FIELDS}) for
+	 * a link, so a shared address cannot merge two records without that corroboration.
 	 *
 	 * Suppresses the spatial-only links that fuse distinct co-located providers.
 	 * Default false.
@@ -367,7 +366,7 @@ export interface ResolveConfig {
 	 */
 	usePhone?: boolean
 	/**
-	 * Clustering linkage.
+	 * The linkage method used for clustering.
 	 *
 	 * `"single"` (default) is connected components, while `"average"` is an average-linkage
 	 * refinement that splits a component whose sub-clusters are joined only by a weak bridge.
@@ -406,7 +405,7 @@ export interface ResolveConfig {
 	 * organization or phone agreement is still held out.
 	 *
 	 * A learned scorer is normally trained to subsume corroboration, so use one or the other.
-	 * Combining them lets the FS check veto the learned score.
+	 * The independent FS check can veto the learned score when both checks run.
 	 */
 	scorer?: (a: SourceRecord, b: SourceRecord) => number
 	/**
@@ -513,8 +512,8 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 		const score = scorePair(scoringModel, a, b)
 		let weight = scorer ? scorer(a, b) : score.weight
 
-		// A link must carry positive name or organization corroboration, since a shared
-		// address alone carries no identity evidence.
+		// A link requires positive name or organization corroboration, since a shared
+		// address provides no identity evidence by itself.
 		if (config.requireCorroboration) {
 			const corroborated = score.contributions.some(
 				(c) => (CORROBORATING_FIELDS.has(c.name) || c.name.startsWith("attr:")) && c.weight > 0

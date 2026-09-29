@@ -12,8 +12,8 @@
  *   The row's own `gn:id` must agree with the coordinates. The GeoNames record must identify the same place.
  *
  *   The correction applies to the candidate artifact rather than the admin gazetteer.
- *   `place_population` in `admin-global-priority.db` still carries the WOF figure, so a reader going
- *   there sees what WOF says and a reader going to `candidate.db` sees the corroborated number. The
+ *   `place_population` in `admin-global-priority.db` still stores the WOF figure, so a reader going
+ *   there sees WOF's value and a reader going to `candidate.db` sees the corroborated number. The
  *   admin database is a transcription of its source, so correcting it there would make the
  *   transcription disagree with what it transcribes.
  */
@@ -26,7 +26,7 @@ export interface PopulationCorrection {
 	 * The GeoNames id from the WOF record's own `concordances` row makes this a
 	 * correction rather than a substitution.
 	 *
-	 * The two sources describe the same place because WOF says so.
+	 * The two sources describe the same place according to WOF.
 	 */
 	geonamesID: string
 	population: number
@@ -45,10 +45,10 @@ export interface PopulationCorrection {
  * WOF id → the corrected population.
  *
  * One entry, because one row has been followed.
- * Adding a second correction requires the same review.
+ * A second correction requires the same review.
  *
  * Read the row's `gn:id` and confirm the coordinates agree.
- * Then state what the second source says.
+ * Then record the second source's value.
  */
 export const POPULATION_CORRECTIONS: Readonly<Record<number, PopulationCorrection>> = {
 	102_030_887: {

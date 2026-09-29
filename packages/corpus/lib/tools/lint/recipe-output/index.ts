@@ -5,10 +5,10 @@
  *
  * Corpus linter. Compares a new recipe output (one parquet file) against pre-computed corpus statistics and
  * flags token-label distribution outliers, label-vacuum tokens, bigram-label collisions, anti-pattern rule
- * matches, and basic sanity problems.
+ * matches and basic sanity problems.
  *
  * The markdown report goes to stdout, with optional markdown and JSON sidecars. The command exits 0 when no
- * errors are found and 1 when any are, because warnings do not refuse. A flagged recipe output should carry
+ * errors are found and 1 when any are, because warnings do not refuse. A flagged recipe output should include
  * `lint_acknowledged: true` in its manifest before training consumes it.
  */
 

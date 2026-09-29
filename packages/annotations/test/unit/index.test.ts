@@ -84,7 +84,7 @@ test("toNative: returns the native set unchanged", () => {
 
 test("composeStreetAddress: collapses housenumber + street + unit into one number-first line", () => {
 	expect(composeStreetAddress({ houseNumber: "8", street: "Boulevard du Palais" })).toBe("8 Boulevard du Palais")
-	// The unit rides the same opaque string, since schema.org has no unit slot.
+	// The unit uses the same opaque string, since schema.org has no unit slot.
 	expect(composeStreetAddress({ houseNumber: "350", street: "5th Ave", unit: "Apt 4B" })).toBe("350 5th Ave Apt 4B")
 	expect(composeStreetAddress({ street: "5th Ave" })).toBe("5th Ave")
 	expect(composeStreetAddress({ houseNumber: "  ", street: "" })).toBe("")

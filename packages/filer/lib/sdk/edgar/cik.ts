@@ -85,7 +85,7 @@ export interface CompanyTickerEntry {
  * e.g. `{"0": {...}, "1": {...}}` — SEC's own shape rather than an array).
  *
  * @throws a descriptive error naming the offending row key on a structural mismatch
- * (decision 8's "malformed input must be loud" discipline, carried from `form499.ts`/`provider-list.ts`).
+ * (decision 8's "malformed input must be loud" discipline, continued from `form499.ts`/`provider-list.ts`).
  * This is SEC's own canonical reference file, so a row that doesn't fit the documented shape
  * is a real signal something changed upstream rather than a case worth silently skipping.
  */
@@ -228,8 +228,8 @@ export interface ResolveCIKOptions {
 	 * Cap on the number of candidates returned, highest score first.
 	 *
 	 * Defaults to {@linkcode DEFAULT_CANDIDATE_LIMIT}.
-	 * `company_tickers.json` carries more than 10,000 rows.
-	 * Reporting every candidate below a real match adds noise.
+	 * `company_tickers.json` contains more than 10,000 rows.
+	 * A report of every candidate below a real match adds noise.
 	 *
 	 * Never narrows a genuine tie at the top score below this cap (see the function's own docstring).
 	 * `limit` trims the long low-scoring tail rather than a collision the caller needs to see.
@@ -251,8 +251,10 @@ function canonicalOf(name: string): string {
  *
  * See the module docstring for the false-identity-link rationale.
  *
- * **The tie rule is the actual enforcement mechanism rather than the docstring alone.**
- * Sorting by score and reporting `score` per candidate is necessary but not sufficient.
+ * **The tie rule enforces this behavior.
+ * The docstring describes it.** The score sort and per-candidate `score` report
+ * candidate is necessary but not sufficient.
+ *
  * A caller that also passes `limit: 1` (the natural thing to do when it wants "the" answer)
  * would otherwise see the ambiguity vanish behind a plain `.slice(0, limit)`.
  *
@@ -266,7 +268,7 @@ function canonicalOf(name: string): string {
  *
  * **Candidates are collapsed to one row per CIK before scoring ties.** The
  * tie rule depends on this collapse.
- * `company_tickers.json` carries one row per ticker, so a registrant filed under several share
+ * `company_tickers.json` contains one row per ticker, so a registrant filed under several share
  * classes appears several times under a single CIK — resolving `"Liberty Broadband Corporation"`
  * on 2026-08-03 returned CIK `0001611983` four times with a score of 1.0 for every row.
  *

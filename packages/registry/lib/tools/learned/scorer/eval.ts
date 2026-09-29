@@ -55,7 +55,9 @@ export interface ScorerPairwiseEvalOptions {
 
 	/**
 	 * The base PRNG seed.
-	 * It defaults to 1, and each split adds its index to it.
+	 *
+	 * It defaults to 1.
+	 * Each split adds its index to that value.
 	 */
 	seed?: number
 

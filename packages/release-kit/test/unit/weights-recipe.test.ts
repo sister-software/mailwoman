@@ -102,7 +102,7 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 	})
 
 	it("reports a pair index for every country the config names, whatever the entry's shape", async () => {
-		// The two entries differ in shape and neither carries a `db` key.
+		// The two entries differ in shape and neither includes a `db` key.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 

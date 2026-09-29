@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The slim-trace pin: the matrices go, every discrete diagnostic stays, and the omission announces itself. The full
+ *   The slim-trace pin: the matrices go, every discrete diagnostic stays and the omission announces itself. The full
  *   payload measured in the thousands of floats per input and crowded the very context windows the trace exists to
  *   inform — inline numbers cost more than their reported value.
  */

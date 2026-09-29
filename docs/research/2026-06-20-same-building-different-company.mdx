@@ -6,7 +6,7 @@ tags: [record-matching, geocoding, motivation]
 date: 2026-06-20
 ---
 
-Suppose you have a set of records and no key to join them on. A clinic appears in the federal provider registry, again in a state licensing export, and a third time in a funding-program spreadsheet that someone typed by hand. The files share no identifier. The provider number is internal to one publisher, and the facility ID is internal to another. Deciding _which of these are the same place_ therefore requires a judgment for each pair, repeated a few million times.
+Suppose you have a set of records and no key to join them on. A clinic appears in the federal provider registry, again in a state licensing export, and a third time in a funding-program spreadsheet that someone typed by hand. The files share no identifier. The provider number is internal to one publisher, and the facility ID is internal to another. You must judge _which records describe the same place_ for each pair, repeated a few million times.
 
 The market offers two kinds of tools for this. Each solves part of the problem, and neither solves all of it.
 
@@ -14,7 +14,7 @@ The market offers two kinds of tools for this. Each solves part of the problem, 
 
 ## The two tools, and the halves they skip
 
-The first tool is a string matcher, such as Splink, Zingg, dedupe, or the fuzzy-match component inside Tamr or Tilores. You give it name and address columns, and it scores how similar the text is. Used as the _whole_ answer, it has a basic flaw: text similarity does not measure place similarity. An address two doors down the same street is one character away. The same building written two different ways can score far apart. Tuning a threshold then takes weeks, and a threshold that is too loose in cities is too tight in suburbs. (We covered this in detail in [Match where it is rather than how it's spelled](/research/match-where-it-is-not-how-its-spelled). In short, `Jyllandsgade 15` and `Jyllandsgade 75` score 0.96 similar and sit 650 meters apart, and no threshold handles that.)
+The first tool is a string matcher, such as Splink, Zingg, dedupe, or the fuzzy-match component inside Tamr or Tilores. You give it name and address columns, and it scores how similar the text is. Used as the _whole_ answer, it has a basic flaw: text similarity does not measure place similarity. An address two doors down the same street is one character away. The same building written two different ways can score far apart. Threshold tuning then takes weeks, and a threshold that is too loose in cities is too tight in suburbs. (We covered this in detail in [Match where it is rather than how it's spelled](/research/match-where-it-is-not-how-its-spelled). In short, `Jyllandsgade 15` and `Jyllandsgade 75` score 0.96 similar and sit 650 meters apart, and no threshold handles that.)
 
 Strings are still useful. Names are some of the best evidence available, and later sections argue for relying on them heavily. The limitation is narrower: a string describes how a record is spelled and makes no statement about where it is, so it should not be the field you _block_ on.
 
@@ -28,7 +28,7 @@ Key vendors say little about the remaining cases. At `1504 Taub Loop` in Houston
 
 Placekey's own FAQ says that it "operates as a universal join key rather than a matching service… it doesn't perform record linkage itself." That is an accurate description of what a key does. The key finds records in the same building. The remaining question is whether records in the same building, with different company names, are one entity or two.
 
-Answering that question requires a probability.
+A probability answers that question.
 
 ## The missing half: a number you can read, and the humility to abstain
 
@@ -38,7 +38,7 @@ In summary: _Placekey tells you two records are in the same building. Mailwoman 
 
 ## When the string is the answer, normalize it first
 
-Sometimes the name decides the match. Reconciling the federal provider registry against the FCC's funding records is one such case. The same health system appears in one file as `BAYLOR COLLEGE OF MEDICINE` and in the other as `Baylor Coll. of Medicine`, as a d/b/a, or with a `, LLC` that the other publisher dropped. Geography places the two records in the same area, so they are plausibly the same place. The name decides whether they are the _same entity_, provided it is normalized before comparison.
+Sometimes the name decides the match. A comparison of the federal provider registry with the FCC's funding records shows one such case. The same health system appears in one file as `BAYLOR COLLEGE OF MEDICINE` and in the other as `Baylor Coll. of Medicine`, as a d/b/a, or with a `, LLC` that the other publisher dropped. Geography places the two records in the same area, so they are plausibly the same place. The name decides whether they are the _same entity_, provided it is normalized before comparison.
 
 Normalization therefore runs first. `canonicalizeOrganizationName` strips legal-form terms (`LLC`, `Inc`, a leading `The`), splits the d/b/a, normalizes punctuation, and uses the ISO 20275 entity-form list so that `Coll` and `College` compare as the same word. _Then_ the names are compared, and agreement on the rare token `Baylor` counts for much more than a shared `Medical Center`. The same mechanism handles both directions. The building with a dozen distinct practices stays a dozen entities, because they share a coordinate but have different normalized names. One facility registered twice under different operational names merges into one. The coordinate does the blocking, and the normalized name comparison decides the match. Neither alone reconciles NPPES and the FCC data, and together they do.
 
@@ -54,7 +54,7 @@ A learned scorer may memorize one dataset's quirks. To test that, we trained the
 
 ## Show your ruler
 
-A result such as "F1 of 68%" is meaningless until you state _what it was measured against_. Grading the exact same clusters against four different definitions of truth moves the number from 53.6% to 68.1%. The clusters did not change. Only the ground truth changed, as it defined one entity more precisely. We hand-adjudicated 120 of the hardest Texas pairs (co-located, with similar names and distinct IDs). All 120 were the same real-world organization under different registrations, and none were unrelated companies merged by mistake. We report the ground truth next to the number. Most vendors do not.
+A result such as "F1 of 68%" is meaningless until you state _what it was measured against_. The same clusters score from 53.6% to 68.1% against four different definitions of truth. The clusters did not change. Only the ground truth changed, as it defined one entity more precisely. We hand-adjudicated 120 of the hardest Texas pairs (co-located, with similar names and distinct IDs). All 120 were the same real-world organization under different registrations, and none were unrelated companies merged by mistake. We report the ground truth next to the number. Most vendors do not.
 
 ## Own it, and what it doesn't do
 

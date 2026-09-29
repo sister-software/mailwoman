@@ -29,7 +29,7 @@ import { canonicalJSON, definitionContentHash } from "#eval-harness/preregistrat
 export const SAME_DATA_SCHEMA_VERSION = 1
 
 /**
- * Candidate fields the fixture never carries, because each is a verdict the backend already
+ * Candidate fields the fixture never includes, because each is a verdict the backend already
  * computed about the query rather than a fact about the place; {@link SameDataCandidate}
  * and the frozen definition's own list are both derived from this tuple.
  */
@@ -42,7 +42,7 @@ export const WITHHELD_CANDIDATE_FIELDS = [
 ] as const
 
 /**
- * One candidate as the fixture carries it: a `ResolvedPlace` minus the withheld verdicts.
+ * One candidate as the fixture represents it: a `ResolvedPlace` minus the withheld verdicts.
  */
 export type SameDataCandidate = Omit<ResolvedPlace, (typeof WITHHELD_CANDIDATE_FIELDS)[number]>
 
@@ -90,8 +90,8 @@ export interface SameDataGold {
 /**
  * One panel row: the question and its answer key.
  *
- * Carries no candidates — those live in the candidate fixture, so the panel stays
- * readable and the evidence stays one file.
+ * Contains no candidates — those live in the candidate fixture, so the panel
+ * stays readable and the evidence stays one file.
  */
 export interface SameDataPanelRow {
 	id: string
@@ -172,7 +172,7 @@ export function candidatePool(lookups: readonly SameDataLookup[]): SameDataCandi
 /**
  * One row's evidence digest.
  *
- * The value each arm's receipt carries.
+ * The value each arm's receipt records.
  * The validator compares it across arms.
  */
 export function fixtureRowDigest(row: SameDataFixtureRow): string {
@@ -193,7 +193,7 @@ export function fixtureDigest(rows: readonly SameDataFixtureRow[]): string {
 }
 
 /**
- * A problem the fixture carries, described so a refusal reads as an instruction.
+ * A problem the fixture records, described so a refusal reads as an instruction.
  */
 export interface FixtureProblem {
 	rowID: string
@@ -365,7 +365,7 @@ export function observeEvidence(arm: string, row: SameDataFixtureRow): ArmEviden
  * A backend that answers only from the fixture.
  *
  * A key it does not hold raises and is appended to `misses`, because `resolveTree` catches a backend
- * throw on purpose and records `backend_error`; a raise alone reaches the arm as an abstention,
+ * throw on purpose and records `backend_error`; a raise by itself reaches the arm as an abstention,
  * so the caller reads `misses` after the walk and turns a non-empty list into a harness error.
  */
 export function replayBackend(row: SameDataFixtureRow, misses: string[] = []): ResolverBackend {

@@ -37,7 +37,8 @@ export interface PlaceAutocompleteProps {
 }
 
 /**
- * Renders the suggestion listbox when suggestions exist, and no listbox otherwise.
+ * Renders the suggestion listbox when suggestions exist.
+ * It renders no listbox otherwise.
  */
 export function PlaceAutocomplete({
 	suggestions,

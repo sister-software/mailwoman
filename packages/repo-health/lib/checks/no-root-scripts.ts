@@ -31,8 +31,10 @@ function isTestFile(path: string): boolean {
 }
 
 /**
- * Checks that no root `scripts/` directory exists or is referenced, and that CI
- * and package targets run only registered entry points rather than bare `lib/*.ts` paths.
+ * Checks that no root `scripts/` directory exists or is referenced.
+ *
+ * It also checks that CI and package targets run only registered entry points
+ * rather than bare `lib/*.ts` paths.
  */
 export const noRootScriptsCheck: RepoCheck = {
 	id: "no-root-scripts",

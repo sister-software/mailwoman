@@ -5,7 +5,7 @@
  *
  *   Importance is `min(1, log2(1 + pop/1000) / 14)`, so `ONE_TOKEN_IMPORTANCE_FLOOR` inverts to
  *   pop ≥ 10,314 and `PERSON_NAME_IMPORTANCE_FLOOR` to pop ≥ 77,793. Which floor applies depends on
- *   whether libpostal carries the surface as a person name.
+ *   whether libpostal classifies the surface as a person name.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -22,8 +22,8 @@ let scratch: TemporaryDirectory
 function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
-	// Durability is worthless in a throwaway fixture, and the autocommit PRAGMAs are
-	// what keep this layer cheap enough to run on every PR.
+	// Durability is worthless in a throwaway fixture.
+	// The autocommit PRAGMAs are what keep this layer cheap enough to run on every PR.
 	db.exec(`
 		PRAGMA synchronous = OFF;
 		PRAGMA journal_mode = MEMORY;

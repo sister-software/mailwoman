@@ -25,7 +25,7 @@ run entirely from npm. Step 3 does not: `@mailwoman/osm` is not published to npm
 repository checkout. Each requirement below says which half it belongs to.
 
 - **About 3 GB of free disk** for the path below: 2.88 GB of gazetteer and under 100 MB of everything
-  else. Adding France's whole national register instead of three départements is 6.95 GB; adding the US
+  else. France's whole national register adds 6.95 GB instead of the three départements; the US
   is 41.3 GB. Check the number for the country you want before you start it.
 - **Steps 1–2, from npm.** The CLI, plus the French register's builder:
 
@@ -45,7 +45,7 @@ repository checkout. Each requirement below says which half it belongs to.
   mkdir -p "$MAILWOMAN_DATA_ROOT"
   ```
 
-Building the US tier is a different shape from everything below, because the US is the one country with
+The US tier differs from every build below because the US is the one country with
 both a rooftop register and a national street-segment file. It has its own page:
 [Build the US address dataset](./build-the-us-dataset.mdx).
 
@@ -207,7 +207,7 @@ cd mailwoman && yarn install && yarn compile
 The two `node packages/osm/out/scripts/...` commands in this section run from that checkout's root. Step 4 goes
 back to the npm CLI and does not care where the database was built.
 
-Three countries have a registered street-normalization locale for this path — `fr`, `de` and `nl`. Adding
+Three countries have a registered street-normalization locale for this path — `fr`, `de` and `nl`. A build that adds
 a fourth means registering the country and writing its branch in the street normalizer in the same commit,
 which is why the list grows one considered country at a time.
 

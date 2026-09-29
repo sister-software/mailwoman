@@ -204,7 +204,7 @@ describe("scriptForCodepoint", () => {
 
 	/**
 	 * The converse direction, what the table leaves uncovered, since asserting only
-	 * that claimed scripts are real says what the table misses.
+	 * that claimed scripts exist exposes what the table misses.
 	 *
 	 * Each allowance measures the uncovered remainder for one script.
 	 * A growing value means the table covers fewer codepoints in that script.

@@ -70,7 +70,7 @@ beforeAll(async () => {
 	dir = await temporaryDirectory("geonames-official-")
 	altDir = await temporaryDirectory("geonames-official-alt-")
 
-	// Turku alternates include the Swedish official name, Greek transliteration, and historic form.
+	// Turku alternates include the Swedish official name, Greek transliteration and historic form.
 	await writeLocalFile(
 		mainRow({
 			0: "633679",

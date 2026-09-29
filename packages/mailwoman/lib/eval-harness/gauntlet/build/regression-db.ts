@@ -8,7 +8,7 @@
  *
  *   Row order in the DB is the loader's order (country dir, then case id) — not the pre-2026-08-05
  *   chronological array order. Checked rather than assumed: the regression runner reads every row. the ablation
- *   layer's `select` carries `.orderBy("id")`, so `--limit N` samples the same N rows either way. and
+ *   layer's `select` includes `.orderBy("id")`, so `--limit N` samples the same N rows either way. and
  *   `ablationBoardID` hashes a sorted fingerprint.
  *   The regression runner changed the order of its per-case output, so the migration's graded receipt was sorted before diffing.
  *

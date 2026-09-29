@@ -56,7 +56,7 @@ export const PREMISE_LINKAGE_SHAPE_CLASSES: ReadonlyArray<PremiseLinkageInputSha
 ]
 
 /**
- * Which components the input actually carried, as booleans rather than values:
+ * Which components the input actually included, as booleans rather than values:
  * naming a postcode is a reporting axis, naming a full postcode is a licensed field.
  */
 export interface PremiseLinkagePresence {
@@ -70,7 +70,7 @@ export interface PremiseLinkagePresence {
 /**
  * One authoritative identifier, associated with its scheme.
  *
- * The scheme is carried per row so a non-UK register grades against its own
+ * The scheme is recorded per row so a non-UK register grades against its own
  * namespace without a second row type.
  */
 export interface PremiseLinkageObjectID {
@@ -125,7 +125,7 @@ export type PremiseLinkageOutcome = (typeof PremiseLinkageOutcome)[keyof typeof 
 
 /**
  * Why a row was not `exact`, from a closed set rather than free text that could
- * carry an address or a provider payload.
+ * include an address or a provider payload.
  */
 export const PremiseLinkageFailureCategory = {
 	/**
@@ -182,7 +182,7 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	 * Great-circle error in meters.
 	 *
 	 * It is present only when {@link coordinatePublishable} is true.
-	 * The row must carry a truth coordinate and the arm must produce one.
+	 * The row must include a truth coordinate and the arm must produce one.
 	 */
 	coordinateErrorM?: number
 	/**

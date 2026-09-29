@@ -15,7 +15,7 @@
  *   for. an administrative region needs its own outline or the cells along its edge claim coverage
  *   the source never had.
  *
- *   Refusing a multi-match is the point rather than politeness. `name` is not unique in OSM even within one
+ *   The extractor rejects multiple matches because `name` is not unique in OSM even within one
  *   admin level. Silently taking the first row would key a completeness claim to whichever feature
  *   the driver happened to emit first. Downstream code could not distinguish it from the region the caller meant.
  */
@@ -33,7 +33,7 @@ const BOUNDARY_LAYER = "multipolygons"
 
 /**
  * Same allowlist discipline as `extract-poi.ts`'s `SAFE_TAG_TOKEN`, widened to the
- * characters a real place name carries (`Île-de-France`, `Provence-Alpes-Côte d'Azur`).
+ * characters a real place name contains (`Île-de-France`, `Provence-Alpes-Côte d'Azur`).
  *
  * The value is interpolated into an ogrsql string literal, so an apostrophe is
  * admissible only because it is doubled below.
@@ -44,7 +44,7 @@ const SAFE_NAME = /^[\p{L}\p{N} '’\-.()/]+$/u
 /**
  * `admin_level` is compared as an ogrsql string literal.
  *
- * OSM only ever carries small integers here.
+ * OSM only uses small integers here.
  */
 const SAFE_ADMIN_LEVEL = /^[0-9]{1,2}$/
 

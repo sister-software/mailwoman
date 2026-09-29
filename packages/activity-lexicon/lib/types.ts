@@ -100,7 +100,7 @@ export type ActivityPhraseAttestation =
 export interface ActivityPhraseEntry {
 	/**
 	 * The text a person types.
-	 * Matching compares normalized forms.
+	 * The matcher compares normalized forms.
 	 */
 	phrase: string
 	/**

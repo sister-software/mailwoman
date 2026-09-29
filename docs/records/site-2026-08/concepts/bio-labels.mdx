@@ -99,10 +99,10 @@ Petersburg → I-locality             ← the model was confident, picked I-loca
 
 The result is structurally **invalid**. An `I-locality` is by definition "inside a locality span", and the previous token is not in a locality span. There is no `B-locality` to be inside of. This is called an **orphan-I**.
 
-What happens when the decoder reconstructs the span? Depending on how it handles the orphan-I:
+What happens when the decoder reconstructs the span? Its treatment of the orphan-I determines the result:
 
 - **Strict mode** — drop the orphan. "Saint Petersburg" becomes "Petersburg" (a 1-token locality starting at Petersburg). This is the "Saint Petersburg → Petersburg" bug visible in Mailwoman v0.2.0.
-- **Forgiving mode** — treat the orphan-I as a `B-X`. "Saint Petersburg" becomes two adjacent localities. Worse.
+- **The forgiving mode** — treat the orphan-I as a `B-X`. "Saint Petersburg" becomes two adjacent localities. Worse.
 
 Neither is what the data wants: `B-locality, I-locality`.
 
@@ -131,7 +131,7 @@ flowchart LR
 BIO labels are simple enough that:
 
 - **The model architecture stays small.** No special span-prediction heads — just a per-token classifier.
-- **Training data is easy to generate.** Given `(raw, components)` from a corpus adapter, you align each component's text to its tokens and emit `B-` for the first token and `I-` for the rest.
+- **Corpus adapters generate training data easily.** Given `(raw, components)` from a corpus adapter, you align each component's text to its tokens and emit `B-` for the first token and `I-` for the rest.
 - **Evaluation is straightforward.** Compare predicted spans to gold spans; compute precision, recall, F1 per tag.
 
 This pattern is one of the most-tested approaches in NLP. CoNLL-2003 (the canonical Named Entity Recognition benchmark) uses BIO. CoNLL-2000 (chunking) uses BIO. Every modern NER tool exposes BIO-style output as the default. Mailwoman inheriting this standard means our training data is interoperable and our evaluation tooling is familiar.
@@ -159,4 +159,4 @@ Expand the **BIO labels** section to see the word-level BIO label breakdown for 
 - [How Mailwoman parses an address](./how-mailwoman-parses-an-address.mdx) — the full parse this label space plugs into
 - [CRF decoder](./crf-decoder.mdx) — the structural-validity layer
 - [Tokenization](./tokenization.mdx) — what gets labeled
-- [Training pipeline](./training-pipeline.mdx) — how BIO labels become training data
+- [Workflow for training](./training-pipeline.mdx) — how BIO labels become training data

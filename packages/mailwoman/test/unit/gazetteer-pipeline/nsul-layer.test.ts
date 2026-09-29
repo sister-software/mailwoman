@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The nsul builder's interface: the line classifier's input-tail behavior (BOM header, empty `pcds`,
- *   a postcode-shaped column holding something else, a truncated line), the vintage parse, and a full
+ *   a postcode-shaped column holding something else or a truncated line), the vintage parse and a full
  *   fixture build through `buildNSULLayer` — the `uprn.db` join, both skipped classes, DDL, checks,
  *   coverage, manifest, seal — verified by reading the sealed artifact back through the production
  *   reader.

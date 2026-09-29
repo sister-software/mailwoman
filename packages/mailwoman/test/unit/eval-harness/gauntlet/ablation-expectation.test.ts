@@ -345,7 +345,8 @@ describe("gradeAgainstLadder", () => {
 		expect(graded).toMatchObject({ grade: "held", achievedRungDepth: 0, degradedRungs: 0 })
 	})
 
-	// A coarser answer that the surviving evidence justifies passes, and the drop in depth is recorded.
+	// A coarser answer that the surviving evidence justifies passes.
+	// The test records the drop in depth.
 	it("passes a coarsening the surviving evidence justifies, and records how far it fell", () => {
 		const graded = gradeAgainstLadder({ ...base, expected: rung(3), lat: 39.76, lon: -89.66 })
 

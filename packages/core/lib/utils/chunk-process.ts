@@ -15,7 +15,7 @@
  *   A non-zero exit throws.
  *   A chunk that exits cleanly without rows also throws.
  *   A chunk that dies mid-range has already written part of its rows into the shared artifact.
- *   Continuing would seal a database
+ *   The parent process must stop before it seals a database
  *   missing rows without identifiers.
  *   Downstream code reads the incomplete database as a smaller source rather than as a failure.
  */

@@ -7,8 +7,8 @@
  *   shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`). The existing
  *   `AddressPointSqliteLookup` reads it with zero changes.
  *
- *   ⚠ ODbL: the output extract is an OpenStreetMap Derived Database (share-alike). This code carries no
- *   OSM bytes. The obligation rides on the built `.db`. Source = `openstreetmap:<cc>`. See
+ *   ⚠ ODbL: the output extract is an OpenStreetMap Derived Database (share-alike). This code contains no
+ *   OSM bytes. The obligation applies to the built `.db`. Source = `openstreetmap:<cc>`. See
  *   `osm/readme.md` for the licensing boundary and the counsel sign-off required before any extract ships.
  *
  *   Usage:
@@ -183,7 +183,7 @@ async function main(): Promise<void> {
 			}
 
 			// Per-surface locale routing.
-			// A French-lead surface folds under the fr rules whatever the country default,
+			// A French-lead surface folds under the fr rules regardless of the country default.
 			// and the probe side routes with the same shared function.
 			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 			const number = rec.housenumber.trim().toLowerCase()

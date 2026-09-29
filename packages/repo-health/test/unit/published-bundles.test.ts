@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The published-bundles check over the live tree and over planted registries and snapshots: a registry figure
- *   edited away from the bucket's, a bundle the snapshot never measured, a size it could not read, and a snapshot row
+ *   edited away from the bucket's, a bundle the snapshot never measured, a size it could not read and a snapshot row
  *   the registry no longer names.
  */
 
@@ -24,7 +24,7 @@ function bundleWith(name: string, remotePath: string, approxBytes: number): Data
 		description: `${name} fixture`,
 		artifacts: [{ remotePath, localPath: `${name}/${name}.db`, md5Sidecar: false, approxBytes }],
 		// `expression` is what `data pull --refuse` decides on.
-		// The fixture carries a grant whose obligations are unrecorded, so a refusal
+		// The fixture includes a grant whose obligations are unrecorded, so a refusal
 		// over this bundle would rest on an unresolved reading.
 		rights: { publishers: [], expression: "LicenseRef-Undeclared-Input", terms: [], conditions: [], unresolved: [] },
 	}

@@ -7,24 +7,24 @@ audience: teams
 
 # Capabilities
 
-Everything below runs from one install. Parsing needs the model alone; the jobs that place an address
+Everything below runs from one install. The parser needs the model alone; the jobs that place an address
 on the map need a gazetteer database on disk as well. Each entry links to the page that runs it end to
 end, with the output that page captured.
 
-## Reading an address
+## Parse an address
 
-**Parsing** turns a string into tagged components — house number, street, locality, region, postcode
-— each carrying a span and a confidence score.
+**The parser** turns a string into tagged components — house number, street, locality, region, postcode
+— and gives each component a span and confidence score.
 [Read everything a parse returns](../developers/tutorials/understand-a-parse.mdx)
 
 **Validation** checks that a parsed address is complete, well-formed for its country, and read
 confidently enough to use. It is a check on the string rather than on whether a letterbox exists.
 [Validate an address before you use it](../developers/how-to/validate-addresses.mdx)
 
-## Placing it
+## Find an address
 
 **Forward geocoding** walks the parsed tree and attaches coordinates from the gazetteer, reporting
-which tier answered and how much uncertainty rides on it.
+which tier answered and the uncertainty attached to the result.
 [Geocode a CSV of customer addresses](../developers/tutorials/geocode-a-csv.mdx)
 
 **Reverse geocoding** turns a latitude/longitude into an administrative hierarchy. It answers at
@@ -36,7 +36,7 @@ package. Places only — a user typing a house number gets no useful result from
 importance rather than proximity.
 [Add place autocomplete](../developers/how-to/add-autocomplete.mdx)
 
-## Working with records
+## Match records
 
 **Record matching** collapses the same organization written four ways into one entity, blocking on
 geography first and then scoring the pairs it kept.
@@ -50,7 +50,7 @@ codes, emitted in either the native shape or OpenCage's.
 
 | Job               | What has to be there                                    |
 | ----------------- | ------------------------------------------------------- |
-| Parsing           | The weights package                                     |
+| Address parsing   | The weights package                                     |
 | Validation        | The weights package                                     |
 | Autocomplete      | The weights package — the 21.8 MB index is inside it    |
 | Forward geocoding | The weights package plus the `candidate` bundle         |

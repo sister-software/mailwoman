@@ -11,8 +11,9 @@ import { flag } from "#operations/inputs"
 import { prepareReleaseVersion } from "#release/prepare-version"
 
 /**
- * Defines the `release.prepare-version` operation, which writes the resolved release
- * version into the checkout's package manifests and release config.
+ * Defines the `release.prepare-version` operation.
+ *
+ * It writes the resolved release version into the checkout's package manifests and release config.
  *
  * A dry run behaves like `--check-only`, resolving and validating the version without writing.
  */

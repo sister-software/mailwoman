@@ -147,8 +147,9 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
 }
 
 /**
- * Reconstruct a short-cell int's ancestor at a coarser resolution from the stored cell itself
- * rather than a centroid, which can land in a different parent.
+ * Reconstruct a short-cell int's ancestor at a coarser resolution from the
+ * stored cell itself rather than a centroid.
+ * A centroid can land in a different parent.
  */
 export function shortCellToParentInt(shortCell: number, from: number, to: number): number {
 	return shortCellToInt(cellToParent(expandShortCellInt(shortCell, from), to) as H3Cell)

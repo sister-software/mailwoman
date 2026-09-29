@@ -151,7 +151,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 
 /**
  * Supplies {@link createPOIIntentStage} with its phrase lookup, the parser for the anchor
- * remainder, and an optional executor that turns an intent into an outcome.
+ * remainder and an optional executor that turns an intent into an outcome.
  */
 export interface POIIntentStageDeps {
 	lookup: POIPhraseLookup

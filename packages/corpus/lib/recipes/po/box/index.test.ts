@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest"
 const run = recipeRunner("po-box", poBoxRecipe, 517)
 
 /**
- * Tuples in the shape the recipe requires: a locality, a postcode, a country, and a region (except NZ).
+ * Tuples in the shape the recipe requires: a locality, a postcode, a country and a region (except NZ).
  */
 const TUPLES = Array.from({ length: 6 }, (_, index) => ({
 	locality: "Madrid",

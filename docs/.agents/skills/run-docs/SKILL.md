@@ -102,7 +102,7 @@ driver above is the right tool.
 - **`/demo/`, `/debug/` and `/trace/` are redirect pages.** They forward to https://earth.mailwoman.ai with the query intact; the geocoder's behaviour is tested in `packages/earth` rather than here.
 - **The driver does not launch or kill the dev server.** This is deliberate — Docusaurus's first build is slow and you'll typically run the driver 5–20 times against one server. Tear down explicitly with `pkill -f 'docusaurus start'` when done.
 
-## Troubleshooting
+## Diagnose common failures
 
 | Symptom                                                                                 | Fix                                                                                                                                                                      |
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

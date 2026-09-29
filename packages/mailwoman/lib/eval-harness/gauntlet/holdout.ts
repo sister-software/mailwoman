@@ -47,7 +47,7 @@ export interface HoldoutLayerOptions {
 	/**
 	 * A tokenizer-splice candidate ships a new vocab.
 	 *
-	 * Grading it needs the candidate tokenizer (and card) paired with the candidate model.
+	 * The grade needs the candidate tokenizer (and card) paired with the candidate model.
 	 * Production then also runs through the shipped trio (createScorer on both sides),
 	 * so the only variables are the ONNX and the vocab.
 	 * Omit for a model-only bump.
@@ -60,8 +60,8 @@ export interface HoldoutLayerOptions {
 	/**
 	 * Package-shaped candidate weights dir (see {@link GauntletLayerOptions.weightsCacheRoot}).
 	 *
-	 * Like a splice candidate it carries its own vocab, so production also runs
-	 * through the shipped trio to keep the z-test clean.
+	 * Like a splice candidate it has its own vocab, so production also runs through
+	 * the shipped trio to keep the z-test clean.
 	 */
 	weightsCacheRoot?: string
 	/**
@@ -156,7 +156,7 @@ export function holdoutSources(): Record<string, SourceDef> {
  * A seeded default would turn the generalization measure into a fixed set.
  *
  * It also returns `drawnFrom`, the count of parseable rows the reservoir saw,
- * since the sample size alone does not say what it was drawn out of.
+ * since the sample size by itself does not identify what it was drawn from.
  */
 export async function drawHoldoutSample(
 	src: SourceDef,
@@ -168,7 +168,7 @@ export async function drawHoldoutSample(
 	let line = 0
 
 	// The staging files are LF, but the final column (the truth coord) would otherwise
-	// carry a stray \r on a crlf source and fail to parse.
+	// include a stray \r on a crlf source and fail to parse.
 	for await (const raw of TextSpliterator.fromAsync(src.file, { crlf: true })) {
 		if (line++ === 0) continue // header
 		const s = src.parse(raw.split(";"))

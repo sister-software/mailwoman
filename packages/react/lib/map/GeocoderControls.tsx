@@ -171,7 +171,7 @@ export function GeocoderControls({
 
 			if (!drag) return
 
-			// Dragging up makes the drawer taller, so the delta is inverted against the pointer's y.
+			// An upward drag makes the drawer taller, so the delta is inverted against the pointer's y.
 			const delta = drag.startY - event.clientY
 
 			if (Math.abs(delta) > DRAG_TRAVEL_PX) {
@@ -318,7 +318,7 @@ export function GeocoderControls({
 		void geocode.submit(initialQuery)
 	}, [initialQuery, runtime.ready, geocode])
 
-	// Crossing the drawer breakpoint clears any dragged height.
+	// A drawer-breakpoint crossing clears any dragged height.
 	// The height could clip the desktop column.
 	useEffect(() => {
 		const query = globalThis.matchMedia(DRAWER_LAYOUT)
@@ -330,7 +330,7 @@ export function GeocoderControls({
 	}, [])
 
 	// A user pan, zoom, or rotate shrinks the drawer to its floor detent without dismissing the result.
-	// Programmatic camera moves, such as the fly-to after a query, carry no `originalEvent` and are ignored.
+	// Programmatic camera moves, such as the fly-to after a query, have no `originalEvent` and are ignored.
 	useEffect(() => {
 		if (!map) return
 
@@ -371,7 +371,7 @@ export function GeocoderControls({
 		return () => document.removeEventListener("keydown", onKeyDown)
 	}, [openSheet])
 
-	// Clicking a map label searches for its name.
+	// A map-label click searches for its name.
 	const pickLabel = useCallback(
 		(name: string) => {
 			geocode.setText(name)

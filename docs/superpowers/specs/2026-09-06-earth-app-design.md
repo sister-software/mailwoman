@@ -86,7 +86,7 @@ asset requests do not invoke a Worker.
 Workers Builds configuration lives in the Cloudflare dashboard, so this spec records it and the package
 README repeats it:
 
-| Setting           | Value                                                                                                                                                                  |
+| Parameter         | Value                                                                                                                                                                  |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Root directory    | `packages/earth`                                                                                                                                                       |
 | Build command     | `yarn build` (`tsc -b && vite build`, then the `build.json` emit)                                                                                                      |
@@ -192,7 +192,7 @@ verified for the new origin before launch. The check is a `curl` with an `Origin
 behavior does not change, because the browser talks to `public.mailwoman.ai` directly and no Worker sits
 in that path.
 
-### Testing
+### Test plan
 
 - `@mailwoman/react/map`: the fake-runtime component tests, stories and geometry tests stay. The
   runtime hook gets a test with injected loaders and without network access.
@@ -249,7 +249,7 @@ Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
 
 ## Out of scope
 
-- Redesigning the geocoder's appearance, the resolver, or the model.
+- The geocoder's appearance, resolver, and model retain their current designs.
 - A generated release manifest in place of `resources.ts`. The version pins move as constants first, and
   the manifest is a follow-up.
 - A Worker script of any kind.

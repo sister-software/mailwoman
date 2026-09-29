@@ -1,4 +1,4 @@
-"""Scoring a trained checkpoint on the GPU: per-tag readouts and feature ON/OFF contrasts.
+"""This command scores a trained checkpoint on the GPU: per-tag readouts and feature ON/OFF contrasts.
 
     modal run -m launch.train_remote::eval_de --output-dir=… --step=…
     modal run -m launch.train_remote::grade_street_type_contrast --step=3000
@@ -385,7 +385,7 @@ def grade_evidence_bundle(
             input_ids=torch.tensor([feats["input_ids"][:n]]),
             attention_mask=torch.tensor([feats["attention_mask"][:n]]),
         )
-        # Model-capability-aware feeding: a channel is fed only when this model carries it — the
+        # Model-capability-aware feeding: feed a channel only when this model uses it — the
         # v385 reference row (no bundle channels) grades through the same instrument without raising.
         has = {
             "anchor": getattr(model, "use_postcode_anchor", False),

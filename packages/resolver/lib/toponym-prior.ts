@@ -179,7 +179,7 @@ export function rankByCountryPrior<T extends Rankable>(
 }
 
 /**
- * Returns a place's capital status: 2 for a national capital, 1 for an admin-1 seat, and 0 otherwise.
+ * Returns a place's capital status: 2 for a national capital, 1 for an admin-1 seat and 0 otherwise.
  *
  * The caller supplies it, so the resolver never loads a capitals reference itself.
  */

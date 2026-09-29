@@ -73,7 +73,7 @@ export interface JusoLabelRow {
 	region: string
 	sigungu: string
 	/**
-	 * The 읍/면 the road address itself carries between the 시군구 and the road (읍면동구분 `0`), else empty.
+	 * The 읍/면 included in the road address between the 시군구 and the road (읍면동구분 `0`), else empty.
 	 *
 	 * A 동 is never written in the road form, it goes in the parenthetical.
 	 */

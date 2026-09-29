@@ -323,7 +323,7 @@ async function discoverAssertions(testsDir: PathBuilderLike): Promise<ExtractedA
  * the fixture format inherited from the retired rule-based suite:
  * `country, dependency, house_number, level_designator, level, locality, postcode, region, street, unit_designator, unit, venue`.
  *
- * Anything outside this set is invisible to the comparison and gets folded or dropped.
+ * Values outside this set are invisible to the comparison and get folded or dropped.
  */
 const VISIBLE_TAGS = new Set([
 	"country",

@@ -317,7 +317,7 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
  * Returns the line join for single-line output in the selected country and `script`.
  *
  * CJK joins apply only to the local script.
- * Selecting a script keeps line order and separator tied to one system.
+ * A single script keeps line order and separator tied to one system.
  */
 export function lineJoinForCountry(countryCode: string | null | undefined, script?: AddressScript): string {
 	if (!countryCode) return ", "

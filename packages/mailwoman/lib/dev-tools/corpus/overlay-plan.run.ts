@@ -7,7 +7,7 @@
  *
  *   An overlay is a parquet file added to a built corpus after the base build, carrying rows a recipe
  *   produced rather than an adapter. The previous corpus's manifest records every one of them with its
- *   `source` label and the split it entered, so the list of overlays to carry forward is readable
+ *   `source` label and the split it entered, so readers can see which overlays the plan retains
  *   rather than maintained by hand.
  *
  *   Each overlay groups under its unsplit original. A manifest entry ending `.train.parquet`,
@@ -15,9 +15,9 @@
  *   collapse to one original. This groups them and reports the original each came from.
  *
  *   **Every original is routed, including one holding no row the policy holds out.** `split-slice`
- *   writes a val or test file only where rows reach it. Routing an empty file therefore produces one train file with
- *   the same rows. A hand-maintained per-file list can omit a file and silently overlap holdout with train. Routing
- *   every file costs a few seconds per small file.
+ *   writes a val or test file only where rows reach it. An empty file therefore produces one train file with
+ *   the same rows. A hand-maintained per-file list can omit a file and silently overlap holdout with train.
+ *   A complete route costs a few seconds per small file.
  *
  *   An original this cannot locate is reported by name and counted. It is never dropped from the plan,
  *   because an overlay missing from the next corpus is a silent loss of the rows a recipe was written
@@ -90,8 +90,8 @@ interface OverlayOriginal {
 	 * The previous manifest preserves the spelling that was current when written.
 	 * `currentSourceName` maps retired spellings forward.
 	 *
-	 * Passing a retired spelling to `overlay-manifest` would make the manifest disagree with the rows.
-	 * A later plan would then carry the stale label forward again.
+	 * A retired spelling passed to `overlay-manifest` would make the manifest disagree with the rows.
+	 * A later plan would then repeat the stale label.
 	 */
 	source: string
 	/**
@@ -142,7 +142,7 @@ const searchDirectories = TextSpliterator.from(search, { delimiter: "," }).toArr
  * so the roots are walked rather than listed.
  * The plan excludes the previous corpus directory because its files are the copies this plan replaces.
  *
- * Routing a copy that already followed the old policy would repeat its previous routing.
+ * A copy that already followed the old policy would repeat its previous routing.
  */
 const index = new Map<string, string[]>()
 const previousCorpusDirectory = dirname(baseManifest)
@@ -172,7 +172,8 @@ for (const [stem, entry] of [...grouped].toSorted(([a], [b]) => a.localeCompare(
 	}
 
 	// Check `.migrated.parquet` first.
-	// When both forms exist, it carries the register, surface and recipe columns a current corpus needs.
+	// When both forms exist, this form includes the register, surface
+	// and recipe columns a current corpus needs.
 	// The plain file predates those columns.
 	let unsplitPath: string | null = null
 
@@ -192,14 +193,14 @@ for (const [stem, entry] of [...grouped].toSorted(([a], [b]) => a.localeCompare(
 
 	const recorded = [...entry.source][0] ?? ""
 
-	// A carried source is one no recipe in this repository produces, so it keeps
+	// A retained source is one no recipe in this repository produces, so it keeps
 	// its upstream spelling and maps to itself.
-	// `currentSourceName` answers for the recipe outputs alone.
+	// `currentSourceName` answers only for the recipe outputs.
 	const current = CARRIED_SOURCES.includes(recorded) ? recorded : currentSourceName(recorded)
 
 	if (recorded && !current) {
 		// A label absent from both tables has no forward mapping.
-		// Passing it to `overlay-manifest` would record a claim the rows may not support.
+		// `overlay-manifest` would record a claim the rows may not support if it received this label.
 		unmappable.push(`${stem}: ${recorded}`)
 	}
 
@@ -291,8 +292,8 @@ if (renamed.length) {
  * These entries are derived.
  * The source comes from the plan's current spelling instead of the previous manifest.
  *
- * Reading the directory rather than the originals is deliberate: routing decides how many files exist
- * and which splits they carry, so a file it wrote and a file it declined both show up here as they are.
+ * A directory read rather than a read of the originals is deliberate: routing decides how many files
+ * exist and which splits each source enters, so the plan lists files it wrote and files it declined.
  */
 async function routedLists(directory: string): Promise<{ parquet: string[]; source: string[]; split: string[] }> {
 	const names = (await Globerator.from("*.parquet", { cwd: directory, onlyFiles: true }).toArray())
@@ -332,7 +333,7 @@ async function routedLists(directory: string): Promise<{ parquet: string[]; sour
 		}
 
 		// The manifest records the name held by the corpus.
-		// Copying the file into the corpus drops the `.migrated` infix that marks files from an older corpus.
+		// A corpus copy drops the `.migrated` infix that marks files from an older corpus.
 		// `overlay-manifest` resolves `<newDir>/<split>/<parquet>`, so a list carrying
 		// the staged spelling resolves to a path the corpus does not have.
 		parquet.push(name.replace(".migrated", ""))
@@ -355,7 +356,7 @@ async function routedLists(directory: string): Promise<{ parquet: string[]; sour
 }
 
 /**
- * The split a routed filename carries, defaulting to `train` for a name routing left unsuffixed.
+ * The split assigned to a routed filename, defaulting to `train` when the name has no suffix.
  */
 function splitOf(name: string): string {
 	return ROUTED_SUFFIX.exec(name)?.[1] ?? "train"

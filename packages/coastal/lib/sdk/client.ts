@@ -55,7 +55,7 @@ export const EA_MIN_REQUEST_INTERVAL_MS = 500
 const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
 /**
- * The licence value that the catalogue entry must carry.
+ * The licence value that the catalogue entry must contain.
  * A different value means the terms changed.
  */
 export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
@@ -136,7 +136,7 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	 * ID that changes when the product is republished.
 	 *
 	 * @throws {Error} When the entry is for a different dataset, has no `revision` date,
-	 * or carries a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
+	 * or has a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<CoastalCatalogueRecord> {
 		return readCKANPackageRecord(this, {

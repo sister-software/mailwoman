@@ -190,7 +190,7 @@ export interface CoastalZoneCellTable {
  * They share feature IDs and attributes but have different geometry.
  *
  * A bounding-box scan over 160 rows costs less than a cell index.
- * Omitting the index also keeps this hazard out of the erosion probe.
+ * The erosion probe also excludes this hazard because the schema has no cell index.
  */
 export interface CoastalGroundInstabilityTable {
 	/**

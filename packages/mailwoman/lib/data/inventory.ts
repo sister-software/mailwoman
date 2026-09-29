@@ -20,20 +20,20 @@ import { Globerator } from "spliterator/node/fs"
  */
 export const Provenance = {
 	/**
-	 * Carries a `layer_manifest` row — source, vintage, build command, build sha.
+	 * Has a `layer_manifest` row — source, vintage, build command, build sha.
 	 */
 	Manifested: "manifested",
 	/**
 	 * A built artifact with no manifest.
 	 *
-	 * Rebuilding it requires knowing which command made it.
+	 * The builder requires knowledge of which command made it.
 	 * A person may know that command even when the file does not record it.
 	 */
 	Unprovenanced: "unprovenanced",
 	/**
 	 * Not ours to reproduce — a third party's artifact we keep for comparison.
 	 *
-	 * Counting these as debt would make the number unimprovable and therefore useless.
+	 * The number would never improve if the inventory counted these as debt.
 	 */
 	Foreign: "foreign",
 	/**
@@ -53,7 +53,7 @@ export type Provenance = (typeof Provenance)[keyof typeof Provenance]
  * Use a list instead of a heuristic.
  *
  * "Is this ours" is a fact about intent.
- * Guessing it from the filename is how a real gap gets excused as foreign.
+ * A filename-based guess lets a real gap pass as foreign.
  */
 export const FOREIGN_ROOTS: Record<string, string> = {
 	"pelias-rig": "a Pelias comparison rig — a third party's build, kept to measure against",
@@ -171,7 +171,7 @@ export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest
  * and an unbounded walk would spend minutes in directories that contain no databases.
  * Foreign roots are not descended into at all.
  *
- * Counting each row and preserving its name costs less while recording the same fact.
+ * The inventory records each row and its name at lower cost.
  */
 async function findDatabases(
 	dataRoot: PathBuilder,
@@ -225,7 +225,7 @@ async function findDatabases(
  * Run `lstat` before `stat` for a symlinked artifact.
  * The report must include the link and the size of its target.
  *
- * `stat` alone answers only for the target; `lstat` alone answers only for the link.
+ * `stat` by itself answers only for the target; `lstat` by itself answers only for the link.
  */
 async function inventoryEntry(dataRoot: string, path: string): Promise<InventoryEntry> {
 	const rel = relative(dataRoot, path)
@@ -318,7 +318,7 @@ export function inventorySentence(report: InventoryReport): string {
  * And `osm/address-points-au-au.db` records `node scratchpad/build-gnaf-rooftop-database.ts`,
  * which exists on the machine that built it and nowhere else, because `scratchpad/` is gitignored.
  *
- * Both artifacts pass every "has a manifest" check and neither can be rebuilt from what it says.
+ * Both artifacts pass every "has a manifest" check and neither can be rebuilt from its recorded contents.
  * So presence of a manifest is not the property worth counting on its own.
  *
  * The check is deliberately shallow: any token that looks like a path
@@ -350,7 +350,7 @@ export async function buildCommandGaps(buildCmd: string, repoRoot: PathBuilderLi
  * A manifest row written before the `license` column existed leaves it undefined.
  * This reports that state as unrecorded rather than as an absence of obligations.
  *
- * An artifact whose provenance is anything other than `Manifested` carries no `layer_manifest` row to read.
+ * An artifact whose provenance is anything other than `Manifested` has no `layer_manifest` row to read.
  * It returns `null` so the caller omits the line.
  */
 export function licenseHint(entry: InventoryEntry): string | null {

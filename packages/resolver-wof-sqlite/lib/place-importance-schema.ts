@@ -85,7 +85,7 @@ export const ENCYCLOPEDIC_BOOST_CAP = 0.25
 
 /**
  * Blends the two channels into the legacy `importance` column: the referential score
- * when there is no article, the encyclopedic score alone when population is unknown
+ * when there is no article, only the encyclopedic score when population is unknown
  * (`referential` 0), and otherwise the encyclopedic score clamped between the
  * referential score and {@link ENCYCLOPEDIC_BOOST_CAP} above it.
  */
@@ -118,8 +118,8 @@ export const IMPORTANCE_SPLIT_SOURCES = {
 export type ImportanceSplitSource = (typeof IMPORTANCE_SPLIT_SOURCES)[keyof typeof IMPORTANCE_SPLIT_SOURCES]
 
 /**
- * Returns the `select` term and `left join` that carry `encyclopedic` onto name-lookup
- * results for `schemaName`, degrading to `NULL` and no join when the column is absent.
+ * Returns the `select` term and `left join` that add `encyclopedic` to name-lookup results
+ * for `schemaName`, degrading to `NULL` and no join when the column is absent.
  *
  * It probes for the column rather than the table, because a pre-split table's
  * `importance` mixes Wikipedia and population scores.

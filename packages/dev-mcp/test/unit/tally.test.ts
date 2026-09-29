@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pins for the tally invariants: absence is a bucket, `null` is a value, and every tally sums to the row count. The
+ *   Pins for the tally invariants: absence is a bucket, `null` is a value and every tally sums to the row count. The
  *   sum-to-n property is the one that makes a tally readable as a distribution. A census that silently drops rows is
  *   the exact defect the recount scripts kept re-introducing by hand.
  */

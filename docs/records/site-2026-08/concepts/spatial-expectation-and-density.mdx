@@ -99,7 +99,7 @@ Population is already in the system. The admin hierarchy is already in the syste
 
 ## Where this lands in the open work
 
-**`#621` — coverage reconciliation (eligibility ↔ enrollment anti-join)** is where the regional expected-density model becomes a concrete deliverable. The anti-join — "eligible rather than enrolled" — surfaces every provider or facility that should appear in the FCC RHC enrollment data but doesn't. That is already a deviation from expectation. The density model adds a second, coarser layer: only "which individual entity is missing?" but "which geographic areas have fewer enrolled providers than their population would predict?" The HRSA HPSA/MUA designations are exactly this precomputed — a column in the data (the FCC forms explicitly reference HPSA status). Using them means we don't have to recompute the expected density ourselves; we inherit it from the federal designation system.
+**`#621` — coverage reconciliation (eligibility ↔ enrollment anti-join)** is where the regional expected-density model becomes a concrete deliverable. The anti-join — "eligible rather than enrolled" — surfaces every provider or facility that should appear in the FCC RHC enrollment data but doesn't. That is already a deviation from expectation. The density model adds a second, coarser layer: only "which individual entity is missing?" but "which geographic areas have fewer enrolled providers than their population would predict?" The HRSA HPSA/MUA designations provide this measure in advance as a data column (the FCC forms explicitly reference HPSA status). The system can use those designations directly rather than recomputing expected density.
 
 **`#618` — multi-source cross-dataset correlation** is where inverse-address-frequency weighting does its heaviest work. The NPPES registry alone has 4.8 GB of provider records, several at shared institutional addresses (hospitals, clinics, care systems). A shared address among several records is a high-frequency value and should contribute near-zero evidence to a match decision. The `withTermFrequency` mechanism in `match/tf.ts` and `match/fellegi-sunter.ts` handles this automatically — the term-frequency table is built from the dataset at match time, so a shared-building address automatically gets its weight suppressed without any hand-tuning.
 
@@ -129,7 +129,7 @@ Every number this system produces — the accessibility index, the anti-join mem
 
 That line reflects the correct division of labor for a system that resolves fragmented public data into an analyzable shape. The coverage product (#621) is worth building precisely because it makes that analysis tractable — not because it answers the question for the analyst, but because it asks the question precisely.
 
-The spatial expectation model, at both scales, is how we keep that line exact: given what we know about the population and the data sources, here is what we'd expect to see, and here is how much the observed data departs from it. Interpreting that departure is the analyst's job rather than ours.
+The spatial expectation model, at both scales, keeps that line exact: given what we know about the population and the data sources, here is what we'd expect to see, and here is how much the observed data departs from it. The analyst interprets that departure.
 
 ---
 

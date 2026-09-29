@@ -79,7 +79,7 @@ describe("the FR fragment board fixture", () => {
 
 		expect(negative.length).toBeGreaterThan(100)
 
-		// A negative row must not carry a street gold, or the positive scorer would pick it up.
+		// A negative row must omit a street gold, or the positive scorer would pick it up.
 		for (const row of negative) {
 			expect(row.expect.street, `${row.id} is negative but carries a street gold`).toBeUndefined()
 		}

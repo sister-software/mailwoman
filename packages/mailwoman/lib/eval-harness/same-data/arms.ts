@@ -16,7 +16,7 @@
  *   tracks its own accuracy.
  *
  *   `picked: null` on every trace, or no admin node carrying a `placeID`, is recorded as an abstention with
- *   the checks that produced it. A row that raised is a harness failure carried in `error`, and is never
+ *   the checks that produced it. A row that raised is a harness failure recorded in `error`, and is never
  *   scored as an abstention.
  */
 
@@ -72,7 +72,7 @@ export interface ArmRowResult {
 	/**
 	 * True when the selection lies more than {@link WRONG_AREA_KM} from the gold coordinate.
 	 *
-	 * Null when the arm abstained or the selected candidate carries no coordinate,
+	 * Null when the arm abstained or the selected candidate has no coordinate,
 	 * since absence of a distance is not a distance of zero.
 	 */
 	wrongArea: boolean | null

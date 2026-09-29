@@ -4,12 +4,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Materialize the base-latn overlay's dev artifacts. The overlay carries only the shared model,
+ *   Materialize the base-latn overlay's dev artifacts. The overlay includes only the shared model,
  *   tokenizer, calibration and lexicons, while locale-specific data stays in each locale overlay.
  *
- *   The model pair is the same source en-us links, and `$MAILWOMAN_DEV_MODEL` or
+ *   The model pair is the same source en-us links. `$MAILWOMAN_DEV_MODEL` or
  *   `$MAILWOMAN_DEV_TOKENIZER` overrides it. This workspace is parked and unpublished, so it
- *   carries no digest card. The shared metadata from en-us rides the soft-feed list, where a
+ *   has no digest card. The shared metadata from en-us appears in the soft-feed list, where a
  *   missing source warns and continues.
  */
 

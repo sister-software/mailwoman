@@ -110,7 +110,8 @@ export const MODEL_RELEASE_OPERATIONS: readonly SourceOperation[] = [
  * Returns the recorded permission for one operation under a license decision.
  *
  * The result is `unreviewed` when the decision is not elected or does not mention the operation.
- * Electing terms establishes which terms apply, and each operation still needs its own review.
+ * The selected terms establish which terms apply.
+ * Each operation still needs its own review.
  */
 export function permissionFor(decision: LicenseDecision, operation: SourceOperation): OperationDecision {
 	if (decision.state !== LicenseReviewState.Elected) {

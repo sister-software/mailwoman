@@ -168,7 +168,7 @@ describe("readCoverageFunnel", () => {
 		expect(kenya?.stages.coverage.state).toBe(StageState.Blocked)
 		expect(kenya?.stages.licensed.state).toBe(StageState.Blocked)
 
-		// US has an elected licence and still resolves neither field, so electing terms alone admits no source.
+		// US has an elected licence and still resolves neither field, so electing terms by itself admits no source.
 		const us = report.rows.find((row) => row.iso2 === "US")
 
 		expect(us?.stages.licensed.state).toBe(StageState.Reached)
@@ -230,8 +230,8 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("reads a country the config never admitted as absent rather than blaming the sampler", async () => {
-		// AQ carries no census row, so it is not admitted and cannot draw.
-		// Reporting it as a sampling failure would blame the admission filter.
+		// AQ has no census row, so it is not admitted and cannot draw.
+		// A sampling-failure report would blame the admission filter.
 		const report = await funnel({
 			sampledRows: new Map([["US", 250_000]]),
 			sampledTotal: 250_000,
@@ -252,8 +252,8 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("surfaces a verified source with no corpus rows, and skips one that has rows", async () => {
-		// US carries corpus rows so it is not a candidate, while KE carries none
-		// and is reached by widening the filter past its backbone `C`.
+		// US has corpus rows so it is not a candidate, while KE has none and is reached
+		// by widening the filter past its backbone `C`.
 		const report = await funnel()
 
 		expect(opportunityCandidates(report).map((entry) => entry.iso2)).toEqual([])
@@ -264,7 +264,7 @@ describe("readCoverageFunnel", () => {
 		const report = await funnel()
 		const kenya = opportunityCandidates(report, ["C"]).find((entry) => entry.iso2 === "KE")
 
-		// KE is admitted by the training config and carries no corpus row: the config promises a locale it cannot deliver.
+		// KE is admitted by the training config and has no corpus row: the config promises a locale it cannot deliver.
 		expect(kenya?.admitted).toBe(true)
 		expect(kenya?.licensed).toBe(false)
 		expect(opportunityCandidates(report, ["C"]).find((entry) => entry.iso2 === "AQ")?.admitted).toBe(false)

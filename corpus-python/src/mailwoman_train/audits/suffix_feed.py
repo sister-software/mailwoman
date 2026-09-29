@@ -13,7 +13,7 @@ from ..data.relabel import AffixRelabelLexicon, relabel_row
 
 # This audit measures both spellings of one source. `RECIPE_SOURCES` in
 # `packages/corpus/lib/recipes/sources.ts` is authoritative for the pair. A corpus records the
-# spelling used during assembly. Matching only one spelling makes the audit report every target cell
+# spelling used during assembly. A match on only one spelling makes the audit report every target cell
 # as absent in the other corpus. The report then resembles a feed with no target rows.
 TARGET_SOURCES = ("synth-suffix-boundary", "spliced-suffix-boundary")
 
@@ -128,7 +128,7 @@ def audit_feed(
             per_source_carriers[(cls, row["source"])] += 1
             per_source_correct[(cls, row["source"])] += int(ok)
 
-    # Every comparison in this report is target against ordinary. `TARGET_SOURCE` alone sorts a row
+    # Every comparison in this report is target against ordinary. A sort by `TARGET_SOURCE` would leave a row
     # into the target bucket. A spelling the corpus retired puts every row in
     # `ordinary`, and the report then reads as a finished measurement whose target cells are all empty.
     # An audit that cannot find what it audits has to say so: a false negative in the measuring tool

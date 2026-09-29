@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The census rides the placetype-pair prior's parent-candidate probes and records what it knows on
+ *   The census uses the placetype-pair prior's parent-candidate probes and records what it knows on
  *   the trace.
  *
  *   The interface this file holds is the negative one: a census present must produce a decode
@@ -148,7 +148,7 @@ describe("census observability — what lands on the trace", () => {
 			},
 		])
 
-		// The census rides the probe rather than replacing it.
+		// The census uses the probe rather than replacing it.
 		expect(probeTrace.firedPath).toBe("segment")
 		expect(probeTrace.firedChildTags).toEqual(["dependent_locality"])
 	})

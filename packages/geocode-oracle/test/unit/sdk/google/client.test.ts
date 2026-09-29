@@ -27,7 +27,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // Module loading reads `dotEnv` from the repo's `.env`, which can contain
 // `GOOGLE_MAPS_API_KEY` on the test machine.
 // `vi.stubEnv(..., undefined)` leaves the key visible because the merge falls back to `dotEnv`.
-// Mocking the module is the only way to make the missing-key test test anything.
+// The missing-key test needs a module mock to exercise the failure path.
 // (`bdc/sdk/client.test.ts` learned this the first time real FCC credentials landed in `.env`.)
 vi.mock("@mailwoman/geocode-oracle/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/geocode-oracle/env")>()
@@ -408,7 +408,7 @@ describe("pacing", () => {
 		await Promise.all([client.geocodeAddress("a"), client.geocodeAddress("b"), client.geocodeAddress("c")])
 
 		// 60000 / 60 = 1000ms.
-		// `requestsPerMinute` alone would have let all three go out at once.
+		// Without the per-request spacing, `requestsPerMinute` would have let all three go out at once.
 		// It is a budget rather than a rate.
 		// See `bdc/sdk/client.ts` for the measurement.
 		expect(transport.dispatchTimes).toEqual([0, 1000, 2000])

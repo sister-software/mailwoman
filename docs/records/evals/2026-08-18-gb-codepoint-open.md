@@ -37,7 +37,7 @@ license v3, acquisition 2026-08-05).
   is the trap this leg exists to catch.
 - **Configurations:** the shipped pipeline (`mailwoman` 9.1.0, model v4.4.0) at production
   defaults under two locales — `en-US` (the out-of-the-box default) and `en-GB`.
-- **Grading:** haversine distance to the Code-Point centroid; a no-result is a miss at every
+- **Metric:** haversine distance to the Code-Point centroid; a no-result is a miss at every
   threshold. Harness: `packages/mailwoman/lib/eval-harness/gb-codepoint-eval.ts` (seeded, re-runnable;
   results JSONL committed to the lab eval store).
 

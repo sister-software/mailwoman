@@ -12,7 +12,7 @@
  * not populate every role's row.
  *
  * A wrong concordance with fan-out of one is invisible here: catching it needs evidence the TSV does
- * not carry.
+ * does not include.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -52,7 +52,7 @@ export interface FanoutResolution {
 export const FANOUT_SPREAD_EPSILON_KM = 5
 
 /**
- * Decide which of `candidates` may carry the Wikidata id's importance.
+ * Decide which of `candidates` may receive the Wikidata id's importance.
  *
  * Pure and total, a single candidate passes straight through and every multi-candidate
  * group lands in exactly one of the module's branches.
@@ -87,7 +87,7 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 
 	// A zero maximum means the population is absent.
 	// A tie supplies no evidence.
-	// Picking a winner in either case would select by row order.
+	// A winner in either case would be selected by row order.
 	if (top.population > 0 && top.population > runnerUp.population) {
 		return { verdict: "population", keep: [top.id] }
 	}
@@ -96,7 +96,7 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 }
 
 /**
- * Running tally of what the guard did, for the command's summary line.
+ * The tally records what the guard did for the command's summary line.
  */
 export interface FanoutStats {
 	fannedGroups: number

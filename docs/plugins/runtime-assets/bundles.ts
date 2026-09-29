@@ -78,7 +78,7 @@ export interface PublishedBundleSummary {
 	totalBytes: number
 	totalSize: string
 	/**
-	 * `null` when the snapshot carries no row for this bundle.
+	 * `null` when the snapshot has no row for this bundle.
 	 */
 	served: ServedBundleSummary | null
 }

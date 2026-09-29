@@ -19,7 +19,7 @@
  *   - `place` holds the resolver-supplied normalized place URI, such as `wof:101751119`.
  *       The serializer emits it when `node.placeID` is set.
  *       Callers that want the bare place ID without the vendor prefix can read this attribute.
- *   - Root `<address>` carries `raw`, the full input string for round-trip.
+ *   - Root `<address>` includes `raw`, the full input string for round-trip.
  *
  *   DOM failure mode: `element.textContent` on a mixed-content node returns the concatenation of
  *   all descendant text. Use `Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n =>
@@ -49,7 +49,7 @@ export interface SerializeXMLOpts {
 	 */
 	includeOffsets?: boolean
 	/**
-	 * Include `src` provenance attribute when the node carries source info.
+	 * Include `src` provenance attribute when the node has source info.
 	 *
 	 * Default true.
 	 */

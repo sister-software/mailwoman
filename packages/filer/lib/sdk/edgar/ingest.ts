@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The edgar chain, assembled — carrier names in, {@linkcode EdgarSubsidiaryRow}s out.
  *
- *   The corroboration check is mandatory: resolving 24 telecom names by score alone returned the wrong company twice,
+ *   The corroboration check is mandatory: resolving 24 telecom names by score only returned the wrong company twice,
  *   at 0.829 and 0.886. {@link EdgarIngestOptions} exposes `pinnedCIKs` for operator decisions.
  *   Every dropped row is counted. A genuine tie between different CIKs after corroboration produces an abstention.
  *   A pinned CIK at the top score resolves that tie.
@@ -54,7 +54,7 @@ export const EdgarSkipReason = {
 	 */
 	NoTenK: "no-10-k",
 	/**
-	 * The most recent 10-K carries no Exhibit 21 — a filer's choice rather than an interface failure.
+	 * The most recent 10-K has no Exhibit 21 — a filer's choice rather than an interface failure.
 	 */
 	NoExhibit21: "no-exhibit-21",
 	/**
@@ -123,7 +123,7 @@ interface SubmissionsPayload {
 }
 
 /**
- * Picks the one corroborated CIK for a name, or says why there isn't one.
+ * Picks the one corroborated CIK for a name, or reports why none qualifies.
  *
  * Corroboration runs over every candidate because the highest name score is
  * exactly what proved untrustworthy.
@@ -164,7 +164,7 @@ async function resolveCorroboratedCIK(
 	corroborated.sort((a, b) => b.score - a.score)
 
 	// Ambiguity is a genuine tie at the top rather than "more than one survived";
-	// with the 1,054,085-entry cik-lookup-data, `corroborated.length > 1` alone
+	// with the 1,054,085-entry cik-lookup-data, `corroborated.length > 1` by itself
 	// would count 10 of 24 names as false ambiguities.
 	if (corroborated.length > 1 && corroborated[0]!.score === corroborated[1]!.score) {
 		// A pinned CIK at the top score breaks the tie: an operator decision about identity outranks a name score.

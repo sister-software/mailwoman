@@ -2,13 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The trailing parenthetical an OpenAddresses locality sometimes carries and the function that removes it.
+ * @file The trailing parenthetical that sometimes appears in an OpenAddresses locality and the function that removes it.
  *
  *   `Manilla (Rural)` is the town of Manilla reached on a rural route. The parenthesis is the source's delivery-type
  *   marker rather than part of the place name, so grading against the raw expectation marks the parser's correct
  *   `Manilla` answer wrong.
  *
- *   A gazetteer name may carry one too, so this is a fallback rather than an up-front normalization.
+ *   A gazetteer name may include one too, so this is a fallback rather than an up-front normalization.
  *   A caller compares the raw surfaces first and tries the stripped form only after a miss.
  *   The fallback adds credit only where the base name already matches. It strips the expectation, never the run's answer.
  *
@@ -18,13 +18,13 @@
 
 /**
  * A trailing qualifier in parentheses at the end of a name, anchored
- * so a parenthesis anywhere else is left alone.
+ * so a parenthesis anywhere else remains unchanged.
  * The convention removed is a suffix.
  */
 const TRAILING_PARENTHETICAL = /\s*\([^)]*\)\s*$/
 
 /**
- * `name` with a trailing parenthetical qualifier removed, or `name` unchanged when it carries none.
+ * `name` with a trailing parenthetical qualifier removed, or `name` unchanged when it has none.
  *
  * A name that is only a parenthetical comes back unchanged rather than emptied,
  * because an empty locality is a row the caller drops silently.

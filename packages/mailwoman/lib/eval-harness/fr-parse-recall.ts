@@ -114,7 +114,7 @@ export interface FRParseRecallOptions {
 }
 
 /**
- * Parse-recall counts, rates in percent, and the floor verdict.
+ * Parse-recall counts, rates in percent and the floor verdict.
  * The verdict `pass` is true when no floor is set.
  */
 export interface FRParseRecallResult {

@@ -71,10 +71,10 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		interpolation = new StreetInterpolator({ dbPath: interpolationDB })
 	}
 
-	// `--cascade` grades the production coordinate path (mailwoman/geocode-core.ts),
-	// per-row, per-state situs and interpolation databases via RegionDatabaseProvider,
-	// so the eval reports the shipped coordinate (address_point > interpolated > admin)
-	// across all states rather than the admin centroid the neural headline alone reports.
+	// `--cascade` grades the production coordinate path (mailwoman/geocode-core.ts), per-row,
+	// per-state situs and interpolation databases via RegionDatabaseProvider, so the eval
+	// reports the shipped coordinate (address_point > interpolated > admin) across all states
+	// rather than the admin centroid reported by the neural headline by itself.
 	// The single-state --address-points/--interpolation flags support one-state runs.
 	// --cascade selects databases per row across multiple states. --data-root locates
 	// the databases (<root>/address-points/, <root>/interpolation/).

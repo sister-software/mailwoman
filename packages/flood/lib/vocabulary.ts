@@ -22,7 +22,7 @@ export interface FloodZoneDefinition {
 }
 
 /**
- * The zone codes the shipped `Flood_Zones_2_3_Rivers_and_Sea` layer carries —
+ * The zone codes in the shipped `Flood_Zones_2_3_Rivers_and_Sea` layer —
  * the closed set the builder validates against.
  */
 export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
@@ -46,7 +46,7 @@ export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
  * The declared domain as a membership set.
  *
  * An unknown `flood_zone` value indicates a source-schema change.
- * Coercing it to a nearest neighbour or null would report that the source has no data.
+ * Coercion to a nearest neighbour or null would report that the source has no data.
  */
 export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DEFINITIONS.map((zone) => zone.code))
 
@@ -110,7 +110,7 @@ export const EA_COVERAGE_STATEMENT =
 export const EA_COVERAGE_STATEMENT_URL = `https://environment.data.gov.uk/dataset/${EA_FLOOD_DATASET_ID}`
 
 /**
- * What the product does not cover, in the authority's own words, carried into the
+ * What the product does not cover, in the authority's own words, preserved in the
  * observation so a reading can be seen for what it is silent about.
  */
 export const EA_PRODUCT_LIMITS: ReadonlyArray<string> = [

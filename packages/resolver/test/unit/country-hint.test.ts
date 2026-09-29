@@ -7,7 +7,7 @@
  *   (an address-system recognizer's derived country, such as `recognizeUSRegions` stamping "US" on a
  *   2-letter US state abbrev) constrains that node's lookup to the hinted country, below a resolved
  *   parent's country but above the global defaults. It breaks the two-consistent-pairs tie where
- *   geographic consistency alone cannot choose Maine over the more-populous Augusta under Messina.
+ *   geographic consistency by itself cannot choose Maine over the more-populous Augusta under Messina.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"

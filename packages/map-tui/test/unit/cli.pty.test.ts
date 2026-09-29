@@ -171,7 +171,7 @@ describe.skipIf(!HAS_LINUX_SCRIPT)("map-tui bin (pty)", () => {
 			const opened = centerOf(samples[0]!)
 			const dragged = centerOf(samples[1]!)
 
-			// Dragging the pointer up and to the left drags the map with it, so the viewport moves south-east.
+			// An up-left pointer drag moves the map and viewport south-east.
 			expect(dragged.lon).toBeGreaterThan(opened.lon)
 			expect(dragged.lat).toBeLessThan(opened.lat)
 

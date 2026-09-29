@@ -7,14 +7,14 @@
  *   pair-index entry shape. The French instance of the dependent-locality prior.
  *
  *   Why BAN and not WOF, when the US instance (R5) took WOF: the source has to be whatever the
- *   postal format carries. WOF's French neighbourhood records are Paris quartiers ("Des Halles",
+ *   postal format uses. WOF's French neighbourhood records are Paris quartiers ("Des Halles",
  *   "Palais Royal") — cartographic subdivisions that never appear in a French postal address, since
  *   the arrondissement is encoded in the postcode (75001 = 1er). The line that does appear is the
- *   lieu-dit, written alone between the street and the commune (La Poste's line 5). Indexing
+ *   lieu-dit, written by itself between the street and the commune (La Poste's line 5). An index of
  *   quartiers would be technically valid and practically wrong: a prior pushing toward spans real
  *   addresses never contain.
  *
- *   Filtering is not reimplemented here. `@mailwoman/ban/sdk`'s `cleanLieuDit` already owns it
+ *   The code uses `@mailwoman/ban/sdk`'s `cleanLieuDit` for filtering
  *   (header leaks, placeholders, `ancienne commune` prefixes plus rows whose lieu-dit repeats
  *   the commune — 5.0% of filled values). The `synth-fr-lieudit` training
  *   database reads through, so the index and the database agree on what a lieu-dit is by construction.
@@ -41,7 +41,7 @@ export interface LieuDitPair {
 	 * The commune is the French postal locality line.
 	 * Every FR address writes it after the postcode.
 	 *
-	 * There is no per-row variation to read here: BAN carries exactly one commune column
+	 * There is no per-row variation to read here: BAN has exactly one commune column
 	 * and every row's parent comes from it.
 	 */
 	parentTag: "locality"

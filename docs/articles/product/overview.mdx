@@ -10,23 +10,23 @@ audience: teams
 Mailwoman is an address parser and geocoder that runs inside your own process. `npm install` puts a
 39.4 MB model file on your disk. After that, a parse is a function call that makes no network request.
 
-Reading an address and placing it are two separate passes, and they become available at different
-times. The model reads a string and returns tagged components, each with a confidence score. A second
-pass places those components on the map using a gazetteer database that you download once and keep.
+Mailwoman reads an address and places it in two separate passes. Each pass becomes available at a
+different time. The model reads a string and returns tagged components, each with a confidence score.
+A second pass places those components on the map using a gazetteer database that you download once and keep.
 Mailwoman requires no account and no API key, and it does not meter usage, because no call reaches a
 server of ours.
 
 ## What it does
 
-Parsing, forward and reverse geocoding, autocomplete, validation, record matching and annotations run
-from the same install. Each one has a page that runs it end to end.
+The same install supports parsing, forward and reverse geocoding, autocomplete, validation, record
+matching and annotations. Each feature has a page that runs it end to end.
 
 [Capabilities](./capabilities.mdx)
 
-## What it costs to carry
+## What it costs to install
 
 A full install of the entry package plus the English weights is 707 MB, and the ONNX runtime accounts
-for 523 MB of that. The model inside it is 39.4 MB. Geocoding adds a 2.88 GB gazetteer download, so
+for 523 MB of that. The model inside it is 39.4 MB. The geocoder adds a 2.88 GB gazetteer download, so
 you decide on it separately. Each figure is published with the command that produced it, as is each
 accuracy number on [Benchmarks](../resources/benchmarks/index.mdx).
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The engine stamp defines the Zod schema apps use in their documentation and the two headers each response carries.
+ *   The engine stamp defines the Zod schema apps use in their documentation and the two headers each response includes.
  *   It also provides the helper that attaches the body field. The `mailwoman` package builds the stamp and passes it as an option.
  *   App factories (`lib/app.ts`, `lib/routes.ts`, `lib/schema.ts`) remain engine-agnostic. Each app supplies its stamp.
  *   must not import `mailwoman`; the bin (`lib/cli.ts`) is the wiring layer that resolves the stamp and passes it in.
@@ -14,7 +14,7 @@ import type { EngineStamp } from "@mailwoman/core/license"
 import type { MiddlewareHandler } from "hono"
 
 /**
- * The stamp carries no licensee or key id.
+ * The stamp contains no licensee or key id.
  *
  * A strict object makes a field that leaks one a schema failure rather than a documented extension.
  */

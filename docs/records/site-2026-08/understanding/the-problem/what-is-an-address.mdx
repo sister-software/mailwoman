@@ -34,7 +34,7 @@ Mailwoman models an address as a **bag of typed components**. Each component is 
 | `intersection_a`, `intersection_b` | `"5th Ave"`, `"42nd St"`                     | for intersections |
 | `attention`                        | `"c/o Jane Smith"`                           | for postal mail   |
 
-The full canonical vocabulary lives in `core/types/component.ts`. Adding a tag requires a written rationale because everything downstream is keyed off this list.
+The full canonical vocabulary lives in `core/types/component.ts`. Each new tag needs a written rationale because everything downstream is keyed off this list.
 
 A parsed result is therefore a **flat dictionary** with optional repeated tags (rare; typically each tag appears at most once), not a tree. The exact shape:
 
@@ -86,7 +86,7 @@ New York, NY
 
 A parser that labels one token at a time has to decide that "Saint" and "Petersburg" go together. The first version of Mailwoman's neural classifier (v0.2.0) got "Saint Petersburg" wrong because the second token's label was independent of the first — see [BIO labels](../../concepts/bio-labels.mdx) for the fix.
 
-**4. Spelling, capitalization, and punctuation vary.**
+**4. Address spelling, capitalization, and punctuation vary.**
 
 ```
 1600 Pennsylvania Ave NW, Washington, DC 20500

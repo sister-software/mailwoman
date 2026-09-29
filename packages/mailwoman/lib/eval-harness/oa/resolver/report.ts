@@ -11,7 +11,7 @@ import { formatPercent, percentile } from "@mailwoman/core/stats"
 import type { Agg, AggPair, OAResolverEvalOptions } from "#eval-harness/oa/resolver/eval"
 
 /**
- * Everything the report reads: the per-arm aggregates, the tier hit counts, and the run's flags.
+ * The report inputs: per-arm aggregates, tier hit counts and the run's flags.
  */
 export interface OaReportInput {
 	agg: { neural: AggPair }

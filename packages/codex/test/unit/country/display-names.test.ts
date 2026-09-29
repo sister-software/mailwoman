@@ -72,7 +72,7 @@ describe("enumerateCountryDisplayNames", () => {
 
 		// These assertions check floors rather than equalities.
 		// An ICU upgrade may add names.
-		// Pinning exact counts would fail after a Node bump.
+		// Exact counts would fail after a Node bump.
 		expect(countries.size).toBeGreaterThanOrEqual(240)
 		expect(rows.length).toBeGreaterThanOrEqual(3000)
 	})

@@ -37,7 +37,7 @@ export interface SemiCRFTransitions {
 }
 
 /**
- * One decoded segment: tokens `[start, start + length)` carry type `segmentTypes[typeID]`.
+ * One decoded segment: tokens `[start, start + length)` have type `segmentTypes[typeID]`.
  */
 export interface DecodedSegment {
 	start: number

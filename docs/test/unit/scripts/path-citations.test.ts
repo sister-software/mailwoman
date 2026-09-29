@@ -86,7 +86,7 @@ describe("citationTarget", () => {
 
 describe("isPointInTimeRecord", () => {
 	it("reads a dated filename as a record wherever it sits", () => {
-		expect(isPointInTimeRecord("docs/records/evals/2026-07-22-night-en-gb-postmortem.md")).toBe(true)
+		expect(isPointInTimeRecord("docs/records/evals/2026-07-18-v710-camx-latam-grade.md")).toBe(true)
 		expect(isPointInTimeRecord("docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md")).toBe(true)
 	})
 

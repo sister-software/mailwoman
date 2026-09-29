@@ -6,10 +6,10 @@
  *   Build `localities-tw-districts.db` — Taiwan's 鄉鎮市區 (the township / county-administered-city / district tier)
  *   as one locality row each, derived from the civil-affairs address register rather than from WOF.
  *
- *   why not WOF: the admin artifact carries the tier twice and both copies are wrong for a Han query. A parsed
- *   `新北市林口區` scoped to New Taipei City finds no in-region row keyed `林口區`: the record that carries the Han
- *   names (WOF 102026697) has no parent and a centroid 54 km away in the hills, while the correctly parented record
- *   (WOF 890467835) carries only the Latin `Linkou`. The training board holds 289 units.
+ *   why not WOF: the admin artifact stores the tier twice. Both copies fail a Han query. A parsed
+ *   `新北市林口區` scoped to New Taipei City finds no in-region row keyed `林口區`: the record that stores the Han
+ *   name (WOF 102026697) has no parent and a centroid 54 km away in the hills, while the correctly parented record
+ *   (WOF 890467835) stores only the Latin `Linkou`. The training board holds 289 units.
  *   Of those, 102 have no Han-keyed TW row. Another 15 have a row only on a namesake in another 縣市.
  *   Ten have a row only on a parentless place.
  *
@@ -27,7 +27,7 @@
  *   then a Han name that identifies exactly one region. It then tries the name without its 縣/市 suffix.
  *   That step lets 桃園市 reach the region WOF still names 桃園縣. The build writes the match as an `ancestors` row.
  *   The candidate build then stamps the row with the region's scope. `names`
- *   carries the register's spelling as the official name and its 臺/台 twin as an alias. Population is 0 (unmeasured:
+ *   stores the register's spelling as the official name and its 臺/台 twin as an alias. Population is 0 (unmeasured:
  *   an address-point count is not a population), so a row wins only where its key is the answer.
  *
  *   Run: mailwoman gazetteer build tw-districts [--release <overture release>] [--parquet <path>] [--admin <path>]
@@ -54,16 +54,16 @@ import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipe
 import { licenseForOvertureCountry } from "#geocode/national-overture"
 
 /**
- * The license expression this artifact carries, read from the same entry the rooftop tier reads.
+ * The license expression assigned to this artifact, read from the same entry the rooftop tier reads.
  *
  * Both artifacts are built from one input, the pinned Overture addresses parquet for Taiwan,
  * so one grant covers both and one entry records it.
  * `COUNTRY_LICENSES` in `#geocode/national-overture` gives Taiwan `CC-BY-4.0 AND OGDL-Taiwan-1.0`.
  *
  * So this build stops until one is settled.
- * Stamping a candidate would record an unverified grant.
+ * A candidate stamp would record an unverified grant.
  *
- * The artifact would carry that claim for as long as it exists.
+ * The artifact would preserve that claim for as long as it exists.
  *
  * @throws Through `licenseForOvertureCountry` when no entry is registered for the country.
  */
@@ -74,8 +74,8 @@ export function twDistrictsLicense(): string {
 /**
  * Compose the artifact's `layer_manifest` from the settled grant and the release it reproduces.
  *
- * Both identifiers in the grant carry Attribution and no share-alike term, so the tier is `shipped`.
- * An identifier that carried more would fail `assertTierMatchesLicense` here
+ * Both identifiers in the grant specify Attribution and no share-alike term, so the tier is `shipped`.
+ * An identifier that specified additional terms would fail `assertTierMatchesLicense` here
  * rather than reach the artifact.
  */
 export function twDistrictsLayerManifest(input: {
@@ -99,14 +99,14 @@ export function twDistrictsLayerManifest(input: {
 }
 
 /**
- * One Han name a WOF Taiwan region carries, as the admin `names` table has it.
+ * One Han name a WOF Taiwan region lists in the admin `names` table.
  */
 export interface TaiwanRegionName {
 	id: number
 	name: string
 	/**
 	 * The `names.official` bit — 1 on the region's own official `zho` name, 0 on every other Han
-	 * spelling it carries (a county listed under a city's name, a pre-upgrade name, a script variant).
+	 * spelling it lists (a county listed under a city's name, a pre-upgrade name, a script variant).
 	 */
 	official: boolean
 }
@@ -118,7 +118,7 @@ export interface TaiwanRegionName {
  *
  * 1. The official `zho` name (`新竹市` → Hsinchu City).
  *    Hsinchu County also lists `新竹市` as a variant.
- * 2. Any Han name, when only one region carries it.
+ * 2. Any Han name that only one region lists.
  * 3. The name minus its 縣/市 suffix against rung 1 and 2 (`桃園市` → `桃園`, the only name WOF
  *    gives the region that became a special municipality after the record was written).
  *
@@ -153,7 +153,7 @@ export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRe
 /**
  * The register's spelling plus its 臺/台 twin, the two forms a person types.
  *
- * A name carrying neither character has no twin and yields itself alone.
+ * A name containing neither character has no twin, so the function returns that name as its only variant.
  */
 export function districtNameVariants(name: string): string[] {
 	const twin = name.includes("臺")
@@ -215,7 +215,7 @@ export interface BuildTWDistrictsResult {
 	out: string
 	inserted: number
 	/**
-	 * Rows whose 縣市 matched a WOF region and carry an `ancestors` row.
+	 * Rows whose 縣市 matched a WOF region and include an `ancestors` row.
 	 * The remainder folded unscoped.
 	 */
 	scoped: number
@@ -231,7 +231,7 @@ export interface BuildTWDistrictsResult {
 }
 
 /**
- * The Han names every current WOF Taiwan region carries, official bit included.
+ * The Han names listed for every current WOF Taiwan region, including the official bit.
  */
 function readTaiwanRegions(admin: DatabaseClient<WOFDatabase>): TaiwanRegionName[] {
 	const rows: TaiwanRegionName[] = []

@@ -37,7 +37,7 @@ export interface CellIndexMeasurement {
 
 	touchedCells: number
 	/**
-	 * Cells answered by the index alone, before compaction.
+	 * Cells answered by the index by itself, before compaction.
 	 */
 	wholeCells: number
 	/**

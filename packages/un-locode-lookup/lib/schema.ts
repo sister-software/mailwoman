@@ -9,7 +9,7 @@
 
 /**
  * One UN/locode entry: the country and location codes that form its key, the place name in raw
- * and folded form, and the coordinate pair when the source carries one.
+ * and folded form, plus the coordinate pair when the source provides one.
  */
 export interface UNLocodeTable {
 	country: string
@@ -21,7 +21,7 @@ export interface UNLocodeTable {
 }
 
 /**
- * The tables `un-locode.db` carries.
+ * The tables in `un-locode.db`.
  */
 export interface UNLocodeDatabase {
 	un_locode: UNLocodeTable

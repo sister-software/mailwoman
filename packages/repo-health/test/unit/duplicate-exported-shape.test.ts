@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The duplicate-shape finder over planted trees: one shape under two names, a union in two workspaces, a
- *   copy inside one workspace, a test file, and a body below the member floor.
+ *   copy inside one workspace, a test file and a body below the member floor.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

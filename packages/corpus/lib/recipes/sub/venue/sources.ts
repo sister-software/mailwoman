@@ -193,7 +193,7 @@ const SIGN_IDENTIFIER_ATOM = /^(?:[0-9]{1,3}|[A-Za-z]|[A-Za-z][0-9]{1,3}|[0-9]{1
  * Reports whether a value is a short sign identifier, such as `12`, `B` or `A3`,
  * or a range of two identifiers joined by `-` or `/`.
  *
- * Shape classification alone accepts some values that this check rejects, so callers apply both.
+ * Shape classification by itself accepts some values that this check rejects, so callers apply both.
  */
 export function isSignIdentifier(value: string): boolean {
 	const parts = value.split(/[/-]/)

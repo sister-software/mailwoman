@@ -37,7 +37,7 @@ in every response. The stamp says which branch applies and makes no statement ab
 never reaches the deployment it describes. For a compliant AGPL user, the cost is two stderr lines they
 can redirect. Only a valid key silences the notice, and no environment variable does.
 
-**Wording uses the doctor's vocabulary.** The doctor reports three obligations: attribution,
+**The report uses the doctor's vocabulary.** The doctor reports three obligations: attribution,
 share-alike on modifications, and the source offer to network users. The notice states the source
 offer, because that is the obligation a network deployment carries and the one the commercial
 agreement waives.
@@ -235,6 +235,6 @@ Docs: `yarn docs:build` routes `/license`, and the existing link check passes.
 - Any change to the doctor's `LicensePosture` or its `detail` line.
 - The MCP server's advertised version (`packages/mcp/lib/server.ts`) and the Fastify plugin; both
   can adopt the stamp later through the same option.
-- The library API. Importing the library prints no notice, and a `GeocodeResult` returned in-process
+- The library API. A library import prints no notice, and a `GeocodeResult` returned in-process
   carries no stamp.
 - Payment, checkout, and the license worker, which the separate design that follows this one covers.
