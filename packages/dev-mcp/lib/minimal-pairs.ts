@@ -163,8 +163,8 @@ function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 
 		const cells = tags.map((tag, i) => (rung.components[tag] ?? ABSENT).padEnd(widths[i]!))
 		const mark = reading.first_divergence?.step === rung.step ? " ←" : ""
-		// An advisory says something about the answer on this row and leaves it in place,
-		// so the cells beside it are the components the rung actually resolved.
+		// An advisory describes the answer on this row and leaves it in place,
+		// so the cells beside it are the components the rung resolved.
 		const advisories = rung.advisories ? `  advisories: ${rung.advisories}` : ""
 
 		lines.push(`  ${rung.input.padEnd(inputWidth)}  ${cells.join("  ")}  ${rung.tier}${mark}${advisories}`)

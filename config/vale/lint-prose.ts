@@ -18,6 +18,7 @@ import { runCLICommand } from "@mailwoman/core/scripting/command"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import { type ValeCommand, valeCommand } from "@mailwoman/core/vale"
 import { chunks } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import {
 	narrowTo,
@@ -36,6 +37,59 @@ async function pathspecsFor(value: Surface): Promise<string[]> {
 
 	return [...filePatterns, ...ignorePatterns]
 }
+
+/**
+ * The directories whose documents a git file listing can miss.
+ *
+ * `workingTreeFiles` runs `git ls-files --cached --others --exclude-standard`,
+ * so a path any ignore rule covers drops out.
+ * `scratchpad/` is covered by `.git/info/exclude` in some clones and by no rule in others,
+ * because that file is per-clone and uncommitted.
+ *
+ * A listing built from git alone therefore lints these documents in one checkout and skips
+ * them in the next, which is why a findings document written there could not be linted at all.
+ *
+ * Enumerating them from the filesystem gives every clone the same surface.
+ */
+const DOCS_DIRECTORIES_OUTSIDE_GIT: readonly string[] = ["scratchpad"]
+
+/**
+ * Markdown under {@link DOCS_DIRECTORIES_OUTSIDE_GIT}, as repository-relative paths.
+ *
+ * A directory that does not exist contributes no path, because a clone without a scratchpad is ordinary.
+ */
+async function documentsOutsideGit(): Promise<string[]> {
+	const found: string[] = []
+
+	for (const directory of DOCS_DIRECTORIES_OUTSIDE_GIT) {
+		const root = repoRootPathBuilder(directory)
+
+		if (!(await pathExists(root))) continue
+
+		for await (const entry of Globerator.from("**/*.{md,mdx}", { cwd: root, absolute: false })) {
+			found.push(`${directory}/${entry.toString()}`)
+		}
+	}
+
+	return found
+}
+
+/**
+ * Whether a run that names no path reads {@link DOCS_DIRECTORIES_OUTSIDE_GIT}.
+ *
+ * A run naming a path reads it, so `lint-prose.ts -s docs scratchpad/<date>/<file>.md` lints that document.
+ * A run naming none skips those directories.
+ *
+ * The reason is the size of the existing set rather than a judgment that the prose there matters less.
+ * Measured on 2026-09-29: 62 of 68 scratchpad documents carry 667 errors between
+ * them, dominated by `styles.Negation` at 173 and `styles.Nothing` at 135,
+ * while the tracked docs surface carries 0 errors.
+ *
+ * Chaining that set into `yarn lint` would refuse every push until all 62 are rewritten.
+ * A clone-specific exemption list cannot express the boundary either,
+ * because each clone holds different scratch files.
+ */
+const UNNARROWED_RUN_READS_DIRECTORIES_OUTSIDE_GIT = false
 
 /**
  * The file list split into one slice per core for concurrent Vale processes.
@@ -142,7 +196,11 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 
 async function lint(surface: Surface, narrowing: readonly string[]) {
 	const resolvedPathSpecs = await pathspecsFor(surface)
-	const listedFiles = await workingTreeFiles(resolvedPathSpecs)
+	const tracked = await workingTreeFiles(resolvedPathSpecs)
+	const readsOutsideGit = surface !== "code" && (narrowing.length > 0 || UNNARROWED_RUN_READS_DIRECTORIES_OUTSIDE_GIT)
+	// A clone whose ignore rules do not cover these directories lists them twice,
+	// so the union is taken by key rather than by concatenation.
+	const listedFiles = [...new Set(readsOutsideGit ? [...tracked, ...(await documentsOutsideGit())] : tracked)]
 
 	const existence = await Promise.all(
 		listedFiles.map(async (file) => ((await pathExists(repoRootPathBuilder(...file.split("/")))) ? file : null))
