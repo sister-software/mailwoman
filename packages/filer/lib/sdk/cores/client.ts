@@ -88,7 +88,8 @@ export interface CreateCORESClientOptions {
 	requestTimeoutMs?: number
 	/**
 	 * Axios overrides.
-	 * A `headers` value replaces the default User-Agent header.
+	 *
+	 * An Axios `headers` override replaces the default User-Agent header.
 	 */
 	axios?: APIClientConfig["axios"]
 }
@@ -146,7 +147,7 @@ export function createCORESClient(options: CreateCORESClientOptions = {}): CORES
 	return new CORESClient({
 		displayName: "FCC CORES",
 		userAgent,
-		// The ceiling keeps the actual rate at or below the requested rate.
+		// `Math.ceil` keeps the actual rate at or below the requested rate.
 		minRequestIntervalMs: Math.ceil(MS_PER_SECOND / requestsPerSecond),
 		retry: {
 			maxAttempts: options.maxAttempts ?? API_CLIENT_DEFAULTS.maxAttempts,

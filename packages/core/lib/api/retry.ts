@@ -118,7 +118,7 @@ export function isRetryableStatus(status: number): boolean {
 }
 
 /**
- * Read the `Retry-After` header from an Axios error's response, if present.
+ * Read the `Retry-After` header off an Axios error's response, if it carried one.
  *
  * Axios lower-cases response header names, but `AxiosHeaders` lookups are case-insensitive anyway.
  * The lower-case spelling is used for the plain-object shape a stubbed adapter may return.
@@ -186,7 +186,7 @@ export interface RetryOptions {
 	/**
 	 * Base delay for the exponential backoff, in milliseconds.
 	 *
-	 * Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, unless the response included a `Retry-After` header.
+	 * Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, unless the response carried a `Retry-After` header.
 	 * The client honors that delay instead.
 	 * Default {@linkcode DEFAULT_BASE_RETRY_DELAY_MS}.
 	 */

@@ -9,7 +9,7 @@
  *
  *   `fixtures/dem-fixture.tif` was written once with gdal's Python bindings: 1024×512 Int16 over the whole globe in
  *   epsg:4326, deflate-compressed, elevation `sin(row·π/8) · (row / 511) · 30000` metres. Its range sits inside
- *   terrarium's ±32,768 m envelope, so the encoder has a value at both ends. 1024 pixels across lands the
+ *   terrarium's ±32,768 m envelope, so the encode has something to carry at both ends. 1024 pixels across lands the
  *   MBTiles step at zoom 2, where the pyramid has levels to build.
  */
 
@@ -147,7 +147,7 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 
 	// Resample the elevations, encode terrarium one band at a time, stack, tile,
 	// decimate the pyramid, convert.
-	// There is no `gdaldem` any more: the archive stores height rather than a shaded picture,
+	// There is no `gdaldem` any more: the archive carries height rather than a shaded picture,
 	// so the shading happens at draw time and each body can be tinted from its style.
 	expect(commands.map((command) => command[0])).toEqual([
 		"gdal_translate",

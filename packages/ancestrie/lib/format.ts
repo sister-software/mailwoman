@@ -61,8 +61,8 @@
  *   canonical output: the serializer is deterministic and insertion-order-independent. Strings are
  *   interned in sorted order. trie states are numbered by a pre-order DFS that visits edges in
  *   sorted-token order (root = 0); entry ordinals follow the interval forest's pre-order (roots and
- *   sibling lists sorted by id ascending). The same entry set seals to identical bytes in any add order.
- *   yields identical bytes.
+ *   sibling lists sorted by id ascending). The same entry set yields identical bytes after sealing,
+ *   regardless of add order.
  */
 
 /**
@@ -114,7 +114,7 @@ export const ENTRY_RECORD_SIZE = 32
 export const ID_INDEX_ENTRY_SIZE = 8
 
 /**
- * Entry flags bit 0: this entry has a payload.
+ * Entry flags bit 0: this entry carries a payload.
  *
  * Presence-signaled per entry so an absent payload can never surface as an empty one —
  * the meaning-of-zero rule, in bytes.

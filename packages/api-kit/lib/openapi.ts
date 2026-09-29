@@ -48,12 +48,12 @@ export interface OpenAPIDocInfo {
  * Each of the four served packages (`api`, `libpostal`, `nominatim`, `photon`) publishes a
  * document naming itself, so the read and the mapping live here rather than four times over.
  * A manifest missing any of the three raises because the document has no meaningful form without them.
- * Every manifest here includes all three.
+ * Every manifest here carries all three.
  *
  * @param base The caller's `import.meta.url`.
  * The package resolves through the graph of the workspace that declares it.
  * That is the purpose of `resolve-from`.
- * A resolution from here would use `@mailwoman/api-kit`'s graph instead.
+ * `@mailwoman/api-kit`'s graph would supply the answer if resolution started here.
  */
 export async function readServedDocumentInfo(
 	base: string,

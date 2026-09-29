@@ -190,7 +190,7 @@ async function main(): Promise<void> {
 				source,
 				args.release,
 				// The rerank folds the model's street with the same function, so the two keys compare.
-				// Some CSV rows contain stray quotes.
+				// Some CSV rows carry stray quotes.
 				foldStreetSurface(row.street_raw.replaceAll('"', ""))
 			)
 

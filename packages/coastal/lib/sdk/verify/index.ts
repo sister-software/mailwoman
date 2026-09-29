@@ -64,7 +64,7 @@ export interface AgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * Every row includes this distance.
+	 * Every row carries this distance.
 	 * It separates a real defect from a difference caused by the two channels
 	 * rendering the same edge differently.
 	 *

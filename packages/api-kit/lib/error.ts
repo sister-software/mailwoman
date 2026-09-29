@@ -26,7 +26,7 @@ export const APIErrorSchema = z
  * Respond with the native error envelope.
  *
  * `status` stays generic so the returned `TypedResponse` keeps the caller's literal status (e.g. `503`).
- * A wider `ContentfulStatusCode` would fail the response type required by
+ * A `ContentfulStatusCode` type would fail the response type required by
  * `app.openapi(route, handler)` because it must match the route's declared response branch.
  */
 export function errorResponse<S extends ContentfulStatusCode>(c: Context, status: S, error: string, detail?: string) {

@@ -5,8 +5,9 @@
  *
  *   Name-normalization primitives shared across the codex tables and the lexicon builders that read
  *   them. They live here rather than in `core` or `normalize` because codex is the
- *   zero-runtime-dependency reference package. Every name lookup against a codex table already depends
- *   on it. The fold rules stay beside their tables. This keeps each lookup consistent with its table.
+ *   zero-runtime-dependency reference package, and every lookup that matches a name against a codex table
+ *   already depends on it. The package keeps folding rules beside the tables they fold. This placement prevents a
+ *   lookup and its table from disagreeing about what counts as the same name.
  */
 
 /**
@@ -44,7 +45,7 @@ export function wordNormLower(s: string): string {
 
 /**
  * Fold a single token to a lowercase, diacritic-free form, leaving punctuation
- * and whitespace only (unlike {@link foldName}); the shared core of the per-country
+ * and whitespace alone (unlike {@link foldName}); the shared core of the per-country
  * token matchers, each of which layers its own character filtering on top.
  */
 export function foldToken(s: string): string {

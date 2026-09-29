@@ -46,22 +46,22 @@ const FIELD: Readonly<Record<string, string>> = {
 /**
  * Two slots are authored rather than transcribed, so the skeleton comparison omits them.
  *
- * Either slot would mark every country that uses it as a departure without testing transcription:
+ * Either slot would mark every country that carries it as a departure without testing transcription:
  *
  * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's
  *   consumers add the destination country themselves.
  * - `dependent_locality`, for the 47 countries measured as printing one.
  *   `%D` appears in 14 of the 197 shipped `fmt` strings.
  *   A country that has the line still needs it.
- *   It takes a line of its own beside the locality, or a place inside the locality's line where
- *   that line also includes the street, so it is dropped wherever it sits rather than only as a line.
+ *   It takes a line of its own beside the locality, or a place inside the locality's line where that
+ *   line also carries the street, so it is dropped wherever it sits rather than only as a line.
  *   Where the generator put it is what `address-layouts.test.ts` checks.
  */
 const AUTHORED_SLOTS = new Set(["country", "dependent_locality"])
 
 function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): string[][] {
 	// A slot counts as authored only when the source does not name it, so the 14 `fmt` strings that
-	// include `%D` are compared like any other line and a transcription error there still fails.
+	// carry `%D` are compared like any other line and a transcription error there still fails.
 	const inSource = new Set(source.flat())
 	const transcribed = (name: string): boolean => !AUTHORED_SLOTS.has(name) || inSource.has(name)
 

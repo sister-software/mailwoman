@@ -44,7 +44,7 @@ export {
  * `local` is the country's own script. libaddressinput's `fmt` states that order.
  * `latin` uses its `lfmt` value.
  *
- * Eight of the 252 shipped records have a distinct pair (CN, HK, JP, KP, KR, MO, TH, TW)
+ * Eight of the 252 shipped records carry a distinct pair (CN, HK, JP, KP, KR, MO, TH, TW)
  * and every other country writes one order in both.
  */
 export type AddressScript = "local" | "latin"
@@ -55,7 +55,7 @@ const { attention, venue, house_number, street, dependent_locality, locality, su
 /**
  * The admin run below the prefecture in Japan, printed without separators.
  *
- * Japan's `fmt` has no `%C` or `%D`, so everything below the prefecture uses the street-address field.
+ * Japan's `fmt` carries no `%C` or `%D`, so everything below the prefecture rides the street-address field.
  */
 export const japaneseSubPrefecture = addr`${subregion}${locality}${dependent_locality}${house_number}`
 
@@ -175,7 +175,7 @@ ${postcode} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%C%n%Z — the postcode takes its own line down the page and a space on one line.
-	// The soft break lets one layout express both forms, preserving `27 Minories, London EC3N 1DE`.
+	// The soft break is how one layout says both, keeping `27 Minories, London EC3N 1DE`.
 	GB: withSoftBreakBefore(
 		addr`${attention}
 ${venue}
@@ -317,7 +317,7 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
  * Returns the line join for single-line output in the selected country and `script`.
  *
  * CJK joins apply only to the local script.
- * The selected script keeps line order and separator tied to one system.
+ * A single script keeps line order and separator tied to one system.
  */
 export function lineJoinForCountry(countryCode: string | null | undefined, script?: AddressScript): string {
 	if (!countryCode) return ", "

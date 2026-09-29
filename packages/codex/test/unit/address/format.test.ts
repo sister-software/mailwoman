@@ -79,7 +79,7 @@ describe("formatAddress", () => {
 	})
 
 	it("returns an empty string for a country the dataset gives no order", () => {
-		// Absence is a real answer: 55 of the 252 shipped country records have no usable skeleton.
+		// Absence is a real answer: 55 of the 252 shipped country records carry no usable skeleton.
 		expect(formatAddress(US_ADDRESS, "ZZ")).toBe("")
 	})
 
@@ -226,7 +226,7 @@ describe("formatAddressRow", () => {
 	})
 
 	it("NAMES a value the layout has no slot for rather than dropping it silently", () => {
-		// France absorbs the region: its skeleton has no %S, so the value appears nowhere.
+		// France absorbs the region: its skeleton has no %S, so the value is carried nowhere.
 		const row = formatAddressRow({ locality: "Paris", region: "Île-de-France", postcode: "75008" }, "FR", {
 			singleLine: true,
 		})
@@ -262,7 +262,7 @@ describe("the script a row renders in", () => {
 	/**
 	 * The same Hong Kong address in both registers.
 	 *
-	 * A single country-keyed layout prints one of them in an order no address uses.
+	 * Either country-keyed layout prints the two rows in an order no address uses.
 	 * That behavior is why the selection exists.
 	 */
 	const HK_LATIN: ComponentDict = {
@@ -319,7 +319,7 @@ describe("the script a row renders in", () => {
 	})
 
 	it("lets the caller override what the values say", () => {
-		// A caller holding a parse tree knows more than the values do: every span records its script.
+		// A caller holding a parse tree knows more than the values do: every span carries the script it is written in.
 		expect(formatAddressRow(HK_LATIN, "HK", { singleLine: true, script: "local" })?.script).toBe("local")
 		expect(formatAddressRow(HK_LOCAL, "HK", { singleLine: true, script: "latin" })?.script).toBe("latin")
 	})

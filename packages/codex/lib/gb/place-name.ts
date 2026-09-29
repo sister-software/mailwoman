@@ -10,7 +10,7 @@
 import { titleCase } from "spliterator/casing"
 
 /**
- * Lowercase particles stay lowercase between words and hyphen segments (`Barrow upon
+ * These particles stay lowercase mid-name between words and hyphen segments (`Barrow upon
  * Soar`, `Weston-super-Mare`), with a leading particle capitalized (`The Green`).
  */
 export const GB_PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([

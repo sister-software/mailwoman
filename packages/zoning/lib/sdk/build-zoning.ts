@@ -160,7 +160,7 @@ export interface BuildZoningResult {
 	storedResolutions: number[]
 	coverageCells: number
 	/**
-	 * The basis included in every coverage row, `source_present` while `zoning_mapped_extent` is empty.
+	 * The basis every coverage row carries, `source_present` while `zoning_mapped_extent` is empty.
 	 */
 	coverageBasis: CoverageBasis
 	tier: LayerTier
@@ -526,8 +526,7 @@ function assertAreaAgreement(
 	const signedKM2 = streamed.area.signedM2 / M2_PER_KM2
 
 	// The publisher's figure is absent rather than defaulted.
-	// The build's own reading as the value would make the receipt print "0.000%
-	// apart" for a check that never ran.
+	// This build's own reading would make the receipt print "0.000% apart" for a check that never ran.
 	const reading = areaAgreementFrom(
 		{ nestedM2: streamed.area.nestedM2, allExteriorM2: streamed.area.allExteriorM2 },
 		expectedSourceAreaM2
@@ -549,7 +548,7 @@ function assertAreaAgreement(
  *
  * @throws {Error} When a chunk exits non-zero or prints no result line.
  * A chunk that died mid-range has written a partial set of rows.
- * The builder must stop before sealing an artifact that lacks features without stable identifiers.
+ * The parent must stop before sealing that partial artifact.
  */
 async function runBatchedIngest(
 	tmpPath: string,
@@ -609,7 +608,7 @@ function writeJurisdictionRows(
 	)
 
 	for (const [code, name] of jurisdictions.toSorted((left, right) => (left[0] < right[0] ? -1 : 1))) {
-		// The id is the publisher's own code, stored in both columns rather than repaired in one
+		// The id is the publisher's own code, carried in both columns rather than repaired in one
 		// because a repaired code is this package's spelling in a column that claims to be the publisher's.
 		insert.run(code, name, code, "IE")
 	}

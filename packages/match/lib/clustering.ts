@@ -5,7 +5,7 @@
  *
  *   The clustering stage resolves scored pairs into canonical entities.
  *
- *   The pairwise scorer treats each pair independently. Its scores are not transitive: A~B at a
+ *   The pairwise scorer treats each pair independently, and its scores are not transitive: A~B at a
  *   high weight and B~C at a high weight does not guarantee A~C is a match. So a distinct stage is
  *   required to turn the graph of above-threshold links into coherent groups — skip it and your
  *   "entities" silently fracture or fuse.

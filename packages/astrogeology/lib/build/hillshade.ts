@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   The hillshade build: publish the DEM as terrain-RGB tiles, so MapLibre's `hillshade` layer shades it at draw
- *   time. The archive stores encoded elevation. The style chooses the color ramp, so a re-tint requires a style edit
+ *   time. The archive carries encoded elevation. The style chooses the color ramp, so a re-tint requires a style edit
  *   instead of rebuilding the archive.
  *
- *   The build averages elevations before encoding. Each encoded byte is a base-256 numeral. A mean of neighboring high bytes
+ *   Average elevations before encoding. Each encoded byte is a base-256 numeral. Averaging neighboring high bytes
  *   would produce an elevation that matches neither sample. The overview pyramid uses `nearest` to decimate real samples.
  *
  *   The XYZ tile scheme is angular and uses the same lon/lat grid on any sphere. The EPSG:4326 label tells GDAL
@@ -84,7 +84,7 @@ export interface HillshadeBuildOptions {
 	demPath: PathBuilderLike
 	outPath: PathBuilderLike
 	/**
-	 * The deepest zoom the archive includes.
+	 * The deepest zoom the archive carries.
 	 * Overviews run from it down to zoom 0.
 	 */
 	maxZoom: number
@@ -102,7 +102,7 @@ export interface HillshadeBuildOptions {
 const TERRARIUM_DATUM_METRES = 32_768
 
 /**
- * `B` stores the fractional metre.
+ * `B` carries the fractional metre.
  *
  * The usgs mosaics are integer metres, so it is constant zero.
  */

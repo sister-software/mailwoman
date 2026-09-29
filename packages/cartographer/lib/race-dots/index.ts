@@ -14,7 +14,7 @@
  * Pass the TileJSON URL to `createRaceDotsSource`.
  *
  * Each dot is a randomized placement within its area, standing for a count.
- * An address interpretation would misread the layer.
+ * A reader who treats one dot as an address misunderstands the layer.
  */
 
 import type { CircleLayerSpecification, VectorSourceSpecification } from "@maplibre/maplibre-gl-style-spec"

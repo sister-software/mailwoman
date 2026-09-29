@@ -124,7 +124,7 @@ export interface PlausibilityBundle {
 	coverage_confidence: "high" | "low" | "insufficient_survey_data"
 	coverage_detail: PlausibilityCoverageDetail
 	/**
-	 * The filing lookup key is the exact `geoid` or the point's H3 cell as an approximation.
+	 * Filing lookup key: the exact `geoid`, or the H3 cell of the point as an approximation.
 	 */
 	block_resolution: "geoid" | "h3_cell_approximation"
 	/**
