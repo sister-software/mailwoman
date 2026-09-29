@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `synth-po-box`: PO box / PMB / Apartado / BP synthesizer adapter.
+ * PO box / PMB / Apartado / BP synthesizer adapter. It emits {@linkcode PO_BOX_ADAPTER_ID}.
  *
  * A PO box delivery line is mutually exclusive with a street line (USPS Pub 28 / DMM 508), so rows
  * are generated fresh from a tuple rather than by mutating a street row.
@@ -36,15 +36,18 @@ export const PO_BOX_ADAPTER_ID = defaultRecipeSource("synth-po-box")
  * License for synthetic PO-box rows.
  *
  * They inherit the terms of the real tuples used to derive them.
+ *
+ * The value is stored in each row's `license` column and read by `licenseNamedIn`,
+ * so it stays byte-for-byte.
  */
-export const SYNTH_PO_BOX_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
+export const PO_BOX_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
 export interface PoBoxInputRow extends PoBoxBaseTuple {
 	street?: string
 	houseNumber?: string
 }
 
-export interface SynthPoBoxAdapterOptions {
+export interface PoBoxAdapterOptions {
 	/**
 	 * How many PO box variants to emit per input tuple, each picking a different leader
 	 * (and possibly a different number or noise level); default 1.
@@ -69,14 +72,14 @@ export interface SynthPoBoxAdapterOptions {
 	militaryRatio?: number
 }
 
-export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): CorpusAdapter {
+export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapter {
 	const variantsPerInput = opts.variantsPerInput ?? 1
 	const pmbRatio = opts.pmbRatio ?? 0.15
 	const militaryRatio = opts.militaryRatio ?? 0
 
 	return {
 		id: PO_BOX_ADAPTER_ID,
-		defaultLicense: SYNTH_PO_BOX_LICENSE,
+		defaultLicense: PO_BOX_LICENSE,
 		addressRole: AddressRole.Mailing,
 		// No register asserts these boxes exist.
 		// The rows teach the shape of a post-office box line.
@@ -147,7 +150,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						source: PO_BOX_ADAPTER_ID,
 						source_id: sourceID,
 						corpus_version: "",
-						license: SYNTH_PO_BOX_LICENSE,
+						license: PO_BOX_LICENSE,
 					}
 
 					emitted++
@@ -183,7 +186,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						source: PO_BOX_ADAPTER_ID,
 						source_id: sourceID,
 						corpus_version: "",
-						license: SYNTH_PO_BOX_LICENSE,
+						license: PO_BOX_LICENSE,
 					}
 
 					emitted++
@@ -196,4 +199,4 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 /**
  * The configured adapter instance registered with the corpus builder.
  */
-export const synthPoBoxAdapter = createSynthPoBoxAdapter()
+export const poBoxAdapter = createPoBoxAdapter()

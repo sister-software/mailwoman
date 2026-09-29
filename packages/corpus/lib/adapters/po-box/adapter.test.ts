@@ -1,16 +1,16 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { createSynthPoBoxAdapter, PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/synth-po-box/adapter"
+import { createPoBoxAdapter, PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/po-box/adapter"
 import { describe, expect, it } from "vitest"
 
 async function writeFixture(rows: Array<Record<string, unknown>>): Promise<string> {
-	const path = tempRootPath(`synth-po-box-fixture-${Math.random().toString(36).slice(2)}.jsonl`)
+	const path = tempRootPath(`po-box-adapter-fixture-${Math.random().toString(36).slice(2)}.jsonl`)
 	await writeLocalJSONLFile(rows, path)
 
 	return path
 }
 
-async function collect(path: string, adapter = createSynthPoBoxAdapter({ seed: 42 })) {
+async function collect(path: string, adapter = createPoBoxAdapter({ seed: 42 })) {
 	const out = []
 
 	for await (const row of adapter.rows({ inputPath: path })) {
@@ -20,7 +20,7 @@ async function collect(path: string, adapter = createSynthPoBoxAdapter({ seed: 4
 	return out
 }
 
-describe("synth-po-box adapter", () => {
+describe("PO box adapter", () => {
 	it("emits one row per input by default", async () => {
 		const path = await writeFixture([
 			{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
@@ -69,7 +69,7 @@ describe("synth-po-box adapter", () => {
 			{ locality: "C", region: "CA", postcode: "94133", country: "US" },
 		])
 
-		const adapter = createSynthPoBoxAdapter({ seed: 7 })
+		const adapter = createPoBoxAdapter({ seed: 7 })
 		const rows = []
 
 		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) {
@@ -83,7 +83,7 @@ describe("synth-po-box adapter", () => {
 
 	it("variantsPerInput emits multiple variants per input", async () => {
 		const path = await writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
-		const adapter = createSynthPoBoxAdapter({ seed: 42, variantsPerInput: 5 })
+		const adapter = createPoBoxAdapter({ seed: 42, variantsPerInput: 5 })
 		const rows = []
 
 		for await (const row of adapter.rows({ inputPath: path })) {
@@ -108,7 +108,7 @@ describe("synth-po-box adapter", () => {
 			},
 		])
 
-		const adapter = createSynthPoBoxAdapter({ seed: 99, pmbRatio: 1 })
+		const adapter = createPoBoxAdapter({ seed: 99, pmbRatio: 1 })
 		const rows = await collect(path, adapter)
 		expect(rows[0]!.components.street).toBe("Main St")
 		expect(rows[0]!.components.house_number).toBe("100")
@@ -125,7 +125,7 @@ describe("synth-po-box adapter", () => {
 			}))
 		)
 
-		const adapter = createSynthPoBoxAdapter({ seed: 1 })
+		const adapter = createPoBoxAdapter({ seed: 1 })
 		const rows = []
 
 		for await (const row of adapter.rows({ inputPath: path, limit: 3 })) {
@@ -149,7 +149,7 @@ describe("synth-po-box adapter", () => {
 
 	it("MilitaryRatio emits a US military/diplomatic PO-box row per input", async () => {
 		const path = await writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
-		const adapter = createSynthPoBoxAdapter({ seed: 42, militaryRatio: 1 })
+		const adapter = createPoBoxAdapter({ seed: 42, militaryRatio: 1 })
 		const rows = await collect(path, adapter)
 
 		expect(rows).toHaveLength(2)
@@ -183,7 +183,7 @@ describe("synth-po-box adapter", () => {
 			{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" },
 		])
 
-		const adapter = createSynthPoBoxAdapter({ seed: 5, militaryRatio: 1 })
+		const adapter = createPoBoxAdapter({ seed: 5, militaryRatio: 1 })
 		const rows = []
 
 		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) {
