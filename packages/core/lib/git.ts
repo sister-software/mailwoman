@@ -9,10 +9,10 @@
  *   different concern and lives in `resources/git.ts`.
  */
 
-import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { repoRootPathBuilder } from "#paths"
 import { runFile } from "#process"
 
 async function git(

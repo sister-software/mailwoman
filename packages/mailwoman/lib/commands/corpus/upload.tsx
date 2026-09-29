@@ -18,10 +18,23 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { useState } from "react"
 import { Globerator } from "spliterator/node/fs"
 
-import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { isCorpusDirectory, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { $private } from "#env"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
+
+/**
+ * Retry counts for every transfer here, above rclone's defaults of 10 low-level and 3 high-level.
+ *
+ * R2 returns an intermittent 501 that succeeds on a retry, and `push_artifact` in
+ * `corpus-python/launch/artifacts.py` already rides it with these two values.
+ * At the defaults a single 501 ends the job, and a 74 GiB corpus over a mobile link meets enough
+ * of them to matter: one lost transfer costs the whole remaining file rather than the request.
+ *
+ * `rclone sync` compares size and modification time, so a re-run after any failure skips
+ * the files that landed and re-sends only a file it was mid-way through.
+ */
+const R2_RETRIES = ["--low-level-retries", "30", "--retries", "8"]
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -31,12 +44,14 @@ export const spec = {
 	description: "Upload a corpus version, tokenizer, or training code to R2",
 	options: {
 		bucket: { type: "string", default: DEFAULT_BUCKET, description: "R2 bucket name" },
-		"corpus-version": {
+		"corpus-directory": {
 			type: "string",
-			validate: isCorpusVersion,
+			validate: isCorpusDirectory,
 			validationMessage:
-				"--corpus-version is the version alone, without the `corpus-v` prefix, as `0.7.0` or `0.7.0-de-holdout`.",
-			description: "Corpus version directory under <data-root>/corpus/versioned (repeatable, comma-separated)",
+				"--corpus-directory is the entry name under <data-root>/corpus/versioned, which for a versioned " +
+				"corpus carries a leading `v`, as `v0.7.0-de-holdout`. It is not the corpus version the build " +
+				"takes, and it is not the `corpus-…` directory nested inside the entry.",
+			description: "Entry name under <data-root>/corpus/versioned, and the R2 key prefix (repeatable, comma-separated)",
 		},
 		"corpus-dir": { type: "string", description: "Local corpus root. Default <data-root>/corpus/versioned" },
 		tokenizer: { type: "boolean", default: false, description: "Also sync the tokenizer" },
@@ -60,7 +75,36 @@ export const spec = {
  *
  * An absent `license_policy` reads as unstated rather than as a policy that ran.
  */
-type UploadedCorpusManifest = Partial<Pick<BuildCorpusManifest, "licenses" | "license_policy">>
+type UploadedCorpusManifest = Partial<
+	Pick<BuildCorpusManifest, "licenses" | "license_policy" | "licenses_cover" | "total_aligned_rows">
+>
+
+/**
+ * The row count the corpus's own manifest reports, which `overlay-manifest` rewrites on each merge.
+ *
+ * `total_rows` here counts the same labeled rows as the build manifest's `total_aligned_rows`,
+ * so the two are comparable and their difference is what the overlays added.
+ */
+interface AssembledCorpusManifest {
+	total_rows?: number
+}
+
+/**
+ * The assembled corpus manifest's `total_rows`, or `undefined` when no manifest sits at `path`.
+ *
+ * A build that wrote no corpus manifest, and a flat-layout entry that holds none, both read
+ * `undefined`, and {@linkcode refuseShareAlike} then leaves the overlay comparison unmade
+ * rather than reading a missing file as a corpus with no overlay rows.
+ */
+async function assembledRowCount(path: PathBuilderLike): Promise<number | undefined> {
+	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
+
+	try {
+		return (await readLocalJSONFile<AssembledCorpusManifest>(path)).total_rows
+	} catch {
+		return undefined
+	}
+}
 
 /**
  * Throws when a corpus version's own license set carries or mentions share-alike.
@@ -73,9 +117,19 @@ type UploadedCorpusManifest = Partial<Pick<BuildCorpusManifest, "licenses" | "li
  *
  * An unreadable or absent `MANIFEST.json` throws as well.
  * A corpus whose license set cannot be read is an unanswered question rather than a clean one.
+ *
+ * `corpusRows` is the assembled corpus manifest's own `total_rows`, or `undefined`
+ * when the upload found no nested corpus directory to read one from.
+ * It decides whether the license set answers for every row.
  */
-async function refuseShareAlike(version: string, manifestPath: PathBuilderLike, allow: boolean): Promise<void> {
+async function refuseShareAlike(
+	version: string,
+	manifestPath: PathBuilderLike,
+	allow: boolean,
+	corpusRows: number | undefined
+): Promise<void> {
 	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
+	const { stringifyJSON } = await import("@mailwoman/core/json")
 	const { shareAlikeFindings } = await import("@mailwoman/corpus/utils/license")
 
 	let manifest: UploadedCorpusManifest
@@ -95,6 +149,36 @@ async function refuseShareAlike(version: string, manifestPath: PathBuilderLike, 
 			`corpus ${version}: ${manifestPath} records no \`licenses\` map, so its license set is unknown. ` +
 				`Pass --allow-share-alike to upload without the check.`
 		)
+	}
+
+	// `align` increments the `licenses` map once per canonical adapter row, and `total_aligned_rows`
+	// counts the labeled rows those fan out to, so the two are different units and cannot be compared.
+	// The rows the map does not answer for are the ones `overlay-manifest` merged
+	// after the build: they raise the corpus manifest's `total_rows` above the build
+	// manifest's `total_aligned_rows` and carry their own license values.
+	// A clean reading over the base alone would state that the whole corpus is free
+	// of an obligation this check never looked for.
+	const aligned = manifest.total_aligned_rows ?? 0
+	const held = corpusRows ?? 0
+
+	if (aligned > 0 && held > aligned) {
+		const overlaid = held - aligned
+
+		const detail =
+			`corpus ${version}: the \`licenses\` map answers for the ${aligned.toLocaleString()} rows this build ` +
+			`aligned, and the corpus holds ${held.toLocaleString()}, so ${overlaid.toLocaleString()} rows were ` +
+			`merged by \`overlay-manifest\` afterwards and carry license values this check cannot read. ` +
+			`\`licenses_cover\` reads ` +
+			`${stringifyJSON(manifest.licenses_cover ?? "nothing, because the corpus predates the field")}.`
+
+		if (!allow) {
+			throw new Error(
+				`${detail}\nRun \`corpus overlay-manifest\` on a build that records the merged license set, or pass ` +
+					`--allow-share-alike to upload with the gap recorded rather than measured.`
+			)
+		}
+
+		process.stderr.write(`${detail}\nProceeding under --allow-share-alike.\n`)
 	}
 
 	const findings = shareAlikeFindings(manifest.licenses)
@@ -144,16 +228,16 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 
 		const corpusRoot = PathBuilder.from(options.corpusDir ?? dataRootPath("corpus", "versioned"))
 
-		const versions = extractDelimited(options.corpusVersion)
+		const directories = extractDelimited(options.corpusDirectory)
 
-		if (!versions.length && !options.tokenizer && !options.code) {
+		if (!directories.length && !options.tokenizer && !options.code) {
 			const available = (await pathExists(corpusRoot))
 				? (await Globerator.from("*", { cwd: corpusRoot, absolute: false }).toSorted()).slice(-6)
 				: []
 
 			throw new Error(
-				"nothing selected. Pass --corpus-version <v> (and/or --tokenizer, --code).\n" +
-					`Recent versions under ${corpusRoot}:\n  ${available.join("\n  ")}`
+				"nothing selected. Pass --corpus-directory <name> (and/or --tokenizer, --code).\n" +
+					`Recent entries under ${corpusRoot}:\n  ${available.join("\n  ")}`
 			)
 		}
 
@@ -186,17 +270,37 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 
 		const jobs: Job[] = []
 
-		for (const version of versions) {
-			// The on-disk layout nests the corpus under its own name: <root>/<version>/corpus-<version>/.
-			const nested = corpusRoot(version, `corpus-${version}`)
-			const source = (await pathExists(nested)) ? nested : corpusRoot(version)
+		for (const directory of directories) {
+			// The on-disk layout nests the corpus under its own name: <root>/<entry>/corpus-<entry>/.
+			// `corpus()` in `corpus-python/launch/plan.py` composes `corpus-<entry>` from the same string,
+			// and its `NESTED` layout reads this directory out of the R2 key this job writes.
+			const nested = corpusRoot(directory, `corpus-${directory}`)
+			const layout = (await pathExists(nested)) ? "nested" : "flat"
+			const source = layout === "nested" ? nested : corpusRoot(directory)
 
-			await refuseShareAlike(version, corpusRoot(version, "MANIFEST.json"), options.allowShareAlike)
+			if (!(await pathExists(source))) {
+				throw new Error(
+					`corpus ${directory}: neither ${nested} nor ${corpusRoot(directory)} is on disk. ` +
+						`--corpus-directory takes the entry name under ${corpusRoot}, which for a versioned corpus ` +
+						`carries a leading "v" as "v0.7.0-de-holdout".`
+				)
+			}
+
+			// The layout decides which `Copy` row in `launch/corpora.py` stages the result,
+			// so the reader has to see which one this transfer wrote rather than infer it from the key.
+			process.stderr.write(`corpus ${directory}: ${layout} layout, uploading ${source}\n`)
+
+			await refuseShareAlike(
+				directory,
+				corpusRoot(directory, "MANIFEST.json"),
+				options.allowShareAlike,
+				await assembledRowCount(PathBuilder.from(source)("MANIFEST.json"))
+			)
 
 			jobs.push({
-				label: `corpus ${version}`,
+				label: `corpus ${directory}`,
 				source,
-				dest: `${base}/corpus/${version}/`,
+				dest: `${base}/corpus/${directory}/`,
 				extra: ["--transfers", "8", "--checkers", "16"],
 			})
 		}
@@ -236,7 +340,10 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			update(index, { status: "running" })
 
 			try {
-				await $({ env })`rclone sync ${job.source.toString()} ${job.dest} ${job.extra} ${dry} --stats-one-line`.quiet()
+				await $({
+					env,
+				})`rclone sync ${job.source.toString()} ${job.dest} ${job.extra} ${dry} ${R2_RETRIES} --stats-one-line`.quiet()
+
 				update(index, { status: "done", detail: options.dryRun ? "would sync" : "synced" })
 			} catch (error: unknown) {
 				const e = error as Record<string, unknown>

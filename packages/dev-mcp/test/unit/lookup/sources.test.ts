@@ -232,7 +232,7 @@ describe("lookupCandidate", () => {
 		const [row] = lookupCandidate(db, ["Vaduz"], { country: "ZZ" })
 
 		expect(row).toMatchObject({ hit: false, entries: null })
-		expect(row!.note).toContain("COVERAGE gap")
+		expect(row!.note).toContain("coverage gap rather than a missing name")
 		expect(row!.note).toContain("4 countries")
 	})
 

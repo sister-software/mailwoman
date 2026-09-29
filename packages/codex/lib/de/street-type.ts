@@ -9,7 +9,7 @@
  *   file. A US street type is a separate trailing word with a USPS-standardized abbreviation (`Main
  *   Street` → `ST`). A German street type is overwhelmingly an **agglutinative suffix** fused onto
  *   the name (`Straußstraße`, `Karl-Liebknecht-Straße`), with only one abbreviation in real use
- *   (`Str.`). Detection uses suffixes, not trailing tokens. No Pub-28-style
+ *   (`Str.`). Detection examines suffixes because German street types attach to the name. No Pub-28-style
  *   abbreviation table to salvage.
  *
  *   The second lesson is the collision, the German cousin of the US `KY` = Key / Kentucky problem.
