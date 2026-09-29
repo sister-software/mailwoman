@@ -790,7 +790,7 @@ const args = [
 ]
 ```
 
-`-r1` turns off tippecanoe's point dropping, which would otherwise thin the layer by density; the per-feature `minzoom` is the only declutter. `packages/mailwoman/lib/coverage/core.ts` runs tippecanoe through `zx`; this package runs it through `runFile`, and the argument list is its own (a different layer, different flags), so there is no shared shape to extract.
+`-r1` turns off tippecanoe's point dropping, which would otherwise thin the layer by density; the per-feature `minzoom` is the only declutter. `packages/mailwoman/lib/coverage/core.ts` runs tippecanoe through `zx`. This package runs it through `runFile`. Its argument list serves a different layer with different flags, so there is no shared shape to extract.
 
 - [ ] **Step 3: Metadata**
 

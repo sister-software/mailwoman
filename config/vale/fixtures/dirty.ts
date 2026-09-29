@@ -14,6 +14,11 @@
 // Here it is: `the gate` and `a seam`.
 // The loader reads each row, which validates the fields and records the result,
 // so the report can compare runs.
+// The loader reads each row, which validates the fields and records the result.
+// The loader validates each row, and it records the result, so the report can compare runs.
+// The loader validates each row, and the adapter records the result, so the report can compare runs.
+// The loader validates each row, and then it records the result.
+// The loader validates each row, and it records the result, so the report can compare runs.
 // Parsing the manifest before validation hides which row failed.
 // Following the redirect, the client retries the request.
 

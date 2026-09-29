@@ -77,7 +77,7 @@ Most of the dictionaries have been derived using the following process:
 5. Add the ones that mean "street" (or other relevant words) to dictionaries
 6. Augment by researching addresses in countries speaking language x
 
-## Contributing
+## Contribute a language dictionary
 
 If you're a native speaker of one or more languages in libpostal, we'd love your contribution. Edit the text files under this directory and open a pull request; there are no other steps. Dictionaries are organized by [language code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes), so find the language you speak and start editing. If your language has no directory yet, add one. It needs no additional configuration.
 

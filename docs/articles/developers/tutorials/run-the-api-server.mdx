@@ -271,11 +271,11 @@ curl -s http://127.0.0.1:7788/metrics | jq
 }
 ```
 
-That count is lower than the number of requests this page has sent, and it is the thing to know before
-you wire the route to a dashboard: each worker keeps its own counters, and a scrape reads whichever
-worker answered it. Three consecutive scrapes of this two-worker server returned 4, 6 and 4 — one
-server, three answers. Run `--cpus 1` when you want a single coherent set, or sum across scrapes and
-accept that the percentiles are per worker.
+That count is lower than the number of requests this page has sent. Check the counters before you wire
+the route to a dashboard. Each worker keeps its own counters. A scrape reads whichever worker answered
+it. Three consecutive scrapes of this two-worker server returned 4, 6 and 4 — one server, three
+answers. Run `--cpus 1` when you want a single coherent set, or sum across scrapes and accept that the
+percentiles are per worker.
 
 The `tiers` histogram is the operational read that matters over time: a deployment that starts answering
 `admin` where it used to answer `address_point` has lost a database rather than accuracy.

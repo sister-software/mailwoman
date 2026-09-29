@@ -60,7 +60,7 @@ if [ -n "$STAGED" ]; then
 		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.16.5 format
 	fi
 	if printf '%s\n' "$STAGED" | grep -q '^corpus-python/'; then
-		python3 corpus-python/scripts/verify_toolchain.py
+		uv run --project corpus-python --extra dev --extra train python corpus-python/scripts/verify_toolchain.py
 	fi
 
 	# Re-stage fixed files so they're included in the commit

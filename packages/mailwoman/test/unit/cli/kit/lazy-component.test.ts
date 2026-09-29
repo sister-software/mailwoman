@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   It runs in a subprocess against real Ink because the interface calls `process.exit(1)`, and the stdout/stderr split is asserted with ANSI stripped so colour cannot make a negative match pass for the wrong reason.
+ *   The test runs in a subprocess against real Ink because the interface calls `process.exit(1)`.
+ *   It strips ANSI codes before checking stdout and stderr, so colour cannot make a negative match pass.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"

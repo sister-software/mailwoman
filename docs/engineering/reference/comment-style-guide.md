@@ -92,7 +92,7 @@ Comment non-obvious behavior, constraints, decisions, and limitations. Keep comm
 
 ### Do not chain another thought onto the sentence
 
-The target cadence is a sentence that reaches its main point, adds a comma, and then keeps going through `which`, `whose`, or `and`. These clauses can each be grammatical. The problem is the accumulation: the reader must remember the opening point while the sentence adds another operation, explanation, or result.
+The target cadence starts with a main point. A comma adds another clause beginning with `which`, `whose`, or `and`. These clauses can each be grammatical. The problem is the accumulation: the reader must remember the opening point while the sentence adds another operation, explanation, or result.
 
 ```ts
 // The pass uses the trainer's emitter, which makes its counts comparable, and this means the audit matches a training run.

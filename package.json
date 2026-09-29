@@ -57,7 +57,7 @@
 		"lint:prose": "run-s lint:prose:vocab lint:prose:code",
 		"lint:prose:code": "node config/vale/lint-prose.ts -s code",
 		"lint:prose:vocab": "yarn workspace @mailwoman/docs lint:prose:vocab",
-		"lint:python": "uvx ruff@0.16.5 check corpus-python packages/neural/test/fixtures/generate-evidence-parity.py packages/neural/test/fixtures/generate-tokenizer-parity.py packages/repo-health/test/fixtures/comments.py && uvx ruff@0.16.5 format --check corpus-python packages/neural/test/fixtures/generate-evidence-parity.py packages/neural/test/fixtures/generate-tokenizer-parity.py packages/repo-health/test/fixtures/comments.py && python3 corpus-python/scripts/verify_toolchain.py && yarn python:typecheck && yarn python:security",
+		"lint:python": "uvx ruff@0.16.5 check corpus-python packages/neural/test/fixtures/generate-evidence-parity.py packages/neural/test/fixtures/generate-tokenizer-parity.py packages/repo-health/test/fixtures/comments.py && uvx ruff@0.16.5 format --check corpus-python packages/neural/test/fixtures/generate-evidence-parity.py packages/neural/test/fixtures/generate-tokenizer-parity.py packages/repo-health/test/fixtures/comments.py && uv run --project corpus-python --extra dev --extra train python corpus-python/scripts/verify_toolchain.py && yarn python:typecheck && yarn python:security",
 		"mwops": "node packages/ops-cli/lib/cli.ts",
 		"prepare": "husky",
 		"python:security": "cd corpus-python && uv run --extra dev --extra train bandit -c pyproject.toml -r src",
