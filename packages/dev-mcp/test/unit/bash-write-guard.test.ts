@@ -200,6 +200,9 @@ describe("bash-write-guard: the work a session actually does", () => {
 			`rm -f packages/repo-health/out/checks/module-surface.d.ts.map`,
 		],
 		["removing a build cache", `rm packages/core/tsconfig.tsbuildinfo`],
+		// Git tracks no path under `scratchpad/`, so a removal there discards only scratch work.
+		["removing a stale scratchpad document", `rm scratchpad/2026-08-21-coverage-miss-decomposition.md`],
+		["removing a dated scratchpad directory", `rm -rf scratchpad/2026-08-21`],
 		["removing a dependency install before a clean install", `rm -rf node_modules && yarn install`],
 		["clearing build output by absolute path", `rm -rf ${REPO_ROOT}/packages/core/out`],
 		["a copy out of the repository", `cp AGENTS.md /tmp/`],

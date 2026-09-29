@@ -115,18 +115,26 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 }
 
 /**
- * Repository paths that hold only derived files: compiler output and installed dependencies.
+ * Repository paths that hold no tracked file: compiler output, installed dependencies, and scratch work.
  *
  * No tracked path matches.
- * `tsc -b` or `yarn install` restores any of them.
+ * `tsc -b` or `yarn install` restores `out`, `dist` and `node_modules`.
+ *
+ * `scratchpad/` holds one-off notes and scripts, which `scratchpad/AGENTS.md`
+ * describes as temporary and outside the main codebase.
+ * Git tracks no path there, so a removal discards only uncommitted scratch work,
+ * and a stale document is removed rather than carried.
+ *
+ * A removal there is permanent, which is the difference from the three build
+ * directories above: a build restores those.
  *
  * `.yarn/` is excluded because it holds the tracked yarn binary.
  *
  * Only {@link REMOVER} gets this exemption.
- * The hook can remove derived output safely, but a hand-written file such as
+ * The hook can remove these paths safely, but a hand-written file such as
  * `out/<subpath>.d.ts` would stand in for source that does not exist.
  */
-const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules)(?:\/|$)|\.tsbuildinfo$/u
+const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules|scratchpad)(?:\/|$)|\.tsbuildinfo$/u
 
 const REMOVER = "rm"
 

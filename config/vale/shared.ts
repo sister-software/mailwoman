@@ -50,9 +50,12 @@ export function loadValeIgnore(filePath: PathBuilder) {
 export function narrowTo(files: readonly string[], narrowing: readonly string[]): string[] {
 	if (!narrowing.length) return [...files]
 
-	const wanted = new Set(narrowing.map((path) => path.replace(/^\.\//, "")))
+	const wanted = new Set(narrowing.map((path) => path.replace(/^\.\//, "").replace(/\/$/, "")))
+	// A named directory reaches every file under it, so a sweep over one runs as one command.
+	// Without this a directory matches no file, because the surface lists files alone.
+	const prefixes = [...wanted].map((path) => `${path}/`)
 
-	return files.filter((file) => wanted.has(file))
+	return files.filter((file) => wanted.has(file) || prefixes.some((prefix) => file.startsWith(prefix)))
 }
 
 const ValeSurfaceConfigPath = {
@@ -94,7 +97,12 @@ export async function describeUnmatched(
 	surface: Surface
 ): Promise<string[]> {
 	const found = new Set(matched)
-	const missing = narrowing.map((path) => path.replace(/^\.\//, "")).filter((path) => !found.has(path))
+
+	// A directory reaches its files rather than itself, so a named directory that
+	// matched anything is satisfied and only an empty one is reported.
+	const missing = narrowing
+		.map((path) => path.replace(/^\.\//, "").replace(/\/$/, ""))
+		.filter((path) => !found.has(path) && !matched.some((file) => file.startsWith(`${path}/`)))
 
 	if (!missing.length) return []
 
