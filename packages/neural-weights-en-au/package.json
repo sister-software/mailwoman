@@ -12,6 +12,7 @@
 		"model-card.json",
 		"LICENSE.md",
 		"PROVENANCE.json",
+		"fst-street-morphology.bin",
 		"anchor-lexicon-v1.json",
 		"locality-surface-lexicon-v7.json",
 		"street-type-lexicon-v3.json",

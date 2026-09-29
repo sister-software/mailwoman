@@ -11,7 +11,9 @@
  *   A model includes more than its `.onnx` file. The card declares required channels. Other bundle artifacts provide them.
  *   A model-file-only replacement would score it with the shipped bundle's channels.
  *
- *   The default uses symlinks, so it copies no files and leaves the data root untouched.
+ *   By default, the command links each artifact. It writes no bytes and leaves the data root untouched.
+ *   `--dereference` copies the artifacts. A board-routed `mwdev_compare` arm requires that copy
+ *   because it refuses an artifact resolving outside the cache it was given.
  *   `--from` seeds the layout. `--file`, `--omit`, and `--card` then change it for an A/B comparison.
  *
  *   Usage:
@@ -23,7 +25,7 @@
  */
 
 import { isFile, pathExists } from "@mailwoman/core/fs/readers"
-import { createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { copyFileTo, createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, type PathBuilder, resolvePath, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -51,6 +53,14 @@ export interface StageWeightsCacheOptions {
 	 */
 	card?: string
 	clean: boolean
+	/**
+	 * Copy each artifact's bytes instead of linking to them.
+	 *
+	 * A board-routed `mwdev_compare` arm refuses an artifact that resolves outside its `weights_cache`,
+	 * because a link back to the workspace would grade the installed model under the candidate's name.
+	 * A cache assembled for grading therefore needs the bytes.
+	 */
+	dereference: boolean
 	log: (line: string) => void
 }
 
@@ -120,14 +130,14 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 			continue
 		}
 
-		await createSymbolicLink(source, packageDir(name))
+		await (options.dereference ? copyFileTo(source, packageDir(name)) : createSymbolicLink(source, packageDir(name)))
 
 		linked++
 	}
 
 	const stagedNames = [...staged.keys()].toSorted().filter((key) => !omit.has(key))
 
-	log(`staged ${linked} artifact(s) → ${packageDir}`)
+	log(`staged ${linked} artifact(s) ${options.dereference ? "as copies" : "as links"} → ${packageDir}`)
 	log(`  cacheRoot: ${cacheRoot}`)
 
 	for (const entry of stagedNames) {

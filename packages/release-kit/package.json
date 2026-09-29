@@ -104,6 +104,11 @@
 			"node": "./lib/weights/weights-recipe.ts",
 			"default": "./out/weights/weights-recipe.js"
 		},
+		"./weights/stage-weights-cache": {
+			"types": "./out/weights/stage-weights-cache.d.ts",
+			"node": "./lib/weights/stage-weights-cache.ts",
+			"default": "./out/weights/stage-weights-cache.js"
+		},
 		"./weights/rights/files": {
 			"types": "./out/weights/rights/files.d.ts",
 			"node": "./lib/weights/rights/files.ts",

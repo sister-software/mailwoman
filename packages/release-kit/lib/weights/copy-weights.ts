@@ -7,6 +7,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import {
 	type PairIndexInputs,
@@ -204,16 +205,44 @@ export async function copyWeights({
 	return { skipped: false, workspaces: targets }
 }
 
+/**
+ * Whether a weights workspace's published `files` array names an artifact.
+ *
+ * The array is the publish contract, so it decides whether a missing source is an
+ * absence the workspace states or a materialization that failed.
+ * `en-nz` names no per-locale FST, so a skip is correct there and an error is
+ * correct for a workspace that names one.
+ */
+async function declaresArtifact(context: MaterializationContext, workspace: string, name: string): Promise<boolean> {
+	const manifest = await readPackageJSON(resolvePath(context.repoRoot, workspace, "package.json"))
+	const files = manifest.files
+
+	return Array.isArray(files) && files.includes(name)
+}
+
 async function materializeFST(context: MaterializationContext, workspace: string, dir: string) {
 	const locale = workspace.replace(/^packages\/neural-weights-/, "")
-	const src = resolvePath(context.dataRoot, "wof", "fst-per-locale", `fst-${locale}.bin`)
+	const name = `fst-${locale}.bin`
 
-	if (!(await pathExists(src))) {
-		context.log(
-			`copy-weights: no FST at ${src} — skipping ${workspace}/fst-${locale}.bin (byte-stable; en-nz has none)`
-		)
+	if (!(await declaresArtifact(context, workspace, name))) {
+		// An earlier run, or a run against a different declaration, can have left a copy here.
+		// The resolution ladder admits a workspace artifact by existence, so one left in
+		// place feeds a dev arm a channel no published install includes.
+		await removePathIfPresent(resolvePath(dir, name))
+		context.log(`copy-weights: ${workspace}/package.json names no ${name} — skipping it`)
 
 		return
+	}
+
+	const src = wofDatabaseRoot(context.dataRoot)("fst-per-locale", name)
+
+	if (!(await pathExists(src))) {
+		throw new Error(
+			`Missing FST for ${locale}: ${src}\n` +
+				`${workspace}/package.json names ${name} in its files array, so the published package carries it and ` +
+				`a tarball built without it ships a locale whose gazetteer prior has no signal source. ` +
+				`Build it with \`mailwoman gazetteer build fst\`, or set MAILWOMAN_DATA_ROOT to a root that has it.`
+		)
 	}
 
 	const dest = resolvePath(dir, `fst-${locale}.bin`)
@@ -223,14 +252,23 @@ async function materializeFST(context: MaterializationContext, workspace: string
 }
 
 async function materializeStreetMorphology(context: MaterializationContext, workspace: string, dir: string) {
-	const src = resolvePath(context.dataRoot, "wof", "fst-street-morphology.bin")
-
-	if (!(await pathExists(src))) {
-		context.log(
-			`copy-weights: no street-morphology FST at ${src} — skipping ${workspace}/fst-street-morphology.bin (byte-stable)`
-		)
+	if (!(await declaresArtifact(context, workspace, "fst-street-morphology.bin"))) {
+		await removePathIfPresent(resolvePath(dir, "fst-street-morphology.bin"))
+		context.log(`copy-weights: ${workspace}/package.json names no fst-street-morphology.bin — skipping it`)
 
 		return
+	}
+
+	const src = wofDatabaseRoot(context.dataRoot)("fst-street-morphology.bin")
+
+	if (!(await pathExists(src))) {
+		throw new Error(
+			`Missing street-morphology FST: ${src}\n` +
+				`${workspace}/package.json names fst-street-morphology.bin in its files array, so the published ` +
+				`package carries it and the #1315 street-context check has no signal source without it. ` +
+				`Build it with \`mailwoman gazetteer build street-morphology\`, or set MAILWOMAN_DATA_ROOT to a ` +
+				`root that has it.`
+		)
 	}
 
 	const dest = resolvePath(dir, "fst-street-morphology.bin")

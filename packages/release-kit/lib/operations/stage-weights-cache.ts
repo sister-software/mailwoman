@@ -7,7 +7,7 @@
 import { z } from "zod"
 
 import { defineOperation, OperationEffect } from "#operation"
-import { flagDefaultOn, list, text } from "#operations/inputs"
+import { flag, flagDefaultOn, list, text } from "#operations/inputs"
 import { stageWeightsCache } from "#weights/stage-weights-cache"
 
 /**
@@ -18,7 +18,7 @@ import { stageWeightsCache } from "#weights/stage-weights-cache"
 export const stageWeightsCacheOperation = defineOperation({
 	id: "release.stage-weights-cache",
 	description:
-		"Assemble a package-shaped weights directory under --out <cacheRoot> so a candidate model is graded as a bundle: --from seeds it, --file name=path (comma list), --omit (comma list) and --card diverge it.",
+		"Assemble a package-shaped weights directory under --out <cacheRoot> so a candidate model is graded as a bundle: --from seeds it, --file name=path (comma list), --omit (comma list) and --card diverge it, and --dereference copies the bytes for a board-routed mwdev_compare arm.",
 	effect: OperationEffect.LocalWrite,
 	inputSchema: z
 		.object({
@@ -29,6 +29,7 @@ export const stageWeightsCacheOperation = defineOperation({
 			omit: list,
 			card: text,
 			clean: flagDefaultOn,
+			dereference: flag,
 		})
 		.strict(),
 	outputSchema: z.object({
@@ -48,6 +49,7 @@ export const stageWeightsCacheOperation = defineOperation({
 			omit: input.omit,
 			...(input.card ? { card: input.card } : {}),
 			clean: input.clean,
+			dereference: input.dereference,
 			log: context.log,
 		}),
 })
