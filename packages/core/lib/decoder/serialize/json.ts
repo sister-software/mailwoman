@@ -5,7 +5,9 @@
  *
  *   Libpostal-compatible JSON projection.
  *
- *   Flattens the tree to `{ tag: value }`. The first occurrence wins for repeated tags, matching libpostal.
+ *   Flattens the tree to `{ tag: value }`, one value per tag as libpostal does. When a tag occurs twice the
+ *   span that `slotNodes` ranks first takes the slot: a grounded span before an ungrounded one, then
+ *   document order for an administrative or postal rung and label confidence for every other tag.
  *   Use `decodeAsTuples` if order or repetition matters.
  *
  *   A multi-role node, such as a city-state span tagged `region` that also plays `locality`, emits one entry per role
@@ -70,8 +72,8 @@ export interface SerializeJSONOpts {
 /**
  * Place one node's tag and alternative interpretations into the flat map.
  *
- * The first occurrence wins.
- * The function records every span deleted by a taken slot.
+ * The caller walks nodes in `slotNodes` order, so the first node to reach a tag holds it.
+ * The function records every span a taken slot deleted.
  */
 function place(node: AddressNode, out: Partial<Record<ComponentTag, string>>, dropped: DroppedSpan[]): void {
 	if (node.tag in out) {

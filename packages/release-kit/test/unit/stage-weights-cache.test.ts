@@ -12,6 +12,7 @@ import { statLink } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { stageWeightsCache } from "@mailwoman/release-kit/weights/stage-weights-cache"
 import { resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
@@ -42,8 +43,13 @@ async function sourcePackage(root: string): Promise<string> {
 	return dir.toString()
 }
 
-const staged = (root: string, name: string) =>
-	resolvePath(root, "cache", "node_modules", "@mailwoman", "neural-weights-en-gb", name)
+/**
+ * The path an artifact takes inside the staged cache.
+ *
+ * The layout comes from `weightsCachePackageDir`, the resolver's own reader,
+ * so the assertion follows the cache shape rather than restating it.
+ */
+const staged = (root: string, name: string) => weightsCachePackageDir(resolvePath(root, "cache"), "en-gb")(name)
 
 describe("stageWeightsCache", () => {
 	it("links each artifact by default, which writes no bytes", async () => {

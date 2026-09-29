@@ -3,21 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Asks whether the street a board row expects appears in that country's address register, and whether
- *   it appears alongside that row's locality.
+ *   Asks whether the street a board row expects appears in that country's address register. It also
+ *   asks whether that street appears alongside the row's locality.
  *
  *   #2399's first task. A candidate assigned a leading venue name to `street` on rows where the real
- *   street sits second, and the decode path holds no index of street names to separate the two. Before
- *   building one, this measures whether such an index would have carried the answer: a street the
+ *   street sits second. The decode path holds no index of street names to separate the two. This
+ *   measures whether such an index would have answered the question before one is built: a street the
  *   register attests is separable from a venue name the register does not.
  *
  *   The registers read here are the ones the corpus adapters already read. GB comes from HM Land
- *   Registry Price Paid (`ppd/<date>/gb-tuples.csv`, columns `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`)
- *   and every other country from its Overture addresses extract, whose locality sits in
+ *   Registry Price Paid (`ppd/<date>/gb-tuples.csv`, columns `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`).
+ *   Every other country comes from its Overture addresses extract. That extract keeps the locality in
  *   `address_levels` rather than in `postal_city`.
  *
- *   A row whose country has no register on disk is reported as unmeasured rather than as absent, because
- *   the two readings support different decisions.
+ *   A row whose country has no register on disk is reported as unmeasured rather than as absent. The two
+ *   readings support different decisions.
  *
  *   Usage:
  *   node packages/mailwoman/lib/dev-tools/corpus/street-attestation.run.ts \
@@ -29,7 +29,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { Globerator } from "spliterator/node/fs"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
@@ -48,8 +48,33 @@ const wanted = new Set(
 	values.ids
 		.split(",")
 		.map((id) => id.trim())
-		.filter(Boolean)
+		.filter((id) => id.length > 0)
 )
+
+/**
+ * The street-normalization locale this measurement folds a country's streets under.
+ *
+ * `streetLocaleForCountry` in `@mailwoman/osm/sdk` answers the same question for the OSM rooftop build.
+ * Its membership records which countries have an OSM extract rather than
+ * which countries the normalizer has rules for.
+ *
+ * It throws for `es`, `us` and `mx`, which this tool measures against Overture,
+ * so the two registries serve different purposes.
+ *
+ * A country absent here is reported as unmeasured.
+ * A fold under another language's rules would return a count of a key the register writes for no row.
+ */
+const MEASUREMENT_STREET_LOCALE = new Map<string, StreetLocale>([
+	["gb", "en"],
+	["us", "en"],
+	["es", "es"],
+	["mx", "es"],
+	["fr", "fr"],
+	["de", "de"],
+	["it", "it"],
+	["nl", "nl"],
+	["pl", "pl"],
+])
 
 const cases = await loadRegressionCases()
 const rows = cases.filter((seed) => wanted.has(seed.id))
@@ -60,7 +85,9 @@ if (missing.length) throw new Error(`No board row for: ${missing.join(", ")}`)
 /**
  * The Overture release directories that hold an address extract.
  *
- * The newest is the default, and `--release` names an older one.
+ * The newest is the default.
+ * `--release` selects an older one.
+ *
  * The most recent release on this host holds extracts truncated at 800,000 rows,
  * so a measurement against it reads zero for a street the full extract attests.
  */
@@ -95,6 +122,14 @@ interface Verdict {
 	register: string | null
 	inCountry: number | null
 	withLocality: number | null
+	/**
+	 * Why the row was not measured, or `null` when it was.
+	 *
+	 * A row with no register on disk and a row whose country has no folding locale
+	 * are both unmeasured for different reasons.
+	 * A single `register: null` would read as one cause.
+	 */
+	unmeasured: "no-register" | "no-folding-locale" | "no-probe-token" | null
 }
 
 const verdicts: Verdict[] = []
@@ -107,7 +142,16 @@ for (const seed of rows) {
 	const locality = seed.expectComponents?.locality ?? null
 
 	if (!street) {
-		verdicts.push({ id: seed.id, country, street: null, locality, register: null, inCountry: null, withLocality: null })
+		verdicts.push({
+			id: seed.id,
+			country,
+			street: null,
+			locality,
+			register: null,
+			inCountry: null,
+			withLocality: null,
+			unmeasured: null,
+		})
 
 		continue
 	}
@@ -115,8 +159,24 @@ for (const seed of rows) {
 	// The board writes a street as its input does (`Kingsland Rd`) and a register stores the expanded
 	// form (`Kingsland Road`), so a raw string comparison answers 0 for a street with 1,915 records.
 	// Both sides go through the resolver's own street-key normalizer.
-	const streetLocale = country === "GB" || country === "US" ? "en" : country.toLowerCase()
-	const streetKey = normalizeStreetForKeyLocale(street, streetLocale as never)
+	const streetLocale = MEASUREMENT_STREET_LOCALE.get(country.toLowerCase())
+
+	if (!streetLocale) {
+		verdicts.push({
+			id: seed.id,
+			country,
+			street,
+			locality,
+			register: null,
+			inCountry: null,
+			withLocality: null,
+			unmeasured: "no-folding-locale",
+		})
+
+		continue
+	}
+
+	const streetKey = normalizeStreetForKeyLocale(street, streetLocale)
 	const localityLiteral = locality ? `'${escapeSQLString(locality)}'` : null
 	let register: string | null = null
 	let source: string | null = null
@@ -142,17 +202,35 @@ for (const seed of rows) {
 	}
 
 	if (!source || !register) {
-		verdicts.push({ id: seed.id, country, street, locality, register: null, inCountry: null, withLocality: null })
+		verdicts.push({
+			id: seed.id,
+			country,
+			street,
+			locality,
+			register: null,
+			inCountry: null,
+			withLocality: null,
+			unmeasured: "no-register",
+		})
 
 		continue
 	}
 
-	// The longest alphabetic token discriminates better than the first one: `C. de los Cabestreros`
+	// The longest alphabetic token discriminates better than the first one: `C. De los Cabestreros`
 	// leads with `c.`, which matches most Spanish streets, while `cabestreros` matches its own.
 	const probe = [...street.matchAll(/\p{L}{3,}/gu)].map((match) => match[0]).toSorted((a, b) => b.length - a.length)[0]
 
 	if (!probe) {
-		verdicts.push({ id: seed.id, country, street, locality, register, inCountry: null, withLocality: null })
+		verdicts.push({
+			id: seed.id,
+			country,
+			street,
+			locality,
+			register,
+			inCountry: null,
+			withLocality: null,
+			unmeasured: "no-probe-token",
+		})
 
 		continue
 	}
@@ -179,7 +257,7 @@ for (const seed of rows) {
 	let withLocality = localityClause ? 0 : null
 
 	for (const candidate of candidates) {
-		if (normalizeStreetForKeyLocale(candidate.street, streetLocale as never) !== streetKey) continue
+		if (normalizeStreetForKeyLocale(candidate.street, streetLocale) !== streetKey) continue
 
 		inCountry += Number(candidate.n)
 
@@ -188,7 +266,7 @@ for (const seed of rows) {
 		}
 	}
 
-	verdicts.push({ id: seed.id, country, street, locality, register, inCountry, withLocality })
+	verdicts.push({ id: seed.id, country, street, locality, register, inCountry, withLocality, unmeasured: null })
 }
 
 console.log(`${verdicts.length} rows, Overture release ${release}${gbRegister ? `, GB register ${gbRegister}` : ""}\n`)
@@ -200,8 +278,23 @@ for (const verdict of verdicts) {
 		continue
 	}
 
-	if (verdict.register === null) {
+	if (verdict.unmeasured === "no-folding-locale") {
+		console.log(
+			`  ${verdict.id} (${verdict.country})  no folding locale for ${verdict.country} — unmeasured` +
+				`  (add it to MEASUREMENT_STREET_LOCALE once the normalizer has its rules)`
+		)
+
+		continue
+	}
+
+	if (verdict.unmeasured === "no-register") {
 		console.log(`  ${verdict.id} (${verdict.country})  no register on disk — unmeasured`)
+
+		continue
+	}
+
+	if (verdict.unmeasured === "no-probe-token") {
+		console.log(`  ${verdict.id} (${verdict.country})  street "${verdict.street}" holds no 3-letter token — unmeasured`)
 
 		continue
 	}

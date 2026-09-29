@@ -6,9 +6,9 @@
  *   Compares each regression-board row's written form against the form this repository's own layout
  *   would produce from that row's expected components.
  *
- *   Training rows are built by an adapter or a recipe that renders a line through a codex layout. Board
- *   rows carry a `source` naming an operator sweep or an issue, so a person wrote them. Those are two
- *   different written surfaces, and a decoder fitted on the first is graded on the second.
+ *   An adapter or a recipe builds each training row by rendering a line through a codex layout. A board
+ *   row's `source` field records an operator sweep or an issue instead, so a person wrote that line.
+ *   Those are two different written surfaces. A decoder fitted on the first is graded on the second.
  *
  *   This reports how far apart they are, per country, without a parser and without a GPU. A row whose
  *   `input` matches its rendered twin sits inside the surface the training rows teach. A row that

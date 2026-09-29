@@ -62,7 +62,7 @@ def token_f1(
         i_f1 = per_label.get(f"I-{tag}", 0.0)
         result[f"f1_tag.{tag}"] = (b_f1 + i_f1) / 2.0
         result[f"support_tag.{tag}"] = per_label_support.get(f"B-{tag}", 0) + per_label_support.get(f"I-{tag}", 0)
-        # `pred` and `fp` carry the reading a support of zero cannot: a tag the sample never attests
+        # `pred` and `fp` state what a support of zero cannot: a tag the sample never attests
         # and the model predicts anyway reads `support 0, pred > 0` rather than as an absent key.
         result[f"pred_tag.{tag}"] = per_label_pred.get(f"B-{tag}", 0) + per_label_pred.get(f"I-{tag}", 0)
         result[f"fp_tag.{tag}"] = per_label_fp.get(f"B-{tag}", 0) + per_label_fp.get(f"I-{tag}", 0)
@@ -123,10 +123,11 @@ def per_locale_tag_f1(
     percent of the sample cannot move ``macro_f1``. A change confined to one locale is invisible
     there. The regression board then reports it first.
 
-    ``support``, ``pred`` and ``fp`` are emitted for every locale and tag, and the F1 ratio only where
-    support exceeds zero. A ratio over an empty denominator would read as a measured failure, while a
-    tag the sample never attests and the model predicts anyway reads ``support 0, pred > 0`` and stays
-    visible. Omitting the whole pair would hide that prediction from every reported diagnostic.
+    ``support``, ``pred`` and ``fp`` are emitted for every locale and tag. The F1 ratio is emitted only
+    where support exceeds zero, because a ratio over an empty denominator would read as a measured
+    failure. A tag the sample never attests and the model predicts anyway reads ``support 0, pred > 0``
+    and stays visible. A version that omitted the whole pair would hide that prediction from every
+    reported diagnostic.
 
     ``rows.<locale>`` states the row count each locale's scores were taken over, so a score on eight
     rows cannot be mistaken for a score on eight thousand.

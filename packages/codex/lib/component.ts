@@ -74,6 +74,41 @@ export function bareBIOTag(label: string): string {
 }
 
 /**
+ * The tags for a rung of the administrative or postal hierarchy.
+ *
+ * Every locale's canonical line writes these rungs from finest to coarsest.
+ * When one of these tags occurs twice, the earlier span is therefore the more specific place.
+ *
+ * A consumer choosing between two spans of one of these tags reads their order in the input
+ * rather than the model's confidence, because a coarser place name is more frequent
+ * in training and scores higher for that reason.
+ *
+ * A tag outside this set repeats without a containment relation between the two spans.
+ * A span's position then states no evidence about which span is the component.
+ */
+export const ADMIN_HIERARCHY_TAGS = [
+	"country",
+	"region",
+	"subregion",
+	"prefecture",
+	"district",
+	"municipality",
+	"locality",
+	"dependent_locality",
+	"postcode",
+	"block",
+	"sub_block",
+	"locality_unit",
+] as const satisfies readonly ComponentTag[]
+
+/**
+ * Whether {@link ADMIN_HIERARCHY_TAGS} includes this tag.
+ */
+export function isAdminHierarchyTag(tag: string): boolean {
+	return (ADMIN_HIERARCHY_TAGS as readonly string[]).includes(tag)
+}
+
+/**
  * The street-name family in assembly order.
  * That order is part of the interface.
  */

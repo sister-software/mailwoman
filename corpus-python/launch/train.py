@@ -153,8 +153,8 @@ def _train_gpu(
     if cfg.data.required_validation_coverage:
         # A locale the D-rule covers needs a validation split able to show a regression against the
         # shipped model. Without one, `evaluate()` reports the same numbers whatever happened to that
-        # locale, and the run reads as clean. Checked here so a recipe declaring the floor fails before
-        # the GPU time is spent, which is what `audits.py`'s own docstring already claimed.
+        # locale. The run then reads as clean. The check runs here so a recipe declaring the floor fails
+        # before the GPU time is spent. `audits.py`'s own docstring already claimed that placement.
         from pathlib import Path
 
         from mailwoman_train.audits.validation_coverage import run as verify_validation_coverage

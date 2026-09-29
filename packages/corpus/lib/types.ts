@@ -92,7 +92,7 @@ export const SurfaceOrigin = {
 	 *
 	 * No adapter in the tree emits this today: every one assembles its line from the source's fields.
 	 * The value is reserved for a source that publishes the written line itself,
-	 * such as a register whose rows carry `address1` as a person typed it.
+	 * such as a register storing `address1` as a person typed it.
 	 */
 	Attested: "attested",
 	/**
@@ -107,7 +107,8 @@ export const SurfaceOrigin = {
 	/**
 	 * A recipe assembled the text from the published fields of one real record.
 	 *
-	 * The recipe chooses the order, punctuation and casing, and varies them to teach a surface.
+	 * The recipe chooses the order, punctuation and casing.
+	 * It varies them to teach a surface.
 	 */
 	Composed: "composed",
 	/**
@@ -152,7 +153,8 @@ export function requireSurface(raw: Record<string, unknown>, producer: string): 
  * A per-row eligibility field would copy a per-source decision onto every row
  * and would disagree with the register after a review changed a license's state.
  * Whether a row reached a checkpoint is a property of a run rather than of the corpus.
- * and the sampler draws a different sample per epoch, so `deriveEffectiveTrainingManifest`
+ *
+ * And the sampler draws a different sample per epoch, so `deriveEffectiveTrainingManifest`
  * records it per source from a config and an `audit_epoch_mixture` output.
  */
 export interface SourceProvenance {

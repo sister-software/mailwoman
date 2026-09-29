@@ -101,8 +101,8 @@ def test_reports_no_f1_for_a_tag_the_locale_sample_never_carries():
 
 
 def test_a_predicted_tag_the_sample_never_attests_stays_visible():
-    # DE's row holds a locality and the model predicts street over it. Omitting the pair on zero
-    # support would hide that prediction from every reported diagnostic.
+    # DE's row holds a locality and the model predicts street over it. A version that dropped the pair
+    # on zero support would hide that prediction from every reported diagnostic.
     true = torch.cat([_ids("B-street", "I-street"), _ids("B-locality", "I-locality")])
     pred = torch.cat([_ids("B-street", "I-street"), _ids("B-street", "I-street")])
     per_locale = per_locale_tag_f1(pred, true, _locales("US", "DE"), num_labels=NUM)
