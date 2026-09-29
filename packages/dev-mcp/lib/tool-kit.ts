@@ -329,14 +329,13 @@ function droppedRow(run: GeocodeRun): string[] {
 /**
  * Renders the query-intent advisories a run attached.
  *
- * A `QueryIntentMarker` leaves the selected answer unchanged, which its own
- * declaration in `@mailwoman/core/pipeline` states.
+ * A `QueryIntentMarker` leaves the selected answer unchanged. Its declaration
+ * in `@mailwoman/core/pipeline` states this behavior.
  * A marker therefore reports something about the answer rather than replacing or withholding it,
- * and `declared_coarser_answer` in particular sits beside a coordinate the run still returned.
+ * and `declared_coarser_answer` sits beside a coordinate the run returned.
  *
  * The row names each marker and its evidence.
- * The reason a component below is empty lies in the parse or the resolver walk,
- * which the rows around this one report.
+ * The rows around this one show whether the parse or the resolver walk left a component empty.
  *
  * An earlier version of this row called every marker a refusal and attributed
  * every empty component to the #1649 tier check.

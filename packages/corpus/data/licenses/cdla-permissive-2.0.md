@@ -9,7 +9,7 @@ This is the grant the Overture Maps Foundation places its Places theme under, wh
 runtime bundle. The text was taken from the SPDX license list rather than from `cdla.dev`, because
 SPDX publishes it as plain text and the two carry the same words.
 
-## Sharing the data, quoted
+## Data-sharing terms (quoted)
 
 > 2.1. A Data Recipient may share Data, with or without modifications, so long as the Data Recipient
 > makes available the text of this agreement with the shared Data.

@@ -90,7 +90,7 @@ export const SurfaceOrigin = {
 	/**
 	 * The publisher's own string, preserved unchanged.
 	 *
-	 * No adapter in the tree emits this today: every one assembles its line from the source's fields.
+	 * No adapter in the tree emits this today: each one builds its line from the source's fields.
 	 * The value is reserved for a source that publishes the written line itself,
 	 * such as a register storing `address1` as a person typed it.
 	 */

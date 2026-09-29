@@ -80,8 +80,8 @@ against a list of place names, and if it is in there, it is a place.
 
 **What happens here:** the same lookup, made additive instead of decisive. `Washington` matches the
 place index, so the pieces it covers get a bonus on the locality marks and a penalty on street, house
-number and venue. The bonus is capped, and it is withheld entirely where a match sits in
-street-shaped surroundings, so a street named after a town stays a street:
+number and venue. The bonus is capped. A match in street-shaped surroundings receives no bonus. A
+street named after a town therefore stays a street:
 `800 Washington Ave, Portland, OR` parses the same with the index wired and without it. In the run
 above, the place index was the one prior that found anything to say.
 [The gazetteer prior](./the-gazetteer-prior.mdx) is the full treatment.

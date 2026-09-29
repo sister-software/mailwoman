@@ -154,8 +154,8 @@ infrastructure:
 ## 4. Attribution
 
 The Lite channel requires visible attribution to Mailwoman, and the subscriber channel does not.
-This is the clearest form of the GeoLite trade, and it is the part most likely to be
-misunderstood internally, so the two layers are stated separately:
+This is the clearest form of the GeoLite trade. It is also the part most likely to be
+misunderstood internally. State the two layers separately:
 
 **Layer 1 — the upstream data's own attribution.** This layer is non-negotiable, applies to both channels, and is not
 ours to sell. WOF, Overture (CDLA-Permissive-2.0), GeoNames (CC-BY 4.0), and BAN (license

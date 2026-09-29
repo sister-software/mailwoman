@@ -276,8 +276,8 @@ filter separates the two effects (measured 2026-08-04, with this gazetteer and t
 | full admin (`none`) | `Paris`, TX (33.669, −95.544)          | **Paris, France** |
 
 Both backends return Paris, France without the US filter, and both return a Texas result with it.
-This page therefore makes a narrow claim. `candidate.db` is the default, and the default does not
-apply a country filter, so the French address geocoded correctly without any configuration. To
+This page therefore makes a narrow claim. The default `candidate.db` applies no country filter, so
+the French address geocoded correctly without any configuration. To
 compare the two backends yourself, use `--country-scope locale|none` (on `parse` and `geocode`) to
 set the filter the same way for both.
 

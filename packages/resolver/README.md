@@ -28,7 +28,9 @@ const decorated = await resolver.resolveTree(tree)
 
 `createWOFResolver` takes a `ResolverBackend` — a structural interface rather than a class. `@mailwoman/resolver-wof-sqlite` implements it over `node:sqlite`, `@mailwoman/resolver-wof-wasm` over `@sqlite.org/sqlite-wasm` in a browser, and `RemoteResolver` over HTTP. This package imports none of them.
 
-Backends differ in what they can answer, and that is visible rather than silent: `describeCapabilityGaps(backend)` reports which optional methods are missing, so a default-on feature that no-ops without logging on your backend says so instead of looking like a bad result.
+Backends differ in what they can answer. `describeCapabilityGaps(backend)` reports missing optional
+methods. A default-on feature that no-ops without logging on your backend reports that condition instead
+of looking like a bad result.
 
 ## Absence is a value
 

@@ -44,9 +44,11 @@ export interface SpanMatch {
  *
  * Longest-first is what lets a US ZIP+4 ("94610-2737") claim its whole span
  * before the shorter NL-shaped false positive in its tail ("2737 CA") can.
- * The input array is not mutated (`toSorted`), and the sort is stable,
- * so candidates of equal length and equal priority keep the order the caller pushed
- * them in (pattern order, then match order within a pattern).
+ * The function sorts a copy with `toSorted`, so it leaves the input array unchanged.
+ *
+ * The sort is stable.
+ * Candidates with equal length and priority keep their insertion order:
+ * pattern order first, then match order within each pattern.
  */
 export function selectNonOverlappingMatches<T extends SpanMatch>(candidates: readonly T[]): T[] {
 	const ordered = candidates.toSorted((a, b) => b.end - b.start - (a.end - a.start) || a.priority - b.priority)

@@ -190,8 +190,8 @@ are the fallback values the page shows when the endpoint does not answer** (§10
 The same site says "WE'VE identified **33,295** jurisdictions". **The widely quoted "more than 33,000
 jurisdictions" is the universe they have identified rather than what they have published.** Published
 coverage is 11,015 of 33,295, about 33 % of jurisdictions. A separate undated claim of "over 50% national
-coverage" appears on the project's analysis page **with no stated denominator**, and it matches neither
-the jurisdiction ratio nor the population ratio, so it is not used here.
+coverage" appears on the project's analysis page **with no stated denominator**. It matches neither
+the jurisdiction ratio nor the population ratio, so this report does not use it.
 
 **The state chapters publish separately, under four different regimes**, and the rights chain back to
 Land Use Atlas is nowhere stated:
@@ -1088,8 +1088,8 @@ difference is exactly what a negative answer would need to know.
 
 ### 3.3 Two denominators, two numbers, and neither substitutes for the other
 
-The issue asked for a coverage fraction with its denominator. **Two fractions apply here, and they differ
-by an order of magnitude**, so this record states both and keeps them apart.
+The issue asked for a coverage fraction with its denominator. **Two fractions apply here. They differ
+by an order of magnitude, so this record states both and keeps them apart.**
 
 **Denominator A — people living in a covered jurisdiction.** For Ireland: **4,982,055 of 5,149,139 =
 96.76 %**, and the missing authority is Donegal County Council (Census 2022, CSO table `FY003A`). This

@@ -345,8 +345,8 @@ should also let the codex consolidate the three divergent shape tables (A.1), si
 are the only reason the tables diverged.
 
 **D-rule.** The mechanism is opt-in behind `postcodeShapeCoherence` and default-off. It can only
-demote a postcode, and a wrong demotion is the costly failure, so a default-on promotion needs the
-full check set.
+demote a postcode. A wrong demotion is the costly failure. Any default-on promotion therefore needs
+the full check set.
 
 **Pre-registered bars.**
 

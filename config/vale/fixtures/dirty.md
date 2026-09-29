@@ -9,6 +9,10 @@ import ObviouslyBrokenComponent from "@site/src/components/ObviouslyBrokenCompon
 
 The loader reads each row, which validates the fields and records the result, so the report can compare runs.
 
+The loader validates each row, and it records the result, so the report can compare runs.
+The loader validates each row, and the adapter records the result, so the report can compare runs.
+The loader validates each row, and then it records the result.
+
 This file exists to trip every Mailwoman Vale rule on purpose. It also carries an
 import line, a JSX tag, a code fence, and a `<details>` block that each contain
 banned words — none of those four should be flagged, because they are ignored by

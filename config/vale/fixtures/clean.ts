@@ -35,6 +35,8 @@
 export const clean = 1
 
 // The provenance grade of a zoning row is either `authoritative` or `inferred`.
+// The loader validates each row, and it records the result.
+// The distance, the policy, and the defence belong to each feature, so the answer is a polygon.
 // Each row has exactly one provenance grade.
 // The grades never merge.
 // Each artifact contains rows of one provenance grade only.

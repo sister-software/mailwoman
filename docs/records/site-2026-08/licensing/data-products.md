@@ -22,7 +22,9 @@ This page lists the databases, with one entry per artifact. Each entry covers wh
 
 **Cadence** describes current practice rather than a goal. Most of these artifacts are rebuilt when coverage changes or an ingest bug is fixed. They have no fixed schedule. Each entry states when that is the case.
 
-Every artifact is a **sealed** SQLite file. It is built to a temp path, verified, swapped into place, and then set to `chmod 0444`. Updates are full rebuilds. None of these artifacts is a live database you write to.
+Every artifact is a **sealed** SQLite file. The build writes it to a temporary path. The process verifies
+the file before swapping it into place, then sets its permissions to `chmod 0444`. Updates are full
+rebuilds. None of these artifacts is a live database you write to.
 
 ## The shelf at a glance
 
