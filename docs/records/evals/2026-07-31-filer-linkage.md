@@ -19,13 +19,13 @@ The control score is expected rather than impressive. A pipeline that groups fil
 
 Two registrants are predicted to share a family when the built `filer.db` places them in a common family as of 2026-06-01. The eval reads each membership with the shipped corporate-family reader that product callers use. That reader answers for one node at a time, and a registrant can own several nodes (its FRN registrations and its provider ID), so the eval takes the union of the families across those nodes. The union is the eval's own step, and it is why a parent disclosed on only one of a registrant's two filings still counts.
 
-Memberships that exist only because two filers reported the same management company are excluded from both the prediction and the truth. Management is operational control rather than ownership, and the eval does not withhold that field. If the score counted management, an input field would decide a question about the field held out of the run. The corpus includes two filers that report the same manager so that the exclusion is exercised.
+Memberships that exist only because two filers reported the same management company are excluded from both the prediction and the truth. Management is operational control rather than ownership, and the eval does not withhold that field. Counting it would let a field the eval provides decide a question about the field the eval withholds. The corpus includes two filers that report the same manager so that the exclusion is exercised.
 
 ### What counts as a registrant
 
-The eval scores registrants rather than FRNs. One operator can hold several FRN registrations, and the corpus has one registrant that holds two, joined by a shared provider ID. A parent disclosed on one registration describes the whole company. Separate FRN scores could put one legal entity in two families at once under the truth partition.
+The eval scores registrants rather than FRNs. One operator can hold several FRN registrations, and the corpus has one registrant that holds two, joined by a shared provider ID. A parent disclosed on one registration describes the whole company. Scoring FRNs separately would let the truth partition put one legal entity in two families at once.
 
-The eval treats a shared provider ID as proof of one registrant. Real provider-list rows with a shared provider ID have reported different parents, so that fold could join companies that should stay apart. That failure would be visible here. When the fold joins two registrants from different families, it puts a truth-negative pair inside one truth group. The control run cannot recover that pair, control recall falls below 1.000, and the test that asserts a perfect control fails.
+Treating a shared provider ID as proof of one registrant is a modelling choice. Real provider-list rows that share a provider ID have been observed reporting different parents, which would mean the fold joins companies that should stay apart. That failure would be visible here. Folding two registrants from different families puts a truth-negative pair inside one truth group, the control run cannot recover that pair, control recall falls below 1.000, and the test that asserts a perfect control fails.
 
 ## Corpus
 
@@ -54,7 +54,7 @@ The corpus has 12 Form 499 filers folded into 11 registrants. It is authored rat
 
 ## Input record shape
 
-The tables below list every field the builder receives in the withheld run and how much of each field the corpus fills in. The empty fields would not change the result because the family path does not read them (see "What would move this number" below). The table shows them so readers do not mistake corpus sparsity for the reason the withheld run scores zero.
+The tables below list every field the builder receives in the withheld run and how much of each field the corpus fills in. Filling in the empty fields would not change the result, because nothing on the family path reads them (see "What would move this number" below). They are listed so that the corpus's sparsity is not mistaken for the reason the withheld run scores zero.
 
 | Form499Row field             | in the withheld input? | populated in the corpus | note                                                                                                                                                                               |
 | ---------------------------- | ---------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -99,7 +99,7 @@ The tables below list every field the builder receives in the withheld run and h
 | total registrant pairs scored | 55                         | 55                         |
 | input SHA-256                 | `b20909439dcf6bc0…`        | `86f4c23616835425…`        |
 
-The withheld run reports F1 as `N/A` rather than `0.000` on purpose. Precision is undefined when a prediction makes no positive calls, because its denominator is zero, and an F1 built on an undefined precision is also undefined. A run with no predicted pairs differs from one that predicts pairs and gets every pair wrong; the latter would show `precision 0.000`.
+The withheld run reports F1 as `N/A` rather than `0.000` on purpose. Precision is undefined when a prediction makes no positive calls, because its denominator is zero, and an F1 built on an undefined precision is also undefined. Recovering nothing because nothing was predicted is a different failure from predicting pairs and getting them all wrong, which would show `precision 0.000`.
 
 ### Same-family pairs, individually
 
@@ -139,11 +139,11 @@ No other part of the build produces an ownership fact, and two deliberate design
 
 Better evidence would not lift the withheld score in this code, and two probes show why.
 
-**Address and contact fields do not affect the score.** The probe filled `hqAddress`, `customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family in the withheld corpus, then rebuilt, re-clustered and re-scored. It produced a byte-identical result with 0 pairs recovered. Those fields are stored as attributes. Neither the family path nor the entity-resolution path reads them, because entity resolution reads only legal names and identifier codes. The result comes from the pipeline's design rather than from gaps in the corpus.
+**Populating the address and contact fields changes nothing.** Filling `hqAddress`, `customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family in the withheld corpus, then rebuilding, re-clustering and re-scoring, gives a byte-identical result with 0 pairs recovered. Those fields are stored as attributes. Neither the family path nor the entity-resolution path reads them, because entity resolution reads only legal names and identifier codes. The result comes from the pipeline's design rather than from gaps in the corpus.
 
-**An ownership edge does not change the score either.** The probe wrote inferred `subsidiary` `filer_edge` rows that joined the same filers to a parent, in the shape a corporate-filing importer is specified to emit. Recall remained at 0.000. Corporate-family membership is read from `filer_family` alone. The family readers query `filer_edge` only to recover the raw company name behind a canonicalized family ID, and never to decide who belongs to a family, which is what this eval scores.
+**Adding an ownership edge changes nothing either.** Writing inferred `subsidiary` `filer_edge` rows that join the same filers to a parent, in the shape a corporate-filing importer is specified to emit, leaves recall at 0.000. Corporate-family membership is read from `filer_family` alone. The family readers query `filer_edge` only to recover the raw company name behind a canonicalized family ID, and never to decide who belongs to a family, which is what this eval scores.
 
-**A channel that writes a `filer_family` row moves this number, and a channel that writes only a `filer_edge` row does not.** The probe injected three ownership `filer_family` rows into the withheld build. Recall rose from 0.000 to 0.500 at precision 1.000. A standing test reruns that probe, so each run checks whether the baseline can be beaten.
+**A channel that writes a `filer_family` row moves this number, and a channel that writes only a `filer_edge` row does not.** Injecting three ownership `filer_family` rows into the withheld build raises recall from 0.000 to 0.500 at precision 1.000. A standing test keeps that probe running, so the claim that this baseline can be beaten is checked on every run.
 
 Anyone using this page as a before-and-after baseline depends on that distinction. A later build scores above 0.000 only if its new evidence lands as `filer_family` membership rows. An importer that writes ownership edges and stops there will score 0.000 again, which would look as if the evidence did not help when in fact nothing read it.
 
