@@ -16,7 +16,7 @@
  *
  *   The code uses `@mailwoman/ban/sdk`'s `cleanLieuDit` for filtering
  *   (header leaks, placeholders, `ancienne commune` prefixes plus rows whose lieu-dit repeats
- *   the commune — 5.0% of filled values). The `synth-fr-lieudit` training
+ *   the commune — 5.0% of filled values). The `rendered-fr-lieudit` training
  *   database reads through, so the index and the database agree on what a lieu-dit is by construction.
  */
 

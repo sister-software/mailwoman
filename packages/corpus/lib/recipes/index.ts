@@ -3,7 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The synthetic-corpus recipe registry. Each recipe ({@link CorpusRecipe}) is what one root-level
+ *   The recipe registry. A recipe derives rows from attested data; `recipes/sources.ts` records which
+ *   operation each one performs, and only the `invented-*` recipes compose a row with no real record
+ *   behind it. Each recipe ({@link CorpusRecipe}) is what one root-level
  *   build script used to be. the `mailwoman corpus slice <recipe>` command dispatches to them. A new
  *   recipe is a new entry here rather than a new script.
  */

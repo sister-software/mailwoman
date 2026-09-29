@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared scaffolding for synthetic-corpus recipes: the seeded LCG PRNG, the tuple reader and
+ *   Shared scaffolding for corpus recipes: the seeded LCG PRNG, the tuple reader and
  *   the canonical → `alignRow` → `LabeledRow` jsonl emit step. A recipe ({@link CorpusRecipe})
- *   supplies only its synthesis and filter. The `mailwoman corpus slice <recipe>` command supplies the I/O.
+ *   supplies only its row construction and filter. The `mailwoman corpus slice <recipe>` command
+ *   supplies the I/O.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

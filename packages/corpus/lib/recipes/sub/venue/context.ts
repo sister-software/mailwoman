@@ -38,7 +38,7 @@ const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 
 /**
  * Load the address skeletons every leg renders onto: GB / US / FR from the house-venue v3 tuples
- * (the same 176,519 real rows the `synth-house-venue` recipe output is built from, so the two
+ * (the same 176,519 real rows the `invented-house-venue` recipe output is built from, so the two
  * recipes' address halves are drawn from one pool), DE and ES streamed out of OpenAddresses.
  */
 export async function loadContextTuples(

@@ -9,8 +9,9 @@
  *   LINZ-derived extracts also supply inputs. The module applies OpenCage templates to
  *   choose ordering and punctuation by country.
  *
- *   Keep emitted `synth-*` source ids stable: they are persisted in built corpora
- *   and referenced by training configs.
+ *   Keep the emitted source ids stable: they are persisted in built corpora and referenced by
+ *   training configs. `recipes/sources.ts` records each one under its operation spelling
+ *   (`rendered-de`) and the `synth-*` spelling it retired on 2026-09-26.
  */
 
 import { formatAddress } from "@mailwoman/codex/address-format"

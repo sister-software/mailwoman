@@ -87,7 +87,7 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
  * Venue names containing street-like words.
  *
  * Avoid leading digit-plus-ordinal forms because they can confuse house-number labels.
- * `synth-house-venue` covers house-number and venue co-occurrence.
+ * `invented-house-venue` covers house-number and venue co-occurrence.
  */
 const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Wall Street Industries",

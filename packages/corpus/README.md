@@ -42,7 +42,7 @@ training pipeline (`corpus-python/`).
 | **`build.ts`**              | Drive the end-to-end build, write `labeled.jsonl` + `quarantine.jsonl` |
 | **`runner.ts`**             | Run one adapter or all of them, and emit the run manifest              |
 | **`synthesizers/*.ts`**     | Synthetic row generators (boundary stress, order variants, etc.)       |
-| **`recipes/index.ts`**      | The synthetic-corpus recipe registry (`CorpusRecipe` by name)          |
+| **`recipes/index.ts`**      | The recipe registry (`CorpusRecipe` by name)                           |
 | **`tools/fetch/index.ts`**  | The acquisition registry — one entry per external source               |
 | **`tools/corpus-stats.ts`** | Per-source and per-tag statistics                                      |
 
@@ -100,7 +100,7 @@ registered-office grammar.
 The field is required on `CorpusAdapter` and carries no default, because the answer is a property of
 the source that only the adapter's author has read. Ten of the 23 adapters here emit a non-premise
 role: four facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
-`usgov-samhsa-treatment-locator`), three mailing (`synth-po-box`, `state-tx-notaries`,
+`usgov-samhsa-treatment-locator`), three mailing (`invented-po-box`, `state-tx-notaries`,
 `usgov-irs-bmf`), two practice (`usgov-nppes`, `state-ny-notaries`) and one registered-office
 (`state-ia-contractors`). A defaulted field would record premise for all ten.
 

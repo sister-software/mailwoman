@@ -6,7 +6,7 @@
  *   Write a coordinate panel that draws evenly across a country's regions.
  *
  *   The default US panel `$MAILWOMAN_DATA_ROOT/eval/coord/us.jsonl` contains 2,000 rows over 7 of the 50 states plus DC.
- *   Five of the 7 states are the five regions `synth-suffix-boundary` draws from. A rate measured on it is a rate
+ *   Five of the 7 states are the five regions `spliced-suffix-boundary` draws from. A rate measured on it is a rate
  *   for those regions. The 97.7-point interior spread is invisible there. No tool in the repository
  *   built the panel that exposed it.
  *

@@ -1959,7 +1959,7 @@
 		},
 		{
 			"term": "synthetic extract",
-			"definition": "A machine-generated training dataset that augments the real-address corpus with targeted variations — reversed word order, missing punctuation, all-caps, boundary-stress patterns. Teaches the model to handle edge cases not present in the reference data.",
+			"definition": "A recipe output that augments the base corpus with targeted variations — reversed word order, missing punctuation, all-caps, boundary-stress patterns. Most are real published records written in a layout rather than fabricated rows; `SourceOperation` in packages/corpus/lib/recipes/sources.ts records which operation each source performs, and only `invented-*` names no real record. Teaches the model to handle edge cases not present in the reference data.",
 			"tags": ["corpus"],
 			"relatedTerms": ["corpus", "parity campaign", "boundary instability"]
 		},

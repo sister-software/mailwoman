@@ -204,7 +204,7 @@ Two changes make non-US OpenAddresses usable here:
    to a US namesake (`Berlin` resolved to a 20k-pop US Berlin, coord ~5,940 km). Pass
    `--default-country DE` (or `none`) for non-US data and the coord drops to ~10 km.
 
-The German _training_ recipe output (`synth-german`, now `packages/corpus/lib/de/recipes/locale.ts`)
+The German _training_ recipe output (`rendered-de`, written by `packages/corpus/lib/de/recipes/locale.ts`)
 renders these real DE tuples in German order via the OpenCage `DE` template, so the
 model learns house-number-after-street and postcode-before-city. Run the German
 before/after with `node scripts/eval-de-coverage.ts <model> <tokenizer> <model-card>`.
