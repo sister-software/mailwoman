@@ -21,7 +21,8 @@
 import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
+
+import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 
 const { values } = parseArguments({
 	options: {
