@@ -102,6 +102,12 @@ export const SurfaceOrigin = {
 	 * publisher, so the components are the source's and the written form is this repository's.
 	 * Distinct from {@link SurfaceOrigin.Composed} because an adapter renders one canonical
 	 * form per record while a recipe varies the form deliberately.
+	 *
+	 * A source id beginning `rendered-` does not take this value.
+	 * `SourceOperation.Rendered` in `#recipes/sources` names a recipe operation with the same word,
+	 * and those recipes record {@link SurfaceOrigin.Composed} because they vary the form.
+	 *
+	 * Read the row's `surface` rather than its source name to learn which of the two produced it.
 	 */
 	Rendered: "rendered",
 	/**

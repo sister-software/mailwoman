@@ -26,10 +26,19 @@
 
 /**
  * What a recipe did to attested data to produce its rows.
+ *
+ * This describes the operation behind a source's id.
+ * The row's `surface` is a separate field that `SurfaceOrigin` in `#types` records,
+ * and the two spell `rendered` for different classifications.
+ *
+ * A `rendered-*` source records `SurfaceOrigin.Composed`, because `renderLocaleRow` draws
+ * on the row's house number and postcode and takes an order, so it varies the written form
+ * rather than writing one canonical form per record.
+ * `SurfaceOrigin.Rendered` belongs to an adapter that writes that one form.
  */
 export const SourceOperation = {
 	/**
-	 * One real record, written in a layout its country uses.
+	 * One real record, written in a layout its country uses, with the form varied across rows.
 	 */
 	Rendered: "rendered",
 	/**
