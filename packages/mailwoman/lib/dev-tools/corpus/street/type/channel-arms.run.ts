@@ -29,7 +29,7 @@
  *   JSON, so an edit to the committed artifact would reach a training run unreviewed.
  *
  *   Usage:
- *   node packages/mailwoman/lib/dev-tools/corpus/street/type-channel-arms.run.ts [--country ES,MX,IT] [--json <out>]
+ *   node packages/mailwoman/lib/dev-tools/corpus/street/type/channel-arms.run.ts [--country ES,MX,IT] [--json <out>]
  */
 
 import { slotNodes } from "@mailwoman/core/decoder"

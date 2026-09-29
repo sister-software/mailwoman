@@ -15,7 +15,7 @@
  *   reimplementation of the artifact's `word_norm` and n-gram rules.
  *
  *   Usage:
- *   node packages/mailwoman/lib/dev-tools/corpus/street/type-lexicon-coverage.run.ts [--show 20] [--json <out>]
+ *   node packages/mailwoman/lib/dev-tools/corpus/street/type/lexicon-coverage.run.ts [--show 20] [--json <out>]
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
