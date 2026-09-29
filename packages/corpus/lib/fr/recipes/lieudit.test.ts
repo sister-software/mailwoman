@@ -13,12 +13,13 @@ import { gzip } from "@mailwoman/core/fs/compression"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { frLieuditRecipe } from "@mailwoman/corpus/fr/recipes/lieudit"
-import type { RecipeOptions } from "@mailwoman/corpus/recipes/scaffold"
-import { defaultRecipeSource } from "@mailwoman/corpus/recipes/sources"
-import type { RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
+
+import { frLieuditRecipe } from "#fr/recipes/lieudit"
+import type { RecipeOptions } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
+import type { RecipeRow } from "#test-kit/corpus-recipe"
 
 const fixtures = new AsyncDisposableStack()
 

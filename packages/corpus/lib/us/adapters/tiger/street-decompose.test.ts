@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { decomposeStreet } from "@mailwoman/corpus/us/adapters/tiger/street-decompose"
 import { describe, expect, it } from "vitest"
+
+import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 
 describe("decomposeStreet", () => {
 	it("leading directional + street type", () => {

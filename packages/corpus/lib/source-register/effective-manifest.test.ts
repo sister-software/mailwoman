@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { describe, expect, it } from "vitest"
+
 import {
 	deriveEffectiveTrainingManifest,
 	effectiveManifestDigest,
@@ -12,8 +14,7 @@ import {
 	provenanceRefusals,
 	type EpochMixtureAudit,
 	type TrainingManifest,
-} from "@mailwoman/corpus/source-register"
-import { describe, expect, it } from "vitest"
+} from "#source-register/index"
 
 const corpusManifest: TrainingManifest = {
 	manifestID: "corpus-training-manifest",

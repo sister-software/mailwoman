@@ -6,8 +6,9 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { promoteGolden } from "@mailwoman/corpus/tools"
 import { expect, it } from "vitest"
+
+import { promoteGolden } from "#tools"
 
 it("counts streamed candidates while filtering them", async () => {
 	await using scratch = await temporaryDirectory("mw-golden-promote-")

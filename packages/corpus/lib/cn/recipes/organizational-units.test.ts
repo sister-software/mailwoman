@@ -4,13 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import {
-	cnOrganizationalUnitsRecipe,
-	labelCNOrganizationalRow,
-} from "@mailwoman/corpus/cn/recipes/organizational-units"
-import { recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
-import { cjkAwareTokenizer } from "@mailwoman/corpus/utils/tokenize"
 import { describe, expect, it } from "vitest"
+
+import { cnOrganizationalUnitsRecipe, labelCNOrganizationalRow } from "#cn/recipes/organizational-units"
+import { recipeRunner } from "#test-kit/corpus-recipe"
+import { cjkAwareTokenizer } from "#utils/tokenize"
 
 const run = recipeRunner("cn-units", cnOrganizationalUnitsRecipe, 11)
 

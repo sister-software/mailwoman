@@ -3,7 +3,7 @@
 **Status:** design approved 2026-09-06. The operator chose export conditions in the owning packages over a new leaf
 package. Implemented 2026-09-07 (PR #2192).
 **Builds on:** the platform-split rule that put `workerd`/`browser` conditions beside `node` in `@mailwoman/core`
-for the license worker (`packages/core/test/integration/worker-bundle.test.ts` is the proof shape), and the
+for the license worker (`packages/core/lib/worker-bundle.integration.test.ts` is the proof shape), and the
 `browser` condition `@mailwoman/neural` already carries on `./onnx-runner`.
 **Precedes:** the Earth app (`2026-09-06-earth-app-design.md`) and the planetary app
 (`2026-09-06-planetary-app-design.md`). Both consume the packages this design fixes, under a second bundler.
@@ -89,9 +89,9 @@ Every bundle walk lives in one place: the `bundle-graph` check in `@mailwoman/re
 conditions a consumer bundles it under. `esbuild` bundles the row, and the check reads the metafile for
 a builtin on a static edge, a dynamic builtin import that no row lists, and files the row says the bundle
 must or must not carry. The same table now holds the two license-key rows under
-`["workerd", "worker", "browser"]` that `packages/core/test/integration/worker-bundle.test.ts` held, and
-the classifier row that `packages/neural/test/unit/browser-graph.test.ts` held. Both files are gone, so
-the repository has one esbuild walk rather than three. `packages/neural/test/integration/browser-slo.test.ts`
+`["workerd", "worker", "browser"]` that `packages/core/lib/worker-bundle.integration.test.ts` held, and
+the classifier row that `packages/neural/lib/browser-graph.test.ts` held. Both files are gone, so
+the repository has one esbuild walk rather than three. `packages/neural/lib/web/browser-slo.integration.test.ts`
 keeps its reduced graph because it measures timing, and it remains the size budget. Subpaths in packages
 that `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-wof-wasm`,
 `resolver-wof-sqlite`) measured clean, and the Earth app's Vite build guards them.

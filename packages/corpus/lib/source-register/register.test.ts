@@ -6,6 +6,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { beforeAll, describe, expect, it } from "vitest"
+
 import {
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
@@ -30,9 +32,8 @@ import {
 	type AddressSourceRegister,
 	type ElectedLicense,
 	type LicenseDecision,
-} from "@mailwoman/corpus/source-register"
-import { AddressRole } from "@mailwoman/corpus/types"
-import { beforeAll, describe, expect, it } from "vitest"
+} from "#source-register/index"
+import { AddressRole } from "#types"
 
 describe("the committed address-source register", () => {
 	let register: AddressSourceRegister

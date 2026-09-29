@@ -246,7 +246,7 @@ them against the literal strings extracted from the current file. The collapse l
 `modal run corpus-python/modal/train_remote.py::sync_v560_bare_postcode` becomes
 `modal run -m launch.sync --version v5.6.0`. The old string appears in `REPRODUCIBILITY.md:28,31`,
 `packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts:24`, `modal/AGENTS.md`, the `night-shift` and
-`training-arc` skills, and the fixture strings in `packages/dev-mcp/test/unit/bash-write-guard.test.ts`. The compiler
+`training-arc` skills, and the fixture strings in `packages/dev-mcp/lib/hooks/bash/write/bash-write-guard.test.ts`. The compiler
 reads none of them, so they are updated as quoted literals per the "Moving a workspace" rule in `AGENTS.md`.
 
 The Bash write guard is unaffected, because `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` matches

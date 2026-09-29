@@ -45,7 +45,7 @@ const PATH_BUILDERS = new Set(["join", "path", "resolve", "resolvePath", "resolv
 const ALLOWED: Record<string, string> = {
 	// The oracle for that layout: a fixture built with the implementation's own helper cannot fail
 	// when the implementation is wrong, so this file spells the path independently.
-	"packages/neural/test/integration/weights/cache.test.ts":
+	"packages/neural/lib/weights/cache.integration.test.ts":
 		"pins the cache layout independently of the helper that builds it",
 	// Probes a foreign scratch project it just created with `npm install`, reading the install
 	// layout from outside because `import.meta.resolve` would answer from the monorepo's graph.
@@ -58,18 +58,18 @@ const ALLOWED: Record<string, string> = {
 	"packages/dev-mcp/lib/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
 	// The oracle for that farm: a fixture built with the implementation's own helper
 	// cannot fail when the implementation is wrong.
-	"packages/dev-mcp/test/unit/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
+	"packages/dev-mcp/lib/worktree/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
 	// Builds a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves.
 	// A fixture without an install layout cannot test Yarn's resolution behavior.
-	"packages/repo-health/test/unit/move/plan.test.ts":
+	"packages/repo-health/lib/move/plan.test.ts":
 		"builds the scratch workspace's install link; nothing exists to resolve yet",
 	// Writes a fixture cache in the npm-prefix layout `weightsCachePackageDir` reads,
 	// spelled out so the cache rung's test stays independent of the helper it exercises.
-	"packages/neural/test/integration/weights/overlay.test.ts":
+	"packages/neural/lib/weights/overlay.integration.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
 	// Plants a fake `@vvago/vale` install under a scratch root so `valeCommand`'s resolution
 	// of the launcher and binary from an installed layout can be tested.
-	"packages/core/test/unit/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
+	"packages/core/lib/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
 	// Links the checkout's own node_modules into the staging tree for `yarn pack`'s
 	// project context, addressing no package-owned path by hand.
 	"packages/release-kit/lib/release/stage.ts":

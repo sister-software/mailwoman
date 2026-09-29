@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { classifySuffixBoundaryStreet } from "@mailwoman/corpus/recipes/street/affix"
 import { describe, expect, test } from "vitest"
+
+import { classifySuffixBoundaryStreet } from "#recipes/street/affix"
 
 describe("suffix-boundary #1569 source classifier", () => {
 	test.each(["Blue Hill Rd", "Cedar Park Avenue", "Stone Ridge Dr", "Sutton Hollow Road"])(
@@ -26,7 +27,7 @@ describe("suffix-boundary #1569 source classifier", () => {
 
 describe("suffix-boundary v2 layout shells (corpus 0.19.0)", () => {
 	test("venue shell draws from the provided real-venue pool, not the six templates", async () => {
-		const { renderRow } = await import("@mailwoman/corpus/recipes/street/affix")
+		const { renderRow } = await import("#recipes/street/affix")
 
 		const base = {
 			house_number: "64",
@@ -60,7 +61,7 @@ describe("suffix-boundary v2 layout shells (corpus 0.19.0)", () => {
 	})
 
 	test("default options reproduce the original street-affix distribution", async () => {
-		const { renderRow } = await import("@mailwoman/corpus/recipes/street/affix")
+		const { renderRow } = await import("#recipes/street/affix")
 
 		const base = {
 			house_number: "12",

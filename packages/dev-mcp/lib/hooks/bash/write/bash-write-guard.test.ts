@@ -1,0 +1,289 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ * @file The refused set and admitted set define this interface. The admitted set determines whether the guard
+ *   remains usable, since a guard that refuses ordinary work gets switched off. The first version refused
+ *   55 of 56 commands from a working session.
+ */
+
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { describe, expect, it } from "vitest"
+
+import { judgeCommand } from "#hooks/bash/write/rules"
+import { runHook } from "#test/hook-harness"
+
+const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "bash", "write", "guard.ts")
+const REPO_ROOT = repoRootPath().replace(/\/$/u, "")
+
+function refusalFor(command: string): string | null {
+	return judgeCommand(command, REPO_ROOT, REPO_ROOT)?.reason ?? null
+}
+
+function guidanceFor(command: string): string | null {
+	return judgeCommand(command, REPO_ROOT, REPO_ROOT)?.guidance ?? null
+}
+
+describe("bash-write-guard: the direct spellings of a file edit", () => {
+	it.each([
+		["a python heredoc", `cd ${REPO_ROOT} && python3 - <<'PY'\nprint("x")\nPY`],
+		["a heredoc writing a module", `cat > packages/core/lib/workspaces.ts <<'TS'\nexport const x = 1\nTS`],
+		["sed in place", `sed -i 's|old|new|' packages/tile-worker/wrangler.toml`],
+		["sed in place, long flag", `sed --in-place 's/a/b/' AGENTS.md`],
+		["sed in place behind a directory change", `cd packages/core && sed -i.bak 's/a/b/' package.json`],
+		["awk in place", `awk -i inplace '{print}' AGENTS.md`],
+		["sort over its input", `sort -o AGENTS.md AGENTS.md`],
+		["an inline node write", `node -e "require('fs').writeFileSync('AGENTS.md', 'x')"`],
+		["an inline node copy", `node -e "require('fs').cpSync('/tmp/x','AGENTS.md')"`],
+		["an inline python copy", `python3 -c "import shutil; shutil.copy('/tmp/x','AGENTS.md')"`],
+		["a redirect into the repository", `echo "{}" > packages/core/tsconfig.json`],
+		["an append into the repository", `echo "rule" >> .gitignore`],
+		["a numbered redirect into the repository", `yarn compile 2> packages/core/errors.log`],
+		["a clobbering redirect", `echo x >| AGENTS.md`],
+		["a redirect whose target this hook cannot read", `echo x > "$OUT/AGENTS.md"`],
+		["an unadmitted command", `curl -o AGENTS.md https://example.com/x`],
+		["a writer behind a wrapper", `env sed -i 's/a/b/' AGENTS.md`],
+		["a writer behind xargs", `git ls-files '*.md' | xargs sed -i 's/a/b/'`],
+		["a writer behind find", `find packages -name '*.toml' -exec sed -i 's/a/b/' {} \\;`],
+		["find deleting", `find packages/core/lib -name '*.ts' -delete`],
+		["a writer inside a command substitution", `echo $(sed -i 's/a/b/' AGENTS.md)`],
+		["a writer after a single ampersand", `true & sed -i 's/a/b/' AGENTS.md`],
+		["a writer in a conditional head", `if sed -i 's/a/b/' AGENTS.md; then echo ok; fi`],
+		// A real brace group still opens a command, because bash's own rule is that `{` opens
+		// one only Whitespace after the brace marks the boundary where the segmenter now splits.
+		["a writer inside a brace group", `{ sed -i 's/a/b/' AGENTS.md; }`],
+		["a writer after an apostrophe in prose", `echo "don't" && sed -i 's/a/b/' AGENTS.md`],
+		["git restoring a path", `git restore packages/core/lib/env.ts`],
+		["git checkout over a pathspec", `git checkout -- packages/core`],
+		["popping the stash", `git stash pop`],
+		["applying a stash entry", `git stash apply 0f4c6a668db23aa251b8d462398d8780105ca9f0`],
+		// The stack is shared across every worktree, so the entry at the top is as likely to be another session's.
+		["dropping the stash with no index", `git stash drop`],
+		["dropping the stash by SHA rather than index", `git stash drop 0f4c6a668db23aa251b8d462398d8780105ca9f0`],
+		["git config writing a manifest", `git config -f packages/core/package.json foo.bar baz`],
+		["npm rewriting a manifest", `npm pkg set scripts.evil=x`],
+		["yarn running an arbitrary program", `yarn dlx replace-in-file a b AGENTS.md`],
+		["yarn running a script through node", `yarn node scripts/rewrite.js`],
+		["vitest rewriting snapshots", `yarn vitest run -u packages/core`],
+		["a copy into the repository", `cp /tmp/x AGENTS.md`],
+		["a removal inside the repository", `rm -rf packages/core/lib`],
+		["a removal escaping derived output through a parent", `rm -rf packages/core/out/../lib`],
+		["a removal whose target this hook cannot read", `rm -rf "$TARGET"`],
+		["a removal of the pinned yarn binary", `rm .yarn/releases/yarn-4.18.0.cjs`],
+		["a removal naming one derived path and one tracked path", `rm -rf packages/core/out packages/core/lib`],
+		["a copy into derived output", `cp /tmp/x packages/core/out/index.js`],
+		["tee into the repository", `yarn compile | tee packages/core/build.log`],
+	])("refuses %s", (_label, command) => {
+		expect(refusalFor(command)).not.toBeNull()
+	})
+
+	it("names the command it did not admit", () => {
+		expect(refusalFor(`curl -sS https://example.com`)).toContain("`curl`")
+	})
+})
+
+describe("bash-write-guard: a Modal launch this shell could kill", () => {
+	// Both spellings have cost a training run.
+	// `timeout 600 modal run -d …` killed the v3.0.0 span-head probe at step ~1000 of 2000
+	// on 2026-07-15 with no checkpoint written; `run_in_background` on `modal run -d …`
+	// was stopped by the host's memory guard on 2026-09-09 and Modal cancelled the
+	// input at step 21,000 of 60,000, last save at 20,000.
+	it.each([
+		["a detached launch", `modal run -d corpus-python/launch/train_remote.py --config x.yaml`],
+		["a detached launch, long flag", `modal run --detach corpus-python/launch/train_remote.py --config x.yaml`],
+		["a timed launch", `timeout 600 modal run -d corpus-python/launch/train_remote.py --config x.yaml`],
+		["a timed Modal command with no detach", `timeout 200 modal run corpus-python/launch/train_remote.py::audit`],
+		["a detached launch behind a directory change", `cd corpus-python && modal run -d launch/train_remote.py`],
+	])("refuses %s", (_label, command) => {
+		expect(refusalFor(command)).not.toBeNull()
+	})
+
+	it("explains process ownership rather than the Write tool", () => {
+		const command = `modal run -d corpus-python/launch/train_remote.py --config x.yaml`
+
+		expect(guidanceFor(command)).toContain("launch-detached.run.ts")
+		expect(guidanceFor(command)).not.toContain("Edit tool")
+	})
+
+	it("still points a file-write refusal at the Write tool", () => {
+		expect(guidanceFor(`sed -i 's/a/b/' AGENTS.md`)).toContain("Edit tool")
+	})
+
+	it("explains removal rather than the Write tool", () => {
+		const guidance = guidanceFor(`rm -rf packages/core/lib`)
+
+		expect(guidance).toContain("git rm")
+		expect(guidance).not.toContain("Edit tool")
+	})
+})
+
+describe("bash-write-guard: GitHub mutations owned by the development MCP", () => {
+	it.each([
+		["creating an issue", `gh issue create --title "Feature" --body "Body"`],
+		["editing an issue", `gh issue edit 2365 --body "Body"`],
+		["commenting on an issue", `gh issue comment 2365 --body "Comment"`],
+		["creating a pull request", `gh pr create --title "Feature" --body "Body"`],
+		["editing a pull request", `gh pr edit 2366 --body "Body"`],
+		["commenting on a pull request", `gh pr comment 2366 --body "Comment"`],
+	])("refuses %s", (_label, command) => {
+		expect(refusalFor(command)).not.toBeNull()
+		expect(guidanceFor(command)).toContain("mwdev_issue")
+		expect(guidanceFor(command)).toContain("mwdev_pull_request")
+	})
+
+	it.each([
+		["viewing an issue", `gh issue view 2365`],
+		["closing an issue", `gh issue close 2365`],
+		["viewing a pull request", `gh pr view 2366`],
+		["watching checks", `gh pr checks 2366 --watch`],
+		["merging a pull request", `gh pr merge 2366 --squash`],
+		["reading a workflow run", `gh run view 36142066728`],
+	])("still admits %s", (_label, command) => {
+		expect(refusalFor(command)).toBeNull()
+	})
+})
+
+describe("bash-write-guard: the work a session actually does", () => {
+	it.each([
+		["a build whose log lands outside the repository", `{ yarn compile; echo "EXIT=$?"; } > /tmp/compile.log 2>&1`],
+		["a test run", `yarn vitest run packages/core --reporter dot 2>&1 | tail -5`],
+		["a search", `grep -rn "readPackageJSON" --include="*.ts" packages | head -20`],
+		["a probe that prints", `node -e "console.log(require('./package.json').version)"`],
+		["a module probe that prints", `node --input-type=module -e "import x from './a.ts'; console.log(x)"`],
+		["a probe writing to stdout", `node -e "process.stdout.write('hi')"`],
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
+		["git staging", `git add -A && git status --porcelain`],
+		// A patch is an artifact the author produced and can dry-run.
+		// It preserves the target when the context does not match.
+		// It also applies a bulk deletion without requiring every removed line to be retyped.
+		["applying a patch", `git apply /tmp/prune.patch`],
+		["dry-running a patch", `git apply --check /tmp/prune.patch`],
+		["a formatter over its own inputs", `npx oxfmt .`],
+		["the formatter writing its derivation", `yarn oxfmt --write packages/core/lib/env.ts`],
+		["the linter applying its own fixes", `yarn oxlint --fix packages/core/lib`],
+		["the linter applying its own fixes, bare", `oxlint --fix packages/core/lib`],
+		["a compiler emitting into out/", `yarn compile`],
+		["discarding output", `git fetch origin main -q 2>/dev/null`],
+		["sed in its reading spelling", `sed -n '10,20p' AGENTS.md`],
+		["a pipeline of readers", `git ls-files '*.ts' | xargs wc -l | sort -rn | head -5`],
+		["a loop over admitted commands", `for f in a b c; do wc -l "$f"; done`],
+		["a subshell group piped into a reader", `(git diff --name-only HEAD; git diff --cached --name-only) | sort -u`],
+		["process substitution as an argument", `comm -12 <(sort /tmp/a.txt) /tmp/b.txt`],
+		["reading the stash", `git stash list`],
+		// This command writes no file.
+		// The standing rule requires clearing an entry after restoration.
+		// The explicit index is the condition: it is what stops a bare `drop` from
+		// silently taking another session's `stash@{0}`.
+		["dropping a named stash entry", `git stash drop stash@{0}`],
+		["dropping a named stash entry further down the stack", `git stash drop stash@{12}`],
+		// A brace glued to a word is part of that word. The splitter would read each example as two segments, with the second
+		// The next segment started with a digit. The guard refused the read-only command with
+		// "`1` is not on the admitted command list".
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
+		["a reflog selector", `git rev-parse HEAD@{1}`],
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
+		["an upstream selector", `git log @{upstream}..HEAD --oneline`],
+		["a brace expansion", `wc -l packages/core/lib/{env,paths}.ts`],
+		["switching branch", `git checkout -b feature/x`],
+		["a conditional", `if test -f AGENTS.md; then head -1 AGENTS.md; fi`],
+		["a scratch directory", `mkdir -p /tmp/scratch && rm -rf /tmp/scratch`],
+		// A directory has no content for the symbol precheck to read.
+		// Git also leaves empty directories untracked.
+		// The hook admits this path inside the tree while it refuses other path writers.
+		["a directory inside the tree", `mkdir -p packages/mailwoman/lib/dev-tools/codex`],
+		["the state directory a linked session writes", `mkdir -p .claude/state`],
+		["clearing a workspace's build output", `rm -rf packages/repo-health/out`],
+		[
+			"removing a declaration map the compiler orphaned",
+			`rm -f packages/repo-health/out/checks/module-surface.d.ts.map`,
+		],
+		["removing a build cache", `rm packages/core/tsconfig.tsbuildinfo`],
+		// Git tracks no path under `scratchpad/`, so a removal there discards only scratch work.
+		["removing a stale scratchpad document", `rm scratchpad/2026-08-21-coverage-miss-decomposition.md`],
+		["removing a dated scratchpad directory", `rm -rf scratchpad/2026-08-21`],
+		["removing a dependency install before a clean install", `rm -rf node_modules && yarn install`],
+		["clearing build output by absolute path", `rm -rf ${REPO_ROOT}/packages/core/out`],
+		["a copy out of the repository", `cp AGENTS.md /tmp/`],
+		["a log captured through tee outside the tree", `yarn compile 2>&1 | tee /tmp/compile.log`],
+		["a timeout around a test run", `timeout 600 yarn test`],
+		["this repository's operator CLI", `yarn mwops health all`],
+		[
+			"a short Modal command with no detach and no timeout",
+			`modal run corpus-python/launch/train_remote.py::sync_v540`,
+		],
+		["a Modal volume read", `modal volume ls mailwoman-training /output-v540/checkpoints`],
+		[
+			"the detached launcher itself",
+			`node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log /tmp/r.log -- modal run -d x.py`,
+		],
+		["a release checksum", `sha256sum /tmp/package.tgz`],
+		["a database probe", `sqlite3 /tmp/wof.db 'select count(*) from place'`],
+		["an environment assignment", `MAILWOMAN_DATA_ROOT=\${HOME}/data yarn test`],
+		// A quoted value used to split the assignment into two words, so the head became
+		// the quote placeholder and the `quoted` refusal — a word absent from the input,
+		// for a command admitted the moment the quotes came off.
+		// A value with `$PWD` or a space requires quoting in ordinary shell syntax.
+		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/srv/mailwoman-data/x" yarn test`],
+		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node config/vale/check-rules.ts`],
+		// A quote nested inside another kind of quote.
+		// The pair must be read as one span.
+		// Mis-pairing it leaves a stray delimiter that swallows the rest of the command.
+		// The head then comes from inside the `-e` script.
+		["a grep pattern quoting a JSON key", `grep -rc '"spliterator": "^6.5.0"' package.json packages/*/package.json`],
+		[
+			"that grep before a multi-line node probe",
+			`grep -rc '"spliterator": "^6.5.0"' package.json\nnode --input-type=module -e "\nconst { smartSnakeCase } = await import('spliterator')\nconsole.log(smartSnakeCase('x'))\n" 2>&1 | tail -6`,
+		],
+		["a redirect after changing directory", `cd /tmp && echo hi > probe.txt`],
+		["a home-relative redirect", `echo x > ~/notes.txt`],
+		// `\b` ends a word at a hyphen, so the arbitrary-program rule read this check's
+		// own name as `yarn node …` and refused a read-only guard.
+		// The subcommand has to be a whole argument.
+		["a health check whose name starts with a refused subcommand", `yarn mwops health node-modules-reacharound`],
+		["a script whose name starts with a refused subcommand", `yarn exec-plan --dry-run`],
+	])("admits %s", (_label, command) => {
+		expect(refusalFor(command)).toBeNull()
+	})
+})
+
+describe("bash-write-guard: the hook around the judgement", () => {
+	it("answers a deny decision on stdout", () => {
+		const output = runHook(HOOK, {
+			hook_event_name: "PreToolUse",
+			tool_name: "Bash",
+			cwd: REPO_ROOT,
+			tool_input: { command: `sed -i 's/a/b/' AGENTS.md` },
+		})
+
+		expect(output.hookSpecificOutput?.permissionDecision).toBe("deny")
+		expect(output.hookSpecificOutput?.permissionDecisionReason).toContain("Edit tool")
+	})
+
+	it("denies a Modal launch through the adapter, with the launcher in the reason", () => {
+		const output = runHook(HOOK, {
+			hook_event_name: "PreToolUse",
+			tool_name: "Bash",
+			cwd: REPO_ROOT,
+			tool_input: { command: `modal run -d corpus-python/launch/train_remote.py --config x.yaml` },
+		})
+
+		expect(output.hookSpecificOutput?.permissionDecision).toBe("deny")
+		expect(output.hookSpecificOutput?.permissionDecisionReason).toContain("launch-detached.run.ts")
+	})
+
+	it("ignores a tool that is not Bash", () => {
+		const output = runHook(HOOK, {
+			tool_name: "Write",
+			cwd: REPO_ROOT,
+			tool_input: { command: `sed -i 's/a/b/' AGENTS.md` },
+		})
+
+		expect(output.hookSpecificOutput).toBeUndefined()
+	})
+
+	it("admits an unreadable payload rather than halting the shell", () => {
+		expect(runHook(HOOK, "{not json")).toEqual({})
+	})
+})

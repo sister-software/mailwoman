@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { corpusDirectoryName } from "@mailwoman/corpus/directory"
 import { describe, expect, it } from "vitest"
+
+import { corpusDirectoryName } from "#directory"
 
 describe("corpusDirectoryName", () => {
 	it("composes the directory from a version carrying no prefix", () => {

@@ -8,14 +8,15 @@
  */
 
 import { mulberry32 } from "@mailwoman/core/random"
+import { describe, expect, it } from "vitest"
+
 import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,
 	type SynthesizedBoundaryStressRow,
-} from "@mailwoman/corpus/synthesizers/boundary-stress"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
-import { describe, expect, it } from "vitest"
+} from "#synthesizers/boundary-stress"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
 	return {

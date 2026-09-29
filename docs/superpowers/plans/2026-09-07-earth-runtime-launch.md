@@ -136,7 +136,7 @@ git commit -m "feat(earth): the real geocoder runtime is application code; the s
 
 **Files:**
 
-- Move: `docs/src/pages/demo/{_compare,_controls,_debug,_devDrawer,_mapControls}.tsx`, `styles.module.css`, `geocoder.module.css`, `_debug.module.css` → `packages/earth/lib/panels/`; `docs/src/components/{AboutDemo,PermalinkButton,VersionCompare,LayerToggleControl}/` → `packages/earth/lib/panels/<name>/`; `docs/src/components/ModelVisualizer/` (both visualizers, styles, helpers) and `docs/src/components/DashboardMap/map-debug.ts` → `packages/earth/lib/explorers/`; the docs tests of those components (`grep -rl "components/ModelVisualizer\|VersionCompare\|LayerToggleControl" docs/test/unit`) → `packages/earth/test/unit/`
+- Move: `docs/src/pages/demo/{_compare,_controls,_debug,_devDrawer,_mapControls}.tsx`, `styles.module.css`, `geocoder.module.css`, `_debug.module.css` → `packages/earth/lib/panels/`; `docs/src/components/{AboutDemo,PermalinkButton,VersionCompare,LayerToggleControl}/` → `packages/earth/lib/panels/<name>/`; `docs/src/components/ModelVisualizer/` (both visualizers, styles, helpers) and `docs/src/components/DashboardMap/map-debug.ts` → `packages/earth/lib/explorers/`; the docs tests of those components (`grep -rl "components/ModelVisualizer\|VersionCompare\|LayerToggleControl" docs`) → `packages/earth/lib/`
 - Delete: `docs/src/components/ResultPanel/` (the app uses `@mailwoman/react/map`'s `ResultPanel`; if the docs copy renders something the react one does not, that difference moves into the react component as a prop, once)
 - Modify: `packages/earth/lib/App.tsx` (the `panels` composition from `docs/src/pages/demo/index.tsx` lines 35–108), `packages/earth/lib/routes.ts` (`/debug` opens the drawer; `/trace` mounts `LiveModelVisualizer`)
 
@@ -235,7 +235,7 @@ git mv DemoMap.tsx MapCanvas.tsx; git mv DemoMap.stories.tsx MapCanvas.stories.t
 git mv DemoControls.tsx GeocoderControls.tsx
 git mv useDemoGeocode.ts useGeocode.ts
 cd ../runtime && git mv useDemoRuntime.ts useReleaseRuntime.ts && git mv useDemoRuntime.stories.tsx useReleaseRuntime.stories.tsx && cd ../../../..
-git mv packages/react/test/unit/map/GeocoderDemo.test.tsx packages/react/test/unit/map/Geocoder.test.tsx
+git mv packages/react/lib/map/GeocoderDemo.test.tsx packages/react/lib/map/Geocoder.test.tsx
 ```
 
 Then apply the rename map with word-boundary substitutions across the listed trees:
@@ -292,7 +292,7 @@ Expected: pass on the real deployment. The parity list from the spec's definitio
 - Create: `docs/src/pages/demo/index.tsx` (redirect), `docs/src/pages/debug.tsx` (redirect), `docs/src/pages/trace.tsx` (redirect)
 - Rename: `docs/src/contexts/DemoEmbed.tsx` → `RuntimeEmbed.tsx` (`useRuntimeEmbed`, `RuntimeEmbedProvider`); `docs/plugins/demo-assets/` → `docs/plugins/runtime-assets/`
 - Modify: `docs/docusaurus.config.ts` (navbar and footer `/demo` → `https://earth.mailwoman.ai`, the plugin path, sitemap ignore patterns), `docs/package.json` (dependencies per knip, `imports["#shared/*"]` and `#e2e` gone), `.github/workflows/docs-build.yml` (paths), `docs/.gitignore` (the staged-asset entries that remain), `AGENTS.md` (the `apps/web-demo` line; the docs row; the `demo-assets` mention in the fs bullet if any)
-- Delete: whatever remains under `docs/src/shared/` except `maplibre-worker.ts` and `maplibre-worker-url.ts`; `docs/test/unit/plugins/demo-assets/` moves with the plugin rename
+- Delete: whatever remains under `docs/src/shared/` except `maplibre-worker.ts` and `maplibre-worker-url.ts`; `docs/plugins/demo-assets/` moves with the plugin rename
 
 - [ ] **Step 1: The redirects**
 

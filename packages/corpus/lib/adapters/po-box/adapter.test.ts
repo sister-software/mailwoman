@@ -1,7 +1,8 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { createPoBoxAdapter, PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/po-box/adapter"
 import { describe, expect, it } from "vitest"
+
+import { createPoBoxAdapter, PO_BOX_ADAPTER_ID } from "#adapters/po-box/adapter"
 
 async function writeFixture(rows: Array<Record<string, unknown>>): Promise<string> {
 	const path = tempRootPath(`po-box-adapter-fixture-${Math.random().toString(36).slice(2)}.jsonl`)

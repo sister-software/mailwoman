@@ -1,0 +1,308 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilder } from "path-ts"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+import {
+	type GeocodeAddress,
+	type RawGeocode,
+	delimiterFor,
+	geocodeAddressVia,
+	inferMapping,
+	ingestRows,
+	streamRows,
+} from "#ingest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
+const CSV = `id,name,org,street,city,state,zip,phone,email
+c1,Dr. Robert Smith,Acme Health LLC,123 Main St,Portland,OR,97201,503-555-0100,Bob@Acme.org
+c2,Maria Garcia,,50 Elm Ave,Seattle,WA,98101,,maria@example.com`
+
+describe("inferMapping", () => {
+	it("maps a tidy header to the obvious fields", () => {
+		const m = inferMapping(["id", "name", "org", "street", "city", "state", "zip", "phone", "email"])
+		expect(m).toMatchObject({ id: "id", organization: "org", phone: "phone", email: "email", name: "name" })
+		expect(m.address).toEqual(["street", "city", "state", "zip"])
+	})
+
+	it("reads a real bespoke header (TX HHSC facility), id beating org despite 'Facility'", () => {
+		const m = inferMapping([
+			"Facility ID",
+			"Facility Name",
+			"Physical Address",
+			"Physical Address CITY",
+			"Physical Address State",
+			"Physical Address Zipcode",
+			"Facility Phone Number",
+		])
+
+		expect(m.id).toBe("Facility ID")
+		expect(m.organization).toBe("Facility Name")
+		expect(m.phone).toBe("Facility Phone Number")
+
+		expect(m.address).toEqual([
+			"Physical Address",
+			"Physical Address CITY",
+			"Physical Address State",
+			"Physical Address Zipcode",
+		])
+	})
+
+	it("prefers org over a person name, and a dedicated email over the generic sweep", () => {
+		const m = inferMapping(["Organization Name", "Contact First Name", "Contact Last Name", "Contact E-mail"])
+		expect(m.organization).toBe("Organization Name")
+		expect(m.email).toBe("Contact E-mail")
+		expect(m.name).toEqual(["Contact First Name", "Contact Last Name"])
+	})
+
+	it("matches whole tokens — 'Statement' is not an address 'state'", () => {
+		expect(inferMapping(["Statement", "Notes"])).toEqual({})
+	})
+})
+
+describe("ingestRows", () => {
+	// A stub geocoder.
+	// The real one is injected at the CLI boundary.
+	const stubGeocode: GeocodeAddress = (raw) => ({
+		components: {},
+		canonicalKey: raw
+			.toLowerCase()
+			.replaceAll(/[^a-z0-9]+/g, " ")
+			.trim()
+			.replaceAll(/\s+/g, "|"),
+		formatted: raw,
+		geocode: { coordinate: { latitude: 45.5, longitude: -122.6 }, tier: "address_point", uncertaintyMeters: 1 },
+	})
+
+	const mapping = {
+		id: "id",
+		name: "name",
+		organization: "org",
+		address: ["street", "city", "state", "zip"],
+		phone: "phone",
+		email: "email",
+	}
+
+	// `streamRows` reads a path, so the fixture goes to disk once for the block.
+	let csvPath: PathBuilder
+
+	beforeAll(async () => {
+		csvPath = fixtures.use(await temporaryDirectory("mw-ingest-")).path("rows.csv")
+
+		await writeLocalTextFile(CSV, csvPath)
+	})
+
+	it("normalizes each row: parsed name, canonical org, geocoded address, phone/email", async () => {
+		const [a, b] = await ingestRows(streamRows(csvPath), mapping, { geocodeAddress: stubGeocode })
+
+		expect(a!.id).toBe("c1")
+		expect(a!.name).toEqual({ prefix: "Dr.", given: "Robert", family: "Smith" })
+		expect(a!.organization?.canonical).toBe("acme health")
+		expect(a!.organization?.designations).toEqual(["llc"])
+		expect(a!.phone).toBe("503-555-0100")
+		expect(a!.email).toBe("bob@acme.org")
+		expect(a!.address?.geocode?.tier).toBe("address_point")
+		expect(a!.address?.formatted).toBe("123 Main St, Portland, OR, 97201")
+
+		expect(b!.name).toEqual({ given: "Maria", family: "Garcia" })
+		expect(b!.organization).toBeUndefined()
+		expect(b!.phone).toBeUndefined()
+	})
+
+	it("comma-joins a multi-column address by default, space when overridden (#694 flip)", async () => {
+		const [dflt] = await ingestRows(streamRows(csvPath), mapping, { geocodeAddress: stubGeocode })
+		expect(dflt!.address?.formatted).toBe("123 Main St, Portland, OR, 97201")
+		const spaced = { geocodeAddress: stubGeocode, addressSeparator: " " }
+		const [space] = await ingestRows(streamRows(csvPath), mapping, spaced)
+		expect(space!.address?.formatted).toBe("123 Main St Portland OR 97201")
+	})
+
+	it("falls back to the row index when no id column maps", async () => {
+		const [first] = await ingestRows(streamRows(csvPath), { name: "name" })
+		expect(first!.id).toBe("0")
+	})
+
+	it("leaves the address unresolved when no geocoder is injected", async () => {
+		const [first] = await ingestRows(streamRows(csvPath), mapping)
+		expect(first!.address).toBeUndefined()
+	})
+})
+
+describe("streamRows (lazy delimited ingest)", () => {
+	const dirs: PathBuilder[] = []
+
+	const tmp = async (): Promise<PathBuilder> => {
+		const d = fixtures.use(await temporaryDirectory("mw-stream-")).path
+		dirs.push(d)
+
+		return d
+	}
+
+	afterAll(() => Promise.all(dirs.map((d) => removePathIfPresent(d))))
+
+	it("infers the delimiter from the extension", () => {
+		expect(delimiterFor("/x/data.tsv")).toBe("tab")
+		expect(delimiterFor("/x/DATA.TSV")).toBe("tab")
+		expect(delimiterFor("/x/data.csv")).toBe("comma")
+		expect(delimiterFor("/x/data")).toBe("comma")
+	})
+
+	it("streams a TSV as header-keyed rows, preserving the original header names", async () => {
+		const file = (await tmp())("f.tsv")
+
+		await writeLocalTextFile(
+			"Facility Name\tPhysical Address\tCITY\nAVIR\t214 Jones Rd\tElkhart\nFoo Clinic\t1 Main St\tPalestine\n",
+			file
+		)
+
+		const rows: Record<string, string>[] = []
+
+		for await (const r of streamRows(file)) {
+			rows.push(r)
+		}
+
+		expect(rows).toHaveLength(2)
+		expect(Object.keys(rows[0]!)).toEqual(["Facility Name", "Physical Address", "CITY"])
+		expect(rows[0]!["Facility Name"]).toBe("AVIR")
+		expect(rows[1]!["CITY"]).toBe("Palestine")
+	})
+
+	it("preserves empty fields — consecutive delimiters do not collapse (NPPES-style alignment)", async () => {
+		// A row with consecutive empties must keep every column, or every value
+		// after the empty run shifts left.
+		const file = (await tmp())("f.tsv")
+		await writeLocalTextFile("npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n", file)
+		const rows: Record<string, string>[] = []
+
+		for await (const r of streamRows(file)) {
+			rows.push(r)
+		}
+
+		expect(rows).toHaveLength(1)
+		expect(rows[0]).toEqual({ npi: "123", org: "", last: "", first: "", state: "NE" })
+	})
+
+	it("parses quoted fields — embedded delimiters, embedded newlines, doubled quotes (NPPES-style quoting)", async () => {
+		const file = (await tmp())("f.csv")
+		await writeLocalTextFile('npi,org,city\n123,"Acme, LLC",Portland\n456,"Multi\nLine ""Quoted"" Org",Seattle\n', file)
+		const rows: Record<string, string>[] = []
+
+		for await (const r of streamRows(file)) {
+			rows.push(r)
+		}
+
+		expect(rows).toHaveLength(2)
+		expect(rows[0]).toEqual({ npi: "123", org: "Acme, LLC", city: "Portland" })
+		expect(rows[1]).toEqual({ npi: "456", org: 'Multi\nLine "Quoted" Org', city: "Seattle" })
+	})
+
+	it("normalizes CRLF row terminators — no stray \\r on the last column or header keys", async () => {
+		const file = (await tmp())("f.csv")
+		await writeLocalTextFile("npi,state\r\n123,NE\r\n", file)
+		const rows: Record<string, string>[] = []
+
+		for await (const r of streamRows(file)) {
+			rows.push(r)
+		}
+
+		expect(rows).toEqual([{ npi: "123", state: "NE" }])
+	})
+
+	it("closes the file handle on an early break (no leaked fd)", async () => {
+		const file = (await tmp())("f.tsv")
+		await writeLocalTextFile("a\tb\n1\t2\n3\t4\n5\t6\n", file)
+		let count = 0
+
+		for await (const _ of streamRows(file)) {
+			count++
+
+			if (count === 1) break
+		}
+
+		expect(count).toBe(1)
+		const all: Record<string, string>[] = []
+
+		for await (const r of streamRows(file)) {
+			all.push(r)
+		}
+
+		expect(all).toHaveLength(3)
+	})
+
+	it("threads straight into ingestRows (async-iterable source)", async () => {
+		const file = (await tmp())("f.tsv")
+		await writeLocalTextFile("name\taddress\nJohn Smith\t123 Main St\nMaria Garcia\t50 Elm Ave\n", file)
+		const records = await ingestRows(streamRows(file), { name: "name", address: "address" })
+		expect(records).toHaveLength(2)
+		expect(records[0]!.name).toEqual({ given: "John", family: "Smith" })
+		expect(records[1]!.name).toEqual({ given: "Maria", family: "Garcia" })
+	})
+})
+
+describe("geocodeAddressVia", () => {
+	const components = {
+		house_number: "123",
+		street: "Main",
+		street_suffix: "St",
+		locality: "Portland",
+		region: "OR",
+		postcode: "97201",
+		country: "US",
+	}
+
+	it("wires parse + geocode into a PostalAddress with the canonical key and coordinate", async () => {
+		const geocoded = geocodeAddressVia({
+			parse: () => components,
+			geocode: (): RawGeocode => ({ lat: 45.5, lon: -122.6, resolution_tier: "interpolated", uncertainty_m: 120 }),
+			country: "US",
+		})
+
+		const address = await geocoded("123 Main St, Portland OR 97201")
+		expect(address?.canonicalKey).toBe("123|main|st|portland|or|97201|us")
+		expect(address?.geocode?.coordinate).toEqual({ latitude: 45.5, longitude: -122.6 })
+		expect(address?.geocode?.tier).toBe("interpolated")
+		expect(address?.geocode?.uncertaintyMeters).toBe(120)
+	})
+
+	it("returns the parsed-but-unlocated address when geocoding can't place it", async () => {
+		const geocoded = geocodeAddressVia({ parse: () => components, geocode: () => null })
+		const address = await geocoded("123 Main St")
+		expect(address?.canonicalKey).toBeTruthy()
+		expect(address?.geocode).toBeUndefined()
+	})
+
+	it("parseAndGeocode variant: one combined call wires the same PostalAddress + coordinate", async () => {
+		let calls = 0
+
+		const geocoded = geocodeAddressVia({
+			parseAndGeocode: async () => {
+				calls++
+
+				return { components, geo: { lat: 45.5, lon: -122.6, resolution_tier: "interpolated", uncertainty_m: 120 } }
+			},
+			country: "US",
+		})
+
+		const address = await geocoded("123 Main St, Portland OR 97201")
+		expect(calls).toBe(1)
+		expect(address?.canonicalKey).toBe("123|main|st|portland|or|97201|us")
+		expect(address?.geocode?.coordinate).toEqual({ latitude: 45.5, longitude: -122.6 })
+		expect(address?.geocode?.tier).toBe("interpolated")
+	})
+
+	it("parseAndGeocode with geo null returns the parsed-but-unlocated address", async () => {
+		const geocoded = geocodeAddressVia({ parseAndGeocode: async () => ({ components, geo: null }) })
+		const address = await geocoded("123 Main St")
+		expect(address?.canonicalKey).toBeTruthy()
+		expect(address?.geocode).toBeUndefined()
+	})
+})

@@ -1,0 +1,61 @@
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilder } from "path-ts"
+import { afterAll, describe, expect, it } from "vitest"
+
+import { normalizeCSV } from "#ingest"
+import type { SourceRecord } from "#types"
+
+const dir = await temporaryDirectory("normalize-csv-")
+afterAll(() => dir[Symbol.asyncDispose]())
+
+async function fixture(name: string, text: string): Promise<PathBuilder> {
+	const p = dir.path(name)
+
+	await writeLocalFile(text, p)
+
+	return p
+}
+
+async function collect(gen: AsyncIterable<SourceRecord>): Promise<SourceRecord[]> {
+	const out: SourceRecord[] = []
+
+	for await (const r of gen) {
+		out.push(r)
+	}
+
+	return out
+}
+
+const MAPPING = { id: "id", name: "name", organization: "org", address: ["addr", "city", "state"] }
+
+describe("normalizeCSV", () => {
+	it("Streams normalized records (name parsed, org canonicalized without geocode)", async () => {
+		const p = await fixture(
+			"people.csv",
+			"id,name,org,addr,city,state\n" +
+				"c1,Dr. Robert Smith,Acme Health LLC,123 Main St,Portland,OR\n" +
+				"c2,Maria Garcia,,50 Elm Ave,Seattle,WA\n"
+		)
+
+		const recs = await collect(normalizeCSV(p, { mapping: MAPPING }))
+		expect(recs).toHaveLength(2)
+
+		const row0 = recs[0]!
+		const row1 = recs[1]!
+
+		expect(row0.id).toBe("c1")
+		expect(row0.name?.family).toBe("Smith")
+		expect(row0.organization).toBeTruthy()
+		expect(row0.address).toBeUndefined()
+		expect(row0.raw).toMatchObject({ addr: "123 Main St", state: "OR" })
+		expect(row1.organization).toBeUndefined()
+	})
+
+	it("falls back to the row index for a missing id", async () => {
+		const p = await fixture("no-id.csv", "name,addr\nJohn Doe,1 A St\nJane Roe,2 B St\n")
+		const recs = await collect(normalizeCSV(p, { mapping: { name: "name", address: "addr" } }))
+
+		expect(recs.map((r) => r.id)).toEqual(["0", "1"])
+	})
+})

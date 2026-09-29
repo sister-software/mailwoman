@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { describe, expect, it } from "vitest"
+
 import {
 	compileLicenseExcludes,
 	createLicenseVerdictCache,
@@ -11,8 +13,7 @@ import {
 	LicensePolicy,
 	LicenseRefusalKind,
 	licenseVerdict,
-} from "@mailwoman/corpus/utils/license"
-import { describe, expect, it } from "vitest"
+} from "#utils/license"
 
 /**
  * A license value measured in `v0.7.0-de-holdout`, where the grant is unresolved

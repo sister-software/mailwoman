@@ -7,8 +7,9 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { buildInputsPath, readBuildInputs } from "@mailwoman/corpus/build/inputs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
+import { buildInputsPath, readBuildInputs } from "#build/inputs"
 
 let scratch: TemporaryDirectory
 

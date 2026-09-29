@@ -8,17 +8,18 @@ import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
+import { beforeEach, describe, expect, it } from "vitest"
+
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
 import {
 	FCC_BDC_ADAPTER_ID,
 	FCC_BDC_DEFAULT_LICENSE,
 	buildPostcode,
 	createFccBdcAdapter,
-} from "@mailwoman/corpus/us/adapters/fcc-bdc/adapter"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilder } from "path-ts"
-import { beforeEach, describe, expect, it } from "vitest"
+} from "#us/adapters/fcc-bdc/adapter"
 
 const scratch = useScratchDir("fcc-bdc")
 

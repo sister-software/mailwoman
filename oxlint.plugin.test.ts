@@ -403,35 +403,3 @@ test("no-await-using-sync-disposable leaves an asynchronously-disposed resource 
 
 	expect(reportsFor("no-await-using-sync-disposable", awaitUsingProgram(stack))).toEqual([])
 })
-
-function importNode(type: string, specifier: string): TestNode {
-	const source = { type: "Literal", value: specifier, range: [0, 0] as [number, number] }
-
-	return type === "TSImportType" ? { type, range: [0, 0], argument: source } : { type, range: [0, 0], source }
-}
-
-function viCall(method: string, specifier: string): TestNode {
-	return {
-		type: "CallExpression",
-		range: [0, 0],
-		callee: { type: "MemberExpression", object: { name: "vi" }, property: { name: method } },
-		arguments: [{ type: "Literal", value: specifier, range: [0, 0] }],
-	}
-}
-
-test("no-private-import-in-test reports a # specifier in every import position", () => {
-	for (const type of ["ImportDeclaration", "ExportNamedDeclaration", "ExportAllDeclaration", "ImportExpression"]) {
-		expect(reportsFor("no-private-import-in-test", importNode(type, "#env"))).toHaveLength(1)
-	}
-
-	expect(reportsFor("no-private-import-in-test", importNode("TSImportType", "#env"))).toHaveLength(1)
-	expect(reportsFor("no-private-import-in-test", viCall("mock", "#env"))).toHaveLength(1)
-	expect(reportsFor("no-private-import-in-test", viCall("importActual", "#env"))[0]).toMatch(/public exports/)
-})
-
-test("no-private-import-in-test leaves public, relative and unrelated specifiers alone", () => {
-	expect(reportsFor("no-private-import-in-test", importNode("ImportDeclaration", "@mailwoman/core/env"))).toEqual([])
-	expect(reportsFor("no-private-import-in-test", importNode("ImportDeclaration", "./fixtures.ts"))).toEqual([])
-	expect(reportsFor("no-private-import-in-test", viCall("mock", "@mailwoman/bdc/env"))).toEqual([])
-	expect(reportsFor("no-private-import-in-test", viCall("stubEnv", "#not-a-specifier"))).toEqual([])
-})

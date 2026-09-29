@@ -10,10 +10,11 @@
  */
 
 import { CA_PROVINCES } from "@mailwoman/codex/ca"
-import { defaultRecipeSource } from "@mailwoman/corpus/recipes/sources"
-import { trailingRegionRecipe } from "@mailwoman/corpus/recipes/trailing-region"
-import { recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
+
+import { defaultRecipeSource } from "#recipes/sources"
+import { trailingRegionRecipe } from "#recipes/trailing-region"
+import { recipeRunner } from "#test-kit/corpus-recipe"
 
 const run = recipeRunner("trailing-region", trailingRegionRecipe, 901)
 

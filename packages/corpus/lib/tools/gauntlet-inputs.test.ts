@@ -5,8 +5,9 @@
  * @file Tests the board-input register that recipes consult and the rows it must contain.
  */
 
-import { normalizeGauntletSurface, readGauntletInputs } from "@mailwoman/corpus/tools/gauntlet-inputs"
 import { beforeAll, describe, expect, it } from "vitest"
+
+import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-inputs"
 
 let inputs: ReadonlySet<string>
 

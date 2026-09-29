@@ -1,0 +1,132 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ * Tests two GeoNames postal-fold rules: stored names match the sanitized-query token shape. Centroids are medoids rather than off-settlement means.
+ */
+
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { describe, expect, it } from "vitest"
+
+import { ingestGeonamesPostal, normalizePostcodeName } from "#geonames"
+import type { WOFDatabase } from "#schema"
+
+describe("normalizePostcodeName (the #920 name law)", () => {
+	it("strips the spaced CZ/SK form to the query-token shape", () => {
+		expect(normalizePostcodeName("110 00")).toBe("11000")
+	})
+
+	it("strips the dashed PL form", () => {
+		expect(normalizePostcodeName("11-041")).toBe("11041")
+	})
+
+	it("keeps plain alphanumerics whole", () => {
+		expect(normalizePostcodeName("8281")).toBe("8281")
+		expect(normalizePostcodeName("AD500")).toBe("AD500")
+	})
+})
+
+async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
+	const db = DatabaseClient.temp<WOFDatabase>()
+
+	db.exec(`
+		CREATE TABLE spr (
+			id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL DEFAULT -1, name TEXT NOT NULL DEFAULT '',
+			placetype TEXT NOT NULL DEFAULT '', country TEXT NOT NULL DEFAULT '',
+			latitude REAL NOT NULL DEFAULT 0, longitude REAL NOT NULL DEFAULT 0,
+			min_latitude REAL NOT NULL DEFAULT 0, min_longitude REAL NOT NULL DEFAULT 0,
+			max_latitude REAL NOT NULL DEFAULT 0, max_longitude REAL NOT NULL DEFAULT 0,
+			is_current INTEGER NOT NULL DEFAULT 1, is_deprecated INTEGER NOT NULL DEFAULT 0,
+			is_ceased INTEGER NOT NULL DEFAULT 0, is_superseded INTEGER NOT NULL DEFAULT 0,
+			is_superseding INTEGER NOT NULL DEFAULT 0, lastmodified INTEGER NOT NULL DEFAULT 0
+		);
+		CREATE TABLE names (id INTEGER NOT NULL, name TEXT, placetype TEXT, country TEXT, language TEXT, lastmodified INTEGER);
+	`)
+
+	return db
+}
+
+describe("ingestGeonamesPostal", () => {
+	it("folds one medoid row per normalized code, with the display form as an alt name", async () => {
+		await using dirDirectory = await temporaryDirectory("gn-postal-")
+		const dir = dirDirectory.path
+
+		// The medoid must be one of the real member points, never the outlier-pulled mean.
+		await writeLocalTextFile(
+			[
+				"CZ\t110 00\tPraha 1\tPraha\t10\t\t\t\t\t50.08\t14.42\t4",
+				"CZ\t110 00\tPraha 1-x\tPraha\t10\t\t\t\t\t50.09\t14.43\t4",
+				"CZ\t110 00\tOutlier\tPraha\t10\t\t\t\t\t50.30\t14.60\t4",
+				"CZ\t500 02\tHradec\tKralovehradecky\t\t\t\t\t\t50.21\t15.83\t4",
+			].join("\n"),
+			dir("CZ.txt")
+		)
+
+		const db = await fixtureDB()
+		const result = await ingestGeonamesPostal(db, ["CZ"], dir)
+
+		expect(result.inserted).toBe(2)
+		expect(result.byCountry.CZ).toBe(2)
+
+		const row = db.prepare("SELECT id, name, placetype, latitude, longitude FROM spr WHERE name = '11000'").get() as {
+			id: number
+			name: string
+			placetype: string
+			latitude: number
+			longitude: number
+		}
+
+		expect(row.placetype).toBe("postalcode")
+		expect(row.id).toBeGreaterThanOrEqual(GEONAMES_POSTAL_ID_BASE)
+		expect([50.08, 50.09, 50.3]).toContain(row.latitude)
+		expect(row.latitude).toBe(50.09)
+
+		const names = db
+			.prepare("SELECT name FROM names WHERE id = ? ORDER BY name")
+			.all(row.id)
+			.map((r) => (r as { name: string }).name)
+
+		expect(names).toEqual(["110 00", "11000"])
+	})
+
+	it("reports a code whose rows all name one point", async () => {
+		await using dirDirectory = await temporaryDirectory("gn-postal-degenerate-")
+		const dir = dirDirectory.path
+
+		await writeLocalTextFile(
+			[
+				"TH\t10230\tLat Phrao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
+				"TH\t10230\tKhanna Yao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
+				"TH\t10120\tYan Nawa\tBangkok\t10\t\t\t\t\t13.6969\t100.5407\t4",
+			].join("\n"),
+			dir("TH.txt")
+		)
+
+		const db = await fixtureDB()
+		const result = await ingestGeonamesPostal(db, ["TH"], dir)
+
+		expect(result.byCountry.TH).toBe(2)
+		expect(result.singlePointByCountry.TH).toBe(1)
+
+		const row = db.prepare("SELECT latitude, longitude FROM spr WHERE name = '10230'").get() as {
+			latitude: number
+			longitude: number
+		}
+
+		expect([row.latitude, row.longitude]).toEqual([14.3333, 99.9167])
+	})
+
+	it("reports missing country files instead of throwing", async () => {
+		await using dirDirectory = await temporaryDirectory("gn-postal-empty-")
+		const dir = dirDirectory.path
+		const db = await fixtureDB()
+		const result = await ingestGeonamesPostal(db, ["FI"], dir)
+
+		expect(result.inserted).toBe(0)
+		expect(result.missing).toEqual(["FI"])
+	})
+})

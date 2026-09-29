@@ -10,10 +10,11 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
-import { writeParquetFile } from "@mailwoman/corpus/parquet/writers"
-import { holdoutComponents, splitOverlaySlice } from "@mailwoman/corpus/tools"
 import { afterAll, describe, expect, it } from "vitest"
+
+import type { ParquetRow } from "#parquet/schema"
+import { writeParquetFile } from "#parquet/writers"
+import { holdoutComponents, splitOverlaySlice } from "#tools"
 
 const root = await temporaryDirectory("mw-split-slice-")
 

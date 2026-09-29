@@ -7,14 +7,15 @@
  *   the detector refuses would train the model on a string the query-shape prior cannot then support.
  */
 
-import { BARE_POSTCODE_EVAL_CASES, isReservedBarePostcode } from "@mailwoman/corpus/recipes/bare/postcode/eval"
+import { describe, expect, it } from "vitest"
+
+import { BARE_POSTCODE_EVAL_CASES, isReservedBarePostcode } from "#recipes/bare/postcode/eval"
 import {
 	detectedAsPostcode,
 	findMissingPostcodeSources,
 	renderBarePostcode,
 	selectPostcodes,
-} from "@mailwoman/corpus/recipes/bare/postcode/index"
-import { describe, expect, it } from "vitest"
+} from "#recipes/bare/postcode/index"
 
 describe("renderBarePostcode", () => {
 	it("writes the NNN NN countries with the space, and keeps the compact form too", () => {

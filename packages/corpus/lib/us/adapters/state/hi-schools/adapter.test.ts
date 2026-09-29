@@ -5,16 +5,17 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { InMemoryAdapterRegistry } from "@mailwoman/corpus/adapters/utils"
-import { writeDelimitedFixture } from "@mailwoman/corpus/test-kit"
+import type { PathBuilder } from "path-ts"
+import { afterAll, beforeEach, describe, expect, it } from "vitest"
+import writeXlsxFile, { type SheetData } from "write-excel-file/node"
+
+import { InMemoryAdapterRegistry } from "#adapters/utils"
+import { writeDelimitedFixture } from "#test-kit"
 import {
 	createStateHiSchoolsAdapter,
 	STATE_HI_SCHOOLS_ADAPTER_ID,
 	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
-} from "@mailwoman/corpus/us/adapters/state/hi-schools/adapter"
-import type { PathBuilder } from "path-ts"
-import { afterAll, beforeEach, describe, expect, it } from "vitest"
-import writeXlsxFile, { type SheetData } from "write-excel-file/node"
+} from "#us/adapters/state/hi-schools/adapter"
 
 const fixtures = new AsyncDisposableStack()
 

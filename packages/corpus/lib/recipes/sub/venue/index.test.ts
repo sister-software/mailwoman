@@ -7,6 +7,8 @@
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { describe, expect, it } from "vitest"
+
 import {
 	allocate,
 	buildIdentifierModel,
@@ -23,9 +25,8 @@ import {
 	sampleIdentifier,
 	SUBVENUE_LEGS,
 	type SubVenueLeg,
-} from "@mailwoman/corpus/recipes/sub/venue/index"
-import { SUBVENUE_PROMOTIONS } from "@mailwoman/corpus/tools"
-import { describe, expect, it } from "vitest"
+} from "#recipes/sub/venue/index"
+import { SUBVENUE_PROMOTIONS } from "#tools"
 
 const lexicon = await readSubVenueLexicon(defaultLexiconPath())
 const shippedModifiers = lexicon.modifiers.filter((m) => m.shipped).map((m) => m.id)

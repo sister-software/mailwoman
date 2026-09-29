@@ -1,0 +1,223 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import type { PathBuilder } from "path-ts"
+import { afterAll, describe, expect, it } from "vitest"
+
+import { missingWeightsCacheArtifacts, readEvalReport, summarizeEvalReport } from "#eval-report"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
+async function outDir(verdict?: unknown, provenance?: string): Promise<PathBuilder> {
+	const dir = fixtures.use(await temporaryDirectory("mwdev-eval-report-")).path
+
+	if (verdict !== undefined) {
+		await writeLocalJSONFile(verdict, dir("verdict.json"))
+	}
+
+	if (provenance !== undefined) {
+		await writeLocalFile(provenance, dir("provenance.txt"))
+	}
+
+	return dir
+}
+
+const PASSING = {
+	label: "v9.0.0-base",
+	graded_artifact: "weights-cache",
+	verdict: "PASS",
+	results: {
+		"us.street": { floor: 80.4, actual: 82.1, pass: true },
+		"fr.postcode": { floor: 99.5, actual: 99.7, pass: true },
+	},
+	int8_vs_fp32_deltas: {},
+}
+
+describe("readEvalReport", () => {
+	it("reads floors with their margins", async () => {
+		const report = await readEvalReport(await outDir(PASSING), "", "")
+
+		expect(report.verdict).toBe("PASS")
+		expect(report.floors).toHaveLength(2)
+		expect(report.floors[0]).toMatchObject({ metric: "us.street", floor: 80.4, observed: 82.1, pass: true })
+		expect(report.floors[0]!.margin).toBeCloseTo(1.7, 5)
+	})
+
+	it("distinguishes an unmeasured floor from one that missed the bar", async () => {
+		// The eval marks an unmeasured floor failing so it cannot pass by default.
+		// That interpretation would send someone to tune a metric that never ran.
+		const report = await readEvalReport(
+			await outDir({
+				...PASSING,
+				verdict: "FAIL",
+				results: {
+					"us.street": { floor: 80.4, actual: 78, pass: false },
+					"nl.postcode": { floor: 99, actual: undefined, pass: false },
+				},
+			}),
+			"",
+			""
+		)
+
+		const missed = report.floors.find((floor) => floor.metric === "us.street")!
+		const unmeasured = report.floors.find((floor) => floor.metric === "nl.postcode")!
+
+		expect(missed).toMatchObject({ measured: true, pass: false })
+		expect(missed.margin).toBeCloseTo(-2.4, 5)
+		expect(unmeasured).toMatchObject({ measured: false, observed: null, margin: null, pass: false })
+		expect(report.notes.join(" ")).toContain("never ran")
+	})
+
+	it("reports an absent verdict.json as not-graded, never as FAIL", async () => {
+		const report = await readEvalReport(await outDir(), "", "")
+
+		expect(report.verdict).toBeNull()
+		expect(report.notes.join(" ")).toContain("different outcomes")
+	})
+
+	it("surfaces the ledger command and refuses to imply it was run", async () => {
+		const log =
+			"ledger (#885): on promote, append this run —\n" +
+			"  node packages/mailwoman/out/cli/index.js eval ledger-append \\\n" +
+			"    --out-dir /tmp/x --model-version <npm-semver>\n"
+
+		const report = await readEvalReport(await outDir(PASSING), log, "")
+
+		expect(report.ledger_command).toContain("eval ledger-append")
+		expect(report.ledger_command).toContain("--out-dir /tmp/x")
+		expect(report.ledger_note).toContain("REPORTED, never run")
+	})
+
+	it("passes the lore-guard refusal through verbatim rather than working around it", async () => {
+		const report = await readEvalReport(
+			await outDir(),
+			"",
+			"✗ recompile packages/core/out before evaluating — it is stale\n"
+		)
+
+		expect(report.lore_guard_refusal).toContain("recompile")
+	})
+
+	it("carries provenance when the run wrote it, and says so when it did not", async () => {
+		expect((await readEvalReport(await outDir(PASSING, "md5 abc123\n"), "", "")).provenance).toContain("md5 abc123")
+		expect((await readEvalReport(await outDir(PASSING), "", "")).notes.join(" ")).toContain("md5s are unrecorded")
+	})
+})
+
+describe("summarizeEvalReport", () => {
+	it("names the graded artifact before the verdict", async () => {
+		const summary = summarizeEvalReport(await readEvalReport(await outDir(PASSING), "", ""))
+
+		expect(summary).toContain("graded the weights-cache artifact")
+		expect(summary).toContain("PASS")
+		expect(summary).toContain("All 2 floors met")
+	})
+
+	it("says UNRECORDED rather than guessing when the artifact is unknown", async () => {
+		const summary = summarizeEvalReport(
+			await readEvalReport(await outDir({ ...PASSING, graded_artifact: undefined }), "", "")
+		)
+
+		expect(summary).toContain("UNRECORDED")
+	})
+
+	it("counts missed and unmeasured floors separately", async () => {
+		const summary = summarizeEvalReport(
+			await readEvalReport(
+				await outDir({
+					...PASSING,
+					verdict: "FAIL",
+					results: {
+						"us.street": { floor: 80.4, actual: 78, pass: false },
+						"nl.postcode": { floor: 99, actual: undefined, pass: false },
+					},
+				}),
+				"",
+				""
+			)
+		)
+
+		expect(summary).toContain("1 floor missed and 1 unmeasured")
+	})
+})
+
+describe("missingWeightsCacheArtifacts", () => {
+	it("names every artifact a package-shaped root is missing", async () => {
+		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
+		const root = rootDirectory.path
+
+		const missing = await missingWeightsCacheArtifacts(root)
+
+		expect(missing.kind).toBe("wrong-shape")
+		expect(missing.paths).toHaveLength(3)
+		expect(missing.paths.join(" ")).toContain("model.onnx")
+		expect(missing.paths.join(" ")).toContain("node_modules")
+	})
+
+	it("catches a cache missing what its OWN card declares", async () => {
+		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
+		const root = rootDirectory.path
+
+		const packageDir = weightsCachePackageDir(root, "en-us")
+
+		await makeDirectories(packageDir)
+		await writeLocalTextFile("x", packageDir("model.onnx"))
+		await writeLocalTextFile("x", packageDir("tokenizer.model"))
+
+		await writeLocalJSONFile(
+			{ files_md5: { $comment: "ignored", "model.onnx": "a", "street-type-lexicon-v3.json": "b" } },
+			packageDir("model-card.json")
+		)
+
+		const missing = await missingWeightsCacheArtifacts(root)
+
+		expect(missing.kind).toBe("under-staged")
+		expect(missing.paths).toHaveLength(1)
+		expect(missing.paths[0]).toContain("street-type-lexicon-v3.json")
+	})
+
+	it("does not treat the card's $comment key as an artifact", async () => {
+		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
+		const root = rootDirectory.path
+
+		const packageDir = weightsCachePackageDir(root, "en-us")
+
+		await makeDirectories(packageDir)
+
+		for (const artifact of ["model.onnx", "tokenizer.model"]) {
+			await writeLocalTextFile("x", packageDir(artifact))
+		}
+
+		await writeLocalJSONFile({ files_md5: { $comment: "docs only" } }, packageDir("model-card.json"))
+
+		expect((await missingWeightsCacheArtifacts(root)).kind).toBe("ok")
+	})
+
+	it("passes a well-formed cache", async () => {
+		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
+		const root = rootDirectory.path
+
+		const packageDir = weightsCachePackageDir(root, "en-us")
+
+		await makeDirectories(packageDir)
+
+		for (const artifact of ["model.onnx", "tokenizer.model"]) {
+			await writeLocalTextFile("x", packageDir(artifact))
+		}
+
+		await writeLocalJSONFile(
+			{ files_md5: { "model.onnx": "a", "tokenizer.model": "b" } },
+			packageDir("model-card.json")
+		)
+
+		expect((await missingWeightsCacheArtifacts(root)).kind).toBe("ok")
+	})
+})

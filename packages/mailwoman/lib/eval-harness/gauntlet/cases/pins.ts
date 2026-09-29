@@ -27,7 +27,7 @@ export interface BoardPins {
 /**
  * Repository-relative path of the test file that holds the pinned constants.
  */
-export const PIN_TEST_PATH = "packages/mailwoman/test/unit/eval-harness/gauntlet/cases/load.test.ts"
+export const PIN_TEST_PATH = "packages/mailwoman/lib/eval-harness/gauntlet/cases/load.test.ts"
 
 /**
  * Measures the pins from the committed corpus with the same loaders that the pin test uses.
