@@ -20,7 +20,7 @@
  *   readings support different decisions.
  *
  *   Usage:
- *   node packages/mailwoman/lib/dev-tools/corpus/street-attestation.run.ts \
+ *   node packages/mailwoman/lib/dev-tools/corpus/street/attestation.run.ts \
  *     --ids es-op3-label-cabestreros,gb-op2-east-west-fortess [--release 2026-05-20.0] [--json <out>]
  */
 
