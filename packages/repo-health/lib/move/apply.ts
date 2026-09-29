@@ -7,7 +7,7 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { runFile } from "@mailwoman/core/process"
+import { git } from "@mailwoman/core/git"
 import { dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -146,7 +146,7 @@ export async function applyModuleMoves(
 
 	for (const move of plan.moves) {
 		await makeDirectories(resolvePath(context.repoRoot, dirname(move.to)))
-		await runFile("git", ["mv", move.from, move.to], { cwd: context.repoRoot, encoding: "utf8" })
+		await git(["mv", move.from, move.to], context.repoRoot)
 	}
 
 	await removeEmptiedDirectories(

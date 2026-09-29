@@ -14,8 +14,8 @@
 import { readLocalTextFile, realPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { git } from "@mailwoman/core/git"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
 import type { RepoContext } from "@mailwoman/repo-health"
 import { applyModuleMoves } from "@mailwoman/repo-health/move/apply"
 import { planModuleMoves } from "@mailwoman/repo-health/move/plan"
@@ -81,15 +81,14 @@ async function fixture() {
 	}
 
 	await createSymbolicLink(resolvePath(repoRoot, PACKAGE), resolvePath(repoRoot, "node_modules/@fixture/recipes"))
-	await runFile("git", ["init", "--quiet"], { cwd: repoRoot, encoding: "utf8" })
-	await runFile("git", ["add", "-A", "--", "packages", "package.json"], { cwd: repoRoot, encoding: "utf8" })
+	await git(["init", "--quiet"], repoRoot)
+	await git(["add", "-A", "--", "packages", "package.json"], repoRoot)
 
 	// A rename is detected against a commit rather than against an empty index: with no head,
 	// `git mv` still moves the file but `git status` reports an addition.
-	await runFile(
-		"git",
+	await git(
 		["-c", "user.email=fixture@example.invalid", "-c", "user.name=fixture", "commit", "--quiet", "-m", "fixture"],
-		{ cwd: repoRoot, encoding: "utf8" }
+		repoRoot
 	)
 
 	const context: RepoContext = { repoRoot, trackedFiles: Object.keys(FILES) }
@@ -158,10 +157,7 @@ describe("applyModuleMoves", () => {
 			`from "../../scaffold.ts"`
 		)
 
-		const { stdout } = await runFile("git", ["status", "--porcelain"], {
-			cwd: context.repoRoot,
-			encoding: "utf8",
-		})
+		const stdout = await git(["status", "--porcelain"], context.repoRoot)
 
 		// `RM`, not `R `: the index records the rename and the worktree records the
 		// specifier rewrite inside the file that moved.

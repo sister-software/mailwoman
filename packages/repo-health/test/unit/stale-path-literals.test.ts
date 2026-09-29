@@ -12,7 +12,7 @@
 import { realPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { runFile } from "@mailwoman/core/process"
+import { git } from "@mailwoman/core/git"
 import {
 	findStalePathLiterals,
 	isRepositoryPathLiteral,
@@ -25,11 +25,8 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const git = (repoRoot: string, args: string[]) =>
-	runFile("git", ["-c", "user.email=fixture@example.invalid", "-c", "user.name=fixture", ...args], {
-		cwd: repoRoot,
-		encoding: "utf8",
-	})
+const gitWithConfig = (repoRoot: string, args: string[]) =>
+	git(["-c", "user.email=fixture@example.invalid", "-c", "user.name=fixture", ...args], repoRoot)
 
 /**
  * A repository where `packages/thing/lib/old-name.ts` was renamed to `new-name.ts`,
@@ -41,11 +38,11 @@ async function plant(sources: Record<string, string>) {
 	const root = PathBuilder.from(repoRoot)
 
 	await writeLocalTextFile("export const thing = 1\n", root("packages/thing/lib/old-name.ts"))
-	await git(repoRoot, ["init", "--quiet"])
-	await git(repoRoot, ["add", "-A"])
-	await git(repoRoot, ["commit", "--quiet", "-m", "first"])
-	await git(repoRoot, ["mv", "packages/thing/lib/old-name.ts", "packages/thing/lib/new-name.ts"])
-	await git(repoRoot, ["commit", "--quiet", "-m", "rename"])
+	await gitWithConfig(repoRoot, ["init", "--quiet"])
+	await gitWithConfig(repoRoot, ["add", "-A"])
+	await gitWithConfig(repoRoot, ["commit", "--quiet", "-m", "first"])
+	await gitWithConfig(repoRoot, ["mv", "packages/thing/lib/old-name.ts", "packages/thing/lib/new-name.ts"])
+	await gitWithConfig(repoRoot, ["commit", "--quiet", "-m", "rename"])
 
 	for (const [file, text] of Object.entries(sources)) {
 		await writeLocalTextFile(text, root(file))

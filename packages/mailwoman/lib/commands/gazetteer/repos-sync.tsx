@@ -9,7 +9,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { runFile } from "@mailwoman/core/process"
+import { git } from "@mailwoman/core/git"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
 import { dirname, PathBuilder } from "path-ts"
@@ -88,25 +88,23 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 				try {
 					if (plan.action === SyncAction.Clone) {
 						await makeDirectories(dirname(plan.directory))
-						await runFile("git", ["clone", "--depth", "1", plan.origin.url, plan.directory])
+						await git(["clone", "--depth", "1", plan.origin.url, plan.directory])
 						performed.push(`cloned ${plan.repo} from ${plan.origin.source}`)
 					} else if (plan.action === SyncAction.FastForward) {
-						await runFile("git", ["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
+						await git(["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
 						performed.push(`fast-forwarded ${plan.repo}`)
 					} else if (plan.action === SyncAction.RepointRequired && options.repoint) {
 						// The next upstream sync would need a guess without the fork's address.
-						await runFile("git", ["-C", plan.directory, "remote", "rename", "origin", "upstream"])
-						await runFile("git", ["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
-						await runFile("git", ["-C", plan.directory, "fetch", "--quiet", "origin"])
+						await git(["-C", plan.directory, "remote", "rename", "origin", "upstream"])
+						await git(["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
+						await git(["-C", plan.directory, "fetch", "--quiet", "origin"])
 
 						// The rename preserved `branch.<name>.remote`, so without re-pointing tracking the
 						// next `git pull` here pulls upstream over the corrections this command preserves.
-						const branch = (
-							await runFile("git", ["-C", plan.directory, "rev-parse", "--abbrev-ref", "HEAD"])
-						).stdout.trim()
+						const branch = await git(["-C", plan.directory, "rev-parse", "--abbrev-ref", "HEAD"])
 
 						if (branch && branch !== "HEAD") {
-							await runFile("git", ["-C", plan.directory, "branch", `--set-upstream-to=origin/${branch}`, branch])
+							await git(["-C", plan.directory, "branch", `--set-upstream-to=origin/${branch}`, branch])
 						}
 
 						performed.push(`re-pointed ${plan.repo} at ${plan.origin.org} (previous remote kept as upstream)`)

@@ -15,14 +15,19 @@ import { TextSpliterator } from "spliterator"
 import { repoRootPathBuilder } from "#paths"
 import { runFile } from "#process"
 
-async function git(
+/**
+ * Run a git command in the given repository and return its stdout as a string.
+ */
+export async function git(
+	args: string | string[],
 	repoRoot: PathBuilderLike = repoRootPathBuilder,
-	args: string[],
 	maxBuffer?: number
 ): Promise<string> {
-	const { stdout } = await runFile("git", args, { cwd: repoRoot.toString(), encoding: "utf8", maxBuffer })
+	const argumentList = Array.isArray(args) ? args : [args]
 
-	return stdout
+	const { stdout } = await runFile("git", argumentList, { cwd: repoRoot, encoding: "utf8", maxBuffer })
+
+	return stdout.trim()
 }
 
 /**
@@ -34,14 +39,14 @@ export async function gitHead(
 ): Promise<string> {
 	const args = options.short ? ["rev-parse", "--short", "HEAD"] : ["rev-parse", "HEAD"]
 
-	return (await git(repoRoot, args)).trim()
+	return await git(args, repoRoot)
 }
 
 /**
  * The checked-out branch name, or `head` when the tree is detached.
  */
 export async function currentBranch(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
-	return (await git(repoRoot, ["rev-parse", "--abbrev-ref", "HEAD"])).trim()
+	return (await git(["rev-parse", "--abbrev-ref", "HEAD"], repoRoot)).trim()
 }
 
 /**
@@ -57,7 +62,7 @@ export async function dirtyTrackedFiles(
 	pathspecs: string[] = []
 ): Promise<string[]> {
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
-	const output = await git(repoRoot, ["status", "--porcelain", "--untracked-files=no", ...scope])
+	const output = await git(["status", "--porcelain", "--untracked-files=no", ...scope], repoRoot)
 
 	return TextSpliterator.from(output)
 		.map((line) => line.trimEnd())
@@ -81,7 +86,7 @@ export async function workingTreeStatus(
 	pathspecs: string[] = []
 ): Promise<string[]> {
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
-	const output = await git(repoRoot, ["status", "--porcelain", ...scope])
+	const output = await git(["status", "--porcelain", ...scope], repoRoot)
 
 	return TextSpliterator.from(output)
 		.map((line) => line.trimEnd())
@@ -101,7 +106,7 @@ export async function changedFiles(
 	base: string,
 	head: string
 ): Promise<string[]> {
-	const output = await git(repoRoot, ["diff", "--name-only", "-z", base, head], 64 * 1024 * 1024)
+	const output = await git(["diff", "--name-only", "-z", base, head], repoRoot, 64 * 1024 * 1024)
 
 	return output.split("\0").filter((path) => path.length)
 }
@@ -116,7 +121,7 @@ export async function trackedFiles(
 	repoRoot: PathBuilderLike = repoRootPathBuilder,
 	pathspecs: string[] = []
 ): Promise<string[]> {
-	const output = await git(repoRoot, ["ls-files", "-z", ...pathspecs], 64 * 1024 * 1024)
+	const output = await git(["ls-files", "-z", ...pathspecs], repoRoot, 64 * 1024 * 1024)
 
 	return output.split("\0").filter((path) => path.length)
 }
@@ -137,8 +142,8 @@ export async function workingTreeFiles(
 	repoRoot: PathBuilderLike = repoRootPathBuilder
 ): Promise<string[]> {
 	const output = await git(
-		repoRoot,
 		["ls-files", "-z", "--cached", "--others", "--exclude-standard", ...pathspecs],
+		repoRoot,
 		64 * 1024 * 1024
 	)
 
@@ -166,8 +171,8 @@ export async function workingTreeFiles(
  */
 export async function movedAwayPaths(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<Set<string>> {
 	const output = await git(
-		repoRoot,
 		["log", "--all", "--no-renames", "--diff-filter=D", "--name-only", "--format="],
+		repoRoot,
 		64 * 1024 * 1024
 	)
 
