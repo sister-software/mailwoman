@@ -1,0 +1,147 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Tests that overlap resolution returns non-overlapping spans and orders them by confidence,
+ *   span length and start position.
+ */
+
+import type { ComponentTag } from "@mailwoman/codex/component"
+import { describe, expect, test } from "vitest"
+
+import { resolveProposalOverlaps } from "#decoder/resolve-proposal-overlaps"
+import { Span } from "#tokenization"
+import type { ClassificationProposal } from "#types"
+
+/**
+ * Create a proposal whose span end is derived from its text.
+ */
+function p(component: ComponentTag, body: string, start: number, confidence: number): ClassificationProposal {
+	return {
+		span: new Span(body, start),
+		component,
+		confidence,
+		source: "neural",
+		source_id: "test",
+		penalty: 0,
+	} as ClassificationProposal
+}
+
+/**
+ * Return whether the proposals have disjoint spans.
+ */
+function noOverlaps(out: readonly ClassificationProposal[]): boolean {
+	for (let i = 0; i < out.length; i++) {
+		for (let j = i + 1; j < out.length; j++) {
+			if (out[i]!.span.start < out[j]!.span.end && out[j]!.span.start < out[i]!.span.end) return false
+		}
+	}
+
+	return true
+}
+
+describe("resolveProposalOverlaps — trivial cases", () => {
+	test("empty → empty", () => {
+		expect(resolveProposalOverlaps([])).toEqual([])
+	})
+
+	test("single proposal → unchanged", () => {
+		const out = resolveProposalOverlaps([p("street", "Main St", 0, 0.9)])
+		expect(out).toHaveLength(1)
+	})
+
+	test("non-overlapping (adjacent) spans are all kept, in span order", () => {
+		// The spans are separated by whitespace.
+		const out = resolveProposalOverlaps([p("street", "5th Ave", 4, 0.9), p("house_number", "350", 0, 0.9)])
+		expect(out.map((x) => x.component)).toEqual(["house_number", "street"])
+		expect(noOverlaps(out)).toBe(true)
+	})
+
+	test("touching spans (end === next start) do not overlap — both kept", () => {
+		const out = resolveProposalOverlaps([p("house_number", "350", 0, 0.9), p("street", "5thAve", 3, 0.9)])
+		expect(out).toHaveLength(2)
+		expect(noOverlaps(out)).toBe(true)
+	})
+})
+
+describe("resolveProposalOverlaps — overlap resolution", () => {
+	test("containment: higher-confidence span wins, the other is dropped", () => {
+		const out = resolveProposalOverlaps([
+			p("street", "350 5th Ave", 0, 0.8), // Coarser and less confident.
+			p("house_number", "350", 0, 0.9), // Finer and more confident.
+		])
+
+		expect(out).toHaveLength(1)
+		expect(out[0]!.component).toBe("house_number")
+		expect(noOverlaps(out)).toBe(true)
+	})
+
+	test("PRECONDITION: equal-confidence decomposition beats the coarse subsuming span", () => {
+		// Equal confidence lets the two finer spans beat the overlapping whole-street span.
+		const out = resolveProposalOverlaps([
+			p("street", "350 5th Ave", 0, 0.9),
+			p("house_number", "350", 0, 0.9),
+			p("street", "5th Ave", 4, 0.9),
+		])
+
+		expect(out.map((x) => `${x.component}[${x.span.start},${x.span.end}]`)).toEqual([
+			"house_number[0,3]",
+			"street[4,11]",
+		])
+
+		expect(noOverlaps(out)).toBe(true)
+	})
+
+	test("partial overlap: higher-confidence span wins", () => {
+		const out = resolveProposalOverlaps([p("locality", "abcde", 0, 0.7), p("region", "defgh", 3, 0.9)])
+		expect(out).toHaveLength(1)
+		expect(out[0]!.component).toBe("region")
+	})
+
+	test("identical spans, different tags → higher-confidence tag kept", () => {
+		const out = resolveProposalOverlaps([p("locality", "Springfield", 0, 0.8), p("region", "Springfield", 0, 0.9)])
+		expect(out).toHaveLength(1)
+		expect(out[0]!.component).toBe("region")
+	})
+
+	test("confidence is primary: a confident coarse span evicts finer low-confidence spans", () => {
+		// Confidence takes precedence over span length.
+		const out = resolveProposalOverlaps([
+			p("street", "350 5th Ave", 0, 0.95),
+			p("house_number", "350", 0, 0.7),
+			p("street", "5th Ave", 4, 0.7),
+		])
+
+		expect(out).toHaveLength(1)
+		expect(out[0]!.span.start).toBe(0)
+		expect(out[0]!.span.end).toBe(11)
+	})
+})
+
+describe("resolveProposalOverlaps — coherence invariant", () => {
+	test("a fully-tiling address is preserved intact", () => {
+		const out = resolveProposalOverlaps([
+			p("house_number", "350", 0, 0.9),
+			p("street", "5th Ave", 4, 0.9),
+			p("locality", "New York", 12, 0.9),
+			p("region", "NY", 21, 0.9),
+		])
+
+		expect(out).toHaveLength(4)
+		expect(noOverlaps(out)).toBe(true)
+		expect(out.map((x) => x.span.start)).toEqual([0, 4, 12, 21]) // Sorted by start position.
+	})
+
+	test("output never overlaps even from a messy multi-source pile", () => {
+		const out = resolveProposalOverlaps([
+			p("street", "350 5th Ave", 0, 0.6),
+			p("house_number", "350", 0, 0.95),
+			p("street", "5th Ave", 4, 0.9),
+			p("street", "5th", 4, 0.5),
+			p("locality", "5th Ave New", 4, 0.4),
+		])
+
+		expect(noOverlaps(out)).toBe(true)
+	})
+})

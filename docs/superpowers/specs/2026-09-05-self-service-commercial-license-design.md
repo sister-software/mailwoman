@@ -135,7 +135,7 @@ is the shape for a neutral module; a split module adds `"workerd"` and `"browser
 as `@mailwoman/neural/onnx-runner` does with its `browser` condition today. The bundle test below is what says whether a
 subpath is neutral or needs the split; the design does not guess.
 
-**The bundle test.** `packages/core/test/integration/worker-bundle.test.ts` runs esbuild with
+**The bundle test.** `packages/core/lib/worker-bundle.integration.test.ts` runs esbuild with
 `--platform=neutral --conditions=workerd,worker,browser` over an entry that imports `@mailwoman/core/license/key` and
 `@mailwoman/core/license/register`, and fails on any `node:` specifier the bundle would need. It is the same shape as
 `browser-slo.test.ts` in `@mailwoman/neural`, and it is the check that refuses a `node:` import reaching the worker as core grows.

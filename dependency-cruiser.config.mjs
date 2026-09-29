@@ -43,7 +43,7 @@ const LOADED_WITHOUT_AN_IMPORT = [
 	// Playwright specs: the runner collects them from disk by glob.
 	"(^|/)test/browser/[^/]+[.]spec[.]ts$",
 	// A worker script must be a real file on disk for the runtime to spawn by path.
-	// `packages/mailwoman/test/unit/geocode/stream.test.ts` hands this one to a worker, and
+	// `packages/mailwoman/lib/geocode/stream.test.ts` hands this one to a worker, and
 	// `@mailwoman/site-kit/vite/pwa` names `lib/service-worker.ts` as the `injectManifest` entry.
 	"(^|/)lib/test-fixtures/[^/]+-worker[.](?:js|ts)$",
 	"(^|/)lib/service-worker[.]ts$",

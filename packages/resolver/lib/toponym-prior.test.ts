@@ -1,0 +1,374 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import type { ResolvedPlace } from "@mailwoman/core/resolver"
+import { describe, expect, it } from "vitest"
+
+import {
+	DEFAULT_COUNTRY_PRIOR_WEIGHT,
+	NATIONAL_CAPITAL_MARGIN_LOG10,
+	promoteCapitals,
+	rankByCountryPrior,
+	rankByImportance,
+} from "#toponym-prior"
+
+const place = (over: Partial<ResolvedPlace> & Pick<ResolvedPlace, "id" | "name" | "country">): ResolvedPlace => ({
+	placetype: "locality",
+	lat: 0,
+	lon: 0,
+	score: 0,
+	exactMatch: true,
+	...over,
+})
+
+// The live rows: prominence is candidate.db's -neg_rank (log10(population + 1)),
+// importance comes from admin-global-priority-importance.db.
+const WHITBY: ResolvedPlace[] = [
+	place({ id: 8_143_502_164_401, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
+	place({ id: 101_874_191, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
+	place({ id: 9_000_000_663_998, name: "Whitby", country: "TC", prominence: 2.7505, importance: 0.1 }),
+]
+
+const WINDSOR: ResolvedPlace[] = [
+	place({ id: 1, name: "Windsor", country: "CA", prominence: 5.3368, importance: 0.5607 }),
+	place({ id: 2, name: "Windsor", country: "US", prominence: 4.5809, importance: 0.4638 }),
+	place({ id: 3, name: "Windsor", country: "GB", prominence: 4.4295, importance: 0.5648 }),
+]
+
+describe("rankByImportance", () => {
+	it("prefers the encyclopedically prominent namesake over the more POPULOUS one", () => {
+		// The population key ranks Whitby, Ontario (128,377) over Whitby, North Yorkshire (13,130).
+		const ranked = rankByImportance(WHITBY)
+		expect(ranked.map((c) => c.country)).toEqual(["GB", "CA", "TC"])
+	})
+
+	it("separates a near-tie the population key gets wrong (Windsor: 0.5648 GB vs 0.5607 CA)", () => {
+		expect(rankByImportance(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
+	})
+
+	it("ABSTAINS when only ONE candidate carries a measured score (positive evidence only)", () => {
+		// A missing importance means the score source never measured the place, never 0,
+		// so a lone measured 0.55 must not be read as beating an unmeasured megacity.
+		const partial = [
+			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085 }),
+			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
+		]
+
+		expect(rankByImportance(partial).map((c) => c.country)).toEqual(["CA", "GB"])
+	})
+
+	it("leaves UNSCORED candidates on their population rank and permutes only the scored slots", () => {
+		// Unscored rows keep their population slot: zero-filling would let a scored hamlet leapfrog an unscored metropolis.
+		const live = [
+			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
+			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
+			place({ id: 3, name: "Whitby", country: "TC", prominence: 2.7505 }),
+			place({ id: 4, name: "Whitby", country: "US", prominence: 0 }),
+		]
+
+		expect(rankByImportance(live).map((c) => c.country)).toEqual(["GB", "CA", "TC", "US"])
+	})
+
+	it("never lets a scored small place jump an UNSCORED larger one", () => {
+		const rows = [
+			place({ id: 1, name: "X", country: "A", prominence: 7 }),
+			place({ id: 2, name: "X", country: "B", prominence: 3, importance: 0.1 }),
+			place({ id: 3, name: "X", country: "C", prominence: 2, importance: 0.9 }),
+		]
+
+		expect(rankByImportance(rows).map((c) => c.country)).toEqual(["A", "C", "B"])
+	})
+
+	it("is byte-stable on today's shipped artifacts (candidate.db carries no place_importance)", () => {
+		const none = [
+			place({ id: 1, name: "Berlin", country: "DE", prominence: 6.5646 }),
+			place({ id: 2, name: "Berlin", country: "US", prominence: 4.2981 }),
+		]
+
+		expect(rankByImportance(none)).toEqual(none)
+	})
+
+	it("never crosses the exact/partial boundary", () => {
+		// Tier is the primary key everywhere in this resolver, so a soft prior re-orders within a tier only.
+		const mixed = [
+			place({ id: 1, name: "Whitby", country: "CA", importance: 0.2, exactMatch: true }),
+			place({ id: 2, name: "Whitby Bay", country: "GB", importance: 0.9, exactMatch: false }),
+			place({ id: 3, name: "Whitby", country: "GB", importance: 0.55, exactMatch: true }),
+		]
+
+		expect(rankByImportance(mixed).map((c) => c.id)).toEqual([3, 1, 2])
+	})
+
+	it("preserves incoming order on a same-country pair tied on BOTH importance and size (the seat corridor)", () => {
+		// Preserve the backend's incoming order for a tied same-country pair: inverting
+		// that seat tiebreak moves bare `Pu-cheng-hsien` 1,100 km end-to-end.
+		const seatFirst = [
+			place({ id: 1, name: "Pucheng", country: "CN", prominence: 4.777, importance: 0.4233 }),
+			place({ id: 2, name: "Pucheng", country: "CN", prominence: 4.777, importance: 0.4233 }),
+		]
+
+		expect(rankByImportance(seatFirst).map((c) => c.id)).toEqual([1, 2])
+		expect(rankByImportance(seatFirst.toReversed()).map((c) => c.id)).toEqual([2, 1])
+	})
+
+	it("breaks an importance tie on prominence, then leaves the input order", () => {
+		const tied = [
+			place({ id: 1, name: "X", country: "A", prominence: 3, importance: 0.5 }),
+			place({ id: 2, name: "X", country: "B", prominence: 4, importance: 0.5 }),
+		]
+
+		expect(rankByImportance(tied).map((c) => c.id)).toEqual([2, 1])
+	})
+})
+
+describe("rankByImportance same-country tie band (Springfield decision, 2026-08-11)", () => {
+	// The band makes a same-country chained trio fall back to size order,
+	// pinning the bare query to the referential answer (MO).
+	const SPRINGFIELD: ResolvedPlace[] = [
+		place({ id: 85_940_429, name: "Springfield", country: "US", prominence: 5.0513, importance: 0.612605 }),
+		place({ id: 85_950_393, name: "Springfield", country: "US", prominence: 5.1866, importance: 0.611142 }),
+		place({ id: 85_971_363, name: "Springfield", country: "US", prominence: 5.2345, importance: 0.596195 }),
+	]
+
+	it("abstains to referential order inside a same-country band (bare Springfield stays MO)", () => {
+		expect(rankByImportance(SPRINGFIELD).map((c) => c.id)).toEqual([85_971_363, 85_950_393, 85_940_429])
+	})
+
+	it("does NOT band cross-country pairs — Windsor's 0.0042 gap still flips to GB", () => {
+		// The band must never compare across countries: any width covering Springfield's
+		// The 0.0164 gap also covers Windsor's accepted flips.
+		expect(rankByImportance(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
+	})
+
+	it("lets importance separate same-country bearers when the gap clears the band", () => {
+		const clear = [
+			place({ id: 1, name: "X", country: "US", prominence: 6, importance: 0.6 }),
+			place({ id: 2, name: "X", country: "US", prominence: 3, importance: 0.65 }),
+		]
+
+		expect(rankByImportance(clear).map((c) => c.id)).toEqual([2, 1])
+	})
+
+	it("chains adjacent gaps transitively — a run of near-ties is ONE cluster", () => {
+		// The algorithm chains adjacent gaps into one cluster.
+		// Otherwise, the boundary would depend on which pair the sort compared first.
+		const run = [
+			place({ id: 1, name: "X", country: "US", prominence: 3, importance: 0.6 }),
+			place({ id: 2, name: "X", country: "US", prominence: 4, importance: 0.585 }),
+			place({ id: 3, name: "X", country: "US", prominence: 5, importance: 0.57 }),
+		]
+
+		expect(rankByImportance(run).map((c) => c.id)).toEqual([3, 2, 1])
+	})
+
+	it("moves a banded cluster as a unit, keyed by its most important member", () => {
+		const interleaved = [
+			place({ id: 1, name: "X", country: "US", prominence: 5, importance: 0.6 }),
+			place({ id: 2, name: "X", country: "US", prominence: 6, importance: 0.59 }),
+			place({ id: 3, name: "X", country: "GB", prominence: 2, importance: 0.595 }),
+		]
+
+		expect(rankByImportance(interleaved).map((c) => c.id)).toEqual([2, 1, 3])
+	})
+
+	it("keeps unmeasured rows on their slots while a band resolves among the measured", () => {
+		const withUnmeasured = [
+			SPRINGFIELD[0]!,
+			place({ id: 4, name: "Springfield", country: "US", prominence: 4.9 }),
+			SPRINGFIELD[2]!,
+		]
+
+		expect(rankByImportance(withUnmeasured).map((c) => c.id)).toEqual([85_971_363, 4, 85_940_429])
+	})
+
+	it("#2272: a bearer with NO recorded population never heads its country over one the gazetteer counted", () => {
+		// `blendImportance` returns the encyclopedic score uncapped when `referential <= 0`,
+		// so an article-only row can outscore a counted municipality.
+		const anderlecht: ResolvedPlace[] = [
+			place({ id: 1, name: "Anderlecht", country: "BE", prominence: 5.2, population: 160_553, importance: 0.524 }),
+			place({ id: 2, name: "Anderlecht", country: "BE", prominence: 0, importance: 0.5665 }),
+		]
+
+		expect(rankByImportance(anderlecht).map((c) => c.id)).toEqual([1, 2])
+	})
+
+	it("#2272: the partition is SAME-COUNTRY — an uncounted foreign bearer still wins on fame", () => {
+		// The partition is same-country deliberately: across borders an article-only score
+		// is the only evidence there is, so that branch stays uncapped.
+		const crossBorder: ResolvedPlace[] = [
+			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, population: 128_377, importance: 0.5089 }),
+			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
+		]
+
+		expect(rankByImportance(crossBorder).map((c) => c.id)).toEqual([2, 1])
+	})
+
+	it("#2272: two uncounted same-country bearers still separate on importance", () => {
+		// The partition must not touch two uncounted same-country bearers:
+		// neither was measured, so importance is all there is.
+		const neitherCounted: ResolvedPlace[] = [
+			place({ id: 1, name: "Bonito", country: "BR", prominence: 0, importance: 0.31 }),
+			place({ id: 2, name: "Bonito", country: "BR", prominence: 0, importance: 0.44 }),
+		]
+
+		expect(rankByImportance(neitherCounted).map((c) => c.id)).toEqual([2, 1])
+	})
+
+	it("never bands a candidate that carries no country", () => {
+		const anonymous = [
+			place({ id: 1, name: "X", country: undefined, prominence: 6, importance: 0.6 }),
+			place({ id: 2, name: "X", country: "US", prominence: 3, importance: 0.61 }),
+		]
+
+		expect(rankByImportance(anonymous).map((c) => c.id)).toEqual([2, 1])
+	})
+})
+
+describe("rankByCountryPrior", () => {
+	it("lets a far more prominent foreign namesake outrank the locale country (Zürich)", () => {
+		// Zurich, Kansas (pop 81, prominence 1.91) cannot clear Zürich CH (443,037) with a +2 bonus.
+		const zurich = [
+			place({ id: 1, name: "Zürich", country: "CH", prominence: 5.6464 }),
+			place({ id: 2, name: "Zurich", country: "US", prominence: 1.9138 }),
+		]
+
+		expect(rankByCountryPrior(zurich, "US").map((c) => c.country)).toEqual(["CH", "US"])
+	})
+
+	it("keeps the in-country answer when the contest is close (Manchester under en-US)", () => {
+		// A soft prior rather than a global coin-flip: Manchester NH's 5.06 + 2 = 7.06 beats GB's 5.74.
+		const manchester = [
+			place({ id: 1, name: "Manchester", country: "GB", prominence: 5.74 }),
+			place({ id: 2, name: "Manchester", country: "US", prominence: 5.06 }),
+		]
+
+		expect(rankByCountryPrior(manchester, "US").map((c) => c.country)).toEqual(["US", "GB"])
+	})
+
+	it("is a no-op without a country (byte-stable)", () => {
+		const rows = [
+			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1 }),
+			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1 }),
+		]
+
+		expect(rankByCountryPrior(rows, undefined)).toEqual(rows)
+	})
+
+	it("falls back to `score` when the backend reports no prominence", () => {
+		const rows = [
+			place({ id: 1, name: "X", country: "FR", score: 9 }),
+			place({ id: 2, name: "X", country: "US", score: 8 }),
+		]
+
+		expect(rankByCountryPrior(rows, "US", 2).map((c) => c.id)).toEqual([2, 1])
+	})
+
+	it("never crosses the exact/partial boundary", () => {
+		const mixed = [
+			place({ id: 1, name: "X", country: "FR", prominence: 3, exactMatch: true }),
+			place({ id: 2, name: "X", country: "US", prominence: 9, exactMatch: false }),
+		]
+
+		expect(rankByCountryPrior(mixed, "US").map((c) => c.id)).toEqual([1, 2])
+	})
+
+	it("weights in log10-population units, matching the resolver's anchorWeight default", () => {
+		expect(DEFAULT_COUNTRY_PRIOR_WEIGHT).toBe(2)
+	})
+})
+
+describe("promoteCapitals (#1880 — bounded capital promotion after the fame key)", () => {
+	const prom = (population: number): number => Math.log10(population + 1)
+
+	const capitalOf =
+		(levels: Record<string, number>) =>
+		(p: { name: string }): number =>
+			levels[p.name] ?? 0
+
+	it("promotes a national capital over a namesake within the 100x population margin (San José → CR)", () => {
+		// San Jose, California 969,655 vs San José, Costa Rica 342,188 — 2.8x, inside 10^2.
+		const ranked = promoteCapitals(
+			[
+				place({ id: "us", name: "San Jose", country: "US", prominence: prom(969_655), importance: 0.54 }),
+				place({ id: "cr", name: "San José", country: "CR", prominence: prom(342_188), importance: 0.31 }),
+			],
+			capitalOf({ "San José": 2 })
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["cr", "us"])
+	})
+
+	it("stops at the margin: a 100x-more-populous namesake keeps the lead (Hamilton → ON, not Bermuda)", () => {
+		// Hamilton, Ontario 519,949 vs Hamilton, Bermuda 902 — 576x, over 10^2.
+		const ranked = promoteCapitals(
+			[
+				place({ id: "ca", name: "Hamilton", country: "CA", prominence: prom(519_949) }),
+				place({ id: "bm", name: "Hamilton", country: "BM", prominence: prom(902) }),
+			],
+			(p) => (p.country === "BM" ? 2 : 0)
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["ca", "bm"])
+	})
+
+	it("never promotes an admin-1 seat — the ratified referential decisions hold (Springfield stays MO)", () => {
+		// An admin-1 seat is never promoted: even a 1-log10-unit seat margin flipped
+		// Springfield to Illinois, so level 1 promotes no candidate.
+		const seat = (p: { lat: number }): number => (p.lat === 39.8 ? 1 : 0)
+
+		const ranked = promoteCapitals(
+			[
+				place({ id: "mo", name: "Springfield", country: "US", lat: 37.2, prominence: prom(169_176) }),
+				place({ id: "il", name: "Springfield", country: "US", lat: 39.8, prominence: prom(116_250) }),
+			],
+			seat
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["mo", "il"])
+	})
+
+	it("walks past several rows, stopping at the first over the margin", () => {
+		const level = (p: { country?: string }): number => (p.country === "GD" ? 2 : 0)
+
+		const ranked = promoteCapitals(
+			[
+				place({ id: "metro", name: "St. George", country: "US", prominence: prom(9_000_000) }),
+				place({ id: "town", name: "St. George", country: "US", prominence: prom(95_000) }),
+				place({ id: "village", name: "St. Georges", country: "GB", prominence: prom(4000) }),
+				place({ id: "gd", name: "Saint George's", country: "GD", prominence: prom(33_000) }),
+			],
+			level
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["metro", "gd", "town", "village"])
+	})
+
+	it("is tier-safe: a capital in the partial tier never crosses into the exact tier", () => {
+		const ranked = promoteCapitals(
+			[
+				place({ id: "exact", name: "Roseau", country: "US", prominence: prom(15_252), exactMatch: true }),
+				place({ id: "partial-capital", name: "Roseau", country: "DM", prominence: prom(16_571), exactMatch: false }),
+			],
+			(p) => (p.country === "DM" ? 2 : 0)
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["exact", "partial-capital"])
+	})
+
+	it("is identity without a level function or without any capital in the list", () => {
+		const rows = [
+			place({ id: "a", name: "X", country: "US", prominence: 5 }),
+			place({ id: "b", name: "X", country: "GB", prominence: 4 }),
+		]
+
+		expect(promoteCapitals(rows, undefined).map((p) => p.id)).toEqual(["a", "b"])
+		expect(promoteCapitals(rows, () => 0).map((p) => p.id)).toEqual(["a", "b"])
+	})
+
+	it("holds the margin the sentences above rely on", () => {
+		expect(NATIONAL_CAPITAL_MARGIN_LOG10).toBe(2)
+	})
+})

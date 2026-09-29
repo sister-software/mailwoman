@@ -1,0 +1,639 @@
+import type { POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import { JSONSpliterator } from "spliterator"
+import { describe, expect, it } from "vitest"
+
+import {
+	auditFixtures,
+	evaluateFloors,
+	type FloorInput,
+	gradeCase,
+	isCountedFixture,
+	partitionCases,
+	POI_BOARD_FIXTURES,
+	POI_BOARD_FLOORS,
+	type POIBoardFixture,
+	type POIBoardOutcome,
+} from "#eval-harness/poi/board"
+import { canonicalJSON, loadProbeDefinition } from "#eval-harness/semantic-utility/probe"
+
+const fixtures = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toArray()
+const probeDefinition = await loadProbeDefinition()
+
+function intentOutcome(poiIntent: POIIntentOutcome): POIBoardOutcome {
+	return { path: "poi", poiIntent }
+}
+
+const resultsFixture: POIBoardFixture = {
+	id: "t-results",
+	query: "cafe near Springfield IL",
+	expect: {
+		kind: "results",
+		categoryID: "cafe",
+		anchorGold: { latitude: 39.7817, longitude: -89.6501 },
+		maxNearestKm: 25,
+	},
+}
+
+const brandResultsFixture: POIBoardFixture = {
+	id: "t-brand-results",
+	query: "chevron near Houston TX",
+	expect: {
+		kind: "results",
+		brandWikidata: "Q319642",
+		anchorGold: { latitude: 29.7604, longitude: -95.3698 },
+		maxNearestKm: 25,
+	},
+}
+
+const abstainFixture: POIBoardFixture = {
+	id: "t-abstain",
+	query: "fire hydrant near Springfield IL",
+	expect: { kind: "abstain", reason: "requires_build_local_layer" },
+}
+
+const addressFixture: POIBoardFixture = {
+	id: "t-address",
+	query: "350 5th Ave, New York, NY 10118",
+	expect: { kind: "address" },
+}
+
+function poiResult(
+	overrides: Partial<NonNullable<Extract<POIIntentOutcome, { type: "intent" }>["results"]>[number]> = {}
+) {
+	return {
+		name: "Some Place",
+		categoryID: "cafe",
+		brandWikidata: null,
+		latitude: 39.78,
+		longitude: -89.65,
+		country: "US",
+		confidence: 0.9,
+		gersID: "gers-1",
+		...overrides,
+	}
+}
+
+describe("gradeCase — results expectation", () => {
+	it("passes when ≥1 result, nearest within range, top category matches", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
+		})
+
+		const grade = gradeCase(resultsFixture, outcome)
+
+		expect(grade.pass).toBe(true)
+		expect(grade.nearestKm).toBeCloseTo(0, 3)
+		expect(grade.resultCount).toBe(1)
+	})
+
+	it("uses the NEAREST result's distance, not necessarily the top-ranked one", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			results: [poiResult({ latitude: 10, longitude: 10 }), poiResult({ latitude: 39.7817, longitude: -89.6501 })],
+		})
+
+		const grade = gradeCase(resultsFixture, outcome)
+
+		expect(grade.nearestKm).toBeLessThan(1)
+	})
+
+	it("fails when the nearest result is outside maxNearestKm", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			results: [poiResult({ latitude: 10, longitude: 10 })],
+		})
+
+		const grade = gradeCase(resultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.detail).toMatch(/> maxNearestKm/)
+	})
+
+	it("fails when the top result's category doesn't match, even if in range", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			results: [poiResult({ latitude: 39.7817, longitude: -89.6501, categoryID: "restaurant" })],
+		})
+
+		const grade = gradeCase(resultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.detail).toMatch(/top category restaurant !== expected cafe/)
+	})
+
+	it("fails on zero results", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			results: [],
+		})
+
+		const grade = gradeCase(resultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.resultCount).toBe(0)
+		expect(grade.nearestKm).toBeUndefined()
+	})
+
+	it("fails when the outcome is an abstain instead of results", () => {
+		const outcome = intentOutcome({ type: "abstain", reason: "anchor_required" })
+		const grade = gradeCase(resultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.detail).toMatch(/got abstain\(anchor_required\)/)
+	})
+
+	it("fails when the pipeline never took the poi path at all", () => {
+		const grade = gradeCase(resultsFixture, { path: "full" })
+
+		expect(grade.pass).toBe(false)
+		expect(grade.detail).toMatch(/no poi intent/)
+	})
+})
+
+describe("gradeCase — brand results expectation", () => {
+	it("passes when the top result's brandWikidata matches the expected QID", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			results: [
+				poiResult({
+					latitude: 29.7604,
+					longitude: -95.3698,
+					categoryID: "gas_station",
+					brandWikidata: "Q319642",
+				}),
+			],
+		})
+
+		const grade = gradeCase(brandResultsFixture, outcome)
+
+		expect(grade.pass).toBe(true)
+		expect(grade.nearestKm).toBeCloseTo(0, 3)
+	})
+
+	it("fails when the top result's brandWikidata doesn't match, even if in range", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			results: [
+				poiResult({
+					latitude: 29.7604,
+					longitude: -95.3698,
+					categoryID: "gas_station",
+					brandWikidata: "Q999999",
+				}),
+			],
+		})
+
+		const grade = gradeCase(brandResultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.detail).toMatch(/top brandWikidata Q999999 !== expected Q319642/)
+	})
+
+	it("fails on zero results", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			results: [],
+		})
+
+		const grade = gradeCase(brandResultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.resultCount).toBe(0)
+	})
+
+	it("Category grading is unaffected by the brandWikidata branch (check)", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
+			results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
+		})
+
+		const grade = gradeCase(resultsFixture, outcome)
+
+		expect(grade.pass).toBe(true)
+	})
+})
+
+describe("gradeCase — abstain expectation", () => {
+	it("passes on an exact reason match", () => {
+		const outcome = intentOutcome({ type: "abstain", reason: "requires_build_local_layer" })
+		const grade = gradeCase(abstainFixture, outcome)
+
+		expect(grade.pass).toBe(true)
+	})
+
+	it("fails on a different abstain reason", () => {
+		const outcome = intentOutcome({ type: "abstain", reason: "anchor_required" })
+		const grade = gradeCase(abstainFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.detail).toMatch(/expected abstain\(requires_build_local_layer\), got abstain\(anchor_required\)/)
+	})
+
+	it("fails when the outcome carries results instead of an abstain", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant" } },
+			results: [poiResult({ categoryID: "fire_hydrant" })],
+		})
+
+		const grade = gradeCase(abstainFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+	})
+})
+
+describe("gradeCase — address expectation", () => {
+	it("passes when the pipeline never claims the poi path", () => {
+		const grade = gradeCase(addressFixture, { path: "full" })
+
+		expect(grade.pass).toBe(true)
+	})
+
+	it("passes when path is full-length address parse even with poiIntent absent", () => {
+		const grade = gradeCase(addressFixture, { path: "fast-path" })
+
+		expect(grade.pass).toBe(true)
+	})
+
+	it("fails when the poi branch wrongly claims a full address", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } },
+		})
+
+		const grade = gradeCase(addressFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.detail).toMatch(/poi branch claimed it/)
+	})
+})
+
+describe("the committed poi-board fixture set", () => {
+	it("carries 56 cases — 51 counted toward the floors, plus 5 tracked", () => {
+		expect(fixtures).toHaveLength(56)
+		expect(fixtures.filter((f) => isCountedFixture(f))).toHaveLength(51)
+		expect(fixtures.filter((f) => !isCountedFixture(f))).toHaveLength(5)
+	})
+
+	it("audits clean", () => {
+		expect(auditFixtures(fixtures)).toEqual([])
+	})
+
+	it("has unique ids", () => {
+		const ids = fixtures.map((f) => f.id)
+
+		expect(new Set(ids).size).toBe(ids.length)
+	})
+
+	it("carries every expect kind the spec requires", () => {
+		const kinds = new Set(fixtures.map((f) => f.expect.kind))
+
+		expect(kinds).toContain("results")
+		expect(kinds).toContain("abstain")
+		expect(kinds).toContain("address")
+	})
+
+	it("covers all four poi.db countries with ≥4 category+anchor cases each (via well-known city anchors)", () => {
+		const cityToCountry: Record<string, string> = {
+			springfield: "US",
+			chicago: "US",
+			austin: "US",
+			seattle: "US",
+			denver: "US",
+			houston: "US",
+			dallas: "US",
+			toronto: "CA",
+			ottawa: "CA",
+			vancouver: "CA",
+			calgary: "CA",
+			montreal: "CA",
+			guadalajara: "MX",
+			tijuana: "MX",
+			monterrey: "MX",
+			cancun: "MX",
+			mexico: "MX",
+			lyon: "FR",
+			marseille: "FR",
+			toulouse: "FR",
+			nice: "FR",
+			paris: "FR",
+		}
+
+		const counts: Record<string, number> = { US: 0, CA: 0, MX: 0, FR: 0 }
+
+		for (const f of fixtures) {
+			if (f.expect.kind !== "results") continue
+			const lower = f.query.toLowerCase()
+			const hit = Object.entries(cityToCountry).find(([city]) => lower.includes(city))
+
+			if (hit) {
+				counts[hit[1]]!++
+			}
+		}
+
+		for (const country of ["US", "CA", "MX", "FR"]) {
+			expect(counts[country], `${country} count`).toBeGreaterThanOrEqual(4)
+		}
+	})
+
+	it("checks at least one locale-synonym case to an exact locale, and at least one is unrestricted", () => {
+		const withLocale = fixtures.filter((f) => f.locale)
+
+		expect(withLocale.length).toBeGreaterThanOrEqual(1)
+
+		const withoutLocale = fixtures.filter((f) => !f.locale && f.expect.kind === "results")
+
+		expect(withoutLocale.length).toBeGreaterThanOrEqual(1)
+	})
+
+	it("every results-kind expect carries a plausible lat/lon and a positive maxNearestKm", () => {
+		for (const f of fixtures) {
+			if (f.expect.kind !== "results") continue
+			const { latitude, longitude } = f.expect.anchorGold
+
+			expect(Math.abs(latitude), f.id).toBeLessThanOrEqual(90)
+			expect(Math.abs(longitude), f.id).toBeLessThanOrEqual(180)
+			expect(f.expect.maxNearestKm, f.id).toBeGreaterThan(0)
+		}
+	})
+
+	it("every abstain-kind expect carries a non-empty reason", () => {
+		for (const f of fixtures) {
+			if (f.expect.kind !== "abstain") continue
+			expect(f.expect.reason.length, f.id).toBeGreaterThan(0)
+		}
+	})
+
+	it("every results-kind expect carries EXACTLY ONE of categoryID / brandWikidata", () => {
+		for (const f of fixtures) {
+			if (f.expect.kind !== "results") continue
+			const hasCategory = f.expect.categoryID !== undefined
+			const hasBrand = f.expect.brandWikidata !== undefined
+
+			expect(hasCategory !== hasBrand, f.id).toBe(true)
+		}
+	})
+
+	it("carries at least 4 brand cases: brand+anchor results, locale-restricted slang, and a bare-brand abstain", () => {
+		const brandResults = fixtures.filter((f) => f.expect.kind === "results" && f.expect.brandWikidata !== undefined)
+
+		expect(brandResults.length).toBeGreaterThanOrEqual(4)
+
+		const slang = fixtures.find((f) => f.id === "brand-slang-01")
+		expect(slang?.locale).toBeTruthy()
+		expect(slang?.expect.kind).toBe("results")
+
+		const bare = fixtures.find((f) => f.id === "brand-bare-01")
+		expect(bare?.expect).toEqual({ kind: "abstain", reason: "anchor_required" })
+	})
+})
+
+describe("evaluateFloors — breach detection", () => {
+	function report(kinds: Record<string, { total: number; pass: number }>): FloorInput {
+		const byExpectKind: FloorInput["byExpectKind"] = {}
+		let total = 0
+		let pass = 0
+
+		for (const [kind, s] of Object.entries(kinds)) {
+			byExpectKind[kind] = { total: s.total, pass: s.pass, rate: s.total > 0 ? s.pass / s.total : 0 }
+			total += s.total
+			pass += s.pass
+		}
+
+		return { overallPassRate: total > 0 ? pass / total : 0, byExpectKind }
+	}
+
+	const shipping = report({
+		results: { total: 37, pass: 33 },
+		abstain: { total: 8, pass: 8 },
+		address: { total: 6, pass: 6 },
+	})
+
+	it("passes the committed v1.1 standing (47/51 = 92.2%, abstain 8/8, address 6/6) — no breach", () => {
+		const evaluation = evaluateFloors(shipping)
+
+		expect(evaluation.breached).toBe(false)
+		expect(evaluation.lines.every((l) => l.met)).toBe(true)
+
+		const overall = evaluation.lines.find((l) => l.key === "overall")!
+		expect(overall.observed).toBeCloseTo(47 / 51, 5)
+		expect(overall.fraction).toBe("47/51")
+	})
+
+	it("breaches when overall dips below 90% even with both category floors met", () => {
+		const evaluation = evaluateFloors(
+			report({
+				results: { total: 37, pass: 30 },
+				abstain: { total: 8, pass: 8 },
+				address: { total: 6, pass: 6 },
+			})
+		)
+
+		expect(evaluation.breached).toBe(true)
+
+		const overall = evaluation.lines.find((l) => l.key === "overall")!
+		expect(overall.met).toBe(false)
+		expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(true)
+		expect(evaluation.lines.find((l) => l.key === "address")!.met).toBe(true)
+	})
+
+	it("breaches on a single abstain miss (100% floor is hard) even when overall clears 90%", () => {
+		const evaluation = evaluateFloors(
+			report({
+				results: { total: 37, pass: 37 },
+				abstain: { total: 8, pass: 7 },
+				address: { total: 6, pass: 6 },
+			})
+		)
+
+		expect(evaluation.breached).toBe(true)
+		expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(false)
+		expect(evaluation.lines.find((l) => l.key === "overall")!.met).toBe(true)
+	})
+
+	it("Breaches on a single address-condition miss (the poi branch hijacking an address)", () => {
+		const evaluation = evaluateFloors(
+			report({
+				results: { total: 37, pass: 37 },
+				abstain: { total: 8, pass: 8 },
+				address: { total: 6, pass: 5 },
+			})
+		)
+
+		expect(evaluation.breached).toBe(true)
+		expect(evaluation.lines.find((l) => l.key === "address")!.met).toBe(false)
+	})
+
+	it("treats an absent category kind as UNMET (a 100% floor can't be vacuously cleared)", () => {
+		const evaluation = evaluateFloors(report({ results: { total: 37, pass: 37 } }))
+
+		expect(evaluation.breached).toBe(true)
+		expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(false)
+		expect(evaluation.lines.find((l) => l.key === "abstain")!.fraction).toBe("0/0")
+	})
+
+	it("exposes the pre-registered floor thresholds", () => {
+		expect(POI_BOARD_FLOORS).toEqual({ overall: 0.9, abstain: 1, address: 1 })
+	})
+
+	describe("The 55-row composition", () => {
+		it("reads the same 49/51 = 96.1% it read at 51 rows, because the four promoted rows are tracked", () => {
+			const evaluation = evaluateFloors(
+				report({
+					results: { total: 37, pass: 35 },
+					abstain: { total: 8, pass: 8 },
+					address: { total: 6, pass: 6 },
+				})
+			)
+
+			expect(evaluation.breached).toBe(false)
+
+			const overall = evaluation.lines.find((l) => l.key === "overall")!
+			expect(overall.fraction).toBe("49/51")
+			expect(overall.observed).toBeCloseTo(49 / 51, 5)
+		})
+
+		it("would breach at 49/55 = 89.1% if the four counted — the reason the tracked convention carries them", () => {
+			const evaluation = evaluateFloors(
+				report({
+					results: { total: 41, pass: 35 },
+					abstain: { total: 8, pass: 8 },
+					address: { total: 6, pass: 6 },
+				})
+			)
+
+			expect(evaluation.breached).toBe(true)
+
+			const overall = evaluation.lines.find((l) => l.key === "overall")!
+			expect(overall.met).toBe(false)
+			expect(overall.fraction).toBe("49/55")
+			expect(overall.observed).toBeCloseTo(49 / 55, 5)
+			expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(true)
+			expect(evaluation.lines.find((l) => l.key === "address")!.met).toBe(true)
+		})
+	})
+})
+
+describe("the tracked-row convention", () => {
+	function tracked(overrides: Partial<POIBoardFixture> = {}): POIBoardFixture {
+		return { ...resultsFixture, id: "t-tracked", status: "known_fail", bugRef: "#1039", ...overrides }
+	}
+
+	it("defaults an absent status to pass, so a row counts toward the floors without carrying a field", () => {
+		expect(isCountedFixture(resultsFixture)).toBe(true)
+		expect(isCountedFixture(tracked())).toBe(false)
+		expect(isCountedFixture(tracked({ status: "improvement_target", bugRef: "#1966" }))).toBe(false)
+	})
+
+	it("refuses an unknown status rather than defaulting it", () => {
+		const problems = auditFixtures([tracked({ status: "known-fail" as POIBoardFixture["status"] })])
+
+		expect(problems.join("\n")).toMatch(/unknown status/u)
+	})
+
+	it("Refuses an unknown key rather than dropping it", () => {
+		const problems = auditFixtures([{ ...resultsFixture, bugref: "#1039" } as POIBoardFixture])
+
+		expect(problems.join("\n")).toMatch(/unknown key "bugref"/u)
+	})
+
+	it("refuses a bugRef on a counted row — it would assert the defect is repaired", () => {
+		const problems = auditFixtures([{ ...resultsFixture, bugRef: "#1039" }])
+
+		expect(problems.join("\n")).toMatch(/only meaningful on a tracked row/u)
+	})
+
+	it("refuses a tracked row that names no live issue", () => {
+		expect(auditFixtures([tracked({ bugRef: undefined })]).join("\n")).toMatch(/must name the live issue/u)
+		expect(auditFixtures([tracked({ bugRef: "  " })]).join("\n")).toMatch(/must name the live issue/u)
+	})
+
+	it("refuses a duplicate id", () => {
+		expect(auditFixtures([resultsFixture, resultsFixture]).join("\n")).toMatch(/used twice/u)
+	})
+
+	it("splits grades by status and reports a tracked row that started passing", () => {
+		const trackedFixture = tracked({ rowRef: "semantic-utility/probe-definition.json#x", note: "why" })
+		const set = [resultsFixture, trackedFixture]
+		const subject: POIIntent = { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } }
+
+		const grades = [
+			gradeCase(resultsFixture, { path: "full" }),
+			gradeCase(trackedFixture, intentOutcome({ type: "intent", intent: subject, results: [] })),
+		]
+
+		const partition = partitionCases(set, grades)
+
+		expect(partition.counted.map((g) => g.id)).toEqual(["t-results"])
+		expect(partition.tracked).toHaveLength(1)
+		expect(partition.tracked[0]!.status).toBe("known_fail")
+		expect(partition.tracked[0]!.bugRef).toBe("#1039")
+		expect(partition.tracked[0]!.rowRef).toBe("semantic-utility/probe-definition.json#x")
+		expect(partition.tracked[0]!.note).toBe("why")
+		expect(partition.tracked[0]!.holding).toBe(false)
+
+		const holdingGrade = gradeCase(
+			trackedFixture,
+			intentOutcome({
+				type: "intent",
+				intent: subject,
+				results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
+			})
+		)
+
+		expect(partitionCases(set, [holdingGrade]).tracked[0]!.holding).toBe(true)
+	})
+
+	it("Refuses a grade whose id names no committed fixture, rather than dropping it from the floors", () => {
+		const orphan = gradeCase({ ...resultsFixture, id: "t-orphan" }, { path: "full" })
+
+		expect(() => partitionCases([resultsFixture], [orphan])).toThrow(/names no committed fixture/u)
+	})
+})
+
+describe("The promoted semantic-utility family", () => {
+	const definition = probeDefinition
+	const promoted = fixtures.filter((f) => f.rowRef?.startsWith("semantic-utility/probe-definition.json#"))
+
+	it("promotes all four frozen target rows, and nothing else", () => {
+		expect(promoted.map((f) => f.id).toSorted()).toEqual(definition.targetRows.map((r) => r.id).toSorted())
+	})
+
+	it("copies each row from the frozen definition byte-for-byte, so the board grades the row that was registered", () => {
+		const byID = new Map(definition.targetRows.map((row) => [row.id, row]))
+
+		for (const fixture of promoted) {
+			const frozen = byID.get(fixture.rowRef!.split("#")[1]!)
+
+			expect(frozen, `${fixture.id} names ${fixture.rowRef}`).toBeDefined()
+			expect(fixture.id).toBe(frozen!.id)
+			expect(fixture.query).toBe(frozen!.query)
+			expect(fixture.locale).toBe(frozen!.locale)
+			expect(canonicalJSON(fixture.expect)).toBe(canonicalJSON(frozen!.expect))
+		}
+	})
+
+	it("tracks every row against a live issue, and none of them reaches the floors", () => {
+		for (const fixture of promoted) {
+			expect(isCountedFixture(fixture), fixture.id).toBe(false)
+			expect(fixture.bugRef, fixture.id).toMatch(/^#\d+$/u)
+		}
+
+		const byRef = new Map(promoted.map((f) => [f.id, f]))
+
+		expect(byRef.get("sem-act-us-01")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })
+		expect(byRef.get("sem-act-us-02")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })
+		expect(byRef.get("sem-act-mx-01")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })
+		expect(byRef.get("sem-act-fr-01")).toMatchObject({ status: "known_fail", bugRef: "#1039" })
+	})
+})

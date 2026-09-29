@@ -1,0 +1,208 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Regression test for the 2026-07 demo outage: an optional postcode-anchor binary that 404s must
+ *   not block the whole classifier load.
+ *
+ *   `postcode-de.bin` returned 404 from production R2 for every shipped version. `postcode-us/fr`
+ *   returned 200. The loader fetched postcode binaries with a throwing `Promise.all(...fetchBytes)`.
+ *   One 404 rejected the whole `Promise.all`, so `loadNeuralClassifierFromURLs` rejected and
+ *   the demo's `runtime.ready` never fired. The input stayed disabled even though the model, tokenizer
+ *   and other postcode binaries were available.
+ *
+ *   The postcode anchor is a soft ranking channel rather than a required model input. This suite pins the
+ *   fix: one 404 is skipped (with a loud warn) and the classifier still loads with the survivors'
+ *   anchors. all 404 collapses to the anchor-off identity (undefined lookup) and still loads.
+ *
+ *   Strategy mirrors `web-onnx-runner.unit.test.ts` — mock onnxruntime-web so no real model file is
+ *   needed — plus partial mocks of `./tokenizer.ts` + `./classifier.ts` (which need a real
+ *   tokenizer.model) while keeping `PostcodeBinaryResolver` + `serializePostcodeBinary` real, so the
+ *   postcode-load-and-merge path under test runs for real.
+ */
+
+import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
+
+const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
+
+vi.mock("onnxruntime-web/webgpu", () => {
+	class Tensor {
+		readonly type: string
+		readonly data: BigInt64Array | Float32Array
+		readonly dims: readonly number[]
+
+		constructor(type: string, data: BigInt64Array | Float32Array, dims: readonly number[]) {
+			this.type = type
+			this.data = data
+			this.dims = dims
+		}
+	}
+
+	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
+})
+
+/**
+ * The config the (stubbed) `NeuralAddressClassifier` was constructed with — the assertion surface.
+ */
+let capturedConfig: { postcodeAnchorLookup?: Map<string, unknown> } | null = null
+
+// The real tokenizer needs a valid SentencePiece model.
+// Stub the load (we feed dummy bytes).
+vi.mock("#tokenizer", async (importOriginal) => ({
+	...(await importOriginal<typeof import("#tokenizer")>()),
+	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
+}))
+
+// Capture-only stub: the real classifier needs the real tokenizer + label wiring.
+// We only care that it is constructed (the load reached the end) and what postcode lookup it received.
+vi.mock("#classifier", async (importOriginal) => ({
+	...(await importOriginal<typeof import("#classifier")>()),
+	NeuralAddressClassifier: class {
+		constructor(cfg: { postcodeAnchorLookup?: Map<string, unknown> }) {
+			capturedConfig = cfg
+		}
+	},
+}))
+
+// vi.resetModules() before these imports: the root vitest config runs `isolate: false`
+// (one shared module graph per worker), so `./web-loader.ts` and its dependencies may
+// already be cached — evaluated without this file's mocks by an earlier file.
+// A cached module never re-evaluates, so the mock factories above would be skipped
+// and the real tokenizer/classifier would try to parse the dummy fixture bytes
+// (SentencePiece ParseFromArray failure). resetModules forces re-evaluation against the registered mocks.
+// The afterAll reset runs again on the way out so the next file in this fork
+// never inherits our mocked modules from the cache.
+vi.resetModules()
+afterAll(() => vi.resetModules())
+
+// Import after the mock declarations + reset.
+// `postcode-binary-resolver.ts` is not mocked, so the binaries we build here decode through the real reader.
+const { serializePostcodeBinary } = await import("#postcode")
+const { loadNeuralClassifierFromURLs } = await import("#web/loader")
+
+const SEQ = 128
+
+/**
+ * A mocked ORT session with a plain graph (no soft-channel inputs → no unfed-channel warnings).
+ */
+function installMockSession(): void {
+	sessionCreateMock.mockReset()
+
+	sessionCreateMock.mockResolvedValue({
+		inputNames: ["input_ids", "attention_mask"],
+		run: vi.fn(() => Promise.resolve({ logits: { data: new Float32Array(SEQ * 3), dims: [1, SEQ, 3] } })),
+	})
+}
+
+const US_BIN = "https://cdn.example/mailwoman/v9/postcode-us.bin"
+const DE_BIN = "https://cdn.example/mailwoman/v9/postcode-de.bin"
+const MODEL_URL = "https://cdn.example/mailwoman/v9/model.onnx"
+const TOKENIZER_URL = "https://cdn.example/mailwoman/v9/tokenizer.model"
+
+/**
+ * A fake `fetch` whose per-URL status is decided by `statusFor`. 200 responses contain real
+ * bytes: a decodable single-record postcode binary for the `.bin` URLs, dummy bytes for
+ * model/tokenizer (the ORT session + tokenizer are mocked, so the content is irrelevant).
+ */
+function makeFetch(statusFor: (url: string) => number): typeof fetch {
+	return async (input) => {
+		const url = String(input)
+		const status = statusFor(url)
+
+		if (status !== 200) {
+			return new Response(null, { status, statusText: status === 404 ? "Not Found" : "Server Error" })
+		}
+
+		if (url.includes("postcode-us")) {
+			return new Response(
+				serializePostcodeBinary([{ postcode: "10001", country: "US", lat: 40.7478, lon: -73.985 }]).slice().buffer
+			)
+		}
+
+		if (url.includes("postcode-de")) {
+			return new Response(
+				serializePostcodeBinary([{ postcode: "10115", country: "DE", lat: 52.53, lon: 13.38 }]).slice().buffer
+			)
+		}
+
+		return new Response(new Uint8Array([1, 2, 3])) // model / tokenizer — mocked downstream
+	}
+}
+
+function baseOpts(fetchImpl: typeof fetch, postcodeBinaryURLs: readonly string[]) {
+	return {
+		modelURL: MODEL_URL,
+		tokenizerURL: TOKENIZER_URL,
+		// Skip the sibling-lexicon fetches — irrelevant to the postcode-tolerance path under test.
+		gazetteerLexiconURL: null,
+		countryLexiconURL: null,
+		streetTypeLexiconURL: null,
+		localitySurfaceLexiconURL: null,
+		postcodeBinaryURLs,
+		runner: { useWebGPU: false },
+		fetchImpl,
+	}
+}
+
+beforeEach(() => {
+	installMockSession()
+	capturedConfig = null
+})
+
+describe("loadNeuralClassifierFromURLs — optional postcode-anchor binary tolerance (demo outage #fix)", () => {
+	test("ONE 404 postcode binary is skipped with a warn; the classifier STILL loads with the survivor's anchors", async () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+		// postcode-de.bin 404s (the live incident); postcode-us.bin + model + tokenizer are 200.
+		const fetchImpl = makeFetch((url) => (url.includes("postcode-de") ? 404 : 200))
+
+		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [US_BIN, DE_BIN]))
+
+		// ready fires: the load resolved and constructed a classifier.
+		expect(result.classifier).toBeDefined()
+
+		// The 200 binary's anchors are present.
+		// The 404 one is absent.
+		const lookup = capturedConfig?.postcodeAnchorLookup
+		expect(lookup).toBeInstanceOf(Map)
+		expect(lookup!.has("10001")).toBe(true) // US survived
+		expect(lookup!.has("10115")).toBe(false) // DE was skipped
+
+		// The skip was loud and included the URL and status.
+		const warned = warn.mock.calls.map((c) => String(c[0])).join("\n")
+		expect(warned).toContain(DE_BIN)
+		expect(warned).toContain("404")
+
+		warn.mockRestore()
+	})
+
+	test("ALL postcode binaries 404 → classifier loads with an UNDEFINED postcode lookup (anchor-off identity)", async () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+		const fetchImpl = makeFetch((url) => (url.includes("postcode") ? 404 : 200))
+
+		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [US_BIN, DE_BIN]))
+
+		// Still loads — identical to the no-postcodes-configured path.
+		expect(result.classifier).toBeDefined()
+		expect(capturedConfig?.postcodeAnchorLookup).toBeUndefined()
+
+		// Both skips were warned.
+		const warned = warn.mock.calls.map((c) => String(c[0])).join("\n")
+		expect(warned).toContain(US_BIN)
+		expect(warned).toContain(DE_BIN)
+
+		warn.mockRestore()
+	})
+
+	test("both binaries 200 → both postcodes' anchors merge in (the happy path is unregressed)", async () => {
+		const fetchImpl = makeFetch(() => 200)
+
+		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [US_BIN, DE_BIN]))
+
+		expect(result.classifier).toBeDefined()
+		const lookup = capturedConfig?.postcodeAnchorLookup
+		expect(lookup).toBeInstanceOf(Map)
+		expect(lookup!.has("10001")).toBe(true)
+		expect(lookup!.has("10115")).toBe(true)
+	})
+})

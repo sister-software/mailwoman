@@ -1,0 +1,153 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Multi-extract attach tests for `WOFSQLitePlaceLookup`; fixtures are on-disk because attach requires file paths.
+ */
+
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
+import { afterEach, beforeEach, describe, expect, test } from "vitest"
+
+import { buildPlaceSearchFTS } from "#fts"
+import { WOFSQLitePlaceLookup } from "#lookup"
+import type { WOFDatabase } from "#schema"
+
+let scratch: TemporaryDirectory
+
+function buildAdminExtract(path: PathBuilderLike): void {
+	using db = new DatabaseClient<WOFDatabase>(path)
+
+	db.exec(`
+		CREATE TABLE spr (
+			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
+			latitude REAL, longitude REAL,
+			min_latitude REAL, max_latitude REAL, min_longitude REAL, max_longitude REAL,
+			is_current INTEGER, is_deprecated INTEGER
+		);
+		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
+		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
+		INSERT INTO spr VALUES (101, NULL, 'Springfield', 'locality', 'US', 39.80, -89.65, 39.75, 39.85, -89.70, -89.60, -1, 0);
+		INSERT INTO spr VALUES (102, NULL, 'Beverly Hills', 'locality', 'US', 34.07, -118.40, 34.05, 34.09, -118.42, -118.38, 1, 0);
+		INSERT INTO spr VALUES (103, NULL, 'Paris', 'locality', 'FR', 48.85, 2.34, 48.81, 48.90, 2.22, 2.46, -1, 0);
+	`)
+
+	buildPlaceSearchFTS(db)
+}
+
+async function buildPostcodeExtract(path: PathBuilderLike): Promise<void> {
+	using db = new DatabaseClient<WOFDatabase>(path)
+
+	db.exec(`
+		CREATE TABLE spr (
+			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
+			latitude REAL, longitude REAL,
+			min_latitude REAL, max_latitude REAL, min_longitude REAL, max_longitude REAL,
+			is_current INTEGER, is_deprecated INTEGER
+		);
+		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
+		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
+		INSERT INTO spr VALUES (201, 101, '62701', 'postalcode', 'US', 39.80, -89.65, 39.78, 39.82, -89.67, -89.63, 1, 0);
+		INSERT INTO spr VALUES (202, 102, '90210', 'postalcode', 'US', 34.10, -118.41, 34.08, 34.12, -118.43, -118.39, -1, 0);
+		INSERT INTO spr VALUES (203, 101, '62702', 'postalcode', 'US', 39.82, -89.63, 39.80, 39.84, -89.65, -89.61, 1, 0);
+	`)
+
+	buildPlaceSearchFTS(db)
+}
+
+beforeEach(async () => {
+	scratch = await temporaryDirectory("mailwoman-multi-extract-")
+})
+
+afterEach(async () => {
+	scratch[Symbol.asyncDispose]()
+})
+
+describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
+	test("opens a single extract via string path (backwards compatible)", async () => {
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
+		buildAdminExtract(adminPath)
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: adminPath })
+
+		const r = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
+		expect(r.length).toBeGreaterThan(0)
+		expect(r[0]?.name).toBe("Springfield")
+	})
+
+	test("opens admin + postcode extracts via array, auto-routes by placetype", async () => {
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
+		const pcPath = scratch.path("whosonfirst-data-postalcode-us-latest.db")
+		buildAdminExtract(adminPath)
+		await buildPostcodeExtract(pcPath)
+
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
+
+		const localities = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
+		expect(localities).toHaveLength(1)
+		expect(localities[0]?.placetype).toBe("locality")
+		expect(localities[0]?.id).toBe(101)
+
+		const postcodes = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
+		expect(postcodes).toHaveLength(1)
+		expect(postcodes[0]?.placetype).toBe("postalcode")
+		expect(postcodes[0]?.id).toBe(201)
+	})
+
+	test("ExtractConfig.schemaName override + explicit placetypes hint", async () => {
+		const adminPath = scratch.path("admin.db")
+		const oddlyNamed = scratch.path("wherever-they-put-postcodes.db")
+		buildAdminExtract(adminPath)
+		await buildPostcodeExtract(oddlyNamed)
+
+		using lookup = new WOFSQLitePlaceLookup({
+			databasePath: [adminPath, { path: oddlyNamed, schemaName: "pc", placetypes: ["postalcode"] }],
+		})
+
+		const postcodes = await lookup.findPlace({ text: "90210", placetype: "postalcode" })
+		expect(postcodes).toHaveLength(1)
+		expect(postcodes[0]?.name).toBe("90210")
+	})
+
+	test("postcode bbox + proximity work via R*Tree on the attached extract", async () => {
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
+		const pcPath = scratch.path("whosonfirst-data-postalcode-us-latest.db")
+		buildAdminExtract(adminPath)
+		await buildPostcodeExtract(pcPath)
+
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
+
+		const r = await lookup.findPlace({
+			text: "62701",
+			placetype: "postalcode",
+			near: { lat: 39.8, lon: -89.65, maxDistanceKm: 10 },
+		})
+
+		expect(r.length).toBeGreaterThan(0)
+		expect(r[0]?.distanceKm).toBeDefined()
+		expect(r[0]?.distanceKm).toBeLessThan(5)
+	})
+
+	test("query without placetype routes to main (admin) regardless of extracts", async () => {
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
+		const pcPath = scratch.path("whosonfirst-data-postalcode-us-latest.db")
+		buildAdminExtract(adminPath)
+		await buildPostcodeExtract(pcPath)
+
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
+
+		const r = await lookup.findPlace({ text: "Springfield" })
+		expect(r).toHaveLength(1)
+		expect(r[0]?.placetype).toBe("locality")
+	})
+
+	test("placetype with no matching extract falls back to main", async () => {
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
+		buildAdminExtract(adminPath)
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath] })
+
+		const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
+		expect(r).toEqual([])
+	})
+})

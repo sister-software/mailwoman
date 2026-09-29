@@ -4,15 +4,16 @@
  * @author Teffen Ellis, et al.
  */
 
+import { describe, expect, it } from "vitest"
+
 import {
 	InMemoryAdapterRegistry,
 	canonicalDedupKey,
 	splitStreetLine,
 	stableSourceID,
 	streamingSha256,
-} from "@mailwoman/corpus/adapters/utils"
-import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "@mailwoman/corpus/types"
-import { describe, expect, it } from "vitest"
+} from "#adapters/utils"
+import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
 	return {

@@ -14,9 +14,10 @@
  *      digit. The bare-locality and bare-postcode counter rows must both exist and have no street.
  */
 
-import { noFragmentRecipe } from "@mailwoman/corpus/no/recipes/fragment"
-import { scratch, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
+
+import { noFragmentRecipe } from "#no/recipes/fragment"
+import { scratch, recipeRunner } from "#test-kit/corpus-recipe"
 
 const run = recipeRunner("no-fragment", noFragmentRecipe, 901)
 

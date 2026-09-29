@@ -8,9 +8,10 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { frFragmentRecipe } from "@mailwoman/corpus/fr/recipes/fragment"
-import { scratch, recipeRunner, type RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
+
+import { frFragmentRecipe } from "#fr/recipes/fragment"
+import { scratch, recipeRunner, type RecipeRow } from "#test-kit/corpus-recipe"
 
 const run = recipeRunner("fr-fragment", frFragmentRecipe, 727)
 

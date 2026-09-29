@@ -7,9 +7,10 @@
  */
 
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { runFile, runFileSync } from "@mailwoman/core/process"
-import { PathBuilder } from "path-ts"
+import { gitCommonDirectory, workingTreeRoot } from "@mailwoman/core/git"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { runFile } from "@mailwoman/core/process"
+import { isAbsolute, PathBuilder } from "path-ts"
 
 import { lintReply, type ValeAlert } from "#hooks/vale/check-core"
 
@@ -190,8 +191,26 @@ export async function linkIssue(cwd: string, issueNumber: number): Promise<void>
 }
 
 /**
- * Reads the current Git branch without a shell.
+ * The working tree a GitHub operation acts from.
+ *
+ * The server's own checkout is the default.
+ * A caller in a worktree passes its checkout path.
+ *
+ * That path must share the server repository's `.git` directory.
+ * A path in another repository is refused.
  */
-export function currentBranch(cwd: string): string {
-	return runFileSync("git", ["branch", "--show-current"], { cwd, encoding: "utf8" }).trim()
+export async function resolveCheckout(repoRoot: string, checkout?: string): Promise<string> {
+	if (!checkout) return repoRoot
+
+	if (!isAbsolute(checkout)) {
+		throw new Error(`\`checkout\` must be an absolute path; received ${stringifyJSON(checkout)}.`)
+	}
+
+	const [expected, actual] = await Promise.all([gitCommonDirectory(repoRoot), gitCommonDirectory(checkout)])
+
+	if (expected !== actual) {
+		throw new Error(`${checkout} is not a checkout of the repository at ${repoRoot}.`)
+	}
+
+	return await workingTreeRoot(checkout)
 }

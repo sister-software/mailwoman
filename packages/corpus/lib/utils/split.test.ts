@@ -7,6 +7,9 @@
 import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { TextSpliterator } from "spliterator"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
 import {
 	type CountryHoldout,
 	defaultHoldouts,
@@ -16,9 +19,7 @@ import {
 	splitRows,
 	writeSplitManifests,
 	writeSplitManifestsFromLabeledFiles,
-} from "@mailwoman/corpus/utils/split"
-import { TextSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+} from "#utils/split"
 
 interface MinRow {
 	source_id: string

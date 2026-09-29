@@ -6,15 +6,16 @@
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
+import { describe, expect, it } from "vitest"
+
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
 import {
 	USGOV_SAMHSA_ADAPTER_ID,
 	USGOV_SAMHSA_DEFAULT_LICENSE,
 	createUsgovSamhsaTreatmentLocatorAdapter,
-} from "@mailwoman/corpus/us/adapters/usgov/samhsa-treatment-locator/adapter"
-import { alignRow } from "@mailwoman/corpus/utils"
-import { describe, expect, it } from "vitest"
+} from "#us/adapters/usgov/samhsa-treatment-locator/adapter"
+import { alignRow } from "#utils"
 
 const scratch = useScratchDir("samhsa")
 

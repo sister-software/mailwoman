@@ -104,7 +104,7 @@ This README is the package-local summary. The authoritative documents are in the
 
 ## Layout
 
-Source lives at the workspace root. Tests live under `test/unit/` and import the package by its package name, never by a relative path. The manifest's `files` array declares `data/**/*.json` explicitly. `**/*.ts` does not match JSON, and a data file missing from `files` would leave the installed package without the data it exists to carry.
+Source lives at the workspace root. Each test sits beside the module it covers under `lib/`. The manifest's `files` array declares `data/**/*.json` explicitly. `**/*.ts` does not match JSON, and a data file missing from `files` would leave the installed package without the data it exists to carry.
 
 ## License
 

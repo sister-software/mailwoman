@@ -1,4 +1,7 @@
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilder } from "path-ts"
+import { describe, expect, it } from "vitest"
+
 import {
 	componentsForOSMRow,
 	createOSMAdapter,
@@ -8,12 +11,10 @@ import {
 	OSM_LICENSE,
 	sameName,
 	splitCityValue,
-} from "@mailwoman/corpus/adapters/osm/adapter"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "@mailwoman/corpus/utils/license"
-import type { PathBuilder } from "path-ts"
-import { describe, expect, it } from "vitest"
+} from "#adapters/osm/adapter"
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
+import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "#utils/license"
 
 const scratch = useScratchDir("osm")
 

@@ -8,15 +8,12 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import {
-	OVERTURE_SUBVENUE_CATEGORIES,
-	readOvertureLayerVintage,
-	readOvertureSubVenues,
-} from "@mailwoman/corpus/tools/overture-subvenue"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
+
+import { OVERTURE_SUBVENUE_CATEGORIES, readOvertureLayerVintage, readOvertureSubVenues } from "#tools/overture-subvenue"
 
 interface FixtureRow {
 	category: string

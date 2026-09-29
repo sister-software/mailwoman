@@ -124,20 +124,23 @@ interface DocTarget {
 }
 
 /**
- * Every `{@link}` target and every declaration-shaped backticked name in the file, in document order.
+ * Every `{@link}` target and declaration-shaped backticked name in the file's doc comments.
+ *
+ * Targets come back in document order.
+ * A string literal that spells a doc comment is skipped, such as a test's planted source file.
  */
 function docTargets(text: string, file: string): DocTarget[] {
 	const targets: DocTarget[] = []
 
-	for (const match of text.matchAll(LINK_TAG)) {
-		const target = match.groups?.["target"] ?? ""
-
-		if (isJudgeable(target)) {
-			targets.push({ offset: match.index, target })
-		}
-	}
-
 	for (const comment of docComments(text, file)) {
+		for (const match of comment.text.matchAll(LINK_TAG)) {
+			const target = match.groups?.["target"] ?? ""
+
+			if (isJudgeable(target)) {
+				targets.push({ offset: comment.pos + match.index, target })
+			}
+		}
+
 		for (const match of comment.text.matchAll(BACKTICKED_NAME)) {
 			const target = match.groups?.["target"] ?? ""
 
@@ -222,6 +225,7 @@ export const EXTERNAL_DOC_NAMES: Readonly<Record<string, string>> = {
 	getEditsForFileRename: "the TypeScript language service",
 	readFileSync: "node:fs",
 	WhosOnFirstClassifier: "the Pelias parser's dictionary classifier",
+	DynamicQuantizeLinear: "the ONNX operator",
 }
 
 interface DocLinkSweep {

@@ -155,7 +155,7 @@ does not belong on the installed product's help tree. RELEASING.md's nine `scrip
 AGENTS.md's release-pipeline pitfalls follow the operations.
 
 **Health (13) → `repo-health` checks.** `repo-health` (the debt counters), `verify-exports`,
-`verify-test-interface`, `verify-version-sync`, `vocab-census`, `node-modules-reacharound.test`,
+`verify-test-layout`, `verify-version-sync`, `vocab-census`, `node-modules-reacharound.test`,
 `typecheck-tests`, with `tracked-sources` and `ts-ast` as its internal helpers. `package.json`'s
 `health:*` targets become `mwops health <id>` and `mwops health all`. `generate-man` generates, so it
 fails the admission rule; it goes to the CLI's `commands/dev/generate/` beside the generators there.

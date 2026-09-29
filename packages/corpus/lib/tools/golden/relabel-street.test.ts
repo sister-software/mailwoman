@@ -8,8 +8,9 @@
  *   interesting half, because a relabel that over-reaches silently rewrites the answer key.
  */
 
-import { type GoldenStreetRow, relabelGoldenStreetRow } from "@mailwoman/corpus/tools/golden-relabel-street"
 import { describe, expect, it } from "vitest"
+
+import { type GoldenStreetRow, relabelGoldenStreetRow } from "#tools/golden/relabel-street/index"
 
 const row = (components: Record<string, string>, extra: Partial<GoldenStreetRow> = {}): GoldenStreetRow => ({
 	raw: "(unused by the row-level relabel)",

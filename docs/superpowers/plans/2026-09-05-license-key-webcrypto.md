@@ -42,13 +42,13 @@
 | `packages/core/lib/license/publication.ts` (modify)                                     | imports `PublishedLicenseKeys` from the register                                                                                              |
 | `packages/core/lib/license/index.ts` (modify)                                           | exports the register rather than trusted-keys                                                                                                 |
 | `packages/core/package.json` (modify)                                                   | `./license/key`, `./license/register` exports; `esbuild` devDependency                                                                        |
-| `packages/core/test/unit/crypto/ed25519.test.ts`, `base64url.test.ts` (create)          | the primitives                                                                                                                                |
-| `packages/core/test/unit/license/key.test.ts`, `register.test.ts` (modify/create)       | async key tests, the legacy fixture, the register derivations                                                                                 |
-| `packages/core/test/integration/worker-bundle.test.ts` (create)                         | esbuild under `workerd,worker,browser`, no `node:` specifier                                                                                  |
+| `packages/core/lib/crypto/ed25519.test.ts`, `base64url.test.ts` (create)                | the primitives                                                                                                                                |
+| `packages/core/lib/license/key/key.test.ts`, `register.test.ts` (modify/create)         | async key tests, the legacy fixture, the register derivations                                                                                 |
+| `packages/core/lib/worker-bundle.integration.test.ts` (create)                          | esbuild under `workerd,worker,browser`, no `node:` specifier                                                                                  |
 | `packages/mailwoman/lib/cli-kit/engine-stamp.ts` (modify)                               | awaits `verifyConfiguredLicenseKey`                                                                                                           |
 | `packages/mailwoman/lib/doctor/runner.ts` (modify)                                      | `licenseKey(): Promise<…>`                                                                                                                    |
 | `packages/mailwoman/lib/cli-native/commands/license.ts` (modify)                        | awaits; reads the register; new `register` action                                                                                             |
-| `packages/mailwoman/test/unit/doctor/runner.test.ts` (modify)                           | async fixtures                                                                                                                                |
+| `packages/mailwoman/lib/doctor/runner.test.ts` (modify)                                 | async fixtures                                                                                                                                |
 | `packages/repo-health/lib/checks/license-register.ts` (create) + `registry.ts` (modify) | the committed well-known JSON equals the register's derivation                                                                                |
 | `docs/static/.well-known/mailwoman/license-keys.json` (regenerate)                      | from the register                                                                                                                             |
 | `CHANGELOG.md` (modify)                                                                 | Changed: async key API, register, subpaths                                                                                                    |
@@ -122,7 +122,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Create: `packages/core/lib/crypto/base64url.ts`, `packages/core/lib/crypto/ed25519.ts`
-- Test: `packages/core/test/unit/crypto/base64url.test.ts`, `packages/core/test/unit/crypto/ed25519.test.ts`
+- Test: `packages/core/lib/crypto/base64url.test.ts`, `packages/core/lib/crypto/ed25519.test.ts`
 
 **Interfaces produced:**
 
@@ -147,7 +147,7 @@ export function sha256Bytes(data: Uint8Array): Promise<Uint8Array>
 - [ ] **Step 1: Write the failing tests**
 
 ```ts
-// packages/core/test/unit/crypto/base64url.test.ts
+// packages/core/lib/crypto/base64url.test.ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -180,7 +180,7 @@ describe("base64url", () => {
 ```
 
 ```ts
-// packages/core/test/unit/crypto/ed25519.test.ts
+// packages/core/lib/crypto/ed25519.test.ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -256,7 +256,7 @@ describe("Ed25519 on WebCrypto", () => {
 
 - [ ] **Step 2: Run them to verify they fail**
 
-Run: `yarn vitest run packages/core/test/unit/crypto`
+Run: `yarn vitest run packages/core/lib/crypto`
 Expected: FAIL, the two subpaths do not resolve.
 
 - [ ] **Step 3: Write the implementation**
@@ -412,14 +412,14 @@ Add the two subpath exports to `packages/core/package.json`, beside `./hash`:
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `yarn vitest run packages/core/test/unit/crypto`
+Run: `yarn vitest run packages/core/lib/crypto`
 Expected: PASS, 8 tests. If the deterministic-signature test fails while the verify test passes, the platform's Ed25519 is the RFC 8032 one (deterministic by construction), so the mismatch is in the PEM codec: compare `pemToDER(fixture.privateKeyPEM)` against `createPrivateKey(pem).export({ type: "pkcs8", format: "der" })` byte for byte.
 
 - [ ] **Step 5: Lint and commit**
 
 ```bash
-yarn oxlint packages/core/lib/crypto packages/core/test/unit/crypto
-git add packages/core/lib/crypto packages/core/test/unit/crypto packages/core/package.json
+yarn oxlint packages/core/lib/crypto packages/core/lib/crypto
+git add packages/core/lib/crypto packages/core/lib/crypto packages/core/package.json
 git commit -m "feat(core): Ed25519 and base64url on the web platform's primitives, one implementation for Node, a Worker and a browser
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -432,7 +432,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Modify: `packages/core/lib/license/key.ts`, `packages/core/lib/hash.ts`
-- Modify: `packages/core/test/unit/license/key.test.ts`
+- Modify: `packages/core/lib/license/key/key.test.ts`
 
 **Interfaces produced:**
 
@@ -448,7 +448,7 @@ export function verifyLicenseKey(token: string, options: { trustedKeys; now? }):
 
 - [ ] **Step 1: Rewrite the key tests as async and add the fixture and field cases**
 
-Replace `packages/core/test/unit/license/key.test.ts` wholesale:
+Replace `packages/core/lib/license/key/key.test.ts` wholesale:
 
 ```ts
 /**
@@ -587,7 +587,7 @@ describe("license key", () => {
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `yarn vitest run packages/core/test/unit/license/key.test.ts`
+Run: `yarn vitest run packages/core/lib/license/key/key.test.ts`
 Expected: FAIL — `isSelfServicePayload` is not exported; `await licenseKeyID(...)` on a string still passes, the `lid` case fails on the schema stripping the key (`toMatchObject` on `payload: selfService` fails).
 
 - [ ] **Step 3: Rewrite `key.ts`**
@@ -734,14 +734,14 @@ Delete `generateEd25519KeyPair`, `signEd25519`, `verifyEd25519`, `publicKeyDER`,
 
 - [ ] **Step 5: Run the tests**
 
-Run: `yarn vitest run packages/core/test/unit/license/key.test.ts packages/core/test/unit/utils/hash.test.ts`
+Run: `yarn vitest run packages/core/lib/license/key/key.test.ts packages/core/lib/hash.test.ts`
 Expected: PASS. Every other license test in core still fails to compile at this point (they call the sync signatures); Task 4 fixes them. Do not run the whole core suite yet.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-yarn oxlint packages/core/lib/license/key.ts packages/core/lib/hash.ts packages/core/test/unit/license/key.test.ts
-git add packages/core/lib/license/key.ts packages/core/lib/hash.ts packages/core/test/unit/license/key.test.ts
+yarn oxlint packages/core/lib/license/key.ts packages/core/lib/hash.ts packages/core/lib/license/key/key.test.ts
+git add packages/core/lib/license/key.ts packages/core/lib/hash.ts packages/core/lib/license/key/key.test.ts
 git commit -m "feat(core): the license key signs and verifies on WebCrypto and carries lid and agreement
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -756,7 +756,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Create: `packages/core/lib/license/register.ts`
 - Delete: `packages/core/lib/license/trusted-keys.ts`
 - Modify: `packages/core/lib/license/publication.ts` (import `PublishedLicenseKeys` from the register), `packages/core/lib/license/index.ts`, `packages/core/package.json` (exports)
-- Test: `packages/core/test/unit/license/register.test.ts`
+- Test: `packages/core/lib/license/register.test.ts`
 
 **Interfaces produced:**
 
@@ -781,7 +781,7 @@ export function publishedLicenseKeys(): PublishedLicenseKeys
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// packages/core/test/unit/license/register.test.ts
+// packages/core/lib/license/register.test.ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -829,7 +829,7 @@ describe("the license key register", () => {
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `yarn vitest run packages/core/test/unit/license/register.test.ts`
+Run: `yarn vitest run packages/core/lib/license/register.test.ts`
 Expected: FAIL — the names are not exported.
 
 - [ ] **Step 3: Write the register and delete the map**
@@ -955,14 +955,14 @@ The `register` CLI action arrives in Task 5. Until then, write the file with a s
 
 - [ ] **Step 5: Run the tests**
 
-Run: `yarn vitest run packages/core/test/unit/license/register.test.ts`
+Run: `yarn vitest run packages/core/lib/license/register.test.ts`
 Expected: PASS, 3 tests.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 yarn oxlint packages/core/lib/license
-git add packages/core/lib/license packages/core/package.json packages/core/test/unit/license/register.test.ts docs/static/.well-known/mailwoman/license-keys.json
+git add packages/core/lib/license packages/core/package.json packages/core/lib/license/register.test.ts docs/static/.well-known/mailwoman/license-keys.json
 git commit -m "feat(core): one typed register of signing keys derives both the shipped trust map and the well-known JSON
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -977,7 +977,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Modify: `packages/core/lib/license/configured.ts`
 - Modify: `packages/mailwoman/lib/cli-kit/engine-stamp.ts`
 - Modify: `packages/mailwoman/lib/doctor/runner.ts`
-- Modify: `packages/mailwoman/test/unit/doctor/runner.test.ts`, `packages/core/test/unit/license/stamp.test.ts`
+- Modify: `packages/mailwoman/lib/doctor/runner.test.ts`, `packages/core/lib/license/stamp.test.ts`
 - Test: the existing suites
 
 - [ ] **Step 1: Make `verifyConfiguredLicenseKey` async on the register**
@@ -1021,22 +1021,22 @@ export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 
 In `packages/mailwoman/lib/doctor/runner.ts`, make three changes. The deps interface line `licenseKey(): LicenseKeyVerification | undefined` becomes `licenseKey(): Promise<LicenseKeyVerification | undefined>`. The wiring `licenseKey: () => verifyConfiguredLicenseKey()` keeps its text. The call site `const key = deps.licenseKey()` becomes `const key = await deps.licenseKey()`.
 
-In `packages/mailwoman/test/unit/doctor/runner.test.ts`, every `licenseKey: () => X` becomes `licenseKey: async () => X`. The grep during this plan's preparation found five sites, at lines 54, 215, 252, 264 and 278. Re-run the grep, because the line numbers will have moved.
+In `packages/mailwoman/lib/doctor/runner.test.ts`, every `licenseKey: () => X` becomes `licenseKey: async () => X`. The grep during this plan's preparation found five sites, at lines 54, 215, 252, 264 and 278. Re-run the grep, because the line numbers will have moved.
 
 - [ ] **Step 4: Fix the stamp test's key fixtures**
 
-In `packages/core/test/unit/license/stamp.test.ts`, the module-level `pair`, `kid`, `token`, `valid`, `expired`, `unknownKey`, `invalid` become top-level `await`s of the async functions. vitest supports top-level await in ESM test files, and `key.test.ts` in Task 2 already uses it.
+In `packages/core/lib/license/stamp.test.ts`, the module-level `pair`, `kid`, `token`, `valid`, `expired`, `unknownKey`, `invalid` become top-level `await`s of the async functions. vitest supports top-level await in ESM test files, and `key.test.ts` in Task 2 already uses it.
 
 - [ ] **Step 5: Run the affected suites**
 
-Run: `yarn vitest run packages/core/test/unit/license packages/mailwoman/test/unit/cli-kit packages/mailwoman/test/unit/doctor packages/mailwoman/test/unit/cli-launcher.test.ts`
+Run: `yarn vitest run packages/core/lib/license packages/mailwoman/lib/cli/kit packages/mailwoman/lib/doctor packages/mailwoman/lib/cli/launcher.test.ts`
 Expected: PASS. The launcher test spawns the compiled CLI, so run `yarn compile` first; the CLI still reads `unknown_key` for a test token and prints the notice.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-yarn oxlint packages/core/lib/license/configured.ts packages/mailwoman/lib/cli-kit/engine-stamp.ts packages/mailwoman/lib/doctor/runner.ts packages/mailwoman/test/unit/doctor/runner.test.ts packages/core/test/unit/license/stamp.test.ts
-git add packages/core/lib/license/configured.ts packages/mailwoman/lib/cli-kit/engine-stamp.ts packages/mailwoman/lib/doctor/runner.ts packages/mailwoman/test/unit/doctor/runner.test.ts packages/core/test/unit/license/stamp.test.ts
+yarn oxlint packages/core/lib/license/configured.ts packages/mailwoman/lib/cli-kit/engine-stamp.ts packages/mailwoman/lib/doctor/runner.ts packages/mailwoman/lib/doctor/runner.test.ts packages/core/lib/license/stamp.test.ts
+git add packages/core/lib/license/configured.ts packages/mailwoman/lib/cli-kit/engine-stamp.ts packages/mailwoman/lib/doctor/runner.ts packages/mailwoman/lib/doctor/runner.test.ts packages/core/lib/license/stamp.test.ts
 git commit -m "refactor(license): every caller awaits the WebCrypto verifier — the configured key, the stamp resolver, the doctor
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -1049,14 +1049,14 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Modify: `packages/mailwoman/lib/cli-native/commands/license.ts`
-- Test: `packages/mailwoman/test/integration/license-cli.test.ts` (create)
+- Test: `packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts` (create)
 
 **Interfaces produced:** `mailwoman license register [--write] [--json]`, which prints the derived well-known JSON or writes it to `docs/static/.well-known/mailwoman/license-keys.json` under the repo root.
 
 - [ ] **Step 1: Write the failing CLI test**
 
 ```ts
-// packages/mailwoman/test/integration/license-cli.test.ts
+// packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -1130,7 +1130,7 @@ Check that `makeTemporaryDirectory` is the name `@mailwoman/core/fs/temporary` e
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `yarn compile && yarn vitest run packages/mailwoman/test/integration/license-cli.test.ts`
+Run: `yarn compile && yarn vitest run packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts`
 Expected: the `register` test fails with an unknown action. The other two may fail because `license.ts` does not compile against the async API. The next step fixes the compile.
 
 - [ ] **Step 3: Update the command**
@@ -1173,7 +1173,7 @@ Add `write: { type: "boolean", default: false, description: "register: write the
 
 - [ ] **Step 4: Compile, run the CLI test, and regenerate the well-known file through the command**
 
-Run: `yarn compile && yarn vitest run packages/mailwoman/test/integration/license-cli.test.ts`
+Run: `yarn compile && yarn vitest run packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts`
 Expected: PASS, 3 tests.
 
 Run: `node packages/mailwoman/out/cli.js license register --write && git diff --stat docs/static`
@@ -1182,8 +1182,8 @@ Expected: no diff (Task 3's scratch write already matched the derivation).
 - [ ] **Step 5: Commit**
 
 ```bash
-yarn oxlint packages/mailwoman/lib/cli-native/commands/license.ts packages/mailwoman/test/integration/license-cli.test.ts
-git add packages/mailwoman/lib/cli-native/commands/license.ts packages/mailwoman/test/integration/license-cli.test.ts packages/mailwoman/man docs/articles/developers/reference/cli.mdx
+yarn oxlint packages/mailwoman/lib/cli-native/commands/license.ts packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts
+git add packages/mailwoman/lib/cli-native/commands/license.ts packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts packages/mailwoman/man docs/articles/developers/reference/cli.mdx
 git commit -m "feat(cli): license keygen, issue and verify on the WebCrypto key; license register prints or writes the well-known file
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -1199,12 +1199,12 @@ The pre-commit hook regenerates the CLI reference page and the man page for the 
 
 - Create: `packages/repo-health/lib/checks/license-register.ts`
 - Modify: `packages/repo-health/lib/registry.ts`
-- Test: `packages/repo-health/test/unit/license-register.test.ts`
+- Test: `packages/repo-health/lib/checks/license-register.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// packages/repo-health/test/unit/license-register.test.ts
+// packages/repo-health/lib/checks/license-register.test.ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -1226,7 +1226,7 @@ Match the `context` shape to what `versionSyncCheck.run(context)` receives (`gre
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `yarn vitest run packages/repo-health/test/unit/license-register.test.ts`
+Run: `yarn vitest run packages/repo-health/lib/checks/license-register.test.ts`
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the check and register it**
@@ -1276,7 +1276,7 @@ In `registry.ts`, import `licenseRegisterCheck` from `#checks/license-register` 
 
 - [ ] **Step 4: Run the test and the health command**
 
-Run: `yarn vitest run packages/repo-health/test/unit/license-register.test.ts && yarn mwops health all 2>&1 | tail -5`
+Run: `yarn vitest run packages/repo-health/lib/checks/license-register.test.ts && yarn mwops health all 2>&1 | tail -5`
 Expected: PASS; `health all` lists `license-register` among its checks with no diagnostics.
 
 - [ ] **Step 5: Commit**
@@ -1295,12 +1295,12 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Modify: `packages/core/package.json` (`esbuild` devDependency, `0.28.2` as in `@mailwoman/neural`)
-- Create: `packages/core/test/integration/worker-bundle.test.ts`
+- Create: `packages/core/lib/worker-bundle.integration.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// packages/core/test/integration/worker-bundle.test.ts
+// packages/core/lib/worker-bundle.integration.test.ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -1353,14 +1353,14 @@ test("@mailwoman/core/license/key and /register bundle for a Worker with no node
 
 - [ ] **Step 2: Run to verify it fails or passes for the right reason**
 
-Run: `yarn workspace @mailwoman/core add -D esbuild@0.28.2 && yarn vitest run packages/core/test/integration/worker-bundle.test.ts`
+Run: `yarn workspace @mailwoman/core add -D esbuild@0.28.2 && yarn vitest run packages/core/lib/worker-bundle.integration.test.ts`
 
 Expected: the test passes if Tasks 1 to 3 left the graph clean. Otherwise it fails and reports the offending module. If it reports `packages/core/lib/objects.ts` reaching `spliterator`, which in turn reaches `node:`, create a `#json/strict.ts` module that holds only `parseJSONStrict` and have `key.ts` import it. The function has no Node dependency, but the module it currently lives in does. If the test reports `#errors/schema`, apply the same fix. Record the reported module in the commit message.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add packages/core/package.json yarn.lock packages/core/test/integration/worker-bundle.test.ts
+git add packages/core/package.json yarn.lock packages/core/lib/worker-bundle.integration.test.ts
 git commit -m "test(core): the license key's subpaths bundle for a Worker under the workerd/worker/browser conditions with no node: import
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -1394,7 +1394,7 @@ file; `mailwoman license register --write` regenerates it and the `license-regis
 yarn compile
 yarn typecheck:tests
 yarn lint
-yarn vitest run packages/core/test packages/mailwoman/test/unit/cli-kit packages/mailwoman/test/unit/doctor packages/mailwoman/test/unit/cli-launcher.test.ts packages/mailwoman/test/integration/license-cli.test.ts packages/mailwoman/test/integration/openapi-cli.test.ts packages/repo-health/test
+yarn vitest run packages/core/test packages/mailwoman/lib/cli/kit packages/mailwoman/lib/doctor packages/mailwoman/lib/cli/launcher.test.ts packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts packages/mailwoman/lib/cli/kit/openapi-cli.integration.test.ts packages/repo-health/test
 ```
 
 Then run `yarn test` alone, with no other process running. Read the failures in the log rather than relying on the exit code, because model-loading suites time out under machine load and pass when run alone.
@@ -1405,12 +1405,12 @@ Then run `yarn test` alone, with no other process running. Read the failures in 
 node --import /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/count-modules.mjs packages/mailwoman/out/cli.js --version 2>&1 >/dev/null | grep -E "^COUNT="
 ```
 
-Update `MEASURED_MODULE_COUNT` in `packages/mailwoman/test/unit/module-count.test.ts` to the new number. It should change by a handful, since the `crypto/` modules are added and `node:crypto` leaves the license path.
+Update `MEASURED_MODULE_COUNT` in `packages/mailwoman/lib/cli/kit/module-count.test.ts` to the new number. It should change by a handful, since the `crypto/` modules are added and `node:crypto` leaves the license path.
 
 - [ ] **Step 4: Commit, push, PR**
 
 ```bash
-git add CHANGELOG.md packages/mailwoman/test/unit/module-count.test.ts
+git add CHANGELOG.md packages/mailwoman/lib/cli/kit/module-count.test.ts
 git commit -m "docs(changelog): the license key on WebCrypto, the typed register, and the Worker-safe subpaths
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"

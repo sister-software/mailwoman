@@ -1,0 +1,63 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { expect, test } from "vitest"
+
+import { foldName, makeUNLocodeAnnotator, parseUNLocodeCoords, UNLocodeLookup } from "#index"
+import type { UNLocodeDatabase } from "#schema"
+
+test("foldName: strips diacritics, lowercases, collapses whitespace", () => {
+	expect(foldName("Nagykovácsi")).toBe("nagykovacsi")
+	expect(foldName("  New   York ")).toBe("new york")
+	expect(foldName("Rotterdam")).toBe("rotterdam")
+})
+
+test("parseUNLocodeCoords: DDMM hemisphere → decimal degrees", () => {
+	expect(parseUNLocodeCoords("4923N 01522E")).toEqual({ lat: 49 + 23 / 60, lon: 15 + 22 / 60 })
+	const sw = parseUNLocodeCoords("3352S 15113W")
+	expect(sw!.lat).toBeLessThan(0)
+	expect(sw!.lon).toBeLessThan(0)
+	expect(parseUNLocodeCoords("")).toBeNull()
+	expect(parseUNLocodeCoords("nonsense")).toBeNull()
+})
+
+async function fixtureDB(): Promise<DatabaseClient<UNLocodeDatabase>> {
+	const db = DatabaseClient.temp<UNLocodeDatabase>()
+	db.exec("CREATE TABLE un_locode (country TEXT, location TEXT, name TEXT, nameNorm TEXT, lat REAL, lon REAL)")
+	const ins = db.prepare("INSERT INTO un_locode VALUES (?,?,?,?,?,?)")
+	ins.run("NL", "RTM", "Rotterdam", "rotterdam", 51.92, 4.48)
+	ins.run("US", "NYC", "New York", "new york", 40.7, -74)
+
+	return db
+}
+
+test("UNLocodeLookup.byName: country + folded name → code", async () => {
+	using db = await fixtureDB()
+	using lookup = new UNLocodeLookup({ database: db })
+	expect(lookup.byName("NL", "Rotterdam")).toBe("NL RTM")
+	expect(lookup.byName("us", "new york")).toBe("US NYC")
+	expect(lookup.byName("NL", "Nowhere")).toBeNull()
+})
+
+test("UNLocodeLookup.nearest: closest coordinate within range", async () => {
+	using db = await fixtureDB()
+	using lookup = new UNLocodeLookup({ database: db })
+	expect(lookup.nearest(40.71, -74.01)).toBe("US NYC")
+	expect(lookup.nearest(0, 0, 25)).toBeNull()
+})
+
+test("makeUNLocodeAnnotator: byName when available, else nearest", async () => {
+	using db = await fixtureDB()
+	using lookup = new UNLocodeLookup({ database: db })
+	const annotate = makeUNLocodeAnnotator(lookup)
+
+	expect(annotate({ lat: 40.71, lon: -74.01, countryCode: "US", placeName: "New York" })).toEqual({
+		unLocode: "US NYC",
+	})
+
+	expect(annotate({ lat: 51.92, lon: 4.48 })).toEqual({ unLocode: "NL RTM" })
+})

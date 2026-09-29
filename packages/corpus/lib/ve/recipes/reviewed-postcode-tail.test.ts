@@ -5,13 +5,14 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { describe, expect, it } from "vitest"
+
 import {
 	readReviewedPostcodeTuples,
 	REVIEWED_POSTCODE_TAIL_SOURCE,
 	reviewedPostcodeTailRecipe,
 	reviewedPostcodeTailVariants,
-} from "@mailwoman/corpus/ve/recipes/reviewed-postcode-tail"
-import { describe, expect, it } from "vitest"
+} from "#ve/recipes/reviewed-postcode-tail"
 
 interface EmittedRow {
 	raw: string

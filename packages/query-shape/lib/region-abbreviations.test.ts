@@ -1,0 +1,91 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { describe, expect, it } from "vitest"
+
+import { classifyTokens } from "#character-class"
+import { computeQueryShape } from "#compute"
+import { detectRegionAbbreviations } from "#region-abbreviations"
+import { segment } from "#segmentation"
+
+const makeTokenClasses = classifyTokens
+
+describe("detectRegionAbbreviations", () => {
+	it("detects 'DC' after comma in 'Washington, DC 20500'", () => {
+		const text = "Washington, DC 20500"
+		const tokens = makeTokenClasses(text)
+		const segs = segment(text)
+		const hits = detectRegionAbbreviations(tokens, segs)
+		expect(hits).toHaveLength(1)
+		expect(hits[0]!.span).toBe("DC")
+	})
+
+	it("detects 'NY' after comma in '350 5th Ave, New York, NY 10118'", () => {
+		const text = "350 5th Ave, New York, NY 10118"
+		const tokens = makeTokenClasses(text)
+		const segs = segment(text)
+		const hits = detectRegionAbbreviations(tokens, segs)
+		expect(hits).toHaveLength(1)
+		expect(hits[0]!.span).toBe("NY")
+	})
+
+	it("returns empty for inputs without commas", () => {
+		const text = "New York NY 10118"
+		const tokens = makeTokenClasses(text)
+		const segs = segment(text)
+		const hits = detectRegionAbbreviations(tokens, segs)
+		expect(hits).toEqual([])
+	})
+
+	it("returns empty for single-segment inputs", () => {
+		const text = "Paris"
+		const tokens = makeTokenClasses(text)
+		const segs = segment(text)
+		const hits = detectRegionAbbreviations(tokens, segs)
+		expect(hits).toEqual([])
+	})
+
+	it("detects multiple abbreviations in multi-address input", () => {
+		const text = "Seattle, WA and Portland, OR"
+		const tokens = makeTokenClasses(text)
+		const segs = segment(text)
+		// "WA" appears after the first comma.
+		// Whether both are detected depends on segmentation treating "and" as whitespace-separated,
+		// so this pins the weaker property: at least one is found.
+		const hits = detectRegionAbbreviations(tokens, segs)
+
+		expect(hits.length).toBeGreaterThan(0)
+	})
+
+	it("does not detect lowercase abbreviations", () => {
+		const text = "the street, dc area"
+		const tokens = makeTokenClasses(text)
+		const segs = segment(text)
+		const hits = detectRegionAbbreviations(tokens, segs)
+		expect(hits).toEqual([])
+	})
+
+	it("does not detect 3+ letter words as abbreviations", () => {
+		const text = "hello, WORLD"
+		const tokens = makeTokenClasses(text)
+		const segs = segment(text)
+		const hits = detectRegionAbbreviations(tokens, segs)
+		// "world" is 5 letters rather than 2
+		expect(hits).toEqual([])
+	})
+
+	it("integrates with computeQueryShape", () => {
+		const shape = computeQueryShape("1600 Pennsylvania Ave NW, Washington, DC 20500")
+		expect(shape.regionAbbreviations).toHaveLength(1)
+		expect(shape.regionAbbreviations[0]!.span).toBe("DC")
+	})
+
+	it("detects 'CA' in 'Pier 39, San Francisco, CA 94133'", () => {
+		const shape = computeQueryShape("Pier 39, San Francisco, CA 94133")
+		expect(shape.regionAbbreviations).toHaveLength(1)
+		expect(shape.regionAbbreviations[0]!.span).toBe("CA")
+	})
+})

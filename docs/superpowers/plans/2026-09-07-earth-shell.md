@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- The app is `private: true`, lives under `packages/`, and joins the root `workspaces` array, both root `tsconfig.json` reference entries, and `SANCTIONED_RELEASE_ABSENCES` with a stated reason. The `publishCount` pin in `packages/release-kit/test/integration/release-stage.test.ts` stays at 60.
+- The app is `private: true`, lives under `packages/`, and joins the root `workspaces` array, both root `tsconfig.json` reference entries, and `SANCTIONED_RELEASE_ABSENCES` with a stated reason. The `publishCount` pin in `packages/release-kit/lib/release-stage.integration.test.ts` stays at 60.
 - The app has no application Worker script. `wrangler.toml` has no `main`, no `run_worker_first`, and no routes.
 - Dependency ranges match the workspace that already declares them (`sherif` in `health:manifests` refuses a second range): `react` and `react-dom` `^19.2.8`, `react-map-gl` `^8.1.3`, `maplibre-gl` `^6.7.0`, `vite` `^8.2.2`, `@vitejs/plugin-react` `^6.1.1`, `wrangler` `^4.129.0`, `@playwright/test` at the range `docs/package.json` carries.
 - Code never reads `process.env` directly, and this plan has no environment to read.
@@ -51,7 +51,7 @@ packages/site-kit/                        @mailwoman/site-kit, private: the stat
   lib/vite/build-info.ts                  buildInfoPlugin({ app }) — emits build.json
   lib/vite/pwa.ts                         installablePWA({ id, name, shortName, themeColor }) — VitePWA options
   lib/playwright.ts                       previewConfig({ port, remoteURLVariable }) — the Playwright config both apps use
-  test/unit/build-info.test.ts
+  lib/build-info.test.ts
 
 packages/react/lib/map/fake-runtime.ts    moved from packages/react/test/mocks.tsx (the DemoRuntime half)
 packages/react/package.json                exports "./map/fake-runtime"
@@ -68,7 +68,7 @@ package.json, tsconfig.json, packages/release-kit/lib/release/stage.ts, dependen
 - Create: `packages/react/lib/map/fake-runtime.ts`
 - Modify: `packages/react/test/mocks.tsx` (remove `STUB_MAP_STYLE`, `FAKE_SUGGESTIONS`, `makeDemoRuntime`, `makeFakeParseResult`, `makePipelineRuntime`; keep the POI fakes)
 - Modify: `packages/react/package.json` (`exports["./map/fake-runtime"]`)
-- Modify: the eight consumers: `lib/map/GeocoderDemo.stories.tsx`, `lib/map/PlaceAutocomplete.stories.tsx`, `lib/map/ResultPanel.stories.tsx`, `lib/pipeline/PipelineExplorer.stories.tsx`, `test/unit/map/panels.test.tsx`, `test/unit/map/GeocoderDemo.test.tsx`, `test/unit/pipeline/PipelineExplorer.test.tsx`, `test/mocks.tsx`
+- Modify: the eight consumers: `lib/map/GeocoderDemo.stories.tsx`, `lib/map/PlaceAutocomplete.stories.tsx`, `lib/map/ResultPanel.stories.tsx`, `lib/pipeline/PipelineExplorer.stories.tsx`, `lib/map/panels.test.tsx`, `lib/map/GeocoderDemo.test.tsx`, `lib/pipeline/PipelineExplorer.test.tsx`, `test/mocks.tsx`
 
 **Interfaces:**
 
@@ -113,7 +113,7 @@ In `packages/react/package.json`, beside `"./map/ResultPanel"`:
 
 - [ ] **Step 3: Point every consumer at the new home**
 
-In `test/mocks.tsx`, delete the five moved definitions and the now-unused imports (`DemoMapStyle`, `DemoRuntime`, `ParseResult`, `PipelineRuntime`, `Suggestion`, `ResolvedMapPlace`). In the three `lib/**/*.stories.tsx` files replace `from "#test/mocks"` with `from "#map/fake-runtime"` for those names (a story that also uses a POI fake keeps its `#test/mocks` import for it). In the three `test/unit/**` files replace the same names' source with `from "@mailwoman/react/map/fake-runtime"`.
+In `test/mocks.tsx`, delete the five moved definitions and the now-unused imports (`DemoMapStyle`, `DemoRuntime`, `ParseResult`, `PipelineRuntime`, `Suggestion`, `ResolvedMapPlace`). In the three `lib/**/*.stories.tsx` files replace `from "#test/mocks"` with `from "#map/fake-runtime"` for those names (a story that also uses a POI fake keeps its `#test/mocks` import for it). In the three `lib/**/*.test.tsx` files replace the same names' source with `from "@mailwoman/react/map/fake-runtime"`.
 
 ```bash
 grep -rn "makeDemoRuntime\|makePipelineRuntime\|makeFakeParseResult\|FAKE_SUGGESTIONS\|STUB_MAP_STYLE" packages/react --include='*.ts' --include='*.tsx' | grep -v "/out/" | grep -v "fake-runtime.ts"
@@ -379,7 +379,7 @@ The watch paths grow when the runtime moves in (`neural`, `resolver-wof-wasm`, `
 ```bash
 yarn install
 node -e "const w=require('./package.json').workspaces,r=require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces;console.log(w.filter(x=>!r.includes(x)))"
-yarn vitest --run --config vitest.slow.config.ts packages/release-kit/test/integration/release-stage.test.ts
+yarn vitest --run --config vitest.slow.config.ts packages/release-kit/lib/release-stage.integration.test.ts
 yarn mwops health manifest-targets
 ```
 
@@ -399,7 +399,7 @@ git commit -m "feat(earth,site-kit): the two private workspaces, registered in t
 **Files:**
 
 - Create: `packages/earth/lib/routes.ts`, `packages/earth/lib/config.ts`, `packages/site-kit/lib/build-info.ts`
-- Test: `packages/earth/test/unit/routes.test.ts`, `packages/site-kit/test/unit/build-info.test.ts`
+- Test: `packages/earth/lib/routes.test.ts`, `packages/site-kit/lib/build-info.test.ts`
 
 **Interfaces:**
 
@@ -407,7 +407,7 @@ git commit -m "feat(earth,site-kit): the two private workspaces, registered in t
 
 - [ ] **Step 1: Write the failing tests**
 
-`packages/earth/test/unit/routes.test.ts`:
+`packages/earth/lib/routes.test.ts`:
 
 ```ts
 /**
@@ -450,7 +450,7 @@ describe("queryFromSearch", () => {
 })
 ```
 
-`packages/site-kit/test/unit/build-info.test.ts`:
+`packages/site-kit/lib/build-info.test.ts`:
 
 ```ts
 /**
@@ -474,7 +474,7 @@ test("renderBuildInfo emits the three fields as tab-indented JSON with a trailin
 - [ ] **Step 2: Run them to see the failure**
 
 ```bash
-yarn vitest --run --config vitest.fast.config.ts packages/earth/test/unit packages/site-kit/test/unit
+yarn vitest --run --config vitest.fast.config.ts packages/earth/lib packages/site-kit/lib
 ```
 
 Expected: both files fail to resolve `@mailwoman/earth/routes` and `@mailwoman/site-kit/build-info` (the root vitest config aliases every workspace's `exports` to source, so once the files exist the alias resolves).
@@ -599,7 +599,7 @@ export function renderBuildInfo(info: BuildInfo): string {
 - [ ] **Step 4: Run the tests and the checks**
 
 ```bash
-yarn vitest --run --config vitest.fast.config.ts packages/earth/test/unit packages/site-kit/test/unit
+yarn vitest --run --config vitest.fast.config.ts packages/earth/lib packages/site-kit/lib
 yarn oxlint packages/earth packages/site-kit
 yarn compile
 yarn mwops health manifest-targets

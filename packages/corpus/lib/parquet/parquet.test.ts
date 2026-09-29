@@ -10,12 +10,9 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import {
-	countParquetRows,
-	parquetColumnNames,
-	readParquetRows,
-	tryReadParquetRows,
-} from "@mailwoman/corpus/parquet/readers"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
+import { countParquetRows, parquetColumnNames, readParquetRows, tryReadParquetRows } from "#parquet/readers"
 import {
 	LABELED_ROW_SCHEMA,
 	PARQUET_COLUMNS,
@@ -23,12 +20,11 @@ import {
 	type ParquetRow,
 	ROW_GROUP_SIZE,
 	rowToParquet,
-} from "@mailwoman/corpus/parquet/schema"
-import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
-import { writeParquetSplits } from "@mailwoman/corpus/parquet/writers"
-import { SurfaceOrigin } from "@mailwoman/corpus/types"
-import type { LabeledRow } from "@mailwoman/corpus/types"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+} from "#parquet/schema"
+import { openParquetRowStream } from "#parquet/streams"
+import { writeParquetSplits } from "#parquet/writers"
+import { SurfaceOrigin } from "#types"
+import type { LabeledRow } from "#types"
 
 const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	raw: "Paris",

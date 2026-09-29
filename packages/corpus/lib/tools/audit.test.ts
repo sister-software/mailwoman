@@ -8,14 +8,15 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-// Re-export the internals for testing.
-// The script's CLI entry is conditioned on `runIfScript(import.meta, …)`,
-// so importing the module is side-effect-free.
-import { audit } from "@mailwoman/corpus/tools/audit"
 // Lightweight integration smoke against the actual corpus on this host.
 // Skipped when the data isn't present (CI / fresh clones); only the
 // file-format-parsing tests run unconditionally.
 import { describe, expect, it } from "vitest"
+
+// Re-export the internals for testing.
+// The script's CLI entry is conditioned on `runIfScript(import.meta, …)`,
+// so importing the module is side-effect-free.
+import { audit } from "#tools/audit"
 
 const CORPUS_PATH = dataRootPath("corpus", "versioned", "v0.3.0", "corpus-v0.3.0")
 const hasCorpus = await pathExists(CORPUS_PATH)

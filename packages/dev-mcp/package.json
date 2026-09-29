@@ -14,7 +14,7 @@
 	},
 	"type": "module",
 	"imports": {
-		"#test/stub-registry": "./test/stub-registry.ts",
+		"#test/*": "./test/*.ts",
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",

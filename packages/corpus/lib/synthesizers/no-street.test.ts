@@ -8,14 +8,15 @@
  */
 
 import { makeLcg } from "@mailwoman/core/random"
+import { describe, expect, it } from "vitest"
+
 import {
 	hasAnyStreetSideTag,
 	type NoStreetBaseTuple,
 	type NoStreetTemplate,
 	STREET_SIDE_TAGS,
 	synthesizeNoStreetRow,
-} from "@mailwoman/corpus/synthesizers/no-street"
-import { describe, expect, it } from "vitest"
+} from "#synthesizers/no-street"
 
 const SAMPLE_BASE: NoStreetBaseTuple = {
 	locality: "Boston",

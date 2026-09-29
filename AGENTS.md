@@ -9,7 +9,8 @@ Sixty workspaces publish to npm. `.release-it.json` defines that set. Fifteen wo
 and `packages/osm` remains unpublished pending ODbL counsel sign-off. Run the workspace check described
 in `packages/release-kit/AGENTS.md` after adding or moving a workspace.
 
-Every `packages/*` workspace keeps source under `lib/` and tests under `test/`. `docs/` keeps Docusaurus
+Every `packages/*` workspace keeps source under `lib/`, with each test beside the module it covers.
+`test/` holds fixtures, shared test helpers and Playwright suites. `docs/` keeps Docusaurus
 source under `src/`. The complete workspace catalog is
 `docs/engineering/reference/workspaces.mdx`. The non-workspace directories `corpus-python/`,
 `hf-publish/`, `data/`, `evals/`, and `docker/` have their purposes documented in that catalog and their
@@ -81,13 +82,16 @@ A package owns the declarations it exports. Do not re-export a declaration from 
 `@mailwoman/*` package or from `mailwoman`. Import the declaration from its owning package. The
 `mailwoman/no-cross-package-reexport` lint rule enforces this boundary.
 
-A test imports the package under test through its public package export. Relative imports may name
-helpers inside that test directory. Tests must not use the package's private `#` imports. Add an export
-for a module that a consumer-facing test must reach. `mailwoman/no-private-import-in-test` and the
-`test-interface` repository check enforce these rules.
+A test sits in the same directory as the module it covers: `packages/core/lib/decoder/build-tree.ts` is tested by
+`packages/core/lib/decoder/build-tree.test.ts`. The suffix selects the suite: `<name>.test.ts` runs in the fast suite,
+`<name>.integration.test.ts` in the slow suite, and `<name>.full.test.ts` in the full-data suite. A test
+may import its module by relative path, by the package's `#` imports, or by the public export. The
+`test-layout` repository check reports a test in a directory that holds no module.
 
 Each compiling workspace sets `rootDir` to `./lib`; TypeScript therefore emits `lib/x.ts` as
-`out/x.js`. Test configurations widen `rootDir` because `test/` sits outside `lib/`. The ten
+`out/x.js`. Every build `tsconfig.json` excludes `**/*.test.ts`, and every published `files` list
+negates it, so a colocated test reaches neither `out/` nor a tarball. Test configurations widen
+`rootDir` because shared helpers under `test/` sit outside `lib/`. The ten
 `neural-weights-*` data packages and `sentencepiece-wasm` compile no TypeScript.
 
 `sdk/` means data acquisition: fetching or extracting source data and implementing the

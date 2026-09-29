@@ -8,8 +8,9 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { migrateRecipeOutput, surfaceForSource } from "@mailwoman/corpus/tools/migrate-recipe-output"
 import { describe, expect, it } from "vitest"
+
+import { migrateRecipeOutput, surfaceForSource } from "#tools/migrate/recipe-output"
 
 const OLD_ROW = {
 	raw: "1 Fake St, Faketown",

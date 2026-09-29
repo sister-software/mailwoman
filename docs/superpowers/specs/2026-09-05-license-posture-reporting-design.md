@@ -201,7 +201,7 @@ the headers. The four `cli.ts` entry points always pass one.
 
 ## Verification
 
-Unit, in `packages/core/test/unit/license/stamp.test.ts`:
+Unit, in `packages/core/lib/license/stamp.test.ts`:
 
 - `buildEngineStamp` over no key, `valid`, `expired`, `unknown_key`, `invalid`: `license` and the
   presence of `notice` match the doctor's branch for each; `licensee` and `kid` never appear in the

@@ -250,7 +250,7 @@ const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 	["config/vale/fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
 	["packages/repo-health/lib/checks/vocab-census.ts", "this file — its patterns have to spell the words it classifies"],
-	["packages/repo-health/test/unit/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
+	["packages/repo-health/lib/checks/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
 	["packages/repo-health/lib/checks/debt.ts", "its banned-vocabulary constant has to spell the word it counts"],
 	["config/vale/check-rules.ts", "the rule fixtures' own harness; its docstring quotes the words the rules match"],
 ]

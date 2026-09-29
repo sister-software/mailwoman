@@ -1,0 +1,76 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { stringifyJSON } from "@mailwoman/core/json"
+import { rectangleRing, reversedRing } from "@mailwoman/spatial/geometries/polygon"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { expect, test } from "vitest"
+
+import { makeTimezoneAnnotator, offsetSecForTimezone, TimezoneLookup } from "#index"
+import type { TimezoneDatabase } from "#schema"
+
+const SQUARE: number[][][][] = [
+	[
+		[
+			[0, 0],
+			[0, 10],
+			[10, 10],
+			[10, 0],
+			[0, 0],
+		],
+	],
+]
+
+test("TimezoneLookup.explore: a point on an island inside a hole is inside the zone", () => {
+	using db = DatabaseClient.temp<TimezoneDatabase>()
+	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
+
+	const exteriorHoleIsland = stringifyJSON([
+		[rectangleRing(0, 0, 10, 10), reversedRing(2, 2, 8, 8), rectangleRing(4, 4, 6, 6)],
+	])
+
+	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run("Test/Zone", 0, 10, 0, 10, exteriorHoleIsland)
+
+	using lookup = new TimezoneLookup({ database: db })
+
+	expect(lookup.explore(1, 1)).toBe("Test/Zone")
+	expect(lookup.explore(3, 3)).toBeNull()
+	expect(lookup.explore(5, 5)).toBe("Test/Zone")
+	expect(lookup.explore(15, 15)).toBeNull()
+})
+
+test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
+	// Tokyo has no DST: always +9h.
+	expect(offsetSecForTimezone("Asia/Tokyo", new Date("2026-06-15T00:00:00Z"))).toBe(32_400)
+	// New York: EST (-5h) in January, EDT (-4h) in July.
+	expect(offsetSecForTimezone("America/New_York", new Date("2026-01-15T12:00:00Z"))).toBe(-18_000)
+	expect(offsetSecForTimezone("America/New_York", new Date("2026-07-15T12:00:00Z"))).toBe(-14_400)
+	expect(offsetSecForTimezone("Not/AZone")).toBeUndefined()
+})
+
+async function fixtureDB(): Promise<DatabaseClient<TimezoneDatabase>> {
+	const db = DatabaseClient.temp<TimezoneDatabase>()
+	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
+
+	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run("Test/Zone", 0, 10, 0, 10, stringifyJSON(SQUARE))
+
+	return db
+}
+
+test("TimezoneLookup.find: bbox-prefilter + PIP returns the containing zone", async () => {
+	using db = await fixtureDB()
+	using lookup = new TimezoneLookup({ database: db })
+	expect(lookup.explore(5, 5)).toBe("Test/Zone")
+	expect(lookup.explore(50, 50)).toBeNull()
+})
+
+test("makeTimezoneAnnotator: fills AnnotationSet.timezone", async () => {
+	using db = await fixtureDB()
+	using lookup = new TimezoneLookup({ database: db })
+	const annotate = makeTimezoneAnnotator(lookup)
+	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone" } })
+	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
+})

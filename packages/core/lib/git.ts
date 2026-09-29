@@ -16,7 +16,9 @@ import { repoRootPathBuilder } from "#paths"
 import { runFile } from "#process"
 
 /**
- * Run a git command in the given repository and return its stdout as a string.
+ * Run a git command in the given repository.
+ *
+ * @returns stdout as a string.
  */
 export async function git(
 	args: string | string[],
@@ -46,7 +48,23 @@ export async function gitHead(
  * The checked-out branch name, or `head` when the tree is detached.
  */
 export async function currentBranch(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
-	return (await git(["rev-parse", "--abbrev-ref", "HEAD"], repoRoot)).trim()
+	return git(["rev-parse", "--abbrev-ref", "HEAD"], repoRoot)
+}
+
+/**
+ * The absolute path of the repository's shared `.git` directory.
+ *
+ * The main checkout and each of its worktrees report the same directory.
+ */
+export async function gitCommonDirectory(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
+	return git(["rev-parse", "--path-format=absolute", "--git-common-dir"], repoRoot)
+}
+
+/**
+ * The absolute path of the working tree that contains `repoRoot`.
+ */
+export async function workingTreeRoot(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
+	return git(["rev-parse", "--show-toplevel"], repoRoot)
 }
 
 /**

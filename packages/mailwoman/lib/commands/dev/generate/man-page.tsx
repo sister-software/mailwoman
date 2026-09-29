@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman dev generate man-page` regenerates the committed `man/mailwoman.1` from the compiled CLI help tree.
- *   The command runs offline. The `test/unit/` freshness test fails on drift. The pre-commit hook runs this command
+ *   The command runs offline. The `lib/dev-tools/man-page.test.ts` freshness test fails on drift. The pre-commit hook runs this command
  *   when a commit touches the command surface.
  */
 

@@ -13,6 +13,6 @@
 		"customConditions": ["workerd"]
 	},
 	"include": ["./lib/**/*", "./lib/**/*.json"],
-	"exclude": ["./out/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts"],
 	"references": [{ "path": "../core" }, { "path": "../release-kit" }]
 }

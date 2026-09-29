@@ -4,16 +4,17 @@
  * @author Teffen Ellis, et al.
  */
 
+import { currentBranch } from "@mailwoman/core/git"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { z } from "zod"
 
 import {
 	assertValeClean,
-	currentBranch,
 	fetchGitHubIssue,
 	fetchGitHubPullRequest,
 	linkIssue,
 	replaceTaskBlock,
+	resolveCheckout,
 	runGitHub,
 	taskBlockIsComplete,
 	type RunGitHub,
@@ -48,6 +49,17 @@ const TASK_SCHEMA = z.object({
 })
 
 type Task = z.infer<typeof TASK_SCHEMA>
+
+const CHECKOUT_FIELD = z
+	.string()
+	.min(1)
+	.optional()
+	.describe(
+		"Absolute path of the caller's working tree when it differs from the server's checkout, such as a " +
+			"`.claude/worktrees/<name>` worktree. The branch, the issue link and `gh` run from this tree."
+	)
+
+const CHECKOUT_SCHEMA = z.object({ checkout: CHECKOUT_FIELD })
 
 function renderTasks(tasks: Task[]): string {
 	return tasks.map((task) => `- [${task.completed ? "x" : " "}] ${task.text}`).join("\n")
@@ -131,6 +143,7 @@ const ISSUE_SCHEMA = z.discriminatedUnion("action", [
 
 const ISSUE_INPUT_SCHEMA = z.object({
 	action: z.enum(["create", "view", "edit", "update_tasks", "append_comment"]),
+	checkout: CHECKOUT_FIELD,
 	issue_number: z.number().int().positive().optional(),
 	title: z.string().min(1).optional(),
 	area: z.enum(AREAS).optional(),
@@ -175,6 +188,7 @@ const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
 const PULL_REQUEST_INPUT_SCHEMA = z.object({
 	action: z.enum(["create", "view", "edit", "append_comment"]),
 	issue_number: z.number().int().positive().describe("The issue this pull request closes."),
+	checkout: CHECKOUT_FIELD,
 	pull_request_number: z.number().int().positive().optional(),
 	title: z.string().min(1).optional(),
 	summary: z.string().min(1).optional(),
@@ -187,7 +201,7 @@ const PULL_REQUEST_INPUT_SCHEMA = z.object({
 export interface GitHubToolOverrides {
 	run?: RunGitHub
 	lint?: typeof assertValeClean
-	branch?: (cwd: string) => string
+	branch?: (cwd: string) => Promise<string>
 }
 
 export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = {}): [DevTool, DevTool] {
@@ -203,7 +217,7 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 			"Edits and comments are also Vale-checked. `update_tasks` changes only the marker-owned block.",
 		inputSchema: ISSUE_INPUT_SCHEMA,
 		handler: async (raw) => {
-			const cwd = deps.registry.repoRoot
+			const cwd = await resolveCheckout(deps.registry.repoRoot, CHECKOUT_SCHEMA.parse(raw).checkout)
 			const request = ISSUE_SCHEMA.parse(raw)
 
 			if (request.action === "create") {
@@ -291,11 +305,12 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 		name: "mwdev_pull_request",
 		description:
 			"Create and maintain the pull request that closes an implementation issue. Creation requires a completed " +
-			"marker-owned issue task list, Vale-checks the PR body, creates the PR from the current branch, and starts a " +
+			"marker-owned issue task list, Vale-checks the PR body, creates the PR from the current branch of `checkout` " +
+			"(default: the server's checkout), and starts a " +
 			"tracked `gh pr checks --watch --fail-fast` job. Poll the returned job through `mwdev_job`.",
 		inputSchema: PULL_REQUEST_INPUT_SCHEMA,
 		handler: async (raw) => {
-			const cwd = deps.registry.repoRoot
+			const cwd = await resolveCheckout(deps.registry.repoRoot, CHECKOUT_SCHEMA.parse(raw).checkout)
 			const request = PULL_REQUEST_SCHEMA.parse(raw)
 
 			if (request.action === "create") {
@@ -307,9 +322,9 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 					throw new Error(`Issue #${request.issue_number} has an absent, empty, or incomplete todo-sync task list.`)
 				}
 
-				const head = branch(cwd)
+				const head = await branch(cwd)
 
-				if (!head || head === request.base) {
+				if (!head || head === "HEAD" || head === request.base) {
 					throw new Error(`Create the pull request from a branch other than ${request.base}.`)
 				}
 

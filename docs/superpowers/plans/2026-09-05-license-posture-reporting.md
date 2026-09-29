@@ -35,17 +35,17 @@
 | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `packages/core/lib/license/stamp.ts` (create)                                                            | `EngineStamp`, `buildEngineStamp`, `licenseNoticeLines`, `licensePageURL` — pure |
 | `packages/core/lib/license/index.ts` (modify)                                                            | re-export `#license/stamp`                                                       |
-| `packages/core/test/unit/license/stamp.test.ts` (create)                                                 | the pure function's tests                                                        |
+| `packages/core/lib/license/stamp.test.ts` (create)                                                       | the pure function's tests                                                        |
 | `packages/mailwoman/lib/cli-kit/engine-stamp.ts` (create)                                                | `resolveEngineStamp()` memoized per process, `printLicenseNotice()`              |
 | `packages/mailwoman/package.json` (modify)                                                               | `./cli-kit/engine-stamp` export                                                  |
 | `packages/mailwoman/lib/cli.ts` (modify)                                                                 | print the notice after dispatch                                                  |
-| `packages/mailwoman/test/unit/cli-launcher.test.ts` (modify)                                             | stderr carries the notice, stdout is the bare version                            |
+| `packages/mailwoman/lib/cli/launcher.test.ts` (modify)                                                   | stderr carries the notice, stdout is the bare version                            |
 | `packages/mailwoman/lib/cli-native/commands/{geocode,reverse,autocomplete}.ts` (modify)                  | attach `engine` to JSON output                                                   |
 | `packages/api-kit/lib/engine-stamp.ts` (create)                                                          | `EngineStampSchema` (zod) and `engineHeaders(stamp)` middleware                  |
 | `packages/api-kit/lib/index.ts` (modify)                                                                 | re-export                                                                        |
-| `packages/api-kit/test/unit/engine-stamp.test.ts` (create)                                               | header middleware test                                                           |
+| `packages/api-kit/lib/engine-stamp.test.ts` (create)                                                     | header middleware test                                                           |
 | `packages/api/lib/{app,routes,schema}.ts` (modify)                                                       | option, headers, body field, OpenAPI                                             |
-| `packages/api/test/unit/index.test.ts` (modify)                                                          | body + header assertions                                                         |
+| `packages/api/lib/index.test.ts` (modify)                                                                | body + header assertions                                                         |
 | `packages/nominatim/lib/{app,routes,schema}.ts` (modify)                                                 | option, headers, per-result field                                                |
 | `packages/photon/lib/{app,routes,engine}.ts` (modify)                                                    | option, headers, collection foreign member                                       |
 | `packages/libpostal/lib/app.ts` (modify)                                                                 | option, headers only                                                             |
@@ -67,7 +67,7 @@ Three decisions recorded here that refine the spec:
 
 - Create: `packages/core/lib/license/stamp.ts`
 - Modify: `packages/core/lib/license/index.ts`
-- Test: `packages/core/test/unit/license/stamp.test.ts`
+- Test: `packages/core/lib/license/stamp.test.ts`
 
 **Interfaces:**
 
@@ -97,7 +97,7 @@ Three decisions recorded here that refine the spec:
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// packages/core/test/unit/license/stamp.test.ts
+// packages/core/lib/license/stamp.test.ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -223,7 +223,7 @@ describe("licenseNoticeLines", () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `yarn vitest run packages/core/test/unit/license/stamp.test.ts`
+Run: `yarn vitest run packages/core/lib/license/stamp.test.ts`
 Expected: FAIL — `buildEngineStamp` is not exported from `@mailwoman/core/license`.
 
 - [ ] **Step 3: Write the implementation**
@@ -335,15 +335,15 @@ export * from "#license/stamp"
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `yarn vitest run packages/core/test/unit/license/stamp.test.ts`
+Run: `yarn vitest run packages/core/lib/license/stamp.test.ts`
 Expected: PASS, 11 tests.
 
 - [ ] **Step 5: Lint and commit**
 
-Run: `yarn oxlint packages/core/lib/license/stamp.ts packages/core/test/unit/license/stamp.test.ts` (or `yarn lint:oxlint` if the single-file form is not wired).
+Run: `yarn oxlint packages/core/lib/license/stamp.ts packages/core/lib/license/stamp.test.ts` (or `yarn lint:oxlint` if the single-file form is not wired).
 
 ```bash
-git add packages/core/lib/license/stamp.ts packages/core/lib/license/index.ts packages/core/test/unit/license/stamp.test.ts
+git add packages/core/lib/license/stamp.ts packages/core/lib/license/index.ts packages/core/lib/license/stamp.test.ts
 git commit -m "feat(core): the engine stamp — which license branch produced a response, built once from the doctor's inputs
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -357,7 +357,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 - Create: `packages/mailwoman/lib/cli-kit/engine-stamp.ts`
 - Modify: `packages/mailwoman/package.json` (the `exports` map, beside `./cli-kit/metadata` at line ~205)
-- Test: `packages/mailwoman/test/unit/cli-kit/engine-stamp.test.ts`
+- Test: `packages/mailwoman/lib/cli/kit/engine-stamp.test.ts`
 
 **Interfaces:**
 
@@ -376,7 +376,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// packages/mailwoman/test/unit/cli-kit/engine-stamp.test.ts
+// packages/mailwoman/lib/cli/kit/engine-stamp.test.ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -440,7 +440,7 @@ describe("printLicenseNotice", () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `yarn vitest run packages/mailwoman/test/unit/cli-kit/engine-stamp.test.ts`
+Run: `yarn vitest run packages/mailwoman/lib/cli/kit/engine-stamp.test.ts`
 Expected: FAIL — cannot resolve `mailwoman/cli-kit/engine-stamp`.
 
 - [ ] **Step 3: Write the implementation and register the export**
@@ -528,13 +528,13 @@ Check `packages/mailwoman/package.json` for a `files` array or a knip/exports te
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `yarn vitest run packages/mailwoman/test/unit/cli-kit/engine-stamp.test.ts`
+Run: `yarn vitest run packages/mailwoman/lib/cli/kit/engine-stamp.test.ts`
 Expected: PASS, 3 tests.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/mailwoman/lib/cli-kit/engine-stamp.ts packages/mailwoman/package.json packages/mailwoman/test/unit/cli-kit/engine-stamp.test.ts
+git add packages/mailwoman/lib/cli-kit/engine-stamp.ts packages/mailwoman/package.json packages/mailwoman/lib/cli/kit/engine-stamp.test.ts
 git commit -m "feat(mailwoman): resolve the engine stamp once per process
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -547,7 +547,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Modify: `packages/mailwoman/lib/cli.ts` (the last line, `process.exitCode = await (...)`)
-- Test: `packages/mailwoman/test/unit/cli-launcher.test.ts`
+- Test: `packages/mailwoman/lib/cli/launcher.test.ts`
 
 **Interfaces:**
 
@@ -558,7 +558,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 The existing `runCLI` helper returns stdout only on success (`execFileSync` with a piped stderr discards it), so the `--version` assertion survives the notice. Add a second helper that keeps both streams, and two tests:
 
 ```ts
-// add to the imports at the top of packages/mailwoman/test/unit/cli-launcher.test.ts
+// add to the imports at the top of packages/mailwoman/lib/cli/launcher.test.ts
 import { runFile } from "@mailwoman/core/process"
 
 // add inside describe("the CLI launcher", …)
@@ -583,7 +583,7 @@ it("prints the notice for a key this build does not trust", async () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `yarn vitest run packages/mailwoman/test/unit/cli-launcher.test.ts`
+Run: `yarn vitest run packages/mailwoman/lib/cli/launcher.test.ts`
 Expected: the two new tests fail (stderr is empty); the three existing tests pass.
 
 - [ ] **Step 3: Print the notice after dispatch**
@@ -614,7 +614,7 @@ process.exitCode = exitCode
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `yarn vitest run packages/mailwoman/test/unit/cli-launcher.test.ts`
+Run: `yarn vitest run packages/mailwoman/lib/cli/launcher.test.ts`
 Expected: PASS, 5 tests.
 
 - [ ] **Step 5: Compile and check the compiled CLI by hand**
@@ -625,7 +625,7 @@ Expected: three lines — the version, then the two notice lines.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/mailwoman/lib/cli.ts packages/mailwoman/test/unit/cli-launcher.test.ts
+git add packages/mailwoman/lib/cli.ts packages/mailwoman/lib/cli/launcher.test.ts
 git commit -m "feat(cli): every invocation ends with the license notice on stderr
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -641,7 +641,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Modify: `packages/mailwoman/lib/cli-native/commands/reverse.ts` (the `JSON.stringify` at ~line 116)
 - Modify: `packages/mailwoman/lib/cli-native/commands/autocomplete.ts` (line ~48)
 - Modify: `CHANGELOG.md` (Unreleased → Changed)
-- Test: `packages/mailwoman/test/integration/reverse-cli.test.ts` (extend), `packages/mailwoman/test/unit/cli-native/` (new `json-stamp.test.ts` if the existing tests there do not already spawn `autocomplete`)
+- Test: `packages/mailwoman/lib/commands/reverse-cli.integration.test.ts` (extend), `packages/mailwoman/lib/cli/native/` (new `json-stamp.test.ts` if the existing tests there do not already spawn `autocomplete`)
 
 **Interfaces:**
 
@@ -649,7 +649,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 - [ ] **Step 1: Read the existing integration test**
 
-Run: `sed -n 1,60p packages/mailwoman/test/integration/reverse-cli.test.ts`
+Run: `sed -n 1,60p packages/mailwoman/lib/commands/reverse-cli.integration.test.ts`
 Note how it spawns the CLI and whether it skips without a gazetteer. Add the `engine` assertion inside the existing JSON test:
 
 ```ts
@@ -664,7 +664,7 @@ If the file skips when the gazetteer is absent, keep that guard; the assertion r
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `yarn vitest run packages/mailwoman/test/integration/reverse-cli.test.ts`
+Run: `yarn vitest run packages/mailwoman/lib/commands/reverse-cli.integration.test.ts`
 Expected: FAIL on `body.engine` (or SKIP if the gazetteer is absent — then proceed on the unit test below and hand-check in Step 6).
 
 - [ ] **Step 3: Attach the stamp in `geocode.ts`**
@@ -748,7 +748,7 @@ Expected: the first three end with an `engine` object; the last prints `0`.
 
 - [ ] **Step 7: Run the tests and commit**
 
-Run: `yarn vitest run packages/mailwoman/test/integration/reverse-cli.test.ts packages/mailwoman/test/unit/cli-native`
+Run: `yarn vitest run packages/mailwoman/lib/commands/reverse-cli.integration.test.ts packages/mailwoman/lib/cli/native`
 Expected: PASS.
 
 ```bash
@@ -766,7 +766,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 - Create: `packages/api-kit/lib/engine-stamp.ts`
 - Modify: `packages/api-kit/lib/index.ts`
-- Test: `packages/api-kit/test/unit/engine-stamp.test.ts`
+- Test: `packages/api-kit/lib/engine-stamp.test.ts`
 
 **Interfaces:**
 
@@ -785,7 +785,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// packages/api-kit/test/unit/engine-stamp.test.ts
+// packages/api-kit/lib/engine-stamp.test.ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -855,7 +855,7 @@ test("EngineStampSchema: accepts the stamp and refuses a licensee", () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `yarn vitest run packages/api-kit/test/unit/engine-stamp.test.ts`
+Run: `yarn vitest run packages/api-kit/lib/engine-stamp.test.ts`
 Expected: FAIL — `engineHeaders` is not exported.
 
 - [ ] **Step 3: Write the implementation**
@@ -939,13 +939,13 @@ and keep whichever form makes both header tests pass.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `yarn vitest run packages/api-kit/test/unit/engine-stamp.test.ts`
+Run: `yarn vitest run packages/api-kit/lib/engine-stamp.test.ts`
 Expected: PASS, 4 tests.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/api-kit/lib/engine-stamp.ts packages/api-kit/lib/index.ts packages/api-kit/test/unit/engine-stamp.test.ts
+git add packages/api-kit/lib/engine-stamp.ts packages/api-kit/lib/index.ts packages/api-kit/lib/engine-stamp.test.ts
 git commit -m "feat(api-kit): the engine stamp's schema, response headers, and body helper
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -960,7 +960,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Modify: `packages/api/lib/app.ts` (`MailwomanAPIOptions`, `createMailwomanAPI`)
 - Modify: `packages/api/lib/routes.ts` (`RegisterMailwomanAPIRoutesOptions`, the 200 responses of parse GET/POST, geocode, batch, resolve, format)
 - Modify: `packages/api/lib/schema.ts` (`ParseOutcomeSchema`, `GeocodeOutcomeSchema`, `BatchResponseSchema`, `ResolveResponseSchema`, `FormatResponseSchema`)
-- Test: `packages/api/test/unit/index.test.ts`
+- Test: `packages/api/lib/index.test.ts`
 
 **Interfaces:**
 
@@ -969,7 +969,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 - [ ] **Step 1: Write the failing tests**
 
-Add to `packages/api/test/unit/index.test.ts`, after the `fullEngine` fixture:
+Add to `packages/api/lib/index.test.ts`, after the `fullEngine` fixture:
 
 ```ts
 import type { EngineStamp } from "@mailwoman/core/license"
@@ -1036,7 +1036,7 @@ test("no engine option: no `engine` field and no headers", async () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `yarn vitest run packages/api/test/unit/index.test.ts`
+Run: `yarn vitest run packages/api/lib/index.test.ts`
 Expected: the three new tests fail; the rest pass.
 
 - [ ] **Step 3: Thread the option through app and routes**
@@ -1094,7 +1094,7 @@ export const GeocodeOutcomeSchema = GeocodeOutcomeLikeSchema.extend({ engine: En
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `yarn vitest run packages/api/test/unit/index.test.ts packages/mailwoman/test/unit/api-schema-drift.test.ts` (adjust the drift test's path with `git ls-files | grep api-schema-drift`).
+Run: `yarn vitest run packages/api/lib/index.test.ts packages/mailwoman/lib/geocode/schema-drift.integration.test.ts` (adjust the drift test's path with `git ls-files | grep api-schema-drift`).
 Expected: pass.
 
 If a route's `responses` schema in `routes.ts` is declared with the wire schema and the typed `c.json` now rejects the widened body, widen the route's `200` content schema to the same schema you extended in Step 4.
@@ -1117,7 +1117,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Modify: `packages/nominatim/lib/app.ts` (`NominatimAppOptions`, `createNominatimApp`)
 - Modify: `packages/nominatim/lib/routes.ts` (`registerNominatimRoutes` signature; the jsonv2 and geojson responses of `/search`, `/reverse`, `/lookup`)
 - Modify: `packages/nominatim/lib/schema.ts` (`NominatimResultSchema`)
-- Test: `packages/nominatim/test/unit/index.test.ts`
+- Test: `packages/nominatim/lib/index.test.ts`
 
 **Interfaces:**
 
@@ -1126,7 +1126,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 - [ ] **Step 1: Write the failing test**
 
-Find the existing `/search` test in `packages/nominatim/test/unit/index.test.ts` that builds a `NominatimEngine` fixture (`grep -n "createNominatimApp" packages/nominatim/test/unit/index.test.ts`). Reuse its fixture engine in:
+Find the existing `/search` test in `packages/nominatim/lib/index.test.ts` that builds a `NominatimEngine` fixture (`grep -n "createNominatimApp" packages/nominatim/lib/index.test.ts`). Reuse its fixture engine in:
 
 ```ts
 import type { EngineStamp } from "@mailwoman/core/license"
@@ -1174,7 +1174,7 @@ Replace `fixtureEngine` with the name the file already uses for its engine fixtu
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `yarn vitest run packages/nominatim/test/unit/index.test.ts`
+Run: `yarn vitest run packages/nominatim/lib/index.test.ts`
 Expected: the two new tests fail.
 
 - [ ] **Step 3: Thread the option**
@@ -1203,7 +1203,7 @@ and at each response site:
 
 - [ ] **Step 4: Run the tests and commit**
 
-Run: `yarn vitest run packages/nominatim/test/unit`
+Run: `yarn vitest run packages/nominatim/lib`
 Expected: PASS.
 
 ```bash
@@ -1222,7 +1222,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Modify: `packages/photon/lib/app.ts` (`PhotonAppOptions`, `createPhotonApp`)
 - Modify: `packages/photon/lib/routes.ts` (`registerPhotonRoutes`, the two `c.json(collection, 200)` sites at ~161 and ~193)
 - Modify: `packages/photon/lib/engine.ts` (`PhotonFeatureCollection`)
-- Test: `packages/photon/test/unit/index.test.ts`
+- Test: `packages/photon/lib/index.test.ts`
 
 **Interfaces:**
 
@@ -1231,7 +1231,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 - [ ] **Step 1: Write the failing test**
 
-Reuse the file's existing engine fixture (find it with `grep -n "createPhotonApp" packages/photon/test/unit/index.test.ts`):
+Reuse the file's existing engine fixture (find it with `grep -n "createPhotonApp" packages/photon/lib/index.test.ts`):
 
 ```ts
 import type { EngineStamp } from "@mailwoman/core/license"
@@ -1267,7 +1267,7 @@ test("no engine option: the collection has no `engine` member", async () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `yarn vitest run packages/photon/test/unit/index.test.ts`
+Run: `yarn vitest run packages/photon/lib/index.test.ts`
 Expected: the two new tests fail.
 
 - [ ] **Step 3: Thread the option**
@@ -1287,7 +1287,7 @@ Expected: the two new tests fail.
 
 - [ ] **Step 4: Run the tests and commit**
 
-Run: `yarn vitest run packages/photon/test/unit`
+Run: `yarn vitest run packages/photon/lib`
 Expected: PASS.
 
 ```bash
@@ -1304,7 +1304,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Modify: `packages/libpostal/lib/app.ts` (`LibpostalAppOptions`, `createLibpostalApp`)
-- Test: `packages/libpostal/test/unit/index.test.ts`
+- Test: `packages/libpostal/lib/index.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1341,7 +1341,7 @@ test("engine option: headers only — the /parse body is byte-identical with and
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `yarn vitest run packages/libpostal/test/unit/index.test.ts`
+Run: `yarn vitest run packages/libpostal/lib/index.test.ts`
 Expected: the new test fails on the `server` header.
 
 - [ ] **Step 3: Add the option**
@@ -1350,7 +1350,7 @@ Expected: the new test fails on the `server` header.
 
 - [ ] **Step 4: Run the tests and commit**
 
-Run: `yarn vitest run packages/libpostal/test/unit`
+Run: `yarn vitest run packages/libpostal/lib`
 Expected: PASS.
 
 ```bash
@@ -1567,7 +1567,7 @@ Run, in order, and paste the tail of each into the PR description:
 yarn compile
 yarn typecheck:tests
 yarn lint
-yarn vitest run packages/core/test/unit/license packages/api-kit/test/unit packages/api/test/unit packages/nominatim/test/unit packages/photon/test/unit packages/libpostal/test/unit packages/mailwoman/test/unit/cli-launcher.test.ts packages/mailwoman/test/unit/cli-kit
+yarn vitest run packages/core/lib/license packages/api-kit/lib packages/api/lib packages/nominatim/lib packages/photon/lib packages/libpostal/lib packages/mailwoman/lib/cli/launcher.test.ts packages/mailwoman/lib/cli/kit
 ```
 
 Expected: all clean. `yarn lint` includes `health`, which counts synchronous filesystem calls and banned vocabulary; a new finding there is a defect in this branch.

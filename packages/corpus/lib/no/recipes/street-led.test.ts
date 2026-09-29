@@ -13,9 +13,10 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { noStreetLedRecipe } from "@mailwoman/corpus/no/recipes/street/led"
-import { scratch, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
+
+import { noStreetLedRecipe } from "#no/recipes/street/led"
+import { scratch, recipeRunner } from "#test-kit/corpus-recipe"
 
 const run = recipeRunner("no-street-led", noStreetLedRecipe, 901)
 

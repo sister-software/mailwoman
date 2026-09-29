@@ -10,6 +10,8 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { describe, expect, it } from "vitest"
+
 import {
 	auditTrainingManifest,
 	freezeTrainingManifest,
@@ -20,8 +22,7 @@ import {
 	sourcesNotPermitting,
 	trainingManifestDigest,
 	type LicenseDecision,
-} from "@mailwoman/corpus/source-register"
-import { describe, expect, it } from "vitest"
+} from "#source-register/index"
 
 const elected: LicenseDecision = {
 	licenseID: "testland-open-data",

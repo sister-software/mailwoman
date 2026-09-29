@@ -17,8 +17,7 @@
   refusal by its word and that no file was written.
 - **The claim reducer takes its clock from the events.** `initialClaimState()` takes no time, and the deadline counts from the
   first event, because a render must be pure.
-- **Docs tests import site sources through `#license/*`** (added to `docs/package.json` `imports`), as `test-interface`
-  requires.
+- **Docs tests import site sources through `#license/*`** (added to `docs/package.json` `imports`).
 
 **Architecture:** Core gains two small modules beside the ones the worker already made: `license/key-file.ts` (the config-root key and refresh-credential files, read by `verifyConfiguredLicenseKey` after the environment variable) and `license/status.ts` (the HTTP client for the worker's refresh and status routes, on `APIClient`, outside the barrel like `publication.ts`). The CLI's `license` command grows two actions over them; the doctor's runtime license check reports the lid status as a fifth word beside the publication. The docs site gets a constants module for the shop's URLs, a Purchase section on `/license`, and a `/license/issued` page whose polling is a pure reducer with a unit test, rendered through `BrowserOnly`.
 
@@ -28,7 +27,7 @@
 
 ## Global Constraints
 
-- The key-file read joins the CLI launcher's path: `packages/mailwoman/test/unit/module-count.test.ts` pins `mailwoman --version` at or under 200 modules (132 today). `fs/readers` and `data-root` are already on that path through the manifest read; no new module may join it.
+- The key-file read joins the CLI launcher's path: `packages/mailwoman/lib/cli/kit/module-count.test.ts` pins `mailwoman --version` at or under 200 modules (132 today). `fs/readers` and `data-root` are already on that path through the manifest read; no new module may join it.
 - The HTTP client lives outside the `@mailwoman/core/license` barrel, as `publication.ts` does, so the launcher never loads it.
 - HTTP goes through `APIClient` (`@mailwoman/core/api`), never raw `fetch`, with a bounded timeout and `silentLogger()` so stdout stays a document.
 - A secret file is created `0600` through `writePrivateTextFile`; the key file is not a secret and uses `writeLocalTextFile`.
@@ -38,7 +37,7 @@
 - The Payment Link, portal and terms URLs are operator-owned (spec issue A). They live in one constants module and start `undefined`; the Purchase section renders only when both Payment Links are set, so the live page never shows a dead button.
 - `docs/src/pages/license/terms/<version>.mdx` is issue A's deliverable (legal text). This plan creates no terms page.
 - Prose follows `config/vale/.vale-vocab.ini` (README, plan) and the site's `config/vale/.vale.ini` (pages); acronyms cap as whole components; snake_case wire keys stay.
-- Tests sit under `test/unit/` or `test/integration/` and import helpers by the package interface, never relatively (`test-interface` health check); every exported name is imported somewhere (`exports` check); no `as never`, no `as unknown as` (`debt` counters).
+- Each test sits beside the module it covers, `<name>.test.ts` or `<name>.integration.test.ts`, and imports its own package through the `#` imports map (`test-layout` health check); every exported name is imported somewhere (`exports` check); no `as never`, no `as unknown as` (`debt` counters).
 - Every commit ends with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
 
 ---
@@ -49,7 +48,7 @@
 
 - Create: `packages/core/lib/license/key-file.ts`
 - Modify: `packages/core/lib/license/configured.ts`, `packages/core/lib/license/index.ts` (export the new module), `packages/core/lib/env/schema.ts` (add `MAILWOMAN_LICENSE_URL`)
-- Test: `packages/core/test/unit/license/key-file.test.ts`
+- Test: `packages/core/lib/license/key-file.test.ts`
 
 **Interfaces produced:**
 
@@ -76,7 +75,7 @@ export function writeRefreshCredentials(credentials: RefreshCredentials): Promis
 - [x] **Step 1: Write the failing test**
 
 ```ts
-// packages/core/test/unit/license/key-file.test.ts
+// packages/core/lib/license/key-file.test.ts
 import { configRootPath } from "@mailwoman/core/data-root"
 import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -130,11 +129,11 @@ describe("the config-root license files", () => {
 })
 ```
 
-Check how `$public` reads the environment before relying on `vi.stubEnv`: `packages/core/lib/env/index.ts`. If `$public` is parsed once at import, read the variable through a getter the test can control (`readPublicEnv()`), or accept an `env` parameter with a default; the existing `verifyConfiguredLicenseKey` reads `$public.MAILWOMAN_LICENSE_KEY` and its test in `packages/core/test/unit/license/` shows the pattern the suite already uses. Follow that pattern.
+Check how `$public` reads the environment before relying on `vi.stubEnv`: `packages/core/lib/env/index.ts`. If `$public` is parsed once at import, read the variable through a getter the test can control (`readPublicEnv()`), or accept an `env` parameter with a default; the existing `verifyConfiguredLicenseKey` reads `$public.MAILWOMAN_LICENSE_KEY` and its test in `packages/core/lib/license/` shows the pattern the suite already uses. Follow that pattern.
 
 - [x] **Step 2: Run to verify it fails**
 
-Run: `yarn vitest run packages/core/test/unit/license/key-file.test.ts`. Expected: fail, `readConfiguredLicenseToken` is not exported.
+Run: `yarn vitest run packages/core/lib/license/key-file.test.ts`. Expected: fail, `readConfiguredLicenseToken` is not exported.
 
 - [x] **Step 3: Implement**
 
@@ -259,8 +258,8 @@ Update its header comment: the file is why a refreshed key applies without an en
 
 - [x] **Step 4: Run the tests, the module-count pin, and the launcher path**
 
-Run: `yarn vitest run packages/core/test/unit/license`. Expected: pass.
-Run: `yarn compile && yarn vitest run packages/mailwoman/test/unit/module-count.test.ts`. Expected: pass; note the count it prints in the commit message. If it rose, the new import pulled something onto the launcher path: `fs/readers` and `data-root` were already there through `readMailwomanManifest`, so a rise means a different module joined; find it with `node --trace-... ` as that test's header describes.
+Run: `yarn vitest run packages/core/lib/license`. Expected: pass.
+Run: `yarn compile && yarn vitest run packages/mailwoman/lib/cli/kit/module-count.test.ts`. Expected: pass; note the count it prints in the commit message. If it rose, the new import pulled something onto the launcher path: `fs/readers` and `data-root` were already there through `readMailwomanManifest`, so a rise means a different module joined; find it with `node --trace-... ` as that test's header describes.
 
 - [x] **Step 5: Commit**
 
@@ -279,7 +278,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 - Create: `packages/core/lib/license/status.ts`
 - Modify: `packages/core/package.json` (export `./license/status`, `node`/`default`/`types` conditions like `./license/publication`)
-- Test: `packages/core/test/unit/license/status.test.ts`
+- Test: `packages/core/lib/license/status.test.ts`
 
 **Interfaces produced:**
 
@@ -306,7 +305,7 @@ export function refreshLicenseKey(
 - [x] **Step 1: Write the failing test**
 
 ```ts
-// packages/core/test/unit/license/status.test.ts
+// packages/core/lib/license/status.test.ts
 import { checkLicenseStatus, licenseWorkerURL, refreshLicenseKey } from "@mailwoman/core/license/status"
 import { createServer, type Server } from "node:http"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
@@ -397,7 +396,7 @@ describe("the license worker client", () => {
 
 - [x] **Step 2: Run to verify it fails**
 
-Run: `yarn vitest run packages/core/test/unit/license/status.test.ts`. Expected: fail, module not found.
+Run: `yarn vitest run packages/core/lib/license/status.test.ts`. Expected: fail, module not found.
 
 - [x] **Step 3: Implement**
 
@@ -497,7 +496,7 @@ Read `packages/core/lib/api/APIClient.ts` for the exact request-options shape (`
 
 - [x] **Step 4: Run and commit**
 
-Run: `yarn vitest run packages/core/test/unit/license/status.test.ts`. Expected: pass.
+Run: `yarn vitest run packages/core/lib/license/status.test.ts`. Expected: pass.
 Run: `yarn mwops health manifest-targets`. Expected: pass.
 
 ```bash
@@ -514,7 +513,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Modify: `packages/mailwoman/lib/cli-native/commands/license.ts`
-- Test: `packages/mailwoman/test/integration/license-cli.test.ts` (extend)
+- Test: `packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts` (extend)
 
 **Interfaces consumed:** Task 0's key-file functions from `@mailwoman/core/license`; Task 1's `refreshLicenseKey`, `checkLicenseStatus`, `licenseWorkerURL` from `@mailwoman/core/license/status`; `isSelfServicePayload` from `@mailwoman/core/license`.
 
@@ -527,7 +526,7 @@ Behaviour:
 
 - [x] **Step 1: Write the failing tests**
 
-Add to `packages/mailwoman/test/integration/license-cli.test.ts`. The stub worker is a Hono app served through `@mailwoman/api-kit`'s `serveNode` on port 0, with `MAILWOMAN_LICENSE_URL` handed to the CLI child. The test generates a signing pair, but it cannot inject that pair into the register the CLI reads, because the compiled CLI ships its register. No token in a test is one the build trusts. The tests therefore assert the refusals precisely, and they assert the file writes through `adopt` of a token whose verification result the CLI reports. Use `--json` output for the payload echo. Concretely:
+Add to `packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts`. The stub worker is a Hono app served through `@mailwoman/api-kit`'s `serveNode` on port 0, with `MAILWOMAN_LICENSE_URL` handed to the CLI child. The test generates a signing pair, but it cannot inject that pair into the register the CLI reads, because the compiled CLI ships its register. No token in a test is one the build trusts. The tests therefore assert the refusals precisely, and they assert the file writes through `adopt` of a token whose verification result the CLI reports. Use `--json` output for the payload echo. Concretely:
 
 ```ts
 import { Hono } from "hono"
@@ -628,7 +627,7 @@ Add `pathExists` (`@mailwoman/core/fs/readers`), `writePrivateTextFile` (`@mailw
 
 - [x] **Step 2: Run to verify they fail**
 
-Run: `yarn compile && yarn vitest run packages/mailwoman/test/integration/license-cli.test.ts`. Expected: the new tests fail with "Unknown action".
+Run: `yarn compile && yarn vitest run packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts`. Expected: the new tests fail with "Unknown action".
 
 - [x] **Step 3: Implement**
 
@@ -774,7 +773,7 @@ JSON gains `...(lidStatus ? { lid_status: lidStatus } : {})`; the text gains `${
 
 - [x] **Step 4: Run, regenerate the reference, commit**
 
-Run: `yarn compile && yarn vitest run packages/mailwoman/test/integration/license-cli.test.ts`. Expected: pass.
+Run: `yarn compile && yarn vitest run packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts`. Expected: pass.
 The pre-commit hook regenerates `docs/articles/developers/reference/cli.mdx` and `packages/mailwoman/man/mailwoman.1` from the spec; stage both when it does.
 
 ```bash
@@ -791,7 +790,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Modify: `packages/mailwoman/lib/doctor/checks.ts` (`RuntimeLicenseObservation.lidStatus`, `LicensePosture.lid`/`lidStatus`, detail text), `packages/mailwoman/lib/doctor/runner.ts` (dependency `checkLicenseStatus`, gathered when the payload carries `lid`)
-- Test: `packages/mailwoman/test/unit/doctor/runner.test.ts` (extend the valid-key case), `packages/mailwoman/test/unit/doctor/checks.test.ts`
+- Test: `packages/mailwoman/lib/doctor/runner.test.ts` (extend the valid-key case), `packages/mailwoman/lib/doctor/checks.test.ts`
 
 - [x] **Step 1: Write the failing test**
 
@@ -844,7 +843,7 @@ In `runner.test.ts`'s valid-key case, add `checkLicenseStatus: async () => "acti
 
 - [x] **Step 2: Run to verify it fails**
 
-Run: `yarn vitest run packages/mailwoman/test/unit/doctor`. Expected: fail on `lidStatus`.
+Run: `yarn vitest run packages/mailwoman/lib/doctor`. Expected: fail on `lidStatus`.
 
 - [x] **Step 3: Implement**
 
@@ -854,7 +853,7 @@ Run: `yarn vitest run packages/mailwoman/test/unit/doctor`. Expected: fail on `l
 
 - [x] **Step 4: Run and commit**
 
-Run: `yarn vitest run packages/mailwoman/test/unit/doctor`. Expected: pass.
+Run: `yarn vitest run packages/mailwoman/lib/doctor`. Expected: pass.
 
 ```bash
 git add packages/mailwoman
@@ -1019,7 +1018,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Create: `docs/src/license/claim.ts` (the pure reducer and the fetch), `docs/src/components/License/IssuedLicense.tsx`, `docs/src/pages/license/issued.tsx`
-- Test: `docs/test/unit/license-claim.test.ts`
+- Test: `docs/license-claim.test.ts`
 
 **Interfaces produced:**
 
@@ -1059,14 +1058,13 @@ export function claimURL(sessionID: string): string // `${LICENSE_WORKER_URL}/v1
 - [x] **Step 1: Write the failing test**
 
 ```ts
-// docs/test/unit/license-claim.test.ts
+// docs/license-claim.test.ts
 import { describe, expect, it } from "vitest"
 
 import { CLAIM_DEADLINE_MS, initialClaimState, nextClaimState } from "@site/src/license/claim"
 
-// If `@site` does not resolve under the root vitest config, import by relative path from docs/test/unit — the docs
-// workspace is the one place the test-interface check admits `browser`/`build`/`e2e` beside unit; check how
-// docs/test/unit/*.test.ts already import src.
+// If `@site` does not resolve under the root vitest config, import by relative path; check how
+// docs/*.test.ts already import src.
 
 describe("the claim page's state", () => {
 	const t0 = 1_000_000
@@ -1130,7 +1128,7 @@ describe("the claim page's state", () => {
 
 - [x] **Step 2: Run to verify it fails**
 
-Run: `yarn vitest run docs/test/unit/license-claim.test.ts`. Expected: fail, module not found.
+Run: `yarn vitest run docs/license-claim.test.ts`. Expected: fail, module not found.
 
 - [x] **Step 3: Implement the reducer and the fetch**
 
@@ -1232,13 +1230,13 @@ Add `<meta name="robots" content="noindex">` for this page through Docusaurus `H
 
 - [x] **Step 5: Run the test and render the page**
 
-Run: `yarn vitest run docs/test/unit/license-claim.test.ts`. Expected: pass.
+Run: `yarn vitest run docs/license-claim.test.ts`. Expected: pass.
 With the dev server up: `node .claude/skills/run-docs/driver.mts --check "/license/issued/?session_id=cs_test_probe"` and a screenshot. Expected: the page reaches `unreachable` or `not_found` (the real worker is not deployed yet), renders the matching copy, and logs no console error other than the failed fetch. Also `--check /license/issued/` without a query: the "provide at /license" copy.
 
 - [x] **Step 6: Commit**
 
 ```bash
-git add docs/src docs/test/unit/license-claim.test.ts
+git add docs/src docs/license-claim.test.ts
 git commit -m "feat(docs): /license/issued — poll the claim route, show the key and the one-time refresh secret, say what a wait means
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
@@ -1272,7 +1270,7 @@ writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key` and the credentials to `r
 yarn compile
 yarn typecheck:tests
 yarn lint
-yarn vitest run packages/core/test/unit/license packages/mailwoman/test/unit/doctor packages/mailwoman/test/integration/license-cli.test.ts packages/mailwoman/test/unit/module-count.test.ts docs/test/unit/license-claim.test.ts
+yarn vitest run packages/core/lib/license packages/mailwoman/lib/doctor packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts packages/mailwoman/lib/cli/kit/module-count.test.ts docs/license-claim.test.ts
 yarn test:license-worker
 ```
 

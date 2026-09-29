@@ -205,7 +205,7 @@ yarn compile
 yarn oxlint packages/core/lib/pipeline/client-result.ts packages/react docs/src
 yarn mwops health bundle-graph
 yarn workspace @mailwoman/react test:browser
-yarn vitest --run --config vitest.fast.config.ts docs/test/unit packages/core/test/unit
+yarn vitest --run --config vitest.fast.config.ts docs packages/core/lib
 cd docs && yarn typecheck && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; tail -3 /tmp/docs-build.log; cd -
 ```
 
@@ -225,7 +225,7 @@ git commit -m "refactor(core,react,docs): the client parse result is one interfa
 **Files:**
 
 - Move: `docs/src/shared/httpvfs-resolver.ts` → `packages/resolver-wof-wasm/lib/httpvfs/resolver.ts`; `httpvfs-street.ts` → `lib/httpvfs/street.ts`; `poi-httpvfs.ts` → `lib/httpvfs/poi.ts`; `sqljs-rows.ts` → `lib/httpvfs/rows.ts`
-- Move: `docs/test/unit/src/shared/{httpvfs-resolver,candidate-parity,httpvfs-street}.test.ts` and `stub-worker.ts` → `packages/resolver-wof-wasm/test/unit/httpvfs/`
+- Move: `docs/src/shared/{httpvfs-resolver,candidate-parity,httpvfs-street}.test.ts` and `stub-worker.ts` → `packages/resolver-wof-wasm/lib/httpvfs/`
 - Create: `packages/resolver-wof-wasm/lib/host-assets.ts` (from `docs/plugins/demo-assets/artifacts.ts` `syncArtifact` + `stageSQLJSHTTPVFS`)
 - Delete: `docs/src/shared/candidate-resolver-backend.ts`
 - Modify: `packages/resolver-wof-wasm/package.json` (exports, dependencies `@mailwoman/spatial`, `sql.js-httpvfs`), `packages/resolver-wof-wasm/tsconfig.json` (reference `../spatial`), `docs/src/shared/demo-helpers.ts` (`resolveStreet` leaves), `docs/plugins/demo-assets/artifacts.ts` and `plugin.ts`, the docs importers, `packages/repo-health/lib/checks/bundle-graph.ts`
@@ -350,15 +350,15 @@ Add to `packages/resolver-wof-wasm/package.json` `exports`, in the shape of `"./
 ```
 
 ```bash
-mkdir -p packages/resolver-wof-wasm/test/unit/httpvfs
-git mv docs/test/unit/src/shared/httpvfs-resolver.test.ts packages/resolver-wof-wasm/test/unit/httpvfs/resolver.test.ts
-git mv docs/test/unit/src/shared/candidate-parity.test.ts packages/resolver-wof-wasm/test/unit/httpvfs/candidate-parity.test.ts
-git mv docs/test/unit/src/shared/httpvfs-street.test.ts   packages/resolver-wof-wasm/test/unit/httpvfs/street.test.ts
-git mv docs/test/unit/src/shared/stub-worker.ts            packages/resolver-wof-wasm/test/unit/httpvfs/stub-worker.ts
-sed -i 's#@mailwoman/docs/shared/httpvfs-resolver#@mailwoman/resolver-wof-wasm/httpvfs/resolver#; s#@mailwoman/docs/shared/httpvfs-street#@mailwoman/resolver-wof-wasm/httpvfs/street#; s#@mailwoman/docs/shared/demo-helpers#@mailwoman/resolver-wof-wasm/httpvfs/street#' packages/resolver-wof-wasm/test/unit/httpvfs/*.test.ts
+mkdir -p packages/resolver-wof-wasm/lib/httpvfs
+git mv packages/resolver-wof-wasm/lib/httpvfs/resolver.test.ts packages/resolver-wof-wasm/lib/httpvfs/resolver.test.ts
+git mv packages/resolver-wof-wasm/lib/httpvfs/candidate-parity.test.ts packages/resolver-wof-wasm/lib/httpvfs/candidate-parity.test.ts
+git mv packages/resolver-wof-wasm/lib/httpvfs/street.test.ts   packages/resolver-wof-wasm/lib/httpvfs/street.test.ts
+git mv docs/src/shared/stub-worker.ts            packages/resolver-wof-wasm/test/httpvfs-stub-worker.ts
+sed -i 's#@mailwoman/docs/shared/httpvfs-resolver#@mailwoman/resolver-wof-wasm/httpvfs/resolver#; s#@mailwoman/docs/shared/httpvfs-street#@mailwoman/resolver-wof-wasm/httpvfs/street#; s#@mailwoman/docs/shared/demo-helpers#@mailwoman/resolver-wof-wasm/httpvfs/street#' packages/resolver-wof-wasm/lib/httpvfs/*.test.ts
 ```
 
-The third substitution is right only for `street.test.ts`, whose one `demo-helpers` import is `resolveStreet`; check the other two files import nothing from `demo-helpers` (`grep -n demo-helpers packages/resolver-wof-wasm/test/unit/httpvfs/*.ts` prints nothing). The `candidate-parity` test opens a SQLite fixture through `@mailwoman/sqlite/client` and `dataRootPath`; it stays a unit test under this package's `test/unit` only if the fast leg already ran it from docs (it did: `docs/test/unit/**` is in the fast include) — keep it there.
+The third substitution is right only for `street.test.ts`, whose one `demo-helpers` import is `resolveStreet`; check the other two files import nothing from `demo-helpers` (`grep -n demo-helpers packages/resolver-wof-wasm/lib/httpvfs/*.ts` prints nothing). The `candidate-parity` test opens a SQLite fixture through `@mailwoman/sqlite/client` and `dataRootPath`; it stays a fast-suite `.test.ts` beside `lib/httpvfs/` only if the fast leg already ran it from docs (it did: `docs/**` is in the fast include) — keep it there.
 
 - [ ] **Step 5: The docs importers**
 
@@ -378,7 +378,7 @@ yarn compile
 yarn oxlint packages/resolver-wof-wasm docs/src docs/plugins
 yarn mwops health bundle-graph
 yarn mwops health manifest-targets
-yarn vitest --run --config vitest.fast.config.ts packages/resolver-wof-wasm/test/unit docs/test/unit
+yarn vitest --run --config vitest.fast.config.ts packages/resolver-wof-wasm/lib docs
 yarn health:architecture
 cd docs && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; tail -3 /tmp/docs-build.log; cd -
 ```
@@ -399,7 +399,7 @@ git commit -m "refactor(resolver-wof-wasm): the httpvfs readers, resolveStreet, 
 **Files:**
 
 - Create: `packages/mailwoman/lib/browser-runtime/types.ts`, `resources.ts`, `manifest.ts`, `classify.ts`, `load-assets.ts`, `index.ts`
-- Move tests: `docs/test/unit/src/shared/demo-helpers.test.ts` → `packages/mailwoman/test/unit/browser-runtime/classify.test.ts`; `manifest-wire-keys.test.ts` → `…/manifest.test.ts`; `pair-index-url.test.ts` → `…/resources.test.ts`
+- Move tests: `docs/src/shared/demo-helpers.test.ts` → `packages/mailwoman/lib/browser-runtime/classify.test.ts`; `manifest-wire-keys.test.ts` → `…/manifest.test.ts`; `pair-index-url.test.ts` → `…/resources.test.ts`
 - Delete after the move: `docs/src/shared/resources/index.ts`, `docs/src/shared/demo-helpers.ts`, `docs/src/shared/demo-loader.ts`
 - Modify: `packages/mailwoman/package.json` (six exports), `docs/package.json` (dependency `mailwoman`, drop `imports["#shared/resources"]`), the docs consumers, `packages/mailwoman/lib/commands/gazetteer/publish.tsx:89`, `packages/mailwoman/lib/gazetteer-pipeline/index.ts:500`, `packages/mailwoman/lib/release-tools/publish-hf.ts:286`, `packages/mailwoman/lib/data/bundles.ts:69`, `packages/mailwoman/lib/eval-harness/demo-cascade-smoke.ts:38`, `packages/repo-health/lib/checks/bundle-graph.ts`
 
@@ -459,14 +459,14 @@ Add to `packages/mailwoman/package.json` `exports`, in the shape of `"./gazettee
 - [ ] **Step 3: The moved tests**
 
 ```bash
-mkdir -p packages/mailwoman/test/unit/browser-runtime
-git mv docs/test/unit/src/shared/demo-helpers.test.ts       packages/mailwoman/test/unit/browser-runtime/classify.test.ts
-git mv docs/test/unit/src/shared/manifest-wire-keys.test.ts packages/mailwoman/test/unit/browser-runtime/manifest.test.ts
-git mv docs/test/unit/src/shared/pair-index-url.test.ts     packages/mailwoman/test/unit/browser-runtime/resources.test.ts
-sed -i 's#@mailwoman/docs/shared/demo-helpers#mailwoman/browser-runtime/classify#; s#@mailwoman/docs/shared/resources#mailwoman/browser-runtime/resources#' packages/mailwoman/test/unit/browser-runtime/*.test.ts
+mkdir -p packages/mailwoman/lib/browser-runtime
+git mv docs/src/shared/demo-helpers.test.ts       packages/mailwoman/lib/browser-runtime/classify.test.ts
+git mv docs/src/shared/manifest-wire-keys.test.ts packages/mailwoman/lib/browser-runtime/manifest.test.ts
+git mv packages/mailwoman/lib/browser-runtime/resources.test.ts     packages/mailwoman/lib/browser-runtime/resources.test.ts
+sed -i 's#@mailwoman/docs/shared/demo-helpers#mailwoman/browser-runtime/classify#; s#@mailwoman/docs/shared/resources#mailwoman/browser-runtime/resources#' packages/mailwoman/lib/browser-runtime/*.test.ts
 ```
 
-`manifest.test.ts` imports `normalizeReleasesManifest` and `WireReleaseEntry`, which now live in `manifest`. Therefore, its specifier is `mailwoman/browser-runtime/manifest` rather than `classify`; `classify.test.ts` imports `MailwomanLookupLike` from `@mailwoman/resolver-wof-wasm/browser-cascade`. `rmdir docs/test/unit/src/shared` once empty.
+`manifest.test.ts` imports `normalizeReleasesManifest` and `WireReleaseEntry`, which now live in `manifest`. Therefore, its specifier is `mailwoman/browser-runtime/manifest` rather than `classify`; `classify.test.ts` imports `MailwomanLookupLike` from `@mailwoman/resolver-wof-wasm/browser-cascade`. `rmdir docs/src/shared` once empty.
 
 - [ ] **Step 4: Docs consumes the package**
 
@@ -489,7 +489,7 @@ yarn oxlint packages/mailwoman/lib/browser-runtime docs/src docs/test
 yarn mwops health bundle-graph
 yarn mwops health manifest-targets
 yarn mwops health exports
-yarn vitest --run --config vitest.fast.config.ts packages/mailwoman/test/unit/browser-runtime docs/test/unit
+yarn vitest --run --config vitest.fast.config.ts packages/mailwoman/lib/browser-runtime docs
 yarn health:architecture
 cd docs && yarn typecheck && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; tail -3 /tmp/docs-build.log; cd -
 ```
@@ -590,7 +590,7 @@ Expected: `EXIT=0`; 7 of 7 specs pass. `docusaurus serve` opens a browser throug
 - [ ] **Step 2: The lockstep test still holds**
 
 ```bash
-yarn vitest --run --config vitest.fast.config.ts packages/resolver-wof-wasm/test/unit/httpvfs/candidate-parity.test.ts
+yarn vitest --run --config vitest.fast.config.ts packages/resolver-wof-wasm/lib/httpvfs/candidate-parity.test.ts
 ```
 
 Expected: pass. This is the browser-versus-Node candidate ranking parity; it moved packages and must still compare the same two implementations.

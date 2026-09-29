@@ -10,22 +10,23 @@ import { appendLocalTextFile, removeFile, removePath } from "@mailwoman/core/fs/
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
-import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof/admin/json/adapter"
+import type { PathBuilder } from "path-ts"
+import { JSONSpliterator, TextSpliterator } from "spliterator"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import {
 	assertHeapForAdapters,
 	buildCorpus,
 	BuildProfile,
 	RESIDENT_ADAPTER_HEAP_FLOOR_BYTES,
 	type BuildStage,
-} from "@mailwoman/corpus/build"
-import type { AlignCheckpoint } from "@mailwoman/corpus/build/checkpoint"
-import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
-import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
-import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
-import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "@mailwoman/corpus/utils/license"
-import type { PathBuilder } from "path-ts"
-import { JSONSpliterator, TextSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+} from "#build"
+import type { AlignCheckpoint } from "#build/checkpoint"
+import type { ParquetRow } from "#parquet/schema"
+import { openParquetRowStream } from "#parquet/streams"
+import type { ParquetManifest } from "#parquet/writers"
+import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "#utils/license"
 
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")
 
