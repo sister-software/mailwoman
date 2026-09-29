@@ -4,13 +4,13 @@ title: Contribute and send feedback
 hide_footer: true
 ---
 
-# Contribute and send feedback {#contributing-feedback}
+# Contribute and send feedback
 
 This page covers how to obtain Mailwoman, how to report bugs or request enhancements, and what a
 contribution needs to be accepted. It mirrors the repository's `CONTRIBUTING.md`; where the two
 differ, the repository copy governs code contributions and this page will be corrected.
 
-## Get Mailwoman {#obtaining-mailwoman}
+## Get Mailwoman
 
 - **Install from npm:** `npm install mailwoman` (the CLI + library), or any of the scoped
   packages at https://www.npmjs.com/org/mailwoman. Model weights ship as data-only packages
@@ -32,7 +32,7 @@ differ, the repository copy governs code contributions and this page will be cor
 - A useful bug report for a parser/geocoder is small: one address in, one wrong answer out.
   Reports like that routinely become permanent regression tests within days.
 
-## Contribute {#contributing}
+## Contribute
 
 For anything larger than a typo or an obvious fix, get in touch first so we can agree on the
 approach before you spend the time. Model-layer work (training, corpus extracts, evals) has its

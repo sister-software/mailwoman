@@ -1,4 +1,4 @@
-# Joint reconciliation leaves the default decode path {#retiring-joint-reconcile-as-the-default-decode-path}
+# Joint reconciliation leaves the default decode path
 
 _2026-06-14. A reconcile-vs-raw-neural audit, run during the geocoder campaign to quantify how frequently
 the shipped pipeline degrades a parse, found the joint-reconcile path (#427's default since Route A

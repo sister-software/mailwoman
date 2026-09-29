@@ -57,7 +57,7 @@ check whose pattern can match the checker is measuring itself.
 
 ---
 
-## A 325-character real address throws an uncaught TypeError {#finding-1-a-325-character-real-address-throws-an-uncaught-typeerror}
+## A 325-character real address throws an uncaught TypeError
 
 **Severity: high.** Availability _and_ correctness, on the shipped geocode path, triggered by valid
 input.
@@ -142,7 +142,7 @@ mitigation rather than the fix.
 
 ---
 
-## `computeQueryShape` is quadratic in segment count {#finding-2-compute-query-shape-is-quadratic-in-segment-count}
+## `computeQueryShape` is quadratic in segment count
 
 **Severity: high.** Availability. Reachable from every path, including `parseForGeocode`.
 
@@ -187,7 +187,7 @@ _before_ the segment loop, but stays quadratic when the abbreviation repeats.
 
 ---
 
-## The phrase grouper is quadratic on capitalized and street-suffix runs {#finding-3-the-phrase-grouper-is-quadratic-on-capitalized-and-street-suffix-runs}
+## The phrase grouper is quadratic on capitalized and street-suffix runs
 
 **Severity: high.** Availability. This is the worst of the three by constant factor.
 
@@ -249,7 +249,7 @@ over the wire.
 
 ---
 
-## The pipeline masks the classifier crash and substitutes rule-based output {#finding-4-the-pipeline-masks-the-classifier-crash-and-substitutes-rule-based-output}
+## The pipeline masks the classifier crash and substitutes rule-based output
 
 **Severity: medium.** Silent wrongness.
 
@@ -283,7 +283,7 @@ indistinguishable from a clean no-match. A `classifierError` field on `PipelineR
 
 ---
 
-## Garbage resolves to real coordinates {#finding-5-garbage-resolves-to-real-coordinates}
+## Garbage resolves to real coordinates
 
 **Severity: medium.** Silent wrongness rather than availability. Inherent to gazetteer breadth, but
 currently unmitigated.

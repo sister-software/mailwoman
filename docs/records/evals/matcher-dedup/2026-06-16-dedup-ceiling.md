@@ -20,7 +20,7 @@ _Trust the full-population number. Smaller "first-N in file order" samples badly
 
 Of the 12989 collision pairs, **8715** (67.1%) also share a phone — so phone (a shared institutional switchboard) does not separate them either; if anything it over-links. This is why the benchmark found phone an unreliable secondary identifier.
 
-## Collision sources: NPI over-segmentation and distinct providers {#splitting-the-collisions-npi-over-segmentation-vs-distinct-providers}
+## Collision sources: NPI over-segmentation and distinct providers
 
 A collision (same address, ~same name, frequently same phone) with DIFFERENT NPIs is typically one organization holding multiple NPIs (subparts / departments) — where merging is **correct** and NPI-as-truth is **over-segmenting** rather than a model error. NPPES's own fields separate the two cases:
 

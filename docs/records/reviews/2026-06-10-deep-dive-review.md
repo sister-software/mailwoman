@@ -48,7 +48,7 @@ The research also found that the main competitor has improved. Senzing retrained
 
 ---
 
-## 3. Model training + eval pipeline {#model-training-eval-pipeline}
+## 3. Model training + eval pipeline
 
 **Operationally mature, structurally fragile.** The corpus build is deterministic with full lineage (manifests + SHAs, locality-holdout splits, synth ancestry tags); training deps are pinned (the v4.1.0 Safari-opset set); the eval ledger (`evals/scores-by-version.json`) is current through v0.9.13 with corpus/eval-set SHAs per run. The eval inventory is huge: 40+ harnesses spanning name-match, coordinate error, PIP containment, calibration, per-locale tripwires.
 

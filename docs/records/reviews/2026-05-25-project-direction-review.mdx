@@ -55,7 +55,7 @@ The docs describe a nearly complete v0.5.0 pipeline, but the runtime's default p
 
 The architectural thesis — "candidate generation + joint coherence beats per-stage argmax" — has not been proven end-to-end with real model output. This is the largest product risk. Until the reconcile path runs against real classifier output and shows a measured improvement on the kryptonite catalogue, the project is shipping architectural scaffolding without validating its core hypothesis.
 
-### Instability in training remains the central blocker {#training-instability-remains-the-central-blocker}
+### Instability in training remains the central blocker
 
 Across two model versions (v0.4.0, v0.5.0), nine training runs have diverged with the same fingerprint: loss descends through warmup, bottoms out at a useful basin (train_loss 0.31–0.69), then climbs catastrophically under sustained peak learning rate. The gradient-norm probe revealed that the CRF-NLL gradient dominates the CE gradient by 8–20× at the inflection point — the CRF is pulling the model toward a degenerate attractor that CE opposes.
 

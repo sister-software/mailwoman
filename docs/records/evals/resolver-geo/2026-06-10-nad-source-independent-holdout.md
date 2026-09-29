@@ -15,14 +15,14 @@ carried. This is the _memorization_ axis, orthogonal to the VT/WY/ND _geographic
 | **v4.2.0**        |          77.3% |   **100.0%** |   100.0% |    5.5 km |  138.8 km |
 | v0 (Pelias rules) |          86.7% |        91.7% |    99.4% |    4.3 km |   24.6 km |
 
-## Result 1 — no memorization cliff {#finding-1--no-memorization-cliff}
+## Result 1 — no memorization cliff
 
 v4.2.0 vs v4.1.0 on never-seen-lineage data: locality −0.8, region +0.1 — the same
 within-noise story as the lineage-shared evals. The consolidation's gains are not riding
 memorized OpenAddresses rows. This was the question this holdout exists to answer, and the
 answer is clean.
 
-## Result 2 — the census-designation gap (CORRECTED same night) {#finding-2--the-census-designation-gap-corrected-same-night}
+## Result 2 — the census-designation gap (CORRECTED same night)
 
 > **CORRECTION (night-10, hours after first publication):** the first version of this
 > section attributed the locality gap to the postal-city/vanity-city divergence (#475).

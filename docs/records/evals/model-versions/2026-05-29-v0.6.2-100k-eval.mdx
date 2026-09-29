@@ -41,7 +41,7 @@ addresses the only remaining regression.
 | `venue` recall                      | 29.0%           | 29.4%           | 29.3% (-)                                        |
 | Harness pass rate (415 assertions)  | 14.4%           | 13.7%           | 14.0% (-0.4pp)                                   |
 
-## Model-fit curves {#training-curves}
+## Model-fit curves
 
 The val_loss and macro_f1 over training steps (v0.6.2 full-weight run alongside
 the v0.6.2b half-weight parallel). The val_loss bouncing was per-batch noise rather than a structural overconfidence pattern — macro_f1 stayed remarkably flat.
@@ -166,7 +166,7 @@ but doesn't move the harness needle, it ships as experimental. If the house_numb
 doesn't materialize, the linter design (see `project-corpus-poisoning-vulnerability` memory)
 becomes the priority — we need preventative checks before the next synth extract goes in.
 
-## Reproduce the evaluation {#reproducing}
+## Reproduce the evaluation
 
 ```bash
 ./scripts/eval-v062-checkpoint.sh 100000

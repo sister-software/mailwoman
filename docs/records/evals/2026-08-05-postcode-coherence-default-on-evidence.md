@@ -343,7 +343,7 @@ which the landing record already flagged for its own ticket.
 
 ---
 
-## 6. Reproduce this test {#6-reproducing-this}
+## 6. Reproduce this test
 
 ```bash
 # Gap (a) — the check, both ways. Rebuild the corpus first: the committed seed carries

@@ -162,7 +162,7 @@ candidates, against a US control where `Chicago 60601, Illinois, United States` 
 candidate and resolves it at rank 1. So locality-level with a 25 km tolerance is the ceiling for these
 rows until that data exists, and the tolerance is a ceiling rather than slack.
 
-## 5. Status after this run {#5-standing-after-this-run}
+## 5. Status after this run
 
 - The capability is present on both artifacts and attributable: the 56 strings are excluded from
   training and moved 0 → 31 of 32 and 19 → 24 of 24.

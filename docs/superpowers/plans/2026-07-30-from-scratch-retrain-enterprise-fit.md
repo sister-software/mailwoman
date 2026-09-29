@@ -54,7 +54,7 @@ harness becomes the per-customer acceptance battery.
 | Evidence bundle as a fine-tune graft              | channels added at 6k-step fine-tunes, over-trust curricula bolted on | channels + curricula in the base objective from step 0 (the over-trust pattern may not form at all) |
 | Capability manifest / calibration drift           | carried-forward blocks, re-anchors                                   | regenerated from one run                                                                            |
 
-## Recommended sequence {#sequencing-recommendation}
+## Recommended sequence
 
 1. **Pre-work (no GPU, this week if desired):** the char-encoder decision memo (CharCNN vs
    byte-fallback status quo — the v8 design notes in the scratchpad archive carry the candidates);

@@ -12,7 +12,7 @@ So the questions for the day: why does looking up one name cost 243 round trips?
 
 {/* truncate */}
 
-## Range requests expose database lookup costs {#reading-a-database-through-a-straw}
+## Range requests expose database lookup costs
 
 Here's the setup, because the constraint is the whole story. The admin database is 2.6 GB. Nobody is downloading 2.6 GB to type "Chicago" into a search box. What makes this work at all is `sql.js-httpvfs`: a SQLite build whose file-reading layer, instead of reading from disk, issues HTTP `Range` requests against the file on the CDN. SQLite asks for "bytes 4,210,688 through 4,276,224," the VFS turns that into a range GET, the CDN hands back that one 64 KB chunk, and the query engine carries on as if the file were local. You're reading a multi-gigabyte database through a straw, and most of the time you never touch 99.99% of it.
 

@@ -171,11 +171,11 @@ The server gains no throughput by processing several rows at once. It geocodes a
 
 More cores require work on other threads, as in the streaming recipes below. A measured sweep found 1.4× throughput at two workers. Memory and I/O on the shared multi-gigabyte database limit geocoding. [The performance reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/performance.mdx) has the full measurements.
 
-## Skip the endpoint entirely {#skipping-the-endpoint-entirely}
+## Skip the endpoint entirely
 
 If the CSV is already on the machine that has the gazetteer, HTTP only adds overhead. Both recipes below use [spliterator](https://github.com/sister-software/spliterator) to stream the file, so a ten-million-row export uses the same memory as a ten-row one.
 
-### Parse without a gazetteer {#parsing-only-with-no-gazetteer}
+### Parse without a gazetteer
 
 When you want components rather than coordinates, for example to dedupe a mailing list or normalize a column before a join, skip the resolver. This recipe uses no database, so it needs no data root:
 

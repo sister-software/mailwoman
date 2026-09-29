@@ -58,7 +58,7 @@ Once the records are joined, you can ask which entities appear in the eligibilit
 
 That result needs careful interpretation. We produce the reconciliation, and the analyst draws the conclusion. An entity in the "eligible rather than enrolled" set is a candidate for review and does not imply wrongdoing. A gap can mean the entity did not apply, applied under a name we did not resolve, is not eligible, or has some other ordinary explanation. The tool resolves public records into an analyzable shape and surfaces candidates. The analyst decides what a correlation means.
 
-## The ground truth changed the score {#the-number-was-lying-too}
+## The ground truth changed the score
 
 To measure deduplication within the registry we needed ground truth. The registry provides a stable, government-issued ID on every provider. A cluster score against that ID appears objective.
 
@@ -76,7 +76,7 @@ A matching F1 is uninterpretable unless it states its truth grain. Report the gr
 
 At 68.1%, F1 is still mediocre. The ground-truth analysis explains part of the low number, but it does not make the number good. The matcher still misclusters. Rural route addresses and PO boxes defeat the geocoder: a shared box at a post office resolves to the same rooftop coordinate for every resident, so the distance feature carries no information. Rooftop interpolation can place a strip-mall suite on the wrong unit. The performance table includes those rows, and we are working on them.
 
-## Why a single Node process matters {#why-pure-node-matters}
+## Why a single Node process matters
 
 A geocoder and a record-linkage library could provide some of this. The integration comes from using the same calibrated geocoder for blocking and distance weights, all in one process without an external service.
 

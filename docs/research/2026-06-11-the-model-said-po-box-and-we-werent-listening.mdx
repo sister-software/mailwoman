@@ -36,7 +36,7 @@ dot_. None of the 670 million training rows could teach the span to stay whole, 
 times more training data had moved the score by 2.9 points. More repetition cannot fix a
 gap in the representation.
 
-## The decoder merges fragments across punctuation {#listening-is-a-decoder-feature}
+## The decoder merges fragments across punctuation
 
 The fix needed neither new data nor new weights. It is a dozen lines of decode logic that
 we now call the span bridge. When two fragments carry the same tag and only a short run of

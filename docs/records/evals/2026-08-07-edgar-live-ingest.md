@@ -74,7 +74,7 @@ resolved by operator pins — the tie is real collision between two registrants
 with identical canonical names, and a pin is the decision about which one is
 in scope.
 
-## Run it yourself {#running-it-yourself}
+## Run it yourself
 
 ```bash
 mailwoman filer edgar-ingest \

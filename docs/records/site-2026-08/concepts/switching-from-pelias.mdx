@@ -4,13 +4,13 @@ sidebar_label: Switching from Pelias
 description: A self-hosted geocoder without the Elasticsearch cluster and the import pipeline.
 ---
 
-# Migrate from Pelias {#switching-from-pelias}
+# Migrate from Pelias
 
 [Pelias](https://pelias.io) is a modular, self-hosted geocoder. Its importers for OSM, OpenAddresses, Who's On First, and other sources feed an Elasticsearch cluster. Pelias operators maintain the cluster, importers, gigabytes of data, and an analysis chain tuned by hand.
 
 Mailwoman keeps what Pelias offers (self-hosting, open data, and hierarchy awareness) and removes the cluster. The hierarchy lives in SQLite, in a Who's On First `ancestors` table. A calibrated neural model does the work that Pelias's analysis chain did with rules.
 
-## Map the move {#mapping-the-move}
+## Map the move
 
 Pelias has its own `/v1` response envelope, and Mailwoman does not ship a `/v1`-compatible package today. You migrate by mapping each capability to a Mailwoman package. An endpoint URL change alone does not work:
 

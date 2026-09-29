@@ -385,7 +385,7 @@ Reviewed with DeepSeek, grounded in existing codebase behavior and downstream co
 
 The `geojson.body` column is the only way to extract `wof:population` (used by `build-importance.ts` population fallback and `fts.ts::buildPlaceSearchFts` population aux table). After extraction into `place_population`, the table is dropped. The frozen artifact never contains raw GeoJSON text.
 
-### 3. Extract data {#extract-data}
+### 3. Extract data
 
 **Build both. Per-country extracts are canonical, and the monolith is a convenience.**
 

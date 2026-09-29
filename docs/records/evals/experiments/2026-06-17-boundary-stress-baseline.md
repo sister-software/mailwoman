@@ -53,7 +53,7 @@ caught two things, only one of them a true problem:
   house-number-after-street is FR-only (DE's native order is covered by `synth-german`). Net: every extract
   locality now agrees with the base — the contradiction is gone rather than deferred.
 
-## How to read the results {#reading}
+## How to read the results
 
 - The model is **38–51%** on the boundary-stress cases vs ~95%+ on clean canonical — a large, real gap.
 - **The street boundary is the common casualty** (38% / 46% / 43% / 49% across all four shapes): when an

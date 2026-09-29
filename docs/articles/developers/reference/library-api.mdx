@@ -377,7 +377,7 @@ namespace in practice. `for` is a property rather than a method so it can be pas
 This file resolves against a downloaded `candidate.db` with no street databases wired, so it answers on
 the admin tier. It also runs without the gazetteer emission priors: `geocodeAddress` never wires the
 index, and `GeocodeDeps` has no field for it — see [Wiring the gazetteer index on a bare
-call](#wiring-the-gazetteer-index-on-a-bare-call).
+call](#pass-the-gazetteer-index-to-a-bare-call).
 
 ```ts
 import { NeuralAddressClassifier } from "@mailwoman/neural"

@@ -227,7 +227,7 @@ failed hypothesis about the trailing-region extract.
    block. The tail alone shows the flips and hides the breakage. Use `counted cases pass`
    first, every time.
 
-## Caveat that still applies {#standing-caveat}
+## Caveat that still applies
 
 > **STRUCK 2026-08-19 — no longer true, and it was true only for one more day after this was written.**
 > `gazetteerPrior` became default-ON in the harness on **2026-08-16** (`harness.ts`'s `priorDepsFor`:

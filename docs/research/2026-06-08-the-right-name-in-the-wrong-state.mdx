@@ -35,7 +35,7 @@ Here is what the held-out set said, next to the number we'd been quoting:
 
 Region-match: zero. Not low. Zero. The resolver was getting the state right essentially never, and the name-match metric had no way to tell us, because "Sheldon, Vermont" and "Sheldon, Iowa" are the same word.
 
-## How the resolver lost 326 kilometers {#following-the-326-kilometers-down}
+## How the resolver lost 326 kilometers
 
 The model wasn't the problem. Hand it `226 Bridge Rd, North Hero, VT 05474` and it directly tags `region="VT"`, `locality="North Hero"`, the street, the number, the postcode. The parse is right. The resolver throws the region away.
 

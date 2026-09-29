@@ -157,7 +157,7 @@ one CIK. The lookup for "Liberty Broadband Corporation" returned the same CIK fo
 two different companies — reported a four-way tie. The same phantom tie appeared for Comcast,
 AT&T, T-Mobile and Telephone and Data Systems.
 
-## Reproduce the filing test {#reproducing}
+## Reproduce the filing test
 
 The vendored corpus needs no network:
 

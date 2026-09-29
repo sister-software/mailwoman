@@ -8,7 +8,7 @@ owner: docs maintainers
 review-by: 2026-10-14
 ---
 
-# Contribute to the docs {#contributing-to-the-docs}
+# Contribute to the docs
 
 These rules are the contributor-facing form of the documentation-architecture policy. CI enforces the structural rules with `docs/scripts/check/docs-structure.ts`, which the Docs workflow runs on every PR that touches the site. Reviewers enforce the editorial rules. Run the check locally with `yarn workspace @mailwoman/docs lint:structure`.
 
@@ -44,7 +44,7 @@ Four concept pages answer the recurring reader questions. If your material answe
 
 A new page must answer a reader question that none of these pages covers. State that question in the PR description. Interfaces belong in Reference. An explanation that exists in two places will eventually contradict itself.
 
-## Retire a page {#retiring-a-page}
+## Retire a page
 
 - [ ] Move its sidebar entry to the Archive section in `sidebars.ts`. Leave the file where it is, because the URL must not change. The Archive banner then marks the page as historical.
 - [ ] If a successor exists, set `status: superseded` and `superseded-by:` on the retired page.

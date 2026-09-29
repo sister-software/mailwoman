@@ -112,7 +112,7 @@ trusts for every input, which is what cost the venues and the Vermont names here
 - Candidate cache `$MAILWOMAN_DATA_ROOT/candidates/v580-cache`; control `v570-cache-fr`
 - Final training validation: val_loss 0.715332, val_macro_f1 0.895982 (v5.7.0: 0.727783 / 0.898163)
 
-## The staging trap {#staging-trap}
+## The staging trap
 
 A staged candidate cache symlinks `model-card.json` into one shared file under
 `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, so two arms share the inode. A change to a candidate's card in

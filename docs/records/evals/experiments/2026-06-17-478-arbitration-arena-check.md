@@ -34,7 +34,7 @@ Against raw neural the arbitrated pipeline is **+122 / −10**: it captures 122 
 the registry keeps it) and loses 10 (cases where neural was right and arbitration preferred the rule
 parse). The run is clean across all 376 assertions, no errors.
 
-## How to read the results {#reading}
+## How to read the results
 
 - **The thesis holds.** Per-component arbitration closes the arena's `v0-only` column the way #478
   predicted — the pipeline keeps whichever source is right per component, so it stops scoring below v0

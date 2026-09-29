@@ -17,7 +17,7 @@ This document inventories what already exists, reports four measurements that si
 pre-registers three mechanisms with their bars. **This document implements no mechanism.** Bars are
 fixed before results, as in the PIX1 preregistration.
 
-## Names {#naming}
+## Names
 
 This work sits between three vocabularies that already exist in the repo, and a name from the wrong
 one would collide.

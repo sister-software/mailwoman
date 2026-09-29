@@ -110,7 +110,7 @@ The next expensive run needs predefined acceptance subsets rather than a single 
 - low-confidence graceful-failure rate
 - per-failure-class metrics from `addresses-that-break-geocoders.md`
 
-### 4. Instability in training is now the central technical blocker {#training-instability-central-technical-blocker}
+### 4. Instability in training is now the central technical blocker
 
 v0.4.0 and v0.5.0 both show the same pattern: loss descends through warmup, reaches a useful basin, then climbs catastrophically under sustained peak LR. The v0.5.0 bisect ruled out learning rate alone, loss-side knobs, hidden-size bump, and phrase-prior conditioning. The remaining suspect is the A1 tokenizer / corpus-v0.4.0 pair, especially transliteration data distribution.
 

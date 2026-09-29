@@ -107,7 +107,7 @@ Write the successor to `plan/README.mdx` — a short "what mailwoman is now" sco
 
 ---
 
-## Sequence {#sequence}
+## Sequence
 
 Tracks 1 and 2 are independent and can run in parallel (Track 1 is demo/runtime code; Track 2 is eval + docs). Track 3 needs an hour of operator time and can happen any day. Track 4 starts only after Track 2's re-score exists (its checks depend on the fresh baseline) and Track 3 sets its budget ceiling. Track 5 can be a night-shift deliverable once 1–3 have landed, so the new scope doc describes the re-railed state rather than promising it.
 

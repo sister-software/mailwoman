@@ -13,7 +13,7 @@ Initial analysis compared val_macro_f1 (0.579 vs 0.638) and concluded v0.5.3 reg
 
 v0.5.3 peaked at val_macro_f1 = **0.579** (step 28K). v0.5.1 reached **0.638**. Every recipe change since v0.5.1 — wof-admin downweight, cosine LR, label smoothing — has regressed. The model is not capacity-limited; the recipe is wrong.
 
-## Model-fit curve {#training-curve}
+## Model-fit curve
 
 | Step       | val_loss  | val_macro_f1 | Note                     |
 | ---------- | --------- | ------------ | ------------------------ |
@@ -234,7 +234,7 @@ The fix is not more metrics. It's a mandatory step where you look at the actual 
 5. **After tokenizer vocab change, recheck param count.** 48K vocab added 9.2M embedding params.
 6. **DeepSeek consultations must include functional test results** alongside metrics. Aggregate metrics without functional evidence are insufficient to conclude.
 
-## Tool improvements {#tooling-improvements-identified}
+## Tool improvements
 
 ### Prospective Claude Code skills
 

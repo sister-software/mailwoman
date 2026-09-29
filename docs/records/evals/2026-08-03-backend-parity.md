@@ -340,7 +340,7 @@ prerequisite for shipping either independently.
   largest (12.16M rows / 7.71M distinct places, against 10.20M / 10.14M / 8.97M for
   `-920`, `-coverage-admin`, `-20j`). No cross-version comparison was run.
 
-## Reproduce the comparison {#reproducing}
+## Reproduce the comparison
 
 Instruments B, D and E use shipped tooling:
 

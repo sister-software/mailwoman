@@ -166,7 +166,7 @@ equivalence. Per-lane CIs are wide at these denominators (run the scorer for the
 only per-lane differences whose CIs exclude zero are en-nz (Mailwoman +24.6 pp, all thresholds) and
 eu-mixed (Pelias, 1 km and 5 km).
 
-## How to read the table — shared upstreams {#reading-the-table--shared-upstreams}
+## How to read the table — shared upstreams
 
 The reference coordinates and two of the arms' indexes share upstream data, and the @1 km column
 should be read with that in view:

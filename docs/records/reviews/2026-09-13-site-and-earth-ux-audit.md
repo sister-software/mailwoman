@@ -216,7 +216,7 @@ and an empty chart reading "No data points". The config already admits the place
 
 Either hold it behind the Resources door until it has real data, or drop the footer link.
 
-### 4. Prices and licenses remain separate {#pricing-and-licensing-do-not-connect}
+### 4. Prices and licenses remain separate
 
 The two halves of the money path never reference each other:
 

@@ -59,7 +59,7 @@ The US locale confirms this. American addresses put the postcode after the city 
 
 This asymmetry is structural, and tuning will not remove it. A single added vector can encode "look toward the city." It cannot encode "look toward the city, which is sometimes to the left and sometimes to the right." When both orders are mixed into one extract, the vector settles on an average that serves the dominant order, which matches the flat international number across retrains. To rule out a name-matching artifact, we ran a containment metric that checks whether the resolved point lands inside the correct city's polygon. The gap remained: 96% on native German and 57% on the international order. The misses are geographic errors, and the scoring method did not cause them.
 
-## The measured asymmetry is acceptable {#accepting-the-asymmetry}
+## The measured asymmetry is acceptable
 
 We had changed the corpus, the address ending, and the architecture without moving the number, so we stopped treating it as a bug. We brought the full sequence to our second-opinion model, the same one that argued against the flag removal last time, and it recommended the option we had been considering: accept the asymmetry and ship the result.
 

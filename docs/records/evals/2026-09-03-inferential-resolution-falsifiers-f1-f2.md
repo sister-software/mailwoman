@@ -219,7 +219,7 @@ pairs are clustered at p < 0.05, and the family's median share is ≥ 2%.
 rate (55.3% vs 5%); the family's streets sit at 73% of the distance random streets of the same
 locality would.
 
-## How to read the results {#reading}
+## How to read the results
 
 Observation: the board's US/FR misses are precision and span misses rather than identity misses. Thirteen
 of 26 land in the right locality at the wrong tier or a few kilometers off and 7 more miss on a

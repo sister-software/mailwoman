@@ -40,7 +40,7 @@ Hong Kong has a hundred and forty-one cities in the reference and zero in ours. 
 
 This external comparison was the most productive hour of the whole effort, and it was simple. It needed no model or new metric. It needed a comparison of our file against someone else's count. The main recommendation of this post is to compare your coverage against a reference you did not build, along whatever dimension matters to you. A gap you cannot see still limits your results.
 
-## A data update fills the gap without retraining {#fixing-it-without-retraining-anything}
+## A data update fills the gap without retraining
 
 A pure data gap needs only a data fix. It needs no GPU, model, or retrain, because GeoNames already has the places, with coordinates and per-language names, for every country we were missing. We extended our gap-fill builder to register country codes it had not seen before and ran it on the full `allCountries` dump, keeping only current populated places and dropping historical and abandoned ones.
 

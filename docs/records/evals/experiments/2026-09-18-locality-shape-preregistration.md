@@ -269,7 +269,7 @@ carrying enough rows to read.
 The complete fixed and regressed lists, with each row's expected locality and what each arm answered,
 are in `paired-us-shape-stratified-v570-vs-v590.json`.
 
-### Reproduce the result {#reproducing-it}
+### Reproduce the result
 
 ```sh
 node packages/mailwoman/lib/dev-tools/us/locality-region-postcode-arms.run.ts \

@@ -1,4 +1,4 @@
-# Multi-locale coverage starts with the observed gaps (2026-06-02) {#going-multi-locale-starts-with-finding-out-whats-broken-2026-06-02}
+# Multi-locale coverage starts with the observed gaps (2026-06-02)
 
 You have a parser trained on US and French addresses, and you want it to read German ones. The
 tempting move is to grab a pile of German data and retrain. Don't. Not yet. First find out what's
@@ -67,7 +67,7 @@ data fixes.
 
 Check passed. The wall is coverage, and coverage is cheap.
 
-## Show the order {#teaching-the-order}
+## Show the order
 
 The fix is a small supplement extract that shows the model German order, and the trick is to not
 synthesize German street names, because German morphology is hard to fake and you'll teach the model

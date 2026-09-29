@@ -34,7 +34,7 @@ WOF GitHub repos                     Per-placetype SQLite DBs
 
 ## Layer by layer
 
-### `commands/wof/sync.tsx` — clone or update repositories {#commandswofsynctx-repo-cloning}
+### `commands/wof/sync.tsx` — clone or update repositories
 
 `sync` finds WOF data repos with `gh repo list whosonfirst-data --no-archived`, optionally filtered by `--repos` (a comma-separated allow-list). It clones or pulls each repo into a local directory. After all repos sync, it calls `Placetype.prepare()` to load the placetype hierarchy from `whosonfirst-placetypes`.
 

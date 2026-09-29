@@ -403,7 +403,7 @@ sanitizers doing exactly this; Photon's analyzers are the same bet; Pelias's API
 before parsing for the same reason.
 **vs Stage 2.7 doc:** This is outside that doc's scope, which is parser-side. The two are complementary and do not conflict.
 
-### Sequence {#sequence}
+### Sequence
 
 M2 + M3 are one build (the Stage 2.7 proposer with three cue families: designators, paired
 delimiters, numeric punctuation) and need no retrain. M4's lookup folds are partially

@@ -1,4 +1,4 @@
-# Interpolation-radius calibration — direct confidence for the street-level tier {#calibrating-the-interpolation-radius--direct-confidence-for-the-street-level-tier}
+# Interpolation-radius calibration — direct confidence for the street-level tier
 
 _2026-06-14. The forward geocoder's interpolation tier stamps an `uncertainty_m` radius = half the
 matched TIGER segment's length. That's an honest geometric prior, but is it a calibrated confidence

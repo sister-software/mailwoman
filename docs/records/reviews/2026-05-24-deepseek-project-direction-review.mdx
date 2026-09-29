@@ -71,7 +71,7 @@ The docs describe a nearly complete v0.5.0 pipeline, but the runtime still does 
 
 This is the largest product risk. Before expensive validation, wire the real path behind a feature flag and run it against the kryptonite catalogue. If joint decode does not beat fallback on kryptonite without hurting the normal subsets, fix scoring before retraining.
 
-### 2. Instability in training is the central technical blocker {#training-instability-is-the-central-technical-blocker}
+### 2. Instability in training is the central technical blocker
 
 v0.4.0 and v0.5.0 both show the same fingerprint across **nine training runs**: loss descends through warmup, reaches a useful basin (train_loss 0.31–0.69), then climbs back to its starting magnitude (1.85–3.29) over 100–300 steps under sustained peak LR. Validation macro-F1 mirrors it — peaks when loss bottoms, collapses to random-baseline.
 
