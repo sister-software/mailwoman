@@ -103,6 +103,49 @@ def cross_pollution(
     return out
 
 
+def per_locale_tag_f1(
+    preds: torch.Tensor,
+    labels: torch.Tensor,
+    row_locale_ids: torch.Tensor | None,
+    num_labels: int,
+    bio_labels: tuple[str, ...] = ACTIVE_BIO_LABELS,
+    tags: Sequence[str] = ("street", "house_number"),
+) -> dict[str, float]:
+    """Per-locale token F1 for the tags a promotion bar reads, with each locale's row count beside it.
+
+    ``token_f1`` concatenates every locale into one score, so a locale holding a fraction of a
+    percent of the sample cannot move ``macro_f1``. A change confined to one locale is invisible
+    there. The regression board then reports it first.
+
+    A locale whose sample contains no true instance of a tag is omitted rather than scored 0.0,
+    because a zero reads as a measured failure rather than an absent denominator. ``rows.<locale>``
+    states the row count each locale's scores were taken over, so a score on eight rows cannot be
+    mistaken for a score on eight thousand.
+    """
+    if row_locale_ids is None:
+        return {}
+
+    out: dict[str, float] = {}
+
+    for lid in torch.unique(row_locale_ids).tolist():
+        if lid not in ID_TO_LOCALE:  # IGNORE_INDEX / unmapped country
+            continue
+
+        selected = row_locale_ids == lid
+        locale = ID_TO_LOCALE[lid]
+        out[f"rows.{locale}"] = float(int(selected.sum()))
+        scored = token_f1(preds[selected], labels[selected], num_labels=num_labels, bio_labels=bio_labels)
+
+        for tag in tags:
+            if int(scored.get(f"support_tag.{tag}", 0)) == 0:
+                continue
+
+            out[f"f1_tag.{tag}.{locale}"] = scored[f"f1_tag.{tag}"]
+            out[f"support_tag.{tag}.{locale}"] = float(scored[f"support_tag.{tag}"])
+
+    return out
+
+
 def eval_csv_row(step: int, elapsed: float, val: Mapping[str, float], tags: Sequence[str]) -> list[str | int]:
     """The train_log.csv eval row, one `f1.<tag>` cell per tag of the run's label set.
 

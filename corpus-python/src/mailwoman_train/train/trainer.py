@@ -18,7 +18,7 @@ import torch
 from ..config import Config
 from ..data.loader import IGNORE_INDEX, iter_batches
 from ..data.source_reps import format_derivation, resolve_config_reps
-from ..evaluation.metrics import cross_pollution, token_f1
+from ..evaluation.metrics import cross_pollution, per_locale_tag_f1, token_f1
 from ..nn.encoder import force_math_sdpa
 from ..protocols import TrainCallback
 from ..tokenizer import Tokenizer
@@ -98,6 +98,15 @@ def _eval_val(
     metrics["val_rows"] = rows_seen
     row_locale = torch.cat(all_locale_ids, dim=0) if all_locale_ids else None
     metrics.update(cross_pollution(preds, labels, row_locale))
+    metrics.update(
+        per_locale_tag_f1(
+            preds,
+            labels,
+            row_locale,
+            num_labels=len(label_set.bio_labels),
+            bio_labels=label_set.bio_labels,
+        )
+    )
     if all_locale_preds and row_locale is not None:
         locale_pred = torch.cat(all_locale_preds, dim=0)
         valid = row_locale != IGNORE_INDEX
