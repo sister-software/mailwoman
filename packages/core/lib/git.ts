@@ -15,7 +15,10 @@ import { TextSpliterator } from "spliterator"
 import { repoRootPathBuilder } from "#paths"
 import { runFile } from "#process"
 
-async function git(
+/**
+ * Run one `git` command in `repoRoot` and return its standard output.
+ */
+export async function git(
 	repoRoot: PathBuilderLike = repoRootPathBuilder,
 	args: string[],
 	maxBuffer?: number
@@ -42,6 +45,22 @@ export async function gitHead(
  */
 export async function currentBranch(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
 	return (await git(repoRoot, ["rev-parse", "--abbrev-ref", "HEAD"])).trim()
+}
+
+/**
+ * The absolute path of the repository's shared `.git` directory.
+ *
+ * The main checkout and each of its worktrees report the same directory.
+ */
+export async function gitCommonDirectory(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
+	return (await git(repoRoot, ["rev-parse", "--path-format=absolute", "--git-common-dir"])).trim()
+}
+
+/**
+ * The absolute path of the working tree that contains `repoRoot`.
+ */
+export async function workingTreeRoot(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
+	return (await git(repoRoot, ["rev-parse", "--show-toplevel"])).trim()
 }
 
 /**

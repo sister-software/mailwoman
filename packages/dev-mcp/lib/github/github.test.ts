@@ -6,10 +6,19 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { git, workingTreeRoot } from "@mailwoman/core/git"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { assertValeClean, replaceTaskBlock, taskBlockIsComplete, type GitHubIssue, type RunGitHub } from "#github/index"
+import {
+	assertValeClean,
+	replaceTaskBlock,
+	resolveCheckout,
+	taskBlockIsComplete,
+	type GitHubIssue,
+	type RunGitHub,
+} from "#github/index"
 import { JobRegistry, type Job } from "#jobs"
 import { stubEngineRegistry } from "#test/stub-registry"
 import { githubTools } from "#tools/index"
@@ -119,7 +128,7 @@ describe("GitHub MCP tools", () => {
 
 		const [, tool] = githubTools(
 			{ registry: stubEngineRegistry({ repoRoot: process.cwd() }), jobs: new JobRegistry(), startedAt: Date.now() },
-			{ run, lint: async () => undefined, branch: () => "feature/test" }
+			{ run, lint: async () => undefined, branch: async () => "feature/test" }
 		)
 
 		await expect(
@@ -173,7 +182,7 @@ describe("GitHub MCP tools", () => {
 
 		const [, tool] = githubTools(
 			{ registry: stubEngineRegistry({ repoRoot: process.cwd() }), jobs, startedAt: Date.now() },
-			{ run, lint: async () => undefined, branch: () => "feature/test" }
+			{ run, lint: async () => undefined, branch: async () => "feature/test" }
 		)
 
 		await tool.handler({
@@ -197,4 +206,81 @@ describe("GitHub MCP tools", () => {
 			process.cwd()
 		)
 	})
+
+	it("creates a PR from the branch of a named worktree checkout", async () => {
+		const { repo, worktree } = await repositoryWithWorktree("feature/worktree")
+		const calls: string[][] = []
+
+		const run: RunGitHub = vi.fn(async (args) => {
+			calls.push(args)
+
+			if (args[0] === "issue") return rawIssue(COMPLETE_BODY)
+
+			if (args[1] === "create") return "https://github.com/sister-software/mailwoman/pull/2401\n"
+
+			return stringifyJSON({ number: 2401, headRefName: "feature/worktree", baseRefName: "main", state: "OPEN" })
+		})
+
+		const jobs = new JobRegistry()
+
+		const start = vi.spyOn(jobs, "start").mockReturnValue({
+			jobID: "job-2",
+			label: "CI for pull request #2401",
+			command: "gh",
+			args: [],
+			state: "running",
+			startedAt: Date.now(),
+			endedAt: null,
+			exitCode: null,
+			stdout: "",
+			stderr: "",
+			child: null,
+		} satisfies Job)
+
+		const [, tool] = githubTools(
+			{ registry: stubEngineRegistry({ repoRoot: repo }), jobs, startedAt: Date.now() },
+			{ run, lint: async () => undefined }
+		)
+
+		await tool.handler({
+			action: "create",
+			issue_number: 2365,
+			checkout: worktree,
+			title: "Add GitHub tools",
+			summary: "The development MCP creates pull requests.",
+			evidence: "The unit test covers creation.",
+			completion_assertions: [{ text: "CI passes.", completed: true }],
+		})
+
+		const createArgs = calls.find((args) => args[0] === "pr" && args[1] === "create")!
+
+		expect(createArgs[createArgs.indexOf("--head") + 1]).toBe("feature/worktree")
+		expect(start.mock.calls[0]![3]).toBe(await workingTreeRoot(worktree))
+	})
+
+	it("refuses a checkout that belongs to another repository", async () => {
+		const { repo } = await repositoryWithWorktree("feature/one")
+		const { repo: other } = await repositoryWithWorktree("feature/two")
+
+		await expect(resolveCheckout(repo, other)).rejects.toThrow(/is not a checkout of the repository/)
+		await expect(resolveCheckout(repo, "relative/path")).rejects.toThrow(/absolute path/)
+		expect(await resolveCheckout(repo)).toBe(repo)
+	})
 })
+
+/**
+ * A repository with one empty commit and a worktree on `branch`, both inside a disposable directory.
+ */
+async function repositoryWithWorktree(branch: string): Promise<{ repo: string; worktree: string }> {
+	const root = fixtures.use(await temporaryDirectory("mw-github-worktree-")).path
+	const repo = root("repo").toString()
+	const worktree = root("worktree").toString()
+	const identity = ["-c", "user.email=test@example.com", "-c", "user.name=Test"]
+
+	await makeDirectories(repo)
+	await git(repo, ["init", "--quiet", "--initial-branch=main"])
+	await git(repo, [...identity, "commit", "--quiet", "--allow-empty", "-m", "init"])
+	await git(repo, ["worktree", "add", "--quiet", "-b", branch, worktree])
+
+	return { repo, worktree }
+}
