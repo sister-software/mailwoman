@@ -206,7 +206,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_NAD_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.NationalAddressDatabase,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"US DOT National Address Database — ~97M structured US address points (911-grade). Single largest US source.",
 

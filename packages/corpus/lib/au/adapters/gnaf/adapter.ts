@@ -76,7 +76,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 		defaultLicense: GNAF_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.GNAF,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"G-NAF (Australia): assembled address tuples rendered in multiple word orders (canonical / postcode-first / locality-first) — teaches the model AU's postcode-first layout.",
 

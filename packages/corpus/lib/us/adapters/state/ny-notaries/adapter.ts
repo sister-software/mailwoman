@@ -41,7 +41,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 		defaultLicense: STATE_NY_NOTARIES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Practice,
 		register: SourceRegister.NewYorkNotaries,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "New York Commissioned Notaries — name + optional business address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

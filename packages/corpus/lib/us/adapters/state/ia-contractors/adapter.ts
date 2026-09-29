@@ -61,7 +61,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 		defaultLicense: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
 		addressRole: AddressRole.RegisteredOffice,
 		register: SourceRegister.IowaContractors,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"Iowa Active Construction Contractor Registrations — business name + full street address (public-domain).",
 

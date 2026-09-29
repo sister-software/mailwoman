@@ -101,7 +101,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 		defaultLicense: GEONAMES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.GeoNames,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"GeoNames populated places (CC-BY-4.0) — global locality coverage incl. small towns, with region/country names from the sibling admin1/countryInfo files.",
 

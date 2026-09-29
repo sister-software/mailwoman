@@ -132,7 +132,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 		// OpenAddresses redistributes national and municipal registers with terms that differ per file.
 		// A row's source file identifies its upstream, rather than this adapter.
 		register: SourceRegister.OpenAddresses,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "OpenAddresses (global): line-delimited GeoJSON dumps with per-row licenses.",
 
 		async *rows(adapterOpts: AdapterOptions): AsyncIterable<CanonicalRow> {

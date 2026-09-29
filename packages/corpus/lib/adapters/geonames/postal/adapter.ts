@@ -48,7 +48,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 		defaultLicense: GEONAMES_POSTAL_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.GeoNamesPostal,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"GeoNames postcodes (CC-BY-4.0) — multi-locale postcode→locality→region, names inline; international postcode-first order.",
 

@@ -92,7 +92,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 		// Overture rows include their own `sources[].dataset` and `sources[].license`,
 		// so this declares the aggregator rather than asserting a national grant.
 		register: SourceRegister.Overture,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "Overture Maps Addresses (global): per-country JSONL of street/number/postcode/locality.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

@@ -86,7 +86,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_NPPES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Practice,
 		register: SourceRegister.NPPES,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"CMS National Plan and Provider Enumeration System — 7M provider practice locations (public-domain). Venue+address co-occurrence at scale.",
 

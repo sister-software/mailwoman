@@ -82,7 +82,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 		defaultLicense: FCC_BDC_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.FCCBroadbandData,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "FCC Broadband Data Collection — Fabric-derived BSL addresses (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

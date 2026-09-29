@@ -205,7 +205,7 @@ export function createOSMAdapter(): CorpusAdapter {
 		defaultLicense: OSM_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.OpenStreetMap,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"OpenStreetMap addresses (ODbL, share-alike): per-country JSONL from a Geofabrik extract, for the countries no permissive source covers.",
 

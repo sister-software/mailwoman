@@ -92,7 +92,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 		defaultLicense: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
 		register: SourceRegister.HawaiiSchools,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "Hawaii DOE School Directory — ~300 K-12 public + charter schools with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

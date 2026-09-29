@@ -145,7 +145,7 @@ export function createTigerAdapter(): CorpusAdapter {
 		defaultLicense: TIGER_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.CensusTIGER,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"US Census TIGER/Line streets + places consumer (public-domain); SQLite DB built via `mailwoman tiger fetch`.",
 

@@ -54,7 +54,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 		defaultLicense: STATE_TX_NOTARIES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Mailing,
 		register: SourceRegister.TexasNotaries,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"Texas Notary Public Commissions — name + mailing address with embedded city/state/zip (public-domain).",
 

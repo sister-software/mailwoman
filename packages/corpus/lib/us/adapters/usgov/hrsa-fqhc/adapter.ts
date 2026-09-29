@@ -91,7 +91,7 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
 		register: SourceRegister.HRSAHealthCenters,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"HRSA Federally Qualified Health Center site locations (public-domain). Adversarial source: venue + address co-occurrence, hand-entered.",
 

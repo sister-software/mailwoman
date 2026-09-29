@@ -210,7 +210,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 		defaultLicense: "CC0-1.0",
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.WhosOnFirst,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"Who's On First admin GeoJSON bundles (countries, regions, counties, localities) — multi-name variants per record.",
 

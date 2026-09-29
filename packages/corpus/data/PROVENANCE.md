@@ -285,6 +285,32 @@ the eleven sources the frozen manifest names, nine drew rows and two carry weigh
 sources were emitted under no frozen-manifest entry, 886,620 of the 1,000,000 rows, because the overlays
 carrying them were merged after that manifest was written.
 
+## The `surface` column on a corpus built up to `v0.7.0-de-holdout`
+
+`SurfaceOrigin` gained a `rendered` value on 2026-09-29. Before that the enum held `attested`,
+`composed` and `invented`, and every one of the 22 adapters declared `attested` while each of them
+assembles its row's line from the source's fields. A recipe declared `composed`. So on a corpus built up
+to and including `v0.7.0-de-holdout`, `surface` records which stage produced a row rather than whether
+the written form is the publisher's:
+
+| recorded value | what it means on those builds                                      |
+| -------------- | ------------------------------------------------------------------ |
+| `attested`     | an adapter produced the row, and the line is assembled from fields |
+| `composed`     | a recipe produced the row                                          |
+| `invented`     | a synthetic row matching no published record                       |
+
+Those builds keep the value they recorded, because a built artifact's value is what it said at the time.
+A reader needing the distinction on one of them derives it from `source` against the adapter inventory
+rather than from `surface`.
+
+From the next build, an adapter that assembles a line declares `rendered`, a recipe declares `composed`,
+and `attested` is reserved for a source that publishes the written line itself. No adapter in the tree
+emits `attested` today, so a corpus reporting zero attested rows is a correct census rather than a defect.
+
+Measured on `v0.7.0-de-holdout` while this was found: GB holds 813,781 street-bearing rows and every one
+reads `composed`, from `rendered-gb`. Its 13,000,821 rows reading `attested` come from `wof-postalcode`
+and `wof-admin` and carry no street.
+
 ## `reviewed-ve-postcode-tuples.json` — reviewed Venezuelan postcode placement (#1821)
 
 Four geographic facts support the Venezuelan `locality postcode, region` convention. The Barcelona

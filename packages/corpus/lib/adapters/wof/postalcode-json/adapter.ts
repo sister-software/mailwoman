@@ -145,7 +145,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 		defaultLicense: "CC0-1.0",
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.WhosOnFirst,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"Who's On First postalcode GeoJSON bundles (postcode → locality/region pairs). Ancestor names from sibling admin repos.",
 

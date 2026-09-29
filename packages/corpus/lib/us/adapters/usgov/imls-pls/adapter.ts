@@ -54,7 +54,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_IMLS_PLS_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
 		register: SourceRegister.IMLSPublicLibraries,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "IMLS Public Libraries Survey — ~17K library outlets with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

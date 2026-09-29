@@ -70,7 +70,7 @@ export function createBanAdapter(): CorpusAdapter {
 		defaultLicense: "Licence Ouverte 2.0",
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.BaseAdresseNationale,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "Base Adresse Nationale (FR): house-number-level street addresses (~25M rows).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

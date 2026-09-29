@@ -146,7 +146,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 		defaultLicense: "CC-BY-4.0",
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.WhosOnFirst,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "Japanese admin hierarchy from WOF (synthesized addresses without house numbers).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

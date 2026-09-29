@@ -84,17 +84,30 @@ export function addressRoleOf(row: Pick<CanonicalRow, "addressRole">): AddressRo
  * The values are wire values.
  *
  * This is separate from {@link CanonicalRow.register}, which records where the underlying record came from.
- * A template rendering of a real register record is `Composed`, and it is still a real address.
+ * A rendering of a real register record is `Rendered` or `Composed`, and it is still a real address.
  */
 export const SurfaceOrigin = {
 	/**
 	 * The publisher's own string, preserved unchanged.
+	 *
+	 * No adapter in the tree emits this today: every one assembles its line from the source's fields.
+	 * The value is reserved for a source that publishes the written line itself,
+	 * such as a register whose rows carry `address1` as a person typed it.
 	 */
 	Attested: "attested",
 	/**
-	 * A template assembled the text from the published fields of one real record.
+	 * An adapter assembled the line from one record's fields, in that locale's canonical order.
 	 *
-	 * The recipe chooses the order, punctuation and casing.
+	 * The order comes from the codex layout or the adapter's own template rather than from the
+	 * publisher, so the components are the source's and the written form is this repository's.
+	 * Distinct from {@link SurfaceOrigin.Composed} because an adapter renders one canonical
+	 * form per record while a recipe varies the form deliberately.
+	 */
+	Rendered: "rendered",
+	/**
+	 * A recipe assembled the text from the published fields of one real record.
+	 *
+	 * The recipe chooses the order, punctuation and casing, and varies them to teach a surface.
 	 */
 	Composed: "composed",
 	/**

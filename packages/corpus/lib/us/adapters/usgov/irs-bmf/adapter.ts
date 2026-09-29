@@ -76,7 +76,7 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_IRS_BMF_DEFAULT_LICENSE,
 		addressRole: AddressRole.Mailing,
 		register: SourceRegister.IRSBusinessMasterFile,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"IRS Exempt Organizations Business Master File — US non-profit venue+address (public-domain), with strong PO-box coverage.",
 

@@ -119,7 +119,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_SAMHSA_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
 		register: SourceRegister.SAMHSATreatmentLocator,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"SAMHSA Behavioral Health Treatment Services Locator (public-domain). Adversarial source: venue + two-line address co-occurrence, hand-entered.",
 
