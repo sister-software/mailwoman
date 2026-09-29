@@ -44,7 +44,7 @@ const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 })
 
 describe("universal augmentations", () => {
-	it("caseUpper transforms raw + components, sets synth marker", () => {
+	it("caseUpper transforms raw + components, sets the recipe marker", () => {
 		const out = caseUpper(
 			baseRow({ raw: "Portland, OR 97214", components: { locality: "Portland", region: "OR", postcode: "97214" } })
 		)!
@@ -806,7 +806,7 @@ describe("composeAdversarialRow", () => {
 		})
 	})
 
-	it("synth marker carries compose:<pattern> + base_source_id from the address row", () => {
+	it("recipe marker carries compose:<pattern> + base_source_id from the address row", () => {
 		const address = baseRow({
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
