@@ -12,9 +12,8 @@ import { statLink } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
-import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { stageWeightsCache } from "@mailwoman/release-kit/weights/stage-weights-cache"
-import { resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -22,34 +21,33 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * A scratch directory represented as a string.
- * `repoRoot` uses this form.
+ * A scratch directory to stage into, as the builder every path below derives from.
  */
-async function scratchRoot(prefix: string): Promise<string> {
-	return fixtures.use(await temporaryDirectory(prefix)).path.toString()
+async function scratchRoot(prefix: string): Promise<PathBuilder> {
+	return fixtures.use(await temporaryDirectory(prefix)).path
 }
 
 /**
- * Writes a package-shaped source directory with two artifacts.
- * Returns the directory path.
+ * Writes a package-shaped source directory with two artifacts and returns its directory.
  */
-async function sourcePackage(root: string): Promise<string> {
-	const dir = resolvePath(root, "source-package")
+async function sourcePackage(root: PathBuilder): Promise<PathBuilder> {
+	const dir = root("source-package")
 
 	await makeDirectories(dir)
-	await writeLocalTextFile("graph-bytes", dir, "model.onnx")
-	await writeLocalTextFile(prettyJSON({ version: "1.0.0" }), dir, "model-card.json")
+	await writeLocalTextFile("graph-bytes", dir("model.onnx"))
+	await writeLocalTextFile(prettyJSON({ version: "1.0.0" }), dir("model-card.json"))
 
-	return dir.toString()
+	return dir
 }
 
 /**
- * The path an artifact takes inside the staged cache.
+ * The options every case below shares.
  *
- * The layout comes from `weightsCachePackageDir`, the resolver's own reader,
- * so the assertion follows the cache shape rather than restating it.
+ * Each assertion reads the staged layout from the report's own `packageDir`
+ * rather than rebuilding it, so neither value appears again below.
  */
-const staged = (root: string, name: string) => weightsCachePackageDir(resolvePath(root, "cache"), "en-gb")(name)
+const STAGE_INTO = "cache"
+const STAGE_LOCALE = "en-gb"
 
 describe("stageWeightsCache", () => {
 	it("links each artifact by default, which writes no bytes", async () => {
@@ -58,8 +56,8 @@ describe("stageWeightsCache", () => {
 
 		const report = await stageWeightsCache({
 			repoRoot: root,
-			out: "cache",
-			locale: "en-gb",
+			out: STAGE_INTO,
+			locale: STAGE_LOCALE,
 			from,
 			file: [],
 			omit: [],
@@ -69,7 +67,7 @@ describe("stageWeightsCache", () => {
 		})
 
 		expect(report.linked).toBe(2)
-		expect((await statLink(staged(root, "model.onnx"))).isSymbolicLink()).toBe(true)
+		expect((await statLink(report.packageDir("model.onnx"))).isSymbolicLink()).toBe(true)
 	})
 
 	it("copies each artifact's bytes under dereference, so every path stays inside the cache", async () => {
@@ -78,8 +76,8 @@ describe("stageWeightsCache", () => {
 
 		const report = await stageWeightsCache({
 			repoRoot: root,
-			out: "cache",
-			locale: "en-gb",
+			out: STAGE_INTO,
+			locale: STAGE_LOCALE,
 			from,
 			file: [],
 			omit: [],
@@ -89,8 +87,8 @@ describe("stageWeightsCache", () => {
 		})
 
 		expect(report.linked).toBe(2)
-		expect((await statLink(staged(root, "model.onnx"))).isSymbolicLink()).toBe(false)
-		expect(await readLocalTextFile(staged(root, "model.onnx"))).toBe("graph-bytes")
+		expect((await statLink(report.packageDir("model.onnx"))).isSymbolicLink()).toBe(false)
+		expect(await readLocalTextFile(report.packageDir("model.onnx"))).toBe("graph-bytes")
 	})
 
 	it("leaves an omitted artifact out of the staged package", async () => {
@@ -99,8 +97,8 @@ describe("stageWeightsCache", () => {
 
 		const report = await stageWeightsCache({
 			repoRoot: root,
-			out: "cache",
-			locale: "en-gb",
+			out: STAGE_INTO,
+			locale: STAGE_LOCALE,
 			from,
 			file: [],
 			omit: ["model-card.json"],
@@ -111,28 +109,30 @@ describe("stageWeightsCache", () => {
 
 		expect(report.linked).toBe(1)
 		expect(report.omitted).toEqual(["model-card.json"])
-		await expect(statLink(staged(root, "model-card.json"))).rejects.toThrow(/ENOENT/)
+		await expect(statLink(report.packageDir("model-card.json"))).rejects.toThrow(/ENOENT/)
 	})
 
 	it("stages a file override in place of what `from` seeded", async () => {
 		const root = await scratchRoot("stage-weights-file-")
 		const from = await sourcePackage(root)
-		const candidate = resolvePath(root, "candidate.onnx")
+		const candidate = root("candidate.onnx")
 
 		await writeLocalTextFile("candidate-bytes", candidate)
 
-		await stageWeightsCache({
+		const report = await stageWeightsCache({
 			repoRoot: root,
-			out: "cache",
-			locale: "en-gb",
-			from,
+			out: STAGE_INTO,
+			locale: STAGE_LOCALE,
+			// `file` entries stay strings because each one is a `<name-in-package>=<source>`
+			// spec that `stageWeightsCache` splits, rather than a path on its own.
 			file: [`model.onnx=${candidate}`],
+			from,
 			omit: [],
 			clean: true,
 			dereference: true,
 			log: () => {},
 		})
 
-		expect(await readLocalTextFile(staged(root, "model.onnx"))).toBe("candidate-bytes")
+		expect(await readLocalTextFile(report.packageDir("model.onnx"))).toBe("candidate-bytes")
 	})
 })

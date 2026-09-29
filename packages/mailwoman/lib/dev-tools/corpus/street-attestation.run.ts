@@ -106,6 +106,9 @@ const release = values.release ?? [...releases].toSorted().at(-1)
 
 if (!release) throw new Error(`No Overture address extract under ${overtureRoot}`)
 
+// The register path reaches SQL text, a log line and the JSON verdict.
+// Each of those three takes a string.
+// No caller derives a further path from it, so the walk yields it as a string.
 const gbRegisters: string[] = []
 
 for await (const entry of Globerator.from("*/gb-tuples.csv", { cwd: dataRootPath("ppd"), absolute: true })) {

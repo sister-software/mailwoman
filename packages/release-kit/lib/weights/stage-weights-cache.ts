@@ -27,17 +27,20 @@
 import { isFile, pathExists } from "@mailwoman/core/fs/readers"
 import { copyFileTo, createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { basename, type PathBuilder, resolvePath, resolvePathBuilder } from "path-ts"
+import { basename, type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 export interface StageWeightsCacheOptions {
-	repoRoot: string
-	out: string
+	repoRoot: PathBuilderLike
+	/**
+	 * The cache directory, resolved against {@linkcode StageWeightsCacheOptions.repoRoot}.
+	 */
+	out: PathBuilderLike
 	locale: string
 	/**
 	 * A workspace package directory to seed the layout from.
 	 */
-	from?: string
+	from?: PathBuilderLike
 	/**
 	 * `<name-in-package>=<source path>` entries.
 	 *
@@ -65,9 +68,26 @@ export interface StageWeightsCacheOptions {
 }
 
 export interface StageWeightsCacheReport {
-	cacheRoot: string
-	packageDir: string
+	/**
+	 * The cache directory, as a builder a caller derives further paths from.
+	 *
+	 * A caller that needs a string takes one at its own boundary.
+	 * `release.stage-weights-cache` does exactly that, because its `outputSchema`
+	 * serializes the report to JSON.
+	 */
+	cacheRoot: PathBuilder
+	/**
+	 * The staged package directory.
+	 *
+	 * `packageDir(name)` is the path of one staged artifact.
+	 * A caller checking the layout reads that rather than re-deriving it.
+	 */
+	packageDir: PathBuilder
 	linked: number
+	/**
+	 * The artifact filenames staged.
+	 * Each entry is a name inside the package rather than a path.
+	 */
 	staged: string[]
 	omitted: string[]
 }
@@ -77,7 +97,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	if (!options.out) throw new Error("--out <dir> is required")
 
-	const cacheRoot = resolvePath(repoRoot, options.out)
+	const cacheRoot = resolvePathBuilder(repoRoot, options.out)
 	// The layout comes from the resolver's own `weightsCachePackageDir`
 	// rather than a re-typed literal, so the two cannot drift.
 	const packageDir = weightsCachePackageDir(cacheRoot, options.locale)
@@ -150,7 +170,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	return {
 		cacheRoot,
-		packageDir: packageDir.toString(),
+		packageDir,
 		linked,
 		staged: stagedNames,
 		omitted: [...omit],

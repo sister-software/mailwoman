@@ -24,9 +24,9 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createScorer } from "@mailwoman/neural/scorer"
+import { resolveWeights } from "@mailwoman/neural/weights"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
-import { readWeightsIdentity } from "#eval-harness/preregistration"
 
 const { values } = parseArguments({
 	options: {
@@ -39,12 +39,25 @@ const show = Number(values.show ?? 25)
 
 if (!Number.isFinite(show) || show < 0) throw new Error(`--show must be a non-negative number, read ${values.show}`)
 
-const weights = await readWeightsIdentity({})
+// `resolveWeights` locates the tokenizer and the model card itself.
+// A rewrite of `model.onnx` into a sibling filename would miss a bundle whose
+// card resolves from the base package instead.
+// That case is the `baseModelCardPath` fallback below.
+const weights = await resolveWeights({})
+
+const modelCardPath = weights.modelCardPath ?? weights.baseModelCardPath
+
+if (!modelCardPath) {
+	throw new Error(
+		`The weights at ${weights.modelPath} resolved no model-card.json. ` +
+			`The card states the label set, so a parse without it would report tags this build cannot emit.`
+	)
+}
 
 const scorer = await createScorer({
-	modelPath: weights.weightsModelPath,
-	tokenizerPath: weights.weightsModelPath.replace(/model\.onnx$/u, "tokenizer.model"),
-	modelCardPath: weights.weightsModelPath.replace(/model\.onnx$/u, "model-card.json"),
+	modelPath: weights.modelPath,
+	tokenizerPath: weights.tokenizerPath,
+	modelCardPath,
 	strict: true,
 	tier: "server",
 })

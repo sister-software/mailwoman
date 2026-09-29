@@ -39,8 +39,8 @@ export const stageWeightsCacheOperation = defineOperation({
 		staged: z.array(z.string()),
 		omitted: z.array(z.string()),
 	}),
-	run: (input, context) =>
-		stageWeightsCache({
+	run: async (input, context) => {
+		const report = await stageWeightsCache({
 			repoRoot: context.repoRoot,
 			out: input.out,
 			locale: input.locale,
@@ -51,5 +51,16 @@ export const stageWeightsCacheOperation = defineOperation({
 			clean: input.clean,
 			dereference: input.dereference,
 			log: context.log,
-		}),
+		})
+
+		// `outputSchema` serializes the report to JSON.
+		// That is the boundary where the two directory builders become strings.
+		// `stageWeightsCache` returns them intact so a library caller derives an artifact
+		// path from `packageDir` rather than rebuilding the cache layout.
+		return {
+			...report,
+			cacheRoot: report.cacheRoot.toString(),
+			packageDir: report.packageDir.toString(),
+		}
+	},
 })
