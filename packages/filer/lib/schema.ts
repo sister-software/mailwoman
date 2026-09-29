@@ -24,7 +24,7 @@
  * single-column text PK stays a rowid table for the same lack of a second column to fold in.
  *
  * Strength and kind are orthogonal columns: {@link FilerEdgeAssertion} grades how strongly an assertion is evidenced
- * and {@link FilerRelationship} says what it means. `relationship` is not part of either primary key, because one
+ * and {@link FilerRelationship} defines what it means. `relationship` is not part of either primary key, because one
  * source asserting two relationship kinds for the same pair at the same instant is a contradiction to reject rather
  * than a plurality to store.
  *
@@ -32,13 +32,13 @@
  * different identifiers) and a corporate family (a holding/parent/subsidiary/management tree spanning several
  * filers) — see {@link FilerFamilyTable}.
  *
- * `naming_node_id` carries a family fact's naming provenance. `family_id` is a canonicalized slug. Re-running the
+ * `naming_node_id` stores a family fact's naming provenance. `family_id` is a canonicalized slug. Re-running the
  * canonicalizer at read time would make a sealed, versioned artifact depend on designation-list edits in another
  * workspace. The manifest does not pin the canonicalizer's identity, so such an edit could remove every display name.
  * See {@link FilerFamilyTable}.
  *
- * `filer_family` also carries `assertion` and `match_score`. Criterion 2 requires inferred rows to remain distinct
- * from authoritative rows. A check on `filer_edge` alone would miss inferred family memberships written by Edgar.
+ * `filer_family` also stores `assertion` and `match_score`. Criterion 2 requires inferred rows to remain distinct
+ * from authoritative rows. A check on `filer_edge` by itself would miss inferred family memberships written by Edgar.
  * `source` cannot represent the distinction because `edgar-exhibit-21` writes both grades under one source name.
  */
 
@@ -47,9 +47,11 @@ import { sql, type Kysely } from "kysely"
 /**
  * The identifier namespaces a `filer_node.node_id` can be minted from (no enum, per the repo rule).
  *
- * `spin` is defined but unpopulated: neither `filer/sdk` parser carries a spin field
- * and `build-filer.ts` mints no `spin:` node, so the namespace is reserved for
- * a future source that actually carries one.
+ * `spin` is defined but unpopulated.
+ * The `filer/sdk` parsers have no spin field.
+ *
+ * `build-filer.ts` creates no `spin:` node.
+ * The namespace is reserved for a future source that provides one.
  *
  * `CIK` is SEC edgar's Central Index Key, always the zero-padded 10-digit string form
  * (matching how `data.sec.gov/submissions/CIK##########.json` names itself) and never the
@@ -78,7 +80,7 @@ export type FilerIdentifierType = (typeof FilerIdentifierType)[keyof typeof File
  *
  * `Authoritative` means the source document states it directly.
  * `Inferred` means name or address comparators derived it.
- * Inferred rows carry `match_score` and `evidence`.
+ * Inferred rows store `match_score` and `evidence`.
  */
 export const FilerEdgeAssertion = {
 	Authoritative: "authoritative",
@@ -248,7 +250,7 @@ export const FILER_FAMILY_SCHEMA_VERSION = 2
  *
  * No table changed shape between 2 and 3, so a version-2 artifact is structurally readable,
  * but it cannot be trusted about content: every ceased filer in a version-2 build
- * carries `valid_to: null`, so an `asOf`-scoped read answers a carrier dissolved a
+ * stores `valid_to: null`, so an `asOf`-scoped read answers a carrier dissolved a
  * decade earlier with no error — a worse failure than a missing table.
  *
  * Readers should therefore compare against {@linkcode FILER_FAMILY_SCHEMA_VERSION} for
@@ -309,7 +311,7 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
  * a contradiction the composite `unique` index makes SQLite reject.
  *
  * A check constraint additionally rejects a blank/whitespace-only `relationship`,
- * which `not NULL` alone does not.
+ * which `not NULL` by itself does not.
  *
  * Call {@link createFilerEdgeToNodeIndex} separately after bulk load for the reverse traversal path.
  */
@@ -398,9 +400,10 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  * the builder's `insert or ignore` silently drop the second spelling's display name
  * from every rollup, against the SDK's expose-the-plurality-never-guess rule.
  *
- * Blank-rejecting checks cover `relationship` and `assertion`, because `not NULL` alone accepts
- * the empty string and a blank assertion matches neither half of every criterion-2 read; `match_score`
- * may appear only on an inferred row, since an authoritative membership matched no candidate.
+ * Blank-rejecting checks cover `relationship` and `assertion`, because `not NULL`
+ * by itself accepts the empty string and a blank assertion matches neither half
+ * of every criterion-2 read; `match_score` may appear only on an inferred row,
+ * since an authoritative membership matched no candidate.
  *
  * Call {@link createFilerFamilyIndex} separately after bulk load for the
  * `all members of this family` lookup path.
@@ -421,7 +424,7 @@ export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise
 		.addPrimaryKeyConstraint("filer_family_pk", ["node_id", "family_id", "naming_node_id", "source", "valid_from"])
 		.addCheckConstraint("filer_family_relationship_not_blank", sql`trim(relationship) != ''`)
 		.addCheckConstraint("filer_family_assertion_not_blank", sql`trim(assertion) != ''`)
-		// Use sql.lit because SQLite DDL cannot carry a bound parameter. The literal comes from FilerEdgeAssertion.
+		// Use sql.lit because SQLite DDL cannot bind a parameter. The literal comes from FilerEdgeAssertion.
 		// This keeps the constraint aligned with the constant.
 		.addCheckConstraint(
 			"filer_family_match_score_inferred_only",

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Stream rooftop address records out of a BAN `adresses-<dept>.csv` dump (adresse.data.gouv.fr). The
- *   dump is a `;`-delimited, header-first CSV in which every row already carries the full tuple —
+ *   dump is a `;`-delimited, header-first CSV in which every row already contains the full tuple —
  *   `numero`, `rep`, `nom_voie`, `code_postal`, `nom_commune`, `lon`/`lat` — so there is no OSM-style
  *   "association gap" (a point with no street): BAN is a structured government register rather than a
  *   community tag soup. We stream line-by-line (the national set is 26M rows / ~5 GB uncompressed);
@@ -32,7 +32,7 @@ import { createReadStream } from "spliterator/node/fs"
  */
 export interface BANAddrRecord {
 	/**
-	 * `numero` — the house number (numeric in BAN. The `rep` suffix is carried separately).
+	 * `numero` — the house number (numeric in BAN. The `rep` suffix is stored separately).
 	 */
 	numero: string
 	/**
@@ -71,7 +71,7 @@ export interface BANAddrRecord {
 	 * `certification_commune` — 1 when the commune certified the address, 0 when it did not.
 	 * Null when the column is blank.
 	 *
-	 * Carried verbatim so a coverage basis can be computed per commune rather than inferred from a share.
+	 * Preserved verbatim so a coverage basis can be computed per commune rather than inferred from a share.
 	 */
 	certified: number | null
 }
@@ -180,7 +180,8 @@ async function openCSV(csvPath: PathBuilderLike): Promise<AsyncIterable<Uint8Arr
 export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGenerator<BANAddrRecord> {
 	// CSVSpliterator handles quoted fields and embedded delimiters.
 	// `split(";")` leaked CSV quotes into lieu-dit street keys (#1044).
-	// Quoted fields now unwrap, doubled inner quotes fold, and a quoted `;` stays within its field.
+	// The parser unwraps quoted fields and folds doubled inner quotes.
+	// A quoted `;` stays within its field.
 	let checkedHeader = false
 
 	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(await openCSV(csvPath), {

@@ -42,7 +42,7 @@ export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
  * Whether a coverage reading can support an exclusion.
  *
  * Absence is only supportable from a designated or surveyed basis (presence is supportable from any),
- * so callers building negative evidence must check this rather than `completeness` alone
+ * so callers building negative evidence must check this rather than `completeness` by itself
  * or an exclusion fires identically on a genuinely empty cell and on one we never surveyed.
  */
 export function supportsExclusion(cell: { basis?: CoverageBasis | null }): boolean {
@@ -50,7 +50,7 @@ export function supportsExclusion(cell: { basis?: CoverageBasis | null }): boole
 }
 
 /**
- * What an exclusion rests on, carried into the derivation so a reader can audit the refusal.
+ * What an exclusion rests on, preserved in the derivation so a reader can audit the refusal.
  */
 export interface CoverageScope {
 	layer: string

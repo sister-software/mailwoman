@@ -437,22 +437,23 @@ export const isCorpusVersion = (value: string): boolean => /^\d+(\.\d+)*(-[A-Za-
  * under `$MAILWOMAN_DATA_ROOT/corpus/versioned/`.
  *
  * This is a second identifier, distinct from the corpus version {@linkcode isCorpusVersion} accepts.
- * A versioned corpus is written under `v${version}` and holds `corpus-v${version}` inside it,
- * so the entry name carries the leading `v` that a corpus version must omit.
+ * A versioned corpus is written under `v${version}` and holds `corpus-v${version}` inside it.
  *
- * `corpus("v0.7.0-de-holdout")` in `corpus-python/launch/corpora.py` passes the same
- * string, and `launch/plan.py` composes the R2 key and the volume path from it,
- * so all three readers share this spelling.
+ * The entry name includes the leading `v` that a corpus version must omit.
  *
- * No repository code derives the entry name: an operator supplies it through
- * `corpus build --out`, and 3 of the 84 entries on the lab host carry a label
- * rather than a version (`board-hk`, `board-sg`, `smoke-schema`).
- * The check therefore accepts a leading `v`, a dot, and a bare label.
+ * `corpus("v0.7.0-de-holdout")` in `corpus-python/launch/corpora.py` passes the same string.
+ * `launch/plan.py` composes the R2 key and volume path from it.
+ * All three readers therefore use this spelling.
+ *
+ * Repository code does not derive the entry name.
+ * An operator supplies it through `corpus build --out`, and 3 of the 84 entries on the
+ * lab host use a label rather than a version (`board-hk`, `board-sg`, `smoke-schema`).
+ * The check accepts a leading `v`, a dot, or a bare label.
  *
  * It refuses a path separator, because the value is interpolated into a directory name and an R2 key.
  * It refuses a leading `corpus-`, the spelling of the directory nested inside the entry.
  *
- * Passing that spelling would address `corpus-corpus-v0.7.0-de-holdout`.
+ * That spelling would produce the key `corpus-corpus-v0.7.0-de-holdout`.
  */
 export const isCorpusDirectory = (value: string): boolean =>
 	/^[A-Za-z0-9][A-Za-z0-9.-]*$/u.test(value) && !value.startsWith("corpus-")

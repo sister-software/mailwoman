@@ -79,7 +79,7 @@ describe("formatAddress", () => {
 	})
 
 	it("returns an empty string for a country the dataset gives no order", () => {
-		// Absence is a real answer: 55 of the 252 shipped country records carry no usable skeleton.
+		// An empty result is valid: 55 of the 252 shipped country records have no usable skeleton.
 		expect(formatAddress(US_ADDRESS, "ZZ")).toBe("")
 	})
 
@@ -226,7 +226,7 @@ describe("formatAddressRow", () => {
 	})
 
 	it("NAMES a value the layout has no slot for rather than dropping it silently", () => {
-		// France absorbs the region: its skeleton has no %S, so the value is carried nowhere.
+		// France absorbs the region: its skeleton has no %S, so the formatter omits the value.
 		const row = formatAddressRow({ locality: "Paris", region: "Île-de-France", postcode: "75008" }, "FR", {
 			singleLine: true,
 		})
@@ -319,7 +319,7 @@ describe("the script a row renders in", () => {
 	})
 
 	it("lets the caller override what the values say", () => {
-		// A caller holding a parse tree knows more than the values do: every span carries the script it is written in.
+		// A caller with a parse tree knows more than the values do: every span records its writing system.
 		expect(formatAddressRow(HK_LATIN, "HK", { singleLine: true, script: "local" })?.script).toBe("local")
 		expect(formatAddressRow(HK_LOCAL, "HK", { singleLine: true, script: "latin" })?.script).toBe("latin")
 	})

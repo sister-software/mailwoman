@@ -44,7 +44,7 @@ import {
 /**
  * Rows per bulk-insert transaction.
  *
- * Chosen for the geometry table because its rows carry a blob.
+ * Chosen for the geometry table because its rows contain a blob.
  * A larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
@@ -83,7 +83,7 @@ export interface CoastalChunkResult {
 	 */
 	area: { sourceM2: number; nestedM2: number; allExteriorM2: number }
 	/**
-	 * The defence types this chunk saw, with counts — a census carried on the receipt
+	 * The defence types this chunk saw, with counts — a census recorded on the receipt
 	 * rather than only checked, because the authority publishes no list for the domain
 	 * and the counts are how a reader sees it move.
 	 */

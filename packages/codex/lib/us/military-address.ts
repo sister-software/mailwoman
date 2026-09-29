@@ -77,7 +77,7 @@ export type USArmedForcesRegionCode = (typeof US_ARMED_FORCES_REGIONS)[number]["
  *
  * - `PSC <id> BOX <box>` — Postal Service Center
  * - `CMR <id> BOX <box>` — Community Mail Room
- * - `unit <id> BOX <box>` — numbered unit (battalion/company); unit may stand alone
+ * - `unit <id> BOX <box>` — numbered unit (battalion/company); the unit may appear
  *   with just an id and no BOX when the unit has direct mail delivery
  *
  * BOX is required for PSC and CMR.

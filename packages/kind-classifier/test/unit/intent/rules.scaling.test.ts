@@ -226,18 +226,20 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 			`over ${prepared.length} queries x ${PASSES} passes`
 	)
 
-	// The bar reads the absolute per-query cost with intent, and 25 us is the headroom this machine needs.
+	// The bar measures absolute per-query cost with intent.
+	// This machine needs 25 us of headroom.
 	//
-	// All three candidate statistics move with machine load, and the absolute moves least.
+	// Machine load changes all three candidate statistics.
+	// The absolute statistic changes least.
 	// Readings of the with-intent arm: 3.504, 3.733, 6.764, 10.382 and 13.320 us/query, a 3.8x spread.
 	// The same runs' baseline arm: 3.088, 3.332, 5.556, 7.628 and 9.457 us/query.
 	// The difference between the arms therefore reads 0.400, 0.416, 1.208, 2.754
-	// and 3.863 us/query, a 9.7x spread: it subtracts two large noisy numbers, so it carries
+	// and 3.863 us/query, a 9.7x spread: it subtracts two large noisy numbers, so it combines
 	// both noises over a smaller value and its relative error is the worst of the three.
 	// The ratio inherits the baseline as its denominator and moves 1.12x to 3.48x.
 	//
-	// The 10 us bar this replaces was set when the baseline arm sat near 0.5 us,
-	// and the arm now reads 3 to 9.5 us on the same code.
+	// The replaced 10 us bar was set when the baseline arm measured about 0.5 us.
+	// The arm now measures 3 to 9.5 us on the same code.
 	// That is why CI measured 10.382 and failed on an arm that runs no intent rule:
 	// the bar was calibrated against a machine this one no longer resembles.
 	//
@@ -247,9 +249,9 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 	// so Stage 2.5 in full is ~0.4% of a parse even at the loaded reading.
 	//
 	// A bar that survives this runner cannot also police microseconds.
-	// Dividing the intent cost by a calibration workload timed in the same process
-	// would hold the quotient steady while a slow machine slowed both numbers,
-	// and that change is filed rather than made here.
+	// A calibration workload timed in the same process would slow alongside the intent cost.
+	// The ratio to that workload would stay steady on a slower machine.
+	// The team has filed that change and has not made it here.
 	expect(
 		perQueryIntentUs,
 		`Stage 2.5 cost ${perQueryIntentUs.toFixed(3)} us/query (baseline ${perQueryBaselineUs.toFixed(3)}, ` +

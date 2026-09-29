@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Casing of French commune names.
+ *   French commune name casing.
  */
 
 import { titleCase } from "spliterator/casing"

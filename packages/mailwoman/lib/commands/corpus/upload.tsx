@@ -25,10 +25,13 @@ const DEFAULT_BUCKET = "mailwoman-assets"
 /**
  * Retry counts for every transfer here, above rclone's defaults of 10 low-level and 3 high-level.
  *
- * R2 returns an intermittent 501 that succeeds on a retry, and `push_artifact` in
- * `corpus-python/launch/artifacts.py` already rides it with these two values.
- * At the defaults a single 501 ends the job, and a 74 GiB corpus over a mobile link meets enough
- * of them to matter: one lost transfer costs the whole remaining file rather than the request.
+ * R2 intermittently returns 501 before a retry succeeds.
+ * `push_artifact` in `corpus-python/launch/artifacts.py` already retries with these two values.
+ *
+ * At the defaults, one 501 ends the job.
+ * A 74 GiB corpus over a mobile link can encounter enough failures to matter.
+ *
+ * One lost transfer then costs the remaining file rather than one request.
  *
  * `rclone sync` compares size and modification time, so a re-run after any failure skips
  * the files that landed and re-sends only a file it was mid-way through.
@@ -77,7 +80,8 @@ type UploadedCorpusManifest = Partial<
 >
 
 /**
- * The row count the corpus's own manifest reports, which `overlay-manifest` rewrites on each merge.
+ * The row count in the corpus's manifest.
+ * `overlay-manifest` rewrites this count on each merge.
  *
  * `total_rows` here counts the same labeled rows as the build manifest's `total_aligned_rows`,
  * so the two are comparable and their difference is what the overlays added.
@@ -89,8 +93,8 @@ interface AssembledCorpusManifest {
 /**
  * The assembled corpus manifest's `total_rows`, or `undefined` when no manifest sits at `path`.
  *
- * A build that wrote no corpus manifest, and a flat-layout entry that holds none, both read
- * `undefined`, and {@linkcode refuseShareAlike} then leaves the overlay comparison unmade
+ * A build without a corpus manifest and a flat-layout entry without one both read
+ * `undefined`. {@linkcode refuseShareAlike} then skips the overlay comparison
  * rather than reading a missing file as a corpus with no overlay rows.
  */
 async function assembledRowCount(path: PathBuilderLike): Promise<number | undefined> {
@@ -104,13 +108,13 @@ async function assembledRowCount(path: PathBuilderLike): Promise<number | undefi
 }
 
 /**
- * Throws when a corpus version's own license set carries or mentions share-alike.
+ * Throws when a corpus version's own license set includes or mentions share-alike.
  *
  * The decision reads the obligations recorded for each license value the corpus stores,
  * through `shareAlikeFindings`.
- * It does not read source ids, adapter names or license-string prefixes,
- * because a row's obligation is a property of its license value and a share-alike
- * register can reach a corpus through a source whose id says otherwise.
+ * It does not read source ids, adapter names or license-string prefixes, because a
+ * row's obligation is a property of its license value and a share-alike register can
+ * reach a corpus through a source whose id identifies a different license.
  *
  * An unreadable or absent `MANIFEST.json` throws as well.
  * A corpus whose license set cannot be read is an unanswered question rather than a clean one.
@@ -148,13 +152,14 @@ async function refuseShareAlike(
 		)
 	}
 
-	// `align` increments the `licenses` map once per canonical adapter row, and `total_aligned_rows`
-	// counts the labeled rows those fan out to, so the two are different units and cannot be compared.
+	// `align` increments the `licenses` map once per canonical adapter row.
+	// `total_aligned_rows` counts the labeled rows produced from those rows.
+	// The values use different units.
 	// The rows the map does not answer for are the ones `overlay-manifest` merged
 	// after the build: they raise the corpus manifest's `total_rows` above the build
-	// manifest's `total_aligned_rows` and carry their own license values.
-	// A clean reading over the base alone would state that the whole corpus is free
-	// of an obligation this check never looked for.
+	// manifest's `total_aligned_rows` and include their own license values.
+	// A reading of the base by itself would state that the whole corpus is free of
+	// an obligation this check never looked for.
 	const aligned = manifest.total_aligned_rows ?? 0
 	const held = corpusRows ?? 0
 
@@ -269,8 +274,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 
 		for (const directory of directories) {
 			// The on-disk layout nests the corpus under its own name: <root>/<entry>/corpus-<entry>/.
-			// `corpus()` in `corpus-python/launch/plan.py` composes `corpus-<entry>` from the same string,
-			// and its `NESTED` layout reads this directory out of the R2 key this job writes.
+			// `corpus()` in `corpus-python/launch/plan.py` composes `corpus-<entry>` from the same string.
+			// Its `NESTED` layout reads this directory from the R2 key written by this job.
 			const nested = corpusRoot(directory, `corpus-${directory}`)
 			const layout = (await pathExists(nested)) ? "nested" : "flat"
 			const source = layout === "nested" ? nested : corpusRoot(directory)

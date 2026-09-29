@@ -59,11 +59,11 @@ describe("OvertureNationalDatabaseProvider", () => {
 	})
 
 	it("stamps Taiwan's grant as the conjunction, because a row through Overture is bound by both", () => {
-		// Two documents describe two grants over the same municipal 門牌 rows rather than
-		// disagreeing about one: Overture states the terms it redistributes under,
-		// and the counsel dossier reads the originating agencies' own grant.
-		// Each carries Attribution alone, so the conjunction adds no obligation either lacks,
-		// and naming one alone would drop the other's conditions (#2369).
+		// Two documents describe separate grants over the same municipal 門牌 rows.
+		// Overture states the terms it redistributes under.
+		// The counsel dossier reads the originating agencies' own grant.
+		// Each grant includes Attribution and adds no obligation the other lacks.
+		// A row with one grant would omit the other's conditions (#2369).
 		expect(licenseForOvertureCountry("tw")).toBe("CC-BY-4.0 AND OGDL-Taiwan-1.0")
 	})
 

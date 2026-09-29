@@ -25,7 +25,7 @@
  *        reproduced by hitting the same URL with and without a compliant UA — no UA is a 403, a
  *        descriptive one is a 200. It does not mean the resource is missing or that this client/IP is
  *        blocked. Retrying it would burn the 10 req/s budget. The 403 is non-retryable
- *        (`core/api/retry.ts`) and the thrown error says all of this explicitly. This project already
+ *        (`core/api/retry.ts`) and the thrown error states all of this explicitly. This project already
  *        lost a debugging cycle to a generic "403 Forbidden" on an FCC endpoint.
  *
  *   document path (a prerequisite the migration review flagged as `m3`/`I2`, folded into Task
@@ -35,7 +35,7 @@
  *   SECClient.getDocument} is the raw-text sibling: same client, same pacing limit, same host allowlist, same
  *   retry policy, same {@linkcode ResourceError} mapping — the only difference is a per-request `responseType:
  *   "text"` override makes Axios return the body as-is. Axios skips `JSON.parse`. The on-disk
- *   cache is keyed by URL alone (method/URL/params/body — never `responseType`), so a document fetched once
+ *   cache is keyed by URL only (method/URL/params/body — never `responseType`), so a document fetched once
  *   is served from the same cache entry on a later `getDocument` call for that URL; `get`/`getDocument` are
  *   never called against the same URL in practice (JSON endpoints vs. `/Archives/` documents are disjoint
  *   host paths), so this sharing is never observed to disagree. The cache's `validate` predicate (below) was
@@ -56,7 +56,7 @@
  *
  *   redirect policy: Axios follows redirects automatically. The host allowlist checks the original
  *   request URL and skips each later hop. A redirect from an allowed
- *   host to an arbitrary one would carry the configured UA there unchecked. Accepted for now — edgar's
+ *   host to an arbitrary one would send the configured UA there unchecked. Accepted for now — edgar's
  *   public JSON/document endpoints don't redirect cross-host in normal operation — but a future
  *   hardening pass fetching caller-discovered (as opposed to hardcoded) URLs should set
  *   `maxRedirects: 0` and re-validate the `Location` host per hop before following it.
@@ -200,14 +200,15 @@ export function isImmutableArchiveURL(url: URL): boolean {
  * (before any cache/rate-limit/network activity) a URL on any other host, or any non-https scheme.
  *
  * This is the designated SEC edgar client.
- * Its configured User-Agent carries a real contact address.
+ * Its configured User-Agent includes a real contact address.
  *
  * A caller-supplied host or a cleartext connection would expose the User-Agent
  * outside SEC's fair-access program without benefit.
  *
  * `sec.gov` (the apex) and `efts.sec.gov` (edgar full-text search — the Exhibit 21 discovery path)
  * are included alongside the two hosts decision 5 names.
- * Matching is exact (a `Set` lookup on `url.hostname`), not a suffix check.
+ * The client compares `url.hostname` by exact `Set` membership.
+ * It does not check suffixes.
  *
  * Exact hostname matching rejects `www.sec.gov.attacker.example`.
  * An `.endsWith(".sec.gov")`-style check would accept it.
@@ -287,7 +288,7 @@ export interface CreateSECClientOptions {
 	/**
 	 * Base delay for the exponential backoff between retry attempts, in milliseconds.
 	 *
-	 * Attempt `n`'s wait is `baseRetryDelayMs * 2^(n-1)`, unless the response carried
+	 * Attempt `n`'s wait is `baseRetryDelayMs * 2^(n-1)`, unless the response included
 	 * A `Retry-After` header overrides this delay.
 	 */
 	baseRetryDelayMs?: number
@@ -314,7 +315,7 @@ export interface CreateSECClientOptions {
  */
 export interface SECClientConfig extends APIClientConfig {
 	/**
-	 * The fair-access User-Agent every request carries.
+	 * The fair-access User-Agent sent with every request.
 	 *
 	 * Included in the 403 explanation so a maintainer can see what was actually sent.
 	 */
@@ -450,7 +451,8 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  *   A decoded body that isn't an object means the upstream served something other than what it claimed.
  * - A non-empty string (every `getDocument` call — a filing document is html/text, never JSON):
  *   admits the body `getDocument`'s `responseType: "text"` override actually produces.
- *   A `typeof === "object"` test alone would reject it outright, since a string is never `typeof "object"`.
+ *   A `typeof === "object"` test by itself would reject it outright,
+ *   since a string is never `typeof "object"`.
  *   `.length > 0` is the truncated/empty guard on this shape.
  *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does,
  *   so this predicate is the only check standing between a truncated/empty document

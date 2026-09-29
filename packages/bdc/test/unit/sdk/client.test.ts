@@ -20,7 +20,7 @@ import type { FCCAsOfDateEntry } from "@mailwoman/bdc/sdk/filing-dates"
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
 // `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type (`as ResourceError`);
-// the value arrives via the post-reset dynamic import below, while a `const` carries no type side,
+// the value arrives via the post-reset dynamic import below, while a `const` has no type side,
 // so the type position needs its own static import (type-only, so it never evaluates the mock chain).
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { crc32 } from "@mailwoman/core/fs/compression"
@@ -174,7 +174,7 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 
 	it("APPENDS the path to the base rather than RESOLVING it, so no path can redirect the credentials off-host", async () => {
 		// `new URL(path, BDC_API_BASE_URL)` would resolve an absolute-looking path to
-		// another origin and carry the `username`/`hash_value` pair there.
+		// another origin and send the `username`/`hash_value` pair there.
 		// Concatenation cannot, because the host is already fixed by the time the path is appended.
 		const transport = bdcTransport([{ body: { data: [] } }, { body: { data: [] } }])
 		const client = clientFor(transport)
@@ -320,7 +320,7 @@ describe("createBDCClient: the throttle meter", () => {
 	it("counts a per-minute budget cooldown once the budget is spent", async () => {
 		// The budget limit (`requestsPerMinute`) is declared alongside the interval limit.
 		// This assertion proves the budget limit is wired.
-		// The interval alone produces identical arrival spacing.
+		// The interval by itself produces identical arrival spacing.
 		const BUDGET = 2
 
 		const clock = new VirtualClock()
@@ -505,7 +505,7 @@ describe("createBDCClient: the binary download path", () => {
 		// A JSON-validating disk cache cannot read back a multi-hundred-megabyte zip.
 		// `downloadBDCFile` writes the extracted CSV itself.
 		//
-		// An empty cache directory alone would not prove this: the storage layer's own `validate`
+		// An empty cache directory by itself would not prove this: the storage layer's own `validate`
 		// check rejects a zip too, so the assertion would pass with `cache: false` deleted.
 		// What distinguishes "the request bypassed the cache" from "the cache refused
 		// the write" is that `buildDiskStorage` warns on every write it drops,
@@ -595,7 +595,7 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 })
 
 // The interface an ingestion run depends on: each branch is decided from `status`
-// and `isTransientResourceError()` alone, never from message text.
+// and `isTransientResourceError()` directly, never from message text.
 describe("createBDCClient: the caller's failure taxonomy, decided without reading any message", () => {
 	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
 		const client = clientFor(bdcTransport(outcomes), { maxAttempts, baseRetryDelayMs: 1 })

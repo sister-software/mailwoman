@@ -160,7 +160,7 @@ export interface BuildZoningResult {
 	storedResolutions: number[]
 	coverageCells: number
 	/**
-	 * The basis every coverage row carries, `source_present` while `zoning_mapped_extent` is empty.
+	 * The basis stored in every coverage row, `source_present` while `zoning_mapped_extent` is empty.
 	 */
 	coverageBasis: CoverageBasis
 	tier: LayerTier
@@ -608,7 +608,7 @@ function writeJurisdictionRows(
 	)
 
 	for (const [code, name] of jurisdictions.toSorted((left, right) => (left[0] < right[0] ? -1 : 1))) {
-		// The id is the publisher's own code, carried in both columns rather than repaired in one
+		// The id is the publisher's own code, preserved in both columns rather than repaired in one
 		// because a repaired code is this package's spelling in a column that claims to be the publisher's.
 		insert.run(code, name, code, "IE")
 	}

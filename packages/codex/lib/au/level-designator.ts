@@ -35,7 +35,7 @@ export interface AuLevelDesignator {
 	/**
 	 * Whether the designator must be followed by a floor identifier, as in `level 3`.
 	 *
-	 * Types such as `ground` and `rooftop` stand alone.
+	 * Types such as `ground` and `rooftop` appear without a level number.
 	 */
 	requiresNumber: boolean
 }

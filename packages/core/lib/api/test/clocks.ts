@@ -174,8 +174,8 @@ export class VirtualClock implements ClockLike {
 	 * Drive `work` to completion, jumping virtual time to the next pending deadline
 	 * whenever the real event loop goes idle.
 	 *
-	 * {@linkcode advance} alone is not enough once the code under test interleaves
-	 * virtual sleeps with real asynchrony.
+	 * {@linkcode advance} by itself is insufficient once the code under test
+	 * interleaves virtual sleeps with real asynchrony.
 	 * A paced client whose limit sits downstream of an on-disk cache spends several real
 	 * event-loop turns in `readFile` before it ever registers its `sleep()`.
 	 *

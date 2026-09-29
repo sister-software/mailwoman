@@ -114,7 +114,7 @@ export const ENTRY_RECORD_SIZE = 32
 export const ID_INDEX_ENTRY_SIZE = 8
 
 /**
- * Entry flags bit 0: this entry carries a payload.
+ * Entry flags bit 0: this entry contains a payload.
  *
  * Presence-signaled per entry so an absent payload can never surface as an empty one —
  * the meaning-of-zero rule, in bytes.

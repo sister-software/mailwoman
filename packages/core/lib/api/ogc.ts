@@ -238,7 +238,7 @@ export async function readWFSFeatureCount(
 	// WFS 2.0 permits `numberMatched="unknown"`, which is the server declining to count
 	// rather than a count of zero.
 	// The message must say that the attribute could not be read.
-	// Returning 0 would invent a count.
+	// The value 0 would invent a count.
 	if (!/^\d+$/u.test(numberMatched)) {
 		throw new Error(
 			`${options.context}: the WFS hits response${subject} reported numberMatched=${stringifyJSON(numberMatched)} rather than a count — the server declined to count the matches, which is not the same as matching none`

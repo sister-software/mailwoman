@@ -200,7 +200,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		// The cache interceptor also swaps the adapter.
 		// Its adapter lets a cache hit skip the grant check.
 		// It receives merged config inside the interceptor chain, after this method hands over the request.
-		// Removing the caller's adapter preserves the interceptor's adapter.
+		// The request options omit the caller's adapter, so the interceptor keeps its adapter.
 		const { adapter: _callerAdapter, ...safeOptions } = options
 
 		for (let attempt = 1; ; attempt++) {

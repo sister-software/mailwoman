@@ -107,7 +107,7 @@ export const ResourceErrorKind = {
 	 */
 	Network: "network",
 	/**
-	 * An http response came back and carried a failing status.
+	 * An HTTP response came back with a failing status.
 	 */
 	Response: "response",
 	/**
@@ -134,7 +134,7 @@ export const ResourceErrorKind = {
 export type ResourceErrorKind = (typeof ResourceErrorKind)[keyof typeof ResourceErrorKind]
 
 /**
- * The `source` component every URN in this module carries — the implementation that produced the failure.
+ * The `source` component present in every URN in this module — the implementation that produced the failure.
  */
 const RESOURCE_ERROR_SOURCE = "axios"
 
@@ -237,7 +237,7 @@ function responseReason(status: number): string {
  *
  * What changed, measured rather than recalled: a differential against `98c4dda1` across
  * 18 failure shapes in the exact `TileAPI` configuration found 16 of them changed,
- * where the original claim named two.
+ * where the original claim identified two.
  *
  * - Every responseless failure (`ERR_NETWORK`, `econnrefused`, `econnreset`, `econnaborted`,
  *   `etimedout`, `ERR_CANCELED`) used to collapse into a uniform 500.

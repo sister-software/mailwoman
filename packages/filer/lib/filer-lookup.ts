@@ -67,7 +67,7 @@ export interface FilerLookupFamily {
 	assertion: string
 	/**
 	 * The match score.
-	 * An authoritative row carries null.
+	 * An authoritative row has a null score.
 	 */
 	match_score: number | null
 	display_names: string[]
