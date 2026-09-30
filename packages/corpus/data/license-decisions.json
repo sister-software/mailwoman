@@ -2,11 +2,102 @@
 	"$comment": "Licence decisions somebody made by reading a publisher's terms. The register's own build generates every decision as `unchecked` from the research pass's access labels, which is correct — that pass recorded what a register costs to reach and opened nobody's terms. This file is where a decision that was made gets recorded, and `buildSourceRegister` applies these over the generated defaults. It is an input to the build rather than an edit of its output, so a rebuild preserves what is here instead of overwriting it.",
 	"$howToAdd": "Read the publisher's terms. Store the copy you read somewhere a later reader can open it, and name that location in `retrievedCopy` — a link to today's page is not a copy. Then add one entry here keyed by the `licenseID` the register already uses for that source, and rebuild. `auditAddressSourceRegister` refuses an elected record missing `electedTerms`, `retrievedCopy` or `electedBecause`, and a refused record missing `refusedBecause`, so an incomplete entry fails the build rather than entering the register.",
 	"$shape": "Each key is a licenseID the register declares. Each value is an ElectedLicense or RefusedLicense minus its `licenseID`, which the build fills from the key. See `@mailwoman/corpus/source-register`'s types.",
-	"$state": "Eleven decisions of the register's 389 are recorded: AusTender's publisher grants CC BY 3.0 AU, DENUE's publisher INEGI grants its own free-use terms, and INSEE grants Licence Ouverte 2.0 over SIRENE in each of nine overseas territories. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. Ten sources now have all four of those resolved and every one is blocked on its personal-data reading alone, so the ingest-eligible count is 0 of 389. See #2351 for this file and #2323 for the source fields.",
-	"$notElected": "Two candidates were examined on 2026-09-30 and left unchecked, with the retrieved documents in `internal/strategy/rights-receipts/gb-mx-es-2026-09-30/`. Companies House serves its Free Company Data Product from `download.companieshouse.gov.uk`, whose page states `This snapshot is provided free of charge` and names no licence, no Crown copyright and no Open Government Licence; the GOV.UK site-wide clause grants OGL over `content on GOV.UK`, which is a different domain from the one serving the product. Spain's `es-mixed-regulatory-1` names two publishers, Catastro and INE, and the retained ES receipt covers Catastro's INSPIRE licence alone, so one election against that row would grant INE's data on a reading of Catastro's terms.",
+	"$state": "Sixteen decisions of the register's 389 are recorded. AusTender's publisher grants CC BY 3.0 AU. DENUE's publisher INEGI grants its own free-use terms. INSEE grants Licence Ouverte 2.0 over SIRENE in each of nine overseas territories. And five OCDS procurement releases are served by the OCP Data Registry under CC0 1.0 (Chile, Germany), CC BY 4.0 (Italy, Zambia) and the Licencia de Datos Abiertos Uruguay 0.1. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. Ten sources have all four of those resolved and every one is refused on its personal-data reading alone, so the ingest-eligible count is 0 of 389. The five OCDS releases elected here still need their address columns measured. See #2351 for this file and #2323 for the source fields.",
+	"$notElected": "Five candidates were examined on 2026-09-30 and left unchecked. Companies House serves its Free Company Data Product from `download.companieshouse.gov.uk`, whose page states `This snapshot is provided free of charge` without naming a licence, a copyright holder or the Open Government Licence; the GOV.UK site-wide clause grants OGL over `content on GOV.UK`, a different domain from the one serving the product. Spain's `es-mixed-regulatory-1` names two publishers, Catastro and INE, and the retained ES receipt covers Catastro's INSPIRE licence alone, so one election against that row would grant INE's data on a reading of Catastro's terms. Kenya's PPRA and Kosovo's PPRC OCDS publications read `License: -` on the OCP Data Registry, which records no licence for either. Ghana's PPA publication records a licence as a bare URL, `https://www.ppaghana.org/ocds-license`, and that host did not resolve on 2026-09-30. The retrieved documents are in `internal/strategy/rights-receipts/gb-mx-es-2026-09-30/` and `ocp-eight-2026-09-30/`.",
 	"$sireneRepetition": "Nine of the decisions below are one reading of one document, recorded nine times. INSEE publishes SIRENE for mainland France and its overseas territories, and the register scopes a decision to one publisher in one jurisdiction, so BL, GF, GP, MF, MQ, PM, RE, WF and YT each carry their own. That repetition is deliberate: an election wide enough to cover nine jurisdictions at once is the failure review cannot undo.",
 	"$sharedReadings": "One publisher can hold a licence over several jurisdictions, and the register scopes a decision to one publisher in one jurisdiction, so reading that publisher's terms once produces several decisions with the same body. A decision reads `sameAs` to name a body declared here, which keeps each licence id's own decision while the prose behind it has one home. The build refuses a `sameAs` naming a reading this file does not declare.",
+	"$ocpRegistryStatements": "Five of the decisions below rest on the OCP Data Registry's own licence statement rather than on the publisher's page. Each of those register rows records its access as OCDS bulk through that registry and its `sourceURL` as the registry, so the copy this repository would fetch is the registry's and the licence it publishes is the one governing that copy. AusTender is the exception: its publisher's own terms were retrieved, which is the stronger record. Retrieving each of the five publishers' own pages would raise them to the same standard and is not done.",
 	"sharedReadings": {
+		"ocp-registry-cc0-1.0": {
+			"state": "elected",
+			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
+			"spdx": "CC0-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The OCP Data Registry publishes this OCDS release under CC0 1.0 and offers no alternative: `License: Creative Commons CC0 1.0 Universal Public Domain Dedication`, with the deed's summary that the person associating the work with it `has dedicated the work to the public domain by waiving all of his or her rights to the work worldwide under copyright law, including all related and neighboring rights, to the extent allowed by law`. The legalcode is retained beside the registry page. CC0 imposes no attribution condition, so this repository owes none; crediting the publisher anyway is courtesy rather than obligation.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives every copyright and related right to the extent allowed by law, so copying the published file is unrestricted by the dedication."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed states `You can copy, modify, distribute and perform the work, even for commercial purposes`, and reading columns out of the file is copying and modifying."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed permits modification without condition."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act, so fitting a model on the rows is unrestricted by the dedication."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed permits distribution and performance, commercially included, with no attribution or share-alike condition."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives the rights that would make a derived work's release a licensed act, so the question that stays unreviewed under CC BY does not arise here."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A dedication to the public domain leaves no right to sublicense, so a recipient needs no grant from this repository."
+				}
+			}
+		},
+		"ocp-registry-cc-by-4.0": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0 International",
+			"retrievedCopy": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The OCP Data Registry publishes this OCDS release under CC BY 4.0 and offers no alternative: `License: Creative Commons Attribution 4.0 International (CC BY 4.0)`, with the deed's summary granting `Share — copy and redistribute the material in any medium or format` and `Adapt — remix, transform, and build upon the material for any purpose, even commercially`, under `Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made` and `No additional restrictions`. The legalcode is retained beside the registry page. The attribution owed is therefore a credit, a link to the licence, and a statement that changes were made, which a transformed corpus always requires.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the right to reproduce and share the material in any medium or format."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `remix, transform, and build upon the material` covers reading the address fields out of the release."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, so a token and tag corpus is permitted with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 reserves no act of analysis and grants building upon the material for any purpose, commercially included."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Share grant covers redistribution in any medium, conditioned on the attribution and on adding no restriction beyond the licence."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the deed does not state it. If they are, the attribution and the statement of changes attach to the release."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 grants no sublicensing right and instead gives every downstream recipient an offer from the licensor directly. Whether that arrangement satisfies a commercial agreement's needs is a drafting question this text does not answer."
+				}
+			}
+		},
 		"insee-sirene-lov2": {
 			"state": "elected",
 			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
@@ -53,6 +144,53 @@
 		}
 	},
 	"decisions": {
+		"unchecked-national-terms-cl-direcci-n-de-compras-y-contrataci-n-p-blica": { "sameAs": "ocp-registry-cc0-1.0" },
+		"unchecked-national-terms-de-procurement-office-of-the-federal-ministry-of": { "sameAs": "ocp-registry-cc0-1.0" },
+		"unchecked-national-terms-it-autorit-nazionale-anticorruzione-anac": { "sameAs": "ocp-registry-cc-by-4.0" },
+		"unchecked-national-terms-zm-zambia-public-procurement-authority-zppa": { "sameAs": "ocp-registry-cc-by-4.0" },
+		"unchecked-national-terms-uy-agencia-reguladora-de-compras-estatales-arce": {
+			"state": "elected",
+			"electedTerms": "Licencia de Datos Abiertos - Uruguay Versión 0.1",
+			"termsVersion": "0.1",
+			"retrievedCopy": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/ocp-uy-publication-43.html",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The OCP Data Registry publishes this release under `Licencia de Datos Abiertos - Uruguay Versión 0.1` and quotes the licence's own clauses on the page, so the retained bytes carry the terms rather than a label alone. The licence names no SPDX identifier, which is why none is recorded. The Authorization clause grants, `for commercial and non-commercial use`, that the data `may be: alienated, reproduced, distributed, published, translated, adapted, transformed, communicated or made available to the public through any form or procedure; merged with own and third-party data, and can be combined to form new and independent data sets; integrated into business processes, products and internal and external applications in public and private electronic networks`. The Note of Origin clause conditions all of it: `the name of the provider, the reference to the “Open Data License - Uruguay”. the reference to the data set that is being used`, and `Changes, editions, new designs or modifications must be mentioned in the note of origin`. The licensor's own page at catalogodatos.gub.uy answers HTTP 404, so the registry's quotation is the copy retained.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Authorization clause grants that the data may be `reproduced`, which is what copying the published release performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `adapted, transformed` and `combined to form new and independent data sets`, which covers reading the address fields out of it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants adaptation and transformation, and the Note of Origin requires that `Changes, editions, new designs or modifications must be mentioned`, so the obligation is a disclosure rather than a restriction."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `integrated into business processes, products and internal and external applications`, which is the act a model fitted on the rows performs."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `distributed, published` and `made available to the public through any form or procedure`, conditioned on the Note of Origin naming the provider, the licence and the dataset."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Integration into a product is granted, and whether releasing weights is that act or the redistribution of a derived data set is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records. The Note of Origin's disclosure of modifications would attach either way."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants commercial use and states no term about granting these rights onward, so the text settles neither."
+				}
+			}
+		},
 		"unchecked-national-terms-bl-insee": { "sameAs": "insee-sirene-lov2" },
 		"unchecked-national-terms-gf-insee": { "sameAs": "insee-sirene-lov2" },
 		"unchecked-national-terms-gp-insee": { "sameAs": "insee-sirene-lov2" },
