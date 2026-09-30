@@ -2,8 +2,8 @@
 	"$comment": "Licence decisions somebody made by reading a publisher's terms. The register's own build generates every decision as `unchecked` from the research pass's access labels, which is correct — that pass recorded what a register costs to reach and opened nobody's terms. This file is where a decision that was made gets recorded, and `buildSourceRegister` applies these over the generated defaults. It is an input to the build rather than an edit of its output, so a rebuild preserves what is here instead of overwriting it.",
 	"$howToAdd": "Read the publisher's terms. Store the copy you read somewhere a later reader can open it, and name that location in `retrievedCopy` — a link to today's page is not a copy. Then add one entry here keyed by the `licenseID` the register already uses for that source, and rebuild. `auditAddressSourceRegister` refuses an elected record missing `electedTerms`, `retrievedCopy` or `electedBecause`, and a refused record missing `refusedBecause`, so an incomplete entry fails the build rather than entering the register.",
 	"$shape": "Each key is a licenseID the register declares. Each value is an ElectedLicense or RefusedLicense minus its `licenseID`, which the build fills from the key. See `@mailwoman/corpus/source-register`'s types.",
-	"$state": "Sixteen decisions of the register's 389 are recorded. AusTender's publisher grants CC BY 3.0 AU. DENUE's publisher INEGI grants its own free-use terms. INSEE grants Licence Ouverte 2.0 over SIRENE in each of nine overseas territories. And five OCDS procurement releases are served by the OCP Data Registry under CC0 1.0 (Chile, Germany), CC BY 4.0 (Italy, Zambia) and the Licencia de Datos Abiertos Uruguay 0.1. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. Ten sources have all four of those resolved and every one is refused on its personal-data reading alone, so the ingest-eligible count is 0 of 389. The five OCDS releases elected here still need their address columns measured. See #2351 for this file and #2323 for the source fields.",
-	"$notElected": "Five candidates were examined on 2026-09-30 and left unchecked. Companies House serves its Free Company Data Product from `download.companieshouse.gov.uk`, whose page states `This snapshot is provided free of charge` without naming a licence, a copyright holder or the Open Government Licence; the GOV.UK site-wide clause grants OGL over `content on GOV.UK`, a different domain from the one serving the product. Spain's `es-mixed-regulatory-1` names two publishers, Catastro and INE, and the retained ES receipt covers Catastro's INSPIRE licence alone, so one election against that row would grant INE's data on a reading of Catastro's terms. Kenya's PPRA and Kosovo's PPRC OCDS publications read `License: -` on the OCP Data Registry, which records no licence for either. Ghana's PPA publication records a licence as a bare URL, `https://www.ppaghana.org/ocds-license`, and that host did not resolve on 2026-09-30. The retrieved documents are in `internal/strategy/rights-receipts/gb-mx-es-2026-09-30/` and `ocp-eight-2026-09-30/`.",
+	"$state": "Twenty decisions of the register's 389 are recorded: seventeen elected and three refused. Elected are AusTender under CC BY 3.0 AU, DENUE under INEGI's own free-use terms, SIRENE under Licence Ouverte 2.0 in each of nine overseas territories, five OCDS procurement releases under CC0 1.0 (Chile, Germany), CC BY 4.0 (Italy, Zambia) and the Licencia de Datos Abiertos Uruguay 0.1, and Svalbard's Enhetsregisteret records under NLOD 2.0. Refused are the Banque Centrale des Comores, the Institut de la statistique de la Polynésie française and the Government of Tokelau, each of which reserves all rights and publishes no data licence. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. Sixteen of the 25 `verified-corpus` sources now have one blocking condition each rather than four, and the ingest-eligible count is 0 of 389. See #2351 for this file and #2323 for the source fields.",
+	"$notElected": "Eight candidates were examined on 2026-09-30 and left unchecked. Three carry no licensing statement this pass could read: the Central Bank of Libya's commercial banks directory holds no licensing keyword in 184,310 retained bytes, the Puerto Rico Department of State's corporations registry holds none in 646,949, and ASIF's supervised-entity list for the Holy See could not be read at all because the `sourceURL` the register records answers HTTP 404. An absence of any statement differs from the three refusals above, where the publisher reserves all rights. The other five follow. Companies House serves its Free Company Data Product from `download.companieshouse.gov.uk`, whose page states `This snapshot is provided free of charge` without naming a licence, a copyright holder or the Open Government Licence; the GOV.UK site-wide clause grants OGL over `content on GOV.UK`, a different domain from the one serving the product. Spain's `es-mixed-regulatory-1` names two publishers, Catastro and INE, and the retained ES receipt covers Catastro's INSPIRE licence alone, so one election against that row would grant INE's data on a reading of Catastro's terms. Kenya's PPRA and Kosovo's PPRC OCDS publications read `License: -` on the OCP Data Registry, which records no licence for either. Ghana's PPA publication records a licence as a bare URL, `https://www.ppaghana.org/ocds-license`, and that host did not resolve on 2026-09-30. The retrieved documents are in `internal/strategy/rights-receipts/gb-mx-es-2026-09-30/` and `ocp-eight-2026-09-30/`.",
 	"$sireneRepetition": "Nine of the decisions below are one reading of one document, recorded nine times. INSEE publishes SIRENE for mainland France and its overseas territories, and the register scopes a decision to one publisher in one jurisdiction, so BL, GF, GP, MF, MQ, PM, RE, WF and YT each carry their own. That repetition is deliberate: an election wide enough to cover nine jurisdictions at once is the failure review cannot undo.",
 	"$sharedReadings": "One publisher can hold a licence over several jurisdictions, and the register scopes a decision to one publisher in one jurisdiction, so reading that publisher's terms once produces several decisions with the same body. A decision reads `sameAs` to name a body declared here, which keeps each licence id's own decision while the prose behind it has one home. The build refuses a `sameAs` naming a reading this file does not declare.",
 	"$ocpRegistryStatements": "Five of the decisions below rest on the OCP Data Registry's own licence statement rather than on the publisher's page. Each of those register rows records its access as OCDS bulk through that registry and its `sourceURL` as the registry, so the copy this repository would fetch is the registry's and the licence it publishes is the one governing that copy. AusTender is the exception: its publisher's own terms were retrieved, which is the stronger record. Retrieving each of the five publishers' own pages would raise them to the same standard and is not done.",
@@ -143,7 +143,67 @@
 			}
 		}
 	},
+	"$firstRefusals": "Three decisions below read `refused`, the register's first. Each publisher reserves all rights in its own footer and publishes no data license: the Banque Centrale des Comores, the Institut de la statistique de la Polynésie française, and the Government of Tokelau. A footer notice is a site-wide assertion rather than a statement about the data, so a request to the publisher could still produce a grant. What `refused` records is that the terms were read and no grant was found, which is a different state from `unchecked`, where nobody looked.",
 	"decisions": {
+		"unchecked-national-terms-sj-br-nn-ysund-register-centre": {
+			"state": "elected",
+			"electedTerms": "Norsk lisens for offentlige data (NLOD) 2.0",
+			"spdx": "NLOD-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/seven-web-sources-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Brønnøysund's own open-data API documentation states one license and no alternative: `License: Norsk lisens for offentlige data (NLOD)`. NLOD 2.0's text is retained beside it. Its preface grants `the right to copy, use and distribute information, provided you acknowledge the contributors`, and section 2 grants `distributing the information to others, modifying the information and/or combining the information with other information, and copying and distributing such changed or combined information`, as `a non-exclusive, free, perpetual and worldwide licence` usable `in any medium and format known today and/or which will become known in the future`. Attribution is the only condition on use.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The preface grants the right to copy the information, which is what retrieving the register's records performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants modifying the information and combining it with other information, which covers reading the address fields out of a record."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants modification and the copying and distribution of the changed information, so a token and tag corpus is permitted with the contributors acknowledged."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants use in any medium and format known today or in future, and reserves no act of analysis."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants distributing the information and distributing changed or combined information. The licence's own commentary adds that `the party receiving such information must obtain permission from the original licensor`, so a recipient takes their grant from Brønnøysund rather than from this repository."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are the changed or combined information section 2 names is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "Section 2 states `The Licensee shall not sub-license or transfer this licence.` Its commentary is explicit that this `does not grant the licensee permission to grant others permission to use the information`."
+				}
+			}
+		},
+		"unchecked-national-terms-km-banque-centrale-des-comores": {
+			"state": "refused",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"refusedBecause": "The Banque Centrale des Comores reserves all rights in its own footer, `© Droit Réservé | Banque Centrale des Comores - 2022`, and the retained page carries no data license, no open-data statement and no reuse permission. The research pass's `Free` label records that the page costs nothing to read rather than a grant. A footer notice is a site-wide assertion rather than a statement about the data, so a request to the bank could still produce a grant; what this records is that the terms available were read and no grant was found."
+		},
+		"unchecked-national-terms-pf-institut-de-la-statistique-de-la-polyn-sie-fr": {
+			"state": "refused",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"refusedBecause": "The Institut de la statistique de la Polynésie française reserves all rights in its own footer, `© 2026 - ispf.pf Tous droits reservés`, and the retained Répertoire territorial des entreprises page carries no data license and no reuse permission. Its `mentions légales` path answers HTTP 404. The register row already records that its bulk path requires review, and this adds that the web path grants nothing either."
+		},
+		"unchecked-national-terms-tk-tokelau-department-of-education": {
+			"state": "refused",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"refusedBecause": "The Government of Tokelau reserves all rights in its own footer, `© Copyright On-Going Government of Tokelau. All Rights Reserved.`, and the retained school directory carries no data license. The row covers three schools, so the refusal costs the corpus almost nothing: the page itself states that the total student population across the three schools is just over 400."
+		},
 		"unchecked-national-terms-cl-direcci-n-de-compras-y-contrataci-n-p-blica": { "sameAs": "ocp-registry-cc0-1.0" },
 		"unchecked-national-terms-de-procurement-office-of-the-federal-ministry-of": { "sameAs": "ocp-registry-cc0-1.0" },
 		"unchecked-national-terms-it-autorit-nazionale-anticorruzione-anac": { "sameAs": "ocp-registry-cc-by-4.0" },

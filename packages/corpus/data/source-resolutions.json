@@ -8,6 +8,20 @@
 	"$sireneSecondAddress": "SIRENE's establishment file carries a second address family, the `2`-suffixed columns, which INSEE labels only `adresse secondaire` — `complementAdresse2Etablissement` reads `Complément d'adresse secondaire`. What role that address plays is unstated, so it takes no entry in `addressRoles` rather than a guessed one, and the coverage text names it so a reader knows the column exists.",
 	"$ocdsPartyRoles": "An OCDS release keys its addresses by party role, so `addressRoles` names roles rather than columns for those sources. A role is assigned only where OCDS's own codelist defines it, retrieved from `https://standard.open-contracting.org/1.1/en/codelists/partyRole.csv`: `buyer`, `procuringEntity`, `payer`, `funder` and `reviewBody` are bodies acting in the process, so their address is an office they operate and reads `facility`; `supplier` and `tenderer` are the transacting party, so theirs reads `counterparty`. Germany's release also uses eight roles from an extension whose codelist neither the 1.1 nor the latest list defines — `processContactPoint`, `reviewContactPoint`, `submissionReceiptBody`, `mediationBody`, `evaluationBody`, `procurementServiceProvider`, `leadTenderer`, `subcontractor` — and those take no role here rather than a guessed one.",
 	"resolutions": {
+		"sj-business-legal-1": {
+			"addressRoles": {
+				"forretningsadresse": "registered-office",
+				"postadresse": "mailing",
+				"beliggenhetsadresse": "facility"
+			},
+			"coverage": "Svalbard records in Brønnøysund's Enhetsregisteret, the Central Coordinating Register for Legal Entities, reached through its open-data API. Read from Brønnøysund's own API documentation rather than from a data sample: the record carries three named address families, `forretningsadresse` the business address, `postadresse` the postal address and `beliggenhetsadresse` the location address, each with `adresse`, `postnummer`, `poststed`, `kommune`, `land` and `landkode`. Three families with three roles on one record is the richest shape of the sources measured so far. The Svalbard subset's row count is unmeasured: the API serves the national register and no count was taken over its Svalbard rows.",
+			"upstreamLineage": ["https://data.brreg.no/enhetsregisteret/api/dokumentasjon/index.html"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Enhetsregisteret registers `enkeltpersonforetak`, sole proprietorships, so a record can name a natural person and give three addresses for them. No measurement was taken over the Svalbard subset, so this reading rests on the register's composition rather than on a count, and the count is the work that would narrow it. The shape matches SIRENE's: a national business register whose sole traders are natural persons.",
+				"record": "internal/strategy/rights-receipts/seven-web-sources-2026-09-30/README.md"
+			}
+		},
 		"it-procurement-grants-1": {
 			"addressRoles": {
 				"parties[roles=buyer].address": "facility",

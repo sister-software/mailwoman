@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "70a8f55608c0e801624d08249f0c81b7d3aeae7edf7437b7b08c424f6fd936b4",
+	"contentDigest": "7ab4a408c60390cbc1579487bad200388a8480c2ff55501450a24b63eb7772f9",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -1855,10 +1855,10 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Business and Companies Regulatory Division, Ministry of Commerce in KI, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-km-banque-centrale-des-comores",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Banque Centrale des Comores in KM, so electing it grants that publisher's sources in that jurisdiction alone."
+			"refusedBecause": "The Banque Centrale des Comores reserves all rights in its own footer, `© Droit Réservé | Banque Centrale des Comores - 2022`, and the retained page carries no data license, no open-data statement and no reuse permission. The research pass's `Free` label records that the page costs nothing to read rather than a grant. A footer notice is a site-wide assertion rather than a statement about the data, so a request to the bank could still produce a grant; what this records is that the terms available were read and no grant was found.",
+			"licenseID": "unchecked-national-terms-km-banque-centrale-des-comores"
 		},
 		{
 			"licenseID": "unchecked-national-terms-kn-financial-services-regulatory-commission-nevi",
@@ -2263,10 +2263,10 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to SUNARP + SUNAT in PE, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-pf-institut-de-la-statistique-de-la-polyn-sie-fr",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Institut de la statistique de la Polynésie française (ISPF) in PF, so electing it grants that publisher's sources in that jurisdiction alone."
+			"refusedBecause": "The Institut de la statistique de la Polynésie française reserves all rights in its own footer, `© 2026 - ispf.pf Tous droits reservés`, and the retained Répertoire territorial des entreprises page carries no data license and no reuse permission. Its `mentions légales` path answers HTTP 404. The register row already records that its bulk path requires review, and this adds that the web path grants nothing either.",
+			"licenseID": "unchecked-national-terms-pf-institut-de-la-statistique-de-la-polyn-sie-fr"
 		},
 		{
 			"licenseID": "unchecked-national-terms-pg-registrar-of-companies-investment-promotion-a",
@@ -2497,10 +2497,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to AJPES in SI, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-sj-br-nn-ysund-register-centre",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Brønnøysund Register Centre in SJ, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Norsk lisens for offentlige data (NLOD) 2.0",
+			"spdx": "NLOD-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/seven-web-sources-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Brønnøysund's own open-data API documentation states one license and no alternative: `License: Norsk lisens for offentlige data (NLOD)`. NLOD 2.0's text is retained beside it. Its preface grants `the right to copy, use and distribute information, provided you acknowledge the contributors`, and section 2 grants `distributing the information to others, modifying the information and/or combining the information with other information, and copying and distributing such changed or combined information`, as `a non-exclusive, free, perpetual and worldwide licence` usable `in any medium and format known today and/or which will become known in the future`. Attribution is the only condition on use.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The preface grants the right to copy the information, which is what retrieving the register's records performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants modifying the information and combining it with other information, which covers reading the address fields out of a record."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants modification and the copying and distribution of the changed information, so a token and tag corpus is permitted with the contributors acknowledged."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants use in any medium and format known today or in future, and reserves no act of analysis."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants distributing the information and distributing changed or combined information. The licence's own commentary adds that `the party receiving such information must obtain permission from the original licensor`, so a recipient takes their grant from Brønnøysund rather than from this repository."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are the changed or combined information section 2 names is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "Section 2 states `The Licensee shall not sub-license or transfer this licence.` Its commentary is explicit that this `does not grant the licensee permission to grant others permission to use the information`."
+				}
+			},
+			"licenseID": "unchecked-national-terms-sj-br-nn-ysund-register-centre"
 		},
 		{
 			"licenseID": "unchecked-national-terms-sk-ministry-of-justice-commercial-courts",
@@ -2605,10 +2644,10 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Tax Committee / national registration authority in TJ, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-tk-tokelau-department-of-education",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Tokelau Department of Education in TK, so electing it grants that publisher's sources in that jurisdiction alone."
+			"refusedBecause": "The Government of Tokelau reserves all rights in its own footer, `© Copyright On-Going Government of Tokelau. All Rights Reserved.`, and the retained school directory carries no data license. The row covers three schools, so the refusal costs the corpus almost nothing: the page itself states that the total student population across the three schools is just over 400.",
+			"licenseID": "unchecked-national-terms-tk-tokelau-department-of-education"
 		},
 		{
 			"licenseID": "unchecked-national-terms-tl-ministry-of-justice",
@@ -11188,7 +11227,19 @@
 			"access": "public web search + downloadable registered information",
 			"publisher": "Brønnøysund Register Centre",
 			"sourceURL": "https://virksomhet.brreg.no/en/",
-			"note": "Verified Svalbard records expose organisation number, business address and postal address."
+			"note": "Verified Svalbard records expose organisation number, business address and postal address.",
+			"addressRoles": {
+				"forretningsadresse": "registered-office",
+				"postadresse": "mailing",
+				"beliggenhetsadresse": "facility"
+			},
+			"coverage": "Svalbard records in Brønnøysund's Enhetsregisteret, the Central Coordinating Register for Legal Entities, reached through its open-data API. Read from Brønnøysund's own API documentation rather than from a data sample: the record carries three named address families, `forretningsadresse` the business address, `postadresse` the postal address and `beliggenhetsadresse` the location address, each with `adresse`, `postnummer`, `poststed`, `kommune`, `land` and `landkode`. Three families with three roles on one record is the richest shape of the sources measured so far. The Svalbard subset's row count is unmeasured: the API serves the national register and no count was taken over its Svalbard rows.",
+			"upstreamLineage": ["https://data.brreg.no/enhetsregisteret/api/dokumentasjon/index.html"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Enhetsregisteret registers `enkeltpersonforetak`, sole proprietorships, so a record can name a natural person and give three addresses for them. No measurement was taken over the Svalbard subset, so this reading rests on the register's composition rather than on a count, and the count is the work that would narrow it. The shape matches SIRENE's: a national business register whose sole traders are natural persons.",
+				"record": "internal/strategy/rights-receipts/seven-web-sources-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "tc-business-legal-1",
