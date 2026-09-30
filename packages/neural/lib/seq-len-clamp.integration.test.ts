@@ -16,25 +16,16 @@
  *   the difference invites diagnosing this as a word-consistency bug.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 
 import { NeuralAddressClassifier } from "#classifier"
-import { resolveWeights } from "#weights"
 
-async function modelIsMaterialized(): Promise<boolean> {
-	try {
-		const weights = await resolveWeights({ locale: "en-US" })
+import { MODEL_LOAD_TEST_TIMEOUT_MS, testModelAssets } from "../test/model-assets.ts"
 
-		return !!weights.modelPath && (await pathExists(weights.modelPath))
-	} catch {
-		// Lean checkout with no materialized weights — skip, like the other model-conditional suites here.
-		return false
-	}
-}
+const haveModel = (await testModelAssets()) !== null
 
-const haveModel = await modelIsMaterialized()
+vi.setConfig({ testTimeout: MODEL_LOAD_TEST_TIMEOUT_MS })
 
 const TAIL = "1600 Amphitheatre Parkway, Mountain View, California, 94043, United States"
 /**

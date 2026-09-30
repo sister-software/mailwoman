@@ -20,11 +20,15 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 
 import { NeuralAddressClassifier } from "#classifier"
 import { resolveWeights } from "#weights"
 import { readLabelsFromModelCard } from "#weights/channels"
+
+import { MODEL_LOAD_TEST_TIMEOUT_MS } from "../test/model-assets.ts"
+
+vi.setConfig({ testTimeout: MODEL_LOAD_TEST_TIMEOUT_MS })
 
 /**
  * Every locale with a weights workspace.

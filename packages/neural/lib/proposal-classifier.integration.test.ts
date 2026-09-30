@@ -6,21 +6,19 @@
  *   Unit + smoke tests for `createNeuralProposalClassifier`.
  *
  *   The unit tests stub a `NeuralAddressClassifier` with a hand-authored `AddressTree` so we exercise
- *   the adapter logic without loading a real model. The smoke test runs against the v0.2.0 int8
- *   weights when `MAILWOMAN_TEST_ONNX_MODEL` (or the default host path) is present.
+ *   the adapter logic without loading a real model. The smoke test runs against the model that
+ *   `test/model-assets.ts` selects, and skips in a checkout that has none.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { workspacePath } from "@mailwoman/core/paths"
 import type { Section } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
 
 import { NeuralAddressClassifier } from "#classifier"
-import { $public } from "#env"
 import { createNeuralProposalClassifier, type NeuralProposalClassifierConfig } from "#proposal-classifier"
+
+import { testModelAssets } from "../test/model-assets.ts"
 
 /**
  * Minimal duck-typed Section.
@@ -31,15 +29,11 @@ function sectionLiteral(body: string, start = 0): Section {
 	return { body, start, end: start + body.length } as Section
 }
 
-const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
-
-const MODEL_PATH =
-	$public.MAILWOMAN_TEST_ONNX_MODEL ?? dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx")
-
-const haveModel = await pathExists(MODEL_PATH)
+const assets = await testModelAssets()
+const haveModel = assets !== null
 
 /**
- * The coarse tags the v0.2.0 model is expected to reach at least one of.
+ * The coarse tags the test model is expected to reach at least one of.
  *
  * Typed so a tag that leaves the union stops compiling rather than silently never matching.
  */
@@ -162,11 +156,11 @@ describe("createNeuralProposalClassifier — proposal emission", () => {
 	})
 })
 
-describe.skipIf(!haveModel)("createNeuralProposalClassifier — e2e with v0.2.0 weights", () => {
+describe.skipIf(!haveModel)("createNeuralProposalClassifier — e2e with the test model", () => {
 	test("emits at least one coarse proposal for a familiar address", async () => {
 		const neural = await NeuralAddressClassifier.loadFromWeights({
-			modelPath: MODEL_PATH,
-			tokenizerPath: TOKENIZER_PATH,
+			modelPath: assets!.modelPath,
+			tokenizerPath: assets!.tokenizerPath,
 		})
 
 		const cls = createNeuralProposalClassifier({ id: "neural-v0.2.0-en-us", classifier: neural })
