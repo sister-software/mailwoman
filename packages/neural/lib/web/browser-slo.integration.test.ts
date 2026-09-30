@@ -573,7 +573,7 @@ const BROWSER_ENTRY_SOURCE = [
 	// the root manifest there and fails.
 	// The entry therefore imports the package's public subpaths.
 	'import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"',
-	'import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"',
+	'import { WebONNXRunner } from "@mailwoman/neural/web/onnx-runner"',
 	"",
 	"// Pinned so the warm number names one arm. Without cross-origin isolation ORT would settle on a",
 	"// single thread anyway; stating it removes the dependence on that inference.",

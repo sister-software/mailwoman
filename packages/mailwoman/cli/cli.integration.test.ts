@@ -72,6 +72,6 @@ describe("the published bin names", () => {
 	test("`mailwoman` and `mw` both point at the compiled CLI", async () => {
 		const manifest = await readPackageJSON(workspacePath("mailwoman", "package.json"))
 
-		expect(manifest.bin).toEqual({ mailwoman: "./out/cli.js", mw: "./out/cli.js" })
+		expect(manifest.bin).toEqual({ mailwoman: "./out/cli/main.js", mw: "./out/cli/main.js" })
 	})
 })
