@@ -21,8 +21,15 @@ import { trackedSourcePaths } from "#tracked-sources"
 
 /**
  * Matches one Vale `--output line` record of the form `path:line:col:Rule:message`.
+ *
+ * Vale prefixes a rule with the style package that holds it, and `config/vale/.vale-code-census.ini`
+ * sets that package to `styles` on its `BasedOnStyles = styles` line.
+ * A pattern naming another package matches no record, so `collectHits` returns
+ * an empty array for a tree that has hits.
+ *
+ * The `POSITIVE_CONTROL` check exists for that failure and reports it as a run that measured no rows.
  */
-const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
+const HIT_PATTERN = /^(.*?):(\d+):(\d+):styles\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
  * Matches an interface-tied token.
@@ -59,15 +66,15 @@ export interface Hit {
 	/**
 	 * The word immediately before the hit.
 	 *
-	 * When this word carries meaning, it identifies the intended check.
+	 * When this word has meaning, it identifies the intended check.
 	 */
 	modifier: string
 }
 
 /**
- * Preceding words that carry no meaning include articles and pronouns.
+ * Articles and pronouns are examples of preceding words that add no meaning.
  *
- * Comment markers also carry no meaning.
+ * Comment markers also add no meaning.
  * A hit after any of them is a bare reference.
  */
 const EMPTY_MODIFIERS = new Set([
@@ -214,7 +221,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
 	// Vale must run from the repository root because its paths are repo-relative.
-	// A process error carries the expected output when Vale exits non-zero for alerts.
+	// A process error includes the expected output when Vale exits non-zero for alerts.
 	// The function rethrows every other error instead of treating it as zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,
@@ -243,7 +250,7 @@ const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 	["config/vale/fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
 	["packages/repo-health/lib/checks/vocab-census.ts", "this file — its patterns have to spell the words it classifies"],
-	["packages/repo-health/test/unit/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
+	["packages/repo-health/lib/checks/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
 	["packages/repo-health/lib/checks/debt.ts", "its banned-vocabulary constant has to spell the word it counts"],
 	["config/vale/check-rules.ts", "the rule fixtures' own harness; its docstring quotes the words the rules match"],
 ]

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Regenerate every version-stamped generated document after a release bump. The man page embeds
- *   `mailwoman <version>` in its `.TH` line, so every bump stales it. The docs CLI reference carries
+ *   `mailwoman <version>` in its `.TH` line, so every bump stales it. The docs CLI reference contains
  *   no version stamp today, but it is generated from the same help tree, so regenerating both keeps
  *   one sequence.
  *
@@ -24,13 +24,13 @@ import { $ } from "zx"
 /**
  * The generated surfaces, each with the generator that owns it.
  *
- * Adding a version-stamped generated document means adding a row here.
+ * Each version-stamped generated document needs a row here.
  * The prepare job stages exactly these paths.
  */
 const GENERATED_SURFACES: ReadonlyArray<{ file: string; generator: readonly string[] }> = [
 	{
 		file: "packages/mailwoman/man/mailwoman.1",
-		generator: ["packages/mailwoman/out/cli/index.js", "dev", "generate", "man-page"],
+		generator: ["packages/mailwoman/out/cli/main.js", "dev", "generate", "man-page"],
 	},
 	{ file: "docs/articles/developers/reference/cli.mdx", generator: ["docs/scripts/generate-cli-reference.ts"] },
 ]
@@ -44,7 +44,7 @@ export async function releaseGeneratedSurfaces(
 	repoRoot: string,
 	log: (line: string) => void
 ): Promise<GeneratedSurfaceState[]> {
-	const compiledCLI = resolvePath(repoRoot, "packages/mailwoman/out/cli/index.js")
+	const compiledCLI = resolvePath(repoRoot, "packages/mailwoman/out/cli/main.js")
 
 	if (!(await pathExists(compiledCLI))) {
 		throw new Error(

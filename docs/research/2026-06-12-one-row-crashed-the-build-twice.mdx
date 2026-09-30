@@ -68,7 +68,7 @@ have been `[0, 13)`. Our span-locating code returned `[0, 14)`, one code unit pa
 string that should contain it. The overrun was exactly one code unit, on a string made almost
 entirely of combining marks.
 
-Combining marks are a common source of bugs in character-offset code. A grapheme like the Bengali
+Unicode combining marks are a common source of bugs in character-offset code. A grapheme like the Bengali
 `ক্ষ` is several code units. The boundary logic that keeps a short component from matching inside
 a longer component's word behaves correctly on Latin script. On this string it stepped one code
 unit too far across the combining sequence and returned an impossible offset. The span-invariant
@@ -83,8 +83,8 @@ data we had not tested.
 
 The obvious fix is the off-by-one itself. A proper fix teaches the boundary logic about combining
 marks and _keeps_ every one of those non-Latin rows. We filed it as issue #555 and will do it
-properly. Writing that fix at 3 a.m., during recovery, to unblock a multi-hour build would risk
-introducing a worse bug.
+properly. A 3 a.m. fix during recovery could introduce a worse bug while trying to unblock
+a multi-hour build.
 
 The recovery fix was smaller: no single row can crash hours of work. It has two parts. First, an
 out-of-bounds span (one that cannot be a valid character offset) quarantines the row with a named

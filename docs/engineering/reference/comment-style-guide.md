@@ -1,6 +1,6 @@
 # Mailwoman comment and code documentation style
 
-This guide sets the voice for Mailwoman code comments, API documentation, and explanatory text in tests. It draws on comments and documentation from the author's earlier projects and on the current Mailwoman communication standards.
+This guide sets the voice for Mailwoman code comments, API documentation, Markdown prose, and explanatory text in tests. It draws on comments and documentation from the author's earlier projects and on the current Mailwoman communication standards.
 
 The goal is a natural, useful explanation. A comment can be conversational, but it should tell a reader what the code does, why a choice matters, or what a test establishes. It should not make the reader reconstruct the point from narration, shorthand, or a chain of clauses.
 
@@ -31,6 +31,14 @@ Name the property the code relies on, then state what follows from it.
 ```
 
 Use the actual buffer, index, state, or lifecycle rule. The word “invariant” can be useful when discussing a named invariant, but it should not replace the property itself.
+
+### Lead with the subject and its action
+
+Start with the person, component, or operation that acts. An opening `-ing` phrase can hide its actor or turn an action into a long noun phrase.
+
+```ts
+// The parser validates the response before it passes fields to the decoder.
+```
 
 ### Give each causal step a sentence
 
@@ -84,7 +92,7 @@ Comment non-obvious behavior, constraints, decisions, and limitations. Keep comm
 
 ### Do not chain another thought onto the sentence
 
-The target cadence is a sentence that reaches its main point, adds a comma, and then keeps going through `which`, `whose`, or `and`. These clauses can each be grammatical. The problem is the accumulation: the reader must remember the opening point while the sentence adds another operation, explanation, or result.
+The target cadence starts with a main point. A comma adds another clause beginning with `which`, `whose`, or `and`. These clauses can each be grammatical. The problem is the accumulation: the reader must remember the opening point while the sentence adds another operation, explanation, or result.
 
 ```ts
 // The pass uses the trainer's emitter, which makes its counts comparable, and this means the audit matches a training run.
@@ -111,6 +119,14 @@ const reader = stream.readable.getReader()
 ```
 
 Explain an ordering only when the order matters. Then say why.
+
+### Do not open with an `-ing` construction
+
+Put the subject before the action, even when the `-ing` sentence is grammatical. The opening phrase should identify who or what performs the operation.
+
+```ts
+// Validating the response before passing it to the decoder keeps malformed values out.
+```
 
 ### Do not rely on shared context or hints
 
@@ -147,7 +163,9 @@ When the claim depends on an evaluation, name its conditions and metric. Separat
 
 ```ts
 /** Creates a session. */
-function createSession() { /* ... */ }
+function createSession() {
+	/* ... */
+}
 ```
 
 Add behavior, inputs, outputs, constraints, side effects, or caller guidance that the symbol itself does not express. Remove empty JSDoc blocks and comments that add no information.

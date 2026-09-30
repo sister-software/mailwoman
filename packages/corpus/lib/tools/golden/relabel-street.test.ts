@@ -4,12 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   Fixture rows for the golden street-suffix relabel (v0.1.2 → v0.1.3). Every class the tool
- *   distinguishes gets a row here, including the ones it must leave alone. Those are the
+ *   distinguishes gets a row here, including the ones it must leave unchanged. Those are the
  *   interesting half, because a relabel that over-reaches silently rewrites the answer key.
  */
 
-import { type GoldenStreetRow, relabelGoldenStreetRow } from "@mailwoman/corpus/tools/golden-relabel-street"
 import { describe, expect, it } from "vitest"
+
+import { type GoldenStreetRow, relabelGoldenStreetRow } from "#tools/golden/relabel-street"
 
 const row = (components: Record<string, string>, extra: Partial<GoldenStreetRow> = {}): GoldenStreetRow => ({
 	raw: "(unused by the row-level relabel)",
@@ -82,7 +83,8 @@ describe("relabelGoldenStreetRow", () => {
 
 	it("refuses to strip a post-directional when it would leave the street empty", () => {
 		// "1ST AVE SW BOX E": trailing "E" is a directional but "BOX" is no suffix.
-		// The b1 branch must not fire, and the b3 branch is not applied at all.
+		// The b1 branch stays inactive.
+		// The b3 branch is skipped entirely.
 		const out = relabelGoldenStreetRow(row({ street: "1ST AVE SW BOX E" }))
 
 		expect(out.changed).toBe(false)

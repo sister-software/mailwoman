@@ -6,7 +6,7 @@
  * What data the repository holds, per country and per artifact — the question before `lookup-sources.ts`'s "does this
  * source know this string".
  *
- * A row count alone can mislead. The report includes `join` and `parentLinked`: `postalcode-geonames-intl.db` holds
+ * A row count by itself can mislead. The report includes `join` and `parentLinked`: `postalcode-geonames-intl.db` holds
  * 395,544 PT postcodes and is `spr`-only. Even `postalcode-intl.db`'s `ancestors` table reaches no locality when
  * every `parent_id` is `-1`. A zero-byte or table-less extract is reported unreadable rather than as zero rows.
  *
@@ -44,14 +44,14 @@ export interface SourceCensusRow {
 	bytes: number
 	tables: number
 	/**
-	 * Present only when the artifact carries an `spr` table.
+	 * Present only when the artifact contains an `spr` table.
 	 *
 	 * A file without one is reported unreadable with a reason rather than a zero.
 	 */
 	countries?: Record<string, number>
 	join: JoinCapability[]
 	/**
-	 * Whether any row carries a usable `parent_id`.
+	 * Whether any row has a usable `parent_id`.
 	 *
 	 * A row count cannot show that every row has `-1` and lacks a parent link.
 	 */

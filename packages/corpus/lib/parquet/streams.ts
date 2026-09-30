@@ -25,10 +25,10 @@ export function normalizeDuckDBValue(value: unknown): unknown {
 
 	// A DuckDB STRUCT arrives as `{ entries: { field: value } }` rather than as
 	// the plain object its fields describe.
-	// Handing that through makes `row.address_levels[0].value` read `undefined` on every row.
+	// The raw value makes `row.address_levels[0].value` read `undefined` on every row.
 	// A consumer counting values then reports that the file does not populate the column.
 	// Overture's `address_levels` and `sources` are both lists of structs.
-	// Reading them unwrapped reported all 25,914,431 Italian rows as carrying no locality.
+	// Unwrapped values made the audit report all 25,914,431 Italian rows as lacking locality.
 	if (value && typeof value === "object" && "entries" in value && value.entries && typeof value.entries === "object") {
 		return Object.fromEntries(
 			Object.entries(value.entries as Record<string, unknown>).map(([key, entry]) => [key, normalizeDuckDBValue(entry)])
@@ -57,8 +57,8 @@ export interface ParquetRowStreamOptions {
 	 *
 	 * Every column when omitted.
 	 *
-	 * A column the file does not carry raises rather than coming back absent: a projection
-	 * that silently drops a field hands the consumer a well-formed row with the field missing.
+	 * A column absent from the file raises rather than coming back absent: a projection that
+	 * silently drops a field hands the consumer a well-formed row with the field missing.
 	 * The consumer reads that as "this row has no value there" instead of "this file has no such column".
 	 */
 	columns?: readonly string[]

@@ -5,7 +5,7 @@
  *
  *   Stage sql.js-httpvfs's runtime files (the UMD, the worker, the wasm) into an app's public directory before Vite
  *   builds or serves, so the httpvfs readers find them at a same-origin path. The files are never bundled: the readers
- *   load them by URL at run time, and a worker script must be a real file on the origin that serves the page.
+ *   load them by URL at run time. A worker script must be a real file on the origin that serves the page.
  */
 
 import { stageSQLJSAssets } from "@mailwoman/resolver-wof-wasm/host-assets"

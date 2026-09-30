@@ -11,8 +11,8 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { CoverageBasis, EpistemicStatus } from "@mailwoman/evidence"
 
 /**
- * What may be claimed about a coordinate, from how it was produced and, when the
- * answering register carries one, the coverage basis of the row that answered.
+ * What may be claimed about a coordinate, from how it was produced and, when the answering
+ * register includes one, the coverage basis of the row that answered.
  *
  * - No coordinate → `unresolved`
  * - A register row whose coverage basis is `designated` → `designated` (an authority assigned it)

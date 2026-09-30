@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The registry of repository health checks — the only executable entry point of this package, and the file knip
+ *   The registry of repository health checks — the only executable entry point of this package. Knip
  *   treats as such. A check that is not listed here is dead code and knip reports it. `mwops health <id>` and
  *   `mwops health all` iterate this array.
  */
@@ -23,6 +23,7 @@ import { localeTablesCheck } from "#checks/locale/tables"
 import { manifestTargetsCheck } from "#checks/manifest-targets"
 import { moduleCohesionCheck } from "#checks/module/cohesion"
 import { moduleSurfaceCheck } from "#checks/module/surface"
+import { nestedIndexCheck } from "#checks/nested-index"
 import { noRootScriptsCheck } from "#checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
 import { packageLicenseCheck } from "#checks/package-license"
@@ -43,6 +44,7 @@ import { weightsFamilyCheck } from "#checks/weights/family"
 import { weightsReconciliationCheck } from "#checks/weights/reconciliation"
 import { weightsRightsCheck } from "#checks/weights/rights"
 import { wireIdentifiersCheck } from "#checks/wire-identifiers"
+import { workspaceExportsCheck, workspaceFilesCheck } from "#checks/workspace-manifest"
 
 /**
  * Every health check, in the order `mwops health all` runs them: the ones that only read
@@ -65,11 +67,14 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	nodeModulesReacharoundCheck,
 	noRootScriptsCheck,
 	manifestTargetsCheck,
+	workspaceExportsCheck,
+	workspaceFilesCheck,
 	moduleSurfaceCheck,
 	moduleCohesionCheck,
 	privateNameShadowsCheck,
 	cliFlagPropertiesCheck,
 	prefixDirectoriesCheck,
+	nestedIndexCheck,
 	pythonPrefixDirectoriesCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,

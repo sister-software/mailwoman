@@ -5,15 +5,16 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeDelimitedFixture } from "@mailwoman/corpus/test-kit"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
+import type { PathBuilder } from "path-ts"
+import { afterAll, beforeEach, describe, expect, it } from "vitest"
+
+import { writeDelimitedFixture } from "#test-kit"
+import type { CanonicalRow } from "#types"
 import {
 	createUSGovIRSBMFAdapter,
 	USGOV_IRS_BMF_ADAPTER_ID,
 	USGOV_IRS_BMF_DEFAULT_LICENSE,
-} from "@mailwoman/corpus/us/adapters/usgov/irs-bmf/adapter"
-import type { PathBuilder } from "path-ts"
-import { afterAll, beforeEach, describe, expect, it } from "vitest"
+} from "#us/adapters/usgov/irs-bmf/adapter"
 
 const fixtures = new AsyncDisposableStack()
 

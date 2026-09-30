@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Blocking — candidate generation. Comparing every pair is O(n²) (a million records is a trillion
- *   comparisons), so we only score pairs that share a cheap key. This is where the geocode-first
+ *   The blocking stage generates candidate pairs. An all-pairs comparison is O(n²): a million records require a trillion
+ *   comparisons. This stage scores pairs that share a cheap key. This is where the geocode-first
  *   bet pays off: two records resolving to the same place land in the same spatial cell regardless
  *   of how their address strings are spelled, so geography is the primary block.
  *

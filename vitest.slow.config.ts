@@ -10,7 +10,7 @@ export default mergeConfig(
 	baseConfig,
 	defineConfig({
 		test: {
-			include: ["packages/*/test/integration/**/*.{test,spec}.{ts,tsx}"],
+			include: ["packages/*/**/*.integration.test.{ts,tsx}"],
 		},
 	})
 )

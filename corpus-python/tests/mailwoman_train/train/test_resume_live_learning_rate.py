@@ -2,7 +2,7 @@
 
 `optim.load_state_dict()` overwrites every param group's `lr` and `initial_lr` with the checkpoint's saved values and `scheduler.load_state_dict()` does it again to the scheduler's base rates, so the live rates must be captured before either load and re-stamped after both.
 
-The config carries two rates — `train.learning_rate` and the `classifier_learning_rate` carve-out — so the check is per group."""
+The config defines two rates — `train.learning_rate` and the `classifier_learning_rate` carve-out — so the check is per group."""
 
 from __future__ import annotations
 

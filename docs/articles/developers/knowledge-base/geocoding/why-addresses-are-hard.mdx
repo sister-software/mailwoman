@@ -40,7 +40,7 @@ like a description of addresses rather than a description of one country's conve
 Germany writes the house number after the street. France writes the postcode before the town.
 Japanese addresses start at the prefecture and work inward, and number blocks rather than streets —
 so there is no street name to parse at all. Mannheim's city center is a lettered grid where `R 5` is a
-block rather than a road. [Addressing around the world](../postal/addressing-around-the-world.mdx) walks
+block rather than a road. [Global address conventions](../postal/addressing-around-the-world.mdx) walks
 those conventions properly.
 
 The structural point is not that there are exceptions. It is that there is no privileged ordering for
@@ -92,8 +92,8 @@ of map search boxes that capitalization is not required and diacritics are not r
 Lowercase is not degraded input. It is the register real users type, and a system that treats it as an
 error case has misidentified where its users live. The same is true of the colloquial name (`Bombay`
 for `Mumbai`, `Saigon` for `Ho Chi Minh City`) — both names in each pair are in current use by
-millions of people, and the choice between them can carry political weight. Rejecting one is rejecting
-real usage; silently rewriting it is making a decision on the user's behalf that they did not ask for.
+millions of people, and the choice between them can carry political weight. A rejection erases real
+usage; a silent rewrite makes a decision on the user's behalf that they did not ask for.
 
 And the same is true of the wrong-but-workable name: the neighborhood given as the city, the
 independent city given as its larger neighbour, the postal town that is not the municipality. In every
@@ -121,14 +121,14 @@ to the carrier who knows the route. Each link hands the next one enough to decid
 
 There is a limit on the learning side too, and it belongs in the same breath. A model that has seen no
 fractional house numbers will not invent the category; it will assign the pieces to whatever its
-training distribution makes likely. Learning the distribution beats enumerating the rules, and it is
-not a way of escaping the need for data about the shapes you care about.
+training distribution makes likely. A model that learns the distribution handles more cases than a
+list of rules, but still needs data about the shapes you care about.
 
 ## Related
 
 - [Falsehoods about addresses](../postal/falsehoods-about-addresses.mdx) — the specimens, twenty-five
   of them.
-- [Addressing around the world](../postal/addressing-around-the-world.mdx) — the conventions the first
+- [Global address conventions](../postal/addressing-around-the-world.mdx) — the conventions the first
   section refers to.
 - [Handle messy input](../../how-to/handle-messy-input.mdx) — what the pipeline repairs, and what it
   leaves alone.

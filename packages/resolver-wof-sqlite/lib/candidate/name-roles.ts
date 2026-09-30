@@ -18,13 +18,13 @@ import { normalizeLocalityForKey } from "#street/normalize"
 /**
  * Key-count threshold for the gloss anomaly detector.
  *
- * A legitimate famous place is separated by the prominence check rather than this number alone.
+ * A legitimate famous place is separated by the prominence check rather than this number by itself.
  */
 export const GLOSS_KEY_THRESHOLD = 50
 
 /**
- * Placetypes the gloss detector never flags: a country or region legitimately carries
- * a name in every language, so key volume carries no signal there.
+ * Placetypes the gloss detector never flags: a country or region legitimately has a
+ * name in every language, so key volume provides no signal there.
  */
 export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
@@ -42,7 +42,7 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
  * own-name verdict, then `gloss` by key-volume anomaly.
  *
  * @returns The stamp counts plus the census the prototype exists to report:
- * how much of the ≥-threshold key tail carries any role.
+ * how much of the ≥-threshold key tail has any role.
  */
 export function stampNameRoles(ctx: {
 	src: DatabaseClient<WOFDatabase>
@@ -89,7 +89,7 @@ export function stampNameRoles(ctx: {
 	if (hasSourceNames) {
 		out.exec("BEGIN")
 
-		// WOF's abbreviation/short name kinds qualify by kind alone.
+		// WOF's abbreviation/short name kinds qualify by kind only.
 		// Everything else qualifies as a variant in an official language.
 		for (const r of src
 			.prepare("SELECT id, name, language FROM names WHERE privateuse = 'variant' OR language IN ('abbr', 'short')")
@@ -127,8 +127,8 @@ export function stampNameRoles(ctx: {
 			.run().changes
 	)
 
-	// Runs before gloss on purpose: the place's own name is not a translation,
-	// and an uncovered script answers no-verdict.
+	// Runs before gloss so the place's own name remains its source name.
+	// An uncovered script answers no-verdict.
 	out.exec(
 		"CREATE TEMP TABLE variant_key (spr_id INTEGER NOT NULL, name_key TEXT NOT NULL, PRIMARY KEY (spr_id, name_key)) WITHOUT ROWID"
 	)

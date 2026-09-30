@@ -1,17 +1,17 @@
 """Build the Taiwanese training corpus for the character-path CJK model from Overture-TW (#2204 §2).
 
 Source: ``$MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/addresses-tw.parquet`` — 9,732,009 rows, every one with
-three ``address_levels`` (縣市 / 鄉鎮市區 / 村里), a ``street`` that already carries the section, lane and alley
+three ``address_levels`` (縣市 / 鄉鎮市區 / 村里), a ``street`` that already contains the section, lane and alley
 (``建國路三段``, ``文建街２０１巷``), a ``number`` (``２９８`` or ``２０１號``) and a ``unit`` that holds the
 sub-number and the floor (``之１號``, ``四樓``, ``四樓之２``). The rows come from the civil-affairs bureaus of 15
 of Taiwan's 22 縣市 through OpenAddresses (CC BY 4.0), redistributed by Overture under CDLA-Permissive-2.0. the
 build report lists the 15 agencies recorded in the parquet's ``sources.dataset`` column. The model
-card carries that list because the Taiwanese license voids the grant when attribution is missing.
+card lists that data because the Taiwanese license voids the grant when attribution is missing.
 
 Measured over a 1,486,679-row sample (12 of the row groups): street ends in 巷 33%, 路 23%, 街 16%, 段 13%, 弄 12%;
 ``number`` is ``N號`` in 89% and a bare ``N`` in 11%; ``unit`` is empty in 39%, a sub-number ``之N號`` in 6%, a floor
-(``三樓`` … ``七樓``) or a floor plus sub-number in the rest. No row carries a postcode (Chunghwa Post's 3+3 codes
-carry no distribution grant, so none is built here either).
+(``三樓`` … ``七樓``) or a floor plus sub-number in the rest. No row contains a postcode (Chunghwa Post's 3+3 codes
+have no distribution grant, so none is built here either).
 
 Labels, under the ``stage3-cjk`` head with no new tag, mirroring the Korean choice of one tag per WOF placetype:
 
@@ -22,7 +22,7 @@ Labels, under the ``stage3-cjk`` head with no new tag, mirroring the Korean choi
     number + 之N sub-number → house_number, with the 號 designator inside the span (``298之1號``)
     floor     → unit                (``四樓``, ``四樓之2``)
 
-Registers (weights renormalized over what a row can render. the build report says what landed):
+Registers (weights renormalized over what a row can render. the build report records what landed):
 
     official     高雄市鳳山區忠義里中山西路２９８之１號       the household-registration form: full-width digits, the 里 present
     no_village   高雄市鳳山區中山西路298之1號               how it is typed: no 里, ASCII digits
@@ -32,7 +32,7 @@ Registers (weights renormalized over what a row can render. the build report say
 
 Held-out 鄉鎮市區 (the board) are chosen by the same stable hash rule as the JP and KR boards, at the KR share
 (``--board-bucket-min 90``, about one district in ten); train and val are stratified over the 縣市 by water-filling.
-The board carries the row's own coordinate. a per-district centroid table (mean of every source row) is written
+The board stores the row's own coordinate. A per-district centroid table (mean of every source row) is written
 beside it so the JP scorer reads the coordinate half with ``--resolve-tags region,subregion``.
 
 Two modules, the same division as the Japanese and Korean builders: `rows` reads the parquet and renders one row

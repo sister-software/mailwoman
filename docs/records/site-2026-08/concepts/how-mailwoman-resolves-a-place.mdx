@@ -58,7 +58,7 @@ The parse labeled "Springfield" as a locality. Resolution answers the question t
 </address>
 ```
 
-The spans, offsets, and confidences are unchanged from the parser. The resolver adds `place=` and the coordinates, and changes the `src=` attribution to `resolver`, keeping the classifier's original label in metadata. Parsing and resolving are deliberately separate jobs. The model handles the grammar, the gazetteer handles geography, and either side can be upgraded without retraining the other. [What Mailwoman is](./what-mailwoman-is.mdx) explains that design in full.
+The resolver preserves the parser's spans, offsets, and confidences. It adds `place=` and coordinates, and changes the `src=` attribution to `resolver` while keeping the classifier's original label in metadata. These jobs are deliberately separate. The model handles the grammar, the gazetteer handles geography, and either side can be upgraded without retraining the other. [What Mailwoman is](./what-mailwoman-is.mdx) explains that design in full.
 
 ## The atlas on disk
 
@@ -68,7 +68,7 @@ Everything the resolver reads is a read-only SQLite artifact, built ahead of tim
 
 The resolver walks the tree top-down. At each node whose tag is a place type (country, region, locality, postcode), it asks the backend which places have this name and type under the current constraints. Lookups are budgeted, by default to ten per tree with five candidates each. The resolver never queries tags without place semantics, such as `house_number` and `unit`.
 
-Retrieval is an exact lookup on normalized name keys, with a trigram index for fuzzy matches. Ranking follows a strict order:
+Retrieval performs an exact lookup on normalized name keys and uses a trigram index for fuzzy matches. The ranking follows a strict order:
 
 1. **Exact name matches outrank partial matches.** A place named exactly "Springfield" beats every "Springfield Gardens" the index also returns.
 2. **Within a tier, prominence decides.** Prominence is capped log-population, plus a proximity term when the caller supplies a map viewport or user location. This is the importance ranking a Pelias user expects, but it only breaks ties _within_ one match-quality tier. Applied across tiers, population would pull "ME" to Missouri (a populous partial match) over Maine (the exact match).
@@ -80,7 +80,7 @@ Under that ranking, a bare `Springfield` with no other evidence resolves to Spri
 
 Our query has more context than a bare Springfield, because the parse nested it under a region. The walk is top-down, so `IL` resolves first, to Illinois. The locality lookup below it is limited to descendants of Illinois in the gazetteer's containment graph, so the Missouri Springfield never enters the pool. This is how the resolver handles namesakes such as the several Berlins or Warsaws. It applies the same containment logic that [the tree builder](./containment-and-tree-projection.mdx) used to nest the spans, now checked against the map instead of the string.
 
-Scoping assumes that the parent resolved correctly. Several fallback passes cover the cases where it did not, and these passes handle most namesake cases:
+The scope search assumes that the parent resolved correctly. Several fallback passes cover incorrect parent resolutions, and these passes handle most namesake cases:
 
 - **An empty scope triggers one retry without the parent**, keeping the country constraint. A missing link in a gazetteer's ancestor chain should not turn a resolvable town into a null.
 - **A resolved region with a failed child locality** points to a likely greedy-order error. A bare "ME" can mean Maine or Messina, Italy. A post-walk pass then asks which same-named region candidate has a locality of this name under it. It re-picks both nodes as a pair and records the swap on the node.

@@ -5,7 +5,7 @@
  *
  * The page's half of the range-cache protocol in `service-worker.ts`: the worker persists every validated 64 KB range
  * chunk of the byte-range databases under an immutable, versioned URL, so the page must name the release whose chunks
- * stay cached, and everything here is best-effort — no service worker support (insecure context, private mode) degrades
+ * stay cached. Everything here is best-effort — no service worker support (insecure context, private mode) degrades
  * to plain network range fetches.
  */
 

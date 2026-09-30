@@ -1,0 +1,62 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman eval ledger-append`: turn a promotion-eval out-dir into one row of
+ *   `evals/scores-by-version.json`. `eval promote` prints this command pre-filled on every
+ *   `pass`. Refuses duplicates without `--replace` and refuses un-excepted `fail` verdicts. exit codes
+ *   mirror the retired script (0 appended, 1 refused, 2 usage).
+ */
+
+import { type CommandSpec, harnessCommand } from "#cli-kit"
+
+export const description = "Append a promotion-eval run to evals/scores-by-version.json (#885)"
+
+/**
+ * Native command-line interface consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "ledger-append",
+	description,
+	options: {
+		"out-dir": { type: "string", description: "The promotion-eval out-dir carrying verdict.json (required)" },
+		"model-version": { type: "string", description: "The npm semver being ledgered (required)" },
+		"run-id": { type: "string", description: "Stable run id, ^[a-z0-9-]+$ (required)" },
+		"model-path": {
+			type: "string",
+			description: "Published artifact pointer, e.g. @mailwoman/neural-weights-en-us@5.0.0 (required)",
+		},
+		card: {
+			type: "string",
+			default: "packages/neural-weights-en-us/model-card.json",
+			description: "Model card JSON (run-metadata defaults)",
+		},
+		ledger: { type: "string", default: "evals/scores-by-version.json", description: "The ledger file" },
+		"trained-at": { type: "string", description: "ISO date the model trained (default: today)" },
+		notes: { type: "string", default: "", description: "Free-text notes appended to the row" },
+		replace: {
+			type: "boolean",
+			default: false,
+			description: "Overwrite an existing row for the same run_id / model_version",
+		},
+		"operator-exception": {
+			type: "string",
+			multiple: true,
+			description: "Name an adjudicated failing check to ledger a FAIL verdict (repeatable)",
+		},
+	},
+} as const satisfies CommandSpec
+
+// `ledgerAppend` narrates its own ✓/✗ lines, so no `json`.
+const EvalLedgerAppend = harnessCommand(
+	spec,
+	async (options) => {
+		const { ledgerAppend } = await import("#tools/eval-harness/ledger-append")
+
+		return await ledgerAppend(options)
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
+
+export default EvalLedgerAppend

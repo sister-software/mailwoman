@@ -13,7 +13,7 @@
  *   unsimplified rings so simplification cannot change those weights silently.
  *
  *   The reduction stores a distribution instead of one winning class. Four separate shares record reasons for
- *   absence. Class 8 is a determination, so it contributes a class share. Folding a `notcom` polygon, a water body
+ *   absence. Class 8 is a determination, so it contributes a class share. A fold that places a `notcom` polygon, a water body
  *   and an unrated series into "not arable" would produce a well-formed but wrong answer. The four shares preserve
  *   those distinctions.
  *
@@ -33,7 +33,7 @@ export const SoilCellContainment = {
 	/**
 	 * Every point in the cell is inside the delineation.
 	 *
-	 * Answered from the index alone, with no geometry read.
+	 * Answered from the index without reading geometry.
 	 */
 	Whole: "whole",
 	/**
@@ -102,7 +102,7 @@ export interface SoilMapUnitCellTable {
 	/**
 	 * The resolution this row's cell was captured at.
 	 *
-	 * A short cell carries no resolution of its own.
+	 * A short cell has no resolution of its own.
 	 * A table that mixes resolutions requires this column for probes.
 	 */
 	resolution: number
@@ -141,7 +141,7 @@ export interface SoilMapUnitTable {
 	 * The full conditional string, verbatim.
 	 *
 	 * `Not prime farmland` is itself a declared value, while NULL means the map
-	 * unit carries no farmland classification at all.
+	 * unit has no farmland classification.
 	 */
 	farmlndcl: string | null
 	/**
@@ -154,7 +154,7 @@ export interface SoilMapUnitTable {
 	 */
 	farmland_scope: string
 	/**
-	 * Nrcs's own dominant-condition capability class for the map unit, carried rather than recomputed.
+	 * Nrcs's own dominant-condition capability class for the map unit, stored rather than recomputed.
 	 */
 	niccdcd: string | null
 	/**
@@ -205,7 +205,7 @@ export interface SoilComponentTable {
 	 *
 	 * Populated only where irrigation is a considered use, so its absence states that
 	 * the rating does not apply rather than anything about the land.
-	 * It is carried but never reduced.
+	 * The build stores it without reducing it.
 	 */
 	irrcapcl: string | null
 	irrcapscl: string | null
@@ -278,10 +278,10 @@ export interface SoilCapabilityCellTable {
 	 *
 	 * This gives consumers an at-cell result and follows NRCS's `niccdcd`/`niccdcdpct` pattern.
 	 *
-	 * NULL when the cell carries no class.
+	 * NULL when the cell has no class.
 	 * This is a valid result.
 	 *
-	 * A cell that is 100% `unrated_share` is complete and carries no capability reading at all.
+	 * A cell that is 100% `unrated_share` is complete and has no capability reading.
 	 */
 	top_class: string | null
 	top_class_share: number | null
@@ -305,8 +305,8 @@ export interface SoilCapabilityCellTable {
  * The authority's mapped footprint, one row per published survey area, derived from the
  * survey-area outline and each area's own metadata rather than from the rated polygons.
  *
- * Deriving it from the rated polygons is the error §3.2 of the survey describes.
- * `notcom` and access-denied map units are inside the footprint and carry no rating,
+ * The survey's §3.2 identifies rated polygons as an invalid source for this footprint.
+ * `notcom` and access-denied map units are inside the footprint and have no rating,
  * so a footprint taken from the rated set would report them as unmapped even
  * though the authority has declared exactly what they are.
  */
@@ -366,7 +366,7 @@ export interface SoilSurveyAreaTable {
  * The authority's declared domain for one `Choice` column, read out of the `msdomdet.txt` the archive ships.
  *
  * Stored so a reader can refuse a code the layer cannot hold.
- * The artifact also carries the authority's prose definition of "capability class 3"
+ * The artifact also includes the authority's prose definition of "capability class 3"
  * instead of requiring a separate handbook.
  */
 export interface SoilVocabularyTable {
@@ -384,7 +384,7 @@ export interface SoilVocabularyTable {
 	 */
 	definition: string
 	/**
-	 * Ordering within the domain, as the authority declares it.
+	 * Each value's sequence records its order within the authority's domain.
 	 */
 	sequence: number
 }

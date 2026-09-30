@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `post /v1/licenses/refresh`: a wrong secret and an unknown lid answer the same body so the route confirms no lid's existence, and rate limits apply per lid and per address independently, so a stranger who learns a lid cannot spend its owner's allowance.
+ * `post /v1/licenses/refresh`: a wrong secret and an unknown lid answer with the same body, so the route confirms no lid's existence. Rate limits apply independently per lid and address, so a stranger who learns a lid cannot spend its owner's allowance.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

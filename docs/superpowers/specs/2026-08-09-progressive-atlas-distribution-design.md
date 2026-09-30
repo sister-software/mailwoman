@@ -282,7 +282,7 @@ not introduce alternate behavior.
 
 ## Filesystem interface
 
-`env-paths` supplies platform-native defaults. Existing deployments retain
+`env-paths` supplies platform-native defaults. Current deployments retain
 `MAILWOMAN_DATA_ROOT` as the complete durable-data override.
 
 ```text
@@ -314,7 +314,7 @@ belong in the data path. Registry configuration belongs in the config path. The 
 owns the typed overrides, and a repository lint prevents new call sites from inventing their own
 Mailwoman directories.
 
-## Licensing tiers keep the same runtime shape
+## License tiers keep the same runtime shape
 
 The layer interface's three tiers remain:
 

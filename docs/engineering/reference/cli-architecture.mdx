@@ -4,8 +4,7 @@ title: CLI architecture
 
 # CLI architecture
 
-Mailwoman's CLI uses an explicit lazy router. Selecting a command must not import unrelated commands or interactive UI
-dependencies.
+Mailwoman's CLI uses an explicit lazy router. The router imports only the selected command and its interactive UI dependencies.
 
 ## Command shape
 
@@ -36,7 +35,7 @@ Ink is reserved for interactive interfaces and must sit behind a dynamic route s
 - Process argument access lives in `@mailwoman/core/scripting/arguments`. Cleanup and logging remain in the heavier
   `@mailwoman/core/scripting/utils` entry.
 
-## Adding or converting a command
+## Add or convert a command
 
 1. Define its static router summary and lazy loader.
 2. Express flags and positionals as a `CommandSpec`.

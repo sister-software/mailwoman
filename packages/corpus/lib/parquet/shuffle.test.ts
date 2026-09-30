@@ -5,8 +5,9 @@
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
-import { DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "@mailwoman/corpus/parquet/shuffle"
 import { describe, expect, it } from "vitest"
+
+import { DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
 
 async function* from<T>(items: readonly T[]): AsyncIterable<T> {
 	for (const item of items) {

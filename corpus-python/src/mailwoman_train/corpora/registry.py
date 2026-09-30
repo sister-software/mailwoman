@@ -51,7 +51,7 @@ def overture_dir(*parts: str) -> Path:
 
 LABEL_SET_NAME = "stage3-cjk"
 
-# One aligned string with its hold-out key and the projected coordinate (registers carry none, so it is None).
+# One aligned string with its hold-out key and the projected coordinate (registers provide no coordinate, so it is None).
 Candidate = tuple[dict[str, Any], str]
 
 

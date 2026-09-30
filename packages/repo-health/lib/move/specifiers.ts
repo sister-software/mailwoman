@@ -143,7 +143,7 @@ export function packageSpecifiersFor(manifest: PackageManifest, file: string): P
 /**
  * The relative specifier that reaches `target` from `containingFile`,
  * with `keepExtension` mirroring the replaced specifier because a relative import
- * carries an explicit `.ts` under Node's type stripping.
+ * includes an explicit `.ts` under Node's type stripping.
  */
 export function relativeSpecifier(containingFile: string, target: string, keepExtension: boolean): string {
 	const path: string = relative(dirname(containingFile), target)

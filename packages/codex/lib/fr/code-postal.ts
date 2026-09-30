@@ -19,7 +19,7 @@
  *   Corse-du-Sud / `2B` Haute-Corse, resolved by the rest of the code), and the overseas DOM use a
  *   three-digit prefix (`971`–`976`). `departementOfCodePostal` handles both. Two further
  *   real-world caveats it does not try to model: a handful of communes sit under a neighbouring
- *   département's code (e.g. some `05`/`04` border villages), and a cedex code can carry a
+ *   département's code (e.g. some `05`/`04` border villages), and a cedex code can include a
  *   large-volume-mail prefix that differs from the geographic one — both rare enough to leave to
  *   the gazetteer.
  */
@@ -33,7 +33,7 @@ import { FR_REGIONS, type FrenchRegionInfo } from "#fr/region"
  * A French postcode: five digits (`75008`).
  *
  * Same shape as a US ZIP or a German PLZ.
- * The shape alone does not disambiguate the country.
+ * The shape by itself does not disambiguate the country.
  *
  * @category Postal
  * @type string

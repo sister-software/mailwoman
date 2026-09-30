@@ -12,7 +12,7 @@
  *   any coverage row whose basis would support an exclusion.
  *
  *   The layer describes the authority's map. The Environment Agency states that its data
- *   "cannot provide details for individual properties", and every reading carries the product limits.
+ *   "cannot provide details for individual properties", and every reading includes the product limits.
  *
  *   A lookup walks the H3 ancestor chain first. Only a cell that a boundary crosses leads to a ray cast
  *   against the polygons indexed for that cell and scenario.
@@ -121,7 +121,7 @@ export interface CoastalDesignation {
 	/**
 	 * Publication year as published.
 	 *
-	 * Some source rows carry 0 with blank policy and defence fields.
+	 * Some source rows contain 0 with blank policy and defence fields.
 	 * The source does not explain them.
 	 */
 	publishedYear?: number
@@ -143,7 +143,7 @@ export interface CoastalErosionReading {
 	/**
 	 * Every polygon of the scenario that contains the point, ordered by `area_id`.
 	 *
-	 * Overlapping frontages can yield several.
+	 * One frontage can yield several entries when frontages overlap.
 	 * The list is empty for an `unknown` reading.
 	 */
 	designations: CoastalDesignation[]

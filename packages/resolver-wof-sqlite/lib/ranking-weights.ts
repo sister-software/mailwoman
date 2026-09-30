@@ -9,7 +9,7 @@
  */
 
 /**
- * Ranking weights for `findPlace`.
+ * The weights used to rank `findPlace` results.
  *
  * Tweakable per-instance but defaults match the values declared in the Phase 4.2 plan doc.
  */
@@ -39,7 +39,7 @@ export interface RankingWeights {
 	 */
 	lengthPenaltyWeight: number
 	/**
-	 * Magnitude of the proximity boost when the query carries `near`.
+	 * Magnitude of the proximity boost when the query includes `near`.
 	 *
 	 * The contribution is `proximityBoost / (1 + distanceKm / proximityScaleKm)`.
 	 * At distance 0 the boost has full magnitude.
@@ -71,7 +71,7 @@ export interface RankingWeights {
 	 *
 	 * The contribution is `populationBoost * log10(1 + population) / populationScaleLog10`,
 	 * capped at `populationBoost`.
-	 * WOF only carries population for about 15% of localities (mostly larger ones),
+	 * WOF records population for about 15% of localities (mostly larger ones),
 	 * and places without it get +0, never a penalty.
 	 *
 	 * Default tuned so the famous Springfield, IL (pop ~112k) gets about a 0.42 boost,
@@ -99,7 +99,7 @@ export interface RankingWeights {
 	 * as in "Springfield" → Springfield IL over Springfield MA.
 	 *
 	 * It does not promote a place that matches the query worse.
-	 * Tiering keeps match quality as the primary key with prominence secondary within a tier.
+	 * Tiers keep match quality as the primary key and prominence as the secondary key within each tier.
 	 *
 	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`),
 	 * so a pathological exact match outside that window is not rescued.
@@ -169,7 +169,7 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
  * Returns zero for an absent or non-positive population.
  * It also returns zero for a non-positive scale.
  *
- * A magnitude never carries its own absence.
+ * A magnitude never represents its own absence.
  * The coordinate-first locality path consumes this fraction directly. {@link populationBoostTerm} scales it.
  */
 export function populationScaleTerm(
@@ -185,7 +185,7 @@ export function populationScaleTerm(
  * The additive population boost: `populationBoost * populationScaleTerm(...)`,
  * capped at `populationBoost` magnitude at `10^populationScaleLog10` people.
  *
- * Missing population contributes 0, never a penalty.
+ * A missing population contributes 0, without a penalty.
  * The one formula behind the Node weighted sum and the wasm re-rank, so the two backends cannot drift.
  */
 export function populationBoostTerm(

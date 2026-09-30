@@ -182,7 +182,7 @@ def test_rendered_rows_match_the_committed_reference(built: dict[str, Any], spli
 
 
 def test_the_report_matches_the_committed_reference(built: dict[str, Any]) -> None:
-    """The report carries the counts a reader trusts — the join tiers, the quota, the vocab size."""
+    """The report includes the counts a reader trusts — the join tiers, the quota and the vocab size."""
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
     expected = json.loads(REFERENCE.read_text(encoding="utf-8"))["report"]
@@ -190,7 +190,7 @@ def test_the_report_matches_the_committed_reference(built: dict[str, Any]) -> No
 
 
 def test_every_span_covers_the_text_it_claims(built: dict[str, Any]) -> None:
-    """The spans are emitted by construction, so this holds for any input — and says so when it stops."""
+    """The spans are emitted by construction, so every input has this property. The test fails if it stops."""
     for split in ("train", "val", "board"):
         for row in built[split]:
             raw = row["raw"]

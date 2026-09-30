@@ -1,0 +1,212 @@
+/**
+ * @copyright Sister Software.
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Unpack the Code-Point Open archive. `codepo_gb.zip` (14 MB) holds 120 per-postcode-area CSVs under
+ *   `Data/CSV/` — `ab.csv`, `al.csv`, … `ze.csv`, one per outward-code area, 162 MB unpacked — plus a
+ *   small `Doc/` tree carrying the licence text and column headers, plus metadata.
+ *   The metadata file provides the most useful check in the archive.
+ *
+ *   ## `Doc/metadata.txt` supplies a row-count manifest
+ *
+ *   OS ships a per-area expected row count inside the archive:
+ *
+ *     ordnance survey
+ *     product: OS code-POINT_03.02
+ *     dataset version number: 2026.2.0
+ *     copyright date: 20260420
+ *     RM update date: 20260417
+ *           AB      17403
+ *           AL       7789
+ *            B      41835
+ *     …
+ *
+ *   The build sums the manifest and compares it with the parsed rows.
+ *   A truncated CSV or skipped area file then fails the build instead of producing a short database.
+ *   {@link parseCodePointMetadata} reads the manifest and {@link ExtractCodePointResult}
+ *   preserves it. Verified against the 2026-05 extract: the manifest sums to 1,747,841 and the CSVs
+ *   hold exactly 1,747,841 rows.
+ *
+ *   Extraction is to disk rather than streamed in memory because the dated acquisition directory is the
+ *   cache. A rebuild re-reads the CSVs instead of re-downloading them.
+ *   A human debugging a postcode can `grep` the same bytes the builder saw.
+ */
+
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
+
+/**
+ * Archive-internal prefix of the per-area CSVs.
+ */
+const CSV_ENTRY_PREFIX = "Data/CSV/"
+
+/**
+ * Archive-internal prefix of the documentation tree (licence, column headers, metadata).
+ */
+const DOC_ENTRY_PREFIX = "Doc/"
+
+/**
+ * The header block of `Doc/metadata.txt`, parsed off the leading lines.
+ *
+ * Everything after these is the per-area count table.
+ */
+export interface CodePointMetadata {
+	/**
+	 * `OS code-POINT_03.02` — the product/spec version.
+	 */
+	product: string
+	/**
+	 * `2026.2.0` — the internal dataset version.
+	 *
+	 * Distinct from the Downloads API's `2026-05` release label.
+	 * Both are recorded in the database's provenance because they move independently.
+	 */
+	datasetVersion: string
+	/**
+	 * `20260420` — the OS copyright date. Its year must appear in the attribution block.
+	 */
+	copyrightDate: string
+	/**
+	 * `20260417` — the Royal Mail data update date.
+	 */
+	royalMailUpdateDate: string
+	/**
+	 * Per-postcode-area expected row counts, keyed by the uppercase area code (`AB`, `B`, `ZE`).
+	 */
+	rowsByArea: Record<string, number>
+	/**
+	 * Sum of {@link rowsByArea}.
+	 * The total row count the archive claims to contain.
+	 */
+	totalRows: number
+}
+
+/**
+ * Parse `Doc/metadata.txt`.
+ *
+ * The format is positional and undocumented.
+ * This parser locates the four header fields by their `KEY:` label rather than by line number.
+ *
+ * The count table is every remaining line that looks like `<area> <integer>`.
+ * Lines without that shape are skipped.
+ *
+ * OS has added header fields before (the `RM update date` row is newer than the product),
+ * and a new one must not break the build.
+ */
+export function parseCodePointMetadata(text: string): CodePointMetadata {
+	const field = (label: string): string => {
+		const match = new RegExp(`^${label}:\\s*(.+)$`, "m").exec(text)
+
+		return match?.[1]?.trim() ?? ""
+	}
+
+	const rowsByArea: Record<string, number> = {}
+
+	for (const line of text.split(/\r?\n/)) {
+		const match = /^\s*([A-Z]{1,2})\s+(\d+)\s*$/.exec(line)
+
+		if (match?.[1]) {
+			rowsByArea[match[1]] = Number(match[2])
+		}
+	}
+
+	return {
+		product: field("PRODUCT"),
+		datasetVersion: field("DATASET VERSION NUMBER"),
+		copyrightDate: field("COPYRIGHT DATE"),
+		royalMailUpdateDate: field("RM UPDATE DATE"),
+		rowsByArea,
+		totalRows: Object.values(rowsByArea).reduce((sum, n) => sum + n, 0),
+	}
+}
+
+export interface ExtractCodePointOptions {
+	/**
+	 * The downloaded `codepo_gb.zip`.
+	 */
+	archivePath: PathBuilderLike
+	/**
+	 * Directory the `Data/CSV` and `Doc` trees are written under — normally the same
+	 * dated acquisition directory the archive sits in.
+	 */
+	destDir: PathBuilderLike
+	onPhase?: (phase: string, detail?: string) => void
+}
+
+export interface ExtractCodePointResult {
+	/**
+	 * Absolute paths of the extracted per-area CSVs, sorted by area code.
+	 */
+	csvPaths: string[]
+	/**
+	 * Directory holding the extracted `Doc/` tree.
+	 */
+	docDir: string
+	/**
+	 * The archive's own manifest — the row-count oracle.
+	 *
+	 * See the module docstring.
+	 */
+	metadata: CodePointMetadata
+	/**
+	 * `Doc/licence.txt` verbatim. The database provenance therefore quotes OS's own words.
+	 *
+	 * Decode the file as **Latin-1**. The archive declares no encoding. Its only non-ASCII byte is `0xA9`, which Latin-1 maps to `©` and which UTF-8 cannot decode by itself. UTF-8 decoding turns each copyright symbol into U+fffd. The first build therefore stored `Contains Ordnance Survey data � Crown copyright` in the database's `meta`. Mojibake in a decorative string is cosmetic. The attribution text is legally required for redistribution, so corrupted text there prevents accurate attribution.
+	 */
+	licenseText: string
+	totalBytes: number
+}
+
+/**
+ * Extract the CSV and Doc trees from `codepo_gb.zip` into `destDir`.
+ */
+export async function extractCodePointOpen(options: ExtractCodePointOptions): Promise<ExtractCodePointResult> {
+	const phase = options.onPhase ?? (() => {})
+	const destDir = PathBuilder.from(options.destDir)
+	const csvDir = destDir("Data", "CSV")
+	const docDir = destDir("Doc")
+
+	await makeDirectories(csvDir, docDir)
+
+	phase("extract", options.archivePath.toString())
+
+	const entries = await listZipEntries(options.archivePath)
+
+	const csvEntries = entries.filter(
+		(entry) => entry.name.startsWith(CSV_ENTRY_PREFIX) && entry.name.toLowerCase().endsWith(".csv")
+	)
+
+	const docEntries = entries.filter((entry) => entry.name.startsWith(DOC_ENTRY_PREFIX) && !entry.name.endsWith("/"))
+	const totalBytes = [...csvEntries, ...docEntries].reduce((sum, entry) => sum + entry.uncompressedSize, 0)
+
+	await extractZipEntries(options.archivePath, csvDir, {
+		selector: /^Data\/CSV\/.*\.csv$/i,
+		flatten: true,
+	})
+
+	await extractZipEntries(options.archivePath, docDir, { selector: /^Doc\/.+/i, flatten: true })
+
+	const csvPaths = csvEntries
+		.map((entry) => {
+			return csvDir(entry.name.slice(entry.name.lastIndexOf("/") + 1)).toString()
+		})
+		.toSorted()
+
+	if (!csvPaths.length) {
+		throw new Error(`extractCodePointOpen: no ${CSV_ENTRY_PREFIX}*.csv entries in ${options.archivePath}`)
+	}
+
+	phase("extract", `${csvPaths.length} area CSVs, ${ByteFormatter.formatIEC(totalBytes)}`)
+
+	const metadata = parseCodePointMetadata(await readLocalTextFile(docDir("metadata.txt")))
+
+	// Latin-1, deliberately — see `ExtractCodePointResult.licenseText`.
+	// A missing file throws, because the database must quote the attribution text.
+	const licenseText = (await readLocalBuffer(docDir("licence.txt"))).toString("latin1")
+
+	return { csvPaths, docDir: docDir.toString(), metadata, licenseText, totalBytes }
+}

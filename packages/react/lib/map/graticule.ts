@@ -35,8 +35,8 @@ const VERTEX_STEP_DEGREES = 2
 /**
  * The latitude the parallels stop at.
  *
- * Past ~85° the meridians have converged close enough that more rings read as a
- * smudge at the pole, and Web Mercator's own limit is 85.051129.
+ * Past ~85° the meridians have converged close enough that more rings read as a smudge at the pole.
+ * Web Mercator's own limit is 85.051129.
  */
 const MAX_LATITUDE = 85
 

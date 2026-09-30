@@ -23,7 +23,7 @@ import { conventionCandidateDBPath } from "mailwoman/resolver-backend"
 
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
-import { openSealedArtifact } from "#lookup/index"
+import { openSealedArtifact } from "#lookup"
 import { provenanceFor, type Provenance } from "#tool-kit"
 
 /**
@@ -180,8 +180,8 @@ export async function runConstraintCensus(
 	dependencies: { openArtifact?: OpenCensusArtifact } = {}
 ): Promise<ConstraintCensusResult> {
 	const set = await resolveInputSet(args.inputs ?? { kind: "board" })
-	// Tracing and the band probe are forced on: both are inputs the census cannot
-	// do without and neither can change an answer.
+	// The census always enables tracing and the band probe because it needs both
+	// inputs do without and neither can change an answer.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 
 	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(

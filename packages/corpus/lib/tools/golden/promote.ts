@@ -50,7 +50,7 @@ import type { GoldenCandidateEntry as GoldenEntry } from "#utils/golden"
 const MIN_GOLDEN_COMPONENTS = 5
 
 /**
- * Components an existing entry must still carry to survive promotion.
+ * Components an existing entry must still include to survive promotion.
  */
 const MIN_PROMOTABLE_COMPONENTS = 4
 
@@ -174,7 +174,7 @@ export async function promoteGolden(
 		throw new Error(`Candidates file not found: ${options.input}`)
 	}
 
-	// Forward-copy base: existing entries from the prior golden version go forward verbatim,
+	// Forward-copy base: existing entries from the prior golden version go forward verbatim.
 	// and we dedupe new candidates against them so v_new = v_old ∪ accepted_candidates.
 	const priorDir = goldenRoot(prior)
 	const priorEntries: { country: string; entries: GoldenEntry[] }[] = []
@@ -260,7 +260,8 @@ export async function promoteGolden(
 	const buckets = new Map<string, GoldenEntry[]>()
 
 	for (const { country, entries } of priorEntries) {
-		// Existing files keyed by filename uppercase (us.jsonl → US, adversarial.jsonl → adversarial)
+		// The filename supplies the key for existing files after uppercasing
+		// (us.jsonl → US, adversarial.jsonl → adversarial)
 		buckets.set(country, [...entries])
 	}
 

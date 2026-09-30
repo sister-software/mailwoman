@@ -2,14 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Every source id a training config addresses is one some adapter, recipe or carried overlay has emitted.
+ * @file Every source id a training config addresses is one some adapter, recipe or retained overlay has emitted.
  *
  *   A `source_weights` key refers to a string stored inside a built corpus. This check reads the
  *   configs as data and asks whether each key is a string something in the checkout emits.
  *
  *   The check compares values from `source_weights`, `source_reps`, `augment_exclude_sources`, and
  *   `required_corpus_receipts[].source` with source ids declared by adapters and Python corpus builders.
- *   It also checks both retired and current spellings in `RECIPE_SOURCES`. Renaming only a config key
+ *   It also checks both retired and current spellings in `RECIPE_SOURCES`. A config-key-only rename
  *   produces a diagnostic.
  *
  *   This check cannot compare a corpus on disk with the spelling in its targeting config.
@@ -43,7 +43,7 @@ const KEYED_FIELDS = new Set(["source_weights", "source_reps"])
 const LISTED_FIELD = "augment_exclude_sources"
 
 /**
- * The config field whose list entries carry a `source:` value that is a source id.
+ * The config field whose list entries contain a `source:` value that is a source id.
  */
 const RECEIPTS_FIELD = "required_corpus_receipts"
 
@@ -152,7 +152,7 @@ export async function declaredSourceNames(context: Parameters<RepoCheck["run"]>[
 
 /**
  * The `wire-identifiers` check: one error per config key that no adapter,
- * recipe or carried overlay has emitted.
+ * recipe or retained overlay has emitted.
  */
 export const wireIdentifiersCheck: RepoCheck = {
 	id: "wire-identifiers",

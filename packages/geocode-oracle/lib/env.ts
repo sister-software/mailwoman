@@ -10,7 +10,8 @@ import { z } from "zod"
 /**
  * Google Maps Platform key for the reference-geocoder oracle (`geocode-oracle/lib/sdk/google-client.ts`).
  *
- * Billed per request, which is why the client caches for 30 days and paces at 60/minute by default.
+ * The client is billed per request.
+ * It caches for 30 days and paces at 60/minute by default.
  *
  * Never log its value.
  */

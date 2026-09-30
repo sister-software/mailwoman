@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Environment variables naming the WOF SQLite artifacts this resolver opens, and the development weights the overlay
+ * Environment variables name the WOF SQLite artifacts this resolver opens and the development weights the overlay
  *   linker materializes. CLI flags (`--resolve-db`, …) override these at the call site.
  */
 

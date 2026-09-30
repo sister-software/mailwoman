@@ -7,7 +7,7 @@
  *
  *   The package is engine-agnostic: {@link createNominatimApp} takes a {@link NominatimEngine} and
  *   exposes it under the endpoint shapes and response format a Nominatim client expects. The CLI
- *   wires the real Mailwoman engine and tests can inject a fake, which keeps the compat surface
+ *   wires the real Mailwoman engine. Tests can inject a fake. This keeps the compat surface
  *   isolated from the resolver wiring.
  *
  *   Routes whose engine method is absent answer `501`, with `/status` as the one exception.

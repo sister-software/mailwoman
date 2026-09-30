@@ -7,7 +7,7 @@
  *
  *   The Hawaii State Department of Education publishes a directory of all hidoe schools and public
  *   charter schools (PCS) as an xlsx workbook (`SchoolList.xlsx`) with two sheets: `hidoe` (~258
- *   rows) and `PCS` (~38 rows). Total ~296 rows statewide. Each row carries a school name,
+ *   rows) and `PCS` (~38 rows). Total ~296 rows statewide. Each row includes a school name,
  *   single-line street address, city, ZIP, a numeric `code`, and HI-specific administrative columns
  *   (complex, complex_area, district, island, charter).
  *
@@ -28,7 +28,7 @@
  *   License: stamped `"Public Domain"` per Hawaii state government open-data terms.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator, XLSXSpliterator } from "spliterator"
 
@@ -45,7 +45,7 @@ import { lookupStateAbbreviation } from "#us/fips-state"
  */
 export const STATE_HI_SCHOOLS_ADAPTER_ID = "state-hi-schools"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const STATE_HI_SCHOOLS_DEFAULT_LICENSE = "Public Domain"
@@ -92,7 +92,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 		defaultLicense: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
 		register: SourceRegister.HawaiiSchools,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "Hawaii DOE School Directory — ~300 K-12 public + charter schools with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

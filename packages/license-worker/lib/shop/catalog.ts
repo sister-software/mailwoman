@@ -11,7 +11,7 @@
 import type { CommercialPlan } from "#plans"
 
 /**
- * The agreement version carried as Payment Link metadata and recorded on every license.
+ * The agreement version included as Payment Link metadata and recorded on every license.
  *
  * Bump it when the terms page changes.
  * Then create new Payment Links and update `AGREEMENT_VERSION` in each environment.

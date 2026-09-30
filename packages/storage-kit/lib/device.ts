@@ -25,7 +25,7 @@ export interface BlockDevice {
 }
 
 /**
- * Everything `lsblk` knows about one device and its partitions.
+ * The `lsblk` record for one device and its partitions.
  */
 export async function inspectDevice(device: string): Promise<BlockDevice> {
 	const probe = await $({

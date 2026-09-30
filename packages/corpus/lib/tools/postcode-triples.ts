@@ -42,7 +42,7 @@ export interface PostcodeTriple {
 }
 
 /**
- * Which GeoNames postal column carries the locality for a country.
+ * The GeoNames postal column that contains the locality for a country.
  *
  * `admin2` is the default.
  * For the US it is the inverse, because column 3 is the city and admin2 the county,
@@ -52,7 +52,7 @@ export type GeonamesLocalityColumn = "place" | "admin2"
 
 /**
  * Records where a country writes the postcode.
- * It also records the locale tag carried by its rows.
+ * It also records the locale tag in its rows.
  *
  * A country is in this table only when a gauntlet board row attests its surface, because extracting
  * an absent country with the wrong placement teaches a convention that country does not use.
@@ -78,7 +78,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	["IN", { placement: "after_region", locale: "en-IN" }],
 	// Attested by the four `us_city_state_postcode` board rows; `localityColumn` keeps it from training counties.
 	["US", { placement: "after_region", locale: "en-US", localityColumn: "place" }],
-	// The two `br_*` rows carry locality, region and CEP in that order.
+	// The two `br_*` rows list locality, region and CEP in that order.
 	// The default `admin2` column is right here, because BR's export writes the
 	// municipality in column 3 and admin2 alike.
 	["BR", { placement: "after_region", locale: "pt-BR" }],
@@ -191,7 +191,7 @@ interface PreferredNames {
  * then the region's co-official languages, then the gazetteer's own `spr.name`
  * (the English exonym), deduplicated with order kept.
  *
- * Reading `spr.name` alone teaches stripped exonyms (`Balearic Islands`, `Cordoba`)
+ * An input that uses only `spr.name` teaches stripped exonyms (`Balearic Islands`, `Cordoba`)
  * against the forms a user writes.
  */
 export function regionWrittenForms(sprName: string, names: PreferredNames): string[] {
@@ -425,8 +425,7 @@ export async function readPairsFromAdmin(
 			const locality = surfaces.locality(cc, row.locality_id, row.locality)
 
 			for (const region of surfaces.region(cc, row.region_id, row.region)) {
-				// A pair whose region repeats its locality carries no signal about the
-				// boundary this recipe measures.
+				// A pair whose region repeats its locality adds no signal about the boundary this recipe measures.
 				// The recipe drops that pair, so filtering it here keeps the country budget for rows that remain.
 				if (region === locality) continue
 
@@ -479,7 +478,7 @@ export async function createKnownLocalityCheck(
  * Read triples straight out of a GeoNames `<CC>.txt` export, with no join.
  *
  * `admin2` supplies the locality, `admin1` supplies the region and column 3 supplies the dependent locality.
- * Reading column 3 as the locality taught `Mahatma Gandhi Road` as a city.
+ * A locality value from column 3 taught `Mahatma Gandhi Road` as a city.
  *
  * A country whose export lacks admin1 or admin2 yields zero from this reader.
  * That result is correct and needs no fallback.
@@ -525,8 +524,8 @@ export async function readTriplesFromGeonames(
 		// A dependent locality that merely repeats its parent teaches a doubled segment rather than a boundary.
 		const dep = dependentLocality && dependentLocality !== locality ? dependentLocality : ""
 
-		// The bare twin of a punctuated code carries no new fact.
-		// Keeping both doubles the country's weight.
+		// The bare twin of a punctuated code adds no new fact.
+		// Both entries would double the country's weight.
 		const key = `${postcode.replaceAll("-", "")} ${locality} ${dep}`
 
 		if (seen.has(key)) continue

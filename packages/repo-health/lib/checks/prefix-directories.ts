@@ -4,13 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   A repeated hyphen prefix among a directory's children is a directory hierarchy encoded in names.
- *   `usgov-nppes/` and `usgov-nad/` are US federal register adapters that belong under `usgov/`. Keeping that boundary
+ *   `usgov-nppes/` and `usgov-nad/` are US federal register adapters that belong under `usgov/`. This directory boundary
  *   as a directory makes imports, file listings and editor trees show the same hierarchy.
  *
  *   A group contains two or more children that share their first hyphen-delimited segment. A sibling whose full name
  *   is the prefix joins the group. For example, `reliability.ts` belongs beside `reliability-report.ts` as the family's
  *   own module.
- *   A file in that position becomes the directory's `index`; a directory in it is already the destination and stays.
+ *   The head stays where it is: a file keeps its name beside the new directory, and a directory is already the
+ *   destination.
  *
  *   Two conditions determine what counts as a child. A name can represent an interface instead of a layout. A
  *   workspace directory is an npm package name. `packages/neural-weights-en-gb` is published under that
@@ -47,6 +48,10 @@ export interface PrefixMember {
 	 * Repo-relative path of the child.
 	 */
 	path: string
+	/**
+	 * For a directory, the sibling module named for it (`x.ts` beside `x/`), which moves with the directory.
+	 */
+	companion?: string
 }
 
 export interface PrefixGroup {
@@ -110,7 +115,29 @@ function directoryChildren(
 		}
 	}
 
-	return new Map([...children].map(([directory, bucket]) => [directory, [...bucket.values()]]))
+	return new Map([...children].map(([directory, bucket]) => [directory, withCompanions([...bucket.values()])]))
+}
+
+function memberStem(member: PrefixMember): string {
+	return member.kind === "file" ? member.name.replace(SOURCE_FILE, "") : member.name
+}
+
+/**
+ * Folds each module named for a sibling directory into that directory's member.
+ *
+ * `x.ts` beside `x/` is the directory's own module rather than a second sibling,
+ * so the pair counts once toward a prefix group and moves as one.
+ */
+function withCompanions(members: readonly PrefixMember[]): PrefixMember[] {
+	const directories = new Set(members.filter((member) => member.kind === "directory").map((member) => member.name))
+
+	return members.flatMap((member) => {
+		if (member.kind === "file") return directories.has(memberStem(member)) ? [] : [member]
+
+		const companion = members.find((sibling) => sibling.kind === "file" && memberStem(sibling) === member.name)
+
+		return [companion ? { ...member, companion: companion.path } : member]
+	})
 }
 
 /**
@@ -142,7 +169,7 @@ export function findPrefixGroups(
 
 		// A sibling whose full name is the prefix belongs to the family it heads:
 		// `reliability.ts` beside `reliability-report.ts` is the family's own module.
-		// Leaving it out splits the family across two levels.
+		// Its omission splits the family across two levels.
 		for (const [prefix, grouped] of byPrefix) {
 			const head = stems.get(prefix)
 
@@ -178,8 +205,8 @@ export function findPrefixGroups(
 export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: readonly string[]): ModuleMove[] {
 	const moves: ModuleMove[] = []
 
-	// A directory that is itself moving carries its contents with it, so a group inside
-	// one would claim the same file twice with two destinations.
+	// A directory that is itself moving includes its contents, so a group inside one
+	// would claim the same file twice with two destinations.
 	// `lib/cli-native/command-router.ts` is both a `cli-` member through its directory
 	// and a `command-` member in its own right.
 	// The outer move wins this pass and the check re-reads afterwards.
@@ -195,15 +222,13 @@ export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: re
 
 		for (const member of group.members) {
 			const stem = member.kind === "file" ? member.name.replace(SOURCE_FILE, "") : member.name
-			// The member whose full name is the prefix heads the family rather than sitting beside it.
-			// A directory already is the destination and stays put.
-			// A file becomes the directory's index.
-			// That name represents the family itself from inside the directory.
-			const head = stem === group.prefix
 
-			if (head && member.kind === "directory") continue
+			// The member whose full name is the prefix heads the family and stays put.
+			// A head file sits beside the new directory, so `reliability.ts` keeps its
+			// specifier and no `index` is created.
+			if (stem === group.prefix) continue
 
-			const rest = head ? `index${member.name.slice(stem.length)}` : member.name.slice(group.prefix.length + 1)
+			const rest = member.name.slice(group.prefix.length + 1)
 			const destination = `${group.directory}/${group.prefix}/${rest}`
 
 			if (member.kind === "file") {
@@ -216,6 +241,10 @@ export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: re
 				if (!file.startsWith(`${member.path}/`)) continue
 
 				moves.push({ from: file, to: `${destination}${file.slice(member.path.length)}` })
+			}
+
+			if (member.companion) {
+				moves.push({ from: member.companion, to: `${destination}${member.companion.slice(member.path.length)}` })
 			}
 		}
 	}
@@ -259,6 +288,8 @@ export const prefixDirectoriesFix: RepoFix = {
 	async plan(context) {
 		const workspaceDirectories = await readWorkspaceDirectories(context.repoRoot)
 
-		return planPrefixMoves(findPrefixGroups(context.trackedFiles, workspaceDirectories), context.trackedFiles)
+		return {
+			moves: planPrefixMoves(findPrefixGroups(context.trackedFiles, workspaceDirectories), context.trackedFiles),
+		}
 	},
 }

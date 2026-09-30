@@ -9,7 +9,7 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { aliasBagExactMatch, foldQueryText } from "#fts/index"
+import { aliasBagExactMatch, foldQueryText } from "#fts"
 
 /**
  * Among `ids`, return the subset whose name or any alias equals `text` case-insensitively,
@@ -90,8 +90,9 @@ export function exactMatchIDs<DB>(
  *
  * Same collate nocase semantics as {@link WOFSQLitePlaceLookup.#exactMatchIDs},
  * so the two probes agree on what "equals the query" means.
- * Fails soft on gazetteers built before the `official` column existed, and the sub-tier
- * then behaves exactly as if `officialNameExact` were off.
+ * Fails soft on gazetteers built before the `official` column existed.
+ *
+ * The sub-tier then behaves exactly as if `officialNameExact` were off.
  */
 export function officialNameIDs<DB>(
 	db: DatabaseClient<DB>,

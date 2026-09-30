@@ -71,9 +71,9 @@ export class NUTSLookup extends SQLiteLookup<NUTSDatabase> {
 	 * Parsed geometry by nuts id, most recently used last.
 	 *
 	 * The table is read-only, so an entry never goes stale.
-	 * The cache is bounded because the shipped `nuts.db` carries 14.3 MB of geometry
-	 * JSON over 2,010 regions, and a lookup service that answers points across the
-	 * whole EU would otherwise hold every region parsed.
+	 * The cache is bounded because the shipped `nuts.db` contains 14.3 MB of geometry JSON over 2,010 regions.
+	 *
+	 * A lookup service that answers points across the whole EU would otherwise hold every region parsed.
 	 */
 	readonly #geometryCache = new Map<string, MultiPolygonRings>()
 

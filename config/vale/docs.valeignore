@@ -18,8 +18,11 @@ THIRD_PARTY_NOTICES.md
 **/THIRD_PARTY_NOTICES.md
 packages/**/data/PROVENANCE.md
 packages/**/lib/**/*.md
+packages/*/sdk/*.md
+packages/*/tools/*.md
+packages/*/cli/*.md
 docs/records/evals/**
 packages/mailwoman/skills/**
-packages/mailwoman/lib/eval-harness/**
+packages/mailwoman/tools/eval-harness/**
 packages/resolver-wof-sqlite/CONVENTION.md
 packages/resolver-wof-sqlite/POSTCODE-*.md

@@ -57,14 +57,14 @@ $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/
 
 ### Model + API interface
 
-| Knob             | Value                                          |
-| ---------------- | ---------------------------------------------- |
-| Model            | `deepseek-v4-flash`                            |
-| Reasoning effort | `low`                                          |
-| Endpoint         | `https://api.deepseek.com/v1/chat/completions` |
-| Max tokens       | 20,000 per response                            |
-| Retries          | 5, exponential backoff at 2.0× from 2s         |
-| Timeout          | 300s per call                                  |
+| Knob           | Value                                          |
+| -------------- | ---------------------------------------------- |
+| Model          | `deepseek-v4-flash`                            |
+| Effort setting | `low`                                          |
+| Endpoint       | `https://api.deepseek.com/v1/chat/completions` |
+| Max tokens     | 20,000 per response                            |
+| Retries        | 5, exponential backoff at 2.0× from 2s         |
+| Timeout        | 300s per call                                  |
 
 The OpenAI-compatible Chat Completions schema is used directly via stdlib `urllib` —
 no SDK dependency. 429 / 5xx are retried; 4xx (other) bubble out as fatal.
@@ -100,7 +100,7 @@ Three artifacts pin the generation:
    `KRYPTONITE_CATEGORIES`. Version-pinned through git history.
 2. **Raw responses** — every chat-completion is persisted to
    `raw-deepseek-kryptonite.jsonl` with `{batch_id, category, n_requested, model, finish_reason, usage, response_content}`.
-   Regenerating from this raw log requires only the JSON validator rather than another DeepSeek call.
+   The JSON validator can regenerate this from the raw log without another DeepSeek call.
 3. **Checkpoint** — `.kryptonite-checkpoint.json` records the set of completed
    `batch_id`s. Reruns with identical args skip done batches.
 
@@ -156,7 +156,7 @@ regions anyway.
 The kryptonite catalogue's eval surface lives elsewhere — Stage 5 reconcile (Thread D)
 ships its own hand-curated fixture set. See [`PHASE_8 §D`](../../records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx).
 
-## Auditing
+## Audit the output
 
 ```bash
 npx tsx corpus/scripts/audit.ts \

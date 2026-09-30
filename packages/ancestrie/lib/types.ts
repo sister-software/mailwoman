@@ -23,7 +23,7 @@ export type TokenNormalizer = (token: string) => string
  * One build-side entry.
  *
  * A builder may add its `id` under several token sequences as aliases.
- * Every alias must carry the same fields that depend on the `id`.
+ * Every alias must contain the same fields that depend on the `id`.
  */
 export interface AncestrieEntry {
 	/**
@@ -44,7 +44,8 @@ export interface AncestrieEntry {
 	parentIDs: readonly number[]
 
 	/**
-	 * Ranking score, higher surfaced first, stored as an ieee-754 float32.
+	 * A higher rank score surfaces first.
+	 * The score is stored as an ieee-754 float32.
 	 */
 	rank: number
 

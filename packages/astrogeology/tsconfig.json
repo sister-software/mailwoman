@@ -13,12 +13,14 @@
 		"resolveJsonModule": true
 	},
 	"include": ["./lib/**/*"],
-	"exclude": ["./out/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		// ---
 		{ "path": "../core" },
 		{ "path": "../spatial" },
 		{ "path": "../ancestrie" },
-		{ "path": "../mailwoman" }
+		{ "path": "../mailwoman" },
+		{ "path": "../mailwoman/cli" },
+		{ "path": "../mailwoman/tools" }
 	]
 }

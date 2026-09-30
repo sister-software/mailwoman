@@ -165,8 +165,8 @@ The evidence for the requirement is §1.1, which is committed data and independe
 capability is absent, the absence is structural, and the type system rules out the obvious repair.
 The evidence for the requirement's **size** is §1.3, which contains no measurement.
 
-That difference decides the posture, and it is the central argument of this record. Shipping an
-unreachable capability to the callers who ask for it is defensible. Changing what every caller gets
+That difference decides the posture, and it is the central argument of this record. The team can make
+an unreachable capability available to the callers who ask for it. A change to what every caller gets
 is a different claim, and it needs a denominator that does not exist. The requirement is therefore
 admitted **at opt-in strength**. That is enough to make the route a supported surface, but not
 enough to change the default answer for inputs nobody has counted.
@@ -189,8 +189,8 @@ subject lookup stays three rungs and the order is frozen by this record:
 
 The route supplies positive evidence only. A miss returns `[]`. The route can add a subject where
 there was none, but it can never remove one or displace a committed hit. When the route is absent,
-the composition behaves exactly as shipped. This order is fixed under the opt-in posture. Changing
-it would change precedence on the default path, which is a separate decision with its own D-rule
+the composition behaves exactly as shipped. This order is fixed under the opt-in posture. A change
+it would change precedence on the default path, which requires a separate decision and D-rule
 obligations.
 
 The route is typed as a plain `POIPhraseLookup`, so the pipeline has no information about where the
@@ -255,8 +255,8 @@ publishes `@mailwoman/geographic-model` at the shared version. The workspace is 
 therefore does both, and the dependency versions always match. No step here needs a hand-publish, and no step
 here permits one.
 
-The dynamic import may stay or go once the edge is real. Publishing no longer requires it. Keeping
-it only keeps the artifact reader off the load path for callers who never build a route, which is a
+The dynamic import may stay or go once the edge is real. The publishing path works without it. The deployment can retain
+it off the load path to benefit callers who never build a route, a
 small, separate benefit.
 
 ---
@@ -381,8 +381,8 @@ deterministically. To revert a recognition regression, revert the lexicon. Neith
 the route.
 
 **Release rollback.** `mailwoman` and `@mailwoman/geographic-model` bump together in the same
-coordinated release (§3.3), so a revert is a coordinated patch release of both. Reverting only one
-would recreate the version skew the release list exists to prevent.
+coordinated release (§3.3), so a revert is a coordinated patch release of both. A revert of only one
+would recreate the version skew the release list prevents.
 
 ---
 
@@ -428,12 +428,12 @@ is implemented here.
 
 ### 8.1 The plural affordance must be answered without an authored preference
 
-The set-to-one narrowing in §1.4(a) is resolved as follows, and the resolution keeps the program's
+The program resolves the set-to-one narrowing in §1.4(a) as follows, and the resolution keeps its
 architectural boundary intact.
 
 **The POI branch searches the union, and the resolver orders the results.** §3 of the boundary
 record assigns candidate ordering to the runtime and resolver, and prohibits the geographic model from
-authoring any ordering. Searching every afforded, mapped category and letting the existing candidate
+authoring any ordering. Search every afforded, mapped category and let the existing candidate
 ordering rank the union satisfies both rules. No world-model record states a preference, because the
 schema has no field for one. The ordering that decides the answer is the one the system already owns
 and already measures.
@@ -441,7 +441,7 @@ and already measures.
 This requires `POIIntent`'s evidence to carry a set rather than one id. The reader already handles
 sets: `resolveOvertureCategories` returns an array per seed id, and `#searchKRing` probes each. The
 narrowing happens entirely upstream, at `matchPOISubject`'s `hits[0]` and at
-`POIIntent.evidence.categoryID`. Widening it is a runtime change with its own board obligations, and
+`POIIntent.evidence.categoryID`. This widening is a runtime change with its own board obligations, and
 it is owned outside this program.
 
 **Until that change lands, a plural affordance may not reach the route.** The interim rule is a
@@ -494,7 +494,7 @@ across the move.
 
 ---
 
-## 9. Sequencing
+## 9. Sequence the work
 
 | Issue                       | Relationship to this record                                                                                                                                                                                                                                                                        |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -525,7 +525,7 @@ consumer, so every drop-in API would inherit a world-semantics dependency there.
 the integration needs no API from core. The POI branch lives in `mailwoman`, and
 `@mailwoman/kind-classifier` receives its lexicon by injection.
 
-No other exclusion in §6 changes. Ranking behavior is unchanged, and no authored weight, boost,
+No other exclusion in §6 changes. Rank order is unchanged, and no authored weight, boost,
 penalty or ordering API is introduced. §8.1 explicitly routes the plural case to the resolver's
 existing ordering rather than authoring one.
 
@@ -568,7 +568,7 @@ The last two are declared phrasings no registered row uses, and they claim a sub
 
 The POI **name** rung is deliberately absent from both arms. It can only claim phrases the route
 would otherwise be asked about, so leaving it out can only over-report semantic claims, and a
-measured zero is conservative. Adding it needs a `poi.db`, which §5 row 5 should use.
+measured zero is conservative. The measurement needs a `poi.db`, which §5 row 5 should use.
 
 **The wave-1 simulation.** The committed `packages/geographic-model/data/geographic-model.json` was
 read and cloned. The clone received one added concept (`drugstore`, `isA: ["establishment"]`) with

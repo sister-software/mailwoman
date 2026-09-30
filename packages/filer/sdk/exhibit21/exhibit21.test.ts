@@ -1,0 +1,375 @@
+/**
+ * @copyright Sister Software.
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file Tests for {@linkcode parseExhibit21}/{@linkcode fetchExhibit21}.
+ */
+
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { htmlToLayoutText } from "@mailwoman/core/html/text"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
+import { describe, expect, it } from "vitest"
+
+import { fetchExhibit21, parseExhibit21, type SECDocumentClient } from "#sdk/exhibit21"
+
+async function fixture(name: string): Promise<string> {
+	return await readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", name))
+}
+
+describe("parseExhibit21 — criterion 3 (decision 6: abstain, never guess)", () => {
+	it("a deliberately mangled fixture yields ZERO subsidiaries, a NON-ZERO unparseable count, and throws nothing", async () => {
+		const html = await fixture("exhibit21-mangled.html")
+
+		expect(() => parseExhibit21(html)).not.toThrow()
+
+		const result = parseExhibit21(html)
+
+		expect(result.subsidiaries).toEqual([])
+		expect(result.unparseable).toBeGreaterThan(0)
+		expect(result.unparseable).toBe(3)
+	})
+
+	it("never throws on a totally empty document", () => {
+		expect(() => parseExhibit21("")).not.toThrow()
+		expect(parseExhibit21("")).toEqual({ subsidiaries: [], unparseable: 0 })
+	})
+
+	it("never throws on a document that is neither a table, a list, nor any recognizable line", () => {
+		expect(() => parseExhibit21("<html><body></body></html>")).not.toThrow()
+	})
+})
+
+describe("parseExhibit21 — fabrication audit: malformed input recovered WITHOUT fabrication (C1, C2, C4)", () => {
+	it("C1a: an unclosed <td> before the next <td> is implicitly closed at the next cell — not merged into one name", () => {
+		const html = "<table><tr><td>Acme Fiber LLC<td>Delaware</td></tr></table>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Acme Fiber LLC", jurisdiction: "Delaware" }],
+			unparseable: 0,
+		})
+	})
+
+	it("C1b: a row with NO </td> at all still yields both cells — not silently dropped as empty-row cruft", () => {
+		const html = "<table><tr><td>Acme<td>Delaware</tr></table>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Acme", jurisdiction: "Delaware" }],
+			unparseable: 0,
+		})
+	})
+
+	it("C2: a minified no-table/no-<li> document splits on paragraph boundaries, not on tag-stripping artifacts", () => {
+		const html = "<html><body><p>Acme Fiber LLC (Delaware)</p><p>Beta Networks Inc (Nevada)</p></body></html>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [
+				{ name: "Acme Fiber LLC", jurisdiction: "Delaware" },
+				{ name: "Beta Networks Inc", jurisdiction: "Nevada" },
+			],
+			unparseable: 0,
+		})
+	})
+
+	it("C4: an inline <b>/<font> inside a <li> no longer truncates the name at the tag's artifact space", () => {
+		const html = "<ul><li><b>Acme</b> Fiber LLC (Delaware)</li></ul>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Acme Fiber LLC", jurisdiction: "Delaware" }],
+			unparseable: 0,
+		})
+	})
+})
+
+describe("parseExhibit21 — fabrication audit: ambiguous/decorative content abstains (C3, I2)", () => {
+	it("C3: a plain-text 3-column fixed-width row abstains, matching the table strategy's identical 3+-cell rule", () => {
+		const text = "Acme Fiber LLC        Delaware        100%"
+
+		expect(parseExhibit21(text)).toEqual({ subsidiaries: [], unparseable: 1 })
+	})
+
+	it("I2: <td>-tagged header/decoration rows abstain instead of becoming subsidiaries, real row still recovered", async () => {
+		const html = await fixture("exhibit21-mangled-headers.html")
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Cascade Fiber Holdings, LLC", jurisdiction: "Delaware" }],
+			unparseable: 3,
+		})
+	})
+
+	it("I2: the same boilerplate-label check applies to the plain-text/list strategies, not just the table strategy", () => {
+		const text = "SUBSIDIARIES OF THE REGISTRANT\nName of Subsidiary        Jurisdiction of Incorporation\n----\n"
+
+		expect(parseExhibit21(text)).toEqual({ subsidiaries: [], unparseable: 3 })
+	})
+})
+
+describe("parseExhibit21 — fabrication audit: nested layout table (I1)", () => {
+	it("finds the OUTERMOST table's real row and abstains on the nested table's row, rather than replacing the real list", () => {
+		const html =
+			"<table><tr><td><table><tr><td>Inner</td></tr></table></td></tr>" +
+			"<tr><td>Acme Fiber LLC</td><td>Delaware</td></tr></table>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Acme Fiber LLC", jurisdiction: "Delaware" }],
+			unparseable: 1,
+		})
+	})
+})
+
+describe("parseExhibit21 — clean HTML table", () => {
+	it("yields exactly the expected subsidiary list, skipping the header row", async () => {
+		const html = await fixture("exhibit21-clean-table.html")
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [
+				{ name: "Cascade Fiber Holdings, LLC", jurisdiction: "Delaware" },
+				{ name: "Meridian Broadband, Inc.", jurisdiction: "Nevada" },
+				{ name: "Summit Networks Co.", jurisdiction: "Texas" },
+			],
+			unparseable: 0,
+		})
+	})
+
+	it("a data row with no jurisdiction column is a name-only subsidiary, not unparseable", () => {
+		const html = "<table><tr><td>Standalone Sub LLC</td></tr></table>"
+
+		expect(parseExhibit21(html)).toEqual({ subsidiaries: [{ name: "Standalone Sub LLC" }], unparseable: 0 })
+	})
+
+	it("an empty <tr></tr> is skipped as formatting cruft — not a subsidiary, not unparseable", () => {
+		const html = "<table><tr></tr><tr><td>Real Sub Inc</td><td>Ohio</td></tr></table>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Real Sub Inc", jurisdiction: "Ohio" }],
+			unparseable: 0,
+		})
+	})
+
+	it("decodes HTML entities inside cells", () => {
+		const html = "<table><tr><td>Smith &amp; Sons, LLC</td><td>New York</td></tr></table>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Smith & Sons, LLC", jurisdiction: "New York" }],
+			unparseable: 0,
+		})
+	})
+})
+
+describe("parseExhibit21 — header-mapped columns and the indented corporate tree", () => {
+	/**
+	 * TDS indents each subsidiary one column to the right of its parent.
+	 *
+	 * The parser discards nesting depth because each Exhibit 21 row is a registrant-to-subsidiary edge.
+	 */
+	it("reads an indented child row's name from the column between the header's name and jurisdiction columns", () => {
+		const html =
+			"<table>" +
+			"<tr><td>Subsidiary Companies</td><td></td><td>State of Organization</td></tr>" +
+			"<tr><td>Cascade Fiber Holdings, LLC</td><td></td><td>Delaware</td></tr>" +
+			"<tr><td></td><td>Cascade Last Mile, LLC</td><td>Illinois</td></tr>" +
+			"<tr><td></td><td>Meridian Broadband, Inc.</td><td>Wisconsin</td></tr>" +
+			"</table>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [
+				{ name: "Cascade Fiber Holdings, LLC", jurisdiction: "Delaware" },
+				{ name: "Cascade Last Mile, LLC", jurisdiction: "Illinois" },
+				{ name: "Meridian Broadband, Inc.", jurisdiction: "Wisconsin" },
+			],
+			unparseable: 1,
+		})
+	})
+
+	it("a blank name column with NO column before the jurisdiction still abstains — there is nothing to read", () => {
+		const html =
+			"<table>" +
+			"<tr><td>Name of Subsidiary</td><td>Jurisdiction of Incorporation</td><td>% of Ownership</td></tr>" +
+			"<tr><td>Cascade Fiber Holdings, LLC</td><td>Delaware</td><td>100%</td></tr>" +
+			"<tr><td></td><td>Delaware</td><td>100%</td></tr>" +
+			"</table>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Cascade Fiber Holdings, LLC", jurisdiction: "Delaware" }],
+			unparseable: 2,
+		})
+	})
+})
+
+describe("parseExhibit21 — nested-list variant", () => {
+	it("flattens a nested subsidiary <ul>/<li> tree, each carrying its own name + jurisdiction", async () => {
+		const html = await fixture("exhibit21-nested-list.html")
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [
+				{ name: "Cascade Fiber Holdings, LLC", jurisdiction: "Delaware" },
+				{ name: "Cascade Last Mile, LLC", jurisdiction: "Nevada" },
+				{ name: "Meridian Broadband, Inc.", jurisdiction: "Texas" },
+			],
+			unparseable: 0,
+		})
+	})
+
+	it("a list item with no parenthetical jurisdiction is name-only, not unparseable", () => {
+		const html = "<ul><li>Standalone Sub LLC</li></ul>"
+
+		expect(parseExhibit21(html)).toEqual({ subsidiaries: [{ name: "Standalone Sub LLC" }], unparseable: 0 })
+	})
+})
+
+describe("parseExhibit21 — plain-text variant", () => {
+	it("splits fixed-width columns on the 2+-space gap", async () => {
+		const text = await fixture("exhibit21-plain-text.txt")
+
+		expect(parseExhibit21(text)).toEqual({
+			subsidiaries: [
+				{ name: "Cascade Fiber Holdings, LLC", jurisdiction: "Delaware" },
+				{ name: "Meridian Broadband, Inc.", jurisdiction: "Nevada" },
+				{ name: "Summit Networks Co.", jurisdiction: "Texas" },
+			],
+			unparseable: 0,
+		})
+	})
+
+	it("splits on exactly one comma when there is no fixed-width column gap", () => {
+		const text = "Acme Fiber LLC, Delaware\n"
+
+		expect(parseExhibit21(text)).toEqual({
+			subsidiaries: [{ name: "Acme Fiber LLC", jurisdiction: "Delaware" }],
+			unparseable: 0,
+		})
+	})
+
+	it("does NOT split on 2+ commas — a legal name may itself contain one — and keeps the whole line as the name", () => {
+		const text = "Acme Fiber, LLC, Delaware\n"
+
+		const result = parseExhibit21(text)
+
+		expect(result.unparseable).toBe(0)
+		expect(result.subsidiaries).toEqual([{ name: "Acme Fiber, LLC, Delaware" }])
+	})
+
+	it("blank lines are skipped, never counted as unparseable", () => {
+		const text = "Acme Fiber LLC, Delaware\n\n\nBeta Networks, Ohio\n"
+
+		expect(parseExhibit21(text).subsidiaries).toHaveLength(2)
+		expect(parseExhibit21(text).unparseable).toBe(0)
+	})
+})
+
+describe("fetchExhibit21", () => {
+	it("fetches through the shared SEC client's getDocument and parses the result", async () => {
+		let requestedURL: string | URL | undefined
+
+		const client: SECDocumentClient = {
+			getDocument: async (url) => {
+				requestedURL = url
+
+				return "<table><tr><td>Fetched Sub LLC</td><td>Delaware</td></tr></table>"
+			},
+		}
+
+		const result = await fetchExhibit21(client, "https://www.sec.gov/Archives/edgar/data/1/1/ex21.htm")
+
+		expect(requestedURL).toBe("https://www.sec.gov/Archives/edgar/data/1/1/ex21.htm")
+		expect(result).toEqual({ subsidiaries: [{ name: "Fetched Sub LLC", jurisdiction: "Delaware" }], unparseable: 0 })
+	})
+})
+
+/**
+ * A name is only emitted if it appears in the input as a contiguous string,
+ * checked here against the same strip/decode/collapse normalization every parse
+ * strategy applies rather than against the raw source.
+ */
+function normalizedDocument(html: string): string {
+	return normalizeWhitespace(htmlToLayoutText(html))
+}
+
+/**
+ * Every case the fabrication audit found, kept so the substring-invariant test runs across them.
+ * mutating any of the tightenings above regresses at least one back to a name that fails the check.
+ */
+const FABRICATION_AUDIT_CASES: Record<string, string> = {
+	"C1a unclosed <td>": "<table><tr><td>Acme Fiber LLC<td>Delaware</td></tr></table>",
+	"C1b no </td> at all": "<table><tr><td>Acme<td>Delaware</tr></table>",
+	"C2 minified paragraphs":
+		"<html><body><p>Acme Fiber LLC (Delaware)</p><p>Beta Networks Inc (Nevada)</p></body></html>",
+	"C3 3-column plain text": "Acme Fiber LLC        Delaware        100%",
+	"C4 inline tag in <li>": "<ul><li><b>Acme</b> Fiber LLC (Delaware)</li></ul>",
+	"I1 nested layout table":
+		"<table><tr><td><table><tr><td>Inner</td></tr></table></td></tr>" +
+		"<tr><td>Acme Fiber LLC</td><td>Delaware</td></tr></table>",
+	"I2 header/decoration rows":
+		"SUBSIDIARIES OF THE REGISTRANT\nName of Subsidiary        Jurisdiction of Incorporation\n----\n",
+}
+
+const FIXTURE_FILES = [
+	"exhibit21-mangled.html",
+	"exhibit21-mangled-headers.html",
+	"exhibit21-clean-table.html",
+	"exhibit21-nested-list.html",
+	"exhibit21-plain-text.txt",
+]
+
+/**
+ * The substring check catches a jurisdiction or name fabricated from no input.
+ *
+ * A name-only shape in the swept set exposes that failure.
+ * The case-specific tests above cover concatenation bugs.
+ */
+const NAME_ONLY_PROBES: Record<string, string> = {
+	"name-only table row": "<table><tr><td>Standalone Sub LLC</td></tr></table>",
+	"name-only list item": "<ul><li>Standalone Sub LLC</li></ul>",
+	"name-only plain-text line": "Standalone Sub LLC\n",
+}
+
+describe("parseExhibit21 — substring invariant (decision 6, criterion 3): a name is only emitted if the input contains it", () => {
+	it.each(FIXTURE_FILES)(
+		"every emitted name/jurisdiction is a substring of the normalized document: %s",
+		async (name) => {
+			const html = await fixture(name)
+			const normalized = normalizedDocument(html)
+			const result = parseExhibit21(html)
+
+			for (const subsidiary of result.subsidiaries) {
+				expect(normalized).toContain(subsidiary.name)
+
+				if (subsidiary.jurisdiction) {
+					expect(normalized).toContain(subsidiary.jurisdiction)
+				}
+			}
+		}
+	)
+
+	it.each(Object.entries(FABRICATION_AUDIT_CASES))(
+		"every emitted name/jurisdiction is a substring of the normalized document: %s",
+		(_label, html) => {
+			const normalized = normalizedDocument(html)
+			const result = parseExhibit21(html)
+
+			for (const subsidiary of result.subsidiaries) {
+				expect(normalized).toContain(subsidiary.name)
+
+				if (subsidiary.jurisdiction) {
+					expect(normalized).toContain(subsidiary.jurisdiction)
+				}
+			}
+		}
+	)
+
+	it.each(Object.entries(NAME_ONLY_PROBES))(
+		"every emitted name/jurisdiction is a substring of the normalized document: %s",
+		(_label, html) => {
+			const normalized = normalizedDocument(html)
+			const result = parseExhibit21(html)
+
+			for (const subsidiary of result.subsidiaries) {
+				expect(normalized).toContain(subsidiary.name)
+
+				if (subsidiary.jurisdiction) {
+					expect(normalized).toContain(subsidiary.jurisdiction)
+				}
+			}
+		}
+	)
+})

@@ -464,7 +464,7 @@ postcode is excluded: an orthogonal channel rather than a containment rung."
 3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled rather than real WOF. They are counted **separately** and never merged into the WOF counts. For the 86-country backfill set, the locality rung and above already contain some Overture data, so those cells compare Overture with itself, and the report must say so.
 
 **Why the projection happens in SQL.** A parent with both a `borough` child and a `neighbourhood`
-child must count **once** toward `dependent_locality` parent-coverage. Counting distinct parents per
+child must count **once** toward `dependent_locality` parent-coverage. The distinct-parent count per
 placetype and summing in JS would count it twice. The query therefore projects placetype → rung with
 a `CASE` expression generated from `placetypesForRung`, then runs `COUNT(DISTINCT p.id)` per rung.
 Because the `CASE` is generated from the projection table, the two cannot diverge.

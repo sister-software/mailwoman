@@ -14,8 +14,8 @@ depends on the graph shape alone.
 
 ## Where the time goes
 
-The ONNX forward pass takes **93.2% of a parse**. Tokenizing, the anchor/gazetteer/country channel
-lookups, Viterbi, and building the tree add up to 0.25 ms, under 7% of the wall clock.
+The ONNX forward pass takes **93.2% of a parse**. Tokenization, anchor/gazetteer/country channel
+lookups, Viterbi, and tree construction add up to 0.25 ms, under 7% of the wall clock.
 
 If the forward pass took no time, parsing would be 14.6x faster. Every change below tries to capture
 part of that 14.6x, and every one fails for the same reason: the forward pass never sits idle waiting
@@ -41,12 +41,12 @@ Two things block the thread, and either one alone is enough to prevent overlap:
 - **`node:sqlite` reads are synchronous** by design, because the resolution ladder is a sync
   interface (see `packages/sqlite/AGENTS.md`). The resolve half of a geocode also blocks.
 
-Scaling stays between 1.00x and 1.02x at every worker count. Contention would produce a declining
+The measured scale stays between 1.00x and 1.02x at every worker count. Contention would produce a declining
 curve. A flat line
 means that no work overlapped.
 
 For this reason, `MAILWOMAN_BATCH_CONCURRENCY` was removed on 2026-07-16. It defaulted to 8 and was
-documented as a tuning knob, but it had never had any effect. Setting it to 1 and to 16 produced the
+documented as a tuning knob, but it had never had any effect. Values of 1 and 16 produced the
 same throughput to three digits. `POST /v1/batch` is now an explicit sequential loop, which is how it
 had always behaved in practice.
 
@@ -54,7 +54,7 @@ The same change works in Python, where `intra_op=1` plus 16 threads gives 1.64x,
 binding releases the GIL during a run. That result does not transfer to Node, because the Node
 binding behaves differently.
 
-## Batching does not pay
+## Batch requests do not improve throughput
 
 The obvious counterexample is [deepparse](https://deepparse.org/), which parses at 3.1 ms/addr
 batched against 32.5 ms sequential, a 10x improvement. That 10x comes from amortizing per-call Python
@@ -72,8 +72,8 @@ These results were measured on the shipped int8 graph, re-exported so that it co
 |    32 |    4.64 |  215.6 |   0.71x |
 |    64 |    5.33 |  187.7 |   0.62x |
 
-Throughput peaks at 1.12x and then declines. fp32 behaves the same way (1.24x at B=4). Batching
-raises arithmetic intensity, which helps when cores sit idle waiting on memory, and our cores do not.
+Throughput peaks at 1.12x and then declines. fp32 behaves the same way (1.24x at B=4). Higher
+arithmetic intensity helps when cores sit idle waiting on memory, and our cores do not.
 Above B=8, the working set no longer fits, and throughput drops.
 
 **On CPU, do not build a batching path.** On GPU or WebGPU the arithmetic intensity differs, and
@@ -95,7 +95,7 @@ That `1` is the batch dimension, traced in as a literal.
 The cause is **`torch.export`'s 0/1 specialization**. `torch.export` always specializes a dimension
 of size 0 or 1 to a constant, even when `dynamic_shapes` marks it dynamic. The export traced with
 batch=1 example inputs, so it discarded the dynamic request but still labeled the input `'batch'`.
-The metadata was therefore wrong. Tracing with batch=2 fixes it:
+The metadata was therefore wrong. A batch=2 trace fixes it:
 
 ```
 dummy_batch=1  logits_out=[1, 'sequence', 33]        B=4:FAIL
@@ -119,7 +119,7 @@ Only moving work across a thread boundary increases throughput.
 already does this. It is an async iterator over a `spliterator` worker pool. Each worker builds its
 own classifier and lookups, and results are yielded in completion order.
 
-Expect a modest gain. Geocoding is memory- and I/O-bound on a shared multi-gigabyte database. A
+Expect a modest gain. The geocoding path is memory- and I/O-bound on a shared multi-gigabyte database. A
 measured NPPES sweep peaked at **two workers (~1.4x)** and degraded after that: four workers matched
 the baseline, and six gave no gain. Each worker also pays for its own 38 MB session and its own open
 database. Measure the worker count on your own data and machine instead of defaulting to
@@ -138,7 +138,7 @@ Avoid two mistakes, both of which produced a wrong answer during the original sw
   half the time. The spread across identical configs is ~13%, wider than most effects worth
   investigating.
 - **Instrument the real runner.** The forward-pass split needs `classifier.cfg.runner`.
-  Instrumenting the wrong field reports 0 ms and 0%, which looks like a measurement but means the
+  The wrong field reports 0 ms and 0%, which looks like a measurement but means the
   code measured no work. This is the same class of bug as
   [the meaning of zero](./the-meaning-of-zero.mdx).
 

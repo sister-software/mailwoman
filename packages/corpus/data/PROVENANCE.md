@@ -9,8 +9,10 @@ source's terms. Generated, **not hand-edited**.
 
 ```sh
 mailwoman corpus source-register \
-  --inventory      ../mailwoman-internal/research/global-address-jurisdiction-inventory-v3.csv \
-  --sources        ../mailwoman-internal/research/global-functional-authority-corpora-v2.csv \
+  --inventory      internal/research/global-address-jurisdiction-inventory-v3.csv \
+  --sources        internal/research/global-functional-authority-corpora-v2.csv \
+  --decisions      packages/corpus/data/license-decisions.json \
+  --resolutions    packages/corpus/data/source-resolutions.json \
   --register-version 0.1.0 \
   --authored-at    2026-09-18 \
   --source-version global-address-corpus-spec-v3
@@ -18,18 +20,26 @@ yarn format
 ```
 
 That is the command that produced the committed copy. The two CSVs are research working documents and
-live in the `mailwoman-internal` repository under `research/`, so regenerating needs a checkout of it
-beside this one. They were under this repository's gitignored `.notes/` until 2026-09-20, where
+live in the `mailwoman-internal` repository under `research/`, so regenerating needs a checkout of it.
+That repository is checked out at `internal/`, which `.git/info/exclude` keeps out of this one, and
+the paths above read from there. They were under this repository's gitignored `.notes/` until 2026-09-20, where
 nothing versioned them and a reviewer could not tell which copy produced the register. The register
 is the committed record here, and it carries every field a reader needs to check a row: the
 publisher, the retrieved URL, and the research pass.
 
-There is a third input, and it is committed: `--decisions` defaults to `license-decisions.json`
-beside this file, and holds every licence decision somebody made by reading a publisher's terms. The
-build derives each decision as `unchecked` from the research pass's access labels and applies the
-recorded ones over that, so a decision survives a rebuild. Recording one in the register instead
-would be erased by the next run with no error, because the write below replaces the file whole
-(#2351). The file is empty today, which is why every decision in the register reads `unchecked`.
+Two further inputs are committed beside this file, and both exist because the write below replaces the
+register whole: a value recorded in the register itself is erased by the next run with no error and a
+normal-looking count.
+
+`--decisions` defaults to `license-decisions.json` and holds every licence decision somebody made by
+reading a publisher's terms. The build derives each decision as `unchecked` from the research pass's
+access labels and applies the recorded ones over that, so a decision survives a rebuild (#2351).
+
+`--resolutions` defaults to `source-resolutions.json` and holds the source fields a review resolved:
+`addressRoles`, `coverage`, `upstreamLineage` and `personalDataReview`. The research CSV records the
+first three as the placeholders `varies`, `country-specific` and the empty string on all 399 of its
+non-rail rows, and has no column for a personal-data review, so a review records its findings here
+rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
 The `oxfmt` pass is required — committed JSON is oxfmt-clean, which `JSON.stringify` cannot
 reproduce. The generator is deterministic, so the artifact is reproducible from the same inputs.
@@ -61,7 +71,7 @@ concluding the publisher renamed itself.
 | file                                           |  rows | what is read                                                           |
 | ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
 | `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
-| `global-functional-authority-corpora-v2.csv`   | 2,389 | the 389 rows naming a national source; 2,000 are dropped               |
+| `global-functional-authority-corpora-v2.csv`   | 2,399 | the 399 rows naming a national source; 2,000 are dropped               |
 
 The 2,000 dropped rows carry `origin = global_research_rail`: eight global discovery lookups the
 pass repeated once per jurisdiction, which collapse to eight distinct row bodies ignoring the `iso2`
@@ -72,14 +82,14 @@ README's procedure and not rows here.
 
 `global-functional-authority-corpora-v2.csv` has an `address_role`, a `coverage` and an `upstream`
 column, and the register declares all three unresolved. That is not the build dropping usable data.
-Over the 389 rows it keeps, `address_role` reads `varies` on all 389, `coverage` reads
-`country-specific` on all 389, and `upstream` is empty on all 389. The first two are the research
+Over the 399 rows it keeps, `address_role` reads `varies` on all 399, `coverage` reads
+`country-specific` on all 399, and `upstream` is empty on all 399. The first two are the research
 pass saying it did not determine the field per source.
 
 The build reads the columns and refuses to carry a placeholder, because
 `ingestEligibilityProblems` reports "no address role is resolved" and "no coverage has been
-measured" as two of the four blockers that apply to every source in the register. The other two are
-the unreviewed license decision and the absent personal-data review. Writing `varies`
+measured" as two of its five conditions. The others are the unreviewed license decision, the absent
+personal-data review, and a status that records the source as uninspected. Writing `varies`
 into `addressRole` would stop both from firing while resolving nothing. A value outside the declared
 placeholder set is carried through, and an `address_role` that is neither a placeholder nor an
 `AddressRole` fails the build rather than being dropped.
@@ -108,7 +118,7 @@ hand-written by design — that file is an input to this build, not an output of
 ### What the register carries
 
 Two tables rather than one nested list. The jurisdiction table is a complete 250-row enumeration;
-the source table is zero or more rows per jurisdiction, 389 over 240 of them. Nesting the second
+the source table is zero or more rows per jurisdiction, 399 over 240 of them. Nesting the second
 inside the first would make a jurisdiction nobody researched structurally identical to one whose
 list happens to be empty, and no reader could tell which they were looking at.
 
@@ -127,7 +137,7 @@ one that does not.
 | ----------------------- | ---: | ----------------------------------------------------------------------- |
 | `verified-authority`    |  221 | register confirmed; address fields, bulk access and terms not inspected |
 | `retained-original`     |  142 | carried from the earlier memo without recheck; no publisher, no URL     |
-| `verified-corpus`       |   25 | a bulk corpus confirmed reachable                                       |
+| `verified-corpus`       |   29 | a bulk corpus confirmed reachable                                       |
 | `verified-corpus-stale` |    1 | reachable, and the copy examined has stopped being updated              |
 
 The `A`/`A~`/`B`/`C`/`D` column is `backboneState`, and it is deliberately not called a tier: this
@@ -138,28 +148,30 @@ repository already has locale tiers 1 through 5 in `scope.config.json` and the
 
 Say this plainly rather than making a reader discover it by querying:
 
-- **`addressRole` — 0 of 389.** Every row reads `varies`. The specification's section 2 asks for a
-  role per source and the pass recorded none, so the register cannot say whether any of these
+- **`addressRole` — 0 of 399.** Every row reads `varies`. The specification's section 2 asks for a
+  role per source and the pass recorded none, so the research CSV cannot say whether any of these
   sources holds premises, registered offices or mailing addresses.
-- **`upstreamLineage` — 0 of 389.** No row records what it was copied from, so two databases carrying
+- **`upstreamLineage` — 0 of 399.** No row records what it was copied from, so two databases carrying
   one upstream submission cannot yet be collapsed into the single observation they are.
-- **`coverage` — 0 of 389.** Every row reads `country-specific`, which is a scope rather than a
+- **`coverage` — 0 of 399.** Every row reads `country-specific`, which is a scope rather than a
   measurement. A national portal is not evidence of national coverage.
 
-The register declares all three in its `unresolved` array and the audit checks the claim in both
-directions: a field listed there must be absent from every row, and a field not listed must be
-present on at least one.
+A later review resolves these per source in `source-resolutions.json`, and the register's `unresolved`
+array names any field no row carries yet. The audit checks that claim in both directions: a field
+listed there must be absent from every row, and a field not listed must be present on at least one.
+The array is empty today, because a review has resolved each of the four on at least one source.
 
-**No row is ingest-eligible.** Ask `ingestEligibilityProblems()` rather than reading a status as
-permission; today it answers with reasons for all 389.
+Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of 399 sources it
+admits eleven, ten INSPIRE Addresses themes and Italy's ANAC procurement release, and answers the
+other 388 with the reasons below.
 
-### Licences: every one unchecked
+### Licences: 34 read, 365 unchecked
 
-All 389 rows point at one of twelve decision records, and every one is `state: "unchecked"`. That is
-a finding, not a placeholder. The 247 web-researched rows read `CHECK NATIONAL / DATASET TERMS`
-verbatim. The other 142 carry an access label from the original memo — `Free`, `Free-reg`, `Gated`,
-`Licensed` — which says what the download costs and grants nothing, so treating one as permissive
-would admit a source on a sentence about price.
+All 399 rows point at a decision record of their own. 28 are `elected`, 6 are `refused`, and the
+other 365 read `unchecked`, which is a finding rather than a placeholder. The 247 web-researched rows
+read `CHECK NATIONAL / DATASET TERMS` verbatim. The other 143 carry an access label from the original
+memo — `Free`, `Free-reg`, `Gated`, `Licensed` — which says what the download costs and grants
+nothing, so treating one as permissive would admit a source on a sentence about price.
 
 `unchecked` is a first-class value distinct from a licence reviewed and found permissive, which is
 what `elected` records: the terms, the retrieved copy, the version, and why that grant rather than
@@ -195,18 +207,53 @@ copy they were read from, that copy's version where the publisher gives one, and
 not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
 register that fails its audit, so an incomplete entry never reaches the committed artifact.
 
-**The file is empty.** Every one of the register's 389 decisions therefore reads `unchecked`. Electing
-them is necessary and not sufficient: `ingestEligibilityProblems` also refuses all 389 sources for an
-unresolved `addressRole` and unmeasured `coverage`, which no licence decision touches, so clearing
-this alone moves the ingest-eligible count from 0 to 0.
+**Thirty-two of the register's 399 decisions are recorded**, 28 elected and 6 refused. AusTender's
+publisher, the Australian Department of Finance, grants `CC-BY-3.0-AU` in the AusTender Terms of Use
+§5.1. DENUE's publisher, INEGI, grants its own free-use terms. INSEE grants `Licence Ouverte 2.0` over
+SIRENE in each of nine overseas territories. Kadaster dedicates the Dutch address theme to the public
+domain under CC0 1.0, Klimadatastyrelsen licenses the Danish one under CC BY 4.0, and ČÚZK states
+`žádné podmínky neplatí` on all 6,259 rights elements of the Czech feed. Maa- ja Ruumiamet dedicates
+the Estonian theme to the public domain under CC0 1.0, stated in the ISO 19139 dataset record its own
+WFS capabilities links rather than in the capabilities document, whose `Fees` and `AccessConstraints`
+read `puudub` and describe the service. The Dirección General del
+Catastro grants its own INSPIRE
+access-and-use licence over the cadastral addresses of 52 Spanish territorial offices, and the three
+foral councils that publish through the same national feed grant their own terms over the rest of
+Spain's cadastral addresses: Navarra under `CC-BY-4.0`, Gipuzkoa under `CC-BY-SA-4.0`, and Bizkaia
+under a statement naming no instrument. Each is retained under
+`internal/strategy/rights-receipts/`. Six publishers refuse in their own words: the Banque Centrale
+des Comores, the ISPF and the Government of Tokelau reserve all rights in a site footer, Kenya's PPRA
+and the Central Bank of Libya do the same, and Kosovo's PPRC publishes terms whose clause 12(c)
+reserves copying, reproduction and derivative works except by its express written agreement. The
+other 365 read `unchecked`.
 
-### Why there are 389 of them rather than 12
+A decision may name a body declared once under `sharedReadings` rather than restating it. One publisher
+can hold a licence over several jurisdictions, and a decision is scoped to one publisher in one
+jurisdiction, so one reading of INSEE's terms produces nine decisions. Each licence id still carries its
+own, so no election spans two jurisdictions; the shared body removes the risk of nine hand-maintained
+copies drifting. The build refuses a `sameAs` naming a reading the file does not declare.
+
+Electing terms is necessary and not sufficient. `ingestEligibilityProblems` also requires a resolved
+address role per column, measured coverage, and a personal-data review that does not read `present`,
+none of which a licence decision touches; those live in `source-resolutions.json`. **Sixteen sources
+have exactly one blocking condition left, and fifteen of the sixteen are blocked on their personal-data
+reading alone.** That makes the personal-data question one decision gating fifteen sources rather than
+a question about one. The sixteenth is Uruguay, blocked on its address role instead.
+
+### Why there are 399 of them rather than 12
 
 A decision is scoped to one publisher in one jurisdiction, so the register carries one per source.
 Keying a decision by the research pass's access label alone made it as wide as the label:
-`CHECK NATIONAL / DATASET TERMS` covered 247 of the 389 sources across 222 publishers, and `Free`
-covered 99. Recording one election against either would have granted every source under it on a
+`CHECK NATIONAL / DATASET TERMS` covered 247 of the 399 sources across 222 publishers, and `Free`
+covered 103. Recording one election against either would have granted every source under it on a
 single reading of one publisher's terms.
+
+Spain was the worked case of the same defect inside one row. `es-mixed-regulatory-1` was named
+`Catastro, INE` and carried no publisher, so its decision scoped to the source id and covered two
+institutions. The same national feed carries three foral cadastres under their own terms, which the
+same pass gave three rows of their own. The 2026-09-30 rights review split the row per publisher, which moved each
+row's scope onto its own publisher. Naming the publisher is what makes the scoping work, and a row
+that names two defeats it.
 
 The jurisdiction is part of the scope because a publisher name is not unique across states. The pass
 wrote `Ministry of Justice` for Belarus, Lebanon and Timor-Leste, `Ministry of Commerce and Industry`
@@ -216,6 +263,149 @@ The cost falls on a publisher that genuinely serves several jurisdictions. INSEE
 France and nine overseas territories, so it holds ten decisions, and a reviewer who reads its terms
 once records that conclusion ten times. That is the direction to err in: an over-wide election is the
 failure review cannot undo.
+
+## `source-resolutions.json` — source fields a review resolved (#2323)
+
+Hand-written, and an input to the register build for the same reason as `license-decisions.json`: the
+build rewrites the register whole.
+
+Each key is a `sourceID` the register declares, and each value carries any of `addressRoles`,
+`coverage`, `upstreamLineage` and `personalDataReview`. `buildSourceRegister` applies these over the
+rows it derives from the research CSV and refuses a resolution naming a source the register does not
+carry, because a resolution that resolves nothing is a typo or a source that has been removed.
+
+The fields live here rather than in the CSV because the CSV is the record of a research pass. All 390
+of its non-rail rows write `varies` for `address_role`, `country-specific` for `coverage` and an empty
+`upstream`, and no pass has a personal-data column at all. Editing those placeholders would change
+what a pass is recorded as having found. A row's other columns are a different matter: a later pass
+rewrites one when reading the publisher settles something the earlier pass recorded wrongly, and the
+row's `origin` column then names that later pass so the change is legible.
+
+`addressRoles` is keyed by the address column's path in the published record rather than holding one
+role for the source, because a publication can carry two roles on one record. AusTender's OCDS release
+gives a `counterparty` address for the supplier and a `facility` address for the procuring entity on
+every contracting process. Taiwan's GCIS register gives a registered company address and a tax-office
+business address in separate columns. `ingestEligibilityProblems` requires at least one column to have
+a role, and the audit refuses an empty map, which would read as resolved while stating nothing.
+
+**Twenty-eight sources of 399 carry at least one resolved field, and twenty-five carry all four.** AusTender
+and five OCDS procurement releases are recorded from whole-year measurements of the published data.
+The nine SIRENE territories are recorded from INSEE's own `dessin de fichier`. Six of the ten
+INSPIRE Addresses themes are recorded from an element census over a whole GML file, the largest being
+the Netherlands' 29,677,448,685 bytes and 10,066,060 features. Denmark's is recorded from the column
+schema of its GeoPackage instead, because it publishes the theme as a database. Estonia's, Slovakia's
+and the Flemish Region's are recorded from every property of every feature type their WFS publishes,
+five types and 101 properties for Estonia, five and 44 for Slovakia and four and 32 for Flanders,
+because none of the three publishes a file. Each is retained under
+`internal/strategy/rights-receipts/`.
+
+**Eleven sources are ingest-eligible and fifteen have one blocking condition each.** Fourteen of the
+fifteen read `personalDataReview: present`. The fifteenth is Uruguay, refused on its address role: no
+party object in 127,885 carries an address field of any kind, so that publication is reachable in bulk
+and is not an address source.
+
+Ten of the eleven eligible sources are INSPIRE Addresses (AD) themes: Spain's Dirección General del
+Catastro, the three foral cadastres of Bizkaia, Gipuzkoa and Navarra, the Netherlands' Kadaster under
+CC0 1.0, Denmark's Klimadatastyrelsen under CC BY 4.0, Czechia's ČÚZK, Estonia's Maa- ja
+Ruumiamet under CC0 1.0, Slovakia's Ministerstvo vnútra under the INSPIRE controlled value for an
+absence of conditions, and the Flemish Region's agentschap Digitaal Vlaanderen under the
+Modellicentie voor gratis hergebruik Vlaanderen v1.0. The INSPIRE Addresses model they follow has no
+element for a party, so a party reaches one of these publications only through a free-text name
+element. INSPIRE Annex I makes Addresses a mandatory theme for every EU member state, so the remaining
+twenty-one are the place to look for more.
+
+**A regional row covers a region.** The Flemish theme's 4,563,062 addresses are the Flemish Region,
+and Brussels and Wallonia publish their own services, so a Belgian build needs three rows where a
+Danish build needs one. Spain already reads this way, with Catastro's national feed beside three foral
+cadastres.
+
+`AD:LocatorName` is that free-text element, typed `GeographicalName`, and it has to be opened rather
+than assumed empty. The Dutch, Czech, Danish, Slovak and Flemish themes leave it unpopulated, Flanders
+measured at 0 of 800 addresses over 40 windows across its 4,563,062 and Slovakia at 0 of 800 over 40
+windows across its 1,704,196. Estonia fills it on 1,200 of 1,200 addresses sampled over 60 windows
+spread across its 729,973, every one typed `siteName` or `buildingName` in the INSPIRE codelist, with
+0 of the 1,200 carrying the given-name-and-family-name shape. The values are Estonian farm names,
+which is how a rural Estonian address designates its addressable unit.
+
+**A reader that finds the element on one service can miss it on another.** Slovakia nests the locator
+and omits the `name` key entirely, so its absence is structural as well as sampled. Estonia flattens
+the path to `locator_addresslocator_name_locatorname_name_spelling_text`. One traversal run against
+both would report one of them wrongly, which is why each service's measurement states the shape it
+read, and why Slovakia's traversal was checked against Estonia before its 0 was recorded.
+
+Those publishers state five different grants, which is worth knowing before anyone assumes a
+mandatory EU theme comes with uniform terms. Kadaster and Maa- ja Ruumiamet dedicate to the public
+domain, Denmark and Navarra license under CC BY 4.0, Gipuzkoa under CC BY-SA 4.0, ČÚZK and the Slovak
+Ministerstvo vnútra state the INSPIRE controlled value for an absence of conditions, and Flanders
+grants its own model licence for free re-use, whose article 4 makes attribution the sole condition and
+whose article 5 leaves the licensee holding the intellectual property in works created from the data.
+The Directive mandates the data rather than its licence.
+
+A member state's WFS states its own access terms in fields that are not the data's licence. `Fees`
+and `AccessConstraints` in a capabilities document describe what calling the service costs, and the
+grant over the data sits in the ISO 19139 dataset record the document links through
+`inspire_dls:SpatialDataSetIdentifier`. Estonia's capabilities read `puudub` in both fields while its
+dataset record grants CC0 1.0, and Slovakia's read `NONE` while its register record states that no
+conditions apply and names CC0, so reading the service fields as the licence understates both grants.
+Flanders states the price of the service in `Fees` and sends the reader to each dataset's metadata for
+the data's terms, which is where its model licence is named.
+
+**An HTTP 422 is a validation message naming the fix, where a 404 is an absence.** The export URL in
+Slovakia's own capabilities document answers 422 with
+`{"loc":["path","collection_record_id"],"msg":"value is not a valid uuid"}`, which places the id in
+the path where the capabilities put it in the query, and a second 422 enumerates the permitted
+`export_format` values, which exclude the `gmd` the capabilities asks for. Reading those two bodies
+turned a record recorded as unreachable into
+`https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72`. Its own
+`downloadable_urls` holds the service's capabilities URL, which is what ties the record to the
+service rather than a title match.
+
+**A dataset record may carry more than one instrument, in separate constraint blocks that answer
+different questions.** The Flemish Adressen record states `Geen beperkingen op de publieke toegang` in
+its access block, and in its re-use block names four things: the model licence for free re-use, two
+instruments governing public-task use by GDI-Vlaanderen participants and by bodies that are not
+participants, and the attribution string the licensor requires, `Bron: Digitaal Vlaanderen`. Flattening
+those blocks loses which instrument governs which re-user.
+
+**An identifier that will not serve its own text may serve it under a file extension.** The Flemish
+licence identifier answers `text/html`, `text/turtle`, `application/ld+json` and `application/rdf+xml`
+with one 541,080-byte application rendering to its title. The same path with `.ttl` appended returns
+the RDF, which states `cc:requires cc:Attribution`, and the record's `rdfs:seeAlso` gives the page
+carrying the nine articles.
+
+Denmark also shows that the theme is not always GML: it serves a GeoPackage, so its `addressRoles`
+is keyed by a table name rather than an element name.
+
+The eighth is Italy's ANAC procurement release, and it is eligible for a different reason.
+`internal/strategy/personal-data-policy-2026-09-30.md` records the operator's decision that a corpus
+carries the addresses of organizations and no address of an identifiable natural person. Italy's
+release names natural persons among its suppliers and records an address for none of them: 0 of
+11,075 supplier parties carry an `address` object, and every address in the release sits on `buyer`
+or `payer`, both Italian public entities. Its `addressRoles` names those two fields alone. That
+reading is `assessed` rather than `absent`, because the publication does name people.
+
+The other `verified-corpus` sources are business registers and procurement portals where the address
+belongs to a party, and some of those parties are natural persons trading on their own account. The
+policy document records why a name-shape filter, an organization identifier and a diffusion-status
+filter each fail to separate the two kinds of party.
+
+Every measured source places the role differently, which is why the field is a map keyed by a path rather
+than one role per source.
+
+- AusTender carries two roles in two column families on one record.
+- Companies House carries one role in one family.
+- Catastro's INSPIRE AD theme carries one role on the record itself rather than in a column: the
+  feature is the address, so the map is keyed by the feature's element name, `AD:Address`.
+- SIRENE carries it on a row-level flag: `etablissementSiege` says whether the establishment is its legal
+  unit's seat, so the same columns are a `registered-office` address on one row and a `facility` address
+  on the next.
+- An OCDS release keys addresses by party role, and the roles differ per publisher. Germany uses fifteen
+  where AusTender uses two. Italy's `supplier` role carries no address at all, so its addresses are a
+  `buyer`'s and a `payer`'s, which is AusTender's shape inverted. Chile carries a region and neither a
+  postcode nor a locality on any of 544,754 party objects.
+
+An OCDS role takes a role here only where OCDS's own codelist defines it. Germany's eight extension roles
+take none rather than a guessed one.
 
 ## `training-manifests/<version>.json` — what reached one base corpus (#2375)
 
@@ -284,6 +474,32 @@ epoch emitted that the frozen manifest does not name, with their row counts.
 the eleven sources the frozen manifest names, nine drew rows and two carry weight 0.0. Thirty-nine further
 sources were emitted under no frozen-manifest entry, 886,620 of the 1,000,000 rows, because the overlays
 carrying them were merged after that manifest was written.
+
+## The `surface` column on a corpus built up to `v0.7.0-de-holdout`
+
+`SurfaceOrigin` gained a `rendered` value on 2026-09-29. Before that the enum held `attested`,
+`composed` and `invented`, and every one of the 22 adapters declared `attested` while each of them
+assembles its row's line from the source's fields. A recipe declared `composed`. So on a corpus built up
+to and including `v0.7.0-de-holdout`, `surface` records which stage produced a row rather than whether
+the written form is the publisher's:
+
+| recorded value | what it means on those builds                                      |
+| -------------- | ------------------------------------------------------------------ |
+| `attested`     | an adapter produced the row, and the line is assembled from fields |
+| `composed`     | a recipe produced the row                                          |
+| `invented`     | a synthetic row matching no published record                       |
+
+Those builds keep the value they recorded, because a built artifact's value is what it said at the time.
+A reader needing the distinction on one of them derives it from `source` against the adapter inventory
+rather than from `surface`.
+
+From the next build, an adapter that assembles a line declares `rendered`, a recipe declares `composed`,
+and `attested` is reserved for a source that publishes the written line itself. No adapter in the tree
+emits `attested` today, so a corpus reporting zero attested rows is a correct census rather than a defect.
+
+Measured on `v0.7.0-de-holdout` while this was found: GB holds 813,781 street-bearing rows and every one
+reads `composed`, from `rendered-gb`. Its 13,000,821 rows reading `attested` come from `wof-postalcode`
+and `wof-admin` and carry no street.
 
 ## `reviewed-ve-postcode-tuples.json` — reviewed Venezuelan postcode placement (#1821)
 

@@ -13,15 +13,10 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -39,45 +34,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./blocking": {
-			"types": "./out/blocking.d.ts",
-			"node": "./lib/blocking.ts",
-			"default": "./out/blocking.js"
-		},
-		"./clustering": {
-			"types": "./out/clustering.d.ts",
-			"node": "./lib/clustering.ts",
-			"default": "./out/clustering.js"
-		},
-		"./comparators": {
-			"types": "./out/comparators.d.ts",
-			"node": "./lib/comparators.ts",
-			"default": "./out/comparators.js"
-		},
-		"./distance": {
-			"types": "./out/distance.d.ts",
-			"node": "./lib/distance.ts",
-			"default": "./out/distance.js"
-		},
-		"./fellegi-sunter": {
-			"types": "./out/fellegi-sunter.d.ts",
-			"node": "./lib/fellegi-sunter.ts",
-			"default": "./out/fellegi-sunter.js"
-		},
-		"./em": {
-			"types": "./out/em.d.ts",
-			"node": "./lib/em.ts",
-			"default": "./out/em.js"
-		},
-		"./tf": {
-			"types": "./out/tf.d.ts",
-			"node": "./lib/tf.ts",
-			"default": "./out/tf.js"
-		},
-		"./gbt": {
-			"types": "./out/gbt.d.ts",
-			"node": "./lib/gbt.ts",
-			"default": "./out/gbt.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

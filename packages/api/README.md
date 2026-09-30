@@ -81,7 +81,7 @@ serveNode({ fetch: app.fetch, port: 3000, hostname: "0.0.0.0" })
 - `bodyLimitBytes` — max request body size, enforced ahead of every `/v1/*` handler. Default 2 MiB (carried
   from the express server's `express.json({ limit: "2mb" })`). Oversized bodies answer `413` before the body
   is buffered into memory.
-- `batchMax` — max `addresses` rows accepted by `POST /v1/batch`. Default 500. Exceeding it answers `413`.
+- `batchMax` — max `addresses` rows accepted by `POST /v1/batch`. Default 500. The endpoint answers `413` when the request exceeds this limit.
 
 ## Metrics
 

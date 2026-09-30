@@ -172,7 +172,7 @@ Lake             US  county         134 keys   pop      10,855
 
 A country with 428 exonyms is correct. **A neighborhood of 63 people with 221 name keys is not.**
 
-Splitting the 4,000 on that basis:
+The split of 4,000 records on that basis is:
 
 |                                                  | count     |
 | ------------------------------------------------ | --------- |
@@ -194,7 +194,7 @@ near-unique. **Wrong, and measurably so:**
 | `Meer` (afr, "lake")      | 18                          |
 | `Wien` (an actual exonym) | **14**                      |
 
-The actual exonym is shared across _more_ places than the offending noun. Sharing does not separate them.
+The actual exonym is shared across _more_ places than the offending noun. The overlap does not separate them.
 
 **What does look separable** — and this is a hypothesis rather than a finding — is the mismatch between key count
 and prominence. 221 keys on a 63-person neighborhood is anomalous in a way 428 keys on the United States

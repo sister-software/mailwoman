@@ -6,7 +6,7 @@
 
 import * as ort from "onnxruntime-web/webgpu"
 
-import type { NeuralRunner } from "#classifier/index"
+import type { NeuralRunner } from "#classifier"
 import {
 	decodeInferOutput,
 	packCharFeed,

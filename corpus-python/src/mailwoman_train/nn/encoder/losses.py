@@ -1,4 +1,4 @@
-"""Composing the supervised loss and its auxiliary terms.
+"""Compose the supervised loss and its auxiliary terms.
 
 None of these terms appears in `logits`. A term that stops firing changes what the model learns
 without changing the logits returned by inference. Every reduction that could divide by an empty
@@ -129,7 +129,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         """
         # Auxiliary locale cross-entropy, in fp32: supervises the locale head against the row's
         # country so the pooled representation (and therefore the FiLM conditioning) actually
-        # encodes "which country". Rows whose country is unmapped carry IGNORE_INDEX and are
+        # encodes "which country". Rows whose country is unmapped use IGNORE_INDEX and are
         # skipped. An all-ignored batch contributes no term rather than 0/0 → NaN.
         if (
             self.use_locale_conditioning
@@ -169,7 +169,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
                 start_tgt = is_b.float()
                 end_tgt = (in_entity & ~next_is_i).float()
                 # Run the head in the ambient (autocast) dtype, then upcast the logits to fp32 for a
-                # stable BCE. Upcasting `h` before the matmul instead would clash with the bf16 head
+                # stable BCE. An upcast of `h` before the matmul would clash with the bf16 head
                 # weights (mat1/mat2 dtype).
                 sb_logits = self.span_boundary_head(hidden)
                 targets = torch.stack([start_tgt, end_tgt], dim=-1)

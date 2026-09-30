@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mwdev_interface`'s measurement: parse an input set, validate each tree against the decoder's own structural
- *   interface, and report which violation classes fire — including the ones that do not.
+ *   interface and report which violation classes fire, including the ones that do not.
  *
  *   The tree validated is `GeocodeRun.tree` as the resolver sees it, after the postcode and stranded-affix repairs, so
  *   this counts what survives them: a violation the repairs already clean up has no consumer impact.

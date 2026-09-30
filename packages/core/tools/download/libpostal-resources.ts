@@ -1,0 +1,100 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Download and alphabetize libpostal's `resources/dictionaries`.
+ *   The normalizer uses per-language abbreviation and street-type tables.
+ *   It also uses synonym tables.
+ *   The script shallow-clones {@link https://github.com/openvenues/libpostal openvenues/libpostal}.
+ *   It sorts each dictionary file in place and copies the `dictionaries/` tree beside this script.
+ *
+ *   Replaces the bash `resources-download.sh`. `git clone` runs through zx's `$` (no clean native
+ *   equivalent); everything else is `node:fs` / `node:os`. The script sorts in-process with a plain
+ *   code-point `Array.sort()`, which matches `LC_ALL=C sort` byte order — deterministic and free of
+ *   the shell `sort`'s locale dependency (the original relied on the ambient locale).
+ *
+ *   ## Usage
+ *
+ *   ```sh
+ *   mailwoman dev download libpostal-resources [--force]
+ *   ```
+ *
+ *   ## Flags
+ *
+ *   - `--force` — delete an existing `./dictionaries` directory instead of erroring out
+ */
+
+import type { PathBuilder } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
+
+import { isDirectory, readLocalTextFile } from "#fs/readers"
+import { temporaryDirectory } from "#fs/temporary"
+import { copyPath, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
+import { resourceDictionaryPath } from "#paths"
+import { CommandError } from "#scripting/command"
+
+const REPO_URL = "https://github.com/openvenues/libpostal.git"
+const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
+
+/**
+ * Sort a single dictionary file in place by code point (matching `LC_ALL=C sort`).
+ *
+ * Blank lines sort to the top, exactly as `sort` orders empty strings.
+ * A trailing newline is preserved.
+ */
+async function sortFileInPlace(path: PathBuilder): Promise<void> {
+	const text = await readLocalTextFile(path)
+	const hadTrailingNewline = text.endsWith("\n")
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Sorting needs every line resident. the largest libpostal dictionary is 409 KB.
+	const lines = text.split("\n")
+
+	// Drop the empty element produced by a trailing newline so it isn't re-sorted as a blank line.
+	if (hadTrailingNewline) {
+		lines.pop()
+	}
+
+	lines.sort()
+	await writeLocalTextFile(lines.join("\n") + (hadTrailingNewline ? "\n" : ""), path)
+}
+
+/**
+ * Shallow-clone libpostal and alphabetize each dictionary file.
+ *
+ * Install the tree at the checked-in `core/data/libpostal/dictionaries`.
+ *
+ * Refuses to clobber an existing tree unless `force`.
+ * Zx is lazy-imported (dev-grade dependency — the pipeline convention).
+ */
+export async function downloadLibpostalResources(
+	options: { force?: boolean } = {},
+	report?: (line: string) => void
+): Promise<void> {
+	// Guard the destination exactly as the bash version did: refuse to clobber unless --force.
+	if (await isDirectory(DICTIONARIES_DIR)) {
+		if (options.force) {
+			report?.("Warning: The dictionaries directory already exists. Deleting it due to --force flag.")
+			await removePathIfPresent(DICTIONARIES_DIR)
+		} else {
+			throw new CommandError("The dictionaries directory already exists. Remove it first or pass --force.")
+		}
+	}
+
+	const { $ } = await import("zx")
+	await using tempDir = await temporaryDirectory("libpostal-")
+
+	const cloneDir = tempDir.path("libpostal")
+	await $`git clone --depth 1 ${REPO_URL} ${cloneDir}`
+
+	const sourceDicts = cloneDir("resources", "dictionaries")
+
+	// Alphabetize the contents of each dictionary file in place.
+	for await (const entry of Globerator.from("*", { cwd: sourceDicts, withFileTypes: true, onlyFiles: false })) {
+		if (entry.isFile()) {
+			await sortFileInPlace(sourceDicts(entry.name))
+		}
+	}
+
+	// Copy the (now-sorted) dictionaries tree into the checked-in data home.
+	await copyPath(sourceDicts, DICTIONARIES_DIR)
+}

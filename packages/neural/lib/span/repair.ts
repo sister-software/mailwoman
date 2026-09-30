@@ -9,7 +9,7 @@
  *   Both passes have the same skeleton: run a priority-ordered list of shape regexes over the raw
  *   input text, resolve the resulting overlapping candidates down to a non-overlapping set, map each
  *   surviving char range onto the token indices it covers, then relabel that run. `unit-repair.ts`
- *   was written as a deliberate mirror of `postcode-repair.ts` (its docstring says so), so the
+ *   was written as a deliberate mirror of `postcode-repair.ts` (its docstring states this), so the
  *   skeleton was duplicated line-for-line — including two byte-identical sort comparators. This
  *   module is that skeleton, extracted once so the two passes cannot drift on it.
  *
@@ -44,9 +44,11 @@ export interface SpanMatch {
  *
  * Longest-first is what lets a US ZIP+4 ("94610-2737") claim its whole span
  * before the shorter NL-shaped false positive in its tail ("2737 CA") can.
- * The input array is not mutated (`toSorted`), and the sort is stable,
- * so candidates of equal length and equal priority keep the order the caller pushed
- * them in (pattern order, then match order within a pattern).
+ * The function sorts a copy with `toSorted`, so it leaves the input array unchanged.
+ *
+ * The sort is stable.
+ * Candidates with equal length and priority keep their insertion order:
+ * pattern order first, then match order within each pattern.
  */
 export function selectNonOverlappingMatches<T extends SpanMatch>(candidates: readonly T[]): T[] {
 	const ordered = candidates.toSorted((a, b) => b.end - b.start - (a.end - a.start) || a.priority - b.priority)
@@ -64,7 +66,7 @@ export function selectNonOverlappingMatches<T extends SpanMatch>(candidates: rea
 /**
  * Whether two half-open char ranges intersect.
  *
- * Touching ranges do not overlap.
+ * Ranges that share an endpoint are disjoint.
  */
 export function spansOverlap(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
 	return a.start < b.end && b.start < a.end
@@ -73,8 +75,8 @@ export function spansOverlap(a: { start: number; end: number }, b: { start: numb
 /**
  * A shape pattern a repair pass scans the raw text with.
  *
- * Passes carry extra fields on their entries (postcode-repair's `kind`); {@link collectMatchesFor}
- * hands the matched pattern back so those fields survive onto the match.
+ * Passes include extra fields on their entries (postcode-repair's `kind`);
+ * {@link collectMatchesFor} hands the matched pattern back so those fields survive onto the match.
  */
 export interface SpanPattern {
 	re: RegExp

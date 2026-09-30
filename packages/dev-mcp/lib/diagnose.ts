@@ -11,7 +11,7 @@
  * ranks and lineage.
  *
  * Classification is v1: transparent predicates over recorded pipeline facts, with no calibration — every
- * result says so in its own `calibration` field — and a row that matches no shape while failing its
+ * result records that in its own `calibration` field — and a row that matches no shape while failing its
  * expectation is reported `unclassified` rather than squeezed into the nearest match.
  *
  * Aggregation is by shape with each class's n, never by raw row count, because a rate over a mixture is a
@@ -60,8 +60,8 @@ const SHAPE_ID_CAP = 20
  *
  * A flip is one geocode per row per setting and the setting space is five wide, so a full
  * board would be thousands of extra resolves plus an engine build per distinct patch.
- * Every result that applies the narrowing says so and marks a clean row's settings
- * UNMEASURED rather than measured and found inert.
+ * Every result that applies the narrowing records this and marks a clean row's
+ * settings UNMEASURED rather than measured and found inert.
  */
 export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
 
@@ -226,7 +226,7 @@ export interface ParseFacts {
 /**
  * One backend lookup, reduced to the facts a shape reads.
  *
- * The candidate table itself is deliberately not carried, since `mwdev_trace` renders it
+ * The candidate table itself is deliberately omitted, since `mwdev_trace` renders it
  * and an account that dumped it would be a trace with extra steps.
  */
 interface LookupFact {
@@ -251,7 +251,7 @@ interface LookupFact {
 
 export interface RetrievalFacts {
 	/**
-	 * `null` when the trace carries no resolver records at all (a trace predating them);
+	 * `null` when the trace contains no resolver records (a trace predating them);
 	 * an empty array is the walk stating it performed no lookups, a different claim
 	 * the shapes must not read as retrieval failure.
 	 *
@@ -261,7 +261,7 @@ export interface RetrievalFacts {
 	 *
 	 * The resolver's post-walk recovery passes — span-rescore and postcode-compound
 	 * recovery — query the backend directly and emit no record.
-	 * A row can therefore carry a resolved coordinate beside an empty lookup list.
+	 * A row can therefore include a resolved coordinate beside an empty lookup list.
 	 * {@link RowAccount.resolved_without_recorded_lookup} records that case.
 	 */
 	lookups: LookupFact[] | null
@@ -291,7 +291,7 @@ export interface RowAccount {
 	country?: string | undefined
 	shapes: DiagnoseShape[]
 	/**
-	 * `null` when the run carried no parse trace (the bundle could not produce one),
+	 * `null` when the run produced no parse trace (the bundle could not produce one),
 	 * distinct from a parse whose every channel is absent.
 	 */
 	parse: ParseFacts | null
@@ -455,7 +455,7 @@ export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFact
  * This function does not decide the terminal states.
  * The row's expectation determines `clean` or `unclassified`.
  *
- * Keeping that expectation outside this function prevents it from influencing a mechanism claim.
+ * That expectation stays outside this function so it cannot influence a mechanism claim.
  */
 export function matchShapes(facts: {
 	parse: ParseFacts | null
@@ -480,7 +480,7 @@ export function matchShapes(facts: {
 
 	// A span is only empty AT the deciding site when no lookup resolved it: Both
 	// `postcode_format_probe` and `empty_admin_pick` answer from an empty candidate table.
-	// Treating either as retrieval failure would report a working fallback as a defect.
+	// A retrieval-failure label for either case would report a working fallback as a defect.
 	const emptyDeciding = lookups.some(
 		(lookup) =>
 			lookup.n_candidates === 0 &&
@@ -764,7 +764,8 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	const wantCounterfactuals = args["counterfactuals"] !== false
 
 	const set = await resolveInputSet(ref)
-	// Tracing is the account's entire input, so it is forced on regardless of what the caller passed.
+	// The account uses a traced parse as its full input.
+	// The engine enables tracing regardless of caller configuration.
 	const engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 

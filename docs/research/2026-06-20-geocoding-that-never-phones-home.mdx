@@ -26,7 +26,7 @@ The choices are to rent a service and send it the query, host a service and run 
 
 The whole pipeline, parsing and then resolving to a coordinate, runs client-side. The parser is a 29.8 MB int8 ONNX model executed by `onnxruntime-web`. The gazetteer is a single global SQLite file of around 530 MB covering every country we resolve against, and the page never downloads the whole file. It reads the file over HTTP range requests, pulling roughly a dozen small ranges to answer a query. The resolver needs no Elasticsearch, PostGIS, or native module. It uses plain `node:sqlite`, and the same code runs in Node and in a browser tab.
 
-Getting to a dozen ranges took work. The resolver used to need 243 round trips, and reducing that to twelve required changing how the database is indexed, while the fetching stayed the same. [A separate post](/research/243-round-trips-to-find-a-city) covers that. The result is a global geocoder that answers queries with a few small reads and no server.
+The resolver used to need 243 round trips. An index change reduced that count to twelve while the fetching stayed the same. [A separate post](/research/243-round-trips-to-find-a-city) covers that. The result is a global geocoder that answers queries with a few small reads and no server.
 
 ## A neural parser the size of a photo
 

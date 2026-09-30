@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Decides from the command text alone whether a Bash command may run.
+ *   Decides from the command text by itself whether a Bash command may run.
  *
  *   The symbol precheck hook runs only on the Write and Edit tools, so this guard steers file edits
  *   away from Bash. It also refuses Modal launches that a shell signal could cancel. The guard is an
@@ -19,7 +19,7 @@ import { isAbsolute, resolvePath } from "path-ts"
  * Commands that may run anywhere.
  *
  * None of them takes file content from the agent as an argument.
- * Anything they write, they derive.
+ * Each admitted command creates only output derived from its arguments.
  */
 const ADMITTED = new Set([
 	"awk",
@@ -100,7 +100,7 @@ const ADMITTED = new Set([
  * Commands that write to the paths in their arguments.
  *
  * Each is admitted only when no written path lands inside the repository.
- * The value says whether every operand is written or only the last one.
+ * The value indicates whether every operand is written or only the last one.
  */
 const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 	chmod: "all",
@@ -115,18 +115,32 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 }
 
 /**
- * Repository paths that hold only derived files: compiler output and installed dependencies.
+ * Repository paths that hold no tracked file: compiler output, installed dependencies, and scratch work.
  *
  * No tracked path matches.
- * `tsc -b` or `yarn install` restores any of them.
+ * `tsc -b` or `yarn install` restores `out`, `dist` and `node_modules`.
+ *
+ * `scratchpad/` holds one-off notes and scripts.
+ * `scratchpad/AGENTS.md` describes those files as temporary and outside the main codebase.
+ *
+ * Git tracks no path there, so a removal discards only uncommitted scratch work,
+ * and the hook deletes a stale document permanently.
+ *
+ * A build restores the three directories above.
+ * A removal from `scratchpad/` stays permanent.
+ *
+ * `.claude/state/` holds the session's link to its GitHub issue.
+ * The task-intake skill removes that link at close-out.
+ *
+ * `.gitignore` excludes the directory, and the development MCP rewrites the link on the next intake.
  *
  * `.yarn/` is excluded because it holds the tracked yarn binary.
  *
  * Only {@link REMOVER} gets this exemption.
- * Removing derived output is safe, but a hand-written file such as `out/<subpath>.d.ts`
- * would stand in for source that does not exist.
+ * The hook can remove these paths safely, but a hand-written file such as
+ * `out/<subpath>.d.ts` would stand in for source that does not exist.
  */
-const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules)(?:\/|$)|\.tsbuildinfo$/u
+const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules|scratchpad|\.claude\/state)(?:\/|$)|\.tsbuildinfo$/u
 
 const REMOVER = "rm"
 
@@ -145,7 +159,7 @@ const WRAPPER_ARGUMENT = /^(?:-|\d)/u
  * The advice for the two Modal launch refusals.
  */
 const DETACHED_LAUNCH_GUIDANCE =
-	"Launch it through `node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
+	"Launch it through `node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
 	"which spawns the client in its own session and exits, so no signal aimed at this shell can reach it. Modal's `-d` " +
 	"does not make the client disposable: when the client dies Modal answers `Received a cancellation signal` and stops " +
 	"the container mid-training. Watch the run by polling the volume for its next checkpoint rather than by holding the client " +
@@ -155,7 +169,8 @@ const DETACHED_LAUNCH_GUIDANCE =
  * The advice for a {@link REMOVER} refusal.
  */
 const REMOVAL_GUIDANCE =
-	"Removing DERIVED output is admitted: a path under `out/`, `dist/` or `node_modules/`, or a `*.tsbuildinfo`, read " +
+	"Removing DERIVED output is admitted: a path under `out/`, `dist/`, `node_modules/`, `scratchpad/` or " +
+	"`.claude/state/`, or a `*.tsbuildinfo`, read " +
 	"after any `..` is resolved. Anything else inside the repository is tracked or is someone's scratch file — remove a " +
 	"tracked path with `git rm`, so the index and the worktree agree. A target this hook cannot read, such as one behind " +
 	"a variable, is never derived; name the path in full."
@@ -329,7 +344,7 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 
 		let words = segment.split(/\s+/u).filter((word) => word.length)
 
-		// Leading assignments, `!` and control-flow keywords precede the command word.
+		// Assignments, `!`, and control-flow keywords can precede the command word.
 		while (
 			words.length &&
 			(/^[A-Za-z_][A-Za-z0-9_]*=/u.test(words[0]!) || words[0] === "!" || CONTROL_FLOW_WORDS.has(words[0]!))

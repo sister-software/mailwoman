@@ -92,7 +92,7 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * The metadata JSON stored at seal time, or `undefined` when the artifact carries none.
+	 * The metadata JSON stored at seal time, or `undefined` when the artifact has no metadata.
 	 */
 	metadata(): JSONValue | undefined {
 		const offset = this.header.metadataOffset

@@ -5,10 +5,10 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
-import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
-import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 import type { GeocodeRun } from "mailwoman/geocode"
+import { checkCase } from "mailwoman/tools/eval-harness/gauntlet/check-case"
+import { toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
+import type { GauntletCaseTable } from "mailwoman/tools/eval-harness/gauntlet/schema"
 
 import { caseCarriesTruth, seedToCaseTable } from "#grade"
 import type { ResolvedInput } from "#input-sets"
@@ -29,8 +29,8 @@ export interface ExpectationReading {
 /**
  * The case table this row is graded against, or `null` when it asserts no fact.
  *
- * A board row carries a `SeedCase` and grades through the board's own `checkCase`;
- * a panel / holdout / golden / parity row carries expectations without a seed,
+ * A board row contains a `SeedCase` and grades through the board's own `checkCase`;
+ * a panel / holdout / golden / parity row contains expectations without a seed,
  * so one is synthesized around what its corpus actually pinned.
  * The same grader then reads both.
  */
@@ -80,7 +80,7 @@ export function expectationCase(
  *
  * Typed against the real `GeocodeResult` rather than {@link AccountInput}:
  * `checkCase` reads the gauntlet projection.
- * Projecting twice causes a recorded answer and the live one it came from to disagree.
+ * A second projection makes a recorded answer disagree with the live answer it came from.
  */
 export function gradeExpectation(item: ResolvedInput, result: GeocodeRun["result"]): ExpectationReading {
 	const expectation = expectationCase(item)

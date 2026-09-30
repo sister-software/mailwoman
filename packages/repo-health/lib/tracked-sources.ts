@@ -19,6 +19,27 @@ import { resolvePath } from "path-ts"
 
 import type { RepoContext } from "#check"
 
+/**
+ * The directories a package compiles: its library, and the acquisition, tooling
+ * and command-line roots beside it.
+ */
+export const PACKAGE_SOURCE_ROOTS = ["lib", "sdk", "tools", "cli"] as const
+
+/**
+ * Pathspecs for every TypeScript source under a package's source roots.
+ *
+ * A pathspec `*` crosses `/`, so each entry reaches every depth below its root.
+ */
+export const PACKAGE_SOURCE_GLOBS: readonly string[] = PACKAGE_SOURCE_ROOTS.flatMap((root) => [
+	`packages/*/${root}/*.ts`,
+	`packages/*/${root}/*.tsx`,
+])
+
+/**
+ * A repo-relative path under a package's source roots.
+ */
+export const PACKAGE_SOURCE_PATH = /^packages\/[^/]+\/(?:lib|sdk|tools|cli)\//u
+
 export interface TrackedSourceOptions {
 	/**
 	 * Pathspecs in `git ls-files` form (default: every `.ts` / `.tsx`).
@@ -76,7 +97,7 @@ export function pathspecPattern(pathspec: string): RegExp {
 /**
  * The tracked sources of `context`, as absolute paths in `git ls-files` order.
  *
- * The index can carry a stray build artifact under `out/` or `node_modules/`.
+ * The index can include a stray build artifact under `out/` or `node_modules/`.
  * Checks should never read those paths, so the function always drops these segments.
  */
 export async function trackedSourcePaths(context: RepoContext, options: TrackedSourceOptions = {}): Promise<string[]> {

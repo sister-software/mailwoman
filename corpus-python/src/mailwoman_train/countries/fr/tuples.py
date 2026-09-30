@@ -38,9 +38,9 @@ def titlecase(text: str) -> str:
 def iter_tuples(count: int, rng: random.Random, *, reserved: frozenset[str]) -> Iterator[dict[str, Any]]:
     """Sample BAN rows and render them.
 
-    `region` is carried empty because the FR rendering has no region. The recipe guard still requires
-    the tuple field. `reserved` names street surfaces held out for an eval fixture. Skip those rows so
-    the board and the training corpus stay disjoint.
+    `region` is written as an empty value because the FR rendering has no region. The recipe guard still requires
+        the tuple field. `reserved` names street surfaces held out for an eval fixture. Skip those rows so
+        the board and the training corpus stay disjoint.
     """
     for street, number, postcode, locality in sample_address_points(data_root_path(*BAN_DB_PARTS), count, rng):
         if street in reserved:

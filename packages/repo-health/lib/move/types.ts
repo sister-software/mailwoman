@@ -46,6 +46,20 @@ export interface ManifestRewrite {
 	end: number
 }
 
+/**
+ * A workspace manifest written whole rather than spliced.
+ *
+ * A replacement can change subpath keys, and a splice never does.
+ * Every specifier that resolved through the old keys is planned against the new text.
+ */
+export interface ManifestReplacement {
+	/**
+	 * The repo-relative `package.json` path.
+	 */
+	file: string
+	text: string
+}
+
 export interface PathLiteralRewrite {
 	/**
 	 * The file holding the path, at its post-move location.
@@ -79,6 +93,12 @@ export interface ModuleMovePlan {
 	 * A subpath KEY never changes.
 	 */
 	manifestRewrites: ManifestRewrite[]
+	/**
+	 * Manifests the plan writes whole.
+	 *
+	 * A manifest listed here receives no `manifestRewrites` entry.
+	 */
+	manifestReplacements: ManifestReplacement[]
 	/**
 	 * Repo-relative paths written as text — a hook command, a lint glob, a `Usage:`
 	 * line — that the moves invalidate and no check reads.

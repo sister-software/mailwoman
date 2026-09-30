@@ -65,6 +65,18 @@
 			"digest": "unrecorded"
 		},
 		{
+			"path": "fst-it-it.bin",
+			"role": "gazetteer-fst",
+			"md5": null,
+			"digest": "unrecorded"
+		},
+		{
+			"path": "fst-street-morphology.bin",
+			"role": "gazetteer-fst",
+			"md5": null,
+			"digest": "unrecorded"
+		},
+		{
 			"path": "anchor-lexicon-v1.json",
 			"role": "lexicon",
 			"md5": null,
@@ -100,8 +112,8 @@
 	"effective_training_sources": null,
 	"tokenizer_version": null,
 	"unresolved": [
-		"No digest is recorded for 5 of 5 declared artifacts: pair-index-it.bin, anchor-lexicon-v1.json, locality-surface-lexicon-v7.json, street-type-lexicon-v3.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
-		"This package's model card records no training attribution of its own. It ships 5 artifacts and no model graph, so its own inputs are unattributed here while the 10 entries under inherited_lineage describe @mailwoman/neural-weights-en-us's graph.",
+		"No digest is recorded for 7 of 7 declared artifacts: pair-index-it.bin, fst-it-it.bin, fst-street-morphology.bin, anchor-lexicon-v1.json, locality-surface-lexicon-v7.json, street-type-lexicon-v3.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
+		"This package's model card records no training attribution of its own. It ships 7 artifacts and no model graph, so its own inputs are unattributed here while the 10 entries under inherited_lineage describe @mailwoman/neural-weights-en-us's graph.",
 		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, `effective-manifest.run.ts` derives from it and an `audit_epoch_mixture` output what one config's epoch drew, and no released model was built from a corpus carrying either. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

@@ -152,8 +152,8 @@ def _load_r2_env() -> dict[str, str]:
     return env
 
 
-# The container has no `.env` file. Build the secret from the local checkout only. Raising
-# unconditionally would crash every function that does not use R2.
+# The container has no `.env` file. Build the secret from the local checkout only.
+# An unconditional secret would crash every function that does not use R2.
 r2_secret = modal.Secret.from_dict(_load_r2_env() if modal.is_local() else {})
 
 

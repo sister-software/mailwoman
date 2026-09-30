@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The `mwdev_daemon` tool definition — the description an agent reads, the input schema, and the handler wiring over
+ * The `mwdev_daemon` tool definition provides the description and input schema an agent reads. It wires the handler over
  * the measurement in the package root.
  */
 

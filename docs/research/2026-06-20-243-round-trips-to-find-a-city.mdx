@@ -12,7 +12,7 @@ So the questions for the day: why does looking up one name cost 243 round trips?
 
 {/* truncate */}
 
-## Reading a database through a straw
+## Range requests expose database lookup costs
 
 Here's the setup, because the constraint is the whole story. The admin database is 2.6 GB. Nobody is downloading 2.6 GB to type "Chicago" into a search box. What makes this work at all is `sql.js-httpvfs`: a SQLite build whose file-reading layer, instead of reading from disk, issues HTTP `Range` requests against the file on the CDN. SQLite asks for "bytes 4,210,688 through 4,276,224," the VFS turns that into a range GET, the CDN hands back that one 64 KB chunk, and the query engine carries on as if the file were local. You're reading a multi-gigabyte database through a straw, and most of the time you never touch 99.99% of it.
 
@@ -22,7 +22,7 @@ For a B-tree lookup on a primary key, this is close to magic. The engine walks r
 
 The trouble started because we weren't doing a primary-key lookup. We were doing a name search, and to make name search fast inside SQLite you reach for FTS5 — full-text search, an inverted index. For each token it stores a posting list: every row that contains it. Search becomes "go read the posting list for this token," which is exactly the kind of thing a real database does well when the disk is right there.
 
-The disk is not right there. It's at the end of a straw. And an FTS posting list for a common name is not one tidy run of bytes — it's a chain of pages scattered through the file, because the index grew as the data loaded and the postings landed wherever there was room. Reading one posting list means following that chain, and every hop in the chain is its own range request. A common place name dragged in a long chain. Then the candidate rows themselves lived somewhere else again. The reads piled up: 243 of them, about 16.5 MB, to answer one query.
+The disk is not right there. It's at the end of a straw. And an FTS posting list for a common name is not one tidy run of bytes — it's a chain of pages scattered through the file, because the index grew as the data loaded and the postings landed wherever there was room. A client reads one posting list by following that chain, and every hop in the chain is its own range request. A common place name dragged in a long chain. Then the candidate rows themselves lived somewhere else again. The reads piled up: 243 of them, about 16.5 MB, to answer one query.
 
 The maddening part came when we tried to tune it. The VFS lets you widen the straw — ask for bigger chunks per request, fetch 64 KB or 256 KB at a swing. We widened it, expecting fewer round trips. We got more bytes and barely fewer trips, because the postings were scattered, so a bigger chunk mostly bought us neighbours we didn't want. We'd been getting away with it on a "slim" database — a stripped 53 MB build with three countries in it — and the slim build was cheap for the dullest possible reason: it was small, so even a scattered search couldn't scatter very far. That's not an optimization. That's a database too little to misbehave.
 

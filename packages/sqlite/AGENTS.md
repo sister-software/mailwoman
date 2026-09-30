@@ -9,7 +9,7 @@ If you are building a database, remember that they are readonly artifacts which 
 When making a database, use Kysley as the database connector. It is a thin wrapper around SQLite that provides a simple interface for creating and querying databases and is backed by the native `node:sqlite` module. It is the only supported database connector for this repo.
 Table DDL goes through Kysely's schema-builder rather than raw `db.exec("CREATE TABLE …")`. The idiom, established across #745–#749:
 
-- A schema module owns both the typed `Database` interface and a co-located `createXTable(db)` function built with `db.schema.createTable(...)`. The interface is the read/write interface; the builder creates the table; a column added to one is a compile error against the other. See `packages/resolver-wof-sqlite/{candidate,address-point,postal-city-candidate,postal-city-alias}-schema.ts`, `packages/resolver-wof-sqlite/lib/unified-schema.ts`, and `packages/tiger/lib/sdk/schema.ts`.
+- A schema module owns both the typed `Database` interface and a co-located `createXTable(db)` function built with `db.schema.createTable(...)`. The interface is the read/write interface; the builder creates the table; a column added to one is a compile error against the other. See `packages/resolver-wof-sqlite/{candidate,address-point,postal-city-candidate,postal-city-alias}-schema.ts`, `packages/resolver-wof-sqlite/lib/unified-schema.ts`, and `packages/tiger/lib/schema.ts`.
 - `DatabaseClient` (`@mailwoman/sqlite/client`) extends `Kysely` over `node:sqlite`. A build script constructs the raw `DatabaseSync` for its **hot positional INSERTs** (the bulk-load fast path) and wraps that _same_ handle in a `DatabaseClient` for the DDL — one connection, shared; `kdb.destroy()` owns the close. The schema-builder is async, so the DDL functions and their callers are `async`.
 - `WITHOUT ROWID` has no first-class builder — use the ``.modifyEnd(sql`without rowid`)`` raw modifier. It's a win only for small-row, PK-probed tables (the candidate gazetteer, `pl_block`); never for a table carrying a large blob like geometry, where clustering the row into the B-tree _hurts_.
 
@@ -18,7 +18,7 @@ Table DDL goes through Kysely's schema-builder rather than raw `db.exec("CREATE 
 Some inline SQL is raw on purpose. If you migrate one of these thinking it was missed, you'll regress it. Each has a reason:
 
 - **FTS5 virtual tables + `MATCH`** (`fts.ts`, `lookup.ts`, `extracts.ts`) — Kysely can't express `CREATE VIRTUAL TABLE … USING fts5` or the `MATCH` operator.
-- **ogr2ogr / GDAL-dialect SQL** (`packages/tiger/lib/sdk/fetch.ts`) — runs inside ogr2ogr against shapefiles rather than the app DB.
+- **ogr2ogr / GDAL-dialect SQL** (`packages/tiger/sdk/fetch.ts`) — runs inside ogr2ogr against shapefiles rather than the app DB.
 - **Hot bulk writes** — the positional prepared-statement INSERT loops, their `BEGIN`/`COMMIT`, and the candidate clustering `INSERT … SELECT … ORDER BY`. Plus `PRAGMA`, `VACUUM`, `ANALYZE`, `ATTACH` — none are Kysely-modelled, and the inserts are the throughput path.
 - **Runtime-dynamic schemas** (`packages/corpus/scripts/ingest-csv.ts`) — columns + types are inferred from the CSV at runtime; a builder loop wraps the same dynamic strings with ceremony and no added type safety.
 - **Introspect-and-replay** (`packages/resolver-wof-sqlite/lib/build/slim.ts`) — it execs the _source_ DB's own `CREATE TABLE` strings read from `sqlite_master`; a static builder can't express a copied schema.

@@ -8,7 +8,7 @@ tags:
   - neural
 ---
 
-# Training pipeline
+# Model training workflow
 
 The training pipeline turns raw address data sources into a model file that ships on npm. This article describes each stage in order. The [Corpus construction](./corpus-construction.mdx) article covers the first three stages in more detail.
 
@@ -84,7 +84,7 @@ A v0.3.0 build produces about 30 train extracts, 1 val extract, and 1 test extra
 
 ## Stage 5 — Training
 
-Training runs in Python on the lab's GPU (AMD Radeon 780M). The training script:
+The training script runs in Python on the lab's GPU (AMD Radeon 780M):
 
 1. Loads the tokenizer (`tokenizer.model`).
 2. Builds the model architecture (`MailwomanCoarseEncoder` + `LinearChainCRF`).

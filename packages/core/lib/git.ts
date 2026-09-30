@@ -5,24 +5,31 @@
  * @file The working tree's own git state: head, the current branch, dirty tracked files, tracked paths.
  *
  *   Every reader here is one `git` invocation with its output shaped for the caller, so the seven sites that each
- *   spelled `git rev-parse head` through their own wrapper share one. Cloning and pulling a resource repository is a
+ *   spelled `git rev-parse head` through their own wrapper share one. A resource repository clone and pull is a
  *   different concern and lives in `resources/git.ts`.
  */
 
-import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { repoRootPathBuilder } from "#paths"
 import { runFile } from "#process"
 
-async function git(
+/**
+ * Run a git command in the given repository.
+ *
+ * @returns stdout as a string.
+ */
+export async function git(
+	args: string | string[],
 	repoRoot: PathBuilderLike = repoRootPathBuilder,
-	args: string[],
 	maxBuffer?: number
 ): Promise<string> {
-	const { stdout } = await runFile("git", args, { cwd: repoRoot.toString(), encoding: "utf8", maxBuffer })
+	const argumentList = Array.isArray(args) ? args : [args]
 
-	return stdout
+	const { stdout } = await runFile("git", argumentList, { cwd: repoRoot, encoding: "utf8", maxBuffer })
+
+	return stdout.trim()
 }
 
 /**
@@ -34,14 +41,30 @@ export async function gitHead(
 ): Promise<string> {
 	const args = options.short ? ["rev-parse", "--short", "HEAD"] : ["rev-parse", "HEAD"]
 
-	return (await git(repoRoot, args)).trim()
+	return await git(args, repoRoot)
 }
 
 /**
  * The checked-out branch name, or `head` when the tree is detached.
  */
 export async function currentBranch(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
-	return (await git(repoRoot, ["rev-parse", "--abbrev-ref", "HEAD"])).trim()
+	return git(["rev-parse", "--abbrev-ref", "HEAD"], repoRoot)
+}
+
+/**
+ * The absolute path of the repository's shared `.git` directory.
+ *
+ * The main checkout and each of its worktrees report the same directory.
+ */
+export async function gitCommonDirectory(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
+	return git(["rev-parse", "--path-format=absolute", "--git-common-dir"], repoRoot)
+}
+
+/**
+ * The absolute path of the working tree that contains `repoRoot`.
+ */
+export async function workingTreeRoot(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
+	return git(["rev-parse", "--show-toplevel"], repoRoot)
 }
 
 /**
@@ -57,7 +80,7 @@ export async function dirtyTrackedFiles(
 	pathspecs: string[] = []
 ): Promise<string[]> {
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
-	const output = await git(repoRoot, ["status", "--porcelain", "--untracked-files=no", ...scope])
+	const output = await git(["status", "--porcelain", "--untracked-files=no", ...scope], repoRoot)
 
 	return TextSpliterator.from(output)
 		.map((line) => line.trimEnd())
@@ -81,7 +104,7 @@ export async function workingTreeStatus(
 	pathspecs: string[] = []
 ): Promise<string[]> {
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
-	const output = await git(repoRoot, ["status", "--porcelain", ...scope])
+	const output = await git(["status", "--porcelain", ...scope], repoRoot)
 
 	return TextSpliterator.from(output)
 		.map((line) => line.trimEnd())
@@ -101,7 +124,48 @@ export async function changedFiles(
 	base: string,
 	head: string
 ): Promise<string[]> {
-	const output = await git(repoRoot, ["diff", "--name-only", "-z", base, head], 64 * 1024 * 1024)
+	const output = await git(["diff", "--name-only", "-z", base, head], repoRoot, 64 * 1024 * 1024)
+
+	return output.split("\0").filter((path) => path.length)
+}
+
+/**
+ * The renames between `ref` and the working tree, as repo-relative `{from, to}` pairs.
+ *
+ * Rename detection runs with git's default similarity threshold.
+ * The output is read NUL-delimited, where each rename is a status field followed by its two paths.
+ */
+export async function renamesSince(
+	ref: string,
+	repoRoot: PathBuilderLike = repoRootPathBuilder
+): Promise<Array<{ from: string; to: string }>> {
+	const fields = (await git(["diff", "--name-status", "-M", "-z", ref], repoRoot, 64 * 1024 * 1024)).split("\0")
+	const renames: Array<{ from: string; to: string }> = []
+
+	for (let index = 0; index < fields.length;) {
+		const status = fields[index]!
+
+		if (!status) break
+
+		if (status.startsWith("R") || status.startsWith("C")) {
+			if (status.startsWith("R")) {
+				renames.push({ from: fields[index + 1]!, to: fields[index + 2]! })
+			}
+
+			index += 3
+		} else {
+			index += 2
+		}
+	}
+
+	return renames
+}
+
+/**
+ * Every path `ref` tracks, repo-relative, read NUL-delimited.
+ */
+export async function filesAtRef(ref: string, repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string[]> {
+	const output = await git(["ls-tree", "-r", "--name-only", "-z", ref], repoRoot, 64 * 1024 * 1024)
 
 	return output.split("\0").filter((path) => path.length)
 }
@@ -116,13 +180,13 @@ export async function trackedFiles(
 	repoRoot: PathBuilderLike = repoRootPathBuilder,
 	pathspecs: string[] = []
 ): Promise<string[]> {
-	const output = await git(repoRoot, ["ls-files", "-z", ...pathspecs], 64 * 1024 * 1024)
+	const output = await git(["ls-files", "-z", ...pathspecs], repoRoot, 64 * 1024 * 1024)
 
 	return output.split("\0").filter((path) => path.length)
 }
 
 /**
- * Every path in the working tree that git would carry, repo-relative: the tracked ones
+ * Every path in the working tree that Git includes, repo-relative: the tracked ones
  * and the untracked ones an ignore rule does not cover, optionally narrowed by git pathspecs.
  *
  * This is the set a checker over repository contents needs. {@linkcode trackedFiles}
@@ -137,8 +201,8 @@ export async function workingTreeFiles(
 	repoRoot: PathBuilderLike = repoRootPathBuilder
 ): Promise<string[]> {
 	const output = await git(
-		repoRoot,
 		["ls-files", "-z", "--cached", "--others", "--exclude-standard", ...pathspecs],
+		repoRoot,
 		64 * 1024 * 1024
 	)
 
@@ -158,7 +222,7 @@ export async function workingTreeFiles(
  *
  * The old path never appears, so the result contains only paths that still exist.
  *
- * Turning detection off reports every move as a deletion of the old path.
+ * Disabled rename detection reports every move as a deletion of the old path.
  * That is the path a stale literal holds.
  *
  * Measured on this repository: 11,696 paths over 4,398 commits in 205 ms,
@@ -166,8 +230,8 @@ export async function workingTreeFiles(
  */
 export async function movedAwayPaths(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<Set<string>> {
 	const output = await git(
-		repoRoot,
 		["log", "--all", "--no-renames", "--diff-filter=D", "--name-only", "--format="],
+		repoRoot,
 		64 * 1024 * 1024
 	)
 

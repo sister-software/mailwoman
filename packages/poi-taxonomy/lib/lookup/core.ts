@@ -107,8 +107,9 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	 * keep this package dependency-free): exact locale 1.0, language-only 0.5, otherwise no match.
 	 * Unrestricted phrases always match at 1.0.
 	 *
-	 * Deduplicated by category (best confidence wins), sorted by confidence descending, and at equal
-	 * confidence a curated synonym comes before an identity phrase ({@link CategoryMatch.phraseSource}).
+	 * Deduplicated by category (best confidence wins) and sorted by confidence descending.
+	 * At equal confidence a curated synonym comes before an identity
+	 * phrase ({@link CategoryMatch.phraseSource}).
 	 */
 	function lookupPOICategory(text: string, locale?: string): CategoryMatch[] {
 		const norm = text.trim().toLowerCase()

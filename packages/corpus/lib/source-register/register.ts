@@ -30,6 +30,7 @@ import {
 	type LicenseDecision,
 	type OperationDecision,
 } from "#source-register/types"
+import { AddressRole } from "#types"
 
 /**
  * Resolves the path of the committed register through the package's `./data/*` export.
@@ -47,6 +48,7 @@ const RESEARCH_STATES = new Set<string>(Object.values(JurisdictionResearchState)
 const SOURCE_STATUSES = new Set<string>(Object.values(SourceStatus))
 const GEOMETRIES = new Set<string>(Object.values(SourceGeometry))
 const PERSONAL_DATA_READINGS = new Set<string>(Object.values(PersonalDataReading))
+const ADDRESS_ROLES = new Set<string>(Object.values(AddressRole))
 
 /**
  * Returns the license label that the exclude filter in `@mailwoman/corpus/utils/license` matches by prefix.
@@ -110,7 +112,8 @@ export const MODEL_RELEASE_OPERATIONS: readonly SourceOperation[] = [
  * Returns the recorded permission for one operation under a license decision.
  *
  * The result is `unreviewed` when the decision is not elected or does not mention the operation.
- * Electing terms establishes which terms apply, and each operation still needs its own review.
+ * The selected terms establish which terms apply.
+ * Each operation still needs its own review.
  */
 export function permissionFor(decision: LicenseDecision, operation: SourceOperation): OperationDecision {
 	if (decision.state !== LicenseReviewState.Elected) {
@@ -169,8 +172,8 @@ export function ingestEligibilityProblems(
 		problems.push("the register was confirmed but its address fields and bulk access were not inspected")
 	}
 
-	if (!source.addressRole) {
-		problems.push("no address role is resolved, so the grammar the rows carry is unknown")
+	if (!Object.keys(source.addressRoles ?? {}).length) {
+		problems.push("no address column has a resolved role, so the grammar the rows carry is unknown")
 	}
 
 	if (!source.coverage) {
@@ -441,6 +444,22 @@ function auditSources(register: AddressSourceRegister): string[] {
 
 		if (!declared.has(source.license)) {
 			problems.push(`source ${named} points at an undeclared license decision`)
+		}
+
+		if (source.addressRoles && !Object.keys(source.addressRoles).length) {
+			problems.push(
+				`source ${named} carries an empty \`addressRoles\`, which reads as resolved and states no role. ` +
+					"Leave the field out until a column has one."
+			)
+		}
+
+		for (const [column, role] of Object.entries(source.addressRoles ?? {})) {
+			if (!ADDRESS_ROLES.has(role)) {
+				problems.push(
+					`source ${named} gives column ${stringifyJSON(column)} the role ${stringifyJSON(role)}, ` +
+						"which is not an `AddressRole`"
+				)
+			}
 		}
 
 		const review = source.personalDataReview

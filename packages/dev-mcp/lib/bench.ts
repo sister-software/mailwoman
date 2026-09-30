@@ -71,7 +71,7 @@ export interface BenchReading {
 }
 
 /**
- * Why every benchmark here is single-threaded, carried on the result rather than left to a reader to know.
+ * Why every benchmark here is single-threaded, recorded in the result for readers.
  *
  * Two measurements document the concurrency decision.
  * `session.run()` in `onnxruntime-node` blocks its calling thread.

@@ -1,9 +1,9 @@
 """The two passes over one epoch: what the sampler drew and what the trainer would read.
 
-They open the same stream at the same seed. Their counts are comparable.
+Both passes open the same stream at the same seed, so their counts are comparable.
 When every augmentation probability is zero, both passes consume the rng identically and produce
-byte-equal counts. The test pins that result. The emitted pass still skips `iter_rows`' shuffle
-buffer. That buffer reorders rows without changing counts.
+byte-equal counts. The test pins that result. The emitted pass skips the `iter_rows` shuffle buffer.
+That buffer reorders rows without changing counts.
 """
 
 from __future__ import annotations
@@ -35,8 +35,8 @@ class DrawPass:
     countries: Counter[str]
     #: Countries drawn from each source, keyed `source`, then country code.
     #:
-    #: `per_source` says how many rows a source contributed. `countries` says how many rows a country
-    #: received. Neither field says which countries received rows from each source. That join separates
+    #: `per_source` reports how many rows a source contributed. `countries` reports how many rows a country
+    #: received. Neither field identifies which countries received rows from each source. That join separates
     #: a country the sampler declined from a country whose rows sit in files the sampler never opened:
     #: `_source_iter` visits a source's parquet files in shuffled order and drains each before opening
     #: the next, so a fixed draw per source reads only the earliest files.
@@ -160,7 +160,7 @@ def run_emitted_pass(
     """Pass 2 — emitted level: the same stream expanded through the augmentation policy.
 
     The pass uses the trainer's emit step, including per-source exclusion. It omits the relabel
-    lexicon because it counts rows per source and country. Relabeling rewrites labels within a row
+    lexicon because it counts rows per source and country. The relabel lexicon rewrites labels within a row
     without adding or removing rows.
     """
     policy = EmitPolicy(

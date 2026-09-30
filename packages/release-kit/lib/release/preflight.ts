@@ -11,7 +11,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { formatTarballAudit } from "#pack/verify-tarball"
 import { auditStagedWorkspaces, checkReleaseListIdentity, releaseWorkspaces, stageReleaseTree } from "#release/stage"
 import { copyWeights } from "#weights/copy-weights"
-import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights/index"
+import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights"
 
 /**
  * Where the staged weights artifacts come from: `repo` reads this machine's data root,
@@ -67,8 +67,8 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 	await using resources = new AsyncDisposableStack()
 
 	// The caller's `--staging` root is written into and never removed.
-	// A scratch root this operation makes is its own, and `--keep` withholds its removal
-	// so the staged tree survives for inspection.
+	// A scratch root this operation makes belongs to this operation.
+	// `--keep` withholds its removal so the staged tree survives for inspection.
 	let stagingRoot = options.staging
 
 	if (!stagingRoot) {

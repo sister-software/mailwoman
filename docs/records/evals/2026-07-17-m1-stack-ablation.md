@@ -8,7 +8,7 @@ metric (decodeAsJSON → fold → per-tag exact-match F1; runner `scratchpad/m1-
 results `scratchpad/m1-ablation-results.json`). Model = shipped v381/v6.5.0, en-us weights, all
 sweeps CPU-only.
 
-Reading note: ablating a channel the model was TRAINED with is deliberate out-of-distribution
+Interpretation: the ablation removes a channel the model was TRAINED with, so it tests deliberate out-of-distribution
 input (#566/#685), so a channel delta reads "what this channel is worth to the trained model" —
 not "what a model trained without it would score." That is the right question for the
 consolidation ledger (P2): it prices what each layer warrants at inference time today.
@@ -31,7 +31,7 @@ consolidation ledger (P2): it prices what each layer warrants at inference time 
 
 ## The four findings
 
-**1. The gazetteer channel is the stack.** Removing it costs −10.4 micro on golden-us and
+**1. The gazetteer channel is the stack.** Without it, the score drops −10.4 micro on golden-us and
 collapses the country tag everywhere (−66.5 us / −60.0 fr / −63.4 parity — country is carried
 almost entirely by the atlas feed), with locality −21.6 and region −16.6 on US riding with it. The
 raw-model rows confirm it: of the ~9-point total stack value on us/fr/parity, nearly all of it is

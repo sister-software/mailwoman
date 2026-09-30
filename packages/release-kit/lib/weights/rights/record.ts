@@ -177,7 +177,7 @@ export interface AttributionRecord {
 
 /**
  * The attribution that an overlay inherits from the package that owns its model graph,
- * repeated so a consumer of the overlay alone can read it and labeled as the base's
+ * repeated so a consumer of the overlay by itself can read it and labeled as the base's
  * because the overlay's own artifacts did not contribute to that model.
  */
 export interface InheritedLineage {
@@ -250,7 +250,7 @@ export interface WeightsRightsRecord {
 	 *
 	 * The corpus manifest states what a corpus holds and this states what one config's audited
 	 * epoch drew from it, so the rights files report the second rather than the first.
-	 * `null` is a statement about the checkout: it says no such record was committed,
+	 * `null` is a statement about the checkout: no such record was committed,
 	 * rather than that the epoch drew from no source.
 	 */
 	effectiveTraining: EffectiveTrainingManifest | null
@@ -286,7 +286,7 @@ interface ModelCard {
 /**
  * The documentation files that a weights package declares.
  *
- * The record excludes them from the artifact list because they carry no data with provenance.
+ * The record excludes them from the artifact list because they contain no data with provenance.
  */
 const DOCUMENTATION_FILES: ReadonlySet<string> = new Set([
 	"README.md",
@@ -310,7 +310,7 @@ export const EFFECTIVE_MANIFESTS_DIRECTORY = "packages/corpus/data/training-mani
 /**
  * The effective training manifest for the corpus a card names, or `null` when the repository holds none.
  *
- * A card naming no corpus, and a corpus with no committed manifest, both answer `null`.
+ * A card naming no corpus and a corpus with no committed manifest both answer `null`.
  * The caller records that as a statement about the checkout rather than as
  * an epoch that drew from no source.
  */
@@ -384,8 +384,8 @@ export async function readWeightsRightsRecord(
 		tokenizerVersion: stringOrNull(card?.training?.tokenizer_version),
 		// Read from the file rather than from the card's `num_labels`, because the
 		// card is a claim about the graph.
-		// The `cjk` graph carries 49 labels where `en-us` carries 33, so a value copied
-		// from one card would misdescribe the other.
+		// The `cjk` graph has 49 labels while `en-us` has 33, so a value copied from
+		// one card would misdescribe the other.
 		modelGraph: artifacts.some((artifact) => artifact.path === MODEL_GRAPH_FILE)
 			? await readModelGraph(resolvePath(repoRoot, workspace, MODEL_GRAPH_FILE))
 			: null,

@@ -3,7 +3,7 @@ sidebar_position: 16
 title: Training recipe settings
 ---
 
-# Training recipe settings
+# Settings for training recipes
 
 Every training run is defined by a YAML config with ~30 knobs. Most interact. This document catalogues each setting, what it does, how we arrived at the current value, what happens when you move it, and where we've found ceilings. The goal is to make the reasoning behind the recipe reproducible — not the recipe itself alone.
 
@@ -23,7 +23,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **How we got to 384.** The operator chose it as the v0.5.0 target. The plan doc described 256→384 as "paid for by rented GPU." The h384 bisect during the divergence campaign appeared to show h384 was a destabilizer — but it was the dual-loss interaction that was unstable at every size. Once CE-only fixed the training, h384 worked on the first try.
 
-**Ceiling.** Not found. 512 is the next natural step (doubles the FFN intermediate from 1536 to 2048). Expected cost: ~2× wall time per step, ~4× parameter count (~68M vs 29M at h384). Whether the additional capacity helps depends on whether the model is capacity-limited or data-limited. The v0.5.1 overfitting past step 65K suggests data-limited at h384 — going larger without more data would overfit faster.
+**Upper bound.** Not found. 512 is the next natural step (doubles the FFN intermediate from 1536 to 2048). Expected cost: ~2× wall time per step, ~4× parameter count (~68M vs 29M at h384). Whether the additional capacity helps depends on whether the model is capacity-limited or data-limited. The v0.5.1 overfitting past step 65K suggests data-limited at h384 — going larger without more data would overfit faster.
 
 **What 256 provides you.** ~17M params, trains at 6.9 sps on A100 (h256 batch=16 ga=8) or ~120 sps (h256 batch=128 direct — untested but estimated). Fits on any GPU including consumer iGPUs.
 
@@ -36,7 +36,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | 256         | 4         | 64       |
 | 384         | 6         | 64       |
 
-**How we got here.** Following the standard 64-dim-per-head convention from BERT. No experimentation on head count — it's always derived from hidden_size.
+**How we got here.** We followed the standard 64-dim-per-head convention from BERT. No experimentation on head count — it is always derived from hidden_size.
 
 ### `num_hidden_layers`
 
@@ -44,7 +44,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **Current value: 6.** Unchanged since v0.1.0. The model is intentionally shallow — address parsing doesn't require the deep reasoning chains that language generation does. Most of the useful signal is local (neighboring tokens in a comma-separated address).
 
-**Ceiling.** Not explored. 6 layers at h384 is ~29M params. 12 layers would be ~50M. The overfitting at step 65K suggests the current depth is sufficient for the data; more layers without more data would overfit faster.
+**Upper bound.** Not explored. 6 layers at h384 is ~29M params. 12 layers would be ~50M. The overfitting at step 65K suggests the current depth is sufficient for the data; more layers without more data would overfit faster.
 
 ### `use_phrase_priors`
 
@@ -77,7 +77,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What 0.05 did.** Shipped v0.3.0 and v0.4.0 successfully at h256 with those corpora. Failed at h384 and with the v0.4.0 corpus. The destabilization is recipe-dependent rather than a universal property of 0.05 — it interacted with the larger model and/or the new corpus.
 
-**Ceiling.** 0.0 is the floor. There is no known ceiling because any value > 0 reintroduces the curvature conflict on this data. The structural CRF benefits (no orphan I-tags) are preserved at inference via the frozen mask. The training-side CRF NLL is unnecessary.
+**Upper bound.** 0.0 is the floor. There is no known ceiling because any value > 0 reintroduces the curvature conflict on this data. The structural CRF benefits (no orphan I-tags) are preserved at inference via the frozen mask. The training-side CRF NLL is unnecessary.
 
 ### `class_weights`
 
@@ -91,14 +91,14 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | B/I-country            | 2.0           | 2.0           | Carried from v0.4.0.                                                                                                   |
 | B/I-dependent_locality | 1.5           | **0.3**       | 956 FPs in v0.5.0 eval. Model hallucinates this tag. Downweight to make hallucination cheap → model stops emitting it. |
 | B/I-subregion          | 1.5           | **0.3**       | 272 FPs with 0 TPs. Same hallucination pattern.                                                                        |
-| B/I-venue              | 0.5           | 1.5           | Underperforming. Upweight.                                                                                             |
-| B/I-house_number       | 0.5           | 1.5           | Underperforming on golden. Upweight.                                                                                   |
+| B/I-venue              | 0.5           | 1.5           | The score is low. Upweight.                                                                                            |
+| B/I-house_number       | 0.5           | 1.5           | The golden score is low. Upweight.                                                                                     |
 
-**How we got here.** The v0.5.0 eval matrix showed the 956 dependent_locality FPs and 272 subregion FPs as the most concrete failure. Setting their weight to 0.3 makes mislabeling a token as dependent_locality cheap. The model has no incentive to emit it. Meanwhile upweighting street, locality, venue, and house_number pulls the model's attention toward the tags that matter for exact-match accuracy.
+**How we got here.** The v0.5.0 eval matrix showed the 956 dependent_locality FPs and 272 subregion FPs as the most concrete failure. A weight of 0.3 makes mislabeling a token as dependent_locality cheap. The model has no incentive to emit it. Meanwhile higher street, locality, venue, and house_number weights pull the model's attention toward the tags that matter for exact-match accuracy.
 
-**Whether it worked.** Pending — v0.5.1 training is still running. The eval at step 55K showed val_macro_f1=0.633 but we need the per-component breakdown to know if the hallucination was suppressed.
+**Whether it worked.** The v0.5.1 training run is still running. The eval at step 55K showed val_macro_f1=0.633 but we need the per-component breakdown to know if the hallucination was suppressed.
 
-**Risks.** Setting dependent_locality too low (e.g. 0.1) could make the model unable to learn it at all — if the data ever includes legitimate dependent_locality examples, the model would ignore them. 0.3 is a compromise: low enough to suppress hallucination, high enough that a clear signal still trains.
+**Risks.** A dependent_locality weight that is too low (e.g. 0.1) could make the model unable to learn it at all — if the data ever includes legitimate dependent_locality examples, the model would ignore them. 0.3 is a compromise: low enough to suppress hallucination, high enough that a clear signal still trains.
 
 ### `label_smoothing`
 
@@ -123,7 +123,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **How we got to 1.5e-4.** v0.3.0 empirically found it as the stable LR for this architecture + corpus. v0.4.0 tried higher (5e-4, 3e-4) but the bisect showed divergence was recipe-driven rather than LR-driven. 1.5e-4 has been the constant since.
 
-**Ceiling.** Unknown under CE-only. The dual-loss divergence at higher LRs was caused by the CRF curvature conflict, which is gone. Higher LR might now be stable. But 1.5e-4 is working well enough that there's no pressure to explore.
+**Upper bound.** Unknown under CE-only. The dual-loss divergence at higher LRs was caused by the CRF curvature conflict, which is gone. Higher LR might now be stable. But 1.5e-4 is working well enough that there's no pressure to explore.
 
 ### `batch_size` × `grad_accum_steps` (effective batch)
 
@@ -185,7 +185,7 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe s
 
 **v0.5.2 planned change:** Drop `wof-admin` from 2.0 → 0.3. Root cause of the locality/region confusion in demo presets: WOF bare-name entries (which carry no positional context) outnumber OSM full-address entries for ambiguous place names like "Washington." The model learns the frequency-dominant pattern (region) rather than the positionally-correct pattern (locality when preceding a region abbreviation). See [`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.mdx).
 
-### Training augmentation (v0.5.2 planned)
+### Augmentation during training (v0.5.2 planned)
 
 **Directional expansion.** Train on both raw and expanded forms of directional abbreviations: "NW" and "Northwest" with identical BIO labels. Teaches the model both forms without requiring inference-time normalization. ~30 lines in corpus pipeline.
 
@@ -197,11 +197,11 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe s
 
 **What it does.** Per-country acceptance probability in the data loader. Only US and FR are weighted (1.0 each) — these are the two locales with trained weights.
 
-**Ceiling.** Adding more countries (RU, JP, AM, KR, CN) is the v0.6.0 roadmap. The A1 tokenizer already covers these scripts; the corpus has transliteration rows; only the classifier training is missing.
+**Upper bound.** More countries (RU, JP, AM, KR, CN) are planned for v0.6.0. The A1 tokenizer already covers these scripts; the corpus has transliteration rows; only the classifier training is missing.
 
 ## Known ceilings and open questions
 
-1. **Data ceiling at h384.** Overfitting past step 65K suggests the model has extracted what it can from corpus-v0.4.0 at this capacity. More data (v0.5.0 corpus expansion, v0.6.0 multi-locale) would raise this ceiling.
+1. **Data ceiling at h384.** The model overfit past step 65K, which suggests it has extracted what it can from corpus-v0.4.0 at this capacity. More data (v0.5.0 corpus expansion, v0.6.0 multi-locale) would raise this ceiling.
 
 2. **Composition ceiling.** Per-token BIO accuracy (0.605-0.633 macro_f1) doesn't chain into per-component exact-match accuracy (0.1-6% on golden). This is a structural limitation of per-token training objectives. A future loss term that penalizes globally invalid parses (e.g. sequence-level negative log-likelihood over full addresses) would address this, but hasn't been explored.
 

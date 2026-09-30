@@ -1,4 +1,4 @@
-"""Encoding one corpus row into the tensors a training step reads.
+"""Encode one corpus row as the tensors a training step reads.
 
 This is where the soft-feed channels are assembled. Each channel is optional and absent by
 default, so a row encoded without one is byte-identical to what the pre-channel recipe produced.
@@ -30,9 +30,9 @@ def require_whole_span_triple(
     span_ends: Sequence[int] | None,
     span_tags: Sequence[str] | None,
 ) -> SpanTriple | None:
-    """The span triple when the row carries one, `None` when it carries none, RAISE in between.
+    """The span triple when the row has all three values, `None` when it has none, RAISE in between.
 
-    A partial triple is a corpus writer that emitted two of three columns. Falling back to the
+    A partial triple means a corpus writer emitted two of three columns. The encoder's fallback to the
     token path there would encode the row against labels the writer had already replaced.
     The resulting model would train without complaint.
     """
@@ -83,7 +83,7 @@ def paint_anchor(
 
     `"shaped"` paints on postcode-SHAPED spans rather than gold postcode labels (#220/#723),
     mirroring inference's `neural/postcode-anchor.ts` — so the model trains on the anchor firing on
-    house-numbers-that-look-like-ZIPs and learns to override it. It reads the raw text alone and
+    house-numbers-that-look-like-ZIPs and learns to override it. It reads only the raw text and
     ignores tokens, labels and spans. The other two modes follow the label source: a row with a
     span triple takes the postcode range off the spans, a row without it off the tokens.
     """
@@ -116,7 +116,7 @@ def encode_row(
     Truncates to ``max_length`` SP pieces. Pads to ``max_length`` with the SP ``pad_id`` and
     fills the label tail with ``IGNORE_INDEX`` so cross-entropy ignores the padding.
 
-    **Label source** (#519, the v0.5.0 char-offset migration): when the row carries the span
+    **Label source** (#519, the v0.5.0 char-offset migration): when the row has the span
     triple (``span_starts``/``span_ends``/``span_tags``), the per-char label array is built FROM
     THE SPANS and the token-quantized path is skipped — intra-span punctuation pieces get the
     span's label. The token path cannot represent that alignment. Rows without spans use the

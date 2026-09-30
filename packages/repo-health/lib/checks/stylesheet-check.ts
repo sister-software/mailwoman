@@ -143,7 +143,7 @@ const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stro
  */
 const RAW_RADIUS = /border-radius\s*:\s*[^;}]*\d+px/u
 
-// The token that marks a glass surface, and the token that its fallbacks paint instead.
+// The token that marks a glass surface and the token that its fallbacks paint instead.
 const MATERIAL_BACKGROUND = "var(--material-glass-background)"
 const MATERIAL_FALLBACK = "var(--material-glass-fallback-background)"
 
@@ -166,7 +166,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 	const diagnostics: Diagnostic[] = []
 	const rules = styleRules(css)
 
-	// The system stylesheet must carry the box-sizing reset and the button color default.
+	// The system stylesheet must include the box-sizing reset and the button color default.
 	if (file === SYSTEM_STYLESHEET) {
 		const universalBorderBox = rules.some(
 			(rule) => rule.selector.includes("*") && /box-sizing\s*:\s*border-box/u.test(rule.body)

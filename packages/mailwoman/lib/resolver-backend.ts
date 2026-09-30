@@ -109,7 +109,7 @@ interface ResolverLookupModule {
 /**
  * Creates the place lookup.
  *
- * It uses the candidate-table backend when a candidate gazetteer resolves,
+ * It uses the candidate-table backend when a candidate gazetteer resolves.
  * and the FTS backend over `wofPaths` otherwise.
  * The FTS backend gets the postal-city alias scorer when an alias database exists.
  */

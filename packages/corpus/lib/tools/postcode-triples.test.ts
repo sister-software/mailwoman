@@ -7,6 +7,12 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
+import { afterAll, describe, expect, it } from "vitest"
+
 import {
 	applyCountryBudget,
 	applyLocalityQuota,
@@ -17,12 +23,7 @@ import {
 	readTriplesFromGeonames,
 	readTriplesFromParentJoin,
 	regionWrittenForms,
-} from "@mailwoman/corpus/tools/postcode-triples"
-import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilder } from "path-ts"
-import { afterAll, describe, expect, it } from "vitest"
+} from "#tools/postcode-triples"
 
 const TAB = String.fromCharCode(9)
 const root = await temporaryDirectory("mw-postcode-triples-")
@@ -58,7 +59,7 @@ const acceptAll = { isKnownLocality: () => true }
 describe("readTriplesFromGeonames", () => {
 	it("keeps ONE row for a code published both hyphenated and bare", async () => {
 		// The PT and PL exports list every code in both forms.
-		// Counting both would double those countries' weight.
+		// A count of both would double those countries' weight.
 		const path = await writeExport("pt.txt", [
 			["PT", "3750-000", "Borralha", "Aveiro", "Águeda"],
 			["PT", "3750000", "Borralha", "Aveiro", "Águeda"],
@@ -227,7 +228,7 @@ describe("applyCountryBudget", () => {
 	})
 
 	it("spends the budget ACROSS regions, because source order is postcode order and a postcode sorts geographically", () => {
-		// Taking rows in source order would fill the budget from the first few regions.
+		// Source-order rows would fill the budget from the first few regions.
 		const row = (region: string, n: number) => ({ ...make("US", `city-${region}-${n}`, String(n)), region })
 
 		const triples = [
@@ -262,7 +263,7 @@ describe("regionWrittenForms", () => {
 		expect(surfaces).toEqual(["Islas Baleares", "Illes Balears", "Balearic Islands"])
 		expect(regionWrittenForms("Zamora", { official: ["Zamora"], coOfficial: [] })).toEqual(["Zamora"])
 
-		// The Catalan preferred name carries a "Província de" generic that envelopes omit.
+		// The Catalan preferred name includes a "Província de" generic that envelopes omit.
 		// Without it, the name matches the Castilian form and deduplicates.
 		const barcelona = { official: ["Barcelona"], coOfficial: ["Província de Barcelona"] }
 		const corunna = { official: ["La Coruña"], coOfficial: ["Província d'A Coruña", "A Coruña"] }

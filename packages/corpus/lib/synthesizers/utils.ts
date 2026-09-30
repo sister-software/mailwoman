@@ -31,7 +31,7 @@ export type Augmentation = (row: CanonicalRow) => CanonicalRow | null
 type ComponentDict = Partial<Record<ComponentTag, string>>
 
 /**
- * Build an augmented row with synth metadata.
+ * Build an augmented row with its `RecipeMarker`.
  */
 function withAugmentation(
 	source: CanonicalRow,
@@ -725,7 +725,7 @@ export function countryToLocale(country: string): string {
  */
 export interface ComposeAdversarialOptions {
 	/**
-	 * Pattern name used in `synth.method` as `compose:<pattern>`.
+	 * Pattern name written to the row's `recipe.recipe` as `compose:<pattern>`.
 	 */
 	pattern: string
 

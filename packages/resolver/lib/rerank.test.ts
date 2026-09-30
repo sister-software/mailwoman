@@ -1,0 +1,171 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { describe, expect, it, vi } from "vitest"
+
+import { rerankByResolution } from "#rerank"
+
+/**
+ * A tree whose finest resolved node has `tag`.
+ * `country` is what the guard vetoes.
+ */
+function resolvedTree(tag: string, raw = "x"): AddressTree {
+	const node: AddressNode = {
+		tag,
+		value: raw,
+		start: 0,
+		end: raw.length,
+		confidence: 1,
+		children: [],
+		placeID: "wof:1",
+		lat: 1,
+		lon: 2,
+	} as AddressNode
+
+	return { raw, roots: [node] }
+}
+
+const bare = (raw: string): AddressTree => ({ raw, roots: [] })
+
+/**
+ * A locality resolved at `lat`/`lon`.
+ *
+ * A locality rather than a country, so guard A passes it whatever the coordinate.
+ */
+function localityAt(lat: number, lon: number, raw = "x"): AddressTree {
+	const tree = resolvedTree("locality", raw)
+
+	tree.roots[0]!.lat = lat
+	tree.roots[0]!.lon = lon
+
+	return tree
+}
+
+describe("rerankByResolution", () => {
+	it("keeps the model's rank-1 when it resolves plausibly — no gratuitous reordering", async () => {
+		const resolve = vi.fn(async () => resolvedTree("locality"))
+
+		const out = await rerankByResolution(
+			[
+				{ score: -1, tree: bare("a"), payload: "a" },
+				{ score: -2, tree: bare("b"), payload: "b" },
+			],
+			resolve
+		)
+
+		expect(out.best.payload).toBe("a")
+		expect(out.changed).toBe(false)
+		// Rank-1 was plausible, so rank-2 need not have been resolved at all...
+		// But the budget resolves in order.
+		// What matters is the answer is unchanged.
+		expect(out.ranked[0]!.payload).toBe("a")
+	})
+
+	it("promotes rank-2 when rank-1 resolves to a country centroid — the arc's whole claim", async () => {
+		const resolve = vi.fn(async (t: AddressTree) => (t.raw === "a" ? resolvedTree("country") : resolvedTree("street")))
+
+		const out = await rerankByResolution(
+			[
+				{ score: -1, tree: bare("a"), payload: "rank1-garbage" },
+				{ score: -2, tree: bare("b"), payload: "rank2-real" },
+			],
+			resolve
+		)
+
+		expect(out.best.payload).toBe("rank2-real")
+		expect(out.changed).toBe(true)
+		// The vetoed one is retained, with its reason, never silently dropped.
+		const vetoed = out.ranked.find((r) => r.implausible)!
+		expect(vetoed.payload).toBe("rank1-garbage")
+		expect(vetoed.reason).toBe("country-centroid")
+	})
+
+	it("falls back to the model's rank-1 when EVERY candidate is implausible", async () => {
+		// "All my evidence identifies these as bad" is not grounds to invent a different answer.
+		const resolve = vi.fn(async () => resolvedTree("country"))
+
+		const out = await rerankByResolution(
+			[
+				{ score: -1, tree: bare("a"), payload: "rank1" },
+				{ score: -2, tree: bare("b"), payload: "rank2" },
+			],
+			resolve
+		)
+
+		expect(out.best.payload).toBe("rank1")
+		expect(out.changed).toBe(false)
+	})
+
+	it("does NOT veto a candidate when the resolver throws — an outage is not evidence", async () => {
+		const resolve = vi.fn(async (t: AddressTree) => {
+			if (t.raw === "a") throw new Error("resolver down")
+
+			return resolvedTree("street")
+		})
+
+		const out = await rerankByResolution(
+			[
+				{ score: -1, tree: bare("a"), payload: "rank1" },
+				{ score: -2, tree: bare("b"), payload: "rank2" },
+			],
+			resolve
+		)
+
+		expect(out.best.payload).toBe("rank1")
+		expect(out.best.implausible).toBe(false)
+		expect(out.changed).toBe(false)
+	})
+
+	it("resolves at most maxResolve candidates — the latency knob is real", async () => {
+		const resolve = vi.fn(async () => resolvedTree("locality"))
+		const candidates = Array.from({ length: 10 }, (_, i) => ({ score: -i, tree: bare(`c${i}`), payload: i }))
+		await rerankByResolution(candidates, resolve, { maxResolve: 3 })
+		expect(resolve).toHaveBeenCalledTimes(3)
+	})
+
+	it("carries unresolved (beyond-budget) candidates through without vetoing them", async () => {
+		const resolve = vi.fn(async () => resolvedTree("country")) // everything resolved is vetoed
+		const candidates = Array.from({ length: 4 }, (_, i) => ({ score: -i, tree: bare(`c${i}`), payload: i }))
+		const out = await rerankByResolution(candidates, resolve, { maxResolve: 2 })
+		// c2/c3 were never resolved → not implausible → they outrank the two vetoed ones.
+		expect(out.best.payload).toBe(2)
+		expect(out.ranked.filter((r) => r.implausible)).toHaveLength(2)
+	})
+
+	it("throws on an empty candidate list rather than inventing a result", async () => {
+		await expect(rerankByResolution([], async (t) => t)).rejects.toThrow(/must not be empty/)
+	})
+
+	it("vetoes a resolution outside the expected country — guard B, reachable now", async () => {
+		// A locality that resolves in the middle of the Atlantic is the cross-country-jump
+		// class the bare-centroid guard structurally cannot see: the node is a locality
+		// rather than a country, so guard A passes it.
+		const resolve = vi.fn(async (tree: AddressTree) =>
+			tree.raw === "a" ? localityAt(39.7392, -104.9903, "a") : localityAt(0, 0, "b")
+		)
+
+		const out = await rerankByResolution(
+			[
+				{ score: -1, tree: bare("b"), payload: "b" },
+				{ score: -2, tree: bare("a"), payload: "a" },
+			],
+			resolve,
+			{ expectedCountry: "US" }
+		)
+
+		expect(out.best.payload).toBe("a")
+		expect(out.ranked.find((r) => r.payload === "b")?.reason).toBe("outside-expected-country")
+	})
+
+	it("runs only guard A without an expected country, which is the shipped default", async () => {
+		const resolve = vi.fn(async () => localityAt(0, 0, "b"))
+
+		const out = await rerankByResolution([{ score: -1, tree: bare("b"), payload: "b" }], resolve)
+
+		expect(out.ranked[0]!.implausible).toBe(false)
+	})
+})

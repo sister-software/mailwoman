@@ -49,7 +49,7 @@ export const PhotonFeatureCollectionSchema =
 	featureCollectionSchema(PhotonFeatureSchema).openapi("PhotonFeatureCollection")
 
 /**
- * The error envelope, which is an empty FeatureCollection with a message.
+ * The error envelope is an empty FeatureCollection with a message.
  * Photon does not use an `{ error }` body.
  */
 export const PhotonMessageCollectionSchema = z

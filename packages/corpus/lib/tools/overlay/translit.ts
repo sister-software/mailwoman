@@ -6,7 +6,7 @@
  *   Build per-script parquet files from the DeepSeek-generated transliteration jsonl and emit the
  *   corpus-v0.4.0 manifest that combines them with the existing kryptonite + v0.3.0 files.
  *
- *   Sibling to `kryptonite.ts`. The two modules share the same composition pattern: take a
+ *   This module sits beside `kryptonite.ts`. Both modules use the same composition pattern: take a
  *   base manifest, append new parquet files, write a combined manifest. Differences specific to
  *   transliteration:
  *
@@ -19,7 +19,7 @@
  *       rewritten from `$MAILWOMAN_DATA_ROOT/...` to `/data/...` in the combined manifest so
  *       all paths share one container-friendly form.
  *
- *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for prompts, model, and the
+ *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for prompts, model and the
  *   reproducibility interface.
  *
  *   Invoke via `mailwoman corpus slice translit \
@@ -56,7 +56,7 @@ export interface TranslitOverlayOptions {
 	 */
 	canonicalPathPrefix?: string
 	/**
-	 * Prefix the base manifest's file paths currently carry, to be rewritten
+	 * Prefix currently used in the base manifest's file paths, to be rewritten
 	 * to {@link TranslitOverlayOptions.canonicalPathPrefix}.
 	 *
 	 * Defaults to `dataRootPath()` with a trailing slash — the root that wrote those paths.

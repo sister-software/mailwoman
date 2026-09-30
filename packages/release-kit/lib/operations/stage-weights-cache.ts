@@ -7,7 +7,7 @@
 import { z } from "zod"
 
 import { defineOperation, OperationEffect } from "#operation"
-import { flagDefaultOn, list, text } from "#operations/inputs"
+import { flag, flagDefaultOn, list, text } from "#operations/inputs"
 import { stageWeightsCache } from "#weights/stage-weights-cache"
 
 /**
@@ -18,7 +18,7 @@ import { stageWeightsCache } from "#weights/stage-weights-cache"
 export const stageWeightsCacheOperation = defineOperation({
 	id: "release.stage-weights-cache",
 	description:
-		"Assemble a package-shaped weights directory under --out <cacheRoot> so a candidate model is graded as a bundle: --from seeds it, --file name=path (comma list), --omit (comma list) and --card diverge it.",
+		"Assemble a package-shaped weights directory under --out <cacheRoot> so a candidate model is graded as a bundle: --from seeds it, --file name=path (comma list), --omit (comma list) and --card diverge it, and --dereference copies the bytes for a board-routed mwdev_compare arm.",
 	effect: OperationEffect.LocalWrite,
 	inputSchema: z
 		.object({
@@ -29,6 +29,7 @@ export const stageWeightsCacheOperation = defineOperation({
 			omit: list,
 			card: text,
 			clean: flagDefaultOn,
+			dereference: flag,
 		})
 		.strict(),
 	outputSchema: z.object({
@@ -38,8 +39,8 @@ export const stageWeightsCacheOperation = defineOperation({
 		staged: z.array(z.string()),
 		omitted: z.array(z.string()),
 	}),
-	run: (input, context) =>
-		stageWeightsCache({
+	run: async (input, context) => {
+		const report = await stageWeightsCache({
 			repoRoot: context.repoRoot,
 			out: input.out,
 			locale: input.locale,
@@ -48,6 +49,18 @@ export const stageWeightsCacheOperation = defineOperation({
 			omit: input.omit,
 			...(input.card ? { card: input.card } : {}),
 			clean: input.clean,
+			dereference: input.dereference,
 			log: context.log,
-		}),
+		})
+
+		// `outputSchema` serializes the report to JSON.
+		// That is the boundary where the two directory builders become strings.
+		// `stageWeightsCache` returns them intact so a library caller derives an artifact
+		// path from `packageDir` rather than rebuilding the cache layout.
+		return {
+			...report,
+			cacheRoot: report.cacheRoot.toString(),
+			packageDir: report.packageDir.toString(),
+		}
+	},
 })

@@ -52,7 +52,8 @@ function writeStderr(line: string): void {
 /**
  * Downloads each distinct planned weights object once and writes it into every workspace that declares it.
  *
- * It also copies the artifacts sourced from the checkout, and it verifies checksums for both.
+ * It also copies artifacts sourced from the checkout.
+ * It verifies checksums for both.
  *
  * It probes every remote object before downloading anything, so an unstaged
  * version fails once and lists every missing object.

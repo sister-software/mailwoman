@@ -29,7 +29,7 @@ source-of-truth: api/routes.ts, api/schema.ts, api/app.ts
 6. **Rationale.** Why the interface has this shape. Last, never first.
 7. **See also.**
 
-## Opening move
+## Start here
 
 Identify the surface and state what it is in one declarative sentence. Leave out any welcome, scenario, or
 promise.
@@ -41,12 +41,12 @@ promise.
 > validator-enforced. The package takes an engine object in which every method is optional. When a method is
 > absent, the endpoint returns a status code instead of throwing: `/v1/parse` returns `501`, and
 > `/v1/geocode`, `/v1/batch`, `/v1/resolve`, and `/v1/reload` return `503`. `/v1/format` is the exception.
-> It is wired in-package from `@mailwoman/codex/address-format` and works without any engine method.
+> It is wired in-package from `@mailwoman/codex/address/format` and works without any engine method.
 
 Errors go in one closed table. Each row carries a stable code a caller can match on, one line of meaning, and
 the next step. A meaning that only restates the code's name gives the reader no information.
 
-| Status | Body                                                 | Meaning                                                          | Next step                                                               |
+| Status | Body                                                 | Explanation                                                      | Next step                                                               |
 | ------ | ---------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | `501`  | `{ "error": "not implemented" }`                     | The engine has no `parse` method.                                | Wire `parse` on the engine object.                                      |
 | `503`  | `{ "error": "unavailable" }`                         | The engine method exists in the type but not in this deployment. | Check the data root and the resolver database path.                     |

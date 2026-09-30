@@ -13,20 +13,20 @@ import { APIClient } from "@mailwoman/core/api"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "ourairports"
 
 /**
- * The project's own GitHub Pages mirror, which `ourairports.com/data/*.csv` redirects to.
+ * `ourairports.com/data/*.csv` redirects to the project's own GitHub Pages mirror.
  */
 const BASE_URL = "https://davidmegginson.github.io/ourairports-data"
 
 /**
  * `airports.csv` is the payload.
  *
- * The other three join its codes to text or carry the negative class.
+ * The other three join its codes to text or provide the negative class.
  */
 const FILES = ["airports.csv", "countries.csv", "regions.csv", "runways.csv"] as const
 

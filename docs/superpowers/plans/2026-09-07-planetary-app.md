@@ -59,11 +59,11 @@ packages/cartographer/package.json                 exports "./planetary"
 **Files:**
 
 - Modify: `packages/cartographer/lib/base/composition.ts`
-- Test: `packages/cartographer/test/unit/composition.test.ts` (create if absent; `ls packages/cartographer/test/unit`)
+- Test: `packages/cartographer/lib/base/composition.test.ts` (create if absent; `ls packages/cartographer/lib`)
 
 **Interfaces:**
 
-- Produces: `StyleSpecificationComposition` gains `baseLayers?: LayerSpecification[]` (default `BaseLayers`), `hillshadeSource?: SourceSpecification | null` (default `createTerrainDEMSource()`; `null` adds none), `sprite?: string | null` (default the Protomaps v4 sprite; `null` omits the key), `glyphs?: string` (default the Protomaps font host). Existing callers pass none and get today's style byte for byte.
+- Produces: `StyleSpecificationComposition` gains `baseLayers?: LayerSpecification[]` (default `BaseLayers`), `hillshadeSource?: SourceSpecification | null` (default `createTerrainDEMSource()`; `null` adds none), `sprite?: string | null` (default the Protomaps v4 sprite; `null` omits the key), `glyphs?: string` (default the Protomaps font host). Current callers pass none and get today's style byte for byte.
 
 - [ ] **Step 1: The test first**
 
@@ -94,7 +94,7 @@ test("a composition can bring its own base layers, no hillshade source and no sp
 })
 ```
 
-Run `yarn vitest --run --config vitest.fast.config.ts packages/cartographer/test/unit/composition.test.ts`; expected: the second test fails (the options are unknown and the Earth layers come back).
+Run `yarn vitest --run --config vitest.fast.config.ts packages/cartographer/lib/base/composition.test.ts`; expected: the second test fails (the options are unknown and the Earth layers come back).
 
 - [ ] **Step 2: The change**
 
@@ -144,7 +144,7 @@ git commit -m "feat(cartographer): the style composer takes base layers, the hil
 
 - Create: `packages/cartographer/lib/planetary/index.ts`, `sources.ts`, `layers.ts`, `style.ts`
 - Modify: `packages/cartographer/package.json` (`exports["./planetary"]`), `packages/cartographer/lib/index.ts` if it re-exports subpaths (it does not need to)
-- Test: `packages/cartographer/test/unit/planetary.test.ts`
+- Test: `packages/cartographer/lib/planetary/style.test.ts`
 
 **Interfaces:**
 
@@ -319,7 +319,7 @@ Add `browserRow("@mailwoman/cartographer/planetary")` to `bundle-graph.ts` in th
 **Files:**
 
 - Create: `packages/planetary/package.json`, `tsconfig.json`, `tsconfig.test.json`, `lib/env.ts`, `lib/body.ts`, `lib/bodies/{index,moon,mars}.ts`, `lib/routes.ts`
-- Test: `test/unit/body.test.ts`, `test/unit/bodies.test.ts`, `test/unit/routes.test.ts`
+- Test: `lib/body.test.ts`, `lib/bodies/bodies.test.ts`, `lib/routes.test.ts`
 - Modify: the four registers (as in the Earth shell plan, Task 2 Step 3, with the values above)
 
 **Interfaces:**
@@ -328,7 +328,7 @@ Add `browserRow("@mailwoman/cartographer/planetary")` to `bundle-graph.ts` in th
 
 - [ ] **Step 1: Tests**
 
-`test/unit/body.test.ts`:
+`lib/body.test.ts`:
 
 ```ts
 import { assertHostMatchesBody } from "@mailwoman/planetary/body"
@@ -349,7 +349,7 @@ test("a production host serving the other body's build fails, naming both", () =
 })
 ```
 
-`test/unit/routes.test.ts` covers `/` → map, `/feature/11150` → feature `11150`, `/feature/` → null, `/nowhere` → null, and `viewportFromSearch("?lon=-11.2&lat=-43.3&z=5")` → the three numbers, with a malformed value → null. `test/unit/bodies.test.ts` asserts both configs name their own hostname, that `tiles.nomenclature` ends in `/${body}.json`, and that `identity.origin` is `https://${hostname}/`.
+`lib/routes.test.ts` covers `/` → map, `/feature/11150` → feature `11150`, `/feature/` → null, `/nowhere` → null, and `viewportFromSearch("?lon=-11.2&lat=-43.3&z=5")` → the three numbers, with a malformed value → null. `lib/bodies/bodies.test.ts` asserts both configs name their own hostname, that `tiles.nomenclature` ends in `/${body}.json`, and that `identity.origin` is `https://${hostname}/`.
 
 - [ ] **Step 2: The modules**
 
@@ -450,7 +450,7 @@ export default defineConfig({
 ```bash
 yarn install
 yarn compile
-yarn vitest --run --config vitest.fast.config.ts packages/planetary/test/unit
+yarn vitest --run --config vitest.fast.config.ts packages/planetary/lib
 PLANETARY_BODY=moon yarn workspace @mailwoman/planetary build && cat packages/planetary/dist/build.json
 PLANETARY_BODY=mars yarn workspace @mailwoman/planetary build && node -e "console.log(require('./packages/planetary/dist/manifest.webmanifest').id)"
 git add package.json yarn.lock tsconfig.json packages/planetary packages/release-kit dependency-cruiser.config.cjs
@@ -551,7 +551,7 @@ git commit -m "feat(planetary): the globe over the body's archives, click-to-sel
 
 **Files:**
 
-- Create: `lib/search/index.ts`, `lib/search/SearchBox.tsx`; `test/fixtures/moon-search.ancestrie`; `test/unit/search.test.ts`
+- Create: `lib/search/index.ts`, `lib/search/SearchBox.tsx`; `test/fixtures/moon-search.ancestrie`; `lib/search/search.test.ts`
 
 **Interfaces:**
 
@@ -559,7 +559,7 @@ git commit -m "feat(planetary): the globe over the body's archives, click-to-sel
 
 - [ ] **Step 1: The fixture and test**
 
-The fixture is built by the astrogeology package's `buildSearchIndex` over its five Moon fixture features. Run that function once from a Node one-liner and commit the bytes (`ls -la` under 10 KB). `test/unit/search.test.ts`:
+The fixture is built by the astrogeology package's `buildSearchIndex` over its five Moon fixture features. Run that function once from a Node one-liner and commit the bytes (`ls -la` under 10 KB). `lib/search/search.test.ts`:
 
 ```ts
 test("prefix search finds Tycho and ranks the larger feature first at a shared prefix", async () => {
@@ -584,7 +584,7 @@ Add Mare Tranquillitatis with its alias to the astrogeology Moon fixture if it i
 - [ ] **Step 3: Run, commit**
 
 ```bash
-yarn vitest --run --config vitest.fast.config.ts packages/planetary/test/unit
+yarn vitest --run --config vitest.fast.config.ts packages/planetary/lib
 git add packages/planetary packages/astrogeology/test/fixtures
 git commit -m "feat(planetary): search over the pipeline's ancestrie artifact, through the shared autocomplete listbox"
 ```

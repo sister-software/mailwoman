@@ -37,7 +37,7 @@ The full boundary doc (the per-source license matrix, the attribution requiremen
 requirement) is [`docs/articles/licensing/data-provenance.md`](../docs/articles/licensing/data-provenance.md); this
 section is the package-local summary.
 
-## Building a per-country database
+## Build a per-country database
 
 You need GDAL (`ogr2ogr`) on the path — the same dependency `@mailwoman/tiger` uses. GDAL's OSM driver
 resolves node and way/polygon geometries for us, so building-tagged addresses (the dominant German shape)
@@ -49,7 +49,7 @@ aren't lost.
 #    → $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/
 
 # 2. Build the extract (writes $MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-idf.db):
-node packages/osm/out/scripts/build-rooftop-database.js \
+node packages/osm/out/tools/build-rooftop-database.js \
   --country fr --slug idf --release 260627 \
   --created-at 2026-06-27T00:00:00.000Z \
   --build-sha "$(git rev-parse HEAD)" \

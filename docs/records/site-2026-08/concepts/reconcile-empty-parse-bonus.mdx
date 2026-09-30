@@ -65,7 +65,7 @@ The first implementation granted the bonus once per accepted slot. That carries 
 1. **Fragments beat coverage.** The per-token logit aggregation gives interior fragments inflated confidence — `City` aggregates the I-locality mass of a token that sits _inside_ a locality, scoring `locality=0.92`, while the full `New York City` span scores `0.60`. With a flat per-slot bonus, the beam paid no penalty for leaving `New York` unexplained: the bare `locality="City"` won at `+0.475` over the full span's `+0.199`, and the grouper-audit then promoted the orphaned `York` proposal to a spurious `region` node. Final output: `{region: "York", locality: "City"}` — for an input the plain argmax path parses correctly.
 2. **More spans collect more bonuses.** Two interpretations covering the same words were not scored on evidence alone — the one split into more slots banked one bonus per slot, a flat subsidy for fragmentation.
 
-Scaling the bonus by the slot's word count makes _coverage_ the thing being rewarded. Equal-coverage interpretations collect equal bonus (the evidence factors alone decide between them), and a covering interpretation out-scores one that silently drops words unless the extra evidence is weak. On the query above, the full span now wins at `+2.03` (three words' bonus) vs `+0.48` for the bare fragment.
+A bonus scaled by the slot's word count rewards _coverage_. Equal-coverage interpretations collect equal bonus (the evidence factors alone decide between them), and a covering interpretation out-scores one that silently drops words unless the extra evidence is weak. On the query above, the full span now wins at `+2.03` (three words' bonus) vs `+0.48` for the bare fragment.
 
 Word counting is whitespace-delimited with a floor of one — scripts without spaces (CJK) degrade to the old per-slot behavior rather than misbehaving.
 
@@ -73,7 +73,7 @@ Word counting is whitespace-delimited with a floor of one — scripts without sp
 
 `INCLUSION_LOG_BONUS` is a **module-level constant** rather than a configurable option. Reasons:
 
-- Exposing it as an opt invites callers to set it to `0`, which defeats the purpose of the reconciler — the empty parse comes back.
+- An opt-in setting would let callers set it to `0`. That value defeats the purpose of the reconciler because the empty parse wins again.
 - The sensible range is narrow. Below `log(2)` (≈ 0.693) the empty parse re-dominates on most inputs; above `log(4)` (≈ 1.386) the search starts accepting noise spans. Operators who want to tune this should be reading the reconciler's tests rather than the public API.
 - A per-locale knob may justify itself later (Japanese vs English may have different "what counts as low-confidence evidence" floors). When the eval data exists to justify per-locale priors, we can expose this as a controlled knob. Today it would be premature.
 

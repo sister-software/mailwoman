@@ -48,8 +48,8 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 /**
  * Refuse to publish a workspace this repository holds out of the release, naming the recorded reason.
  *
- * Every entry is refused rather than the rights-held ones alone, so one rule cannot
- * drift from a classification it does not carry.
+ * Every entry is refused rather than only the rights-held ones, so one rule cannot
+ * drift from a classification it does not include.
  */
 export function assertWorkspacePublishable(workspacePath: string): void {
 	const workspace = workspacePath.replace(/^\.\//, "").replace(/\/$/, "")
@@ -66,8 +66,9 @@ export function assertWorkspacePublishable(workspacePath: string): void {
 /**
  * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from.
  *
- * @throws On a missing, empty, or non-string list: every caller treats this as the full
- * bump/publish surface, and an empty read must never be mistaken for zero workspaces.
+ * @throws On a missing, empty, or non-string list: every caller treats this
+ * as the full bump/publish surface.
+ * An empty read must never be mistaken for zero workspaces.
  */
 export async function releaseWorkspaces(repoRoot: PathBuilderLike): Promise<string[]> {
 	const config = await readLocalJSONFile<{

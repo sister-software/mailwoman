@@ -18,7 +18,7 @@
  *   `US_UNIT_DESIGNATOR_REQUIRES_RANGE` is Pub-28's own "Requires a Secondary Number" column. APT,
  *   bldg, dept, FL, hngr, KEY, LOT, pier, RM, slip, SPC, stop, STE, trlr and unit must be followed
  *   by an identifier ("Apt 4B"). bsmt, frnt, lbby, lowr, OFC, PH, rear, side and uppr may stand
- *   alone. A separate deliverable is the per-locale *level-semantics* table (étage/RDC, EG/OG/UG,
+ *   by itself. A separate deliverable is the per-locale *level-semantics* table (étage/RDC, EG/OG/UG,
  *   planta/piso/bajo, piano/terra, 階/F/B1, …). This module stays US/Pub-28 only.
  *
  *   Data is verbatim USPS Pub-28 C2.
@@ -96,7 +96,7 @@ export const US_UNIT_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USUnitDesignator
  * The designator must be followed by an identifier ("Apt 4B", "Rm 12").
  *
  * The remaining designators (basement, front, lobby, lower, office, penthouse, rear, side, upper)
- * may stand alone with no trailing identifier.
+ * may appear with no trailing identifier.
  * Verbatim from USPS Pub-28 C2.
  */
 export const US_UNIT_DESIGNATOR_REQUIRES_RANGE: Readonly<Record<USUnitDesignator, boolean>> = {

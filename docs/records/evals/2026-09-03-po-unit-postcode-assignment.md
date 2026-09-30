@@ -59,7 +59,7 @@ PO6 66.1% of 24,077; PO4 66.3% of 24,445. Largest single confusion: `PO20 9BH` â
 - Null model 69.57% exact: below the 80% floor. No runtime surface is earned.
 - Footprint lift âˆ’0.06 pp: below the 5 pp bar. The footprint input is dropped.
 
-## Reading
+## How to read the results
 
 Unit postcodes interleave at the scale of a street. A point's own centroid is beaten by a neighbour's
 for three points in ten, and buildings do not help because a building almost never spans the decision

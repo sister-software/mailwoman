@@ -44,7 +44,7 @@ Conversely, some postcodes cover large populations: UK postcode `CV4 7AL` serves
 
 Most people know their 5-digit ZIP code. Far fewer know their ZIP+4. Almost no one knows their delivery point code (the last two digits). When a user types `90210`, they are giving a 5-digit approximation of their address — off by up to several miles for rural routes. A geocoder that treats `90210` as a precise location is misleading the user.
 
-Misreading handwritten postcodes is a common failure mode. A human writes `SW1A 1AA` and the OCR reads `SW1A 1A4` — one character off, different delivery point. The postal system handles this through carrier local knowledge (the carrier knows the route). A geocoder returns a coordinate for the wrong address.
+OCR can misread handwritten postcodes. A human writes `SW1A 1AA` and the OCR reads `SW1A 1A4` — one character off, different delivery point. The postal system handles this through carrier local knowledge (the carrier knows the route). A geocoder returns a coordinate for the wrong address.
 
 ### "Every address has a postcode."
 

@@ -10,7 +10,7 @@
  *   admin records must be in the same walk.
  *
  *   Each postcode record produces one row per pair of name slot and hierarchy variant. The name slots are the canonical
- *   `wof:name` (slot `default`) plus any `name:*` variants. The hierarchy variants are the postcode alone, then with
+ *   `wof:name` (slot `default`) plus any `name:*` variants. The hierarchy variants are the postcode by itself, then with
  *   locality, region and country added in turn. Ancestor names always use the canonical `wof:name`.
  *
  *   `source_id` has the form `wof-postalcode-<wof_id>-<name-slot>-<hierarchy-variant>`.
@@ -145,7 +145,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 		defaultLicense: "CC0-1.0",
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.WhosOnFirst,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"Who's On First postalcode GeoJSON bundles (postcode → locality/region pairs). Ancestor names from sibling admin repos.",
 
@@ -166,7 +166,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 
 			// The adapter read admin records so postcode ancestry resolves.
 			// The index above now holds the three ancestor names read by each postcode variant.
-			// Dropping them here releases every admin record's `nameVariants` map before the emit pass.
+			// Their removal here releases every admin record's `nameVariants` map before the emit pass.
 			// `shouldEmit` skipped those records anyway.
 			for (const [id, record] of byID) {
 				if (placetypeToTag(record.placetype) !== "postcode") {

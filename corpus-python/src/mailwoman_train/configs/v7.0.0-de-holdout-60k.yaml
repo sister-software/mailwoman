@@ -26,16 +26,28 @@
 # The run starts from scratch with `--resume none`. A fine-tune from the v6.0.0 checkpoint is not
 # available, because no v6.0.0 run reached a checkpoint on this corpus family.
 #
-# All other weights, reps targets, receipts and the model, train and eval blocks match v6.0.0.
+# 4. `ve-locality-postcode-region` asks for 200 draws where v6.0.0 asked for 250. Every other receipt
+#    floor, weight and reps target, and the model, train and eval blocks, match v6.0.0.
 #
-# One receipt is short of its floor on this mixture, and it is short for the same reason under v6.0.0's
-# spelling. `ve-locality-postcode-region` asks for 250 draws from `reviewed-postcode-tail`. That source
-# holds 22 rows, its weight of 0.05 gives it a requested share of 0.00024440 of the epoch, and 1,000,000
-# draws therefore expect 244. Measured at seed 43: 240 observed. The floor sits above the mixture's own
-# expectation, so the receipt refuses on about half of the seeds whatever the corpus is called. Raising
-# the weight, lowering the floor and emitting more than 22 VE rows are three different changes with
-# three different effects on the run, and this config leaves both numbers as v6.0.0 set them rather than
-# fitting one of them to this reading.
+#    v6.0.0's floor of 250 sat above the mixture's own expectation. `reviewed-postcode-tail` carries
+#    weight 0.05, and a source's requested share follows its weight alone: measured over the audit's
+#    `requested` map, every source reads `share / weight = 0.00488798`, and `rendered-de` at 187,485 rows
+#    and `rendered-nl-postcode` at 10,000 rows both read 0.02932786 at weight 6.0. So the share is
+#    0.05 / 204.58 = 0.00024440, and 1,000,000 draws expect 244.4 with a binomial standard deviation of
+#    15.6. A floor of 250 refuses 63.1% of seeds and a floor of 200 refuses 0.2%, both computed exactly
+#    from Poisson(244.4). Seed 43 drew 240.
+#
+#    200 is 2.85 standard deviations below the expectation, so it is a function of the weight and the
+#    draw count rather than of the 240 observed. Had seed 43 drawn 262 and passed, the same arithmetic
+#    would still give 200. The floor keeps its purpose: a mixture change that stopped routing these rows
+#    to the trainer still refuses. It is stale if the weight moves, which is the argument for a receipt
+#    field stating a fraction of the expected draws rather than a constant.
+#
+#    The other two candidate changes were declined. Raising the weight above 0.05 would choose a training
+#    parameter so that a check passes, and it would shift every other source's share. Emitting more than
+#    the 22 rows leaves the expected draws at 244.4, because the share follows the weight alone, so it
+#    cannot move this receipt. It would lower the 10.9 reps per row, and that number is 240 divided by 22,
+#    so it carries the same information as the draw count.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout
@@ -270,8 +282,10 @@ data:
       min_draws: 1000
       source: fragment-fr-bare-street-v22
       country: FR
+    # 200 rather than v6.0.0's 250: the expectation is 244.4 draws at weight 0.05, so 250 refuses 63.1%
+    # of seeds and 200 refuses 0.2%. The header states the derivation.
     - name: ve-locality-postcode-region
-      min_draws: 250
+      min_draws: 200
       source: reviewed-postcode-tail
       country: VE
       component_sequence:

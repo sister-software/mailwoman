@@ -37,7 +37,7 @@ export interface ResolvedPlaceLayersProps {
 }
 
 /**
- * Render the marker(s), outline, and (optional) camera move for one resolved place.
+ * Render the marker(s), outline and optional camera move for one resolved place.
  */
 export function ResolvedPlaceLayers({
 	spec,

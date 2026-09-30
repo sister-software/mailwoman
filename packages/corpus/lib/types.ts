@@ -28,6 +28,15 @@ export const AddressRole = {
 	 */
 	RegisteredOffice: "registered-office",
 	/**
+	 * The address a third party records for a transacting party on its own transaction record,
+	 * such as the supplier on a government contract notice.
+	 *
+	 * The party supplied the address to the recording body rather than to a registrar.
+	 * No registrar filed it as a seat, and no address register confirmed it as a premise.
+	 * A sole trader's entry can hold a home address.
+	 */
+	Counterparty: "counterparty",
+	/**
 	 * The place where post is delivered.
 	 * This can be a post-office box.
 	 */
@@ -84,17 +93,37 @@ export function addressRoleOf(row: Pick<CanonicalRow, "addressRole">): AddressRo
  * The values are wire values.
  *
  * This is separate from {@link CanonicalRow.register}, which records where the underlying record came from.
- * A template rendering of a real register record is `Composed`, and it is still a real address.
+ * A rendering of a real register record is `Rendered` or `Composed`, and it is still a real address.
  */
 export const SurfaceOrigin = {
 	/**
-	 * The publisher's own string, carried through unchanged.
+	 * The publisher's own string, preserved unchanged.
+	 *
+	 * No adapter in the tree emits this today: each one builds its line from the source's fields.
+	 * The value is reserved for a source that publishes the written line itself,
+	 * such as a register storing `address1` as a person typed it.
 	 */
 	Attested: "attested",
 	/**
-	 * A template assembled the text from the published fields of one real record.
+	 * An adapter assembled the line from one record's fields, in that locale's canonical order.
+	 *
+	 * The order comes from the codex layout or the adapter's own template rather than from the
+	 * publisher, so the components are the source's and the written form is this repository's.
+	 * Distinct from {@link SurfaceOrigin.Composed} because an adapter renders one canonical
+	 * form per record while a recipe varies the form deliberately.
+	 *
+	 * A source id beginning `rendered-` does not take this value.
+	 * `SourceOperation.Rendered` in `#recipes/sources` names a recipe operation with the same word,
+	 * and those recipes record {@link SurfaceOrigin.Composed} because they vary the form.
+	 *
+	 * Read the row's `surface` rather than its source name to learn which of the two produced it.
+	 */
+	Rendered: "rendered",
+	/**
+	 * A recipe assembled the text from the published fields of one real record.
 	 *
 	 * The recipe chooses the order, punctuation and casing.
+	 * It varies them to teach a surface.
 	 */
 	Composed: "composed",
 	/**
@@ -129,7 +158,7 @@ export function requireSurface(raw: Record<string, unknown>, producer: string): 
 }
 
 /**
- * Provenance fields that every corpus row carries.
+ * Provenance fields present on every corpus row.
  *
  * Two related facts are recorded per source rather than per row.
  * `createIneligibilityReader` in `build/eligibility.ts` joins `source` against the
@@ -138,8 +167,9 @@ export function requireSurface(raw: Record<string, unknown>, producer: string): 
  *
  * A per-row eligibility field would copy a per-source decision onto every row
  * and would disagree with the register after a review changed a license's state.
- * Whether a row reached a checkpoint is a property of a run rather than of the corpus,
- * and the sampler draws a different sample per epoch, so `deriveEffectiveTrainingManifest`
+ * Whether a row reached a checkpoint is a property of a run rather than of the corpus.
+ *
+ * And the sampler draws a different sample per epoch, so `deriveEffectiveTrainingManifest`
  * records it per source from a config and an `audit_epoch_mixture` output.
  */
 export interface SourceProvenance {
@@ -217,7 +247,7 @@ export interface CanonicalRow extends SourceProvenance {
 	 * The role of this address.
 	 *
 	 * The runner stamps the adapter's `addressRole` on rows that omit it.
-	 * An adapter sets it per row only when one source carries several roles.
+	 * An adapter sets it per row only when one source has several roles.
 	 * Read it with {@link addressRoleOf}.
 	 */
 	addressRole?: AddressRole
@@ -321,7 +351,7 @@ export interface AdapterOptions {
 	limit?: number
 
 	/**
-	 * The fraction of rows that carry an explicit `country` component.
+	 * The fraction of rows that include an explicit `country` component.
 	 *
 	 * A source without country tokens teaches the model that country tokens are rare.
 	 * That lowers `country` recall.

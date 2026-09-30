@@ -16,11 +16,11 @@
  *   The register designates GB complete (every uprn in AddressBase with a Code-Point Open postcode),
  *   and the builder writes `layer_coverage` with basis `designated` for every cell the register
  *   touches. Inside a covered cell an empty answer is evidence of absence: no GB uprn by that number
- *   carries a Code-Point postcode, or no uprn carries that postcode. Two absences the reader cannot
+ *   has a Code-Point postcode, or no UPRN has that postcode. Two absences the reader cannot
  *   tell from those are recorded in `nsul_meta` as counts rather than as rows. A uprn whose `pcds` is
  *   null (its postcode is not in Code-Point Open) and one Open uprn publishes no coordinate for — so a
  *   caller building negative evidence reads the coverage table and those counts rather than this reader
- *   alone. Outside coverage (Northern Ireland, the Isle of Man, the Channel Islands) the answer is
+ *   by itself. Outside coverage (Northern Ireland, the Isle of Man, the Channel Islands) the answer is
  *   unknown, per the meaning-of-zero rule.
  */
 
@@ -114,7 +114,7 @@ export class NSULLookup extends SQLiteLookup<NSULDatabase> {
 	 *
 	 * The key is compacted through {@link compactPostcode} first, so `PO21 1HR`
 	 * and `PO211HR` answer identically.
-	 * An empty array is the register's answer, scoped as the module docstring says.
+	 * An empty array is the register's answer, scoped as the module docstring describes.
 	 */
 	uprnsForPostcode(postcode: string): NSULAssignedPoint[] {
 		return this.#pointsProbe(compactPostcode(postcode)).map((row) => ({

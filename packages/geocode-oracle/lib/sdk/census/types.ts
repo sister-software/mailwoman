@@ -51,7 +51,7 @@ export const CensusBenchmarkName = {
 } as const
 
 /**
- * The benchmark identifier a Census request can carry.
+ * The benchmark identifier a Census request can include.
  */
 export type CensusBenchmarkName = (typeof CensusBenchmarkName)[keyof typeof CensusBenchmarkName]
 
@@ -68,7 +68,7 @@ export const CensusVintageName = {
 } as const
 
 /**
- * The vintage identifier a `geographies/*` lookup can carry.
+ * The vintage identifier a `geographies/*` lookup can include.
  */
 export type CensusVintageName = (typeof CensusVintageName)[keyof typeof CensusVintageName]
 
@@ -210,7 +210,7 @@ export interface CensusBlockGeography {
 	FUNCSTAT: TIGERFunctionalStatus | string
 	GEOID: FIPSBlockGeoID | string
 	/**
-	 * Housing units in the block, 2020 decennial.
+	 * The number of housing units in the block in the 2020 decennial census.
 	 */
 	HU100: number
 	INTPTLAT: string

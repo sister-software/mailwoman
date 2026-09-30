@@ -54,7 +54,7 @@ Each line is one assumption and one address that breaks it.
 
 ## Numbers
 
-- **Building numbers are positive integers.** `0 Egmont Road, Middlesbrough` exists. So do hyphenated
+- **A building number must be a positive integer.** `0 Egmont Road, Middlesbrough` exists. So do hyphenated
   ranges such as `4-5 Bonhill Street, London`, and half-numbers, which appear as `43 1/2`, `43.5` or
   `43½` depending on which database you are reading.
 - **A number at the front of the address is the building number.** `Minusone Priory Road, Newbury` has
@@ -62,8 +62,8 @@ Each line is one assumption and one address that breaks it.
 - **A street and a number identify one place.** There are two `50 Ammanford Road` addresses about four
   miles apart, in different towns, under different postcodes.
 - **A spelled-out number equals its digits.** `Ten Post Office Square` and `10 Post Office Square` in
-  Boston are different buildings. Normalizing one to the other merges two locations.
-- **Leading zeros can be dropped.** Apartment `001` and apartment `1` have been different apartments
+  Boston are different buildings. Normalization merges the two locations.
+- **A leading zero can be dropped.** Apartment `001` and apartment `1` have been different apartments
   on different floors of the same building.
 
 ## Postcodes
@@ -106,7 +106,7 @@ cannot. That is the argument for learning the distribution rather than enumerati
 set has to name each case, and the cases combine — a Cyrillic street name, in a non-English order,
 with an apostrophe in it, in a town that was renamed last year.
 
-Learning has its own version of the same limit, and it is must be explicit. A model that has seen
+Models have the same limit, and we must state it explicitly. A model that has seen
 no fractional house numbers will not invent the category; it will assign the pieces to whatever labels
 its training distribution makes likely. The counterexamples above are useful to a model only insofar
 as the training corpus contains their shapes, which is why locale claims here are made per locale and
@@ -115,7 +115,7 @@ measured rather than asserted for the world
 
 ## Related
 
-- [Addressing around the world](./addressing-around-the-world.mdx) — the conventions these assumptions
+- [Global address conventions](./addressing-around-the-world.mdx) — the conventions these assumptions
   come from.
 - [Postcodes and ZIP Codes](./postcodes-and-zip-codes.mdx) — the postcode section, at length.
 - [Two addresses, one building](./two-addresses-one-building.mdx) — the hierarchy section, at length.

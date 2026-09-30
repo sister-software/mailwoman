@@ -79,7 +79,7 @@ export const siBareVillageRecipe: CorpusRecipe = {
 				raw = `${postcode} ${village}, ${village} ${number}`
 			}
 
-			// One resolution for both, because `source_id` carries the source as its prefix
+			// One resolution for both, because `source_id` includes the source as its prefix
 			// and a pair that disagreed would name a source no row of this output declares.
 			const source = defaultRecipeSource("synth-si-bare-village")
 			const source_id = recipeSourceID(source, { ...components, o: String(order), v: String(read) })
@@ -97,8 +97,8 @@ export const siBareVillageRecipe: CorpusRecipe = {
 			}
 
 			// Per row rather than on the shared literal, because the id names this tuple's record.
-			// A tuples file written before `sourceID` existed carries none.
-			// `null` says so.
+			// A tuples file written before `sourceID` existed has no id.
+			// `null` records that case.
 			if (
 				alignAndWrite(write, canonical, "si-bare-village", {
 					...SI_BARE_VILLAGE_PROVENANCE,

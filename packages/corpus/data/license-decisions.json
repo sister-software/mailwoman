@@ -2,6 +2,844 @@
 	"$comment": "Licence decisions somebody made by reading a publisher's terms. The register's own build generates every decision as `unchecked` from the research pass's access labels, which is correct — that pass recorded what a register costs to reach and opened nobody's terms. This file is where a decision that was made gets recorded, and `buildSourceRegister` applies these over the generated defaults. It is an input to the build rather than an edit of its output, so a rebuild preserves what is here instead of overwriting it.",
 	"$howToAdd": "Read the publisher's terms. Store the copy you read somewhere a later reader can open it, and name that location in `retrievedCopy` — a link to today's page is not a copy. Then add one entry here keyed by the `licenseID` the register already uses for that source, and rebuild. `auditAddressSourceRegister` refuses an elected record missing `electedTerms`, `retrievedCopy` or `electedBecause`, and a refused record missing `refusedBecause`, so an incomplete entry fails the build rather than entering the register.",
 	"$shape": "Each key is a licenseID the register declares. Each value is an ElectedLicense or RefusedLicense minus its `licenseID`, which the build fills from the key. See `@mailwoman/corpus/source-register`'s types.",
-	"$empty": "No decision has been recorded yet, so all 12 of the register's licence decisions read `unchecked`. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also refuses every one of the 389 sources for an unresolved address role and unmeasured coverage, which no licence decision touches. See #2351 for this file and #2323 for the unresolved fields.",
-	"decisions": {}
+	"$titleIsNotThePublisher": "Find a publisher's own licence entry by matching the publisher rather than the product's title. Two data.gov.uk entries describe the Companies House Free Company Data Product. The one whose title matches the product name is published by the London Borough of Barnet and reads `license_id: notspecified`. The one that licenses it is published by Companies House, is titled `Basic Company Data`, and reads `license_id: cc-by`. Reading the title-matching entry would have recorded that no licence exists.",
+	"$state": "Thirty-four decisions are recorded here and three shared readings under `sharedReadings`, which the build expands to 28 elected and 6 refused licences over the register's 399 sources. Elected are ten INSPIRE Addresses themes, under CC0 1.0 for the Netherlands and Estonia, CC BY 4.0 for Denmark and Navarra, CC BY-SA 4.0 for Gipuzkoa, the INSPIRE controlled value for an absence of conditions for Czechia and Slovakia, the Modellicentie voor gratis hergebruik Vlaanderen v1.0 for the Flemish Region, and each publisher's own access-and-use licence for Catastro and Bizkaia; AusTender under CC BY 3.0 AU; DENUE under INEGI's own free-use terms; SIRENE under Licence Ouverte 2.0 in each of nine overseas territories; five OCDS procurement releases under CC0 1.0 (Chile, Germany), CC BY 4.0 (Italy, Zambia) and the Licencia de Datos Abiertos Uruguay 0.1; Svalbard's Enhetsregisteret records under NLOD 2.0; and Companies House's Free Company Data Product under Creative Commons Attribution. Refused are the Banque Centrale des Comores, the Institut de la statistique de la Polynésie française, the Government of Tokelau, Kenya's PPRA, the Central Bank of Libya and Kosovo's PPRC, each of which reserves rights and publishes no data licence. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. `mwops release rights-audit` reports 11 of 399 sources eligible for ingest. See #2351 for this file and #2323 for the source fields.",
+	"$notElected": "Three candidates examined across 2026-09-30 remain unchecked, and each is unchecked for a different reason. The Puerto Rico Department of State's corporations registry states nothing either way: its 646,949 bytes carry one licensing string, `Licensed under MIT`, which is Bootstrap's notice inside a stylesheet comment rather than a statement about the registry, and the territory's data catalog answers HTTP 404 at its CKAN API. An absence of any statement is a different fact from a reservation of rights, which is why it stays unchecked rather than joining the refusals. Ghana's PPA publication records a licence as a bare URL, `https://www.ppaghana.org/ocds-license`, and that host failed at the network layer from four paths across three passes, so the licence exists and is unreadable. Spain's `es-mixed-regulatory-2` is INE, and no pass has read an INE document; its row exists because the 2026-09-30 rights review split `Catastro, INE` into one row per publisher, and that split is what let Catastro's INSPIRE licence be elected without granting INE's data. Two candidates left this list by being elected. Companies House's Free Company Data Product download page states only the access cost, and Companies House licenses the same product on data.gov.uk as `Basic Company Data` under Creative Commons Attribution. Catastro's licence is elected against `unchecked-access-free-es-direcci-n-general-del-catastro`, and the three foral cadastres that publish through the same national feed are elected separately. Three left it by being refused once the publisher's own words were read rather than a third party's field: Kenya's PPRA reserves all rights in its footer, the Central Bank of Libya reserves all rights in its footer, and Kosovo's PPRC publishes terms whose clause 12(c) reserves copying, reproduction and derivative works except by its express written agreement. Kenya matters as a method note: earlier passes recorded its host as failing at the network layer, which was the `www` prefix, so its terms had never been read rather than been read and found empty. Check a bare host before recording a publisher as unreachable. The retrieved documents are in `internal/strategy/rights-receipts/gb-mx-es-2026-09-30/`, `ocp-eight-2026-09-30/`, `seven-web-sources-2026-09-30/`, `publisher-terms-2026-09-30/`, `es-catastro-2026-09-30/` and `es-foral-cadastres-2026-09-30/`. Request drafts are in `internal/strategy/rights-outreach/2026-09-30-footer-reservations/` for the three publishers that reserve rights in a footer, and in `2026-09-30-no-stated-license/` for the four whose own sites were re-read, where Kosovo's asks for the written agreement its own clause 12(c)(ii) provides for. Two services left this list on 2026-10-01 and both left it the same way, which is the method note worth keeping: the statement existed and the route to it was misread. Flanders' instrument was named in the dataset record, and its identifier served one JavaScript application for every content type, so the text looked unretrievable. Appending `.ttl` to that identifier's path returns the RDF, and the record's `rdfs:seeAlso` gives the page carrying the nine articles. **A single-page application intercepts a path rather than a file extension.** Slovakia's dataset record was recorded as unreachable after the export URL in its own capabilities document answered HTTP 422 four ways. That body says which field is wrong and where it belongs: `{\"loc\":[\"path\",\"collection_record_id\"],\"msg\":\"value is not a valid uuid\"}` places the id in the path where the capabilities put it in the query, and a second 422 enumerates the permitted `export_format` values, which exclude the `gmd` the capabilities asks for. **A 422 is a validation message naming the fix, where a 404 is an absence**, so read the body before recording a publisher as unreachable. Both `data.gov.sk` and `data.slovensko.sk` do answer every path with the same 524-byte application shell, identical by sha256, and neither was the route: `rpi.gov.sk`, the publisher's own register, holds the record.",
+	"$sireneRepetition": "Nine of the decisions below are one reading of one document, recorded nine times. INSEE publishes SIRENE for mainland France and its overseas territories, and the register scopes a decision to one publisher in one jurisdiction, so BL, GF, GP, MF, MQ, PM, RE, WF and YT each carry their own. That repetition is deliberate: an election wide enough to cover nine jurisdictions at once is the failure review cannot undo.",
+	"$sharedReadings": "One publisher can hold a licence over several jurisdictions, and the register scopes a decision to one publisher in one jurisdiction, so reading that publisher's terms once produces several decisions with the same body. A decision reads `sameAs` to name a body declared here, which keeps each licence id's own decision while the prose behind it has one home. The build refuses a `sameAs` naming a reading this file does not declare.",
+	"$ocpRegistryStatements": "Five of the decisions below rest on the OCP Data Registry's own licence statement rather than on the publisher's page. Each of those register rows records its access as OCDS bulk through that registry and its `sourceURL` as the registry, so the copy this repository would fetch is the registry's and the licence it publishes is the one governing that copy. AusTender is the exception: its publisher's own terms were retrieved, which is the stronger record. Retrieving each of the five publishers' own pages would raise them to the same standard and is not done.",
+	"sharedReadings": {
+		"ocp-registry-cc0-1.0": {
+			"state": "elected",
+			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
+			"spdx": "CC0-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The OCP Data Registry publishes this OCDS release under CC0 1.0 and offers no alternative: `License: Creative Commons CC0 1.0 Universal Public Domain Dedication`, with the deed's summary that the person associating the work with it `has dedicated the work to the public domain by waiving all of his or her rights to the work worldwide under copyright law, including all related and neighboring rights, to the extent allowed by law`. The legalcode is retained beside the registry page. CC0 imposes no attribution condition, so this repository owes none; crediting the publisher anyway is courtesy rather than obligation.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives every copyright and related right to the extent allowed by law, so copying the published file is unrestricted by the dedication."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed states `You can copy, modify, distribute and perform the work, even for commercial purposes`, and reading columns out of the file is copying and modifying."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed permits modification without condition."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act, so fitting a model on the rows is unrestricted by the dedication."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed permits distribution and performance, commercially included, with no attribution or share-alike condition."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives the rights that would make a derived work's release a licensed act, so the question that stays unreviewed under CC BY does not arise here."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A dedication to the public domain leaves no right to sublicense, so a recipient needs no grant from this repository."
+				}
+			}
+		},
+		"ocp-registry-cc-by-4.0": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0 International",
+			"retrievedCopy": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The OCP Data Registry publishes this OCDS release under CC BY 4.0 and offers no alternative: `License: Creative Commons Attribution 4.0 International (CC BY 4.0)`, with the deed's summary granting `Share — copy and redistribute the material in any medium or format` and `Adapt — remix, transform, and build upon the material for any purpose, even commercially`, under `Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made` and `No additional restrictions`. The legalcode is retained beside the registry page. The attribution owed is therefore a credit, a link to the licence, and a statement that changes were made, which a transformed corpus always requires.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the right to reproduce and share the material in any medium or format."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `remix, transform, and build upon the material` covers reading the address fields out of the release."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, so a token and tag corpus is permitted with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 reserves no act of analysis and grants building upon the material for any purpose, commercially included."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Share grant covers redistribution in any medium, conditioned on the attribution and on adding no restriction beyond the licence."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the deed does not state it. If they are, the attribution and the statement of changes attach to the release."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 grants no sublicensing right and instead gives every downstream recipient an offer from the licensor directly. Whether that arrangement satisfies a commercial agreement's needs is a drafting question this text does not answer."
+				}
+			}
+		},
+		"insee-sirene-lov2": {
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			}
+		}
+	},
+	"$firstRefusals": "Three decisions below read `refused`, the register's first. Each publisher reserves all rights in its own footer and publishes no data license: the Banque Centrale des Comores, the Institut de la statistique de la Polynésie française, and the Government of Tokelau. A footer notice is a site-wide assertion rather than a statement about the data, so a request to the publisher could still produce a grant. What `refused` records is that the terms were read and no grant was found, which is a different state from `unchecked`, where nobody looked.",
+	"decisions": {
+		"unchecked-national-terms-gb-companies-house": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-mx-es-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Companies House licenses the product on data.gov.uk, under the title `Basic Company Data`. Two retained records agree: the CKAN API answers `organization: Companies House`, `license_id: cc-by`, `license_title: Creative Commons Attribution` and `license_url: http://www.opendefinition.org/licenses/cc-by`, and the dataset page reads `Publisher Companies House … Licence Creative Commons Attribution`. The record's resources include `http://download.companieshouse.gov.uk/BasicCompanyData-part1.zip`, which is the Free Company Data Product whose own download page states only `This snapshot is provided free of charge` and names no license. So the license sits on the publisher's data.gov.uk entry rather than on the file's download page. Two cautions are recorded rather than resolved. Neither retained record states a CC BY version, so no `spdx` is set here: writing one would make an unstated version machine-readable through `electedLicenseLabel`, which feeds the share-alike filter. Reading the version off the publisher is the work that would settle it. And a second data.gov.uk entry titled `Companies House - Free Company Data Product` is published by the London Borough of Barnet with `license_id: notspecified`, so reading the entry whose title matches the product name would have answered that no license exists.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY grants the right to reproduce and share the material in any medium or format, which is what copying the published snapshot performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY grants remixing, transforming and building upon the material, which covers reading the nine `RegAddress.` columns out of the snapshot."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY reserves no act of analysis and grants building upon the material for any purpose, commercially included."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY grants redistribution in any medium, conditioned on crediting Companies House, linking the license, and stating that changes were made."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and neither retained record states it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY grants no sublicensing right and instead offers every downstream recipient a license from the licensor directly. Whether that satisfies a commercial agreement is a drafting question these records do not answer."
+				}
+			}
+		},
+		"unchecked-national-terms-sj-br-nn-ysund-register-centre": {
+			"state": "elected",
+			"electedTerms": "Norsk lisens for offentlige data (NLOD) 2.0",
+			"spdx": "NLOD-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/seven-web-sources-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Brønnøysund's own open-data API documentation states one license and no alternative: `License: Norsk lisens for offentlige data (NLOD)`. NLOD 2.0's text is retained beside it. Its preface grants `the right to copy, use and distribute information, provided you acknowledge the contributors`, and section 2 grants `distributing the information to others, modifying the information and/or combining the information with other information, and copying and distributing such changed or combined information`, as `a non-exclusive, free, perpetual and worldwide licence` usable `in any medium and format known today and/or which will become known in the future`. Attribution is the only condition on use.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The preface grants the right to copy the information, which is what retrieving the register's records performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants modifying the information and combining it with other information, which covers reading the address fields out of a record."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants modification and the copying and distribution of the changed information, so a token and tag corpus is permitted with the contributors acknowledged."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants use in any medium and format known today or in future, and reserves no act of analysis."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 2 grants distributing the information and distributing changed or combined information. The licence's own commentary adds that `the party receiving such information must obtain permission from the original licensor`, so a recipient takes their grant from Brønnøysund rather than from this repository."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are the changed or combined information section 2 names is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "Section 2 states `The Licensee shall not sub-license or transfer this licence.` Its commentary is explicit that this `does not grant the licensee permission to grant others permission to use the information`."
+				}
+			}
+		},
+		"unchecked-national-terms-xk-public-procurement-regulatory-commission-pprc": {
+			"state": "refused",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"refusedBecause": "The PPRC's own terms document refuses reproduction and derivative works, and names the route to permission. `https://e-prokurimi.rks-gov.net/Home/Manuals//TermsAndConditions/KushtetDheTermatE-prokurimi.pdf`, 405,856 bytes, sha256 `fbb08255e3294050245d87aa43c3d4ea0b66be66773676416c2312897a43f06c`, is titled `Kushtet dhe Termat për Përdorimin e Sistemit të Prokurimit Elektronik – Marrëveshja e Përdoruesit` and is six pages, read in full. Clause 12(b) states that all contents in the system are the property of the KRPP. Clause 12(c) states `Asnjë përdorues nuk mund të kopjojë, modifikojë, publikojë, transmetojë, transferojë ose shesë, riprodhojë, krijojë vepra derivative, shpërndajë, shfaqë ose në ndonjë mënyrë të shfrytëzojë ndonjë nga përmbajtjet, tërësisht ose pjesërisht, me përjashtim i) kur ju lejohet me ligjet dhe rregulloret e prokurimit publik të Republikës së Kosovës, ose ii) me marrëveshjen e shprehur me shkrim të KRPP-së`: no user may copy, modify, publish, transmit, transfer, sell, reproduce, create derivative works from, distribute or display any of the contents, in whole or in part, except where the Republic of Kosovo's public procurement law permits it or by the express written agreement of the KRPP. Copying, extracting and fitting a model are each among the reserved acts. Two limits on this reading are recorded rather than resolved. The document governs the e-procurement portal and names the OCDS export nowhere, so whether the export is `contents in this system` is a reading rather than a statement; the export is a rendering of the portal's own records, which is why the refusal is taken as covering it. And clause 12(c)(ii) names a route to permission, so a written request to the KRPP could reverse this. The register's earlier record rested on the OCP Data Registry reading `License: -`, which is a third party's empty field rather than the publisher's statement, and this replaces it with the publisher's own words."
+		},
+		"unchecked-national-terms-ke-kenya-public-procurement-regulatory-authority": {
+			"state": "refused",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"refusedBecause": "The PPRA reserves all rights in its own footer, `PPRA © 2024 All Rights Reserved`, and its site carries no data license, no open-data statement and no reuse permission. Three further paths on that host answer HTTP 404 (`/terms-of-use/`, `/privacy-policy/`, `/copyright/`) and `/downloads/` answers 403; the 404 body is the same 58,133 bytes each time. The retained home page is 119,357 bytes, sha256 `d6d2f936c885591588ebe3074aeffd42a176bba767c8f1106092312d50407df0`. Earlier passes recorded this host as failing at the network layer, which was an artifact of the `www` prefix: `www.ppra.go.ke` fails and `ppra.go.ke` answers HTTP 200, so the publisher's terms had never been read rather than been read and found empty. A footer notice is a site-wide assertion rather than a statement about the data, so a request to the authority could still produce a grant; its own site publishes `info@ppra.go.ke`."
+		},
+		"unchecked-national-terms-ly-central-bank-of-libya": {
+			"state": "refused",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"refusedBecause": "The Central Bank of Libya reserves all rights in its own footer, `© All rights reserved 2026، The Central Bank of Libya.`, and its site carries no data license and no reuse permission. Its English home page holds no licensing term in 222,200 bytes and it publishes no terms-of-use page; `/en/terms-of-use/` answers HTTP 404 and the contact page, 147,508 bytes, sha256 `765d8a3adabde677eee5c8afcc2d4be1cf36d26b2e6d8d2498586cc2974750a4`, carries the footer and nothing further. The only address the site publishes is `webdesign@email.ly`, which belongs to whoever built the site rather than to the bank, so a request goes through the contact form at `https://cbl.gov.ly/en/contact/`. Do not substitute a third party's dataset: a humdata query for Libya returns five `cc-by` datasets, every one published by the World Bank Group or the AfDB rather than by the central bank."
+		},
+		"unchecked-national-terms-km-banque-centrale-des-comores": {
+			"state": "refused",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"refusedBecause": "The Banque Centrale des Comores reserves all rights in its own footer, `© Droit Réservé | Banque Centrale des Comores - 2022`, and the retained page carries no data license, no open-data statement and no reuse permission. The research pass's `Free` label records that the page costs nothing to read rather than a grant. A footer notice is a site-wide assertion rather than a statement about the data, so a request to the bank could still produce a grant; what this records is that the terms available were read and no grant was found."
+		},
+		"unchecked-national-terms-pf-institut-de-la-statistique-de-la-polyn-sie-fr": {
+			"state": "refused",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"refusedBecause": "The Institut de la statistique de la Polynésie française reserves all rights in its own footer, `© 2026 - ispf.pf Tous droits reservés`, and the retained Répertoire territorial des entreprises page carries no data license and no reuse permission. Its `mentions légales` path answers HTTP 404. The register row already records that its bulk path requires review, and this adds that the web path grants nothing either."
+		},
+		"unchecked-national-terms-tk-tokelau-department-of-education": {
+			"state": "refused",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"refusedBecause": "The Government of Tokelau reserves all rights in its own footer, `© Copyright On-Going Government of Tokelau. All Rights Reserved.`, and the retained school directory carries no data license. The row covers three schools, so the refusal costs the corpus almost nothing: the page itself states that the total student population across the three schools is just over 400."
+		},
+		"unchecked-national-terms-cl-direcci-n-de-compras-y-contrataci-n-p-blica": { "sameAs": "ocp-registry-cc0-1.0" },
+		"unchecked-national-terms-de-procurement-office-of-the-federal-ministry-of": { "sameAs": "ocp-registry-cc0-1.0" },
+		"unchecked-national-terms-it-autorit-nazionale-anticorruzione-anac": { "sameAs": "ocp-registry-cc-by-4.0" },
+		"unchecked-national-terms-zm-zambia-public-procurement-authority-zppa": { "sameAs": "ocp-registry-cc-by-4.0" },
+		"unchecked-national-terms-uy-agencia-reguladora-de-compras-estatales-arce": {
+			"state": "elected",
+			"electedTerms": "Licencia de Datos Abiertos - Uruguay Versión 0.1",
+			"termsVersion": "0.1",
+			"retrievedCopy": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/ocp-uy-publication-43.html",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The OCP Data Registry publishes this release under `Licencia de Datos Abiertos - Uruguay Versión 0.1` and quotes the licence's own clauses on the page, so the retained bytes carry the terms rather than a label alone. ARCE's own data page corroborates it and gives the licence a statutory basis: `La siguiente licencia de datos abiertos de Uruguay está incluida en el Decreto N° 54/017 de 20 de febrero de 2017 reglamentario del art. 82 de la Ley 19.355 de 19 de diciembre de 2015`. So this is the one OCDS election of the five that rests on the licensor rather than on the registry alone. The licence names no SPDX identifier, which is why none is recorded. The Authorization clause grants, `for commercial and non-commercial use`, that the data `may be: alienated, reproduced, distributed, published, translated, adapted, transformed, communicated or made available to the public through any form or procedure; merged with own and third-party data, and can be combined to form new and independent data sets; integrated into business processes, products and internal and external applications in public and private electronic networks`. The Note of Origin clause conditions all of it: `the name of the provider, the reference to the “Open Data License - Uruguay”. the reference to the data set that is being used`, and `Changes, editions, new designs or modifications must be mentioned in the note of origin`. The licensor's own page at catalogodatos.gub.uy answers HTTP 404, so the registry's quotation is the copy retained.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Authorization clause grants that the data may be `reproduced`, which is what copying the published release performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `adapted, transformed` and `combined to form new and independent data sets`, which covers reading the address fields out of it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants adaptation and transformation, and the Note of Origin requires that `Changes, editions, new designs or modifications must be mentioned`, so the obligation is a disclosure rather than a restriction."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `integrated into business processes, products and internal and external applications`, which is the act a model fitted on the rows performs."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `distributed, published` and `made available to the public through any form or procedure`, conditioned on the Note of Origin naming the provider, the licence and the dataset."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Integration into a product is granted, and whether releasing weights is that act or the redistribution of a derived data set is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records. The Note of Origin's disclosure of modifications would attach either way."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants commercial use and states no term about granting these rights onward, so the text settles neither."
+				}
+			}
+		},
+		"unchecked-national-terms-bl-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-gf-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-gp-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-mf-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-mq-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-pm-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-re-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-wf-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-yt-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-access-free-es-direcci-n-general-del-catastro": {
+			"state": "elected",
+			"electedTerms": "Licencia de acceso y uso de los servicios y conjuntos de datos INSPIRE de la Dirección General del Catastro",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/es-catastro-2026-09-30/, whose licence text is internal/strategy/rights-receipts/es-2026-09-25/catastro-inspire-licencia.pdf, sha256 9265a9c05ad0cf5a4366c59a4b16168eda9cf792ec1279e2c52a53f3f622d652",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The instrument is titled for exactly the three INSPIRE themes this source publishes, `Parcela Catastral (CP)`, `Direcciones (AD)` and `Edificios (BU)`, at version 1.0 of July 2016, and its three pages were read in full. It names no Creative Commons licence and no SPDX identifier applies, so none is recorded. The publisher states three things that do not agree, and this records all three rather than reconciling them. The titled instrument grants what the operations below describe. All 52 of the 52 province feeds that the Dirección General del Catastro publishes read `This service can be used free of charge in every instance, as long as that the D. G. of the Cadastre (Ministry of Finance) is mentioned as author and owner of the information`, which agrees on use and states the attribution obligation; that denominator is every DGC province feed the top-level feed links, each retrieved, with no retrieval failing. The top-level feed and each of its 52 DGC entries read `Copyright (c) 2012\", ES.SDGC; all rights reserved`, four years older than the instrument and carrying a stray quotation mark after the year. The election rests on the titled instrument because it is the publication's own licence for these datasets and the most recent of the three, and a reviewer reading only the top-level feed reads the opposite. Attribution to the Dirección General del Catastro as author and owner conditions every permitted act. The feed's remaining three entries belong to the Provincial Councils of Bizkaia, Gipuzkoa and Navarra, which state `CC BY 3.0 ES`, `CC-BY-SA` and `CC BY 4.0`; this decision reaches none of them, and the source's `coverage` records the exclusion.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 1 reads `La descarga masiva de información gráfica y alfanumérica del Catastro y el acceso a los servicios web se autoriza para uso propio del usuario titular de la licencia`, which authorizes retrieving the zipped GML each province feed links."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause authorizes the download `para la elaboración y distribución de nuevos productos de valor añadido a partir de la información catastral`. Reading the house-number designator, the thoroughfare name and the postal descriptor out of the GML is a step in producing such a product."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 1 requires the transformation rather than merely allowing it: `siempre que ésta sea transformada por el interesado`. Clause 3 bounds it, in that a transformation may not alter the content or denature its sense, and a derived product may not identify itself as `cartografía catastral` or `información catastral` or a confusable equivalent."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 1 authorizes `el uso público, incluido el comercial, de la información catastral que haya sido sometida a cualquier proceso previo de transformación en los términos establecidos en el artículo 21 del texto refundido de la Ley de Propiedad Intelectual`. Fitting a model on a token and tag corpus built from the rows is a use of information that such a process has already transformed."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"because": "Clause 1 states `no se autoriza la difusión, distribución o comercialización de la información original suministrada, que no puede ser difundida por Internet ni por ningún otro medio sin su previa transformación`. Publishing the supplied GML, or a copy of its rows that no transformation has changed, is the act the clause withholds."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a work transformed in the sense of article 21, which clause 1 makes the condition of any public use, is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records. The retained text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The instrument grants a licence to its own holder and states no sublicensing right either way. Clause `Supuestos de revocación de la licencia` reserves revocation for inadequate use, decided under article 78 of RD 417/2006, which is a further reason the question needs counsel rather than a reading here."
+				}
+			}
+		},
+		"unchecked-access-free-dk-klimadatastyrelsen": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Klimadatastyrelsen states one licence and states it twice, once as a label and once as an identifier. `https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml`, 3,130 bytes, sha256 `5a32be44b186586dbef5efa24bd200b3d2d85afebb74172250f5dd977d3ddbea`, carries `<rights>CC BY 4.0</rights>` and a `describedby` link to `https://creativecommons.org/licenses/by/4.0/deed.da`, the Danish deed page for that licence. The version is stated, so `spdx` reads `CC-BY-4.0`, and CC BY 4.0 carries no share-alike term. The feed's `author` names `Klimadatastyrelsen`, which is the agency that succeeded SDFE and still serves the data from the `sdfe.dk` host.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce and share the Licensed Material in whole, which is what retrieving the zipped GeoPackage performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which covers reading the designator and component columns out of the `address` table."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, commercial purposes included, with §3(a)(1)(B) requiring that modifications be indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing in any medium, conditioned by §3(a) on crediting Klimadatastyrelsen, retaining the copyright notice, linking the licence, and indicating modifications."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the licence text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 §2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right. Whether that satisfies a commercial agreement is a drafting question this text does not answer."
+				}
+			}
+		},
+		"unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky": {
+			"state": "elected",
+			"electedTerms": "Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "The Ministry states one condition of use and states it twice, in its own register and in that register's INSPIRE export. Reaching it took reading an error body rather than another search: the export URL the service's own capabilities document writes answers HTTP 422 with `{\"loc\":[\"path\",\"collection_record_id\"],\"msg\":\"value is not a valid uuid\"}`, which places the id in the PATH where the capabilities put it in the query, and a second 422 enumerates the permitted `export_format` values, among which `gmd` does not appear. `https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72`, 9,335 bytes, sha256 `0937d4bffc3f3078e27aad12dc3649469969ec407a022da81125f2656ff6ff38`, is the record: `title` `INSPIRE - Adresy`, `unit_name` `Ministerstvo vnútra Slovenskej republiky`, `hierarchy_level` `dataset`, `status` `published`, `date_stamp` `2025-05-28`. It ties to the measured service by its own `downloadable_urls`, which holds exactly `https://rageo.minv.sk/geoserver/ad/wfs?service=WFS&version=2.0.0&request=GetCapabilities`, and its `spatial_scopes` reads the INSPIRE codelist term `national` with a `footprint_geo` of `Slovenská Republika` at a 100% match. Its `use_constraints` reads `Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)`. The same record exported as `export_format=inspire_xml`, 18,955 bytes, sha256 `710e0fc3216645b5c4014a4044dbaff86adc07da390b8a06b0e99055decdf28e`, carries `accessConstraints` and `useConstraints` both as `otherRestrictions`, the ISO code meaning that the statement is in `otherConstraints`, and two `otherConstraints` values: `Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)` and `Neuplatňujú sa žiadne podmienky`. That phrase renders INSPIRE's controlled value for no conditions applying to access and use, in Slovak, as ČÚZK's `žádné podmínky neplatí` does in Czech. The parenthetical adds the publisher's own identification of it as CC0. No version accompanies that label, so `spdx` and `termsVersion` are left out and `electedTerms` records the publisher's words, the same treatment Czechia's entry receives. The record also reads `is_opendata_allowed` and `is_hvd_compliant` true, so the Ministry publishes this as a high-value dataset under the Open Data Directive. The CC BY 4.0 an earlier pass recorded for Slovakia belongs to the geodesy authority's ATOM feed at `inspirews.skgeodesy.sk` and grants nothing over this service, which is a different publisher.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The statement is that no conditions apply to access and use, so paging the service's GeoJSON is unreserved. The capabilities document agrees on price with `<Fees>NONE</Fees>`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply reserves no act, so reading the designator and the component references out of a feature is unreserved. CC0, which the publisher names, waives extraction and database rights explicitly."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No condition attaches to adaptation, so joining the five feature types into a token and tag corpus is unreserved."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No condition attaches to any purpose, so fitting a model on the rows is unreserved."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply imposes no attribution condition, and CC0 imposes none either. Crediting the Ministry stays good practice and neither statement requires it."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question that stands open under CC BY and ODbL, whether trained weights are a derivative of the rows, does not arise where the publisher states that no conditions apply and names CC0, which waives the rights that would make the answer matter."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply leaves no right that would need sublicensing. CC0 §3 adds a fallback licence to exercise all those rights unconditionally where the waiver is ineffective in law, and it runs to the public rather than to one recipient."
+				}
+			}
+		},
+		"unchecked-access-free-be-agentschap-digitaal-vlaanderen": {
+			"state": "elected",
+			"electedTerms": "Modellicentie voor gratis hergebruik Vlaanderen",
+			"termsVersion": "v1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The grant is named in the dataset record and its articles sit in a separate instrument, and the two are reached from the service rather than from a search. `https://geo.api.vlaanderen.be/ad/wfs?service=WFS&version=2.0.0&request=GetCapabilities`, 131,001 bytes, sha256 `317c2e322dde870fe7c2c6d2f9dec05e486bac96ae1ccd398638f090110d028b`, states `<Fees>Het gebruik van de service is kosteloos.</Fees>`, which prices the service rather than licensing the data, and points `AccessConstraints` at a `gebruiksrecht` page whose own words send the reader onward: `Gelieve de toegangs- en gebruiksbepalingen te raadplegen in de metadata van alle datasets die in de service worden aangeboden`. Its per-type `MetadataURL` gives CSW record `5c52b299-8f05-4d35-9839-a42934f1e619`, retrieved at `https://metadata.vlaanderen.be/srv/dut/csw?request=GetRecordById&service=CSW&version=2.0.2&ElementSetName=full&id=5c52b299-8f05-4d35-9839-a42934f1e619&OUTPUTSCHEMA=http://www.isotc211.org/2005/gmd`, 57,258 bytes, sha256 `71c827ecab5e485be1900b975849417ab3f47242e96fc97608f9493ef3d861b2`, whose title reads `Adressen`. That record carries two `MD_LegalConstraints` blocks and the distinction matters. The access block states `Geen beperkingen op de publieke toegang.` against the INSPIRE codelist term `noLimitations`. The re-use block names four instruments: `Modellicentie voor gratis hergebruik` at `https://data.vlaanderen.be/id/licentie/modellicentie-gratis-hergebruik/v1.0`, two instruments for public-task use by GDI-Vlaanderen participants and by bodies that are not participants, and the attribution string `Bron: Digitaal Vlaanderen`. A re-user who is neither a participant nor a public body acting on a public task holds the first, and the two GDI instruments govern a use this repository does not make. The articles are at `https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik`, 71,446 bytes, sha256 `c195c42c0b8578d784e779a012137bfdc4e44cb55f7fee0dd2b13a3db04d1f2b`. The identifier itself serves no text: it answers `text/html`, `text/turtle`, `application/ld+json` and `application/rdf+xml` with one 541,080-byte application rendering to its title, and `.ttl` appended to the same path serves the RDF, which states `cc:requires cc:Attribution` and `dct:type adms:licencetype/Attribution`. Article 3 grants a non-exclusive, worldwide right to re-use the product for any lawful purpose, `met inbegrip van het reproduceren, doorgeven, publiceren, aanpassen en commercieel exploiteren`. Article 4 makes attribution the only use condition and lets the licensor specify its form, which this licensor has: `Bron: Digitaal Vlaanderen`. Article 6 states that access, provision and re-use are free. Article 7 gives the licence indefinite duration. The instrument states its own compatibility with the Open Government Licence, the Licence Ouverte, CC BY 3.0 and ODC-By 1.0, and it carries no share-alike term. No SPDX identifier exists for it, so `spdx` is left out rather than approximating one, because `electedLicenseLabel` feeds the share-alike prefix filter.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Article 3 grants the right to reproduce and transmit the product, which is what paging the service performs, and article 6 states that access and provision are free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Article 3 grants adaptation (`aanpassen`) alongside reproduction, which covers reading the designator and the component references out of a feature. Article 2 defines intellectual property rights to include database rights, and article 3 grants re-use over the product rather than over a subset of those rights."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Article 3 grants re-use for any lawful purpose including adaptation and commercial exploitation, so joining the four feature types into a token and tag corpus is granted. Article 4 adds one obligation that carries into the result: attribution as `Bron: Digitaal Vlaanderen`."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Article 3's `elk rechtmatig doeleinde` reserves no act of analysis, and article 5 states that the licensee holds the intellectual property in the works it creates on the basis of the product. Article 4 requires that the re-use not breach data-protection law, which this source's `personalDataReview` addresses."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Article 3 grants publication and transmission. Article 4 conditions it on the attribution the licensor specified, `Bron: Digitaal Vlaanderen`, and provides the wording for a combined work where listing every source is impractical: `bevat overheidsinformatie, verkregen onder de modellicentie voor gratis hergebruik Vlaanderen v1.0`. Article 4 also forbids suggesting that the re-use carries the licensor's endorsement."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "This instrument answers the question CC BY leaves open. Article 5 states that the licensee retains all intellectual property rights in the works it creates on the basis of the product, `zonder evenwel afbreuk te doen aan de verplichtingen betreffende het hergebruik van het product in deze werken`. Trained weights are such a work, so they are the licensee's, and the product's attribution obligation carries into them."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "Article 3 grants a non-exclusive right to the licensee and states no sublicensing right, and article 5 reserves to the licensor every right the licence does not grant. Unlike CC BY 4.0 §2(a)(5)(A), this instrument makes no direct offer to a downstream recipient, so whether a recipient holds it by taking the product under the same standing public licence is a question the text does not answer. Article 7 also ends the licence of right on breach, which a sublicence would have to account for."
+				}
+			}
+		},
+		"unchecked-access-free-ee-maa-ja-ruumiamet": {
+			"state": "elected",
+			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
+			"spdx": "CC0-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The grant is in the dataset metadata the service itself points at, rather than in the service's own capabilities. `https://inspire.geoportaal.ee/geoserver/AD_Address/wfs?service=WFS&version=2.0.0&request=GetCapabilities`, 114,189 bytes, sha256 `252bcd63e3d841825689e62c01d441fdd791cb5dec17f32fa9d3d0a75b392289`, states `<Fees>puudub</Fees>` and `<AccessConstraints>puudub</AccessConstraints>`, which are the OGC service fields and say only that the service charges nothing. Its `inspire_dls:SpatialDataSetIdentifier` carries `metadataURL` for CSW record `b0bd266e-b4c6-45db-b7ea-f47486b6258b`. That record, retrieved at `https://metadata.geoportaal.ee/geonetwork/srv/est/csw?service=CSW&request=GetRecordById&version=2.0.2&outputSchema=http://www.isotc211.org/2005/gmd&elementSetName=full&id=b0bd266e-b4c6-45db-b7ea-f47486b6258b`, 32,198 bytes, sha256 `4e48cbfcd2f297a3bf2fac3d5807ae7edcca03e4baf26feb33636a651c7569eb`, is the right record on three checks: its `fileIdentifier` equals the id the service named, its `identifier` set includes `AD EE`, and its title reads `Eesti aadressiandmete süsteemi infosüsteem`. Its `otherConstraints` states `Creative Commons CC0 1.0 Üldine (https://creativecommons.org/publicdomain/zero/1.0/deed.et)` and `avaliku juurdepääsu piirangud puuduvad`, Estonian for an absence of public-access restrictions. CC0 1.0 is a public-domain dedication rather than a licence with conditions, and the version is in the identifier, so `spdx` reads `CC0-1.0`. Reading the capabilities alone would have recorded this publisher as stating no grant.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 §3 waives every copyright and related right the Affirmer holds, to the greatest extent permitted by law, so paging the service's GeoJSON is unreserved."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same waiver covers extraction and database rights, which §2 names among the rights waived, so reading the designator, the locator name and the component references out of a feature is unreserved."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2 waives the rights to reproduce, adapt, distribute and perform, in every medium and for any purpose, so joining the five feature types into a token and tag corpus is unreserved."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act at all, so fitting a model on the rows is unreserved."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2 waives the distribution right without condition. Crediting Maa- ja Ruumiamet stays good practice and CC0 requires it nowhere."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question that stands open under CC BY and ODbL, whether trained weights are a derivative of the rows, does not arise here: CC0 waives the rights that would make the answer matter, and §3 adds a fallback licence to exercise all those rights unconditionally where the waiver is ineffective in law."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§3's fallback grant is `royalty-free, non transferable, non sublicensable, non exclusive, irrevocable and unconditional`, and it runs to the public rather than to one recipient, so a downstream party holds it directly. The waiver in §2 leaves no right that would need sublicensing."
+				}
+			}
+		},
+		"unchecked-access-free-nl-kadaster": {
+			"state": "elected",
+			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
+			"spdx": "CC0-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Kadaster states one licence and states it as a URL rather than as prose. `https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml`, 2,247 bytes, sha256 `36c587f04c6c4e57c71fd03ff253d85df3c8d796b9c12c26159dda1e0262effe`, carries two `rights` elements and both read `https://creativecommons.org/publicdomain/zero/1.0/deed.nl`. That is the Dutch-language deed page for CC0 1.0 Universal, which is a public-domain dedication rather than a licence with conditions. The version is in the identifier, so `spdx` reads `CC0-1.0`. CC0 carries no attribution condition and no share-alike term, which makes this the least conditioned grant in the register.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 §3 waives every copyright and related right the Affirmer holds, to the greatest extent permitted by law, so copying the published GML is unreserved."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same waiver covers extraction and database rights, which §2 names among the rights waived, so reading the address fields out of the file is unreserved."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2 waives the rights to reproduce, adapt, distribute and perform, in every medium and for any purpose, so producing a token and tag corpus from the rows is unreserved."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act at all, so fitting a model on the rows is unreserved."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2 waives the distribution right without condition. Crediting Kadaster stays good practice and CC0 requires it nowhere."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question that stands open under CC BY and ODbL, whether trained weights are a derivative of the rows, does not arise here: CC0 waives the rights that would make the answer matter, and §3 adds a fallback licence to exercise all those rights unconditionally where the waiver is ineffective in law."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§3's fallback grant is `royalty-free, non transferable, non sublicensable, non exclusive, irrevocable and unconditional`, and it runs to the public rather than to one recipient, so a downstream party holds it directly. The waiver in §2 leaves no right that would need sublicensing."
+				}
+			}
+		},
+		"unchecked-access-free-cz-czech-office-for-surveying-mapping-and-cadast": {
+			"state": "elected",
+			"electedTerms": "žádné podmínky neplatí",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "ČÚZK states one condition of use and states it uniformly. `https://atom.cuzk.gov.cz/AD/AD.xml`, 8,373,817 bytes, sha256 `9b1d51a721ab601fa74307cce5ce20f74d12dd29512f87be29cd1072f0a2d83b`, carries 6,259 `rights` elements and every one of the 6,259 reads `žádné podmínky neplatí`, which renders INSPIRE's controlled value `no conditions apply to access and use` in Czech. The first municipality feed retrieved from it, `CZ-00025712-CUZK_AD_584061.xml`, carries the same text. That is a denominator of every rights element the feed holds rather than a sample. No licence instrument is named, so no `spdx` is written here and `electedTerms` records the publisher's own words. A caution is recorded rather than resolved: the INSPIRE controlled value states the absence of a legal restriction on access and use, and it is not a copyright licence, so what it grants beyond access and use rests on Czech law rather than on this text.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`No conditions apply to access and use` places no restriction on obtaining the data, which is what retrieving each municipality's zipped GML performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same statement places no condition on use, so reading the address fields out of the GML is within it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No stated condition restricts modification of the data once accessed."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The statement reserves no act of analysis, and fitting a model is a use of the data."
+				},
+				"redistribute-data": {
+					"permission": "unreviewed",
+					"because": "The INSPIRE value speaks to access and use. Whether it also waives the right to republish the dataset is a question of Czech law that the text does not answer, and ČÚZK names no licence instrument that would."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The statement says nothing about a work fitted from the data, so whether a released model carries any obligation is unread."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No instrument is named, so there is no sublicensing clause to read either way."
+				}
+			}
+		},
+		"unchecked-access-free-es-gobierno-de-navarra": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/es-foral-cadastres-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Navarra states one licence and states it in its own feed rather than through Catastro's. `Addresses_ServiceATOM_Navarra.xml` is 671,131 bytes, sha256 `6971dd61d87e2fc047e953e956b09c6cc88aaa92e16ffb3bbc4750a1edb1ab60`, and its feed-level `rights` reads `This layer is published under the terms of the license Creative Commons Attribution 4.0 International (CC BY 4.0). [ https://creativecommons.org/licenses/by/4.0/ ]`. All 272 of its 272 municipality entries carry the same text. Catastro's national feed repeats it, so the two agree; this decision rests on Navarra's own feed. The version is stated, so `spdx` is written here, and CC BY 4.0 carries no share-alike term.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce and share the Licensed Material in whole, which is what retrieving each zipped GML partition performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which covers reading the designator, thoroughfare name and postal descriptor out of the GML."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, commercial purposes included, with §3(a)(1)(B) requiring that modifications be indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing in any medium, conditioned by §3(a) on crediting the Gobierno de Navarra, retaining the copyright notice, linking the licence, and indicating modifications."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the licence text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 §2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right. Whether that satisfies a commercial agreement is a drafting question this text does not answer."
+				}
+			}
+		},
+		"unchecked-access-free-es-diputaci-n-foral-de-gipuzkoa": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution-ShareAlike 4.0 International",
+			"spdx": "CC-BY-SA-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/es-foral-cadastres-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Gipuzkoa states four things, and the one addressing this dataset is elected. Its ISO 19139 dataset metadata, `https://b5m.gipuzkoa.eus/metadata_inspire/ES.GFA.AD.MD.xml`, 35,329 bytes, sha256 `e7c228b9feb33e570b802210421a76cf3f583249afbd57ef5baffe7dd2786724`, carries `otherConstraints` reading `CC BY-SA 4.0 This information does not have an official map category; therefore, it should not be used for any type of certificate`. Its Atom entry reads `Open access - Creative Commons Citation: CC-BY-SA` with no version. Its feed-level `rights` and subtitle read `Access to this service is permitted in all cases, provided that the authorship and ownership of DFG are referred to as follows: «© Gipuzkoa Provincial Council»`, which states no share-alike term. Its legal page at `https://b5m.gipuzkoa.eus/web5000/es/informacion-legal`, 35,492 bytes, sha256 `9f550d0f2e081221d296d55bc01b4db4c33dcb94867acd87492d8f5cc4a85796`, reads `Los contenidos de este sitio web están bajo una licencia Creative Commons Internacional (CC BY 4.0)`. The dataset metadata is the only one of the four addressing this dataset rather than the service or the website, and it is the only one stating a version. Electing the stricter of the two readings also means the share-alike filter sees this source, which is the direction to err in: `electedLicenseLabel` feeds `SHARE_ALIKE_PATTERN`, and recording CC BY 4.0 here would hide a share-alike obligation the publisher may hold. Reading the difference with the publisher is the work that would settle it.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY-SA 4.0 §2(a)(1)(A) grants reproducing and sharing the Licensed Material in whole, which is what retrieving `ES.GFA.AD.zip` performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which covers reading the address fields out of the GML."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose. §3(b) then binds the adaptation: it travels under this licence or a compatible one."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY-SA 4.0 reserves no act of analysis and grants use for any purpose. The share-alike condition attaches to what is shared rather than to the fitting itself, which is why this permits ingest and the two release operations stay unreviewed."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing in any medium, conditioned by §3(a) on attribution and by §3(b) on Adapted Material travelling under BY-SA 4.0 or a compatible licence. The corpus filter reads that condition off `electedLicenseLabel`."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material, and therefore whether §3(b) binds a released model to BY-SA, is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for ODbL. It arises here in the same shape and the licence text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "§2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right, and §3(b) would carry the share-alike condition to that recipient. Whether that satisfies a commercial agreement needs counsel rather than a reading here."
+				}
+			}
+		},
+		"unchecked-access-free-es-diputaci-n-foral-de-bizkaia": {
+			"state": "elected",
+			"electedTerms": "No conditions to access and use, with attribution to «©Bizkaiko Foru Aldundia»",
+			"retrievedCopy": "internal/strategy/rights-receipts/es-foral-cadastres-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Bizkaia names no licence instrument, so no SPDX identifier is written here and `electedTerms` records the publisher's own words. Its INSPIRE metadata, `https://apli.bizkaia.eus/apps/Danok/INSPIRE/inspireBizkaiaAtomMetadata.xml`, 20,612 bytes, sha256 `50d8f1bfe5cf036035c9d85bd3cce84c3bc08820b70cbf6d1e2c87350236dc60`, carries exactly three `otherConstraints`: `No limitations to public access`, `No conditions to access and use`, and `https://www.bizkaia.eus/es/inspirebizkaia`. Those are the INSPIRE controlled values for a dataset under no legal restriction. Its feed-level `rights` adds the condition: `Access to this service is permitted in all cases, provided that the authorship and ownership of BFA are referred to as follows: «©Bizkaiko Foru Aldundia»`. Two contradictions are recorded rather than resolved. All 112 of its municipality entries read `Copyright (c) 2017\", ES.BFA; all rights reserved`, which is the same unedited template string, stray quotation mark included, that the Dirección General del Catastro's feed carries under a different year. And Catastro's national feed labels the Bizkaia entry `CC BY 3.0 ES`, a licence no document Bizkaia publishes names; a third party's label is not this publisher's grant, so it plays no part in this decision.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`No conditions to access and use` places no restriction on obtaining the data, and the service `is permitted in all cases` subject to attribution, which is what retrieving each municipality's zipped GML performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same statement places no condition on use beyond attribution, so reading the address fields out of the GML is within it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No stated condition restricts modification. The attribution obligation attaches to the result."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`No conditions to access and use` reserves no act of analysis, and the feed's own condition is attribution alone."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The feed permits access `in all cases` on the single condition that authorship and ownership of BFA be stated as «©Bizkaiko Foru Aldundia». The metadata adds no limitation on public access. A redistributed copy therefore carries that credit."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The statements are about the data and the service and say nothing about a work fitted from them, so whether a released model carries the attribution obligation is unread."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No instrument is named, so there is no sublicensing clause to read either way."
+				}
+			}
+		},
+		"unchecked-access-free-mx-mx-business-legal-1": {
+			"state": "elected",
+			"electedTerms": "Términos de Libre Uso de la Información del INEGI",
+			"retrievedCopy": "internal/strategy/rights-receipts/mx-gb-2026-09-27/mx-inegi-terminos.html, sha256 97e97599169f75f455877e85edffcf941d512f56c5c00197ebfec783d802c67a",
+			"retrievedAt": "2026-09-27",
+			"electedBecause": "DENUE is a product of INEGI, and INEGI publishes one set of free-use terms covering its information. The document names no Creative Commons license and carries no version or effective date, so there is no SPDX identifier to record; the retained bytes hold no occurrence of `Creative Commons`, `misma licencia`, `compartir igual` or `CompartirIgual`, so no share-alike term applies. It states its own term as indefinite: `La vigencia de estos Términos de Libre Uso es por tiempo indefinido`. Three obligations attach to every permitted act: credit INEGI as author in the form `Fuente: INEGI, nombre del producto de donde se extrae la información`; notify the end user of any analysis or transformation so that it is not presented as INEGI's; and do not suggest that the use represents an official INEGI position or is endorsed by it.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede hacer y distribuir copias de la información, sin alterar ni suprimir sus metadatos.` The metadata condition binds the copy, so a fetch retains the published metadata rather than discarding it."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede extraer total o parcialmente la información.`"
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede adaptar y reordenar la información.` The disclosure obligation attaches: the end user has to be told that the transformation is not INEGI's."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede explotar comercialmente la información, utilizándola como insumo para generar otros productos o servicios.` A model fitted on the rows uses the information as an input to another product, which is the act this clause names."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede difundir y publicar la información.` Conditioned by the metadata clause on copies and by the credit line `Fuente: INEGI, nombre del producto de donde se extrae la información`, which for this source reads `Fuente: INEGI, Directorio Estadístico Nacional de Unidades Económicas`."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a work derived from the rows is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and these terms do not address it. The disclosure obligation would attach to a released model if they do."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The retained bytes hold no occurrence of `sublicencia`. Commercial exploitation is granted as an input to other products, which is not the same act as granting a third party these rights, and the terms state neither."
+				}
+			}
+		},
+		"unchecked-national-terms-au-australian-department-of-finance": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 3.0 Australia",
+			"spdx": "CC-BY-3.0-AU",
+			"termsVersion": "3.0 Australia",
+			"retrievedCopy": "internal/strategy/rights-receipts/au-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "AusTender's Terms of Use §5.1 offers one grant and no alternative: with the exception of the Commonwealth Coat of Arms, Approach to Market material and where otherwise noted, all materials on AusTender are licensed under CC BY 3.0 AU. §5.4 withholds Approach to Market material, which is the tender documentation a buyer publishes and which the OCDS release does not contain — the OCP Data Registry reports 0 documents for this publication. §6.1 requires two attribution lines rather than one: that AusTender materials are released by the Department of Finance, and that they are subject to change and should be verified at www.tenders.gov.au.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A grants a licence to 'Reproduce the Work', which is what copying the published bulk file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A grants the right to 'create and Reproduce one or more Derivative Works', which covers reading the postal addresses out of the copied file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A grants the right to 'create and Reproduce one or more Derivative Works'. A token and tag corpus built from the rows is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A reserves no act of analysis, and §3C reserves only rights not expressly granted. Fitting a model reproduces the Work into the training process and produces a derivative, both of which §3A grants."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A grants the right to 'Distribute and publicly perform the Work, a Derivative Work or the Work as incorporated in any Collection'. §4A conditions it: the copy travels under this licence with its URI, notices stay intact, and no technological measure may restrict a recipient. §6.1 of AusTender's terms adds its two attribution lines."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a Derivative Work of the rows is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for ODbL, and it arises here in the same shape. Nothing in the retrieved terms answers it, and it plays no part in ingest."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "CC BY 3.0 AU §4A states 'You are not granted the right to sublicense the Work.' A recipient takes their rights from the licensor under §9 rather than from this repository."
+				}
+			}
+		}
+	}
 }

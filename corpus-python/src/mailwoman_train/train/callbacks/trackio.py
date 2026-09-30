@@ -48,9 +48,9 @@ class TrackioCallback:
     def _dashboard_metrics(self, state: TrainState, metrics: dict[str, float]) -> dict[str, float]:
         """Per-tag F1 beside per-tag support, with F1 OMITTED where support is zero.
 
-        A zero-support tag means the val sample contains no examples of it — a coverage gap. Logging
-        F1 as 0.0 there draws a flat-zero line that reads as a model failure, so the series gets a
-        gap instead and `support.<tag>` says why.
+                A zero-support tag means the val sample contains no examples of it — a coverage gap. Logging
+                F1 as 0.0 there draws a flat-zero line that reads as a model failure, so the series gets a
+        gap instead and `support.<tag>` reports why.
         """
         dashboard: dict[str, float] = {
             "val_loss": float(metrics.get("val_loss", float("nan"))),

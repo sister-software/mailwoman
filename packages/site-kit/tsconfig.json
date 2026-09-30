@@ -13,6 +13,6 @@
 		"lib": ["ES2023", "DOM", "DOM.Iterable"]
 	},
 	"include": ["./lib/**/*"],
-	"exclude": ["./out/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [{ "path": "../core" }]
 }

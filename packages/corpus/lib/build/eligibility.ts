@@ -2,16 +2,16 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What the address-source register says about a row's source, read once per build.
+ * @file What the address-source register records about a row's source, read once per build.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 
-import { ingestEligibilityProblems, readAddressSourceRegister, type LicenseDecision } from "#source-register/index"
+import { ingestEligibilityProblems, readAddressSourceRegister, type LicenseDecision } from "#source-register"
 import type { CanonicalRow } from "#types"
 
 /**
- * Every register source's ingest-eligibility reasons keyed by the adapter id its rows carry.
+ * Every register source's ingest-eligibility reasons keyed by the adapter id in its rows.
  *
  * An empty array is the only value a caller may read as permission.
  * An absent source is refused rather than admitted.
@@ -23,7 +23,7 @@ export async function readSourceEligibility(): Promise<ReadonlyMap<string, reado
 }
 
 /**
- * The register's license decisions keyed by the label a row carries.
+ * The register's license decisions keyed by the label in a row.
  *
  * An unmatched adapter label records a `null` decision rather than inventing one.
  */

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Locating a data-only package's shipped `data/` files. `data/` sits at the package root (it is a `files` entry),
+ *   This resolver locates a data-only package's shipped `data/` files. `data/` sits at the package root (it is a `files` entry),
  *   and the calling module sits either at that root — running from source — or one level down under `out/` when
  *   compiled, so there are exactly two places to look. The probe tests for the file: probing by attempting a parse
  *   folds a corrupt table into "not this candidate", and the package then reports a missing table it is looking

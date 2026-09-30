@@ -17,7 +17,7 @@ import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/pla
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { LookupRow } from "#lookup/index"
+import type { LookupRow } from "#lookup"
 import { type PlaceIDProvenance, placeIDProvenance } from "#place-id-provenance"
 
 /**
@@ -78,7 +78,7 @@ interface CandidateEntry extends PlaceIDProvenance {
 	importance_split?: { referential: number; encyclopedic: number | null } | null
 	/**
 	 * The source place ID.
-	 * The `wof_id` field says whether it is a WOF ID.
+	 * The `wof_id` field indicates whether it is a WOF ID.
 	 */
 	spr_id: number
 }
@@ -198,7 +198,7 @@ export function lookupCandidate<DB>(
 
 		// `findPlace` tries the whitespace fold before the qualifier strip.
 		// The order matters.
-		// Stripping first would turn "1012 LG" into `1012` and match a coarser postcode stem.
+		// An initial strip would turn "1012 LG" into `1012` and match a coarser postcode stem.
 		// The exact row is keyed `1012lg`.
 		if (!found.total) {
 			const fusedKey = normalizeLocalityForKey(query.replaceAll(/\s+/g, ""))
@@ -446,7 +446,8 @@ interface WOFEntry extends PlaceIDProvenance {
 	/**
 	 * `null` means `place_population` has no row and the source recorded no value,
 	 * while `0` is a recorded zero.
-	 * Ranking uses it to compute `neg_rank` and `referential`.
+	 *
+	 * The ranking step uses it to compute `neg_rank` and `referential`.
 	 */
 	population: number | null
 }
@@ -473,7 +474,7 @@ const WOF_FTS_FROM = `FROM place_search JOIN spr ON spr.id = place_search.wof_id
 const WOF_NAMES_FROM = `FROM names n JOIN spr ON spr.id = n.id ${SPR_JOINS} WHERE n.name = ?`
 
 /**
- * Both statements carry the country filter, so a scoped count covers only that country.
+ * Both statements apply the country filter, so a scoped count covers only that country.
  * The count includes only current, non-deprecated records.
  */
 function wofStatements(from: string, order: string, scoped: boolean): { rows: string; count: string } {

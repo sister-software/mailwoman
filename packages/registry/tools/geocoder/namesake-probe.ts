@@ -1,0 +1,91 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Admin-tier wrong-region probe. When no street extract covers an address, the admin cascade can
+ *   resolve the locality by name and, when the region or postcode constraint is weak, pick the
+ *   population-dominant foreign namesake instead of the in-state Texas city. This probes a curated
+ *   set of TX namesake cities, with and without ZIP. It flags any result outside the Texas bounding
+ *   box.
+ *
+ *   Run: `mailwoman registry scorer-eval namesake-probe`
+ */
+
+import { haversineKm } from "@mailwoman/spatial"
+
+import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { inTXBBOX } from "#tools/shared"
+
+/**
+ * Options for {@linkcode geocoderNamesakeProbe}.
+ */
+export interface GeocoderNamesakeProbeOptions {
+	/**
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 */
+	createGeocoder: EvalGeocoderFactory
+}
+
+/**
+ * TX namesake cities with their real Texas coordinates + the famous foreign/other namesake to watch for.
+ */
+const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: string }> = [
+	{ city: "Paris", zip: "75460", tx: [33.66, -95.55], namesake: "Paris, France (48.85, 2.35)" },
+	{ city: "Athens", zip: "75751", tx: [32.2, -95.85], namesake: "Athens, Greece (37.98, 23.72)" },
+	{ city: "Palestine", zip: "75801", tx: [31.76, -95.63], namesake: "Palestine, Levant (31.9, 35.2)" },
+	{ city: "Italy", zip: "76651", tx: [32.18, -96.88], namesake: "Italy, the country (~42, 12)" },
+	{ city: "Naples", zip: "75568", tx: [33.2, -94.68], namesake: "Naples, Italy (40.85, 14.27)" },
+	{ city: "Dublin", zip: "76446", tx: [32.08, -98.34], namesake: "Dublin, Ireland (53.35, -6.26)" },
+	{ city: "Nazareth", zip: "79063", tx: [34.54, -102.1], namesake: "Nazareth, Israel (32.7, 35.3)" },
+	{ city: "Odessa", zip: "79761", tx: [31.85, -102.37], namesake: "Odessa, Ukraine (46.48, 30.72)" },
+]
+
+/**
+ * Probe a curated set of TX namesake cities and print one line per variant to stdout.
+ */
+export async function geocoderNamesakeProbe(
+	options: GeocoderNamesakeProbeOptions,
+	report?: (line: string) => void
+): Promise<{ wrongRegion: number; total: number }> {
+	report?.("[A] building the geocoder…")
+	const geocoder = await options.createGeocoder()
+	const geo = geocoder.geocode
+
+	report?.("[B] probing TX namesake cities (with ZIP / without ZIP)…\n")
+	let wrongRegion = 0
+	let total = 0
+
+	for (const c of CASES) {
+		for (const variant of [`${c.city}, TX ${c.zip}`, `${c.city}, TX`, `${c.city}, Texas`]) {
+			total++
+			const g = await geo(variant)
+
+			if (g.lat === null || g.lon === null) {
+				console.log(`  ✗ "${variant}"  → UNPLACED`)
+
+				continue
+			}
+
+			const ok = inTXBBOX(g.lat, g.lon)
+			const km = haversineKm(c.tx[0], c.tx[1], g.lat, g.lon)
+
+			if (!ok) {
+				wrongRegion++
+			}
+
+			console.log(
+				`  ${ok ? "✓" : "✗ WRONG-REGION"}  "${variant}"  → ${g.lat.toFixed(3)},${g.lon.toFixed(3)} ` +
+					`[${g.resolution_tier ?? "?"}]  ${km > 100 ? `${km.toFixed(0)}km off TX (cf ${c.namesake})` : `${(km * 1000).toFixed(0)}m off`}`
+			)
+		}
+	}
+
+	geocoder[Symbol.dispose]()
+
+	console.log(`\n  ${wrongRegion}/${total} variants resolved OUTSIDE Texas (wrong-region).`)
+
+	return { wrongRegion, total }
+}

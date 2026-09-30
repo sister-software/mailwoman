@@ -71,7 +71,7 @@ poi-taxonomy pharmacy  → the pharmacy concept
 [`data/geographic-model.json`](./data/geographic-model.json) is the committed compilation. **Do not hand-edit it.** Regenerate it instead:
 
 ```bash
-node packages/geographic-model/lib/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
+node packages/geographic-model/tools/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
 ```
 
 [`data/PROVENANCE.md`](./data/PROVENANCE.md) records what each file states and where each external category id was read from. A reviewed amendment added a first breadth wave: a `drugstore` concept, a US-scoped `affords` assertion on it, and a second `poi-taxonomy` mapping. All three are authored under the same provenance rules. One activity therefore reaches two establishment classes. The schema was designed to express that case, and the POI branch searches the two classes as a union.
@@ -80,7 +80,7 @@ In a measurement, this one proposition was injected behind an off-by-default fla
 
 ## Design commitments
 
-Each of these concerns belongs to another package. Listing the owner prevents a second copy from growing here.
+Each of these concerns belongs to another package. The ownership list prevents a second copy from growing here.
 
 | Not here                                                                                                     | Owner                                                                                                    |
 | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
@@ -104,7 +104,7 @@ This README is the package-local summary. The authoritative documents are in the
 
 ## Layout
 
-Source lives at the workspace root. Tests live under `test/unit/` and import the package by its package name, never by a relative path. The manifest's `files` array declares `data/**/*.json` explicitly. `**/*.ts` does not match JSON, and a data file missing from `files` would leave the installed package without the data it exists to carry.
+Source lives at the workspace root. Each test sits beside the module it covers under `lib/`. The manifest's `files` array declares `data/**/*.json` explicitly. `**/*.ts` does not match JSON, and a data file missing from `files` would leave the installed package without the data it exists to carry.
 
 ## License
 

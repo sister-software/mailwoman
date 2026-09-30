@@ -1,0 +1,53 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Phase-0 entry: walk the v1 parity suite, extract every `assert()` case, write
+ *   `mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl`. Run from the repo root:
+ *   `node packages/mailwoman/tools/dev-tools/extract-parity-corpus.run.ts`
+ */
+
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
+import { join } from "path-ts"
+import { createNewlineWriter } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
+
+import { extractAssertCalls, type ParityCase } from "#tools/dev-tools/parity-extract"
+
+const TEST_DIR = "packages/mailwoman/test"
+const OUT_PATH = "packages/mailwoman/lib/test-fixtures/legacy-golden/parity-inputs.jsonl"
+
+const cases: ParityCase[] = []
+let parityFileCount = 0
+
+for (const entry of await Globerator.files("test.ts", {
+	cwd: TEST_DIR,
+	absolute: false,
+	recursive: false,
+}).toSorted()) {
+	const path = join(TEST_DIR, entry)
+	const text = await readLocalTextFile(path)
+
+	// Only the parity suite imports the shared rules-parser test-kit.
+	if (!text.includes(`from "mailwoman/test-kit"`)) continue
+
+	parityFileCount++
+	cases.push(...extractAssertCalls(text, path))
+}
+
+{
+	await using out = createNewlineWriter(OUT_PATH)
+
+	for (const parityCase of cases) {
+		await out.write(stringifyJSON(parityCase))
+	}
+}
+
+const written = cases.length
+const nonLiteralCount = cases.filter((c) => c.nonLiteral).length
+
+console.error(
+	`extracted ${written} assert() cases from ${parityFileCount} parity files (${nonLiteralCount} non-literal)`
+)

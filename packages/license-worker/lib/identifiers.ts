@@ -40,7 +40,7 @@ export async function secretDigest(text: string): Promise<string> {
 }
 
 /**
- * Compare two hex digests in time that depends on their length alone.
+ * Compare two hex digests in time that depends only on their length.
  *
  * Visit every byte and fold the verdict instead of returning early.
  * A wrong secret then takes the same comparison path as any other mismatch.

@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { decomposeFrStreet } from "@mailwoman/corpus/fr/adapters/ban/street-decompose"
 import { describe, expect, it } from "vitest"
+
+import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 
 describe("decomposeFrStreet", () => {
 	it("single-word street type prefix", () => {

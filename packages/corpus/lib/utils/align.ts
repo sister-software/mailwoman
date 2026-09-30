@@ -289,7 +289,7 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
 }
 
 /**
- * Assign BIO labels to tokens given the component spans, which must be sorted by start offset.
+ * Assign BIO labels to tokens from component spans sorted by start offset.
  */
 function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {
 	const out: BIOLabel[] = []

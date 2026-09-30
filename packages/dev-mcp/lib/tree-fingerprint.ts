@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * The staleness guard for a long-lived process holding an imported module graph: the fingerprint covers the newest
- * mtime across the workspaces an engine imports, plus `head` and the dirty set, and a change makes the engine
+ * mtime across the workspaces an engine imports, plus `head` and the dirty set. A change makes the engine
  * unreachable rather than wrong.
  */
 
@@ -54,7 +54,7 @@ export interface TreeFingerprint {
 	digest: string
 	gitHead: string
 	/**
-	 * Paths with uncommitted changes, as `git status --porcelain` reports them, carried
+	 * Paths with uncommitted changes, as `git status --porcelain` reports them, listed
 	 * so a result can say which files were uncommitted when it was produced rather than to refuse.
 	 */
 	dirtyFiles: string[]

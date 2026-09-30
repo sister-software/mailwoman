@@ -8,13 +8,14 @@
  *   Other measurements here vary the configuration while holding the input fixed. This measurement varies the input
  *   while holding the configuration fixed. That isolates changes caused by a token from changes caused by a setting.
  *
- *   The caller supplies the rungs. Generating them here would assert a component order. A generator with the wrong
+ *   The caller supplies the rungs. A local generator would assert a component order. A generator with the wrong
  *   order for one locale would produce a table for an invalid ordering.
  *
  *   A tag absent on a rung is reported as absent. A component can be gained, lost, or changed. The table preserves
  *   those separate facts instead of grouping all three under "different".
  */
 
+import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { haversineKm } from "@mailwoman/spatial"
 
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
@@ -54,13 +55,17 @@ interface RungReading {
 	lon: number | null
 	tier: string
 	/**
-	 * The intent check's verdict, when it fired on this rung: a refused rung has
-	 * no components and no coordinate.
+	 * The query-intent advisory codes this rung attached, comma-separated.
 	 *
-	 * The same result could indicate an input the parser could not interpret.
-	 * The `refused` field distinguishes a completed parse tree that the eval discarded.
+	 * A `QueryIntentMarker` leaves the selected answer unchanged, as its declaration
+	 * in `@mailwoman/core/pipeline` states, so a rung carrying one still reports
+	 * whatever components and coordinate it resolved.
+	 * `poi_category` and `authority_designation` describe an answer the run returned.
+	 *
+	 * This field therefore states what the run said about its answer.
+	 * The reason a component on this rung is absent lies elsewhere, in the parse or the resolver walk.
 	 */
-	refused?: string
+	advisories?: string
 	/**
 	 * Null on step 0, where there is no previous rung — a different fact from a
 	 * delta whose every list is empty.
@@ -115,7 +120,7 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 		}
 	}
 
-	// A null coordinate on either side is not distance zero: abstention is its own outcome and the tier fields carry it.
+	// A null coordinate on either side is not distance zero: abstention is its own outcome and the tier fields record it.
 	const moved =
 		previous.lat !== null && previous.lon !== null && current.lat !== null && current.lon !== null
 			? haversineKm(previous.lat, previous.lon, current.lat, current.lon)
@@ -158,11 +163,11 @@ function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 
 		const cells = tags.map((tag, i) => (rung.components[tag] ?? ABSENT).padEnd(widths[i]!))
 		const mark = reading.first_divergence?.step === rung.step ? " ←" : ""
-		// A refusal is stated on the row itself: its cells are all `absent`, which without this
-		// reads as a parse that found no result rather than a completed parse that was thrown away.
-		const refusal = rung.refused ? `  REFUSED as ${rung.refused} — parse discarded, not failed` : ""
+		// An advisory describes the answer on this row and leaves it in place,
+		// so the cells beside it are the components the rung resolved.
+		const advisories = rung.advisories ? `  advisories: ${rung.advisories}` : ""
 
-		lines.push(`  ${rung.input.padEnd(inputWidth)}  ${cells.join("  ")}  ${rung.tier}${mark}${refusal}`)
+		lines.push(`  ${rung.input.padEnd(inputWidth)}  ${cells.join("  ")}  ${rung.tier}${mark}${advisories}`)
 	}
 
 	if (reading.first_divergence) {
@@ -220,7 +225,7 @@ export async function runMinimalPairs(
 		for (const [step, input] of ladder.rungs.entries()) {
 			try {
 				const run = await engine.session.geocode(input)
-				const markers = (run.result as { intent_markers?: Array<{ kind: string }> }).intent_markers
+				const markers = (run.result as { intent_markers?: QueryIntentMarker[] }).intent_markers
 
 				rungs.push({
 					step,
@@ -230,7 +235,10 @@ export async function runMinimalPairs(
 					lon: run.result.lon,
 					tier: run.result.resolution_tier,
 					delta: null,
-					...(markers?.length ? { refused: markers.map((m) => m.kind).join(", ") } : {}),
+					// `code` is the stable identifier the marker declares.
+					// `kind` is the query kind that produced it, so reading `kind` here printed
+					// `locality_only` where a reader expected the advisory's own name.
+					...(markers?.length ? { advisories: markers.map((marker) => marker.code).join(", ") } : {}),
 				})
 
 				evaluated++

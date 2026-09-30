@@ -1,6 +1,6 @@
 """The `rate=` figure on the console step line reports throughput for this process.
 
-A resumed run inherits the step counter but not the seconds. Dividing the absolute step by time-since-start reported
+A resumed run inherits the step counter but not the seconds. The absolute-step/time-since-start ratio reported
 103.70 steps/s on a run resumed at 35,000, although its measured rate was 5.42 steps/s. The displayed figure fell on each line as `elapsed` grew because the ratio's numerator was inherited.
 """
 

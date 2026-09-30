@@ -1,8 +1,8 @@
-"""Reading rows out of one parquet file, shuffled, with the per-row filters applied.
+"""This module reads rows from one parquet file. It then shuffles them and applies per-row filters.
 
 Three shuffles happen here. Each uses the caller's `rng`. Shuffle row groups within each file.
 Shuffle rows within each group. Shuffle files within each source. Source weighting belongs to `mixture.py`'s
-multinomial. Applying weights per row instead produces the
+    multinomial. Per-row weights instead produce the
 `raw_share × accept_share` mix rather than the configured one.
 """
 
@@ -20,8 +20,8 @@ from ..augment import SPAN_KEYS
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
 
-# Char-offset label columns. Presence is decided per file by schema: a file carries all three and
-# every row has non-null values, or it carries none. Files without the columns use the legacy token
+# Char-offset label columns. Presence is decided per file by schema: a file has all three and
+# every row has non-null values, or it has none. Files without the columns use the legacy token
 # path. A file with only some columns is corrupt.
 _SPAN_COLUMNS: tuple[str, ...] = SPAN_KEYS
 
@@ -57,7 +57,7 @@ def _file_row_iter(
     """
     pf = pq.ParquetFile(path)
     # Span-column presence is a per-file schema fact: all three or none. A partial file is corrupt.
-    # Reading the surviving columns would silently train the wrong labels.
+    # The loader would silently train on the wrong labels if it read only the surviving columns.
     schema_names = set(pf.schema_arrow.names)
     span_present = [c for c in _SPAN_COLUMNS if c in schema_names]
     if span_present and len(span_present) != len(_SPAN_COLUMNS):
@@ -113,7 +113,7 @@ def _file_row_iter(
                     )
                 # Empty is the quieter way a span-schema file lies: a writer that projects rows without
                 # the span triple emits `[]` for all three. Those values pass the null check above
-                # and train as all-`O`. A row whose BIO labels carry a tag cannot honestly have no spans.
+                # and train as all-`O`. A row whose BIO labels include a tag cannot honestly have no spans.
                 if all(not v for v in spans.values()) and any(lbl != "O" for lbl in bio_labels):
                     raise ValueError(
                         f"corrupt row in {path} (row-group {rg}, raw={row['raw']!r}): "
@@ -141,7 +141,7 @@ def _source_iter(
     number of distinct sources rather than by any file-pool parameter.
 
     A draw reads one row-group. Rows are ordered by country within a source, so a draw sees only
-    the countries in that row-group. Shuffling file order moves which row-group that is without
+    the countries in that row-group. A shuffled file order changes which row-group appears first without
     widening it. ``docs/records/engineering/corpus-draw-coverage.mdx`` records the measurement and
     the candidate repairs.
     """

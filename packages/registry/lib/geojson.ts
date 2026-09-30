@@ -5,7 +5,7 @@
  *
  *   Export resolved entities as GeoJSON — the bridge to QGIS and any web map. Each entity becomes a
  *   Point at its resolved coordinate, carrying the properties an analyst needs: how many records
- *   merged into it, how tightly (cohesion), the canonical name/org/address, and the geocode tier
+ *   merged into it, how tightly (cohesion), the canonical name/org/address and the geocode tier
  *   (so rooftop-precise entities can be styled apart from admin-centroid guesses). Entities without
  *   a coordinate are omitted (a Point feature needs one).
  */

@@ -67,7 +67,7 @@ export interface FilerLookupFamily {
 	assertion: string
 	/**
 	 * The match score.
-	 * An authoritative row carries null.
+	 * An authoritative row has a null score.
 	 */
 	match_score: number | null
 	display_names: string[]
@@ -249,7 +249,7 @@ export function assertFamilySchemaVersion(schemaVersion: number, readerName: str
 export interface FamilyMemberRow {
 	node_id: string
 	/**
-	 * Naming node used to derive `family_id`.
+	 * The node whose name supplies `family_id`.
 	 */
 	naming_node_id: string
 	relationship: string

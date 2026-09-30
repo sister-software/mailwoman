@@ -5,8 +5,9 @@
  *
  *   Container entrypoint that serves the `/v1` API on `0.0.0.0:3000`.
  *
- *   Parsing needs the bundled English weights and returns `501` without them. Geocoding and batch
- *   also need a gazetteer mounted at `$MAILWOMAN_DATA_ROOT` and return `503` without one.
+ *   The API parser needs the bundled English weights and returns `501` when they are absent. The
+ *   geocode and batch endpoints also need a gazetteer mounted at `$MAILWOMAN_DATA_ROOT` and return
+ *   `503` when no gazetteer is available.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"

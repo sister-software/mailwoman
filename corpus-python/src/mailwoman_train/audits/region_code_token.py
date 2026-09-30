@@ -11,7 +11,7 @@ contested set falls out of the data rather than out of a table that would be a s
 codex's. A code with a count under one tag only is not contested. a code with counts under both is.
 
 BOTH LEVELS, BECAUSE AUGMENTATION WRITES REGIONS. `augment_region_prob` appends a region surface to a
-row that did not carry one, so the emitted stream carries region codes the drawn stream does not. A
+row that lacked one, so the emitted stream includes region codes absent from the drawn stream. A
 draw-level counts understate the region side by exactly the augmentation's share. This module measures
 the emitted stream to capture that region signal. The sampling mirrors
 `audit_epoch_mixture` and `census_opening_token` — same stream, same seed convention, same budget — so
@@ -43,7 +43,7 @@ def _tag(label: str) -> str | None:
     """The tag a token OPENS, or None.
 
     Only a `B-` label counts. A two-letter token inside a longer span is part of a name.
-    Counting it would credit `St. John's, NL` and `Newfoundland and Labrador` to the same evidence.
+    The count would credit `St. John's, NL` and `Newfoundland and Labrador` as the same evidence.
     """
     return label[2:] if label.startswith("B-") else None
 

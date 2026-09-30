@@ -128,7 +128,7 @@ swapping it out after measuring would be exactly the row selection this pre-regi
 prevent. It is the reason the diagnostic baseline is 1 rather than 0, and therefore the reason the
 diagnostic delta bar is +2 rather than +3.
 
-## Reproducing
+## Reproduce the probe
 
 ```bash
 yarn compile
@@ -137,5 +137,5 @@ node packages/mailwoman/out/cli.js eval semantic-utility-probe --arm baseline --
 
 The loader refuses the pre-registration if its content hash has moved from
 `packages/mailwoman/lib/eval-harness/semantic-utility/probe-freeze.json`, so a run that produces a
-receipt has provably read the ruler recorded here. `packages/mailwoman/test/unit/eval-harness/semantic-utility-probe.test.ts`
+receipt has provably read the ruler recorded here. `packages/mailwoman/lib/commands/eval/semantic-utility-probe.test.ts`
 holds the freeze, the refusals, the arithmetic, and this receipt's agreement with the frozen numbers.

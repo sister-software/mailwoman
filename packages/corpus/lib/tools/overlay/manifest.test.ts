@@ -6,15 +6,11 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import { useScratchDir } from "@mailwoman/corpus/test-kit"
-import {
-	assembleOverlayManifest,
-	baseManifestFiles,
-	rerootBaseFilePath,
-	splitFromFilename,
-} from "@mailwoman/corpus/tools"
 import { describe, expect, it } from "vitest"
+
+import { openDuckDB } from "#parquet/duckdb"
+import { useScratchDir } from "#test-kit"
+import { assembleOverlayManifest, baseManifestFiles, rerootBaseFilePath, splitFromFilename } from "#tools"
 
 const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
 
@@ -133,8 +129,7 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		const parquet = await writeOverlayParquet("part-mismatch.train.parquet", "rendered-de")
 
 		// The loader groups rows by the column.
-		// Recording the caller's label instead would write a manifest that disagrees
-		// with the rows the run trains on.
+		// The caller's label would make the manifest disagree with the rows the run trains on.
 		await expect(
 			assembleOverlayManifest({
 				...overlay(parquet, "train"),
@@ -205,14 +200,14 @@ describe("baseManifestFiles", () => {
 	it("REFUSES a manifest that names no file list under either key", () => {
 		// Neither key holds an array.
 		// The manifest makes no statement about the file count.
-		// Answering an empty list would report a false absence.
+		// An empty list would report a false absence.
 		const neither = { corpus_version: "v0.0.0" } as Parameters<typeof baseManifestFiles>[0]
 
 		expect(() => baseManifestFiles(neither)).toThrow(/names no file list/u)
 	})
 
 	it("answers an empty list for a manifest that declares one, because that is a measurement", () => {
-		// `slices: []` says the corpus holds no file.
+		// `slices: []` means the corpus holds no file.
 		// The overlay assembler's requirement for a non-empty base lives in its own caller.
 		expect(baseManifestFiles(manifestWith("slices", []))).toEqual([])
 	})

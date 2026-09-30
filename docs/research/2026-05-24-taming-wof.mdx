@@ -29,7 +29,7 @@ WOF gives you something no other open dataset does: **a consistent hierarchy wit
 
 ### One file per place
 
-WOF stores each place as a separate `.geojson` file in a directory tree. A US admin dataset has roughly 120,000 individual files. The French equivalent has about 80,000. Opening, parsing, and indexing 200,000 JSON files is a meaningful engineering problem before you've even asked a question of the data.
+WOF stores each place as a separate `.geojson` file in a directory tree. A US admin dataset has roughly 120,000 individual files. The French equivalent has about 80,000. Before an analyst can ask a question, the system must open, parse, and index 200,000 JSON files. That setup is a substantial engineering task.
 
 This per-file layout made sense for WOF's original use case, which was tracking changes to individual places in git. You can see who edited Houston last, what changed, and when. For a geocoder that needs to query "all localities named Houston" across 120K files, it is the wrong access pattern.
 
@@ -127,7 +127,7 @@ The table has one row per name variant. "Saint Petersburg", "St. Petersburg", an
 
 ### The Piscina pipeline (stalled, documented)
 
-Processing 120K GeoJSON files into these DBs is an embarrassingly-parallel problem. Our `commands/wof/prepare` command uses Piscina (a Node.js worker-thread pool) to dispatch files across all available CPU cores. Each worker:
+The 120K GeoJSON files can be processed in parallel to build these databases. Our `commands/wof/prepare` command uses Piscina (a Node.js worker-thread pool) to dispatch files across all available CPU cores. Each worker:
 
 1. Reads a GeoJSON file.
 2. Calls `pluckPlacetypeSpec` to extract the structured fields + all name variants per language.

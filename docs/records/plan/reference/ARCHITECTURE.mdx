@@ -95,7 +95,7 @@ The split between `neural/` (runtime) and `neural-weights-*/` (data) is delibera
 
 ### `ComponentTag`
 
-`ComponentTag` is the canonical union of address component types. It has a single canonical definition in [`reference/SCHEMA.md`](../../../engineering/reference/SCHEMA.mdx). Adding a tag requires a written rationale.
+`ComponentTag` is the canonical union of address component types. It has a single canonical definition in [`reference/SCHEMA.md`](../../../engineering/reference/SCHEMA.mdx). A new tag requires a written rationale.
 
 ### `ClassificationProposal`
 
@@ -179,7 +179,7 @@ Existing ExclusiveCartesianSolver
 Ranked solutions
 ```
 
-## Training path (Python, internal)
+## Train in Python (internal)
 
 ```
 Source data (OSM, WOF, BAN, OpenAddresses, government registries)
@@ -246,7 +246,7 @@ The closest commercial reference point is spaCy's [Japanese transformer pipeline
 spaCy supports the choice of model family. The flagship Japanese model of the industry-standard NER toolkit is a BERT encoder with a token-classification head, which is the same shape. Our design differs from theirs in three ways:
 
 - **Smaller** (10× fewer parameters): our task is narrower. General-purpose Japanese NER must handle 22 entity types across all news text, while address parsing handles 23 component types in addresses only. A narrower task can use a smaller model.
-- **From scratch rather than fine-tuned**: their cl-tohoku backbone was pretrained on Japanese Wikipedia and news. Our domain is far enough from natural-language text that pretraining transfers poorly. Training from scratch on an address-only corpus should give a smaller, faster, more accurate model.
+- **From scratch rather than fine-tuned**: their cl-tohoku backbone was pretrained on Japanese Wikipedia and news. Our domain is far enough from natural-language text that pretraining transfers poorly. An address-only model trained from scratch should be smaller, faster, and more accurate.
 - **Single head rather than multi-head**: they share one encoder across the morphologizer, parser and NER. We have only one head, so the encoder can specialize fully in component disambiguation. (Multi-head is a future extension, described below.)
 
 ### Multi-head extension (Phase 4+)
@@ -266,8 +266,8 @@ None of these heads is in scope for Phases 0–3. They are filed for Phase 4 or 
 
 **Don't use**: spaCy as a runtime or training dependency, for these reasons:
 
-- **Runtime**: spaCy is Python-only. The plan's "TypeScript-first" stance is a hard constraint from the epic. Adding Python at inference time would complicate deployment for Node users, and avoiding that is the project's main reason to exist. spaCy's ONNX export path (`spacy-onnx-export`) exists but is rarely production-grade.
-- **Training**: spaCy's config-driven training (`spacy.cfg` + `Thinc`) is well designed, but it pays off mostly when pipeline composition matters or the task is novel. Our task, single-head NER on `BertForTokenClassification`, is the most common path in HuggingFace Transformers. spaCy would add an abstraction layer for little convenience. The operator prefers as little Python as possible, which argues against spaCy even for training, where Python is unavoidable.
+- **Runtime**: spaCy is Python-only. The plan's "TypeScript-first" stance is a hard constraint from the epic. Python at inference time would complicate deployment for Node users, and avoiding that is the project's main reason to exist. spaCy's ONNX export path (`spacy-onnx-export`) exists but is rarely production-grade.
+- **Model training**: spaCy's config-driven training (`spacy.cfg` + `Thinc`) is well designed, but it pays off mostly when pipeline composition matters or the task is novel. Our task, single-head NER on `BertForTokenClassification`, is the most common path in HuggingFace Transformers. spaCy would add an abstraction layer for little convenience. The operator prefers as little Python as possible, which argues against spaCy even for training, where Python is unavoidable.
 
 **Adopt the patterns rather than the tool**:
 
@@ -278,7 +278,7 @@ None of these heads is in scope for Phases 0–3. They are filed for Phase 4 or 
 | "Training described entirely by a config file, code is the runner" hygiene                                           | spacy.cfg pattern                                                                                                                                     | `corpus-python/src/mailwoman_train/cli/commands/train.py` config shape — adopt the pattern without taking spaCy as a dep |
 | Vintage / language-model-version conventions                                                                         | spaCy's `ja_core_news_trf-3.7.0` naming (`<lang>_<domain>_<size>_<framework>-<version>`)                                                              | Weights package versioning + ONNX file naming                                                                            |
 
-**Optional Phase 3 baseline comparison**: run a fine-tuned `xx_ent_wiki_sm` or `en_core_web_trf` against the same golden set and report the comparison in the model card. Seeing general NER tag `LOC` / `ORG` where we expect `locality` / `venue` shows how the model compares with general NER. A fair baseline run takes ~1 hour of operator time. The comparison is a one-off and stays out of the install dependency tree.
+**Optional Phase 3 baseline comparison**: run a fine-tuned `xx_ent_wiki_sm` or `en_core_web_trf` against the same golden set and report the comparison in the model card. General NER tags `LOC` / `ORG` where we expect `locality` / `venue` show how the model compares with general NER. A fair baseline run takes ~1 hour of operator time. The comparison is a one-off and stays out of the install dependency tree.
 
 ### Casual descriptions (for audiences who don't want the architecture deep-dive)
 
@@ -289,16 +289,16 @@ None of these heads is in scope for Phases 0–3. They are filed for Phase 4 or 
 
 The model is neither a translator (it has neither a language pair nor autoregressive output) nor a generative model.
 
-## Training cadence vs. plan (2026-05-18 reframing)
+## Model training cadence vs. plan (2026-05-18 reframing)
 
 The original phase plan (`phases/PHASE_2_training.md`) targeted a **single training run reaching >95% per-component F1** in ~2 weeks. After two iterations, an **iteration cadence** replaced that plan. Each cycle is ~3-7 days of focused work (corpus refinement → train 6-10h GPU → eval → ship), and each cycle produces a shippable artifact even if it misses the >95% bar.
 
 The plan changed for these reasons:
 
 - **>95% F1 in one run was unrealistic.** Address parsing from scratch on a noisy real-world corpus is harder than that target assumed. Ship floors are lower (~0.85 F1 on coarse components is useful in production with proper calibration).
-- **Shipping below target follows from the bitter-lesson framing.** Per [[project-mailwoman-graceful-failure]], the success metric is graceful failure rather than maximum F1. A 0.85-F1 model with 0.88 calibration in its conf>0.9 bucket is more useful than a 0.95-F1 model with 0.33 calibration (the v0.1.0 situation).
+- **A model shipped below target follows from the bitter-lesson framing.** Per [[project-mailwoman-graceful-failure]], the success metric is graceful failure rather than maximum F1. A 0.85-F1 model with 0.88 calibration in its conf>0.9 bucket is more useful than a 0.95-F1 model with 0.33 calibration (the v0.1.0 situation).
 - **Coexistence with the rule classifiers makes shipping safe.** The neural classifier adds proposals alongside the rule classifiers through the policy registry, so we can start using it before it reaches parity.
-- **Iterating beats a single run.** Each cycle produces artifacts: ONNX weights, a model card, an eval report, the npm package shape, and demo updates.
+- **Repeated cycles beat a single run.** Each cycle produces artifacts: ONNX weights, a model card, an eval report, the npm package shape, and demo updates.
 
 ### Iteration history (live)
 
@@ -314,7 +314,7 @@ The plan changed for these reasons:
 
 ### Why more data doesn't blow up the iteration cost
 
-A training run has a fixed step count rather than a fixed number of epochs. v0.2.0's 50K steps × 128 effective batch = 6.4M examples seen ≈ **2.4% of the 263M-row corpus per pass**. Adding NAD (62M), OA-CA (10M) and state backfills grows the corpus to ~340M rows, and the same 50K steps still finish in ~6.5-10h. The model is far from limited by training data, so a larger corpus adds diversity per example seen without adding wall-clock time.
+A training run has a fixed step count rather than a fixed number of epochs. v0.2.0's 50K steps × 128 effective batch = 6.4M examples seen ≈ **2.4% of the 263M-row corpus per pass**. NAD (62M), OA-CA (10M) and state backfills grow the corpus to ~340M rows, and the same 50K steps still finish in ~6.5-10h. The model is far from limited by training data, so a larger corpus adds diversity per example seen without adding wall-clock time.
 
 These steps add time to each iteration:
 
@@ -324,7 +324,7 @@ These steps add time to each iteration:
 
 ### Re-framed success metric per iteration
 
-Each iteration succeeds if its artifact is independently shippable and measurably better than the previous one. Reaching 95% F1 is no longer the criterion. The eval ledger at `evals/scores-by-version.json` records this: every shipped run gets a row, and the corpus and eval set are pinned by sha so that deltas compare like with like.
+Each iteration succeeds if its artifact is independently shippable and measurably better than the previous one. A 95% F1 score is no longer the criterion. The eval ledger at `evals/scores-by-version.json` records this: every shipped run gets a row, and the corpus and eval set are pinned by sha so that deltas compare like with like.
 
 ## Why this shape
 
@@ -332,7 +332,7 @@ Each iteration succeeds if its artifact is independently shippable and measurabl
 - **Per-component policy** allows incremental rollout instead of switching every component at once. A regression in neural `street` parsing does not affect `country` parsing.
 - **Locale profiles** keep the architecture from defaulting to English-speaking conventions. If the abstractions cannot express a locale outside those conventions, we fix the abstractions instead of working around the locale.
 - **Separate weights packages** keep npm install times reasonable and let users install only the languages they need.
-- **Training in Python and inference in TS** uses each ecosystem for its strengths and keeps production code in one language.
+- **Python training and TypeScript inference** use each ecosystem for its strengths and keep production code in one language.
 
 ## Output shape (Phase 3 concern rather than Phase 2)
 
@@ -350,7 +350,7 @@ The neural model emits per-token BIO labels regardless of how its output is pres
 
 **The formats require no model retraining.** They are post-processing on the BIO output, and the same neural model serves all three formats.
 
-**Existing isp-nexus formatter** (`isp-nexus/universe/mailwoman/postal/formatting.ts`) converts a flat object into a multi-line string for shipping-label rendering. Port it as the inverse of the JSON decoder, and build a separate `sexp→string` formatter for the S-expr path.
+**The isp-nexus formatter** (`isp-nexus/universe/mailwoman/postal/formatting.ts`) converts a flat object into a multi-line string for shipping-label rendering. Port it as the inverse of the JSON decoder, and build a separate `sexp→string` formatter for the S-expr path.
 
 ## Source attribution (Phase 4 — #12, deferred)
 

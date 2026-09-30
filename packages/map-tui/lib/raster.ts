@@ -23,7 +23,7 @@ import type { RGB } from "#style"
  * A row-major rgba pixel buffer.
  *
  * Alpha starts at 0 (unlit/transparent) everywhere.
- * Drawing a pixel sets it to 255.
+ * A drawn pixel has value 255.
  *
  * Callers, including this module's own tests, distinguish "lit" from "background".
  */

@@ -31,7 +31,7 @@ The only intended differences from v0.3.0 were:
 
 `configs/v0_4_0.yaml`. lr=5e-4 had been the v0.2.0 baseline before v0.3.0's dual-loss instability forced it down to 1.5e-4. The §1 hypothesis was that per-token CRF normalization would make `crf_loss_weight=1.0` safe at 5e-4 again.
 
-The run diverged at step 750. Training loss had dropped monotonically 6.5 → 0.3 over steps 0-700, then spiked 0.3 → 3.3 over steps 700-1000. Val macro-F1 collapsed 0.36 → 0.11. We stopped the run with a `train_with_resume.sh` interrupt. The step-500 checkpoint (best so far) is preserved at `/data/models/checkpoints/v0_4_0/step-000500`.
+The run diverged at step 750. The training loss had dropped monotonically 6.5 → 0.3 over steps 0-700, then spiked 0.3 → 3.3 over steps 700-1000. Val macro-F1 collapsed 0.36 → 0.11. We stopped the run with a `train_with_resume.sh` interrupt. The step-500 checkpoint (best so far) is preserved at `/data/models/checkpoints/v0_4_0/step-000500`.
 
 ### Run 2 — full recipe, lr=3e-4
 
@@ -186,7 +186,7 @@ Final eval, shipped checkpoint vs v0.3.0, golden v0.1.2:
 
 Macro F1 raw: 0.357 vs 0.293. Token confidence: 0.806 vs 0.857. Full-parse exact match: 0.082 vs 0.107.
 
-On Issue #116's "≥2 of 4 axes improved" metric, only fine F1 improved directly (street +0.03, house_number +0.01). Coarse F1 is mixed once adversarial denominators are excluded. Calibration was flat. Training stability was negative, which is the central finding of the campaign.
+On Issue #116's "≥2 of 4 axes improved" metric, only fine F1 improved directly (street +0.03, house_number +0.01). Coarse F1 is mixed once adversarial denominators are excluded. Calibration was flat. The campaign found negative training stability, which is its central result.
 
 ## See also
 

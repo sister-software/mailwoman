@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  * @file Head-noun derivation for the sub-venue lexicon — proposing the addressed form of a designator
- * from the encyclopaedic label a vocabulary source carries.
+ * from the encyclopaedic label a vocabulary source provides.
  *
  * Everything derived lands `curated: false`, because a derivation is a hypothesis a locale's own data confirms or kills.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
 
-import type { SubVenueSurface } from "#tools/sub/venue/table"
+import type { SubVenueSurface } from "#subvenue/table"
 
 /**
  * Diacritic-flattened ascii fold, for comparing a Slavic or Turkish inflection against its Latin root.
@@ -39,7 +39,7 @@ const HEAD_NOUN_PREFIX_FLOOR = 5
 /**
  * The shortest substring a non-Latin head-noun candidate may be.
  *
- * Two, because `楼` alone is "building" and would fire on every Chinese building name.
+ * Two, because `楼` by itself means "building" and would fire on every Chinese building name.
  */
 const NON_LATIN_HEAD_MIN_LENGTH = 2
 
@@ -170,7 +170,7 @@ function commonPrefixLength(a: string, b: string): number {
  * Where a pool member has spaces, the candidate must be a whole token.
  *
  * This keeps Korean `공항 터미널` from contributing a fragment across the space.
- * Maximal candidates only: one contained in a longer candidate carried by the same
+ * Maximal candidates only: one contained in a longer candidate produced by the same
  * number of surfaces is dropped, since counting can never separate the two.
  */
 function sharedSubstringCandidates(pool: ReadonlySet<string>): string[] {

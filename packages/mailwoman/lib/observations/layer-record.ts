@@ -26,7 +26,7 @@ export interface ObservationLayerRecord {
 }
 
 /**
- * The coverage side of a designation, with `basis` carried as a plain string because a
+ * The coverage side of a designation, with `basis` stored as a plain string because a
  * marker's evidence is JSON a caller reads rather than a typed value it branches on.
  */
 export interface ObservationCoverageRecord {
@@ -39,7 +39,7 @@ export interface ObservationCoverageRecord {
 }
 
 /**
- * A layer's manifest as the record a designation carries.
+ * A layer's manifest as the record a designation includes.
  */
 export function observationLayerRecord(manifest: LayerManifest): ObservationLayerRecord {
 	return {
@@ -57,7 +57,7 @@ export function observationLayerRecord(manifest: LayerManifest): ObservationLaye
 }
 
 /**
- * A reader's coverage row as the record a designation carries, absent rather than zeroed
+ * A reader's coverage row as the record a designation includes, absent rather than zeroed
  * where the layer holds no row for the cell because a missing row means unknown.
  */
 export function observationCoverageRecord(
@@ -87,7 +87,7 @@ export function observationCoverageRecord(
 }
 
 /**
- * The coverage sentence a designation's one-line description carries, adding the completeness
+ * The coverage sentence in a designation's one-line description, adding the completeness
  * term only where the layer's basis makes a completeness magnitude meaningful.
  */
 export function describeCoverage(

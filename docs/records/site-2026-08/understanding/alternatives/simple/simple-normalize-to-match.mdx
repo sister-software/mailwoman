@@ -31,7 +31,7 @@ The method is string normalization plus similarity matching, with no structural 
 - **You have a known address database.** Examples include a logistics company with 10,000 delivery points, a utility company with 500,000 service addresses, and a retailer with a customer address book. The universe is finite and you control it.
 - **Your input is messy but recognizable.** Customers typing their own addresses make spelling errors, use abbreviations, omit ZIP+4, add apartment numbers. Normalization absorbs these variations.
 - **You don't need component-level output.** You don't need to know which token is the street and which is the city. You only need to know that this input matches address ID #4572.
-- **Your addresses are in one country.** US addresses have a small set of standard abbreviations (USPS Pub 28 defines them all). Expanding `St` → `Street` and `IL` → `Illinois` covers the common cases. International addresses have no such standard abbreviation table.
+- **Your addresses are in one country.** US addresses have a small set of standard abbreviations (USPS Pub 28 defines them all). Standard expansions such as `St` → `Street` and `IL` → `Illinois` cover the common cases. International addresses have no such standard abbreviation table.
 - **You need to ship today.** Normalization is a hundred lines of code and needs no training data, model, or gazetteer. You can ship it in an afternoon.
 
 ## What you lose

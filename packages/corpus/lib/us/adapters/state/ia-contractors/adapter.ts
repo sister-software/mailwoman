@@ -6,7 +6,7 @@
  *   `state-ia-contractors`: Iowa Active Construction Contractor Registrations CSV consumer.
  *
  *   Iowa Workforce Development publishes a public registry of active construction contractors. Each
- *   row carries a business name, street address, city/state/zip, and contact info.
+ *   row includes a business name, street address, city/state/zip and contact info.
  *
  *   The adapter consumes the CSV the operator pre-downloads via `fetch-state-sources.ts`.
  *
@@ -22,7 +22,7 @@
  *   License: stamped `"Public Domain"` per Iowa state government open-data terms.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
@@ -38,7 +38,7 @@ import { lookupStateAbbreviation } from "#us/fips-state"
  */
 export const STATE_IA_CONTRACTORS_ADAPTER_ID = "state-ia-contractors"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const STATE_IA_CONTRACTORS_DEFAULT_LICENSE = "Public Domain"
@@ -61,7 +61,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 		defaultLicense: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
 		addressRole: AddressRole.RegisteredOffice,
 		register: SourceRegister.IowaContractors,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"Iowa Active Construction Contractor Registrations — business name + full street address (public-domain).",
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Smoke-test application routes, query prefill, and fake-runtime results.
+ *   Smoke-test application routes, query prefill and fake-runtime results.
  *   Also check static deployment assets.
  *   The tests do not load model data.
  */

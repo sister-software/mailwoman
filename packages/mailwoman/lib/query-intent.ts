@@ -20,11 +20,11 @@ import { collectNodes } from "@mailwoman/core/decoder"
 import {
 	type AblationPlace,
 	COINCIDENT_PLACE_KM,
+	collapseCoincident,
 	DECISIVE_MARGIN_LOG10,
 	dominanceMarginLog10,
-} from "#eval-harness/gauntlet/ablation/expectation"
-import { collapseCoincident } from "#eval-harness/gauntlet/ablation/gazetteer"
-import { tierRank } from "#eval-harness/gauntlet/ablation/scoring"
+	tierRank,
+} from "#ablation/expectation"
 
 /**
  * The fields of a resolver place that this module reads.
@@ -43,7 +43,8 @@ interface RankedPlaceLike {
 	 *
 	 * On the candidate backend it equals `-effectiveNegRank`, so a difference of
 	 * two prominences is a log10 population margin.
-	 * On the FTS backend it is a capped log population plus a proximity term, which is a different unit.
+	 * On the FTS backend it is a capped log population plus a proximity term.
+	 * The result uses a different unit.
 	 */
 	prominence?: number
 	score?: number

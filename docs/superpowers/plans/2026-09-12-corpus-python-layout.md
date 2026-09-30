@@ -1223,7 +1223,7 @@ git commit -m "refactor(train): key per-country code by country under countries/
 - Consumes: every role module.
 - Produces: `cli.main(argv=None)`, and one `cli/commands/<name>.py` per subcommand, each exporting `add_parser(subparsers) -> None` and `run(args) -> int`.
 
-`scripts/verify_toolchain.py` does not move. It imports only the standard library (`importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib`), and `.husky/pre-commit:63` and `package.json:54` invoke it as bare `python3` without `uv run`. Folding it into the CLI would make the pre-commit hook depend on a synced venv.
+`scripts/verify_toolchain.py` does not move. It imports only the standard library (`importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib`), and `.husky/pre-commit:63` and `package.json:54` invoke it as bare `python3` without `uv run`. A move into the CLI would make the pre-commit hook depend on a synced venv.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1461,7 +1461,7 @@ grep -rn 'modal/train_remote\.py\|corpus-python/modal' --include='*.ts' --includ
   --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=.git --exclude-dir=docs/records
 ```
 
-Rewrite each hit. The known set: `REPRODUCIBILITY.md:28,31`, `packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts:24`, `launch/AGENTS.md`, and the fixture strings in `packages/dev-mcp/test/unit/bash-write-guard.test.ts:85-89,95,154,204`.
+Rewrite each hit. The known set: `REPRODUCIBILITY.md:28,31`, `packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts:24`, `launch/AGENTS.md`, and the fixture strings in `packages/dev-mcp/lib/hooks/bash/write/bash-write-guard.test.ts:85-89,95,154,204`.
 
 Leave `docs/records/` alone. Those files are dated records and keep the path that was correct when they were written.
 

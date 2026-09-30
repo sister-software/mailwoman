@@ -60,7 +60,7 @@ function filesystemCache(config: Configuration, alias: Record<string, string>): 
  * The caller resolves the alias map and passes it here.
  * Docusaurus awaits the plugin factory that resolves the map.
  *
- * Resolving it at this point would return a promise the lifecycle never unwraps.
+ * The function would return a promise the lifecycle never unwraps if it resolved the map here.
  */
 export function configureRuntimeWebpack(
 	config: Configuration,

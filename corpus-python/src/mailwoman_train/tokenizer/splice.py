@@ -72,7 +72,7 @@ def build_slavic_corpus(
     corpus = [ln for ln in lines if ln and len(ln) < 80]
     random.Random(_SEED).shuffle(corpus)
     corpus = corpus[:_CORPUS_SAMPLE]
-    # OA street/city text carries only native names, so an exonym like "Åbo" never warrants a piece.
+    # OA street/city text contains only native names, so an exonym like "Åbo" never warrants a piece.
     # extra_text feeds gazetteer alias names, repeated so a once-per-name list has enough unigram
     # mass to compete for vocab slots.
     if extra_text is not None and extra_text.is_file():
@@ -150,7 +150,7 @@ def collect_sample_codepoints(sample_path: Path, *, cap_bytes: int = 4_000_000) 
     """The set of non-ASCII codepoints in a locale sample file (first ``cap_bytes``, utf-8, errors ignored).
 
     Deliberately format-agnostic. The check needs a locale's character inventory rather than its
-    parse. Reading raw text keeps it free of per-format code.
+    parse. Raw text keeps the parser free of per-format code.
     """
     raw = sample_path.read_bytes()[:cap_bytes].decode("utf-8", errors="ignore")
     return {c for c in raw if ord(c) >= 128}
@@ -167,7 +167,7 @@ def check_codepoint_overlap(
 
     Raise when an overlapping locale is absent from ``accepted_overlap``.
 
-    Accepting a locale is a commitment that a per-locale non-inferiority leg is pre-registered in
+    A locale entry commits the evaluation plan to a pre-registered per-locale non-inferiority leg in
     the check spec before the first measurement.
     """
     accepted = accepted_overlap or set()

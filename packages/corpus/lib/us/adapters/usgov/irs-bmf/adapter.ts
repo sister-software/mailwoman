@@ -8,7 +8,7 @@
  *   The EO BMF is the IRS's authoritative registry of US tax-exempt organizations (charities,
  *   churches, foundations, ...), published as per-region CSVs at
  *   `https://www.irs.gov/charities-non-profits/exempt-organizations-business-master-file-extract-eo-bmf`
- *   (`eo1.csv`..`eo4.csv`, `eo_pr.csv`, `eo_xx.csv`). Each row carries an organization name plus
+ *   (`eo1.csv`..`eo4.csv`, `eo_pr.csv`, `eo_xx.csv`). Each row includes an organization name plus
  *   its mailing address. It complements `usgov-nppes` with a different venue population
  *   (non-profits vs healthcare providers) and, notably, a high share of PO-box addresses — useful
  *   `po_box`-tag signal (a tag with historically low recall).
@@ -19,7 +19,7 @@
  *   federal).
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -33,7 +33,7 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
  */
 export const USGOV_IRS_BMF_ADAPTER_ID = "usgov-irs-bmf"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_IRS_BMF_DEFAULT_LICENSE = "Public Domain"
@@ -59,7 +59,7 @@ interface IRSBMFRow {
  *
  * BMF mixes street addresses and PO boxes in one `street` column, so the PO-box shapes
  * have to be claimed before the shared house-number split runs.
- * Otherwise `splitStreetLine` would hand back `"PO Box 1234"` as a plain street,
+ * Otherwise `splitStreetLine` would hand back `"PO Box 1234"` as a plain street.
  * which is correct for every other US adapter and wrong here.
  */
 function splitStreetLineOrPOBox(street: string): { po_box: string } | { house_number?: string; street: string } | null {
@@ -76,7 +76,7 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_IRS_BMF_DEFAULT_LICENSE,
 		addressRole: AddressRole.Mailing,
 		register: SourceRegister.IRSBusinessMasterFile,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"IRS Exempt Organizations Business Master File — US non-profit venue+address (public-domain), with strong PO-box coverage.",
 

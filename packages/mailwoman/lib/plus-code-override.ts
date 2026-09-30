@@ -24,7 +24,7 @@ import { epistemicStatusFor } from "#geocode/epistemic-status"
 const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{2,3})(?=[\s,]|$)/i
 
 /**
- * Plus-code override: when the query carries an Open Location Code,
+ * Plus-code override: when the query contains an Open Location Code,
  * the code is the user's most precise claim.
  *
  * Google prints these on every place card.
@@ -106,8 +106,9 @@ const COMPONENT_SLOTS = [
 /**
  * A plus code is a coordinate claim and never a component, whatever tag the parse gave it.
  *
- * Evict the token from every slot it landed in and let the next span of that tag — grounded
- * first, then text order, the same `slotNodes` order the projections read — take the slot.
+ * Evict the token from every slot it landed in and let the next span of that tag
+ * take the slot, in the same `slotNodes` order the projections read: grounded first,
+ * then text order for an administrative rung and label confidence for every other tag.
  * `Simpson's Field, 5G8H+8F5, Douglas, Isle of Man IM2 4RE, Isle of Man` parses the code as
  * `postcode`; without this the row's postcode was the code and `IM2 4RE` was the dropped span.
  *

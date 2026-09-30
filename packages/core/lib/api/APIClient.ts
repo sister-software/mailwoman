@@ -25,9 +25,9 @@ import {
 	retryDelayMs,
 	type RetryOptions,
 } from "#api/retry"
-import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
+import { ConsoleLogger, type IRuntimeLogger } from "#logging"
 
-export { type IRuntimeLogger } from "#logging/index"
+export { type IRuntimeLogger } from "#logging"
 
 const MS_PER_MINUTE = 60_000
 
@@ -132,8 +132,8 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		// The pacing limit lives IN the adapter rather than in `fetch()`: `axios-cache-interceptor`
 		// short-circuits a cache HIT by replacing `config.adapter` with its own `cachedAdapter`,
 		// so anything installed here is reached only when the request is actually going to the network.
-		// Restricting in `fetch()` instead put the cache interceptor downstream of the check
-		// and made every cache hit burn a full pacer sleep.
+		// A check in `fetch()` would run after the cache interceptor and make every
+		// cache hit burn a full pacer sleep.
 		//
 		// Retries are unaffected: each attempt re-enters `this.axios(...)`,
 		// so each re-enters this adapter and takes its own grant.
@@ -200,7 +200,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		// The cache interceptor also swaps the adapter.
 		// Its adapter lets a cache hit skip the grant check.
 		// It receives merged config inside the interceptor chain, after this method hands over the request.
-		// Stripping the caller's adapter preserves the interceptor's adapter.
+		// The request options omit the caller's adapter, so the interceptor keeps its adapter.
 		const { adapter: _callerAdapter, ...safeOptions } = options
 
 		for (let attempt = 1; ; attempt++) {
@@ -236,10 +236,10 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * The loop reacquires the pacer on every pass.
 	 * A grant applies to a specific instant.
 	 *
-	 * Waiting on a cooldown after taking a grant makes it stale.
+	 * A grant becomes stale if its caller waits through a cooldown after obtaining it.
 	 * Callers with stale grants would all spend them when the cooldown lifts.
 	 *
-	 * Reacquiring discards each stale grant and gets a fresh one for dispatch.
+	 * Each caller discards its stale grant and obtains a fresh one before dispatch.
 	 * The pacer under-issues by one request per cooldown wait.
 	 * This keeps the limit on the safe side.
 	 */

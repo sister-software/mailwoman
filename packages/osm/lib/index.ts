@@ -3,9 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/osm` — OpenStreetMap rooftop address-point ingestion. Permissive code. the ODbL
- *   obligation rides on the built per-country extracts, never on this package. See `./sdk` for the
- *   ingestion surface and `./scripts/build-rooftop-database` for the build CLI.
+ *   `@mailwoman/osm` reads the OpenStreetMap rooftop address-point databases, and its `sdk` ingests the extracts
+ *   that build them. Permissive code. The ODbL obligation applies to the built per-country extracts, never to
+ *   this package.
  */
 
-export * from "#sdk/index"
+export * from "#address-point-schema"
+export * from "#region-database-provider"
+export * from "#street-locale"

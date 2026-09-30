@@ -49,6 +49,6 @@ Of those, **10** span all three sources.
 | entity-1075 | fcc-rhc, fcc-rhc-commitments                 | baylor scott and white health bswh | 32.7940, -96.7657  |
 | entity-1071 | fcc-rhc, fcc-rhc-commitments                 | christus health                    | 29.4704, -98.6862  |
 
-## Reading
+## How to read the results
 
 4 datasets with no shared key — a provider registry, a federal funding program (two of its forms, the commitments form exploded into its Filing + Participating HCP per row), and a state facility registry — resolve into a single entity model where 219 entities are corroborated by ≥2 independent sources (10 by all three kinds), purely on geocoded location + name/org agreement, in pure Node (no Elasticsearch, no server). Each cross-source entity is a candidate "same place, multiple records" surfaced for review; whether a correlation means anything is the data consumer's call rather than ours.

@@ -23,4 +23,4 @@
  */
 
 export * from "#result"
-export * from "#sdk/index"
+export * from "#sdk"

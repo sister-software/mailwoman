@@ -22,12 +22,15 @@ done)
 # on every commit that stages a command file, and `yarn compile` cannot clear it because the compile precedes the hook.
 CLI_REF=packages/mailwoman/tsconfig.tsbuildinfo
 [ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/out/tsconfig.tsbuildinfo
-[ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/out/cli/index.js
+[ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/out/cli/main.js
 CLI_STALE_SRC=""
 if [ -f "$CLI_REF" ]; then
 	# cli-native holds the specs of the native commands (license, doctor, geocode …); the reference reads them from
 	# the compiled CLI too, so a spec edit there is the same staleness as one under commands/.
-	CLI_STALE_SRC=$(find packages/mailwoman/lib/commands packages/mailwoman/lib/cli/kit packages/mailwoman/lib/cli/native \( -name '*.tsx' -o -name '*.ts' \) -newer "$CLI_REF" -print -quit 2>/dev/null)
+	# A colocated test is excluded: `packages/mailwoman/tsconfig.json` excludes `./**/*.test.ts`, so no compile reads
+	# one and no compile can make the reference newer than one. Since the roots were split, tests sit beside their
+	# modules under cli/kit, and a test edit alone left this guard unclearable.
+	CLI_STALE_SRC=$(find packages/mailwoman/cli/commands packages/mailwoman/cli/kit packages/mailwoman/cli/native \( -name '*.tsx' -o -name '*.ts' \) ! -name '*.test.ts' ! -name '*.test.tsx' -newer "$CLI_REF" -print -quit 2>/dev/null)
 fi
 
 if [ -n "$STAGED" ]; then
@@ -60,7 +63,7 @@ if [ -n "$STAGED" ]; then
 		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.16.5 format
 	fi
 	if printf '%s\n' "$STAGED" | grep -q '^corpus-python/'; then
-		python3 corpus-python/scripts/verify_toolchain.py
+		uv run --project corpus-python --extra dev --extra train python corpus-python/scripts/verify_toolchain.py
 	fi
 
 	# Re-stage fixed files so they're included in the commit
@@ -70,11 +73,11 @@ fi
 # CLI-reference freshness (2026-08-05): the docs CI check asserts docs/articles/developers/reference/
 # cli.mdx byte-for-byte against the command schemas, and it fired four times in one day because the
 # regeneration step lives a 20-minute CI round-trip away. Staged-scoped: only runs when this commit
-# touches the command surface. The generator reads the COMPILED tree (packages/mailwoman/out/commands — the
+# touches the command surface. The generator reads the COMPILED tree (packages/mailwoman/out/cli/commands — the
 # commands are TSX, which node cannot type-strip), so a stale out/ would silently regenerate WRONG
 # bytes; the mtime guard turns that into an instruction instead.
-if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailwoman/lib/(commands|cli-kit)/'; then
-	if [ -f packages/mailwoman/out/cli/index.js ]; then
+if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailwoman/cli/(commands|kit|native)/'; then
+	if [ -f packages/mailwoman/out/cli/main.js ]; then
 		# Freshness reference: the tsbuildinfo, not cli.js — an incremental `tsc -b` that finds
 		# cli.js byte-identical does not rewrite it, so an mtime check against cli.js blocks
 		# forever after an unrelated source edit (bit the ablation-harness worktree 2026-08-05).
@@ -98,24 +101,24 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 		# The SECOND generated artifact, same freshness interface: the man page's CI drift test fired on
 		# 2026-08-17 (cli.mdx prose) and again on 2026-08-18 (a new flag) because only cli.mdx was
 		# hook-covered. Same guard, same remediation shape.
-		node packages/mailwoman/out/cli/index.js dev generate man-page
+		node packages/mailwoman/out/cli/main.js dev generate man-page
 		if ! git diff --quiet -- packages/mailwoman/man/mailwoman.1; then
 			echo "pre-commit: the man page moved — it has been regenerated in your worktree; stage it and retry:" >&2
 			echo "  git add packages/mailwoman/man/mailwoman.1" >&2
 			exit 1
 		fi
 	else
-		echo "pre-commit: packages/mailwoman/out/cli/index.js not compiled — skipping CLI-reference freshness (CI's byte-for-byte test still checks)" >&2
+		echo "pre-commit: packages/mailwoman/out/cli/main.js not compiled — skipping CLI-reference freshness (CI's byte-for-byte test still checks)" >&2
 	fi
 fi
 
 # Raw-angle MDX lint — already staged-scoped by default (see the script header). A bare `<55` in
 # docs prose is a build-breaking MDX-JSX parse error; this class broke three builds on 2026-06-10.
-# The lint tool lives at mailwoman/dev-tools/lint-mdx-angles.ts
+# The lint tool lives at packages/mailwoman/tools/dev-tools/lint-mdx-angles.ts
 # and needs the compiled CLI (`yarn compile`). An uncompiled tree (fresh clone) skips with a warning
 # rather than blocking every commit — CI's full lint still checks this class.
-if [ -f packages/mailwoman/out/cli/index.js ]; then
-	node packages/mailwoman/out/cli/index.js dev lint mdx-angles
+if [ -f packages/mailwoman/out/cli/main.js ]; then
+	node packages/mailwoman/out/cli/main.js dev lint mdx-angles
 else
-	echo "pre-commit: packages/mailwoman/out/cli/index.js not compiled — skipping mdx-angles lint (run 'yarn compile')" >&2
+	echo "pre-commit: packages/mailwoman/out/cli/main.js not compiled — skipping mdx-angles lint (run 'yarn compile')" >&2
 fi

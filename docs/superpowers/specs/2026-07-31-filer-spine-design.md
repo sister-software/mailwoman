@@ -49,9 +49,9 @@ to, and what the public record physically supports.
 | **BDC provider_id**         | FCC BDC                            | Yes                         | Already in `bdc.db.provider_id`; `bdc_provider` sidecar exists unpopulated (2a task 7)     | The landing table is already built                                                                                            |
 | **ASR number**              | FCC Antenna Structure Registration | Yes, bulk + **coordinates** | **The most valuable physical-nexus source**: structure lat/lon + owner FRN                 | Registered structures only (height/lighting thresholds)                                                                       |
 | **ULS license**             | FCC Universal Licensing System     | Yes, weekly bulk            | Spectrum authority by FRN + geography; Part 101 microwave paths are strong backhaul signal | Enormous; scope by service code                                                                                               |
-| **ASN / org**               | ARIN, PeeringDB                    | Yes, API                    | Routing reality; PeeringDB `fac` gives facility presence                                   | This is C6's substrate — same spine                                                                                           |
+| **ASN / org**               | ARIN, PeeringDB                    | Yes, API                    | Route evidence; PeeringDB `fac` gives facility presence                                    | This is C6's substrate — same spine                                                                                           |
 | **CIK**                     | SEC EDGAR                          | Yes, API                    | Public-company identity; **Exhibit 21 = literal subsidiary list**                          | Only covers public parents                                                                                                    |
-| **OCN**                     | NECA                               | Partially                   | ILEC/CLEC identity, LERG                                                                   | Licensing on bulk LERG is restrictive — verify                                                                                |
+| **OCN**                     | NECA                               | Partially                   | ILEC/CLEC identity, LERG                                                                   | Bulk LERG terms are restrictive — verify                                                                                      |
 | **EIN**                     | IRS                                | **Mostly not public**       | —                                                                                          | Public only via SEC cover pages and **nonprofit 990s** (which do cover several rural co-op ISPs). Do not promise EIN coverage |
 | **State CPCN / SOS entity** | 50 state registries                | Heterogeneous               | Registered agent + officer names frequently reveal family                                  | Per-state scrapers; OpenCorporates licensing is restrictive — verify before use                                               |
 
@@ -112,7 +112,7 @@ different vintage reports the skew instead of silently reconciling it. A family 
 reports today's ownership against last year's filing, and nobody can see the error.
 
 Connected components over authoritative-only edges form **entity clusters**, each one operating company.
-Adding family edges (holding company, parent CIK) merges clusters into **corporate families**.
+Family edges (holding company, parent CIK) merge clusters into **corporate families**.
 The two rollups always stay distinguishable and are never merged silently.
 
 ### 4.2 The artifact
@@ -154,7 +154,7 @@ truth at real scale. The data covers thousands of filers and real corporate-name
 It would help position the project on its own (Track E), and it tests `match`/`record` harder than
 any synthetic corpus.
 
-## 6. Phasing (agent-night sizing, each phase gets its own plan)
+## 6. Phases sized for an agent night (each phase gets its own plan)
 
 - **3a — identity core (~4, absorbs 2c's registry + matcher wiring).** `@mailwoman/filer` workspace;
   CORES + 499 acquisition (Nexus salvage: `sync/scripts/registrations.ts` already joins BDC provider
@@ -216,7 +216,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 
 ## 10. Carried into 3b from 3a (2026-07-31)
 
-- **Inferred linkage is degenerate in 3a and must be rebuilt on real corroboration.** 3a's identifier veto (added after an adversarial review found it merging "American Broadband LLC" with "American Broadband, Inc." across disjoint FRNs) is correct but structurally reduces pass (b) to "same authoritative component": identifier sets are derived per component, so sharing an identifier implies sharing a component by construction. Discovering two filings that _are_ one company but share no identifier needs evidence beyond the canonical name. 3b has that evidence: CORES parent/subsidiary fields, EDGAR Exhibit 21, plus normalized HQ address and contact phone/email from the 499 columns already parsed. Design the corroboration rule there; do not restore name-only linkage.
+- **Inferred linkage is degenerate in 3a and must be rebuilt on real corroboration.** 3a's identifier veto (added after an adversarial review found it merging "American Broadband LLC" with "American Broadband, Inc." across disjoint FRNs) is correct but structurally reduces pass (b) to "same authoritative component": identifier sets are derived per component, so sharing an identifier implies sharing a component by construction. Evidence beyond the canonical name is needed to connect two filings that _are_ one company but share no identifier. 3b has that evidence: CORES parent/subsidiary fields, EDGAR Exhibit 21, plus normalized HQ address and contact phone/email from the 499 columns already parsed. Design the corroboration rule there; do not restore name-only linkage.
 - **Same-vintage supersession** for inferred edges (3a fix round 2) is the pattern transfer-of-control edges must follow when they land.
 
 ## 11. CORES access — corrected diagnosis (2026-07-31)
@@ -289,7 +289,7 @@ easier alternative to the fixed-width archives. It is easier to use, but we veri
 2. **It has no FRN field.** All 29 fields are: `OBJECTID, RegNum, UniqSysID, Entity, ContAdd, ContPO,
 ContCity, ContState, ContZip, ContName, LatDeg…LonDir, CoordsType, StatusCode, LocAdd, LocCity,
 LocState, Strucht, FAAstudy, FAAcirc, latdec, londec, url`. Owner appears only as `Entity`, a name
-   string. **Joining a structure to a filer by name rather than FRN produces exactly the false identity links
+   string. **A structure joined to a filer by name rather than FRN produces exactly the false identity links
    that 3a's identifier veto exists to prevent** ("American Broadband LLC" vs "American Broadband,
    Inc."). The FRN is the whole reason ASR matters to this project, so the convenient source is the
    wrong one.

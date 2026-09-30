@@ -1,6 +1,6 @@
 """Pins the encoder's logits, loss, state-dict keys and initial weights against a committed reference.
 
-Existing checkpoints are keyed on attribute names, so a renamed attribute loads as a missing key or a
+An existing checkpoint uses attribute names as keys, so a renamed attribute loads as a missing key or a
 fresh random tensor.
 """
 

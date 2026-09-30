@@ -11,6 +11,9 @@ import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import type { PathBuilder } from "path-ts"
+import { afterAll, describe, expect, it } from "vitest"
+
 import {
 	applyCountryAppend,
 	applyDistrictAsLocalityOverride,
@@ -19,11 +22,9 @@ import {
 	type LocalePart,
 	readTuples,
 	resolveLocaleParts,
-} from "@mailwoman/corpus/international/recipes/locale"
-import { SourceRegister } from "@mailwoman/corpus/registers"
-import type { RenderedLocaleRow } from "@mailwoman/corpus/surfaces/locale"
-import type { PathBuilder } from "path-ts"
-import { afterAll, describe, expect, it } from "vitest"
+} from "#international/recipes/locale"
+import { SourceRegister } from "#registers"
+import type { RenderedLocaleRow } from "#surfaces/locale"
 
 const fixtures = new AsyncDisposableStack()
 

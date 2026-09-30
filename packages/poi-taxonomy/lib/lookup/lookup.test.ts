@@ -1,0 +1,263 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { prettyJSON } from "@mailwoman/core/json"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { afterEach, describe, expect, it, vi } from "vitest"
+
+import {
+	getAllCategories,
+	getPOICategory,
+	lookupPOICategory,
+	requiresBuildLocalLayer,
+	resolveOvertureCategories,
+} from "#lookup"
+import { generateTaxonomyTable } from "#tools/generate-taxonomy"
+
+describe("lookupPOICategory", () => {
+	it("matches a category by its own id-phrase and label", () => {
+		expect(lookupPOICategory("hospital")[0]?.category.id).toBe("hospital")
+		expect(lookupPOICategory("Gas station")[0]?.category.id).toBe("gas_station")
+	})
+
+	it("matches synonyms case-insensitively", () => {
+		const matches = lookupPOICategory("Drinking Fountain")
+		expect(matches[0]?.category.id).toBe("drinking_water")
+		expect(matches[0]?.matchedPhrase).toBe("drinking fountain")
+	})
+
+	it("maps infrastructure phrases and flags the build-local requirement", () => {
+		const [match] = lookupPOICategory("fiber hut")
+		expect(match?.category.id).toBe("telecom_cabinet")
+		expect(requiresBuildLocalLayer(match!.category)).toBe(true)
+		const [shipped] = lookupPOICategory("restaurant")
+		expect(requiresBuildLocalLayer(shipped!.category)).toBe(false)
+	})
+
+	it("resolves telecom_exchange and tower_comms categories with build-local requirement", () => {
+		const telecomExchangeMatch = lookupPOICategory("telephone exchange")[0]
+		expect(telecomExchangeMatch?.category.id).toBe("telecom_exchange")
+		expect(requiresBuildLocalLayer(telecomExchangeMatch!.category)).toBe(true)
+
+		const towerCommsMatch = lookupPOICategory("comms tower")[0]
+		expect(towerCommsMatch?.category.id).toBe("tower_comms")
+		expect(requiresBuildLocalLayer(towerCommsMatch!.category)).toBe(true)
+
+		expect(lookupPOICategory("central office")[0]?.category.id).toBe("telecom_exchange")
+		expect(lookupPOICategory("exchange building")[0]?.category.id).toBe("telecom_exchange")
+		expect(lookupPOICategory("communications mast")[0]?.category.id).toBe("tower_comms")
+		expect(lookupPOICategory("radio mast")[0]?.category.id).toBe("tower_comms")
+	})
+
+	it("gates locale-restricted synonyms like variant-aliases does", () => {
+		expect(lookupPOICategory("chemist", "en-GB")[0]?.confidence).toBe(1)
+		expect(lookupPOICategory("chemist", "en-IE")[0]?.confidence).toBe(0.5)
+		expect(lookupPOICategory("chemist", "fr-FR")).toEqual([])
+		expect(lookupPOICategory("datacenter", "fr-FR")[0]?.confidence).toBe(1)
+	})
+
+	it("returns [] for unknown phrases", () => {
+		expect(lookupPOICategory("flux capacitor depot")).toEqual([])
+	})
+})
+
+describe("taxonomy integrity", () => {
+	it("every synonym points at an existing category, and hierarchies end with the category id", () => {
+		for (const category of getAllCategories()) {
+			expect(category.hierarchy.at(-1)).toBe(category.id)
+		}
+
+		for (const category of getAllCategories()) {
+			expect(getPOICategory(category.id)).toBeDefined()
+		}
+	})
+
+	it("every osmTag present is well-formed, and every mailwoman-infra category carries one", () => {
+		for (const category of getAllCategories()) {
+			// The full Overture snapshot has no OSM mapping, so osmTag is a curated field.
+			// The Overpass emitter requires one on the infra classes.
+			if (category.osmTag !== undefined) {
+				expect(category.osmTag, `malformed osmTag on ${category.id}`).toMatch(/^[a-z_]+=[a-z_]+$/)
+			}
+
+			if (category.source === "mailwoman-infra") {
+				expect(category.osmTag, `osmTag missing on mailwoman-infra ${category.id}`).toMatch(/^[a-z_]+=[a-z_]+$/)
+			}
+		}
+	})
+})
+
+describe("umbrella categories", () => {
+	it("keeps place-of-worship leaves independently addressable", () => {
+		expect(lookupPOICategory("mosque")[0]?.category.id).toBe("mosque")
+		expect(lookupPOICategory("synagogue")[0]?.category.id).toBe("synagogue")
+	})
+
+	it("fans the place-of-worship umbrella out without absorbing its leaves", () => {
+		expect(lookupPOICategory("places of worship")[0]?.category.id).toBe("place_of_worship")
+		expect(resolveOvertureCategories("place_of_worship")).toContain("church_cathedral")
+		expect(resolveOvertureCategories("place_of_worship")).toContain("mosque")
+	})
+})
+
+describe("resolveOvertureCategories", () => {
+	it("fans a mismatched seed id out over its Overture leaves", () => {
+		const supermarket = resolveOvertureCategories("supermarket")
+		expect(supermarket).toContain("grocery_store")
+		// The curated seed id itself is not a stored Overture leaf.
+		// It must not leak into the probe list.
+		expect(supermarket).not.toContain("supermarket")
+
+		const trail = resolveOvertureCategories("trail")
+		expect(trail).toEqual(["hiking_trail", "mountain_bike_trail", "recreational_trail_or_path"])
+	})
+
+	it("keeps the canonical id when a category adds sibling leaves (cafe → cafe + coffee_shop)", () => {
+		expect(resolveOvertureCategories("cafe")).toEqual(["cafe", "coffee_shop"])
+	})
+
+	it("defaults to identity for a seed id that already equals its Overture leaf", () => {
+		expect(resolveOvertureCategories("hotel")).toEqual(["hotel"])
+		expect(resolveOvertureCategories("restaurant")).toEqual(["restaurant"])
+	})
+
+	it("returns [] for an unknown seed id (clean miss, mirrors getPOICategory)", () => {
+		expect(resolveOvertureCategories("flux_capacitor_depot")).toEqual([])
+	})
+
+	it("every declared Overture leaf is a distinct string, and identity holds for the undeclared rest", () => {
+		for (const category of getAllCategories()) {
+			const leaves = resolveOvertureCategories(category.id)
+
+			if (category.overtureCategories && category.overtureCategories.length) {
+				expect(leaves).toEqual([...category.overtureCategories])
+			} else {
+				expect(leaves).toEqual([category.id])
+			}
+		}
+	})
+})
+
+describe("lookup without a locale", () => {
+	it("hides locale-restricted synonyms and keeps unrestricted ones", () => {
+		expect(lookupPOICategory("chemist")).toEqual([])
+		expect(lookupPOICategory("drinking fountain")[0]?.confidence).toBe(1)
+	})
+})
+
+describe("full Overture snapshot + curated overlay", () => {
+	it("ships the full snapshot: well over 1900 categories, plus the 8 mailwoman-infra classes", () => {
+		const categories = getAllCategories()
+		expect(categories.length).toBeGreaterThan(1900)
+		expect(categories.filter((c) => c.source === "mailwoman-infra")).toHaveLength(8)
+	})
+
+	it("carries brand-new Overture identity categories that the seed taxonomy never had", () => {
+		// `acupuncture` is a real Overture leaf with no curated overlay.
+		// It must resolve identity-style.
+		const acupuncture = getPOICategory("acupuncture")
+		expect(acupuncture?.source).toBe("overture")
+		expect(acupuncture?.hierarchy.at(-1)).toBe("acupuncture")
+		expect(resolveOvertureCategories("acupuncture")).toEqual(["acupuncture"])
+	})
+
+	it("curated records WIN id collisions and keep owning their synonym phrases (board depends on it)", () => {
+		expect(getPOICategory("supermarket")?.overtureCategories).toContain("grocery_store")
+		expect(resolveOvertureCategories("cafe")).toEqual(["cafe", "coffee_shop"])
+
+		// The Overture leaves those curated records absorb (`coffee_shop`, `grocery_store`, `hiking_trail`)
+		// are not emitted as standalone categories, or their id-phrase would shadow the curated synonym.
+		expect(getPOICategory("coffee_shop")).toBeUndefined()
+		expect(getPOICategory("grocery_store")).toBeUndefined()
+		expect(getPOICategory("hiking_trail")).toBeUndefined()
+
+		expect(lookupPOICategory("coffee shop").map((m) => m.category.id)).toEqual(["cafe"])
+		expect(lookupPOICategory("hiking trail").map((m) => m.category.id)).toEqual(["trail"])
+		expect(lookupPOICategory("grocery").map((m) => m.category.id)).toEqual(["supermarket"])
+		expect(lookupPOICategory("supermarket").map((m) => m.category.id)).toEqual(["supermarket"])
+	})
+
+	it("recovers absorbed-leaf phrases via curated synonyms (#1209 review)", () => {
+		// The curated overlay absorbs these Overture leaves (`high_school`, `bank_credit_union`,
+		// `mountain_bike_trail`, `greengrocer`), so their leaf id-phrases are not emitted standalone.
+		// Curated synonyms keep the direct phrases resolving to the canonical curated id.
+		expect(lookupPOICategory("high school").map((m) => m.category.id)).toEqual(["school"])
+		expect(lookupPOICategory("middle school").map((m) => m.category.id)).toEqual(["school"])
+		expect(lookupPOICategory("elementary school").map((m) => m.category.id)).toEqual(["school"])
+		expect(lookupPOICategory("private school").map((m) => m.category.id)).toEqual(["school"])
+		expect(lookupPOICategory("mountain bike trail").map((m) => m.category.id)).toEqual(["trail"])
+		expect(lookupPOICategory("greengrocer").map((m) => m.category.id)).toEqual(["supermarket"])
+
+		// `credit union` is special: Overture keeps a standalone `credit_union` category
+		// (its own id-phrase), and the curated `bank` record absorbs the separate `bank_credit_union` leaf.
+		// The added synonym maps the phrase onto bank too, so it yields both the curated
+		// redirect first, then the standalone category.
+		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["bank", "credit_union"])
+	})
+
+	it("lets a curated synonym outrank a category whose id spells the same phrase (#1933)", () => {
+		expect(lookupPOICategory("drugstore", "en-US").map((m) => [m.category.id, m.phraseSource])).toEqual([
+			["pharmacy", "synonym"],
+			["drugstore", "identity"],
+		])
+
+		// The `drugstore → pharmacy` row is scoped to en-US.
+		// Elsewhere the phrase means the drugstore category.
+		expect(lookupPOICategory("drugstore", "en-GB")[0]?.category.id).toBe("drugstore")
+		expect(lookupPOICategory("drugstore")[0]?.category.id).toBe("drugstore")
+
+		// The three unrestricted redirects flip everywhere.
+		expect(lookupPOICategory("motel")[0]?.category.id).toBe("hotel")
+		expect(lookupPOICategory("emergency room")[0]?.category.id).toBe("hospital")
+		expect(lookupPOICategory("credit union")[0]?.category.id).toBe("bank")
+
+		expect(lookupPOICategory("fire hydrant").map((m) => m.category.id)).toEqual(["fire_hydrant"])
+	})
+
+	it("regenerates deterministically and matches the committed table by content", async () => {
+		// The generator is self-deterministic: two runs produce byte-identical output (no Map/sort nondeterminism).
+		const once = prettyJSON(await generateTaxonomyTable())
+		expect(prettyJSON(await generateTaxonomyTable())).toBe(once)
+
+		// The committed taxonomy.json is the generator's output run through oxfmt,
+		// so it is compared by parsed content rather than raw bytes.
+		const committed = await readLocalJSONFile(resolvePackagePath("@mailwoman/poi-taxonomy", "data", "taxonomy.json"))
+
+		expect(committed).toEqual(await generateTaxonomyTable())
+	})
+})
+
+describe("taxonomy integrity — malformed table", () => {
+	afterEach(() => {
+		vi.doUnmock("@mailwoman/core/fs/readers")
+		vi.resetModules()
+	})
+
+	it("throws at module init when a synonym's categoryID points at a nonexistent category", async () => {
+		vi.resetModules()
+
+		vi.doMock("@mailwoman/core/fs/readers", async () => {
+			const actual = await vi.importActual<typeof import("@mailwoman/core/fs/readers")>("@mailwoman/core/fs/readers")
+
+			const malformed = {
+				version: "0.0.0",
+				overtureRelease: null,
+				categories: [
+					{ id: "hospital", label: "Hospital", hierarchy: ["hospital"], basicLabel: null, source: "overture" },
+				],
+				synonyms: [{ phrase: "x", categoryID: "nope" }],
+			}
+
+			return {
+				...actual,
+				readLocalJSONFile: async () => malformed,
+			}
+		})
+
+		await expect(import("#lookup")).rejects.toThrow(/synonym/)
+	})
+})

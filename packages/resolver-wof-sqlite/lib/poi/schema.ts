@@ -6,7 +6,7 @@
  *   Typed schema for poi.db, the first spatial layer (spec §3.4). One clustered `without rowid`
  *   B-tree uses `(h3_cell, category_id, neg_rank, rowid_key)` as its key. All rows near a res-9 cell
  *   occupy a contiguous key range. This matches byte-range and httpvfs access and follows the
- *   candidate gazetteer's layout. Rows carry denormalized name, brand and coordinates.
+ *   candidate gazetteer's layout. Rows include denormalized name, brand and coordinates.
  *   The `poi_category_codes` dictionary stores category ids as small integers. POI-taxonomy category
  *   ids remain strings. The database embeds the layer-interface tables from `@mailwoman/core/layers`.
  *   The builder writes a manifest with tier `shipped` and spine `h3` res 9. It also writes per-res-6-cell coverage.
@@ -69,7 +69,7 @@ export interface POITable {
 }
 
 /**
- * Staging mirror.
+ * The staging mirror.
  * Every column is nullable except the coords.
  *
  * The loader fills this table positionally.

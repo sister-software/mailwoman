@@ -19,8 +19,8 @@ import type { PathBuilderLike } from "path-ts"
 import { AsyncSpliterator } from "spliterator"
 
 import { $private } from "#env"
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { streamDownload, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { streamDownload, writeManifest } from "#tools/fetch/download"
 
 const HTTP_OK = 200
 

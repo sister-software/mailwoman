@@ -31,8 +31,7 @@ const IDLE_BUDGET_MS = 5000
  * a few turns and should not pay a timer.
  * Past that point, the wait is on real work.
  *
- * Continuing to spin actively harms that work.
- * Back-to-back `setImmediate` turns monopolize the event loop and starve the I/O it awaits.
+ * More spin turns monopolize the event loop and starve the I/O that the work awaits.
  */
 const IDLE_SPIN_TURNS = 50
 
@@ -147,7 +146,7 @@ export class VirtualClock implements ClockLike {
 	 * A woken continuation that runs through a library's own promise chain — Axios's
 	 * request/response interceptors — needs more microtask turns than any hardcoded count.
 	 *
-	 * Coming up short lets the clock run ahead of an in-flight dispatch.
+	 * A too-short drain lets the clock run ahead of an in-flight dispatch.
 	 * The request then records a later deadline's timestamp.
 	 *
 	 * Two dispatches can appear to share an instant when they did not.
@@ -175,8 +174,8 @@ export class VirtualClock implements ClockLike {
 	 * Drive `work` to completion, jumping virtual time to the next pending deadline
 	 * whenever the real event loop goes idle.
 	 *
-	 * {@linkcode advance} alone is not enough once the code under test interleaves
-	 * virtual sleeps with real asynchrony.
+	 * {@linkcode advance} by itself is insufficient once the code under test
+	 * interleaves virtual sleeps with real asynchrony.
 	 * A paced client whose limit sits downstream of an on-disk cache spends several real
 	 * event-loop turns in `readFile` before it ever registers its `sleep()`.
 	 *

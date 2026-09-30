@@ -41,7 +41,7 @@ export const LicensePolicy = {
 	 */
 	All: "all",
 	/**
-	 * Refuse a row whose license carries a share-alike obligation.
+	 * Refuse a row whose license imposes a share-alike obligation.
 	 *
 	 * Also refuse a row whose license text mentions a share-alike licence while stating no grant of its own.
 	 *
@@ -186,7 +186,7 @@ export interface ShareAlikeFinding {
 }
 
 /**
- * Every license value in a built corpus's license set that carries or mentions share-alike.
+ * Every license value in a built corpus's license set that imposes or mentions share-alike.
  *
  * Takes the `licenses` map recorded by `BuildCorpusManifest`.
  * The map counts the rows adapters yielded.
@@ -220,7 +220,7 @@ export interface LicenseVerdictCache {
 	read(license: string | undefined): LicenseVerdict
 	/**
 	 * Every distinct value refused so far, with the class it was refused under,
-	 * so a build that dropped rows says which values it dropped them for.
+	 * so a build that dropped rows reports which values caused each drop.
 	 */
 	refusedValues(): Map<string, LicenseRefusalKind>
 }

@@ -171,7 +171,7 @@ The previous pipeline (v0.4.0 and earlier) had three limits:
 
 With those limits, `NY-NY Steakhouse, Houston, TX` returned `region: NY, locality: Houston, region: TX`, and downstream code crashed on the two regions. The fix had to go in the reconciler, because by design each upstream stage sees only its own part of the input.
 
-This example illustrates the [knowledge-ladder](../understanding/our-approach/the-knowledge-ladder.mdx) argument. Each stage contributes one kind of information, and the joint decoder combines them. Without a joint decoder, geocoders fail on adversarial inputs like this one. Adding it was most of the v0.5.0 work.
+This example illustrates the [knowledge-ladder](../understanding/our-approach/the-knowledge-ladder.mdx) argument. Each stage contributes one kind of information, and the joint decoder combines them. Without a joint decoder, geocoders fail on adversarial inputs like this one. The v0.5.0 work focused mainly on the joint decoder.
 
 ## See also
 

@@ -6,8 +6,8 @@
  *   `usgov-imls-pls`: IMLS Public Libraries Survey outlet CSV consumer.
  *
  *   The Institute of Museum and Library Services publishes an annual Public Libraries Survey with one
- *   row per library outlet (~17K rows). Each row carries the library name, street address, city,
- *   ZIP, county, and geocoordinates.
+ *   row per library outlet (~17K rows). Each row includes the library name, street address, city,
+ *   ZIP, county and geocoordinates.
  *
  *   The adapter consumes the outlet CSV the operator pre-downloads via `fetch-imls-pls.ts`. Column
  *   names match the IMLS PLS outlet file header.
@@ -18,7 +18,7 @@
  *   License: stamped `"Public Domain"` per IMLS federal government distribution terms.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -33,7 +33,7 @@ import { lookupStateAbbreviation } from "#us/fips-state"
  */
 export const USGOV_IMLS_PLS_ADAPTER_ID = "usgov-imls-pls"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_IMLS_PLS_DEFAULT_LICENSE = "Public Domain"
@@ -54,7 +54,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_IMLS_PLS_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
 		register: SourceRegister.IMLSPublicLibraries,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "IMLS Public Libraries Survey — ~17K library outlets with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

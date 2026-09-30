@@ -12,7 +12,7 @@ tags:
 
 # What is a postcode?
 
-A postcode is a **routing instruction** rather than a geographic area. It tells a postal service how to sort and deliver mail. It does not tell a geocoder where a building is, what municipality it belongs to, or what polygon contains it. Confusing these two things is the most common error in address geocoding — and the source of a surprising fraction of production bugs.
+A postcode is a **routing instruction** rather than a geographic area. It tells a postal service how to sort and deliver mail. It does not tell a geocoder where a building is, what municipality it belongs to, or what polygon contains it. A geocoder that treats the postcode as an area makes one of the most common errors in address geocoding — and causes a surprising fraction of production bugs.
 
 ## What postcodes encode
 
@@ -42,7 +42,7 @@ When you see a ZIP code displayed as a polygon on a map, you are almost certainl
 
 This matters because the errors are systematic:
 
-- **Rural areas are the worst.** A rural ZIP may cover hundreds of square miles. The ZCTA centroid can be 10+ miles from any actual delivery point. Geocoding a rural address to its ZIP centroid routinely produces errors of 5-15 miles.
+- **Rural areas are the worst.** A rural ZIP may cover hundreds of square miles. The ZCTA centroid can be 10+ miles from any actual delivery point. A rural address geocoded to its ZIP centroid can therefore be 5-15 miles off.
 - **New development is invisible.** When a new subdivision is built and assigned a new ZIP+4, the ZCTA won't reflect it until the next decennial census — up to 10 years.
 - **PO boxes cluster at post offices.** A ZIP code used primarily for PO boxes (common in small towns) will produce a centroid at the post office building rather than at the residences the PO box holders live in.
 

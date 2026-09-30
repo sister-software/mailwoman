@@ -27,7 +27,7 @@ Item 5 is new code outside training, so it is not a suspect. Items 1-4 are the s
 
 ## The failure mode
 
-Training is a long loop of ~50,000 iterations, during which we watch a number called "loss" go down. The loss went down smoothly for the first ~1000 iterations and then climbed catastrophically. By the time we noticed, the model had unlearned everything useful and was producing garbage.
+A training run lasts about 50,000 iterations, during which we watch a number called "loss" go down. The loss went down smoothly for the first ~1000 iterations and then climbed catastrophically. By the time we noticed, the model had unlearned everything useful and was producing garbage.
 
 In software terms, imagine a process that runs fine for the first hour and then enters cascading state corruption that slowly destroys its in-memory data, even though no individual operation looks wrong. No operation segfaults or throws an exception. The numbers slowly drift from useful to useless.
 
@@ -39,7 +39,7 @@ descent through warmup  →  brief plateau at a low loss  →  sharp climb back 
 
 Every run so far has shown this shape at slightly different points. The depth of the plateau and the step where the climb starts both vary, but every run climbs.
 
-## Bisecting by elimination
+## Eliminate possible causes
 
 We have made five attempts, each varying one knob from the previous one:
 
@@ -57,7 +57,7 @@ In every bisect attempt, **the model learns something useful for several hundred
 
 Each bisect tested a different hypothesis about the cause:
 
-- **v2 tested whether the learning rate was too high.** It was not. Lowering LR delayed the climb but didn't stop it.
+- **v2 tested whether the learning rate was too high.** It was not. A lower LR delayed the climb but did not stop it.
 - **v3 tested whether the new loss-side weighting knobs were destabilising training.** They were not. v0.4.0's known-stable loss settings still produced the climb.
 - **bisect-h256 tested whether the bigger model was the problem.** It was not. We reverted the hidden size to v0.4.0's value and got the cleanest training so far, including the best validation macro-F1 we've ever measured, and the climb still happened.
 - **bisect-phrase-off (today) tested whether the phrase-prior input layer was the problem.** It was not. We turned off the phrase-prior feature concatenation entirely, and the climb still appears in the same shape at almost the same step.

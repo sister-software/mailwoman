@@ -21,6 +21,7 @@ import { join, relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { readContextSource, readContextSources } from "#context"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
@@ -33,7 +34,7 @@ const MINIMUM_REASON_LENGTH = 20
  * and path-ts's, in bare or `path.` qualified form, plus the `TemporaryDirectory`
  * builder called as `scratch.path("node_modules", …)`.
  *
- * The check is on the name alone, so a rename-import (`join as pathJoin`) slips past,
+ * The check is on the name by itself, so a rename-import (`join as pathJoin`) slips past,
  * the accepted hole that closing would require resolving imports.
  */
 const PATH_BUILDERS = new Set(["join", "path", "resolve", "resolvePath", "resolvePathBuilder"])
@@ -45,7 +46,7 @@ const PATH_BUILDERS = new Set(["join", "path", "resolve", "resolvePath", "resolv
 const ALLOWED: Record<string, string> = {
 	// The oracle for that layout: a fixture built with the implementation's own helper cannot fail
 	// when the implementation is wrong, so this file spells the path independently.
-	"packages/neural/test/integration/weights/cache.test.ts":
+	"packages/neural/lib/weights/cache.integration.test.ts":
 		"pins the cache layout independently of the helper that builds it",
 	// Probes a foreign scratch project it just created with `npm install`, reading the install
 	// layout from outside because `import.meta.resolve` would answer from the monorepo's graph.
@@ -58,25 +59,25 @@ const ALLOWED: Record<string, string> = {
 	"packages/dev-mcp/lib/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
 	// The oracle for that farm: a fixture built with the implementation's own helper
 	// cannot fail when the implementation is wrong.
-	"packages/dev-mcp/test/unit/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
+	"packages/dev-mcp/lib/worktree/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
 	// Builds a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves.
 	// A fixture without an install layout cannot test Yarn's resolution behavior.
-	"packages/repo-health/test/unit/move/plan.test.ts":
+	"packages/repo-health/lib/move/plan.test.ts":
 		"builds the scratch workspace's install link; nothing exists to resolve yet",
 	// Writes a fixture cache in the npm-prefix layout `weightsCachePackageDir` reads,
 	// spelled out so the cache rung's test stays independent of the helper it exercises.
-	"packages/neural/test/integration/weights/overlay.test.ts":
+	"packages/neural/lib/weights/overlay.integration.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
 	// Plants a fake `@vvago/vale` install under a scratch root so `valeCommand`'s resolution
 	// of the launcher and binary from an installed layout can be tested.
-	"packages/core/test/unit/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
+	"packages/core/lib/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
 	// Links the checkout's own node_modules into the staging tree for `yarn pack`'s
 	// project context, addressing no package-owned path by hand.
 	"packages/release-kit/lib/release/stage.ts":
 		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
 	// `weightsCachePackageDir` is the inverse of a resolution rather than a substitute for one:
 	// the directory does not exist yet when the layout is needed, so there is no path to resolve.
-	"packages/neural/lib/weights/index.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
+	"packages/neural/lib/weights.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
 }
 
 /**
@@ -88,12 +89,9 @@ const ALLOWED: Record<string, string> = {
  */
 async function listCandidateSources(context: RepoContext): Promise<string[]> {
 	const tracked = await trackedSourcePaths(context, { existingOnly: true })
+	const texts = await readContextSources(context, tracked)
 
-	const found = await Promise.all(
-		tracked.map(async (path) => ((await readLocalTextFile(path)).includes("node_modules") ? path : null))
-	)
-
-	return found.filter((path): path is NonNullable<typeof path> => path !== null).toSorted()
+	return tracked.filter((_path, index) => texts[index]!.includes("node_modules")).toSorted()
 }
 
 /**
@@ -193,7 +191,7 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 
 				if (key in ALLOWED) return
 
-				for (const hit of findReachArounds(await readLocalTextFile(path), path)) {
+				for (const hit of findReachArounds(await readContextSource(context, path), path)) {
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
 						message: `hand-assembled node_modules path: ${hit.text}`,

@@ -26,7 +26,7 @@ role: evidence
 6. **Caveats.** Mechanism first. Circularity caveats are mandatory.
 7. **Reproduce.** The command, and a link to the run.
 
-## Opening move
+## Start here
 
 Lead with what was measured and against which baseline, in one sentence, before any interpretation.
 

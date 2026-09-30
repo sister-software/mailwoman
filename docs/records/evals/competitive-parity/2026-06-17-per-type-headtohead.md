@@ -23,7 +23,7 @@ OpenAddresses has ~no PO boxes, intersections, or units, so these are templated 
 | intersection            | 150 |          82.0% |       0.0% |
 | unit (keeps designator) | 150 |         100.0% |       0.0% |
 
-## Reading
+## How to read the results
 
 - **The US edge is not uniform.** Neural's overall locality-match lead (+1.9pp) concentrates on addresses with structure the rules engine fumbles: multi-word localities +5.3pp, directional streets +2.0pp. On plain single-word-city addresses the two are a near-tie (+0.6pp). Coordinate p50 is identical across buckets. The difference is which CITY resolves rather than the point's precision.
 - **Structured types are a rout, by construction.** The Pelias port emits 0.0% correct structure on PO boxes, intersections, and units — no `po_box` tag, an intersection side dropped, the unit designator stripped. Neural emits them because it was trained on the negative space. The one direct gap: intersections, where neural is 82.0% — the templated `A & B` form trips it ~1 in 6.

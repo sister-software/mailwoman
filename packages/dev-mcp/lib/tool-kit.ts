@@ -6,7 +6,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
-import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"
+import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/cli/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { z } from "zod"
 
@@ -236,7 +236,7 @@ export interface DevTool {
 
 /**
  * The maximum number of diffs rendered as text.
- * Beyond it, results carry only the structured list.
+ * Beyond it, results include only the structured list.
  */
 export const RENDERED_DIFF_LIMIT = 40
 
@@ -326,7 +326,25 @@ function droppedRow(run: GeocodeRun): string[] {
 	]
 }
 
-function refusalRow(run: GeocodeRun): string[] {
+/**
+ * Renders the query-intent advisories a run attached.
+ *
+ * A `QueryIntentMarker` leaves the selected answer unchanged.
+ * Its declaration in `@mailwoman/core/pipeline` states this behavior.
+ *
+ * A marker therefore reports something about the answer rather than replacing or withholding it,
+ * and `declared_coarser_answer` sits beside a coordinate the run returned.
+ *
+ * The row names each marker and its evidence.
+ * The rows around this one show whether the parse or the resolver walk left a component empty.
+ *
+ * An earlier version of this row called every marker a refusal and attributed
+ * every empty component to the #1649 tier check.
+ * That sentence appeared on rows whose components were populated and on markers with
+ * no connection to that check, such as `poi_category` and `authority_designation`,
+ * and a reader acting on it attributed a parse failure to a stage that had not run.
+ */
+function intentAdvisoryRow(run: GeocodeRun): string[] {
 	const markers = (run.result as { intent_markers?: QueryIntentMarker[] }).intent_markers
 
 	if (!markers?.length) return []
@@ -335,14 +353,11 @@ function refusalRow(run: GeocodeRun): string[] {
 		.map((marker) => {
 			const evidence = marker.evidence ? ` ${stringifyJSON(marker.evidence)}` : ""
 
-			return `${marker.kind} via ${marker.mechanism}${evidence}`
+			return `${marker.code} via ${marker.mechanism}${evidence}`
 		})
 		.join(", ")
 
-	return [
-		`intent: REFUSED as ${named} — the #1649 check discarded a completed parse rather than the parse failing. ` +
-			"Every empty component below follows from that decision, not from the model.",
-	]
+	return [`intent advisories (the answer below is unchanged by these): ${named}`]
 }
 
 /**
@@ -365,7 +380,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 			channelsRow(run.trace),
 			localeHeadRow(run.trace),
 			decodeRow(run.trace),
-			...refusalRow(run),
+			...intentAdvisoryRow(run),
 			...droppedRow(run),
 			...resolverRows(run.trace),
 		],

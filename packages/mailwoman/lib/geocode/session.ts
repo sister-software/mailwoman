@@ -116,7 +116,7 @@ export interface GeocodeSessionOptions {
 
 	/**
 	 * Whether to record a {@link GeocodeTrace} per input.
-	 * Recording it costs one extra decode per input.
+	 * This setting costs one extra decode per input.
 	 */
 	trace?: boolean
 
@@ -167,7 +167,7 @@ export interface GeocodeTrace {
 /**
  * One address's geocode result and the {@link AddressTree} it was resolved from.
  *
- * The tree's nodes carry character offsets for span rendering.
+ * The tree's nodes store character offsets for span rendering.
  */
 export interface GeocodeRun {
 	result: GeocodeResult
@@ -495,7 +495,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let nationalDatabases: ((country: string) => RegionDatabases) | undefined
 
 	try {
-		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))).for
 	} catch {
 		nationalDatabases = undefined
@@ -513,7 +513,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let osmProvider: RegionDatabaseProvider | undefined
 
 	try {
-		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
+		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/region-database-provider")
 		osmProvider = await OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))
 	} catch {
 		osmProvider = undefined

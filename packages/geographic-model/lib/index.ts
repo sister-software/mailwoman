@@ -13,10 +13,9 @@
  *
  * Four things this package must never hold, each owned elsewhere:
  *
- * 1. Ranking policy — no weights, boosts, penalties, or candidate-ordering API. Candidate ordering
- *    belongs to `@mailwoman/resolver`, and the decode objective to `@mailwoman/neural` plus
- *    `@mailwoman/core/decoder`. Knowledge here creates observations and never overrides learned
- *    interpretation.
+ * 1. The resolver owns ranking policy. It defines weights, boosts, penalties and candidate order.
+ *    The resolver package also owns rank order. The neural package and `@mailwoman/core/decoder` own
+ *    the decode objective. This package creates observations and leaves candidate order to the resolver.
  * 2. A second POI vocabulary — external and curated POI categories, their containment hierarchy, the
  *    Overture-leaf translation, the query-phrase lexicon and the brand table belong to
  *    `@mailwoman/poi-taxonomy`; this package maps into those identifiers.

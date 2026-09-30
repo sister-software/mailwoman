@@ -70,7 +70,7 @@ function fold(input: string): string {
 
 /**
  * Normalizes a US or English street name into an address-point key, folding directionals,
- * spelled ordinals, and the USPS street-type suffix.
+ * spelled ordinals and the USPS street-type suffix.
  * The extract builder and the probe must both call it.
  */
 export function normalizeStreetForKey(street: string): StreetKey {

@@ -11,8 +11,9 @@
  *   This interface prevents the missing-delimiter failure.
  */
 
-import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
 import { describe, expect, it } from "vitest"
+
+import { createRecipeLineWriter } from "#recipes/scaffold"
 
 /**
  * Records every chunk separately, so the test can tell one write of `"a\n"`

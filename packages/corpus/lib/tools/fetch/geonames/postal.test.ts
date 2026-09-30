@@ -15,9 +15,10 @@ import type { AddressInfo } from "node:net"
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { fetchGeonamesPostal } from "@mailwoman/corpus/tools"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+import { fetchGeonamesPostal } from "#tools"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -78,8 +79,8 @@ afterAll(() => server[Symbol.asyncDispose]())
 /**
  * The retry count is what these cases pin.
  *
- * The pause between attempts is not, and paying the shipped 5 s twice per failing
- * transfer cost this file 20.1 s of the fast leg.
+ * The pause between attempts is absent.
+ * The shipped 5 s timeout runs twice per failing transfer and cost this file 20.1 s of the fast leg.
  */
 const RETRY_DELAY_MS = 1
 

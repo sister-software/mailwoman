@@ -13,7 +13,7 @@ We shipped a browser-based address parser that runs a 29 MB ONNX model entirely 
 
 Every address component was classified as "locality" with 0.2–0.4 confidence. "400 Broad St, Seattle, WA 98109" became three locality spans without a street, region, or postcode. The model was producing near-uniform logits, as an untrained model would.
 
-Toggling to the WASM backend in our debug UI produced perfect results immediately with the same model bytes, tokenizer, and input. The fault was in the GPU path.
+The debug UI produced perfect results after selecting the WASM backend, with the same model bytes, tokenizer, and input. The fault came from the GPU path.
 
 ## The wrong hypotheses
 

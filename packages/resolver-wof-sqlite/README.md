@@ -81,7 +81,7 @@ Cross-database `UNION` queries are not supported in one `findPlace` call — BM2
 comparable across separately-indexed corpora. Issue two `findPlace` calls and merge in your
 caller if you need that.
 
-## Getting the WOF SQLite distribution
+## Get the WOF SQLite distribution
 
 The Geocode Earth team mirrors WOF SQLite distributions at <https://data.geocode.earth/wof/dist/sqlite/>. The two relevant distributions for v1:
 
@@ -137,7 +137,7 @@ Builds a trimmed WOF SQLite distribution sized for browser-side deployments (Pat
 # Defaults: --top 1000 localities, --countries US, drops geojson after building aux tables
 # The slim wof-hot.db distribution is RETIRED (2026-06-20): the demo byte-range-resolves
 # against the global candidate table. `buildSlimWOFDatabase` remains importable from
-# `@mailwoman/resolver-wof-sqlite/build-slim` for test fixtures. Historical invocation:
+# `@mailwoman/resolver-wof-sqlite/build/slim` for test fixtures. Historical invocation:
 # mailwoman-wof-build-slim \
   --in /path/to/whosonfirst-data-admin-us-latest.db \
   --in /path/to/whosonfirst-data-postalcode-us-latest.db \
@@ -175,7 +175,7 @@ const { created, indexedRows, durationMs } = buildPlaceSearchFts(db, {
 })
 ```
 
-## Ranking
+## Rank places
 
 The resolver scores candidates by:
 
@@ -237,7 +237,7 @@ are all stripped safely before going to FTS5. Per-token rules:
 
 - **Bare tokens** (`"Paris"`, `"62701"`) become FTS5 **phrase matches**: `"Paris"` matches places
   named exactly "Paris", `"62701"` matches the postcode 62701 exactly.
-- **Trailing `*`** (`"627*"`, `"Pari*"`) becomes FTS5 **prefix syntax**: `627*` matches every
+- **A trailing `*`** (`"627*"`, `"Pari*"`) becomes FTS5 **prefix syntax**: `627*` matches every
   postcode starting with 627, `Pari*` matches Paris / Parishville / etc. The caller explicitly
   signals "prefix"; bare tokens stay phrase-matched for safety.
 - **Multiple tokens** join with an implicit `AND`: `"Pari* TX"` matches places whose name contains

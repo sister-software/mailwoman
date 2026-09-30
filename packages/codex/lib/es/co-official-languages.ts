@@ -16,14 +16,14 @@
  *     18/1986 of Navarre for its Basque-speaking zone.
  *
  *   Asturian and Aragonese are guarded by their statutes and not co-official, so Asturias, Huesca, Teruel and Zaragoza
- *   carry no entry. Ceuta, Melilla and the province-less territories carry none.
+ *   have no entry. Ceuta, Melilla and the province-less territories also have no entry.
  *
  *   why a table. Who's On First stores preferred province names in many languages.
  *   For languages not spoken in a province, its preferred name may belong to the autonomous community.
  *   Zamora's Catalan preferred name is `Castella i Lleó`. Seville's Asturian name is `Andalucía`.
- *   Ourense's Occitan name is `Galícia`. Reading every
- *   language's name as a surface of the province would teach those pairs. The statute says which languages a province's
- *   addresses are written in. this table carries that answer, keyed by the province's Castilian name as the gazetteer
+ *   Ourense's Occitan name is `Galícia`. If every language's name were treated as a province surface, the data would
+ *   teach those pairs. The statute specifies which languages a province's
+ *   addresses are written in. This table stores that answer, keyed by the province's Castilian name as the gazetteer
  *   spells it in its `spa` preferred form.
  */
 

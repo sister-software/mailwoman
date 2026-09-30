@@ -22,7 +22,7 @@ A per-country line-delimited JSON file written by `@mailwoman/osm`'s `emit-corpu
 Geofabrik extract. GDAL and the PBF stay in that package; this one streams the result.
 
 ```bash
-node packages/osm/out/scripts/emit-corpus-jsonl.js \
+node packages/osm/out/tools/emit-corpus-jsonl.js \
   --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/pakistan-260819.osm.pbf \
   --out $MAILWOMAN_DATA_ROOT/db/osm/corpus/osm-pk.corpus.jsonl
 ```

@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file One CycloneDX document naming every data artifact a release can deliver, with the terms each one
- *   carries.
+ * @file One CycloneDX document naming every data artifact a release can deliver, with each artifact's terms.
  *
  *   Four artifacts held a part of this record and no reader joined them. `bundles.ts` holds the publishers,
  *   terms, conditions and open questions per bundle as prose. `published-bundles.json` holds the served size
@@ -15,14 +14,14 @@
  *   CycloneDX 1.5 rather than a schema of this repository's own, because the existing validators run against
  *   it and the software SBOMs beside it are already in that format. The components are of type `data`.
  *
- *   **The document is deterministic.** `metadata.timestamp` carries the snapshot's `measuredAt` rather than
+ *   **The document is deterministic.** `metadata.timestamp` stores the snapshot's `measuredAt` rather than
  *   the run's own clock. No `serialNumber` is emitted, so re-running over an unchanged snapshot produces
  *   identical bytes and the committed file diffs only when a measurement changed.
  *
- *   **What it does not establish.** An artifact whose `layer_manifest` could not be read carries the
+ *   **What it does not establish.** An artifact whose `layer_manifest` could not be read reports the
  *   expression this repository's bundle registry assigns from the publishers' stated terms. The component
  *   records which of the two it is under `mailwoman:licenseBasis`. The 177 databases under the data root that
- *   carry no `layer_manifest` row are counted in the metadata and are not emitted as components, because a
+ *   have no `layer_manifest` row are counted in the metadata and are not emitted as components, because a
  *   component with no license field reads as unlicensed rather than as unrecorded.
  */
 
@@ -153,7 +152,7 @@ function bundleComponents(
 			"bom-ref": `bundle/${bundleName}/${artifact.remotePath}`,
 			name: artifact.remotePath,
 			// A per-state database's version is the family version `releases.json` pins.
-			// Every other artifact carries the date segment of its own object key.
+			// Every other artifact has the date segment of its own object key.
 			// That segment is how the bucket versions it.
 			version: artifact.family ?? artifact.remotePath.split("/").at(-2) ?? bundleName,
 			description: bundle.description,
@@ -213,9 +212,9 @@ function inventoryComponent(entry: InventoryEntry): DataBOMComponent {
 			...property("mailwoman:buildCommand", manifest.build_cmd),
 			...property("mailwoman:createdAt", manifest.created_at),
 			// The record count each publisher supplied to the build, verbatim as the manifest stores it.
-			// An artifact recording no count carries no property.
-			// The count cannot be recovered from the input afterwards, and a zero would
-			// assert that a publisher supplied 0 records to this build.
+			// An artifact recording no count has no property.
+			// The count cannot be recovered from the input afterwards.
+			// A zero would assert that a publisher supplied 0 records to this build.
 			...property("mailwoman:sourceRecords", manifest.source_records),
 			...property("mailwoman:bytes", entry.bytes),
 			...property("mailwoman:linkTarget", entry.linkTarget),
@@ -277,7 +276,7 @@ export function buildDataBOM(options: DataBOMOptions): DataBOM {
 }
 
 /**
- * The document as the bytes to write, with the trailing newline a committed file carries.
+ * The document as the bytes to write, including the trailing newline used in committed files.
  */
 export function serializeDataBOM(document: DataBOM): string {
 	return prettyJSON(document)

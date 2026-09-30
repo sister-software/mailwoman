@@ -1,0 +1,213 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Fill one stratum of a pre-registered panel. Shuffle eligible rows once with the registered seed.
+ *   Take rows in that order until the target is reached. Report each dropped row and the reason.
+ *
+ *   Every stratified benchmark uses this function so its draw order stays consistent. The draw order decides
+ *   which rows a frozen panel contains. A stratum with separate drop-counting logic could report a coverage
+ *   hole as a panel choice.
+ *
+ *   Each stratum decides whether a row is gradeable. Under the same-data homograph rule, gold alternates between
+ *   two bearers. A check of only the iterated row would refuse rows whose actual gold is valid.
+ */
+
+import { SeededRandom } from "@mailwoman/core/random"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+
+/**
+ * What a stratum's own rule made of one eligible row.
+ */
+export type StratumOutcome<Row> =
+	| { readonly outcome: "row"; readonly row: Row }
+	| { readonly outcome: "ungradeable" }
+	| { readonly outcome: "unbuildable" }
+
+/**
+ * What the build dropped and why — reported beside the panel, never folded into it.
+ */
+export interface StratumFillCensus {
+	stratum: string
+	eligible: number
+	selected: number
+	/**
+	 * Rows skipped because the identity join produced no coherent gold set.
+	 *
+	 * The gold reader's own census identifies which part of the guard refused them.
+	 */
+	droppedUngradeableGold: number
+	/**
+	 * Rows the stratum's own rule could not render.
+	 *
+	 * Counted apart from the gold drop because the two name different holes —
+	 * one in the gazetteer, one in the source register.
+	 */
+	droppedUnbuildable: number
+}
+
+export interface FillStratumOptions<Item, Row> {
+	stratum: string
+	eligible: readonly Item[]
+	seed: number
+	target: number
+	/**
+	 * The identity a stratum marks used, so a later stratum drawing from the same
+	 * register cannot take the row again.
+	 */
+	identify: (item: Item) => string
+	/**
+	 * Identities already taken.
+	 *
+	 * Mutated as rows are selected, so strata fill in order against one set.
+	 */
+	used: Set<string>
+	build: (item: Item, index: number) => StratumOutcome<Row>
+}
+
+/**
+ * Fill one stratum and report its census.
+ */
+export function fillStratum<Item, Row>(
+	options: FillStratumOptions<Item, Row>
+): {
+	rows: Row[]
+	census: StratumFillCensus
+} {
+	const { stratum, eligible, seed, target, identify, used, build } = options
+	const rows: Row[] = []
+	let droppedUngradeableGold = 0
+	let droppedUnbuildable = 0
+
+	// A copy, so the caller's array is untouched.
+	// This walk's order selects the rows in the frozen panel.
+	// A published record stores the panel's digest.
+	// So the generator is `SeededRandom`'s, seeded the way `SeededRandom` seeds it,
+	// rather than a normalisation re-typed here.
+	const shuffled = [...eligible]
+
+	new SeededRandom(seed).shuffle(shuffled)
+
+	for (const item of shuffled) {
+		if (rows.length >= target) break
+
+		const built = build(item, rows.length)
+
+		if (built.outcome === "ungradeable") {
+			droppedUngradeableGold++
+
+			continue
+		}
+
+		if (built.outcome === "unbuildable") {
+			droppedUnbuildable++
+
+			continue
+		}
+
+		rows.push(built.row)
+		used.add(identify(item))
+	}
+
+	return {
+		rows,
+		census: {
+			stratum,
+			eligible: eligible.length,
+			selected: rows.length,
+			droppedUngradeableGold,
+			droppedUnbuildable,
+		},
+	}
+}
+
+/**
+ * The zero-padded ordinal included in a row id, so ids sort in draw order.
+ */
+export function padRowIndex(index: number): string {
+	return String(index + 1).padStart(3, "0")
+}
+
+/**
+ * The register columns a panel builder reads to select and grade a row.
+ *
+ * `GeoNamesCity` satisfies it.
+ * The builders take this shape rather than that type so the grouping and gold
+ * helpers below are not tied to one register's reader.
+ */
+export interface PanelSubject {
+	geonameid: string
+	name: string
+	asciiname: string
+	lat: number
+	lon: number
+	country: string
+	admin1: string
+	population: number
+}
+
+/**
+ * Group rows by lowercased ASCII name.
+ *
+ * Both builders use these groups to find names with one bearer.
+ *
+ * Build this grouping once and pass it down.
+ * Each candidate row needs a lookup.
+ *
+ * A group rebuild for each row would walk the whole register repeatedly.
+ */
+export function groupByFoldedName<Subject extends PanelSubject>(subjects: readonly Subject[]): Map<string, Subject[]> {
+	const byName = new Map<string, Subject[]>()
+
+	for (const subject of subjects) {
+		const key = subject.asciiname.toLowerCase()
+		const bucket = byName.get(key) ?? []
+
+		bucket.push(subject)
+		byName.set(key, bucket)
+	}
+
+	return byName
+}
+
+/**
+ * Rows whose name is borne exactly once and which no earlier stratum has taken, in geonameid order.
+ *
+ * The order matters and is why this is shared rather than re-typed: `fillStratum` shuffles what
+ * it is handed, so two builders sorting differently would draw different rows from the same seed.
+ * `extra` is the caller's own rule — a population floor, a band — applied before the sort.
+ */
+export function uniqueNameEligible<Subject extends PanelSubject>(options: {
+	subjects: readonly Subject[]
+	byName: ReadonlyMap<string, Subject[]>
+	used: ReadonlySet<string>
+	extra?: (subject: Subject) => boolean
+}): Subject[] {
+	const { subjects, byName, used, extra } = options
+
+	return subjects
+		.filter((subject) => byName.get(subject.asciiname.toLowerCase())!.length === 1)
+		.filter((subject) => (extra ? extra(subject) : true))
+		.filter((subject) => !used.has(subject.geonameid))
+		.toSorted((left, right) => compareByCodePoint(left.geonameid, right.geonameid))
+}
+
+/**
+ * The gold a panel row records: the register's own entity and coordinate,
+ * plus the identity set the concordance reached.
+ *
+ * Every benchmark here grades against this shape, so it is written once.
+ */
+export function goldOf<Subject extends PanelSubject>(subject: Subject, placeIDs: number[]) {
+	return {
+		geonameid: subject.geonameid,
+		placeIDs,
+		name: subject.name,
+		country: subject.country,
+		admin1: subject.admin1,
+		lat: subject.lat,
+		lon: subject.lon,
+		population: subject.population,
+	}
+}

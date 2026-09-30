@@ -27,7 +27,7 @@ import { POIExplorer, PipelineExplorer } from "@mailwoman/react"
 import "@mailwoman/react/styles.css"
 ```
 
-Styling ships as a standalone stylesheet (`@mailwoman/react/styles.css`). It is plain CSS with a `mw-`
+The stylesheet ships as a standalone file (`@mailwoman/react/styles.css`). It is plain CSS with a `mw-`
 prefix and reads Infima tokens, so it renders correctly both inside Docusaurus and standalone. No
 component imports CSS, so the bare package import stays safe to load in Node.
 

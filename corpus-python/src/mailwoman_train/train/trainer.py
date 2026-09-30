@@ -1,4 +1,4 @@
-"""Training loop for the Stage 1 coarse token-classification model.
+"""Train the Stage 1 coarse token-classification model.
 
 `setup.py` holds what a run decides before its first batch. `loop.py` runs the optimizer loop.
 Callbacks write the run's outputs.
@@ -18,7 +18,7 @@ import torch
 from ..config import Config
 from ..data.loader import IGNORE_INDEX, iter_batches
 from ..data.source_reps import format_derivation, resolve_config_reps
-from ..evaluation.metrics import cross_pollution, token_f1
+from ..evaluation.metrics import cross_pollution, per_locale_tag_f1, token_f1
 from ..nn.encoder import force_math_sdpa
 from ..protocols import TrainCallback
 from ..tokenizer import Tokenizer
@@ -53,7 +53,9 @@ def _eval_val(
     device: torch.device,
     max_rows: int | None,
 ) -> dict[str, float]:
-    """Streaming val-set eval: mean val loss, token-level macro F1, the cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on.
+    """Evaluate the validation set and return mean loss, token-level macro F1 and cross-pollution regression.
+
+    Include auxiliary locale-head accuracy when self-conditioning is on.
 
     ``tokenizer`` is None on the char path, where ``iter_batches`` encodes per character, so a guard
     that refuses a None tokenizer here would stop every char-mode run at its first eval."""
@@ -96,6 +98,15 @@ def _eval_val(
     metrics["val_rows"] = rows_seen
     row_locale = torch.cat(all_locale_ids, dim=0) if all_locale_ids else None
     metrics.update(cross_pollution(preds, labels, row_locale))
+    metrics.update(
+        per_locale_tag_f1(
+            preds,
+            labels,
+            row_locale,
+            num_labels=len(label_set.bio_labels),
+            bio_labels=label_set.bio_labels,
+        )
+    )
     if all_locale_preds and row_locale is not None:
         locale_pred = torch.cat(all_locale_preds, dim=0)
         valid = row_locale != IGNORE_INDEX

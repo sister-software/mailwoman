@@ -6,7 +6,7 @@
  *   Validates the hand-labeled golden eval set, where every labeled component must occur in `raw`.
  */
 
-import { componentsPresentIn } from "@mailwoman/codex/address-format"
+import { componentsPresentIn } from "@mailwoman/codex/address/format"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"

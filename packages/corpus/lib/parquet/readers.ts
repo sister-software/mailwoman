@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Promise-based parquet reads. The iterator-based reads live in `./streams`.
  *
- *   {@linkcode readParquetRows} throws when the file is missing, and {@linkcode tryReadParquetRows} returns `null`.
+ *   {@linkcode readParquetRows} throws when the file is missing. {@linkcode tryReadParquetRows} returns `null`.
  *   Both throw for an unreadable file, so a caller cannot mistake a read failure for an empty file.
  */
 

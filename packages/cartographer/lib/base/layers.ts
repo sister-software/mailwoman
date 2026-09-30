@@ -20,12 +20,13 @@ export const HillsLayerID = LayerID(HillshadeTileSetID, "hills")
 /**
  * Splits `layers()` into non-label and label groups.
  *
- * Building footprints, water outlines, and hillshade sit between base geometry and labels.
+ * The interval between base geometry and labels holds the footprints.
+ * It also holds water outlines and hillshade.
  *
  * `@protomaps/basemaps@5.x` doesn't expose a `noLabels` helper.
  * `labelsOnly: true` gives only the label layers.
  *
- * Subtracting that set from the full list yields the non-label group.
+ * The full list minus that set yields the non-label group.
  */
 const allBaseLayers = layers(MailwomanBaseTileSetID, MailwomanBaseFlavor, { lang: "en" })
 const labelLayers = layers(MailwomanBaseTileSetID, MailwomanBaseFlavor, { lang: "en", labelsOnly: true })

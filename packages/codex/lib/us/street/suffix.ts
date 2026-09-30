@@ -61,8 +61,8 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() 
  * Preferred USPS abbreviation per canonical (`avenue → "AVE"`, `street → "ST"`).
  */
 export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, string>> = Object.fromEntries(
-	// Every Pub-28 canonical carries at least one variant, and the JSON import types
-	// values as `string[]`, so the head is asserted present.
+	// Every Pub-28 canonical has at least one variant.
+	// The JSON import types values as `string[]`, so the head is asserted present.
 	(Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]!])
 ) as Readonly<Record<USStreetSuffix, string>>
 
@@ -86,7 +86,7 @@ export function matchTrailingSuffix(street: string): { canonical: USStreetSuffix
 }
 
 /**
- * The USPS suffix record under its original isp-nexus name, aliasing {@link US_STREET_SUFFIX_VARIANTS}.
+ * The USPS suffix record.
  */
 export const StreetSuffixAbbreviationRecord = US_STREET_SUFFIX_VARIANTS
 

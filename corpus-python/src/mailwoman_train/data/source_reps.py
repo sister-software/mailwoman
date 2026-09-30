@@ -8,7 +8,7 @@ once the corpus is known.
 With ``W`` the sum of the fixed weights, ``S`` the run's total samples and ``D = sum(reps_i * rows_i)``
 over the reps-targeted sources, those sources take ``D / S`` of the draws, so
 ``total_weight = W / (1 - D / S)`` and ``weight_i = reps_i * rows_i * total_weight / S``. Their draws
-come out of the fixed sources' share, ``D`` must stay below ``S``, and at least one source must carry a
+come out of the fixed sources' share, ``D`` must stay below ``S``, and at least one source must receive a
 fixed weight or there is no reference to scale against.
 """
 
@@ -60,7 +60,7 @@ def derive_source_weights(
 
     missing = sorted(src for src in source_reps if not rows_by_source.get(src))
     if missing:
-        # An unreadable row count leaves the exposure unknown. Deriving a weight from it would
+        # An unreadable row count leaves the exposure unknown. A derived weight would
         # silently change the mixture.
         raise ValueError(f"reps-targeted sources have no readable train rows in the corpus: {missing}")
 

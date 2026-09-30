@@ -18,7 +18,7 @@ import { walkNodes } from "#decoder/tree/walk"
 import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
- * True when every node in the tree either carries `tag` or bears no value.
+ * True when every node in the tree either has `tag` or bears no value.
  *
  * A tag-matching node counts even when its value is empty.
  * The guard asks whether the parser emitted this shape.
@@ -73,7 +73,7 @@ export interface FlatTreeNode {
 	/**
 	 * Where the assertion came from, one of `rule`, `neural`, `resolver`.
 	 *
-	 * Carried because a span that keeps its tag, its text and its confidence while its
+	 * Included because a span that keeps its tag, its text and its confidence while its
 	 * source moves from `resolver` to `neural` has lost its gazetteer backing.
 	 * A projection that drops this reports that span as unchanged.
 	 */
@@ -82,14 +82,14 @@ export interface FlatTreeNode {
 	/**
 	 * The resolver's answer for this span, when one won.
 	 *
-	 * Carried for the same reason `source` is.
+	 * Included for the same reason `source` is.
 	 * A projection that keeps only the text and the tag cannot tell a span that resolved
 	 * to a different place from one that did not move at all.
 	 *
 	 * `alternatives` is reduced to its length.
 	 * Consumers read the retrieval breadth.
 	 *
-	 * Returning candidate objects invites a walk this projection already performed.
+	 * Candidate objects would invite a walk that this projection already performed.
 	 */
 	placeID?: string
 	lat?: number
@@ -104,8 +104,8 @@ export interface FlatTreeNode {
  * It coincides with source order only while every parent's span precedes its children's.
  * The decoder does not promise that ordering.
  *
- * Sorting is what the tuple projection already does, so this makes a rendered span list
- * and `decodeAsTuples` agree by construction.
+ * The tuple projection already sorts the results, so the same order makes a rendered
+ * span list and `decodeAsTuples` agree by construction.
  */
 export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 	if (!tree) return []

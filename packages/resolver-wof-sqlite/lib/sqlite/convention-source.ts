@@ -7,7 +7,7 @@
 import { tryParsingJSON } from "@mailwoman/core/json"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "#convention/index"
+import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "#convention"
 
 /**
  * Reads per-place address conventions from the convention table in an attached

@@ -15,11 +15,11 @@ New to Mailwoman? Start with [How Mailwoman parses an address](./how-mailwoman-p
 
 ## The clusters
 
-- **Parsing internals** — tokenization, BIO labels, the Viterbi decoder, the FST priors, attention. What happens between a raw string and a labeled tree. Start at [How the model reasons](./how-the-model-reasons.mdx).
-- **Training and corpus** — how the training data gets built, validated, and turned into a model. Start at [Training pipeline](./training-pipeline.mdx).
+- **Parser internals** — tokenization, BIO labels, the Viterbi decoder, the FST priors, attention. This section covers the path from a raw string to a labeled tree. Start at [How the model reasons](./how-the-model-reasons.mdx).
+- **Model data and corpus** — how the system builds and validates training data, then turns it into a model. Start at [Workflow for training](./training-pipeline.mdx).
 - **Resolver and gazetteer** — turning labeled spans into coordinates against Who's On First. Start at [Resolver and Who's On First](./resolver-and-wof.mdx).
 - **Record matching** — geocode-first entity resolution for messy records with no shared ID. Start at [Geocode-first record matching](./geocode-first-record-matching.mdx).
-- **Switching guides** — coming from Pelias, libpostal, Nominatim, Photon, or OpenCage? These map the differences directly, starting with [How Mailwoman compares](./how-mailwoman-compares.mdx).
+- **Migration guides** — users of Pelias, libpostal, Nominatim, Photon, or OpenCage can map the differences directly, starting with [How Mailwoman compares](./how-mailwoman-compares.mdx).
 
 ## Article shape
 

@@ -3,40 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `tiger`: US Census tiger/Line consumer adapter.
+ * `tiger`: Adapter for US Census TIGER/Line data.
  *
- *   tiger/Line is the canonical US street + locality dataset published by the Census Bureau as a
- *   **public-domain** product (no ODbL share-alike concerns for US-only corpora). Coverage extends
- *   to every street segment with a name + every incorporated place + CDP across the 50 states + DC + the
- *   five primary territories — substantially better US street-name coverage than OSM, especially in
- *   rural areas.
+ * This reads a prebuilt SQLite database (from TIGER shapefiles) and emits:
+ * - Street rows from `tiger_streets`
+ * - Locality rows from `tiger_places`
  *
- *   Following the `wof-admin` / `wof-postalcode` pattern, this adapter consumes a SQLite database the
- *   operator pre-builds from the raw tiger shapefiles (see the readme for the schema and a
- *   suggested `ogr2ogr` pipeline). The mailwoman side does not parse Shapefile binary directly —
- *   keeping the adapter narrow lets the operator pick their own ingestion tool (ogr2ogr / shp2pgsql
- *   / a custom Python script / etc.) without forcing a heavy native dep into `@mailwoman/corpus`.
- *
- *   Two row classes are emitted:
- *
- *   - **Street-level** (`tiger_streets`): one row per segment, optionally with up to two postcode
- *       variants if `zipl` / `zipr` differ. Components: `{ street, region, postcode? }`. Streets
- *       without a recognized state FIPS are dropped — there's no useful row without `region`.
- *   - **Locality-level** (`tiger_places`): up to three variants per place: locality-only,
- *       locality-with-region, locality-with-region-country (mirrors `wof-admin`'s fan-out for
- *       consistency).
- *   - `packages/corpus/lib/us/fips-state.ts` — the FIPS → `{abbreviation, name}` lookup table
- *       (originally `tiger/state.ts`, AGPL-3.0 → AGPL-3.0). The full isp-nexus tiger module ships a
- *       TypeORM-backed service layer. mailwoman only needs the lookup data so we don't carry the
- *       service layer over.
- *
- *   License: stamped `"Public Domain"` per Census Bureau guidance on tiger/Line. No per-row override
- *   needed — every row in tiger is the same license.
+ * TIGER is public domain, so every emitted row is stamped `"Public Domain"`.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
+import type { TIGERDatabase } from "@mailwoman/tiger/schema"
 
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
@@ -44,22 +22,16 @@ import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 import { lookupFipsState } from "#us/fips-state"
 
 /**
- * Registry id for this adapter.
- *
- * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
+ * Registry ID for this adapter.
  */
 export const TIGER_ADAPTER_ID = "tiger"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
- * consumers inherit the terms rather than having to look them up.
+ * Default license for rows from this source.
  */
 export const TIGER_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * The country surface form used in `formatAddress` for US.
- *
- * Matches the canonical OpenCage US template output so reconciliation doesn't strip it
- * when the row carries `country` explicitly.
+ * Country display name used by `formatAddress`.
  */
 const US_COUNTRY_DISPLAY = "United States of America"
 
@@ -79,13 +51,7 @@ interface TigerPlaceRow {
 }
 
 /**
- * Yield one or more `CanonicalRow`s per street segment.
- *
- * Postcode variants:
- *
- * - No ZIP set → one row, street + region.
- * - `zipl === zipr` → one row, street + region + postcode.
- * - `zipl !== zipr` → two rows (one per side's ZIP).
+ * Build one or more street variants from a TIGER street segment.
  */
 function* streetVariants(row: TigerStreetRow): Iterable<{
 	components: CanonicalRow["components"]
@@ -141,7 +107,7 @@ function* streetVariants(row: TigerStreetRow): Iterable<{
 }
 
 /**
- * Three locality-level variants, mirroring `wof-admin`'s fan-out.
+ * Build locality variants for a TIGER place.
  */
 function* placeVariants(row: TigerPlaceRow): Iterable<{
 	components: CanonicalRow["components"]
@@ -171,9 +137,7 @@ function* placeVariants(row: TigerPlaceRow): Iterable<{
 }
 
 /**
- * Build a tiger adapter.
- *
- * Pure factory so multiple instances can be created in tests.
+ * Build a TIGER adapter.
  */
 export function createTigerAdapter(): CorpusAdapter {
 	return {
@@ -181,7 +145,7 @@ export function createTigerAdapter(): CorpusAdapter {
 		defaultLicense: TIGER_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.CensusTIGER,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"US Census TIGER/Line streets + places consumer (public-domain); SQLite DB built via `mailwoman tiger fetch`.",
 
@@ -256,6 +220,6 @@ export function createTigerAdapter(): CorpusAdapter {
 }
 
 /**
- * The configured adapter instance registered with the corpus builder.
+ * Configured adapter instance.
  */
 export const tigerAdapter = createTigerAdapter()

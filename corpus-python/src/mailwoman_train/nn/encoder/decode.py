@@ -1,4 +1,4 @@
-"""Reading tag sequences out of the logits.
+"""Read tag sequences from the logits.
 
 `forward` returns logits. These two paths return tags. They are the only inference paths that
 consult the CRF and trim each row to its mask length. A caller gets one unpadded list per row.
@@ -53,7 +53,7 @@ class CoarseEncoderDecode(CoarseEncoderState):
         """Top-K tag sequences per row with calibrated log-prob scores.
 
         v0.5.0 thread C: this is what Stage 5 reconcile (Thread D) consumes. Each row
-        gets up to ``k`` ``TopKPath`` items, sorted by score descending. Padding is
+        returns up to ``k`` ``TopKPath`` items, sorted by score descending. The decoder trims padding
         trimmed from each path's ``sequence``. Only works when the encoder was built with
         ``use_crf=True`` — argmax-only encoders have no notion of path probability.
         """

@@ -13,12 +13,12 @@
  *   (`us/state.ts`) and Canadian provinces (`ca/province.ts`). Both directions are covered: the ISO
  *   code (`QC` → Quebec) and the full name (`Quebec` / `Québec` → the `QC` record), so a resolver
  *   can expand the abbreviation the gazetteer FTS index lacks ("QC" is not an alt-name of Québec)
- *   into the full name it does carry. This is a soft prior rather than a routing decision. The gazetteer
+ *   into the full name it does contain. This is a soft prior rather than a routing decision. The gazetteer
  *   still does the geographic confirmation (per the registry-backed-soft-prior doctrine).
  *
  *   The US and Canadian code sets are disjoint. No two-letter code or full name collides between them, so the
  *   combined lookup below is unambiguous. `CA` resolves to California the
- *   US state (Canada's provinces carry no `CA` subdivision code), never to Canada the country —
+ *   US state (Canada's provinces have no `CA` subdivision code), never to Canada the country —
  *   country recognition stays with `matchCountry`.
  *
  *   Source: the underlying `US_STATE_BY_ABBREVIATION` (USPS Publication 28, Appendix B) and

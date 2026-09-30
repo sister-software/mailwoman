@@ -43,7 +43,7 @@ const LOADED_WITHOUT_AN_IMPORT = [
 	// Playwright specs: the runner collects them from disk by glob.
 	"(^|/)test/browser/[^/]+[.]spec[.]ts$",
 	// A worker script must be a real file on disk for the runtime to spawn by path.
-	// `packages/mailwoman/test/unit/geocode/stream.test.ts` hands this one to a worker, and
+	// `packages/mailwoman/lib/geocode/stream.test.ts` hands this one to a worker, and
 	// `@mailwoman/site-kit/vite/pwa` names `lib/service-worker.ts` as the `injectManifest` entry.
 	"(^|/)lib/test-fixtures/[^/]+-worker[.](?:js|ts)$",
 	"(^|/)lib/service-worker[.]ts$",
@@ -53,6 +53,34 @@ const LOADED_WITHOUT_AN_IMPORT = [
 	// `@mailwoman/neural`'s `./onnx-runner` is the case.
 	"(^|/)lib/onnx/runner/browser[.]ts$",
 ]
+
+/**
+ * Directories inside `lib/` whose role is acquisition, build tooling or the CLI
+ * rather than the package's library.
+ *
+ * Any package's `sdk`, `tools`, `scripts`, `commands`, `cli` and `dev-tools`
+ * directories hold one of those roles, and so do the named `mailwoman` directories
+ * for its CLI views, evaluation harness and build pipelines.
+ *
+ * Each directory's own module beside it (`lib/sdk.ts` beside `lib/sdk/`) belongs to it.
+ * `dev-mcp` and `mcp` use `tools` for MCP tool definitions, which are their library.
+ */
+const ROLE_DIRECTORIES =
+	"^packages/[^/]+/(?:sdk|tools|cli)/|" +
+	"^packages/[^/]+/lib/(?:sdk|tools|scripts|commands|cli|dev-tools)(?:/|[.]tsx?$)|" +
+	"^packages/[^/]+/lib/.*/(?:sdk|tools|scripts|commands|cli|dev-tools)(?:/|[.]tsx?$)|" +
+	"^packages/mailwoman/lib/(?:debug-view|doctor|eval-harness|gazetteer-pipeline|coverage|release-tools|tiles)(?:/|[.]tsx?$)"
+
+const LIBRARY_TOOLS = "^packages/(?:dev-mcp|mcp)/lib/tools(?:/|[.]tsx?$)"
+
+/**
+ * Packages whose whole `lib/` is tooling: the development and release servers, the repository checks,
+ * the operator CLI, build helpers, the planetary data pipeline, the reference geocoder clients
+ * the evaluations call, and the training-corpus build kit, whose recipes read acquired sources.
+ * They may import any role.
+ */
+const TOOLING_PACKAGES =
+	"^packages/(?:dev-mcp|ops-cli|release-kit|release-mcp|repo-health|storage-kit|site-kit|astrogeology|geocode-oracle|corpus)/"
 
 /**
  * @type {IConfiguration}
@@ -97,7 +125,21 @@ const config = {
 				"import now names them.",
 			severity: "error",
 			from: { path: "^packages/(?:react|tile-worker|api|fastify|mcp|earth|planetary)/" },
-			to: { path: "^packages/[^/]+/lib/(?:tools|sdk)/" },
+			// The directory's own module sits beside it (`lib/sdk.ts` beside `lib/sdk/`),
+			// so the pattern names both.
+			// `mcp/lib/tools.ts` is `mcp`'s MCP tool definitions, a module with no directory beside it.
+			to: { path: "^packages/[^/]+/lib/(?:tools|sdk)(?:/|\\.tsx?$)", pathNot: "^packages/mcp/lib/tools\\.ts$" },
+		},
+		{
+			name: "no-library-to-role-directory",
+			comment:
+				"A package's library in `lib/` never imports acquisition, build tooling or the CLI, in its own package or another. " +
+				"Those layers import the library. Under the `./*` export pattern every module in `lib/` is public API, " +
+				"so a library module that reaches `sdk/` or `tools/` publishes that dependency (#2404).",
+			severity: "error",
+			// A test ships in no tarball, and a test that builds its fixture through `sdk/` is test setup.
+			from: { path: "^packages/[^/]+/lib/", pathNot: [ROLE_DIRECTORIES, TOOLING_PACKAGES, "[.]test[.]tsx?$"] },
+			to: { path: ROLE_DIRECTORIES, pathNot: [LIBRARY_TOOLS] },
 		},
 		{
 			name: "no-app-factory-to-mailwoman",

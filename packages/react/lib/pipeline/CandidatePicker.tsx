@@ -6,10 +6,10 @@
  *   `CandidatePicker` — the ranked list of alternate gazetteer candidates. clicking one selects it.
  *   Presentational. the selected index is owned by the caller (the pipeline hook).
  *
- *   The row shows the rank rather than the score. `ResolvedPlaceView.score` is implementation-defined. Its own type says
+ *   The row shows the rank rather than the score. `ResolvedPlaceView.score` is implementation-defined. Its type specifies
  *   "callers should treat as ordinal" — and the backends do not agree on a scale: the FTS regime is a negated bm25
- *   plus additive tiers, while the candidate regime is exactly `log10(population + 1)`. Printing both put
- *   "New York · 6.95" (log10 of 8.9M) directly under "350 5th Ave · 1.00" from a bounded blend, which reads as one
+ *   plus additive tiers, while the candidate regime is exactly `log10(population + 1)`. Both regimes put
+ *   "New York · 6.95" (log10 of 8.9M) directly under "350 5th Ave · 1.00" from a bounded blend. That reads as one
  *   number beating another by a factor of seven rather than as two numbers that never shared a scale.
  *   `docs/records/reviews/2026-08-04-resolver-score-abstention.md` measures this in full.
  *

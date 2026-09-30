@@ -8,7 +8,7 @@
  *
  *   The overlay writes to the data root rather than the tracked package. A worktree starts empty. `yarn test`
  *   could mutate tracked directories. `fs.copyFile` can also write through a leftover symlink that a publish tarball
- *   rejects (`YN0035`). Writing outside git avoids these cases. Symlinks are safe there because no operation tars the data root.
+ *   rejects (`YN0035`). A path outside git avoids these cases. Symlinks are safe there because no operation tars the data root.
  *
  *   Run with `--plan` (or `--dry-run`) to see what it would do and make no change.
  *
@@ -27,7 +27,7 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 import { relative, resolvePath, resolvePathBuilder } from "path-ts"
 
-import { $public } from "#env/index"
+import { $public } from "#env"
 import { type BuildableArtifact, type LinkableArtifact, readWeightsRecipe } from "#weights/weights-recipe"
 
 export interface LinkWeightsOverlayOptions {
@@ -105,7 +105,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		const cardSource = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
 
 		// Copy the card to keep the overlay independent of one working tree.
-		// Removing a worktree after linking would leave the card dangling.
+		// A worktree removal after linking would leave the card dangling.
 		if ((await pathExists(cardSource)) && !plan) {
 			await makeDirectories(dir)
 			await removePathIfPresent(resolvePath(dir, "model-card.json"))

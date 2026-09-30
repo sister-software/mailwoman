@@ -29,7 +29,7 @@ import { readLocalTextFile } from "#fs/readers"
 import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
 import { sha256Hex } from "#hash"
 import { tryParsingJSON, stringifyJSON } from "#json"
-import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
+import { ConsoleLogger, type IRuntimeLogger } from "#logging"
 
 /**
  * Options for {@linkcode buildDiskStorage}.
@@ -47,7 +47,7 @@ export interface DiskStorageOptions {
 	 *
 	 * This is the hook for "a 200 whose body isn't what this API is supposed to return" —
 	 * Some upstreams, including SEC EDGAR, serve an HTML error page with a 200 status.
-	 * Persisting that page under a permanent TTL poisons the URL indefinitely.
+	 * A permanent TTL for that page poisons the URL indefinitely.
 	 *
 	 * The structural checks (serializable, finite `createdAt`/`ttl`) always run regardless.
 	 */
@@ -193,7 +193,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 			if (serialized === null) {
 				// Drop any older entry too: the interceptor is telling us this key's content just changed.
-				// Keeping a superseded body would be worse than a miss.
+				// A superseded body would turn this changed response into a stale cache hit.
 				await removeEntry(key)
 
 				return

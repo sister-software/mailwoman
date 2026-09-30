@@ -115,7 +115,7 @@ US-2k coord p50 3.31 km / resolve 1.000 / region 0.999; CZ-1k resolved-p50 3.29 
    `scripts/eval/ledger-append.ts`; `promotion-check.ts` prints the pre-filled append command on
    every PASS, so the update no longer depends on discipline). The 4.5–4.16 gap stays
    unpopulated and is documented in the row's notes.
-3. **Standing re-score rule — APPROVED (operator, 2026-07-02)** and written into
+3. **Approved re-score rule (operator, 2026-07-02)**, written into
    `CONTRIBUTING_MODEL_WORK.mdx`: every 5 promotes, or any promote that lowers a check floor,
    triggers a full re-score published as a dated scorecard. v4.4.0 → v4.15.0 was 11 promotes
    with none; this doc is the debt paid once.

@@ -7,7 +7,7 @@
  *   its QueryShape and returns a confidence from 0 to 1.
  */
 
-import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
+import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street/suffix"
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 import { classifyTokens, foldInputClass } from "@mailwoman/query-shape/character-class"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
@@ -142,7 +142,8 @@ export function withoutPostcodeSpans(text: string, shape: QueryShapeLike): strin
 
 	let remainder = text
 
-	// Removing spans from last to first keeps the remaining offsets valid.
+	// The loop removes spans from last to first.
+	// This order keeps the remaining offsets valid.
 	for (let index = merged.length - 1; index >= 0; index--) {
 		const span = merged[index]!
 
@@ -158,7 +159,7 @@ export function withoutPostcodeSpans(text: string, shape: QueryShapeLike): strin
 /**
  * Reports whether text contains a Unicode letter.
  *
- * The `alpha` character class alone can match punctuation-only input.
+ * By itself, the `alpha` character class can match punctuation-only input.
  */
 export function carriesLetter(text: string): boolean {
 	return /\p{L}/u.test(text)

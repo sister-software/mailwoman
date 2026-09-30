@@ -6,7 +6,7 @@
  *   The client serves two routes on the license worker.
  *   The status route returns the public status for a license ID.
  *   The refresh route trades a license ID and secret for the current token.
- *   The client stays outside the `license` barrel like `publication.ts` because it carries the HTTP client.
+ *   The client stays outside the `license` barrel like `publication.ts` because it imports the HTTP client.
  *   The barrel sits on the CLI launcher's path.
  *   `unreachable` is a network result rather than a license verdict.
  *   Callers report it as a network result.
@@ -18,7 +18,7 @@ import type { CacheRequestConfig } from "axios-cache-interceptor"
 import { APIClient, type APIClientConfig } from "#api/APIClient"
 import { $public } from "#env"
 import { ResourceError } from "#errors/schema"
-import { silentLogger } from "#logging/index"
+import { silentLogger } from "#logging"
 import { withoutTrailingSlashes } from "#strings/format"
 
 /**

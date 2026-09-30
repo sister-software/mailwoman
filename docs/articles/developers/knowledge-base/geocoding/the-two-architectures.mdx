@@ -47,8 +47,8 @@ parser first. Pelias shapes its queries with libpostal, which accounts for the 4
 That parse shapes the query without deciding the answer, and the ranking still runs against one index
 over everything. The system never decides that `Springfield` is a locality. It finds documents that
 score well against the token `springfield` and ranks them. The system does not resolve ambiguity. It
-returns the candidates as a result list. Adding a country means adding documents. Adding a language
-means adding name variants to existing documents. Neither requires writing a grammar.
+returns the candidates as a result list. To add a country, the index needs more documents. To add a
+language, it needs name variants in existing documents. Neither change requires a grammar.
 
 Nominatim, Photon and Pelias use this architecture, and so does the tantivy-based
 [Airmail](https://github.com/ellenhp/airmail). The storage engines differ (a relational database with
@@ -68,14 +68,14 @@ everything, queried as text.
 - **A ranked list suits autocomplete.** A search box needs five plausible completions instead of
   one confident answer, and this architecture always produces a ranked list.
 
-**What it costs.** Ranking runs against the whole corpus at query time, so the corpus needs to be in
+**What it costs.** The system ranks against the whole corpus at query time, so the corpus needs to be in
 memory, and the ranking function must be tuned against all of it at once. A change that improves one
 country's recall can reduce another's precision without any warning, and you find out only from the
 aggregate scores. The answer is also a matched document without a breakdown of your input. You learn which
 record matched, but you do not learn which part of your string matched what. If you need to know whether `Ave` was a
 street suffix or part of a venue name, this architecture never determines that.
 
-## Architecture two: understand, then look up
+## Architecture two: parse, then look up
 
 This design labels the string first. It decides that one span is a house number, another a street,
 another a locality and another a postcode, without consulting any place database, because that decision
@@ -141,7 +141,7 @@ against it.
 **Disk space also costs something.** Mailwoman's US rooftop tier is 41.3 GB if you download all of
 it. The difference is that the large part is optional, split by state, and unused until queried.
 
-**Both designs pay for the same thing in different ways.** Geocoding needs the world's places stored
+**Both designs pay for the same thing in different ways.** A geocoder needs the world's places stored
 somewhere it can reach them. The search design reaches them by ranking, which needs them in memory. The
 label-then-look-up design reaches them by constrained lookups, which lets them stay on disk. It pays
 for that with a model and a labeled corpus per locale. That cost is paid before you run a single query,

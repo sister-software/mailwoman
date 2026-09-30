@@ -10,7 +10,7 @@ import { dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import type { RepoContext } from "#check"
-import { inventorySourceComments, type InventoryResult } from "#comment/triage/index"
+import { inventorySourceComments, type InventoryResult } from "#comment/triage"
 
 /**
  * Under `.cache/` because it is rebuilt from the tree on every run and no tool reads it across checkouts.
@@ -26,8 +26,8 @@ export interface TriageInventoryReport extends InventoryResult {
 }
 
 /**
- * `.d.ts` carries generated declarations and `out/` the compiled tree, so both would
- * inventory comments this repository did not write and cannot edit.
+ * `.d.ts` contains generated declarations and `out/` contains the compiled tree,
+ * so both would inventory comments this repository did not write and cannot edit.
  */
 function isInventorySource(path: string): boolean {
 	const isPython = path.startsWith("corpus-python/") && path.endsWith(".py")

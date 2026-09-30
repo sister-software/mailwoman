@@ -36,7 +36,7 @@ dot_. None of the 670 million training rows could teach the span to stay whole, 
 times more training data had moved the score by 2.9 points. More repetition cannot fix a
 gap in the representation.
 
-## Listening is a decoder feature
+## The decoder merges fragments across punctuation
 
 The fix needed neither new data nor new weights. It is a dozen lines of decode logic that
 we now call the span bridge. When two fragments carry the same tag and only a short run of
@@ -61,10 +61,10 @@ eval failure points at the _system_, which may or may not mean the weights. Last
 stubborn tag turned out to be contradictory labels in the corpus. Last night it was a
 label format that could not represent what the model already knew. In both cases, scaling
 the model or the data would have cost a week and changed no outcome, because the constraint
-was in a different layer. Reading forty failing rows found it.
+was in a different layer. A review of forty failing rows exposed it.
 
-Finding it this way cost three full check batteries in one night and a pre-registered
-floor that we did not round up. That cost is worth paying. A check that fails twice and
+The investigation used three full check batteries in one night and retained the
+pre-registered floor without rounding it up. That cost is worth paying. A check that fails twice and
 shows why is more useful than several that pass without explanation.
 
 A larger fix is still needed. The punctuation gap is a property of our corpus format, and

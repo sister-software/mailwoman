@@ -25,16 +25,16 @@ A learned proposer is the bitter-lesson-safe approach: train a small (1-2M param
 **Model:** small encoder-only transformer.
 
 - **Tokenizer:** the v0.5.0 multi-script sentencepiece tokenizer (Thread A). It is shared with the main classifier, without a separate vocab.
-- **Embedding:** ~256-dim per token. Reused from the main classifier as a starting point (LoRA / linear adapter on top), or trained from scratch with a tied vocabulary.
+- **Token vectors:** ~256 dimensions per token. Reused from the main classifier as a starting point (LoRA / linear adapter on top), or trained from scratch with a tied vocabulary.
 - **Encoder:** 3-4 transformer blocks, hidden 256, 4 attention heads. Total ~1-2M params (a fraction of the main classifier's ~10M).
 - **Heads:** two parallel heads:
   - **Boundary head:** per-token binary classifier "is this token a phrase boundary?" (BIO-shaped: begin, inside, outside).
   - **Kind head:** per-token 7-way softmax over the `PhraseKind` taxonomy. Predicted at the begin-token of each proposed phrase.
-- **Decoding:** Viterbi over the boundary head emissions, then read off `kindHypothesis` at each phrase's begin token. Top-k proposals (configurable, default k=5) emitted with calibrated confidence.
+- **Decode:** Viterbi over the boundary head emissions, then read off `kindHypothesis` at each phrase's begin token. Top-k proposals (configurable, default k=5) emitted with calibrated confidence.
 
-## Training data
+## Data for training
 
-Training data comes from Thread B (corpus-v0.4.0) in two forms:
+Thread B (corpus-v0.4.0) provides training data in two forms:
 
 1. **Derived labels from the existing BIO corpus.** Each contiguous run of same-tag tokens is one phrase; map the BIO tag to a `PhraseKind` via a lookup table (e.g. `B-locality ... I-locality` → LOCALITY_PHRASE). These labels cost no extra work at training time and need no new labeling. The mapping is lossy at the edges (POI tags collapse to VENUE_PHRASE), but the loss falls in the structural-shape vocabulary, which this model does not need to distinguish.
 2. **Synthetic adversarial expansion.** The kryptonite-catalogue generation pipeline (Thread B) prompt-engineers DeepSeek to produce inputs where the rule-based grouper systematically gets boundaries wrong. The learned model trains on those cases as hard negatives.
@@ -54,7 +54,7 @@ The reconciler weighs phrase proposals against classifier proposals and resolver
 
 - **Multi-locale ensembling:** one model per locale vs one model handling all locales. Before evaluation, lean toward one shared model trained on the full multi-script corpus, because the tokenizer and the encoder already do the locale-aware work.
 - **Joint training with the main classifier:** phrase-proposer embeddings could pass into the classifier as conditioning. Thread C mentions this as the eventual integration. Whether the proposer trains jointly or stays a frozen feature extractor is a v0.6.0+ question.
-- **Replacing the rule version.** The rule version stays in tree as the explainable fallback + the test oracle. The learned version is additive. Both can coexist behind a runtime flag, and the reconciler can consume proposals from either (or both, with source attribution).
+- **Replace the rule version.** The rule version stays in tree as the explainable fallback + the test oracle. The learned version is additive. Both can coexist behind a runtime flag, and the reconciler can consume proposals from either (or both, with source attribution).
 
 ## See also
 

@@ -10,7 +10,9 @@ import { ENGINE_RIGS, rigQuery, rigStart, rigStatus, rigStop, type EngineRigName
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
- * Defines the `mwdev_rig` tool, which checks, starts, stops and queries the local Pelias and Photon rigs.
+ * Defines the `mwdev_rig` tool.
+ *
+ * It checks, starts, stops and queries the local Pelias and Photon rigs.
  */
 export const rigTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_rig",

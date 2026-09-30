@@ -19,7 +19,7 @@ browser table factory, but nothing consumed them — every query still only ever
 1. **Dominance floor in the brand-table generator.** `build-brands.ts`'s `aggregateBrands` now
    drops a QID entirely when its modal name covers less than `--dominance` (default 0.5) of the
    QID's total rows — notdemotes the minority spellings out of the alias list the way the
-   pre-existing noise floor does. Motivating case: `Q4835981` aggregated ~20 unrelated US
+   pre-existing noise floor does. For example, `Q4835981` aggregated ~20 unrelated US
    chains (CVS 23.8%, Walgreens 11.8%, 7-Eleven 6.2%, …) under one Wikidata QID — a systematic
    mistagging upstream in Overture's data rather than a chain with noisy alt-spellings. **Regenerated
    `brands.json` against the same `poi-full.db`: 315 QIDs clear `--min-rows` alone; the
@@ -114,7 +114,7 @@ brand vs category, since 25 km papers over what a 4 km search radius can't reach
 
 ## Runner notes
 
-- Grading extension: `PoiBoardResultsExpect` gained an optional `brandWikidata` field alongside
+- The grade extension adds an optional `brandWikidata` field to `PoiBoardResultsExpect` alongside
   the existing (now-optional) `categoryID` — every fixture sets exactly one, enforced by a new
   fixture-set test. `gradeCase`'s results branch checks `results[0].brandWikidata` when
   `brandWikidata` is set, `results[0].categoryID` otherwise; the category branch's exact

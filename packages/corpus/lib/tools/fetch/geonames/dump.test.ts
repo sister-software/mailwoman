@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `fetchGeonamesDumps` — catalog-driven coverage, the zip→txt extraction, and the two presence traps: a country
+ * @file `fetchGeonamesDumps` — catalog-driven coverage, the zip→txt extraction and the two presence traps: a country
  *   the source does not publish (404 ≠ transfer failure, the geonames-postal lesson) and a present `<CC>.txt` that is
  *   not a gazetteer dump at all (GeoNames' postal exports share the basename. seven tier-1 postal files sat at these
  *   paths reading as coverage until the capitals build found them capital-less).
@@ -14,10 +14,11 @@ import type { AddressInfo } from "node:net"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { fetchGeonamesDumps, looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
 import ADMZip from "adm-zip"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+import { fetchGeonamesDumps, looksLikeGazetteerDump, parseCountryInfo } from "#tools"
 
 let server: Server
 let baseURL: string

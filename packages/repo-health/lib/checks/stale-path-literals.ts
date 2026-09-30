@@ -41,7 +41,7 @@ const DERIVED_SEGMENTS = ["/out/", "/dist/", "/node_modules/", "/build/", "/.yar
  * Returns whether a literal has the shape of a repository path.
  *
  * It rejects globs, interpolation placeholders, URLs, whitespace, skipped prefixes and build output.
- * The last segment must carry a file extension.
+ * The last segment must have a file extension.
  */
 export function isRepositoryPathLiteral(text: string): boolean {
 	if (!REPOSITORY_ROOTS.some((root) => text.startsWith(root))) return false

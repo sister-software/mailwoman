@@ -29,7 +29,7 @@ import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay } f
 import styles from "./styles.module.css"
 
 /**
- * A label as the ribbon shows it: the bare tag, `O` for outside, and a placeholder unchanged.
+ * A label as the ribbon shows it: the bare tag, `O` for outside and a placeholder unchanged.
  */
 const labelText = (label: string): string => tagOf(label) || label
 

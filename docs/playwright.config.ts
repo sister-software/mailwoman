@@ -8,7 +8,7 @@
 import { defineConfig } from "@playwright/test"
 
 // Playwright loads this file with its own loader. The loader walks up from every import to find a tsconfig.
-// Importing `$public` from @mailwoman/core adds core/tsconfig.json to that walk. Playwright
+// An import of `$public` from @mailwoman/core adds core/tsconfig.json to that walk. Playwright
 // handles neither of the things it relies on — a package-name `extends` resolved from hoisted
 // node_modules, nor directory-style `references` ("../codex", which TypeScript reads as
 // "../codex/tsconfig.json"). Node and tsc accept both forms. This loader chokes

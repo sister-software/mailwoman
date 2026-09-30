@@ -35,7 +35,7 @@ facts split across a doc page, a calculator and a console with no single worked 
 
 [docs.mapbox.com](https://docs.mapbox.com) splits by URL prefix: `/api/*` reference, `/help/dive-deeper/*`
 explanation, `/help/glossary/*` one term per page, `/help/getting-started/*` and `/help/tutorials/*` task
-content, `/playground/*` interactive. Pricing is never inline in technical docs. Reference prose is
+content, `/playground/*` interactive. Prices never appear inline in technical docs. Reference prose is
 table-bound and terse; the response vocabulary (`feature`, `properties`, `relevance`, `spatial hierarchy`)
 holds across reference, explanation and glossary with no synonym drift.
 
@@ -102,7 +102,7 @@ decides the ASD-STE100 row below.
 
 Nine standards were assessed. The verdict column is binding.
 
-| Standard                                                                          | Verdict                          | Scope taken                                                                                    | Grounding                                                                                                                                                                                                                                          |
+| Standard                                                                          | Verdict                          | Scope taken                                                                                    | Evidence                                                                                                                                                                                                                                           |
 | --------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Diátaxis](https://diataxis.fr/)                                                  | Adopt, structural                | Page-role split; one purpose per page                                                          | Already the six-role frontmatter interface (four Diátaxis roles plus `landing` and `evidence`). Geocode Earth's flat sidebar mixing read-once with look-up-repeatedly survives only at roughly 25 pages.                                           |
 | [ASD-STE100](https://asd-ste100.org/)                                             | Adapt, reference register only   | One instruction per sentence, active voice, one word per meaning, without rhetorical language  | Applied to `reference` pages. The controlled dictionary is rejected: it cannot carry geo and ML vocabulary, and no surveyed contemporary uses one. Tutorials and guides are exempt; flattening them would discard the field's best warm registers. |
@@ -175,7 +175,7 @@ the training set share a source, say so in the same section as the number.
    whose claim they are evaluating.
 6. **Version forks stay navigable side by side** with one migration pointer, and the old version keeps one
    name in every nav and on every page.
-7. **Marketing and legal content stay outside the technical tree**, as siblings rather than nodes inside it.
+7. **Keep marketing and legal content outside the technical tree**, as siblings rather than nodes inside it.
 8. **Do not anthropomorphize the system.** A parser assigns scores, returns spans, or emits components. Say
    which.
 
@@ -191,7 +191,7 @@ concept the page is about. That is the recursive-hop failure the Mapbox survey r
 definition on the third page that needs it either; that is the repetition cost the Felt survey records. One
 sentence locally, the registry for the rest.
 
-**Adding a term.** A concept used on two or more pages warrants a registry entry. Add it to
+**A new term.** A concept used on two or more pages warrants a registry entry. Add it to
 `glossary/glossary.json` with its aliases, so the drift spellings resolve to one tooltip rather than to
 no entry.
 
@@ -236,7 +236,7 @@ structural, and a rule that matched them would also match correct prose.
 3. **Vague attribution.** "Developers find", "it is widely considered". Fix: name who, or remove the sentence.
 4. **Filler intensifiers.** Words that prop up a claim the evidence does not carry. Vale catches the common
    ones; the pattern is the target rather than the token list.
-5. **Contrastive negation.** Introducing a topic by what it is not, especially when nobody proposed the
+5. **Contrastive negation.** A topic framed by what it is not, especially when nobody proposed the
    negated thing. Fix: state the positive claim.
 6. **Manufactured cadence.** Strings of clipped sentences, or a paragraph ending on a quotable line rather
    than an informative one. Fix: end on the sentence that carries information.
@@ -254,7 +254,7 @@ rhythm and no information should go.
 
 ## How Vale enforces the mechanical subset
 
-Vale checks the token-level subset of these rules. Everything structural — role, section order, example
+Vale checks the token-level subset of these rules. The structural rules cover role, section order, example
 discipline, the audit above — is enforced by review and by `docs/scripts/check/docs-structure.ts` rather than by
 Vale.
 
@@ -294,7 +294,7 @@ Inline code spans and fenced code blocks are excluded from linting, so a banned 
 backticks — which is how the canonical terms table above states the spellings it forbids. Frontmatter is
 stripped before linting, so a `source-of-truth:` key is not read as prose.
 
-Adding a rule means adding a fixture. `config/vale/fixtures/dirty.md` carries one hit per token and
+Every rule needs a fixture. `config/vale/fixtures/dirty.md` carries one hit per token and
 `clean.md` must stay at zero alerts; `config/vale/check-rules.ts` asserts both, plus a minimum error
 count and at least one hit from every rule file, and it runs in the docs CI job. That script also carries
 negative assertions: `full-text search` in plain prose must stay quiet, because the `text search` swap is

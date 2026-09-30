@@ -78,8 +78,8 @@ The card is built by running the shipped model over data where the answer is alr
 the predictions by their stated confidence into twenty buckets, and recording what fraction of each
 bucket turned out right. That gives a translation from stated confidence to observed accuracy. The
 fit is **isotonic**. The translation can never run backwards, so a raw 0.9 always maps to at least
-as much corrected confidence as a raw 0.8. Ordering
-is preserved; only the scale changes.
+as much corrected confidence as a raw 0.8. The decoder preserves the prediction order and changes
+only the confidence scale.
 
 Applied to the same held-out data, expected calibration error goes from 0.0698 to 0.0017. The
 corrected number means roughly what it says. Those two figures are the held-out open-data set;

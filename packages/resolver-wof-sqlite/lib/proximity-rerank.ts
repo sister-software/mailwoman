@@ -9,13 +9,13 @@
  *
  *   This lives in its own platform-free module because it has to run identically in two places, the
  *   Node candidate reader and the browser byte-range twin. That is the server and demo parity
- *   interface held by construction. Constants alone were not enough, since the two copies agreed on
+ *   interface held by construction. Constants by themselves were not enough, since the two copies agreed on
  *   every literal and still diverged on which field the population term reads and on whether the
  *   combined value is written back.
  *
  *   Two properties are required and easy to lose when transcribing:
  *
- *   1. The population base is `prominence ?? score`. `prominence` carries the bounded cross-country
+ *   1. The population base is `prominence ?? score`. `prominence` contains the bounded cross-country
  *      primary preference, so reading raw score lets a coincidental foreign alias ride population
  *      back over a primary whenever a viewport hint happens to be present.
  *   2. The combined value is persisted into `prominence`. The resolver walk re-sorts by
@@ -46,8 +46,10 @@ export const POP_SCALE_LOG10 = 6
 /**
  * Distance at which the nearness term halves.
  *
- * Sharper than the FTS reader's 100 km on purpose, because the candidate backend's score is log-population
- * alone with no bm25 document term, which weakens the population signal relative to the bias.
+ * Sharper than the FTS reader's 100 km on purpose, because the candidate backend's
+ * score is log-population by itself with no bm25 document term.
+ * This weakens the population signal relative to the bias.
+ *
  * At around 30 km the boost reaches only candidates the user is looking at,
  * so an in-view namesake still wins and a distant one does not.
  */
@@ -86,8 +88,8 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
 	const popTerm = POP_BOOST * Math.min(1, Math.max(0, popBase) / POP_SCALE_LOG10)
 	let proxTerm = 0
 
-	// A candidate at the null island carries no coordinate, so it warrants no nearness term.
-	// Treating the 0,0 pair as a real coordinate would give it an enormous one.
+	// A candidate at the null island has no coordinate, so it warrants no nearness term.
+	// A 0,0 pair interpreted as a real coordinate would receive an enormous score.
 	if (!(candidate.lat === 0 && candidate.lon === 0)) {
 		for (const b of bias) {
 			const d = haversineKm(b.lat, b.lon, candidate.lat, candidate.lon)
@@ -105,7 +107,7 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
 /**
  * Re-order `candidates` in place by {@link combinedProminence}, persisting each
  * combined value into `prominence` so the resolver walk's own `prominence ?? score`
- * sort carries the bias order rather than undoing it.
+ * sort preserves the bias order rather than undoing it.
  *
  * Stable within equal prominence, preserving the population order the index already gave.
  * A caller with no bias hints must not call this.

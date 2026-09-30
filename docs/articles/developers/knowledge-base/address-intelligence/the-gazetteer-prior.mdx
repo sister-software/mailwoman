@@ -46,7 +46,7 @@ For each match it produces a small set of adjustments to the per-piece scores:
 
 The parser adds those adjustments to the model's scores, and the decoder reads the sum. This technique
 is called shallow fusion. It comes from speech recognition, where a language model's scores are added
-to an acoustic model's scores at decode time instead of replacing them. Adding the scores keeps both
+to an acoustic model's scores at decode time instead of replacing them. The combined scores retain both
 sources of evidence. The model contributes what the sentence looks like, the index contributes what
 the world contains, and the parser consults both on every input.
 
@@ -62,7 +62,7 @@ words. A one-word match is weak evidence, because surnames, common words and str
 names somewhere. A match spanning several words is stronger, because a coincidental match becomes less
 likely with each word. By default, the parser discounts the penalty on competing readings for a short
 match and keeps the bonus at full strength. A bare `Hollywood` is a one-word match, and the full bonus
-is what makes it come back as a locality. Discounting the bonus would remove the index's most
+is what makes it come back as a locality. If the parser discounted the bonus, the index would lose its most
 important effect. A wrong one-word match does its damage through the penalty, so the penalty is the
 part that is reduced.
 
@@ -86,7 +86,7 @@ which place, and it produces no coordinate. The resolver does that after the par
 [The two architectures](../geocoding/the-two-architectures.mdx) describes where the two jobs sit.
 
 **It covers four component types.** A match becomes a bonus only when its place type has a model
-label: country, region, locality or postcode. The index holds more types than that. Querying `Boston`
+label: country, region, locality or postcode. The index holds more types than that. A query for `Boston`
 returns neighborhood entries as well as the locality. Entries outside those four types contribute
 no bonus, because there is no label to apply the bonus to.
 
@@ -105,7 +105,7 @@ index from the weights package on its first call and passes it to every parse. A
 construct and call directly receives no index. The parse still succeeds, but it is less accurate on
 the inputs the index is meant for, and it breaks silently. A bare `Hollywood` comes back
 as a street without the index and as a locality with it.
-[Library API](../../reference/library-api.mdx#wiring-the-gazetteer-index-on-a-bare-call) has the
+[Library API](../../reference/library-api.mdx#pass-the-gazetteer-index-to-a-bare-call) has the
 wiring and the measured difference.
 
 ## What it costs
@@ -133,7 +133,7 @@ name is labeled a locality across characters 0 to 22, and `Boston` is correctly 
 is labeled correctly. The parser fails to decide that the leading phrase is a venue instead of a
 second place name. The output is identical with and without the index, both through the pipeline and through
 a bare classifier call. `Riverside` and `Boston` are both in the index, but neither match changes that
-decision. Separating a business name from the town after it requires judging how the words are used,
+decision. The parser must judge how the words are used to separate a business name from the town after it,
 and the index has no entries for business names. A prior that supplies world knowledge without sentence
 structure will produce this kind of failure.
 
@@ -141,6 +141,6 @@ structure will produce this kind of failure.
 
 - [How a model reads an address](./how-a-model-reads-an-address.mdx) — where this sits in the chain.
 - [Gazetteers](../geocoding/gazetteers.mdx) — the place database, and what is in it.
-- [Decoding and the best path](./decoding-and-viterbi.mdx) — what reads the adjusted scores.
+- [How the decoder chooses a path](./decoding-and-viterbi.mdx) — how the decoder reads the adjusted scores.
 - [Library API](../../reference/library-api.mdx) — the `fst` option, and what a bare classifier call misses.
 - [Footprints](../../reference/footprints.mdx) — measured file sizes, with the commands that produced them.

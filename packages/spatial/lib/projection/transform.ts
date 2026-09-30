@@ -21,10 +21,10 @@ import { TextSpliterator } from "spliterator"
  *
  *   The check runs even when a source needs no transformation. A source already in EPSG:4326 returns
  *   `Null geographic offset from WGS 84 to WGS 84, 0 m, World.` This operation is usable. The check costs one process.
- *   Skipping this case would leave a later source's required grid unchecked.
+ *   A skipped case would leave a later source's required grid unchecked.
  *
  *   Every vector ingest shares this check because the failure comes from PROJ rather than from a particular product.
- *   Parsing is separate from process execution so tests can use captured output. The two output states came from the
+ *   Output parsing is separate from process execution so tests can use captured output. The two output states came from the
  *   same command on the same machine before and after grid installation. One produced a metre-accurate layer. The
  *   other produced a 3 m offset.
  */
@@ -74,7 +74,7 @@ export const WGS84_EPSG = 4326
 
 export interface AssertDatumTransformationOptions {
 	/**
-	 * Names the caller in the refusal, so a build log says which ingest stopped.
+	 * Identifies the caller in the refusal, so a build log reports which ingest stopped.
 	 */
 	context: string
 	targetEPSG?: number

@@ -5,7 +5,9 @@
  */
 
 import { BIO_LABELS, COMPONENT_TAGS } from "@mailwoman/codex/component"
-import { SourceRegister } from "@mailwoman/corpus/registers"
+import { describe, expect, it } from "vitest"
+
+import { SourceRegister } from "#registers"
 import {
 	AddressRole,
 	addressRoleOf,
@@ -16,8 +18,7 @@ import {
 	type LabeledRow,
 	type QuarantinedRow,
 	SurfaceOrigin,
-} from "@mailwoman/corpus/types"
-import { describe, expect, it } from "vitest"
+} from "#types"
 
 describe("corpus types", () => {
 	it("CanonicalRow accepts every COMPONENT_TAG as a component key", () => {

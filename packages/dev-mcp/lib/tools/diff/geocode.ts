@@ -80,7 +80,7 @@ export const diffGeocodeTool = (deps: DevToolDeps): DevTool => ({
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs
 		const rendered = shown.slice(0, RENDERED_DIFF_LIMIT).map((d) => renderGeocodeDiff(d))
 
-		// Which attribution dominates is the diagnosis, and it decides whether a run was worth grading.
+		// Which attribution dominates determines whether a run was worth grading.
 		// A `tier-changed` majority means the arms differ on data the model never saw.
 		const attributions: Record<string, number> = {}
 

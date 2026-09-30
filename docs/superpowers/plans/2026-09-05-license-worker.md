@@ -41,7 +41,7 @@ task bodies are left as written.
   only a failed signature answers 400, and Stripe retries every non-2xx. Refresh and status hold a per-lid and a
   per-address limit independently. `/health` reports `ledger` and answers 503 when D1 does not respond.
 
-**Architecture:** A Hono app on `@hono/zod-openapi`, the same route idiom as the drop-in servers, exported as the Worker's `fetch` handler, plus a `scheduled` handler for reconciliation. Stripe's SDK runs on `fetch` and WebCrypto. The ledger is three D1 tables written under unique constraints, so Stripe's at-least-once, unordered delivery is idempotent without a queue. Signing calls `encodeLicenseKey` from `@mailwoman/core/license/key`, which the bundle test on `main` already proves `node:`-free. Tests run under `@cloudflare/vitest-pool-workers` with Miniflare's D1 and a fetch stub handed to the Stripe SDK standing in for `api.stripe.com`.
+**Architecture:** A Hono app on `@hono/zod-openapi`, the same route idiom as the drop-in servers, exported as the Worker's `fetch` handler, plus a `scheduled` handler for reconciliation. Stripe's SDK runs on `fetch` and WebCrypto. The ledger is three D1 tables written under unique constraints, so Stripe's at-least-once, unordered delivery is idempotent without a queue. The worker signs keys with `encodeLicenseKey` from `@mailwoman/core/license/key`, which the bundle test on `main` already proves `node:`-free. Tests run under `@cloudflare/vitest-pool-workers` with Miniflare's D1 and a fetch stub handed to the Stripe SDK standing in for `api.stripe.com`.
 
 **Tech Stack:** TypeScript, Hono 4.13 + `@hono/zod-openapi` 1.6, `stripe` 22.6 (`Stripe.createFetchHttpClient()`, `Stripe.createSubtleCryptoProvider()`), Kysely over `kysely-d1`, wrangler 4.129, `@cloudflare/vitest-pool-workers` 0.22, `@cloudflare/workers-types` 5.
 
@@ -100,15 +100,15 @@ task bodies are left as written.
 **Files:**
 
 - Create: `packages/core/lib/crypto/digest.ts`
-- Modify: `packages/core/lib/crypto/ed25519.ts` (drop `sha256Bytes`), `packages/core/lib/license/key.ts` (drop the local `hex`; import `hexOf` and `sha256Bytes` from the digest module), `packages/core/package.json` (`./crypto/digest` export), `packages/core/test/unit/crypto/ed25519.test.ts` (import the digest from its home)
-- Test: `packages/core/test/unit/crypto/digest.test.ts`
+- Modify: `packages/core/lib/crypto/ed25519.ts` (drop `sha256Bytes`), `packages/core/lib/license/key.ts` (drop the local `hex`; import `hexOf` and `sha256Bytes` from the digest module), `packages/core/package.json` (`./crypto/digest` export), `packages/core/lib/crypto/ed25519.test.ts` (import the digest from its home)
+- Test: `packages/core/lib/crypto/digest.test.ts`
 
 `sha256Bytes` sits in `ed25519.ts` today because the key id needed it; the worker needs the same digest for the refresh secret, and a third copy would be the duplicate the review of #2153 refused. One module serves all three importers.
 
 - [x] **Step 1: Write the failing test**
 
 ```ts
-// packages/core/test/unit/crypto/digest.test.ts
+// packages/core/lib/crypto/digest.test.ts
 import { hexOf, sha256Bytes } from "@mailwoman/core/crypto/digest"
 import { expect, it } from "vitest"
 
@@ -147,7 +147,7 @@ Remove `sha256Bytes` from `ed25519.ts` and import it from `#crypto/digest` where
 
 - [x] **Step 3: Run, lint, commit**
 
-Run: `yarn compile`, then `yarn vitest run packages/core/test/unit/crypto packages/core/test/unit/license packages/core/test/integration/worker-bundle.test.ts`. Expected: pass. Commit as `refactor(core): the WebCrypto digest has one home, crypto/digest, for the key id and the worker alike`.
+Run: `yarn compile`, then `yarn vitest run packages/core/lib/crypto packages/core/lib/license packages/core/lib/worker-bundle.integration.test.ts`. Expected: pass. Commit as `refactor(core): the WebCrypto digest has one home, crypto/digest, for the key id and the worker alike`.
 
 ---
 
@@ -584,7 +584,7 @@ Run `yarn install` (the lockfile changes; commit it).
 Run: `yarn workspace @mailwoman/license-worker test`
 Expected: PASS, 1 test. If `cloudflare:test` fails to resolve, the pool did not install; check `yarn why @cloudflare/vitest-pool-workers`.
 
-Then `yarn tsc -b packages/license-worker` (or `yarn compile`) and `yarn health:architecture`, and the release-stage identity: `yarn vitest run packages/release-kit/test/integration/release-stage.test.ts` (the `publishCount` pin stays 59; the absence set grows by one).
+Then `yarn tsc -b packages/license-worker` (or `yarn compile`) and `yarn health:architecture`, and the release-stage identity: `yarn vitest run packages/release-kit/lib/release-stage.integration.test.ts` (the `publishCount` pin stays 59; the absence set grows by one).
 
 - [x] **Step 6: Commit**
 

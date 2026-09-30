@@ -4,13 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { beforeAll, describe, expect, it } from "vitest"
+
 import {
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
 	BackboneState,
 	electedLicenseLabel,
+	INGEST_OPERATIONS,
 	ingestEligibilityProblems,
 	JurisdictionResearchState,
 	LicenseReviewState,
@@ -30,9 +35,8 @@ import {
 	type AddressSourceRegister,
 	type ElectedLicense,
 	type LicenseDecision,
-} from "@mailwoman/corpus/source-register"
-import { AddressRole } from "@mailwoman/corpus/types"
-import { beforeAll, describe, expect, it } from "vitest"
+} from "#source-register"
+import { AddressRole } from "#types"
 
 describe("the committed address-source register", () => {
 	let register: AddressSourceRegister
@@ -66,31 +70,161 @@ describe("the committed address-source register", () => {
 	})
 
 	it("carries the researched sources and none of the repeated discovery lookups", () => {
-		expect(register.sources).toHaveLength(389)
-		expect(new Set(register.sources.map((row) => row.sourceID)).size).toBe(389)
+		// The count moves whenever a pass splits a row or a jurisdiction gains a source,
+		// so what is held here is that every row is a researched source with a distinct id
+		// and a status from the vocabulary, rather than a total.
+		expect(register.sources.length).toBeGreaterThan(0)
+		expect(new Set(register.sources.map((row) => row.sourceID)).size).toBe(register.sources.length)
+
+		for (const row of register.sources) {
+			expect(Object.values(SourceStatus), row.sourceID).toContain(row.status)
+		}
 
 		const byStatus = (status: SourceStatus): number => register.sources.filter((row) => row.status === status).length
+		const counted = Object.values(SourceStatus).reduce((total, status) => total + byStatus(status), 0)
 
-		expect(byStatus(SourceStatus.VerifiedAuthority)).toBe(221)
-		expect(byStatus(SourceStatus.RetainedOriginal)).toBe(142)
-		expect(byStatus(SourceStatus.VerifiedCorpus)).toBe(25)
-		expect(byStatus(SourceStatus.VerifiedCorpusStale)).toBe(1)
+		expect(counted).toBe(register.sources.length)
 	})
 
-	it("declares the fields no source resolved, and no source resolves one", () => {
-		expect([...register.unresolved].toSorted()).toEqual([...UNRESOLVED_FIELDS].toSorted())
-
+	it("declares a field unresolved only while no source carries it", () => {
+		// AusTender resolves all four, so the array is empty.
+		// The audit checks both directions.
+		// A listed field and a populated row therefore cannot coexist.
 		for (const field of register.unresolved) {
+			expect(UNRESOLVED_FIELDS).toContain(field)
 			expect(register.sources.filter((row) => row[field] !== undefined)).toHaveLength(0)
 		}
+
+		for (const field of UNRESOLVED_FIELDS) {
+			if (register.unresolved.includes(field)) continue
+
+			expect(register.sources.filter((row) => row[field] !== undefined).length).toBeGreaterThan(0)
+		}
 	})
 
-	it("holds no source eligible for ingest, because no licence has been reviewed", () => {
-		expect(register.licenses.every((decision) => decision.state === LicenseReviewState.Unchecked)).toBe(true)
+	it("admits a source for ingest only when its five conditions all read positively", () => {
+		// Eligibility admits a publication into a training build.
+		// An eligible row is checked here against the register's own fields.
+		// Each of the five readings has to be present and affirmative.
+		// An absent field therefore cannot produce eligibility by default.
+		const eligible = register.sources.filter((source) => !ingestEligibilityProblems(source, register).length)
 
-		for (const source of register.sources) {
-			expect(ingestEligibilityProblems(source, register).length).toBeGreaterThan(0)
+		for (const source of eligible) {
+			const decision = register.licenses.find((entry) => entry.licenseID === source.license)!
+
+			expect(decision.state, source.sourceID).toBe(LicenseReviewState.Elected)
+
+			for (const operation of INGEST_OPERATIONS) {
+				expect(permissionFor(decision, operation).permission, `${source.sourceID} ${operation}`).toBe(
+					OperationPermission.Permitted
+				)
+			}
+
+			expect([
+				SourceStatus.VerifiedAuthority,
+				SourceStatus.RetainedOriginal,
+				SourceStatus.VerifiedCorpusStale,
+			]).not.toContain(source.status)
+
+			expect(Object.keys(source.addressRoles ?? {}).length, source.sourceID).toBeGreaterThan(0)
+			expect(source.coverage, source.sourceID).toBeTruthy()
+			expect(source.personalDataReview?.reading, source.sourceID).toBeDefined()
+			expect(source.personalDataReview?.reading, source.sourceID).not.toBe(PersonalDataReading.Present)
+			expect(source.personalDataReview?.because, source.sourceID).toBeTruthy()
 		}
+	})
+
+	it("blocks AusTender on its personal-data reading alone, every other condition being met", () => {
+		// The worked example of #2323's step 6: one source taken through all five conditions.
+		// Its licence is elected and its address roles and coverage are resolved.
+		// The publication also gives street addresses for named natural persons.
+		// `present` records that reading, and ingest refuses it.
+		const austender = register.sources.find((source) => source.sourceID === "au-procurement-grants-1")!
+		const decision = register.licenses.find((entry) => entry.licenseID === austender.license)!
+
+		expect(decision.state).toBe(LicenseReviewState.Elected)
+		expect(austender.status).toBe(SourceStatus.VerifiedCorpus)
+		expect(Object.keys(austender.addressRoles ?? {}).length).toBeGreaterThan(0)
+		expect(austender.coverage).toBeDefined()
+		expect(austender.personalDataReview?.reading).toBe(PersonalDataReading.Present)
+
+		expect(ingestEligibilityProblems(austender, register)).toHaveLength(1)
+	})
+
+	it("states a reason on every refused decision, and refuses the sources pointing at one", () => {
+		// A refusal records that the terms were read and no grant was found,
+		// which is a different fact from `unchecked`.
+		// The reason is what a later request to the publisher starts from, so the audit
+		// requires it and this holds that the committed refusals carry one.
+		const refused = register.licenses.filter((decision) => decision.state === LicenseReviewState.Refused)
+
+		expect(refused.length).toBeGreaterThan(0)
+
+		for (const decision of refused) {
+			expect(decision.state === LicenseReviewState.Refused && decision.refusedBecause, decision.licenseID).toBeTruthy()
+
+			const pointing = register.sources.filter((source) => source.license === decision.licenseID)
+
+			expect(pointing.length, decision.licenseID).toBeGreaterThan(0)
+
+			for (const source of pointing) {
+				expect(ingestEligibilityProblems(source, register).join("\n"), source.sourceID).toMatch(/is refused/u)
+			}
+		}
+	})
+
+	it("gives each SIRENE territory its own decision carrying one shared reading of INSEE's terms", async () => {
+		// One publisher holds SIRENE across mainland France and its overseas territories,
+		// and a decision is scoped to one publisher in one jurisdiction.
+		// So one reading produces nine decisions, and the property that matters is that
+		// each licence id has its own rather than one covering all nine.
+		const territories = ["bl", "gf", "gp", "mf", "mq", "pm", "re", "wf", "yt"]
+
+		const decisions = territories.map((code) =>
+			register.licenses.find((entry) => entry.licenseID === `unchecked-national-terms-${code}-insee`)!
+		)
+
+		for (const [index, decision] of decisions.entries()) {
+			expect(decision, territories[index]).toBeDefined()
+			expect(decision.state, territories[index]).toBe(LicenseReviewState.Elected)
+			expect(electedLicenseLabel(decision), territories[index]).toBe("etalab-2.0")
+		}
+
+		// Each decision is reached through its own source, so no election spans two jurisdictions.
+		for (const code of territories) {
+			const pointing = register.sources.filter((source) => source.license === `unchecked-national-terms-${code}-insee`)
+
+			expect(
+				pointing.map((source) => source.iso2),
+				code
+			).toEqual([code.toUpperCase()])
+		}
+	})
+
+	it("carries exactly the decisions `license-decisions.json` records, and leaves the rest unchecked", async () => {
+		// The count is read from the input rather than pinned, so recording one more
+		// election is ordinary work rather than a test edit.
+		// What the assertion holds is that the build applied every recorded decision and invented none.
+		const recorded = await readLocalJSONFile<{
+			decisions?: Record<string, { state?: string; sameAs?: string }>
+			sharedReadings?: Record<string, { state: string }>
+		}>(resolveModulePath("@mailwoman/corpus/data/license-decisions.json"))
+
+		const entries = Object.entries(recorded.decisions ?? {})
+		const reviewed = register.licenses.filter((decision) => decision.state !== LicenseReviewState.Unchecked)
+
+		expect(reviewed.map((decision) => decision.licenseID).toSorted()).toEqual(entries.map(([id]) => id).toSorted())
+
+		for (const [licenseID, decision] of entries) {
+			// A decision carrying `sameAs` takes its state from the shared reading,
+			// so the expectation resolves the reference the way the build does.
+			const expected = decision.sameAs ? recorded.sharedReadings?.[decision.sameAs]?.state : decision.state
+
+			expect(expected, licenseID).toBeDefined()
+			expect(register.licenses.find((entry) => entry.licenseID === licenseID)?.state, licenseID).toBe(expected)
+		}
+
+		expect(register.licenses.length - reviewed.length).toBe(register.licenses.length - entries.length)
 	})
 
 	it("gives every source its own license decision, so one reading cannot grant many", () => {
@@ -131,11 +265,11 @@ describe("auditAddressSourceRegister", () => {
 	const base: AddressSourceRegister = {
 		registerID: "test",
 		version: "0.0.0",
-		// A literal without a generating source carries no meaningful digest.
+		// A literal without a generating source has no meaningful digest.
 		// The structural audit does not read the field.
 		contentDigest: "",
 		provenance: { source: "test" },
-		unresolved: ["addressRole", "upstreamLineage", "coverage", "personalDataReview"],
+		unresolved: ["addressRoles", "upstreamLineage", "coverage", "personalDataReview"],
 		licenses: [
 			{
 				licenseID: "unchecked-test",
@@ -236,6 +370,27 @@ describe("auditAddressSourceRegister", () => {
 
 		expect(problems.some((problem) => problem.startsWith('"coverage" is declared unresolved'))).toBe(true)
 	})
+
+	it("refuses an empty `addressRoles`, which reads as resolved and states no role", () => {
+		const problems = auditAddressSourceRegister({
+			...base,
+			sources: [{ ...base.sources[0]!, addressRoles: {} }],
+		})
+
+		expect(problems.some((problem) => problem.includes("carries an empty `addressRoles`"))).toBe(true)
+	})
+
+	it("refuses a column whose role is outside the `AddressRole` vocabulary", () => {
+		const problems = auditAddressSourceRegister({
+			...base,
+			// A role a reviewer invented reaches the register unless the audit reads the vocabulary.
+			sources: [{ ...base.sources[0]!, addressRoles: { "party.address": "head-office" as AddressRole } }],
+		})
+
+		expect(problems).toContain(
+			'source "zz-health-1" gives column "party.address" the role "head-office", which is not an `AddressRole`'
+		)
+	})
 })
 
 describe("electedLicenseLabel", () => {
@@ -325,8 +480,8 @@ describe("applyLicenseDecisions", () => {
 	})
 
 	it("refuses a decision naming a licence the register does not carry", () => {
-		// Applying such a decision silently would leave the register asserting a grant no
-		// source points at, the shape a typo or a removed source takes.
+		// A silent application would leave the register asserting a grant no source points at,
+		// the shape a typo or a removed source takes.
 		expect(() =>
 			applyLicenseDecisions(generated, new Map([["no-such-licence", { ...elected, licenseID: "no-such-licence" }]]))
 		).toThrow(/does not carry/u)
@@ -334,7 +489,7 @@ describe("applyLicenseDecisions", () => {
 
 	/**
 	 * The smallest register the audit accepts, so these cases read the audit's
-	 * verdict on the applied decision alone.
+	 * verdict on the applied decision by itself.
 	 */
 	function registerWith(licenses: readonly LicenseDecision[]): AddressSourceRegister {
 		return {
@@ -342,7 +497,7 @@ describe("applyLicenseDecisions", () => {
 			version: "0.0.0",
 			contentDigest: "",
 			provenance: { source: "test" },
-			unresolved: ["addressRole", "upstreamLineage", "coverage", "personalDataReview"],
+			unresolved: ["addressRoles", "upstreamLineage", "coverage", "personalDataReview"],
 			licenses,
 			jurisdictions: [
 				{
@@ -411,7 +566,7 @@ describe("permission by operation", () => {
 		geometry: SourceGeometry.Unresolved,
 		license: "terms-under-review",
 		researchPass: ResearchPass.WebResearch,
-		addressRole: AddressRole.Premise,
+		addressRoles: { address: AddressRole.Premise },
 		coverage: "measured national, 2026-09",
 		personalDataReview: {
 			reading: PersonalDataReading.Absent,
@@ -425,7 +580,7 @@ describe("permission by operation", () => {
 			version: "0.0.0",
 			contentDigest: "",
 			provenance: { source: "test" },
-			unresolved: ["addressRole", "upstreamLineage", "coverage"],
+			unresolved: ["addressRoles", "upstreamLineage", "coverage"],
 			licenses: [decision],
 			jurisdictions: [
 				{
@@ -615,8 +770,8 @@ describe("permission by operation", () => {
 		})
 
 		it("admits a grant whose permission carries a condition, with the condition recorded beside it", () => {
-			// A modification-notice grant permits the act and requires a statement that the
-			// work was changed, which lives in `because` rather than becoming a refusal.
+			// A modification-notice grant permits the act and requires a statement that the work was changed.
+			// The statement lives in `because` rather than becoming a refusal.
 			const modificationNotice: ElectedLicense = {
 				licenseID: "terms-under-review",
 				state: LicenseReviewState.Elected,
@@ -666,7 +821,7 @@ describe("permission by operation", () => {
 
 		it("records which half of a dual grant was elected, so the other half's conditions are not inherited", () => {
 			// A dual-licensed publication offers a choice.
-			// The decision's own fields carry which half was elected and why
+			// The decision's own fields record which half was elected and why
 			// rather than a reader inferring it from the operations.
 			const elected: ElectedLicense = {
 				licenseID: "terms-under-review",
@@ -680,7 +835,7 @@ describe("permission by operation", () => {
 			expect(electedLicenseLabel(elected)).toBe("Licence Ouverte / Open Licence 2.0")
 			expect(elected.electedBecause).toContain("attribution-only half")
 
-			// Electing the permissive half makes no statement about publishing a model.
+			// The permissive half makes no statement about publishing a model.
 			// No reviewer compared these terms with that act, so the record reads unreviewed
 			// rather than inheriting either half's answer.
 			expect(permissionFor(elected, SourceOperation.RedistributeModel).permission).toBe(OperationPermission.Unreviewed)

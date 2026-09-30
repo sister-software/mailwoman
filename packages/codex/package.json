@@ -13,19 +13,14 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
 		"lib/us/street-suffix.json",
 		"out/us/street-suffix.json",
 		"lib/postcode/shapes.json",
-		"out/postcode/shapes.json",
-		"!test/**"
+		"out/postcode/shapes.json"
 	],
 	"type": "module",
 	"imports": {
@@ -42,165 +37,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./country": {
-			"types": "./out/country/index.d.ts",
-			"node": "./lib/country/index.ts",
-			"default": "./out/country/index.js"
-		},
-		"./us": {
-			"types": "./out/us/index.d.ts",
-			"node": "./lib/us/index.ts",
-			"default": "./out/us/index.js"
-		},
-		"./de": {
-			"types": "./out/de/index.d.ts",
-			"node": "./lib/de/index.ts",
-			"default": "./out/de/index.js"
-		},
-		"./fr": {
-			"types": "./out/fr/index.d.ts",
-			"node": "./lib/fr/index.ts",
-			"default": "./out/fr/index.js"
-		},
-		"./ca": {
-			"types": "./out/ca/index.d.ts",
-			"node": "./lib/ca/index.ts",
-			"default": "./out/ca/index.js"
-		},
-		"./gb": {
-			"types": "./out/gb/index.d.ts",
-			"node": "./lib/gb/index.ts",
-			"default": "./out/gb/index.js"
-		},
-		"./jp": {
-			"types": "./out/jp/index.d.ts",
-			"node": "./lib/jp/index.ts",
-			"default": "./out/jp/index.js"
-		},
-		"./au": {
-			"types": "./out/au/index.d.ts",
-			"node": "./lib/au/index.ts",
-			"default": "./out/au/index.js"
-		},
-		"./nz": {
-			"types": "./out/nz/index.d.ts",
-			"node": "./lib/nz/index.ts",
-			"default": "./out/nz/index.js"
-		},
-		"./nl": {
-			"types": "./out/nl/index.d.ts",
-			"node": "./lib/nl/index.ts",
-			"default": "./out/nl/index.js"
-		},
-		"./address-layout": {
-			"types": "./out/address/layout.d.ts",
-			"node": "./lib/address/layout.ts",
-			"default": "./out/address/layout.js"
-		},
-		"./address-layouts": {
-			"types": "./out/address/layouts/index.d.ts",
-			"node": "./lib/address/layouts/index.ts",
-			"default": "./out/address/layouts/index.js"
-		},
-		"./address-layouts-generated": {
-			"types": "./out/address/layouts/generated.d.ts",
-			"node": "./lib/address/layouts/generated.ts",
-			"default": "./out/address/layouts/generated.js"
-		},
-		"./address-render": {
-			"types": "./out/address/render.d.ts",
-			"node": "./lib/address/render.ts",
-			"default": "./out/address/render.js"
-		},
-		"./address-format": {
-			"types": "./out/address/format.d.ts",
-			"node": "./lib/address/format.ts",
-			"default": "./out/address/format.js"
-		},
-		"./address-key": {
-			"types": "./out/address/key.d.ts",
-			"node": "./lib/address/key.ts",
-			"default": "./out/address/key.js"
-		},
-		"./abbreviations": {
-			"types": "./out/abbreviations.d.ts",
-			"node": "./lib/abbreviations.ts",
-			"default": "./out/abbreviations.js"
-		},
-		"./component": {
-			"types": "./out/component.d.ts",
-			"node": "./lib/component.ts",
-			"default": "./out/component.js"
-		},
-		"./placetype-map": {
-			"types": "./out/placetype-map.d.ts",
-			"node": "./lib/placetype-map.ts",
-			"default": "./out/placetype-map.js"
-		},
-		"./normalize": {
-			"types": "./out/normalize.d.ts",
-			"node": "./lib/normalize.ts",
-			"default": "./out/normalize.js"
-		},
-		"./es": {
-			"types": "./out/es/index.d.ts",
-			"node": "./lib/es/index.ts",
-			"default": "./out/es/index.js"
-		},
-		"./it": {
-			"types": "./out/it/index.d.ts",
-			"node": "./lib/it/index.ts",
-			"default": "./out/it/index.js"
-		},
-		"./address-system-conventions": {
-			"types": "./out/address/system-conventions.d.ts",
-			"node": "./lib/address/system-conventions.ts",
-			"default": "./out/address/system-conventions.js"
-		},
-		"./level-semantics": {
-			"types": "./out/level-semantics.d.ts",
-			"node": "./lib/level-semantics.ts",
-			"default": "./out/level-semantics.js"
-		},
-		"./postcode-shapes": {
-			"types": "./out/postcode/shapes.d.ts",
-			"node": "./lib/postcode/shapes.ts",
-			"default": "./out/postcode/shapes.js"
-		},
-		"./postcode-systems": {
-			"types": "./out/postcode/systems.d.ts",
-			"node": "./lib/postcode/systems.ts",
-			"default": "./out/postcode/systems.js"
-		},
-		"./postal-regimes": {
-			"types": "./out/postal-regimes.d.ts",
-			"node": "./lib/postal-regimes.ts",
-			"default": "./out/postal-regimes.js"
-		},
-		"./us/floor-designator": {
-			"types": "./out/us/floor-designator.d.ts",
-			"node": "./lib/us/floor-designator.ts",
-			"default": "./out/us/floor-designator.js"
-		},
-		"./us/state": {
-			"types": "./out/us/state.d.ts",
-			"node": "./lib/us/state.ts",
-			"default": "./out/us/state.js"
-		},
-		"./us/street-suffix": {
-			"types": "./out/us/street/suffix.d.ts",
-			"node": "./lib/us/street/suffix.ts",
-			"default": "./out/us/street/suffix.js"
-		},
-		"./us/unit-designator": {
-			"types": "./out/us/unit-designator.d.ts",
-			"node": "./lib/us/unit-designator.ts",
-			"default": "./out/us/unit-designator.js"
-		},
-		"./kr": {
-			"types": "./out/kr/index.d.ts",
-			"node": "./lib/kr/index.ts",
-			"default": "./out/kr/index.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

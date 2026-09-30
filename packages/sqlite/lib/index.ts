@@ -5,8 +5,8 @@
  *
  *   The one way a Mailwoman SQLite connection comes into being.
  *
- *   `DatabaseClient` opens the file; `openBuiltClient` opens a built artifact with the seal check. A caller says which
- *   file and which schema and never constructs the connection, so one database carries one schema, one owner, and a
+ *   `DatabaseClient` opens the file; `openBuiltClient` opens a built artifact with the seal check. A caller specifies which
+ *   file and schema. It never constructs the connection, so one database has one schema, one owner and a
  *   lifetime `using` can end. `new DatabaseSync` appears once in this package and nowhere else in the repository.
  *
  *   It lives outside `@mailwoman/core` because it needs none of core's 11 MB of parser reference data. Its whole
@@ -16,11 +16,11 @@
 export * from "#batched"
 export * from "#client"
 export * from "#database-schema"
-export * from "#dialect/index"
+export * from "#dialect"
 export * from "#dialect/config"
 export * from "#introspection"
 export * from "#lookup"
 export * from "#schema-columns"
-export * from "#sealed/index"
+export * from "#sealed"
 export * from "#sealed/build"
 export * from "#sealed/db"

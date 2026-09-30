@@ -19,7 +19,7 @@ import { readRequiredChannels } from "#weights/channels"
  * A model card declares its lexicon in `requires.<channel>.lexicon`,
  * and {@linkcode resolveEvidenceLexicon} resolves that file.
  * The legacy filename applies only to cards that declare no lexicon.
- * Using it logs one warning.
+ * Its use logs one warning.
  */
 export const EVIDENCE_LEXICON_FAMILIES = {
 	street_type: { prefix: "street-type-lexicon-v", legacy: "street-type-lexicon-v3.json" },
@@ -34,8 +34,8 @@ export type EvidenceLexiconChannel = keyof typeof EVIDENCE_LEXICON_FAMILIES
 /**
  * Thrown when the model card declares one lexicon version and the weights package ships a different one.
  *
- * Serving a different lexicon version than the model trained with degrades parses without
- * any other error, so {@linkcode resolveWeights} fails the load instead.
+ * A different lexicon version from the one used to train the model degrades parses
+ * without any other error, so {@linkcode resolveWeights} fails the load instead.
  */
 export class LexiconVersionMismatchError extends Error {
 	constructor(message: string) {
@@ -47,7 +47,7 @@ export class LexiconVersionMismatchError extends Error {
 /**
  * The `channel:card` keys already warned about for an undeclared lexicon.
  *
- * Keying by card makes each distinct bundle warn once.
+ * The card key makes each distinct bundle warn once.
  */
 const warnedUndeclaredLexicon = new Set<string>()
 
@@ -76,7 +76,7 @@ async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Prom
  * 4. When the card declares no file, it returns the legacy filename if present and warns once.
  *
  * Only the package directory is searched.
- * Falling back to the base package would turn the evidence channels on for every
+ * A fallback to the base package would turn the evidence channels on for every
  * data-only overlay, on locales that were never evaluated with them.
  * An overlay that wants a lexicon must ship its own copy.
  */

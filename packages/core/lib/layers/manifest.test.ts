@@ -1,0 +1,281 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sql } from "kysely"
+import { describe, expect, it } from "vitest"
+
+import {
+	COVERAGE_INSERT_BATCH,
+	readLayerCoverage,
+	readLayerManifest,
+	writeLayerCoverage,
+	writeLayerManifest,
+	type CoverageCell,
+	type LayerManifest,
+} from "#layers/manifest"
+import { createLayerCoverageTable, createLayerManifestTable, type layerschemadatabase } from "#layers/schema"
+
+const MANIFEST: LayerManifest = {
+	name: "poi",
+	version: "0.1.0",
+	schemaVersion: 1,
+	tier: "shipped",
+	license: "CDLA-Permissive-2.0",
+	attribution: "Overture Maps Foundation",
+	source: "overture-places",
+	sourceVintage: "2026-06",
+	buildCmd: "mailwoman gazetteer build poi",
+	buildSHA: "deadbeef",
+	freshnessPolicy: "sealed",
+	spineKeys: { h3: { column: "h3_cell", resolution: 13 }, wofID: "wof_id" },
+	createdAt: "2026-07-18T00:00:00Z",
+}
+
+async function openschemadb(): Promise<DatabaseClient<layerschemadatabase>> {
+	const db = DatabaseClient.temp<layerschemadatabase>()
+	await createLayerManifestTable(db)
+	await createLayerCoverageTable(db)
+
+	return db
+}
+
+describe("layer manifest IO", () => {
+	it("round-trips a manifest", async () => {
+		using db = await openschemadb()
+		await writeLayerManifest(db, MANIFEST)
+		const back = await readLayerManifest(db)
+		expect(back).toEqual(MANIFEST)
+	})
+
+	it("round-trips the per-publisher input record counts", async () => {
+		using db = await openschemadb()
+
+		const counted: LayerManifest = {
+			...MANIFEST,
+			sourceRecords: { "overture-places": 13_680_000, "openaddresses-us": 57_847_619 },
+		}
+
+		await writeLayerManifest(db, counted)
+
+		expect(await readLayerManifest(db)).toEqual(counted)
+	})
+
+	it("reads a missing count as absent and a zero-publisher count as empty", async () => {
+		// These outcomes differ.
+		// Old manifests and builds without a count omit `sourceRecords`.
+		// `{}` means the build counted records and found no publisher.
+		// Overture prunes its release, so the original count cannot be recovered from the input.
+		using absent = await openschemadb()
+		await writeLayerManifest(absent, MANIFEST)
+
+		expect(await readLayerManifest(absent)).not.toHaveProperty("sourceRecords")
+
+		using empty = await openschemadb()
+		await writeLayerManifest(empty, { ...MANIFEST, sourceRecords: {} })
+
+		expect((await readLayerManifest(empty)).sourceRecords).toEqual({})
+	})
+
+	it("rejects an unknown tier at write time", async () => {
+		using db = await openschemadb()
+		const offInterface: Omit<LayerManifest, "tier"> & { tier: string } = { ...MANIFEST, tier: "bootleg" }
+
+		await expect(writeLayerManifest(db, offInterface as LayerManifest)).rejects.toThrow(/tier/)
+	})
+
+	it("rejects a manifest with no spine keys", async () => {
+		using db = await openschemadb()
+		await expect(writeLayerManifest(db, { ...MANIFEST, spineKeys: {} })).rejects.toThrow(/spine/)
+	})
+
+	it("throws when reading a database with no manifest", async () => {
+		using db = await openschemadb()
+		await expect(readLayerManifest(db)).rejects.toThrow(/manifest/)
+	})
+
+	it("round-trips a manifest with attribution absent", async () => {
+		using db = await openschemadb()
+		const { attribution: _attribution, ...manifestWithoutAttribution } = MANIFEST
+		await writeLayerManifest(db, manifestWithoutAttribution)
+		const back = await readLayerManifest(db)
+		expect(back).toEqual(manifestWithoutAttribution)
+		expect("attribution" in back).toBe(false)
+	})
+})
+
+describe("layer coverage IO", () => {
+	it("round-trips cells and returns undefined for unsurveyed cells", async () => {
+		using db = await openschemadb()
+
+		await writeLayerCoverage(db, [
+			{ h3Cell: 1001, completeness: 0.9, observedRows: 240 },
+			{ h3Cell: 1002, completeness: 0.1, observedRows: 3 },
+		])
+
+		expect(await readLayerCoverage(db, 1001)).toEqual({
+			h3Cell: 1001,
+			completeness: 0.9,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: 240,
+		})
+
+		// An unsurveyed cell reads as `undefined`, which means unknown coverage.
+		expect(await readLayerCoverage(db, 9999)).toBeUndefined()
+	})
+
+	it("distinguishes a surveyed-and-empty cell from an unsurveyed one", async () => {
+		using db = await openschemadb()
+		await writeLayerCoverage(db, [{ h3Cell: 1003, completeness: 0, observedRows: 0 }])
+
+		expect(await readLayerCoverage(db, 1003)).toEqual({
+			h3Cell: 1003,
+			completeness: 0,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: 0,
+		})
+	})
+
+	it("chunks inserts past a single statement's bound-variable limit", async () => {
+		using db = await openschemadb()
+		// The cell count fills two insert batches and part of a third.
+		const cellCount = COVERAGE_INSERT_BATCH * 2 + 17
+
+		const cells = Array.from({ length: cellCount }, (_, i) => ({
+			h3Cell: i,
+			completeness: i / cellCount,
+			observedRows: i,
+		}))
+
+		await writeLayerCoverage(db, cells)
+
+		expect(await readLayerCoverage(db, 0)).toEqual({
+			h3Cell: 0,
+			completeness: 0,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: 0,
+		})
+
+		const midSecondBatch = COVERAGE_INSERT_BATCH + Math.floor(COVERAGE_INSERT_BATCH / 2)
+
+		expect(await readLayerCoverage(db, midSecondBatch)).toEqual({
+			h3Cell: midSecondBatch,
+			completeness: midSecondBatch / cellCount,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: midSecondBatch,
+		})
+
+		const lastCell = cellCount - 1
+
+		expect(await readLayerCoverage(db, lastCell)).toEqual({
+			h3Cell: lastCell,
+			completeness: lastCell / cellCount,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: lastCell,
+		})
+
+		expect(await readLayerCoverage(db, cellCount + 1000)).toBeUndefined()
+	})
+})
+
+describe("coverage cell invariants", () => {
+	it("round-trips an exclusion-grade cell and answers supportsExclusion for it", async () => {
+		using db = await openschemadb()
+
+		await writeLayerCoverage(db, [
+			{ h3Cell: 7, completeness: 0.6665, basis: CoverageBasis.Surveyed, observedRows: 0 },
+			{ h3Cell: 8, completeness: 1, basis: CoverageBasis.Designated, observedRows: 3 },
+			{ h3Cell: 9, completeness: 1, basis: CoverageBasis.SourcePresent, observedRows: 3 },
+		])
+
+		expect(supportsExclusion((await readLayerCoverage(db, 7))!)).toBe(true)
+		expect(supportsExclusion((await readLayerCoverage(db, 8))!)).toBe(true)
+		expect(supportsExclusion((await readLayerCoverage(db, 9))!)).toBe(false)
+	})
+
+	it("refuses a completeness outside [0, 1] at write time", async () => {
+		using db = await openschemadb()
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: 1.5, observedRows: 1 }])).rejects.toThrow(
+			/completeness/
+		)
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: -0.1, observedRows: 1 }])).rejects.toThrow(
+			/completeness/
+		)
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: Number.NaN, observedRows: 1 }])).rejects.toThrow(
+			/completeness/
+		)
+	})
+
+	it("refuses an unknown basis at write time", async () => {
+		using db = await openschemadb()
+
+		const offInterface: Omit<CoverageCell, "basis"> & { basis: string } = {
+			h3Cell: 1,
+			completeness: 1,
+			basis: "vibes",
+			observedRows: 1,
+		}
+
+		await expect(writeLayerCoverage(db, [offInterface as CoverageCell])).rejects.toThrow(/unknown basis/)
+	})
+
+	it("refuses a negative or fractional observed-row count", async () => {
+		using db = await openschemadb()
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: 1, observedRows: -1 }])).rejects.toThrow(
+			/observedRows/
+		)
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: 1, observedRows: 1.5 }])).rejects.toThrow(
+			/observedRows/
+		)
+	})
+
+	it("refuses the whole batch rather than writing the well-formed half", async () => {
+		using db = await openschemadb()
+
+		await expect(
+			writeLayerCoverage(db, [
+				{ h3Cell: 1, completeness: 1, observedRows: 1 },
+				{ h3Cell: 2, completeness: 9, observedRows: 1 },
+			])
+		).rejects.toThrow(/completeness/)
+
+		expect(await readLayerCoverage(db, 1)).toBeUndefined()
+	})
+
+	it("refuses a corrupted row at READ time too", async () => {
+		using db = await openschemadb()
+
+		await writeLayerCoverage(db, [{ h3Cell: 5, completeness: 0.5, basis: CoverageBasis.Surveyed, observedRows: 2 }])
+
+		// Raw SQL bypasses the writer's validation to store an invalid row.
+		await sql`update layer_coverage set completeness = 4.2 where h3_cell = 5`.execute(db)
+
+		await expect(readLayerCoverage(db, 5)).rejects.toThrow(/completeness/)
+	})
+})
+
+describe("SpineKeys.street — the third layer shape", () => {
+	it("accepts a street spine as satisfying the at-least-one rule", async () => {
+		// Situs extracts are keyed by street.
+		const db = await openschemadb()
+
+		await expect(
+			writeLayerManifest(db, { ...MANIFEST, spineKeys: { street: { column: "street_norm" } } })
+		).resolves.toBeUndefined()
+	})
+
+	it("still refuses a manifest with NO spine at all", async () => {
+		const db = await openschemadb()
+
+		await expect(writeLayerManifest(db, { ...MANIFEST, spineKeys: {} })).rejects.toThrow(/spine/)
+	})
+})

@@ -4,11 +4,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Materialize the en-us overlay's dev artifacts, the base package that carries the model and
+ *   Materialize the en-us overlay's dev artifacts, the base package that contains the model and
  *   tokenizer every other overlay inherits, the soft-feed lexicons, the US postcode binary, the
  *   FSTs and the US placetype-pair index.
  *
- *   `neural/test/integration/weights.test.ts` runs this on every `yarn test`, so the model pair is
+ *   `neural/lib/weights/weights.integration.test.ts` runs this on every `yarn test`, so the model pair is
  *   held to this package's `model-card.json` `files_md5`. The linked default bytes must match the
  *   digests the release re-verifies against the published tarball.
  *   A mismatch fails loudly and prevents grading an eval shift against the wrong weights.

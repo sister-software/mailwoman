@@ -3,39 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fcc-bdc`: FCC Broadband Data Collection (BDC) — Fabric-derived location consumer.
+ *   `fcc-bdc`: FCC Broadband Data Collection (BDC) adapter.
  *
- *   The first member of Phase 1.6's "adversarial sources" class. BDC ships the public-domain US
- *   broadband-serviceable-location (BSL) fabric: ~120M addresses keyed by stable `location_id`,
- *   carrying `address_primary` + `city` + `state` + `zip` + `zip_suffix`. Compared to the clean
- *   gazetteer rows from WOF / tiger / BAN, BDC carries the chaos of address data that has passed
- *   through several layers of human entry + automated geocoding + revision: abbreviation drift,
- *   inconsistent unit designators, "RR" / "HC" / "PSC" rural-route shapes, embedded apartment /
- *   suite numbers that did not survive the address parser cleanly. This is the highest-signal,
- *   hardest-to-normalize address corpus in the federal public-domain catalog.
+ *   Reads BDC Fabric addresses from a prebuilt SQLite database.
+ * 	 Note that Fabric IDs are managed by CostQuest and may be subject to licensing or usage restrictions.
  *
- *   Following the `tiger` / `wof-admin` pattern, this adapter consumes a SQLite database the operator
- *   pre-builds via the isp-nexus BDC ETL (`/srv/isp-nexus/sync/fcc/bdc/`) or any equivalent
- *   host-side pipeline. The mailwoman side does not download or parse the raw CSV/ZIP distribution
- *   directly. That keeps the adapter narrow and the BDC ingest pluggable.
+ *   Each row is keyed by `location_id` and includes:
+ *   `address_primary`, `city`, `state`, `zip`, and `zip_suffix`.
  *
- *   The SQLite schema is documented in readme.md and modeled after `NTIARecord`
- *   (`isp-nexus/fcc/bdc/data-collection.ts`): one row per `location_id`. The adapter splits
- *   `address_primary` into `house_number` (leading numeric prefix, if any) + `street` (everything
- *   after), and combines `zip` + `zip_suffix` into the canonical USPS `postcode` slot.
+ *   This adapter does not download raw BDC files.
  *
- *   One CanonicalRow per fabric record. Unlike `tiger` (multiple postcode variants per segment) or
- *   `wof-admin` (multiple hierarchy variants per place), BDC records already represent fully
- *   specified addresses. no fan-out is warranted. Adversarial composition (Phase 1.6 §2.1) is the
- *   mechanism for deriving multiple training rows per BDC record.
+ *   It converts each source row into one CanonicalRow by:
+ *   - splitting `address_primary` into `house_number` + `street`
+ *   - combining `zip` + `zip_suffix` into `postcode`
  *
- *   License: stamped `"Public Domain"` per the BDC fabric's US federal-government distribution terms.
- *   The CostQuest Fabric source data has its own license. consumers who substitute that path should
- *   re-stamp accordingly.
+ *   Rows are stamped with the source license: `"Public Domain"`.
  */
 
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { splitStreetLine } from "#adapters/utils"
@@ -44,21 +30,16 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter.
- *
- * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
+ * Stable registry id for this adapter.
  */
 export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
- * consumers inherit the terms rather than having to look them up.
+ * Default license stamped on emitted rows.
  */
 export const FCC_BDC_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * SQLite row shape — one row per BSL `location_id`.
- *
- * Columns mirror NTIARecord.
+ * SQLite row shape (one row per `location_id`).
  */
 interface BdcLocationRow {
 	location_id: number
@@ -70,17 +51,14 @@ interface BdcLocationRow {
 }
 
 /**
- * Combine `zip` + optional `zip_suffix` into the canonical USPS postcode surface form.
- *
- * NTIARecord doc is ambiguous about whether `zip_suffix` is the 4-digit extension alone
- * or the full ZIP+4 string.
- * This handles both:
+ * Build USPS postcode from `zip` and optional `zip_suffix`.
+ * Handles both a 4-digit suffix and a full ZIP+4 value.
  *
  * - Bare 4-digit extension (`zip="94103"`, `zip_suffix="1234"`) → `"94103-1234"`
  * - Already-joined form (`zip_suffix="94103-1234"`) → returned as-is
  * - No suffix → bare `zip`
  *
- * Empty / whitespace-only suffix is treated as missing.
+ * Empty/whitespace suffix is treated as missing.
  */
 export function buildPostcode(zip: string, suffix: string | null): string {
 	const z = zip.trim()
@@ -96,9 +74,7 @@ export function buildPostcode(zip: string, suffix: string | null): string {
 }
 
 /**
- * Build a BDC adapter.
- *
- * Pure factory so multiple instances can be created in tests.
+ * Build the BDC corpus adapter.
  */
 export function createFccBdcAdapter(): CorpusAdapter {
 	return {
@@ -106,9 +82,8 @@ export function createFccBdcAdapter(): CorpusAdapter {
 		defaultLicense: FCC_BDC_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.FCCBroadbandData,
-		surface: SurfaceOrigin.Attested,
-		description:
-			"FCC Broadband Data Collection — Fabric-derived BSL addresses (public-domain); SQLite DB the operator builds via the isp-nexus BDC ETL.",
+		surface: SurfaceOrigin.Rendered,
+		description: "FCC Broadband Data Collection — Fabric-derived BSL addresses (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			if (opts.country && opts.country !== "US") {
@@ -178,6 +153,6 @@ export function createFccBdcAdapter(): CorpusAdapter {
 }
 
 /**
- * The configured adapter instance registered with the corpus builder.
+ * Default configured adapter instance.
  */
 export const fccBdcAdapter = createFccBdcAdapter()

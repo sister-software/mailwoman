@@ -187,7 +187,7 @@ and it says how much moves: "approximately 10 to 20 percent of soil survey areas
 measured changes". The 2025 refresh added 41,974,803 acres of new soil data, 116,727 new polygons and
 2,227 new map units.
 
-The measurement agrees with the statement. Grouping `sacatalog` by `YEAR(saverest)` returns
+The measurement agrees with the statement. The `sacatalog` grouping by `YEAR(saverest)` returns
 **2016: 1, 2025: 3,323, 2026: 56**, so 98.3 % of areas carry a version-established date from one
 refresh rather than drifting per area. **The current vintage is the
 October 1, 2025 refresh.** NRCS uses no fiscal-year label for it; five primary sources were checked for
@@ -725,7 +725,7 @@ the condition would invent a determination nobody made. NCCPI is stored as its o
 its own rule name and is never blended with the capability class.
 
 The builder holds the authority's declared domain as a closed set and **throws** on a value outside it.
-An unknown code means the source schema changed, which a reader most needs to know. Coercing it to a
+An unknown code means the source schema changed, which a reader most needs to know. Conversion to a
 nearest neighbour or to NULL would turn "the source changed" into "there is no observation here".
 
 This matters more for Consumer B than it first appears. #1683's vector needs a numeric axis, so storing
@@ -791,7 +791,7 @@ The maximum is 26. By `mukind`, there are 210,339 Consociation, 94,803 Complex, 
 complex is NRCS's statement that two or more soils are intermingled and _cannot be separated at the
 mapping scale_. The mixture is the survey's own finding rather than a loss we introduced.
 
-**Second, in one map unit in six the largest component covers a minority of it.** Bucketing each map unit by its maximum
+**Second, in one map unit in six the largest component covers a minority of it.** We bucket each map unit by its maximum
 `comppct_r`:
 
 | dominant component covers | map units | share  |
@@ -852,7 +852,7 @@ supports it. The layer reproduces that pattern at cell grain rather than inventi
    weighting produced each share**, because "60 % of this cell's area lies in map units whose dominant
    component is class 2" and "the components in this cell sum to 60 % class 2" are different claims.
 3. **Minority classes survive as shares but lose their identity below a floor.** A class occupying 0.4 %
-   of a cell is real but is noise for most consumers. Truncating a long tail is legitimate, but only if
+   of a cell is real but is noise for most consumers. A truncated long tail is legitimate only if
    the truncation is recorded. The layer stores every class share above a declared floor and **one
    explicit `other` share** carrying the truncated remainder. The shares therefore always sum to 1, and
    a reader can see how much was folded away rather than inferring it from a gap.
@@ -967,7 +967,7 @@ truth table must therefore keep unsimplified rings, because simplifying them wou
 without any error, and both consumers read the reduction.
 
 `soil_survey_area` is a separate table for the same reason the flood survey gives `flood_map_extent`
-one. Deriving the mapped footprint from the rated polygons would make exactly the error §3.2 describes,
+one. A mapped footprint derived from the rated polygons would make exactly the error §3.2 describes,
 because `NOTCOM` and access-denied map units are inside the footprint and carry no rating. The table
 also carries the two dates that §3.2 requires be kept apart.
 
@@ -1130,7 +1130,7 @@ shape `poiSemanticLookup` settled on, because a boolean makes the factory constr
 and opens a layer on the default construction path. The flag and its row in the
 [runtime-flag register](../../engineering/reference/runtime-flags.mdx) land in the same change.
 
-**Ranking is unchanged, and byte-stability is the evidence.** The same query, with and without the layer
+**The layer leaves rank order unchanged, and byte-stability is the evidence.** The same query, with and without the layer
 attached, returns an identical result plus one advisory. That follows from how the carrier is built: it
 reads neither candidates, coordinates, nor ordering, and a test pins that.
 
@@ -1171,7 +1171,7 @@ verdict. Land the survey rated as precluding cultivation is reported as that rat
 confused with land the survey did not rate. The observation states what the map assigns at a location
 and never whether the land can be farmed, because the authority itself declines that second statement
 and says so in the metadata it ships. #1683's affordance vector reads the same per-cell artifact,
-unchanged and not duplicated, as its arability axis. Ranking, abstention and every existing result field
+unchanged and not duplicated, as its arability axis. Rank order, abstention and every existing result field
 are unchanged. The observation is additive, attributed, and off by default.
 
 ## 7. The builder-issue outline

@@ -6,15 +6,16 @@
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
+import { describe, expect, it } from "vitest"
+
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
 import {
 	USGOV_HRSA_FQHC_ADAPTER_ID,
 	USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 	createUSGovHRSAFQHCAdapter,
-} from "@mailwoman/corpus/us/adapters/usgov/hrsa-fqhc/adapter"
-import { alignRow } from "@mailwoman/corpus/utils"
-import { describe, expect, it } from "vitest"
+} from "#us/adapters/usgov/hrsa-fqhc/adapter"
+import { alignRow } from "#utils"
 
 const scratch = useScratchDir("usgov-hrsa")
 

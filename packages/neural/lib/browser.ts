@@ -16,7 +16,7 @@
  */
 
 export * from "#anchor-inference"
-export * from "#classifier/index"
+export * from "#classifier"
 export * from "#country-inference"
 export * from "#gazetteer-inference"
 export * from "#labels"

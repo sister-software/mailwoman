@@ -8,19 +8,19 @@
  *   pairs across `packages/*\/lib`: two were true copies (`percentile` with the percentile as a fraction, a second
  *   `pyRound`), the rest thin wrappers, deliberate dependency-free copies, or same-name-different-thing.
  *
- *   A copy that stays says why, on the line above it:
+ *   A copy that stays explains why, on the line above it:
  *
  *       // repo-health-ignore private-name-shadows-export -- <reason>
  *
  *   The `debt` check pins the count so the number ratchets down. this check names each site.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
-import { trackedSourcePaths } from "#tracked-sources"
+import { parseContextSource, readContextSources } from "#context"
+import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#tracked-sources"
 
 /**
  * The comment marker that keeps a deliberate copy out of the census.
@@ -77,15 +77,8 @@ function hasExportModifier(node: ts.FunctionDeclaration): boolean {
 	return (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)
 }
 
-function functionSites(file: string, text: string): FunctionSite[] {
-	const source = ts.createSourceFile(
-		file,
-		text,
-		ts.ScriptTarget.Latest,
-		false,
-		file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-	)
-
+function functionSites(file: string, source: ts.SourceFile): FunctionSite[] {
+	const { text } = source
 	const sites: FunctionSite[] = []
 
 	for (const statement of source.statements) {
@@ -115,25 +108,31 @@ function functionSites(file: string, text: string): FunctionSite[] {
 
 /**
  * Every module-private top-level function in `packages/*\/lib` whose name another module
- * exports, excluding generic names, short names, and copies with a reasoned ignore marker.
+ * exports, excluding generic names, short names and copies with a reasoned ignore marker.
  */
 export async function findPrivateNameShadows(context: RepoContext): Promise<PrivateNameShadow[]> {
 	const paths = await trackedSourcePaths(context, {
-		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` alone skips a file
+		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` by itself skips a file
 		// directly under `lib/` (`lib/index.ts`), the same quirk `tracked-sources.ts` documents.
-		globs: ["packages/*/lib/*.ts", "packages/*/lib/*.tsx", "packages/*/lib/**/*.ts", "packages/*/lib/**/*.tsx"],
+		globs: PACKAGE_SOURCE_GLOBS,
 		existingOnly: true,
 	})
 
 	const exportedBy = new Map<string, string[]>()
 	const privates: FunctionSite[] = []
 
-	for (const path of paths) {
+	const read = paths.filter((path) => {
 		const file = relative(context.repoRoot, path)
 
-		if (file.includes("/test/") || file.endsWith(".d.ts")) continue
+		return !file.includes("/test/") && !file.endsWith(".d.ts")
+	})
 
-		for (const site of functionSites(file, await readLocalTextFile(path))) {
+	await readContextSources(context, read)
+
+	for (const path of read) {
+		const file = relative(context.repoRoot, path)
+
+		for (const site of functionSites(file, await parseContextSource(context, path))) {
 			if (site.exported) {
 				exportedBy.set(site.name, [...(exportedBy.get(site.name) ?? []), site.file])
 			} else {

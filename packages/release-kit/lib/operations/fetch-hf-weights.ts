@@ -9,7 +9,7 @@ import { z } from "zod"
 
 import { defineOperation, OperationEffect } from "#operation"
 import { text } from "#operations/inputs"
-import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights/index"
+import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights"
 
 /**
  * `release.fetch-hf-weights` — writes inside the checkout or the data root.

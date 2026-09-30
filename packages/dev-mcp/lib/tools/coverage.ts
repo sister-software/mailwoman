@@ -18,7 +18,7 @@ import {
 	ParseReading,
 	parseReading,
 	resolveTrainingConfig,
-} from "mailwoman/coverage"
+} from "mailwoman/tools/coverage"
 import { z } from "zod"
 
 import type { DevTool, DevToolDeps } from "#tool-kit"
@@ -108,7 +108,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const report = await censusCoverage({
 			configPath,
 			manifestPath,
-			casesRoot: repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"),
+			casesRoot: repoRootPath("packages", "mailwoman", "tools", "eval-harness", "gauntlet", "cases"),
 			refresh: args["refresh"] === true,
 		})
 

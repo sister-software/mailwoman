@@ -47,9 +47,9 @@ export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype
 }
 
 /**
- * The rank of a placetype, or `undefined` when it carries none.
+ * The rank of a placetype, or `undefined` when it has none.
  *
- * Returning `undefined` rather than a number leaves the decision to the caller.
+ * An `undefined` result leaves the decision to the caller.
  * A caller that cannot rank a row must decide what that means for its own check.
  *
  * The two reasonable answers (block conservatively, or ignore) differ per call site.
@@ -88,7 +88,7 @@ export function isAtLeastAsSpecific(
  * A check for whether a live row covers a dead one wants an equal rung to count as covering,
  * so a live `locality` covers a dead `locality` of the same name.
  *
- * Negating `isAtLeastAsSpecific(live, dead)` answers whether the live row is
+ * `isAtLeastAsSpecific(live, dead) === false` answers whether the live row is
  * strictly coarser and quietly drops the equal case.
  *
  * `undefined` when either placetype is unranked.

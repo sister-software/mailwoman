@@ -12,7 +12,7 @@
  * Levels, per mechanism:
  *
  * - **L0 present** — the mechanism's record appears in the trace (the stage ran / the channel was
- *   configured); near meaningless alone, since a stage can report `applied: true` beside all-zero
+ *   configured); near meaningless by itself, since a stage can report `applied: true` beside all-zero
  *   channels.
  * - **L1 signaled** — it produced nonzero input to the next stage. This file computes L0 and L1 from one
  *   traced run.
@@ -223,7 +223,8 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
 export async function runCensus(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
 	const config = (args["config"] as Record<string, unknown> | undefined) ?? {}
-	// Tracing is the census's entire input, so it is forced on regardless of what the caller passed.
+	// The census uses a traced parse as its full input.
+	// The engine enables tracing regardless of caller configuration.
 	const engine = await registry.acquire({ ...config, trace: true })
 
 	const traced: Array<{ id: string; input: string; parse: NeuralParseTrace }> = []

@@ -134,7 +134,7 @@ export function isExcludedFromBuild(page: DocPage): boolean {
 	if (page.relativePath.startsWith("evals/")) {
 		const basename = path.posix.basename(page.relativePath)
 
-		return basename.includes("postmortem") || basename.includes("night-shift-session-report")
+		return basename.includes("postmortem")
 	}
 
 	return false

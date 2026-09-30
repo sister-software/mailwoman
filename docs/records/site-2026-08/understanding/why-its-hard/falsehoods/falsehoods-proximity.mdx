@@ -39,14 +39,14 @@ USPS delivery to a rural address: the mailbox is at the road, 200 meters from th
 
 "Close enough" depends on what you're doing:
 
-| Use case                                          | Required precision      | Why                                             |
-| ------------------------------------------------- | ----------------------- | ----------------------------------------------- |
-| Statistical aggregation (census, market analysis) | Block group (~250m)     | You're counting people rather than finding them |
-| Regional routing (which warehouse?)               | City-level (~5km)       | The truck is going to the right metro area      |
-| Delivery routing (which truck?)                   | Street segment (~50m)   | The driver needs the right block                |
-| Last-mile delivery (which door?)                  | Building entrance (~5m) | The driver needs the right building             |
-| Emergency dispatch (which entrance?)              | Specific door (~1m)     | Seconds matter, wrong entrance kills            |
-| Utility service (which meter?)                    | Specific wall (~0.5m)   | The gas shutoff is on the north wall            |
+| Use case                                          | Required precision       | Why                                             |
+| ------------------------------------------------- | ------------------------ | ----------------------------------------------- |
+| Statistical aggregation (census, market analysis) | Block group (~250m)      | You're counting people rather than finding them |
+| Regional routing (which warehouse?)               | City-level (~5km)        | The truck is going to the right metro area      |
+| Delivery routing (which truck?)                   | Street segment (~50m)    | The driver needs the right block                |
+| Last-mile delivery (which door?)                  | Structure entrance (~5m) | The driver needs the right building             |
+| Emergency dispatch (which entrance?)              | Specific door (~1m)      | Seconds matter, wrong entrance kills            |
+| Utility service (which meter?)                    | Specific wall (~0.5m)    | The gas shutoff is on the north wall            |
 
 A geocode that is "close enough" for market analysis (city-level) is wrong by 5 kilometers for last-mile delivery. A geocode that is "close enough" for delivery routing (street segment) is wrong by 50 meters for emergency dispatch. The same coordinate can be useful for one consumer and useless for another.
 
@@ -98,12 +98,12 @@ The reverse geocode is answering "what place is at this coordinate?" not "what a
 
 **The resolver can return multiple candidates per address component.** `locality=Springfield` returns 34 candidates, each with a different coordinate. The downstream system can choose the one that matches additional context (state, postcode) or surface all of them. The resolver does not pretend to know which Springfield when it doesn't.
 
-**[Confidence is per-component rather than spatial](../../../concepts/confidence-calibration.mdx).** The parser's confidence score is about the label — "I'm 95% sure this token is a locality" — not about the coordinate — "I'm 95% sure the locality is within 500 meters of this point." The resolver's score is about gazetteer match quality rather than spatial accuracy. Separating these into different signals (label confidence, resolver match quality, spatial precision metadata) is future work.
+**[Confidence is per-component rather than spatial](../../../concepts/confidence-calibration.mdx).** The parser's confidence score is about the label — "I'm 95% sure this token is a locality" — not about the coordinate — "I'm 95% sure the locality is within 500 meters of this point." The resolver's score is about gazetteer match quality rather than spatial accuracy. Separate signals for label confidence, resolver match quality, and spatial precision metadata remain future work.
 
 ## What Mailwoman still can't do
 
 - **Frontage-level coordinates.** WOF stores one coordinate per record — typically a centroid. Mailwoman's resolver returns that coordinate. Multiple coordinates per address (entrance, delivery, parcel centroid) require a gazetteer that stores them and a resolver that exposes them. No open gazetteer does this at global scale.
-- **Precision metadata.** The resolver does not return a `location_type` equivalent (ROOFTOP vs GEOMETRIC_CENTER vs APPROXIMATE). WOF records don't consistently encode how the coordinate was derived. Adding a precision signal to the resolver output is planned but not yet implemented.
+- **Precision metadata.** The resolver does not return a `location_type` equivalent (ROOFTOP vs GEOMETRIC_CENTER vs APPROXIMATE). WOF records don't consistently encode how the coordinate was derived. The planned resolver output includes a precision signal, which is not yet implemented.
 - **Reverse geocoding.** The resolver forward-geocodes — text → coordinate. Reverse geocoding (coordinate → text) is a different problem with different infrastructure (spatial index rather than text index). Mailwoman does not do reverse geocoding.
 
 ## References

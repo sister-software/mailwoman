@@ -47,7 +47,7 @@ export function loneBareLocalityNode(tree: AddressTree, placetypeMap: PlacetypeM
 export const BARE_REGION_DOMINANCE_LOG10 = 0.5
 
 /**
- * Log10(population + 1), 0 when the backend carries none.
+ * Log10(population + 1), 0 when the backend has no population value.
  *
  * The saturation-free magnitude the bare-region dominance rule compares
  * (prominence caps at the backend's populationBoost and erases exactly the margins this rule needs).

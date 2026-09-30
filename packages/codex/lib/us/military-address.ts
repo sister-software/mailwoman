@@ -11,7 +11,7 @@
  *   appearing above the city line identifies the specific installation unit, postal service center,
  *   or community mail room.
  *
- *   Sourcing (accessed 2026-06-12):
+ *   Sources (accessed 2026-06-12):
  *
  *   - **USPS Publication 28, Chapter 7** ("Armed Forces and Diplomatic Post Offices") defines the three
  *       armed-forces location codes and three state-code regions. The publication states: "Use APO with AA
@@ -77,7 +77,7 @@ export type USArmedForcesRegionCode = (typeof US_ARMED_FORCES_REGIONS)[number]["
  *
  * - `PSC <id> BOX <box>` — Postal Service Center
  * - `CMR <id> BOX <box>` — Community Mail Room
- * - `unit <id> BOX <box>` — numbered unit (battalion/company); unit may stand alone
+ * - `unit <id> BOX <box>` — numbered unit (battalion/company); the unit may appear
  *   with just an id and no BOX when the unit has direct mail delivery
  *
  * BOX is required for PSC and CMR.

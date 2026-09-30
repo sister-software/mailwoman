@@ -9,7 +9,7 @@
  *   file is missing, rows omit that component.
  */
 
-import { componentsPresentIn } from "@mailwoman/codex/address-format"
+import { componentsPresentIn } from "@mailwoman/codex/address/format"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { PathBuilder } from "path-ts"
@@ -47,7 +47,7 @@ export const GEONAMES_MAIN_COLUMNS = {
 const COL = GEONAMES_MAIN_COLUMNS
 
 /**
- * Feature codes for historical, abandoned or destroyed populated places, which the adapter skips.
+ * The adapter skips these feature codes for historical, abandoned, or destroyed populated places.
  */
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 
@@ -101,7 +101,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 		defaultLicense: GEONAMES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.GeoNames,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"GeoNames populated places (CC-BY-4.0) — global locality coverage incl. small towns, with region/country names from the sibling admin1/countryInfo files.",
 

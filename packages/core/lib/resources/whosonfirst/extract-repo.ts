@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reading a place out of a cloned Who's On First data repo.
+ *   This function reads a place from a cloned Who's On First data repository.
  *
  *   WOF stores each record at a path derived from its own ID. The decimal ID is split into three-character directories,
  *   followed by `<id>.geojson`. `85977539` lives at `859/775/39/85977539.geojson`. The data does not state this rule.

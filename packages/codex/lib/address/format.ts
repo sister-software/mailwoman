@@ -4,16 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Render a `ComponentTag`-keyed dict into a country-localized string — the inverse of the parser. The order
- *   lives in `@mailwoman/codex/address-layouts`, as data. This module is the public surface over
+ *   lives in `@mailwoman/codex/address/layouts`, as data. This module is the public surface over
  *   {@linkcode renderAddress}.
  */
 
-import {
-	defaultScriptForCountry,
-	layoutForCountry,
-	lineJoinForCountry,
-	type AddressScript,
-} from "#address/layouts/index"
+import { defaultScriptForCountry, layoutForCountry, lineJoinForCountry, type AddressScript } from "#address/layouts"
 import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
 import { COMPONENT_TAGS, type ComponentTag } from "#component"
 
@@ -68,7 +63,7 @@ function separatorFor(country: string, script: AddressScript, opts: FormatAddres
  *
  * An explicit `separator` overrides both.
  * A caller-supplied separator applies between every pair of lines.
- * Returning two separators would ignore the requested value.
+ * Two separators would ignore the requested value.
  */
 function softSeparatorFor(opts: FormatAddressOptions): string {
 	if (opts.separator !== undefined) return opts.separator
@@ -83,7 +78,7 @@ function softSeparatorFor(opts: FormatAddressOptions): string {
 const SCRIPT_WITNESSES: readonly ComponentTag[] = ["street", "locality", "dependent_locality", "region", "venue"]
 
 /**
- * Whether a string carries a letter written in something other than the Latin alphabet.
+ * Whether a string contains a letter written in something other than the Latin alphabet.
  *
  * Every record carrying two orders pairs a Latin register with a non-Latin one,
  * so this binary answer is the whole question a layout choice asks.
@@ -93,7 +88,7 @@ function carriesNonLatinLetter(value: string): boolean {
 }
 
 /**
- * The script `components` are written in, read off the first witness that carries a letter.
+ * The script `components` are written in, read from the first witness that contains a letter.
  *
  * A witness without letters does not identify a script.
  * All-digit or absent witnesses return `undefined`.
@@ -102,7 +97,7 @@ function carriesNonLatinLetter(value: string): boolean {
 // repo-health-ignore export-name-affix -- core's `scriptOf` takes a codepoint
 // and answers its ISO 15924 script.
 // This takes a dict and answers which of a country's two orders it is written for.
-// Importing it is also impossible because this package has no runtime dependencies.
+// This package cannot import it because it has no runtime dependencies.
 // The core package adds 11 MB of shipped data.
 export function scriptOfComponents(components: ComponentDict): AddressScript | undefined {
 	for (const tag of SCRIPT_WITNESSES) {
@@ -157,8 +152,8 @@ function scriptIsFreeToDerive(country: string): boolean {
 /**
  * Render a component dict into an idiomatic per-country address string.
  *
- * @returns An empty string when the dict is empty, when no layout names `country`
- * (55 of the 252 shipped records carry no usable skeleton), or when the layout prints no field.
+ * @returns An empty string when the dict is empty, when no layout defines `country`
+ * (55 of the 252 shipped records have no usable skeleton), or when the layout prints no field.
  * A partial dict degrades to the parts the layout can print.
  */
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
@@ -188,7 +183,7 @@ export interface AddressRow {
 	 * The caller's `script`, else the one read off the components, else the country's own default.
 	 *
 	 * Reported so callers can identify the chosen order.
-	 * In a country with two orders, the rendered text alone may not reveal it.
+	 * In a country with two orders, the rendered text by itself may not reveal it.
 	 *
 	 * A dictionary with no street and one administrative tier prints the same string either way.
 	 * A corpus row needs its register to be graded against that order.

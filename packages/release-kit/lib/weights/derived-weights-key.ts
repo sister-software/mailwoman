@@ -13,7 +13,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
 import { createHash } from "@mailwoman/core/hash"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
-import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
+import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/tools/gazetteer-pipeline/postcode/binary"
 import { type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -23,21 +23,21 @@ import { Globerator } from "spliterator/node/fs"
  *
  * Each generating source module is paired with its compiled counterpart
  * because the build spawns the compiled CLI.
- * Hashing source alone lets a stale compile compute the fixed key and build with the broken code.
+ * A source-only hash lets a stale compile compute the fixed key and build with the broken code.
  *
  * Transitive compiled imports are deliberately excluded, or the store would
  * invalidate on every unrelated commit.
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"release.config.json",
-	"packages/mailwoman/lib/gazetteer-pipeline/borough-pairs.ts",
-	"packages/mailwoman/lib/gazetteer-pipeline/lieudit-pairs.ts",
-	"packages/mailwoman/lib/commands/gazetteer/pair-index.tsx",
-	"packages/mailwoman/lib/commands/gazetteer/postcode/binary.tsx",
-	"packages/mailwoman/out/gazetteer-pipeline/borough-pairs.js",
-	"packages/mailwoman/out/gazetteer-pipeline/lieudit-pairs.js",
-	"packages/mailwoman/out/commands/gazetteer/pair-index.js",
-	"packages/mailwoman/out/commands/gazetteer/postcode/binary.js",
+	"packages/mailwoman/tools/gazetteer-pipeline/borough-pairs.ts",
+	"packages/mailwoman/tools/gazetteer-pipeline/lieudit-pairs.ts",
+	"packages/mailwoman/cli/commands/gazetteer/pair-index.tsx",
+	"packages/mailwoman/cli/commands/gazetteer/postcode/binary.tsx",
+	"packages/mailwoman/out/tools/gazetteer-pipeline/borough-pairs.js",
+	"packages/mailwoman/out/tools/gazetteer-pipeline/lieudit-pairs.js",
+	"packages/mailwoman/out/cli/commands/gazetteer/pair-index.js",
+	"packages/mailwoman/out/cli/commands/gazetteer/postcode/binary.js",
 ]
 
 /**
@@ -60,7 +60,7 @@ async function postcodePipelinePaths(): Promise<string[]> {
 	const root = repoRootPathBuilder()
 
 	const dirs = [
-		root("packages", "mailwoman", "lib", "gazetteer-pipeline", "postcode"),
+		root("packages", "mailwoman", "tools", "gazetteer-pipeline", "postcode"),
 		root("packages", "mailwoman", "out", "gazetteer-pipeline", "postcode"),
 	]
 
@@ -85,7 +85,9 @@ async function postcodePipelinePaths(): Promise<string[]> {
 export interface DerivedWeightsInput {
 	/**
 	 * Repo-relative identity of the input.
-	 * Hashed, and it must not vary by checkout location.
+	 *
+	 * Hashed.
+	 * The value must not vary by checkout location.
 	 */
 	name: string
 	/**
@@ -167,7 +169,7 @@ export function derivedWeightsDir(key: string): string {
  */
 /**
  * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve check reads.
- * Anything shorter cannot carry a record count at all.
+ * No shorter value can represent a record count.
  */
 const PCB1_HEADER_BYTES = 9
 

@@ -78,7 +78,7 @@ export interface TrainingManifest {
 }
 
 /**
- * The digest a manifest should carry, computed over the manifest with its digest field emptied.
+ * The digest a manifest should include, computed over the manifest with its digest field emptied.
  */
 export function trainingManifestDigest(manifest: TrainingManifest): string {
 	return sha256Hex(stringifyJSON({ ...manifest, contentDigest: "" }))
@@ -87,7 +87,7 @@ export function trainingManifestDigest(manifest: TrainingManifest): string {
 /**
  * Freeze one build's source observations into a manifest.
  *
- * A license the decision table does not carry records `decision: null` rather than being omitted,
+ * A license absent from the decision table records `decision: null` rather than being omitted,
  * so a build that read an unregistered adapter stays distinguishable from one that read no source.
  */
 export function freezeTrainingManifest(input: {

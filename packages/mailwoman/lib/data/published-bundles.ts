@@ -57,9 +57,9 @@ export type ServedSize =
  * It joins every upstream's terms with `AND`.
  *
  * That claims that all of them govern the whole artifact.
- * Counsel says that claim is wrong for a database whose own rights differ from the rights in its contents.
+ * Counsel states that claim is wrong for a database whose own rights differ from the rights in its contents.
  *
- * It is recorded because it is what the artifact says.
+ * It is recorded because it is the value in the artifact.
  * The per-component record belongs in {@link BundleRightsRecord}.
  *
  * `null` records a manifest row that holds no expression.

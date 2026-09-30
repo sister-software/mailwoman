@@ -70,7 +70,7 @@ const MS_PER_MINUTE = 60_000
  * Rooftop coordinates rarely change.
  *
  * The TTL still bounds how long a cached answer can disagree with a fresh geocode.
- * Deleting the cache directory forces fresh requests.
+ * The cache directory must be deleted to force fresh requests.
  */
 const DEFAULT_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
@@ -168,7 +168,7 @@ export interface CreateGoogleGeocoderClientOptions {
 	 * Axios options merged over the defaults.
 	 * Tests inject an adapter here to avoid network calls.
 	 *
-	 * Replacing `params` entirely would drop the API key.
+	 * A replacement `params` object would drop the API key.
 	 */
 	axios?: APIClientConfig["axios"]
 }
@@ -234,8 +234,10 @@ type GeocodeParams = Record<string, string>
 /**
  * Builds the cache key for one request without the API key.
  *
- * Excluding the key keeps cache entries valid across key rotation.
- * Sorting the parameter names makes two requests that differ only in property order share an entry.
+ * The cache key omits the credential.
+ * Entries remain valid across key rotation.
+ *
+ * The function sorts parameter names, so requests that differ only in property order share an entry.
  */
 export function geocodeCacheKey(config: { method?: string; url?: string; params?: unknown }): string {
 	const params = (config.params ?? {}) as Record<string, unknown>
@@ -253,7 +255,7 @@ export function geocodeCacheKey(config: { method?: string; url?: string; params?
  * Only `OK` and `ZERO_RESULTS` bodies qualify because they describe the address.
  * Other statuses describe the request or account.
  *
- * Caching `REQUEST_DENIED`, for example, would repeat the failure for the whole TTL.
+ * A cached `REQUEST_DENIED` response would repeat the failure for the whole TTL.
  */
 export function isCacheableGoogleBody(value: { data?: { data?: unknown } }): boolean {
 	const body = value.data?.data as GoogleGeocodeResponse | undefined
@@ -509,7 +511,7 @@ export function createGoogleGeocoderClient(options: CreateGoogleGeocoderClientOp
 		baseRetryDelayMs: options.baseRetryDelayMs ?? DEFAULT_BASE_RETRY_DELAY_MS,
 		clock,
 		// The minimum interval spaces requests evenly.
-		// The per-minute budget alone would allow bursts.
+		// The per-minute budget by itself would allow bursts.
 		requestsPerMinute,
 		minRequestIntervalMs: Math.ceil(MS_PER_MINUTE / requestsPerMinute),
 		retry: {

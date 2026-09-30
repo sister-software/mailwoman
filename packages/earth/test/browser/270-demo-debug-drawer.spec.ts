@@ -1,5 +1,5 @@
 /**
- * @file The `/debug` route and the in-demo model-visualizer drawer, which traces the same address
+ * @file The `/debug` route and the in-demo model-visualizer drawer. The drawer traces the same address
  *   geocoded on the map.
  */
 

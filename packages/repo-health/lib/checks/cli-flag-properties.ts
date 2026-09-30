@@ -8,7 +8,7 @@
  *   under a name no code reads. The flag parses and validates, but changes no behavior.
  *
  *   The check derives each flag's property with that same function and asks whether any tracked source mentions it,
- *   over the component command tree under `lib/commands/`; the `native/commands/` family reads `parsed.values` by
+ *   over the component command tree under `cli/commands/`; the `native/commands/` family reads `parsed.values` by
  *   the kebab name itself and derives no property.
  */
 
@@ -17,7 +17,7 @@ import { optionPropertyName } from "@mailwoman/core/scripting/utils"
 import { relative } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
-import { trackedSourcePaths } from "#tracked-sources"
+import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#tracked-sources"
 
 /**
  * The kebab-case flag keys of one `spec.options` block, from `options: {` to the
@@ -34,7 +34,7 @@ const IDENTIFIER = /\b[A-Za-z_$][\w$]*/gu
 /**
  * The command tree the router loads and derives property names for.
  */
-const DERIVED_COMMAND = /^packages\/[^/]+\/lib\/commands\//u
+const DERIVED_COMMAND = /^packages\/[^/]+\/(?:cli|lib)\/commands\//u
 
 interface CommandFlags {
 	file: string
@@ -63,7 +63,7 @@ export const cliFlagPropertiesCheck: RepoCheck = {
 		"Every kebab CLI flag derives a property name some tracked source mentions, so no flag parses and then fills a property nothing reads.",
 	async run(context) {
 		const sources = await trackedSourcePaths(context, {
-			globs: ["packages/*/lib/*.ts", "packages/*/lib/*.tsx", "packages/*/lib/**/*.ts", "packages/*/lib/**/*.tsx"],
+			globs: PACKAGE_SOURCE_GLOBS,
 			existingOnly: true,
 		})
 

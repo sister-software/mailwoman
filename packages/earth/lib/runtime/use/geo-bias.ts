@@ -17,7 +17,7 @@ export type GeoBiasError = "denied" | "unavailable" | "unsupported"
 export interface GeoBiasControl {
 	active: boolean
 	/**
-	 * Why the last attempt failed, or `null`; the chip alone cannot say this,
+	 * Why the last attempt failed, or `null`; the chip by itself cannot explain this,
 	 * because a denial turns it back off exactly like a manual toggle-off and pressing
 	 * again has no visible effect since the browser never prompts twice.
 	 */

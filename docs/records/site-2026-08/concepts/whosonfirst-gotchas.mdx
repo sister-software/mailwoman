@@ -29,7 +29,7 @@ WOF provides something no other open dataset does: **a consistent hierarchy with
 
 ### One file per place
 
-WOF's canonical storage is one `.geojson` file per place, organized in a directory tree. A US admin subset has roughly 120,000 individual files, and the French equivalent has about 80,000. Opening, parsing, and indexing 200,000 JSON files is a substantial engineering task before you can run a single query.
+WOF's canonical storage is one `.geojson` file per place, organized in a directory tree. A US admin subset has roughly 120,000 individual files, and the French equivalent has about 80,000. A build that opens, parses, and indexes 200,000 JSON files must complete substantial engineering work before it can run a single query.
 
 This layout suited WOF's original use case, which was tracking changes to individual places in git. A geocoder that needs to find all localities named Houston across 120K files needs a different access pattern. The SQLite distributions from Geocode Earth exist to provide it.
 
@@ -91,7 +91,7 @@ A query that assumes every record has a valid parent chain fails silently on the
 
 ### Name normalization is critical
 
-WOF stores "São Paulo" with the accent, and user input might arrive as "Sao Paulo" or "SAO PAULO". Matching requires case folding and accent stripping. The resolver's placename index normalizes every name to a canonical form (NFC, lowercase, accent-stripped) before insertion.
+WOF stores "São Paulo" with the accent, and user input might arrive as "Sao Paulo" or "SAO PAULO". The resolver folds case and strips accents. Its placename index normalizes every name to a canonical form (NFC, lowercase, accent-stripped) before insertion.
 
 ## How Mailwoman uses WOF
 
@@ -151,4 +151,4 @@ WOF is the best open option for hierarchy and multilingual names, but it is hard
 - [Spelunker](https://spelunker.whosonfirst.org/): the official WOF browser
 - [Resolver and Who's On First](./resolver-and-wof.mdx): how the runtime resolver queries WOF
 - [WOF data pipeline](./wof-data-pipeline.mdx): build-time ingest architecture
-- [Taming Who's On First](/research/taming-whosonfirst): the narrative version of this article
+- [The narrative version of this article](/research/taming-whosonfirst)

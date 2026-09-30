@@ -32,15 +32,15 @@ for await (const record of normalizeCSV("nppes.csv", { mapping })) {
 
 The `mapping` is the entire configuration. Each field lists the column, or columns, that it reads from. A field with several columns, like `address` above, joins them in order, so four NPPES columns become `"500 N Hiatus Rd Ste 200, Pembroke Pines, FL, 33026"`. The original row is kept verbatim on `record.raw`, so no data is lost. Downstream stages recompute from the raw row instead of relying on a lossy projection.
 
-`normalizeCSV` does not produce a coordinate, and `record.address` is deliberately undefined here. Normalizing a row (mapping columns, parsing the name, canonicalizing the org) takes microseconds, so it runs cheaply on a single thread. Geocoding has very different costs.
+`normalizeCSV` leaves `record.address` undefined and produces no coordinate. Row normalization maps columns, parses the name, and canonicalizes the org in microseconds, so one thread handles it cheaply. The geocoder has a different cost profile.
 
 ## Why geocoding is a separate stage
 
 With a million rows, it is tempting to spread the work across all cores. That helps for expensive work and hurts for cheap work, and the boundary between the two is sharper than it looks.
 
-Dispatching a row to a worker thread and getting the result back has a fixed cost: serializing the row, deserializing the result, and a few microseconds of structured clone in each direction. Normalizing a row costs about the same. Threading the normalize step therefore spends a microsecond to save a microsecond. Spread across eight cores, it gets _slower_, because the main thread spends all its time packing and unpacking messages. We measured this on light CSV work at 0.3–0.9× of single-threaded speed. Keep the cheap stage on one thread.
+A worker-thread round trip has a fixed cost: serializing the row, deserializing the result, and a few microseconds of structured clone in each direction. Row normalization costs about the same. A worker therefore spends a microsecond to save a microsecond on the normalize step. Eight-core runs make light CSV work _slower_ because the main thread spends its time packing and unpacking messages. Our measurements put that work at 0.3–0.9× single-threaded speed. Keep the cheap stage on one thread.
 
-Geocoding is the opposite case. Each address runs a neural parse and several lookups against a multi-gigabyte gazetteer, which takes milliseconds, about a thousand times the dispatch cost. At that scale the fixed overhead is negligible, and threads help. The division follows from these costs: **normalize on the main thread, geocode in workers.**
+The cost profile reverses for geocoding. Each address runs a neural parse and several lookups against a multi-gigabyte gazetteer, which takes milliseconds, about a thousand times the dispatch cost. At that scale the fixed overhead is negligible, and threads help. The division follows from these costs: **normalize on the main thread, geocode in workers.**
 
 ## Compose them, and filter in between
 
@@ -69,7 +69,7 @@ for await (const record of geocodeStream(onlyWithAddress(normalized), { mapping,
 }
 ```
 
-The filter is where the savings come from. Geocoding is the expensive stage, so every row you discard _before_ it saves a worker dispatch. If you normalize a million rows and keep the 300 K with a usable address, only those rows reach the pool. Filtering takes a microsecond and geocoding takes milliseconds, so reject rows before geocoding.
+The filter saves worker dispatches because geocoding is the expensive stage. Every row discarded _before_ geocoding avoids a dispatch. If you normalize a million rows and keep the 300 K with a usable address, only those rows reach the pool. A filter takes a microsecond, while geocoding takes milliseconds, so reject rows before geocoding.
 
 ## How the workers stay cheap
 
@@ -82,7 +82,7 @@ This design has two consequences:
 
 ## Don't reach for all your cores
 
-For this reason, `geocodeStream` sets a low default `concurrency` instead of your core count. Geocoding looks CPU-bound, but it is limited by latency and memory. Every row makes random reads into the multi-gigabyte WOF database, and the classifier already spreads each inference across several cores. Additional workers get no additional compute. They contend for the same memory bandwidth and the same DB pages.
+The `geocodeStream` default `concurrency` stays below your core count because latency and memory limit the workload. Although the workload looks CPU-bound, every row makes random reads into the multi-gigabyte WOF database, and the classifier already spreads each inference across several cores. Additional workers get no additional compute. They contend for the same memory bandwidth and the same DB pages.
 
 A sweep over real NPPES addresses on a 16-core machine with a single 4 GB gazetteer produced these results:
 
@@ -94,12 +94,12 @@ A sweep over real NPPES addresses on a 16-core machine with a single 4 GB gazett
 |       4 |     47 rows/s |     1.1× |
 |       6 |     43 rows/s |       1× |
 
-Throughput peaks at two workers and _declines_ after that. At six workers it is back to the single-threaded rate while using six cores. Capping per-worker inference threads did not change the result, because the limit is the shared database rather than the CPU. Measure several `concurrency` values for your data and disk, starting low. Threading the geocode stage gives a real but modest gain (~1.4×), and adding more workers loses it.
+Two workers produce peak throughput; each additional worker lowers it. Six workers return to the single-threaded rate while using six cores. A per-worker inference-thread cap did not change the result because the shared database, rather than the CPU, sets the limit. Measure several `concurrency` values for your data and disk, starting low. The geocode-stage threads give a measured ~1.4× gain, and more workers erase it.
 
 If your gazetteer fits in RAM or is spread across several disks, your throughput curve will be higher, so measure it. The default (`min(4, cores)`) is deliberately conservative, so that the default behavior improves throughput instead of overloading the database.
 
 ## When to stop at `normalize`
 
-Not every ingest needs a coordinate. If you load records to dedupe by name and org, or to join on an ID, the address is never geocoded. Without an expensive stage to thread, `normalizeCSV` does the whole job. Adding `geocodeStream` there would only add worker overhead to microsecond work, the loss described two sections earlier. Thread only the stage whose per-row cost justifies it.
+Some ingests need no coordinate. A name-and-org deduplication or an ID join never geocodes the address. `normalizeCSV` handles the whole job when no expensive stage can use threads. A `geocodeStream` call would add worker overhead to microsecond work, as described two sections earlier. Thread only a stage whose per-row cost justifies it.
 
-Once you have geocoded `SourceRecord`s, [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers the dedup and entity-resolution step that follows this ingest. [Displaying results on a map](./display-on-a-map.md) covers plotting the output.
+After geocoding produces `SourceRecord`s, [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers the dedup and entity-resolution step that follows this ingest. [Map display](./display-on-a-map.md) covers plotting the output.

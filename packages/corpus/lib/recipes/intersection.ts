@@ -17,7 +17,7 @@
  *   - Every crossing in data/eval/external/intersection-real.jsonl is excluded from both modes, by node
  *       id and by order-insensitive name pair (the eval shares all three counties).
  *
- *   Rendering covers junction-format variety: padded and tight `&` and `/`, `and`, `at`, `@`, and the
+ *   Junction-format variety includes padded and tight `&` and `/`, `and`, `at`, `@`, and the
  *   leading phrases `corner of` and `intersection of`, crossed with tails (bare / `, ST` / `, ST ZIP` /
  *   `, City, ST [ZIP]`) and case variants. ZIPs are the crossing's own tiger edge zipl (real). The
  *   locality tail comes from the OA Cook-county ZIP→city majority map.
@@ -93,7 +93,7 @@ interface Crossing {
  * Junction forms.
  *
  * Weights favor the common connectors.
- * The tight (unpadded) variants and leading phrases each carry at least 5% of the mass.
+ * The tight (unpadded) variants and leading phrases each account for at least 5% of the mass.
  */
 interface Form {
 	id: string
@@ -121,7 +121,7 @@ const FORMS: readonly Form[] = [
  * so the bare form keeps a majority.
  * City tails require a ZIP→city hit (Cook only).
  *
- * ZIP tails require the edge to carry a zipl.
+ * ZIP tails require the edge to include a zipl.
  * Misses downgrade to the region tail.
  */
 interface Tail {
@@ -207,7 +207,7 @@ async function readEvalExclusions(): Promise<{ nodes: Set<number>; pairs: Set<st
  * Extract real crossings from one county's tiger edges shapefile.
  *
  * Same query shape as the eval builder (2 incident distinct S1* FULLNAMEs at a node, both names >=6 chars),
- * plus the edge zipl so tails can carry the crossing's own ZIP.
+ * plus the edge zipl so tails can include the crossing's own ZIP.
  * Hash-ordered for seed-stable determinism.
  */
 async function extractCrossings(
@@ -346,7 +346,7 @@ function renderRow(
 
 	// Components keep their original case. alignRow matches case-insensitively
 	// and labels the tokens of the (cased) raw.
-	// The parquet row carries tokens+labels only.
+	// The parquet row contains tokens+labels only.
 	return { raw, components, formID: form.id, tailID: tail.id, caseID: casing.id }
 }
 
@@ -451,8 +451,8 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behaviour it exercises.
+ * See `description` below for the generated surface form.
  */
 export const intersectionRecipe: CorpusRecipe = {
 	name: "intersection",

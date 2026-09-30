@@ -9,7 +9,7 @@ levels." Written down here with the bigger shape it connects to.
 PO Box 123 · Apt 4B · Suite 500 · Unit 9 · Level 12 · 3rd Floor · Private Bag 39990 · Drawer
 61547 · CMB B99 — every one is **DESIGNATOR + IDENTIFIER**: a closed-vocabulary leader (now
 provenance-tracked across `codex/us|fr|ca|au|nz`) followed by a short id with per-designator
-shape rules. Addressing standards treat them as one family too (USPS "secondary unit
+shape rules. Postal standards treat them as one family too (USPS "secondary unit
 designators"; AU's subpremise forms in the same AMAS table the #517 recipes mined; NZ Post's
 delivery-service types). The model currently learns each tag's instances separately
 (`unit` extract, `po_box/cedex` extract) and shares no representation across the family.
@@ -45,7 +45,7 @@ The architecture has rightful homes for this instinct, in escalating order of am
    answer to v0's remaining edge-format wins (the postal arena's label formats are exactly
    where v0 still beats neural).
 
-## Sequencing against the live board
+## Sequence against the live board
 
 Slot 2 is the natural first build: it needs no retrain (priors are inference-side), its
 implementation is shared with the #518 revival verdict, and the v0.5.0 char-offset format makes its

@@ -1,4 +1,4 @@
-# Reproducing a shipped model (worked example: v4.2.0)
+# Reproduction of a shipped model (worked example: v4.2.0)
 
 The "clone + train" recipe (#480). A shipped model is reproducible from five inputs; this
 page names exactly where each lives and the commands that consume them. The worked example
@@ -7,13 +7,13 @@ is **v4.2.0** (`v1.0.2-consolidation-runB`); substitute per the eval-ledger row
 
 ## The five inputs
 
-| Input         | v4.2.0 value                                                               | Where it lives                                                                                                                                                                                |
-| ------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Training code | `corpus-python/src/mailwoman_train/` @ the release tag                     | this repo                                                                                                                                                                                     |
-| Config        | `corpus-python/src/mailwoman_train/configs/v1.0.2-consolidation-runB.yaml` | this repo                                                                                                                                                                                     |
-| Corpus        | `corpus-v0.4.12-consolidation` (Parquet files + MANIFEST)                  | R2 `mailwoman-assets` bucket → Modal volume `mailwoman-training` at `/data/corpus/versioned/`                                                                                                 |
-| Tokenizer     | `v0.6.0-a0/tokenizer.model` (md5 `b6137e8c…`)                              | same volume, `/data/models/tokenizer/`                                                                                                                                                        |
-| Aux lookups   | `pilot-anchor-lookup.json` + `anchor-lexicon-v1.json`                      | volume `/data/anchor/`, `/data/gazetteer/` — rebuildable from source: `scripts/build-pilot-anchor-lookup.ts`, `scripts/build-gazetteer-anchor-lexicon.mjs` (needs the custom WOF DBs + codex) |
+| Input               | v4.2.0 value                                                               | Where it lives                                                                                                                                                                                |
+| ------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model training code | `corpus-python/src/mailwoman_train/` @ the release tag                     | this repo                                                                                                                                                                                     |
+| Config              | `corpus-python/src/mailwoman_train/configs/v1.0.2-consolidation-runB.yaml` | this repo                                                                                                                                                                                     |
+| Corpus              | `corpus-v0.4.12-consolidation` (Parquet files + MANIFEST)                  | R2 `mailwoman-assets` bucket → Modal volume `mailwoman-training` at `/data/corpus/versioned/`                                                                                                 |
+| Tokenizer           | `v0.6.0-a0/tokenizer.model` (md5 `b6137e8c…`)                              | same volume, `/data/models/tokenizer/`                                                                                                                                                        |
+| Aux lookups         | `pilot-anchor-lookup.json` + `anchor-lexicon-v1.json`                      | volume `/data/anchor/`, `/data/gazetteer/` — rebuildable from source: `scripts/build-pilot-anchor-lookup.ts`, `scripts/build-gazetteer-anchor-lexicon.mjs` (needs the custom WOF DBs + codex) |
 
 > **Known gaps (the #480 gaps, still open):** the corpus + tokenizer are snapshots on
 > R2/Modal rather than derivable offline from the repo (adapters fetch from live sources that age);
@@ -73,7 +73,7 @@ md5 below is the v4.2.0 artifact's and predates the `onnxscript` bump.
 Check your local env against the set:
 
 ```bash
-node packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts   # exits nonzero on any mismatch
+node packages/mailwoman/tools/dev-tools/verify-export-quant-versions.run.ts   # exits nonzero on any mismatch
 ```
 
 ## Eval procedure invariants

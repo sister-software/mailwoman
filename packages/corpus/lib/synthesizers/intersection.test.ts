@@ -5,20 +5,21 @@
  *
  *   Tests for the v0.7 intersection synthesizer. Validates the {raw, components} interface and the BIO
  *   output by running rows through the real `alignRow` aligner — confirming the model will see
- *   B-/I-intersection_a, O on the connector, and B-/I-intersection_b (the signal it currently
+ *   B-/I-intersection_a, O on the connector and B-/I-intersection_b (the signal it currently
  *   lacks).
  */
 
 import { mulberry32 } from "@mailwoman/core/random"
+import { describe, expect, it } from "vitest"
+
 import {
 	DEFAULT_US_BASES,
 	generateIntersectionRows,
 	synthesizeIntersectionRow,
 	type SynthesizedIntersectionRow,
-} from "@mailwoman/corpus/synthesizers/intersection"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
-import { describe, expect, it } from "vitest"
+} from "#synthesizers/intersection"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 function asCanonical(r: SynthesizedIntersectionRow): CanonicalRow {
 	return { ...r, country: "US", source: "synth-intersection", source_id: "synth-intersection:test" } as CanonicalRow
@@ -41,7 +42,7 @@ describe("synthesizeIntersectionRow", () => {
 		const bare = rows.filter((r) => r.components.locality == null)
 		expect(bare.length).toBeGreaterThan(rows.length * 0.4)
 
-		// Bare rows still carry both intersection tags.
+		// Bare rows still include both intersection tags.
 		for (const r of bare.slice(0, 20)) {
 			expect(r.components.intersection_a).toBeTruthy()
 			expect(r.components.intersection_b).toBeTruthy()

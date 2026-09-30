@@ -15,7 +15,7 @@ import { scoreByPostcode, scoreByScript } from "@mailwoman/locale-hint"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 
 import { scriptFamilyBase } from "#char-encoder"
-import type { NeuralAddressClassifier } from "#classifier/index"
+import type { NeuralAddressClassifier } from "#classifier"
 import type { ParseOpts } from "#classifier/options"
 import type { NeuralParseTrace } from "#trace"
 import {

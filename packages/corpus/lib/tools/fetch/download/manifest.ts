@@ -54,8 +54,8 @@ export async function writeManifest(path: PathBuilderLike, manifest: unknown): P
  * The sibling `manifest.json` shape for a source that is a collection of files behind one
  * portal (a monthly register published per region, per industry, or per first letter).
  *
- * It carries what a trained artifact has to be able to cite later: the license the portal labels
- * the data with, the attribution wording it requires, and one {@link SourceManifest} per file.
+ * It records what a trained artifact has to be able to cite later: the license the portal labels
+ * the data with, the attribution wording it requires and one {@link SourceManifest} per file.
  */
 export interface SourceCollectionManifest {
 	source: string

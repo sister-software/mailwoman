@@ -1,11 +1,11 @@
-"""Assembling the Japan corpus: survey, select, render, write, report.
+"""Assemble the Japan corpus through survey, selection, rendering, writing and reporting.
 
 One `random.Random` runs through every stage — exact-selection masks, shuffle, register draw and each
 per-row fraction — so the order of the stages and of the draws inside them decides what the corpus
 contains; `tests/mailwoman_train/countries/test_jp_build_parity.py` pins the emitted rows.
 
 Pass 1 counts eligible rows so the per-prefecture cap can be water-filled against the target.
-Pass 2 streams the selection under that cap. Holding pass 1's rows would put 19.5M rendered records
+    Pass 2 streams the selection under that cap. If pass 1's rows stayed in memory, they would require space for 19.5M rendered records
 in memory.
 """
 
@@ -43,7 +43,7 @@ from .rows import (
 )
 from .sources import ADMIN_DB_PARTS, KENALL_PARTS, PARQUET_PARTS, KenAllIndex, iter_source_rows, load_kenall_postcodes
 
-# Municipality bucket split: md5 of the NFC space-stripped kanji, mod 100, board at >= 97. Keeping the
+# Municipality bucket split: md5 of the NFC space-stripped kanji, mod 100, board at >= 97. The split keeps
 # rule byte-identical to the probe keeps its held-out board municipalities held out here.
 BOARD_BUCKET_MIN = 97
 

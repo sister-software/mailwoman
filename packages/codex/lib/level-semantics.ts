@@ -7,7 +7,7 @@
  *
  *   The same numbered floor can mean different storeys. In the United States "1st floor" is ground, while in
  *   France, Germany and the UK it is one storey above ground. Designator words are keyed by language family.
- *   Numbering conventions are keyed by full locale.
+ *   Each locale uses its full locale key for numbering conventions.
  *
  *   The tables encode common building usage because no single authority publishes these conventions.
  *   Half-storeys round down: a mezzanine or upper ground maps to 0. A lower ground maps to -1.
@@ -485,7 +485,7 @@ export interface LevelOrdinalConvention {
 }
 
 /**
- * Numbering conventions for specific locales.
+ * These numbering conventions apply to specific locales.
  *
  * English needs per-country entries because US and British buildings number floors differently.
  * Canadian locales follow North American practice, though some Quebec buildings differ.

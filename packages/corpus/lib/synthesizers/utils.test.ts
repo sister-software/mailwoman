@@ -6,6 +6,8 @@
 
 import { BIO_LABELS, type ComponentTag } from "@mailwoman/codex/component"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { describe, expect, it } from "vitest"
+
 import {
 	AUGMENTATIONS,
 	accentStrip,
@@ -27,10 +29,9 @@ import {
 	unitDesignatorAbbreviate,
 	unitDesignatorExpand,
 	zipPlus4DashDrop,
-} from "@mailwoman/corpus/synthesizers/utils"
-import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
-import { describe, expect, it } from "vitest"
+} from "#synthesizers/utils"
+import type { CanonicalRow, LabeledRow } from "#types"
+import { alignRow } from "#utils"
 
 const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 	raw: "",
@@ -44,7 +45,7 @@ const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 })
 
 describe("universal augmentations", () => {
-	it("caseUpper transforms raw + components, sets synth marker", () => {
+	it("caseUpper transforms raw + components, sets the recipe marker", () => {
 		const out = caseUpper(
 			baseRow({ raw: "Portland, OR 97214", components: { locality: "Portland", region: "OR", postcode: "97214" } })
 		)!
@@ -91,7 +92,7 @@ describe("universal augmentations", () => {
 		expect(out.components.locality).toBe("Paris")
 		expect(out.components.country).toBe("France")
 
-		// Substring invariant: every component value must appear in raw.
+		// Every component value must appear in `raw`.
 		for (const v of Object.values(out.components)) {
 			if (v) {
 				expect(out.raw).toContain(v)
@@ -532,7 +533,7 @@ describe("registry + defaults", () => {
 
 describe("augmented copies keep intra-span punctuation (#519)", () => {
 	/**
-	 * Apply the augmentation, align the copy, and return the labeled row (asserting both steps).
+	 * Apply the augmentation, align the copy and return the labeled row (asserting both steps).
 	 */
 	const augmentAndAlign = (id: string, row: CanonicalRow) => {
 		const out = AUGMENTATIONS[id]!(row)
@@ -806,7 +807,7 @@ describe("composeAdversarialRow", () => {
 		})
 	})
 
-	it("synth marker carries compose:<pattern> + base_source_id from the address row", () => {
+	it("recipe marker carries compose:<pattern> + base_source_id from the address row", () => {
 		const address = baseRow({
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },

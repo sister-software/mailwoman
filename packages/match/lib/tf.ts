@@ -45,8 +45,8 @@ const defaultNormalize = (value: string): string => value.trim().toLowerCase().r
 /**
  * Build a {@link TermFrequencyTable} from an iterable of values (e.g. Every `given` name in the dataset).
  *
- * Values are normalized (default: trim + lowercase + collapse whitespace) before counting,
- * and `frequency()` normalizes its argument the same way, so callers pass raw field values.
+ * Values are normalized (default: trim + lowercase + collapse whitespace) before counting.
+ * `frequency()` normalizes its argument the same way, so callers pass raw field values.
  */
 export function buildTermFrequencyTable(
 	values: Iterable<string | null | undefined>,

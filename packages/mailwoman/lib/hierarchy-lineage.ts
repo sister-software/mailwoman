@@ -14,7 +14,7 @@
  *
  *   - `true`: the winner's own ancestors sidecar vouches for this entry, or the entry is the winner.
  *   - `false`: the entry resolved independently to a place outside the winner's containment chain.
- *   - absent: no sidecar to ask (the backend or artifact carries no `ancestors()`), or the entry has
+ *   - absent: no sidecar to ask (the backend or artifact has no `ancestors()`), or the entry has
  *     no place identity. Absence reads as "unverifiable" rather than "false", per the meaning-of-zero
  *     rule.
  *
@@ -79,7 +79,7 @@ const HIERARCHY_TAGS = [
 /**
  * The most-specific resolved admin node, the lineage anchor for tiers without an admin-ladder pick.
  *
- * Anchoring at the deepest resolved entry grades ancestors in its chain.
+ * An anchor at the deepest resolved entry grades ancestors in its chain.
  * It cannot falsely flag a descendant.
  */
 export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | undefined {
@@ -99,7 +99,7 @@ export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): Hierar
  * `streetLocality` is the register commune: on a street-tier result with no locality
  * entry it fills the locality slot, because a street-tier `city` must come from
  * the register rather than a token of the street name.
- * It carries no place identity, so it is never lineage-graded.
+ * It has no place identity, so it is never lineage-graded.
  */
 export function assembleHierarchy(
 	nodes: readonly HierarchySourceNode[],
@@ -151,7 +151,7 @@ export interface LineageAnchor {
 /**
  * Annotate `entries` in place with `in_winner_lineage` against `anchor`'s stamped ancestor chain.
  *
- * Grading is by place identity (`wof:<id>`) rather than name.
+ * The grade uses place identity (`wof:<id>`) rather than name.
  * A name match across instances is exactly the confusion the field exists to expose.
  *
  * Without a sidecar only the anchor's own entry can be vouched for.

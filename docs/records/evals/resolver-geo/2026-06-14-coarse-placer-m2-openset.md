@@ -26,4 +26,4 @@ _Frozen shipped model (`model`), NO retrain. In-map test 55000 rows (11 countrie
 
 Best score (direct dev→test): **`p_inmap`** at min(in-map, heldout) = **91.3** on the frozen test half. **Clears 90/90 post-hoc** — wire it into CoarsePlacer as the open-set reject rule; no retrain needed (Phase 2 reject-head unnecessary).
 
-Ranking (direct dev→test min): `p_inmap` 91.3 · `maxprob` 89.1 · `maxlogit` 83.6 · `energy` 83.4 · `maha` 76.2
+Rank order (direct dev→test min): `p_inmap` 91.3 · `maxprob` 89.1 · `maxlogit` 83.6 · `energy` 83.4 · `maha` 76.2

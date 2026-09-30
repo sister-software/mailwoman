@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Casing policy that is ours rather than the language's.
+ *   The package sets its casing policy rather than borrowing language rules.
  *   The primitives (`titleCase`, `isUpperCase`, `isLowerCase`, `matchCase`, `sentenceCase`)
  *   live in `spliterator`.
  *   This module fixes the thresholds and short-token rules an address parser needs on top of
@@ -25,7 +25,7 @@ const MIN_CASED_LETTERS = 3
  *
  * State codes NY/DC, directionals N/NW/SE, suffixes ST/RD and the NL postcode
  * suffix LG all read best uppercase.
- * Titlecasing `NY` to `Ny` lands a region as a locality.
+ * The title-case form `Ny` misclassifies a region as a locality.
  */
 const ABBREVIATION_LENGTH = 2
 
@@ -96,7 +96,7 @@ export function restoreLowerInput(text: string): string {
  * partly out-of-domain for a model trained on mixed-case text.
  * It causes dropped or mis-bounded tokens.
  *
- * Titlecasing first recovers it.
+ * Title case first recovers it.
  * Fully-lowercase input is as out-of-domain, since it fragments the street and drops the state code.
  *
  * Detection is deliberately strict, so mixed-case input is never touched.

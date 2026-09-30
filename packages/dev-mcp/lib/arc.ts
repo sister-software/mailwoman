@@ -6,7 +6,7 @@
 
 import { dRuleCountries, type ProtectedCountry, readScopeConfig } from "@mailwoman/core/scope-config"
 
-import { runCompare } from "#compare/index"
+import { runCompare } from "#compare"
 import type { EngineRegistryLike } from "#engine/registry"
 import type { ComparedRow } from "#tool-kit"
 
@@ -103,7 +103,8 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
 /**
  * The training shape.
  *
- * A fine-tune needs a null leg, and a from-scratch run does not.
+ * A fine-tune needs a null leg.
+ * A from-scratch run has no such requirement.
  */
 export type RunShape = "fine-tune" | "from-scratch"
 

@@ -81,7 +81,7 @@ export interface OracleAdmission {
 	allowed: boolean
 	provider: OracleProviderName
 	/**
-	 * Remaining calls for this daemon's lifetime, or `null` when the provider is free and uncapped.
+	 * Calls left for this daemon's lifetime, or `null` when the provider is free and uncapped.
 	 */
 	callsRemaining: number | null
 	/**
@@ -168,8 +168,8 @@ export class OracleMeter {
 	}
 
 	/**
-	 * A cache hit still counts: the client answers a repeat for free but hands
-	 * back `OracleGeocodeResult[]` and never says which of those cost a request,
+	 * A cache hit still counts: the client answers a repeat for free but hands back
+	 * `OracleGeocodeResult[]` and never identifies which of those cost a request,
 	 * so the meter counts queries and over-counts a warm run — the direction to be wrong in,
 	 * because the alternative is a cap that undercounts real spend.
 	 */
@@ -182,9 +182,9 @@ export class OracleMeter {
  * The mode refuses grading for every input set.
  *
  * The board's expected coordinates were pinned by hand with these geocoders open as a second opinion.
- * Scoring those coordinates would partly score an oracle against itself.
+ * A score over those coordinates would partly score an oracle against itself.
  *
- * Applying the refusal to only some sets would make set selection part of the rule.
+ * A refusal limited to some sets would make set selection part of the rule.
  */
 export const ORACLE_GRADE_MODE = "diff-only"
 
@@ -198,7 +198,7 @@ export const ORACLE_VERDICT_NOTE =
 /**
  * This test interface exposes only the transport call that a test replaces.
  *
- * Injecting a whole client could lead a test to assert a fabricated version of the provider's protocol.
+ * A whole-client injection could lead a test to assert a fabricated version of the provider's protocol.
  */
 export interface OracleGeocoderLike extends AsyncDisposable {
 	geocodeOne(input: string): Promise<OracleGeocodeResult[]>

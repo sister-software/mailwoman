@@ -15,7 +15,7 @@ That zero was the tell. The parse was right and the resolver still missed, becau
 
 A name-match metric is the thing that misled us, so we replaced it with one that can't. A locality is resolved correctly if the real OpenAddresses per-address point lies **inside the polygon** of the WOF locality the resolver picked — `ST_Within(gold_point, resolved_polygon)`. Containment rather than centroid distance (distance is gameable in a dense metro), and scored against the actual OA point, never the postcode centroid the resolver itself consumed.
 
-Running that metric on the _existing_ resolver first was the cheap move that paid off twice: it confirmed German was a real gap (77.1% containment agreed with the 77.4% name-match, killing the comfortable "it'sa name artifact" hypothesis), and it became the direct yardstick for everything that followed.
+The _existing_ resolver produced that metric first. It confirmed a German gap: 77.1% containment agreed with 77.4% name-match, which rejects the "it'sa name artifact" hypothesis. That metric then became the yardstick for later changes.
 
 ## What we built
 

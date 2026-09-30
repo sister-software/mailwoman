@@ -14,8 +14,9 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { type CSVRecord, readCSVRecords, readTuples } from "@mailwoman/corpus/recipes/scaffold"
 import { describe, expect, it } from "vitest"
+
+import { type CSVRecord, readCSVRecords, readTuples } from "#recipes/scaffold"
 
 async function* byteAtATime(csv: string): AsyncGenerator<Uint8Array> {
 	for (const byte of new TextEncoder().encode(csv)) {
@@ -49,7 +50,7 @@ describe("readCSVRecords", () => {
 		// The collapse is scoped to \r\n on purpose.
 		// Spaces and tabs can appear inside fields.
 		// Every recipe output built so far contains them.
-		// Widening the pattern to `\s+` would rewrite values on rows without line breaks.
+		// A `\s+` pattern would rewrite values on rows without line breaks.
 		const [row] = await read(`${HEADER}-94.8,42.0,120,NORTH   MAIN\tSTREET,,CARROLL,51401\n`)
 
 		expect(row!.street).toBe("NORTH   MAIN\tSTREET")

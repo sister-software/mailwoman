@@ -174,14 +174,20 @@ export const reflowRule: CreateRule = {
 		const eol = text.includes("\r\n") ? "\r\n" : "\n"
 		const candidates = new Map<number, ESTree.Node[]>()
 
+		// Only a statement or a member can own a trailing comment, so the visitor
+		// is registered for those node types alone.
+		// A `"*"` visitor was called for every node of every file, about seven times as often,
+		// and each call read `loc` before `eligibleNode` could refuse the type.
+		const collect = (node: ESTree.Node): void => {
+			if (!eligibleNode(node)) return
+			const line = node.loc.end.line
+			const nodes = candidates.get(line) ?? []
+			nodes.push(node)
+			candidates.set(line, nodes)
+		}
+
 		return {
-			"*"(node) {
-				if (!eligibleNode(node)) return
-				const line = node.loc.end.line
-				const nodes = candidates.get(line) ?? []
-				nodes.push(node)
-				candidates.set(line, nodes)
-			},
+			...Object.fromEntries([...statements, ...members].map((type) => [type, collect])),
 			"Program:exit"() {
 				const comments = source.getAllComments()
 				const protectedComments = new Set(comments.filter((comment) => protectedComment(source, comment)))

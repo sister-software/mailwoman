@@ -7,7 +7,7 @@
  *
  *   One Node process cannot load two versions of a module, so the child imports the worktree's source.
  *
- *   A git worktree has no `node_modules`. Symlinking the main checkout's directory would not work, because
+ *   A git worktree has no `node_modules`. A symlink to the main checkout's directory would not work, because
  *   yarn's workspace links resolve back into the main checkout. This module builds a symlink farm instead:
  *   third-party packages link to the main checkout. Each workspace in {@link FINGERPRINTED_WORKSPACES}
  *   links into the worktree. Other workspaces, including `neural-weights-*`, keep their main-checkout links
@@ -175,7 +175,7 @@ export interface WorktreeArmResult {
  *
  * `options` holds the session options that the caller's registry resolved,
  * so both arms share one configuration path.
- * `git worktree add --detach` leaves the caller's HEAD and working tree alone,
+ * `git worktree add --detach` leaves the caller's HEAD and working tree unchanged,
  * so this is safe to run during an edit.
  * The worktree is removed on every exit path.
  */
@@ -190,7 +190,8 @@ export async function runWorktreeArm(args: {
 	const repoRoot = PathBuilder.from(args.repoRoot)
 	const setupStartedAt = Date.now()
 
-	// The working-tree arm runs in the main checkout, which already has `node_modules`.
+	// The working-tree arm runs in the main checkout.
+	// That checkout already has `node_modules`.
 	// It still runs in a child process through the same runner.
 	// Both arms are invoked the same way.
 	const live = ref === WORKING_TREE_REF

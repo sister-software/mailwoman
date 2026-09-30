@@ -115,7 +115,7 @@ case-insensitive anyway). `lat`/`lon` are OA's point coordinate (the ground
 truth). `expected` carries only the **admin-level** fields the resolver
 produces — `locality`/`region`/`postcode` (no street geometry).
 
-### Sampling method
+### How we selected the samples
 
 - Only a **selected set of specific OA source files** is downloaded rather than the
   multi-GB US collection), stratified across dense-urban / suburban / rural so
@@ -204,7 +204,7 @@ Two changes make non-US OpenAddresses usable here:
    to a US namesake (`Berlin` resolved to a 20k-pop US Berlin, coord ~5,940 km). Pass
    `--default-country DE` (or `none`) for non-US data and the coord drops to ~10 km.
 
-The German _training_ recipe output (`synth-german`, now `packages/corpus/lib/de/recipes/locale.ts`)
+The German _training_ recipe output (`rendered-de`, written by `packages/corpus/lib/de/recipes/locale.ts`)
 renders these real DE tuples in German order via the OpenCage `DE` template, so the
 model learns house-number-after-street and postcode-before-city. Run the German
 before/after with `node scripts/eval-de-coverage.ts <model> <tokenizer> <model-card>`.
@@ -237,23 +237,23 @@ mailwoman corpus slice locale --country ES --count 1500 --seed 7 --golden \
   --output data/eval/external/openaddresses-es-golden.jsonl   # IT/NL alike
 ```
 
-## Running the arenas
+## Run the arenas
 
 All three arenas run through one push-button script:
 
 ```bash
 yarn compile   # harness resolves @mailwoman/neural to its compiled out/ tree
 # default shipped weights:
-node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
+node packages/mailwoman/tools/dev-tools/external-arenas.run.ts
 # against a fresh export (e.g. v0.7.2 int8):
 MODEL=/path/model.int8.onnx TOKENIZER=/path/tokenizer.model \
-  MODELCARD=/path/model-card.json node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
+  MODELCARD=/path/model-card.json node packages/mailwoman/tools/dev-tools/external-arenas.run.ts
 ```
 
 It regenerates the perturbation arena, runs each arena with `--symmetric-match
 --postcode-repair`, and prints the three-bucket table (neural-only / both /
 v0-only / both-fail) per arena plus a by-edge_class breakdown for the postal
-arena (`packages/mailwoman/lib/dev-tools/summarize-arenas.run.ts`).
+arena (`packages/mailwoman/tools/dev-tools/summarize-arenas.run.ts`).
 
 ## Done / next
 

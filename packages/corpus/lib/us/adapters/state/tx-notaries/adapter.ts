@@ -6,7 +6,7 @@
  *   `state-tx-notaries`: Texas Notary Public Commissions CSV consumer.
  *
  *   The Texas Secretary of State publishes a registry of commissioned notaries public. Each row
- *   optionally carries a mailing address in free-form text (often multi-line with embedded
+ *   optionally includes a mailing address in free-form text (often multi-line with embedded
  *   city/state/zip). Address fill rate is ~5-10%.
  *
  *   The adapter parses the embedded `Address` field for city/state/zip using a trailing `"city, ST
@@ -15,7 +15,7 @@
  *   License: stamped `"Public Domain"` per Texas state government open-data terms.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
@@ -31,7 +31,7 @@ import { lookupStateAbbreviation } from "#us/fips-state"
  */
 export const STATE_TX_NOTARIES_ADAPTER_ID = "state-tx-notaries"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const STATE_TX_NOTARIES_DEFAULT_LICENSE = "Public Domain"
@@ -54,7 +54,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 		defaultLicense: STATE_TX_NOTARIES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Mailing,
 		register: SourceRegister.TexasNotaries,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"Texas Notary Public Commissions — name + mailing address with embedded city/state/zip (public-domain).",
 

@@ -21,8 +21,8 @@ import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
 import { basename, type PathBuilderLike } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
-import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
+import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 const INDEX_URL = "https://download.cms.gov/nppes/NPI_Files.html"
 const BASE_URL = "https://download.cms.gov/nppes"
@@ -33,7 +33,7 @@ export type FetchNPPESOptions = BaseFetchOptions
 /**
  * Scrape the NPI_Files.html index for the latest full monthly ZIP: full-replacement
  * files match `NPPES_Data_Dissemination_<Month>_<Year>*.zip`, while weekly files
- * carry a `MMDDYY_MMDDYY` date range and are excluded.
+ * include a `MMDDYY_MMDDYY` date range and are excluded.
  */
 async function discoverLatestZip(): Promise<string | undefined> {
 	const html = await new APIClient({
@@ -54,8 +54,8 @@ async function discoverLatestZip(): Promise<string | undefined> {
 }
 
 /**
- * The main registry CSV (`npidata_pfile_*.csv`); the archive also carries a header file
- * and a per-month change file.
+ * The main registry CSV (`npidata_pfile_*.csv`); the archive also includes a
+ * header file and a per-month change file.
  */
 async function findNpidataCSV(zipPath: PathBuilderLike): Promise<string | undefined> {
 	const entries = await listZipEntries(zipPath)

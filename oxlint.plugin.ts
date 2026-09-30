@@ -352,8 +352,6 @@ const FUNCTION_NODE_TYPES = new Set([
  */
 const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
 
-const MOCKING_FUNCTIONS = new Set(["mock", "doMock", "importActual", "importMock", "unmock", "doUnmock"])
-
 const noSyncFSInAsyncRule: Rule = {
 	meta: {
 		name: "no-sync-fs-in-async",
@@ -361,19 +359,23 @@ const noSyncFSInAsyncRule: Rule = {
 		schema: [],
 	},
 	create(context: RuleContext) {
-		/**
-		 * Traverse the AST while tracking whether each node is inside an async function.
-		 */
-		function walk(node: AstNode, insideAsync: boolean): void {
-			let asyncHere = insideAsync
+		// Whether the innermost enclosing function or synchronous scope is async,
+		// one entry per scope on the path from the program to the current node.
+		// Module scope is synchronous.
+		const asyncScopes: boolean[] = []
 
-			if (FUNCTION_NODE_TYPES.has(node.type)) {
-				asyncHere = node.async === true
-			} else if (SYNC_SCOPE_NODE_TYPES.has(node.type)) {
-				asyncHere = false
-			}
+		const enter = (node: AstNode): void => {
+			asyncScopes.push(FUNCTION_NODE_TYPES.has(node.type) && node.async === true)
+		}
 
-			if (asyncHere && node.type === "CallExpression" && node.callee?.type === "Identifier") {
+		const exit = (): void => {
+			asyncScopes.pop()
+		}
+
+		const visitors: Record<string, (node: AstNode) => void> = {
+			CallExpression(node: AstNode) {
+				if (asyncScopes.at(-1) !== true || node.callee?.type !== "Identifier") return
+
 				const helper = ASYNC_FILESYSTEM_HELPERS.get(node.callee.name ?? "")
 
 				if (helper) {
@@ -384,28 +386,15 @@ const noSyncFSInAsyncRule: Rule = {
 							`\`await\` is legal on this line. Use ${helper}.`,
 					})
 				}
-			}
-
-			for (const [key, value] of Object.entries(node)) {
-				if (key === "parent" || key === "range" || key === "loc") continue
-
-				if (Array.isArray(value)) {
-					for (const child of value) {
-						if (child && typeof child === "object" && typeof (child as AstNode).type === "string") {
-							walk(child as AstNode, asyncHere)
-						}
-					}
-				} else if (value && typeof value === "object" && typeof (value as AstNode).type === "string") {
-					walk(value as AstNode, asyncHere)
-				}
-			}
-		}
-
-		return {
-			Program(node: AstNode) {
-				walk(node, false)
 			},
 		}
+
+		for (const type of [...FUNCTION_NODE_TYPES, ...SYNC_SCOPE_NODE_TYPES]) {
+			visitors[type] = enter
+			visitors[`${type}:exit`] = exit
+		}
+
+		return visitors
 	},
 }
 
@@ -432,68 +421,6 @@ const noRelativeDynamicImportRule: Rule = {
 						"`imports` map instead (`#<path-from-package-root>`, without an extension) — it resolves `.ts` under `node` and " +
 						"`out/*.js` everywhere else, and moves with the file.",
 				})
-			},
-		}
-	},
-}
-
-/**
- * Prevent tests from importing package-private `#` aliases.
- */
-const noPrivateImportInTestRule: Rule = {
-	meta: {
-		name: "no-private-import-in-test",
-		type: "suggestion",
-		schema: [],
-	},
-	create(context: RuleContext) {
-		const report = (node: AstNode, specifier: string) => {
-			context.report({
-				node,
-				message:
-					`${stringifyJSON(specifier)} is the package's private \`imports\` map. A test imports the package under ` +
-					"test through its public exports (`@mailwoman/<pkg>/<subpath>`); a module no export names gets an " +
-					"`exports` entry, and only a helper under `test/` is imported by relative path.",
-			})
-		}
-
-		const checkSource = (node: AstNode) => {
-			const specifier = literalDelimiter(node.source)
-
-			if (specifier !== null && specifier.startsWith("#")) {
-				report(node, specifier)
-			}
-		}
-
-		return {
-			ImportDeclaration: checkSource,
-			ExportNamedDeclaration: checkSource,
-			ExportAllDeclaration: checkSource,
-			ImportExpression: checkSource,
-			TSImportType(node: AstNode) {
-				const specifier = literalDelimiter(node.argument)
-
-				if (specifier !== null && specifier.startsWith("#")) {
-					report(node, specifier)
-				}
-			},
-			CallExpression(node: AstNode) {
-				// Vitest mock helpers take the module specifier as the first argument.
-				const callee = node.callee
-
-				if (callee?.type !== "MemberExpression" || callee.object?.name !== "vi") return
-
-				const calleePropertyName = callee.property?.name
-
-				if (!calleePropertyName || !MOCKING_FUNCTIONS.has(calleePropertyName)) {
-					return
-				}
-
-				const specifier = literalDelimiter(node.arguments?.[0])
-
-				if (specifier !== null && specifier.startsWith("#")) {
-					report(node, specifier)
-				}
 			},
 		}
 	},
@@ -955,25 +882,6 @@ function syncDisposableSource(node: AstNode, locals: ReadonlySet<string>): strin
 }
 
 /**
- * Walk `node` and its children, calling `visit` on each.
- */
-function walkTree(node: AstNode, visit: (node: AstNode) => void): void {
-	visit(node)
-
-	for (const [key, value] of Object.entries(node)) {
-		if (key === "parent" || key === "range" || key === "loc") continue
-
-		const children = Array.isArray(value) ? value : [value]
-
-		for (const child of children) {
-			if (child && typeof child === "object" && typeof (child as AstNode).type === "string") {
-				walkTree(child as AstNode, visit)
-			}
-		}
-	}
-}
-
-/**
  * Take a synchronously-disposed resource with `using`.
  */
 const noAwaitUsingSyncDisposableRule: Rule = {
@@ -983,34 +891,38 @@ const noAwaitUsingSyncDisposableRule: Rule = {
 		schema: [],
 	},
 	create(context: RuleContext) {
+		// Same-file helpers whose declared return type is a synchronously-disposed resource.
+		// A helper may be declared after its use, so the declarations wait for `Program:exit`.
+		const locals = new Set<string>()
+		const awaitUsingDeclarations: AstNode[] = []
+
 		return {
-			Program(program: AstNode) {
-				const locals = new Set<string>()
+			FunctionDeclaration(node: AstNode) {
+				if (node.id?.type !== "Identifier") return
 
-				walkTree(program, (node) => {
-					if (node.type === "FunctionDeclaration" && node.id?.type === "Identifier") {
-						if (namesSyncDisposable((node as ESTreeNode).returnType?.typeAnnotation)) {
-							locals.add(node.id.name ?? "")
-						}
+				if (namesSyncDisposable((node as ESTreeNode).returnType?.typeAnnotation)) {
+					locals.add(node.id.name ?? "")
+				}
+			},
+			VariableDeclarator(node: AstNode) {
+				if (node.id?.type !== "Identifier") return
 
-						return
-					}
+				const initializer = node.init
 
-					if (node.type !== "VariableDeclarator" || node.id?.type !== "Identifier") return
+				if (initializer?.type !== "ArrowFunctionExpression" && initializer?.type !== "FunctionExpression") return
 
-					const initializer = node.init
-
-					if (initializer?.type !== "ArrowFunctionExpression" && initializer?.type !== "FunctionExpression") return
-
-					if (namesSyncDisposable((initializer as ESTreeNode).returnType?.typeAnnotation)) {
-						locals.add(node.id.name ?? "")
-					}
-				})
-
-				walkTree(program, (node) => {
-					if (node.type !== "VariableDeclaration" || node.kind !== "await using") return
-
-					for (const declarator of node.declarations ?? []) {
+				if (namesSyncDisposable((initializer as ESTreeNode).returnType?.typeAnnotation)) {
+					locals.add(node.id.name ?? "")
+				}
+			},
+			VariableDeclaration(node: AstNode) {
+				if (node.kind === "await using") {
+					awaitUsingDeclarations.push(node)
+				}
+			},
+			"Program:exit"() {
+				for (const declaration of awaitUsingDeclarations) {
+					for (const declarator of declaration.declarations ?? []) {
 						const initializer = initializedExpression(declarator.init)
 
 						if (!initializer) continue
@@ -1028,7 +940,7 @@ const noAwaitUsingSyncDisposableRule: Rule = {
 								"which is the shape a `TemporaryDirectory` removing its directory needs.",
 						})
 					}
-				})
+				}
 			},
 		}
 	},
@@ -1048,7 +960,6 @@ const mailwomanPlugin: Plugin = {
 		"no-database-handle-cast": noDatabaseHandleCastRule,
 		"no-import-meta-dirname-walk": noImportMetaDirnameWalkRule,
 		"no-import-meta-resolve": noImportMetaResolveRule,
-		"no-private-import-in-test": noPrivateImportInTestRule,
 		"no-relative-dynamic-import": noRelativeDynamicImportRule,
 		"no-sync-fs-in-async": noSyncFSInAsyncRule,
 		"prefer-home": preferHomeRule,

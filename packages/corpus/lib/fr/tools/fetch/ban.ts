@@ -25,12 +25,13 @@ import { makeDirectories, removePath, writeLocalFile } from "@mailwoman/core/fs/
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { downloadToFile, loadManifestEntries, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, loadManifestEntries, writeManifest } from "#tools/fetch/download"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below
- * which a "download" is an error page rather than data.
+ * Bytes per KiB — the divisor for human-readable sizes.
+ *
+ * It is the floor below which a "download" is an error page rather than data.
  */
 
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"

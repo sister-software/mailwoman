@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `capital` table: the capital-status reference carried inside `candidate.db`, so an npm
+ *   The `capital` table: the capital-status reference included inside `candidate.db`, so an npm
  *   consumer who pulled the artifact can run `capital_tier` without the repo's
  *   `data/gazetteer/capitals-v1.json`, which published packages do not ship. One row per reference
  *   entry. The loader reads the whole table once into a `CapitalIndex` at session construction, so
@@ -29,7 +29,7 @@ export const CAPITAL_TABLE = "capital"
 /**
  * One reference entry as the artifact stores it.
  *
- * `level` is the reference vocabulary (`national` | `admin1`) kept as text,
+ * `level` is the reference vocabulary (`national` | `admin1`) kept as text.
  * and the reader validates on load rather than trusting bytes.
  */
 export interface CapitalTable {

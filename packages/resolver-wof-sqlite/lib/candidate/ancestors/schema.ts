@@ -8,8 +8,8 @@
  *   into the same `candidate.db` by `build-candidate.ts` and read by
  *   {@link WOFCandidateTableLookup.ancestors}.
  *
- *   The sidecar stores denormalized closure rows. Each row represents one (place, ancestor) edge. The row carries the
- *   parent's placetype, display name, and folded key. The two consumers determine this layout:
+ *   The sidecar stores denormalized closure rows. Each row represents one (place, ancestor) edge. The row includes the
+ *   parent's placetype, display name and folded key. The two consumers determine this layout:
  *
  *   1. The admin-coherence check needs the winner's chain as (placetype, name) pairs in one probe.
  *      A fixed-slot `[id.8]` chain returns ids. Each id would then need a name lookup, but the artifact has no
@@ -62,7 +62,7 @@ import type { NameKey } from "#street/normalize"
  * The deepest chain the sidecar stores per place.
  *
  * WOF containment within the resolvable placetypes (country … microhood) never legitimately exceeds this.
- * Anything past it is source noise the build drops (and counts) rather than stores.
+ * The build drops and counts anything past it as source noise rather than storing it.
  */
 export const MAX_ANCESTOR_DEPTH = 8
 

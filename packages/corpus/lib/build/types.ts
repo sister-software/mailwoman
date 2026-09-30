@@ -6,7 +6,7 @@
  *   It also defines the top-level manifest for each build stage.
  *
  *   These sit apart from `buildCorpus` because every phase module reads them and the orchestrator imports
- *   each phase. Holding them beside the orchestrator would make the phases import it back.
+ *   each phase. These types live separately because placing them beside the orchestrator would make phases import it.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -41,7 +41,7 @@ export const BuildProfile = {
 	 */
 	Exploratory: "exploratory",
 	/**
-	 * Include a row only when the register says its source is eligible for ingest.
+	 * Include a row only when the register marks its source eligible for ingest.
 	 * A source whose terms remain unread is refused here.
 	 */
 	ReleaseEligible: "release-eligible",
@@ -131,7 +131,7 @@ export interface BuildCorpusOptions {
 	 *
 	 * Defaults to `LicensePolicy.All`, admitting every row an adapter yields.
 	 *
-	 * A weights build that must carry no share-alike obligation passes `LicensePolicy.ShareAlikeFree`.
+	 * A weights build that must have no share-alike obligation passes `LicensePolicy.ShareAlikeFree`.
 	 */
 	licensePolicy?: LicensePolicy
 
@@ -160,10 +160,12 @@ export interface BuildCorpusManifest {
 	 * The model card derives its data-attribution table from it.
 	 *
 	 * It covers the rows this build aligned.
-	 * An overlay parquet added afterwards by `corpus overlay-manifest` carries its own rows
-	 * and its own licenses, and the overlay corpus's `MANIFEST.json` copies this set forward without
-	 * them. {@linkcode licenses_cover} says so in the artifact, so a reader deriving an attribution
-	 * table from a corpus that carries overlays knows the set is incomplete rather than complete.
+	 * An overlay parquet added afterwards by `corpus overlay-manifest` contains
+	 * its own rows and its own licenses.
+	 *
+	 * The overlay corpus's `MANIFEST.json` copies this set forward without them.
+	 * {@linkcode licenses_cover} records this in the artifact, so a reader deriving an attribution
+	 * table from a corpus with overlays knows the set is incomplete rather than complete.
 	 */
 	licenses: Record<string, number>
 	/**
@@ -208,8 +210,8 @@ export interface BuildCorpusManifest {
 	 */
 	excluded_by_eligibility: number
 	/**
-	 * Every source refused under {@linkcode BuildProfile.ReleaseEligible}, with the reasons
-	 * the register gave, so a blocked build says what to fix rather than only that it stopped.
+	 * Every source refused under {@linkcode BuildProfile.ReleaseEligible}, with the reasons the
+	 * register gave, so a blocked build reports what to fix along with the fact that it stopped.
 	 */
 	ineligible_sources: Record<string, readonly string[]>
 	/**

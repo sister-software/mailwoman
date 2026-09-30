@@ -15,7 +15,7 @@
  *
  *   ## Per-system containment (anti-lock-in)
  *
- *   Addressing _systems_ disagree on hierarchy: a US street address nests `house_number → street →
+ *   Address systems disagree on hierarchy: a US street address nests `house_number → street →
  *   locality`, while a Japanese block address nests `building_number → sub_block → block →
  *   district` — there is no `street` parent at all. Today a single global map suffices only because
  *   the tag sets don't collide, but the moment the resolver or tree builder hardcodes the Western
@@ -51,7 +51,7 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	street_prefix: ["street"],
 	street_prefix_particle: ["street_prefix", "street"],
 	street_suffix: ["street"],
-	// A CN production team can carry a house number with no street at all (`古北口村南关生产队6号`).
+	// A CN production team can include a house number with no street at all (`古北口村南关生产队6号`).
 	house_number: ["street", "locality_unit"],
 	// `venue` is here for the SUB-venue case — `Terminal 5` of `Heathrow Airport`,
 	// `Gate 12` of `Manchester Airport`.
@@ -69,7 +69,7 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	po_box: ["locality", "subregion", "region"],
 
 	// JP — declared for forward-compat.
-	// Mapping is provisional and will be revisited in Phase 6, when a dedicated `japanese`
+	// This mapping is provisional and may be replaced in Phase 6 by a dedicated `japanese`
 	// system map likely supersedes these entries with a no-street hierarchy.
 	prefecture: ["country"],
 	municipality: ["prefecture"],

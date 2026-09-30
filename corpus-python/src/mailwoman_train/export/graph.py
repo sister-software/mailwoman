@@ -1,6 +1,6 @@
 """Inspect a model's channels and graph. Decide whether its channel combination is exportable.
 
-A channel the model was trained with and the graph does not carry runs off at inference, silently:
+If the graph lacks a channel used in training, inference silently omits it:
 the runtime feeds by name, so an absent input is an absent clue. The model then reports confident
 answers computed without that clue. Unsupported combinations below raise instead of
 exporting a reduced graph.
@@ -39,7 +39,7 @@ PER_TOKEN = {0: "batch", 1: "sequence"}
 
 @dataclass(frozen=True)
 class Channels:
-    """What the checkpoint carries, read off the model rather than off the config that built it."""
+    """Values stored in the checkpoint, read from the model rather than from the config that built it."""
 
     anchor: bool = False
     anchor_dim: int = 0
@@ -90,12 +90,12 @@ def detect_channels(model: nn.Module) -> Channels:
         locality_surface=bool(getattr(model, "use_locality_surface_anchor", False)),
         locality_surface_dim=int(getattr(model, "locality_surface_feature_dim", 0)),
         char=bool(getattr(model, "use_char_embed", False)),
-        # When the model carries the locale self-conditioning head, export its pooled posterior as a
+        # When the model has the locale self-conditioning head, export its pooled posterior as a
         # second output ("locale_logits", shape [batch, num_locales], labels.LOCALE_COUNTRIES order).
         # Consumers fetch outputs by name, so appending is backward-compatible. Without it the
         # model's address-system detection is trained but unreadable at inference.
         locale=getattr(model, "locale_head", None) is not None,
-        # Export the span scorer's (B, S, L, T) scores as a separate output. Appending is
+        # Export the span scorer's (B, S, L, T) scores as a separate output. This addition is
         # backward-compatible — a runtime that never asks for `span_scores` pays no cost (ORT prunes
         # the unfetched branch). The JS decoder and the semi-crf-transitions.json sidecar
         # (package_weights.export_semi_crf_transitions) consume it.
@@ -105,7 +105,7 @@ def detect_channels(model: nn.Module) -> Channels:
 
 def check_exportable(channels: Channels) -> None:
     """Refuse a combination whose graph would drop a trained channel."""
-    # The country channel ships on top of anchor+gaz (the production ship-config). Exporting it in any
+    # The country channel ships on top of anchor+gaz (the production ship-config). An export in any
     # other combination is unsupported — a country-trained model whose ONNX lacked the country inputs
     # would silently run country-off — so fail loud instead.
     if channels.country and not (channels.anchor and channels.gazetteer):

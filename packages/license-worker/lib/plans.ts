@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The closed plan catalog: a Price outside it mints no license, and the Price ids come from `shop/ids.json` by the environment's Stripe mode, since sandbox and production hold different Stripe objects for the same two plans.
+ * The closed plan catalog. A Price outside it mints no license. `shop/ids.json` provides Price IDs by environment Stripe mode because sandbox and production use different Stripe objects for the same two plans.
  */
 
 import type { LicenseWorkerEnv } from "#env"

@@ -7,15 +7,15 @@
  *   consumer.
  *
  *   samhsa's Treatment Locator (`findtreatment.gov`) is the federal directory of substance-use and
- *   mental-health treatment facilities. The published CSV carries the facility name, an optional
+ *   mental-health treatment facilities. The published CSV includes the facility name, an optional
  *   secondary name (typically the organizational parent), and the postal address quad split into
  *   primary + secondary street lines. Phase 1.6 §1.2 selects this source for the same reason
  *   it selects HRSA: facility names are hand-typed venue strings and the addresses pass through
  *   enough human + system hands to accumulate the suite-designator + sub-tenant chaos ("Suite C,
  *   behind main building") that pure gazetteer data does not.
  *
- *   samhsa's two-line address shape is the key adapter-specific concern. `street1` typically carries
- *   the canonical postal address (`"123 Main St"`); `street2` carries the suite / unit / "second
+ *   samhsa's two-line address shape is the key adapter-specific concern. `street1` typically contains
+ *   the canonical postal address (`"123 Main St"`); `street2` contains the suite / unit / "second
  *   floor" surface form. The adapter joins them with `", "` into a single `street` component (Phase
  *   1 keeps `unit` as a deferred slot since the OpenCage template doesn't have a clean rendering
  *   for it). Operators wanting a different join policy can subclass the factory.
@@ -28,7 +28,7 @@
  *   distribution terms.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -43,7 +43,7 @@ import { lookupStateAbbreviation } from "#us/fips-state"
  */
 export const USGOV_SAMHSA_ADAPTER_ID = "usgov-samhsa-treatment-locator"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_SAMHSA_DEFAULT_LICENSE = "Public Domain"
@@ -119,7 +119,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_SAMHSA_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
 		register: SourceRegister.SAMHSATreatmentLocator,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"SAMHSA Behavioral Health Treatment Services Locator (public-domain). Adversarial source: venue + two-line address co-occurrence, hand-entered.",
 

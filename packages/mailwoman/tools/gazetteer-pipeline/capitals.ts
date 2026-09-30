@@ -1,0 +1,298 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Build `data/gazetteer/capitals-v1.json`, the capital-status reference: every national
+ *   capital (`pplc`) and first-order administrative seat (`ppla`) in the GeoNames gazetteer dumps,
+ *   each carrying its coordinate and its folded name set (name + romanization + alternate names).
+ *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country, proximity and name
+ *   membership. All three conditions must match, so a capital-adjacent namesake cannot stand in for the capital.
+ *   Alternate names preserve exonym rows ("Vienna" for Wien)
+ *   matching without a hand-kept exonym list.
+ *
+ *   Feature codes are matched exactly: `PPLA2`–`PPLA4` (lower-order seats) and `pplch` (historical
+ *   capital) stay out. `countryInfo.txt`, the same source's own catalog, grades the extraction: a
+ *   catalog country whose dump yields no `pplc` row. It also records a catalog capital name that matches none
+ *   of the extracted rows' names, are both recorded in the coverage block rather than silently
+ *   absorbed (the partial-reader rule: a reference that could not measure a country must say so).
+ */
+
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { dirname, PathBuilder, type PathBuilderLike } from "path-ts"
+
+/**
+ * One capital or admin-1 seat.
+ *
+ * `latitude`/`longitude` are rounded to 4 decimals (~11 m).
+ * The consumer matches within a kilometre radius.
+ * The rounded coordinates keep the committed file small.
+ */
+export interface CapitalReferenceEntry {
+	/**
+	 * GeoNames `geonameid`, a provenance back-pointer and never a join key.
+	 */
+	id: number
+	name: string
+	/**
+	 * ISO alpha-2, uppercase, from the dump row's own country column.
+	 */
+	country: string
+	latitude: number
+	longitude: number
+	level: "national" | "admin1"
+	/**
+	 * Folded name keys (name + romanization + alternate names).
+	 *
+	 * The consumer checks name membership as well as coordinates.
+	 * This prevents the coordinate radius from promoting a capital's same-name neighbours.
+	 *
+	 * Folded with the same `normalizeLocalityForKey` the candidate gazetteer keys with.
+	 */
+	k: string[]
+}
+
+export interface CapitalsReference {
+	version: 1
+	generated_by: string
+	source: string
+	license: string
+	attribution: string
+	coverage: {
+		countries_scanned: number
+		national: number
+		admin1: number
+		/**
+		 * Catalog countries with no dump file on disk.
+		 * This reference could not measure them.
+		 */
+		missing_dumps: string[]
+		/**
+		 * Catalog countries whose `<CC>.txt` is not a 19-column gazetteer dump
+		 * (GeoNames' postal exports share the basename).
+		 *
+		 * A wrong-format file cannot answer the capital question, so it does not count as scanned.
+		 * A "scanned, found none" result would falsely claim the reader had complete evidence.
+		 */
+		wrong_format: string[]
+		/**
+		 * Scanned catalog countries whose dump contains no `pplc` row, a fact about the source.
+		 */
+		missing_national: string[]
+		/**
+		 * Catalog rows whose stated capital name (folded) matches no extracted row name for that country.
+		 *
+		 * These are worth a read rather than a failure: multi-capital countries and spelling drift land here.
+		 */
+		capital_name_mismatches: string[]
+	}
+	entries: CapitalReferenceEntry[]
+}
+
+/**
+ * Feature codes admitted, mapped to the reference level.
+ *
+ * Exact codes only.
+ * `startsWith("ppla")` would admit the county-seat tiers this reference exists to exclude.
+ */
+const LEVEL_BY_FEATURE_CODE: Record<string, CapitalReferenceEntry["level"]> = {
+	PPLC: "national",
+	PPLA: "admin1",
+}
+
+/**
+ * Coordinate decimals kept in the committed file (4 ≈ 11 m. the consumer matches at km radius).
+ */
+const COORD_DECIMALS = 4
+
+const roundCoord = (value: number): number => Number(value.toFixed(COORD_DECIMALS))
+
+/**
+ * Extract the capital/seat rows from one GeoNames dump
+ * (tab-separated, 19 columns. 0-indexed: 0 `geonameid`, 1 `name`, 2 `asciiname`,
+ * 3 `alternatenames`, 4/5 lat/lon, 6 feature class, 7 feature code, 8 country code).
+ *
+ * The folded name set (`k`) covers name + asciiname + every alternate name,
+ * so exonym rows match at the consumer.
+ */
+export function parseCapitalRows(text: string): CapitalReferenceEntry[] {
+	const rows: CapitalReferenceEntry[] = []
+
+	// Walk lines by index instead of calling split("\n").
+	// A dump can contain ~350 MB and millions of rows.
+	// Only rows carrying a capital code need a column split.
+	// The substring probes are the pre-filter.
+	// The feature code sits between tabs, so a capital row must contain the exact delimited code.
+	// Plain populated-place rows do not need splitting.
+	for (let start = 0; start < text.length;) {
+		const end = text.indexOf("\n", start)
+		const line = end === -1 ? text.slice(start) : text.slice(start, end)
+
+		start = end === -1 ? text.length : end + 1
+
+		if (!line.includes("\tPPLC\t") && !line.includes("\tPPLA\t")) continue
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- pre-filtered: only capital-candidate rows reach this split, a few dozen per dump
+		const cols = line.split("\t")
+		const level = cols[6] === "P" ? LEVEL_BY_FEATURE_CODE[cols[7] ?? ""] : undefined
+
+		if (!level) continue
+
+		const id = Number(cols[0])
+		const name = cols[1]?.trim() ?? ""
+		const country = cols[8]?.trim().toUpperCase() ?? ""
+		const latitude = Number(cols[4])
+		const longitude = Number(cols[5])
+
+		if (
+			!Number.isFinite(id) ||
+			!name ||
+			country.length !== 2 ||
+			!Number.isFinite(latitude) ||
+			!Number.isFinite(longitude)
+		) {
+			continue
+		}
+
+		const foldedNames = new Set<string>()
+
+		for (const surface of [name, cols[2] ?? "", ...(cols[3] ?? "").split(",")]) {
+			const key = String(normalizeLocalityForKey(surface.trim()))
+
+			if (key) {
+				foldedNames.add(key)
+			}
+		}
+
+		rows.push({
+			id,
+			name,
+			country,
+			latitude: roundCoord(latitude),
+			longitude: roundCoord(longitude),
+			level,
+			k: [...foldedNames].toSorted(),
+		})
+	}
+
+	return rows
+}
+
+export interface BuildCapitalsOptions {
+	/**
+	 * Directory holding `countryInfo.txt` + the `<CC>.txt` dumps (`mailwoman corpus fetch geonames-dump`).
+	 */
+	geonamesDir: PathBuilderLike
+	outPath: PathBuilderLike
+}
+
+export interface BuildCapitalsResult {
+	outPath: string
+	coverage: CapitalsReference["coverage"]
+}
+
+/**
+ * Reads every catalog country's dump and extracts its capital rows.
+ *
+ * It grades the extraction against the catalog's capital names and writes the reference.
+ *
+ * @throws When `countryInfo.txt` is absent.
+ * Without the catalog, the reference has no denominator.
+ * A reference built from "whatever files exist" cannot state which countries it failed to cover.
+ */
+export async function buildCapitalsReference(options: BuildCapitalsOptions): Promise<BuildCapitalsResult> {
+	const geonamesDir = PathBuilder.from(options.geonamesDir)
+	const countryInfoPath = geonamesDir("countryInfo.txt")
+
+	if (!(await pathExists(countryInfoPath))) {
+		throw new Error(
+			`countryInfo.txt not found in ${options.geonamesDir} — run \`mailwoman corpus fetch geonames-dump\` first; ` +
+				"the catalog is the coverage denominator"
+		)
+	}
+
+	const catalog = parseCountryInfo(await readLocalTextFile(countryInfoPath))
+
+	const entries: CapitalReferenceEntry[] = []
+	const missingDumps: string[] = []
+	const wrongFormat: string[] = []
+	const missingNational: string[] = []
+	const nameMismatches: string[] = []
+	let scanned = 0
+
+	for (const { country, capital } of catalog) {
+		const dumpPath = geonamesDir(`${country}.txt`)
+
+		if (!(await pathExists(dumpPath))) {
+			missingDumps.push(country)
+
+			continue
+		}
+
+		const text = await readLocalTextFile(dumpPath)
+
+		if (!looksLikeGazetteerDump(text)) {
+			wrongFormat.push(country)
+
+			continue
+		}
+
+		scanned++
+
+		const rows = parseCapitalRows(text).filter((r) => r.country === country)
+
+		entries.push(...rows)
+
+		const nationals = rows.filter((r) => r.level === "national")
+
+		if (!nationals.length) {
+			// A stated capital with no pplc row is a gap.
+			// A catalog row with no capital (AQ, BV) is not.
+			if (capital) {
+				missingNational.push(country)
+			}
+
+			continue
+		}
+
+		if (capital && !nationals.some((r) => r.k.includes(String(normalizeLocalityForKey(capital))))) {
+			nameMismatches.push(`${country}: catalog says "${capital}"`)
+		}
+	}
+
+	entries.sort((a, b) => a.country.localeCompare(b.country) || a.id - b.id)
+
+	const reference: CapitalsReference = {
+		version: 1,
+		generated_by: "mailwoman gazetteer capitals (source: GeoNames dumps, PPLC + PPLA exact)",
+		source: "https://download.geonames.org/export/dump",
+		license: "CC-BY-4.0",
+		attribution: "GeoNames",
+		coverage: {
+			countries_scanned: scanned,
+			national: entries.filter((e) => e.level === "national").length,
+			admin1: entries.filter((e) => e.level === "admin1").length,
+			missing_dumps: missingDumps,
+			wrong_format: wrongFormat,
+			missing_national: missingNational,
+			capital_name_mismatches: nameMismatches,
+		},
+		entries,
+	}
+
+	// One entry per line: the header reads like JSON, the entry block diffs like a table.
+	// `false`: the head is spliced rather than written.
+	// The regex below reopens its closing brace so the entries can be printed one per line.
+	// A trailing newline puts a character after that brace and the match silently fails.
+	const head = prettyJSON({ ...reference, entries: undefined }, false).replace(/\n\}$/, ",\n")
+	const body = reference.entries.map((e) => "\t\t" + stringifyJSON(e)).join(",\n")
+
+	await makeDirectories(dirname(options.outPath))
+	await writeLocalTextFile(`${head}\t"entries": [\n${body}\n\t]\n}\n`, options.outPath)
+
+	return { outPath: options.outPath.toString(), coverage: reference.coverage }
+}

@@ -5,14 +5,14 @@
  * @file Whether a layer may cross the boundary from built to published.
  *
  *   `LayerTier` already states the answer. `shipped` is defined as a permissive-license artifact this
- *   project publishes. `build-local` means the sources carry share-alike. The builder ships the
+ *   project publishes. `build-local` means the sources require share-alike. The builder ships the
  *   build tool. The user builds the data. `private` means the user's own data. Every reader consulted the field for
  *   a purpose beyond publication. One result was `candidate.db` shipping as a bundle while its own manifest
  *   recorded `tier = build-local` and `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0`.
  *
  *   The tier is the assertion and the license expression is the evidence for it, so this reads both and
  *   reports every way they disagree with publishing. A layer whose tier permits publication while its
- *   license carries share-alike is as much a finding as a `build-local` layer in a bundle: one of the
+ *   license requires share-alike is as much a finding as a `build-local` layer in a bundle: one of the
  *   two fields is wrong and the artifact cannot say which.
  *
  *   This takes manifests a caller has already read, so it holds no opinion about where they came from
@@ -27,7 +27,7 @@ import { carriesShareAlike, LicenseResolution, readLicenseRecord } from "#licens
 /**
  * Throws when a manifest's tier contradicts what its license expression establishes.
  *
- * `shipped` requires a resolved expression that carries no share-alike obligation.
+ * `shipped` requires a resolved expression with no share-alike obligation.
  * `build-local` is the tier for a source that cannot be published, so it refuses a resolved
  * expression whose obligations stop at attribution, because such a layer is publishable.
  *
@@ -78,7 +78,7 @@ export function assertTierMatchesLicense(
 }
 
 /**
- * One reason a layer may not be published, naming the field that says so.
+ * One reason a layer may not be published, identified by the field that records it.
  */
 export interface PublicationRefusal {
 	/**

@@ -27,7 +27,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * A qualifier may confirm against any level the backend stored.
  *
  * `contradicted` requires every level in the band to miss.
- * Widening the band makes the check more conservative.
+ * A wider band makes the check more conservative.
  */
 export const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "macroregion", "county", "macrocounty"])
 
@@ -46,7 +46,7 @@ export const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "
 const COUNTY_QUALIFIER_PREFIXES = ["county", "co.", "co"] as const
 
 /**
- * Trailing admin-qualifier words, the suffix sibling of the prefix above.
+ * Admin-qualifier words at the end, the suffix form of the prefix above.
  *
  * `San José Province` (CR board row) folds against stored `San José` only with the word removed.
  *
@@ -148,7 +148,7 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
  *
  * The qualifier probe missed every Irish county until this variant landed.
  *
- * Adding `county <key>` restores the two-sidedness for the one stored-form family with an evidenced case.
+ * The `county <key>` form restores two-sidedness for the one stored-form family with an evidenced case.
  * The union is monotone because a wider qualifier set can only find more bearers.
  *
  * Each bearer must still contain a candidate before anything moves.

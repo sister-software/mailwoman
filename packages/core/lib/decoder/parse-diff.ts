@@ -139,7 +139,7 @@ const RELATED_OVERLAP = 0.5
 /**
  * Diff two parses of the same input.
  *
- * Matching is greedy on overlap, strongest pair first, with tag equality breaking ties,
+ * The matcher processes the strongest overlap first and uses tag equality to break ties,
  * so a span that kept its tag is preferred over one that merely sits in the same place.
  */
 export function diffParse(

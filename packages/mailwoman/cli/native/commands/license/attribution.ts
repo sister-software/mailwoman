@@ -1,0 +1,220 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   This report reads obligations from the installed packages. Their set differs from the source register.
+ *   It reports obligations without clearing them. A commercial key covers first-party code and model artifacts.
+ *   Upstream attribution and share-alike conditions still apply.
+ */
+
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import type { PathBuilder } from "path-ts"
+
+/**
+ * The `PROVENANCE.json` fields this reads, written by `mwops release write-rights-files`
+ * and shipped in every published weights package.
+ */
+interface PackageProvenance {
+	package: string
+	package_version: string
+	license: string
+	model_card_version: string | null
+	version_series: string
+	base_weights: string | null
+	inherited_lineage: {
+		package: string
+		package_version: string
+		attribution: Array<{ text: string; license_named: string | null }>
+		unresolved: string | null
+	} | null
+	training_attribution: {
+		status: string
+		entries: Array<{ text: string; license_named: string | null }>
+	}
+	attribution_recorded_in_another_package: Array<{ artifact: string; recorded_in: string }>
+	unresolved: string[]
+}
+
+export interface InstalledPackageReport {
+	package: string
+	version: string
+	license: string
+	versionSeries: string
+	modelCardVersion: string | null
+	own: Array<{ text: string; licenseNamed: string | null }>
+	/**
+	 * Entries belonging to the package this one decodes through, labeled as that package's rather than merged.
+	 */
+	inherited: { package: string; version: string; entries: Array<{ text: string; licenseNamed: string | null }> } | null
+	unresolved: string[]
+}
+
+export interface AttributionReport {
+	/**
+	 * The expression governing the first-party code and model artifacts.
+	 */
+	engineLicense: string
+	packages: InstalledPackageReport[]
+	/**
+	 * Packages supplied on the command line or discovered, that are not installed here.
+	 */
+	notInstalled: string[]
+	/**
+	 * What this report does not cover, stated rather than left to be inferred from its absence.
+	 */
+	notCovered: string[]
+}
+
+/**
+ * The published weights packages this repository knows how to look for, a fixed list rather than
+ * a scan of `node_modules` so one absent from an installation is reported as absent by name.
+ */
+export const KNOWN_WEIGHTS_PACKAGES: readonly string[] = [
+	"@mailwoman/neural-weights-cjk",
+	"@mailwoman/neural-weights-de-de",
+	"@mailwoman/neural-weights-en-au",
+	"@mailwoman/neural-weights-en-gb",
+	"@mailwoman/neural-weights-en-in",
+	"@mailwoman/neural-weights-en-nz",
+	"@mailwoman/neural-weights-en-us",
+	"@mailwoman/neural-weights-es-es",
+	"@mailwoman/neural-weights-fr-fr",
+	"@mailwoman/neural-weights-it-it",
+	"@mailwoman/neural-weights-ja-jp",
+	"@mailwoman/neural-weights-zh-cn",
+]
+
+/**
+ * One installed package's provenance record, or `null` when the package is not installed:
+ * a package that resolves but has no `PROVENANCE.json` is reported absent
+ * rather than as installed with no declaration to make.
+ */
+async function readInstalled(packageName: string): Promise<PackageProvenance | null> {
+	let directory: PathBuilder
+
+	try {
+		directory = resolvePackageDirectory(packageName)
+	} catch {
+		return null
+	}
+
+	const provenance = directory("PROVENANCE.json")
+
+	if (!(await pathExists(provenance))) return null
+
+	return readLocalJSONFile<PackageProvenance>(provenance)
+}
+
+/**
+ * Build the report for the packages in this installation.
+ */
+export async function attributionReport(
+	engineLicense: string,
+	packageNames: readonly string[] = KNOWN_WEIGHTS_PACKAGES
+): Promise<AttributionReport> {
+	const packages: InstalledPackageReport[] = []
+	const notInstalled: string[] = []
+
+	for (const packageName of packageNames) {
+		const provenance = await readInstalled(packageName)
+
+		if (!provenance) {
+			notInstalled.push(packageName)
+
+			continue
+		}
+
+		packages.push({
+			package: provenance.package,
+			version: provenance.package_version,
+			license: provenance.license,
+			versionSeries: provenance.version_series,
+			modelCardVersion: provenance.model_card_version,
+			own: provenance.training_attribution.entries.map((entry) => ({
+				text: entry.text,
+				licenseNamed: entry.license_named,
+			})),
+			inherited: provenance.inherited_lineage
+				? {
+						package: provenance.inherited_lineage.package,
+						version: provenance.inherited_lineage.package_version,
+						entries: provenance.inherited_lineage.attribution.map((entry) => ({
+							text: entry.text,
+							licenseNamed: entry.license_named,
+						})),
+					}
+				: null,
+			unresolved: provenance.unresolved,
+		})
+	}
+
+	return {
+		engineLicense,
+		packages,
+		notInstalled,
+		notCovered: [
+			"Reference data downloaded separately at runtime. This reads installed npm packages, and a database fetched into $MAILWOMAN_DATA_ROOT carries the terms of whoever published it.",
+			"Whether the entries below are the whole of what each source requires. They are what the package records, and a package recording none is not a package with none.",
+		],
+	}
+}
+
+/**
+ * The report as lines for a terminal.
+ */
+export function renderAttributionReport(report: AttributionReport): string[] {
+	const lines: string[] = [
+		`Engine license: ${report.engineLicense}`,
+		"  A commercial agreement covers the code and model artifacts Sister Software authors. It does not reach the",
+		"  sources below, whose attribution and share-alike conditions survive it.",
+		"",
+	]
+
+	if (!report.packages.length) {
+		lines.push("No weights package with a provenance record is installed.")
+	}
+
+	for (const entry of report.packages) {
+		lines.push(`${entry.package} ${entry.version} (${entry.versionSeries}, card ${entry.modelCardVersion ?? "none"})`)
+
+		if (entry.own.length) {
+			lines.push("  Sources for the artifacts this package ships:")
+
+			for (const attribution of entry.own) {
+				lines.push(`    - ${attribution.text}`)
+			}
+		} else {
+			lines.push("  This package records no attribution of its own.")
+		}
+
+		if (entry.inherited) {
+			lines.push(
+				`  Inherited from ${entry.inherited.package} ${entry.inherited.version}, whose graph it decodes through:`
+			)
+
+			for (const attribution of entry.inherited.entries) {
+				lines.push(`    - ${attribution.text}`)
+			}
+		}
+
+		for (const unresolved of entry.unresolved) {
+			lines.push(`  Unresolved: ${unresolved}`)
+		}
+
+		lines.push("")
+	}
+
+	if (report.notInstalled.length) {
+		lines.push(`Not installed here: ${report.notInstalled.join(", ")}`, "")
+	}
+
+	lines.push("This report does not cover:")
+
+	for (const gap of report.notCovered) {
+		lines.push(`  - ${gap}`)
+	}
+
+	return lines
+}

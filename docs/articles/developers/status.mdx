@@ -53,7 +53,7 @@ and build tooling, which are installed as dependencies of these packages.
 | `@mailwoman/core`                                                   | Tokenization, decoder, calibration, the policy registry, and the bundled reference data                                        |
 | `@mailwoman/resolver`                                               | Walks a parsed tree and decorates it with coordinates and attribution                                                          |
 | `@mailwoman/resolver-wof-sqlite`                                    | The Node gazetteer backend, over `node:sqlite`                                                                                 |
-| `@mailwoman/neural/web-loader`                                      | The browser inference runtime, over `onnxruntime-web`                                                                          |
+| `@mailwoman/neural/web/loader`                                      | The browser inference runtime, over `onnxruntime-web`                                                                          |
 | `@mailwoman/resolver-wof-wasm`                                      | The browser gazetteer backend, over `@sqlite.org/sqlite-wasm`                                                                  |
 | `@mailwoman/api`                                                    | The native HTTP surface: `/v1/parse`, `/geocode`, `/batch`, `/resolve`, `/format`                                              |
 | `@mailwoman/nominatim`, `@mailwoman/photon`, `@mailwoman/libpostal` | Drop-in servers that answer on the shapes those tools already use                                                              |
@@ -102,7 +102,7 @@ The gazetteer is a separate download and is not part of any npm package. The pub
 The tiers below are copied from
 [`docs/engineering/SCOPE.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx),
 where they are maintained. Mailwoman claims support for a locale only where a coordinate-graded
-evaluation exists for it. Having training data for a locale does not by itself mean it is supported.
+evaluation exists for it. A locale's training data alone does not qualify it as supported.
 
 | Tier | Locales                                                | What the tier means                                                                 |
 | ---- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
@@ -135,7 +135,7 @@ missing feature, the next step turns it on.
 
 | Limit                                                                                      | Next step                                                                                                          |
 | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| Geocoding requires the gazetteer database. Parsing does not.                               | Download it once: `mailwoman data pull candidate`. `mailwoman doctor` prints that command and the variable to set. |
+| The gazetteer database enables coordinate resolution; parsing uses no gazetteer.           | Download it once: `mailwoman data pull candidate`. `mailwoman doctor` prints that command and the variable to set. |
 | Confidence scores are uncalibrated by default. The shipped model is under-confident.       | Wire `createCalibrator` from `@mailwoman/core/decoder` with the bundled `calibration.json`.                        |
 | The resolver stage has no default. `createRuntimePipeline` parses only until you pass one. | Pass `resolver:` a `createWOFResolver` instance backed by `@mailwoman/resolver-wof-sqlite`.                        |
 | One classifier instance loads one locale.                                                  | Construct one `NeuralAddressClassifier` per locale you serve.                                                      |

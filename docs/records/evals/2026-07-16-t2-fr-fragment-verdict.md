@@ -43,7 +43,7 @@ No target's interval overlaps its baseline. These are not readings anyone has to
 
 T1c's standing prediction was that **this cell might collapse**. It read 0.980 for the _wrong reason_
 — the model called everything without a house number a locality, and on bare localities that was
-accidentally right. Teaching bare streets gave it every incentive to flip that default and trade one
+accidentally right. Bare-street examples gave the model every incentive to flip that default and trade one
 broken prior for another.
 
 **It held exactly: 0.980 → 0.980.** Same interval. The model learned the **distinction** rather than a

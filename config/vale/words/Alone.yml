@@ -1,0 +1,7 @@
+## Flag alone in comments and docstrings for review.
+extends: existence
+message: "'%s' may leave the scope or condition unclear; state when the behavior applies."
+level: warning
+ignorecase: true
+tokens:
+  - '\balone\b'

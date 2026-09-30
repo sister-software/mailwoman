@@ -76,7 +76,7 @@ def test_v3120_crt_probe_config_loads_the_one_variable():
 
 def test_v3120_crt_probe_config_freeze_flags_stay_off():
     """Mutual exclusivity is enforced in train.py, but the shipped config itself must also not
-    trip it — trainable_only_prefixes is meant to stand alone."""
+    trip it — trainable_only_prefixes is meant to work without other freeze flags."""
     cfg = load_config(CONFIG_DIR / "v3.12.0-crt-probe.yaml")
     assert cfg.train.freeze_encoder is False
     assert cfg.train.freeze_token_embeddings is False
@@ -106,7 +106,7 @@ def test_all_carved_out_yields_a_clean_one_group_optimizer():
 
 
 def test_all_carved_out_without_lr_override_is_also_one_group():
-    """trainable_only_prefixes alone (no classifier_learning_rate override) takes the
+    """Set trainable_only_prefixes without a classifier_learning_rate override to take the
     no-carveouts path entirely — `build_optimizer`'s pre-existing `if not carveouts` branch,
     unaffected by this change, over whatever `trainable` already is upstream."""
     m = TinyModel()

@@ -1,10 +1,10 @@
 ---
-title: Reading our numbers
+title: How to read our numbers
 description: Resolve rate against precision, circularity, panel size and host scaling — the four ways a geocoding benchmark reads better than it is.
 role: explanation
 ---
 
-# Reading our numbers
+# How to read our numbers
 
 ## The question
 
@@ -46,7 +46,7 @@ takes 30 out of 30 for street accuracy has been misled by a true number.
 
 There is a second edge on this, and our own script fell off it. A tier field reports where the
 resolution cascade _ended_ rather than whether it produced anything — so a row that returned no coordinate
-still carries `admin`. Counting the field directly put three unresolved rows in the `admin` column of
+still carries `admin`. A direct count put three unresolved rows in the `admin` column of
 each of the first two Belgian arms, and the published table read `admin: 30` two lines under
 `returned a coordinate: 27`. The two rows disagreed about the same three addresses. The fix is to
 bucket on the tier that answered and count the rest as `none`, which is what the table shows now.
@@ -83,7 +83,7 @@ which a national figure can be computed, and neither page computes one.
 Two things go wrong when a panel is read as a population.
 
 **The confidence interval is wider than the digits suggest.** At n = 30, a score of 24 has an
-uncertainty of several rows in either direction. Reporting it as 80.0% adds a decimal place the panel
+uncertainty of several rows in either direction. The 80.0% figure adds a decimal place the panel
 did not provide. We report counts rather than percentages on the panel pages for that reason.
 
 **The panel's composition decides the answer.** Our Belgian rows are civic addresses on well-known
@@ -115,7 +115,7 @@ Three mechanisms break the extrapolation:
 - **The gazetteer is read from disk.** A warm page cache and a cold one give different numbers for the
   same query, and our panels run warm — the same databases were open moments earlier.
 
-Timing here is a sanity check on the order of magnitude rather than a throughput specification. Measure on
+These timings check the order of magnitude rather than specify throughput. Measure on
 your own hardware, with your own data root, at your own concurrency.
 
 **What to ask:** was the model load counted, what was the concurrency, and was the cache warm?

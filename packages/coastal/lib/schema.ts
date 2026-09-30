@@ -17,15 +17,15 @@
  *   The cell table names polygons instead of classes. The flood layer returns a zone code from a two-value domain.
  *   Its index accumulates cells by code. An erosion answer identifies a frontage polygon
  *   with its own distance, policy and defence. The index stores a key for each polygon and scenario. Overlap occurs
- *   in the source: 3,727 of 7,492 features on `NCERM_SMP_2105_95CC` carry a non-zero `maxoverlap`. A cell can name
+ *   in the source: 3,727 of 7,492 features on `NCERM_SMP_2105_95CC` have a non-zero `maxoverlap`. A cell can name
  *   several polygons in one scenario. A reading reports each polygon that contains the point.
  *
  *   Cell tables use `without rowid`; geometry tables use ordinary rowids. Small fixed-width rows are probed by their
  *   exact primary key, so they fit the B-tree. A geometry blob would make every index page a geometry page if stored
  *   in that B-tree.
  *
- *   The whole-cell set is compacted per feature, so it uses mixed resolutions. Each row carries its own
- *   `resolution`. A probe walks `cellToParent` from the index resolution up to the coarsest resolution
+ *   The whole-cell set is compacted per feature, so it uses mixed resolutions. Each row stores its own
+ *   `resolution` value. A probe walks `cellToParent` from the index resolution up to the coarsest resolution
  *   present. `layer_coverage` remains at one resolution because
  *   `recoverShortCellResolution` from `@mailwoman/spatial` recovers one resolution from the stored cells
  *   and throws when a table mixes them.
@@ -42,7 +42,7 @@ export const CoastalCellContainment = {
 	/**
 	 * Every point in the cell is inside the zone.
 	 *
-	 * Answered from the index alone, with no geometry read.
+	 * The index answers this without a geometry read.
 	 */
 	Whole: "whole",
 	/**
@@ -73,7 +73,7 @@ export interface CoastalZoneAreaTable {
 	/**
 	 * One of `NCERM_SCENARIOS`' keys.
 	 *
-	 * Carried as its own column rather than only inside `area_id`, because every probe is
+	 * Stored as its own column rather than only inside `area_id`, because every probe is
 	 * scenario-scoped and a probe that had to parse a key would be parsing a key.
 	 */
 	scenario_key: string
@@ -125,7 +125,7 @@ export interface CoastalZoneAreaTable {
 	/**
 	 * 2024, or 0 on the 87 anomalous rows.
 	 *
-	 * Carried, never coerced: the Environment Agency documents no meaning for them.
+	 * Preserved without coercion: the Environment Agency documents no meaning for them.
 	 */
 	published_year: number | null
 	/**
@@ -190,7 +190,7 @@ export interface CoastalZoneCellTable {
  * They share feature IDs and attributes but have different geometry.
  *
  * A bounding-box scan over 160 rows costs less than a cell index.
- * Omitting the index also keeps this hazard out of the erosion probe.
+ * The erosion probe also excludes this hazard because the schema has no cell index.
  */
 export interface CoastalGroundInstabilityTable {
 	/**
@@ -233,10 +233,10 @@ export interface CoastalGroundInstabilityTable {
  * The Environment Agency publishes no coverage statement for NCERM.
  * There is no footprint to record.
  *
- * `layer_coverage` therefore carries `basis = source_present`.
+ * `layer_coverage` therefore stores `basis = source_present`.
  *
- * The table supports a future footprint source, such as the Shoreline Management Plan
- * Mapping record or frontage geometry behind `frontageid`; see the workspace readme.
+ * The table supports a future footprint source, such as a record in Shoreline Management
+ * Plan Mapping or frontage geometry behind `frontageid`; see the workspace readme.
  * Once a source is settled, this layer can record a stronger basis.
  *
  * The evidence belongs beside the coverage so the audit trail remains intact.

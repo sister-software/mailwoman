@@ -34,8 +34,9 @@ export const FAKE_SUGGESTIONS: Suggestion[] = [
 
 /**
  * Creates an offline {@link GeocoderRuntime} that extends {@link makePipelineRuntime}
- * with the stub style, canned suggestions and versions, and a `resolveMapPlace`
- * that gives the candidate a bounding box so overlays draw.
+ * with the stub style, canned suggestions and versions.
+ *
+ * It also provides `resolveMapPlace` that gives the candidate a bounding box so overlays draw.
  * The fake ignores the bias passed to `runParseWithBias`.
  */
 export function makeFakeGeocoderRuntime(overrides: Partial<GeocoderRuntime> = {}): GeocoderRuntime {

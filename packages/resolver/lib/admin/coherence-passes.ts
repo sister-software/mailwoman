@@ -72,7 +72,8 @@ export function applyParentFallbackContradiction(roots: readonly AddressNode[]):
  * region candidate that actually contains a locality with the same name.
  *
  * This recovers cases such as "Portland, ME" where the region was picked in isolation
- * before the locality was known, and it leaves trees with a resolved locality untouched.
+ * before the locality was known.
+ * It leaves trees with a resolved locality untouched.
  */
 export async function applyAdminCoherence(roots: readonly AddressNode[], backend: ResolverBackend): Promise<void> {
 	const visit = async (node: AddressNode, regionAncestor: AddressNode | null): Promise<void> => {
@@ -223,7 +224,7 @@ function revertResolverDecoration(node: AddressNode): void {
  * Re-picks a locality to the place with the same name inside the country specified in
  * the address, when that country is the locality's nearest admin context.
  *
- * It leaves the locality alone when it already resolved to that place or
+ * It leaves the locality unchanged when it already resolved to that place or
  * when that country has no locality with the same name.
  */
 export async function applyExplicitCountryCoherence(

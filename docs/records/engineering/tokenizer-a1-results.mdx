@@ -56,7 +56,7 @@ A1 is a material improvement over A0 on every targeted script and preserves the 
 2. The covered scripts hit or beat their floor (cjk, cyrillic-noise, armenian).
 3. C-train's classifier consumes the tokenizer; it does not need `<5%` byte-fallback to ship Tier 2 BIO labels on en-US / fr-FR. Latin improved.
 
-The follow-up work for `<5%` overall is a **Thread B3**: extend `TRANSLIT_SCRIPTS` + `KNOWN_SOURCE_PREFIXES` to `grek`, `arab`, `hebr`, `deva`, `thai` (per [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.mdx#scope) — these are noted as additive / deferred), regenerate the deepseek rows, retrain as `v0.5.0-a2`. Treating this as a separate thread keeps C-train unblocked.
+The follow-up work for `<5%` overall is a **Thread B3**: extend `TRANSLIT_SCRIPTS` + `KNOWN_SOURCE_PREFIXES` to `grek`, `arab`, `hebr`, `deva`, `thai` (per [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.mdx#scope) — these are noted as additive / deferred), regenerate the deepseek rows, retrain as `v0.5.0-a2`. A separate thread keeps C-train unblocked.
 
 ## Model card
 

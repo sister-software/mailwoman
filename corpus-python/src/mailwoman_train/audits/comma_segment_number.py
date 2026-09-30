@@ -1,17 +1,17 @@
-"""Count what a bare number standing alone between commas teaches.
+"""Count rows where a bare number occupies a comma-delimited segment.
 
-WHY THIS EXISTS. `301 College Ave, 101, Athens, GA 30601` is the second surface #2298 proposes to
-teach, where `101` is a secondary unit. Unlike the `#101` form it carries no token that decides the
-reading. The same surface — a digit group alone in its own comma segment — is already attested as a
-HOUSE NUMBER (`15, 07691 Portopetro, Illes Balears, Spain`) as well as a POSTCODE. The rule therefore
-needs a count of the rows it would newly claim.
+The `301 College Ave, 101, Athens, GA 30601` surface is the second form proposal #2298 would teach,
+with `101` as a secondary unit. Unlike `#101`, this form has no token that determines its reading.
+The same form, a digit group by itself in its comma segment, also appears as a house number
+(`15, 07691 Portopetro, Illes Balears, Spain`) and as a postcode. The audit counts rows that the
+proposed rule would newly claim.
 
-LEADING AND NON-LEADING ARE SEPARATE COUNTS. A number opening the row is the house-number surface
-several recipes already emit. It is separate from the proposed unit. A number in a LATER segment has
-the exact shape under review. Its current readings are the evidence for the decision.
+The audit reports leading and later positions separately. A number at the start of a row is the
+house-number form that several recipes already emit. A number in a later segment has the shape under
+review. Their current readings inform the decision.
 
-The sampling mirrors `audit_epoch_mixture` and the other two censuses — same stream, same seed
-convention, same budget — so a count here is comparable with an exposure reported there.
+The sample follows `audit_epoch_mixture` and the other two censuses: it uses the same stream, seed
+convention and budget. Those settings make its count comparable with an exposure reported there.
 """
 
 from __future__ import annotations
@@ -38,10 +38,10 @@ def _bare(token: str) -> str | None:
 
 
 def isolated_positions(tokens: list[str]) -> list[int]:
-    """Every index holding a digit group that is ALONE in its comma segment.
+    """Every index where a digit group occupies its own comma segment.
 
-    A segment is delimited by the comma the previous token carries and by the comma this token
-    carries, so a number between two other words in the same segment — `Apt 101 Athens` — is not one.
+    A segment begins at the comma before the token and ends at the comma after it. A number between
+    two other words in the same segment — `Apt 101 Athens` — does not occupy its own segment.
     """
     out: list[int] = []
 

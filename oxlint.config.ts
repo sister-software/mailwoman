@@ -16,10 +16,10 @@ const config = createOxlintConfig({
 	headers: false,
 	restrictProcessGlobals: true,
 	// A number used as a comparison threshold needs a name.
-	// `no-magic-numbers` stays off so that data tables are left alone.
+	// `no-magic-numbers` stays off so that data tables remain unchanged.
 	unnamedThresholds: true,
 	// Only exported constants need a JSDoc block.
-	// A local constant's name usually says enough.
+	// A local constant's name provides enough context.
 	constantDocs: {
 		scope: "exported",
 		// Command modules export these as framework metadata.
@@ -97,9 +97,9 @@ const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
 const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/index.ts",
 	"packages/neural/lib/env.ts",
-	"packages/neural/lib/onnx/runner/index.ts",
+	"packages/neural/lib/onnx/runner.ts",
 	"packages/neural/lib/scorer.ts",
-	"packages/neural/lib/weights/index.ts",
+	"packages/neural/lib/weights.ts",
 	"packages/neural/lib/*.test.ts",
 	"packages/neural/vitest.config.ts",
 ]
@@ -231,21 +231,6 @@ export default {
 			},
 		},
 		{
-			// Tests import the package through its public exports.
-			// The `#` import map is private to `lib/`.
-			files: [
-				"packages/*/test/**/*.ts",
-				"packages/*/test/**/*.tsx",
-				"packages/corpus/lib/**/*.test.ts",
-				"packages/corpus/lib/**/*.test.tsx",
-				"docs/test/**/*.ts",
-				"docs/test/**/*.tsx",
-			],
-			rules: {
-				"mailwoman/no-private-import-in-test": "error",
-			},
-		},
-		{
 			// This file wraps `node:child_process` for the rest of the repo.
 			files: ["packages/core/lib/process.ts"],
 			rules: {
@@ -285,21 +270,21 @@ export default {
 			// These files use builtins that core does not wrap yet, such as readline,
 			// worker_threads, cluster, http and https.
 			files: [
-				"packages/filer/lib/sdk/form499/index.ts",
-				"packages/filer/lib/sdk/provider-list.ts",
-				"packages/mailwoman/lib/cli/native/commands/geocode.ts",
-				"packages/mailwoman/lib/commands/gazetteer/importance.tsx",
-				"packages/mailwoman/lib/commands/serve.tsx",
+				"packages/filer/sdk/form499.ts",
+				"packages/filer/sdk/provider-list.ts",
+				"packages/mailwoman/cli/native/commands/geocode.ts",
+				"packages/mailwoman/cli/commands/gazetteer/importance.tsx",
+				"packages/mailwoman/cli/commands/serve.tsx",
 				"packages/api-kit/test/fixtures/cluster-serve.ts",
-				"packages/mailwoman/lib/commands/situs/interpolation/index.tsx",
+				"packages/mailwoman/cli/commands/situs/interpolation/index.tsx",
 				"packages/mailwoman/lib/geocode/worker.ts",
 				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"docs/static/examples/mailwoman-server.mjs",
 				"docs/plugins/runtime-assets/workspace/resolution.ts",
-				"packages/map-tui/test/unit/tile-source.test.ts",
-				"packages/neural/test/integration/browser-slo.test.ts",
-				"packages/resolver-wof-sqlite/test/integration/lookup-readonly-open.test.ts",
-				"packages/tiger/lib/tools/serve-range.ts",
+				"packages/map-tui/lib/tile-source.test.ts",
+				"packages/neural/lib/web/browser-slo.integration.test.ts",
+				"packages/resolver-wof-sqlite/lib/lookup-readonly-open.integration.test.ts",
+				"packages/tiger/tools/serve-range.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",
@@ -315,7 +300,7 @@ export default {
 		"guard-for-in": "error",
 		// The shared base only warns.
 		// The shared tsconfig disables `noUnusedLocals`, so this rule is an error here.
-		// Setting a severity alone would drop the base's options, so they are repeated here.
+		// The local override repeats the base options because a severity-only entry would drop them.
 		// Prefix a deliberately unused binding with `_`.
 		"no-unused-vars": [
 			"error",
@@ -378,7 +363,7 @@ export default {
 		// The wrapper returns the fallback for non-string input, so convert a buffer with `.toString()` first.
 		//
 		// An override lifts one entry by calling `restrictedPropertiesExcept` with that entry.
-		// Setting the rule to `"off"` would lift every entry.
+		// An `"off"` value would lift every entry.
 		"no-restricted-properties": restrictedPropertiesExcept(),
 		"typescript/no-explicit-any": "error",
 		"unicorn/no-new-array": "off",

@@ -28,7 +28,7 @@ export type MapFlavor = "light" | "dark" | "white" | "grayscale" | "black"
 /**
  * Options for {@link toMapHTML}.
  *
- * With `colorBy: "auto"`, markers are colored by `bucket` when any feature carries one
+ * With `colorBy: "auto"`, markers are colored by `bucket` when any feature has one
  * and otherwise by whether two or more sources agree.
  */
 export interface MapHTMLOptions {
@@ -43,8 +43,9 @@ export interface MapHTMLOptions {
 	flavor?: MapFlavor
 
 	/**
-	 * Chooses marker colors: `bucket` uses the `bucket` property, `sources` shows whether two
-	 * or more sources are linked, and the default `auto` picks `bucket` when any feature carries one.
+	 * Chooses marker colors: `bucket` uses the `bucket` property, `sources` shows
+	 * whether two or more sources are linked.
+	 * The default `auto` picks `bucket` when any feature has one.
 	 */
 	colorBy?: "auto" | "sources" | "bucket"
 }

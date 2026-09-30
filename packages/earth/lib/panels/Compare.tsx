@@ -65,7 +65,7 @@ export const Compare: React.FC<CompareProps> = ({
 	const [compareResult, setCompareResult] = useState<ParseResult | null>(null)
 
 	// Load the compare classifier when compare mode + a compare version are active.
-	// Resetting the load state is the lifecycle boundary for a different requested classifier.
+	// The load-state reset marks the lifecycle boundary for a different requested classifier.
 
 	useEffect(() => {
 		if (!compareMode || !compareVersion) {
@@ -89,7 +89,7 @@ export const Compare: React.FC<CompareProps> = ({
 				setLoading(true)
 				setBackend("")
 
-				const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
+				const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
 
 				const { classifier: cls, diagnostics } = await loadNeuralClassifierFromURLs({
 					...neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM }),

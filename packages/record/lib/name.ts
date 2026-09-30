@@ -258,7 +258,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	if (!tokens.length) return Object.keys(result).length ? result : null
 
-	// 3. Leading titles → prefix.
+	// 3. Titles at the start become the prefix.
 	const prefixParts: string[] = []
 
 	while (tokens.length > 1 && TITLES.has(norm(tokens[0]!))) {
@@ -269,7 +269,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		result.prefix = prefixParts.join(" ")
 	}
 
-	// 4. Trailing suffixes → suffix (a single name token must remain).
+	// 4. Suffixes at the end become the suffix, while one name token must remain.
 	const suffixParts: string[] = []
 
 	while (tokens.length > 1 && SUFFIXES.has(norm(tokens.at(-1)!))) {
@@ -342,7 +342,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
  *
  * Western / romanized only, the same scope {@linkcode parsePersonName} declares.
  * A family-first system does not use this order in reverse.
- * Inventing that order here would be worse than having none.
+ * An invented order here would be worse than having none.
  */
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]
 

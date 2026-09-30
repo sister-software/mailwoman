@@ -7,7 +7,7 @@
  *   3166-2:CA code.
  *
  *   The informative contrast with `de/bundesland.ts` and `us/state.ts`: a Canadian subdivision is
- *   officially bilingual, so each unit carries two equally-canonical names — an English one and a
+ *   officially bilingual, so each unit has two equally-canonical names — an English one and a
  *   French one — and the gap between them is wide (`Nova Scotia` / `Nouvelle-Écosse`, `British
  *   Columbia` / `Colombie-Britannique`). That mirrors the German English-exonym pattern (`Bavaria`
  *   / `Bayern`), except here the French name is not a foreign exonym but a co-official form a real
@@ -19,7 +19,7 @@
 import { foldName } from "#normalize"
 
 /**
- * Per-province record with an ISO 3166-2:CA code, English name, and co-official French name.
+ * Per-province record with an ISO 3166-2:CA code, an English name and a co-official French name.
  */
 export interface CanadianProvinceInfo {
 	/**

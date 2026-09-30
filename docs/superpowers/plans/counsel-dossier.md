@@ -38,7 +38,7 @@ The KR framework (item 4) uses the same approach.
 
 **The question:** data.gov.hk's terms grant commercial download, distribution, and reproduction but
 **make no statement about adaptation, derivative works, or sublicensing** (`license_id: null` on the ALS bulk
-GeoJSON). Compiling ALS into an FST/gazetteer artifact is adaptation. Is that permitted?
+GeoJSON). An ALS-to-FST/gazetteer compilation is adaptation. Is that permitted?
 
 **Facts:** the 2026-07-30 prior-art survey verified these terms. The full survey is in
 `docs/superpowers/plans/2026-07-30-tokenizer-cjk-prior-art-synthesis.md`.
@@ -103,7 +103,7 @@ MLIT is PDL-1.0. Geolonia is CC BY 4.0. Japan Post expressly disclaims copyright
 **Riders:** (a) The parcel-level ABR 地番マスター carries a second Ministry-of-Justice grant. Check
 it before building any parcel-tier JP feature. (b) **MJ文字情報一覧表 / MJ縮退マップ are CC BY-SA 2.1 JP
 (share-alike).** If we ever ship an itaiji-normalization table derived from them, the share-alike terms apply to
-the table file. Sourcing the equivalences from green-licensed data avoids that.
+the table file. Equivalences from green-licensed data avoid that.
 
 ## 6. Taiwan (green with mechanics)
 

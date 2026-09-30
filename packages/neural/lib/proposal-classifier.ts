@@ -12,7 +12,7 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import type { Span } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal, ClassifierContext, ProposalClassifier, Section } from "@mailwoman/core/types"
 
-import type { NeuralAddressClassifier } from "#classifier/index"
+import type { NeuralAddressClassifier } from "#classifier"
 import { STAGE2_TAGS } from "#labels"
 
 export interface NeuralProposalClassifierConfig {
@@ -31,7 +31,7 @@ export interface NeuralProposalClassifierConfig {
 	 * Defaults to the Stage 2 tag set.
 	 *
 	 * A v0.2.0 Stage 1 model never decodes to a fine tag, so the broader default
-	 * carries no backward-compatibility risk.
+	 * creates no backward-compatibility risk.
 	 */
 	emits?: readonly ComponentTag[]
 	/**

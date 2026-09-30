@@ -20,7 +20,7 @@ import {
 
 /**
  * The resolved-place info in a forward `/api` result: the admin ladder (most-specific first)
- * with gazetteer names, the coordinate, the resolved country, and the postcode.
+ * with gazetteer names, the coordinate, the resolved country and the postcode.
  * {@link photonForwardProperties} projects it onto Photon's schema.
  *
  * Decorate from the resolved place rather than the parsed input span.
@@ -219,7 +219,7 @@ export function photonForwardCollection(result: PhotonForwardResult, limit: numb
  *
  * Reads the feature's already-decorated {@link PhotonProperties}
  * (housenumber/street/city/state/postcode/countrycode and the coordinate), so it stays a
- * pure re-serialization of the same resolved place the FeatureCollection carries.
+ * pure re-serialization of the same resolved place included in the FeatureCollection.
  * `streetAddress` is the plain house-number-first join, since the light router has no locale formatter.
  */
 export function photonFeatureToSchemaOrg(feature: PhotonFeature): SchemaOrgPlace {

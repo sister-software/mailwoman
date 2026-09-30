@@ -130,7 +130,7 @@ const ComponentTagSchema = z.enum([
 ])
 
 /**
- * Canonical parsed-component map carried by `GeocodeResult.components`,
+ * Canonical parsed-component map stored in `GeocodeResult.components`,
  * spelled out at this engine-agnostic boundary.
  *
  * The compile-time drift test catches any mismatch with the real type.
@@ -140,7 +140,7 @@ const GeocodeComponentsSchema = z.partialRecord(ComponentTagSchema, z.string())
 /**
  * One `GeocodeOutcome.intent_markers` entry, mirroring `QueryIntentMarker`.
  *
- * `evidence` stays open because each `code` carries its own measurement.
+ * `evidence` stays open because each `code` has its own measurement.
  * A client branches on `code`.
  */
 const QueryIntentMarkerSchema = z
@@ -278,7 +278,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	hierarchy: z.array(GeocodeHierarchyEntrySchema),
 	candidates: z.array(GeocodeCandidateSchema),
 	// The register row's own scope tags when the address_point tier answered and its
-	// extract carries them (normalized locality key + postcode of the rooftop).
+	// extract includes them (normalized locality key + postcode of the rooftop).
 	rooftop: z
 		.object({
 			localityNorm: z.string().optional(),
@@ -338,7 +338,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 		.optional(),
 	// The parse kept this component, but the answer did not follow it.
 	// Its value in `components` looks honored.
-	// No other field says it points at a place far from the rest.
+	// No other field indicates that it points at a place far from the rest.
 	// Absent when the answer followed everything it parsed.
 	unfollowed_components: z
 		.array(

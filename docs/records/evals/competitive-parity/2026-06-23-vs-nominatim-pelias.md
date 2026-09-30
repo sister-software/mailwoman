@@ -79,7 +79,7 @@ The picture is nuanced — and good, once you stop grading on the lenient metric
 
 **Where we trail:** EU coordinate coverage. Nominatim/OSM and Pelias/OA only have more EU address data than our gazetteer + model do today. This is a **coverage/recall gap** (no-result) rather than a precision gap (our resolved p50 is 1.8 km) — and it's the active roadmap: the v4.13.0 multi-locale ship, #370 (the rescore that recovers the wrong-place tail), and G-NAF/coverage ingestion all target exactly it.
 
-**The methodology correction (most important internal takeaway):** our internal "resolve-rate" metric overstated EU by ~15–22 pp — it counts region-level / wrong-same-name resolves that land >25 km from truth. **Going forward, grade on right-place resolve-rate (@25 km / PIP-containment) rather than bare resolve-rate.** This is the #566 "grade the assembled coordinate" discipline, sharpened.
+**The methodology correction (most important internal takeaway):** our internal "resolve-rate" metric overstated EU by ~15–22 pp — it counts region-level / wrong-same-name resolves that land >25 km from truth. **Use right-place resolve-rate (@25 km / PIP-containment) rather than bare resolve-rate in future comparisons.** This is the #566 "grade the assembled coordinate" discipline, sharpened.
 
 **Trade-show framing:** lead with US dominance + the calibrated-confidence demo + deployability; present EU as the fast-improving frontier (just shipped 16 locales). Do **not** claim "more accurate than Nominatim" globally — it's false on EU and true on US; claim it precisely.
 

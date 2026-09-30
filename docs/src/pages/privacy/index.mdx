@@ -34,9 +34,9 @@ If information never leaves your infrastructure, Sister Software is neither rece
 
 Four activities send a request to a server. Each one carries the request metadata any web request carries, such as an IP address, a request time, and a requested URL. None of them carries the content of a parse or geocode request.
 
-- **Installing from a package registry.** npm, or whichever registry you configure, receives the request. Its operator's policy governs it.
-- **Downloading a reference-data bundle.** `mailwoman data pull` requests the bundle's objects from `public.mailwoman.ai`, which is served through Cloudflare R2. Only that command downloads a bundle. A Mailwoman server started without a gazetteer prints the command and stops.
-- **Running the browser engine or a map surface.** A page that loads the browser engine requests its model and database assets from `public.mailwoman.ai` as it starts, and a map surface requests fonts and sprites from the same origin. These requests happen without a prompt, and they identify which assets a visitor's page loaded.
+- **Package installation.** npm, or whichever registry you configure, receives the request. Its operator's policy governs it.
+- **Reference-data downloads.** `mailwoman data pull` requests the bundle's objects from `public.mailwoman.ai`, which is served through Cloudflare R2. Only that command downloads a bundle. A Mailwoman server started without a gazetteer prints the command and stops.
+- **Browser engine or map use.** A page that loads the browser engine requests its model and database assets from `public.mailwoman.ai` as it starts, and a map surface requests fonts and sprites from the same origin. These requests happen without a prompt, and they identify which assets a visitor's page loaded.
 - **Optional online license actions.** `mailwoman license verify --online` and `mailwoman license refresh` contact Sister Software infrastructure and send the license information the request needs. A key verifies offline without them.
 
 A third-party network provider or content-delivery network in front of any of these endpoints may keep its own request records under its own policy.
@@ -47,13 +47,15 @@ The records Mailwoman is trained on are separate from anything you send us, and 
 
 We obtain address records from public and third-party sources to build training corpora and the pretrained models we publish. Those records are not customer queries. Ordinary self-hosted use transmits no query to us, so no customer query can reach a corpus. That fact does not establish that a corpus contains no personal data, so this section states the two claims separately.
 
-The register of candidate sources is public, at `packages/corpus/data/address-source-register.json`. It holds 389 sources. As of this update, the register records a license decision for none of them and marks none of the 389 as eligible for ingest, so no source in that register has contributed to a published model.
+The register of candidate sources is public, at `packages/corpus/data/address-source-register.json`. It holds 399 sources. As of this update, the register records a reviewed license decision for 34 of them and marks eleven of the 399 as eligible for ingest. Eligibility permits a future corpus to draw on a source, and it describes that source's terms and fields rather than the contents of any corpus already built. No source in that register has contributed to a published model.
 
-The assessment of personal data in training sources is incomplete. Some candidate registers, such as the French SIRENE enterprise register, carry records about sole traders that identify a natural person at a business address. We have not completed a purpose, category, role, lawful-basis, retention, and individual-rights analysis for that class of source, and this Policy does not assert one.
+**A corpus we build from now on carries the addresses of organizations and no address of an identifiable natural person.** We decided that on 2026-09-30 and the register enforces it. Some candidate registers, such as the French SIRENE enterprise register, carry records about sole traders that identify a natural person at a business address. That class of source is excluded rather than analyzed: we have not completed a purpose, category, role, lawful-basis, retention, and individual-rights analysis for it, and this Policy does not assert one.
 
-The ingest process enforces that incompleteness. Each source in the register carries a personal-data review with one of three outcomes: a review that found no record about an identifiable person, a review that found such records, or a completed analysis that states where it is recorded. The first and third outcomes admit a source for ingest. The second refuses it, and so does a missing review, because an unexamined publication has not been found clear. All 389 sources are refused on that ground today. This rule keeps such a source out of any corpus built from now on. It makes no statement about a model already published.
+The ingest process enforces that exclusion. Each source in the register carries a personal-data review with one of three outcomes: a review that found no record about an identifiable person, a review that found such records, or a completed analysis that states where it is recorded. The first and third outcomes admit a source for ingest. The second refuses it, and so does a missing review, because an unexamined publication has not been found clear. 386 of the 399 sources are refused on that ground today: 14 carry a review that found records about identifiable people, and 372 carry no review at all. One source carries a completed analysis, the Italian public-contracts database, whose suppliers include named individuals and whose published addresses all belong to public bodies. This rule keeps a source carrying personal addresses out of any corpus built from now on. It makes no statement about a model already published.
 
-Where a published model was trained on address records, we cannot at present recover an individual record from the trained weights, and we do not claim that the weights are anonymous within the meaning of any particular law.
+We cannot at present recover an individual record from the trained weights of a published model trained
+on address records. We make no claim that the weights are anonymous within the meaning of any particular
+law.
 
 ## Information you provide directly to us
 
@@ -149,7 +151,7 @@ Mailwoman workload data processed entirely on your infrastructure is not subject
 
 ## Your rights
 
-Depending on applicable law, you may have rights to access, correct, delete, restrict, or object to our processing of personal information about you.
+Applicable law may give you rights to access, correct, delete, restrict, or object to our processing of personal information about you.
 
 These rights apply only to information we hold.
 

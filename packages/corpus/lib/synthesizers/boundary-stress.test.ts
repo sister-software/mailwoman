@@ -8,14 +8,15 @@
  */
 
 import { mulberry32 } from "@mailwoman/core/random"
+import { describe, expect, it } from "vitest"
+
 import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,
 	type SynthesizedBoundaryStressRow,
-} from "@mailwoman/corpus/synthesizers/boundary-stress"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
-import { describe, expect, it } from "vitest"
+} from "#synthesizers/boundary-stress"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
 	return {
@@ -23,7 +24,7 @@ function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
 		source: "synth-boundary-stress",
 		source_id: "synth-boundary-stress:test",
 		// CanonicalRow requires a country.
-		// The synthesized row carries only the locale it was minted for.
+		// The synthesized row includes only the locale it was minted for.
 		country: r.locale.split("-")[1] ?? "DE",
 		corpus_version: "0.0.0-test",
 		license: "synthetic fixture — not distributed",

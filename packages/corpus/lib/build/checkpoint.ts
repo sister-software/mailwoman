@@ -21,7 +21,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * The four append-only outputs of the align phase, by the name their file carries.
+ * The four append-only outputs of the align phase, by the name in each file.
  */
 export const ALIGN_OUTPUTS = ["train", "val", "test", "quarantine"] as const
 
@@ -31,7 +31,7 @@ export type AlignOutputName = (typeof ALIGN_OUTPUTS)[number]
  * The settings that change what the align phase writes for a given input row.
  *
  * A resume under different settings would mix two policies inside one output file,
- * so the checkpoint carries these and a mismatch refuses the resume rather than continuing.
+ * so the checkpoint records these and a mismatch refuses the resume rather than continuing.
  */
 export interface AlignSettings {
 	corpus_version: string

@@ -61,7 +61,7 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
  * `iconv-lite` disagrees with `cp949` on none of the 17,048.
  *
  * It is not a rare corner.
- * One row in 48,000 of the Korean address register carries such a sequence.
+ * One row in 48,000 of the Korean address register contains such a sequence.
  *
  * `더샾오피스텔`, bytes `b4 f5 98 de bf c0 c7 c7 bd ba c5 da`, which `TextDecoder` reads as `더乍의퓰뵀�`.
  *

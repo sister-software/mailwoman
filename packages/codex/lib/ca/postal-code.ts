@@ -19,7 +19,7 @@
  *
  *   The clean rule has two wrinkles worth knowing. `X` is shared by the Northwest Territories and
  *   Nunavut (no single letter splits them), so `provinceOfPostalCode` returns an array there. And
- *   the large provinces span several letters: Ontario alone owns `K L M N P`, Quebec owns `G H J`.
+ *   the large provinces span several letters: only Ontario owns `K L M N P`, while Quebec owns `G H J`.
  *   The first three characters form the FSA (Forward Sortation Area); the last three are the LDU
  *   (Local Delivery Unit). A FSA whose second character (the first digit) is `0` is a rural area —
  *   the bridge to the wider, lower-density delivery zones.
@@ -39,7 +39,7 @@ const POSTAL_CODE_LENGTH = 6
  *
  * Six alphanumeric characters in a strict Letter-Digit-Letter-Digit-Letter-Digit pattern,
  * conventionally written with a single space after the third.
- * Unlike the other systems' bare five digits, the shape alone already says "Canada".
+ * Unlike the other systems' bare five digits, the shape by itself already identifies "Canada".
  *
  * @category Postal
  * @type string

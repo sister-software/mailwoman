@@ -15,7 +15,7 @@ import unicodedata
 
 from ...text.kana import fold_halfwidth_kana, kanji_to_int
 
-#: The canonical 47. Overture's `address_levels[0]` carries occasional junk (`東京都1`); a full pass
+#: The canonical 47. Overture's `address_levels[0]` contains occasional junk (`東京都1`); a full pass
 #: counted 48 distinct values, so exactly one junk variant survives into 19.6M rows.
 JP_PREFECTURES = frozenset(
     "北海道 青森県 岩手県 宮城県 秋田県 山形県 福島県 茨城県 栃木県 群馬県 埼玉県 千葉県 東京都 神奈川県 "
@@ -25,8 +25,8 @@ JP_PREFECTURES = frozenset(
 )
 
 # Hyphen-equivalence class. Applied to the number field only: U+30FC and U+FF70 are prolonged-sound
-# marks that belong inside katakana names. Folding them there would corrupt the name. In a
-# banchi-go they are a typed hyphen.
+# marks that belong inside katakana names. They function as typed hyphens in banchi-go, so the converter
+# leaves them unchanged in names and folds them only in the number field.
 _HYPHEN_CLASS = "‐‑‒–—―−ー﹘﹣－ｰ"
 _HYPHEN_TABLE = str.maketrans({character: "-" for character in _HYPHEN_CLASS})
 
@@ -40,14 +40,14 @@ _CHOME_TAIL = re.compile(r"^(.*?)([0-9０-９〇一二三四五六七八九十�
 def normalize_name(text: str) -> str:
     """Normalize a NAME field (prefecture / municipality / street): NFC + kana fold + de-space.
 
-    All whitespace is removed, interior included. 135 street values carry an ideographic space
-    (``西与賀町　字今津乙``) which is a rendering artifact of the source rather than part of the name — the
-    written form closes it up. Leaving it in put a U+3000 inside a ``district`` span. The first full
-    build counted labeled characters against significant characters and measured coverage at
-    1.000001. A six-row defect produced that value.
+        All whitespace is removed, interior included. 135 street values contain an ideographic space
+        (``西与賀町　字今津乙``) which is a rendering artifact of the source rather than part of the name — the
+    written form closes it up. Its retention put a U+3000 inside a ``district`` span. The first full
+        build counted labeled characters against significant characters and measured coverage at
+        1.000001. A six-row defect produced that value.
 
-    Explicitly does not touch hyphens (U+30FC is a real katakana character here) and does not fold
-    itaiji — the MJ縮退マップ tables are CC BY-SA.
+        Explicitly does not touch hyphens (U+30FC is a real katakana character here) and does not fold
+        itaiji — the MJ縮退マップ tables are CC BY-SA.
     """
     return "".join(fold_halfwidth_kana(unicodedata.normalize("NFC", text)).split())
 

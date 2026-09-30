@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The worker's bindings, validated on every request and refused when a var still carries a placeholder. Vars are
+ *   The worker's bindings, validated on every request and refused when a var still has a placeholder value. Vars are
  *   strings in Wrangler. the two booleans are parsed here so no route compares a string to "true".
  */
 
@@ -55,8 +55,8 @@ export interface LicenseWorkerEnv extends LicenseWorkerBindings {
 /**
  * Validate the vars and derive the two booleans.
  *
- * @throws on a placeholder, which the Worker's `fetch` turns into a 503:
- * a deploy with an unfilled var must refuse, never mint.
+ * @throws on a placeholder.
+ * The Worker's `fetch` turns that error into a 503: a deploy with an unfilled var must refuse, never mint.
  */
 export function readEnv(bindings: LicenseWorkerBindings): LicenseWorkerEnv {
 	const vars = VarsSchema.parse(bindings)

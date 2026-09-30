@@ -34,8 +34,8 @@ const LOCALITY_BBOX_RADIUS_DEG = 0.25
  * Returns every `(street, house_number)` pair in the tree, ordered by how close the
  * two spans sit, with a number before the street winning a tie.
  *
- * A venue-led address can carry several house numbers, and the tiers take the
- * first pair that hits the register.
+ * A venue-led address can contain several house numbers.
+ * The tiers take the first pair that hits the register.
  */
 export function streetNumberPairs(
 	roots: readonly AddressNode[]

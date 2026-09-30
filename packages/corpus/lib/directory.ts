@@ -15,9 +15,9 @@ import { stringifyJSON } from "@mailwoman/core/json"
 /**
  * The directory name a corpus version is written under.
  *
- * @param corpusVersion The version alone, without the `corpus-v` prefix.
- * @throws When the version already carries the prefix.
- * Composing the name again yields `corpus-vv…`.
+ * @param corpusVersion The version by itself, without the `corpus-v` prefix.
+ * @throws When the version already includes the prefix.
+ * The same name composition yields `corpus-vv…`.
  */
 export function corpusDirectoryName(corpusVersion: string): string {
 	if (corpusVersion.startsWith("v")) {

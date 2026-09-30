@@ -8,7 +8,7 @@
  *   street-like words. Output components never include street-side tags.
  */
 
-import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address-format"
+import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address/format"
 import { countryCodeForTable } from "@mailwoman/codex/country"
 import { sample } from "@mailwoman/core/random"
 
@@ -19,7 +19,7 @@ import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
     cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches defines the
-    output distribution. Reading the cascade top-to-bottom shows it. Naming each cutoff
+   output distribution. The cascade shows each weight from top to bottom. A separate constant for each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
     extracted as constants above. */
 
@@ -87,7 +87,7 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
  * Venue names containing street-like words.
  *
  * Avoid leading digit-plus-ordinal forms because they can confuse house-number labels.
- * `synth-house-venue` covers house-number and venue co-occurrence.
+ * `invented-house-venue` covers house-number and venue co-occurrence.
  */
 const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Wall Street Industries",
@@ -252,7 +252,7 @@ function pickTemplate(random: () => number): NoStreetTemplate {
 }
 
 /**
- * Convenience: assert at type-level that a synthesized row carries no street-side components.
+ * Convenience: assert at type-level that a synthesized row has no street-side components.
  *
  * Used by tests + downstream consumers who want to check the interface behavior at runtime.
  */

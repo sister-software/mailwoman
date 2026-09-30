@@ -31,7 +31,7 @@ export interface AssertAllowedHostOptions {
 	/**
 	 * Exact hostnames this client may reach.
 	 *
-	 * Matching is a `Set` lookup, never a suffix check.
+	 * This check uses a `Set` lookup rather than a suffix check.
 	 * `host.attacker.example` must not match.
 	 * An `.endsWith(...)`-style test would admit it.
 	 */

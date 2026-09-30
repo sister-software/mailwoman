@@ -5,7 +5,7 @@
  *
  *   Diff two geocodes of the same input — the parse diff plus what the resolver did with it.
  *
- *   A distance delta alone says that the answer moved and leaves the cause open. The three ways a geocode changes are
+ *   A distance delta by itself shows that the answer moved and leaves the cause open. The three ways a geocode changes are
  *   different problems with different fixes: the parse changed (a different question was asked), a
  *   span resolved to a different place (ranking or gazetteer coverage), or the tier changed (a lookup
  *   missed and the same components fell through to a coarser rung).
@@ -87,7 +87,7 @@ export interface GeocodeDiff {
 	/**
 	 * Which of the three explanations the evidence supports.
 	 *
-	 * Stated rather than left to the reader, since a distance delta alone cannot choose between them.
+	 * Stated rather than left to the reader, since a distance delta by itself cannot choose between them.
 	 */
 	attribution:
 		| "parse-changed"
@@ -209,7 +209,7 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
  * Metres below which a coordinate move is rendered as "same point".
  *
  * Int8 quantization and float round-tripping move a centroid by centimetres.
- * Rendering that as a delta buries the moves that matter.
+ * A delta rendering buries the moves that matter.
  */
 export const SAME_POINT_M = 1
 

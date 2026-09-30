@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Carry a recipe output written before `recipe`/`register`/`surface` onto the current row schema.
+ * @file Convert a recipe output written before `recipe`/`register`/`surface` to the current row schema.
  *
  * `recipe` and `base_source_id` are renames of `synth_method` and `synth_base_id`, so they assert no new claim.
  * `register` is `mailwoman-derived-tuples` for every row, because naming a publisher would record inference as fact.
@@ -62,7 +62,7 @@ export const RECIPE_SURFACES: Record<string, SurfaceOrigin> = {
 	"synth-pk-register": SurfaceOrigin.Composed,
 	"synth-bd-register": SurfaceOrigin.Composed,
 	"synth-reviewed-postcode-tail": SurfaceOrigin.Composed,
-	// The publisher's own string, carried through by an adapter rather than a recipe.
+	// The publisher's own string, preserved by an adapter rather than a recipe.
 	overture: SurfaceOrigin.Attested,
 	"overture-latam": SurfaceOrigin.Attested,
 	gnaf: SurfaceOrigin.Attested,

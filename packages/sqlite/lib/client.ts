@@ -17,8 +17,8 @@ import { Kysely, type KyselyConfig } from "kysely"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { Database } from "#database-schema"
+import { SqliteDialect } from "#dialect"
 import type { SqliteDialectConfig } from "#dialect/config"
-import { SqliteDialect } from "#dialect/index"
 
 /**
  * A connection's non-Kysely surface: the statements Kysely does not model, plus ending the connection.
@@ -122,8 +122,8 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	/**
 	 * End the connection at scope exit, synchronously.
 	 *
-	 * `destroy()` returns a promise that `Symbol.dispose` cannot await,
-	 * and `node:sqlite`'s `close()` is synchronous.
+	 * `destroy()` returns a promise, so `Symbol.dispose` cannot call it.
+	 * `node:sqlite`'s `close()` is synchronous.
 	 */
 	[Symbol.dispose](): void {
 		this.#database[Symbol.dispose]()

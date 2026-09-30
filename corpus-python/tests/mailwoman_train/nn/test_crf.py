@@ -132,7 +132,7 @@ def test_unknown_reduction_raises():
 
 
 def test_log_likelihood_finite_with_padding():
-    # Regression guard for the multiplicative-mask NaN trap. alpha carries -inf at
+    # Regression guard for the multiplicative-mask NaN trap. alpha contains -inf at
     # structurally-invalid start positions (I-* tags), and the partition recurrence
     # used to blend old vs new alpha with `alpha * (1 - mask_t)`, which evaluates
     # `0 * -inf = NaN` whenever mask_t = 1. The torch.where blend preserves -inf

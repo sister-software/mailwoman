@@ -20,7 +20,7 @@ _PRE_RENAME_MANIFEST_KEY = "sh" + "ards"
 def manifest_files(data: dict[str, Any]) -> list[dict[str, Any]]:
     """Return the manifest's parquet file list from the `slices` key or the older key.
 
-    Reading only `slices` would make an older overlay corpus use the glob fallback. That fallback sees
+    The loader reads only `slices` if it wants an older overlay corpus to use the glob fallback. That fallback sees
     only the overlay's own files.
     """
     current = data.get("slices")
@@ -32,13 +32,13 @@ def manifest_files(data: dict[str, Any]) -> list[dict[str, Any]]:
 def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
     """Map a stale manifest path to an existing local file, or return ``None``.
 
-    The path segment before ``<split>`` identifies the corpus that owns the file: when it is this
-    corpus the ``<split>/<file>`` tail is joined under ``corpus_dir``, and when it is another corpus,
-    such as an overlay's base, the ``<corpus>/<split>/<file>`` tail is joined under the parent of
-    ``corpus_dir``.
+        The path segment before ``<split>`` identifies the corpus that owns the file: when it is this
+        corpus the ``<split>/<file>`` tail is joined under ``corpus_dir``, and when it is another corpus,
+        such as an overlay's base, the ``<corpus>/<split>/<file>`` tail is joined under the parent of
+        ``corpus_dir``.
 
-    Part files are numbered by position, so a base part and an overlay part can share a file name.
-    Re-rooting on the tail alone would read the overlay's part in place of the base's.
+        Part files are numbered by position, so a base part and an overlay part can share a file name.
+    Re-rooting on the tail by itself would read the overlay's part in place of the base's.
     """
     parts = raw.parts
     at = parts.index(split) if split in parts else None
@@ -88,7 +88,7 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
             else:
                 missing.append(str(raw))
         # A partly resolved manifest means the corpus is broken, e.g. an overlay without its base.
-        # Training on the files that remain would use the wrong corpus, so this raises. When no path
+        # The loader raises rather than training on the remaining files from the wrong corpus. When no path
         # resolves, the glob fallback handles older monolithic corpora.
         if resolved and missing:
             raise FileNotFoundError(

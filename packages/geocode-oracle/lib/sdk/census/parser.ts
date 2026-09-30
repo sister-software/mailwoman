@@ -7,14 +7,14 @@
 
 import { createPostalAddressID } from "@mailwoman/address-id"
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
-import type { ComponentDict } from "@mailwoman/codex/address-format"
+import type { ComponentDict } from "@mailwoman/codex/address/format"
 import { type AddressGeocode, toPostalAddress, withGeocode } from "@mailwoman/record"
 
 import { OracleProvider, type OracleGeocodeResult, regionPrefix } from "#result"
 import type { CensusAddressComponents, CensusAddressMatch } from "#sdk/census/types"
 
 /**
- * The tier every Census match carries, without exception.
+ * The tier every Census match has, without exception.
  *
  * The Census geocoder finds the tiger/Line segment whose address range contains the house number
  * and interpolates a position along it, so `interpolated` here is the mechanism rather than a hedge.
@@ -31,7 +31,7 @@ export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
  *
  * The corpus regex is tuned for US CSV extract rows with hand-entry drift and admits a trailing letter
  * and a hyphenated half (`123A`, `40-12`); a Census `matchedAddress` is machine-normalized
- * USPS output whose number is a plain digit run, so this pattern matches that alone.
+ * USPS output whose number is a plain digit run, so this pattern matches that number only.
  * `@mailwoman/corpus`'s declared home for the split is deliberately not used, because reaching it
  * would pull the training-corpus pipeline into a package whose entire job is to make two http calls.
  *
@@ -57,7 +57,7 @@ function joinParts(...parts: Array<string | undefined>): string | undefined {
  * - `street_suffix` ← `suffixType` + `suffixDirection`, because mailwoman has no separate
  *   suffix-directional tag and the two are adjacent in this order on the envelope (`123 N main ST E`).
  * - `street_prefix_particle` is left unset: it exists for grammatical particles (`de la`, `van der`),
- *   which US street names do not carry and the Census geocoder has no slot for.
+ *   which US street names do not use and the Census geocoder has no slot for.
  */
 export function buildStreetComponents(components: CensusAddressComponents): ComponentDict {
 	const dict: ComponentDict = {}
@@ -95,7 +95,7 @@ export function buildStreetComponents(components: CensusAddressComponents): Comp
  * The Census geocoder covers the United States and its territories only.
  *
  * The response has no country field.
- * Leaving it unset would give every US address a different `canonicalKey`.
+ * An unset value would give every US address a different `canonicalKey`.
  */
 export function buildCensusComponents(match: CensusAddressMatch): ComponentDict {
 	const source = match.addressComponents

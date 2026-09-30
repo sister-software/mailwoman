@@ -25,7 +25,7 @@ export const MOUSE_DISABLE = "\u001B[?1006l\u001B[?1002l\u001B[?1000l"
 /**
  * A decoded input event.
  *
- * Pan and zoom carry direction and magnitude only, since how far a step moves the
+ * Pan and zoom encode direction and magnitude only, since how far a step moves the
  * map is the browser's decision rather than the decoder's.
  */
 export type MapTUIInput =
@@ -252,7 +252,7 @@ export function decodeInputChunk(chunk: string, pending = ""): DecodedInput {
 
 			// An unterminated string sequence could grow the held fragment for the life of the process.
 			// Drop an overlong fragment.
-			// Flushing its body back would make terminal content read as key presses.
+			// A body flush would make terminal content read as key presses.
 			return { events, pending: fragment.length > MAX_PENDING_LENGTH ? "" : fragment }
 		}
 

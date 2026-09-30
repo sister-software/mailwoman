@@ -24,8 +24,8 @@ interface ArtifactState {
 	/**
 	 * The link target when the path is a symlink.
 	 *
-	 * `candidate.db` is a pointer `gazetteer promote` swaps, so the target name carries
-	 * the build's identity and the path alone does not.
+	 * `candidate.db` is a pointer `gazetteer promote` swaps, so the target name
+	 * identifies the build and the path by itself does not.
 	 */
 	linkTarget: string | null
 	/**
@@ -110,7 +110,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	const dataRoot = dataRootPath()
 
 	// wof-hot.db belongs to the staged demo rather than the data root, so use `promotion-eval.ts`'s lookup order.
-	const { resolveWOFHotDB } = await import("mailwoman/eval-harness/wof-hot-db")
+	const { resolveWOFHotDB } = await import("mailwoman/tools/eval-harness/wof-hot-db")
 
 	const standard: Array<readonly [string, PathBuilderLike]> = [
 		["admin", wofDatabasePath("admin-global-priority.db")],
@@ -137,7 +137,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 			reposStampAge = (await statPath(reposStampPath)).mtime.toISOString()
 		} catch {
 			// A corrupt stamp is reported as no stamp.
-			// Guessing at its contents would be worse than reporting no value.
+			// A guessed value would be worse than reporting no value.
 			repos = null
 		}
 	}

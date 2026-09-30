@@ -36,8 +36,8 @@ The failure samples say why, and it is not a tunable defect:
 
 The inputs that LOOK easy — short, undecorated toponyms — are exactly the class the entire Track B /
 fr-fragment arc has been about: **a bare name gives no structural evidence of whether it is a street, a
-locality, or a region.** Deciding that requires knowing which names are which — the atlas or the model —
-which is precisely what a shape detector, by construction, does not have. On this domain, ease-of-shape
+locality, or a region.** The atlas or model must identify each name before the system can assign its role —
+something a shape detector cannot do. On this domain, ease-of-shape
 and ease-of-parse are anti-correlated: long inputs are self-disambiguating (a house number licenses the
 street, a postcode anchors the locality); short inputs are pure ambiguity. **The model warrants its keep
 most on the smallest queries** — the opposite of the cascade's premise. Note the model itself scores only
@@ -55,7 +55,7 @@ the shape is ambiguous, and the ambiguous cases are the ones that matter.**
 - **Atlas-verified fronting** — absorb a bare name only after a candidate-table hit confirms it is a
   known locality — is the one direct form left. But that front tier is a gazetteer lookup, i.e. the
   resolver; the model + atlas channel already perform that arbitration with learned weighting (M1 priced
-  the channel at +10.4). Building it as a bypass provides ~0.5 ms and a second code path to keep direct.
+  the channel at +10.4). A bypass provides ~0.5 ms and adds a second code path to maintain.
 - The scoped doubleton bias (PR #1148, four-line guard on a soft prior) remains the template for where
   shape knowledge helps: small, priced, scoped — inside the model's decode rather than in front of it.
 

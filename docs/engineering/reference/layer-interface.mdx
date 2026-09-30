@@ -71,7 +71,7 @@ in order of importance.
    that points at a column that does not exist, such as `flood_zone_area.h3_cell`, is worse than
    either option, because a consumer joins on the field the manifest declares.
 2. **The qualified column name resolves the objection.** The objection to declaring `h3` was that
-   it points a consumer at the index rather than at the domain table. Writing
+   it points a consumer at the index rather than at the domain table. The qualified column name
    `flood_zone_cell.h3_cell` instead of a bare `h3_cell` states that in the field a consumer
    already reads. It incurs no cost, because `SpineKeys.h3.column` has always been author-named
    free text.
@@ -128,7 +128,7 @@ Both consequences are requirements:
    the feature incompletely without any error. That would reproduce, through the index, the silent
    absence the coverage rule is designed to refuse in the data.
 2. **Bound the classification by construction.** Run it in child processes over ranges of the
-   source's own stable ids, so each process starts with an empty heap. Reducing the call count, for
+   source's own stable ids, so each process starts with an empty heap. A lower call count, for
    example by skipping the polyfill where geometry alone determines the answer, helps speed but does
    not guarantee correctness. A build that completes only when fragmentation happens to stay low is
    not reproducible, and its artifact cannot be rebuilt on demand.
@@ -176,7 +176,7 @@ coverage row and the layer's manifest identity.
 
 **The marker reports the verdict's own top kind.** By convention, `QueryIntentMarker.kind` is a kind
 the verdict carries. A designation is not raised by query intent, because no address component
-asks for a flood zone, so it has no kind of its own. Reporting the top kind satisfies the interface
+asks for a flood zone, so it has no kind of its own. The interface is satisfied by reporting the top kind
 literally. `declared_ambiguity` set the precedent for a marker raised at resolve time rather than by
 the classifier. This marker goes one step further and has no kind of its own. That choice is
 documented and accepted. The alternative, widening the carrier with an optional-kind marker
@@ -221,7 +221,7 @@ artifact would have been well formed and would have passed every structural chec
 judgment.** A layer whose source publishes no footprint refuses to WRITE a coverage row that would
 support an exclusion, and it refuses to OPEN an artifact that contains one. The constructor calls
 `supportsExclusion` over the distinct bases, and a stronger basis throws an error that explains why.
-This makes the basis auditable. Moving the layer to a stronger basis requires a deliberate edit to
+This makes the basis auditable. A stronger basis requires a deliberate edit to
 a guard whose message states the reason, so the change cannot slip in as an unnoticed coverage row.
 
 **The footprint question is recorded where a reader will look for it, and it depends on the
@@ -229,9 +229,9 @@ SOURCE.** For the coastal layer as built, the project has not chosen a mapped-fo
 the basis is `source_present`. Two unverified candidates exist. The first is the Environment Agency's
 Shoreline Management Plan Mapping record: NCERM's own lineage says it is derived from the Shoreline
 Management Plans, and every erosion feature carries `smp_no`, `smp_name` and `smp_pu`. The second
-is the frontage geometry behind `frontageid`, which may not be published. Moving the layer from
+is the frontage geometry behind `frontageid`, which may not be published. A change from
 `source_present` to `designated` requires a published statement of the area the authority MAPPED,
-plus its geometry. Deriving the footprint from the union of the hazard polygons is forbidden, for
+plus its geometry. The code forbids a footprint derived from the union of the hazard polygons, for
 the same reason the flood layer forbids it. The union of "at risk" areas differs from the mapped
 area, and that difference is exactly what a negative answer reports.
 
@@ -318,7 +318,7 @@ built by `mw gazetteer build poi-coverage`.
 never "surveyed and found empty." `readLayerCoverage` returns `undefined` for an unsurveyed cell,
 and callers must not treat that as `{ completeness: 0 }`. A missing row is never evidence by
 itself. For this reason, the table is **required by the interface from the start**, even for
-layers that happen to be complete today. Adding coverage information to sealed artifacts later
+layers that happen to be complete today. A later addition of coverage information to sealed artifacts
 would mean rebuilding every one of them. See [the meaning of zero](./the-meaning-of-zero.mdx) for
 the general principle: a value never records its own absence, so store presence separately from
 the value.
@@ -362,7 +362,7 @@ import {
 Validation deliberately runs at **both** ends, so a hand-built or corrupted layer fails when it is
 opened instead of three joins downstream.
 
-## Authoring checklist
+## Checklist for authors
 
 A new layer must meet these interface requirements, in order:
 

@@ -25,8 +25,10 @@ const LADDER_SCHEMA = z.object({
 })
 
 /**
- * Builds the `mwdev_minimal_pairs` tool, which runs caller-written ladders of near-identical
- * inputs through one engine and reports the first rung whose output changes.
+ * Builds the `mwdev_minimal_pairs` tool.
+ *
+ * It runs caller-written ladders of near-identical inputs through one engine
+ * and reports the first rung whose output changes.
  */
 export const minimalPairsTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_minimal_pairs",

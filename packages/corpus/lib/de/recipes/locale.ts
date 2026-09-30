@@ -9,14 +9,14 @@
  * Generate mode builds a tuple pool from the cached zips, then draws `--count` rows with the passed
  * `random`.
  *
- * Mixing the two renderings keeps native-only recipe output from over-teaching German order.
+ * The combined renderings keep native-only recipe output from over-teaching German order.
  * Over-teaching German order appears as a collapse on the US/feed-order eval.
  *
- * Two registers the OA tuples do not carry. A comma-free single line (`Neusser Str. 12 Nippes 50733
+ * Two registers are absent from the OA tuples. A comma-free single line (`Neusser Str. 12 Nippes 50733
  * Köln`) segments as one unit at stage 2. With one segment, the placetype-pair prior never fires.
  * The model then reads `Nippes` as a second street. The one-value-per-tag projection deletes it.
  * `--comma-free-fraction` renders that many native-order rows with `" "` as the line separator. OA
- * rows also carry no district, so `--ortsteil-fraction` rows borrow a WOF Ortsteil of the tuple's
+ * rows also lack a district, so `--ortsteil-fraction` rows borrow a WOF Ortsteil of the tuple's
  * own locality as `dependent_locality`. The German spelling is recovered from the `names` table
  * ({@link ortsteilSurface}) because WOF's `spr.name` for DE neighbourhoods is the ascii-folded label.
  */
@@ -100,14 +100,14 @@ function sameGermanLabel(left: string, right: string): boolean {
  * The surface an Ortsteil is written with in an address, from WOF's rows for it.
  *
  * `spr.name` for a DE neighbourhood is the ascii-folded label.
- * The `names` rows in `deu` carry the German spelling beside unrelated labels for co-located
+ * The `names` rows in `deu` contain the German spelling beside unrelated labels for co-located
  * features (`Bocklemuend` → `Bocklemünd`, `Jüdischer Friedhof Bocklemünd`, `Menara-Garten`).
  *
  * The German name is the one that spells the same label as `spr.name` under either of
  * WOF's ascii folds ({@link foldGerman}); with none, `spr.name` stands.
  *
- * WOF also prefixes some Ortsteile with their city (`Köln-Nippes`), a form no envelope carries once
- * the city is its own line, so a leading `<locality>-` is dropped when something is left after it.
+ * WOF also prefixes some Ortsteile with their city (`Köln-Nippes`), a form absent from the envelope
+ * once the city is its own line, so a leading `<locality>-` is dropped when something is left after it.
  */
 export function ortsteilSurface(sprName: string, deuNames: readonly string[], locality: string): string {
 	const german = deuNames.find((name) => sameGermanLabel(name, sprName)) ?? sprName
@@ -123,7 +123,8 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
  * locality name → Ortsteil surfaces.
  *
  * Empty when the admin database is not readable.
- * The recipe then emits no Ortsteil rows and says so, rather than failing a build over an optional register.
+ * The recipe then emits no Ortsteil rows and reports that result, rather than
+ * failing a build over an optional register.
  */
 async function readOrtsteilPool(adminDB: PathBuilderLike): Promise<Map<string, string[]>> {
 	const pool = new Map<string, string[]>()
@@ -285,7 +286,7 @@ export const germanRecipe: CorpusRecipe = {
 			// (the US/feed layout), the rest in idiomatic German order.
 			// Same components either way.
 			const order = random() < intlFraction ? "international" : "native"
-			// OA does not carry these two registers.
+			// OA does not provide these two registers.
 			// Draw each independently of the order so every combination occurs: an Ortsteil
 			// borrowed from the tuple's own locality or a native line with no commas.
 			const localOrtsteile = ortsteile.get(drawn.locality.toLowerCase())
@@ -306,7 +307,7 @@ export const germanRecipe: CorpusRecipe = {
 			}
 
 			// --golden: emit per-locale-f1 eval rows ({raw, components}) instead of aligned BIO.
-			// `order` rides along so the eval can stratify native vs international.
+			// `order` accompanies each row so the eval can stratify native vs international.
 			if (opts.golden) {
 				write(stringifyJSON({ raw: synth.raw, components: synth.components, country: "DE", order }))
 

@@ -43,7 +43,7 @@ const NEAR_ME_CONFIDENCE = 0.91
 /**
  * Word ceiling for a single bare toponym: four covers the long tail that exists as one
  * place name ("Newcastle upon Tyne", "Sault Sainte Marie", "Las Palmas de Gran Canaria"),
- * and past it the input carries more than a name.
+ * and past it the input contains more than a name.
  */
 const MAX_BARE_TOPONYM_WORDS = 4
 
@@ -172,14 +172,14 @@ const TOPONYM_TAIL_NOUNS: ReadonlySet<string> = new Set([
  * Linear by construction: every alternative begins with a required literal and the only
  * quantifiers are bounded `\s+` runs between two required literals or trailing before `$`,
  * with no unbounded-whitespace-then-literal prefix (the `js/polynomial-redos` shape).
- * `ANCHOR_SEPARATOR` in `poi.ts` carries the same analysis.
+ * `ANCHOR_SEPARATOR` in `poi.ts` uses the same analysis.
  */
 const DEICTIC_LOCATOR_TAIL =
 	/\b(?:near|close\s+to|next\s+to|around|by|closest\s+to|nearest\s+to)\s+(?:me|us|here|my\s+(?:location|position|area|place|house|home))\s*$/
 
 /**
  * The adverbial half of the same class, where the deixis is baked into the word
- * rather than carried by a preposition.
+ * rather than introduced by a preposition.
  */
 const DEICTIC_ADVERB_TAIL =
 	/\b(?:nearby|near\s?by|close\s+by|around\s+here|in\s+my\s+(?:area|neighborhood|neighbourhood))\s*$/
@@ -242,7 +242,7 @@ export function scoreBareToponym(input: NormalizedInputLite, shape: QueryShapeLi
  * The known confound is structural and unfixable here.
  * "Paris London" and "Moscow Idaho" have the same string shape.
  *
- * Separating them needs gazetteer knowledge that Idaho is a region.
+ * A classifier needs gazetteer knowledge that Idaho is a region to distinguish them.
  * ROAD_TO_V9 §4.3 therefore specifies classification plus a declared fork.
  *
  * Both readings appear in the marker, neither wins and the resolver keeps its existing answer.

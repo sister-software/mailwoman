@@ -19,7 +19,7 @@ import { useMapBearing } from "@mailwoman/react/map/useMapBearing"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"
 
-import { BODY_CONFIGS } from "#bodies/index"
+import { BODY_CONFIGS } from "#bodies"
 import { assertHostMatchesBody, currentBody } from "#body"
 import type { SelectedFeature } from "#features/selected"
 import { PlanetaryMap } from "#map/PlanetaryMap"
@@ -27,7 +27,7 @@ import { Attribution } from "#panels/Attribution"
 import { BodyAbout } from "#panels/BodyAbout"
 import { FeaturePanel } from "#panels/FeaturePanel"
 import { pathForRoute, type PlanetaryRoute, routeForPath } from "#routes"
-import type { SearchHit } from "#search/index"
+import type { SearchHit } from "#search"
 import { SearchBox } from "#search/SearchBox"
 import { useSearchIndex } from "#search/useSearchIndex"
 
@@ -52,7 +52,7 @@ function WrongBody({ message }: { message: string }) {
 }
 
 /**
- * A search hit as a selection; `diameterKm` rides along because the camera frames by it.
+ * A search hit as a selection; `diameterKm` accompanies it because the camera frames by it.
  */
 function featureFromHit(hit: SearchHit): SelectedFeature {
 	return {
@@ -71,7 +71,7 @@ export function App() {
 	const config = BODY_CONFIGS[body]
 
 	const [route, setRoute] = useState<PlanetaryRoute | null>(() => routeForPath(location.pathname))
-	// The feature most recently picked: a click carries the archive's whole record.
+	// The feature most recently picked: a click selects the archive's whole record.
 	// The artifact lacks that record, so it is kept beside the route rather than re-read.
 	const [picked, setPicked] = useState<SelectedFeature | null>(null)
 	const search = useSearchIndex(config.artifacts.searchIndexURL)

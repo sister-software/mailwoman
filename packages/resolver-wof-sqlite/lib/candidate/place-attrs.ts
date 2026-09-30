@@ -35,8 +35,8 @@ export interface PlaceAttrs {
 	/**
 	 * The place's toponym-fame score, or null when the score source has no measurement for it.
 	 *
-	 * A property of the place, so it rides {@link StageRow} onto the alias and abbrev rows too.
-	 * That is how a bare `Moscow` reaches Москва's score through the alias row that carries the key.
+	 * A property of the place, so it appears on {@link StageRow} and on alias and abbrev rows too.
+	 * That is how a bare `Moscow` reaches Москва's score through the alias row that includes the key.
 	 */
 	imp: number | null
 }

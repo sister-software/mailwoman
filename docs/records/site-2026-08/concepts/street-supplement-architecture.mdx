@@ -85,12 +85,12 @@ Proposed: `street → intersection → [intersection_a, intersection_b]`, mirror
 
 **The design consult initially called this change zero-risk. Verification showed two problems:**
 
-1. **BIO dimension coupling.** `ComponentTag` is the BIO label space. Adding `intersection` extends `BIO_LABELS` from 33 to 35 entries, which no longer matches the v0.6.0/v0.6.1 weight output dimension. Tail-append avoids this part of the problem, using the same method as `STAGE1_BIO_LABELS` → `STAGE2_BIO_LABELS`. Existing 33-dim weights still align by index with the first 33 labels, and the new B-intersection/I-intersection labels at the tail are never the argmax.
-2. **Rewiring PARENT_OF breaks current behavior, even with tail-append.** If `intersection_a/b` no longer have `street`/`locality` as parents, and the model cannot emit `intersection` proposals because it has no training labels for them, then `intersection_a/b` fall through to root. The existing containment encodes parsing behavior that the rewrite would lose.
+1. **BIO dimension coupling.** `ComponentTag` is the BIO label space. An `intersection` tag extends `BIO_LABELS` from 33 to 35 entries, which no longer matches the v0.6.0/v0.6.1 weight output dimension. Tail-append avoids this part of the problem, using the same method as `STAGE1_BIO_LABELS` → `STAGE2_BIO_LABELS`. All 33-dim weights still align by index with the first 33 labels, and the new B-intersection/I-intersection labels at the tail are never the argmax.
+2. **A PARENT_OF rewrite breaks current behavior, even with tail-append.** If `intersection_a/b` no longer have `street`/`locality` as parents, and the model cannot emit `intersection` proposals because it has no training labels for them, then `intersection_a/b` fall through to root. The existing containment encodes parsing behavior that the rewrite would lose.
 
 The decision is to defer the intersection restructure to v0.7+, when the new tag can be added to the training corpus, the golden set, and a retrained model bundle. Until then, the current flat `intersection_a/b → street` containment stays. It is a known limitation, and keeping it causes no regression.
 
-Schema changes that look like one line in PARENT_OF also affect the model output dimension and the labeled corpus. Writing the architecture doc first, then the code, then verifying caught this issue before any code landed.
+One-line schema changes in PARENT_OF also affect the model output dimension and the labeled corpus. The architecture doc exposed this issue before code landed; implementation and verification followed.
 
 ### Private mailbox folds into unit
 
@@ -98,7 +98,7 @@ Schema changes that look like one line in PARENT_OF also affect the model output
 
 ### Dependent street is a real gap
 
-The current schema cannot express `6 Elm Avenue, Runcorn Road, Birmingham`, which uses the Royal Mail dependent-street format. Adding `dependent_street` is v0.7+ scope and is blocked on the availability of a UK PAF corpus. Containment: `street → dependent_street` (a street contains an optional dependent street).
+The current schema cannot express `6 Elm Avenue, Runcorn Road, Birmingham`, which uses the Royal Mail dependent-street format. The `dependent_street` tag is v0.7+ scope and depends on an available UK PAF corpus. Containment: `street → dependent_street` (a street contains an optional dependent street).
 
 ### Venue + po_box stay as siblings
 
@@ -161,7 +161,7 @@ Country-level granularity is the right v0.7 scope. Variation within a country (U
 1. **Pass 1.** For each token that matches an affix entry, bias toward `B/I-street_prefix` if the locale puts the affix before the name, or `B/I-street_suffix` if the locale puts it after.
 2. **Pass 2.** For each matched affix span, find the adjacent name token: the preceding token for a suffix, the following token for a prefix. Bias that token toward `B/I-street` and **away from** `B/I-dependent_locality`. The negative bias is the most important part, because it fills the missing street signal identified in the v0.6.1 failure analysis.
 
-**Wiring:** Add `fstStreetMorphology?: FSTMatcherLike` to `ParseOpts` in `neural/classifier.ts`. Apply it with `addEmissionMatrix` after the existing admin FST bias, using the same 3.0-logit cap.
+**Classifier wiring:** `neural/classifier.ts` adds `fstStreetMorphology?: FSTMatcherLike` to `ParseOpts`. The classifier applies it with `addEmissionMatrix` after the existing admin FST bias, using the same 3.0-logit cap.
 
 **Locale handling:** Build one combined FST for all locales. The morphology data is small enough (60 locales × ~30 affix lines × ~5 variants = ~9K entries) that per-locale extract routing is unnecessary. The `PlaceEntry` payload encodes the position (prefix vs suffix), so it is not derived per entry at query time.
 
@@ -191,7 +191,7 @@ Country-level granularity is the right v0.7 scope. Variation within a country (U
 
 **Inference:** Layer 2 reuses Layer 1's `fstStreetMorphology` integration point, with the same `addEmissionMatrix` call and a different binary. Layer 2 replaces Layer 1 for streets the FST knows. Layer 1 stays active for new street names whose suffixes the FST does not cover.
 
-**Scoping:** Extracts are routed per metro. The NYC POC validates the approach, and metro expansion waits on its results.
+**Scope:** The system routes extracts per metro. The NYC POC validates the approach, and metro expansion waits on its results.
 
 **Status:** v0.7+. The work spans several shifts: OSM extraction, dedup, parent-chain assignment, and metro packaging.
 
@@ -224,14 +224,14 @@ See [`docs/records/site-2026-08/understanding/exotic-poi/franchise-queries.mdx`]
 
 **Module:** `neural/confidence-penalty.ts` is a pure function `(span, rawText) → penalty`. It penalizes these patterns:
 
-- Missing comma between city/state
+- Comma omitted between city and state
 - Inconsistent casing within a span
 - Ambiguous abbreviations (`CA` for California vs `ca.` for "circa")
 - Mixed scripts within a span
 
 The penalty applies only to span-level confidence scores. It leaves the emission and transition layers and the model's logits unchanged, so it affects calibration without changing classification.
 
-## Sequencing
+## Sequence
 
 | Phase            | Layers                                                            | Time horizon          |
 | ---------------- | ----------------------------------------------------------------- | --------------------- |

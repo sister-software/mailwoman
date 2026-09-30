@@ -13,13 +13,13 @@
  *
  *   ## `!3d`/`!4d` is the pin. `@lat,lng` is not.
  *
- *   A resolved link carries two coordinate pairs and they are different quantities:
+ *   A resolved link contains two coordinate pairs. Each pair represents a different quantity:
  *
  *       .../place/Donkey's+Place/@39.9942189,-74.792132,1062m/data=...!3d39.9933298!4d-74.7902421
  *                                ^^^^^^^^^^^^^^^^^^^^^^^ map viewport centre     ^^^^^^^^^^^^^^^^ the place PIN
  *
- *   The `@` pair marks the camera location. It can be offset from the pin by the view framing and carries a zoom
- *   suffix. Using it instead of `!3d`/`!4d` can lose tens to hundreds of metres of accuracy.
+ *   The `@` pair marks the camera location. It can be offset from the pin by the view framing and includes a zoom
+ *   suffix. This parameter instead of `!3d`/`!4d` can lose tens to hundreds of metres of accuracy.
  *   That distance can consume a rooftop case's full tolerance budget. The resolver uses the viewport only as a
  *   labelled fallback. A fallback row records that source explicitly.
  *
@@ -35,8 +35,10 @@ import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@m
  *
  * This reads a public redirect on somebody else's service for the sake of authoring OUR
  * test data, so the interval is deliberately unhurried rather than tuned.
- * `requestsPerMinute` alone does not hold a rate — its cooldown subtracts the elapsed gap,
- * so N alone dispatches N requests every 60/N seconds — which is why the interval is set directly.
+ * `requestsPerMinute` does not determine the dispatch rate because its cooldown subtracts the elapsed gap.
+ *
+ * Without that adjustment, N requests dispatched every 60/N seconds would exceed the configured rate.
+ * The interval therefore sets the actual spacing directly.
  */
 export const MAP_LINK_MIN_INTERVAL_MS = 1200
 
@@ -69,15 +71,15 @@ export interface MapLinkResolution {
 	/**
 	 * `place-pin` is the coordinate to pin.
 	 *
-	 * `viewport-centre` means the link carried no `!3d`/`!4d` pair and this is the camera
-	 * position — usable for a coarse case, never for a rooftop tolerance.
+	 * `viewport-centre` means the URL has no `!3d`/`!4d` pair and this is the camera position —
+	 * usable for a coarse case, never for a rooftop tolerance.
 	 */
 	source?: MapLinkCoordinateSource
 	/**
-	 * The place name Google put in the URL path, when it carried one.
+	 * The place name Google put in the URL path, when one is present.
 	 *
 	 * Useful for catching a link that resolves to a different place than the caller
-	 * believed — the failure a coordinate alone cannot show.
+	 * believed — the failure a coordinate cannot reveal.
 	 */
 	name?: string
 	/**
@@ -104,7 +106,7 @@ const NAME_PATTERN = /\/place\/([^/@]+)/
  * Parse an expanded Google Maps URL.
  *
  * Exported separately from the fetch so tests can exercise parsing without a network.
- * Parsing is the part of this module that carries the defects.
+ * The parser accounts for the defects in this module.
  */
 export function parseMapURL(url: string, expandedURL: string): MapLinkResolution {
 	const name = NAME_PATTERN.exec(expandedURL)?.[1]
@@ -194,7 +196,7 @@ export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}
 		async resolve(url: string): Promise<MapLinkResolution> {
 			try {
 				// `maxRedirects: 0` — the location header is the answer.
-				// Following the redirect fetches a page we do not want and would have to parse instead.
+				// A redirect fetches a page we do not want and would have to parse instead.
 				const response = await client.fetch({
 					url,
 					method: "GET",

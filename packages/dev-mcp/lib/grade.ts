@@ -13,9 +13,9 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
-import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
-import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
+import type { SeedCase } from "mailwoman/tools/eval-harness/gauntlet/cases/seed-case"
+import type { GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
+import type { GauntletCaseTable } from "mailwoman/tools/eval-harness/gauntlet/schema"
 
 /**
  * The z at which a two-sided 95% test rejects.
@@ -77,8 +77,8 @@ export type RowGrade = "improved" | "regressed" | "neutral" | "ungradeable"
 /**
  * `checkCase` returns the list of issues, so fewer is better.
  *
- * Comparing counts rather than text is deliberate, because an arm that trades one
- * wrong component for a different wrong one has not improved.
+ * Count comparison is deliberate because an arm that trades one wrong component
+ * for a different wrong one has not improved.
  */
 export function gradeRow(
 	seed: SeedCase | undefined,

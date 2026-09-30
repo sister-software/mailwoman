@@ -35,7 +35,7 @@ FISHER_SIDECAR = "fisher-diag-v1.json"
 
 
 class FisherAccumulator:
-    """Running mean of squared gradients per parameter, fp32, on the parameters' device."""
+    """Track the running mean of squared gradients per parameter in fp32 on the parameter's device."""
 
     def __init__(self, model: torch.nn.Module) -> None:
         self._sums: dict[str, torch.Tensor] = {

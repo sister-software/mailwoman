@@ -8,7 +8,7 @@ BERT 80/10/10 masking over a batch of token ids:
     ``cross_entropy(ignore_index=-100)`` scores only the masked positions.
 
 Mask token: the SentencePiece tokenizer has no dedicated ``[MASK]`` symbol, so callers pass the
-``<unk>`` id. Padding uses id 0 and ``<unk>`` is id 1 — but pad positions carry
+    ``<unk>`` id. The padding token uses id 0 and ``<unk>`` uses id 1 — but pad positions use
 ``attention_mask == 0`` and are never selected, while masked positions keep ``attention_mask == 1``,
 so the encoder distinguishes them via attention. No embedding-table change -> the pretrain
 checkpoint's state_dict stays key-identical to a supervised model's.

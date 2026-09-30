@@ -49,7 +49,7 @@ This mode uses a cosine schedule with `max_steps >= 10000`, so the cosine tail d
 | First time exercising a knob at a new LR                                   | **A — constant-LR**                                     |
 | Tweak on a known-stable baseline (`±20%` source weight, etc.)              | **B — long-tail** if cosine dynamics matter; else **A** |
 | Pre-flight integration check (wiring, dtype, sampler) — not a verdict      | Either; constant-LR is faster                           |
-| Reproducing a known divergence to characterize it                          | **A — constant-LR**                                     |
+| Reproduce a known divergence to characterize it                            | **A — constant-LR**                                     |
 
 When unsure, pick constant-LR. A false positive (a stable recipe flagged at sustained peak LR that would survive cosine decay) costs little, because you promote it to the full run anyway. A false negative (a divergent recipe passes the smoke and wastes a full run) is the cost the v0.4.0 campaign paid.
 
@@ -77,7 +77,7 @@ The flag overrides `cfg.train.lr_schedule`. Full runs continue to use whatever t
 
 Long-tail mode does not change `max_steps`; it asserts the recipe already has it sized correctly and warns when `max_steps < 10000`.
 
-## Reading a smoke result
+## Read a smoke result
 
 A smoke answers **only** whether the recipe survives sustained peak LR for the smoke window. It does not predict full-run F1, the full-run convergence step, or anything else.
 
@@ -132,7 +132,7 @@ crf_norm = flat_grad_norm(model)
 ratio = crf_norm / max(ce_norm, 1e-12)
 ```
 
-**Reading the ratio:**
+**Read the ratio:**
 
 - Ratio &gt;&gt; 1 (v0.5.0 observed 8–20×): The CRF gradient dominates, so the larger loss term drives the updates. Reduce `crf_loss_weight` sharply or drop CRF NLL entirely (CE-only training, with the CRF kept at inference through the frozen mask).
 - Ratio &lt;&lt; 0.01: the CRF gradient has collapsed, and the model has decoupled the two objectives. Use the same repair: CE-only training, or separate optimisers.

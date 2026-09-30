@@ -17,7 +17,7 @@ import { registerNominatimRoutes } from "#routes"
  */
 export interface NominatimAppOptions {
 	/**
-	 * Whether every response carries `Access-Control-Allow-Origin: *` and preflight requests
+	 * Whether every response includes `Access-Control-Allow-Origin: *` and preflight requests
 	 * are answered, defaulting to `true` so browser clients can call cross-origin.
 	 *
 	 * Set it to `false` when a reverse proxy already sets the CORS headers.
@@ -25,8 +25,9 @@ export interface NominatimAppOptions {
 	cors?: boolean
 
 	/**
-	 * The engine stamp added to each JSON result and GeoJSON collection,
-	 * and to the `Server` and `Link: rel="license"` headers.
+	 * The engine stamp is added to each JSON result and GeoJSON collection.
+	 *
+	 * It also appears in the `Server` and `Link: rel="license"` headers.
 	 *
 	 * An embedding application may omit it, but the `nominatim` CLI always passes one.
 	 */

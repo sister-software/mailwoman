@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Samples real address tuples for one country and renders them in native or international order.
- *   It emits aligned rows. Sampling and rendering use separate seeded generators.
+ *   It emits aligned rows. The recipe samples and renders with separate seeded generators.
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
@@ -425,8 +425,8 @@ export const localeRecipe: CorpusRecipe = {
 			throw new Error(`--country-fraction must be in [0, 1], got ${countryFraction}`)
 		}
 
-		// `COUNTRY_SOURCES` keys on the retired spelling, and so does `RECIPE_SOURCES`.
-		// Resolving here decides the vocabulary this recipe writes in one place
+		// `COUNTRY_SOURCES` and `RECIPE_SOURCES` both use the retired spelling as their key.
+		// This lookup decides the vocabulary this recipe writes in one place
 		// rather than in twelve table entries.
 		const source = opts.sourceName ?? defaultRecipeSource(countrySource.source)
 		const count = opts.count ?? 4000
@@ -443,7 +443,7 @@ export const localeRecipe: CorpusRecipe = {
 			const effectivePart = applyDistrictAsLocalityOverride(parts[pi]!, districtAsLocalityOverride)
 			const t = await readTuples(effectivePart, reservoirRng)
 
-			// Spreading an array this large into `push` would overflow the stack.
+			// A spread of an array this large into `push` would overflow the stack.
 			for (const x of t) {
 				pool.push(x)
 			}

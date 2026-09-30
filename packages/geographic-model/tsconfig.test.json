@@ -5,5 +5,5 @@
 	"exclude": ["./out/**/*"],
 	// `../core` is referenced by the TEST project only: the boundary test reads core's manifest, and the
 	// build project deliberately declares no dependency on it in either direction.
-	"references": [{ "path": "./tsconfig.json" }, { "path": "../core" }]
+	"references": [{ "path": "./tsconfig.json" }, { "path": "./tools" }, { "path": "../core" }]
 }

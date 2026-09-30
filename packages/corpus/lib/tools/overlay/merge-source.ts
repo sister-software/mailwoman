@@ -6,7 +6,7 @@
  *
  *   The training sampler can read a whole per-source draw from one row group,
  *   so a source split into per-country files would reach only one country per draw.
- *   Shuffling across the inputs mixes the source's countries within each row group.
+ *   A shuffle across the inputs mixes each source's countries within each row group.
  */
 
 import { mulberry32 } from "@mailwoman/core/utils"
@@ -81,7 +81,7 @@ async function* readAll(inputs: readonly PathBuilderLike[]): AsyncGenerator<Parq
 /**
  * Merges the inputs through a windowed shuffle into one or more parquet files and reports their contents.
  *
- * @throws When the inputs carry more than one `source`, because a manifest
+ * @throws When the inputs contain more than one `source`, because a manifest
  * entry records one source per file.
  * The check runs after the stream ends, so files flushed before it remain on disk.
  */

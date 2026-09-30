@@ -186,7 +186,7 @@ export class StreetInterpolator<
 
 	/**
 	 * The artifact's own conformal radius multiplier, read from the extract at construction;
-	 * `undefined` when the extract predates the table or carries no valid row.
+	 * `undefined` when the extract predates the table or contains no valid row.
 	 */
 	get radiusCalibration(): number | undefined {
 		return this.#radiusCalibration

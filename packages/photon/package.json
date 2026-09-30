@@ -8,25 +8,26 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "packages/photon"
 	},
-	"bin": "./out/cli.js",
+	"bin": "./out/cli/main.js",
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"README.md",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
+		"cli/**/*.ts",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"imports": {
+		"#cli/*": {
+			"types": "./out/cli/*.d.ts",
+			"node": "./cli/*.ts",
+			"default": "./out/cli/*.js"
+		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -35,15 +36,20 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
-		"./projection": {
-			"types": "./out/projection.d.ts",
-			"node": "./lib/projection.ts",
-			"default": "./out/projection.js"
-		},
 		".": {
 			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
+		},
+		"./cli/*": {
+			"types": "./out/cli/*.d.ts",
+			"node": "./cli/*.ts",
+			"default": "./out/cli/*.js"
+		},
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

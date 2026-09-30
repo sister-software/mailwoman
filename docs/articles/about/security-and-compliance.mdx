@@ -15,7 +15,7 @@ you to check it, and links the artifacts a security review asks for.
 
 A parse or a geocode sends no request over the network. Those calls read model weights and gazetteer
 files from local disk and return. No published package contains telemetry, analytics, crash
-reporting, a version check or a usage ping. Installing Mailwoman runs none of our lifecycle scripts:
+reporting, a version check or a usage ping. Mailwoman's install runs no lifecycle scripts:
 `npm install` fetches tarballs and stops.
 
 The network behavior has four boundaries:
@@ -23,15 +23,15 @@ The network behavior has four boundaries:
 - **`RemoteResolver` is opt-in, and you own the endpoint.** It separates parser nodes from a
   gazetteer service inside your own network. It throws unless you construct it with an endpoint URL.
   It is never a default, and we do not operate the service.
-- **Building datasets downloads datasets.** `mailwoman gazetteer build` and related commands fetch
+- **The dataset build commands download datasets.** `mailwoman gazetteer build` and related commands fetch
   from the US Census, Geofabrik, `adresse.data.gouv.fr` and the FCC. You run these commands
   deliberately, at build time, separately from parsing.
-- **Pulling reference data downloads reference data.** `mailwoman data pull` fetches prebuilt
+- **The data pull command downloads reference data.** `mailwoman data pull` fetches prebuilt
   gazetteer, POI and locale bundles from `public.mailwoman.ai`. A HEAD request checks the remote
   size, and then a GET streams the file to disk. The command runs only when you invoke it.
   [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx#5-geocode-it) shows the
   exchange line by line.
-- **The browser runtime downloads its model.** `@mailwoman/neural/web-loader` fetches model and data
+- **The browser runtime downloads its model.** `@mailwoman/neural/web/loader` fetches model and data
   artifacts once, from a URL your application supplies. The query text stays in the page. Our hosted
   [Earth](https://earth.mailwoman.ai/) demo is a deployment of that runtime. It serves those
   artifacts from `public.mailwoman.ai` and calls `tiles.mailwoman.ai` for coarse map centring. The
@@ -66,8 +66,8 @@ repository. Generation is a release-time step that runs on demand instead of in 
 published SBOM can lag behind the newest release. Check the version in the filename before you scan
 it.
 
-Publishing uses npm Trusted Publishing over GitHub OIDC, so there is no long-lived registry token
-that could leak. Packages do not currently carry a sigstore provenance attestation.
+npm Trusted Publishing uses GitHub OIDC and removes the need for a long-lived registry token that
+could leak. Packages do not currently carry a sigstore provenance attestation.
 
 ## Data provenance
 
@@ -93,7 +93,7 @@ Two items on that page matter to a review, and we would rather you heard them fr
   CC0 in the provenance catalog and as CC-BY 4.0 in the resolver package's own notes. Until that is
   settled, attribute Who's On First.
 
-## Reporting a vulnerability
+## Report a vulnerability
 
 Report vulnerabilities privately by email instead of in a public issue. The policy, the scope and
 what to include are in

@@ -1,0 +1,178 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { describe, expect, it } from "vitest"
+
+import { classifyTokens } from "#character-class"
+import { detectKnownFormats, isPostcodeFormat } from "#known-formats"
+import type { KnownFormat } from "#types"
+
+describe("isPostcodeFormat", () => {
+	it("reads the naming convention every known format follows, `us_zip4` included", () => {
+		expect(isPostcodeFormat("us_zip")).toBe(true)
+		expect(isPostcodeFormat("us_zip4")).toBe(true) // the trap a naive endsWith("_zip") misses
+		expect(isPostcodeFormat("uk_postcode")).toBe(true)
+		expect(isPostcodeFormat("gr_postcode")).toBe(true)
+		expect(isPostcodeFormat("po_box")).toBe(false)
+		expect(isPostcodeFormat("nonsense")).toBe(false)
+	})
+
+	it("holds for every format the table can emit", () => {
+		// The convention is what `@mailwoman/core`'s runtime pipeline reads in place of a
+		// copied list, so a format omitted from it would be a postcode here and not there.
+		// Every pattern is exercised through detection.
+		const probes = [
+			"10001",
+			"10001-1234",
+			"M5V 3L9",
+			"M5V3L9",
+			"100-0005",
+			"SW1A 2AA",
+			"SW1A2AA",
+			"1012 LG",
+			"1012LG",
+			"110 00",
+		]
+
+		const seen = new Set<string>()
+
+		for (const probe of probes) {
+			for (const hit of detectKnownFormats(probe, tokenize(probe))) {
+				seen.add(hit.format)
+				expect(isPostcodeFormat(hit.format), hit.format).toBe(true)
+			}
+		}
+
+		expect([...seen].toSorted()).toEqual([
+			"ca_postcode",
+			"cz_postcode",
+			"de_postcode",
+			"fr_postcode",
+			"gr_postcode",
+			"jp_postcode",
+			"nl_postcode",
+			"se_postcode",
+			"sk_postcode",
+			"uk_postcode",
+			"us_zip",
+			"us_zip4",
+		])
+	})
+})
+
+const tokenize = classifyTokens
+
+function formatsOf(text: string): KnownFormat[] {
+	return detectKnownFormats(text, tokenize(text)).map((h) => h.format)
+}
+
+describe("detectKnownFormats — postcodes", () => {
+	it("detects US ZIP+4 unambiguously", () => {
+		expect(formatsOf("10118-1234")).toContain("us_zip4")
+	})
+
+	it("detects CA postcode (no space)", () => {
+		const formats = formatsOf("K1A0B1")
+		expect(formats).toContain("ca_postcode")
+	})
+
+	it("detects CA postcode (with space)", () => {
+		const formats = formatsOf("K1A 0B1")
+		expect(formats).toContain("ca_postcode")
+	})
+
+	it("detects JP postcode", () => {
+		expect(formatsOf("100-0005")).toContain("jp_postcode")
+	})
+
+	it("detects a JP postcode written with its postal mark, which is how Japan writes one", () => {
+		// `〒150-0001 Tokyo, Shibuya` read as carrying no known format while `Tokyo 150-0001` scored
+		// 0.95, so the more explicitly Japanese spelling was the one the detector could not see.
+		// The mark is U+3012 and the tokenizer keeps it attached to the digits.
+		expect(formatsOf("〒150-0001")).toContain("jp_postcode")
+		expect(formatsOf("Japan, 〒150-0001 Tokyo, Shibuya")).toContain("jp_postcode")
+	})
+
+	it("does not admit a postal mark in front of another country's postcode shape", () => {
+		// The optional mark belongs only to the JP pattern.
+		// A five-digit group behind it is not a Japanese postcode.
+		// A five-digit group would route a US or FR address based on a character
+		// that happens to appear in the input.
+		expect(formatsOf("〒10118")).not.toContain("jp_postcode")
+		expect(formatsOf("〒SW1A 1AA")).not.toContain("uk_postcode")
+	})
+
+	it("detects UK postcode (no space)", () => {
+		expect(formatsOf("SW1A1AA")).toContain("uk_postcode")
+	})
+
+	it("detects UK postcode (with space)", () => {
+		expect(formatsOf("SW1A 1AA")).toContain("uk_postcode")
+	})
+
+	it("emits all three of US/FR/DE for ambiguous 5-digit", () => {
+		const formats = formatsOf("10118")
+		expect(formats).toContain("us_zip")
+		expect(formats).toContain("fr_postcode")
+		expect(formats).toContain("de_postcode")
+	})
+
+	it("ambiguous 5-digit confidence is lower than unambiguous", () => {
+		const hits = detectKnownFormats("10118", tokenize("10118"))
+		expect(hits.every((h) => h.confidence < 0.9)).toBe(true)
+	})
+
+	it("unambiguous patterns score ≥ 0.9", () => {
+		const hits = detectKnownFormats("10118-1234", tokenize("10118-1234"))
+		const z4 = hits.find((h) => h.format === "us_zip4")!
+		expect(z4.confidence).toBeGreaterThanOrEqual(0.9)
+	})
+
+	it("no postcode match for short numbers", () => {
+		expect(formatsOf("123")).not.toContain("us_zip")
+		expect(formatsOf("12345-67")).not.toContain("us_zip4")
+	})
+})
+
+describe("detectKnownFormats — PO Box", () => {
+	it("detects 'PO Box 1234'", () => {
+		expect(formatsOf("PO Box 1234")).toContain("po_box")
+	})
+
+	it("detects 'P.O. Box 1234'", () => {
+		expect(formatsOf("P.O. Box 1234")).toContain("po_box")
+	})
+
+	it("detects French 'BP 42'", () => {
+		expect(formatsOf("BP 42")).toContain("po_box")
+	})
+
+	it("does not detect a lone 'box'", () => {
+		expect(formatsOf("box 1234")).toContain("po_box") // 'box' is a valid leader on its own
+		expect(formatsOf("just box")).not.toContain("po_box") // no following number
+	})
+
+	it("does not detect random words", () => {
+		expect(formatsOf("hello world")).not.toContain("po_box")
+	})
+})
+
+describe("detectKnownFormats — span correctness", () => {
+	it("spans cover the matched substring", () => {
+		const text = "350 5th Ave, New York, NY 10118"
+		const hits = detectKnownFormats(text, tokenize(text))
+		const usZip = hits.find((h) => h.format === "us_zip")!
+		expect(usZip).toBeDefined()
+		expect(text.slice(usZip.span.start, usZip.span.end)).toBe("10118")
+	})
+
+	it("two-token spans cover both tokens + the separating space", () => {
+		const text = "SW1A 1AA"
+		const hits = detectKnownFormats(text, tokenize(text))
+		const uk = hits.find((h) => h.format === "uk_postcode")!
+		expect(text.slice(uk.span.start, uk.span.end)).toBe("SW1A 1AA")
+	})
+})

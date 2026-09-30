@@ -21,8 +21,9 @@ export interface BuildInfo {
 	/**
 	 * The same revision, full length.
 	 *
-	 * Kept beside `revision` rather than replacing it: a production smoke already reads `revision`
-	 * and compares it against a short form, and a commit URL wants the whole thing.
+	 * Kept beside `revision` rather than replacing it: a production smoke already
+	 * reads `revision` and compares it against a short form.
+	 * A commit URL needs the whole thing.
 	 */
 	commit: string
 	/**
@@ -38,7 +39,7 @@ export interface BuildInfo {
  * value requested by `@mailwoman/react`'s `<AppIdentity>`.
  * The caller injects that prop because `@mailwoman/react` publishes to npm and this package is private.
  *
- * Passing the record instead made both apps add the same one-line adapter.
+ * The record parameter made both apps add the same one-line adapter.
  */
 export function commitURL(commit: BuildInfo["commit"]): string {
 	return `https://github.com/sister-software/mailwoman/commit/${commit}`

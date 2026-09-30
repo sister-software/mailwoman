@@ -33,7 +33,7 @@ export interface CountryCoverageTable {
 	/**
 	 * The promotion-eval verdict as 0 or 1.
 	 *
-	 * It is stored directly because the rate alone does not decide it.
+	 * It is stored directly because the rate by itself does not decide it.
 	 */
 	hard_filter_safe: number
 	/**

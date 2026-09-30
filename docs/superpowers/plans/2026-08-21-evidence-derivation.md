@@ -14,7 +14,7 @@
 
 - **`erasableSyntaxOnly: true`.** Do not use `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), constructor parameter properties, or runtime namespaces.
 - **Relative imports use explicit `.ts` extensions.** Each workspace tsconfig sets `rewriteRelativeImportExtensions: true`.
-- **`@mailwoman/evidence` has zero runtime dependencies.** It depends on neither `@mailwoman/core` nor `@mailwoman/spatial`. Adding a dependency defeats the reason the workspace exists.
+- **`@mailwoman/evidence` has zero runtime dependencies.** It depends on neither `@mailwoman/core` nor `@mailwoman/spatial`. A dependency would defeat the reason the workspace exists.
 - **Acronym casing:** acronyms are whole camelCase components: `parseJSON`, `readID`, `POILookup`. Write `ID`, never `Id`. `sister-software/no-title-case-acronym` in `yarn lint:oxlint` enforces this.
 - **Do not read `process.env` / `process.argv` directly.** CI enforces this. Use `core/env/schema.ts` + `env-paths`.
 - **Data-root paths go through `@mailwoman/core/utils`** (`dataRootPath`, `dataRootPath`). Never hard-code `$MAILWOMAN_DATA_ROOT`.
@@ -491,7 +491,7 @@ rule into the type system for callers who build a link outside a database."
 **Also in this task:** move `res9ShortCellToRes6Parent` from `packages/bdc/lib/sdk/filing-landscape.ts` to
 `@mailwoman/spatial/h3/cell`, generalized over its two resolutions. It currently closes over
 `BDC_H3_RESOLUTION` / `BDC_COVERAGE_H3_RESOLUTION`, and Task 5 needs the identical derivation inside
-`resolver-wof-sqlite`. Importing it from `@mailwoman/bdc` would reverse the dependency direction. The
+`resolver-wof-sqlite`. An import from `@mailwoman/bdc` would reverse the dependency direction. The
 same share-the-function rule that moves `CoverageBasis` applies. See Steps 10-12.
 
 - [ ] **Step 1: Write the failing test**
@@ -1161,7 +1161,7 @@ export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 ```
 
 `UPRN_EXISTENCE_FOLD` uses the identity fold on purpose. This probe keys on a coordinate rather than a name, so
-no string folding can disagree. Passing the same identity as both `probeFold` and `layerFold` records that the
+no string folding can disagree. The same identity in both `probeFold` and `layerFold` records that the
 fold axis does not apply here, rather than silently omitting the check. Say so in the comment, or a future
 reader will take it for a stub.
 

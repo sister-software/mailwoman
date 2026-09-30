@@ -9,7 +9,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { exactMatchIDs, officialNameIDs } from "#exact-match"
-import { foldQueryText } from "#fts/index"
+import { foldQueryText } from "#fts"
 import { populationBoostTerm, type RankingWeights } from "#ranking-weights"
 import type { RawSearchRow } from "#search-fetch"
 import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "#types"
@@ -54,7 +54,7 @@ export function candidateFromSearchRow(
 	const extraLen = Math.max(0, row.name.length - queryLen - 3)
 	score -= (weights.lengthPenaltyWeight * extraLen) / 10
 
-	// Proximity boost applies only when the query carries `near` and the candidate has real coordinates.
+	// Proximity boost applies only when the query includes `near` and the candidate has real coordinates.
 	// The decay is tunable via proximityBoost + proximityScaleKm.
 	let distanceKm: number | undefined
 	// The best decayed-distance term over `near` and every `bias` point wins, each scaled by its weight.
@@ -119,7 +119,7 @@ export function candidateFromSearchRow(
 		candidate.referential = referentialFromPopulation(row.population)
 	}
 
-	// Carried for consumers (annotations / API surfaces); no ranking site reads it.
+	// Returned for consumers (annotations / API surfaces); no ranking site reads it.
 	if (row.encyclopedic !== null) {
 		candidate.encyclopedic = row.encyclopedic
 	}

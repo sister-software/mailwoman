@@ -9,7 +9,7 @@
  *   repo-root `vitest.config.ts` sweep (that run excludes `react/**` test files), so this is the only
  *   entry that executes them.
  *
- *   WebGL via SwiftShader: `<MapCanvas>` (react-map-gl/maplibre) needs a WebGL context, which headless
+ *   WebGL via SwiftShader: `<MapCanvas>` (react-map-gl/maplibre) needs a WebGL context. Headless
  *   Chromium lacks by default. The `--use-gl=angle --use-angle=swiftshader` flags (plus
  *   `--enable-unsafe-swiftshader`, required since Chromium began restricting software WebGL behind it) route
  *   GL through the bundled SwiftShader software rasterizer so the map mounts a real canvas offscreen.
@@ -27,7 +27,7 @@ export default defineConfig({
 		include: ["**/*.test.ts", "**/*.test.tsx"],
 		// Pure `*.node.test.ts` run under bare node via `vitest.node.config.ts`
 		// (see `test:node`), not in the browser.
-		// They prove the geometry/render-spec modules carry no DOM/webgl/react-map-gl dependency.
+		// They prove the geometry/render-spec modules have no DOM/webgl/react-map-gl dependency.
 		exclude: [...configDefaults.exclude, "**/*.node.test.ts"],
 		setupFiles: ["./test/setup.ts"],
 		browser: {

@@ -1,8 +1,8 @@
 """Every subcommand has a module in the registry and declares its own flags.
 
 `cli.py` held eight command bodies and their private helpers. Its 145-line `build_parser` declared
-all eight commands' flags in one function. Adding a command meant editing that shared function.
-Reading a command meant finding its flags a hundred lines from its body.
+all eight commands' flags in one function. A new command required an edit to that shared function.
+A reader had to search a hundred lines from a command body to find its flags.
 
 A command is now a module exporting `NAME`, `add_parser`, plus `run`. `COMMANDS` is the registry.
 `build_parser` loops over it. These tests read the registry rather than argparse's private attributes.

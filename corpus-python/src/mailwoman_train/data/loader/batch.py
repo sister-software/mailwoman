@@ -1,6 +1,6 @@
-"""Stacking encoded examples into the batch the trainer feeds the model.
+"""Stack encoded examples into the batch the trainer feeds the model.
 
-A channel is present in the batch only when the examples carry it, decided from the first example
+A channel is present in the batch only when the examples include it, decided from the first example
 because every example in a run comes from one config. An absent channel is omitted rather than
 zero-filled, so the trainer's tensor conversion skips it and the model runs without it.
 """
@@ -25,7 +25,7 @@ def collate(batch: list[EncodedExample]) -> dict[str, Any]:
         "labels": [ex.labels for ex in batch],
         "locale_ids": [ex.locale_id for ex in batch],
     }
-    # Postcode-anchor channel (#239/#240): only present when every example carries anchor features
+    # Postcode-anchor channel (#239/#240): only present when every example includes anchor features
     # (i.e. an anchor lookup is configured). Absent → omitted, so the trainer's tensor-conversion
     # skips it and the model runs anchor-free (back-compat).
     if batch and batch[0].anchor_features is not None:

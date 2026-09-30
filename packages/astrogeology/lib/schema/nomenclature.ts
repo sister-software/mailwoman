@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   One nomenclature feature as every artifact carries it: east-positive longitude in −180..180, latitude in −90..90,
+ *   One nomenclature feature as represented in every artifact: east-positive longitude in −180..180, latitude in −90..90,
  *   the stable id from the source's feature link. The schema is the interface between the build and the app. a value
  *   outside it never leaves the build.
  */
@@ -12,7 +12,7 @@ import { blankAsAbsent } from "@mailwoman/core/env/utils"
 import { z } from "zod"
 
 /**
- * The feature record every artifact carries.
+ * The feature record in every artifact.
  *
  * The optional strings take the shapefile's `""` as absence.
  * The coordinates are the normalized ones (east-positive, −180..180), never the source's 0..360.

@@ -52,7 +52,7 @@ export interface ModelGraphRecord {
 	format: "ONNX"
 	outputs: ModelGraphOutput[]
 	/**
-	 * Whether any output's element type and shape could carry emitted text.
+	 * Whether any output's element type and shape could encode emitted text.
 	 *
 	 * False for a graph whose outputs are fixed-width logit tensors.
 	 * A reader uses it to answer "can running this model return source text", and no stronger question.
@@ -70,7 +70,7 @@ export interface ModelGraphRecord {
  * Element types a text-emitting output would use.
  *
  * A graph that emitted tokens would return integer token ids or strings.
- * A float logit tensor over a fixed label count cannot carry them.
+ * A float logit tensor over a fixed label count cannot encode them.
  * That type and shape distinction makes the check mechanical.
  */
 const TEXT_CAPABLE_TYPES: ReadonlySet<string> = new Set(["string", "int32", "int64", "uint8"])

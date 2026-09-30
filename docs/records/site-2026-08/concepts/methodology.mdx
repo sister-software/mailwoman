@@ -65,11 +65,10 @@ The failure mode of self-administered rigor is the goalpost that moves between r
 baseline, the softened threshold, the deleted test. Three structural rules close it:
 
 - **Baselines are pinned artifacts.** A baseline is recorded with its checksum and the verbatim
-  command that produced it, at creation time. Comparing against a re-derived baseline under a
+  command that produced it, at creation time. A comparison against a re-derived baseline under a
   different tokenizer or model label is a category error, and the harness refuses it.
 - **Expected failures are tracked rather than hidden.** A known-bad case is an `xfail` with an issue
-  reference — it stays visible in every run's output. Deleting a failing case and tracking it
-  are different acts, and the diff shows which one happened.
+  reference — it stays visible in every run's output. The diff shows whether a failing case was deleted or tracked.
 - **The regression suite is an executable bug log.** Every bug ever fixed remains a permanent,
   named test with its coordinates and tolerances. A fixed bug that un-fixes fails the check —
   loudly, before release, as one did the night before v5.6.0 shipped, when a data rebuild
@@ -92,7 +91,7 @@ hypotheses outnumbered the shipped features, and those were good weeks.
 
 ## Openness as the enforcement mechanism
 
-Keeping research open while keeping it rigorous is typically framed as a tension. We've found
+Open research and rigorous research are typically framed as conflicting goals. We've found
 the opposite: **the public record is the rigor.** A published baseline can't be replaced
 without a visible diff, and neither can an xfail. A falsification posted with its mechanism
 stays findable when the retry gets tempting. Every claim in the docs traces to an eval whose

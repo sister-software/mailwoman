@@ -130,7 +130,7 @@ This is adjacent to #2266, whose failures are all cross-country: `WA Sammamish` 
 and `Fort Worth` answering Fořt in Czechia (8,666 km) are the shape a bbox guard exists to refuse. For a Japanese
 or Chinese answer there is no box to check against.
 
-Adding four boxes is a small data change and a real behaviour change. The guard would begin firing where it
+Four additional boxes are a small data change and a real behaviour change. The guard would begin firing where it
 never has — so it needs the board rather than a commit.
 
 ## Where the country tables' center of gravity still is
@@ -159,7 +159,7 @@ a measured state rather than a gap.
 ## Script cannot carry the CJK distinction, except for Korean
 
 `classifyCodepoint` folds Hiragana, Katakana, Han, Hangul, Yi and the halfwidth forms into one `cjk` class, and
-`scoreByScript` answers `ja-JP` at 0.8 for all of them. Counting ISO 15924 blocks over the per-country sets the
+`scoreByScript` answers `ja-JP` at 0.8 for all of them. The ISO 15924 block count over the per-country sets
 repository holds:
 
 | Source                                            | CJK-containing rows | Kana decides Japanese | Hangul decides Korean |       Han-only |

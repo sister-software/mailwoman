@@ -42,7 +42,7 @@ training pipeline (`corpus-python/`).
 | **`build.ts`**              | Drive the end-to-end build, write `labeled.jsonl` + `quarantine.jsonl` |
 | **`runner.ts`**             | Run one adapter or all of them, and emit the run manifest              |
 | **`synthesizers/*.ts`**     | Synthetic row generators (boundary stress, order variants, etc.)       |
-| **`recipes/index.ts`**      | The synthetic-corpus recipe registry (`CorpusRecipe` by name)          |
+| **`recipes/index.ts`**      | The recipe registry (`CorpusRecipe` by name)                           |
 | **`tools/fetch/index.ts`**  | The acquisition registry — one entry per external source               |
 | **`tools/corpus-stats.ts`** | Per-source and per-tag statistics                                      |
 
@@ -100,7 +100,7 @@ registered-office grammar.
 The field is required on `CorpusAdapter` and carries no default, because the answer is a property of
 the source that only the adapter's author has read. Ten of the 23 adapters here emit a non-premise
 role: four facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
-`usgov-samhsa-treatment-locator`), three mailing (`synth-po-box`, `state-tx-notaries`,
+`usgov-samhsa-treatment-locator`), three mailing (`invented-po-box`, `state-tx-notaries`,
 `usgov-irs-bmf`), two practice (`usgov-nppes`, `state-ny-notaries`) and one registered-office
 (`state-ia-contractors`). A defaulted field would record premise for all ten.
 
@@ -133,11 +133,11 @@ provenance vocabulary. A layer database already embeds `layer_manifest` (`source
 
 `data/address-source-register.json`, read through `@mailwoman/corpus/source-register`, records which
 jurisdictions exist, what research has resolved for each, and what is known about every source's
-terms. It is a backlog made checkable: **no row in it is ingest-eligible today**, and
-`ingestEligibilityProblems()` answers with the reasons rather than a bare `false`.
+terms. It is a backlog made checkable: **eleven rows of 399 are ingest-eligible today**, and
+`ingestEligibilityProblems()` answers for the other 388 with the reasons rather than a bare `false`.
 
 Two tables. The jurisdiction table enumerates all 250 — every ISO 3166-1 alpha-2 code plus the
-operational `XK` — whether or not anybody found a source; the source table holds 389 rows across 240
+operational `XK` — whether or not anybody found a source; the source table holds 399 rows across 240
 of them. A jurisdiction with no sources states `researchState` and a `stateReason`, so "nobody has
 looked yet" is written down rather than inferred from an empty list.
 
@@ -173,7 +173,7 @@ stops and nobody checked the national portal behind it.
 - [`@mailwoman/neural`](../neural) — the runtime that loads and runs the trained model
 - [`@mailwoman/neural-weights-en-us`](../neural-weights-en-us) — the trained model itself
 - [Corpus Construction concepts](https://mailwoman.ai/articles/concepts/corpus-construction/)
-- [Training Pipeline concepts](https://mailwoman.ai/articles/concepts/training-pipeline/)
+- [Concepts for the training pipeline](https://mailwoman.ai/articles/concepts/training-pipeline/)
 - [CONTRIBUTING_MODEL_WORK](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx)
 
 ## License

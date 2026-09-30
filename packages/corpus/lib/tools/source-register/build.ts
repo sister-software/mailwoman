@@ -34,7 +34,7 @@ import {
 	type RefusedLicense,
 	type RegisterSector,
 	type UncheckedLicense,
-} from "#source-register/index"
+} from "#source-register"
 import { AddressRole } from "#types"
 
 /**
@@ -67,8 +67,9 @@ const RESEARCH_STATE_BY_NAME: Readonly<Record<string, JurisdictionResearchState>
 }
 
 /**
- * Every `AddressRole` by its wire value, derived from the enum so a role added to `AddressRole` is
- * readable here without a second edit and a value the CSV carries that is not a role fails the build.
+ * Every `AddressRole` by its wire value, derived from the enum so a role added to
+ * `AddressRole` is readable here without a second edit.
+ * A CSV value outside this role set fails the build.
  */
 const ADDRESS_ROLE_BY_NAME: Readonly<Record<string, AddressRole>> = Object.fromEntries(
 	Object.values(AddressRole).map((role) => [role, role])
@@ -84,6 +85,7 @@ const SOURCE_STATUS_BY_NAME: Readonly<Record<string, SourceStatus>> = {
 const RESEARCH_PASS_BY_ORIGIN: Readonly<Record<string, ResearchPass>> = {
 	"2026-09-18_web_research": ResearchPass.WebResearch,
 	original_memo: ResearchPass.OriginalMemo,
+	"2026-09-30_rights_review": ResearchPass.RightsReview,
 }
 
 const GEOMETRY_BY_NAME: Readonly<Record<string, SourceGeometry>> = {
@@ -97,7 +99,7 @@ const GEOMETRY_BY_NAME: Readonly<Record<string, SourceGeometry>> = {
 /**
  * The research pass writes a source's propositions as one string.
  *
- * The table is closed, because a spelling this does not carry is a vocabulary the
+ * The table is closed, because a spelling it does not include is a vocabulary the
  * register has not agreed to rather than a row to guess at.
  */
 const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["asserts"][number][]>> = {
@@ -107,7 +109,7 @@ const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["ass
 
 /**
  * The access labels the research pass recorded, each with the id prefix
- * and note a decision derived from it carries.
+ * and note a decision derived from it records.
  *
  * A decision is scoped to one publisher in one jurisdiction by {@link scopedLicenseID},
  * so an election cannot reach past the grant it was made about.
@@ -210,7 +212,7 @@ export interface SourceRegisterBuildResult {
 	sources: number
 	licenses: number
 	/**
-	 * Rows dropped because they carry a global discovery lookup rather than a national source.
+	 * Rows dropped because their source identifies a global discovery lookup rather than a national source.
 	 */
 	discoveryRailRowsDropped: number
 	researchStates: Readonly<Record<JurisdictionResearchState, number>>
@@ -238,6 +240,14 @@ export interface BuildSourceRegisterOptions {
 	 * A path that does not exist is read as no decisions recorded.
 	 */
 	decisionsPath?: PathBuilderLike
+	/**
+	 * Source fields a review resolved, applied over the rows this build derives from the research CSV.
+	 *
+	 * An input rather than an edit of the output, for the same reason as {@linkcode
+	 * BuildSourceRegisterOptions.decisionsPath}: this build rewrites the register whole.
+	 * A path that does not exist is read as no resolutions recorded.
+	 */
+	resolutionsPath?: PathBuilderLike
 	version: string
 	/**
 	 * ISO 8601 calendar date the research pass was taken, `yyyy-MM-DD`.
@@ -342,12 +352,12 @@ async function readJurisdictions(
 interface LicenseScope {
 	licenseID: string
 	/**
-	 * The label's own words, carried through so a reviewer sees what the pass wrote.
+	 * The pass retains the label's words so a reviewer sees what it wrote.
 	 */
 	statement: string
 	/**
 	 * The publisher whose terms this decision covers, or `null` when the row names none
-	 * and the decision therefore covers one source alone.
+	 * and the decision therefore covers only one source.
 	 */
 	publisher: string | null
 	scopedTo: string
@@ -497,7 +507,11 @@ async function readSources(
 		const role = readUnresolvedColumn(record["address_role"], "address_role", row)
 
 		if (role) {
-			source.addressRole = mapped(ADDRESS_ROLE_BY_NAME, role, "address_role", row)
+			// The research pass records one role for a whole source and names no column,
+			// so the role is filed under the record's address field.
+			// A source carrying two roles on one record gets a column-by-column reading
+			// in `source-resolutions.json` instead.
+			source.addressRoles = { address: mapped(ADDRESS_ROLE_BY_NAME, role, "address_role", row) }
 		}
 
 		const coverage = readUnresolvedColumn(record["coverage"], "coverage", row)
@@ -521,15 +535,15 @@ async function readSources(
 /**
  * Values the research pass wrote into a column it did not resolve per source.
  *
- * Carrying them onto a record would turn "uninspected" into a value a consumer reads as an answer.
+ * A copy onto a record would turn "uninspected" into a value a consumer reads as an answer.
  */
 const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "country-specific", "unknown", "n/a"])
 
 /**
  * A column's value, or `undefined` when the research pass left it unresolved.
  *
- * Anything outside the placeholder set is returned, so a value somebody fills in later
- * reaches the register or fails the build rather than being lost.
+ * Every value outside the placeholder set is returned, so a value somebody fills in
+ * later reaches the register or fails the build rather than being lost.
  */
 export function readUnresolvedColumn(value: string | undefined, column: string, row: number): string | undefined {
 	const trimmed = (value ?? "").trim()
@@ -555,15 +569,108 @@ export function readUnresolvedColumn(value: string | undefined, column: string, 
  * The output is tab-indented JSON.
  * `oxfmt` applies additional formatting.
  *
- * @throws When an input row carries a vocabulary this build has no mapping for, when a declared
+ * @throws When an input row contains a vocabulary this build has no mapping for, when a declared
  * rewrite never fires, or when the finished register fails {@linkcode auditAddressSourceRegister}.
  */
 /**
- * The shape `license-decisions.json` carries: licence id to the decision minus its own id,
- * keyed by id so one licence cannot carry two.
+ * The shape of `license-decisions.json`: licence id to the decision minus its own id,
+ * keyed by id so each licence has one decision.
  */
-interface LicenseDecisionsFile {
-	decisions?: Record<string, Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense, "licenseID">>
+/**
+ * A decision body without its own id, as `license-decisions.json` records one.
+ */
+type RecordedDecision = Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense, "licenseID">
+
+/**
+ * A decision that reuses a body declared once under `sharedReadings`.
+ *
+ * One publisher can hold a licence over several jurisdictions, and the register
+ * scopes a decision to one publisher in one jurisdiction, so reading that publisher's
+ * terms once produces several decisions with the same body.
+ * Naming the shared body keeps each licence id's own decision while the prose behind
+ * it has one home, so nine copies cannot drift apart under later editing.
+ */
+interface SharedDecisionReference {
+	sameAs: string
+}
+
+/**
+ * The shape of `license-decisions.json`.
+ */
+export interface LicenseDecisionsFile {
+	decisions?: Record<string, RecordedDecision | SharedDecisionReference>
+	/**
+	 * Decision bodies that several licence ids reuse, keyed by a name the ids refer to.
+	 */
+	sharedReadings?: Record<string, RecordedDecision>
+}
+
+function isSharedReference(value: RecordedDecision | SharedDecisionReference): value is SharedDecisionReference {
+	return typeof (value as SharedDecisionReference).sameAs === "string"
+}
+
+/**
+ * The source fields a review resolves, which the research CSV records as placeholders.
+ *
+ * The CSV holds the research pass's findings and is a working document of that pass,
+ * so a later review records its own findings here rather than by editing the pass's record.
+ */
+type SourceResolution = Pick<
+	AddressSourceRecord,
+	"addressRoles" | "coverage" | "upstreamLineage" | "personalDataReview"
+>
+
+/**
+ * The shape of `source-resolutions.json`: source id to the fields a review resolved for it.
+ */
+interface SourceResolutionsFile {
+	resolutions?: Record<string, SourceResolution>
+}
+
+/**
+ * Source resolutions read from `resolutionsPath`, keyed by source id.
+ *
+ * An absent file answers an empty map.
+ * A file that exists and cannot be parsed raises, because reading it as empty would
+ * drop somebody's recorded review without saying so.
+ */
+async function readSourceResolutions(
+	resolutionsPath: PathBuilderLike | undefined
+): Promise<Map<string, SourceResolution>> {
+	if (!resolutionsPath || !(await pathExists(resolutionsPath))) return new Map()
+
+	const file = await readLocalJSONFile<SourceResolutionsFile>(resolutionsPath)
+
+	return new Map(Object.entries(file.resolutions ?? {}))
+}
+
+/**
+ * Merges each recorded resolution onto the source whose id it holds.
+ *
+ * @throws When a resolution's source id is absent from the register.
+ * Such an entry is a typo or a source that has been removed.
+ * Keeping it silently would leave a review whose fields reach no row, which reads as work already done.
+ */
+export function applySourceResolutions(
+	sources: readonly AddressSourceRecord[],
+	recorded: ReadonlyMap<string, SourceResolution>
+): AddressSourceRecord[] {
+	const known = new Set(sources.map((source) => source.sourceID))
+
+	for (const sourceID of recorded.keys()) {
+		if (!known.has(sourceID)) {
+			throw new Error(
+				`a recorded source resolution names ${stringifyJSON(sourceID)}, which the register does not carry. ` +
+					"A resolution that resolves nothing is a typo or a source that has been removed."
+			)
+		}
+	}
+
+	return sources.map((source) => {
+		const resolution = recorded.get(source.sourceID)
+
+		return resolution ? { ...source, ...resolution } : source
+	})
 }
 
 /**
@@ -576,15 +683,39 @@ interface LicenseDecisionsFile {
 async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined): Promise<Map<string, LicenseDecision>> {
 	if (!decisionsPath || !(await pathExists(decisionsPath))) return new Map()
 
-	const file = await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath)
+	return resolveRecordedDecisions(await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath))
+}
 
-	// The id comes from the key, so a record cannot disagree with the licence it is filed under;
-	// `auditAddressSourceRegister` decides whether what it carries is a well-formed decision.
+/**
+ * Turns a decisions file into decisions keyed by licence id, resolving every `sameAs` reference.
+ *
+ * The id comes from the key, so a record cannot disagree with the licence it is filed under.
+ * `auditAddressSourceRegister` decides whether the resolved fields form a well-formed decision, so this
+ * function checks only that the file declares a reading for each reference.
+ *
+ * @throws When a `sameAs` reads a reading absent from `sharedReadings`.
+ * Such a reference would otherwise produce a decision carrying no terms, which the audit
+ * would report as an unknown review state rather than as the typo it is.
+ */
+export function resolveRecordedDecisions(file: LicenseDecisionsFile): Map<string, LicenseDecision> {
+	const shared = file.sharedReadings ?? {}
+
 	return new Map(
-		Object.entries(file.decisions ?? {}).map(([licenseID, decision]) => [
-			licenseID,
-			{ ...decision, licenseID } as LicenseDecision,
-		])
+		Object.entries(file.decisions ?? {}).map(([licenseID, recorded]) => {
+			if (!isSharedReference(recorded)) return [licenseID, { ...recorded, licenseID } as LicenseDecision]
+
+			const body = shared[recorded.sameAs]
+
+			if (!body) {
+				throw new Error(
+					`licence ${stringifyJSON(licenseID)} reads \`sameAs\` ${stringifyJSON(recorded.sameAs)}, ` +
+						"which `sharedReadings` does not declare. A reference to a reading that is absent would " +
+						"otherwise produce a decision with no terms."
+				)
+			}
+
+			return [licenseID, { ...body, licenseID } as LicenseDecision]
+		})
 	)
 }
 
@@ -594,12 +725,14 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 	const scopes = new Map<string, LicenseScope>()
 	const jurisdictions = await readJurisdictions(options.inventoryPath, fired)
 
-	const { sources, discoveryRailRowsDropped } = await readSources(
+	const { sources: derived, discoveryRailRowsDropped } = await readSources(
 		options.sourcesPath,
 		licenseByStatement,
 		fired,
 		scopes
 	)
+
+	const sources = applySourceResolutions(derived, await readSourceResolutions(options.resolutionsPath))
 
 	for (const [from] of RETIRED_NOTE_REWRITES) {
 		if (!fired.has(from)) {

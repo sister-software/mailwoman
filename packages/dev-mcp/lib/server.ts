@@ -15,7 +15,7 @@ import { prettyJSON } from "@mailwoman/core/json"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
-import { buildToolTable, type DevToolDeps } from "#tools/index"
+import { buildToolTable, type DevToolDeps } from "#tools"
 
 export async function createDevMCPServer(deps: DevToolDeps): Promise<McpServer> {
 	const server = new McpServer({ name: "mailwoman-dev", version: "9.1.0" })

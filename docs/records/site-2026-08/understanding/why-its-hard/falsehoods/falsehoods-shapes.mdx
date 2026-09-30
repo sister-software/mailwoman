@@ -61,7 +61,7 @@ A shopping mall at one lat/lon can have 100+ addresses, one per store. An office
 
 A marina has addresses for each berth. The berths are adjacent rather than stacked, but they share approximate coordinates and differ by a few meters. A trailer park has addresses for each pad. The pads share a lat/lon to within 10 meters and are distinguished by pad number.
 
-A post office with PO boxes has hundreds of addresses (the PO box numbers), all at the lat/lon of the post office building. Geocoding a PO box to the post office building is correct at the building level but wrong for the recipient's actual location.
+A post office with PO boxes has hundreds of addresses (the PO box numbers), all at the lat/lon of the post office building. A geocoder that receives a PO box returns the post office building, which is correct at the building level but wrong for the recipient's actual location.
 
 ### "An address stays where it is."
 
@@ -93,7 +93,7 @@ A building at the corner of Main St and Elm St might have address `123 Main St` 
 
 **Vertical resolution is outside Mailwoman's scope.** The schema has a `unit` tag for apartment and suite numbers, but the resolver does not model elevation. A `unit=4B` address resolves to the building centroid rather than Floor 4, Unit B. Vertical resolution requires building-interior data (floor plans, unit layouts) that no open gazetteer provides. This is a commercial address verification problem (SmartyStreets, Melissa Data) rather than an open-source parser problem.
 
-**Moving addresses are outside Mailwoman's scope.** A houseboat's current berth is a resolver question. The parser correctly extracts `Berth 42, Marina del Rey` as a location component, but the resolver needs a current marina database to map that to coordinates. The parser identifies that the text is a location reference, and it cannot know where the houseboat currently is.
+**Current address lookup is outside Mailwoman's scope.** A houseboat's current berth is a resolver question. The parser correctly extracts `Berth 42, Marina del Rey` as a location component, but the resolver needs a current marina database to map that to coordinates. The parser identifies that the text is a location reference, and it cannot know where the houseboat currently is.
 
 ## What Mailwoman still can't do
 

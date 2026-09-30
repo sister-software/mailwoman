@@ -6,7 +6,7 @@
  *   Re-fetch the HRSA Health Center Service Delivery Sites CSV. Source for the `usgov-hrsa-fqhc`
  *   adapter. US Public Domain.
  *
- *   Uses Node's built-in fetch (gzip/brotli) and streaming sha256 instead of curl + sha256sum, and
+ *   Uses Node's built-in fetch (gzip/brotli) and streaming sha256 instead of curl + sha256sum. It
  *   writes the same sibling `manifest.json` (origin URL + fetch timestamp + byte count + sha256) so
  *   downstream adapters can verify provenance.
  *
@@ -16,8 +16,8 @@
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 
-import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
-import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
+import { downloadToFile, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "usgov-hrsa-fqhc"
 const FILENAME = "Health_Center_Service_Delivery_and_LookAlike_Sites.csv"

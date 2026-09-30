@@ -1,4 +1,4 @@
-"""Reading a delimited corpus file that may be zstd-compressed at rest.
+"""Read a delimited corpus file that may be zstd-compressed at rest.
 
 Corpus part files are stored as ``.jsonl.zst`` because the rows repeat heavily. Every consumer
 streams them line by line. Neither this reader nor the TypeScript reader seeks into a part file.
@@ -17,7 +17,7 @@ from typing import Any
 
 ZSTD_EXTENSION = ".zst"
 
-# Importing lazily keeps `zstandard` off the modules that never touch a compressed part file.
+# A lazy import keeps `zstandard` off the modules that never touch a compressed part file.
 
 
 def open_delimited(path: Path, encoding: str = "utf-8") -> io.TextIOBase:

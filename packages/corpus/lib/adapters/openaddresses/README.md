@@ -117,7 +117,7 @@ One `CanonicalRow` per usable Feature:
 ## Known quirks
 
 - Real OA dumps store `street` and `city` in UPPERCASE (legacy USPS
-  convention). The adapter preserves case verbatim; synthesis (`synthesize.ts`)
+  convention). The adapter preserves case verbatim; synthesis (`synthesizers/utils.ts`)
   handles case-perturbation as its own augmentation.
 - Feature lines that fail to parse, are blank, are comments (`#…`), or
   carry a non-`Feature` `type` (e.g. a stray `FeatureCollection`) are

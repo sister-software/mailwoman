@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  * @file The subset of the Google Geocoding API's JSON response this package consumes. Hand-written because `@googlemaps/google-maps-services-js` is an optional `spatial` dependency a supported install can lack.
  *
- * Field names are Google's wire keys (`snake_case`), which the house acronym-casing rule leaves alone.
+ * Field names are Google's wire keys (`snake_case`), which the house acronym-casing rule preserves.
  */
 
 /**
  * Google's in-band error channel: every value arrives under HTTP 200, so branching on HTTP
- * status alone records `REQUEST_DENIED` as a successful geocode with zero results.
+ * status by itself records `REQUEST_DENIED` as a successful geocode with zero results.
  *
  * @see https://developers.google.com/maps/documentation/geocoding/requests-geocoding#StatusCodes
  */
@@ -29,13 +29,13 @@ export const GoogleGeocoderStatus = {
 	InvalidRequest: "INVALID_REQUEST",
 	/**
 	 * A server-side error.
-	 * Google's documentation says to retry.
+	 * Google's documentation recommends retrying.
 	 */
 	UnknownError: "UNKNOWN_ERROR",
 } as const
 
 /**
- * The `status` field every Geocoding API response carries.
+ * The `status` field included in every Geocoding API response.
  */
 export type GoogleGeocoderStatus = (typeof GoogleGeocoderStatus)[keyof typeof GoogleGeocoderStatus]
 

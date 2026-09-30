@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react"
 
-import { loadSearchIndex, type PlanetarySearch } from "#search/index"
+import { loadSearchIndex, type PlanetarySearch } from "#search"
 
 export type SearchIndexState =
 	| { status: "loading"; index: null; error: null }

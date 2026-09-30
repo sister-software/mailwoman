@@ -26,7 +26,7 @@ export interface PresetChipsProps {
 	onPick: (value: string) => void
 	disabled?: boolean
 	/**
-	 * Leading label. @default "Try:"
+	 * The label shown before the choices. @default "Try:"
 	 */
 	caption?: string
 	/**

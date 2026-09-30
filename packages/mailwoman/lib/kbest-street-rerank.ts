@@ -58,7 +58,7 @@ export interface StreetRerankOpts {
 	marginCap?: number
 	/**
 	 * Locality/postcode scope for the evidence probe.
-	 * Fragments usually carry none.
+	 * Fragments generally have none.
 	 */
 	scope?: StreetEvidenceScope
 	/**

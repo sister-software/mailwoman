@@ -1,5 +1,5 @@
 /**
- * @copyright Sister Software (ISO 3166-1 data salvaged from isp-nexus)
+ * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  */
@@ -452,7 +452,7 @@ export const Alpha3ToCountryRecord = {
 	PRI: "Puerto Rico",
 	QAT: "Qatar",
 	REU: "Reunion",
-	ROM: "Romania",
+	ROU: "Romania",
 	RUS: "Russian Federation",
 	RWA: "Rwanda",
 	BLM: "Saint Barthélemy",

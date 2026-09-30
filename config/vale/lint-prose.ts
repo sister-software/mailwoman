@@ -9,6 +9,8 @@
 
 /// <reference types="node" />
 
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { workingTreeFiles } from "@mailwoman/core/git"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/process"
@@ -17,7 +19,9 @@ import { runCLICommand } from "@mailwoman/core/scripting/command"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import { type ValeCommand, valeCommand } from "@mailwoman/core/vale"
 import { chunks } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
+import { writePythonDocstringProjections } from "#config/vale/python-docstrings"
 import {
 	narrowTo,
 	loadValeIgnore,
@@ -37,10 +41,63 @@ async function pathspecsFor(value: Surface): Promise<string[]> {
 }
 
 /**
+ * The directories whose documents a git file listing can miss.
+ *
+ * `workingTreeFiles` runs `git ls-files --cached --others --exclude-standard`,
+ * so a path any ignore rule covers drops out.
+ * `scratchpad/` is covered by `.git/info/exclude` in some clones and by no rule in others,
+ * because that file is per-clone and uncommitted.
+ *
+ * A listing built from git alone therefore lints these documents in one checkout and skips
+ * them in the next, which is why a findings document written there could not be linted at all.
+ *
+ * Enumerating them from the filesystem gives every clone the same surface.
+ */
+const DOCS_DIRECTORIES_OUTSIDE_GIT: readonly string[] = ["scratchpad"]
+
+/**
+ * Markdown under {@link DOCS_DIRECTORIES_OUTSIDE_GIT}, as repository-relative paths.
+ *
+ * A directory that does not exist contributes no path, because a clone without a scratchpad is ordinary.
+ */
+async function documentsOutsideGit(): Promise<string[]> {
+	const found: string[] = []
+
+	for (const directory of DOCS_DIRECTORIES_OUTSIDE_GIT) {
+		const root = repoRootPathBuilder(directory)
+
+		if (!(await pathExists(root))) continue
+
+		for await (const entry of Globerator.from("**/*.{md,mdx}", { cwd: root, absolute: false })) {
+			found.push(`${directory}/${entry.toString()}`)
+		}
+	}
+
+	return found
+}
+
+/**
+ * Whether a run that names no path reads {@link DOCS_DIRECTORIES_OUTSIDE_GIT}.
+ *
+ * A run naming a path reads it, so `lint-prose.ts -s docs scratchpad/<date>/<file>.md` lints that document.
+ * A run naming none skips those directories.
+ *
+ * The reason is the size of the existing set rather than a judgment that the prose there matters less.
+ * Measured on 2026-09-29: 62 of 68 scratchpad documents carry 667 errors between
+ * them, dominated by `styles.Negation` at 173 and `styles.Nothing` at 135,
+ * while the tracked docs surface carries 0 errors.
+ *
+ * Chaining that set into `yarn lint` would refuse every push until all 62 are rewritten.
+ * A clone-specific exemption list cannot express the boundary either,
+ * because each clone holds different scratch files.
+ */
+const UNNARROWED_RUN_READS_DIRECTORIES_OUTSIDE_GIT = false
+
+/**
  * The file list split into one slice per core for concurrent Vale processes.
  *
  * Vale reads an explicit file list on a single core.
- * Handing each core its own slice brings the same work down to a few seconds.
+ * Each core processes its own slice, and the full run takes a few seconds.
  */
 function chunkFiles(files: readonly string[], chunkCount: number): string[][] {
 	return Array.from(chunks(files, Math.max(1, Math.ceil(files.length / chunkCount))))
@@ -49,26 +106,36 @@ function chunkFiles(files: readonly string[], chunkCount: number): string[][] {
 interface ValeCheck {
 	configPath: string
 	files: string[]
+	displayPathPrefix?: string
 }
 
 interface ValeRun extends ProcessOutput {
 	exitCode: number
 }
 
-async function runVale(vale: ValeCommand, configPath: string, files: readonly string[]): Promise<ValeRun> {
+async function runVale(
+	vale: ValeCommand,
+	configPath: string,
+	files: readonly string[],
+	displayPathPrefix?: string
+): Promise<ValeRun> {
+	function display(value: string): string {
+		return displayPathPrefix ? value.replaceAll(`${displayPathPrefix}/`, "") : value
+	}
+
 	try {
 		const result = await runFile(vale.file, [...vale.argv, "--config", configPath, ...files], {
 			cwd: repoRootPathBuilder,
 			maxBuffer: 50 * 1024 * 1024,
 		})
 
-		return { ...result, exitCode: 0 }
+		return { ...result, stdout: display(result.stdout), stderr: display(result.stderr), exitCode: 0 }
 	} catch (error: unknown) {
 		if (!isProcessError(error)) throw error
 
 		return {
-			stdout: error.stdout,
-			stderr: error.stderr,
+			stdout: display(error.stdout),
+			stderr: display(error.stderr),
 			exitCode: typeof error.code === "number" ? error.code : 1,
 		}
 	}
@@ -83,14 +150,14 @@ const SUMMARY_LINE = /^[✔✖] (\d+) errors?, (\d+) warnings? and (\d+) suggest
 /**
  * A chunk's output with Vale's closing summary line removed and its counts returned.
  */
-function splitSummary(stdout: string): { body: string; counts: number[] } {
+function splitSummary(stdout: string): { body: string; counts: [number, number, number, number] } {
 	const match = SUMMARY_LINE.exec(stdout)
 
 	if (!match) return { body: stdout, counts: [0, 0, 0, 0] }
 
 	return {
 		body: stdout.slice(0, match.index) + stdout.slice(match.index + match[0].length),
-		counts: match.slice(1).map(Number),
+		counts: [Number(match[1]), Number(match[2]), Number(match[3]), Number(match[4])],
 	}
 }
 
@@ -106,16 +173,18 @@ function splitSummary(stdout: string): { body: string; counts: number[] } {
 async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promise<number> {
 	const parallelism = availableParallelism()
 
-	const runs = checks.map(({ configPath, files }) => {
+	const runs = checks.map(({ configPath, files, displayPathPrefix }) => {
 		console.log(`Running Vale check with config: ${configPath}`)
 
-		return Promise.all(chunkFiles(files, parallelism).map((chunk) => runVale(vale, configPath, chunk)))
+		return Promise.all(
+			chunkFiles(files, parallelism).map((chunk) => runVale(vale, configPath, chunk, displayPathPrefix))
+		)
 	})
 
 	let exitCode = 0
 
 	for (const results of await Promise.all(runs)) {
-		const totals = [0, 0, 0, 0]
+		const totals: [number, number, number, number] = [0, 0, 0, 0]
 
 		for (const { stdout, stderr, exitCode: code } of results) {
 			const { body, counts } = splitSummary(stdout)
@@ -123,7 +192,10 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 			process.stdout.write(body)
 			process.stderr.write(stderr)
 
-			counts.forEach((count, index) => (totals[index] += count))
+			totals[0] += counts[0]
+			totals[1] += counts[1]
+			totals[2] += counts[2]
+			totals[3] += counts[3]
 			exitCode = Math.max(exitCode, code)
 		}
 
@@ -138,7 +210,17 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 
 async function lint(surface: Surface, narrowing: readonly string[]) {
 	const resolvedPathSpecs = await pathspecsFor(surface)
-	const surfaceFiles = await workingTreeFiles(resolvedPathSpecs)
+	const tracked = await workingTreeFiles(resolvedPathSpecs)
+	const readsOutsideGit = surface !== "code" && (narrowing.length > 0 || UNNARROWED_RUN_READS_DIRECTORIES_OUTSIDE_GIT)
+	// A clone whose ignore rules do not cover these directories lists them twice,
+	// so the union is taken by key rather than by concatenation.
+	const listedFiles = [...new Set(readsOutsideGit ? [...tracked, ...(await documentsOutsideGit())] : tracked)]
+
+	const existence = await Promise.all(
+		listedFiles.map(async (file) => ((await pathExists(repoRootPathBuilder(...file.split("/")))) ? file : null))
+	)
+
+	const surfaceFiles = existence.filter((file): file is string => file !== null)
 
 	if (!surfaceFiles.length) {
 		throw new Error(`No files in the working tree matched the ${surface} Vale surface`)
@@ -165,6 +247,23 @@ async function lint(surface: Surface, narrowing: readonly string[]) {
 
 		if (sourceFiles.length) {
 			checks.push({ configPath: configFor("code-terms").toString(), files: sourceFiles })
+		}
+
+		const pythonFiles = sourceFiles.filter((file) => file.endsWith(".py"))
+
+		if (pythonFiles.length) {
+			await using scratch = await temporaryDirectory("vale-python-docstrings-")
+			const projections = await writePythonDocstringProjections(pythonFiles, repoRootPathBuilder, scratch.path)
+
+			if (projections.files.length) {
+				checks.push({
+					configPath: repoRootPathBuilder("config", "vale", ".vale-python-docstrings.ini").toString(),
+					files: projections.files,
+					displayPathPrefix: projections.displayPathPrefix,
+				})
+			}
+
+			return await runChecks(vale, checks)
 		}
 	}
 

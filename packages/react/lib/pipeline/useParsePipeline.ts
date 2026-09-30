@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The headless core of the pipeline explorer. It owns query text, busy/stage flags, result, and candidate selection.
+ *   The headless core of the pipeline explorer. It owns query text, busy/stage flags, result and candidate selection.
  *   It delegates parse and resolve to the injected {@link PipelineRuntime}.
  */
 

@@ -29,7 +29,7 @@ from ..paths import data_root_path
 
 OUT_PARTS = ("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
 
-#: Street surfaces held out for the FR eval fixture. Sampling them into the training tuples would
+#: Street surfaces held out for the FR eval fixture. The training tuples must exclude them or the
 #: put the board's own surfaces in the corpus.
 FR_RESERVED_SURFACES = Path("mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
 

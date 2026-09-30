@@ -21,12 +21,13 @@ import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 
-import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
-import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
+import { downloadToFile, writeManifest } from "#tools/fetch/download"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below
- * which a "download" is an error page rather than data.
+ * Bytes per KiB — the divisor for human-readable sizes.
+ *
+ * It is the floor below which a "download" is an error page rather than data.
  */
 
 export type FetchStateSourcesOptions = BaseFetchOptions

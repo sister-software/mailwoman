@@ -10,7 +10,7 @@ role: explanation
 
 These two get one page because they are frequently met together and are frequently confused with each
 other. One is a geocoder assembled from services; the other is a parser that several geocoders —
-including the first one — use as a component. Knowing which of them you are comparing against decides
+including the first one — use as a component. Identify which of them you are comparing against before deciding
 what the comparison is even about.
 
 ## What Pelias is
@@ -95,7 +95,7 @@ that difference through, including what it costs each design.
 
 - **You need parsing only, in C or with C bindings.** It is the direct answer, it has bindings in a
   long list of languages, and it is battle-tested across the field.
-- **You want `expand_address`.** Normalizing an address into every standardized form for indexing is
+- **You want `expand_address`.** The function produces every standardized address form for indexing. It is
   a distinct capability, and it is what makes libpostal the preprocessing step in a great deal of
   record matching.
 - **Your platform is one where a C library is easier to deploy than a Node package.** Sometimes the

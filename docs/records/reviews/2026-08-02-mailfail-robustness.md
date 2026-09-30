@@ -57,7 +57,7 @@ check whose pattern can match the checker is measuring itself.
 
 ---
 
-## Finding 1 — a 325-character real address throws an uncaught TypeError
+## A 325-character real address throws an uncaught TypeError
 
 **Severity: high.** Availability _and_ correctness, on the shipped geocode path, triggered by valid
 input.
@@ -101,15 +101,16 @@ digits=129 pieces=129 -> THREW
 ```
 
 **It fires on plausible addresses.** Address-like text runs about 1.8–2.5 characters per piece, so
-128 pieces is roughly 320 characters. Bisecting a realistic form-concatenated delivery address
-(c/o line, building, floor, suite, street, borough, city, state, ZIP+4, country, delivery window):
+128 pieces is roughly 320 characters. A realistic form-concatenated delivery address
+(c/o line, building, floor, suite, street, borough, city, state, ZIP+4, country, delivery window)
+produced these boundaries:
 
 ```
 last OK length: 320 chars (127 pieces)
 first THROW   : 325 chars (131 pieces)
 ```
 
-This length is common. Shipping systems, CRMs and government forms routinely concatenate address
+This length is common. Address fields in shipping systems, CRMs and government forms routinely combine
 lines to well past 325 characters.
 
 **The 512-character drop-in cap does not guard against this.** `nominatim/cli.ts:67` and
@@ -127,21 +128,21 @@ because a long query "would exceed the model's input window." The cap is roughly
   error"** rather than a process crash. The failure is contained, but a 500 on a valid address is a
   product defect.
 - Library and CLI consumers of `geocodeAddress` get an uncaught `TypeError`.
-- `runPipeline` **does** catch, at `core/pipeline/runtime-pipeline.ts:648` (`safeClassify`). See
-  Finding 4, because that catch hides the failure and produces misleading output.
+- `runPipeline` **does** catch, at `core/pipeline/runtime-pipeline.ts:648` (`safeClassify`).
+  Section 4 describes how that catch hides the failure and produces misleading output.
 
 **Suggested fix.** Truncate `pieces` to the runner's `fixedSeqLen` immediately after
 `classifier.ts:662`, so every downstream array is the same length by construction. That kills both
 throw sites and stops `query-shape-prior.ts` / `span-proposal-prior.ts` allocating
 `pieces.length × labels.length` matrices whose tail rows `addEmissionMatrix` discards anyway. It
 also makes the truncation _visible_ — today a 400-character address is silently parsed from its
-first ~320 characters with no signal to the caller, which is its own reportable defect. Tightening
-`MAX_QUERY_LEN` to ~300 would bound the worst case on two of the four servers but is a
+first ~320 characters with no signal to the caller, which is its own reportable defect. A tighter
+`MAX_QUERY_LEN` of ~300 would bound the worst case on two of the four servers but remains a
 mitigation rather than the fix.
 
 ---
 
-## Finding 2 — `computeQueryShape` is quadratic in segment count
+## `computeQueryShape` is quadratic in segment count
 
 **Severity: high.** Availability. Reachable from every path, including `parseForGeocode`.
 
@@ -158,7 +159,7 @@ Ten times the segments, roughly a hundred times the work. `normalize` over the s
 linear (394.8 ms at 1 MB) and the grouper is linear on this shape, so query-shape is 98% of the
 1 MB cost.
 
-Isolating the sub-stages at 100 KB puts 1,228.9 ms of the 1,266.8 ms in one function:
+A sub-stage measurement at 100 KB assigns 1,228.9 ms of the 1,266.8 ms to one function:
 
 ```
 chars=100023 tok=21217 seg=6063 | tokenize=3.0 classify=1.4 segment=8.0 knownFormats=13.8 regionAbbrev=1228.9 fold=0.1
@@ -181,12 +182,12 @@ A comma-dense input with no whitespace (`"a,"` repeated) hits the same quadratic
 count alone: 3.8 ms → 103.4 ms across a 16× size increase.
 
 **Suggested fix.** Both arrays are position-sorted, so a two-pointer merge makes this O(S + T) with
-no behaviour change. Filtering tokens by `REGION_ABBREV_RE` and class _before_ the segment loop is
-a cheaper partial mitigation but stays quadratic when the abbreviation repeats.
+no behaviour change. A cheaper partial mitigation filters tokens by `REGION_ABBREV_RE` and class
+_before_ the segment loop, but stays quadratic when the abbreviation repeats.
 
 ---
 
-## Finding 3 — the phrase grouper is quadratic on capitalized and street-suffix runs
+## The phrase grouper is quadratic on capitalized and street-suffix runs
 
 **Severity: high.** Availability. This is the worst of the three by constant factor.
 
@@ -248,7 +249,7 @@ over the wire.
 
 ---
 
-## Finding 4 — the pipeline masks the classifier crash and substitutes rule-based output
+## The pipeline masks the classifier crash and substitutes rule-based output
 
 **Severity: medium.** Silent wrongness.
 
@@ -257,8 +258,8 @@ over the wire.
 tree from rule-based proposals. The caller gets a normal-looking parse with no indication the model
 never ran.
 
-Instrumenting the pipeline to record whether the inner classifier threw, 10 of 110 probes crashed
-the classifier while the pipeline reported success:
+Instrumentation that recorded whether the inner classifier threw showed that 10 of 110 probes
+crashed the classifier while the pipeline reported success:
 
 | probe                  | bytes | inner throw                           | pipeline output                                                                               |
 | ---------------------- | ----: | ------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -275,14 +276,14 @@ The `num-very-long-digits` row exposes a second, unrelated issue: the emitted `h
 which recomputes `this.end` from the truncated body — so the span's offsets no longer point at the
 input it came from.
 
-**Suggested fix.** Fixing Finding 1 removes the throw, which removes most of this. Independently,
-`safeClassify` swallowing every error with a bare `catch {}` means a model fault is
-indistinguishable from a clean no-match. Surfacing it on `PipelineResult` (a `classifierError`
-field, or a `path` marker) would cost no extra work and make this class self-reporting.
+**Suggested fix.** The Finding 1 fix removes the throw, which removes most of this. Independently,
+when `safeClassify` swallows every error with a bare `catch {}`, a model fault is
+indistinguishable from a clean no-match. A `classifierError` field on `PipelineResult`
+(or a `path` marker) would cost no extra work and make this class self-reporting.
 
 ---
 
-## Finding 5 — garbage resolves to real coordinates
+## Garbage resolves to real coordinates
 
 **Severity: medium.** Silent wrongness rather than availability. Inherent to gazetteer breadth, but
 currently unmitigated.
@@ -349,7 +350,7 @@ following threw, hung, or emitted anything:
 - **Emoji.** Single emoji, ten building emoji, ZWJ family sequences, skin-tone modifiers,
   regional-indicator flags — all emit no component. Keycap sequences (`1️⃣2️⃣3️⃣`) emit
   `{"locality":"3","street":"2","house_number":"1"}`, which is the digits inside them being read rather than an emoji failure.
-- **Encoding stress.** Unpaired high and low surrogates, embedded NUL, BOM, zero-width spaces
+- **Unicode edge cases.** Unpaired high and low surrogates, embedded NUL, BOM, zero-width spaces
   inside tokens, RTL override wrapping, NFD-decomposed accents, fullwidth Latin, non-breaking
   spaces, U+2028/U+2029 — no throw anywhere. The BOM and line-separator cases still parse and
   resolve the underlying address correctly.

@@ -23,8 +23,8 @@ import { sha256File } from "@mailwoman/core/hash"
 import type { PathBuilderLike } from "path-ts"
 import { XLSXSpliterator, type XLSXCellValue } from "spliterator"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 import { STATE_HI_SCHOOL_REQUIRED_COLUMNS, STATE_HI_SCHOOL_SHEETS } from "#us/adapters/state/hi-schools/workbook"
 
 const SOURCE_URL = "https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx"

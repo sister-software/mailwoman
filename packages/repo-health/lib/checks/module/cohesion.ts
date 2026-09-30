@@ -7,11 +7,11 @@
  *   found at any size.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { parseContextSource, readContextSources } from "#context"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
@@ -313,13 +313,19 @@ export const moduleCohesionCheck: RepoCheck = {
 	async run(context: RepoContext): Promise<Diagnostic[]> {
 		const diagnostics: Diagnostic[] = []
 
-		for (const filePath of await trackedSourcePaths(context, { prefix: "packages/", existingOnly: true })) {
+		const filePaths = (await trackedSourcePaths(context, { prefix: "packages/", existingOnly: true })).filter(
+			(filePath) => {
+				const file = relative(context.repoRoot, filePath)
+
+				return file.includes("/lib/") && !TEST_FILE.test(file)
+			}
+		)
+
+		await readContextSources(context, filePaths)
+
+		for (const filePath of filePaths) {
 			const file = relative(context.repoRoot, filePath)
-
-			if (!file.includes("/lib/") || TEST_FILE.test(file)) continue
-
-			const text = await readLocalTextFile(filePath)
-			const source = ts.createSourceFile(filePath, text, ts.ScriptTarget.Latest, true)
+			const source = await parseContextSource(context, filePath, { setParentNodes: true })
 
 			const cohesion = moduleCohesion(source)
 

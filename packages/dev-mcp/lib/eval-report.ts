@@ -5,12 +5,12 @@
  *
  * Read a promotion-eval run's own artifacts.
  *
- * Unlike the gauntlet, the eval writes structured output: `verdict.json` carries every floor with its
+ * Unlike the gauntlet, the eval writes structured output: `verdict.json` records every floor with its
  * reading and `provenance.txt` records each graded artifact's md5 and dynamic-quant fingerprint, so this
  * module parses no prose for a number. It reads the log only for the lore-guard refusal and the pre-filled ledger
  * command. No other module handles these log entries.
  *
- * This module adds no metric and moves no floor. The eval remains the release authority. Relaxing a floor here would
+ * This module adds no metric and moves no floor. The eval remains the release authority. A relaxed floor here would
  * cause the silent eval drift that the eval discipline catches.
  */
 
@@ -100,8 +100,8 @@ const LORE_GUARD_MARKER = "recompile"
 /**
  * Why the ledger command is reported rather than run.
  *
- * It is carried on every check result so the boundary travels with the command, since a
- * reader who sees a filled-in command and no note has every reason to assume it already ran.
+ * It appears on every check result so the boundary travels with the command, since a reader
+ * who sees a filled-in command and no note has every reason to assume it already ran.
  */
 export const LEDGER_NOTE =
 	"This command is REPORTED, never run. Appending to evals/scores-by-version.json is a repo write and a claim about " +

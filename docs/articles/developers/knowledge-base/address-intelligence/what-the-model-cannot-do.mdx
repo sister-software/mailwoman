@@ -26,7 +26,8 @@ There is no envelope it declines. Everything below follows from that.
 
 ## It never abstains
 
-Every stage produces scores, and a set of scores always has a maximum, so there is always an answer.
+Every stage produces scores. A set of scores always has a maximum. The parser therefore always returns
+an answer.
 The parser has no "this is not an address" output and no failure mode that looks like a failure.
 
 ```
@@ -105,8 +106,8 @@ does cover. Two different limits follow.
 
 **A locale with thin training data reads worse, and does not say so.** The
 [tier table](../../reference/locales-and-tiers.mdx) is the map: a locale is claimed when a
-coordinate-graded evaluation exists for it, and trained exposure is not a claim. Reading down the
-tiers tells you how much of a measurement sits behind any given country.
+coordinate-graded evaluation exists for it, and trained exposure is not a claim. The tier table shows
+how much measurement supports each country's claim.
 
 **A script outside the training data produces a confident wrong reading rather than an error.** The
 tokenizer encodes unknown characters byte by byte, so the pipeline never crashes — and the pieces it
@@ -183,11 +184,11 @@ about both without a hand-written guard. Where the collision does not exist, the
 grammar, answerable exactly by a pattern. The model has no notion of validity. It labels a span
 `postcode` because that is where a postcode goes, and `00000` scores as well as a real one.
 
-**Rendering.** Turning components back into a correctly ordered address string for a country is
-deterministic, and a rule table is the right implementation. The inverse of a hard problem is not
+**Address formatting.** A rule table can turn components into a correctly ordered address string for a country
+because rendering is deterministic. The inverse of a hard problem is not
 always hard.
 
-**Anything needing a guarantee rather than a score.** A rule can promise never to emit a tag. A model
+**Any requirement for a guarantee rather than a score.** A rule can promise never to emit a tag. A model
 can be measured at never having emitted it on the data anyone tried, which is a different and weaker
 statement.
 

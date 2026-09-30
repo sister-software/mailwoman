@@ -232,7 +232,7 @@ async function loadSeeds(
 	// Stratified sampling: read all rows from all parquet files, group by source.
 	// Bounded by per-source reservoir: keep at most max(2*count, 5000) rows per source
 	// so we don't blow memory on train parquet files (1M rows × many files).
-	// Sampling later is uniform within each pool.
+	// Later samples are uniform within each pool.
 	const bySource = new Map<string, Seed[]>()
 	const PER_SOURCE_CAP = Math.max(2 * count, 5000)
 	let scanned = 0
@@ -286,7 +286,7 @@ async function loadSeeds(
 
 	// Round-robin sample.
 	// Each source gives floor(count / nSources) seeds.
-	// Rounding goes to sources in alphabetical order.
+	// Sources in alphabetical order receive the rounding remainder.
 	// If a pool is smaller than its target, take all of it.
 	const sources = Array.from(bySource.keys()).toSorted()
 	const perSource = Math.floor(count / sources.length)
@@ -489,7 +489,7 @@ function validate(seed: Seed, candidate: Candidate): boolean {
 		keptCount++
 	}
 
-	// Reject degenerate single-component candidates ("VT", "Paris" alone).
+	// Reject degenerate single-component candidates ("VT", "Paris" by itself).
 	if (keptCount < 2) return false
 
 	return true

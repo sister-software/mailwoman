@@ -15,11 +15,11 @@
  *   The forward-looking entry produces a warning without returning the wrong locale.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { relative, resolvePath } from "path-ts"
+import { relative } from "path-ts"
 import ts from "typescript"
 
-import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
+import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { parseContextSource, readContextSources } from "#context"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
@@ -36,8 +36,8 @@ const LOCALE_TAG = /^[a-z]{2}-[A-Za-z]{2}$/u
  * Those entries must comprise at least half of the declaration.
  *
  * Both conditions are required.
- * Two pairs alone could match an unrelated table with two pairs.
- * The ratio alone could match any two-entry map.
+ * Two pairs by themselves could match an unrelated table with two pairs.
+ * The ratio by itself could match any two-entry map.
  */
 const MINIMUM_LOCALE_PAIRS = 2
 
@@ -129,10 +129,7 @@ function readLocaleTables(source: ts.SourceFile, file: string): LocaleTable[] {
 /**
  * Every country→locale map in the tracked non-test sources.
  */
-export async function findLocaleTables(context: {
-	repoRoot: string
-	trackedFiles: readonly string[]
-}): Promise<LocaleTable[]> {
+export async function findLocaleTables(context: RepoContext): Promise<LocaleTable[]> {
 	// Use `existingOnly` because the walk opens every path it receives.
 	// A staged rename can leave the old path in the index and cause an unrelated ENOENT error.
 	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
@@ -140,20 +137,13 @@ export async function findLocaleTables(context: {
 		.filter((file) => !/\/test\/|\.test\.tsx?$/u.test(file))
 
 	const tables: LocaleTable[] = []
+	const texts = await readContextSources(context, sources)
 
-	for (const file of sources) {
-		const text = await readLocalTextFile(resolvePath(context.repoRoot, file))
-
+	for (const [index, file] of sources.entries()) {
 		// Cheap reject before parsing: a country→locale map mentions the country or locale somewhere in the file.
-		if (!/COUNTR|LOCALE|[Ll]ocale/u.test(text)) continue
+		if (!/COUNTR|LOCALE|[Ll]ocale/u.test(texts[index]!)) continue
 
-		const source = ts.createSourceFile(
-			file,
-			text,
-			ts.ScriptTarget.ESNext,
-			true,
-			file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-		)
+		const source = await parseContextSource(context, file, { setParentNodes: true })
 
 		tables.push(...readLocaleTables(source, file))
 	}

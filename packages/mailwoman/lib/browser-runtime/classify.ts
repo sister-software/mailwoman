@@ -125,7 +125,7 @@ export interface ClassifyStageResult {
  *
  * It runs a locale check over the input text shape (postcode format or script rather than place names)
  * and returns the matching loaded index or `undefined` when no loaded index matches,
- * typed opaquely because the docs bundle carries no neural type dependency.
+ * typed opaquely because the docs bundle has no neural type dependency.
  */
 export type SelectPairIndex = (text: string, opts?: { country?: string }) => object | undefined
 

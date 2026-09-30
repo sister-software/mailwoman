@@ -5,12 +5,12 @@
  *
  *   Fetch GeoNames per-country gazetteer dumps. These are the 19-column `<CC>.txt` files under
  *   `https://download.geonames.org/export/dump/`, the export directory rather than the postal export
- *   at `export/zip/` that `geonames-postal.ts` handles. The dumps carry feature classes and codes
+ *   at `export/zip/` that `geonames-postal.ts` handles. The dumps contain feature classes and codes
  *   (column 8: `pplc` national capital, `ppla` first-order administrative seat), which is what the
  *   capitals reference build consumes.
  *
  *   `countryInfo.txt` supplies the country catalog. It lists each country GeoNames publishes with one
- *   row per ISO alpha-2 code. Each row also carries the capital. The capitals build checks it against
+ *   row per ISO alpha-2 code. Each row also lists the capital. The capitals build checks it against
  *   its `pplc` extraction. The tool fetches this file first and derives the country set from it. A dump
  *   absent from disk then counts as a gap in the source's own catalog.
  *   The dump directory may contain files this tool never fetched. The tool keeps present files unchanged.
@@ -24,8 +24,8 @@ import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
 import { TSVSpliterator } from "spliterator"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download"
 
 /**
  * The one status that means "the source does not publish this country" rather than "the transfer failed".
@@ -78,7 +78,7 @@ export interface GeonamesDumpManifest {
 	downloaded_at: string
 	files: GeonamesDumpFileEntry[]
 	/**
-	 * `<CC>.txt` files already on disk and left alone — the hand-fetched population this tool extends.
+	 * `<CC>.txt` files already on disk and leaves unchanged — the hand-fetched population this tool extends.
 	 */
 	skipped_present: string[]
 	/**
@@ -105,7 +105,7 @@ export interface GeonamesDumpManifest {
 const GAZETTEER_DUMP_COLUMNS = 19
 
 /**
- * True when the first non-empty line carries the gazetteer dump's 19 tab-separated columns.
+ * True when the first non-empty line contains the gazetteer dump's 19 tab-separated columns.
  *
  * Accepts a partial head read.
  * The first line is the whole question, so callers need not hand it a resident 350 MB dump.

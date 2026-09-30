@@ -131,7 +131,7 @@ export interface GeocodeResult {
 	unit: string | null
 
 	/**
-	 * The uppercase ISO 3166-1 alpha-2 code from the first node that carries a resolver country.
+	 * The uppercase ISO 3166-1 alpha-2 code from the first node that includes a resolver country.
 	 */
 	countryCode: string | null
 
@@ -192,7 +192,7 @@ export interface GeocodeResult {
 	 * the parsed `region` and `country`.
 	 *
 	 * It is present whenever a winner resolved.
-	 * Ranking never reads it.
+	 * Downstream ranking does not read it.
 	 */
 	admin_coherence?: AdminCoherenceReport
 

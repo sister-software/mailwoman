@@ -21,7 +21,7 @@ import type { SourceRecord } from "#types"
 
 /**
  * The stable address primary key for a record, or null when it is not geocoded
- * (no coordinate means no locality cell) or carries no raw address to hash.
+ * (no coordinate means no locality cell) or includes no raw address to hash.
  *
  * The state prefix is plucked from the address when present.
  */

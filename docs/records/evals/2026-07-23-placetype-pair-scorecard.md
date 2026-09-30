@@ -129,9 +129,7 @@ Coniston Avenue, Knott End on Sea, Poulton-le-Fylde"` — pre-existing model-lev
 the arc's central structural finding: **the pair-index prior rather than the checkpoint's own
 resurrected classifier row, carries nearly all of GB's dependent_locality recall** — see the
 ablation table below. NZ shows **zero** decode-layer recovery at either checkpoint, despite being
-the arc's original target locale (the sibling en-gb-locale-arc's independent checkpoint sweep
-found the same shape: a hot-classifier-LR resurrection window that peaks near step 2000 and
-re-buries the tag by step 8000 — `docs/articles/evals/2026-07-22-night-en-gb-postmortem.md`).
+the arc's original target locale.
 
 ### Venue-confound FP @ δ\*
 
@@ -287,7 +285,7 @@ a tiebreaker between the two.
 | Error-analysis, no tag >2pp                            | pass (worst venue −1.7pp)                                                                                    | pass (worst street −1.5pp)                                                                        |
 | **Gauntlet (NEW, Task 8)**                             | **fail** (`BAND[num-ordinal]`/`INV[comma-drop]`/`INV[abbrev]`, "350 Fifth Avenue, New York, NY" 283.5km off) | **fail** (`INV[comma-drop]`, "1600 Pennsylvania Ave NW, Washington DC 20500" loses rooftop → 0,0) |
 
-**Ship checkpoint (operator-ratified 2026-07-23): feed-8k.** Reasoning carried from Task 7 — the
+**Ship checkpoint (operator-ratified 2026-07-23): feed-8k.** Task 7 supports this choice — the
 FR-fragment miss is the more dangerous failure class (fires on any bare-locality input, any
 locale), while feed-8k's digit miss is narrower and now clears the revised bar. GB dep-loc recall
 doesn't differentiate the checkpoints (the prior carries it rather than either checkpoint). **Promotion

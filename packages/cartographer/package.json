@@ -16,16 +16,11 @@
 	},
 	"files": [
 		"out/",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!__snapshots__/",
-		"!test/**"
+		"!__snapshots__/"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -38,55 +33,15 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
-		"./styles": {
-			"types": "./out/styles/index.d.ts",
-			"node": "./lib/styles/index.ts",
-			"default": "./out/styles/index.js"
-		},
-		"./tiles": {
-			"types": "./out/tiles/index.d.ts",
-			"node": "./lib/tiles/index.ts",
-			"default": "./out/tiles/index.js"
-		},
-		"./tiles/coords": {
-			"types": "./out/tiles/coords.d.ts",
-			"node": "./lib/tiles/coords.ts",
-			"default": "./out/tiles/coords.js"
-		},
-		"./base": {
-			"types": "./out/base/index.d.ts",
-			"node": "./lib/base/index.ts",
-			"default": "./out/base/index.js"
-		},
-		"./bdc": {
-			"types": "./out/bdc/index.d.ts",
-			"node": "./lib/bdc/index.ts",
-			"default": "./out/bdc/index.js"
-		},
-		"./coverage": {
-			"types": "./out/coverage/index.d.ts",
-			"node": "./lib/coverage/index.ts",
-			"default": "./out/coverage/index.js"
-		},
-		"./race-dots": {
-			"types": "./out/race-dots/index.d.ts",
-			"node": "./lib/race-dots/index.ts",
-			"default": "./out/race-dots/index.js"
-		},
 		".": {
 			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./base/composition": {
-			"types": "./out/base/composition.d.ts",
-			"node": "./lib/base/composition.ts",
-			"default": "./out/base/composition.js"
-		},
-		"./planetary": {
-			"types": "./out/planetary/index.d.ts",
-			"node": "./lib/planetary/index.ts",
-			"default": "./out/planetary/index.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

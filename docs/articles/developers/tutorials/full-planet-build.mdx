@@ -25,7 +25,7 @@ run entirely from npm. Step 3 does not: `@mailwoman/osm` is not published to npm
 repository checkout. Each requirement below says which half it belongs to.
 
 - **About 3 GB of free disk** for the path below: 2.88 GB of gazetteer and under 100 MB of everything
-  else. Adding France's whole national register instead of three départements is 6.95 GB; adding the US
+  else. France's whole national register adds 6.95 GB instead of the three départements; the US
   is 41.3 GB. Check the number for the country you want before you start it.
 - **Steps 1–2, from npm.** The CLI, plus the French register's builder:
 
@@ -45,7 +45,7 @@ repository checkout. Each requirement below says which half it belongs to.
   mkdir -p "$MAILWOMAN_DATA_ROOT"
   ```
 
-Building the US tier is a different shape from everything below, because the US is the one country with
+The US tier differs from every build below because the US is the one country with
 both a rooftop register and a national street-segment file. It has its own page:
 [Build the US address dataset](./build-the-us-dataset.mdx).
 
@@ -169,7 +169,7 @@ Two things about that invocation. It is a script inside the installed package ra
 subcommand. There is no `mailwoman ban` group, the fetch is a `curl` against a documented URL pattern,
 and the build is the script above. And the path is a `node_modules` path because `@mailwoman/ban` is on
 npm; if you are working from a checkout instead, the same file is at
-`packages/ban/out/scripts/build/address-point-database.js` after `yarn compile`.
+`packages/ban/out/tools/build/address-point-database.js` after `yarn compile`.
 
 ## 3. Build the same ground from OpenStreetMap
 
@@ -207,7 +207,7 @@ cd mailwoman && yarn install && yarn compile
 The two `node packages/osm/out/scripts/...` commands in this section run from that checkout's root. Step 4 goes
 back to the npm CLI and does not care where the database was built.
 
-Three countries have a registered street-normalization locale for this path — `fr`, `de` and `nl`. Adding
+Three countries have a registered street-normalization locale for this path — `fr`, `de` and `nl`. A build that adds
 a fourth means registering the country and writing its branch in the street normalizer in the same commit,
 which is why the list grows one considered country at a time.
 
@@ -218,7 +218,7 @@ mkdir -p "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik"
 curl -sL -o "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf" \
   "https://download.geofabrik.de/europe/france/corse-latest.osm.pbf"
 
-node packages/osm/out/scripts/build-rooftop-database.js \
+node packages/osm/out/tools/build-rooftop-database.js \
   --country fr --slug corse --release 260803 \
   --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
 ```
@@ -240,7 +240,7 @@ inventing a street, and that count is the input to the fix: rerun with `--recove
 attaches each orphan to the nearest named highway within 30 m.
 
 ```bash
-node packages/osm/out/scripts/build-rooftop-database.js \
+node packages/osm/out/tools/build-rooftop-database.js \
   --country fr --slug corse --release 260803 --recover \
   --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
 ```

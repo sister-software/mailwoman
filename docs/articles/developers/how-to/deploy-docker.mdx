@@ -12,7 +12,7 @@ from outside the image, and you know when to build your own image instead of pul
 
 The image installs the published `@mailwoman/*` packages from npm and includes the model weights. The
 gazetteer is kept out of the image because it is 2.88 GB or larger and changes on a different schedule
-from the code. It mounts read-only at `/data`. Parsing works without any volume.
+from the code. It mounts read-only at `/data`. The parser works without any volume.
 
 **How this page was verified.** Docker is not installed on the machine these docs are written on, so no
 container was built or run for this page. Every command below comes from the repository files that
@@ -40,7 +40,7 @@ curl -s -X POST localhost:3000/v1/parse \
   -d '{"address":"350 5th Ave, New York, NY 10118"}'
 ```
 
-Parsing answers immediately because the weights are in the image. `/v1/geocode` and `/v1/batch` return a
+The parser answers immediately because the weights are in the image. `/v1/geocode` and `/v1/batch` return a
 `503` with `{"error":"geocoder not available"}` instead of crashing, so a first run needs no data.
 
 **Check the tag before you depend on it.** As of 2026-08-04 the GHCR tag list is `7.3.0` and `latest`,
@@ -95,7 +95,7 @@ The same image includes the three compatible servers. Override the command:
 # Nominatim-compatible — /search /reverse /status, port 8080
 docker run --rm -p 8080:8080 -v /path/to/data:/data:ro \
   ghcr.io/sister-software/mailwoman:latest \
-  node node_modules/@mailwoman/nominatim/out/cli.js serve
+  node node_modules/@mailwoman/nominatim/out/cli/main.js serve
 ```
 
 The image's built-in health check targets `:3000/health`. If you override the command without
@@ -187,7 +187,7 @@ claim from step 1 that parsing works without a volume.
 One behavior contradicts what the fallback suggests. If `$MAILWOMAN_CANDIDATE_DB` points to a file that
 does not exist, discovery does **not** fall through to the default path. It stops at the first position
 that is set and reports that no gazetteer was found. A stale `-e` flag therefore turns a correctly mounted
-volume into a container with geocoding off. This was measured with the same server on `8.7.0`. Setting
+volume into a container with geocoding off. This was measured with the same server on `8.7.0`. Set
 the variable to `/data/db/wof/candidate.db` without a volume produces the transcript above, even when
 `/tmp/mw-fresh-demo/db/wof/candidate.db` exists.
 

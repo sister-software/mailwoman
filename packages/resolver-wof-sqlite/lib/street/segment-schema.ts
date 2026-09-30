@@ -30,7 +30,7 @@ export interface StreetSegmentTable {
 	/**
 	 * `canonicalizeRouteKey(normalizeStreetForKey(street))`, the build/query-consistent probe key.
 	 *
-	 * The column name says `street_norm`, but the value carries the route fold on top of the street fold.
+	 * The column name is `street_norm`, but the value includes the route fold on top of the street fold.
 	 * The value therefore uses the {@link RouteKey} brand.
 	 *
 	 * The builder and probe apply both folds.

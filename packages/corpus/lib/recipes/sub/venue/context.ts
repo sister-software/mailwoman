@@ -38,7 +38,7 @@ const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 
 /**
  * Load the address skeletons every leg renders onto: GB / US / FR from the house-venue v3 tuples
- * (the same 176,519 real rows the `synth-house-venue` recipe output is built from, so the two
+ * (the same 176,519 real rows the `invented-house-venue` recipe output is built from, so the two
  * recipes' address halves are drawn from one pool), DE and ES streamed out of OpenAddresses.
  */
 export async function loadContextTuples(
@@ -107,7 +107,7 @@ export interface StreetNegatives {
 }
 
 /**
- * Shortest token that can carry a `-gate` street suffix and still be a name rather than the bare word:
+ * Shortest token that can take a `-gate` street suffix and still be a name rather than the bare word:
  * `gate` itself is four characters, so the class starts at five (`Highgate`, `Moorgate`, `Stonegate`).
  */
 const MIN_GATE_SUFFIX_TOKEN_LENGTH = 5

@@ -7,13 +7,9 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import {
-	parseGoldenLine,
-	unreachableComponents,
-	validateGoldenDir,
-	validateGoldenFile,
-} from "@mailwoman/corpus/utils/golden"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
+import { parseGoldenLine, unreachableComponents, validateGoldenDir, validateGoldenFile } from "#utils/golden"
 
 const goldenDir = repoRootPath("data", "eval", "golden", "v0.1.0")
 

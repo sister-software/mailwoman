@@ -32,7 +32,7 @@ This layer deliberately does **not** expand abbreviations at runtime. `normalize
 
 ### Layer 2 — model-side case normalization
 
-Some noise is too locale-sensitive for Layer 1 but too systematic to leave to the corpus. Casing is the main example. A model trained on mixed-case text is partly out of domain on an all-caps compliance record, where it drops tokens and sets wrong span boundaries. For example, `214 JONES RD, ELKHART, TX 75839` produced a locality of `ALESTINE`. `neural/case-normalize.ts` therefore title-cases an all-caps input before the model sees it (#690), and it restores the trained mixed-case form of an all-lowercase input (#829). Both are on by default.
+Some noise is too locale-sensitive for Layer 1 but too systematic to leave to the corpus. The main example is casing. A model trained on mixed-case text is partly out of domain on an all-caps compliance record, where it drops tokens and sets wrong span boundaries. For example, `214 JONES RD, ELKHART, TX 75839` produced a locality of `ALESTINE`. For this reason, `neural/case-normalize.ts` title-cases an all-caps input before the model sees it (#690) and restores the trained mixed-case form of an all-lowercase input (#829). Both are on by default.
 
 The detection is deliberately strict. Only an input that is entirely uppercase or entirely lowercase qualifies, so ordinary mixed-case text passes through with an identical byte path. The transform must also keep offsets stable. It handles only pure-ASCII input, because title-casing accented or non-Latin text can change length (`ß`→`SS`, the Turkish dotted and dotless I) and break the offset mapping that Layer 1 preserves. Measured on TX HHSC data, locality recall went from 90.1% to 99.7%.
 
@@ -58,7 +58,7 @@ The check has three relation families, separated by how much a perturbation may 
 
 When a perturbation fails deterministically, it goes in `KNOWN_INV_XFAIL` or `KNOWN_BAND_XFAIL` with a tracking note. The failure stays visible without blocking the build, so the check fails only on _new_ regressions. An xfail that starts passing is flagged for removal. This prevents the list from growing stale the way Pelias's pass-list did, which this design was built to avoid.
 
-Casing and spacing pass. The two normalizer changes above (#829's lowercase restore and the trailing-punctuation trim) fixed them without retraining. The EN suffix abbreviations also pass. The tracked xfails cover the rest:
+The casing and spacing checks pass. The two normalizer changes above (#829's lowercase restore and the trailing-punctuation trim) fixed them without retraining. The EN suffix abbreviations also pass. The tracked xfails cover the rest:
 
 - The FR `Boulevard`→`Bd` swap drops from rooftop to admin tier. The street gazetteer stores the expanded type, so the abbreviation misses the point-tier name match. The gap is in the resolver rather than the model.
 - House-number spelling falls outside the band.
@@ -72,7 +72,7 @@ The golden set (`data/eval/golden/v0.1.2`) includes a small hand-labeled adversa
 
 ### `perturb-golden.ts` — the one-off arena
 
-`packages/mailwoman/lib/dev-tools/perturb-golden.run.ts` takes golden rows and applies perturbations designed to break rule-based parsers, such as stripping the delimiters, lowercasing everything, or joining the region to the postcode as `OR97214`. It keeps the component labels intact. Its purpose is to show that a contextual model degrades more gracefully than a rule parser that depends on delimiters. It is a generator you run on demand. No standing check runs it.
+`packages/mailwoman/tools/dev-tools/perturb-golden.run.ts` takes golden rows and applies perturbations designed to break rule-based parsers, such as stripping the delimiters, lowercasing everything, or joining the region to the postcode as `OR97214`. It keeps the component labels intact. Its purpose is to show that a contextual model degrades more gracefully than a rule parser that depends on delimiters. It is a generator you run on demand. No standing check runs it.
 
 ## The coverage matrix
 
@@ -80,14 +80,14 @@ The table maps each perturbation class to the layers that handle it and the chec
 
 | Class                                        | `normalize/` (runtime)                     | Trained (corpus aug) | Conditional                                                                                               |
 | -------------------------------------------- | ------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------- |
-| Casing                                       | yes (case-normalize #690/#829, model-side) | yes                  | INV[lower/upper] green                                                                                    |
-| Spacing                                      | yes (whitespace.ts)                        | incidental           | INV[ws], INV[comma-tight] green                                                                           |
+| Case normalization                           | yes (case-normalize #690/#829, model-side) | yes                  | INV[lower/upper] green                                                                                    |
+| Whitespace                                   | yes (whitespace.ts)                        | incidental           | INV[ws], INV[comma-tight] green                                                                           |
 | Abbreviation swap (Road↔Rd)                  | capable but off at runtime (deliberate)    | yes                  | INV[abbrev]: EN suffixes green; FR `Bd` tracked-xfail (resolver name-match gap)                           |
 | Number spelling (5th↔Fifth, 100↔One Hundred) | no                                         | no                   | BAND[num-ordinal] green; BAND[num-house] tracked-xfail (untrained)                                        |
 | Typos (single-char edit)                     | no                                         | no                   | BAND[typo-sub]: most bases green; tracked-xfail where a typo'd locality/street loses the pin (anchor-off) |
 | Transpositions                               | no                                         | no                   | BAND[transpose]: same anchor-off gaps as typo-sub                                                         |
 
-Casing and spacing are resolved. The runtime handles them, the corpus reinforces them, and a standing invariant passes on them. The bottom four rows used to be untested. They now run through the metamorphic check, and several of them already pass. The EN suffix abbreviations pass the strict one-meter invariant. Ordinal street spelling (`5th`↔`Fifth`) stays inside the tolerance band even though no training data covers it. The gaps were smaller than expected, and the xfail maps list each one:
+The casing and spacing checks pass. The runtime handles them, the corpus reinforces them, and a standing invariant passes on them. The bottom four rows used to be untested. They now run through the metamorphic check, and several of them already pass. The EN suffix abbreviations pass the strict one-meter invariant. Ordinal street spelling (`5th`↔`Fifth`) stays inside the tolerance band even though no training data covers it. The gaps were smaller than expected, and the xfail maps list each one:
 
 - a French street-type abbreviation that the resolver cannot match at rooftop tier
 - house-number spelling

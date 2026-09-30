@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The deployed page is the real runtime, so anything the fake path alone carries renders nowhere a visitor can see; `status` is the only thing the two paths may differ by.
+ *   The deployed page is the real runtime, so anything present only in the fake path renders nowhere a visitor can see; `status` is the only thing the two paths may differ by.
  */
 
 import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
@@ -44,8 +44,9 @@ const ATTRIBUTION = [
 
 export interface EarthFooterProps {
 	/**
-	 * Which artifact is loading, since the progress bar only says how far along.
-	 * Absent on the canned runtime, which loads no artifact.
+	 * Which artifact is loading, since the progress bar only reports progress.
+	 *
+	 * The canned runtime loads no artifact, so this component is absent there.
 	 */
 	status?: ReactNode
 }

@@ -84,7 +84,7 @@ const weights = {
 	 */
 	line: 12,
 	/**
-	 * Breaking with a parenthesis still open.
+	 * The formatter can break the line while a parenthesis remains open.
 	 * Buys roughly 17 columns of overrun.
 	 */
 	parenSplit: 1200,
@@ -93,7 +93,7 @@ const weights = {
 	 */
 	clause: -130,
 	/**
-	 * Starting a line with a dash, so an em dash stays with the clause it followed.
+	 * A line can start with a dash, so an em dash stays with the clause it followed.
 	 */
 	danglingDash: 700,
 	/**
@@ -105,8 +105,7 @@ const weights = {
 	 */
 	orphanColumns: 24,
 	/**
-	 * A trailing sentence shorter than this many characters joins the paragraph
-	 * before it rather than standing alone.
+	 * The formatter joins a trailing sentence shorter than this many characters to the paragraph before it.
 	 */
 	orphanParagraph: 60,
 } as const
@@ -174,30 +173,74 @@ function balancedEnd(text: string, start: number, open: string, close: string, q
 	return undefined
 }
 
+const SPACE = " ".charCodeAt(0)
+const TAB = "\t".charCodeAt(0)
+const LINE_FEED = "\n".charCodeAt(0)
+const CARRIAGE_RETURN = "\r".charCodeAt(0)
+
+/**
+ * The highest ASCII code.
+ *
+ * Every whitespace character above it is left to the `\s` class.
+ */
+const LAST_ASCII = 127
+
+/**
+ * Whether the character at `index` is whitespace.
+ *
+ * The four ASCII separators answer without a regex, because this tokenizer asks
+ * on every character of every comment.
+ * Any other character keeps the `\s` class's answer.
+ */
+function isWhitespaceAt(text: string, index: number): boolean {
+	const code = text.charCodeAt(index)
+
+	if (code === SPACE || code === TAB || code === LINE_FEED || code === CARRIAGE_RETURN) return true
+
+	return code > LAST_ASCII && /\s/.test(text[index]!)
+}
+
+/**
+ * The words of `text`, split on whitespace.
+ *
+ * Whitespace inside a backtick span, an inline `{@tag}` or a bracketed link stays inside its word.
+ * A word is always a contiguous slice of `text`, so the tokenizer tracks
+ * where each began and slices once at its end.
+ *
+ * The result is `undefined` when a span or a bracket is left open.
+ */
 function words(text: string): string[] | undefined {
 	const result: string[] = []
-	let word = ""
+	let wordStart = -1
 
 	for (let i = 0; i < text.length;) {
-		const character = text[i]!
-
-		if (/\s/.test(character)) {
-			if (word) {
-				result.push(word)
+		if (isWhitespaceAt(text, i)) {
+			if (wordStart !== -1) {
+				result.push(text.slice(wordStart, i))
+				wordStart = -1
 			}
-
-			word = ""
 
 			i++
 
 			continue
 		}
 
+		if (wordStart === -1) {
+			wordStart = i
+		}
+
+		const character = text[i]!
 		let end: number | undefined
 
 		if (character === "`") {
-			const delimiter = /^`+/.exec(text.slice(i))![0]
-			const close = text.indexOf(delimiter, i + delimiter.length)
+			let delimiterEnd = i + 1
+
+			while (text[delimiterEnd] === "`") {
+				delimiterEnd++
+			}
+
+			const delimiter = text.slice(i, delimiterEnd)
+			const close = text.indexOf(delimiter, delimiterEnd)
 
 			if (close === -1) return undefined
 			end = close + delimiter.length
@@ -217,18 +260,11 @@ function words(text: string): string[] | undefined {
 			}
 		}
 
-		if (end) {
-			word += text.slice(i, end)
-			i = end
-		} else {
-			word += character
-
-			i++
-		}
+		i = end ?? i + 1
 	}
 
-	if (word) {
-		result.push(word)
+	if (wordStart !== -1) {
+		result.push(text.slice(wordStart))
 	}
 
 	return result
@@ -601,7 +637,7 @@ function isStructure(line: string) {
 		/(?: {2}|\\)$/.test(line) ||
 		/^\s*type\s+[\w$]+(?:\s*<.*>)?\s*=/.test(line) ||
 		// A section marker identifies what follows without stating a behavior. `concise-section-marker`
-		// caps its label at 60 characters. Joining the sentence under one onto it breaks that cap.
+		// caps its label at 60 characters. The formatter would exceed that cap if it put the sentence under the marker on the same line.
 		/^\s*MARK:/.test(line) ||
 		// `{@link …}` opens a description rather than an object literal, so the brace test excludes an inline tag.
 		/^\s*(?:const |let |var |function |class |import |export |return |if\s*\(|\/\/|\{(?!@)|\})/.test(line) ||
@@ -631,7 +667,7 @@ function reflowText(
 	const output: string[] = []
 	let fence: { marker: string; length: number } | undefined
 	let opaqueTag = false
-	// The block's opening paragraph is the one whose lead sentence stands alone.
+	// The block's opening paragraph contains the lead sentence by itself.
 	let leadPending = true
 
 	for (let i = 0; i < lines.length;) {
@@ -814,7 +850,7 @@ function limitsFor(options: Required<ReflowOptions>, overhead: number): WrapLimi
 }
 
 /**
- * A comment that says its piece in one sentence on one line within `printWidth` is left as it is.
+ * A comment that expresses its point in one sentence on one line within `printWidth` is left as it is.
  *
  * Two sentences on one line are the shape the rule exists to undo, whatever the width.
  */
@@ -873,7 +909,7 @@ export function reflowBlockComment(
 	let plainPrefix: string | undefined
 
 	if (original.length === 1) {
-		// Expanding single-line metadata or examples can change parser semantics.
+		// The formatter preserves single-line metadata and examples because expansion can change parser semantics.
 		if (body.includes("@") || /`{3}|~{3}/.test(body)) return raw
 
 		if (sourceLineWidth <= options.printWidth && splitSentences(body.trim()).length <= 1) return raw

@@ -4,7 +4,7 @@ sidebar_label: Switching from OpenCage
 description: OpenCage's annotations block, self-hosted without an API key or a per-request fee.
 ---
 
-# Switching from OpenCage
+# Migrate from OpenCage
 
 [OpenCage](https://opencagedata.com) is easy to use. It provides forward and reverse geocoding, and every result includes a detailed `annotations` block with timezone, coordinate formats, calling code, currency, flag, and more. It is also a hosted API, so you have to keep an API key secret and pay a per-request bill that grows with your usage.
 
@@ -45,7 +45,7 @@ The `annotations` keys match OpenCage's (`DMS`, `Maidenhead`, `Mercator`, `timez
 
 ## What's missing
 
-- **Annotation coverage is incomplete.** Shipped annotations are coordinate formats (DMS, geohash, Maidenhead, Mercator, qibla), flag, ISO, and the IANA timezone with a DST-correct offset. Calling code, currency, UN/LOCODE, and NUTS are planned. what3words is proprietary and out of scope.
+- **Annotation coverage is incomplete.** Shipped annotations are coordinate formats (DMS, geohash, Maidenhead, Mercator, qibla), flag, ISO, and the IANA timezone with a DST-correct offset. The team plans calling code, currency, UN/LOCODE, and NUTS. what3words is proprietary and out of scope.
 - **Aggregated coverage.** OpenCage combines several backends, so it can resolve some places that Mailwoman cannot yet. Where that matters, combine OpenCage's multi-service guidance with Mailwoman as a [free first pass](../recipes/multi-service-geocoding.md).
 
 See [how Mailwoman compares](./how-mailwoman-compares.mdx) for the capability matrix, and [Switching from Nominatim](./switching-from-nominatim.mdx) for the full endpoint interface.

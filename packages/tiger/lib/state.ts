@@ -481,7 +481,7 @@ export type TerritoryAbbreviation = (typeof TerritoryAbbreviation)[keyof typeof 
 export type AdminLevel1Abbreviation = StateAbbreviation | TerritoryAbbreviation
 
 /**
- * Every admin-level-1 postal abbreviation — the fifty states, DC, and the territories together.
+ * Every admin-level-1 postal abbreviation — the fifty states, DC and the territories together.
  */
 export const AdminLevel1Abbreviation = {
 	...StateAbbreviation,

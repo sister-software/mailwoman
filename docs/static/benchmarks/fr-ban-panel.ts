@@ -20,7 +20,7 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from <DATA_ROOT>/db/wof/candidate.db and the BAN extract from <DATA_ROOT>/db/ban/address-points-fr.db.
 
 import { banDatabaseRoot } from "@mailwoman/ban/paths"
-import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
+import { BANRegionDatabaseProvider } from "@mailwoman/ban/region-database-provider"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -98,7 +98,8 @@ if (!dataRoot) {
 	// oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset
 	process.exit(1)
 
-	// Throwing states the branch's end, since `process.exit` is typed `never` only when the checker can see it.
+	// This throw satisfies the control-flow check because the checker sees
+	// `process.exit` as `never` only in some contexts.
 	throw new Error("unreachable")
 }
 

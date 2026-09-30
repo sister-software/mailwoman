@@ -1,0 +1,402 @@
+{
+	"$comment": "Source fields a review resolved by reading a publisher's data, applied by `buildSourceRegister` over the rows it derives from the research CSV. An input to the build rather than an edit of its output, for the same reason as `license-decisions.json`: the build rewrites the register whole, so a field recorded in the output is erased by the next run with no error and a normal-looking count.",
+	"$whyNotTheCSV": "The research CSV records `address_role`, `coverage` and `upstream` as the placeholders `varies`, `country-specific` and the empty string on all 389 of its non-rail rows, and has no column for a personal-data review. That CSV is the record of what one research pass found on 2026-09-18, so a later review records its own findings here rather than by rewriting the pass's record.",
+	"$shape": "Each key is a `sourceID` the register declares. Each value carries any of `addressRoles`, `coverage`, `upstreamLineage` and `personalDataReview`, which replace the derived row's values. See `@mailwoman/corpus/source-register`'s `AddressSourceRecord`.",
+	"$addressRoles": "Keyed by the address column's path in the published record, because a publication can carry two roles on one record. `ingestEligibilityProblems` requires at least one column to have a role.",
+	"$upstreamLineage": "The endpoint or dataset this source's copy was taken from, so two register rows fed by one upstream submission count as one observation rather than two. A URL when the upstream is not itself a register row.",
+	"$sireneRepetition": "Nine rows below are one source, INSEE's SIRENE establishment register, split by overseas territory. The fields repeat because the register carries one row per jurisdiction and each row's coverage statement is about that territory, while the column layout and the diffusion mechanism are SIRENE's and identical throughout.",
+	"$sireneSecondAddress": "SIRENE's establishment file carries a second address family, the `2`-suffixed columns, which INSEE labels only `adresse secondaire` — `complementAdresse2Etablissement` reads `Complément d'adresse secondaire`. What role that address plays is unstated, so it takes no entry in `addressRoles` rather than a guessed one, and the coverage text names it so a reader knows the column exists.",
+	"$ocdsPartyRoles": "An OCDS release keys its addresses by party role, so `addressRoles` names roles rather than columns for those sources. A role is assigned only where OCDS's own codelist defines it, retrieved from `https://standard.open-contracting.org/1.1/en/codelists/partyRole.csv`: `buyer`, `procuringEntity`, `payer`, `funder` and `reviewBody` are bodies acting in the process, so their address is an office they operate and reads `facility`; `supplier` and `tenderer` are the transacting party, so theirs reads `counterparty`. Germany's release also uses eight roles from an extension whose codelist neither the 1.1 nor the latest list defines — `processContactPoint`, `reviewContactPoint`, `submissionReceiptBody`, `mediationBody`, `evaluationBody`, `procurementServiceProvider`, `leadTenderer`, `subcontractor` — and those take no role here rather than a guessed one.",
+	"resolutions": {
+		"es-mixed-regulatory-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Dirección General del Catastro, reached through the ATOM download service at `https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml`, 681,783 bytes, sha256 `4342d37b6d5527eb7b8bebadc97966c90f1a041068ae9398b90183f2176898b9`, carrying `<updated>2026-08-21T00:00:00Z</updated>`. The feed lists 55 entries, and this row covers 52 of them. The other three belong to the Provincial Councils of Bizkaia, Gipuzkoa and Navarra, which publish their own cadastres through the same feed and state their own terms, `CC BY 3.0 ES`, `CC-BY-SA` and `CC BY 4.0`. Adding them needs a row each, because a decision scoped to one publisher cannot reach another. Each of the 52 entries links a province feed listing one zipped GML per municipality. The measured instance is Ceuta, `A.ES.SDGC.AD.55101.zip`, 354,647 bytes, whose one member `A.ES.SDGC.AD.55101.gml` is 11,861,975 bytes and holds 8,126 `AD:Address` features. A feature is a point at a building entrance carrying a house-number designator, and it references a thoroughfare name, a postal descriptor and an administrative unit by `xlink:href`. The row count for the other 51 offices was not measured.",
+			"upstreamLineage": [
+				"https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml",
+				"http://www.catastro.hacienda.gob.es/INSPIRE/Addresses/55/ES.SDGC.AD.atom_55.xml",
+				"https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/55/55101-CEUTA/A.ES.SDGC.AD.55101.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `A.ES.SDGC.AD.55101.gml` was counted over all 11,861,975 bytes, so this covers the file rather than its first features. It holds 48 distinct element names and none of them names a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name of any kind. The only names are 505 `AD:ThoroughfareName`, 5 `AD:PostalDescriptor` and 1 `AD:AdminUnitName`. The file declares the INSPIRE Addresses 3.0 schema at `urn:x-inspire:specification:gmlas:Addresses:3.0`, which has no party element for another municipality to populate, so the reading rests on the schema as well as on the one municipality read. This is what separates the row from the other 25 `verified-corpus` sources: each of those is a business register or a procurement portal where the address belongs to a party, and some of those parties are natural persons trading on their own account. The cadastre's AD theme records the place. The ownership data that Spanish cadastral records also hold travels through a separate protected channel and appears nowhere in this dataset."
+			}
+		},
+		"dk-property-building-1": {
+			"addressRoles": {
+				"address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Klimadatastyrelsen, reached through the ATOM download service at `https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml`, 3,130 bytes, sha256 `5a32be44b186586dbef5efa24bd200b3d2d85afebb74172250f5dd977d3ddbea`. Denmark serves this theme as a GeoPackage rather than as GML, which is why `addressRoles` is keyed by a table name instead of an element name. The feed holds one entry covering the whole country. Its dataset is `DK_INSPIRE_Addresses.zip`, 101,406,038 bytes, sha256 `0b4e13e27307659ac64065e8f67301b4eb649faa35e6e29f8f443f51c91c5141`, whose member `ad_inspire.gpkg` is 391,258,112 bytes. The database declares five tables in `gpkg_contents`: `address` with 599,999 rows, `thoroughfarename` with 112,488, `addressareaname` with 7,840, `postaldescriptor` with 1,089 and `adminunitname` with 105. **Treat 599,999 as a possible export cap rather than as Denmark's address count**: it is one short of a round 600,000, and the national address register holds several times that. Establishing the true extent means asking the publisher or finding a second distribution. Two reader notes. The feed writes its one entry as `<entry xml:lang=\"da\">`, so a reader matching a bare `<entry>` finds none. And the Atom entry's href returns the weblink's listing page; the file needs `&realfilename=DK_INSPIRE_Addresses.zip` appended.",
+			"upstreamLineage": [
+				"https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml",
+				"https://ftp.sdfe.dk/main.html?download&weblink=39593534f26800b910ef341fa8ec6aec&realfilename=DK_INSPIRE_Addresses.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every column of every table the GeoPackage declares was listed, so this covers the database's whole schema rather than a sample of its rows. The five tables carry 39, 16, 15, 15 and 15 columns, and none of the 100 identifies a party: there is no owner, holder, occupant or contact column, and no personal name. Every column of the `address` table is INSPIRE address structure, being an identifier, a lifespan date, a position, a locator designator, or a reference to a thoroughfare name, postal descriptor, administrative unit, parcel or building. One value invites a misreading: `position_method` reads `byotherparty`, which is an INSPIRE codelist term for how the position was determined rather than a reference to a party. The schema is the INSPIRE Addresses model, which has no party element."
+			}
+		},
+		"sk-property-building-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Ministerstvo vnútra Slovenskej republiky, reached as a WFS 2.0 download service at `https://rageo.minv.sk/geoserver/ad/wfs`. The service publishes all five AD feature types and advertises `ImplementsResultPaging`, so a build pages each type rather than downloading a file. Measured 2026-10-01, `resultType=hits` past index 0 reports 1,704,196 `ad:Address` features, 29,315 `ad:ThoroughfareName`, 3,015 `ad:AdminUnitName`, 1,769 `ad:AddressAreaName` and 1,415 `ad:PostalDescriptor`, and a page of each type agreed with its count. The register record states a national spatial scope and a `footprint_geo` of `Slovenská Republika` at a 100% match. Two reader notes. This service answered one `resultType=hits` request of nine with no `numberMatched` attribute and the other eight with `1704196`, so a caller reads that response as unusable and retries rather than recording a count. And an address references its components through a stored-query URL whose `id` parameter carries the target's feature id, of which 15 of 23 on a page of five addresses joined against the first 1,000 features of each component type, the remaining 8 addressing features past those pages.",
+			"upstreamLineage": [
+				"https://rageo.minv.sk/geoserver/ad/wfs",
+				"https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all five feature types was listed, over 40 features each: 10 on `ad:Address`, 10 on `ad:AdminUnitName`, 8 on `ad:AddressAreaName`, 8 on `ad:PostalDescriptor` and 8 on `ad:ThoroughfareName`. None of the 44 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan or validity date, a status, a position, a locator, a name, a postcode or a component reference. `AD:LocatorName` is the element that needs its own statement, because it is free text of type `GeographicalName` and the one way a family name or a business name reaches an INSPIRE address. This service omits it structurally: its `locator` object carries `designator` and `level` and no `name` key at all, and the designator values are address numbers typed `LocatorDesignatorTypeValue/addressNumber`. The sampled measurement agrees, at 0 of 800 addresses over 40 windows spread across the 1,704,196. The traversal was checked against Estonia, which populates the element on every address, to establish that a reader finding nothing here is reading a service that writes nothing rather than failing to look: Estonia flattens the path to `locator_addresslocator_name_locatorname_name_spelling_text` while Slovakia nests it, so each service needs its own traversal and a single reader run against both would have reported one of them wrongly."
+			}
+		},
+		"be-property-building-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of agentschap Digitaal Vlaanderen, reached as a WFS 2.0 download service at `https://geo.api.vlaanderen.be/ad/wfs`. **Coverage is the Flemish Region rather than Belgium**: Brussels and Wallonia publish the theme through their own services, so this row is one of three a Belgian build needs. Measured 2026-09-30, `resultType=hits` past index 0 reports 4,563,062 `ad:Address` features, and a page of the type agreed with that count. A bare hits request without a `startIndex` reports 10000 instead, which is a per-request cap rather than a count, so this service must be asked past index 0. It publishes four of the five AD feature types, omitting `ad:AddressAreaName`, and the component types report their own counts separately. An address references its components by the identifier URI its component features publish in `identifier`, such as `https://data.vlaanderen.be/id/straatnaam/6301`, which joins locally. On a page of five addresses, 5 of the 20 references instead address `http://vocab.belgif.be/auth/refnis1995/1000#id`, a term in the Belgian NIS vocabulary, so those administrative-unit components live outside this service and an address carrying one is complete at its source rather than incomplete here.",
+			"upstreamLineage": [
+				"https://geo.api.vlaanderen.be/ad/wfs",
+				"https://metadata.vlaanderen.be/srv/dut/csw?request=GetRecordById&service=CSW&version=2.0.2&ElementSetName=full&id=5c52b299-8f05-4d35-9839-a42934f1e619&OUTPUTSCHEMA=http://www.isotc211.org/2005/gmd"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all four feature types was listed, over 40 features each: 9 on `ad:Address`, 8 on `ad:AdminUnitName`, 8 on `ad:PostalDescriptor` and 7 on `ad:ThoroughfareName`. None of the 32 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a validity date, a position, a locator, a name, a postcode or a component reference. `AD:LocatorName` is the element that needs its own statement, because it is free text of type `GeographicalName` and the one way a family name or a business name reaches an INSPIRE address. This service leaves it empty: 0 of 800 addresses sampled over 40 windows spread across the 4,563,062 populate it, and the `locator` carries only a `designator` and a `level`. The designator values are house numbers typed `LocatorDesignatorTypeValue/addressIdentifierGeneral`. Article 4 of the elected licence requires that a re-use not breach data-protection law, and this reading is the measurement behind that undertaking for this source."
+			}
+		},
+		"ee-property-building-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Maa- ja Ruumiamet, reached as a WFS 2.0 download service at `https://inspire.geoportaal.ee/geoserver/AD_Address/wfs`. The service publishes all five AD feature types and advertises `ImplementsResultPaging`, so a build pages each type rather than downloading a file. Measured 2026-09-30, `resultType=hits` past index 0 reports 729,973 `AD.Address` features, and a page of the type agreed with that count. The component types report 19,676 `AD.Address_ThoroughfareName`, 4,800 `AD.Address_AdminUnitName`, 638 `AD.Address_AddressAreaName` and 1,374,116 `AD.Address_PostalDescriptor`, the last of which exceeds the address count and therefore carries more than one descriptor per address. Two reader notes. This service names its types under its own prefix, `AD_Address:AD.Address` and `AD_Address:AD.Address_ThoroughfareName`, so a reader comparing the part after the colon against `Address` finds no address type here. And it advertises `application/geo+json` and answers a `GetFeature` for it with `InvalidParameterValue: Failed to find response for output format`, while the same request under `application/json` returns the features.",
+			"upstreamLineage": [
+				"https://inspire.geoportaal.ee/geoserver/AD_Address/wfs",
+				"https://metadata.geoportaal.ee/geonetwork/srv/est/csw?service=CSW&request=GetRecordById&version=2.0.2&outputSchema=http://www.isotc211.org/2005/gmd&elementSetName=full&id=b0bd266e-b4c6-45db-b7ea-f47486b6258b"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all five feature types was listed, over 40 features each: 37 on `AD.Address`, 20 on `AD.Address_AdminUnitName`, 15 on `AD.Address_ThoroughfareName`, 15 on `AD.Address_AddressAreaName` and 14 on `AD.Address_PostalDescriptor`. None of the 101 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a position, a locator, a name or a component reference. `AD:LocatorName` needs its own statement because it is free text of type `GeographicalName`, which is how a family name or a business name reaches an INSPIRE address, and this publisher populates it where the Dutch, Czech and Danish themes leave it empty: 1,200 of 1,200 addresses sampled over 60 windows spread across the 729,973, reaching 664 distinct locality paths, carry a value. Every one of those 1,200 states its `LocatorNameTypeValue` as `siteName` (829) or `buildingName` (371), which are place designations in the INSPIRE codelist, and no value takes the given-name-and-family-name shape: 0 of 1,200 carry two capitalized words, while 105 carry a hyphen. The values are Estonian farm and site names, which is how a rural Estonian address designates its addressable unit, as in `Saare maakond, Muhu vald, Raugi küla, Jüri`. Some are the genitive of a personal given name, `Jüri`, `Jaani`, `Mardi` and `Hansi` among them, which is the traditional pattern of naming a farm after a historical householder rather than a reference to the present occupant, and the compounds confirm it: `Vana-Käspri` and `Uue-Tooma` read as the old and the new holding of a named farm. No element asserts a party, states a surname, or carries a person identifier."
+			}
+		},
+		"nl-property-building-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Kadaster, reached through the ATOM download service at `https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml`, 2,247 bytes, sha256 `36c587f04c6c4e57c71fd03ff253d85df3c8d796b9c12c26159dda1e0262effe`. The feed holds one entry covering the whole country rather than one per municipality, so this row's coverage is national and measured rather than inferred from a sample. That entry is `https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz`, 819,465,603 bytes, sha256 `7ea1e45ee200327468eab8c8089a46ad99c334606cae19df7ba334cfae34cd5f`, which expands to 29,677,448,685 bytes of GML holding **10,066,060 address features**. That is the largest measured address count of any source in this register.",
+			"upstreamLineage": [
+				"https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml",
+				"https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in the decompressed GML was counted over all 29,677,448,685 bytes, read as a stream, so this covers the whole country rather than a sample of it. The file holds 49 distinct element names across 10,066,060 address features, and none of them identifies a party: there is no owner, holder, occupant or contact element, and no personal name. The four names outside the address, geographical-name and geometry vocabulary are `identifier`, `nameParts`, `PartOfName` and `part`, and the last three are the INSPIRE structure that splits a thoroughfare name into its components. The file follows the INSPIRE Addresses schema, which has no party element."
+			}
+		},
+		"cz-property-building-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Czech Office for Surveying, Mapping and Cadastre, reached through the ATOM download service at `https://atom.cuzk.gov.cz/AD/AD.xml`, 8,373,817 bytes, sha256 `9b1d51a721ab601fa74307cce5ce20f74d12dd29512f87be29cd1072f0a2d83b`. The feed lists 6,258 entries, one dataset feed per municipality, and each dataset feed offers the same data in two projections, EPSG:5514 and EPSG:4258. The measured instance is the first entry, municipality 584061, whose EPSG:5514 archive is 25,248 bytes and whose one member `584061.xml` is 1,164,835 bytes holding 304 address features. The other 6,257 municipalities were not measured, and 304 features in one municipality is too small a sample to estimate the country's total from. The archive's central directory records the member size as `0xFFFFFFFF`, which is the ZIP64 sentinel rather than the real length.",
+			"upstreamLineage": [
+				"https://atom.cuzk.gov.cz/AD/AD.xml",
+				"https://atom.cuzk.cz/AD/datasetFeeds/CZ-00025712-CUZK_AD_584061.xml",
+				"https://services.cuzk.gov.cz/gml/inspire/ad/epsg-5514/584061.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `584061.xml` was counted over all 1,164,835 bytes, so this covers the file rather than its first features. It holds 53 distinct element names across 304 address features, and none of them identifies a party: there is no owner, holder, occupant or contact element, and no personal name. The four names outside the address, geographical-name and geometry vocabulary are `member`, `SpatialDataSet`, `identifier` and `metadata`, each of which describes the document rather than a person. The scope is one municipality of 6,258; the reading extends to the rest through the INSPIRE Addresses schema, which has no party element for another municipality to populate."
+			}
+		},
+		"es-mixed-regulatory-3": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Diputación Foral de Bizkaia, reached through the ATOM download service at `https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml`, 119,029 bytes, sha256 `a832721d87e987dd8aef9fe425cf1c6d3bd20afc441bbb69af10a3dbd777efc4`. The feed lists 112 municipality entries, one zipped GML each, and this row covers all 112. The measured instance is the first, `ES.BFA.AD.001.zip` for 48001 Abadiño, 108,613 bytes, whose one member `ES.BFA.AD.gml` is 5,902,666 bytes and holds 1,357 address features. The feature count for the other 111 municipalities was not measured. Bizkaia publishes this theme itself; Catastro's national feed links it rather than serving it, which is why it is a row of its own.",
+			"upstreamLineage": [
+				"https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml",
+				"https://apli.bizkaia.eus/apps/Danok/INSPIRE/ES.BFA.AD.001.zip",
+				"https://apli.bizkaia.eus/apps/Danok/INSPIRE/inspireBizkaiaAtomMetadata.xml"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `ES.BFA.AD.gml` was counted over all 5,902,666 bytes, so this covers the file rather than its first features. It holds 49 distinct element names across 1,357 address features, and none of them is a party element: there is no owner, holder, `titular`, occupant or contact element. **`AD:LocatorName` needs its values read rather than its name counted.** The INSPIRE Addresses guideline types it as a free-text `GeographicalName` and states that it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Bizkaia populates it on 1,357 of 1,357 features, and every value read is an internal cadastral reference rather than a name: they take the form `48 001 CL\\TRAÑAETXOSTE(00066) 004`, which concatenates the municipality code 48001, a street-type abbreviation, the street name, its cadastral code and the house number. All 1,357 are distinct and each restates the address's own components. No value names a person."
+			}
+		},
+		"es-mixed-regulatory-4": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Diputación Foral de Gipuzkoa, reached through the ATOM download service at `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml`, 4,469 bytes, sha256 `27769a3cc85aacbc1bb5f9b1febc786f5433db8e6c6ad3892ba772adc58e9106`. The feed holds one entry covering the whole province rather than one per municipality, and it links its dataset through `rel=\"alternate\"` rather than `rel=\"enclosure\"`, so a reader that looks only for an enclosure finds no dataset here. That dataset, `https://b5m.gipuzkoa.eus/inspire/download/GML/ES.GFA.AD.zip`, is 7,959,103 bytes, and its one member `ES.GFA.AD.gml` is 313,162,472 bytes holding 68,744 address features. The feed states the refresh cadence as weekly and the reference system as EPSG:3042. This is the whole published extent rather than a sample of it.",
+			"upstreamLineage": [
+				"https://b5m.gipuzkoa.eus/inspire/download/addresses.xml",
+				"https://b5m.gipuzkoa.eus/inspire/download/GML/ES.GFA.AD.zip",
+				"https://b5m.gipuzkoa.eus/metadata_inspire/ES.GFA.AD.MD.xml"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `ES.GFA.AD.gml` was counted over all 313,162,472 bytes, so this covers the whole province rather than a sample of it. It holds 49 distinct element names across 68,744 address features, and none is a party element: there is no owner, holder, `titular`, occupant or contact element. **This source needs the `AD:LocatorName` values read, and they are the case the standard warns about.** The INSPIRE Addresses guideline types that element as a free-text `GeographicalName` and states it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Gipuzkoa populates it on 46,365 of 68,744 features, giving 30,452 distinct values, and every value read is a building name published as a Basque and Spanish pair: `Gasolinera` with `Gasolindegia`, `Ayuntamiento` with `Udaletxea`, `Pabellón` with `Pabilioia`. Many are farmhouses, `Agirre, baserria` with `Agirre, caserío` and `Etxeberri, baserria` with `Etxeberri, caserío`, and a Basque baserri name is commonly also a surname. **The reading stays `absent` because these name the building rather than its occupant.** They are carried inside `GN:GeographicalName`, with the nativeness, name-status and language structure a toponym takes, and the guideline states that a locator name is not the addressee. A corpus built from this source therefore holds a place name whose etymology may be a family name, rather than a record about an identifiable person. Reading this field was the check the element census missed: that census treated `LocatorName` as place vocabulary without opening it."
+			}
+		},
+		"es-mixed-regulatory-5": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Gobierno de Navarra, reached through the ATOM download service at `https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml`, 671,131 bytes, sha256 `6971dd61d87e2fc047e953e956b09c6cc88aaa92e16ffb3bbc4750a1edb1ab60`. The feed splits the province across 272 entries, each a zipped GML partition titled `Address Navarra` rather than named for a municipality, so a partition cannot be selected by place from the feed alone. This row covers all 272. The measured instance is partition 1, `AD_Navarra_1.gml.zip`, 7,476 bytes, whose one member `AD_Navarra_1.gml` is 307,117 bytes and holds 115 address features. The feature count for the other 271 partitions was not measured, and 115 features in the first partition is too small a sample to estimate the province's total from.",
+			"upstreamLineage": [
+				"https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml",
+				"https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/files/AD_Navarra_1.gml.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `AD_Navarra_1.gml` was counted over all 307,117 bytes, so this covers that partition rather than its first features. It holds 29 distinct element names across 115 address features, and every one of the 29 belongs to the INSPIRE address, geographical-name or geometry vocabulary. No element identifies a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name. The scope is one partition of 272; the reading extends to the rest through the INSPIRE Addresses schema, which has no party element for another partition to populate."
+			}
+		},
+		"va-finance-1": {
+			"coverage": "ASIF's list of supervised entities for the Holy See, read from `https://www.asif.va/en/list-of-supervised-entities`, which is the row's `sourceURL` since the 2026-09-30 rights review corrected it. The 2026-09-18 pass recorded `https://www.asif.va/ENG/EntiVigilati.aspx`; on 2026-09-30 that path redirected to `https://www.asif.va/en/enti-vigilati` and answered HTTP 404 with an empty body, while the corrected path answered HTTP 200. The whole page is 3,254 bytes and the list has one member, `Institute for the Works of Religion (IOR)`, named without an address. The only address on the page is ASIF's own footer, `Palazzo San Carlo, 00120 Città del Vaticano`, which belongs to the regulator rather than to a supervised entity. So the register row's note that the list `exposes the regulated entity and Vatican postal address` is not borne out, and this publication is not an address source. `addressRoles` stays unresolved because there is no address column to assign a role to.",
+			"upstreamLineage": ["https://www.asif.va/en/list-of-supervised-entities"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The list has one member and it is an institution, the Institute for the Works of Religion. The page gives no address for it and names no natural person, so a corpus built from this publication would hold no record about an identifiable person. The reading follows from the page being read in full at 3,254 bytes rather than from a sample."
+			}
+		},
+		"sj-business-legal-1": {
+			"addressRoles": {
+				"forretningsadresse": "registered-office",
+				"postadresse": "mailing",
+				"beliggenhetsadresse": "facility"
+			},
+			"coverage": "Svalbard records in Brønnøysund's Enhetsregisteret, the Central Coordinating Register for Legal Entities, reached through its open-data API. Read from Brønnøysund's own API documentation rather than from a data sample: the record carries three named address families, `forretningsadresse` the business address, `postadresse` the postal address and `beliggenhetsadresse` the location address, each with `adresse`, `postnummer`, `poststed`, `kommune`, `land` and `landkode`. Three families with three roles on one record is the richest shape of the sources measured so far. The Svalbard subset's row count is unmeasured: the API serves the national register and no count was taken over its Svalbard rows.",
+			"upstreamLineage": ["https://data.brreg.no/enhetsregisteret/api/dokumentasjon/index.html"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Enhetsregisteret registers `enkeltpersonforetak`, sole proprietorships, so a record can name a natural person and give three addresses for them. No measurement was taken over the Svalbard subset, so this reading rests on the register's composition rather than on a count, and the count is the work that would narrow it. The shape matches SIRENE's: a national business register whose sole traders are natural persons.",
+				"record": "internal/strategy/rights-receipts/seven-web-sources-2026-09-30/README.md"
+			}
+		},
+		"it-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=payer].address": "facility"
+			},
+			"coverage": "ANAC's OCDS release, Jan 2020 through Sep 2025 per the OCP Data Registry, 1,474,656 parties and 0 documents. Measured over the whole 2025 file, 3,963,957 bytes: 9,405 contracting processes and 29,823 party objects in three roles — supplier 11,075, buyer 9,381, payer 9,367. A buyer carries locality, postalCode, countryName and streetAddress on 9,381 of 9,381 rows. A payer carries a postcode on 9,355, a locality on 9,292 and a street line on 2,555. **The supplier role carries no address field at all**, so every address in this release belongs to a public body rather than to a contracting counterparty. Postcodes include the literal placeholder `N.A.`, which a reader has to treat as absent rather than as a code.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/117"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The publication names identifiable natural persons and records an address for none of them, which is what this reading turns on. Two of 11,075 supplier party names take the `Surname, Firstname` form, so `absent` would be wrong. **The supplier role carries no `address` object at all**: 0 of 11,075 supplier parties hold one, re-measured on 2026-09-30 over the whole 2025 file, 9,405 contracting processes and 29,823 party objects. Every address in the release sits on `buyer`, 9,381 of 9,381, or on `payer`, 9,359 of 9,367, and both roles are held by Italian public entities. This source's `addressRoles` names those two fields alone, so an adapter built from the register reads no supplier field. A false-positive check on the reading: 35 party objects carry both an address and an inverted `Surname, Firstname` name, and reading all 35 finds public bodies whose name holds a comma, such as `SETTORE PATRIMONIO, AMBIENTE E LAVORI PUBBLICI` and `PARCO NAZIONALE DEL CILENTO, VALLO DI DIANO E ALBURNI`. The policy this reading applies is that a corpus carries no address of an identifiable natural person and does carry the addresses of organizations.",
+				"record": "internal/strategy/personal-data-policy-2026-09-30.md, with the underlying measurement in internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"zm-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=tenderer].address": "counterparty",
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=procuringEntity].address": "facility"
+			},
+			"coverage": "ZPPA's OCDS release, Aug 2016 through May 2026 per the OCP Data Registry, 483,215 parties and 115,495 documents. Measured over the whole 2026 file, 13,244,085 bytes: 26,157 contracting processes and 62,736 party objects in four roles — tenderer 36,146, buyer 26,590, procuringEntity 26,590, supplier 5,014. A tenderer carries region, locality, countryName and streetAddress on 36,146 of 36,146 rows and a postcode on 29,982. Buyer and procuringEntity carry the same four on 26,590 of 26,590, and a sample shows one party holding both roles. A supplier carries region, locality and countryName on 5,014. The street field sometimes holds a post-office box — the Civil Aviation Authority reads `P.O.Box 50137` in `streetAddress` — so the field's grammar is mixed and a premise parser trained on it would see mailing forms.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/3"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Two measures were run and neither establishes `absent`. No supplier or tenderer name among 36,146 counterparty party objects takes the `Surname, Firstname` form. Every one of those 36,146 carries an organization identifier under scheme `ZM-PCR`, and that settles nothing about the party's kind: PACRA registers sole-proprietor business names alongside companies, so both kinds of party carry the number. Of 9,500 distinct counterparty names, 853 carry no legal-form marker, and a sole trader trading under a shop name reads as a business by every shape test — `KAVULAMUNGU BARGAIN CENTRE` and `NDANJI SHOPPING CENTRE` among them. Every counterparty role here carries a street address on 100% of rows, so the exposure is whatever share of those 9,500 are individuals, which no measure available here bounds.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"uy-procurement-grants-1": {
+			"coverage": "ARCE's OCDS release, Nov 2017 through Sep 2026 per the OCP Data Registry, 1,451,895 parties and 786,024 documents. Measured over the whole 2026 file, 17,636,512 bytes: 57,650 contracting processes and 127,885 party objects in two roles, supplier 70,235 and procuringEntity 57,650. **No party carries a non-empty address field of any kind.** So this publication is not an address source, and its `addressRoles` stays unresolved because there is no address column to assign a role to. The register row reads `verified-corpus`, which records that a bulk corpus is reachable rather than that it carries addresses.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/43"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The release carries no address field on any party, and no supplier or procuring-entity name among 70,235 counterparty party objects takes the `Surname, Firstname` form. With no address to carry, a corpus built from this release would hold no record about an identifiable natural person. The reading follows from the address measurement rather than from a separate analysis."
+			}
+		},
+		"de-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=procuringEntity].address": "facility",
+				"parties[roles=payer].address": "facility",
+				"parties[roles=funder].address": "facility",
+				"parties[roles=reviewBody].address": "facility",
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=tenderer].address": "counterparty"
+			},
+			"coverage": "The federal Procurement Office's OCDS release, Oct 2020 through Sep 2026 per the OCP Data Registry, 1,491,413 parties and 824,807 documents. Measured over the whole 2026 file, 102,848,828 bytes: 154,378 contracting processes and 315,007 party objects in **fifteen** roles — buyer 157,642, reviewBody 73,557, processContactPoint 57,216, tenderer 53,382, supplier 52,766, reviewContactPoint 34,573, submissionReceiptBody 18,797, mediationBody 8,610, procurementServiceProvider 7,445, evaluationBody 4,188, procuringEntity 3,755, funder 1,043, payer 1,013, leadTenderer 566, subcontractor 563. A reviewBody carries a locality on 73,556, a postcode on 73,539 and a street line on 65,366. A processContactPoint carries a locality and countryName on 57,216 and a street line on 55,310. A tenderer carries a locality and countryName on 52,980. Region codes are NUTS rather than names — `DED2D`, `DE91C` — and countryName is the alpha-3 `DEU`. Eight of the fifteen roles take no entry in `addressRoles`, because the extension defining them is not in the codelist this pass retrieved.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/136"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Ten of 53,940 counterparty party names take the `Surname, Firstname` form and nine carry a street line. Three are unambiguous natural persons with a residential-looking address: `Tausendfreund, Bettina` at `Neuer Markt 54, 53340 Meckenheim`, `Supervision-Roy, Jan Roy` at `Pastor-Sander-Bogen 11, 37083 Göttingen`, and `Fröschlein-Dienste, Jörg Schneider` at `Mühlstrasse 17, 01844 NEUSTADT`. The inverted-name form is a lower bound, so the true count is higher.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"cl-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=tenderer].address": "counterparty",
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=procuringEntity].address": "facility"
+			},
+			"coverage": "ChileCompra's OCDS release, Jan 2022 through May 2026 per the OCP Data Registry, 11,619,010 parties and 4,864,820 documents — the largest of the ten procurement publications. Measured over the whole 2026 file, 185,742,438 bytes: 170,410 contracting processes and 544,754 party objects in four roles — tenderer 266,559, supplier 209,702, procuringEntity 170,402, buyer 170,402. A tenderer carries a street line on 265,699 and a region on 264,579; a supplier a street line on 208,380; buyer and procuringEntity a region on 170,120 each and a street line on 164,705. **No party carries a postcode or a locality**, so the admin tail is a region name alone. Region values carry a trailing space (`Región del Biobío `) and party names are doubled around a pipe (`X | X`), both of which a reader has to normalize. The registry also serves a `2029.jsonl.gz` of 0 bytes, so a contracting process is dated four years ahead.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/144"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Two measures were run and neither establishes `absent`. Two of 374,352 counterparty party names take the `Surname, Firstname` form and both are organizations whose name holds a comma, `CEPAL, Naciones Unidas` and `Xpertis, SpA`. Every one of the 374,352 carries an identifier, 374,151 under `CL-RUT` and 201 under `CL-MP`, and the Rol Único Tributario is issued to natural persons as well as to companies, so it settles nothing about the party's kind. Of 38,271 distinct names, 17,994 carry no legal-form marker, and most of that count is the measure's own artifact: `SKY AIRLINE S A` and `GASCO GLP S A` spell `sociedad anónima` as `S A` with a space. Tenderer and supplier carry a street line on 265,699 and 208,380 rows, so the exposure is whatever share of those 38,271 are individuals, which no measure available here bounds.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"bl-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Barthélemy, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Barthélemy is inside the register's geographic perimeter. The per-territory row count is unmeasured, because the file is national and no count was taken over its Saint-Barthélemy subset. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE records an objection per row and places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A row whose `statutDiffusionEtablissement` reads `P` is diffused partially after an objection, and for a natural person `l'identité de l'entrepreneur (nom, prénoms…), l'adresse dans la commune et la géolocalisation seront masquées`. That status changes after a corpus is built, so a frozen corpus and a model trained on it keep an address INSEE has since stopped diffusing. Filtering on the status is mechanical; discharging a continuing obligation from a published artifact is the open question.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"gf-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in French Guiana, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Guyane is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"gp-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Guadeloupe, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Guadeloupe is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"mf-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Martin, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Martin is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"mq-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Martinique, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Martinique is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"pm-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Pierre-et-Miquelon, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Pierre-et-Miquelon is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"re-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Réunion, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states La Réunion is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"wf-public-administration-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE public-sector establishments in Wallis and Futuna, from INSEE's StockEtablissement file, refreshed monthly. This row's coverage is narrower than the other eight SIRENE rows: the register's own note records the scope as public administrative bodies rather than a general private-business corpus, so it is not a business register for the territory. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built. The public-sector scope narrows the exposure and does not remove it, because the measurement that would show no natural person appears in this territory's subset was not taken.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"yt-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Mayotte, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Mayotte is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"gb-business-register-1": {
+			"addressRoles": {
+				"RegAddress": "registered-office"
+			},
+			"coverage": "Live companies on the Companies House register, published as the Free Company Data Product: one 469 MB archive or seven parts, refreshed within five working days of each month end. Measured on the 2026-09-01 part 1 of 7, 73,152,561 bytes: 55 columns, of which nine are one address — CareOf, POBox, AddressLine1, AddressLine2, PostTown, County, Country and PostCode under the `RegAddress.` prefix. Every address column belongs to that one family, so each row carries one address. The row count is unmeasured, because a distinct count cannot be read off one of seven parts.",
+			"upstreamLineage": ["https://download.companieshouse.gov.uk/en_output.html"]
+		},
+		"au-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=procuringEntity].address": "facility"
+			},
+			"coverage": "OCDS releases for Apr 2007 through Sep 2026, retrieved monthly by the OCP Data Registry, last on 2026-09-13. Measured on the 2022 release: 51,829 contracting processes, each carrying one supplier party and one procuring-entity party. A supplier address gives locality, region and countryName on 51,829 of 51,829 rows, a postcode on 51,395 (99.16%), and a non-empty street line on 15,118 (29.17%). A procuring-entity address gives a region on 5,371 (10.36%) and a street line on 4,261 (8.22%). The release is federal procurement reporting rather than a national premise register, so it covers the parties that contracted with the Commonwealth and no other premises.",
+			"upstreamLineage": ["https://app.swaggerhub.com/apis/austender/ocds-api/1.1"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "The publication names natural persons and carries addresses for them. Measured on the 2022 release: 149 of 17,373 distinct supplier names take the `Surname, Firstname` form over 179 rows, 43 of those rows carrying a street line, and `Upton, David Gregory` is published at `3 Sloan Rd, Hawthorndene SA 5051`. A sole trader's reported address can be their home, and the record does not distinguish the two. The analysis that would move this to `assessed` is a decision rather than a measurement, and the measurement it would rest on is in the retained receipt.",
+				"record": "internal/strategy/rights-receipts/au-2026-09-30/README.md"
+			}
+		}
+	}
+}

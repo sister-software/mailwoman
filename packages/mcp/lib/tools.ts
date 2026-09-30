@@ -7,7 +7,8 @@
 import { z } from "zod"
 
 /**
- * Defines the library operations that MCP tool handlers call, which `cli.ts` implements.
+ * Defines the library operations that MCP tool handlers call.
+ * `cli.ts` implements those operations.
  */
 export interface MCPToolDeps {
 	parse: (text: string, opts?: { poi?: boolean }) => Promise<unknown>

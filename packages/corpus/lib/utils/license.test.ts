@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { describe, expect, it } from "vitest"
+
 import {
 	compileLicenseExcludes,
 	createLicenseVerdictCache,
@@ -11,8 +13,7 @@ import {
 	LicensePolicy,
 	LicenseRefusalKind,
 	licenseVerdict,
-} from "@mailwoman/corpus/utils/license"
-import { describe, expect, it } from "vitest"
+} from "#utils/license"
 
 /**
  * A license value measured in `v0.7.0-de-holdout`, where the grant is unresolved
@@ -104,7 +105,7 @@ describe("operator-named prefixes", () => {
 		expect(licenseExcluded("ODbL-1.0", p)).toBe(true)
 		expect(licenseExcluded("odbl-1.0", p)).toBe(true)
 		expect(licenseExcluded("CC-BY-SA-3.0", p)).toBe(true)
-		// The prefix is anchored, so a CC-BY-SA exclusion leaves CC-BY alone.
+		// The prefix is anchored, so a CC-BY-SA exclusion leaves CC-BY unchanged.
 		expect(licenseExcluded("CC-BY-4.0", p)).toBe(false)
 		expect(licenseExcluded("Licence Ouverte 2.0", p)).toBe(false)
 	})

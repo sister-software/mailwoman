@@ -39,7 +39,7 @@ The layer never represents an absence with a small number. A consumer can tell a
 | the polygon exists, the soil mapping does not        | `nodata_share` (`NOTCOM`, `NOTPUB`, access denied) |
 | there is no survey here at all                       | **no `layer_coverage` row, and no summary row**    |
 
-Class 8 is a determination and is a class share like any other. Merging it with the absence readings
+Class 8 is a determination and is a class share like any other. A merge with the absence readings
 produces a well-formed wrong answer, and 67,547 national components carry it. The irrigated rating shows
 the same problem at a larger scale. `irrcapcl` is NULL on 85.1% of national components because it is
 populated only where irrigation is a considered use, so the layer stores it and never reduces it.
@@ -84,7 +84,7 @@ against 2.7% at resolution 9. Resolution 11 was excluded before measuring, becau
 `IA153`'s delineations smaller than a cell at roughly 49× the resolution-9 cell count.
 
 For comparison, NRCS's own map-unit-grain `niccdcdpct` reads below half on 3.3% of national map units.
-Aggregating to a resolution-9 cell multiplies that roughly ninefold, which quantifies the cost of the cell
+Aggregation to a resolution-9 cell multiplies that roughly ninefold, which quantifies the cost of the cell
 grain.
 
 ## Acquisition
@@ -131,7 +131,7 @@ nobody checked. The acknowledgement that the same metadata requests is stored in
 ## Two dates, and they are not the same fact
 
 `sacatalog.saverest` is the refresh date. NRCS runs one coordinated Annual Soils Refresh each October 1.
-Grouping the catalogue by year returns 2016: 1, 2025: 3,323, 2026: 56, so a region's areas share a
+The catalogue grouped by year returns 2016: 1, 2025: 3,323, 2026: 56, so a region's areas share a
 vintage. **The field survey underneath is far older.** `IA153` carries a 2025-09-09 refresh over a
 _Soil Survey of Polk County, Iowa_ published in **1960** at 1:15,840, and the dataset's own
 time-period-of-content ends at the refresh. A consumer that reads the refresh date as the survey date is
@@ -163,7 +163,7 @@ unique farmland nationally, while §657.5(c) and (d) assign statewide and local 
 local agencies. `Farmland of statewide importance` in Iowa and in Georgia are therefore different claims.
 `soil_map_unit.farmland_scope` carries that distinction into the artifact.
 
-## Building
+## Build
 
 ```bash
 # The smoke rung: one real survey area, end to end.
@@ -186,7 +186,7 @@ reproducible. Both live in `@mailwoman/spatial`'s `h3/polygon-cells.ts` and are 
 
 `--verify` runs both halves. The positive half asks Soil Data Access again which map unit covers a sample
 of points drawn deterministically from the artifact, and it compares **map unit against map unit**.
-Comparing the derived class instead would let a wrong delineation agree by accident whenever two
+The derived-class comparison would let a wrong delineation agree by accident whenever two
 neighbours share a class. Disagreements report the distance to the nearest **edge** instead of the nearest
 vertex. A point a centimeter from a long edge can be meters from every vertex, and the flood layer's one
 near-miss measured 1.58 m to vertices and 0.009 m to edges.
@@ -201,7 +201,7 @@ The observation is off by default. It turns on when `$MAILWOMAN_DATA_ROOT/db/soi
 the file's presence is the only switch. The reading reaches a caller as one additive `QueryIntentMarker` with
 `code: "authority_designation"` and `mechanism: "layer:soil_capability"`. The flood layer's marker uses the
 same code in the same `layer` family, and this layer has a rule of its own. The class always travels with
-the share it rests on. Ranking, abstention and every existing result field are unchanged. A test checks
+the share it rests on. This marker leaves ranking, abstention and every existing result field unchanged. A test checks
 that a geocode without the layer is byte-identical to one with it, apart from the marker.
 
 ## Not this layer's job
@@ -220,4 +220,4 @@ that a geocode without the layer is byte-identical to one with it, apart from th
   the opposite of the truth. This vocabulary uses no numeric sentinel for either state and should not
   start.
 - **The layer computes no suitability score.** It repeats what an authority states, in the authority's
-  vocabulary, with the authority's dates. Converting that into a number is the consumer's job.
+  vocabulary, with the authority's dates. The consumer converts that value into a number.

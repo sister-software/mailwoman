@@ -16,14 +16,14 @@ This article records the A0 numbers so [the A1 delta](./tokenizer-a1-results.mdx
 
 A0 was trained 2026-05-23 on a single local host without rented compute, in 1.04 hours wall-clock. SentencePiece configuration:
 
-| Knob                   | A0                                                              | v0.1.0 (predecessor) |
-| ---------------------- | --------------------------------------------------------------- | -------------------- |
-| `model_type`           | unigram                                                         | unigram              |
-| `vocab_size`           | 48,000                                                          | 16,000               |
-| `character_coverage`   | 0.9999                                                          | 0.9995               |
-| `byte_fallback`        | true                                                            | true                 |
-| `user_defined_symbols` | 2,110                                                           | 0                    |
-| Training corpus        | corpus-v0.3.0, US + FR @ 500K each + 2K mined postcode literals | (historical)         |
+| Knob                     | A0                                                              | v0.1.0 (predecessor) |
+| ------------------------ | --------------------------------------------------------------- | -------------------- |
+| `model_type`             | unigram                                                         | unigram              |
+| `vocab_size`             | 48,000                                                          | 16,000               |
+| `character_coverage`     | 0.9999                                                          | 0.9995               |
+| `byte_fallback`          | true                                                            | true                 |
+| `user_defined_symbols`   | 2,110                                                           | 0                    |
+| Corpus used for training | corpus-v0.3.0, US + FR @ 500K each + 2K mined postcode literals | (historical)         |
 
 Eval fixture: 43 hand-curated lines covering CJK / Cyrillic / Armenian / Greek / Arabic / Hebrew / Devanagari / Thai / Latin-with-diacritics. The fixture lives at `data/eval/multi-script/v0.5.0-a0.jsonl`.
 

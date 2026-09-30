@@ -80,7 +80,7 @@ export interface CategoryRecord {
 	 * Omitted/empty ⇒ the id is its own probe id (identity — 21 of 23 seeds rely on that,
 	 * e.g. `hospital` = Overture `hospital`).
 	 *
-	 * `mailwoman-infra` categories carry no Overture leaf and abstain build-local,
+	 * `mailwoman-infra` categories have no Overture leaf and abstain build-local,
 	 * so they leave this omitted too.
 	 */
 	overtureCategories?: POICategoryID[]

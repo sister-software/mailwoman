@@ -6,7 +6,7 @@
  *   Reads provider practice-location addresses from the monthly CMS NPPES full-replacement CSV.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { formatPersonName } from "@mailwoman/record/name"
@@ -44,8 +44,8 @@ interface NPPESRow {
 /**
  * The columns that every emitted row needs, in the publisher's spelling.
  *
- * A missing column reads as `undefined` on every record, and the row filter would
- * then drop every row without an error.
+ * A missing column reads as `undefined` on every record.
+ * The row filter would then drop every row without an error.
  */
 const REQUIRED_COLUMNS = [
 	"Provider First Line Business Practice Location Address",
@@ -86,7 +86,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_NPPES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Practice,
 		register: SourceRegister.NPPES,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"CMS National Plan and Provider Enumeration System — 7M provider practice locations (public-domain). Venue+address co-occurrence at scale.",
 

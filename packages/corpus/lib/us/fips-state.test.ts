@@ -4,13 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import {
-	lookupFipsState,
-	lookupStateAbbreviation,
-	US_FIPS_STATE,
-	US_STATE_BY_ABBREVIATION,
-} from "@mailwoman/corpus/us/fips-state"
 import { expect, test } from "vitest"
+
+import { lookupFipsState, lookupStateAbbreviation, US_FIPS_STATE, US_STATE_BY_ABBREVIATION } from "#us/fips-state"
 
 // #region US_FIPS_STATE table
 

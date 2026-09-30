@@ -22,8 +22,8 @@ import { SurfaceOrigin } from "#types"
  * The row is invented rather than a rendering of a published record.
  */
 /**
- * Resolved once, because `source_id` carries the source as its prefix and a pair that
- * disagreed would name a source no row of this output declares.
+ * Resolved once, because `source_id` includes the source as its prefix and a pair
+ * that disagreed would name a source no row of this output declares.
  */
 const STREET_SOURCE = defaultRecipeSource("synth-street")
 

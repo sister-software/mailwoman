@@ -5,7 +5,7 @@
  *
  *   Node reader for `poi.db` (spec §3.4), the res-9 k-ring reader over the clustered `poi`
  *   `without rowid` B-tree `poi-schema.ts` builds. Category, brand and name searches share one
- *   artifact. Each path has a method that carries its details.
+ *   artifact. Each path has a method that returns its details.
  *
  *   `latLngToCell` and `gridDisk` come from `h3-js`. The 48-bit short-cell packing that turns a raw
  *   H3 cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt`, and

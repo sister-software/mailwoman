@@ -1,4 +1,4 @@
-"""Running the training package's audits on the volume's corpus and committing each receipt.
+"""This module runs the training package's audits on the volume's corpus and commits each receipt.
 
     modal run -m launch.train_remote::audit_epoch_mixture --config-name <recipe>.yaml
     modal run -m launch.train_remote::census_opening_token --config-name <recipe>.yaml
@@ -118,7 +118,7 @@ def census_region_code_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml",
     token is counted. The data determines which values are contested.
 
     The emitted pass matters more than usual here, because `augment_region_prob` writes region
-    surfaces onto rows that did not carry one.
+    surfaces onto rows that lacked one.
     """
     import sys
     from pathlib import Path
@@ -143,11 +143,11 @@ def census_region_code_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml",
     memory=16384,
 )
 def census_comma_segment_number(config_name: str = "v5.6.0-bare-postcode-60k.yaml", draws: int = 0) -> None:
-    """Count what a bare number standing alone between commas teaches.
+    """Count what a bare number by itself between commas teaches.
 
     `301 College Ave, 101, Athens, GA 30601` is the surface #2298 proposes to teach as a unit.
-    It carries no token that decides the reading. The same surface is already attested as a house
-    number and as a postcode. Leading and later positions are counted apart, because only the later
+    It has no token that decides the reading. The same surface is already attested as a house
+    number and as a postcode. The audit counts leading and later positions separately, because only the later
     one is in competition with the proposed unit.
     """
     import sys
@@ -218,7 +218,7 @@ def audit_validation_coverage(
     config_name: str = "v5.9.0-locality-shape-60k.yaml",
     countries: str = "US,FR,DE,GB",
 ) -> None:
-    """Counts rows by country in the validation and test splits. Counts also show how many rows carry a street.
+    """Counts rows by country in the validation and test splits, including how many rows have a street.
 
     The two splits are five parquet files holding roughly 1.9 million rows each, so this reads the
     whole population rather than sampling it the way the rest of this module has to. The nearest
@@ -231,10 +231,12 @@ def audit_validation_coverage(
     `v0.32.0-locality-shape`. US held 1,839,635 rows in each split. Current run output does not report
     those counts.
 
-    A recipe declaring `data.required_validation_coverage` fails this function before a GPU is
-    allocated, the way `required_corpus_receipts` fails `audit_epoch_mixture`. The report is written
-    and committed to the volume first, so a failed floor leaves the numbers behind rather than only
-    the fact that it failed.
+    `train()` runs this same audit in its preflight when a recipe declares
+    `data.required_validation_coverage`, the way it runs `audit_epoch_mixture` for
+    `required_corpus_receipts`, so a declared floor that a split misses raises before the GPU is
+    allocated. This function is the standalone entry point for auditing a corpus without launching a
+    run. The report is written and committed to the volume first either way, so a failed floor leaves
+    the numbers behind rather than only the fact that it failed.
     """
     import sys
     from pathlib import Path

@@ -696,7 +696,7 @@ EOF
 
 ### Task 3: Memoize the two full-DB scans
 
-`buildLocalitySurfaceLexicon` calls `computeSurfaceCountryCounts(dbPath)` (a full scan of `spr` + `names`) and `loadPersonNameSurfaces()` on every invocation. The FR and US builds run in one process and share neither result. Memoizing both is worth doing on its own, because it halves the full build wherever it runs. Tasks 4 and 5 build on it.
+`buildLocalitySurfaceLexicon` calls `computeSurfaceCountryCounts(dbPath)` (a full scan of `spr` + `names`) and `loadPersonNameSurfaces()` on every invocation. The FR and US builds run in one process and share neither result. A cache for both results is worth adding on its own, because it halves the full build wherever it runs. Tasks 4 and 5 build on it.
 
 **Files:**
 

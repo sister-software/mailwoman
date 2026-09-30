@@ -35,7 +35,7 @@ Western address: `[house_number] [street] [unit?], [locality], [region] [postcod
 
 Japanese address: `〒[postcode]? [region][locality][chome][block]-[sub-block]-[house_number]`.
 
-The order matters for parsers because we use position as a feature. A model trained on "1600 Pennsylvania Avenue NW, Washington, DC 20500" expects digits at the start, region near the end. A Japanese address inverts this entirely. Walking the parent chain in the WOF database confirms the inversion:
+The order matters for parsers because we use position as a feature. A model trained on "1600 Pennsylvania Avenue NW, Washington, DC 20500" expects digits at the start, region near the end. A Japanese address inverts this entirely. The WOF database's parent chain confirms the inversion:
 
 ```
 neighbourhood   jpn=１丁目      eng=１丁目

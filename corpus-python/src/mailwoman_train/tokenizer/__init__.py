@@ -2,7 +2,7 @@
 
 The corpus parquet stores ``raw`` plus a whitespace-tokenized ``tokens`` list and a parallel
 ``labels`` list (BIO over those whitespace tokens). As of the v0.5.0 char-offset migration
-(#519) rows additionally carry ``span_starts[]``/``span_ends[]``/``span_tags[]`` — char ranges
+(#519) rows additionally store ``span_starts[]``/``span_ends[]``/``span_tags[]`` — char ranges
 over ``raw`` (sorted, non-overlapping). These ranges are the label source of truth. The neural model
 trains over SentencePiece sub-tokens. These are *finer-grained* than the whitespace tokens.
 
@@ -12,9 +12,9 @@ byte→char index map so multibyte UTF-8 (accents, CJK) round-trips correctly.
 
 Why not a HuggingFace fast tokenizer? Two reasons:
 
-- We don't have a ``tokenizer.json`` for this SP model — only ``tokenizer.model``. Converting
+   - We don't have a ``tokenizer.json`` for this SP model — only ``tokenizer.model``. A conversion
   is doable (PreTrainedTokenizerFast supports loading SP via slow→fast bridge) but adds a
-  fragile build step. Going direct is simpler and the offsets are exact.
+   fragile build step. A direct load is simpler and preserves exact offsets.
 - We need labels aligned at *training-data prep* time rather than inference time. The training loop
   consumes pre-aligned ``(input_ids, label_ids)`` tensors, so we don't need a HF tokenizer
   object at all once labels are baked.

@@ -98,7 +98,7 @@ def iter_rows(
 ) -> Iterator[dict[str, Any]]:
     """Yield rows from parquet files, filtered + shuffled.
 
-    Shuffling is done at three levels:
+    The loader shuffles at three levels:
 
     1. File order (per-epoch): parquet files visited in random order.
     2. Row-group order within a file: row-groups visited in random order.
@@ -109,7 +109,7 @@ def iter_rows(
     shuffle pattern: hold ``N`` rows, pop a random one, replace from the upstream stream
     (when exhausted, drain the buffer in random order).
 
-    Skipping shuffle (``shuffle_buffer<=0``) is intentionally not supported — the previous
+    The loader requires shuffle (``shuffle_buffer<=0``) because the previous
     sequential layout caused val_loss to diverge at step ~1500. Always shuffle.
 
     Per Phase 2 §2 (stratified sampling): ``country_weights`` is applied during the raw
@@ -161,7 +161,7 @@ def iter_rows(
     # The run still reports a clean pass because a `frozenset` answers membership the same way
     # whether its members exist or not. `_apply_source_weights` has already refused any source in the
     # corpus that `source_weights` does not name, so a name absent from those keys is a name no row
-    # carries.
+    # includes.
     if policy.source_weights is not None:
         unmatched = sorted(set(augment_exclude_sources) - set(policy.source_weights))
         if unmatched:

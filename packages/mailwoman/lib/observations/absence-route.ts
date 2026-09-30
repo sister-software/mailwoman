@@ -150,7 +150,7 @@ export interface AbsenceRouteIdentity {
 /**
  * An open absence route decides whether each POI outcome records an absence
  * observation or an explicit refusal.
- * Disposing the route closes the coverage database.
+ * Route disposal closes the coverage database.
  */
 export interface AbsenceObservationRoute extends Disposable {
 	identity: AbsenceRouteIdentity

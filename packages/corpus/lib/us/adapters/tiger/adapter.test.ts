@@ -7,17 +7,14 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import {
-	TIGER_ADAPTER_ID,
-	TIGER_DEFAULT_LICENSE,
-	createTigerAdapter,
-} from "@mailwoman/corpus/us/adapters/tiger/adapter"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
+import type { TIGERDatabase } from "@mailwoman/tiger/schema"
 import type { PathBuilder } from "path-ts"
 import { beforeEach, describe, expect, it } from "vitest"
+
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
+import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "#us/adapters/tiger/adapter"
 
 const scratch = useScratchDir("tiger")
 

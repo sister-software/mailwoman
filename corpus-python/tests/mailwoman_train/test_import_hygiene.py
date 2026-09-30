@@ -4,7 +4,7 @@ A deferred import is legitimate when it provides startup weight: `cli.py` defers
 torch's 1.46 s off every `--help` (measured — `mailwoman_train.cli` imports in 22,340 us against
 `mailwoman_train.train`'s 1,458,740 us). It is a defect when the target module imports this one back,
 because then the deferral is hiding a circular graph and an ImportError surfaces at first call rather
-than at import. This detector flags the second and leaves the first alone.
+than at import. This detector flags the second case and skips the first.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from tests import paths
 PACKAGE_ROOT = paths.PACKAGE_ROOT
 SOURCE_ROOT = paths.SOURCE_ROOT
 
-#: Cycles this tree still carries, each with the move that closes it. The list only ever shrinks.
+#: Cycles remaining in this tree, each with the move that closes it. The list only ever shrinks.
 #: A new entry means a cycle was introduced. An entry that stops matching means one was closed and
 #: the line should go. Both are assertions below, so neither can drift.
 KNOWN_CYCLES: frozenset[str] = frozenset()
@@ -33,8 +33,8 @@ def _resolve(module: str | None, level: int, holder: str, *, is_package: bool) -
     """The absolute module a `from ... import` names, given the module holding it.
 
     Inside a package's `__init__.py`, a single dot means that package. Inside a plain module it means
-    the package containing it. Conflating the two makes `from .x` in `a/b/__init__.py` resolve to
-    `a.x`. The check then accepts a broken import if `a.x` happens to exist.
+    the package containing it. The checker must distinguish these meanings or `from .x` in `a/b/__init__.py` resolves to
+    `a.x`. This confusion lets the check accept a broken import whenever `a.x` happens to exist.
     """
     if level == 0:
         return module or ""
@@ -109,7 +109,7 @@ def test_no_deferred_import_dodges_a_cycle() -> None:
 def test_every_deferred_import_names_a_module_that_exists() -> None:
     """A deferred import is checked only when it runs. Most deferred imports never run under test.
 
-    Moving a module one directory deeper re-levels every relative import inside it. A module-level
+    A module moved one directory deeper changes the level of every relative import inside it. A module-level
     import that survives the move wrong fails at import. a deferred one fails at first call, on a
     branch a config has to enable. Four of these pointed at `mailwoman_train.data.gazetteer_anchor`
     after the data move and the whole suite stayed green.
@@ -149,7 +149,7 @@ def _declared_names(tree: ast.Module) -> set[str]:
 
 
 def test_an_import_names_the_module_that_declares_it() -> None:
-    """Importing a name from a module that only re-imported it pins the wrong file.
+    """An import from a module that only re-imported a name pins the wrong file.
 
     A plain module's import list is an implementation detail. For example, ``trainer`` imports
     ``build_optimizer`` so it can call it. A test that imported the name from ``trainer`` kept passing

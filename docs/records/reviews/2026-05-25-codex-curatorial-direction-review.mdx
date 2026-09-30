@@ -43,7 +43,7 @@ The right product identity is:
 That is narrower and stronger than "natural language classification engine for geocoding." It says who should care and why:
 
 - Node/browser developers who cannot send every query to Google.
-- Geocoding stacks that need local parsers, auditable failures, or custom retraining.
+- This suits geocoding stacks that need local parsers, auditable failures, or custom retraining.
 - Researchers/practitioners who want a small, inspectable neural address parser rather than a black-box LLM.
 
 Avoid positioning Mailwoman as a rooftop geocoder or Google competitor. The resolver currently resolves places and administrative/postcode-level candidates rather than address points. That limitation should be explicit and repeated wherever "geocoder" appears.
@@ -72,7 +72,7 @@ Cheap structural priors before neural classification are a good engineering comp
 
 ### CRF as inference-time structure
 
-Keeping a frozen BIO mask and Viterbi at inference while dropping CRF-NLL from training is a strong simplification if CE-only training continues to hold. The structural guarantee comes from the mask; learned CRF transitions have not yet justified their training risk.
+Keep the frozen BIO mask and Viterbi at inference while dropping CRF-NLL from training if CE-only training continues to hold. The structural guarantee comes from the mask; learned CRF transitions have not yet justified their training risk.
 
 ### Browser-first constraint
 
@@ -124,7 +124,7 @@ Docs say "address parser + geocoder" and show coordinates. They should also say 
 
 ## Documentation critique
 
-### 1. Missing canonical status page
+### 1. No canonical status page
 
 This is the highest-value docs fix. Create `/docs/status` and make it the first docs link after the demo.
 
@@ -141,7 +141,7 @@ It should include:
 
 Status should be maintained here and referenced elsewhere. Blog posts and phase docs should not be treated as current truth.
 
-### 2. Missing getting-started and API pages
+### 2. No getting-started or API pages
 
 The homepage has snippets, but docs need durable pages:
 
@@ -154,7 +154,7 @@ The target reader can handle TypeScript; give them the concrete entry points.
 
 Add "Who this is for" blocks to top-level and operator-heavy docs:
 
-- Understanding: curious engineer/domain learner.
+- Audience: curious engineer or domain learner.
 - Concepts: implementer/technical evaluator.
 - Plan/reference: contributor/operator; historical unless status page says current.
 - Evals: model-quality reviewer.

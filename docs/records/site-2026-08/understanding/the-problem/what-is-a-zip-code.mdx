@@ -8,9 +8,9 @@ tags:
   - en-us
 ---
 
-# What is a ZIP Code and how is it structured?
+# How is a ZIP Code structured?
 
-The US ZIP Code is the most influential postcode system in the world — not because it is the best, but because US-origin address data dominates geocoding training sets and shapes what parsers expect. Understanding its structure is essential for understanding why US-trained parsers fail on international addresses.
+US-origin address data dominates geocoding training sets and shapes what parsers expect. That influence makes the US ZIP Code the world's most influential postcode system. Its structure helps explain why US-trained parsers fail on international addresses.
 
 ## The full 11-digit code
 
@@ -52,7 +52,7 @@ The full 11-digit code uniquely identifies a delivery point. The USPS calls this
 
 Not all ZIP codes are geographic:
 
-| Type            | Description                                    | Example               | Geocoding implication                                                   |
+| Type            | Description                                    | Example               | Geocoder outcome                                                        |
 | --------------- | ---------------------------------------------- | --------------------- | ----------------------------------------------------------------------- |
 | **Standard**    | Street addresses                               | 90210 (Beverly Hills) | Resolves to a post office delivery area — approximate rather than exact |
 | **PO Box only** | Serves only PO boxes at a specific post office | 10001 (part of NYC)   | Centroid at the post office rather than at residents' locations         |

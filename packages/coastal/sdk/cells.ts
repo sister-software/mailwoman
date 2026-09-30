@@ -1,0 +1,242 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   The scenario-keyed cell index has one accumulator per scenario. Its measurements determine the index resolution.
+ *
+ *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's call sites and
+ *   its `@mailwoman/coastal/sdk/cells` subpath keep reading the same. `classifyFeatureCells`, the per-part
+ *   zero-cell guard and the allocator-avoiding shortcuts around it are properties of h3-js rather than of
+ *   this product — the layer interface's polygon-builder section states them as requirements on every polygon
+ *   builder — and a second copy of the zero-cell guard is a second place for it to stop guarding.
+ *
+ *   what stays here is what is scenario-shaped. The flood layer accumulates per zone code, because a flood
+ *   answer is a code from a two-value domain. the soil layer accumulates per delineation and weights by
+ *   covered area. An erosion answer is a specific frontage polygon carrying its own distance, policy and
+ *   defence, under one of twelve scenarios that must never be pooled — so this accumulates per (scenario,
+ *   polygon) and reports per scenario.
+ *
+ *   the measurement is per scenario and never pooled. The twelve
+ *   scenario layers cover the same frontages with different extents, so a pooled `partial` share would
+ *   average a present-day designation together with a 2105 projection and describe neither. The number that
+ *   decides the resolution is the share within one scenario, because that is the population a scenario-scoped
+ *   probe reads.
+ */
+
+import { compactAcrossResolutions, type FeatureCells } from "@mailwoman/spatial"
+
+/**
+ * One scenario's accumulated cell sets across every feature in it.
+ */
+interface ScenarioAccumulator {
+	whole: Set<string>
+	touched: Set<string>
+	features: number
+	coarsened: number
+}
+
+/**
+ * What one scenario came out as at one resolution.
+ * The numbers the resolution choice is made from.
+ */
+export interface ScenarioCellMeasurement {
+	scenarioKey: string
+	features: number
+	/**
+	 * Cells this scenario reaches at all.
+	 */
+	touchedCells: number
+	/**
+	 * Cells the index answers without reading geometry, before compaction.
+	 */
+	wholeCells: number
+	/**
+	 * Cells needing the ray cast.
+	 */
+	partialCells: number
+	/**
+	 * `partialCells / touchedCells`.
+	 *
+	 * The share of in-layer probes the index cannot answer without reading geometry.
+	 */
+	partialShare: number
+	/**
+	 * Whole cells after per-feature `compactCells` — the rows actually stored on the whole side.
+	 */
+	compactedWholeCells: number
+	/**
+	 * Features whose bounding box forced a coarser resolution than the target — see `CELL_ESTIMATE_BUDGET`.
+	 */
+	coarsenedFeatures: number
+}
+
+/**
+ * One resolution's table across every scenario, plus the totals a size question is answered from.
+ */
+export interface CellIndexMeasurement {
+	resolution: number
+	perScenario: ScenarioCellMeasurement[]
+	/**
+	 * Cell rows the artifact would store at this resolution, across every scenario —
+	 * the compacted whole rows plus the partial rows.
+	 *
+	 * This is the artifact's size.
+	 * It is a sum over scenarios rather than a union: two scenarios naming the same
+	 * cell are two rows, because they are two different claims.
+	 */
+	storedCellRows: number
+	/**
+	 * Cells reached across every scenario, summed the same way.
+	 */
+	touchedCells: number
+	partialCells: number
+	/**
+	 * `partialCells / touchedCells` pooled.
+	 *
+	 * Reported for the size question only.
+	 * The resolution is chosen on the per-scenario shares above.
+	 */
+	pooledPartialShare: number
+}
+
+/**
+ * Accumulate one resolution's cell index over a stream of features, keeping the scenarios apart.
+ *
+ * Held as short-cell strings rather than the integers the tables store, because `compactCells`
+ * and `cellToParent` are h3-js functions over full indexes and round-tripping through
+ * the integer form at every step would cost more than the strings do.
+ */
+export class CoastalCellIndex {
+	readonly resolution: number
+
+	readonly #scenarios = new Map<string, ScenarioAccumulator>()
+
+	constructor(resolution: number) {
+		this.resolution = resolution
+	}
+
+	/**
+	 * Fold one feature's classification in, under its own scenario.
+	 */
+	add(scenarioKey: string, cells: FeatureCells): void {
+		let scenario = this.#scenarios.get(scenarioKey)
+
+		if (!scenario) {
+			scenario = { whole: new Set(), touched: new Set(), features: 0, coarsened: 0 }
+
+			this.#scenarios.set(scenarioKey, scenario)
+		}
+
+		scenario.features++
+
+		if (cells.resolution !== this.resolution) {
+			scenario.coarsened++
+		}
+
+		for (const cell of cells.whole) {
+			scenario.whole.add(cell)
+			scenario.touched.add(cell)
+		}
+
+		for (const cell of cells.partial) {
+			scenario.touched.add(cell)
+		}
+	}
+
+	/**
+	 * The measurement, per scenario and then pooled.
+	 *
+	 * The compacted count approximates what the build stores.
+	 * The build compacts each feature's whole set, while this compacts the scenario's union of those sets.
+	 *
+	 * The union can only compact at least as far, so this is a lower bound on the stored row count.
+	 * A size estimate should err in this direction.
+	 * The build's own receipt reports the real number.
+	 */
+	finish(): CellIndexMeasurement {
+		const perScenario: ScenarioCellMeasurement[] = []
+
+		let storedCellRows = 0
+		let touchedTotal = 0
+		let partialTotal = 0
+
+		for (const [scenarioKey, scenario] of [...this.#scenarios].toSorted(([left], [right]) => (left < right ? -1 : 1))) {
+			const compacted = compactAcrossResolutions(scenario.whole).length
+
+			let partial = 0
+
+			for (const cell of scenario.touched) {
+				if (!scenario.whole.has(cell)) {
+					partial++
+				}
+			}
+
+			perScenario.push({
+				scenarioKey,
+				features: scenario.features,
+				touchedCells: scenario.touched.size,
+				wholeCells: scenario.whole.size,
+				partialCells: partial,
+				partialShare: scenario.touched.size ? partial / scenario.touched.size : 0,
+				compactedWholeCells: compacted,
+				coarsenedFeatures: scenario.coarsened,
+			})
+
+			storedCellRows += compacted + partial
+			touchedTotal += scenario.touched.size
+			partialTotal += partial
+		}
+
+		return {
+			resolution: this.resolution,
+			perScenario,
+			storedCellRows,
+			touchedCells: touchedTotal,
+			partialCells: partialTotal,
+			pooledPartialShare: touchedTotal ? partialTotal / touchedTotal : 0,
+		}
+	}
+}
+
+/**
+ * The per-scenario measurement as markdown table rows.
+ *
+ * What a build receipt contains, one line per element so a caller printing them
+ * never has to split a joined string back apart.
+ */
+export function formatScenarioMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {
+	const lines = [
+		"| res | scenario | features | touched cells | whole | partial | partial share | whole after compaction | coarsened |",
+		"| --- | -------- | -------- | ------------- | ----- | ------- | ------------- | ---------------------- | --------- |",
+	]
+
+	for (const measurement of measurements) {
+		for (const scenario of measurement.perScenario) {
+			lines.push(
+				`| ${measurement.resolution} | ${scenario.scenarioKey} | ${scenario.features.toLocaleString()} | ` +
+					`${scenario.touchedCells.toLocaleString()} | ${scenario.wholeCells.toLocaleString()} | ` +
+					`${scenario.partialCells.toLocaleString()} | ${(scenario.partialShare * 100).toFixed(1)}% | ` +
+					`${scenario.compactedWholeCells.toLocaleString()} | ${scenario.coarsenedFeatures.toLocaleString()} |`
+			)
+		}
+	}
+
+	return lines
+}
+
+/**
+ * The per-resolution totals answer the size question rather than the containment question.
+ */
+export function formatResolutionTotalRows(measurements: readonly CellIndexMeasurement[]): string[] {
+	return [
+		"| res | stored cell rows (all scenarios) | touched cells | partial | pooled partial share |",
+		"| --- | ------------------------------- | ------------- | ------- | -------------------- |",
+		...measurements.map(
+			(measurement) =>
+				`| ${measurement.resolution} | ${measurement.storedCellRows.toLocaleString()} | ` +
+				`${measurement.touchedCells.toLocaleString()} | ${measurement.partialCells.toLocaleString()} | ` +
+				`${(measurement.pooledPartialShare * 100).toFixed(1)}% |`
+		),
+	]
+}

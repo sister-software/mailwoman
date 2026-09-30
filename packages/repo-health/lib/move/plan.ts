@@ -36,7 +36,13 @@ import {
 	type PackageManifest,
 } from "#move/specifiers"
 import { spliceText } from "#move/splice"
-import type { ModuleMove, ModuleMovePlan, SpecifierRewrite, UnresolvedSpecifier } from "#move/types"
+import type {
+	ManifestReplacement,
+	ModuleMove,
+	ModuleMovePlan,
+	SpecifierRewrite,
+	UnresolvedSpecifier,
+} from "#move/types"
 import { trackedSourcePaths } from "#tracked-sources"
 import { moduleSpecifierLiterals } from "#ts-ast"
 
@@ -45,9 +51,9 @@ const SOURCE_STEM = /\.(?:m|c)?[jt]sx?$/u
 /**
  * Every tracked `package.json`, read as a manifest.
  *
- * Reading the file rather than importing it is the rule this repository enforces elsewhere for a
- * different reason — a JSON import lands in `out/` and rewrites the package scope of the compiled
- * tree — and it is the only form available here anyway, since the set is discovered at runtime.
+ * The repository requires a file read rather than an import for a different reason —
+ * a JSON import lands in `out/` and rewrites the package scope of the compiled tree —
+ * and it is the only form available here anyway, since the set is discovered at runtime.
  */
 export async function readPackageManifests(context: RepoContext): Promise<PackageManifest[]> {
 	const files = context.trackedFiles.filter((file) => file.endsWith("/package.json") && !file.includes("node_modules/"))
@@ -140,25 +146,47 @@ function candidateReplacements(
 }
 
 /**
+ * Options for {@linkcode planModuleMoves}.
+ */
+export interface ModuleMovePlanOptions {
+	/**
+	 * Manifests to write whole.
+	 *
+	 * Every specifier that resolves through one of them is re-proven against its new text.
+	 */
+	manifests?: readonly ManifestReplacement[]
+}
+
+/**
  * Read every move against the checkout in `context` and answer what would have to change.
  *
  * The plan is complete before anything is written.
  * `moves` lists file renames.
+ * It may be empty when the plan only replaces manifests.
  *
  * `rewrites` lists specifier edits and their offsets.
  * `unresolved` lists specifiers with no replacement proven by resolution.
  */
-export async function planModuleMoves(context: RepoContext, moves: readonly ModuleMove[]): Promise<ModuleMovePlan> {
+export async function planModuleMoves(
+	context: RepoContext,
+	moves: readonly ModuleMove[],
+	options: ModuleMovePlanOptions = {}
+): Promise<ModuleMovePlan> {
 	const manifests = await readPackageManifests(context)
 	const destinations = new Map(moves.map((move) => [move.from, move.to]))
+	const manifestReplacements = [...(options.manifests ?? [])]
+	const replacedFiles = new Set(manifestReplacements.map((replacement) => replacement.file))
+	const replacedPackages = manifests.filter((manifest) => replacedFiles.has(`${manifest.dir}/package.json`))
 
 	// The manifest edits come first: the overlay the replacements are proven against has
 	// to be the tree the whole plan leaves behind, subpath targets included.
-	const manifestRewrites = await planManifestRewrites(
-		context.repoRoot,
-		manifests.map((manifest) => manifest.dir),
-		moves
-	)
+	const manifestRewrites = (
+		await planManifestRewrites(
+			context.repoRoot,
+			manifests.map((manifest) => manifest.dir),
+			moves
+		)
+	).filter((rewrite) => !replacedFiles.has(rewrite.file))
 
 	const rewrittenManifests = new Map<string, string>()
 
@@ -173,6 +201,10 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 				edits.map((edit) => ({ ...edit, expected: edit.target, quoted: true }))
 			)
 		)
+	}
+
+	for (const replacement of manifestReplacements) {
+		rewrittenManifests.set(replacement.file, replacement.text)
 	}
 
 	// Candidates are derived from the maps the plan leaves rather than the ones it found:
@@ -191,7 +223,16 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 
 	const before = createMoveResolver(context.repoRoot, [])
 	const after = createMoveResolver(context.repoRoot, moves, rewrittenManifests)
-	const probes = moves.flatMap((move) => referenceProbes(move, manifests))
+
+	// A replaced manifest can change the target of any bare specifier naming its package, and of
+	// any `#` specifier written inside it, so those files are read whatever text they contain.
+	const probes = [
+		...moves.flatMap((move) => referenceProbes(move, manifests)),
+		...replacedPackages.map((manifest) => manifest.name),
+	]
+
+	const insideReplaced = (file: string): boolean =>
+		replacedPackages.some((manifest) => file.startsWith(`${manifest.dir}/`))
 
 	const tracked = (await trackedSourcePaths(context, { existingOnly: true })).map((path) =>
 		path.startsWith(`${context.repoRoot}/`) ? path.slice(context.repoRoot.length + 1) : path
@@ -205,7 +246,7 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 		const text = await readLocalTextFile(resolvePath(context.repoRoot, file))
 		const moved = destinations.get(file)
 
-		if (!moved && !probes.some((probe) => text.includes(probe))) continue
+		if (!moved && !insideReplaced(file) && !probes.some((probe) => text.includes(probe))) continue
 
 		read++
 
@@ -256,6 +297,7 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 		moves: [...moves],
 		rewrites,
 		manifestRewrites,
+		manifestReplacements,
 		pathLiterals,
 		unresolved,
 		scanned: { read, tracked: tracked.length },

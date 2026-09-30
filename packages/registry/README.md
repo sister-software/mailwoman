@@ -70,9 +70,9 @@ before blocking can use them.
 
 `resolveEntities` ships with these defaults:
 
-- **Blocking keys:** geo-cell on the resolved coordinate (0.05°, neighbours expanded) + canonical
+- **The blocking keys:** geo-cell on the resolved coordinate (0.05°, neighbours expanded) + canonical
   address + phone + email
-- **Scoring model:** Fellegi-Sunter with label-free EM, term frequency adjustment
+- **The scoring model:** Fellegi-Sunter with label-free EM, term frequency adjustment
 - **Learned scorer:** the bundled `DEDUP_GBT_MODEL`, on by default for single-dataset dedup
 - **Threshold:** `DEDUP_GBT_META.recommendedThreshold` (2.8324) while the bundled model is active,
   otherwise 0. The unit is the GBT's own logit rather than a Fellegi-Sunter match weight in bits and not a
@@ -101,7 +101,7 @@ So: set `$MAILWOMAN_CANDIDATE_DB` and pass anything to `--resolve-db`. Do not pa
 `--resolve-db` with the environment variable unset. The flag is believed on that path, and the admin
 backend queries `place_search`/`spr`, which a candidate gazetteer does not have.
 
-Requiring an argument in order to discard it is a defect in this command. Documented rather than fixed.
+An argument required only to discard it is a defect in this command. Documented rather than fixed.
 
 Two CLI defaults differ from the library defaults: `--threshold` defaults to `0`, which is the
 Fellegi-Sunter baseline rather than the bundled model's calibrated 2.8324, and `--train-em` is on.

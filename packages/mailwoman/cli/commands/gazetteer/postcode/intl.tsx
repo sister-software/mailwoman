@@ -1,0 +1,433 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman gazetteer postcode-intl` — build a postcode → point database from GeoNames postal data
+ *   for countries WhosOnFirst does not cover. The canonical pipeline treats GeoNames as a coordinate
+ *   source keyed by string onto WOF-sourced postcode records. Where WOF ships no postcode records there
+ *   is no record to backfill onto, so GeoNames must supply the record as well as the coordinate.
+ *
+ *   It emits a standalone `spr` database in the exact schema `build-candidate`'s `--postcodes` pass
+ *   consumes (placetype='postalcode', real centroid + bbox), so it drops into a candidate rebuild
+ *   alongside `postalcode-intl.db` with no other change.
+ *
+ *   GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute "GeoNames
+ *   (CC-BY 4.0)". These records have no WOF id and get synthetic ids that can never collide with one.
+ *
+ *   A postcode is stored under both its written forms so the candidate name_key matches whichever form
+ *   the parse emits — PL writes "26-300" (hyphen) while CZ writes "58001" though GeoNames stores
+ *   "580 01".
+ *
+ *   `--fold-into <src> --fold-out <dst>` optionally folds the database straight into a copy of an
+ *   existing candidate gazetteer, so a demo-ready DB falls out without a full rebuild. The database
+ *   itself is the durable artifact for the canonical rebuild.
+ *
+ *   `--out` is written directly. The command drops and recreates its table in place on re-run.
+ *   `--fold-out` builds a copy of `--fold-into`. Neither option uses an atomic temp-swap.
+ */
+
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { copyFileTo } from "@mailwoman/core/fs/writers"
+import { CommandError } from "@mailwoman/core/scripting/command"
+import { getRow } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
+import { GeoPoint } from "@mailwoman/spatial"
+import { Box, Text } from "ink"
+import type { PathBuilderLike } from "path-ts"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
+
+/**
+ * Native command-line interface consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-intl",
+	description: "Build international GeoNames postcode databases",
+	options: {
+		geonames: { type: "string", description: "GeoNames postal TSV" },
+		countries: { type: "string", description: "Comma-separated ISO codes" },
+		out: { type: "string", description: "Database output path" },
+		"fold-into": { type: "string", description: "Candidate DB to fold" },
+		"fold-out": { type: "string", description: "Folded candidate destination" },
+	},
+} as const satisfies CommandSpec
+
+/**
+ * The street-normalize key function, threaded in after a dynamic import of the optional peer.
+ */
+type NormalizeKey = (value: string) => string
+
+/**
+ * Above WOF's ~907M ceiling, so these GeoNames-sourced records never collide with a WOF id.
+ */
+const SYNTH_ID_BASE = 8_000_000_000
+
+/**
+ * One postcode's accumulated GeoNames points (one row per place sharing the code).
+ */
+interface PostcodeAcc {
+	cc: string
+	pc: string
+	sumLat: number
+	sumLon: number
+	n: number
+	minLat: number
+	minLon: number
+	maxLat: number
+	maxLon: number
+}
+
+/**
+ * Stream the GeoNames postal TSV, accumulating centroid + bbox per (country, postcode).
+ */
+async function readGeonames(file: PathBuilderLike, want: Set<string>): Promise<Map<string, PostcodeAcc>> {
+	const { TSVSpliterator } = await import("spliterator")
+
+	const acc = new Map<string, PostcodeAcc>()
+
+	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy.
+	// The GeoNames allCountries postal dump is headerless and LF-only upstream,
+	// so field indices map straight through.
+	for await (const fields of TSVSpliterator.fromAsync(file, { header: false, mode: "array" })) {
+		const countryCode = fields[0]
+
+		if (!countryCode || !want.has(countryCode)) continue
+		const postalCode = fields[1]
+		// `GeoPoint.from` answers null for a coordinate off the globe and for Null Island, the dump's placeholder.
+		const point = GeoPoint.from([Number(fields[10]), Number(fields[9])])
+
+		if (!postalCode || !point) continue
+
+		const { latitude, longitude } = point
+
+		const key = `${countryCode}\t${postalCode}`
+		const cur = acc.get(key)
+
+		if (cur) {
+			cur.sumLat += latitude
+			cur.sumLon += longitude
+
+			cur.n++
+
+			if (latitude < cur.minLat) {
+				cur.minLat = latitude
+			}
+
+			if (latitude > cur.maxLat) {
+				cur.maxLat = latitude
+			}
+
+			if (longitude < cur.minLon) {
+				cur.minLon = longitude
+			}
+
+			if (longitude > cur.maxLon) {
+				cur.maxLon = longitude
+			}
+		} else {
+			acc.set(key, {
+				cc: countryCode,
+				pc: postalCode,
+				sumLat: latitude,
+				sumLon: longitude,
+				n: 1,
+				minLat: latitude,
+				minLon: longitude,
+				maxLat: latitude,
+				maxLon: longitude,
+			})
+		}
+	}
+
+	return acc
+}
+
+/**
+ * The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped form.
+ */
+function nameVariants(pc: string, normalizeKey: NormalizeKey): string[] {
+	const stripped = pc.replaceAll(/[\s-]/g, "")
+	const variants = [pc]
+
+	if (stripped && stripped !== pc) {
+		variants.push(stripped)
+	}
+
+	// Dedup by fold() — two forms that normalize identically need only one row.
+	const seen = new Set<string>()
+
+	return variants.filter((v) => {
+		const k = normalizeKey(v)
+
+		if (seen.has(k)) return false
+		seen.add(k)
+
+		return true
+	})
+}
+
+const SPR_COLUMNS = [
+	"id",
+	"parent_id",
+	"name",
+	"placetype",
+	"country",
+	"latitude",
+	"longitude",
+	"min_latitude",
+	"min_longitude",
+	"max_latitude",
+	"max_longitude",
+	"is_current",
+	"is_deprecated",
+	"is_ceased",
+	"is_superseded",
+	"is_superseding",
+	"lastmodified",
+] as const
+
+async function buildDatabase(
+	acc: Map<string, PostcodeAcc>,
+	outPath: PathBuilderLike,
+	normalizeKey: NormalizeKey
+): Promise<number> {
+	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
+
+	if (await pathExists(outPath)) {
+		console.error(`out exists, overwriting: ${outPath}`)
+	}
+
+	using kdb = new DatabaseClient<WOFDatabase>(outPath)
+	// Regenerated artifact: drop any prior table so a re-run with a different country set
+	// fully replaces it and synthetic ids restart cleanly without colliding with stale rows.
+	await kdb.schema.dropTable("spr").ifExists().execute()
+
+	// Schema mirrors postalcode-intl.db's `spr` exactly, as a drop-in `--postcodes` input for build-candidate.
+	await kdb.schema
+		.createTable("spr")
+		.ifNotExists()
+		.addColumn("id", "integer", (c) => c.primaryKey())
+		.addColumn("parent_id", "integer", (c) => c.notNull().defaultTo(-1))
+		.addColumn("name", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("placetype", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("country", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("latitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("longitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("min_latitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("min_longitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("max_latitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("max_longitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("is_current", "integer", (c) => c.notNull().defaultTo(1))
+		.addColumn("is_deprecated", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("is_ceased", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("is_superseded", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("is_superseding", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
+		.execute()
+
+	// Hot bulk write — positional prepared statement (the leave-as-raw fast path), columns from SPR_COLUMNS.
+	const ins = kdb.prepare(
+		`INSERT INTO spr (${SPR_COLUMNS.join(", ")}) VALUES (${SPR_COLUMNS.map(() => "?").join(", ")})`
+	)
+
+	let id = SYNTH_ID_BASE
+	let rows = 0
+	kdb.exec("BEGIN")
+
+	for (const a of acc.values()) {
+		const lat = a.sumLat / a.n
+		const lon = a.sumLon / a.n
+
+		for (const name of nameVariants(a.pc, normalizeKey)) {
+			ins.run(++id, -1, name, "postalcode", a.cc, lat, lon, a.minLat, a.minLon, a.maxLat, a.maxLon, 1, 0, 0, 0, 0, 0)
+
+			rows++
+		}
+	}
+
+	kdb.exec("COMMIT")
+
+	return rows
+}
+
+/**
+ * Fold the freshly-built database into a copy of an existing candidate
+ * gazetteer, mirroring `build-candidate` pass-4's row construction
+ * (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid).
+ */
+async function foldIntoCandidate(
+	databasePath: PathBuilderLike,
+	srcPath: PathBuilderLike,
+	dstPath: PathBuilderLike,
+	normalizeKey: NormalizeKey
+): Promise<number> {
+	await copyFileTo(srcPath, dstPath)
+
+	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
+	using out = new DatabaseClient<WOFDatabase>(dstPath)
+	using database = new DatabaseClient<WOFDatabase>(databasePath, { readOnly: true })
+
+	const ptRow = getRow<{ id: number }>(out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'"))
+
+	if (!ptRow) throw new Error("candidate DB has no 'postalcode' placetype_code")
+	const pcPtid = ptRow.id
+
+	// country code → id, inserting any code the candidate DB does not already contain.
+	const ccCache = new Map<string, number>()
+	const getCc = out.prepare("SELECT id FROM country_codes WHERE code=?")
+	const maxCc = getRow<{ m: number }>(out.prepare("SELECT COALESCE(MAX(id),0) m FROM country_codes"))!
+	let nextCc = maxCc.m + 1
+	const insCc = out.prepare("INSERT INTO country_codes (id, code) VALUES (?, ?)")
+
+	const ccID = (code: string): number => {
+		let id = ccCache.get(code)
+
+		if (id !== undefined) return id
+		const r = getRow<{ id: number }>(getCc, code)
+
+		if (r) {
+			ccCache.set(code, r.id)
+
+			return r.id
+		}
+
+		id = nextCc++
+		insCc.run(id, code)
+		ccCache.set(code, id)
+
+		return id
+	}
+
+	const ins = out.prepare(
+		"INSERT OR IGNORE INTO candidate (name_key, country_id, region_id, placetype_id, neg_rank, spr_id, name, latitude, longitude, min_lat, min_lon, max_lat, max_lon, population, is_primary) " +
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	)
+
+	let n = 0
+	out.exec("BEGIN")
+
+	for (const r of database
+		.prepare(
+			"SELECT id, name, country, latitude, longitude, min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon " +
+				"FROM spr WHERE placetype='postalcode' AND latitude != 0 AND longitude != 0"
+		)
+		.iterate()) {
+		const name = String(r.name ?? "")
+		const key = normalizeKey(name)
+
+		if (!key) continue
+		const lat = r.latitude as number
+		const lon = r.longitude as number
+
+		ins.run(
+			key,
+			ccID(r.country as string),
+			0,
+			pcPtid,
+			0,
+			Number(r.id),
+			name,
+			lat,
+			lon,
+			(r.mnlat as number) || lat,
+			(r.mnlon as number) || lon,
+			(r.mxlat as number) || lat,
+			(r.mxlon as number) || lon,
+			0,
+			1
+		)
+
+		n++
+	}
+
+	out.exec("COMMIT")
+	// Re-cluster the without rowid B-tree contiguously after the mid-tree inserts.
+	out.exec("VACUUM")
+
+	return n
+}
+
+const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
+	const state = useCommandTask(async () => {
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+
+		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
+		const out = options.out ?? wofDatabasePath("postalcode-geonames-intl.db")
+
+		const countries = options.countries ? splitCountryCodes(options.countries) : ["PL", "CZ"]
+
+		const foldInto = options.foldInto
+		const foldOut = options.foldOut
+
+		if (!(await pathExists(geonames))) {
+			throw new CommandError(`Missing GeoNames file: ${geonames}`)
+		}
+
+		// `normalizeLocalityForKey` lives in the optional `@mailwoman/resolver-wof-sqlite` peer,
+		// so it is loaded dynamically to keep `mailwoman --help` from faulting when the peer is absent.
+		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street")
+
+		console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
+
+		const acc = await readGeonames(geonames, new Set(countries))
+		const byCc = new Map<string, number>()
+
+		for (const a of acc.values()) {
+			byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
+		}
+
+		console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
+
+		const rows = await buildDatabase(acc, out, normalizeLocalityForKey)
+
+		console.error(`Wrote ${rows} spr rows (both separator variants) → ${out}`)
+
+		const lines = [
+			`postcode database: ${out}`,
+			`${rows.toLocaleString()} spr rows — ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")} (total ${acc.size})`,
+		]
+
+		if (foldInto && foldOut) {
+			if (!(await pathExists(foldInto))) {
+				throw new CommandError(`Missing --fold-into candidate DB: ${foldInto}`)
+			}
+
+			console.error(`Folding database into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
+
+			const n = await foldIntoCandidate(out, foldInto, foldOut, normalizeLocalityForKey)
+
+			console.error(`Inserted ${n} postcode candidate rows → ${foldOut}`)
+
+			lines.push(`folded ${n.toLocaleString()} postcode candidate rows → ${foldOut}`)
+		} else {
+			console.error(
+				`(no --fold-into/--fold-out: database only — feed it to build-candidate via --postcodes for the canonical rebuild)`
+			)
+
+			lines.push(`database only — feed it to build-candidate via --postcodes for the canonical rebuild`)
+		}
+
+		return lines
+	})
+
+	if (state.status !== "done") return <CommandTaskResult state={state} />
+
+	if (state.status === "done") {
+		return (
+			<Box flexDirection="column">
+				{state.result.map((line, i) => (
+					<Text key={i} color={i === 0 ? "green" : undefined}>
+						{i === 0 ? "✓ " : "  "}
+						{line}
+					</Text>
+				))}
+			</Box>
+		)
+	}
+
+	return null
+}
+
+export default GazetteerPostcodeIntl

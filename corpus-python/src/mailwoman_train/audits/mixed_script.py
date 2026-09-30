@@ -1,7 +1,7 @@
 """Audit script transitions inside gold address components.
 
-Row-level script diversity is not the same capability as a bilingual or mixed-script
-component. ``Rinrin, 高山市`` contains multiple scripts across components. a venue such as
+Row-level script diversity differs from a bilingual or mixed-script component.
+``Rinrin, 高山市`` contains multiple scripts across components. A venue such as
 ``Four Seasons Inn四季酒家`` changes script inside one semantic span. This audit keeps those
 populations separate and reports the latter by component tag, country, plus source.
 
@@ -73,8 +73,8 @@ def character_script(char: str) -> str | None:
     for marker, script in _SCRIPT_MARKERS:
         if marker in name:
             return script
-    # Compatibility letters such as Spanish º/ª decompose to ordinary Latin letters. Treating
-    # their Unicode category (Lo) as a separate script manufactures Latin→Other transitions.
+    # Spanish º/ª decompose to ordinary Latin letters. Their Unicode category (Lo) does not make them a
+    # separate script would manufacture Latin→Other transitions.
     compatibility = unicodedata.normalize("NFKD", char)
     if compatibility != char:
         scripts = {sc for item in compatibility if (sc := character_script(item)) is not None}

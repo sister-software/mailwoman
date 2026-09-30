@@ -18,7 +18,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { canonicalJSON } from "mailwoman/eval-harness/preregistration"
+import { canonicalJSON } from "mailwoman/tools/eval-harness/preregistration"
 import { resolvePath } from "path-ts"
 
 import { releaseWorkspaces } from "#release/stage"
@@ -27,7 +27,7 @@ import {
 	hfVersionBase,
 	planWeightsMaterialization,
 	readBaseModelVersion,
-} from "#weights/fetch-hf-weights/index"
+} from "#weights/fetch-hf-weights"
 
 export interface ReleasePlanPackage {
 	workspace: string

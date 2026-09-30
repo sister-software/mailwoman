@@ -9,7 +9,7 @@
  *
  *   One multilingual model serves en-us and en-gb. The en-gb overlay adds its own retrieval data.
  *   This overlay links the same pair as the base and checks it against en-us's
- *   `model-card.json` `files_md5`, since en-gb's own card carries no `files_md5` block.
+ *   `model-card.json` `files_md5`, since en-gb's own card has no `files_md5` block.
  *
  *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation this
  *   overlay's card records under `requires.<channel>.lexicon`. The card claims its `requires`
@@ -114,7 +114,7 @@ const POSTCODE_BIN_DEST = overlay.destDir("postcode-gb.bin")
 const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 
 /**
- * Keys the built binary must carry (1,746,976 units and 2,863 outward districts),
+ * Keys the built binary must include (1,746,976 units and 2,863 outward districts),
  * the GB half of the training lookup `pilot-anchor-lookup-v2` verbatim.
  *
  * `gazetteer postcode-binary` enforces its own floor and exits nonzero below it,

@@ -9,7 +9,7 @@ This page records what each published package ships, which party grants rights t
 record is incomplete. It was observed on `main` on 2026-09-20 by reading manifests, model cards and
 rights documents in the checkout.
 
-The page keeps three records separate throughout. Mixing them would turn a corpus measurement into a
+The page keeps three records separate throughout. A merge would turn a corpus measurement into a
 claim about a released model:
 
 1. **Current corpus composition**: what the corpus on the training volume contains today.
@@ -29,7 +29,7 @@ document says so explicitly.
 
 The licensor and the services operator are different parties, and the repository states both
 consistently. Nirrus LLC appears in the website Terms and Privacy Policy and in no rights document.
-Operating the services does not make it the copyright holder.
+Service operation does not make the operator the copyright holder.
 
 Two commercial documents exist and each says which it is. `COMMERCIAL-LICENSE.md` opens with a
 template notice stating it does not execute. `commercial-2026-10.mdx` states that acceptance is
@@ -116,14 +116,14 @@ still carry the old field.
 Every published package's model-card version differs from its manifest version, `fr-fr` most widely
 at 6.5.0 against 10.0.0.
 
-**Correcting an earlier reading in this document.** The first version of this section called all
+**Earlier correction to this document's reading.** The first version of this section called all
 twelve a release-engineering defect. For the graph packages, that reading is wrong. Two version
 series exist by design, and `docs/engineering/releases.mdx` documents them. Its current row
 reads `**10.0.0** (current) · model 9.1.0 (unchanged)`, which describes a code-only release over
 unchanged model bytes.
 `mwops release verify-metadata` keys its three surface checks off the card version rather than the npm
 version for exactly that reason, and `fetch-hf-weights` names the Hugging Face directory
-`<family>/v<card version>/`. Forcing the numbers equal would break both.
+`<family>/v<card version>/`. Equal version numbers would break both.
 
 What the cards did not state is which series a given number belongs to. Two packages ship a model
 graph: `en-us` at card 9.1.0 and `cjk` at card 0.0.3. Ten are data-only overlays declaring
@@ -139,8 +139,8 @@ means and how it relates to `package_version`. The numbers are left free to diff
 
 `en-us` records four in `files_md5` — `model.onnx`, `tokenizer.model`,
 `street-type-lexicon-v3.json`, `locality-surface-lexicon-v7.json` — of its twelve. `cjk` records both
-of its two. The remaining ten packages record none of their 48. Summing the table's data-artifact
-column gives 62, and 6 of 62 is 9.7%.
+of its two. The remaining ten packages record none of their 48. The table's data-artifact
+column totals 62. The 6 packages with attribution account for 6 of 62 artifacts, or 9.7%.
 
 `en-us` ships artifacts with separate lineages, and one `data_attribution` list covered all of them.
 
@@ -158,7 +158,7 @@ Those are the two packages that ship a model graph. The ten overlays record none
 with inheriting a graph and makes no statement about the artifacts each overlay ships itself.
 
 The table above counted `en-us` alone, because the first reading of these cards looked at
-`training.data_attribution` and stopped. Reading one spelling reports the other package as recording
+`training.data_attribution` and stopped. A reader that checks one spelling reports the other package as recording
 no attribution.
 
 One of those ten entries attributes an artifact that ships in a different package. Entry 1 names
@@ -180,7 +180,7 @@ attribute. The cross-package case above appears in `en-gb`'s record under
 `attribution_recorded_in_another_package`, found by matching each package's artifact filenames against
 every other package's attribution text rather than by hand.
 
-Generating the files does not satisfy the obligation. `pair-index-gb.bin`'s attribution is still
+The generated files do not satisfy the obligation by themselves. `pair-index-gb.bin`'s attribution is still
 recorded in another package's card. The fix is to move the entry to the package that ships the
 artifact.
 
@@ -205,8 +205,8 @@ travels beside the verbatim text in the package's `PROVENANCE.json`.
 
 Four of the ten describe data this model never learned from. Entries 8 and 9 are coordinate
 evaluation sets recorded as free-rider validation, and 6 and 7 are tokenizer-splice text, which is a
-different and far smaller set than the training corpus. Reading all ten as training attribution says
-the model learned from rows it never saw. Dropping the four loses an attribution those sources still
+different and far smaller set than the training corpus. The card would falsely attribute all ten to training, saying
+the model learned from rows it never saw. The four dropped entries still carry attribution those sources
 require, so both readings are wrong and the record carries the split instead.
 
 Entry 10 states no use at all, which is recorded as `unstated` rather than assumed to be training.
@@ -253,7 +253,7 @@ Who's On First is mixed-provenance and our own notices say it draws on several s
 show that any of these rows trained a published checkpoint. It does not classify a `wof-*` row as
 ODbL, and it does not classify one as unrestricted.
 
-Resolving it needs record-level lineage on the training extracts: the source files, their lineage
+Record-level lineage on the training extracts is needed to resolve it: the source files, their lineage
 fields and license metadata, and the transformations applied. Where lineage cannot be recovered, the
 correct record is unresolved.
 
@@ -328,7 +328,7 @@ corpus rows are most `wof-*`, are not measured here.
 Measured 2026-09-27 against commit `dc65605f0`: `--exclude-share-alike` appeared 12 times across 8
 TypeScript files and in 7 Markdown files, and it was never a flag on `mw corpus build` or on any other
 command. `excludeLicenses` was reachable only from `buildCorpus`, whose sole caller was
-`packages/corpus/lib/build/index.test.ts`, so the mechanism had no operator surface. `mw corpus build` now
+`packages/corpus/lib/build.test.ts`, so the mechanism had no operator surface. `mw corpus build` now
 carries `--license-policy` and `--exclude-licenses`, and the corpus manifest records which policy ran,
 the row count for each refusal class, and the count of admitted rows whose license value resolves to
 no SPDX expression.
@@ -422,7 +422,7 @@ The check is also **non-recursive**, which its header does not say: it collects 
 equals the `data/` directory itself. Every artifact in `packages/core/data/` is a level down, in
 `libpostal/`, `chromium-i18n/`, `internal/` or `coarse-placer/`. The new record brings the
 directory into scope, but the check finds zero artifacts to list and passes. The record itself
-states this limit for readers. Making the check recursive requires a separate change to the check.
+states this limit for readers. The check needs a separate change to become recursive.
 
 The Who's On First path was also wrong. Both notice copies sent a reader to a `whosonfirst`
 directory directly under `data/`, which holds **0 files** in the tarball. The dictionaries are three
@@ -455,7 +455,7 @@ bundles. The local `poi.db` is 4,149,665,792 bytes against a recorded 3,889,184,
 reads version `2026-07-22.0` against a published path of `poi/2026-07-20a/`. This page therefore
 makes no claim about those bundles from a local read.
 
-Retrieving the National Address Database's disclaimer found a second omission. The page states the
+The National Address Database's disclaimer revealed a second omission. The page states the
 data carries no copyright under 17 U.S.C. § 105 and is available for re-use without limitation, and
 it also states that the data "is not intended for use as a mailing list and is subject to individual
 state statutes that prohibit it's use as a mailing list". That restriction does not arise from
@@ -494,13 +494,13 @@ across versions of that license.
 `packages/osm` is held out of the release pending ODbL counsel sign-off. It is not `private`, and it
 declares `publishConfig.access: public`. The hold was membership in `SANCTIONED_RELEASE_ABSENCES` in
 `packages/release-kit/lib/release/stage.ts`, a record that `checkReleaseListIdentity` reads so a
-missing workspace fails with its name. No step on the publish path read it. Running
+missing workspace fails with its name. No step on the publish path read it. A run of
 `mwops release publish-workspace --allow-unplanned` against that directory, or `npm publish` by
 hand, would have published it.
 
 **Repaired.** `assertWorkspacePublishable` refuses any workspace the record names, quoting the
 recorded reason, and both publish paths call it: `publishWorkspace` before it packs, and
-`blessPackages` across every named directory before the first publish. Publishing a held-out
+`blessPackages` across every named directory before the first publish. A held-out workspace publish
 workspace now requires deleting its entry, which a reviewer sees in the diff. The check refuses every
 entry, including those held for reasons other than rights. It therefore has no separate
 classification of rights-held entries that could drift out of date.
@@ -511,9 +511,9 @@ training manifest exists to read.
 
 ### A model upload states its training sources or it does not go out
 
-`mailwoman release hf` in `packages/mailwoman/lib/release-tools/publish/hf.ts` uploads `model.onnx`,
+`mailwoman release hf` in `packages/mailwoman/tools/release-tools/publish/hf.ts` uploads `model.onnx`,
 `tokenizer.model`, `model-card.json` and the FST and postcode binaries. It read those files' sizes and
-no other property of them. Uploading is publication, and attribution and share-alike conditions attach
+no other property of them. The upload publishes these artifacts. Attribution and share-alike conditions attach
 to a source and survive redistribution. The upload is therefore the last point at which to confirm
 that a provenance record exists.
 
@@ -521,10 +521,10 @@ that a provenance record exists.
 `training.data_attribution` is absent or empty. The error identifies the card and asks the operator
 to record in it the sources the run trained on. Entries without a license are printed with their text
 instead of being refused, so the operator sees at publication time which source is unaccounted for.
-Missing evidence about a source is a gap to record. A finding against a source is a conclusion that
+An evidence gap about a source is a gap to record. A finding against a source is a conclusion that
 a person has to reach, and a release control should not make it.
 
-**Correcting a false absence this control first reported.** The first version read
+**False-absence correction for this control.** The first version read
 `training.data_attribution` alone and refused `neural-weights-cjk` as recording no attribution. That card
 records six entries under a top-level `attribution` key instead, naming the Overture CDLA terms, the
 National Tax Agency's 利用規約, KOGL Type 1 for the Korean road-name address database, the Korean
@@ -589,6 +589,6 @@ ships with the tarball instead of existing only in this document. A package with
 attribution reads `none-recorded-in-this-package`. An artifact with no recorded digest reads
 `unrecorded`.
 
-No package is recorded as cleared. Missing evidence is recorded as missing, and it is neither evidence
+No package is recorded as cleared. An evidence gap is recorded as missing, and it is neither evidence
 of compliance nor evidence of infringement. Which license a given upstream value implies, and which
 obligations follow from it, are readings this document does not make.

@@ -60,7 +60,7 @@ the Northern Ireland OpenStreetMap fold at 4,757.
 
 :::caution[Legal sign-off: ☐ not cleared (as of 2026-06-30)]
 
-The OpenStreetMap precision tier is **built but not enabled** in any published artifact. It is not on npm, on R2, or in the demo. Enabling it is blocked until counsel reviews the [questions below](#what-counsel-needs-to-confirm). When that review is complete, change this banner to **☑ cleared**, name the reviewing counsel, and add the date.
+The OpenStreetMap precision tier is **built but not enabled** in any published artifact. It is not on npm, on R2, or in the demo. Counsel must review the [questions below](#what-counsel-needs-to-confirm) before release. After the review, change this banner to **☑ cleared**, name the reviewing counsel, and add the date.
 
 :::
 
@@ -116,7 +116,7 @@ The first row records the deliberate design choice. **WOF is the anchor and the 
 
 OpenStreetMap is licensed under the [ODbL](https://opendatacommons.org/licenses/odbl/). The ODbL requires share-alike **on a Derivative Database** but treats what it calls a _Produced Work_ differently. For a geocoder, that distinction decides the obligations, so it needs a precise statement:
 
-- A **Derivative Database** is a database built from ODbL data. For Mailwoman, that is the OSM rooftop extract (`address-points-<cc>-<slug>.db`). Redistributing one carries the full ODbL obligation: attribution, share-alike, and keeping it open.
+- A **Derivative Database** is a database built from ODbL data. For Mailwoman, that is the OSM rooftop extract (`address-points-<cc>-<slug>.db`). A distributor must provide attribution, share alike, and keep the database open.
 - A **Produced Work** is something _algorithmically derived_ from the database that is not itself a database. Examples are a rendered map, a report, or, in the case that matters here, a single resolved coordinate returned from a lookup. ODbL does **not** impose share-alike on a Produced Work and requires only attribution.
 
 Our working position, which counsel needs to confirm, is that **serving a resolved coordinate is a Produced Work** (attribution without copyleft), while **distributing the extract itself is a Derivative Database** (full ODbL). The architecture assumes that this distinction holds.
@@ -131,7 +131,7 @@ The separation is built into the structure of the code and data, so it does not 
 
 3. **The tier is off by default.** The cascade reaches the OSM extracts only through an _optional_ injected dependency (`osmExtracts?` in [`geocode-core.ts:86`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-core.ts)). It consults them only for a non-US parse without a US situs match. The default product never injects the dependency, so the tier is absent unless a caller deliberately adds it.
 
-4. **The corpus excludes share-alike data.** Training data is filtered through [`SHARE_ALIKE_PATTERN`](https://github.com/sister-software/mailwoman/blob/main/corpus/src/license.ts) (`--exclude-share-alike`), so no ODbL row can enter a proprietary weight build. Where a source is dual-licensed (France BAN), we elect the permissive option.
+4. **The corpus excludes share-alike data.** The training filter applies [`SHARE_ALIKE_PATTERN`](https://github.com/sister-software/mailwoman/blob/main/corpus/src/license.ts) (`--exclude-share-alike`) before a proprietary weight build. Where a source is dual-licensed (France BAN), we elect the permissive option.
 
 :::danger[Correction, 2026-09-27: mechanism 4 above describes a flag that never existed]
 
@@ -140,7 +140,7 @@ a command-line flag and a filter that a reader could not have used.
 
 `--exclude-share-alike` was never a flag on `mw corpus build` or on any other command. Its underlying
 option, `buildCorpus({ excludeLicenses })`, was reachable only from the library, and the only caller in
-the repository was `packages/corpus/lib/build/index.test.ts`. No corpus was ever built with it.
+the repository was `packages/corpus/lib/build.test.ts`. No corpus was ever built with it.
 
 `SHARE_ALIKE_PATTERN` was an anchored prefix match, `/^ODbL|^Open Database License|^CC-BY-SA|^CC-SA/i`,
 over the row's `license` column. Measured over `v0.7.0-de-holdout` on 2026-09-26, that column holds 71

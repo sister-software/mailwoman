@@ -15,10 +15,10 @@ import torch
 def to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
     """Collated lists to device tensors, carrying every channel the loader emitted.
 
-    A channel is present only when its lexicon is configured. Copy each channel under its own guard.
-    The encoder zero-fills a missing channel, so a dropped channel makes the projection train on zeros.
-    The shipped weights would then carry an untrained channel. `test_train_channels` checks key parity
-    between the collator and this function.
+        A channel is present only when its lexicon is configured. Copy each channel under its own guard.
+        The encoder zero-fills a missing channel, so a dropped channel makes the projection train on zeros.
+    The shipped weights would then include an untrained channel. `test_train_channels` checks key parity
+        between the collator and this function.
     """
     tb = {
         "input_ids": torch.tensor(batch["input_ids"], dtype=torch.long, device=device),

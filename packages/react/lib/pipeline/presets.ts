@@ -32,8 +32,8 @@ export const PIPELINE_PRESETS: ReadonlyArray<Preset> = [
 	{ label: "Berlin (native order)", value: "Straußstraße 27, 12623 Berlin", country: "de" },
 	{ label: "Berlin city-state (int'l order)", value: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", value: "181 Rue du Chevaleret, Paris", country: "fr" },
-	// "Henbury" flips to dependent_locality via the en-gb pair-index prior, and the UK
-	// postcode is structurally detectable, in parity with the docs EXAMPLE_ADDRESSES.
+	// "Henbury" flips to dependent_locality via the en-gb pair-index prior.
+	// The UK postcode is structurally detectable, in parity with the docs EXAMPLE_ADDRESSES.
 	{
 		label: "Macclesfield (GB dependent_locality)",
 		value: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD",

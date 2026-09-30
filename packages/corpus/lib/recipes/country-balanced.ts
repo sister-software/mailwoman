@@ -392,7 +392,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? defaultRecipeSource("synth-country")
 		const sources = opts.golden ? EVAL_SOURCES : SOURCES
-		// Reading three times the target leaves room for skipped rows.
+		// A threefold read of the target leaves room for skipped rows.
 		const perSource = Math.ceil((count * 3) / sources.length)
 
 		const pool: CountryTuple[] = []

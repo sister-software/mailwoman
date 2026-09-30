@@ -78,7 +78,8 @@ export const nsulDatabasePath: PathBuilder = databaseRootPath(dataRootPath())("n
  * Default WOF extracts for FTS when `--wof-db` is not provided.
  *
  * Includes the global admin-priority extract plus postcode extracts.
- * Routing in `pickExtractForPlacetype` sends each postcode query to the extract that claims that country.
+ * The routing in `pickExtractForPlacetype` sends each postcode query to the
+ * extract that claims that country.
  *
  * All paths are under `dataRoot`.
  * It defaults to `$MAILWOMAN_DATA_ROOT`, and callers may pass `--data-root`.

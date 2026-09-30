@@ -10,11 +10,11 @@
  *
  *   1. `yarn pack -o <tmpfile>` — yarn 4 translates `workspace:*` deps to the concrete sibling version
  *        while building the tarball. npm's publish step does not translate these dependencies.
- *        Shipping `workspace:*` to consumers breaks `npm install` (eunsupportedprotocol).
+ *        A published `workspace:*` dependency breaks consumer `npm install` (eunsupportedprotocol).
  *   2. Derive the publish exports map from the dev map inside the tarball — every `node → .ts`
  *        condition is rewritten to emitted JavaScript. The repo runs source under Node. Consumers get `out/`.
  *        The dev `exports` in each workspace's package.json is the single source of truth. There is no
- *        hand-maintained `publishConfig.exports`. Removing that duplication shipped a fully broken v7.2.0.
+ *        hand-maintained `publishConfig.exports`. That removal left the v7.2.0 publish fully broken.
  *        This transform replaces it. A guard
  *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points to a
  *        file the tarball doesn't contain.
@@ -41,7 +41,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { resolvePath } from "path-ts"
 
-import { $private, $public } from "#env/index"
+import { $private, $public } from "#env"
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "#pack/pack-workspace"
 import { formatTarballAudit, verifyTarball } from "#pack/verify-tarball"
 import { assertWorkspacePublishable } from "#release/stage"
@@ -177,7 +177,7 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 
 // The tarball audit lives in verify-tarball.ts so both publish paths inherit it.
 // `bless-package` packs a package's first publish.
-// It had no guard, so neural-weights-en-in@8.6.0 shipped without the binary it exists to carry.
+// It had no guard, so neural-weights-en-in@8.6.0 shipped without the binary it exists to provide.
 
 // dereferenceWorkspaceSymlinks lives in pack-workspace.ts so packWorkspaceForPublish
 // derefs for every caller (smoke included); the explicit call above stays as the

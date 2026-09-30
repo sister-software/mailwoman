@@ -87,7 +87,7 @@ export const LEGACY_PLACE_ENTRY_SIZE = 56
 export const ENCYCLOPEDIC_OFFSET = 56
 
 /**
- * `placeFlags` bit 0 (byte `pp+7`, v5+): this place carries an encyclopedic score.
+ * `placeFlags` bit 0 (byte `pp+7`, v5+): this place has an encyclopedic score.
  *
  * Per-place rather than per-file because absence is the common case — roughly 89% of
  * the 2026-08-05 gazetteer has no Wikipedia article — and a file-level flag would
@@ -106,7 +106,7 @@ export const FST_MAGIC_BYTES: readonly number[] = [0x46, 0x53, 0x54, 0x00]
  * Placetypes in hierarchy order, largest first.
  *
  * The writer stores each placetype's index in a place entry.
- * Reordering this array invalidates every existing file.
+ * A different array order invalidates every existing file.
  * Append entries and bump the version.
  */
 export const PLACETYPE_ORDER: readonly PlacetypeID[] = [

@@ -87,14 +87,14 @@ export const SourceStatus = {
 	 */
 	VerifiedAuthority: "verified-authority",
 	/**
-	 * A row carried forward from the earlier memo without a recheck.
+	 * A row retained from the earlier memo without a recheck.
 	 * These rows lack a publisher and a URL.
 	 */
 	RetainedOriginal: "retained-original",
 	/**
 	 * Research confirmed that a bulk corpus is reachable.
 	 *
-	 * This state alone does not make a source eligible for ingest.
+	 * This state by itself does not make a source eligible for ingest.
 	 */
 	VerifiedCorpus: "verified-corpus",
 	/**
@@ -140,7 +140,7 @@ export const REGISTER_SECTORS = [
 export type RegisterSector = (typeof REGISTER_SECTORS)[number]
 
 /**
- * Whether a source carries coordinates; `Unresolved` differs from `Absent`.
+ * Whether a source provides coordinates; `Unresolved` differs from `Absent`.
  */
 export const SourceGeometry = {
 	Present: "present",
@@ -171,6 +171,13 @@ export type SourceGeometry = (typeof SourceGeometry)[keyof typeof SourceGeometry
 export const ResearchPass = {
 	WebResearch: "2026-09-18-web-research",
 	OriginalMemo: "original-memo",
+	/**
+	 * The rights review that read each candidate publisher's own terms.
+	 *
+	 * The pass rewrites a row when reading the publisher settles something the earlier pass
+	 * recorded wrongly, such as a row naming two publishers or a URL that now answers 404.
+	 */
+	RightsReview: "2026-09-30-rights-review",
 } as const
 
 /**
@@ -230,31 +237,31 @@ export interface UncheckedLicense {
  */
 export const SourceOperation = {
 	/**
-	 * Copying the published dataset in bulk into `$MAILWOMAN_DATA_ROOT`.
+	 * Bulk copy of the published dataset into `$MAILWOMAN_DATA_ROOT`.
 	 */
 	Fetch: "fetch",
 	/**
-	 * Reading postal addresses out of the copied file.
+	 * Postal-address extraction from the copied file.
 	 */
 	Extract: "extract",
 	/**
-	 * Relabeling extracted rows into a token and tag corpus.
+	 * Transformation of extracted rows into a token and tag corpus.
 	 */
 	Transform: "transform",
 	/**
-	 * Training a model on the transformed rows.
+	 * Model fitting on the transformed rows.
 	 */
 	Train: "train",
 	/**
-	 * Republishing the rows, raw or transformed, as a database, lexicon or index.
+	 * Redistribution of raw or transformed rows as a database, lexicon or index.
 	 */
 	RedistributeData: "redistribute-data",
 	/**
-	 * Publishing weights trained on the rows.
+	 * Redistribution of weights trained on the rows.
 	 */
 	RedistributeModel: "redistribute-model",
 	/**
-	 * Selling a commercial license over the result.
+	 * Commercial sublicensing of the result.
 	 */
 	CommercialSublicense: "commercial-sublicense",
 } as const
@@ -265,7 +272,7 @@ export const SourceOperation = {
 export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperation]
 
 /**
- * What a grant says about one operation.
+ * What a grant permits for one operation.
  *
  * `unreviewed` means the terms lack an operation-specific review.
  * Eligibility checks treat it as blocking.
@@ -381,7 +388,7 @@ export interface JurisdictionRecord {
 	 */
 	bestPath: string
 	/**
-	 * The research pass's free-text list of propositions it expected sources to carry.
+	 * The research pass's free-text list of propositions it expected sources to support.
 	 *
 	 * The text is kept verbatim because it does not map onto the `AssertedProposition` vocabulary.
 	 */
@@ -470,11 +477,18 @@ export interface AddressSourceRecord {
 	sourceURL?: string
 	note?: string
 	/**
-	 * The role that the source's addresses play, such as a registered seat or a premise.
+	 * The role each of the source's address columns carries, keyed by that
+	 * column's path in the published record.
 	 *
-	 * A source is ineligible for ingest until this is set.
+	 * A source is ineligible for ingest until at least one column has a role.
+	 * One role per source cannot describe a publication that carries two roles on one record:
+	 * AusTender's OCDS release gives a supplier address and a procuring-entity address on
+	 * every contracting process, and Taiwan's GCIS register gives a registered company address
+	 * and a tax-office business address in separate columns.
+	 *
+	 * A source whose every address carries one role records one entry keyed by the field that holds it.
 	 */
-	addressRole?: AddressRole
+	addressRoles?: Readonly<Record<string, AddressRole>>
 	/**
 	 * The upstream sources that this source copies from, where known.
 	 *
@@ -500,7 +514,7 @@ export interface AddressSourceRecord {
  * A listed field must be absent from every row.
  * An unlisted field must appear on at least one row.
  */
-export const UNRESOLVED_FIELDS = ["addressRole", "upstreamLineage", "coverage", "personalDataReview"] as const
+export const UNRESOLVED_FIELDS = ["addressRoles", "upstreamLineage", "coverage", "personalDataReview"] as const
 
 /**
  * One of the {@link UNRESOLVED_FIELDS}.

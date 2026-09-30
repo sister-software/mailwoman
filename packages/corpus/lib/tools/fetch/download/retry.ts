@@ -148,7 +148,7 @@ export async function resumableDownload(options: {
 
 /**
  * The `Set-Cookie` values of a response folded into one `Cookie` header,
- * so a second request carries the session the first opened.
+ * so a second request reuses the session the first opened.
  */
 export function cookieHeader(res: Response): string {
 	return res.headers
@@ -159,7 +159,7 @@ export function cookieHeader(res: Response): string {
 
 /**
  * The file name a `Content-Disposition: attachment` header names, RFC 5987 form (`filename*=utf-8''…`)
- * first, plain `filename="…"` second, or `fallback` when the header carries neither.
+ * first, plain `filename="…"` second, or `fallback` when the header includes neither.
  */
 export function attachmentFilename(res: Response, fallback: string): string {
 	const disposition = res.headers.get("content-disposition") ?? ""

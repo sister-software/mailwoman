@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Fetch Korea's local-government permit registry (지방행정인허가데이터): one CSV per permit category,
- *   every business a local authority has licensed, about 195 categories. Each row carries both address
+ *   every business a local authority has licensed, about 195 categories. Each row includes both address
  *   forms of the same premises — `소재지전체주소` (the lot-number form, 지번) and `도로명전체주소` (the
  *   road-name form) — plus both postcodes and a planar coordinate (`좌표정보(x/y)`, epsg:5174). That
- *   Pairing the two formats is the cheapest dual-format signal Korean addresses offer.
+ *   The two formats together provide the cheapest dual-format signal in Korean addresses.
  *   The coordinate supplies the board's coordinate half. That role gives this source its weight.
  *
  *   What it asserts differs by field. The local authority grants the permit, so the permit identifier is an
@@ -19,7 +19,7 @@
  *   `file.localdata.go.kr`, which serves them behind a session: the category page sets the xsrf cookie,
  *   `/file/validate/download-count` is the portal's own rate check (429 when it wants a pause), and
  *   `/file/download/<slug>/info` streams the CSV. The files are CP949 as delivered. the adapter
- *   decodes. The restaurant category alone is about 700 MB.
+ *   decodes. The restaurant category by itself is about 700 MB.
  *
  *   Invoke via `mailwoman corpus fetch localdata-kr --out-root <path>`, optionally with
  *   `--categories general_restaurants,rest_cafes`.
@@ -31,19 +31,8 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
 
-import type {
-	BaseFetchOptions,
-	FetchSummary,
-	SourceCollectionManifest,
-	SourceManifest,
-} from "#tools/fetch/download/index"
-import {
-	cookieHeader,
-	loadCollectionFiles,
-	streamBodyToFile,
-	withRetries,
-	writeManifest,
-} from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
+import { cookieHeader, loadCollectionFiles, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "localdata-kr"
 const PORTAL = "https://file.localdata.go.kr"
@@ -103,7 +92,7 @@ async function openSession(): Promise<Session> {
 /**
  * The portal's own rate check.
  *
- * A 429 carries the pause it asks for in prose, so the caller sleeps and retries.
+ * A 429 response states the requested pause in prose, so the caller sleeps and retries.
  */
 async function validateDownloadCount(session: Session): Promise<boolean> {
 	const headers: Record<string, string> = { "user-agent": USER_AGENT, cookie: session.cookie, referer: INDEX_URL }

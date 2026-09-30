@@ -108,8 +108,8 @@ function buildOverpass(
 /**
  * Classifies debounced query text as a POI category or brand request and runs live searches on demand.
  *
- * Each result is keyed to the query that produced it, live search requires a non-empty
- * anchor, and brands need `brandLiveSearch` plus a Wikidata ID.
+ * Each result is keyed to the query that produced it, live search requires a non-empty anchor.
+ * Brands need `brandLiveSearch` plus a Wikidata ID.
  */
 export function usePOISearch({
 	text,

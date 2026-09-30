@@ -166,7 +166,7 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 
 /**
- * Returns the ship-obligation message when a lookup carries GB unit keys that a
+ * Returns the ship-obligation message when a lookup includes GB unit keys that a
  * card without `span_mode: "shaped"` can never reach.
  *
  * The one artifact-pairing check a runtime can make, since the mode itself is

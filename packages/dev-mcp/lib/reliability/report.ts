@@ -12,7 +12,7 @@ import { resolvePath } from "path-ts"
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
 import { describeObservedRate, type Selection } from "#power"
-import { curveByStratum, errorClasses, reliabilityCurve, thresholdTable } from "#reliability/index"
+import { curveByStratum, errorClasses, reliabilityCurve, thresholdTable } from "#reliability"
 import {
 	coarsePlacerReliabilitySample,
 	ComponentAggregate,
@@ -143,7 +143,7 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 		provenance: provenanceFor(engine, set),
 		nRequested: selected.length,
 		// A `limit` makes a full board a subset.
-		// Reporting the set's own selection would let a 20-row probe carry a full board's confidence wording.
+		// The set's own selection would let a 20-row probe use a full board's confidence wording.
 		selection: limit && limit < set.inputs.length ? "subset" : set.selection,
 		eventLabel: "incorrect component",
 	}

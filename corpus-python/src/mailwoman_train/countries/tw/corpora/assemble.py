@@ -6,7 +6,7 @@ in the same order. This lets pass 2's exact selectors land on rows counted by pa
 
 One `random.Random` feeds the selectors and then the shuffle. It feeds each row's register and the
 country prefix in that order.
-Adding, dropping, or reordering a draw reshuffles which addresses a seeded build trains on.
+Any added, dropped, or reordered draw reshuffles which addresses a seeded build trains on.
 No artifact records that change.
 """
 
@@ -87,7 +87,7 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     """Pass 1: count eligible rows per 縣市, sum each district's coordinates, list the agencies. Draws no rows.
 
     The agency list is not bookkeeping: the Taiwanese licence voids its grant on a missing attribution,
-    so the report carries the datasets the rows came from.
+    so the report lists the datasets the rows came from.
     """
     pool_counts: Counter[str] = Counter()
     dropped: Counter[str] = Counter()
@@ -204,7 +204,7 @@ def write_splits(
 
 
 def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> list[dict[str, Any]]:
-    """Write the held-out board: every row carries its coordinate and its routing fields."""
+    """Write the held-out board: every row includes its coordinate and routing fields."""
     board_records: list[dict[str, Any]] = []
     with (out_dir / "tw-board.jsonl").open("w", encoding="utf-8") as handle:
         for row in selection.board:

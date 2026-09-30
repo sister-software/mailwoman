@@ -96,11 +96,11 @@ Three metrics survive a name collision:
 - **coordinate error** (great-circle, gold point to resolved centroid, p50/p90) — handles point geometry natively and exposes the wrong-instance resolves that name-match ties.
 - **PIP-containment** — is the gold point inside the resolved place's polygon? Name-surface-independent, but report it _with a polygon-coverage denominator_: WOF point-geometry localities have no polygon and would otherwise count as silent failures, and tight municipal polygons reject rural addresses ascribed to the nearest town. Lead with region-match and coordinate; treat locality-PIP as a coverage-adjusted secondary.
 
-`packages/mailwoman/lib/dev-tools/honest-eval.run.ts` + `packages/mailwoman/lib/dev-tools/pip-containment.run.ts` implement this; see [the `honest-eval` report](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-08-honest-eval.mdx) for the full run.
+`packages/mailwoman/tools/dev-tools/honest-eval.run.ts` + `packages/mailwoman/tools/dev-tools/pip-containment.run.ts` implement this; see [the `honest-eval` report](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-08-honest-eval.mdx) for the full run.
 
 ### When aggregate and functional disagree, functional wins
 
-The region fix that came out of that run looked like a pure triumph on aggregate (Vermont 326→3.4km), and the eight demo presets we read by hand caught it regressing the most famous address in the set (`New York, NY` → "New York Mills", 283km upstate). The aggregate had averaged that one case away. Chasing _why_ the eight disagreed is what surfaced the deeper bug. Run the functional presets before any verdict, and treat a disagreement between them and the aggregate as a clue rather than noise — the same lesson the parser side learned, on the resolver side.
+The region fix from that run looked like a pure triumph on aggregate (Vermont 326→3.4km), and the eight demo presets we read by hand caught it regressing the most famous address in the set (`New York, NY` → "New York Mills", 283km upstate). The aggregate had averaged that one case away. The disagreement among the eight presets surfaced the deeper bug. Run the functional presets before any verdict, and treat a disagreement between them and the aggregate as a clue rather than noise — the same lesson the parser side learned, on the resolver side.
 
 ## Oracle substitution: where the error lives
 
@@ -118,7 +118,7 @@ Two cautions:
 - **It is an upper bound, always optimistic.** The oracle is perfect; the real stage never is. "Oracle locality → coord p50 1km" means _1km is the best the resolver could do given perfect parsing_ rather than a number you will ship.
 - **Inject at the right interface.** A gold locality _string_ (the model's output level) tests the resolver; a gold resolved _place-ID_ (skipping the resolver) tests only the coordinate math. Match the injection point to the stage you want to isolate.
 
-The negative form of the same experiment is worth naming, because it bit us: _removing_ a signal and watching a metric crater tells you how hard a stage leans on that signal. Scoring an anchor-trained model with its retrieval channels _absent_ collapsed the admin tags (country, region, locality, postcode) to near-zero — which, read backwards, measured how essential those channels are (the [v1.5.0-vs-v1.7.0 head-to-head](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-06-18-v150-vs-v170-head-to-head.md) is where that surfaced). Oracle substitution is the same idea run forwards: add a perfect signal and read the ceiling.
+The reverse experiment measures how much a stage relies on a signal: remove the signal and measure the metric change. An anchor-trained model scored without its retrieval channels collapsed the admin tags (country, region, locality, postcode) to near-zero, which measured how essential those channels are (the [v1.5.0-vs-v1.7.0 head-to-head](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-06-18-v150-vs-v170-head-to-head.md) records that result). Oracle substitution applies the idea in the other direction: add a perfect signal and read the ceiling.
 
 ## Verdict smokes and eval infrastructure
 
@@ -147,4 +147,4 @@ Before shipping a model release:
 - [v0.4.0 ablation campaign retrospective](/research/v0-4-0-ablation-campaign) — the original false-negative bucketing analysis
 - [VERDICT_SMOKES.md](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) — smoke-test discipline for training experiments
 - [Dual-loss curvature conflict](./dual-loss-curvature-conflict.mdx) — the training divergence this methodology helped diagnose
-- [Training pipeline](./training-pipeline.mdx) — how corpus composition affects eval-set coverage
+- [Workflow for training](./training-pipeline.mdx) — how corpus composition affects eval-set coverage

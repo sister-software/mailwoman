@@ -5,12 +5,12 @@
  *
  *   `groupPhrases` — Stage 2.7 entry point.
  *
- *   Composes per-kind rules over the normalized input + QueryShape and emits one `PhraseProposal` per
- *   fired rule. Overlapping proposals are expected — the reconciler (Stage 5) picks the best
- *   non-overlapping subset.
+ *   The function composes per-kind rules over normalized input and `QueryShape`. Each rule that fires emits
+ *   one `PhraseProposal`. Proposals can overlap. The reconciler (Stage 5) selects the best non-overlapping
+ *   subset.
  *
  *   See `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` § Phrase grouper
- *   for the design rationale,
+ *   for the design rationale.
  *   and `phrase-grouper/rules.ts` for per-rule documentation.
  */
 

@@ -13,7 +13,7 @@ You'll see all of these at once:
 
 - Model inference produces near-uniform or collapsed outputs (e.g., every token gets the same classification)
 - Confidence scores are low (0.2–0.4) when they should be 0.9+
-- Toggling to WASM (`executionProviders: ["wasm"]`) produces correct results immediately
+- The WASM provider (`executionProviders: ["wasm"]`) produces correct results immediately
 - The problem is worse on Safari (macOS and iOS) than Chrome, or only appears on Safari
 - Playwright / headless CI tests pass because they have no GPU and fall back to WASM
 

@@ -11,8 +11,8 @@ import { TileType } from "pmtiles"
 
 import { cacheResponse } from "#caching"
 import { applyAccessControlAllowOrigin } from "#cors"
+import { CloudflareWorkerPMTiles } from "#protomaps"
 import { TileFileExtensionMap, type TileTypeFileExtension } from "#protomaps/files"
-import { CloudflareWorkerPMTiles } from "#protomaps/index"
 import { WorkerRoute } from "#routing"
 
 // #region Tile Retrieval
@@ -70,7 +70,8 @@ export const TileRoute = WorkerRoute.GET(
 // #region Metadata Lookup
 
 /**
- * Serves a tile set's TileJSON metadata, which clients read before requesting tiles.
+ * Serves a tile set's TileJSON metadata.
+ * Clients read it before requesting tiles.
  */
 export const TileMetadataRoute = WorkerRoute.GET(
 	"/:tileSetName([a-zA-Z0-9_\\-]+).json",

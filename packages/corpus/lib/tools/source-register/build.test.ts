@@ -2,16 +2,20 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The source-register build's reader for the three columns the research pass left unresolved.
+ * @file The source-register build's reader for the columns the research pass left unresolved, and the
+ *   merge of the reviews that resolve them.
  *
- *   The register declares `addressRole`, `upstreamLineage` and `coverage` unresolved. The CSV carries a populated
- *   column for each. Those columns hold `varies` on all 389 rows and `country-specific` on all 389.
- *   The pass therefore did not determine the field per source. Carrying either onto a record would turn "uninspected" into a
- *   value `ingestEligibilityProblems` reads as an answer.
+ *   The CSV holds a populated `address_role`, `coverage` and `upstream` column and resolves none of them:
+ *   all 389 non-rail rows read `varies`, `country-specific` and the empty string. A value copied from one of
+ *   those columns would turn "uninspected" into a value `ingestEligibilityProblems` reads as an answer. A
+ *   review records its findings in `source-resolutions.json`, and `applySourceResolutions` merges them.
  */
 
-import { readUnresolvedColumn } from "@mailwoman/corpus/tools"
 import { describe, expect, it } from "vitest"
+
+import type { AddressSourceRecord } from "#source-register"
+import { applySourceResolutions, readUnresolvedColumn, resolveRecordedDecisions } from "#tools"
+import { AddressRole } from "#types"
 
 describe("readUnresolvedColumn", () => {
 	it("reads a declared placeholder as unresolved, whatever its case", () => {
@@ -32,7 +36,7 @@ describe("readUnresolvedColumn", () => {
 	})
 
 	it("refuses an address_role that is neither a placeholder nor a role", () => {
-		// Dropping it would make a column someone filled in read as a column with no recorded value.
+		// Its omission would make a column someone filled in read as a column with no recorded value.
 		// The message names both repairs because either can be the right one.
 		expect(() => readUnresolvedColumn("head office", "address_role", 42)).toThrow(
 			/row 42: address_role "head office" is neither a declared placeholder nor an `AddressRole`/u
@@ -41,5 +45,116 @@ describe("readUnresolvedColumn", () => {
 
 	it("does not check a non-role column against the role vocabulary", () => {
 		expect(readUnresolvedColumn("head office", "coverage", 42)).toBe("head office")
+	})
+})
+
+describe("resolveRecordedDecisions", () => {
+	it("gives every licence id that names one shared reading its own decision", () => {
+		const resolved = resolveRecordedDecisions({
+			sharedReadings: {
+				"one-publisher": {
+					state: "elected",
+					electedTerms: "Some Open Licence 1.0",
+					retrievedCopy: "internal/strategy/rights-receipts/somewhere/",
+					electedBecause: "the publisher offers one grant",
+				},
+			},
+			decisions: {
+				"unchecked-a": { sameAs: "one-publisher" },
+				"unchecked-b": { sameAs: "one-publisher" },
+			},
+		})
+
+		expect([...resolved.keys()]).toEqual(["unchecked-a", "unchecked-b"])
+
+		// Each carries its own id, which is what keeps one reading from becoming one wide election.
+		expect(resolved.get("unchecked-a")).toMatchObject({ licenseID: "unchecked-a", state: "elected" })
+		expect(resolved.get("unchecked-b")).toMatchObject({ licenseID: "unchecked-b", state: "elected" })
+	})
+
+	it("reads a decision written out in full without consulting the shared readings", () => {
+		const resolved = resolveRecordedDecisions({
+			decisions: {
+				"unchecked-c": {
+					state: "refused",
+					refusedBecause: "the publisher reserves all rights and states no grant",
+				},
+			},
+		})
+
+		expect(resolved.get("unchecked-c")).toEqual({
+			licenseID: "unchecked-c",
+			state: "refused",
+			refusedBecause: "the publisher reserves all rights and states no grant",
+		})
+	})
+
+	it("refuses a `sameAs` naming a reading the file does not declare", () => {
+		// The reference would otherwise resolve to an object with no `state`, which the
+		// audit reports as an unknown review state rather than as the typo it is.
+		expect(() =>
+			resolveRecordedDecisions({
+				sharedReadings: {},
+				decisions: { "unchecked-d": { sameAs: "absent-reading" } },
+			})
+		).toThrow(/licence "unchecked-d" reads `sameAs` "absent-reading", which `sharedReadings` does not declare/u)
+	})
+})
+
+describe("applySourceResolutions", () => {
+	const source: AddressSourceRecord = {
+		sourceID: "zz-health-1",
+		iso2: "ZZ",
+		sector: "health",
+		name: "Testland facility register",
+		status: "verified-corpus",
+		asserts: ["identity", "observation"],
+		authorityBasis: "national health ministry",
+		geometry: "unresolved",
+		license: "unchecked-test",
+		researchPass: "2026-09-18-web-research",
+	}
+
+	it("merges a recorded resolution onto the source it names and leaves the others alone", () => {
+		const other: AddressSourceRecord = { ...source, sourceID: "zz-health-2" }
+
+		const [resolved, untouched] = applySourceResolutions(
+			[source, other],
+			new Map([
+				[
+					"zz-health-1",
+					{
+						addressRoles: { "facility.address": AddressRole.Facility },
+						coverage: "measured national, 2026-09",
+						upstreamLineage: ["https://example.invalid/api"],
+						personalDataReview: {
+							reading: "absent" as const,
+							because: "every row names a licensed facility rather than a person",
+						},
+					},
+				],
+			])
+		)
+
+		expect(resolved!.addressRoles).toEqual({ "facility.address": "facility" })
+		expect(resolved!.coverage).toBe("measured national, 2026-09")
+		expect(resolved!.upstreamLineage).toEqual(["https://example.invalid/api"])
+		expect(resolved!.personalDataReview?.reading).toBe("absent")
+
+		// The merge replaces only the resolved fields, so the CSV-derived ones stay.
+		expect(resolved!.authorityBasis).toBe("national health ministry")
+		expect(untouched).toEqual(other)
+	})
+
+	it("returns the rows unchanged when no resolution is recorded", () => {
+		expect(applySourceResolutions([source], new Map())).toEqual([source])
+	})
+
+	it("refuses a resolution naming a source the register does not carry", () => {
+		// A kept entry would leave a review whose fields reach no row.
+		// That reads as work already done.
+		expect(() => applySourceResolutions([source], new Map([["zz-health-9", { coverage: "measured" }]]))).toThrow(
+			/a recorded source resolution names "zz-health-9", which the register does not carry/u
+		)
 	})
 })

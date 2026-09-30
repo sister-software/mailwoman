@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Read-only lookups over a compiled artifact. Queries use prebuilt maps rather than traversing the graph.
- *   Missing concepts return `undefined`; known concepts with no related facts return an empty list.
+ *   The lookup returns `undefined` for unknown concepts and an empty list for known concepts with no related facts.
  */
 
 import { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"

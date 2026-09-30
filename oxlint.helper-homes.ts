@@ -15,7 +15,7 @@
  * Its `signature` describes what a re-typed copy looks like in the AST: a `method-chain` lists
  * the outermost call's methods innermost-first, matched as a suffix with optional literal arguments,
  * a `numeric-literal` or `string-literal` rule matches a literal a copy cannot avoid.
- * A `descending-swap-loop` rule detects a control shape that carries no distinctive literal.
+ * A `descending-swap-loop` rule detects a control shape with no distinctive literal.
  *
  * A `template-properties` entry lists the components a template interpolates in order.
  */
@@ -104,7 +104,7 @@ export const HELPER_HOMES: readonly HelperHome[] = [
 	{
 		id: "address-order",
 		signature: { kind: "template-properties", properties: ["locality", "region", "postcode"] },
-		specifier: "@mailwoman/codex/address-format",
+		specifier: "@mailwoman/codex/address/format",
 		symbol: "formatAddressRow",
 		reason:
 			"the United States postal order, written as a template. Which components a country prints, in what order, " +

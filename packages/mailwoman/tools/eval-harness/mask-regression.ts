@@ -1,0 +1,259 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Per-release mask-regression check, the "second lock" paired with the load-time
+ *   capability-manifest delta check shipped in `neural/scorer.ts`
+ *   (`assertConventionsRespectCapabilities`).
+ *
+ *   What it adds over the load-time delta check (and why two locks):
+ *
+ *   - The load-time delta check (createScorer) is reactive and coarse. It consults the model card's
+ *       `capabilities` block and rejects only a conventions mask that forbids a tag the card
+ *       certifies, at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on explicitly-forbidden
+ *       tags. It checks only pre-recorded numbers, so it cannot see a tag the mask harms indirectly
+ *       (for example forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
+ *       regression on a tag no `forbiddenTags` row lists.
+ *   - This check is proactive and fine-grained. It re-runs the model (mask-off against mask-auto/on)
+ *       per locale under the full ship-config (anchor-on and gazetteer-on) and fails if any tag's F1
+ *       drops by more than a tighter 2pp threshold under the conventions mask, catching the subtler
+ *       interaction harms the per-tag 5pp delta check would miss.
+ *
+ *   It is weight-dependent (it runs the model), so it is a release check to run with weights on disk
+ *   before publishing. It is not a weightless CI step, since weight-dependent tests do not run in CI.
+ *   Hook it into the release path (`mailwoman eval promote` / the publish flow) rather than Test CI.
+ *
+ *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim, `createScorer` (so
+ *   the channel feed matches the ship config) with `overrides.conventions`
+ *   toggling mask off against auto, plus the unfolded exact-match per-tag F1 from `score-affix.ts`
+ *   (street parts split, so an affix regression is visible, unlike the folded `per-locale-f1.ts`).
+ *   The difference from the manifest generator: that one records `maskOnF1` only for
+ *   codex-forbidden tags (the only tags the load-time check reads), while this check computes the delta
+ *   for every tag, because a mask can harm a tag no `forbiddenTags` row lists.
+ *
+ *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
+ *
+ *   `mailwoman eval mask-regression --model <int8.onnx> --tokenizer <spm> --model-card <json>`
+ *
+ *   pass = no tag regresses more than the threshold under the mask. fail = at least one tag
+ *   regresses (the offending `(locale, tag, maskOff, maskOn, delta)` rows are printed).
+ *
+ *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
+ *   locale × tag rather than just violations) for the release record. All narration goes through the
+ *   `report` sink (stderr by default), and `promotion-eval.ts` captures it into
+ *   `<out-dir>/mask-regression.md`.
+ */
+
+import type { SystemCode } from "@mailwoman/codex"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilderLike } from "path-ts"
+
+import {
+	loadPerTagEvalRows,
+	MASK_EVAL_LOCALES,
+	rowsHaveTag,
+	scoreConventionsMaskOffOn,
+	UNFOLDED_ADDRESS_TAGS,
+} from "#tools/eval-harness/per/tag-f1"
+
+/**
+ * Options for {@linkcode maskRegressionCheck}.
+ */
+export interface MaskRegressionOptions {
+	/**
+	 * ONNX artifact.
+	 *
+	 * Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
+	 */
+	model?: string
+	/**
+	 * SentencePiece tokenizer.
+	 *
+	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 */
+	tokenizer?: PathBuilderLike
+	/**
+	 * Model card JSON.
+	 *
+	 * Default `neural-weights-en-us/model-card.json`.
+	 */
+	modelCard?: string
+	/**
+	 * Anchor lookup JSON.
+	 *
+	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 */
+	anchorLookup?: PathBuilderLike
+	/**
+	 * Gazetteer lexicon JSON.
+	 *
+	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 */
+	gazetteerLexicon?: string
+	/**
+	 * The regression threshold (pp, as a fraction).
+	 *
+	 * 2pp, a finer net than the load-time delta check's 5pp, so subtler interaction harms surface at release.
+	 * A tag whose mask-on F1 is within this band of its mask-off F1 is considered unharmed by the mask.
+	 *
+	 * Default 0.02.
+	 */
+	threshold?: number
+	/**
+	 * Write the full per-tag delta table JSON here.
+	 */
+	json?: string
+}
+
+/**
+ * The per-tag vocabulary scored, unfolded (street parts split, mirroring score-affix.ts
+ * and capability-manifest.ts).
+ *
+ * Every tag here gets a mask-off↔mask-on delta computed.
+ */
+const TAGS = UNFOLDED_ADDRESS_TAGS
+
+interface Delta {
+	locale: SystemCode
+	tag: string
+	maskOff: number
+	maskOn: number
+	/**
+	 * MaskOff − maskOn, in pp.
+	 *
+	 * Positive = the mask hurt the tag.
+	 */
+	delta: number
+	/**
+	 * Whether this tag is even in scope (any gold row includes it under this locale).
+	 */
+	inScope: boolean
+}
+
+/**
+ * Run the mask-off vs mask-on per-tag battery.
+ *
+ * @returns `pass` (no tag regresses beyond the threshold).
+ */
+export async function maskRegressionCheck(
+	options: MaskRegressionOptions = {},
+	report: (line: string) => void = console.error
+): Promise<{ pass: boolean; violations: Delta[] }> {
+	const MODEL = options.model || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")
+	const TOKENIZER = options.tokenizer || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+	const MODEL_CARD = options.modelCard || "packages/neural-weights-en-us/model-card.json"
+	const ANCHOR_LOOKUP = options.anchorLookup || dataRootPath("anchor", "pilot-anchor-lookup.json")
+	const GAZETTEER_LEXICON = options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json"
+	const JSON_OUT = options.json || ""
+	const THRESHOLD = options.threshold ?? 0.02
+
+	for (const p of [MODEL, TOKENIZER, MODEL_CARD]) {
+		if (!(await pathExists(p))) throw new Error(`required artifact not found: ${p}`)
+	}
+
+	report(`mask-regression-check (#718): threshold ${(THRESHOLD * 100).toFixed(1)}pp`)
+	report(`  model      ${MODEL}`)
+	report(`  tokenizer  ${TOKENIZER}`)
+	report(`  model-card ${MODEL_CARD}`)
+
+	const deltas: Delta[] = []
+
+	for (const spec of MASK_EVAL_LOCALES) {
+		const rows = await loadPerTagEvalRows(spec.files)
+		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
+
+		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades.
+		// The rows are formatted postal addresses.
+		// On those, the production pipeline derives `formatted` and runs the
+		// evidence-bundle channels off as a declared ablation.
+		// A bare-library default would measure a path production never takes on these inputs.
+		const { off, on } = await scoreConventionsMaskOffOn(
+			rows,
+			TAGS,
+			{
+				modelPath: MODEL,
+				tokenizerPath: TOKENIZER,
+				modelCardPath: MODEL_CARD,
+				anchorLookupPath: ANCHOR_LOOKUP,
+				gazetteerLexiconPath: GAZETTEER_LEXICON,
+			},
+			{ inputMode: "formatted" }
+		)
+
+		for (const tag of TAGS) {
+			const inScope = rowsHaveTag(rows, tag) || off[tag]! > 0 || on[tag]! > 0
+
+			deltas.push({
+				locale: spec.system,
+				tag,
+				maskOff: off[tag]!,
+				maskOn: on[tag]!,
+				delta: +(off[tag]! - on[tag]!).toFixed(1),
+				inScope,
+			})
+		}
+	}
+
+	report(`\n--- per-tag mask-off vs mask-on F1 (in-scope tags) ---`)
+	report(`  locale  tag                    maskOff   maskOn     Δpp`)
+
+	for (const d of deltas) {
+		if (!d.inScope) continue
+		const flag = d.delta > THRESHOLD * 100 ? "  ✗ REGRESSION" : ""
+
+		report(
+			`  ${d.locale.padEnd(6)}  ${d.tag.padEnd(20)}  ${String(d.maskOff).padStart(7)}  ${String(d.maskOn).padStart(7)}  ${(d.delta >= 0 ? "+" : "") + d.delta.toFixed(1).padStart(5)}${flag}`
+		)
+	}
+
+	const thresholdPp = THRESHOLD * 100
+	const violations = deltas.filter((d) => d.inScope && d.delta > thresholdPp)
+
+	if (JSON_OUT) {
+		await writeLocalJSONFile(
+			{
+				check: "mask-regression-check",
+				issue: 718,
+				thresholdPp,
+				model: MODEL,
+				tokenizer: TOKENIZER,
+				modelCard: MODEL_CARD,
+				pass: violations.length === 0,
+				deltas: deltas.filter((d) => d.inScope),
+				violations,
+			},
+			JSON_OUT
+		)
+
+		report(`\nWrote per-tag delta table → ${JSON_OUT}`)
+	}
+
+	if (violations.length) {
+		report(
+			`\n✗ FAIL — ${violations.length} tag(s) regress more than ${thresholdPp.toFixed(1)}pp under the conventions mask:`
+		)
+
+		for (const v of violations) {
+			report(
+				`  (${v.locale}, ${v.tag}): maskOff ${v.maskOff} → maskOn ${v.maskOn}  Δ=${v.delta.toFixed(1)}pp > ${thresholdPp.toFixed(1)}pp`
+			)
+		}
+
+		report(
+			`\nThe conventions mask provably harms a tag the model emits. Either narrow the codex ` +
+				`forbiddenTags for the offending locale, or re-certify and prove the mask is benign.`
+		)
+
+		return { pass: false, violations }
+	}
+
+	report(
+		`\n✓ PASS — no tag regresses more than ${thresholdPp.toFixed(1)}pp under the conventions mask ` +
+			`(${MASK_EVAL_LOCALES.length} locale(s), ${TAGS.length} tags each).`
+	)
+
+	return { pass: true, violations }
+}

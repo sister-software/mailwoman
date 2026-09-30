@@ -19,7 +19,7 @@ import type { RecipeOptions } from "#recipes/scaffold"
 /**
  * The fields a recipe assertion reads off an emitted row.
  *
- * Naming the shape is what lets `parseJSONStrict`'s `unknown` be checked at all.
+ * A declared shape lets the code check `parseJSONStrict`'s `unknown` value.
  */
 export interface RecipeRow {
 	raw: string
@@ -63,7 +63,7 @@ export async function scratch(prefix: string, tuples: object[], surfaces: string
 }
 
 /**
- * The register id a harness-built tuple set carries.
+ * The register id included in a harness-built tuple set.
  *
  * It names no publisher, so a row written under it cannot be mistaken for a real register's record.
  */
@@ -90,8 +90,8 @@ export function recipeRunner<TStats>(prefix: string, recipe: CorpusRecipe<TStats
 				variants: 1,
 				input: inputs.input,
 				excludeSurfaces: inputs.exclude,
-				// The tuples come from this harness rather than a publisher, and a recipe
-				// that reads them refuses to run without a register.
+				// The tuples come from this harness rather than a publisher.
+				// A recipe that reads them refuses to run without a register.
 				register: TEST_REGISTER,
 				...opts,
 			},

@@ -28,7 +28,9 @@ const decorated = await resolver.resolveTree(tree)
 
 `createWOFResolver` takes a `ResolverBackend` — a structural interface rather than a class. `@mailwoman/resolver-wof-sqlite` implements it over `node:sqlite`, `@mailwoman/resolver-wof-wasm` over `@sqlite.org/sqlite-wasm` in a browser, and `RemoteResolver` over HTTP. This package imports none of them.
 
-Backends differ in what they can answer, and that is visible rather than silent: `describeCapabilityGaps(backend)` reports which optional methods are missing, so a default-on feature that no-ops without logging on your backend says so instead of looking like a bad result.
+Backends differ in what they can answer. `describeCapabilityGaps(backend)` reports missing optional
+methods. A default-on feature that no-ops without logging on your backend reports that condition instead
+of looking like a bad result.
 
 ## Absence is a value
 
@@ -58,13 +60,13 @@ const rank = resolvedSpecificity({ placetype: "postalcode", value: "N7 0BT", res
 
 Either an **exact hit on a unit-grade code** (`@mailwoman/codex`'s `UNIT_GRADE_POSTCODE` — NL PC6, GB unit, CA urban LDU) or an **address system whose area-grade codes are finer than its localities** (`AREA_POSTCODE_FINER_THAN_LOCALITY` — Germany, where a Gemeinde can be the size of Berlin) puts the postcode ahead of the locality. Everything else follows the locality.
 
-The two shapes live in one module deliberately. They express one claim and are consumed by different callers, and when they were separate the eval harnesses each froze one arm of the conditional as a constant — every grader correct on half the data and wrong on the other half, unconditionally, for as long as nobody compared them. `test/unit/admin-winner.test.ts` asserts they agree on every arm; mutating either side fails it.
+The two shapes live in one module deliberately. They express one claim and are consumed by different callers, and when they were separate the eval harnesses each froze one arm of the conditional as a constant — every grader correct on half the data and wrong on the other half, unconditionally, for as long as nobody compared them. `lib/admin/winner.test.ts` asserts they agree on every arm; mutating either side fails it.
 
 Membership in those tiers is earned by measurement, never by shape alone. Canada is the worked example: its urban LDU measures 78 m against rooftop truth and joined the tier, while its rural codes measure 2.08 km and did not — and Canada Post already marks the difference with a `0` in the second character, so the code says which before any lookup runs.
 
 ## Coherence passes
 
-Ranking a span in isolation gets Portland, Maine to Messina, Italy. These run over the whole tree:
+A span ranked in isolation gets Portland, Maine to Messina, Italy. These checks run over the whole tree:
 
 | Pass                         | Question                                                                       |
 | ---------------------------- | ------------------------------------------------------------------------------ |

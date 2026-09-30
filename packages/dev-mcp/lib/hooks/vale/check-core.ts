@@ -69,7 +69,7 @@ export async function lintReply(reply: string): Promise<ValeAlert[]> {
 /**
  * Returns rule guidance without the match's name.
  *
- * A grouped line then carries the message once instead of once per hit.
+ * A grouped line then shows the message once instead of once per hit.
  *
  * Message templates vary.
  * Some contain `'%s'` or use a stock form.
@@ -128,8 +128,9 @@ function formatAlerts(alerts: ValeAlert[], opening: string): string {
 		lines.push(`- ${matches}${tail}: ${group.guidance}`)
 	}
 
-	// The rewrite guidance rides only the blocking path.
-	// An advisory verdict arrives after the reply stands, where the per-group lines alone are the useful part.
+	// The rewrite guidance appears only on the blocking path.
+	// An advisory verdict arrives after the reply is complete, where the per-group
+	// lines by themselves are useful.
 	const guidance = hasErrors
 		? [
 				`Return only replacement text for the flagged sentences. Do not repeat, summarize, reorder, expand, or otherwise restate any unflagged part of the reply. Replace each flagged phrase with the concrete claim it hides — do not merely delete it. Structure: define project terms at first use; give every count its comparison arm and denominator; state the arithmetic behind derived figures; write addresses in full. A hit inside a verbatim address, place name, or quoted string can stand.`,

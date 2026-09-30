@@ -17,7 +17,7 @@
    only. One of the forms below is a deliberate malformation. The postcode-first order is the dominant failure this
    source exists to teach against — and a renderer that produces well-formed addresses cannot express it. */
 
-import { componentsPresentIn } from "@mailwoman/codex/address-format"
+import { componentsPresentIn } from "@mailwoman/codex/address/format"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
@@ -48,7 +48,7 @@ interface GNAFTuple {
  * The address layouts an AU address actually arrives in.
  *
  * The model already handles postcode-trailing (canonical); the two postcode-leading
- * forms are the ones it fails, so they carry the change.
+ * forms are the ones it fails, so they show the change.
  * We keep the canonical form too so the retrain doesn't forget it.
  */
 function renderOrders(c: GNAFTuple): string[] {
@@ -76,7 +76,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 		defaultLicense: GNAF_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.GNAF,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"G-NAF (Australia): assembled address tuples rendered in multiple word orders (canonical / postcode-first / locality-first) — teaches the model AU's postcode-first layout.",
 
@@ -109,8 +109,8 @@ export function createGNAFAdapter(): CorpusAdapter {
 					postcode: t.postcode,
 				}
 
-				// `region` rides only the canonical render, and the postcode-leading layouts
-				// omit it so verbatim alignment never breaks.
+				// `region` appears only in the canonical render.
+				// The postcode-leading layouts omit it so verbatim alignment never breaks.
 				if (order === 0 && t.region) {
 					components.region = t.region
 				}

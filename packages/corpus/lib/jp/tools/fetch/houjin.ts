@@ -25,14 +25,8 @@
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 
-import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest } from "#tools/fetch/download/index"
-import {
-	attachmentFilename,
-	cookieHeader,
-	streamBodyToFile,
-	withRetries,
-	writeManifest,
-} from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest } from "#tools/fetch/download"
+import { attachmentFilename, cookieHeader, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "houjin-jp"
 const PAGE_URL = "https://www.houjin-bangou.nta.go.jp/download/zenken/"
@@ -45,7 +39,7 @@ const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) mailwoman-corpus-fetch"
 export type FetchHoujinJPOptions = BaseFetchOptions
 
 /**
- * The nationwide row of the "CSV形式・Unicode" table carries the file number in its `doDownload(N)` handler.
+ * The nationwide row of the "CSV形式・Unicode" table stores the file number in its `doDownload(N)` handler.
  */
 function nationwideUnicodeFileNumber(html: string): string | undefined {
 	const start = html.indexOf('id="csv-unicode"')
