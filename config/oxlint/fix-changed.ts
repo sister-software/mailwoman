@@ -39,8 +39,10 @@ const FORMAT_EXTENSIONS = /\.(?:[cm]?[jt]sx?|jsonc?|mdx?|toml|css|html)$/u
  */
 const CLEAN_REF = "origin/main"
 
-const OXLINT = repoRootPathBuilder("node_modules", ".bin", "oxlint")
-const OXFMT = repoRootPathBuilder("node_modules", ".bin", "oxfmt")
+/**
+ * The tools run through `yarn`, which resolves each binary from the workspace install.
+ */
+const YARN = "yarn"
 
 /**
  * oxfmt's message when every path it was handed is excluded by its ignore rules.
@@ -152,7 +154,7 @@ async function fixLint(paths: readonly string[]): Promise<number> {
 	}
 
 	const before = await modificationTimes(paths)
-	const first = runFixer(OXLINT.toString(), ["--fix", "--fix-suggestions"], paths)
+	const first = runFixer(YARN, ["oxlint", "--fix", "--fix-suggestions"], paths)
 
 	if (first !== 0) return first
 
@@ -167,7 +169,7 @@ async function fixLint(paths: readonly string[]): Promise<number> {
 
 	process.stdout.write(`oxlint: second pass over the ${rewritten.length} rewritten files\n`)
 
-	return runFixer(OXLINT.toString(), ["--fix", "--fix-suggestions"], rewritten)
+	return runFixer(YARN, ["oxlint", "--fix", "--fix-suggestions"], rewritten)
 }
 
 /**
@@ -180,7 +182,7 @@ function format(paths: readonly string[]): number {
 		return 0
 	}
 
-	const result = spawnProcessSync(OXFMT, ["--write", ...paths], { cwd: repoRootPathBuilder })
+	const result = spawnProcessSync(YARN, ["oxfmt", "--write", ...paths], { cwd: repoRootPathBuilder })
 	const output = result.stdout + result.stderr
 
 	process.stdout.write(output)
