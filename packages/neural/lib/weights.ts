@@ -7,7 +7,7 @@
 import { cacheRootPathBuilder, databaseRootPath, dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { resolvePackageDirectory, tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
 import { scriptFamilyBase } from "#char-encoder"
@@ -118,22 +118,22 @@ export interface ResolveWeightsOpts {
 	overlayRoot?: PathBuilderLike
 
 	/**
-	 * Resolve as though no weights package were installed in the workspace.
+	 * The directory to probe for the installed-package rung instead of module resolution.
 	 *
-	 * The ladder admits an artifact by existence, and the workspace package sits
+	 * It uses the npm `--prefix` layout, so the rung
+	 * reads `<root>/node_modules/@mailwoman/neural-weights-<locale>`.
+	 * A root without that directory resolves as though no package were installed.
+	 *
+	 * The ladder admits an artifact by existence, and the installed package sits
 	 * ahead of the overlay and the cache.
-	 * A checkout where `mwops release copy-weights` has run resolves from the workspace.
+	 * Whether the workspace package holds binaries depends on whether
+	 * `mwops release copy-weights` ran on the machine.
 	 *
-	 * That is correct for that machine, and it leaves the later rungs unreachable.
-	 *
-	 * A measurement of one of those later rungs cannot establish its own precondition without this option.
-	 * `overlayRoot` redirects the overlay rung rather than skipping the rung ahead of it,
-	 * and `cacheRoot` confines resolution to the cache and no other rung.
-	 *
-	 * A test or a diagnostic that asserts which rung answered sets this.
-	 * A serving path leaves it unset, so an installed package keeps its precedence.
+	 * A test or a diagnostic that asserts which rung answered sets this option,
+	 * so its result depends on its own fixture.
+	 * A serving path leaves it unset.
 	 */
-	ignoreInstalledPackage?: boolean
+	installedPackageRoot?: PathBuilderLike
 }
 
 /**
@@ -380,18 +380,16 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 
 	let emptyPackageDir: PathBuilder | undefined
 
-	if (!opts.ignoreInstalledPackage) {
+	const installedDir = opts.installedPackageRoot
+		? weightsCachePackageDir(opts.installedPackageRoot, locale)
+		: tryResolvePackageDirectory(packageName)
+
+	if (installedDir && (await pathExists(installedDir))) {
 		try {
-			return await resolveFromPackageDir(
-				resolvePackageDirectory(packageName),
-				locale,
-				opts,
-				`package:${packageName}`,
-				tried
-			)
+			return await resolveFromPackageDir(installedDir, locale, opts, `package:${packageName}`, tried)
 		} catch (error) {
 			if (error instanceof Error && error.message.includes("missing model files")) {
-				emptyPackageDir = resolvePackageDirectory(packageName)
+				emptyPackageDir = installedDir
 			}
 		}
 	}

@@ -17,7 +17,7 @@ import { afterAll, describe, expect, it } from "vitest"
 import { scriptFamilyBase } from "#char-encoder"
 import { NeuralAddressClassifier, type NeuralRunner } from "#classifier"
 import { packCharFeed } from "#onnx-runner"
-import { resolveWeights } from "#weights"
+import { resolveWeights, weightsCachePackageDir } from "#weights"
 import { readEncoderFromModelCard } from "#weights/channels"
 
 const fixtures = new AsyncDisposableStack()
@@ -226,41 +226,44 @@ describe("script-family fallback", () => {
 			cjk("model-card.json")
 		)
 
-		// The family-base step re-enters the ladder for `cjk`, where the workspace
+		// The family-base step re-enters the ladder for `cjk`, where the installed
 		// package sits ahead of the overlay.
-		// A checkout that has run `copy-weights` holds binaries there and resolves from them.
-		// That is correct for that machine, and it would leave this assertion reading the workspace path.
-		const resolved = await resolveWeights({ locale: "ja-JP", overlayRoot: root, ignoreInstalledPackage: true })
+		// An empty installed-package root keeps this machine's workspace package out of the lookup.
+		const noPackages = fixtures.use(await temporaryDirectory("installed-packages-")).path
+		const resolved = await resolveWeights({ locale: "ja-JP", overlayRoot: root, installedPackageRoot: noPackages })
 
 		expect(resolved.encoder.kind).toBe("char")
 		expect(resolved.modelPath).toBe(cjk("model.onnx").toString())
 		expect(resolved.source).toContain("script-family base for ja-jp")
 	})
 
-	it("reaches the overlay rung under ignoreInstalledPackage and the workspace rung without it", async () => {
-		// The option's only effect is which rung answers.
-		// `en-US` ships an installed package on every checkout, so the pair states the
-		// precedence rather than depending on this machine's artifacts.
-		const root = fixtures.use(await temporaryDirectory("overlay-precedence-")).path
-		const overlay = root("en-us")
+	it("answers from an installed package that holds binaries ahead of the overlay, and from the overlay otherwise", async () => {
+		const card = stringifyJSON({ encoder: "sentencepiece", labels: LABELS, version: "0.0.0-rung-precedence" })
+		const overlayRoot = fixtures.use(await temporaryDirectory("overlay-precedence-")).path
+		const overlay = overlayRoot("en-us")
 
 		await writeLocalTextFile("not-a-real-graph", overlay("model.onnx"))
 		await writeLocalTextFile("not-a-real-tokenizer", overlay("tokenizer.model"))
+		await writeLocalTextFile(card, overlay("model-card.json"))
 
-		await writeLocalTextFile(
-			stringifyJSON({ encoder: "sentencepiece", labels: LABELS, version: "0.0.0-overlay-precedence" }),
-			overlay("model-card.json")
-		)
+		const installedRoot = fixtures.use(await temporaryDirectory("installed-packages-")).path
+		const installed = weightsCachePackageDir(installedRoot, "en-us")
 
-		const fromOverlay = await resolveWeights({ locale: "en-US", overlayRoot: root, ignoreInstalledPackage: true })
+		await writeLocalTextFile(stringifyJSON({ name: "@mailwoman/neural-weights-en-us" }), installed("package.json"))
+		await writeLocalTextFile("not-a-real-graph", installed("model.onnx"))
+		await writeLocalTextFile("not-a-real-tokenizer", installed("tokenizer.model"))
+		await writeLocalTextFile(card, installed("model-card.json"))
+
+		const fromPackage = await resolveWeights({ locale: "en-US", overlayRoot, installedPackageRoot: installedRoot })
+
+		expect(fromPackage.modelPath).toBe(installed("model.onnx").toString())
+		expect(fromPackage.source).toContain("package")
+
+		const noPackages = fixtures.use(await temporaryDirectory("installed-packages-")).path
+		const fromOverlay = await resolveWeights({ locale: "en-US", overlayRoot, installedPackageRoot: noPackages })
 
 		expect(fromOverlay.modelPath).toBe(overlay("model.onnx").toString())
 		expect(fromOverlay.source).toContain("overlay")
-
-		const fromPackage = await resolveWeights({ locale: "en-US", overlayRoot: root })
-
-		expect(fromPackage.modelPath).not.toBe(overlay("model.onnx").toString())
-		expect(fromPackage.source).toContain("package")
 	})
 
 	it("has no family base for a Latin locale", () => {
