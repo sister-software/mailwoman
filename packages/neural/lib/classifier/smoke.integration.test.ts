@@ -3,47 +3,37 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   End-to-end smoke test for `NeuralAddressClassifier`.
- *
- *   Loads the v0.2.0 int8 model from the host-side weights dir (not committed to the repo because of
- *   size). Skips gracefully when the model isn't present so CI in non-host environments still
- *   passes. To run locally:
- *
- *   - Tokenizer.model is in `packages/neural/neural/test/fixtures/` (committed)
- *   - Model.onnx is read from $MAILWOMAN_TEST_ONNX_MODEL or the default path below
+ *   End-to-end smoke test for `NeuralAddressClassifier` over the test model that
+ *   `test/model-assets.ts` selects: the `MAILWOMAN_TEST_ONNX_MODEL` override, or the packaged en-US
+ *   weights. A checkout with neither skips the suite.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 
 import { NeuralAddressClassifier } from "#classifier"
-import { $public } from "#env"
-import { ONNXRunner } from "#onnx-runner"
-import { MailwomanTokenizer } from "#tokenizer"
 
-const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+import { testModelAssets } from "../../test/model-assets.ts"
 
-const MODEL_PATH =
-	$public.MAILWOMAN_TEST_ONNX_MODEL ?? dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx")
+const assets = await testModelAssets()
+const haveModel = assets !== null
 
-const haveModel = await pathExists(MODEL_PATH)
+/**
+ * A classifier over the test model, with the labels of the model card beside it.
+ */
+function loadClassifier(): Promise<NeuralAddressClassifier> {
+	return NeuralAddressClassifier.loadFromWeights({ modelPath: assets!.modelPath, tokenizerPath: assets!.tokenizerPath })
+}
 
-describe.skipIf(!haveModel)("NeuralAddressClassifier — smoke (v0.2.0 int8)", () => {
+describe.skipIf(!haveModel)("NeuralAddressClassifier — smoke over the test model", () => {
 	test("parses the white-house address into a non-empty tree", async () => {
-		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_PATH)
-		const runner = await ONNXRunner.create(MODEL_PATH)
-		const cls = new NeuralAddressClassifier({ tokenizer, runner })
+		const cls = await loadClassifier()
 
 		const tree = await cls.parse("1600 Pennsylvania Avenue NW, Washington, DC 20500")
 		expect(tree.roots.length).toBeGreaterThan(0)
 	})
 
 	test("parseXML emits an <address> root with at least one component", async () => {
-		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_PATH)
-		const runner = await ONNXRunner.create(MODEL_PATH)
-		const cls = new NeuralAddressClassifier({ tokenizer, runner })
+		const cls = await loadClassifier()
 
 		const xml = await cls.parseXML("75004 Paris")
 		expect(xml).toMatch(/^<address /)
@@ -51,9 +41,7 @@ describe.skipIf(!haveModel)("NeuralAddressClassifier — smoke (v0.2.0 int8)", (
 	})
 
 	test("parseJSON returns at least one coarse component for a familiar address", async () => {
-		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_PATH)
-		const runner = await ONNXRunner.create(MODEL_PATH)
-		const cls = new NeuralAddressClassifier({ tokenizer, runner })
+		const cls = await loadClassifier()
 
 		const json = await cls.parseJSON("Washington, DC 20500")
 		const coarseHits = ["country", "region", "locality", "postcode"].filter((k) => k in json)
@@ -61,9 +49,7 @@ describe.skipIf(!haveModel)("NeuralAddressClassifier — smoke (v0.2.0 int8)", (
 	})
 
 	test("empty input returns empty tree without error", async () => {
-		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_PATH)
-		const runner = await ONNXRunner.create(MODEL_PATH)
-		const cls = new NeuralAddressClassifier({ tokenizer, runner })
+		const cls = await loadClassifier()
 
 		const tree = await cls.parse("")
 		expect(tree.roots).toEqual([])

@@ -9,21 +9,20 @@ import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
-import { $public } from "#env"
 import { NeuralAddressClassifier, resolveWeights } from "#index"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "#pair"
 import { weightsCachePackageDir } from "#weights"
+
+import { FIXTURE_TOKENIZER_PATH, MODEL_LOAD_TEST_TIMEOUT_MS, testModelAssets } from "../../test/model-assets.ts"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+const assets = await testModelAssets()
+const haveModel = assets !== null
 
-const MODEL_PATH =
-	$public.MAILWOMAN_TEST_ONNX_MODEL ?? dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx")
-
-const haveModel = await pathExists(MODEL_PATH)
+vi.setConfig({ testTimeout: MODEL_LOAD_TEST_TIMEOUT_MS })
 
 const linkedLocales = new Set<string>()
 
@@ -78,24 +77,24 @@ function enGBClassifier(): Promise<NeuralAddressClassifier> {
 
 describe("resolveWeights — explicit-path mode", () => {
 	test.skipIf(!haveModel)("returns the explicit paths verbatim when both are valid", async () => {
-		const r = await resolveWeights({ modelPath: MODEL_PATH, tokenizerPath: TOKENIZER_PATH })
-		expect(r.modelPath).toBe(MODEL_PATH.toString())
-		expect(r.tokenizerPath).toBe(TOKENIZER_PATH)
+		const r = await resolveWeights({ modelPath: assets!.modelPath, tokenizerPath: assets!.tokenizerPath })
+		expect(r.modelPath).toBe(assets!.modelPath)
+		expect(r.tokenizerPath).toBe(assets!.tokenizerPath)
 		expect(r.source).toBe("explicit")
 	})
 
 	test("throws actionably when explicit modelPath is missing", async () => {
-		await expect(resolveWeights({ modelPath: "/no/such/model.onnx", tokenizerPath: TOKENIZER_PATH })).rejects.toThrow(
-			/Explicit modelPath does not exist/
-		)
+		await expect(
+			resolveWeights({ modelPath: "/no/such/model.onnx", tokenizerPath: FIXTURE_TOKENIZER_PATH })
+		).rejects.toThrow(/Explicit modelPath does not exist/)
 	})
 })
 
 describe("NeuralAddressClassifier.loadFromWeights — explicit-path mode", () => {
 	test.skipIf(!haveModel)("loads + parses a known address into a non-empty tree", async () => {
 		const cls = await NeuralAddressClassifier.loadFromWeights({
-			modelPath: MODEL_PATH,
-			tokenizerPath: TOKENIZER_PATH,
+			modelPath: assets!.modelPath,
+			tokenizerPath: assets!.tokenizerPath,
 		})
 
 		const tree = await cls.parse("75004 Paris")
