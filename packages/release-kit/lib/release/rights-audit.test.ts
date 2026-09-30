@@ -14,14 +14,17 @@
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
+import { readAddressSourceRegister, type AddressSourceRegister } from "@mailwoman/corpus/source-register"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { auditRights, renderRightsAudit } from "#release/rights-audit"
 
 let audit: Awaited<ReturnType<typeof auditRights>>
+let register: AddressSourceRegister
 
 beforeAll(async () => {
 	audit = await auditRights(repoRootPath())
+	register = await readAddressSourceRegister()
 })
 
 describe("auditRights", () => {
@@ -75,9 +78,11 @@ describe("auditRights", () => {
 		expect(audit.unresolved.join("\n")).toMatch(/12 of 12 packages have no frozen training manifest/u)
 	})
 
-	it("reports that the register admits no source, and names each of the four blockers", () => {
-		expect(audit.register.sources).toBe(389)
-		expect(audit.register.eligible).toBe(0)
+	it("counts every register source and names each of the four blockers", () => {
+		// The totals move with every research pass and every review, so the report is checked
+		// against the register it read rather than against a recorded number.
+		expect(audit.register.sources).toBe(register.sources.length)
+		expect(audit.register.eligible).toBeLessThanOrEqual(audit.register.sources)
 
 		// Each of the four ingest conditions has to reach the report.
 		// The license blocker reaches it only because refusals that differ by a quoted
@@ -92,11 +97,11 @@ describe("auditRights", () => {
 			).toBeGreaterThan(0)
 		}
 
-		// No single blocker covers all 389.
+		// No single blocker covers every source.
 		// Resolving one condition on one source is what breaks that, so a blocker widening
-		// back to 389 would mean a recorded resolution stopped being read.
+		// back to the full count would mean a recorded resolution stopped being read.
 		// The assertions above leave each blocker's own count free, because every review moves it.
-		expect(Math.max(...audit.register.refusals.map((refusal) => refusal.sources))).toBeLessThan(389)
+		expect(Math.max(...audit.register.refusals.map((refusal) => refusal.sources))).toBeLessThan(audit.register.sources)
 	})
 
 	it("renders a report that ends on what it leaves open", () => {

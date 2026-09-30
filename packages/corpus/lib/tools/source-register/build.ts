@@ -85,6 +85,7 @@ const SOURCE_STATUS_BY_NAME: Readonly<Record<string, SourceStatus>> = {
 const RESEARCH_PASS_BY_ORIGIN: Readonly<Record<string, ResearchPass>> = {
 	"2026-09-18_web_research": ResearchPass.WebResearch,
 	original_memo: ResearchPass.OriginalMemo,
+	"2026-09-30_rights_review": ResearchPass.RightsReview,
 }
 
 const GEOMETRY_BY_NAME: Readonly<Record<string, SourceGeometry>> = {

@@ -171,6 +171,13 @@ export type SourceGeometry = (typeof SourceGeometry)[keyof typeof SourceGeometry
 export const ResearchPass = {
 	WebResearch: "2026-09-18-web-research",
 	OriginalMemo: "original-memo",
+	/**
+	 * The rights review that read each candidate publisher's own terms.
+	 *
+	 * The pass rewrites a row when reading the publisher settles something the earlier pass
+	 * recorded wrongly, such as a row naming two publishers or a URL that now answers 404.
+	 */
+	RightsReview: "2026-09-30-rights-review",
 } as const
 
 /**

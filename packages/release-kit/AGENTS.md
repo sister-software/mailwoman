@@ -90,8 +90,8 @@ leaves open. It changes nothing and takes no input.
 
 Read it before a release and read the `Unresolved` section first. The report is not a verdict: an empty `Unresolved`
 list would mean the pass found nothing it could not read, which is not a statement that an artifact is cleared for a
-use. As of 2026-09-21 the list is not empty — no register source is eligible for ingest, no package has a frozen
-training manifest, and four attribution entries name no license this reader could find.
+use. The list is not empty: one register source of 390 is eligible for ingest, no package has a frozen
+training manifest, and five attribution entries name no license this reader could find.
 
 The per-check invariants stay where they are. `weights-rights` holds the generated files equal to their writer's
 output, `third-party-notices` holds the three notice copies equal, and `rights-chain` holds every rights document to

@@ -133,11 +133,11 @@ provenance vocabulary. A layer database already embeds `layer_manifest` (`source
 
 `data/address-source-register.json`, read through `@mailwoman/corpus/source-register`, records which
 jurisdictions exist, what research has resolved for each, and what is known about every source's
-terms. It is a backlog made checkable: **no row in it is ingest-eligible today**, and
-`ingestEligibilityProblems()` answers with the reasons rather than a bare `false`.
+terms. It is a backlog made checkable: **one row of 390 is ingest-eligible today**, and
+`ingestEligibilityProblems()` answers for the other 389 with the reasons rather than a bare `false`.
 
 Two tables. The jurisdiction table enumerates all 250 — every ISO 3166-1 alpha-2 code plus the
-operational `XK` — whether or not anybody found a source; the source table holds 389 rows across 240
+operational `XK` — whether or not anybody found a source; the source table holds 390 rows across 240
 of them. A jurisdiction with no sources states `researchState` and a `stateReason`, so "nobody has
 looked yet" is written down rather than inferred from an empty list.
 

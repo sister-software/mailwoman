@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "9632ae2f0af3aee96660260950b0084b51d5c20ae05643e06119fe973ac53348",
+	"contentDigest": "310f1a9b7982b8d67a6e035845d875592dbe6f4fb40690a8a4017cc44c341e4b",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -179,10 +179,53 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to de-telecom-1 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-es-es-mixed-regulatory-1",
+			"state": "elected",
+			"electedTerms": "Licencia de acceso y uso de los servicios y conjuntos de datos INSPIRE de la Dirección General del Catastro",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/es-catastro-2026-09-30/, whose licence text is internal/strategy/rights-receipts/es-2026-09-25/catastro-inspire-licencia.pdf, sha256 9265a9c05ad0cf5a4366c59a4b16168eda9cf792ec1279e2c52a53f3f622d652",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The instrument is titled for exactly the three INSPIRE themes this source publishes, `Parcela Catastral (CP)`, `Direcciones (AD)` and `Edificios (BU)`, at version 1.0 of July 2016, and its three pages were read in full. It names no Creative Commons licence and no SPDX identifier applies, so none is recorded. The publisher states three things that do not agree, and this records all three rather than reconciling them. The titled instrument grants what the operations below describe. All 52 of the 52 province feeds that the Dirección General del Catastro publishes read `This service can be used free of charge in every instance, as long as that the D. G. of the Cadastre (Ministry of Finance) is mentioned as author and owner of the information`, which agrees on use and states the attribution obligation; that denominator is every DGC province feed the top-level feed links, each retrieved, with no retrieval failing. The top-level feed and each of its 52 DGC entries read `Copyright (c) 2012\", ES.SDGC; all rights reserved`, four years older than the instrument and carrying a stray quotation mark after the year. The election rests on the titled instrument because it is the publication's own licence for these datasets and the most recent of the three, and a reviewer reading only the top-level feed reads the opposite. Attribution to the Dirección General del Catastro as author and owner conditions every permitted act. The feed's remaining three entries belong to the Provincial Councils of Bizkaia, Gipuzkoa and Navarra, which state `CC BY 3.0 ES`, `CC-BY-SA` and `CC BY 4.0`; this decision reaches none of them, and the source's `coverage` records the exclusion.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 1 reads `La descarga masiva de información gráfica y alfanumérica del Catastro y el acceso a los servicios web se autoriza para uso propio del usuario titular de la licencia`, which authorizes retrieving the zipped GML each province feed links."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause authorizes the download `para la elaboración y distribución de nuevos productos de valor añadido a partir de la información catastral`. Reading the house-number designator, the thoroughfare name and the postal descriptor out of the GML is a step in producing such a product."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 1 requires the transformation rather than merely allowing it: `siempre que ésta sea transformada por el interesado`. Clause 3 bounds it, in that a transformation may not alter the content or denature its sense, and a derived product may not identify itself as `cartografía catastral` or `información catastral` or a confusable equivalent."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 1 authorizes `el uso público, incluido el comercial, de la información catastral que haya sido sometida a cualquier proceso previo de transformación en los términos establecidos en el artículo 21 del texto refundido de la Ley de Propiedad Intelectual`. Fitting a model on a token and tag corpus built from the rows is a use of information that such a process has already transformed."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"because": "Clause 1 states `no se autoriza la difusión, distribución o comercialización de la información original suministrada, que no puede ser difundida por Internet ni por ningún otro medio sin su previa transformación`. Publishing the supplied GML, or a copy of its rows that no transformation has changed, is the act the clause withholds."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a work transformed in the sense of article 21, which clause 1 makes the condition of any public use, is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records. The retained text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The instrument grants a licence to its own holder and states no sublicensing right either way. Clause `Supuestos de revocación de la licencia` reserves revocation for inadequate use, decided under article 78 of RD 417/2006, which is a further reason the question needs counsel rather than a reading here."
+				}
+			},
+			"licenseID": "unchecked-access-free-es-direcci-n-general-del-catastro"
+		},
+		{
+			"licenseID": "unchecked-access-free-es-instituto-nacional-de-estad-stica",
 			"state": "unchecked",
 			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to es-mixed-regulatory-1 alone."
+			"note": "An access label from the original memo: the download costs nothing. It states no grant. Scoped to Instituto Nacional de Estadística in ES, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
 			"licenseID": "unchecked-access-free-fr-fr-business-legal-1",
@@ -7214,13 +7257,43 @@
 			"sourceID": "es-mixed-regulatory-1",
 			"iso2": "ES",
 			"sector": "mixed-regulatory",
-			"name": "Catastro, INE",
+			"name": "Catastro INSPIRE Direcciones (AD)",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Cadastral authority for Spain; publishes the INSPIRE Addresses (AD) theme as an ATOM download service under its own access-and-use licence",
+			"geometry": "present",
+			"license": "unchecked-access-free-es-direcci-n-general-del-catastro",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "ATOM download service; one zipped GML per municipality",
+			"publisher": "Dirección General del Catastro",
+			"sourceURL": "https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml",
+			"note": "The AD theme is an address point at a building entrance carrying a house-number designator; a thoroughfare name; a postcode and a municipality. It carries no party.",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Dirección General del Catastro, reached through the ATOM download service at `https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml`, 681,783 bytes, sha256 `4342d37b6d5527eb7b8bebadc97966c90f1a041068ae9398b90183f2176898b9`, carrying `<updated>2026-08-21T00:00:00Z</updated>`. The feed lists 55 entries, and this row covers 52 of them. The other three belong to the Provincial Councils of Bizkaia, Gipuzkoa and Navarra, which publish their own cadastres through the same feed and state their own terms, `CC BY 3.0 ES`, `CC-BY-SA` and `CC BY 4.0`. Adding them needs a row each, because a decision scoped to one publisher cannot reach another. Each of the 52 entries links a province feed listing one zipped GML per municipality. The measured instance is Ceuta, `A.ES.SDGC.AD.55101.zip`, 354,647 bytes, whose one member `A.ES.SDGC.AD.55101.gml` is 11,861,975 bytes and holds 8,126 `AD:Address` features. A feature is a point at a building entrance carrying a house-number designator, and it references a thoroughfare name, a postal descriptor and an administrative unit by `xlink:href`. The row count for the other 51 offices was not measured.",
+			"upstreamLineage": [
+				"https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml",
+				"http://www.catastro.hacienda.gob.es/INSPIRE/Addresses/55/ES.SDGC.AD.atom_55.xml",
+				"https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/55/55101-CEUTA/A.ES.SDGC.AD.55101.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `A.ES.SDGC.AD.55101.gml` was counted over all 11,861,975 bytes, so this covers the file rather than its first features. It holds 48 distinct element names and none of them names a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name of any kind. The only names are 505 `AD:ThoroughfareName`, 5 `AD:PostalDescriptor` and 1 `AD:AdminUnitName`. The file declares the INSPIRE Addresses 3.0 schema at `urn:x-inspire:specification:gmlas:Addresses:3.0`, which has no party element for another municipality to populate, so the reading rests on the schema as well as on the one municipality read. This is what separates the row from the other 25 `verified-corpus` sources: each of those is a business register or a procurement portal where the address belongs to a party, and some of those parties are natural persons trading on their own account. The cadastre's AD theme records the place. The ownership data that Spanish cadastral records also hold travels through a separate protected channel and appears nowhere in this dataset."
+			}
+		},
+		{
+			"sourceID": "es-mixed-regulatory-2",
+			"iso2": "ES",
+			"sector": "mixed-regulatory",
+			"name": "Instituto Nacional de Estadística",
 			"status": "retained-original",
 			"asserts": ["identity", "observation"],
 			"authorityBasis": "Regulatory/operational corpus retained from original Functionally Authoritative Address Corpora memo",
 			"geometry": "unresolved",
-			"license": "unchecked-access-free-es-es-mixed-regulatory-1",
+			"license": "unchecked-access-free-es-instituto-nacional-de-estad-stica",
 			"researchPass": "original-memo",
+			"publisher": "Instituto Nacional de Estadística",
 			"note": "Registro Mercantil licensed | mess="
 		},
 		{
@@ -11304,12 +11377,12 @@
 			"authorityBasis": "Exclusive prudential supervisor of entities conducting professional financial activity in Holy See/Vatican City State",
 			"geometry": "unresolved",
 			"license": "unchecked-national-terms-va-holy-see-supervisory-and-financial-informatio",
-			"researchPass": "2026-09-18-web-research",
+			"researchPass": "2026-09-30-rights-review",
 			"access": "public web directory",
 			"publisher": "Holy See Supervisory and Financial Information Authority (ASIF)",
-			"sourceURL": "https://www.asif.va/ENG/EntiVigilati.aspx",
-			"note": "Public supervised-entity list exposes the regulated entity and Vatican postal address.",
-			"coverage": "ASIF's list of supervised entities for the Holy See, read from `https://www.asif.va/en/list-of-supervised-entities`. **The register row's `sourceURL` is stale**: the recorded `https://www.asif.va/ENG/EntiVigilati.aspx` answers HTTP 404, and the path above is the current one. The whole page is 3,254 bytes and the list has one member, `Institute for the Works of Religion (IOR)`, named without an address. The only address on the page is ASIF's own footer, `Palazzo San Carlo, 00120 Città del Vaticano`, which belongs to the regulator rather than to a supervised entity. So the register row's note that the list `exposes the regulated entity and Vatican postal address` is not borne out, and this publication is not an address source. `addressRoles` stays unresolved because there is no address column to assign a role to.",
+			"sourceURL": "https://www.asif.va/en/list-of-supervised-entities",
+			"note": "The list names one supervised entity and gives no address for it. The only address on the page belongs to ASIF itself.",
+			"coverage": "ASIF's list of supervised entities for the Holy See, read from `https://www.asif.va/en/list-of-supervised-entities`, which is the row's `sourceURL` since the 2026-09-30 rights review corrected it. The 2026-09-18 pass recorded `https://www.asif.va/ENG/EntiVigilati.aspx`; on 2026-09-30 that path redirected to `https://www.asif.va/en/enti-vigilati` and answered HTTP 404 with an empty body, while the corrected path answered HTTP 200. The whole page is 3,254 bytes and the list has one member, `Institute for the Works of Religion (IOR)`, named without an address. The only address on the page is ASIF's own footer, `Palazzo San Carlo, 00120 Città del Vaticano`, which belongs to the regulator rather than to a supervised entity. So the register row's note that the list `exposes the regulated entity and Vatican postal address` is not borne out, and this publication is not an address source. `addressRoles` stays unresolved because there is no address column to assign a role to.",
 			"upstreamLineage": ["https://www.asif.va/en/list-of-supervised-entities"],
 			"personalDataReview": {
 				"reading": "absent",
