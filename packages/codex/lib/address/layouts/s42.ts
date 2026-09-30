@@ -3,22 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Layouts for the jurisdictions whose libaddressinput record states `fmt: null`, derived from the UPU's own
- *   Standardized Address Format Description for each one.
+ * Layouts for countries where libaddressinput has `fmt: null`.
  *
- *   A SAFD is the public rendering of a country's approved S42 template. It carries the metadata the template was
- *   registered with, a mapping of S42 element names to the country's own field names, a `STRUCTURE OF ADDRESS LINES`
- *   table, and worked examples that print an address beside its element decomposition. The line structure and the
- *   examples are what these layouts are read from.
+ * These were read from each country's UPU Standardized Address Format
+ * Description (SAFD), using its line-structure table and examples.
  *
- *   These entries therefore have a different provenance from every other layout table here. The generated tables
- *   restate libaddressinput's `fmt`, which is a derived implementation observation. A SAFD is the postal operator's
- *   own submission, approved by the UPU, so it is the `approved-crosswalk` observation that
- *   `#address/convention-claims` names. Where the two disagree, both readings stay recorded rather than being
- *   reconciled.
+ * SAFD-based layouts are kept separate from generated `fmt` layouts.
+ * If they differ, both are kept as-is.
  *
- *   Three of the eight record no postcode element at all: Botswana, Qatar and Zimbabwe. Three print the postcode
- *   before the locality and two after it, which is the fact libaddressinput's null `fmt` left unstated for all eight.
+ * Of these eight countries, Botswana, Qatar, and Zimbabwe have no
+ * postcode element. Three place postcode before locality, two after.
  */
 
 import { addr, numberFirstCommaStreet, numberFirstStreet, SLOTS, type AddressLayout } from "#address/layout"
@@ -26,47 +20,35 @@ import { addr, numberFirstCommaStreet, numberFirstStreet, SLOTS, type AddressLay
 const { attention, country, dependent_locality, locality, postcode, region, venue } = SLOTS
 
 /**
- * One jurisdiction's S42 template as this repository read it.
- *
- * The fields record what the SAFD's own metadata table states.
- * A later reader can then tell a 2012 approval from a 2021 one without opening the document.
+ * Metadata read from one country's SAFD.
  */
 export interface S42LayoutRecord {
 	/**
-	 * The SAFD's `APPROVAL DATE`, as `YYYY-M`.
+	 * SAFD `APPROVAL DATE`, as `YYYY-M`.
 	 */
 	approvedAt: string
 	/**
-	 * The SAFD's `LAST REVIEWED DATE`, as `YYYY-M`.
+	 * SAFD `LAST REVIEWED DATE`, as `YYYY-M`.
 	 */
 	reviewedAt: string
 	/**
-	 * The SAFD's `SAMPLE SIZE`, the number of worked examples it carries.
+	 * SAFD `SAMPLE SIZE`.
 	 *
-	 * Zimbabwe's reads 0 while its document prints examples, so this records the metadata
-	 * rather than a count of what the document holds.
+	 * Note: Zimbabwe says 0 even though examples are printed.
 	 */
 	sampleSize: number
 	/**
-	 * Where the template prints the postcode, or that it registers no postcode element.
+	 * Where postcode appears, or `absent` if none is defined.
 	 */
 	postcode: "before-locality" | "after-locality" | "absent"
 	/**
-	 * What the template states that this layout cannot express.
+	 * Details in the SAFD this layout cannot represent.
 	 */
 	unexpressed: readonly string[]
 }
 
 /**
- * What each SAFD states about its registration, and what this table drops.
- *
- * `unexpressed` exists because an S42 template distinguishes more than `ComponentTag`.
- * Botswana separates a ward from a neighbourhood.
- *
- * Zimbabwe separates two district positions.
- * This vocabulary has one `dependent_locality` for each pair.
- *
- * Recording the loss here keeps it legible rather than silent.
+ * Per-country SAFD metadata and known details that are not representable here.
  */
 export const S42_LAYOUT_RECORDS: Readonly<Record<string, S42LayoutRecord>> = {
 	BW: {
@@ -152,22 +134,17 @@ export const S42_LAYOUT_RECORDS: Readonly<Record<string, S42LayoutRecord>> = {
 }
 
 /**
- * The layout a retrieved SAFD states, for comparison rather than for rendering.
+ * SAFD layouts kept for comparison, not rendering.
  *
- * `layoutForCountry` reads {@linkcode S42_ADDRESS_LAYOUTS} and never this one.
- * This table sets the crosswalk against libaddressinput and the board.
+ * `layoutForCountry` uses {@linkcode S42_ADDRESS_LAYOUTS}, not this table.
  *
- * That comparison turns the `upu-s42` observation from `unread` into a stance.
- *
- * It holds the eight layouts below plus the United Kingdom's.
- * The United Kingdom's template was retrieved, and its board entry already states an order.
- * A jurisdiction absent here has a template nobody has read.
+ * Includes the eight countries below plus GB.
  */
 export const S42_READ_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 	// SAFD lines: PO-BOX, SUB-BLDG-NAME, BLDG-NAME, BLDG-NO-THORO, DEP-LOC,
 	// POST-TOWN, COUNTY, POSTCODE, COUNTRY.
 	// `BLDG-NO-THORO-LINE` prints `prem id & prim thoro name & succ prim thoro type`.
-	// The postcode takes its own line beneath the county, which the board also states.
+	// Postcode is on its own line under county.
 	GB: addr`${attention}
 ${venue}
 ${numberFirstStreet}
@@ -179,10 +156,9 @@ ${country}`,
 }
 
 /**
- * Layouts keyed by ISO 3166-1 alpha-2, read from each jurisdiction's SAFD.
+ * Layouts by ISO 3166-1 alpha-2, read from each country's SAFD.
  *
- * Each entry quotes the SAFD's `STRUCTURE OF ADDRESS LINES` rows in print order.
- * A reader can then check the layout against the document without opening it.
+ * Comments list SAFD line order for quick checking.
  */
 export const S42_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 	// SAFD lines: PLOT, STREET-ADDRESS, PO-BOX, DISTRICT-1, POSTOFFICE-NAME, TOWN, COUNTRY.
@@ -196,7 +172,7 @@ ${country}`,
 
 	// SAFD lines: PO-BOX, thoroughfare 1, thoroughfare 2, sub-district, district,
 	// postcode and town, external country.
-	// `postcode and town` prints `postcode & town`, which is why 77501 precedes OBOCK.
+	// `postcode and town` prints `postcode & town`.
 	DJ: addr`${attention}
 ${venue}
 ${numberFirstStreet}
@@ -206,7 +182,7 @@ ${country}`,
 
 	// SAFD lines: post office box, building details, building, thoroughfare,
 	// postcode and town, external country.
-	// `thoroughfare` prints `prem id & ', ' & thoro`, so the number carries a comma.
+	// `thoroughfare` prints `prem id & ', ' & thoro` (number with comma).
 	// `external country` prints `region & ', ' & country name`.
 	KM: addr`${attention}
 ${venue}
@@ -215,7 +191,7 @@ ${postcode} ${locality} ${dependent_locality}
 ${region}, ${country}`,
 
 	// SAFD lines: PO-BOX, BLDG, STREET-ADDRESS, TOWN, POST OFFICE, POSTCODE, COUNTRY.
-	// `POSTCODE-LINE` prints `town & postcode`, which is why LC04 301 follows Castries.
+	// `POSTCODE-LINE` prints `town & postcode`.
 	LC: addr`${attention}
 ${venue}
 ${numberFirstStreet}
@@ -224,7 +200,7 @@ ${country}`,
 
 	// SAFD lines: post office box, building, street, district, TEL NO, TOWN, country.
 	// Qatar registers no postcode element.
-	// Its `thoro` carries the street name and the street number together.
+	// Its `thoro` includes street name and number together.
 	QA: addr`${attention}
 ${venue}
 ${numberFirstStreet}
@@ -232,8 +208,8 @@ ${dependent_locality}
 ${locality}
 ${country}`,
 
-	// `postcode and town` prints `town & postcode`, so 120110 follows DIEGO MARTIN.
-	// The SAFD's district lev 2 sits above district lev 1, and both map to one tag here.
+	// `postcode and town` prints `town & postcode`.
+	// District levels 1 and 2 both map to one tag here.
 	TT: addr`${attention}
 ${venue}
 ${numberFirstStreet}
@@ -241,9 +217,8 @@ ${dependent_locality}
 ${locality} ${postcode}
 ${country}`,
 
-	// `POSTCODE-REGION-LINE` prints `postcode & region`, and takes `locality` here.
-	// Uganda's own mapping table reads `region → Locality` and `town → Village name`.
-	// The S42 element name would tag Kampala as a region, leaving the postcode claim silent.
+	// `POSTCODE-REGION-LINE` prints `postcode & region`, using `locality` here.
+	// Uganda maps `region → Locality` and `town → Village name`.
 	UG: addr`${attention}
 ${venue}
 ${numberFirstStreet}
@@ -251,7 +226,7 @@ ${postcode} ${locality}
 ${country}`,
 
 	// Zimbabwe registers no postcode element.
-	// Its STREET-ADDRESS carries district lev 2, and DISTRICT-1-LINE carries district lev 1.
+	// `STREET-ADDRESS` carries district level 2, `DISTRICT-1-LINE` level 1.
 	ZW: addr`${attention}
 ${venue}
 ${numberFirstStreet}
