@@ -13,6 +13,14 @@
  */
 
 import {
+	ConventionClaimID,
+	conventionObservation,
+	ConventionSource,
+	stanceFromLayout,
+	type ConventionClaim,
+	type ConventionObservation,
+} from "#address/convention-claims"
+import {
 	addr,
 	type AddressAtom,
 	type AddressLayout,
@@ -50,66 +58,17 @@ export {
 export type AddressScript = "local" | "latin"
 
 /**
- * Where a layout's print order was read from.
+ * Where each layout table's print order was read, quoted as the source's own identifier.
  *
- * Every layout in this package comes from one of the first three.
- * `PostalStandardS42` exists because `#2323` asks which standard a layout cites,
- * and the answer for every country today is a dataset rather than a postal standard.
- *
- * A layout takes that value once somebody transcribes the country's own S42 addressing
- * template and can name the document it came from.
+ * The location is recorded per table rather than per entry because each table is derived by one
+ * procedure from one input, so a per-entry copy could disagree with how its entry was produced.
  */
-export const LayoutBasis = {
-	/**
-	 * libaddressinput's `fmt` field, with `%A` expanded into this repository's street tags.
-	 */
-	LibAddressInputFormat: "libaddressinput-fmt",
-	/**
-	 * libaddressinput's `lfmt` field, which states a country's Latin print order.
-	 */
-	LibAddressInputLatinFormat: "libaddressinput-lfmt",
-	/**
-	 * Hand-authored for a locale this project publishes weights for, and checked
-	 * against real addresses on a board.
-	 * Its skeleton still starts from the country's `fmt`.
-	 */
-	BoardChecked: "board-checked",
-	/**
-	 * Transcribed from the country's UPU S42 addressing template.
-	 */
-	PostalStandardS42: "upu-s42",
+const READ_FROM = {
+	generated: "libaddressinput `fmt`, via GENERATED_ADDRESS_LAYOUTS",
+	latin: "libaddressinput `lfmt`, via GENERATED_LATIN_ADDRESS_LAYOUTS",
+	street: "OpenCage address-formatting templates, via the street atom of the layout",
+	board: "mailwoman locale board, via ADDRESS_LAYOUTS",
 } as const
-
-/**
- * One of the {@link LayoutBasis} values.
- */
-export type LayoutBasis = (typeof LayoutBasis)[keyof typeof LayoutBasis]
-
-/**
- * What every entry in {@linkcode GENERATED_ADDRESS_LAYOUTS} was derived from.
- *
- * The basis is recorded per table rather than per entry because each table is derived
- * by one procedure from one input, so a per-entry copy could disagree with how its
- * entry was produced. {@linkcode layoutBasisForCountry} answers the question for one
- * country by naming the table {@linkcode layoutForCountry} would read.
- */
-export const GENERATED_LAYOUT_BASIS = LayoutBasis.LibAddressInputFormat
-
-/**
- * What every entry in {@linkcode GENERATED_LATIN_ADDRESS_LAYOUTS} was derived from.
- *
- * Its generator reads `lfmt` rather than `fmt`, which is the only difference
- * from {@linkcode GENERATED_LAYOUT_BASIS}.
- */
-export const GENERATED_LATIN_LAYOUT_BASIS = LayoutBasis.LibAddressInputLatinFormat
-
-/**
- * What every entry in {@linkcode ADDRESS_LAYOUTS} was derived from.
- *
- * Each of those entries starts from the country's `fmt` skeleton and was then checked against
- * real addresses on a board, so the board rather than the dataset settled its final order.
- */
-export const HAND_AUTHORED_LAYOUT_BASIS = LayoutBasis.BoardChecked
 
 const { attention, venue, house_number, street, dependent_locality, locality, subregion, region, postcode, country } =
 	SLOTS
@@ -376,33 +335,82 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 }
 
 /**
- * Returns what the layout {@linkcode layoutForCountry} answers for this country was
- * derived from, or `null` when no layout exists for it.
+ * Returns every source's statement about one convention claim for this country,
+ * or `null` when the country has no layout to read.
  *
- * The resolution repeats {@linkcode layoutForCountry}'s order so that the basis
- * describes the layout a caller actually receives.
- * A country whose Latin and local orders differ has a different basis per script.
+ * Each source that holds a layout for the country contributes one observation,
+ * and an observation that contradicts the claim is kept beside one that supports it.
+ * Whether they disagree is a fact about the jurisdiction: libaddressinput states
+ * what an input system requires, the OpenCage templates state what a renderer needs,
+ * and a board entry states what real addresses do.
+ *
+ * `upu-pas` and `upu-s42` contribute no observation yet, because no operator description
+ * or S42 template has been retrieved.
+ * An absent observation reads as unexamined rather than as agreement, which is what
+ * {@linkcode ObservationStance.Silent} exists to separate.
  */
-export function layoutBasisForCountry(
-	countryCode: string | null | undefined,
-	script?: AddressScript
-): LayoutBasis | null {
+export function conventionClaimForCountry(
+	claim: ConventionClaimID,
+	countryCode: string | null | undefined
+): ConventionClaim | null {
 	if (!countryCode) return null
 
 	const code = countryCode.trim().toUpperCase()
 
-	if (script === "latin" && GENERATED_LATIN_ADDRESS_LAYOUTS[code]) return GENERATED_LATIN_LAYOUT_BASIS
-
-	const hand = ADDRESS_LAYOUTS[code]
+	const generated = GENERATED_ADDRESS_LAYOUTS[code]
+	const latin = GENERATED_LATIN_ADDRESS_LAYOUTS[code]
 	const local = GENERATED_LOCAL_ADDRESS_LAYOUTS[code]
+	const hand = ADDRESS_LAYOUTS[code]
 
-	if (script === "local" && hand && local && layoutPrintsLargestFirst(hand) !== layoutPrintsLargestFirst(local)) {
-		return GENERATED_LAYOUT_BASIS
+	if (!generated && !latin && !local && !hand) return null
+
+	const observations: ConventionObservation[] = []
+
+	// libaddressinput settles which components print and in what order,
+	// so its `fmt` answers a line-order claim.
+	// Its `lfmt` is a second statement by the same source about the Latin order.
+	for (const [layout, readFrom] of [
+		[local ?? generated, READ_FROM.generated],
+		[latin, READ_FROM.latin],
+	] as const) {
+		if (!layout) continue
+
+		observations.push(
+			conventionObservation(
+				ConventionSource.LibAddressInput,
+				stanceFromLayout(claim, layout, printedTags(layout)),
+				readFrom
+			)
+		)
 	}
 
-	if (hand) return HAND_AUTHORED_LAYOUT_BASIS
+	// The street atom's order came from the OpenCage templates rather than from `fmt`,
+	// so only a claim about the street line reads as that source's statement.
+	if (claim === ConventionClaimID.HouseNumberPrecedesStreet) {
+		const layout = hand ?? local ?? generated
 
-	return GENERATED_ADDRESS_LAYOUTS[code] ? GENERATED_LAYOUT_BASIS : null
+		if (layout) {
+			observations.push(
+				conventionObservation(
+					ConventionSource.OpenCageAddressFormatting,
+					stanceFromLayout(claim, layout, printedTags(layout)),
+					READ_FROM.street
+				)
+			)
+		}
+	}
+
+	if (hand) {
+		observations.push(
+			conventionObservation(
+				ConventionSource.MailwomanBoard,
+				stanceFromLayout(claim, hand, printedTags(hand)),
+				READ_FROM.board
+			)
+		)
+	}
+
+	return { claim, jurisdiction: code, observations }
 }
 
 /**

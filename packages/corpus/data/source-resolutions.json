@@ -5,6 +5,13 @@
 	"$addressRoles": "Keyed by the address column's path in the published record, because a publication can carry two roles on one record. `ingestEligibilityProblems` requires at least one column to have a role.",
 	"$upstreamLineage": "The endpoint or dataset this source's copy was taken from, so two register rows fed by one upstream submission count as one observation rather than two. A URL when the upstream is not itself a register row.",
 	"resolutions": {
+		"gb-business-register-1": {
+			"addressRoles": {
+				"RegAddress": "registered-office"
+			},
+			"coverage": "Live companies on the Companies House register, published as the Free Company Data Product: one 469 MB archive or seven parts, refreshed within five working days of each month end. Measured on the 2026-09-01 part 1 of 7, 73,152,561 bytes: 55 columns, of which nine are one address — CareOf, POBox, AddressLine1, AddressLine2, PostTown, County, Country and PostCode under the `RegAddress.` prefix. Every address column belongs to that one family, so each row carries one address. The row count is unmeasured, because a distinct count cannot be read off one of seven parts.",
+			"upstreamLineage": ["https://download.companieshouse.gov.uk/en_output.html"]
+		},
 		"au-procurement-grants-1": {
 			"addressRoles": {
 				"parties[roles=supplier].address": "counterparty",

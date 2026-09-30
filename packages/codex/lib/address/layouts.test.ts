@@ -2,112 +2,166 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What each country's layout was derived from.
+ * @file What each source says about a country's addressing convention, disagreements included.
  *
- *   The basis answers which document a layout cites. #2323 asks for UPU S42, and no layout here reads from it:
- *   every print order comes from libaddressinput's `fmt` or `lfmt`, or from a hand-authored entry checked on a
- *   board. `PostalStandardS42` is declared so that a transcribed layout can claim it, and the test below records
- *   that none does.
+ *   #2323 asks the layouts to cite UPU S42. No layout in this package reads from S42 or from a postal operator's
+ *   own description, so neither source contributes an observation yet, and the tests below record that rather
+ *   than let an absent source read as agreement. What the package does hold is libaddressinput's belief about
+ *   what a user must supply, the OpenCage templates' belief about what a renderer needs, and a board entry's
+ *   record of real addresses. Those disagree for some countries, and the disagreement is the finding.
  */
 
 import { describe, expect, it } from "vitest"
 
 import {
-	ADDRESS_LAYOUTS,
-	LayoutBasis,
-	layoutBasisForCountry,
-	layoutForCountry,
-	layoutPrintsLargestFirst,
-} from "#address/layouts"
-import {
-	GENERATED_ADDRESS_LAYOUTS,
-	GENERATED_LATIN_ADDRESS_LAYOUTS,
-	GENERATED_LOCAL_ADDRESS_LAYOUTS,
-} from "#address/layouts/generated"
+	ConventionClaimID,
+	ConventionSource,
+	KIND_BY_SOURCE,
+	ObservationKind,
+	ObservationStance,
+	observationsDisagree,
+} from "#address/convention-claims"
+import { ADDRESS_LAYOUTS, conventionClaimForCountry, layoutForCountry } from "#address/layouts"
+import { GENERATED_ADDRESS_LAYOUTS, GENERATED_LATIN_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 
-describe("layoutBasisForCountry", () => {
-	it("answers a basis for exactly the countries that have a layout", () => {
+const CLAIMS = Object.values(ConventionClaimID)
+
+describe("conventionClaimForCountry", () => {
+	it("answers for exactly the countries that have a layout", () => {
 		const codes = new Set([...Object.keys(GENERATED_ADDRESS_LAYOUTS), ...Object.keys(ADDRESS_LAYOUTS)])
 
 		for (const code of codes) {
-			expect(layoutBasisForCountry(code), code).not.toBeNull()
+			expect(conventionClaimForCountry(ConventionClaimID.LargestUnitFirst, code), code).not.toBeNull()
 		}
 
-		expect(layoutBasisForCountry("ZZ")).toBeNull()
-		expect(layoutBasisForCountry("")).toBeNull()
-		expect(layoutBasisForCountry(null)).toBeNull()
+		expect(conventionClaimForCountry(ConventionClaimID.LargestUnitFirst, "ZZ")).toBeNull()
+		expect(conventionClaimForCountry(ConventionClaimID.LargestUnitFirst, "")).toBeNull()
+		expect(conventionClaimForCountry(ConventionClaimID.LargestUnitFirst, null)).toBeNull()
 	})
 
-	it("reads the hand-authored basis for a locale this project publishes weights for", () => {
-		expect(layoutBasisForCountry("US")).toBe(LayoutBasis.BoardChecked)
-		expect(layoutBasisForCountry("FR")).toBe(LayoutBasis.BoardChecked)
-	})
-
-	it("reads the generated basis for a country with no hand-authored entry", () => {
-		const generatedOnly = Object.keys(GENERATED_ADDRESS_LAYOUTS).find((code) => !ADDRESS_LAYOUTS[code])!
-
-		expect(layoutBasisForCountry(generatedOnly)).toBe(LayoutBasis.LibAddressInputFormat)
-	})
-
-	it("reads the Latin basis for a country whose Latin order is separate", () => {
-		for (const code of Object.keys(GENERATED_LATIN_ADDRESS_LAYOUTS)) {
-			expect(layoutBasisForCountry(code, "latin"), code).toBe(LayoutBasis.LibAddressInputLatinFormat)
-		}
-	})
-
-	it("names the same table `layoutForCountry` reads, for every country and both scripts", () => {
-		// A basis that disagrees with the layout a caller receives would attribute
-		// one table's derivation to another table's bytes.
-		const codes = new Set([
-			...Object.keys(GENERATED_ADDRESS_LAYOUTS),
-			...Object.keys(ADDRESS_LAYOUTS),
-			...Object.keys(GENERATED_LATIN_ADDRESS_LAYOUTS),
-			...Object.keys(GENERATED_LOCAL_ADDRESS_LAYOUTS),
-		])
-
-		for (const script of ["local", "latin"] as const) {
-			for (const code of codes) {
-				const layout = layoutForCountry(code, script)
-				const basis = layoutBasisForCountry(code, script)
-
-				if (!layout) {
-					expect(basis, `${code}/${script}`).toBeNull()
-
-					continue
+	it("reads each observation's kind from its source", () => {
+		for (const claim of CLAIMS) {
+			for (const code of Object.keys(ADDRESS_LAYOUTS)) {
+				for (const entry of conventionClaimForCountry(claim, code)!.observations) {
+					expect(entry.kind, `${code}/${claim}/${entry.source}`).toBe(KIND_BY_SOURCE[entry.source])
+					expect(entry.readFrom.length).toBeGreaterThan(0)
 				}
-
-				const expected =
-					layout === GENERATED_LATIN_ADDRESS_LAYOUTS[code]
-						? LayoutBasis.LibAddressInputLatinFormat
-						: layout === ADDRESS_LAYOUTS[code]
-							? LayoutBasis.BoardChecked
-							: LayoutBasis.LibAddressInputFormat
-
-				expect(basis, `${code}/${script}`).toBe(expected)
 			}
 		}
 	})
 
-	it("claims no UPU S42 transcription, because none has been made", () => {
-		const codes = new Set([...Object.keys(GENERATED_ADDRESS_LAYOUTS), ...Object.keys(ADDRESS_LAYOUTS)])
-		const transcribed = [...codes].filter((code) => layoutBasisForCountry(code) === LayoutBasis.PostalStandardS42)
+	it("cites the board for a locale this project publishes weights for", () => {
+		const claim = conventionClaimForCountry(ConventionClaimID.PostcodePrecedesLocality, "FR")!
 
-		expect(transcribed).toEqual([])
+		expect(claim.jurisdiction).toBe("FR")
+		expect(claim.observations.map((entry) => entry.source)).toContain(ConventionSource.MailwomanBoard)
+
+		// France prints `%Z %C`, the postcode before the locality.
+		expect(claim.observations.find((entry) => entry.source === ConventionSource.MailwomanBoard)!.stance).toBe(
+			ObservationStance.Supports
+		)
 	})
 
-	it("reads a different basis per script where the two orders disagree", () => {
-		// Hong Kong's hand-authored entry states the Latin order, so its local order
-		// comes from the generated table and its basis follows.
-		const disagreeing = Object.keys(GENERATED_LOCAL_ADDRESS_LAYOUTS).filter((code) => {
-			const hand = ADDRESS_LAYOUTS[code]
-			const local = GENERATED_LOCAL_ADDRESS_LAYOUTS[code]
+	it("has no dataset observation to set against the board for nine of the twelve board locales", () => {
+		// `GENERATED_ADDRESS_LAYOUTS` omits every hand-authored country, and the Latin
+		// and local tables hold only the eight whose two scripts print different orders.
+		// So for the nine board locales outside that eight, this package carries the
+		// board's layout as the only statement, and the comparison most worth seeing
+		// is the one that cannot be made. libaddressinput's `fmt` for those nine is in
+		// `packages/core/data/chromium-i18n/ssl-address/` rather than in a table here,
+		// which is why the observation is absent rather than contradicting.
+		const unmatched = Object.keys(ADDRESS_LAYOUTS).filter((code) => {
+			const claim = conventionClaimForCountry(ConventionClaimID.PostcodePrecedesLocality, code)!
 
-			return hand && local && layoutPrintsLargestFirst(hand) !== layoutPrintsLargestFirst(local)
+			return !claim.observations.some((entry) => entry.source === ConventionSource.LibAddressInput)
 		})
 
-		for (const code of disagreeing) {
-			expect(layoutBasisForCountry(code, "local"), code).toBe(LayoutBasis.LibAddressInputFormat)
-			expect(layoutBasisForCountry(code), code).toBe(LayoutBasis.BoardChecked)
+		expect(unmatched.toSorted()).toEqual(["AU", "DE", "ES", "FR", "GB", "IN", "IT", "NZ", "US"])
+	})
+
+	it("cites libaddressinput alone for a country with no board entry", () => {
+		const code = Object.keys(GENERATED_ADDRESS_LAYOUTS).find((candidate) => !ADDRESS_LAYOUTS[candidate])!
+		const claim = conventionClaimForCountry(ConventionClaimID.LargestUnitFirst, code)!
+
+		expect(claim.observations.map((entry) => entry.source)).toEqual([ConventionSource.LibAddressInput])
+		expect(claim.observations[0]!.kind).toBe(ObservationKind.Implementation)
+	})
+
+	it("cites the renderer only for the claim the renderer settled", () => {
+		// The street atom's order came from the OpenCage templates.
+		// The line order came from `fmt`.
+		const street = conventionClaimForCountry(ConventionClaimID.HouseNumberPrecedesStreet, "US")!
+		const lines = conventionClaimForCountry(ConventionClaimID.PostcodePrecedesLocality, "US")!
+
+		expect(street.observations.map((entry) => entry.source)).toContain(ConventionSource.OpenCageAddressFormatting)
+
+		expect(lines.observations.map((entry) => entry.source)).not.toContain(ConventionSource.OpenCageAddressFormatting)
+	})
+
+	it("claims no UPU observation, because none has been retrieved", () => {
+		const codes = new Set([...Object.keys(GENERATED_ADDRESS_LAYOUTS), ...Object.keys(ADDRESS_LAYOUTS)])
+		const upu = new Set<string>([ConventionSource.PostalOperator, ConventionSource.PostalStandardS42])
+		const cited: string[] = []
+
+		for (const claim of CLAIMS) {
+			for (const code of codes) {
+				for (const entry of conventionClaimForCountry(claim, code)!.observations) {
+					if (upu.has(entry.source)) {
+						cited.push(`${code}/${claim}/${entry.source}`)
+					}
+				}
+			}
+		}
+
+		expect(cited).toEqual([])
+	})
+
+	it("keeps both sides where the dataset and the Latin order disagree", () => {
+		// A country with a distinct `lfmt` gets two statements from libaddressinput, and they can differ.
+		// Recording one would report agreement that the data does not show.
+		const disagreeing: string[] = []
+
+		for (const claim of CLAIMS) {
+			for (const code of Object.keys(GENERATED_LATIN_ADDRESS_LAYOUTS)) {
+				const answer = conventionClaimForCountry(claim, code)!
+
+				const stances = new Set(
+					answer.observations
+						.filter((entry) => entry.source === ConventionSource.LibAddressInput)
+						.map((entry) => entry.stance)
+				)
+
+				if (stances.size > 1) {
+					disagreeing.push(`${code}/${claim}`)
+				}
+			}
+		}
+
+		// The set is non-empty for a real dataset: eight countries define a distinct pair.
+		expect(disagreeing.length).toBeGreaterThan(0)
+	})
+
+	it("reports a disagreement rather than resolving it", () => {
+		const found: string[] = []
+
+		for (const claim of CLAIMS) {
+			for (const code of Object.keys(ADDRESS_LAYOUTS)) {
+				const answer = conventionClaimForCountry(claim, code)!
+
+				if (observationsDisagree(answer)) {
+					found.push(`${code}/${claim}`)
+				}
+			}
+		}
+
+		// Whatever the count, every disagreeing claim keeps every observation rather than dropping one.
+		for (const key of found) {
+			const [code, claim] = key.split("/") as [string, ConventionClaimID]
+			const answer = conventionClaimForCountry(claim, code)!
+
+			expect(answer.observations.some((entry) => entry.stance === ObservationStance.Supports)).toBe(true)
+			expect(answer.observations.some((entry) => entry.stance === ObservationStance.Contradicts)).toBe(true)
+			expect(layoutForCountry(code)).not.toBeNull()
 		}
 	})
 })

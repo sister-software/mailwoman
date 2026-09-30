@@ -4,8 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import {
@@ -117,15 +119,24 @@ describe("the committed address-source register", () => {
 		expect(ingestEligibilityProblems(austender, register)).toHaveLength(1)
 	})
 
-	it("carries one elected licence and leaves the rest unchecked", () => {
-		const byState = new Map<string, number>()
+	it("carries exactly the decisions `license-decisions.json` records, and leaves the rest unchecked", async () => {
+		// The count is read from the input rather than pinned, so recording one more
+		// election is ordinary work rather than a test edit.
+		// What the assertion holds is that the build applied every recorded decision and invented none.
+		const recorded = await readLocalJSONFile<{ decisions?: Record<string, { state: string }> }>(
+			resolveModulePath("@mailwoman/corpus/data/license-decisions.json")
+		)
 
-		for (const decision of register.licenses) {
-			byState.set(decision.state, (byState.get(decision.state) ?? 0) + 1)
+		const entries = Object.entries(recorded.decisions ?? {})
+		const reviewed = register.licenses.filter((decision) => decision.state !== LicenseReviewState.Unchecked)
+
+		expect(reviewed.map((decision) => decision.licenseID).toSorted()).toEqual(entries.map(([id]) => id).toSorted())
+
+		for (const [licenseID, decision] of entries) {
+			expect(register.licenses.find((entry) => entry.licenseID === licenseID)?.state).toBe(decision.state)
 		}
 
-		expect(byState.get(LicenseReviewState.Elected)).toBe(1)
-		expect(byState.get(LicenseReviewState.Unchecked)).toBe(register.licenses.length - 1)
+		expect(register.licenses.length - reviewed.length).toBe(register.licenses.length - entries.length)
 	})
 
 	it("gives every source its own license decision, so one reading cannot grant many", () => {

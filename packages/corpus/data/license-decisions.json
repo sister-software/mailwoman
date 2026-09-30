@@ -2,8 +2,51 @@
 	"$comment": "Licence decisions somebody made by reading a publisher's terms. The register's own build generates every decision as `unchecked` from the research pass's access labels, which is correct — that pass recorded what a register costs to reach and opened nobody's terms. This file is where a decision that was made gets recorded, and `buildSourceRegister` applies these over the generated defaults. It is an input to the build rather than an edit of its output, so a rebuild preserves what is here instead of overwriting it.",
 	"$howToAdd": "Read the publisher's terms. Store the copy you read somewhere a later reader can open it, and name that location in `retrievedCopy` — a link to today's page is not a copy. Then add one entry here keyed by the `licenseID` the register already uses for that source, and rebuild. `auditAddressSourceRegister` refuses an elected record missing `electedTerms`, `retrievedCopy` or `electedBecause`, and a refused record missing `refusedBecause`, so an incomplete entry fails the build rather than entering the register.",
 	"$shape": "Each key is a licenseID the register declares. Each value is an ElectedLicense or RefusedLicense minus its `licenseID`, which the build fills from the key. See `@mailwoman/corpus/source-register`'s types.",
-	"$state": "One decision of the register's 389 is recorded. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. See #2351 for this file and #2323 for the source fields.",
+	"$state": "Two decisions of the register's 389 are recorded: AusTender's publisher grants CC BY 3.0 AU, and DENUE's publisher INEGI grants its own free-use terms. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. See #2351 for this file and #2323 for the source fields.",
+	"$notElected": "Two candidates were examined on 2026-09-30 and left unchecked, with the retrieved documents in `internal/strategy/rights-receipts/gb-mx-es-2026-09-30/`. Companies House serves its Free Company Data Product from `download.companieshouse.gov.uk`, whose page states `This snapshot is provided free of charge` and names no licence, no Crown copyright and no Open Government Licence; the GOV.UK site-wide clause grants OGL over `content on GOV.UK`, which is a different domain from the one serving the product. Spain's `es-mixed-regulatory-1` names two publishers, Catastro and INE, and the retained ES receipt covers Catastro's INSPIRE licence alone, so one election against that row would grant INE's data on a reading of Catastro's terms.",
 	"decisions": {
+		"unchecked-access-free-mx-mx-business-legal-1": {
+			"state": "elected",
+			"electedTerms": "Términos de Libre Uso de la Información del INEGI",
+			"retrievedCopy": "internal/strategy/rights-receipts/mx-gb-2026-09-27/mx-inegi-terminos.html, sha256 97e97599169f75f455877e85edffcf941d512f56c5c00197ebfec783d802c67a",
+			"retrievedAt": "2026-09-27",
+			"electedBecause": "DENUE is a product of INEGI, and INEGI publishes one set of free-use terms covering its information. The document names no Creative Commons license and carries no version or effective date, so there is no SPDX identifier to record; the retained bytes hold no occurrence of `Creative Commons`, `misma licencia`, `compartir igual` or `CompartirIgual`, so no share-alike term applies. It states its own term as indefinite: `La vigencia de estos Términos de Libre Uso es por tiempo indefinido`. Three obligations attach to every permitted act: credit INEGI as author in the form `Fuente: INEGI, nombre del producto de donde se extrae la información`; notify the end user of any analysis or transformation so that it is not presented as INEGI's; and do not suggest that the use represents an official INEGI position or is endorsed by it.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede hacer y distribuir copias de la información, sin alterar ni suprimir sus metadatos.` The metadata condition binds the copy, so a fetch retains the published metadata rather than discarding it."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede extraer total o parcialmente la información.`"
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede adaptar y reordenar la información.` The disclosure obligation attaches: the end user has to be told that the transformation is not INEGI's."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede explotar comercialmente la información, utilizándola como insumo para generar otros productos o servicios.` A model fitted on the rows uses the information as an input to another product, which is the act this clause names."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Puede difundir y publicar la información.` Conditioned by the metadata clause on copies and by the credit line `Fuente: INEGI, nombre del producto de donde se extrae la información`, which for this source reads `Fuente: INEGI, Directorio Estadístico Nacional de Unidades Económicas`."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a work derived from the rows is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and these terms do not address it. The disclosure obligation would attach to a released model if they do."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The retained bytes hold no occurrence of `sublicencia`. Commercial exploitation is granted as an input to other products, which is not the same act as granting a third party these rights, and the terms state neither."
+				}
+			}
+		},
 		"unchecked-national-terms-au-australian-department-of-finance": {
 			"state": "elected",
 			"electedTerms": "Creative Commons Attribution 3.0 Australia",
