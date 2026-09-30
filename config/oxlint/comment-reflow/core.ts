@@ -173,30 +173,74 @@ function balancedEnd(text: string, start: number, open: string, close: string, q
 	return undefined
 }
 
+const SPACE = " ".charCodeAt(0)
+const TAB = "\t".charCodeAt(0)
+const LINE_FEED = "\n".charCodeAt(0)
+const CARRIAGE_RETURN = "\r".charCodeAt(0)
+
+/**
+ * The highest ASCII code.
+ *
+ * Every whitespace character above it is left to the `\s` class.
+ */
+const LAST_ASCII = 127
+
+/**
+ * Whether the character at `index` is whitespace.
+ *
+ * The four ASCII separators answer without a regex, because this tokenizer asks
+ * on every character of every comment.
+ * Any other character keeps the `\s` class's answer.
+ */
+function isWhitespaceAt(text: string, index: number): boolean {
+	const code = text.charCodeAt(index)
+
+	if (code === SPACE || code === TAB || code === LINE_FEED || code === CARRIAGE_RETURN) return true
+
+	return code > LAST_ASCII && /\s/.test(text[index]!)
+}
+
+/**
+ * The words of `text`, split on whitespace.
+ *
+ * Whitespace inside a backtick span, an inline `{@tag}` or a bracketed link stays inside its word.
+ * A word is always a contiguous slice of `text`, so the tokenizer tracks
+ * where each began and slices once at its end.
+ *
+ * The result is `undefined` when a span or a bracket is left open.
+ */
 function words(text: string): string[] | undefined {
 	const result: string[] = []
-	let word = ""
+	let wordStart = -1
 
 	for (let i = 0; i < text.length;) {
-		const character = text[i]!
-
-		if (/\s/.test(character)) {
-			if (word) {
-				result.push(word)
+		if (isWhitespaceAt(text, i)) {
+			if (wordStart !== -1) {
+				result.push(text.slice(wordStart, i))
+				wordStart = -1
 			}
-
-			word = ""
 
 			i++
 
 			continue
 		}
 
+		if (wordStart === -1) {
+			wordStart = i
+		}
+
+		const character = text[i]!
 		let end: number | undefined
 
 		if (character === "`") {
-			const delimiter = /^`+/.exec(text.slice(i))![0]
-			const close = text.indexOf(delimiter, i + delimiter.length)
+			let delimiterEnd = i + 1
+
+			while (text[delimiterEnd] === "`") {
+				delimiterEnd++
+			}
+
+			const delimiter = text.slice(i, delimiterEnd)
+			const close = text.indexOf(delimiter, delimiterEnd)
 
 			if (close === -1) return undefined
 			end = close + delimiter.length
@@ -216,18 +260,11 @@ function words(text: string): string[] | undefined {
 			}
 		}
 
-		if (end) {
-			word += text.slice(i, end)
-			i = end
-		} else {
-			word += character
-
-			i++
-		}
+		i = end ?? i + 1
 	}
 
-	if (word) {
-		result.push(word)
+	if (wordStart !== -1) {
+		result.push(text.slice(wordStart))
 	}
 
 	return result

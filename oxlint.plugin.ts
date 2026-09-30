@@ -891,7 +891,7 @@ const noAwaitUsingSyncDisposableRule: Rule = {
 		schema: [],
 	},
 	create(context: RuleContext) {
-		// Same-file helpers whose return type names a synchronously-disposed resource.
+		// Same-file helpers whose declared return type is a synchronously-disposed resource.
 		// A helper may be declared after its use, so the declarations wait for `Program:exit`.
 		const locals = new Set<string>()
 		const awaitUsingDeclarations: AstNode[] = []
