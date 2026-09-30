@@ -75,21 +75,27 @@ describe("auditRights", () => {
 		expect(audit.unresolved.join("\n")).toMatch(/12 of 12 packages have no frozen training manifest/u)
 	})
 
-	it("reports that the register admits no source, and names every blocker that covers all of them", () => {
+	it("reports that the register admits no source, and names the four blockers that cover most of them", () => {
 		expect(audit.register.sources).toBe(389)
 		expect(audit.register.eligible).toBe(0)
 
-		// Four blockers cover all 389.
+		// Each of the four conditions blocks its own near-universal share of the register.
 		// The license blocker reaches the report only because refusals that differ by a quoted
 		// identifier are grouped: each source points at its own license id, so ungrouped it
-		// is 389 messages of one source each and never appears among the largest refusals.
-		const universal = audit.register.refusals.filter((refusal) => refusal.sources === 389)
+		// is one message per source and never appears among the largest refusals.
+		const named = ["is unchecked", "address column has a resolved role", "coverage has been measured", "personal-data"]
 
-		expect(universal).toHaveLength(4)
+		for (const needle of named) {
+			const covering = audit.register.refusals.filter((refusal) => refusal.because.includes(needle))
 
-		expect(universal.map((refusal) => refusal.because).join("\n")).toMatch(
-			/is unchecked[\S\s]*address role[\S\s]*coverage[\S\s]*personal-data/u
-		)
+			expect(covering.length, needle).toBeGreaterThan(0)
+			expect(Math.max(...covering.map((refusal) => refusal.sources)), needle).toBeGreaterThan(380)
+		}
+
+		// No single blocker covers all 389 any more.
+		// Resolving one condition on one source is what breaks that, and the register records three such
+		// sources, so a test pinning 389 here would fail on the next review rather than on a regression.
+		expect(Math.max(...audit.register.refusals.map((refusal) => refusal.sources))).toBeLessThan(389)
 	})
 
 	it("renders a report that ends on what it leaves open", () => {
