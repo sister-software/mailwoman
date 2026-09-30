@@ -173,6 +173,42 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 	() => {
 		const TX_ADDRESS = "2929 Flower Hill Drive, Round Rock, TX 78664"
 
+		const txOutputs = new Map<string, Promise<string>>()
+
+		/**
+		 * The CLI's stdout for the Round Rock address with the TX databases and the given flags.
+		 *
+		 * One spawn serves every test that asks for the same flags, because a spawn
+		 * loads the model and opens three databases, and the shorthand-equivalence test
+		 * compares outputs the format tests already produced.
+		 */
+		function geocodeTX(...flags: string[]): Promise<string> {
+			const key = flags.join(" ")
+			let output = txOutputs.get(key)
+
+			if (!output) {
+				output = withCLISpawnLockAsync(() =>
+					runFile(
+						process.execPath,
+						[
+							CLI_PATH,
+							"geocode",
+							TX_ADDRESS,
+							`--resolve-db=${wofPath}`,
+							`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
+							`--interpolation-db=${TX_INTERPOLATION_DB}`,
+							...flags,
+						],
+						{ encoding: "utf8", timeout: 60_000 }
+					)
+				).then(({ stdout }) => stdout)
+
+				txOutputs.set(key, output)
+			}
+
+			return output
+		}
+
 		test("street-level geocode returns address_point or interpolated tier near Round Rock, TX", async () => {
 			const { stdout } = await withCLISpawnLockAsync(() =>
 				runFile(
@@ -214,21 +250,7 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 		}, 60_000)
 
 		test("--format=text produces readable output with coordinate line", async () => {
-			const { stdout } = await withCLISpawnLockAsync(() =>
-				runFile(
-					process.execPath,
-					[
-						CLI_PATH,
-						"geocode",
-						TX_ADDRESS,
-						`--resolve-db=${wofPath}`,
-						`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
-						`--interpolation-db=${TX_INTERPOLATION_DB}`,
-						"--format=text",
-					],
-					{ encoding: "utf8", timeout: 60_000 }
-				)
-			)
+			const stdout = await geocodeTX("--format=text")
 
 			expect(stdout).toMatch(/resolution_tier/)
 			expect(stdout).toMatch(/coordinate/)
@@ -251,21 +273,7 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 		}, 60_000)
 
 		test("--format=jsonld emits a valid schema.org Place JSON-LD object (#1052)", async () => {
-			const { stdout } = await withCLISpawnLockAsync(() =>
-				runFile(
-					process.execPath,
-					[
-						CLI_PATH,
-						"geocode",
-						TX_ADDRESS,
-						`--resolve-db=${wofPath}`,
-						`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
-						`--interpolation-db=${TX_INTERPOLATION_DB}`,
-						"--format=jsonld",
-					],
-					{ encoding: "utf8", timeout: 60_000 }
-				)
-			)
+			const stdout = await geocodeTX("--format=jsonld")
 
 			const place = parseJSONStrict<{
 				"@context": string
@@ -287,19 +295,8 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 		}, 60_000)
 
 		test("--jsonld and --text are byte-identical shorthands for the --format values (#1577)", async () => {
-			const run = async (...flags: string[]): Promise<string> => {
-				const { stdout } = await withCLISpawnLockAsync(() =>
-					runFile(process.execPath, [CLI_PATH, "geocode", TX_ADDRESS, `--resolve-db=${wofPath}`, ...flags], {
-						encoding: "utf8",
-						timeout: 60_000,
-					})
-				)
-
-				return stdout
-			}
-
-			expect(await run("--jsonld")).toBe(await run("--format=jsonld"))
-			expect(await run("--text")).toBe(await run("--format=text"))
+			expect(await geocodeTX("--jsonld")).toBe(await geocodeTX("--format=jsonld"))
+			expect(await geocodeTX("--text")).toBe(await geocodeTX("--format=text"))
 		}, 240_000)
 	}
 )
