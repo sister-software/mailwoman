@@ -452,7 +452,7 @@ export const Alpha3ToCountryRecord = {
 	PRI: "Puerto Rico",
 	QAT: "Qatar",
 	REU: "Reunion",
-	ROM: "Romania",
+	ROU: "Romania",
 	RUS: "Russian Federation",
 	RWA: "Rwanda",
 	BLM: "Saint Barthélemy",

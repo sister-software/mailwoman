@@ -44,6 +44,10 @@ export const COUNTRY_SURFACE_FORMS = {
 	MX: ["Mexico", "México", "MX", "MEX"],
 	BR: ["Brazil", "Brasil", "BR", "BRA"],
 	JP: ["Japan", "日本", "Nippon", "JP", "JPN"],
+	// `ROM` was Romania's alpha-3 until ISO replaced it with `ROU` in 2002.
+	// The ISO table carries `ROU`, and the retired code stays resolvable here
+	// because address data outlives a standard's revisions.
+	RO: ["Romania", "RO", "ROU", "ROM"],
 } as const satisfies Partial<Record<CountryISO2, readonly string[]>>
 
 export type CountrySurfaceISO2 = keyof typeof COUNTRY_SURFACE_FORMS

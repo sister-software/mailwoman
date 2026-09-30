@@ -21,12 +21,15 @@
 /**
  * The jurisdictions UPU's current template inventory covers, as ISO 3166-1 alpha-2 codes.
  *
- * **Unretrieved.** The list was supplied by the operator on 2026-09-30 and UPU's inventory
- * has not been fetched, so this records a claim rather than a measurement.
- * Retrieving the inventory and comparing it against this constant is the step that turns it into one.
+ * Confirmed on 2026-09-30 against UPU's own template selector on
+ * `https://www.upu.int/en/Postal-Solutions/Programmes-Services/Addressing-Solutions`, retained
+ * at `internal/strategy/rights-receipts/upu-s42-2026-09-30/upu-addressing-solutions.html`.
+ * That page holds a 72-option selector of alpha-3 codes, and each option maps onto
+ * one of these 72 alpha-2 codes, each of these 72 onto one option.
  *
- * The count and the internal consistency were checked: 72 distinct codes, every one a
- * well-formed alpha-2, and every member of both earlier cohorts present.
+ * Reading UPU's list required one repair first.
+ * The selector answers `ROU` for Romania, and codex's alpha-3 table had filed Romania under `ROM`,
+ * the code ISO replaced in 2002, so Romania was the single entry that would not resolve.
  */
 export const S42_TEMPLATE_JURISDICTIONS: readonly string[] = [
 	"AU",
@@ -106,12 +109,23 @@ export const S42_TEMPLATE_JURISDICTIONS: readonly string[] = [
 /**
  * The eleven jurisdictions UPU described in 2006 as using the S42 standard.
  *
- * Same provenance as {@linkcode S42_TEMPLATE_JURISDICTIONS}: supplied rather than retrieved.
+ * These eleven are the 2010 group of seventeen minus {@linkcode S42_COHORT_2010_ADDITIONS},
+ * so the retrieved 2010 list is what attests them jointly.
+ * UPU's own 2006 statement has not been retrieved.
  */
 export const S42_COHORT_2006: readonly string[] = ["AU", "BR", "CL", "FI", "FR", "GB", "MA", "NL", "NZ", "US", "VE"]
 
 /**
  * The six jurisdictions the recognized group had added by 2010, taking it to seventeen.
+ *
+ * The seventeen are quoted verbatim from UPU's own 2010 announcement, retained at
+ * `internal/strategy/rights-receipts/upu-s42-2026-09-30/upu-news-2010-s42.html`:
+ * "The 17 countries that have joined the S42 certification programme are: Australia, Brazil,
+ * Canada, Chile, Finland, France, Germany, Great Britain, Italy, Morocco, Netherlands,
+ * New Zealand, Portugal, Saudi Arabia, South Africa, the United States and Venezuela."
+ *
+ * That wording says the countries joined a certification programme rather than that they
+ * use the standard operationally, which is a weaker claim than the earlier note recorded.
  */
 export const S42_COHORT_2010_ADDITIONS: readonly string[] = ["CA", "DE", "IT", "PT", "SA", "ZA"]
 

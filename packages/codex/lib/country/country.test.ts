@@ -6,7 +6,14 @@
 
 import { expect, test } from "vitest"
 
-import { countrySurfaceForms, formatAsCountryISO2, isAlpha2CodeShape, isCountryToken, matchCountry } from "#country"
+import {
+	Alpha3ToCountryRecord,
+	countrySurfaceForms,
+	formatAsCountryISO2,
+	isAlpha2CodeShape,
+	isCountryToken,
+	matchCountry,
+} from "#country"
 
 test("matchCountry: resolves alpha-2, alpha-3, and name (case-insensitive) to the iso2", () => {
 	expect(matchCountry("US")?.iso2).toBe("US")
@@ -14,6 +21,25 @@ test("matchCountry: resolves alpha-2, alpha-3, and name (case-insensitive) to th
 	expect(matchCountry("DE")?.iso2).toBe("DE")
 	expect(matchCountry("DEU")?.iso2).toBe("DE") // alpha-3
 	expect(matchCountry("  gb ")?.iso2).toBe("GB") // trimmed
+})
+
+test("matchCountry: resolves Romania's current alpha-3 and the one ISO retired in 2002", () => {
+	// The ISO table filed Romania under `ROM`, which ISO replaced with `ROU` in 2002,
+	// so `matchCountry` answered `null` for a feed carrying the current code.
+	// `ROU` is the ISO entry and `ROM` is a curated surface form, because address
+	// data outlives a standard's revisions.
+	expect(matchCountry("ROU")?.iso2).toBe("RO")
+	expect(matchCountry("rou")?.iso2).toBe("RO")
+	expect(matchCountry("ROM")?.iso2).toBe("RO")
+	expect(matchCountry("Romania")?.iso2).toBe("RO")
+})
+
+test("every alpha-3 code resolves to an alpha-2 this repository names", () => {
+	// A code filed under a name the alpha-2 table spells differently answers `null`,
+	// which is how the Romania entry stayed wrong.
+	for (const [alpha3, name] of Object.entries(Alpha3ToCountryRecord)) {
+		expect(matchCountry(alpha3)?.iso2, `${alpha3} (${name})`).toBeDefined()
+	}
 })
 
 test("matchCountry: returns the canonical name + the matched surface; null when unknown", () => {
