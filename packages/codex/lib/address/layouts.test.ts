@@ -23,6 +23,7 @@ import {
 } from "#address/convention-claims"
 import { ADDRESS_LAYOUTS, conventionClaimForCountry, layoutForCountry } from "#address/layouts"
 import { GENERATED_ADDRESS_LAYOUTS, GENERATED_LATIN_ADDRESS_LAYOUTS } from "#address/layouts/generated"
+import { s42CohortForJurisdiction } from "#address/s42-templates"
 
 const CLAIMS = Object.values(ConventionClaimID)
 
@@ -98,15 +99,36 @@ describe("conventionClaimForCountry", () => {
 		expect(lines.observations.map((entry) => entry.source)).not.toContain(ConventionSource.OpenCageAddressFormatting)
 	})
 
-	it("claims no UPU observation, because none has been retrieved", () => {
+	it("marks an S42 template unread where one exists, and omits the source where none does", () => {
+		// The stance separates the two states a single boolean would merge: a country with a template has
+		// an approved crosswalk waiting to be read, and a country without one has no such document.
+		const codes = [...new Set([...Object.keys(GENERATED_ADDRESS_LAYOUTS), ...Object.keys(ADDRESS_LAYOUTS)])]
+
+		for (const code of codes) {
+			const observations = conventionClaimForCountry(ConventionClaimID.PostcodePrecedesLocality, code)!.observations
+			const s42 = observations.find((entry) => entry.source === ConventionSource.PostalStandardS42)
+
+			if (s42CohortForJurisdiction(code)) {
+				expect(s42, code).toBeDefined()
+				expect(s42!.stance, code).toBe(ObservationStance.Unread)
+				expect(s42!.kind, code).toBe(ObservationKind.ApprovedCrosswalk)
+			} else {
+				expect(s42, code).toBeUndefined()
+			}
+		}
+	})
+
+	it("reads no statement from a national postal authority or from the UPU compendium yet", () => {
 		const codes = new Set([...Object.keys(GENERATED_ADDRESS_LAYOUTS), ...Object.keys(ADDRESS_LAYOUTS)])
-		const upu = new Set<string>([ConventionSource.PostalOperator, ConventionSource.PostalStandardS42])
+
+		const unread = new Set<string>([ConventionSource.NationalPostalAuthority, ConventionSource.PostalAddressingSystems])
+
 		const cited: string[] = []
 
 		for (const claim of CLAIMS) {
 			for (const code of codes) {
 				for (const entry of conventionClaimForCountry(claim, code)!.observations) {
-					if (upu.has(entry.source)) {
+					if (unread.has(entry.source)) {
 						cited.push(`${code}/${claim}/${entry.source}`)
 					}
 				}

@@ -24,12 +24,32 @@ import type { AddressLayout } from "#address/layout"
  */
 export const ConventionSource = {
 	/**
-	 * A designated postal operator's own description of its addressing system,
-	 * published through the UPU's Postal Addressing Systems compendium.
+	 * The country's own addressing rules, as its designated postal operator publishes them:
+	 * USPS Publication 28, Royal Mail's addressing guidance, La Poste's NF Z 10-011,
+	 * the South African Post Office's system.
+	 *
+	 * This is the native authority.
+	 * Every other source below describes, maps or approximates it.
 	 */
-	PostalOperator: "upu-pas",
+	NationalPostalAuthority: "national-postal-authority",
 	/**
-	 * UPU S42, the international standard for an addressing template.
+	 * UPU's Postal Addressing Systems compendium, which describes a member country's system.
+	 *
+	 * A third party collected the description rather than the country publishing it,
+	 * so it can lag the rules it describes.
+	 */
+	PostalAddressingSystems: "upu-pas",
+	/**
+	 * The country's UPU S42 template.
+	 *
+	 * S42 is not the domestic system.
+	 * The template maps the country's existing structure into a common set of international
+	 * elements, and UPU builds it with that country's own representative, tests it against
+	 * representative address forms, and has the country approve it before publication.
+	 *
+	 * So a template is an approved crosswalk of national semantics rather than a formatting
+	 * recommendation, and it carries that weight even where the country routes no mail by S42.
+	 * `#address/s42-templates` records which 72 jurisdictions have one.
 	 */
 	PostalStandardS42: "upu-s42",
 	/**
@@ -62,9 +82,18 @@ export const ObservationKind = {
 	 */
 	Authoritative: "authoritative",
 	/**
-	 * A standard's statement about a conforming address, which an operator may or may not follow.
+	 * A mapping of one country's address semantics into a shared vocabulary,
+	 * which that country's representative built and the country approved.
+	 *
+	 * Stronger than a recommendation, because the country agreed to it.
+	 * Weaker than the native authority, because it states the shared vocabulary's terms
+	 * rather than the country's own, and the two can drift apart after approval.
 	 */
-	Standardized: "standardized",
+	ApprovedCrosswalk: "approved-crosswalk",
+	/**
+	 * A third party's account of an authority's system, which can lag the rules it describes.
+	 */
+	Description: "description",
 	/**
 	 * What an input system believes a user must supply.
 	 */
@@ -91,8 +120,9 @@ export type ObservationKind = (typeof ObservationKind)[keyof typeof ObservationK
  * and reads its kind from here rather than restating it.
  */
 export const KIND_BY_SOURCE: Readonly<Record<ConventionSource, ObservationKind>> = {
-	[ConventionSource.PostalOperator]: ObservationKind.Authoritative,
-	[ConventionSource.PostalStandardS42]: ObservationKind.Standardized,
+	[ConventionSource.NationalPostalAuthority]: ObservationKind.Authoritative,
+	[ConventionSource.PostalAddressingSystems]: ObservationKind.Description,
+	[ConventionSource.PostalStandardS42]: ObservationKind.ApprovedCrosswalk,
 	[ConventionSource.LibAddressInput]: ObservationKind.Implementation,
 	[ConventionSource.OpenCageAddressFormatting]: ObservationKind.Rendering,
 	[ConventionSource.MailwomanBoard]: ObservationKind.Observed,
@@ -101,13 +131,18 @@ export const KIND_BY_SOURCE: Readonly<Record<ConventionSource, ObservationKind>>
 /**
  * Whether a source's statement agrees with the claim.
  *
- * `Silent` separates a source that does not address the claim from one that contradicts it,
- * so an unexamined source never reads as a disagreement.
+ * Three of the four values distinguish states that a two-valued field would merge.
+ * `Silent` means the source was read and addresses something else.
+ *
+ * `Unread` means a statement exists on record and nobody here has retrieved it,
+ * which is what tells a reader there is a document to go and read.
+ * A source with no statement at all contributes no observation, so it cannot be mistaken for either.
  */
 export const ObservationStance = {
 	Supports: "supports",
 	Contradicts: "contradicts",
 	Silent: "silent",
+	Unread: "unread",
 } as const
 
 /**

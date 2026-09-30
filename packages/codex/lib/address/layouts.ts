@@ -16,6 +16,7 @@ import {
 	ConventionClaimID,
 	conventionObservation,
 	ConventionSource,
+	ObservationStance,
 	stanceFromLayout,
 	type ConventionClaim,
 	type ConventionObservation,
@@ -39,6 +40,7 @@ import {
 	GENERATED_LATIN_ADDRESS_LAYOUTS,
 	GENERATED_LOCAL_ADDRESS_LAYOUTS,
 } from "#address/layouts/generated"
+import { s42CohortForJurisdiction } from "#address/s42-templates"
 import type { ComponentTag } from "#component"
 
 export {
@@ -344,8 +346,14 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
  * what an input system requires, the OpenCage templates state what a renderer needs,
  * and a board entry states what real addresses do.
  *
- * `upu-pas` and `upu-s42` contribute no observation yet, because no operator description
- * or S42 template has been retrieved.
+ * A jurisdiction in UPU's S42 template inventory contributes an `upu-s42` observation
+ * whose stance is `unread`, because an approved crosswalk of its address semantics exists
+ * and nobody here has retrieved it.
+ * A jurisdiction outside that inventory contributes none, which states that no
+ * crosswalk exists rather than that one went unread.
+ *
+ * `national-postal-authority` and `upu-pas` contribute no observation for any jurisdiction yet.
+ *
  * An absent observation reads as unexamined rather than as agreement, which is what
  * {@linkcode ObservationStance.Silent} exists to separate.
  */
@@ -406,6 +414,22 @@ export function conventionClaimForCountry(
 				ConventionSource.MailwomanBoard,
 				stanceFromLayout(claim, hand, printedTags(hand)),
 				READ_FROM.board
+			)
+		)
+	}
+
+	// A country in UPU's template inventory has an approved crosswalk of its own
+	// address semantics, and no template has been retrieved.
+	// `Unread` says a document exists to go and read, which is what separates these 72
+	// from the jurisdictions that have no crosswalk to read at all.
+	const cohort = s42CohortForJurisdiction(code)
+
+	if (cohort) {
+		observations.push(
+			conventionObservation(
+				ConventionSource.PostalStandardS42,
+				ObservationStance.Unread,
+				`UPU S42 template for ${code}, cohort ${cohort}, not retrieved`
 			)
 		)
 	}
