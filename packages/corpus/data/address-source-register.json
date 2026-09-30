@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "fbe4fe7698dc8c40c829d290f5dc345240c9cc473f7072a384eecbb01876b66b",
+	"contentDigest": "fbd36d4260206a4368ce18b3c73a807e03cf3a89eb877988d16cd17bdd6b7d27",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -264,6 +264,53 @@
 				}
 			},
 			"licenseID": "unchecked-access-free-dk-klimadatastyrelsen"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
+			"spdx": "CC0-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "The grant is in the dataset metadata the service itself points at, rather than in the service's own capabilities. `https://inspire.geoportaal.ee/geoserver/AD_Address/wfs?service=WFS&version=2.0.0&request=GetCapabilities`, 114,189 bytes, sha256 `252bcd63e3d841825689e62c01d441fdd791cb5dec17f32fa9d3d0a75b392289`, states `<Fees>puudub</Fees>` and `<AccessConstraints>puudub</AccessConstraints>`, which are the OGC service fields and say only that the service charges nothing. Its `inspire_dls:SpatialDataSetIdentifier` carries `metadataURL` for CSW record `b0bd266e-b4c6-45db-b7ea-f47486b6258b`. That record, retrieved at `https://metadata.geoportaal.ee/geonetwork/srv/est/csw?service=CSW&request=GetRecordById&version=2.0.2&outputSchema=http://www.isotc211.org/2005/gmd&elementSetName=full&id=b0bd266e-b4c6-45db-b7ea-f47486b6258b`, 32,198 bytes, sha256 `4e48cbfcd2f297a3bf2fac3d5807ae7edcca03e4baf26feb33636a651c7569eb`, is the right record on three checks: its `fileIdentifier` equals the id the service named, its `identifier` set includes `AD EE`, and its title reads `Eesti aadressiandmete süsteemi infosüsteem`. Its `otherConstraints` states `Creative Commons CC0 1.0 Üldine (https://creativecommons.org/publicdomain/zero/1.0/deed.et)` and `avaliku juurdepääsu piirangud puuduvad`, Estonian for an absence of public-access restrictions. CC0 1.0 is a public-domain dedication rather than a licence with conditions, and the version is in the identifier, so `spdx` reads `CC0-1.0`. Reading the capabilities alone would have recorded this publisher as stating no grant.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 §3 waives every copyright and related right the Affirmer holds, to the greatest extent permitted by law, so paging the service's GeoJSON is unreserved."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same waiver covers extraction and database rights, which §2 names among the rights waived, so reading the designator, the locator name and the component references out of a feature is unreserved."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2 waives the rights to reproduce, adapt, distribute and perform, in every medium and for any purpose, so joining the five feature types into a token and tag corpus is unreserved."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act at all, so fitting a model on the rows is unreserved."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2 waives the distribution right without condition. Crediting Maa- ja Ruumiamet stays good practice and CC0 requires it nowhere."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question that stands open under CC BY and ODbL, whether trained weights are a derivative of the rows, does not arise here: CC0 waives the rights that would make the answer matter, and §3 adds a fallback licence to exercise all those rights unconditionally where the waiver is ineffective in law."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§3's fallback grant is `royalty-free, non transferable, non sublicensable, non exclusive, irrevocable and unconditional`, and it runs to the public rather than to one recipient, so a downstream party holds it directly. The waiver in §2 leaves no right that would need sublicensing."
+				}
+			},
+			"licenseID": "unchecked-access-free-ee-maa-ja-ruumiamet"
 		},
 		{
 			"state": "elected",
@@ -10244,6 +10291,34 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every column of every table the GeoPackage declares was listed, so this covers the database's whole schema rather than a sample of its rows. The five tables carry 39, 16, 15, 15 and 15 columns, and none of the 100 identifies a party: there is no owner, holder, occupant or contact column, and no personal name. Every column of the `address` table is INSPIRE address structure, being an identifier, a lifespan date, a position, a locator designator, or a reference to a thoroughfare name, postal descriptor, administrative unit, parcel or building. One value invites a misreading: `position_method` reads `byotherparty`, which is an INSPIRE codelist term for how the position was determined rather than a reference to a party. The schema is the INSPIRE Addresses model, which has no party element."
+			}
+		},
+		{
+			"sourceID": "ee-property-building-1",
+			"iso2": "EE",
+			"sector": "property-building",
+			"name": "EE INSPIRE Addresses (AD)",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "National land and space agency for Estonia; publishes the INSPIRE Addresses (AD) theme as a direct-access Web Feature Service covering the whole country",
+			"geometry": "present",
+			"license": "unchecked-access-free-ee-maa-ja-ruumiamet",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "WFS 2.0 download service; paged GetFeature in GeoJSON or GML",
+			"publisher": "Maa- ja Ruumiamet",
+			"sourceURL": "https://inspire.geoportaal.ee/geoserver/AD_Address/wfs",
+			"note": "A feature is an address point with an address identifier designator and a site or building name. It carries no party.",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Maa- ja Ruumiamet, reached as a WFS 2.0 download service at `https://inspire.geoportaal.ee/geoserver/AD_Address/wfs`. The service publishes all five AD feature types and advertises `ImplementsResultPaging`, so a build pages each type rather than downloading a file. Measured 2026-09-30, `resultType=hits` past index 0 reports 729,973 `AD.Address` features, and a page of the type agreed with that count. The component types report 19,676 `AD.Address_ThoroughfareName`, 4,800 `AD.Address_AdminUnitName`, 638 `AD.Address_AddressAreaName` and 1,374,116 `AD.Address_PostalDescriptor`, the last of which exceeds the address count and therefore carries more than one descriptor per address. Two reader notes. This service names its types under its own prefix, `AD_Address:AD.Address` and `AD_Address:AD.Address_ThoroughfareName`, so a reader comparing the part after the colon against `Address` finds no address type here. And it advertises `application/geo+json` and answers a `GetFeature` for it with `InvalidParameterValue: Failed to find response for output format`, while the same request under `application/json` returns the features.",
+			"upstreamLineage": [
+				"https://inspire.geoportaal.ee/geoserver/AD_Address/wfs",
+				"https://metadata.geoportaal.ee/geonetwork/srv/est/csw?service=CSW&request=GetRecordById&version=2.0.2&outputSchema=http://www.isotc211.org/2005/gmd&elementSetName=full&id=b0bd266e-b4c6-45db-b7ea-f47486b6258b"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all five feature types was listed, over 40 features each: 37 on `AD.Address`, 20 on `AD.Address_AdminUnitName`, 15 on `AD.Address_ThoroughfareName`, 15 on `AD.Address_AddressAreaName` and 14 on `AD.Address_PostalDescriptor`. None of the 101 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a position, a locator, a name or a component reference. `AD:LocatorName` needs its own statement because it is free text of type `GeographicalName`, which is how a family name or a business name reaches an INSPIRE address, and this publisher populates it where the Dutch, Czech and Danish themes leave it empty: 1,200 of 1,200 addresses sampled over 60 windows spread across the 729,973, reaching 664 distinct locality paths, carry a value. Every one of those 1,200 states its `LocatorNameTypeValue` as `siteName` (829) or `buildingName` (371), which are place designations in the INSPIRE codelist, and no value takes the given-name-and-family-name shape: 0 of 1,200 carry two capitalized words, while 105 carry a hyphen. The values are Estonian farm and site names, which is how a rural Estonian address designates its addressable unit, as in `Saare maakond, Muhu vald, Raugi küla, Jüri`. Some are the genitive of a personal given name, `Jüri`, `Jaani`, `Mardi` and `Hansi` among them, which is the traditional pattern of naming a farm after a historical householder rather than a reference to the present occupant, and the compounds confirm it: `Vana-Käspri` and `Uue-Tooma` read as the old and the new holding of a named farm. No element asserts a party, states a surname, or carries a person identifier."
 			}
 		},
 		{
