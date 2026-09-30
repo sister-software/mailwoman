@@ -23,6 +23,50 @@
 				"because": "Every element name in `A.ES.SDGC.AD.55101.gml` was counted over all 11,861,975 bytes, so this covers the file rather than its first features. It holds 48 distinct element names and none of them names a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name of any kind. The only names are 505 `AD:ThoroughfareName`, 5 `AD:PostalDescriptor` and 1 `AD:AdminUnitName`. The file declares the INSPIRE Addresses 3.0 schema at `urn:x-inspire:specification:gmlas:Addresses:3.0`, which has no party element for another municipality to populate, so the reading rests on the schema as well as on the one municipality read. This is what separates the row from the other 25 `verified-corpus` sources: each of those is a business register or a procurement portal where the address belongs to a party, and some of those parties are natural persons trading on their own account. The cadastre's AD theme records the place. The ownership data that Spanish cadastral records also hold travels through a separate protected channel and appears nowhere in this dataset."
 			}
 		},
+		"es-mixed-regulatory-3": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Diputación Foral de Bizkaia, reached through the ATOM download service at `https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml`, 119,029 bytes, sha256 `a832721d87e987dd8aef9fe425cf1c6d3bd20afc441bbb69af10a3dbd777efc4`. The feed lists 112 municipality entries, one zipped GML each, and this row covers all 112. The measured instance is the first, `ES.BFA.AD.001.zip` for 48001 Abadiño, 108,613 bytes, whose one member `ES.BFA.AD.gml` is 5,902,666 bytes and holds 1,357 address features. The feature count for the other 111 municipalities was not measured. Bizkaia publishes this theme itself; Catastro's national feed links it rather than serving it, which is why it is a row of its own.",
+			"upstreamLineage": [
+				"https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml",
+				"https://apli.bizkaia.eus/apps/Danok/INSPIRE/ES.BFA.AD.001.zip",
+				"https://apli.bizkaia.eus/apps/Danok/INSPIRE/inspireBizkaiaAtomMetadata.xml"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `ES.BFA.AD.gml` was counted over all 5,902,666 bytes, so this covers the file rather than its first features. It holds 49 distinct element names across 1,357 address features, and none of them identifies a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name. The seven names outside the address and geometry vocabulary are `FeatureMember`, `identifier`, `versionId`, `withinScopeOf`, and the three INSPIRE geographical-name attributes `transliterationScheme`, `grammaticalGender` and `grammaticalNumber`, each of which describes a place name rather than a person. The file follows the INSPIRE Addresses schema, which has no party element for another municipality to populate."
+			}
+		},
+		"es-mixed-regulatory-4": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Diputación Foral de Gipuzkoa, reached through the ATOM download service at `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml`, 4,469 bytes, sha256 `27769a3cc85aacbc1bb5f9b1febc786f5433db8e6c6ad3892ba772adc58e9106`. The feed holds one entry covering the whole province rather than one per municipality, and it links its dataset through `rel=\"alternate\"` rather than `rel=\"enclosure\"`, so a reader that looks only for an enclosure finds no dataset here. That dataset, `https://b5m.gipuzkoa.eus/inspire/download/GML/ES.GFA.AD.zip`, is 7,959,103 bytes, and its one member `ES.GFA.AD.gml` is 313,162,472 bytes holding 68,744 address features. The feed states the refresh cadence as weekly and the reference system as EPSG:3042. This is the whole published extent rather than a sample of it.",
+			"upstreamLineage": [
+				"https://b5m.gipuzkoa.eus/inspire/download/addresses.xml",
+				"https://b5m.gipuzkoa.eus/inspire/download/GML/ES.GFA.AD.zip",
+				"https://b5m.gipuzkoa.eus/metadata_inspire/ES.GFA.AD.MD.xml"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `ES.GFA.AD.gml` was counted over all 313,162,472 bytes, so this covers the whole province rather than a sample of it. It holds 49 distinct element names across 68,744 address features, and every one of the 49 belongs to the INSPIRE address, geographical-name or geometry vocabulary. No element identifies a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name."
+			}
+		},
+		"es-mixed-regulatory-5": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Gobierno de Navarra, reached through the ATOM download service at `https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml`, 671,131 bytes, sha256 `6971dd61d87e2fc047e953e956b09c6cc88aaa92e16ffb3bbc4750a1edb1ab60`. The feed splits the province across 272 entries, each a zipped GML partition titled `Address Navarra` rather than named for a municipality, so a partition cannot be selected by place from the feed alone. This row covers all 272. The measured instance is partition 1, `AD_Navarra_1.gml.zip`, 7,476 bytes, whose one member `AD_Navarra_1.gml` is 307,117 bytes and holds 115 address features. The feature count for the other 271 partitions was not measured, and 115 features in the first partition is too small a sample to estimate the province's total from.",
+			"upstreamLineage": [
+				"https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml",
+				"https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/files/AD_Navarra_1.gml.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `AD_Navarra_1.gml` was counted over all 307,117 bytes, so this covers that partition rather than its first features. It holds 29 distinct element names across 115 address features, and every one of the 29 belongs to the INSPIRE address, geographical-name or geometry vocabulary. No element identifies a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name. The scope is one partition of 272; the reading extends to the rest through the INSPIRE Addresses schema, which has no party element for another partition to populate."
+			}
+		},
 		"va-finance-1": {
 			"coverage": "ASIF's list of supervised entities for the Holy See, read from `https://www.asif.va/en/list-of-supervised-entities`, which is the row's `sourceURL` since the 2026-09-30 rights review corrected it. The 2026-09-18 pass recorded `https://www.asif.va/ENG/EntiVigilati.aspx`; on 2026-09-30 that path redirected to `https://www.asif.va/en/enti-vigilati` and answered HTTP 404 with an empty body, while the corrected path answered HTTP 200. The whole page is 3,254 bytes and the list has one member, `Institute for the Works of Religion (IOR)`, named without an address. The only address on the page is ASIF's own footer, `Palazzo San Carlo, 00120 Città del Vaticano`, which belongs to the regulator rather than to a supervised entity. So the register row's note that the list `exposes the regulated entity and Vatican postal address` is not borne out, and this publication is not an address source. `addressRoles` stays unresolved because there is no address column to assign a role to.",
 			"upstreamLineage": ["https://www.asif.va/en/list-of-supervised-entities"],

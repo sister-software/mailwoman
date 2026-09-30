@@ -345,6 +345,136 @@
 				}
 			}
 		},
+		"unchecked-access-free-es-gobierno-de-navarra": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/es-foral-cadastres-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Navarra states one licence and states it in its own feed rather than through Catastro's. `Addresses_ServiceATOM_Navarra.xml` is 671,131 bytes, sha256 `6971dd61d87e2fc047e953e956b09c6cc88aaa92e16ffb3bbc4750a1edb1ab60`, and its feed-level `rights` reads `This layer is published under the terms of the license Creative Commons Attribution 4.0 International (CC BY 4.0). [ https://creativecommons.org/licenses/by/4.0/ ]`. All 272 of its 272 municipality entries carry the same text. Catastro's national feed repeats it, so the two agree; this decision rests on Navarra's own feed. The version is stated, so `spdx` is written here, and CC BY 4.0 carries no share-alike term.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce and share the Licensed Material in whole, which is what retrieving each zipped GML partition performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which covers reading the designator, thoroughfare name and postal descriptor out of the GML."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, commercial purposes included, with §3(a)(1)(B) requiring that modifications be indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing in any medium, conditioned by §3(a) on crediting the Gobierno de Navarra, retaining the copyright notice, linking the licence, and indicating modifications."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the licence text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 §2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right. Whether that satisfies a commercial agreement is a drafting question this text does not answer."
+				}
+			}
+		},
+		"unchecked-access-free-es-diputaci-n-foral-de-gipuzkoa": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution-ShareAlike 4.0 International",
+			"spdx": "CC-BY-SA-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/es-foral-cadastres-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Gipuzkoa states four things, and the one addressing this dataset is elected. Its ISO 19139 dataset metadata, `https://b5m.gipuzkoa.eus/metadata_inspire/ES.GFA.AD.MD.xml`, 35,329 bytes, sha256 `e7c228b9feb33e570b802210421a76cf3f583249afbd57ef5baffe7dd2786724`, carries `otherConstraints` reading `CC BY-SA 4.0 This information does not have an official map category; therefore, it should not be used for any type of certificate`. Its Atom entry reads `Open access - Creative Commons Citation: CC-BY-SA` with no version. Its feed-level `rights` and subtitle read `Access to this service is permitted in all cases, provided that the authorship and ownership of DFG are referred to as follows: «© Gipuzkoa Provincial Council»`, which states no share-alike term. Its legal page at `https://b5m.gipuzkoa.eus/web5000/es/informacion-legal`, 35,492 bytes, sha256 `9f550d0f2e081221d296d55bc01b4db4c33dcb94867acd87492d8f5cc4a85796`, reads `Los contenidos de este sitio web están bajo una licencia Creative Commons Internacional (CC BY 4.0)`. The dataset metadata is the only one of the four addressing this dataset rather than the service or the website, and it is the only one stating a version. Electing the stricter of the two readings also means the share-alike filter sees this source, which is the direction to err in: `electedLicenseLabel` feeds `SHARE_ALIKE_PATTERN`, and recording CC BY 4.0 here would hide a share-alike obligation the publisher may hold. Reading the difference with the publisher is the work that would settle it.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY-SA 4.0 §2(a)(1)(A) grants reproducing and sharing the Licensed Material in whole, which is what retrieving `ES.GFA.AD.zip` performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which covers reading the address fields out of the GML."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose. §3(b) then binds the adaptation: it travels under this licence or a compatible one."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY-SA 4.0 reserves no act of analysis and grants use for any purpose. The share-alike condition attaches to what is shared rather than to the fitting itself, which is why this permits ingest and the two release operations stay unreviewed."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing in any medium, conditioned by §3(a) on attribution and by §3(b) on Adapted Material travelling under BY-SA 4.0 or a compatible licence. The corpus filter reads that condition off `electedLicenseLabel`."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material, and therefore whether §3(b) binds a released model to BY-SA, is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for ODbL. It arises here in the same shape and the licence text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "§2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right, and §3(b) would carry the share-alike condition to that recipient. Whether that satisfies a commercial agreement needs counsel rather than a reading here."
+				}
+			}
+		},
+		"unchecked-access-free-es-diputaci-n-foral-de-bizkaia": {
+			"state": "elected",
+			"electedTerms": "No conditions to access and use, with attribution to «©Bizkaiko Foru Aldundia»",
+			"retrievedCopy": "internal/strategy/rights-receipts/es-foral-cadastres-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Bizkaia names no licence instrument, so no SPDX identifier is written here and `electedTerms` records the publisher's own words. Its INSPIRE metadata, `https://apli.bizkaia.eus/apps/Danok/INSPIRE/inspireBizkaiaAtomMetadata.xml`, 20,612 bytes, sha256 `50d8f1bfe5cf036035c9d85bd3cce84c3bc08820b70cbf6d1e2c87350236dc60`, carries exactly three `otherConstraints`: `No limitations to public access`, `No conditions to access and use`, and `https://www.bizkaia.eus/es/inspirebizkaia`. Those are the INSPIRE controlled values for a dataset under no legal restriction. Its feed-level `rights` adds the condition: `Access to this service is permitted in all cases, provided that the authorship and ownership of BFA are referred to as follows: «©Bizkaiko Foru Aldundia»`. Two contradictions are recorded rather than resolved. All 112 of its municipality entries read `Copyright (c) 2017\", ES.BFA; all rights reserved`, which is the same unedited template string, stray quotation mark included, that the Dirección General del Catastro's feed carries under a different year. And Catastro's national feed labels the Bizkaia entry `CC BY 3.0 ES`, a licence no document Bizkaia publishes names; a third party's label is not this publisher's grant, so it plays no part in this decision.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`No conditions to access and use` places no restriction on obtaining the data, and the service `is permitted in all cases` subject to attribution, which is what retrieving each municipality's zipped GML performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same statement places no condition on use beyond attribution, so reading the address fields out of the GML is within it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No stated condition restricts modification. The attribution obligation attaches to the result."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`No conditions to access and use` reserves no act of analysis, and the feed's own condition is attribution alone."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The feed permits access `in all cases` on the single condition that authorship and ownership of BFA be stated as «©Bizkaiko Foru Aldundia». The metadata adds no limitation on public access. A redistributed copy therefore carries that credit."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The statements are about the data and the service and say nothing about a work fitted from them, so whether a released model carries the attribution obligation is unread."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No instrument is named, so there is no sublicensing clause to read either way."
+				}
+			}
+		},
 		"unchecked-access-free-mx-mx-business-legal-1": {
 			"state": "elected",
 			"electedTerms": "Términos de Libre Uso de la Información del INEGI",
