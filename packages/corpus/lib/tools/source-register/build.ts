@@ -575,8 +575,34 @@ export function readUnresolvedColumn(value: string | undefined, column: string, 
  * The shape of `license-decisions.json`: licence id to the decision minus its own id,
  * keyed by id so each licence has one decision.
  */
+/**
+ * A decision body without its own id, as `license-decisions.json` records one.
+ */
+type RecordedDecision = Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense, "licenseID">
+
+/**
+ * A decision that reuses a body declared once under `sharedReadings`.
+ *
+ * One publisher can hold a licence over several jurisdictions, and the register
+ * scopes a decision to one publisher in one jurisdiction, so reading that publisher's
+ * terms once produces several decisions with the same body.
+ * Naming the shared body keeps each licence id's own decision while the prose behind
+ * it has one home, so nine copies cannot drift apart under later editing.
+ */
+interface SharedDecisionReference {
+	sameAs: string
+}
+
 interface LicenseDecisionsFile {
-	decisions?: Record<string, Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense, "licenseID">>
+	decisions?: Record<string, RecordedDecision | SharedDecisionReference>
+	/**
+	 * Decision bodies that several licence ids reuse, keyed by a name the ids refer to.
+	 */
+	sharedReadings?: Record<string, RecordedDecision>
+}
+
+function isSharedReference(value: RecordedDecision | SharedDecisionReference): value is SharedDecisionReference {
+	return typeof (value as SharedDecisionReference).sameAs === "string"
 }
 
 /**
@@ -654,14 +680,26 @@ async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined):
 	if (!decisionsPath || !(await pathExists(decisionsPath))) return new Map()
 
 	const file = await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath)
+	const shared = file.sharedReadings ?? {}
 
-	// The id comes from the key, so a record cannot disagree with the licence it is filed under;
+	// The id comes from the key, so a record cannot disagree with the licence it is filed under.
 	// `auditAddressSourceRegister` decides whether the fields form a well-formed decision.
 	return new Map(
-		Object.entries(file.decisions ?? {}).map(([licenseID, decision]) => [
-			licenseID,
-			{ ...decision, licenseID } as LicenseDecision,
-		])
+		Object.entries(file.decisions ?? {}).map(([licenseID, recorded]) => {
+			if (!isSharedReference(recorded)) return [licenseID, { ...recorded, licenseID } as LicenseDecision]
+
+			const body = shared[recorded.sameAs]
+
+			if (!body) {
+				throw new Error(
+					`licence ${stringifyJSON(licenseID)} reads \`sameAs\` ${stringifyJSON(recorded.sameAs)}, ` +
+						"which `sharedReadings` does not declare. A reference to a reading that is absent would " +
+						"otherwise produce a decision with no terms."
+				)
+			}
+
+			return [licenseID, { ...body, licenseID } as LicenseDecision]
+		})
 	)
 }
 

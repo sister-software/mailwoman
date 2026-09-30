@@ -204,15 +204,24 @@ copy they were read from, that copy's version where the publisher gives one, and
 not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
 register that fails its audit, so an incomplete entry never reaches the committed artifact.
 
-**One of the register's 389 decisions is recorded.** AusTender's publisher, the Australian Department
-of Finance, grants `CC-BY-3.0-AU` in the AusTender Terms of Use §5.1, retained at
-`internal/strategy/rights-receipts/au-2026-09-30/`. The other 388 read `unchecked`.
+**Eleven of the register's 389 decisions are recorded.** AusTender's publisher, the Australian
+Department of Finance, grants `CC-BY-3.0-AU` in the AusTender Terms of Use §5.1. DENUE's publisher,
+INEGI, grants its own free-use terms. INSEE grants `Licence Ouverte 2.0` over SIRENE in each of nine
+overseas territories. Each is retained under `internal/strategy/rights-receipts/`. The other 378 read
+`unchecked`.
+
+A decision may name a body declared once under `sharedReadings` rather than restating it. One publisher
+can hold a licence over several jurisdictions, and a decision is scoped to one publisher in one
+jurisdiction, so one reading of INSEE's terms produces nine decisions. Each licence id still carries its
+own, so no election spans two jurisdictions; the shared body removes the risk of nine hand-maintained
+copies drifting. The build refuses a `sameAs` naming a reading the file does not declare.
 
 Electing terms is necessary and not sufficient. `ingestEligibilityProblems` also requires a resolved
 address role per column, measured coverage, and a personal-data review that does not read `present`,
-none of which a licence decision touches; those live in `source-resolutions.json`. AusTender has all
-four of its fields resolved and stays ineligible, because its personal-data reading is `present`. The
-ingest-eligible count is 0 of 389.
+none of which a licence decision touches; those live in `source-resolutions.json`. **Ten sources now
+have all four resolved and every one of the ten is blocked on its personal-data reading alone**, so the
+ingest-eligible count is 0 of 389. That makes the personal-data question one decision gating ten
+sources rather than a question about one.
 
 ### Why there are 389 of them rather than 12
 
@@ -253,12 +262,21 @@ every contracting process. Taiwan's GCIS register gives a registered company add
 business address in separate columns. `ingestEligibilityProblems` requires at least one column to have
 a role, and the audit refuses an empty map, which would read as resolved while stating nothing.
 
-**One source of 389 is resolved.** AusTender, `au-procurement-grants-1`, has all four fields recorded
-from a measurement of the 2022 OCDS release, retained with the terms at
-`internal/strategy/rights-receipts/au-2026-09-30/`. It remains ineligible for ingest on one condition:
-its `personalDataReview` reads `present`, because the release publishes named natural persons with
-street addresses. Moving that to `assessed` needs a completed analysis, which the register requires be
-named by location.
+**Eleven sources of 389 are resolved**, and ten of the eleven have all four fields. AusTender,
+`au-procurement-grants-1`, is recorded from a measurement of the 2022 OCDS release. The nine SIRENE
+territories are recorded from INSEE's own `dessin de fichier`. `gb-business-register-1` has its role,
+coverage and lineage and no personal-data review, so it is the eleventh with three of four. Each is
+retained under `internal/strategy/rights-receipts/`.
+
+Every one of the ten stays ineligible on the same single condition: `personalDataReview` reads
+`present`. Moving one to `assessed` needs a completed analysis, which the register requires be named by
+location.
+
+The three sources measured so far each place the role differently, which is why the field is a map
+keyed by a path. AusTender carries two roles in two column families on one record. Companies House
+carries one role in one family. SIRENE carries the role on a row-level flag: `etablissementSiege` says
+whether the establishment is its legal unit's seat, so the same columns are a `registered-office`
+address on one row and a `facility` address on the next.
 
 ## `training-manifests/<version>.json` — what reached one base corpus (#2375)
 

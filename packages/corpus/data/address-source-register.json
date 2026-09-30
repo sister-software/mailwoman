@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "23e1a75e4e4dc814ed4a04029227d8430d5c66ade50d9db00db92dafab064bec",
+	"contentDigest": "2c1ab9d04ad84e8301eed5fe02d02b7b03f257cad9db662ad33681e95d2f2f64",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -1083,10 +1083,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Chamber of Commerce / national business-registration authority in BJ, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-bl-insee",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to INSEE in BL, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-national-terms-bl-insee"
 		},
 		{
 			"licenseID": "unchecked-national-terms-bm-government-of-bermuda",
@@ -1377,10 +1416,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to National Agency of Public Registry in GE, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-gf-insee",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to INSEE in GF, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-national-terms-gf-insee"
 		},
 		{
 			"licenseID": "unchecked-national-terms-gg-guernsey-registry",
@@ -1425,10 +1503,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Agence de promotion des investissements privés in GN, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-gp-insee",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to INSEE in GP, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-national-terms-gp-insee"
 		},
 		{
 			"licenseID": "unchecked-national-terms-gq-national-commercial-registration-authority",
@@ -1743,10 +1860,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Tax Administration / CRBE in ME, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-mf-insee",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to INSEE in MF, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-national-terms-mf-insee"
 		},
 		{
 			"licenseID": "unchecked-national-terms-mg-economic-development-board-national-business",
@@ -1797,10 +1953,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Department of Commerce in MP, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-mq-insee",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to INSEE in MQ, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-national-terms-mq-insee"
 		},
 		{
 			"licenseID": "unchecked-national-terms-mr-commercial-registry-court-authority",
@@ -1977,10 +2172,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Ministry of Justice / National Court Register in PL, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-pm-insee",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to INSEE in PM, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-national-terms-pm-insee"
 		},
 		{
 			"licenseID": "unchecked-national-terms-pn-government-of-the-pitcairn-islands",
@@ -2025,10 +2259,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Ministry of Commerce and Industry in QA, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-re-insee",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to INSEE in RE, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-national-terms-re-insee"
 		},
 		{
 			"licenseID": "unchecked-national-terms-ro-national-trade-register-office",
@@ -2361,10 +2634,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Vanuatu Financial Services Commission / registry in VU, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-wf-insee",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to INSEE in WF, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-national-terms-wf-insee"
 		},
 		{
 			"licenseID": "unchecked-national-terms-ws-ministry-of-commerce-industry-and-labour",
@@ -2391,10 +2703,49 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Ministry of Industry and Trade / registration authority in YE, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-yt-insee",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to INSEE in YT, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-national-terms-yt-insee"
 		},
 		{
 			"licenseID": "unchecked-national-terms-za-companies-and-intellectual-property-commissio",
@@ -10201,7 +10552,20 @@
 			"access": "open bulk + API + search",
 			"publisher": "INSEE",
 			"sourceURL": "https://www.insee.fr/fr/information/3591226",
-			"note": "SIRENE geographic scope explicitly includes Saint-Barthélemy."
+			"note": "SIRENE geographic scope explicitly includes Saint-Barthélemy.",
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Barthélemy, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Barthélemy is inside the register's geographic perimeter. The per-territory row count is unmeasured, because the file is national and no count was taken over its Saint-Barthélemy subset. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE records an objection per row and places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A row whose `statutDiffusionEtablissement` reads `P` is diffused partially after an objection, and for a natural person `l'identité de l'entrepreneur (nom, prénoms…), l'adresse dans la commune et la géolocalisation seront masquées`. That status changes after a corpus is built, so a frozen corpus and a model trained on it keep an address INSEE has since stopped diffusing. Filtering on the status is mechanical; discharging a continuing obligation from a published artifact is the open question.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "cc-business-legal-1",
@@ -10265,7 +10629,20 @@
 			"access": "open bulk + API + search",
 			"publisher": "INSEE",
 			"sourceURL": "https://www.insee.fr/fr/information/3591226",
-			"note": "SIRENE geographic scope explicitly includes Guyane."
+			"note": "SIRENE geographic scope explicitly includes Guyane.",
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in French Guiana, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Guyane is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "gl-business-legal-1",
@@ -10297,7 +10674,20 @@
 			"access": "open bulk + API + search",
 			"publisher": "INSEE",
 			"sourceURL": "https://www.insee.fr/fr/information/3591226",
-			"note": "SIRENE geographic scope explicitly includes Guadeloupe."
+			"note": "SIRENE geographic scope explicitly includes Guadeloupe.",
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Guadeloupe, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Guadeloupe is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "gu-business-legal-1",
@@ -10345,7 +10735,20 @@
 			"access": "open bulk + API + search",
 			"publisher": "INSEE",
 			"sourceURL": "https://www.insee.fr/fr/information/3591226",
-			"note": "SIRENE geographic scope explicitly includes Saint-Martin."
+			"note": "SIRENE geographic scope explicitly includes Saint-Martin.",
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Martin, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Martin is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "mq-business-legal-1",
@@ -10361,7 +10764,20 @@
 			"access": "open bulk + API + search",
 			"publisher": "INSEE",
 			"sourceURL": "https://www.insee.fr/fr/information/3591226",
-			"note": "SIRENE geographic scope explicitly includes Martinique."
+			"note": "SIRENE geographic scope explicitly includes Martinique.",
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Martinique, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Martinique is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "ms-business-legal-1",
@@ -10425,7 +10841,20 @@
 			"access": "open bulk + API + search",
 			"publisher": "INSEE",
 			"sourceURL": "https://www.insee.fr/fr/information/3591226",
-			"note": "SIRENE geographic scope explicitly includes Saint-Pierre-et-Miquelon."
+			"note": "SIRENE geographic scope explicitly includes Saint-Pierre-et-Miquelon.",
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Pierre-et-Miquelon, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Pierre-et-Miquelon is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "pr-business-legal-1",
@@ -10457,7 +10886,20 @@
 			"access": "open bulk + API + search",
 			"publisher": "INSEE",
 			"sourceURL": "https://www.insee.fr/fr/information/3591226",
-			"note": "SIRENE geographic scope explicitly includes La Réunion."
+			"note": "SIRENE geographic scope explicitly includes La Réunion.",
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Réunion, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states La Réunion is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "sh-business-legal-1",
@@ -10537,7 +10979,20 @@
 			"access": "public SIRENE search/records; scope limited to public administrative bodies",
 			"publisher": "INSEE",
 			"sourceURL": "https://www.insee.fr/fr/information/6790269?question=quel-est-le-perimetre-geographique-du-repertoire-sirene",
-			"note": "LIMITED COVERAGE: not a general Wallis/Futuna private-business corpus; useful functionally authoritative public-establishment observations."
+			"note": "LIMITED COVERAGE: not a general Wallis/Futuna private-business corpus; useful functionally authoritative public-establishment observations.",
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE public-sector establishments in Wallis and Futuna, from INSEE's StockEtablissement file, refreshed monthly. This row's coverage is narrower than the other eight SIRENE rows: the register's own note records the scope as public administrative bodies rather than a general private-business corpus, so it is not a business register for the territory. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built. The public-sector scope narrows the exposure and does not remove it, because the measurement that would show no natural person appears in this territory's subset was not taken.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "yt-business-legal-1",
@@ -10553,7 +11008,20 @@
 			"access": "open bulk + API + search",
 			"publisher": "INSEE",
 			"sourceURL": "https://www.insee.fr/fr/information/3591226",
-			"note": "SIRENE geographic scope explicitly includes Mayotte."
+			"note": "SIRENE geographic scope explicitly includes Mayotte.",
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Mayotte, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Mayotte is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
 		},
 		{
 			"sourceID": "km-finance-1",

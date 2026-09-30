@@ -2,9 +2,66 @@
 	"$comment": "Licence decisions somebody made by reading a publisher's terms. The register's own build generates every decision as `unchecked` from the research pass's access labels, which is correct — that pass recorded what a register costs to reach and opened nobody's terms. This file is where a decision that was made gets recorded, and `buildSourceRegister` applies these over the generated defaults. It is an input to the build rather than an edit of its output, so a rebuild preserves what is here instead of overwriting it.",
 	"$howToAdd": "Read the publisher's terms. Store the copy you read somewhere a later reader can open it, and name that location in `retrievedCopy` — a link to today's page is not a copy. Then add one entry here keyed by the `licenseID` the register already uses for that source, and rebuild. `auditAddressSourceRegister` refuses an elected record missing `electedTerms`, `retrievedCopy` or `electedBecause`, and a refused record missing `refusedBecause`, so an incomplete entry fails the build rather than entering the register.",
 	"$shape": "Each key is a licenseID the register declares. Each value is an ElectedLicense or RefusedLicense minus its `licenseID`, which the build fills from the key. See `@mailwoman/corpus/source-register`'s types.",
-	"$state": "Two decisions of the register's 389 are recorded: AusTender's publisher grants CC BY 3.0 AU, and DENUE's publisher INEGI grants its own free-use terms. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. See #2351 for this file and #2323 for the source fields.",
+	"$state": "Eleven decisions of the register's 389 are recorded: AusTender's publisher grants CC BY 3.0 AU, DENUE's publisher INEGI grants its own free-use terms, and INSEE grants Licence Ouverte 2.0 over SIRENE in each of nine overseas territories. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. Ten sources now have all four of those resolved and every one is blocked on its personal-data reading alone, so the ingest-eligible count is 0 of 389. See #2351 for this file and #2323 for the source fields.",
 	"$notElected": "Two candidates were examined on 2026-09-30 and left unchecked, with the retrieved documents in `internal/strategy/rights-receipts/gb-mx-es-2026-09-30/`. Companies House serves its Free Company Data Product from `download.companieshouse.gov.uk`, whose page states `This snapshot is provided free of charge` and names no licence, no Crown copyright and no Open Government Licence; the GOV.UK site-wide clause grants OGL over `content on GOV.UK`, which is a different domain from the one serving the product. Spain's `es-mixed-regulatory-1` names two publishers, Catastro and INE, and the retained ES receipt covers Catastro's INSPIRE licence alone, so one election against that row would grant INE's data on a reading of Catastro's terms.",
+	"$sireneRepetition": "Nine of the decisions below are one reading of one document, recorded nine times. INSEE publishes SIRENE for mainland France and its overseas territories, and the register scopes a decision to one publisher in one jurisdiction, so BL, GF, GP, MF, MQ, PM, RE, WF and YT each carry their own. That repetition is deliberate: an election wide enough to cover nine jurisdictions at once is the failure review cannot undo.",
+	"$sharedReadings": "One publisher can hold a licence over several jurisdictions, and the register scopes a decision to one publisher in one jurisdiction, so reading that publisher's terms once produces several decisions with the same body. A decision reads `sameAs` to name a body declared here, which keeps each licence id's own decision while the prose behind it has one home. The build refuses a `sameAs` naming a reading this file does not declare.",
+	"sharedReadings": {
+		"insee-sirene-lov2": {
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "SIRENE offers one licence and no alternative. data.gouv.fr's dataset page records `Producteur Institut national de la statistique et des études économiques (Insee)` and `Licence Licence Ouverte / Open Licence version 2.0`, and its API answers `license: lov2` for the same dataset. The licence text names SIRENE as its own worked example for attribution: `Dans le cas d'une réutilisation de la base SIRENE de l'INSEE, mentionner l'URL du « Concédant » : www.insee.fr + la date de dernière mise à jour de l'Information réutilisée.` The attribution owed is therefore the source and the date of the last update, and the mention must not suggest official endorsement. No share-alike term applies: the licence states it was designed to be compatible with any free licence requiring attribution at a minimum, naming OGL, CC-BY and ODC-BY. It settles no personal-data question, which it says in terms: personal data `peut être librement réutilisée` only `à condition de respecter le cadre légal relatif à la protection des données à caractère personnel`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published stock file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer, notamment pour créer des « Informations dérivées »`. Reading the address columns out of the stock file is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants `la transformer, notamment pour créer des « Informations dérivées »`, and the licence defines an `Information dérivée` as any new data created directly from the Information. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial, par exemple en la combinant avec d'autres informations, ou en l'incluant dans votre propre produit ou application`. Commercial reuse and inclusion in a product are named acts, subject to the attribution above."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The licence grants creating an `Information dérivée` and grants redistributing `l'Information`, including by combining it with other information. Whether redistributing trained weights is one of those acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it. The grant here is wider than CC BY 3.0 AU's, so the answer may differ."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward. A recipient of redistributed Information is itself a `Réutilisateur` under the same licence, which is closer to needing no sublicence than to a sublicence being granted, and the text settles neither."
+				}
+			}
+		}
+	},
 	"decisions": {
+		"unchecked-national-terms-bl-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-gf-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-gp-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-mf-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-mq-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-pm-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-re-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-wf-insee": { "sameAs": "insee-sirene-lov2" },
+		"unchecked-national-terms-yt-insee": { "sameAs": "insee-sirene-lov2" },
 		"unchecked-access-free-mx-mx-business-legal-1": {
 			"state": "elected",
 			"electedTerms": "Términos de Libre Uso de la Información del INEGI",

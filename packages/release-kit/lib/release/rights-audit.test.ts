@@ -75,26 +75,27 @@ describe("auditRights", () => {
 		expect(audit.unresolved.join("\n")).toMatch(/12 of 12 packages have no frozen training manifest/u)
 	})
 
-	it("reports that the register admits no source, and names the four blockers that cover most of them", () => {
+	it("reports that the register admits no source, and names each of the four blockers", () => {
 		expect(audit.register.sources).toBe(389)
 		expect(audit.register.eligible).toBe(0)
 
-		// Each of the four conditions blocks its own near-universal share of the register.
-		// The license blocker reaches the report only because refusals that differ by a quoted
+		// Each of the four ingest conditions has to reach the report.
+		// The license blocker reaches it only because refusals that differ by a quoted
 		// identifier are grouped: each source points at its own license id, so ungrouped it
 		// is one message per source and never appears among the largest refusals.
 		const named = ["is unchecked", "address column has a resolved role", "coverage has been measured", "personal-data"]
 
 		for (const needle of named) {
-			const covering = audit.register.refusals.filter((refusal) => refusal.because.includes(needle))
-
-			expect(covering.length, needle).toBeGreaterThan(0)
-			expect(Math.max(...covering.map((refusal) => refusal.sources)), needle).toBeGreaterThan(380)
+			expect(
+				audit.register.refusals.filter((refusal) => refusal.because.includes(needle)).length,
+				needle
+			).toBeGreaterThan(0)
 		}
 
-		// No single blocker covers all 389 any more.
-		// Resolving one condition on one source is what breaks that, and the register records three such
-		// sources, so a test pinning 389 here would fail on the next review rather than on a regression.
+		// No single blocker covers all 389.
+		// Resolving one condition on one source is what breaks that, so a blocker widening
+		// back to 389 would mean a recorded resolution stopped being read.
+		// The assertions above leave each blocker's own count free, because every review moves it.
 		expect(Math.max(...audit.register.refusals.map((refusal) => refusal.sources))).toBeLessThan(389)
 	})
 

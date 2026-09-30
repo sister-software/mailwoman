@@ -119,13 +119,42 @@ describe("the committed address-source register", () => {
 		expect(ingestEligibilityProblems(austender, register)).toHaveLength(1)
 	})
 
+	it("gives each SIRENE territory its own decision carrying one shared reading of INSEE's terms", async () => {
+		// One publisher holds SIRENE across mainland France and its overseas territories,
+		// and a decision is scoped to one publisher in one jurisdiction.
+		// So one reading produces nine decisions, and the property that matters is that
+		// each licence id has its own rather than one covering all nine.
+		const territories = ["bl", "gf", "gp", "mf", "mq", "pm", "re", "wf", "yt"]
+
+		const decisions = territories.map((code) =>
+			register.licenses.find((entry) => entry.licenseID === `unchecked-national-terms-${code}-insee`)!
+		)
+
+		for (const [index, decision] of decisions.entries()) {
+			expect(decision, territories[index]).toBeDefined()
+			expect(decision.state, territories[index]).toBe(LicenseReviewState.Elected)
+			expect(electedLicenseLabel(decision), territories[index]).toBe("etalab-2.0")
+		}
+
+		// Each decision is reached through its own source, so no election spans two jurisdictions.
+		for (const code of territories) {
+			const pointing = register.sources.filter((source) => source.license === `unchecked-national-terms-${code}-insee`)
+
+			expect(
+				pointing.map((source) => source.iso2),
+				code
+			).toEqual([code.toUpperCase()])
+		}
+	})
+
 	it("carries exactly the decisions `license-decisions.json` records, and leaves the rest unchecked", async () => {
 		// The count is read from the input rather than pinned, so recording one more
 		// election is ordinary work rather than a test edit.
 		// What the assertion holds is that the build applied every recorded decision and invented none.
-		const recorded = await readLocalJSONFile<{ decisions?: Record<string, { state: string }> }>(
-			resolveModulePath("@mailwoman/corpus/data/license-decisions.json")
-		)
+		const recorded = await readLocalJSONFile<{
+			decisions?: Record<string, { state?: string; sameAs?: string }>
+			sharedReadings?: Record<string, { state: string }>
+		}>(resolveModulePath("@mailwoman/corpus/data/license-decisions.json"))
 
 		const entries = Object.entries(recorded.decisions ?? {})
 		const reviewed = register.licenses.filter((decision) => decision.state !== LicenseReviewState.Unchecked)
@@ -133,7 +162,12 @@ describe("the committed address-source register", () => {
 		expect(reviewed.map((decision) => decision.licenseID).toSorted()).toEqual(entries.map(([id]) => id).toSorted())
 
 		for (const [licenseID, decision] of entries) {
-			expect(register.licenses.find((entry) => entry.licenseID === licenseID)?.state).toBe(decision.state)
+			// A decision carrying `sameAs` takes its state from the shared reading,
+			// so the expectation resolves the reference the way the build does.
+			const expected = decision.sameAs ? recorded.sharedReadings?.[decision.sameAs]?.state : decision.state
+
+			expect(expected, licenseID).toBeDefined()
+			expect(register.licenses.find((entry) => entry.licenseID === licenseID)?.state, licenseID).toBe(expected)
 		}
 
 		expect(register.licenses.length - reviewed.length).toBe(register.licenses.length - entries.length)

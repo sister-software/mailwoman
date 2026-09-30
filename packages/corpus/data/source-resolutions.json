@@ -4,7 +4,144 @@
 	"$shape": "Each key is a `sourceID` the register declares. Each value carries any of `addressRoles`, `coverage`, `upstreamLineage` and `personalDataReview`, which replace the derived row's values. See `@mailwoman/corpus/source-register`'s `AddressSourceRecord`.",
 	"$addressRoles": "Keyed by the address column's path in the published record, because a publication can carry two roles on one record. `ingestEligibilityProblems` requires at least one column to have a role.",
 	"$upstreamLineage": "The endpoint or dataset this source's copy was taken from, so two register rows fed by one upstream submission count as one observation rather than two. A URL when the upstream is not itself a register row.",
+	"$sireneRepetition": "Nine rows below are one source, INSEE's SIRENE establishment register, split by overseas territory. The fields repeat because the register carries one row per jurisdiction and each row's coverage statement is about that territory, while the column layout and the diffusion mechanism are SIRENE's and identical throughout.",
+	"$sireneSecondAddress": "SIRENE's establishment file carries a second address family, the `2`-suffixed columns, which INSEE labels only `adresse secondaire` — `complementAdresse2Etablissement` reads `Complément d'adresse secondaire`. What role that address plays is unstated, so it takes no entry in `addressRoles` rather than a guessed one, and the coverage text names it so a reader knows the column exists.",
 	"resolutions": {
+		"bl-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Barthélemy, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Barthélemy is inside the register's geographic perimeter. The per-territory row count is unmeasured, because the file is national and no count was taken over its Saint-Barthélemy subset. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE records an objection per row and places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A row whose `statutDiffusionEtablissement` reads `P` is diffused partially after an objection, and for a natural person `l'identité de l'entrepreneur (nom, prénoms…), l'adresse dans la commune et la géolocalisation seront masquées`. That status changes after a corpus is built, so a frozen corpus and a model trained on it keep an address INSEE has since stopped diffusing. Filtering on the status is mechanical; discharging a continuing obligation from a published artifact is the open question.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"gf-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in French Guiana, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Guyane is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"gp-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Guadeloupe, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Guadeloupe is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"mf-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Martin, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Martin is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"mq-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Martinique, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Martinique is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"pm-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Pierre-et-Miquelon, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Pierre-et-Miquelon is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"re-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Réunion, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states La Réunion is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"wf-public-administration-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE public-sector establishments in Wallis and Futuna, from INSEE's StockEtablissement file, refreshed monthly. This row's coverage is narrower than the other eight SIRENE rows: the register's own note records the scope as public administrative bodies rather than a general private-business corpus, so it is not a business register for the territory. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built. The public-sector scope narrows the exposure and does not remove it, because the measurement that would show no natural person appears in this territory's subset was not taken.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"yt-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Mayotte, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Mayotte is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
 		"gb-business-register-1": {
 			"addressRoles": {
 				"RegAddress": "registered-office"
