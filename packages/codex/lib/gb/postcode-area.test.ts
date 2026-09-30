@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { countryOfPostcode, countryOfPostcodeArea, GB_POSTCODE_AREA_COUNTRY } from "#gb/index"
+import { countryOfPostcode, countryOfPostcodeArea, GB_POSTCODE_AREA_COUNTRY } from "#gb"
 
 describe("GB_POSTCODE_AREA_COUNTRY", () => {
 	it("maps the explicit non-England areas to their country", () => {

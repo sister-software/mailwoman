@@ -11,7 +11,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { formatTarballAudit } from "#pack/verify-tarball"
 import { auditStagedWorkspaces, checkReleaseListIdentity, releaseWorkspaces, stageReleaseTree } from "#release/stage"
 import { copyWeights } from "#weights/copy-weights"
-import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights/index"
+import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights"
 
 /**
  * Where the staged weights artifacts come from: `repo` reads this machine's data root,

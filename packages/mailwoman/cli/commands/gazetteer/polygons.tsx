@@ -1,0 +1,303 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman gazetteer polygons` — build the crisp-polygon sibling for the demo's map. The demo
+ *   draws the WOF rectangle (`place_bbox`) today. This packs the real admin geometry — simplified — so
+ *   the demo can draw an actual boundary, loaded lazily only when a result is shown.
+ *
+ *   Source: the per-id WOF GeoJSON repos at
+ *   `<repos>/whosonfirst-data-admin-<cc>/data/<id-per-region>/<id>.geojson`, where the database path is
+ *   the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson). Only admin placetypes
+ *   contain polygons. Postcodes resolve to a point marker and are skipped. In-scope ids are pulled
+ *   straight from the already-built points/admin DB so the two stay in lockstep.
+ *
+ *   Each ring is Douglas-Peucker simplified (default tol ~0.004° ≈ 400 m) to keep the file shippable,
+ *   since admin polygons are huge at full resolution. Output is `polygons(id integer primary KEY, geom
+ *   text)` where geom is a GeoJSON geometry the demo feeds straight into a MapLibre source.
+ *
+ *   `--points <wof-hot.db>` keeps the demo sidecar in lockstep with the slim points DB (small,
+ *   shippable). `--admin <admin-global-priority.db>` instead pulls every admin row from the full
+ *   gazetteer (optionally `--countries US,DE`). The slim DB excludes localadmin.
+ *   US town polygons live in that placetype.
+ */
+
+import { wofReposPath } from "@mailwoman/core/data-root"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
+import { removePath } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
+import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
+import { CommandError } from "@mailwoman/core/scripting/command"
+import { allRows, getRow } from "@mailwoman/core/utils"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
+import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
+import { Box, Text } from "ink"
+import { resolvePath } from "path-ts"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
+
+/**
+ * Vertices below which a ring cannot be simplified further without collapsing it.
+ */
+const MIN_RING_VERTICES = 3
+
+/**
+ * Vertices a closed ring needs — three corners plus the repeated closing point.
+ */
+const MIN_CLOSED_RING_VERTICES = 4
+
+const ADMIN_PLACETYPES = new Set(["locality", "localadmin", "region", "county", "borough", "macroregion", "country"])
+
+/**
+ * Native command-line interface consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "polygons",
+	description: "Build a WOF polygon sidecar",
+	options: {
+		points: { type: "string", description: "Slim points database" },
+		admin: { type: "string", description: "Full admin database" },
+		countries: { type: "string", description: "Comma-separated ISO country filter" },
+		out: { type: "string", required: true, description: "Output database" },
+		tol: { type: "number", default: 0.004, description: "Simplification tolerance in degrees" },
+		repos: {
+			type: "string",
+			default: wofReposPath("whosonfirst-data").toString(),
+			description: "WOF GeoJSON repository root",
+		},
+	},
+} as const satisfies CommandSpec
+
+type Position = number[]
+
+type LinearRing = Position[]
+
+interface SprRow {
+	id: number
+	country: string
+	placetype: string
+}
+
+interface RawGeometry {
+	type: string
+	// Polygon → LinearRing[]; MultiPolygon → LinearRing[][] — typed loosely at the JSON boundary.
+	coordinates: LinearRing[] | LinearRing[][]
+}
+
+/**
+ * `--repos` defaults to the owner directory, so the repository name is appended
+ * flat to whatever root the caller gave.
+ * The id-to-path rule itself belongs to `wofIDPathSegments`.
+ */
+function geojsonPath(repos: string, country: string, id: number): string {
+	return resolvePath(repos, wofRepoName("admin", country), "data", ...wofIDPathSegments(id)).toString()
+}
+
+/**
+ * Perpendicular distance from point p to segment a–b (planar — fine at admin scale).
+ */
+function segDist(p: Position, a: Position, b: Position): number {
+	const dx = b[0]! - a[0]!
+	const dy = b[1]! - a[1]!
+
+	if (dx === 0 && dy === 0) return Math.hypot(p[0]! - a[0]!, p[1]! - a[1]!)
+	const t = ((p[0]! - a[0]!) * dx + (p[1]! - a[1]!) * dy) / (dx * dx + dy * dy)
+	const tc = Math.max(0, Math.min(1, t))
+
+	return Math.hypot(p[0]! - (a[0]! + tc * dx), p[1]! - (a[1]! + tc * dy))
+}
+
+/**
+ * Douglas-Peucker on a ring of [lon,lat], keeping endpoints and preserving closure.
+ */
+function dp(ring: LinearRing, tol: number): LinearRing | null {
+	if (ring.length <= MIN_RING_VERTICES) return ring
+	const keep = new Uint8Array(ring.length)
+	keep[0] = keep[ring.length - 1] = 1
+	const stack: Array<[number, number]> = [[0, ring.length - 1]]
+
+	while (stack.length) {
+		const [lo, hi] = stack.pop()!
+		let maxD = -1
+		let idx = -1
+
+		for (let i = lo + 1; i < hi; i++) {
+			const d = segDist(ring[i]!, ring[lo]!, ring[hi]!)
+
+			if (d > maxD) {
+				maxD = d
+				idx = i
+			}
+		}
+
+		if (maxD > tol && idx > 0) {
+			keep[idx] = 1
+			stack.push([lo, idx], [idx, hi])
+		}
+	}
+
+	const out: LinearRing = []
+
+	for (let i = 0; i < ring.length; i++)
+		if (keep[i]) {
+			out.push(ring[i]!)
+		}
+
+	// A degenerate ring (<4 pts after simplify) can't render — drop it by signalling null.
+	return out.length >= MIN_CLOSED_RING_VERTICES ? out : null
+}
+
+/**
+ * Simplify a Polygon / MultiPolygon geometry, dropping rings that collapse.
+ *
+ * @returns Null if no entry is left.
+ */
+function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
+	const ringSet = (poly: LinearRing[]): LinearRing[] =>
+		poly.map((ring) => dp(ring, tol)).filter((r): r is LinearRing => r !== null)
+
+	if (geom.type === "Polygon") {
+		const rings = ringSet(geom.coordinates as LinearRing[])
+
+		return rings.length ? { type: "Polygon", coordinates: rings } : null
+	}
+
+	if (geom.type === "MultiPolygon") {
+		const polys = (geom.coordinates as LinearRing[][]).map((p) => ringSet(p)).filter((rings) => rings.length)
+
+		return polys.length ? { type: "MultiPolygon", coordinates: polys } : null
+	}
+
+	return null // Points / lines: no polygon to draw.
+}
+
+const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
+	const state = useCommandTask(async () => {
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
+		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
+		const { tryParsingJSON } = await import("@mailwoman/core/json")
+
+		const out = options.out
+		const points = options.points ?? ""
+		const admin = options.admin ?? ""
+
+		if (!out) {
+			throw new CommandError(
+				"usage: mailwoman gazetteer polygons (--points <wof-hot.db> | --admin <admin.db> [--countries US,DE]) --out <wof-polygons.db> [--tol 0.004]"
+			)
+		}
+
+		if ((!points && !admin) || (points && admin)) {
+			throw new CommandError("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
+		}
+
+		const countries = options.countries ? splitCountryCodes(options.countries) : null
+
+		const repos = options.repos
+		const tol = options.tol
+
+		const srcPath = points || admin
+		using src = new DatabaseClient<PolygonDatabase>(srcPath, { readOnly: true })
+
+		const where = countries
+			? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
+			: `placetype NOT IN ('postalcode')`
+
+		const rows = allRows<SprRow>(
+			src.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`),
+			...(countries ?? [])
+		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
+
+		// Build to a temp sibling and atomically swap into place, because a database is a read-only
+		// artifact and the live path must never be written in case the build dies halfway.
+		const tmpOut = `${out}.tmp-${process.pid}`
+
+		for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {
+			if (await pathExists(stale)) {
+				await removePath(stale)
+			}
+		}
+
+		const kdb = new DatabaseClient<PolygonDatabase>(tmpOut)
+		// DDL goes through the Kysely schema-builder.
+		// The hot insert loop stays on the raw `kdb` handle.
+
+		await createPolygonsTable(kdb)
+
+		const insert = kdb.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
+
+		let done = 0
+		let missing = 0
+		let dropped = 0
+		kdb.exec("BEGIN")
+
+		for (const r of rows) {
+			const path = geojsonPath(repos, r.country, r.id)
+
+			if (!(await pathExists(path))) {
+				missing++
+
+				continue
+			}
+
+			try {
+				// A malformed GeoJSON file nulls out and lands in the `dropped` tally with the rest.
+				const feat = tryParsingJSON<{ geometry?: RawGeometry }>(await readLocalTextFile(path))
+				const simp = feat?.geometry ? simplify(feat.geometry, tol) : null
+
+				if (!simp) {
+					dropped++
+
+					continue
+				}
+
+				insert.run(r.id, stringifyJSON(simp))
+
+				done++
+			} catch {
+				dropped++
+			}
+
+			if ((done + missing + dropped) % 2000 === 0) {
+				console.error(`  …${done} packed, ${missing} missing, ${dropped} dropped`)
+			}
+		}
+
+		kdb.exec("COMMIT")
+		kdb.exec("VACUUM")
+
+		const bytes = getRow<{ n: number; b: number | null }>(
+			kdb.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`)
+		)!
+
+		await kdb.destroy() // closes the underlying `dbOut` handle
+
+		await swapDatabaseIntoPlace(tmpOut, out)
+
+		return [
+			`${out}: ${done} polygons`,
+			`${missing} no-geometry, ${dropped} dropped, ~${ByteFormatter.formatIEC(bytes.b || 0)} geom`,
+		]
+	})
+
+	if (state.status !== "done") return <CommandTaskResult state={state} />
+
+	if (state.status === "done") {
+		return (
+			<Box flexDirection="column">
+				{state.result.map((line, i) => (
+					<Text key={i} color={i === 0 ? "green" : undefined}>
+						{i === 0 ? "✓ " : "  "}
+						{line}
+					</Text>
+				))}
+			</Box>
+		)
+	}
+
+	return null // progress streams to stderr until the summary lands
+}
+
+export default GazetteerPolygons

@@ -1,0 +1,23 @@
+{
+	// The command-line root. It compiles to `../out/cli` beside the library's `../out`, and it references the
+	// library project because the command line imports the library and never the reverse.
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": ".",
+		"outDir": "../out/cli",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"include": ["./**/*"],
+	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [
+		{ "path": ".." },
+		// ---
+		{ "path": "../../api-kit" },
+		{ "path": "../../core" },
+		{ "path": "../../mailwoman" },
+		{ "path": "../../mailwoman/cli" },
+		{ "path": "../../normalize" }
+	]
+}

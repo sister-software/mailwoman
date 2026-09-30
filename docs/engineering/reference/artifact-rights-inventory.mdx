@@ -328,7 +328,7 @@ corpus rows are most `wof-*`, are not measured here.
 Measured 2026-09-27 against commit `dc65605f0`: `--exclude-share-alike` appeared 12 times across 8
 TypeScript files and in 7 Markdown files, and it was never a flag on `mw corpus build` or on any other
 command. `excludeLicenses` was reachable only from `buildCorpus`, whose sole caller was
-`packages/corpus/lib/build/index.test.ts`, so the mechanism had no operator surface. `mw corpus build` now
+`packages/corpus/lib/build.test.ts`, so the mechanism had no operator surface. `mw corpus build` now
 carries `--license-policy` and `--exclude-licenses`, and the corpus manifest records which policy ran,
 the row count for each refusal class, and the count of admitted rows whose license value resolves to
 no SPDX expression.
@@ -511,7 +511,7 @@ training manifest exists to read.
 
 ### A model upload states its training sources or it does not go out
 
-`mailwoman release hf` in `packages/mailwoman/lib/release-tools/publish/hf.ts` uploads `model.onnx`,
+`mailwoman release hf` in `packages/mailwoman/tools/release-tools/publish/hf.ts` uploads `model.onnx`,
 `tokenizer.model`, `model-card.json` and the FST and postcode binaries. It read those files' sizes and
 no other property of them. The upload publishes these artifacts. Attribution and share-alike conditions attach
 to a source and survive redistribution. The upload is therefore the last point at which to confirm

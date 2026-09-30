@@ -10,7 +10,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { createRequire, resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 

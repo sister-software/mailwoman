@@ -14,7 +14,7 @@ import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 import { SQLiteLookup } from "@mailwoman/sqlite/lookup"
 import type { PathBuilderLike } from "path-ts"
 
-import { ancestorLineage } from "#ancestry/index"
+import { ancestorLineage } from "#ancestry"
 import { candidateFromSearchRow, rankCandidates } from "#candidate/scoring"
 import { loadCoincidentLocalities } from "#coincident-roles"
 import {
@@ -25,7 +25,7 @@ import {
 	type ConventionSource,
 	type ResolvedConvention,
 	type Strategy,
-} from "#convention/index"
+} from "#convention"
 import {
 	pickExtractForPlacetype,
 	pickExtractsForPlacetype,
@@ -41,7 +41,7 @@ import {
 	placeBboxExists,
 	placePopulationExists,
 	placeSearchFTSExists,
-} from "#fts/index"
+} from "#fts"
 import { normalizePlacetypes, sanitizeFTSQuery } from "#fts/query"
 import { cfNormalize, softNameScore } from "#name-score"
 import { encyclopedicClauses } from "#place-importance-schema"

@@ -8,7 +8,7 @@
 
 import { expect, test } from "vitest"
 
-import { isOfficialLanguage, OFFICIAL_LANGUAGES } from "#country/index"
+import { isOfficialLanguage, OFFICIAL_LANGUAGES } from "#country"
 
 test("bilingual Finland: Swedish is official under both ISO spellings", () => {
 	expect(isOfficialLanguage("FI", "sv")).toBe(true)

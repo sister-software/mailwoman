@@ -41,7 +41,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { resolvePath } from "path-ts"
 
-import { $private, $public } from "#env/index"
+import { $private, $public } from "#env"
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "#pack/pack-workspace"
 import { formatTarballAudit, verifyTarball } from "#pack/verify-tarball"
 import { assertWorkspacePublishable } from "#release/stage"

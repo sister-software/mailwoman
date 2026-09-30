@@ -12,7 +12,7 @@ import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { beforeAll, expect, test } from "vitest"
 
-import { loadSearchIndex, type PlanetarySearch } from "#search/index"
+import { loadSearchIndex, type PlanetarySearch } from "#search"
 
 const FIXTURE = resolvePackagePath("@mailwoman/planetary", "test", "fixtures", "moon-search.ancestrie")
 

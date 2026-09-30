@@ -340,8 +340,8 @@ jobs:
         with:
           filters: |
             conformance:
-              - 'packages/mailwoman/lib/eval-harness/conformance/**'
-              - 'packages/mailwoman/lib/eval-harness/gauntlet/**'
+              - 'packages/mailwoman/tools/eval-harness/conformance/**'
+              - 'packages/mailwoman/tools/eval-harness/gauntlet/**'
               - 'packages/mailwoman/lib/runtime-pipeline.ts'
               - 'packages/normalize/**'
               - 'packages/query-shape/**'

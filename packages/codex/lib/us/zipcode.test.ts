@@ -12,7 +12,7 @@ import {
 	StateAbbreviationZipCodePrefixRecord,
 	ZipCodePatterns,
 	ZipCodePrefixAbbreviationMap,
-} from "#us/index"
+} from "#us"
 import { isUSStateAbbreviation } from "#us/state"
 
 describe("isZipCode", () => {

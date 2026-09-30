@@ -10,7 +10,7 @@
  * That is why `defaultLicense` is not an option on this adapter.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"

@@ -7,7 +7,7 @@
 import { CoverageBasis } from "@mailwoman/evidence"
 import { describe, expect, it } from "vitest"
 
-import { assertAreaAgreement, sourcePresentCoverageCells } from "#layers/index"
+import { assertAreaAgreement, sourcePresentCoverageCells } from "#layers"
 
 describe("sourcePresentCoverageCells", () => {
 	it("emits one sorted source_present row per observed cell and none elsewhere", () => {

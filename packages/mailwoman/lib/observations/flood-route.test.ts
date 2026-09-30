@@ -19,13 +19,13 @@ import {
 	fixtureSource,
 	FIXTURE_ORIGIN,
 	FIXTURE_SIDE,
-} from "@mailwoman/flood/test-kit"
+} from "@mailwoman/flood/sdk/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "#geocode"
-import { createAuthorityDesignationRoute } from "#observations/index"
+import { createAuthorityDesignationRoute } from "#observations"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
 	return { start: 0, end: 0, confidence: 1, children: [], ...partial }

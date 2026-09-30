@@ -12,9 +12,11 @@
  *   check's mechanical repair.
  */
 
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { filesAtRef, renamesSince } from "@mailwoman/core/git"
+import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { findOperation, type Operation, type OperationContext } from "@mailwoman/core/scripting"
-import { shopOperations } from "@mailwoman/license-worker/shop"
+import { shopOperations } from "@mailwoman/license-worker/shop/operations"
 import { operations, type ReleaseContext } from "@mailwoman/release-kit"
 import {
 	applyModuleMoves,
@@ -27,10 +29,14 @@ import {
 	planModuleMoves,
 	runCommentInventory,
 	type Diagnostic,
+	type ManifestReplacement,
+	type ModuleMove,
 	type RepoContext,
 	writeBaseline,
 } from "@mailwoman/repo-health"
+import { planPathLiteralRewrites } from "@mailwoman/repo-health/move/literals"
 import { storageOperations, type StorageContext } from "@mailwoman/storage-kit"
+import { resolvePath } from "path-ts"
 
 /**
  * How many times `health fix` re-takes a plan before giving up.
@@ -91,6 +97,8 @@ function usage(io: DispatchIO): number {
 			"  mwops health <check>|all [--json]",
 			"  mwops health baseline debt        (rewrite packages/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
+			"  mwops health move <from> <to> [<from> <to> …] [--dry-run]   (or --moves <file.json> listing {from, to})",
+			"  mwops health move --literals-since <ref> [--dry-run]   (rewrite path literals left stale by renames since <ref>)",
 			"  mwops health comments [path]      (rebuild the source-comment inventory and its review leads)",
 			"  mwops storage <operation> [--json] [--dry-run] [--key value …]",
 			"",
@@ -277,30 +285,39 @@ async function runFix(
 	}
 
 	const dryRun = options["dry-run"] === true
-	const passes: Array<{ moves: number; rewrites: number; manifests: number; literals: number; verified: number }> = []
+
+	const passes: Array<{
+		moves: number
+		rewrites: number
+		manifests: number
+		replacements: number
+		literals: number
+		verified: number
+	}> = []
 
 	// A fix can create work for itself, so the plan is re-taken until the check has no further finding.
 	// The bound guards a rule that never settles.
 	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
 		const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
-		const moves = await fix.plan(context)
+		const proposed = await fix.plan(context)
 
-		if (!moves.length) break
+		if (!proposed.moves.length && !proposed.manifests?.length) break
 
-		const plan = await planModuleMoves(context, moves)
+		const plan = await planModuleMoves(context, proposed.moves, { manifests: proposed.manifests })
 		const result = await applyModuleMoves(context, plan, { dryRun })
 
 		passes.push({
 			moves: plan.moves.length,
 			rewrites: plan.rewrites.length,
 			manifests: plan.manifestRewrites.length,
+			replacements: plan.manifestReplacements.length,
 			literals: plan.pathLiterals.length,
 			verified: result.verified,
 		})
 
 		if (options.json !== true) {
 			io.stdout(
-				`${fix.id} pass ${pass + 1}: ${plan.moves.length} move(s), ${plan.rewrites.length} specifier rewrite(s), ${plan.manifestRewrites.length} manifest target(s), ${plan.pathLiterals.length} path literal(s), across ${plan.scanned.read} of ${plan.scanned.tracked} tracked sources\n`
+				`${fix.id} pass ${pass + 1}: ${plan.moves.length} move(s), ${plan.rewrites.length} specifier rewrite(s), ${plan.manifestRewrites.length} manifest target(s), ${plan.manifestReplacements.length} manifest replacement(s), ${plan.pathLiterals.length} path literal(s), across ${plan.scanned.read} of ${plan.scanned.tracked} tracked sources\n`
 			)
 
 			for (const move of plan.moves) {
@@ -339,6 +356,124 @@ async function runFix(
 	return 0
 }
 
+/**
+ * `mwops health move --literals-since <ref>` — rewrite the path literals that
+ * every rename since `ref` left stale.
+ *
+ * The renames come from `git diff --name-status -M <ref>`, and directory renames are judged against
+ * the files `ref` tracked, so a directory counts as moved only when all of its files moved together.
+ */
+async function runLiteralRepair(ref: string, dryRun: boolean, io: DispatchIO): Promise<number> {
+	const renames: ModuleMove[] = await renamesSince(ref, io.repoRoot)
+	const refFiles = await filesAtRef(ref, io.repoRoot)
+	const pathLiterals = await planPathLiteralRewrites(io.repoRoot, refFiles, renames)
+	const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+
+	await applyModuleMoves(
+		context,
+		{
+			moves: [],
+			rewrites: [],
+			manifestRewrites: [],
+			manifestReplacements: [],
+			pathLiterals,
+			unresolved: [],
+			scanned: { read: refFiles.length, tracked: refFiles.length },
+		},
+		{ dryRun }
+	)
+
+	io.stdout(`literals: ${pathLiterals.length} stale path literal(s) from ${renames.length} rename(s) since ${ref}\n`)
+
+	for (const literal of pathLiterals) {
+		io.stdout(`    ${literal.file}: ${literal.path} -> ${literal.replacement}\n`)
+	}
+
+	io.stdout(dryRun ? "Nothing written. Drop --dry-run to apply.\n" : "Rewritten.\n")
+
+	return 0
+}
+
+/**
+ * The `--moves` file: a list of `{from, to}` pairs, or an object that also names replacement manifests.
+ *
+ * Each manifest entry gives the repo-relative `package.json` to replace
+ * and the file holding its new text, so a move into a new source root is planned
+ * against the `imports` and `exports` keys that reach it.
+ */
+type MoveFile = ModuleMove[] | { moves: ModuleMove[]; manifests?: Array<{ file: string; from: string }> }
+
+/**
+ * `mwops health move` — move modules named on the command line or in a JSON file of `{from, to}`
+ * pairs, rewriting every specifier, manifest target and path literal the move invalidates.
+ *
+ * The plan is proven before anything is written, as with `health fix`.
+ */
+async function runMove(
+	targets: readonly string[],
+	options: Record<string, string | boolean>,
+	io: DispatchIO
+): Promise<number> {
+	let moves: ModuleMove[]
+	const manifests: ManifestReplacement[] = []
+
+	if (typeof options["literals-since"] === "string") {
+		return await runLiteralRepair(options["literals-since"], options["dry-run"] === true, io)
+	}
+
+	if (typeof options.moves === "string") {
+		const parsed = parseJSONStrict<MoveFile>(await readLocalTextFile(resolvePath(io.repoRoot, options.moves)))
+
+		moves = Array.isArray(parsed) ? parsed : parsed.moves
+
+		for (const manifest of Array.isArray(parsed) ? [] : (parsed.manifests ?? [])) {
+			manifests.push({
+				file: manifest.file,
+				text: await readLocalTextFile(resolvePath(io.repoRoot, manifest.from)),
+			})
+		}
+	} else {
+		if (!targets.length || targets.length % 2) {
+			io.stderr("mwops health move: give <from> <to> pairs, or --moves <file.json>\n")
+
+			return 2
+		}
+
+		moves = []
+
+		for (let index = 0; index < targets.length; index += 2) {
+			moves.push({ from: targets[index]!, to: targets[index + 1]! })
+		}
+	}
+
+	const dryRun = options["dry-run"] === true
+	const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+	const plan = await planModuleMoves(context, moves, { manifests })
+	const result = await applyModuleMoves(context, plan, { dryRun })
+
+	if (options.json === true) {
+		io.stdout(prettyJSON(result))
+
+		return 0
+	}
+
+	io.stdout(
+		`move: ${plan.moves.length} move(s), ${plan.rewrites.length} specifier rewrite(s), ${plan.manifestRewrites.length} manifest target(s), ${plan.pathLiterals.length} path literal(s), across ${plan.scanned.read} of ${plan.scanned.tracked} tracked sources\n`
+	)
+
+	for (const rewrite of plan.rewrites) {
+		io.stdout(`    ${rewrite.file}: ${rewrite.specifier} -> ${rewrite.replacement}\n`)
+	}
+
+	io.stdout(
+		dryRun
+			? "Nothing written. Drop --dry-run to apply.\n"
+			: `Verified ${result.verified} rewritten specifier(s) against the moved tree. Next: yarn typecheck:tests\n`
+	)
+
+	return 0
+}
+
 async function runHealth(args: readonly string[], io: DispatchIO): Promise<number> {
 	const { options, rest } = parseOptions(args)
 	const id = rest[0]
@@ -348,6 +483,8 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 	if (id === "baseline") return await runBaseline(rest.slice(1), options, io)
 
 	if (id === "fix") return await runFix(rest.slice(1), options, io)
+
+	if (id === "move") return await runMove(rest.slice(1), options, io)
 
 	if (id === "comments") return await runComments(rest.slice(1), options, io)
 

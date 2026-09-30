@@ -7,7 +7,7 @@
  *   its QueryShape and returns a confidence from 0 to 1.
  */
 
-import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
+import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street/suffix"
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 import { classifyTokens, foldInputClass } from "@mailwoman/query-shape/character-class"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"

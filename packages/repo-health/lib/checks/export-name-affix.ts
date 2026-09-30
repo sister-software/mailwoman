@@ -23,7 +23,7 @@ import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
-import { trackedSourcePaths } from "#tracked-sources"
+import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#tracked-sources"
 
 /**
  * The comment marker that keeps a deliberate pair out of the census, followed by the reason.
@@ -134,7 +134,7 @@ export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]>
 	const paths = await trackedSourcePaths(context, {
 		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` by
 		// itself skips a file directly under `lib/`.
-		globs: ["packages/*/lib/*.ts", "packages/*/lib/**/*.ts"],
+		globs: PACKAGE_SOURCE_GLOBS.filter((glob) => glob.endsWith(".ts")),
 		existingOnly: true,
 	})
 

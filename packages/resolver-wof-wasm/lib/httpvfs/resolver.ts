@@ -8,7 +8,7 @@ import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
-import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 import {
 	rankByPrimaryPreference,

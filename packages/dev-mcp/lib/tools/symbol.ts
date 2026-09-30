@@ -18,7 +18,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { z } from "zod"
 
-import { searchDeclarations } from "#symbol/index"
+import { searchDeclarations } from "#symbol"
 import { loadPurposeIndex, searchPurpose } from "#symbol/purpose"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 

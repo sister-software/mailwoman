@@ -17,8 +17,8 @@ import { Kysely, type KyselyConfig } from "kysely"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { Database } from "#database-schema"
+import { SqliteDialect } from "#dialect"
 import type { SqliteDialectConfig } from "#dialect/config"
-import { SqliteDialect } from "#dialect/index"
 
 /**
  * A connection's non-Kysely surface: the statements Kysely does not model, plus ending the connection.

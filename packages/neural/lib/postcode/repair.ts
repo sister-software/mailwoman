@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { POSTCODE_SHAPES } from "@mailwoman/codex/postcode-shapes"
+import { POSTCODE_SHAPES } from "@mailwoman/codex/postcode/shapes"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import {
@@ -41,7 +41,7 @@ export interface PostcodeMatch extends SpanMatch {
 /**
  * Lists the per-country postcode shape patterns, most specific first.
  *
- * The table lives in `@mailwoman/codex/postcode-shapes` because the Python trainer reads the same data.
+ * The table lives in `@mailwoman/codex/postcode/shapes` because the Python trainer reads the same data.
  * The copies must stay aligned.
  */
 export const POSTCODE_PATTERNS: ReadonlyArray<{

@@ -7,7 +7,7 @@
 import { validateStyleMin } from "@maplibre/maplibre-gl-style-spec"
 import { expect, test } from "vitest"
 
-import { createPlanetaryStyle, PALETTES } from "#planetary/index"
+import { createPlanetaryStyle, PALETTES } from "#planetary"
 
 test.each(["moon", "mars"] as const)("%s: a valid planetary style with labels decluttered by diameter", (body) => {
 	const style = createPlanetaryStyle({

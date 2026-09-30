@@ -10,12 +10,12 @@ import { copyFileTo, removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { countRows } from "@mailwoman/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
+import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { sql } from "kysely"
 import type { Kysely } from "kysely"
 import type { PathBuilderLike } from "path-ts"
 
-import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "#fts/index"
+import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "#fts"
 import type { NamesTable, SprTable, WOFDatabase } from "#schema"
 
 export interface BuildSlimOptions {

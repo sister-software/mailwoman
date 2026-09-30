@@ -1,6 +1,6 @@
 ---
 title: Parse in the browser
-description: Serve the model from your own origin, load it with @mailwoman/neural/web-loader, and parse addresses in the tab with no server call — plus what the cold load costs and where the resolver stops.
+description: Serve the model from your own origin, load it with @mailwoman/neural/web/loader, and parse addresses in the tab with no server call — plus what the cold load costs and where the resolver stops.
 role: tutorial
 verified-with: mailwoman 8.7.0
 ---
@@ -8,7 +8,7 @@ verified-with: mailwoman 8.7.0
 # Parse in the browser
 
 The parser is a 39.4 MB ONNX graph and a SentencePiece tokenizer. Neither needs a server: a browser
-can hold both, and `onnxruntime-web` can run the graph. `@mailwoman/neural/web-loader` is what wires
+can hold both, and `onnxruntime-web` can run the graph. `@mailwoman/neural/web/loader` is what wires
 them together, and it produces the same `AddressTree` the Node runtime does.
 
 If you have seen `@mailwoman/neural-web` referenced before: the browser runtime moved into
@@ -96,7 +96,7 @@ One call. It fetches the files in parallel, builds the tokenizer, creates the in
 runs a warm-up pass before it returns.
 
 ```ts
-import { loadNeuralClassifierFromURLs } from "@mailwoman/neural/web-loader"
+import { loadNeuralClassifierFromURLs } from "@mailwoman/neural/web/loader"
 
 const { classifier, diagnostics, labels } = await loadNeuralClassifierFromURLs({
 	modelURL: "/mailwoman/model.onnx",
@@ -249,7 +249,7 @@ reason.
 The data is the other. `@mailwoman/resolver-wof-wasm` is the published browser lookup, and its
 loader fetches a whole database and opens it in memory — workable for a slim, purpose-built
 distribution rather than for the 2.88 GB worldwide one. `buildSlimWOFDatabase` from
-`@mailwoman/resolver-wof-sqlite/build-slim` is what produces such a distribution: give it a source
+`@mailwoman/resolver-wof-sqlite/build/slim` is what produces such a distribution: give it a source
 gazetteer, a country set and a locality cap, and it writes a resolver-schema database sized for a
 static deploy.
 

@@ -6,7 +6,7 @@
  *   Removes overlapping proposals before a flat address tree is built.
  */
 
-import type { ClassificationProposal } from "#types/index"
+import type { ClassificationProposal } from "#types"
 
 /**
  * Returns whether two half-open spans overlap.

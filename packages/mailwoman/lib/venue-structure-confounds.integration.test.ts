@@ -41,7 +41,7 @@ interface ConfoundRow {
 	xfail?: string
 }
 
-const BOARD = workspacePath("mailwoman", "lib", "eval-harness", "fixtures", "venue-structure-confounds.jsonl")
+const BOARD = workspacePath("mailwoman", "tools", "eval-harness", "fixtures", "venue-structure-confounds.jsonl")
 
 const rows: ConfoundRow[] = await JSONSpliterator.fromAsync<ConfoundRow>(BOARD).toArray()
 

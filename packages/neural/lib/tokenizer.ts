@@ -138,7 +138,7 @@ export class MailwomanTokenizer {
 	 * so the rest of the tokenizer bundles for the browser.
 	 *
 	 * A browser call throws at runtime, so use `loadFromBase64` or the URL-fetching
-	 * loaders in `@mailwoman/neural/web-loader`.
+	 * loaders in `@mailwoman/neural/web/loader`.
 	 */
 	static async loadFromFile(modelPath: PathBuilderLike): Promise<MailwomanTokenizer> {
 		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")

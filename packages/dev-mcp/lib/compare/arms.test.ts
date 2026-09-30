@@ -13,7 +13,7 @@ import { createPostalAddressID } from "@mailwoman/address-id"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { runCompare } from "#compare/index"
+import { runCompare } from "#compare"
 import type { EngineRegistryLike } from "#engine/registry"
 import { OracleMeter, OracleProviderName, type OracleGeocoderLike } from "#oracle-arm"
 import { listRuns } from "#run-store"

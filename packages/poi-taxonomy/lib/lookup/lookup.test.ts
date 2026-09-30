@@ -15,8 +15,8 @@ import {
 	lookupPOICategory,
 	requiresBuildLocalLayer,
 	resolveOvertureCategories,
-} from "#lookup/index"
-import { generateTaxonomyTable } from "#scripts/generate-taxonomy"
+} from "#lookup"
+import { generateTaxonomyTable } from "#tools/generate-taxonomy"
 
 describe("lookupPOICategory", () => {
 	it("matches a category by its own id-phrase and label", () => {
@@ -258,6 +258,6 @@ describe("taxonomy integrity — malformed table", () => {
 			}
 		})
 
-		await expect(import("#lookup/index")).rejects.toThrow(/synonym/)
+		await expect(import("#lookup")).rejects.toThrow(/synonym/)
 	})
 })

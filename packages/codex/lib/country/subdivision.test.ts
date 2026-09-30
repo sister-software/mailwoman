@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { matchSubdivision, matchSubdivisionIn } from "#country/index"
+import { matchSubdivision, matchSubdivisionIn } from "#country"
 
 describe("matchSubdivision", () => {
 	it("expands a CA province abbreviation to its name + country (the Montreal QC path)", () => {

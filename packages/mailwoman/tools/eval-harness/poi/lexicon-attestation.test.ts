@@ -1,0 +1,114 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `@mailwoman/activity-lexicon` declares zero dependencies, so the attestations that point at a committed query row, the POI taxonomy, or a compiled concept are checked here, where all three artifacts are held.
+ */
+
+import { readActivityLexicon } from "@mailwoman/activity-lexicon"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/paths"
+import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
+import { JSONSpliterator } from "spliterator"
+import { describe, expect, it } from "vitest"
+
+import { POI_BOARD_FIXTURES, type POIBoardFixture } from "#tools/eval-harness/poi/board"
+
+const lexicon = await readActivityLexicon()
+
+const board = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toMap((row) => [row.id, row])
+
+const { readCompiledGeographicModel } = await import("@mailwoman/geographic-model/packaged")
+const model: CompiledGeographicModel = await readCompiledGeographicModel()
+
+interface CuratedOverlay {
+	synonyms: Array<{ phrase: string; categoryID: string; locales?: string[] }>
+}
+
+const overlay = await readLocalJSONFile<CuratedOverlay>(
+	repoRootPath("packages", "poi-taxonomy", "data", "curated-overlay.json")
+)
+
+/**
+ * Both halves are required: the file is what a reader greps, the record is what a test resolves.
+ */
+function splitReference(reference: string): { file: string; record: string } {
+	const index = reference.lastIndexOf("#")
+
+	return { file: reference.slice(0, index), record: reference.slice(index + 1) }
+}
+
+describe("every committed-query attestation resolves to the row it names", () => {
+	const cited = lexicon.phrases.filter((entry) => entry.attestation.kind === "committed-query")
+
+	it("cites at least one row, or nothing anchors the lexicon", () => {
+		expect(cited.length).toBeGreaterThan(0)
+	})
+
+	for (const entry of cited) {
+		const attestation = entry.attestation
+
+		if (attestation.kind !== "committed-query") continue
+
+		it(`${entry.phrase} → ${attestation.reference}`, () => {
+			const { file, record } = splitReference(attestation.reference)
+
+			expect(file).toBe("packages/mailwoman/tools/eval-harness/fixtures/poi-board.jsonl")
+
+			const row = board.get(record)
+
+			expect(row, `board row ${record} is not committed`).toBeDefined()
+			expect(row!.query).toBe(attestation.detail)
+		})
+	}
+})
+
+describe("every regional-register attestation copies the locales of the record it names", () => {
+	for (const entry of lexicon.phrases) {
+		const attestation = entry.attestation
+
+		if (attestation.kind !== "regional-register") continue
+
+		it(`${entry.phrase} → ${attestation.reference}`, () => {
+			const { file, record } = splitReference(attestation.reference)
+
+			expect(file).toBe("packages/poi-taxonomy/data/curated-overlay.json")
+
+			const synonym = overlay.synonyms.find((candidate) => candidate.phrase === record)
+
+			expect(synonym, `curated synonym ${record} is not committed`).toBeDefined()
+			expect(entry.locales).toEqual(synonym!.locales)
+
+			for (const tag of synonym!.locales ?? []) {
+				expect(attestation.detail).toContain(tag)
+			}
+		})
+	}
+})
+
+describe("every concept-description attestation quotes the compiled description verbatim", () => {
+	for (const entry of lexicon.phrases) {
+		const attestation = entry.attestation
+
+		if (attestation.kind !== "concept-description") continue
+
+		it(`${entry.phrase} → ${attestation.reference}`, () => {
+			const concept = model.concepts.find((candidate) => String(candidate.id) === attestation.reference)
+
+			expect(concept, `the compiled model carries no concept ${attestation.reference}`).toBeDefined()
+			expect(concept!.description).toContain(attestation.detail)
+		})
+	}
+})
+
+describe("every declared activity is an activity the compiled model carries", () => {
+	for (const entry of lexicon.phrases) {
+		it(`${entry.phrase} → ${entry.activity}`, () => {
+			const concept = model.concepts.find((candidate) => String(candidate.id) === entry.activity)
+
+			expect(concept).toBeDefined()
+			expect(concept!.kind).toBe("activity")
+		})
+	}
+})

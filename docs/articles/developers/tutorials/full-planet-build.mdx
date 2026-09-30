@@ -169,7 +169,7 @@ Two things about that invocation. It is a script inside the installed package ra
 subcommand. There is no `mailwoman ban` group, the fetch is a `curl` against a documented URL pattern,
 and the build is the script above. And the path is a `node_modules` path because `@mailwoman/ban` is on
 npm; if you are working from a checkout instead, the same file is at
-`packages/ban/out/scripts/build/address-point-database.js` after `yarn compile`.
+`packages/ban/out/tools/build/address-point-database.js` after `yarn compile`.
 
 ## 3. Build the same ground from OpenStreetMap
 
@@ -218,7 +218,7 @@ mkdir -p "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik"
 curl -sL -o "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf" \
   "https://download.geofabrik.de/europe/france/corse-latest.osm.pbf"
 
-node packages/osm/out/scripts/build-rooftop-database.js \
+node packages/osm/out/tools/build-rooftop-database.js \
   --country fr --slug corse --release 260803 \
   --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
 ```
@@ -240,7 +240,7 @@ inventing a street, and that count is the input to the fix: rerun with `--recove
 attaches each orphan to the nearest named highway within 30 m.
 
 ```bash
-node packages/osm/out/scripts/build-rooftop-database.js \
+node packages/osm/out/tools/build-rooftop-database.js \
   --country fr --slug corse --release 260803 --recover \
   --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
 ```

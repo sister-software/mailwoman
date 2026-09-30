@@ -11,8 +11,8 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
+import { openBuiltClient } from "#sealed"
 import { isSealed, SealedArtifactError, sealDatabase, swapDatabaseIntoPlace } from "#sealed/db"
-import { openBuiltClient } from "#sealed/index"
 
 const fixtures = new AsyncDisposableStack()
 

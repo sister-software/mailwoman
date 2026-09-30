@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { loadFSTArtifact, lookupFST, lookupNormalize, lookupStreetMorphology } from "#lookup/index"
+import { loadFSTArtifact, lookupFST, lookupNormalize, lookupStreetMorphology } from "#lookup"
 
 /**
  * The entries below are the measured `fst-en-us.bin` values, so the zero is the real gazetteer's zero.

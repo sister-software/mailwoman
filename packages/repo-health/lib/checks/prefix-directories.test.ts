@@ -68,12 +68,29 @@ describe("findPrefixGroups", () => {
 		])
 	})
 
-	test("a head file becomes the directory's index", () => {
+	test("a head file stays beside the directory its siblings move into", () => {
 		const tracked = ["a/b/reliability.ts", "a/b/reliability-report.ts"]
 
 		expect(planPrefixMoves(findPrefixGroups(tracked), tracked)).toEqual([
 			{ from: "a/b/reliability-report.ts", to: "a/b/reliability/report.ts" },
-			{ from: "a/b/reliability.ts", to: "a/b/reliability/index.ts" },
+		])
+
+		const moved = ["a/b/reliability.ts", "a/b/reliability/report.ts"]
+
+		expect(findPrefixGroups(moved)).toEqual([])
+	})
+
+	test("counts a directory and the module named for it as one member", () => {
+		expect(findPrefixGroups(["a/b/source-register.ts", "a/b/source-register/fetch.ts"])).toEqual([])
+	})
+
+	test("moves a directory's companion module with the directory", () => {
+		const tracked = ["a/b/geo-names.ts", "a/b/geo-names/fetch.ts", "a/b/geo-shapes.ts"]
+
+		expect(planPrefixMoves(findPrefixGroups(tracked), tracked)).toEqual([
+			{ from: "a/b/geo-names/fetch.ts", to: "a/b/geo/names/fetch.ts" },
+			{ from: "a/b/geo-names.ts", to: "a/b/geo/names.ts" },
+			{ from: "a/b/geo-shapes.ts", to: "a/b/geo/shapes.ts" },
 		])
 	})
 

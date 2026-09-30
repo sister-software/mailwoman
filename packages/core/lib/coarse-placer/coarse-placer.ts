@@ -11,7 +11,7 @@
 import type { PathBuilderLike } from "path-ts"
 
 import { featurize } from "#coarse-placer/featurize"
-import { $public } from "#env/index"
+import { $public } from "#env"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 
 export { COARSE_CLASSES, FEATURE_DIM, featurize } from "#coarse-placer/featurize"

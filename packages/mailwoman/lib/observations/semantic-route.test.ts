@@ -6,8 +6,8 @@ import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { matchPOISubject } from "@mailwoman/kind-classifier"
 import { describe, expect, it } from "vitest"
 
+import { createSemanticObservationRoute } from "#observations"
 import { readCommittedModel } from "#observations/committed-model"
-import { createSemanticObservationRoute } from "#observations/index"
 
 const committedLexicon = await readActivityLexicon()
 const committedRoute = await createSemanticObservationRoute()

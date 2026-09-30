@@ -13,7 +13,9 @@
 		"lib",
 		"out",
 		"baseline.json",
-		"README.md"
+		"README.md",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"imports": {
@@ -30,55 +32,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./registry": {
-			"types": "./out/registry.d.ts",
-			"node": "./lib/registry.ts",
-			"default": "./out/registry.js"
-		},
-		"./baseline": {
-			"types": "./out/baseline.d.ts",
-			"node": "./lib/baseline.ts",
-			"default": "./out/baseline.js"
-		},
-		"./context": {
-			"types": "./out/context.d.ts",
-			"node": "./lib/context.ts",
-			"default": "./out/context.js"
-		},
-		"./tracked-sources": {
-			"types": "./out/tracked-sources.d.ts",
-			"node": "./lib/tracked-sources.ts",
-			"default": "./out/tracked-sources.js"
-		},
-		"./comment-triage": {
-			"types": "./out/comment/triage/index.d.ts",
-			"node": "./lib/comment/triage/index.ts",
-			"default": "./out/comment/triage/index.js"
-		},
-		"./ts-ast": {
-			"types": "./out/ts-ast.d.ts",
-			"node": "./lib/ts-ast.ts",
-			"default": "./out/ts-ast.js"
-		},
-		"./fix": {
-			"types": "./out/fix.d.ts",
-			"node": "./lib/fix.ts",
-			"default": "./out/fix.js"
-		},
-		"./fixes": {
-			"types": "./out/fixes.d.ts",
-			"node": "./lib/fixes.ts",
-			"default": "./out/fixes.js"
-		},
-		"./move/*": {
-			"types": "./out/move/*.d.ts",
-			"node": "./lib/move/*.ts",
-			"default": "./out/move/*.js"
-		},
-		"./checks/*": {
-			"types": "./out/checks/*.d.ts",
-			"node": "./lib/checks/*.ts",
-			"default": "./out/checks/*.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"dependencies": {

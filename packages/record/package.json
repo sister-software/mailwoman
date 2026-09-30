@@ -13,15 +13,10 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -39,20 +34,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./address": {
-			"types": "./out/address.d.ts",
-			"node": "./lib/address.ts",
-			"default": "./out/address.js"
-		},
-		"./name": {
-			"types": "./out/name.d.ts",
-			"node": "./lib/name.ts",
-			"default": "./out/name.js"
-		},
-		"./organization": {
-			"types": "./out/organization.d.ts",
-			"node": "./lib/organization.ts",
-			"default": "./out/organization.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

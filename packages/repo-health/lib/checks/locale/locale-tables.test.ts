@@ -16,8 +16,8 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const CENSUS = "packages/mailwoman/lib/coverage/census.ts"
-const ROUTING = "packages/mailwoman/lib/eval-harness/gauntlet/routing.ts"
+const CENSUS = "packages/mailwoman/tools/coverage/census.ts"
+const ROUTING = "packages/mailwoman/tools/eval-harness/gauntlet/routing.ts"
 
 const weightsMap = (pairs: ReadonlyArray<readonly [string, string]>) =>
 	`export const WEIGHTS_PACKAGE_BY_COUNTRY: ReadonlyMap<string, string> = new Map([\n${pairs
@@ -147,7 +147,7 @@ describe("localeTablesCheck", () => {
 			config: { locales: ["en-us", "fr-fr"] },
 			extra: {
 				// The ladder resolves an FST by path and returns no FST when the file is absent.
-				"packages/mailwoman/lib/eval-harness/autocomplete-ladder.ts": objectTable("FST_LOCALE_BY_COUNTRY", [
+				"packages/mailwoman/tools/eval-harness/autocomplete-ladder.ts": objectTable("FST_LOCALE_BY_COUNTRY", [
 					["US", "en-us"],
 					["KR", "ko-kr"],
 				]),

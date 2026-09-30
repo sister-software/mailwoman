@@ -9,7 +9,7 @@
 		"directory": "packages/mcp"
 	},
 	"bin": {
-		"mailwoman-mcp": "./out/cli.js"
+		"mailwoman-mcp": "./out/cli/main.js"
 	},
 	"files": [
 		"out/**/*.js",
@@ -17,18 +17,19 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"README.md",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
+		"cli/**/*.ts",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"imports": {
+		"#cli/*": {
+			"types": "./out/cli/*.d.ts",
+			"node": "./cli/*.ts",
+			"default": "./out/cli/*.js"
+		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -42,15 +43,15 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./layer-guards": {
-			"types": "./out/layer-guards.d.ts",
-			"node": "./lib/layer-guards.ts",
-			"default": "./out/layer-guards.js"
+		"./cli/*": {
+			"types": "./out/cli/*.d.ts",
+			"node": "./cli/*.ts",
+			"default": "./out/cli/*.js"
 		},
-		"./tools": {
-			"types": "./out/tools.d.ts",
-			"node": "./lib/tools.ts",
-			"default": "./out/tools.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

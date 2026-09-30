@@ -29,7 +29,7 @@ import { readLocalTextFile } from "#fs/readers"
 import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
 import { sha256Hex } from "#hash"
 import { tryParsingJSON, stringifyJSON } from "#json"
-import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
+import { ConsoleLogger, type IRuntimeLogger } from "#logging"
 
 /**
  * Options for {@linkcode buildDiskStorage}.

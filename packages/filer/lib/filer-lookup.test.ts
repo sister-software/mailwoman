@@ -45,7 +45,7 @@ import {
 import { buildFilerDatabase, type EdgarSubsidiaryRow } from "#sdk/build/filer"
 import { clusterAuthoritativeComponents } from "#sdk/cluster-filers"
 import { mintFamilyID } from "#sdk/family-id"
-import type { Form499Row } from "#sdk/form499/index"
+import type { Form499Row } from "#sdk/form499"
 import type { ProviderListRow } from "#sdk/provider-list"
 
 function openMemory(): DatabaseClient<FilerDatabase> {

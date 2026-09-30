@@ -13,7 +13,7 @@ import type { Suggestion } from "@mailwoman/react/map/types"
 import { usePlaceAutocomplete } from "@mailwoman/react/map/usePlaceAutocomplete"
 import { useCallback, useRef, useState } from "react"
 
-import type { PlanetarySearch, SearchHit } from "#search/index"
+import type { PlanetarySearch, SearchHit } from "#search"
 
 export interface SearchBoxProps {
 	search: PlanetarySearch | null

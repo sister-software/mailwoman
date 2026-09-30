@@ -23,7 +23,7 @@ export {
 	loadFSTArtifact,
 	LookupSource,
 	type LookupRow,
-} from "#lookup/index"
+} from "#lookup"
 
 export { readEvalReport, summarizeEvalReport, LEDGER_NOTE, type EvalReport, type FloorReading } from "#eval-report"
 export { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "#gauntlet-report"
@@ -56,5 +56,5 @@ export { gradeRow, significance, seedToCaseTable, caseCarriesTruth, type RowGrad
 export { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "#input-sets"
 export { describeObservedRate, wilsonInterval, zeroEventUpperBound, type PowerReading } from "#power"
 export { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"
-export { buildToolTable, type DevTool, type DevToolDeps, type Provenance } from "#tools/index"
+export { buildToolTable, type DevTool, type DevToolDeps, type Provenance } from "#tools"
 export { createDevMCPServer } from "#server"

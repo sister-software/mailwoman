@@ -13,7 +13,7 @@ import {
 	LicenseKeyStatus,
 	publishedLicenseKeys,
 	trustedLicenseSigningKeys,
-} from "#license/index"
+} from "#license"
 import { repoRootPath } from "#paths"
 
 describe("the license key register", () => {

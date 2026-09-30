@@ -10,7 +10,7 @@
 import { statPath } from "@mailwoman/core/fs/readers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { runFile } from "@mailwoman/core/process"
-import type { UploadTransport } from "mailwoman/tiles/publish"
+import type { UploadTransport } from "mailwoman/tools/tiles/publish"
 import { resolvePath } from "path-ts"
 
 /**

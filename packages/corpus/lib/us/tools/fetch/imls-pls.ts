@@ -19,8 +19,8 @@ import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
 import { basename } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
-import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
+import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 /**
  * The PLS FY 2023 bulk CSV ZIP.

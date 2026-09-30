@@ -495,7 +495,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let nationalDatabases: ((country: string) => RegionDatabases) | undefined
 
 	try {
-		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))).for
 	} catch {
 		nationalDatabases = undefined
@@ -513,7 +513,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let osmProvider: RegionDatabaseProvider | undefined
 
 	try {
-		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
+		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/region-database-provider")
 		osmProvider = await OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))
 	} catch {
 		osmProvider = undefined

@@ -6,7 +6,7 @@
  *   Reads the US DOT National Address Database from a directory of NDJSON files written by the NAD fetcher.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { resolvePathBuilder } from "path-ts"

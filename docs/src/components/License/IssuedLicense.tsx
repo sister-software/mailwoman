@@ -14,8 +14,8 @@ import {
 	nextClaimState,
 	type ClaimState,
 	type IssuedClaim,
-} from "@mailwoman/license-worker/sdk/claim"
-import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "@mailwoman/license-worker/sdk/constants"
+} from "@mailwoman/license-worker/client/claim"
+import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "@mailwoman/license-worker/client/constants"
 import { useClipboard } from "@mailwoman/react"
 import type React from "react"
 import { useEffect, useReducer } from "react"

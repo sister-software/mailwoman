@@ -11,7 +11,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import type { AnchorLookup, AnchorSpanMode } from "#anchor-inference"
 import type { CharEncoderInterface, CharVocabulary } from "#char-encoder"
-import type { NeuralRunner } from "#classifier/index"
+import type { NeuralRunner } from "#classifier"
 import type { CountryLexicon } from "#country-inference"
 import type { FSTMatcherLike, ImportanceLengthScaleMode } from "#fst-prior"
 import type { GazetteerLexicon } from "#gazetteer-inference"

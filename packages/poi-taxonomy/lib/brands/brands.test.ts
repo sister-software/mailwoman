@@ -7,7 +7,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it } from "vitest"
 
-import { getAllBrands, getBrand, lookupPOIBrand, resolveBrandName } from "#brands/index"
+import { getAllBrands, getBrand, lookupPOIBrand, resolveBrandName } from "#brands"
 
 describe("lookupPOIBrand", () => {
 	it("matches a real brand by its exact name, case-insensitively", () => {

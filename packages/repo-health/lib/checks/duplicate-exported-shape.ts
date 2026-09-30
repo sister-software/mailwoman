@@ -24,7 +24,7 @@ import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
-import { trackedSourcePaths } from "#tracked-sources"
+import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#tracked-sources"
 
 /**
  * One exported shape declaration and the key its body reduces to.
@@ -165,7 +165,7 @@ export async function findDuplicateShapes(context: RepoContext): Promise<Duplica
 	const paths = await trackedSourcePaths(context, {
 		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` by itself skips a file
 		// directly under `lib/` (`lib/index.ts`), the same quirk `tracked-sources.ts` documents.
-		globs: ["packages/*/lib/*.ts", "packages/*/lib/*.tsx", "packages/*/lib/**/*.ts", "packages/*/lib/**/*.tsx"],
+		globs: PACKAGE_SOURCE_GLOBS,
 		existingOnly: true,
 	})
 

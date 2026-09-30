@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { countryFlag, countryReferenceAnnotator } from "#country/index"
+import { countryFlag, countryReferenceAnnotator } from "#country"
 
 test("countryFlag: alpha-2 → regional-indicator emoji, case-insensitive", () => {
 	expect(countryFlag("US")).toBe("🇺🇸")

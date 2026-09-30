@@ -17,7 +17,7 @@ import {
 	licenseKeyID,
 	type LicenseKeyPayload,
 	verifyLicenseKey,
-} from "#license/index"
+} from "#license"
 import { resolvePackagePath } from "#module/resolvers"
 
 interface LegacyFixture {

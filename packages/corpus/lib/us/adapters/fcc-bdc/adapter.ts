@@ -21,7 +21,7 @@
  */
 
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { splitStreetLine } from "#adapters/utils"

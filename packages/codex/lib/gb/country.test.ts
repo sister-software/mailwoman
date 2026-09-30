@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry } from "#gb/index"
+import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry } from "#gb"
 
 describe("GB_COUNTRIES", () => {
 	it("covers the four constituent countries of the UK", () => {

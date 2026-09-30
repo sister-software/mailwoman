@@ -14,7 +14,7 @@ python3 scripts/eval/build-calibration-set.py \
   --out data/eval/calibration/calibration-set.jsonl
 
 # 2. Run the SHIPPED model over the set → (raw span confidence, correct?) pairs.
-node packages/mailwoman/lib/dev-tools/collect-span-confidences.run.ts \
+node packages/mailwoman/tools/dev-tools/collect-span-confidences.run.ts \
   --set data/eval/calibration/calibration-set.jsonl \
   --out data/eval/calibration/confidences.jsonl
 

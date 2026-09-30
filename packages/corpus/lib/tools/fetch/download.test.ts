@@ -18,7 +18,7 @@ import {
 	streamBodyToFile,
 	withRetries,
 	writeManifest,
-} from "#tools/fetch/download/index"
+} from "#tools/fetch/download"
 
 let server: Server
 let base: string

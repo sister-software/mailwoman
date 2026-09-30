@@ -12,7 +12,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { diffSpans, SpanVerdict, type LabelledSpan } from "#parse/compare/index"
+import { diffSpans, SpanVerdict, type LabelledSpan } from "#parse/compare"
 
 function span(label: string, value: string, tag?: string): LabelledSpan {
 	return tag === undefined ? { label, value } : { label, value, tag }

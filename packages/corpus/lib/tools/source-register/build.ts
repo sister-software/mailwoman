@@ -34,7 +34,7 @@ import {
 	type RefusedLicense,
 	type RegisterSector,
 	type UncheckedLicense,
-} from "#source-register/index"
+} from "#source-register"
 import { AddressRole } from "#types"
 
 /**

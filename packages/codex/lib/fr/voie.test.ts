@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isFrenchStreetWord } from "#fr/index"
+import { isFrenchStreetWord } from "#fr"
 
 describe("isFrenchStreetWord", () => {
 	it("matches canonical voie words, case- and accent-insensitive", () => {

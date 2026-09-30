@@ -44,7 +44,7 @@ export async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof
 				return { url, country: resolver.header.country, resolver }
 			} catch (error) {
 				console.warn(
-					`[@mailwoman/neural/web-loader] optional placetype-pair index skipped: ${url} — ` +
+					`[@mailwoman/neural/web/loader] optional placetype-pair index skipped: ${url} — ` +
 						`${error instanceof Error ? error.message : String(error)}. ` +
 						"The pair prior is a soft decode channel; the classifier loads without it (no placetype-pair bias only)."
 				)

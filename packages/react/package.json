@@ -19,19 +19,14 @@
 		"tokens/index.css",
 		"tokens/tokens.json",
 		"tokens/tokens.resolver.json",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
 		"!**/*.stories.ts",
 		"!**/*.stories.tsx",
 		"!.storybook/**",
 		"!vitest.config.ts",
-		"!test/**",
 		"!out/test/**",
 		"!out/storybook-static/**",
 		"!storybook-static/**"
@@ -52,9 +47,9 @@
 			"default": "./out/index.js"
 		},
 		"#map": {
-			"types": "./out/map/index.d.ts",
-			"node": "./lib/map/index.ts",
-			"default": "./out/map/index.js"
+			"types": "./out/map.d.ts",
+			"node": "./lib/map.ts",
+			"default": "./out/map.js"
 		},
 		"#*": {
 			"types": "./out/*.d.ts",
@@ -73,11 +68,6 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./map": {
-			"types": "./out/map/index.d.ts",
-			"node": "./lib/map/index.ts",
-			"default": "./out/map/index.js"
-		},
 		"./common/CopyButton": {
 			"types": "./out/common/CopyButton.d.ts",
 			"node": "./lib/common/CopyButton.tsx",
@@ -87,21 +77,6 @@
 			"types": "./out/common/KindBadge.d.ts",
 			"node": "./lib/common/KindBadge.tsx",
 			"default": "./out/common/KindBadge.js"
-		},
-		"./common/confidence-tiers": {
-			"types": "./out/common/confidence-tiers.d.ts",
-			"node": "./lib/common/confidence-tiers.ts",
-			"default": "./out/common/confidence-tiers.js"
-		},
-		"./common/text-tokens": {
-			"types": "./out/common/text-tokens.d.ts",
-			"node": "./lib/common/text-tokens.ts",
-			"default": "./out/common/text-tokens.js"
-		},
-		"./common/useBuildInfo": {
-			"types": "./out/common/useBuildInfo.d.ts",
-			"node": "./lib/common/useBuildInfo.ts",
-			"default": "./out/common/useBuildInfo.js"
 		},
 		"./map/AppIdentity": {
 			"types": "./out/map/AppIdentity.d.ts",
@@ -163,25 +138,10 @@
 			"node": "./lib/map/Geocoder.tsx",
 			"default": "./out/map/Geocoder.js"
 		},
-		"./map/place-render": {
-			"types": "./out/map/place-render.d.ts",
-			"node": "./lib/map/place-render.ts",
-			"default": "./out/map/place-render.js"
-		},
 		"./map/ResultCamera": {
 			"types": "./out/map/ResultCamera.d.ts",
 			"node": "./lib/map/ResultCamera.tsx",
 			"default": "./out/map/ResultCamera.js"
-		},
-		"./map/geometry": {
-			"types": "./out/map/geometry.d.ts",
-			"node": "./lib/map/geometry.ts",
-			"default": "./out/map/geometry.js"
-		},
-		"./map/graticule": {
-			"types": "./out/map/graticule.d.ts",
-			"node": "./lib/map/graticule.ts",
-			"default": "./out/map/graticule.js"
 		},
 		"./map/OverlayLayers": {
 			"types": "./out/map/OverlayLayers.d.ts",
@@ -192,11 +152,6 @@
 			"types": "./out/map/ResolvedPlaceLayers.d.ts",
 			"node": "./lib/map/ResolvedPlaceLayers.tsx",
 			"default": "./out/map/ResolvedPlaceLayers.js"
-		},
-		"./map/types": {
-			"types": "./out/map/types.d.ts",
-			"node": "./lib/map/types.ts",
-			"default": "./out/map/types.js"
 		},
 		"./map/BackendControl": {
 			"types": "./out/map/BackendControl.d.ts",
@@ -217,16 +172,6 @@
 			"types": "./out/map/ResultPanel.d.ts",
 			"node": "./lib/map/ResultPanel.tsx",
 			"default": "./out/map/ResultPanel.js"
-		},
-		"./map/fake-runtime": {
-			"types": "./out/map/fake-runtime.d.ts",
-			"node": "./lib/map/fake-runtime.ts",
-			"default": "./out/map/fake-runtime.js"
-		},
-		"./map/map-debug": {
-			"types": "./out/map/map-debug.d.ts",
-			"node": "./lib/map/map-debug.ts",
-			"default": "./out/map/map-debug.js"
 		},
 		"./common/About": {
 			"types": "./out/common/About.d.ts",
@@ -253,16 +198,6 @@
 			"node": "./lib/pipeline/TreeView.tsx",
 			"default": "./out/pipeline/TreeView.js"
 		},
-		"./map/useMapBearing": {
-			"types": "./out/map/useMapBearing.d.ts",
-			"node": "./lib/map/useMapBearing.ts",
-			"default": "./out/map/useMapBearing.js"
-		},
-		"./map/usePlaceAutocomplete": {
-			"types": "./out/map/usePlaceAutocomplete.d.ts",
-			"node": "./lib/map/usePlaceAutocomplete.ts",
-			"default": "./out/map/usePlaceAutocomplete.js"
-		},
 		"./map/VersionPicker": {
 			"types": "./out/map/VersionPicker.d.ts",
 			"node": "./lib/map/VersionPicker.tsx",
@@ -288,11 +223,6 @@
 			"node": "./lib/poi/LiveResultsBlock.tsx",
 			"default": "./out/poi/LiveResultsBlock.js"
 		},
-		"./poi/types": {
-			"types": "./out/poi/types.d.ts",
-			"node": "./lib/poi/types.ts",
-			"default": "./out/poi/types.js"
-		},
 		"./poi/OverpassBlock": {
 			"types": "./out/poi/OverpassBlock.d.ts",
 			"node": "./lib/poi/OverpassBlock.tsx",
@@ -308,15 +238,10 @@
 			"node": "./lib/poi/SubjectPanel.tsx",
 			"default": "./out/poi/SubjectPanel.js"
 		},
-		"./poi/usePOISearch": {
-			"types": "./out/poi/usePOISearch.d.ts",
-			"node": "./lib/poi/usePOISearch.ts",
-			"default": "./out/poi/usePOISearch.js"
-		},
-		"./runtime/useReleaseRuntime": {
-			"types": "./out/runtime/useReleaseRuntime.d.ts",
-			"node": "./lib/runtime/useReleaseRuntime.ts",
-			"default": "./out/runtime/useReleaseRuntime.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

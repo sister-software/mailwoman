@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isJapanesePrefectureCode, JP_PREFECTURES, lookupJapanesePrefecture } from "#jp/index"
+import { isJapanesePrefectureCode, JP_PREFECTURES, lookupJapanesePrefecture } from "#jp"
 
 describe("JP_PREFECTURES", () => {
 	it("covers all 47 prefectures", () => {

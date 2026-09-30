@@ -9,12 +9,12 @@ import { relative } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
-import { trackedSourcePaths } from "#tracked-sources"
+import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#tracked-sources"
 
 const ROOT_SCRIPTS_PATH = /repoRootPath(?:Builder)?\(\s*["']scripts["']|["'`]scripts\//u
 
 const ROOT_SCRIPTS_RUN = /(?:^|[\s"'`(])(?:node|tsx|yarn node)\s+(?:\.\/)?scripts\//u
-const BARE_LIB_RUN = /(?:^|[\s"'`(])(?:node|tsx|yarn node)\s+\S*\/lib\/\S*\.tsx?(?:\s|$|["'`)])/u
+const BARE_LIB_RUN = /(?:^|[\s"'`(])(?:node|tsx|yarn node)\s+\S*\/(?:lib|sdk|tools|cli)\/\S*\.tsx?(?:\s|$|["'`)])/u
 
 const COMMENT_LINE = /^\s*(?:\/\/|\*|\/\*)/u
 
@@ -56,15 +56,7 @@ export const noRootScriptsCheck: RepoCheck = {
 		}
 
 		const codeFiles = await trackedSourcePaths(context, {
-			globs: [
-				"packages/*/lib/*.ts",
-				"packages/*/lib/*.tsx",
-				"packages/*/lib/**/*.ts",
-				"packages/*/lib/**/*.tsx",
-				"docs/src/**/*.ts",
-				"docs/src/**/*.tsx",
-				"docs/plugins/**/*.ts",
-			],
+			globs: [...PACKAGE_SOURCE_GLOBS, "docs/src/**/*.ts", "docs/src/**/*.tsx", "docs/plugins/**/*.ts"],
 			existingOnly: true,
 		})
 
@@ -116,7 +108,7 @@ export const noRootScriptsCheck: RepoCheck = {
 						file,
 						line: index,
 						message:
-							"Runs a bare lib/*.ts path. CI executes registered entry points only (`yarn mwops …` or a `mailwoman` command).",
+							"Runs a bare source path (lib/, sdk/, tools/ or cli/). CI executes registered entry points only (`yarn mwops …` or a `mailwoman` command).",
 					})
 				}
 			}

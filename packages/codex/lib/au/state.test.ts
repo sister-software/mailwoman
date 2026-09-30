@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { AU_STATE_ABBREVIATIONS, isAuStateAbbreviation } from "#au/index"
+import { AU_STATE_ABBREVIATIONS, isAuStateAbbreviation } from "#au"
 
 test("AU_STATE_ABBREVIATIONS: the eight ISO 3166-2:AU subdivisions map to their full names", () => {
 	expect(AU_STATE_ABBREVIATIONS.NSW).toBe("New South Wales")

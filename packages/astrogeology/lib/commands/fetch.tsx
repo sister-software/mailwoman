@@ -10,7 +10,7 @@
 import { Spinner } from "@inkjs/ui"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli/kit"
 
 import { parseBody } from "#commands/options"
 import { downloadPinned } from "#sdk/fetch"

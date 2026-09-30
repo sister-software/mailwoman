@@ -39,7 +39,7 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 	}
 }
 
-const CLI_PATH = workspacePath("mailwoman", "out", "cli", "index.js")
+const CLI_PATH = workspacePath("mailwoman", "out", "cli", "main.js")
 const haveCLI = await pathExists(CLI_PATH)
 
 const PPD_SOURCE_CSV_PATH = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")

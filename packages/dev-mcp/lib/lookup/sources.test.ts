@@ -10,7 +10,7 @@ import {
 	createCandidateTable,
 	type CandidateDatabase,
 	type CandidateTable,
-} from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+} from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import {
@@ -25,7 +25,7 @@ import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-sche
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aroundAll, describe, expect, it } from "vitest"
 
-import { openSealedArtifact, type LookupRow } from "#lookup/index"
+import { openSealedArtifact, type LookupRow } from "#lookup"
 import {
 	diffCandidateRows,
 	lookupCandidate,

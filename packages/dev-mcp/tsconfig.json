@@ -18,6 +18,8 @@
 		{ "path": "../neural" },
 		{ "path": "../resolver" },
 		{ "path": "../resolver-wof-sqlite" },
-		{ "path": "../mailwoman" }
+		{ "path": "../mailwoman" },
+		{ "path": "../mailwoman/cli" },
+		{ "path": "../mailwoman/tools" }
 	]
 }

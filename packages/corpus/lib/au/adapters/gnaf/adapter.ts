@@ -17,7 +17,7 @@
    only. One of the forms below is a deliberate malformation. The postcode-first order is the dominant failure this
    source exists to teach against — and a renderer that produces well-formed addresses cannot express it. */
 
-import { componentsPresentIn } from "@mailwoman/codex/address-format"
+import { componentsPresentIn } from "@mailwoman/codex/address/format"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 

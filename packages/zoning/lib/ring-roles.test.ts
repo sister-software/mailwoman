@@ -19,7 +19,7 @@ import { pointInEncodedRings, encodeRings, ringAreaReadings, ringSignedAreaM2 } 
 import { describe, expect, it } from "vitest"
 
 import { resolveRingRoles } from "#ring-roles"
-import { exteriorRing, holeRing } from "#test-kit"
+import { exteriorRing, holeRing } from "#sdk/test-kit"
 
 const ORIGIN = { lon: -6.5, lat: 53.4 } as const
 const SIDE = 0.01

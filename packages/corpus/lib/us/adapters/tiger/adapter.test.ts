@@ -8,7 +8,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
+import type { TIGERDatabase } from "@mailwoman/tiger/schema"
 import type { PathBuilder } from "path-ts"
 import { beforeEach, describe, expect, it } from "vitest"
 

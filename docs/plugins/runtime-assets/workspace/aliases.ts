@@ -6,7 +6,7 @@
 
 import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
 
-import { resolvePackageDirectoryEntry, resolvePackageEntry, resolvePackageFile } from "./resolution.ts"
+import { resolvePackageEntry, resolvePackageFile } from "./resolution.ts"
 
 const ROOT_PACKAGES = [
 	"@mailwoman/resolver-wof-wasm",
@@ -16,26 +16,26 @@ const ROOT_PACKAGES = [
 	"@mailwoman/react",
 ] as const
 
-const DIRECTORY_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: string]> = [
+/**
+ * Package subpaths aliased to their source file, `lib/<subpath>.ts`.
+ */
+const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: string]> = [
 	["@mailwoman/react", "map"],
 	["@mailwoman/cartographer", "base"],
 	["@mailwoman/cartographer", "styles"],
 	["@mailwoman/cartographer", "coverage"],
-	...["decoder", "tokenization", "types", "resources", "pipeline"].map(
+	...["decoder", "tokenization", "types", "resources", "pipeline", "objects"].map(
 		(subpath) => ["@mailwoman/core", subpath] as const
 	),
 	["@mailwoman/resolver", "resolve"],
-]
-
-const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: string]> = [
+	["@mailwoman/resolver", "span-rescore"],
 	// These are the browser-safe leaves: each keeps a per-file subpath so the site bundle
-	// never pulls the Node-only siblings that share its directory entry.
-	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete", "fts/index"].map(
+	// never pulls the Node-only siblings that share its directory.
+	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete", "fts"].map(
 		(subpath) => ["@mailwoman/resolver-wof-sqlite", subpath] as const
 	),
-	["@mailwoman/core", "objects"],
 	["@mailwoman/sqlite", "dialect"],
-	["@mailwoman/resolver", "span-rescore"],
+	["@mailwoman/neural", "web/loader"],
 ]
 
 const CODEX_SUBPATHS = [null, "country", "de", "es", "fr", "gb", "it", "nz", "us"] as const
@@ -82,23 +82,10 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	)
 
 	for (const [packageName, subpath] of FILE_SUBPATHS) {
-		// A subpath is a public export key whose file can be either `<subpath>.ts`
-		// or `<subpath>/index.ts`, since the key survives a module growing siblings.
-		const target =
-			(await resolvePackageFile(packageName, subpath)) ?? (await resolvePackageFile(packageName, `${subpath}/index`))
-
-		requireAlias(`${packageName}/${subpath}`, target)
+		requireAlias(`${packageName}/${subpath}`, await resolvePackageFile(packageName, subpath))
 	}
-
-	// The one entry whose export key and file path have no spelling in common:
-	// `web-loader` is the public name and the file is `web/loader`.
-	requireAlias("@mailwoman/neural/web-loader", await resolvePackageFile("@mailwoman/neural", "web/loader"))
 
 	setAlias("@mailwoman/core/errors", await resolvePackageFile("@mailwoman/core", "errors/schema"))
-
-	for (const [packageName, subpath] of DIRECTORY_SUBPATHS) {
-		requireAlias(`${packageName}/${subpath}`, await resolvePackageDirectoryEntry(packageName, subpath))
-	}
 
 	// The resolver root deliberately bypasses its barrel, since the browser graph
 	// needs only the core resolver interfaces while runtime resolution enters through

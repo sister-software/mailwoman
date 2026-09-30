@@ -5,7 +5,7 @@
 # the context must settle the tag.
 #
 # The lexicon at /data/gazetteer/anchor-lexicon-v1.json comes from
-# packages/mailwoman/lib/commands/gazetteer/anchor-lexicon.tsx. Stage it through R2 before launch,
+# packages/mailwoman/cli/commands/gazetteer/anchor-lexicon.tsx. Stage it through R2 before launch,
 # because a mounted container cannot see files written directly to the volume. From corpus-python, run:
 #   modal run -m launch.train_remote::sync_assets \
 #     --extras gazetteer/anchor-lexicon-v1.json>gazetteer/

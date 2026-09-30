@@ -10,7 +10,7 @@ import { dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import type { RepoContext } from "#check"
-import { inventorySourceComments, type InventoryResult } from "#comment/triage/index"
+import { inventorySourceComments, type InventoryResult } from "#comment/triage"
 
 /**
  * Under `.cache/` because it is rebuilt from the tree on every run and no tool reads it across checkouts.

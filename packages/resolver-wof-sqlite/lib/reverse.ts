@@ -29,8 +29,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 import type { PathBuilderLike } from "path-ts"
 
-import { ancestorLineage, placetypeDepth } from "#ancestry/index"
-import { PLACE_BBOX_TABLE } from "#fts/index"
+import { ancestorLineage, placetypeDepth } from "#ancestry"
+import { PLACE_BBOX_TABLE } from "#fts"
 import type { WOFDatabase } from "#schema"
 import type { PlaceCandidate, WOFPlacetype } from "#types"
 /**

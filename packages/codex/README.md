@@ -23,7 +23,7 @@ run without spaces. A formatter that gets any of these wrong produces a plausibl
 another country.
 
 ```ts
-import { formatAddress } from "@mailwoman/codex/address-format"
+import { formatAddress } from "@mailwoman/codex/address/format"
 
 formatAddress(
 	{ house_number: "1600", street: "Pennsylvania Ave NW", locality: "Washington", region: "DC", postcode: "20500" },
@@ -115,7 +115,7 @@ stripped of diacritics and punctuation, and lists fields in a fixed order. Two r
 same address that differ only in spelling produce the same key.
 
 ```ts
-import { canonicalKey } from "@mailwoman/codex/address-key"
+import { canonicalKey } from "@mailwoman/codex/address/key"
 
 canonicalKey({
 	house_number: "123",

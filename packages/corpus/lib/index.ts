@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "#adapters/utils/index"
+export * from "#adapters/utils"
 export * from "#au/adapters/gnaf/assemble"
-export * from "#adapters/index"
+export * from "#adapters"
 export * from "#build"
 export * from "#runner"
-export * from "#recipes/index"
+export * from "#recipes"
 export * from "#types"

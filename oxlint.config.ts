@@ -97,9 +97,9 @@ const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
 const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/index.ts",
 	"packages/neural/lib/env.ts",
-	"packages/neural/lib/onnx/runner/index.ts",
+	"packages/neural/lib/onnx/runner.ts",
 	"packages/neural/lib/scorer.ts",
-	"packages/neural/lib/weights/index.ts",
+	"packages/neural/lib/weights.ts",
 	"packages/neural/lib/*.test.ts",
 	"packages/neural/vitest.config.ts",
 ]
@@ -270,13 +270,13 @@ export default {
 			// These files use builtins that core does not wrap yet, such as readline,
 			// worker_threads, cluster, http and https.
 			files: [
-				"packages/filer/lib/sdk/form499/index.ts",
-				"packages/filer/lib/sdk/provider-list.ts",
-				"packages/mailwoman/lib/cli/native/commands/geocode.ts",
-				"packages/mailwoman/lib/commands/gazetteer/importance.tsx",
-				"packages/mailwoman/lib/commands/serve.tsx",
+				"packages/filer/sdk/form499.ts",
+				"packages/filer/sdk/provider-list.ts",
+				"packages/mailwoman/cli/native/commands/geocode.ts",
+				"packages/mailwoman/cli/commands/gazetteer/importance.tsx",
+				"packages/mailwoman/cli/commands/serve.tsx",
 				"packages/api-kit/test/fixtures/cluster-serve.ts",
-				"packages/mailwoman/lib/commands/situs/interpolation/index.tsx",
+				"packages/mailwoman/cli/commands/situs/interpolation/index.tsx",
 				"packages/mailwoman/lib/geocode/worker.ts",
 				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"docs/static/examples/mailwoman-server.mjs",
@@ -284,7 +284,7 @@ export default {
 				"packages/map-tui/lib/tile-source.test.ts",
 				"packages/neural/lib/web/browser-slo.integration.test.ts",
 				"packages/resolver-wof-sqlite/lib/lookup-readonly-open.integration.test.ts",
-				"packages/tiger/lib/tools/serve-range.ts",
+				"packages/tiger/tools/serve-range.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",

@@ -10,7 +10,7 @@
 import { z } from "zod"
 
 import { ARM_SPEC_SCHEMA } from "#arms"
-import { runCompare } from "#compare/index"
+import { runCompare } from "#compare"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { INPUT_SET_SCHEMA } from "#tool-kit"
 

@@ -24,7 +24,7 @@ import {
 	SEMANTIC_AFFORDS_MECHANISM,
 	createSemanticObservationRoute,
 	semanticObservationMarkers,
-} from "#observations/index"
+} from "#observations"
 
 const route = await createSemanticObservationRoute()
 

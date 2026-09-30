@@ -13,16 +13,16 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { mulberry32 } from "@mailwoman/core/random"
-import { ladderRungs } from "mailwoman/eval-harness/autocomplete-ladder"
-import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
-import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
-import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
-import { routeCountry } from "mailwoman/eval-harness/gauntlet/routing"
+import { ladderRungs } from "mailwoman/tools/eval-harness/autocomplete-ladder"
+import { loadRegressionCases, regressionCorpusHash } from "mailwoman/tools/eval-harness/gauntlet/cases/load"
+import type { SeedCase } from "mailwoman/tools/eval-harness/gauntlet/cases/seed-case"
+import { drawHoldoutSample, holdoutSources } from "mailwoman/tools/eval-harness/gauntlet/holdout"
+import { routeCountry } from "mailwoman/tools/eval-harness/gauntlet/routing"
 import type { PathBuilderLike } from "path-ts"
 
 import type { Selection } from "#power"
 
-const PARITY_FIXTURES_RELATIVE_PATH = "packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
+const PARITY_FIXTURES_RELATIVE_PATH = "packages/mailwoman/tools/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
 /**
  * A reference to one input set, discriminated by `kind`.

@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { declaredFeatureCount, limitedFeatureCount } from "#layers/index"
+import { declaredFeatureCount, limitedFeatureCount } from "#layers"
 
 describe("limitedFeatureCount", () => {
 	it("is the layer's count when no limit is given", () => {

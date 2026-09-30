@@ -8,7 +8,7 @@
 
 import { PathBuilder, type PathBuilderLike, createPathBuilderResolver, resolvePath } from "path-ts"
 
-import { $public } from "#env/index"
+import { $public } from "#env"
 
 /**
  * The per-user configuration root is `$MAILWOMAN_CONFIG_ROOT`.

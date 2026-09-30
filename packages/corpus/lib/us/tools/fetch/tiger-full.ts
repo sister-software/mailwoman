@@ -22,8 +22,8 @@ import { isoSeconds } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import type { PathBuilder } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { readManifest, streamDownload, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { readManifest, streamDownload, writeManifest } from "#tools/fetch/download"
 
 const HTTP_OK = 200
 const HTTP_REDIRECT = 300

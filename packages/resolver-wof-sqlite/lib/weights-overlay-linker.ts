@@ -307,7 +307,7 @@ export async function warnIfFSTStale(fstPath: PathBuilder, locale: string): Prom
 	const warning = await fstFreshnessWarning({
 		fstPath,
 		sourceDBPath: wofDatabasePath("admin-global-priority.db"),
-		rebuildCommand: `node packages/mailwoman/out/cli/index.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-conditional)`,
+		rebuildCommand: `node packages/mailwoman/out/cli/main.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-conditional)`,
 	})
 
 	if (warning) {
@@ -431,7 +431,7 @@ async function pairIndexIsFresh(
  */
 export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<void> {
 	const { packageDir, country, delta, transitionBeta, parentDelta } = overlay
-	const CLI = workspacePathBuilder("mailwoman", "out", "cli", "index.js")
+	const CLI = workspacePathBuilder("mailwoman", "out", "cli", "main.js")
 	const ARTIFACT = `pair-index-${country}.bin`
 
 	const PKG_DIR = weightsOverlayPath(packageDir.replace(/^neural-weights-/, ""))
@@ -795,7 +795,7 @@ async function buildPostcodeBinary(
  */
 export async function materializeDevOverlay(manifest: DevOverlayManifest): Promise<DevOverlay> {
 	const destDir = weightsOverlayPath(manifest.locale)
-	const cli = workspacePathBuilder("mailwoman", "out", "cli", "index.js")
+	const cli = workspacePathBuilder("mailwoman", "out", "cli", "main.js")
 	const card = await readWeightsCard(`neural-weights-${manifest.locale}`)
 
 	await makeDirectories(destDir)

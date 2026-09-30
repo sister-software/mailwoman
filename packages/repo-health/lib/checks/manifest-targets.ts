@@ -118,17 +118,31 @@ function* targetStrings(value: ExportValue | undefined): Generator<string> {
 }
 
 /**
+ * Splits an emitted path below `out/` into the source root that emits it and the rest of the path.
+ *
+ * A directory with its own `tsconfig.json` beside `lib/`, such as `sdk/`, compiles to `out/<root>/`.
+ * Every other emitted path comes from `lib/`, or from `src/` under `docs`.
+ */
+function emittingRoot(workspace: string, emitted: string, extraRoots: readonly string[]): [string, string] {
+	const root = extraRoots.find((candidate) => emitted.startsWith(`${candidate}/`))
+
+	if (root) return [root, emitted.slice(root.length + 1)]
+
+	return [workspace === "docs" ? "src" : "lib", emitted]
+}
+
+/**
  * Returns the repo-relative files that can satisfy a target without a pattern,
  * mapping an `out/` target back to its source files.
  */
-export function sourceCandidates(workspace: string, target: string): string[] {
+export function sourceCandidates(workspace: string, target: string, extraRoots: readonly string[] = []): string[] {
 	const path = target.replace(/^\.\//u, "")
 	const compiled = /^out\/(.*)$/u.exec(path)
 
 	if (!compiled) return [`${workspace}/${path}`]
 
-	const base = compiled[1]!.replace(/\.d\.ts$/u, "").replace(/\.(?:js|mjs|cjs|ts)$/u, "")
-	const sourceRoot = workspace === "docs" ? "src" : "lib"
+	const [sourceRoot, rest] = emittingRoot(workspace, compiled[1]!, extraRoots)
+	const base = rest.replace(/\.d\.ts$/u, "").replace(/\.(?:js|mjs|cjs|ts)$/u, "")
 
 	return [
 		`${workspace}/${sourceRoot}/${base}.ts`,
@@ -141,11 +155,38 @@ export function sourceCandidates(workspace: string, target: string): string[] {
  * Returns the repo-relative directory that holds a pattern target's files,
  * mapping an `out/` prefix back to the source directory.
  */
-export function patternDirectory(workspace: string, target: string): string {
+export function patternDirectory(workspace: string, target: string, extraRoots: readonly string[] = []): string {
 	const prefix = target.replace(/^\.\//u, "").split("*")[0]!
-	const sourceRoot = workspace === "docs" ? "src/" : "lib/"
+	const compiled = /^out\/(.*)$/u.exec(prefix)
 
-	return `${workspace}/${prefix.replace(/^out\//u, sourceRoot)}`
+	if (!compiled) return `${workspace}/${prefix}`
+
+	const [sourceRoot, rest] = emittingRoot(workspace, compiled[1]!, extraRoots)
+
+	return `${workspace}/${sourceRoot}/${rest}`
+}
+
+/**
+ * The directories beside `lib/` that compile as their own project, each with
+ * the scope its `tsconfig.json` states.
+ */
+async function readExtraRoots(
+	repoRoot: string,
+	workspace: string,
+	trackedFiles: readonly string[]
+): Promise<Map<string, CompileScope>> {
+	const pattern = new RegExp(`^${workspace.replaceAll(".", "\\.")}/([^/]+)/tsconfig\\.json$`, "u")
+	const roots = new Map<string, CompileScope>()
+
+	for (const file of trackedFiles) {
+		const root = pattern.exec(file)?.[1]
+
+		if (root) {
+			roots.set(root, await readCompileScope(repoRoot, `${workspace}/${root}`))
+		}
+	}
+
+	return roots
 }
 
 /**
@@ -159,15 +200,27 @@ function judgeTarget(
 	target: string,
 	trackedFiles: readonly string[],
 	tracked: ReadonlySet<string>,
-	scope: CompileScope
+	scope: CompileScope,
+	extraRoots: ReadonlyMap<string, CompileScope>
 ): Diagnostic | null {
 	const file = `${workspace}/package.json`
 	const compiled = target.startsWith("./out/")
-	const emitted = (path: string): boolean => !compiled || compilerAdmits(scope, path.slice(workspace.length + 1))
+	const rootNames = [...extraRoots.keys()]
+
+	const emitted = (path: string): boolean => {
+		if (!compiled) return true
+
+		const relative = path.slice(workspace.length + 1)
+		const root = rootNames.find((name) => relative.startsWith(`${name}/`))
+
+		return root
+			? compilerAdmits(extraRoots.get(root)!, relative.slice(root.length + 1))
+			: compilerAdmits(scope, relative)
+	}
 
 	if (target.includes("*")) {
 		if (CONVENTIONAL_EMPTY_PATTERNS.has(subpath)) return null
-		const directory = patternDirectory(workspace, target)
+		const directory = patternDirectory(workspace, target, rootNames)
 		const under = trackedFiles.filter((path) => path.startsWith(directory))
 
 		if (under.some(emitted)) return null
@@ -181,7 +234,7 @@ function judgeTarget(
 		}
 	}
 
-	const candidates = sourceCandidates(workspace, target)
+	const candidates = sourceCandidates(workspace, target, rootNames)
 	const source = candidates.find((candidate) => tracked.has(candidate))
 
 	if (!source) {
@@ -230,12 +283,23 @@ export const manifestTargetsCheck: RepoCheck = {
 		for (const workspace of await readWorkspaceDirectories(root)) {
 			const manifest = await readPackageJSON(resolvePath(root, workspace, "package.json"))
 			const scope = await readCompileScope(root, workspace)
+			const extraRoots = await readExtraRoots(root, workspace, context.trackedFiles)
 
 			for (const [field, map] of manifestMaps(manifest)) {
 				for (const [subpath, value] of Object.entries(map)) {
 					for (const target of targetStrings(value)) {
 						if (!target.startsWith("./")) continue
-						const diagnostic = judgeTarget(workspace, field, subpath, target, context.trackedFiles, tracked, scope)
+
+						const diagnostic = judgeTarget(
+							workspace,
+							field,
+							subpath,
+							target,
+							context.trackedFiles,
+							tracked,
+							scope,
+							extraRoots
+						)
 
 						if (diagnostic) {
 							diagnostics.push(diagnostic)

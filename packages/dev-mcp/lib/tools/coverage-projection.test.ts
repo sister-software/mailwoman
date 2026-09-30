@@ -9,7 +9,7 @@
  *   A consumer then reads a missing field as an absence. This test keeps the projection pure and checks that it includes the guard.
  */
 
-import type { CoverageReport } from "mailwoman/coverage"
+import type { CoverageReport } from "mailwoman/tools/coverage"
 import { describe, expect, it } from "vitest"
 
 import { projectCoverage } from "#tools/coverage"

@@ -76,7 +76,7 @@ const ALLOWED: Record<string, string> = {
 		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
 	// `weightsCachePackageDir` is the inverse of a resolution rather than a substitute for one:
 	// the directory does not exist yet when the layout is needed, so there is no path to resolve.
-	"packages/neural/lib/weights/index.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
+	"packages/neural/lib/weights.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
 }
 
 /**

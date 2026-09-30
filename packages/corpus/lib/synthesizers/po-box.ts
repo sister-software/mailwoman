@@ -6,7 +6,7 @@
  *   Generates localized PO-box and private-mailbox rows in which the designator and number form one `po_box` span.
  */
 
-import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address-format"
+import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address/format"
 import { countryCodeForTable } from "@mailwoman/codex/country"
 import { sample } from "@mailwoman/core/random"
 

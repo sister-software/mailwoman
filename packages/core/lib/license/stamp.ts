@@ -8,7 +8,7 @@
  */
 
 import { docsSiteURL } from "#license/docs-site"
-import type { LicenseKeyVerification } from "#license/key/index"
+import type { LicenseKeyVerification } from "#license/key"
 import { appliedLicenseBranch } from "#license/obligations"
 
 /**

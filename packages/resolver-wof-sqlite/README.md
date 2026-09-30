@@ -137,7 +137,7 @@ Builds a trimmed WOF SQLite distribution sized for browser-side deployments (Pat
 # Defaults: --top 1000 localities, --countries US, drops geojson after building aux tables
 # The slim wof-hot.db distribution is RETIRED (2026-06-20): the demo byte-range-resolves
 # against the global candidate table. `buildSlimWOFDatabase` remains importable from
-# `@mailwoman/resolver-wof-sqlite/build-slim` for test fixtures. Historical invocation:
+# `@mailwoman/resolver-wof-sqlite/build/slim` for test fixtures. Historical invocation:
 # mailwoman-wof-build-slim \
   --in /path/to/whosonfirst-data-admin-us-latest.db \
   --in /path/to/whosonfirst-data-postalcode-us-latest.db \

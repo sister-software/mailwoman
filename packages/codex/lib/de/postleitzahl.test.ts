@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isPostleitzahl, leitzoneOf, normalizePLZ, PLZ_LEITZONEN } from "#de/index"
+import { isPostleitzahl, leitzoneOf, normalizePLZ, PLZ_LEITZONEN } from "#de"
 
 describe("normalizePLZ", () => {
 	it("strips the D- / DE- country prefix to the bare five digits", () => {

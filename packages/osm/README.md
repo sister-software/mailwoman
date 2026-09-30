@@ -49,7 +49,7 @@ aren't lost.
 #    → $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/
 
 # 2. Build the extract (writes $MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-idf.db):
-node packages/osm/out/scripts/build-rooftop-database.js \
+node packages/osm/out/tools/build-rooftop-database.js \
   --country fr --slug idf --release 260627 \
   --created-at 2026-06-27T00:00:00.000Z \
   --build-sha "$(git rev-parse HEAD)" \

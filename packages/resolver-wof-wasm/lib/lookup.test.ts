@@ -1,6 +1,6 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
+import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build/slim"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"

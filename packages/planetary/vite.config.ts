@@ -17,7 +17,7 @@ import { VitePWA } from "vite-plugin-pwa"
 
 // The package's own `#` map rather than `./lib/…`: the config sits outside `lib/`, so a relative
 // path into the emitting project cannot be rewritten by the test project that checks this file.
-import { BODY_CONFIGS } from "#bodies/index"
+import { BODY_CONFIGS } from "#bodies"
 import { $public } from "#env"
 
 const body = $public.PLANETARY_BODY

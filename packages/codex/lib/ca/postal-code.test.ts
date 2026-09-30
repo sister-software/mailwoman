@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isCaPostalCode, isRuralPostalCode, normalizeCaPostalCode, provinceOfPostalCode } from "#ca/index"
+import { isCaPostalCode, isRuralPostalCode, normalizeCaPostalCode, provinceOfPostalCode } from "#ca"
 
 describe("normalizeCaPostalCode", () => {
 	it("uppercases and inserts a single space between FSA and LDU", () => {

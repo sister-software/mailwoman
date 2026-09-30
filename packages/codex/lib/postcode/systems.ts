@@ -18,16 +18,16 @@
  *   membership for the finer call.
  */
 
-import { normalizeAuPostcode } from "#au/index"
-import { normalizeCaPostalCode } from "#ca/index"
-import { normalizePLZ } from "#de/index"
-import { normalizeCodigoPostal } from "#es/index"
-import { normalizeCodePostal } from "#fr/index"
-import { normalizeUkPostcode } from "#gb/index"
-import { normalizeCAP } from "#it/index"
-import { normalizeJpPostalCode } from "#jp/index"
-import { normalizeNZPostcode } from "#nz/index"
-import { isZipCode } from "#us/index"
+import { normalizeAuPostcode } from "#au"
+import { normalizeCaPostalCode } from "#ca"
+import { normalizePLZ } from "#de"
+import { normalizeCodigoPostal } from "#es"
+import { normalizeCodePostal } from "#fr"
+import { normalizeUkPostcode } from "#gb"
+import { normalizeCAP } from "#it"
+import { normalizeJpPostalCode } from "#jp"
+import { normalizeNZPostcode } from "#nz"
+import { isZipCode } from "#us"
 
 /**
  * A codex address-system code — the subpath under `@mailwoman/codex/<system>`.

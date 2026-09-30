@@ -7,13 +7,20 @@
  * A check warrants a fix only when the repair is a mechanical consequence of the diagnostic.
  */
 
+import { nestedIndexFix } from "#checks/nested-index"
 import { prefixDirectoriesFix } from "#checks/prefix-directories"
+import { workspaceExportsFix, workspaceFilesFix } from "#checks/workspace-manifest"
 import type { RepoFix } from "#fix"
 
 /**
  * Every check that can plan its own repair.
  */
-export const fixes: ReadonlyArray<RepoFix> = [prefixDirectoriesFix]
+export const fixes: ReadonlyArray<RepoFix> = [
+	prefixDirectoriesFix,
+	nestedIndexFix,
+	workspaceExportsFix,
+	workspaceFilesFix,
+]
 
 /**
  * The fix for a check id, or no fix when that check has no mechanical repair.

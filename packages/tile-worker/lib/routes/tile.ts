@@ -11,8 +11,8 @@ import { TileType } from "pmtiles"
 
 import { cacheResponse } from "#caching"
 import { applyAccessControlAllowOrigin } from "#cors"
+import { CloudflareWorkerPMTiles } from "#protomaps"
 import { TileFileExtensionMap, type TileTypeFileExtension } from "#protomaps/files"
-import { CloudflareWorkerPMTiles } from "#protomaps/index"
 import { WorkerRoute } from "#routing"
 
 // #region Tile Retrieval

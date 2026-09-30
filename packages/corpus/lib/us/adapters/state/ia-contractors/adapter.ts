@@ -22,7 +22,7 @@
  *   License: stamped `"Public Domain"` per Iowa state government open-data terms.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 

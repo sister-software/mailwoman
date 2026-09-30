@@ -1,0 +1,42 @@
+{
+	// The build and maintenance root: the evaluation harness, the gazetteer pipeline, the developer tools and the
+	// release tooling. It compiles to `../out/tools` beside the library's `../out`. Tooling imports the library, the
+	// command line imports tooling, and the library imports neither.
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": ".",
+		"outDir": "../out/tools",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"include": ["./**/*"],
+	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [
+		{ "path": ".." },
+		// ---
+		{ "path": "../../activity-lexicon" },
+		{ "path": "../../annotations" },
+		{ "path": "../../ban" },
+		{ "path": "../../ban/sdk" },
+		{ "path": "../../codex" },
+		{ "path": "../../core" },
+		{ "path": "../../corpus" },
+		{ "path": "../../evidence" },
+		{ "path": "../../kind-classifier" },
+		{ "path": "../../locale-hint" },
+		{ "path": "../../match" },
+		{ "path": "../../neural" },
+		{ "path": "../../normalize" },
+		{ "path": "../../osm" },
+		{ "path": "../../osm/sdk" },
+		{ "path": "../../phrase-grouper" },
+		{ "path": "../../poi-taxonomy" },
+		{ "path": "../../query-shape" },
+		{ "path": "../../resolver" },
+		{ "path": "../../resolver-wof-sqlite" },
+		{ "path": "../../resolver-wof-wasm" },
+		{ "path": "../../spatial" },
+		{ "path": "../../sqlite" }
+	]
+}

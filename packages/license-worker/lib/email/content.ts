@@ -9,8 +9,8 @@
  *   to write. It never names an amount or a Stripe id.
  */
 
+import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "#client/constants"
 import type { LicenseEmail } from "#email/provider"
-import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "#sdk/constants"
 
 export type EmailBlock =
 	| { kind: "paragraph"; text: string }

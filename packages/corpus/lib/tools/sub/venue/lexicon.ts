@@ -12,10 +12,9 @@ import { prettyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { extractAttestedPhrases, readSubVenueJSONL, type SubVenueHarvestRow } from "#tools/sub/venue/harvest"
-import { deriveHeadNounSurfaces } from "#tools/sub/venue/head-nouns"
-import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "#tools/sub/venue/promotions"
-import { buildSurfaceIndex } from "#tools/sub/venue/surfaces"
+import { extractAttestedPhrases, readSubVenueJSONL, type SubVenueHarvestRow } from "#subvenue/harvest"
+import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "#subvenue/promotions"
+import { buildSurfaceIndex } from "#subvenue/surfaces"
 import {
 	CONCEPT_QIDS,
 	type IdentifierShape,
@@ -29,13 +28,14 @@ import {
 	type SubVenueModifier,
 	type SubVenueSurface,
 	SUBVENUE_LEXICON_VERSION,
-} from "#tools/sub/venue/table"
+} from "#subvenue/table"
+import { deriveHeadNounSurfaces } from "#tools/sub/venue/head-nouns"
 import { surfacesFromWikidata } from "#tools/sub/venue/wikidata"
 
-export * from "#tools/sub/venue/harvest"
+export * from "#subvenue/harvest"
 export * from "#tools/sub/venue/head-nouns"
-export * from "#tools/sub/venue/surfaces"
-export * from "#tools/sub/venue/table"
+export * from "#subvenue/surfaces"
+export * from "#subvenue/table"
 export * from "#tools/sub/venue/wikidata"
 
 /**

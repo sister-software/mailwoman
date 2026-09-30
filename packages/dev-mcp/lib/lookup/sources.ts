@@ -17,7 +17,7 @@ import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/pla
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { LookupRow } from "#lookup/index"
+import type { LookupRow } from "#lookup"
 import { type PlaceIDProvenance, placeIDProvenance } from "#place-id-provenance"
 
 /**

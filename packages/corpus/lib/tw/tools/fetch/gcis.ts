@@ -30,13 +30,8 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
 
-import type {
-	BaseFetchOptions,
-	FetchSummary,
-	SourceCollectionManifest,
-	SourceManifest,
-} from "#tools/fetch/download/index"
-import { loadCollectionFiles, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
+import { loadCollectionFiles, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "gcis-tw"
 const PORTAL = "https://data.gcis.nat.gov.tw"

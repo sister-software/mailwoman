@@ -337,7 +337,7 @@ you can run today.
 - **The peak is per-machine and per-dataset.** The module doc for `geocodeStream` records a
   different sweep — an NPPES run against a single 4 GB WOF database that peaked at 2 workers and
   degraded from there. Same shape, different peak. Re-run step 4 when the data root or the box changes.
-- **This is CPU inference.** The browser runtime (`@mailwoman/neural/web-onnx-runner`) has a WebGPU
+- **This is CPU inference.** The browser runtime (`@mailwoman/neural/web/onnx-runner`) has a WebGPU
   path; the Node runtime does not, and no amount of pool tuning substitutes for that. See
   [Parse in the browser](../tutorials/parse-in-the-browser.mdx).
 - **A batch inside one session did not pay in the measured run.** The model was re-exported so the graph could accept

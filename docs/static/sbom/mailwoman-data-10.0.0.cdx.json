@@ -7572,7 +7572,7 @@
 				},
 				{
 					"name": "mailwoman:buildCommand",
-					"value": "buildNSULLayer — packages/mailwoman/lib/gazetteer-pipeline/nsul-layer.ts"
+					"value": "buildNSULLayer — packages/mailwoman/tools/gazetteer-pipeline/nsul-layer.ts"
 				},
 				{
 					"name": "mailwoman:createdAt",

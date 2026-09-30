@@ -1,0 +1,72 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman eval poi-board` — the curated POI query board (spec §3.6, exotic-POI arc). Runs the
+ *   real `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })` surface against every
+ *   committed fixture and grades the assembled answer (matched category + coordinate), not label F1.
+ *
+ *   Floors (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`.
+ *   They are graded and printed on every run. Pass `--enforce` to turn a breach into a non-zero exit
+ *   (the CI-check mode). Without `--enforce` the command stays report-only — it exits 0 on case
+ *   failures. A non-zero exit means the harness broke (missing fixtures, missing db, or a pipeline
+ *   construction error), never a graded case failing.
+ *
+ *   `--semantic-observation` injects `mailwoman/observations`' semantic route as an additional phrase
+ *   rung. That is the only arm where the committed activity-phrased rows are reachable. It is off by
+ *   default and the floors are registered against the off arm: the board grades the construction that
+ *   ships.
+ */
+
+import { type CommandSpec, harnessCommand } from "#cli-kit"
+
+export const description = "POI query board (spec §3.6) — graded on the assembled answer, v1 report-only"
+
+/**
+ * Native command-line interface consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "poi-board",
+	description,
+	options: {
+		locale: { type: "string", default: "en-US", description: "Weights package locale" },
+		"weights-cache": { type: "string", description: "Candidate weights dir" },
+		fixtures: { type: "string", description: "Fixture JSONL override" },
+		db: { type: "string", description: "Sealed poi.db" },
+		"resolve-db": { type: "string", description: "WOF admin databases" },
+		"candidate-db": { type: "string", description: "Byte-range candidate.db" },
+		"semantic-observation": {
+			type: "boolean",
+			default: false,
+			description: "Inject the semantic observation route as an extra phrase rung",
+		},
+		json: { type: "boolean", default: false, description: "Print JSON" },
+		enforce: { type: "boolean", default: false, description: "Enforce registered floors" },
+	},
+} as const satisfies CommandSpec
+
+// Without `--json` the runner narrates its table on stdout directly.
+const EvalPoiBoard = harnessCommand(
+	spec,
+	async (options) => {
+		const { runPOIBoard } = await import("#tools/eval-harness/poi/board")
+
+		const { report, exitCode } = await runPOIBoard({
+			locale: options.locale,
+			weightsCacheRoot: options.weightsCache,
+			fixturesPath: options.fixtures,
+			db: options.db,
+			resolveDB: options.resolveDB,
+			candidateDB: options.candidateDB,
+			semanticObservation: options.semanticObservation,
+			quiet: options.json,
+			enforce: options.enforce,
+		})
+
+		return { report, exitCode }
+	},
+	{ exitCode: ({ exitCode }) => exitCode, json: ({ report }, options) => (options.json ? report : undefined) }
+)
+
+export default EvalPoiBoard

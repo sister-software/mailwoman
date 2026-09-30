@@ -87,8 +87,20 @@ describe("collectMissingExportTargets", () => {
 		expect(collectMissingExportTargets(exports, shipped)).toEqual([])
 	})
 
-	it("ignores pattern targets", () => {
-		expect(collectMissingExportTargets({ "./data/*.json": "./data/*.json" }, new Set())).toEqual([])
+	it("flags a pattern target that matches no shipped file", () => {
+		const exports = { "./sdk/*": { types: "./out/sdk/*.d.ts", default: "./out/sdk/*.js" } }
+
+		expect(collectMissingExportTargets(exports, new Set(["./out/index.js"]))).toEqual([
+			"./out/sdk/*.d.ts",
+			"./out/sdk/*.js",
+		])
+	})
+
+	it("passes a pattern target when a nested shipped file matches it", () => {
+		const exports = { "./*": { types: "./out/*.d.ts", default: "./out/*.js" } }
+		const shipped = new Set(["./out/sdk/extract/run.js", "./out/sdk/extract/run.d.ts"])
+
+		expect(collectMissingExportTargets(exports, shipped)).toEqual([])
 	})
 
 	it("tolerates an absent exports map", () => {

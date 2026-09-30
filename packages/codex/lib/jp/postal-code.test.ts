@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { firstDigitRegion, isJpPostalCode, normalizeJpPostalCode } from "#jp/index"
+import { firstDigitRegion, isJpPostalCode, normalizeJpPostalCode } from "#jp"
 
 describe("normalizeJpPostalCode", () => {
 	it("strips the 〒 mark and whitespace, keeping the canonical NNN-NNNN", () => {

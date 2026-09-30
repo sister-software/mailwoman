@@ -7,7 +7,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 
-import { ingestEligibilityProblems, readAddressSourceRegister, type LicenseDecision } from "#source-register/index"
+import { ingestEligibilityProblems, readAddressSourceRegister, type LicenseDecision } from "#source-register"
 import type { CanonicalRow } from "#types"
 
 /**

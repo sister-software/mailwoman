@@ -343,7 +343,7 @@ export interface SchemaOrgInput {
 	/**
 	 * The rendered street line (house number + street + unit) as one string.
 	 *
-	 * Use `@mailwoman/codex/address-format` for locale-aware rendering
+	 * Use `@mailwoman/codex/address/format` for locale-aware rendering
 	 * or {@link composeStreetAddress} for a plain join.
 	 */
 	streetAddress?: string

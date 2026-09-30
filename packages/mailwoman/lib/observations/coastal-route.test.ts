@@ -20,7 +20,7 @@ import {
 	FIXTURE_ORIGIN,
 	FIXTURE_SCENARIOS,
 	FIXTURE_SIDE,
-} from "@mailwoman/coastal/test-kit"
+} from "@mailwoman/coastal/sdk/test-kit"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { QueryKind } from "@mailwoman/core/pipeline"
@@ -29,7 +29,7 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "#geocode"
-import { createCoastalErosionRoute, describeCoastalErosion } from "#observations/index"
+import { createCoastalErosionRoute, describeCoastalErosion } from "#observations"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
 	return { start: 0, end: 0, confidence: 1, children: [], ...partial }

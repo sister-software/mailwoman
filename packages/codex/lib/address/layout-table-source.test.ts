@@ -25,8 +25,8 @@ import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
 import { isAlternation, isLayout, isSlot, type AddressAtom, type AddressLayout } from "#address/layout"
+import { ADDRESS_LAYOUTS, layoutForCountry } from "#address/layouts"
 import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
-import { ADDRESS_LAYOUTS, layoutForCountry } from "#address/layouts/index"
 
 /**
  * Libaddressinput's placeholder vocabulary in this project's tag names; `%A` is the one opaque

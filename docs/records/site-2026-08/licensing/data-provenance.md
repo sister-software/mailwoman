@@ -140,7 +140,7 @@ a command-line flag and a filter that a reader could not have used.
 
 `--exclude-share-alike` was never a flag on `mw corpus build` or on any other command. Its underlying
 option, `buildCorpus({ excludeLicenses })`, was reachable only from the library, and the only caller in
-the repository was `packages/corpus/lib/build/index.test.ts`. No corpus was ever built with it.
+the repository was `packages/corpus/lib/build.test.ts`. No corpus was ever built with it.
 
 `SHARE_ALIKE_PATTERN` was an anchored prefix match, `/^ODbL|^Open Database License|^CC-BY-SA|^CC-SA/i`,
 over the row's `license` column. Measured over `v0.7.0-de-holdout` on 2026-09-26, that column holds 71

@@ -11,7 +11,7 @@
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { listEvalSpecs } from "mailwoman/eval-harness/promotion/eval/index"
+import { listEvalSpecs } from "mailwoman/tools/eval-harness/promotion/eval"
 import { z } from "zod"
 
 import { checkCLIAllowlist } from "#cli/allowlist"
@@ -63,7 +63,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 
 				const layer = (args["layer"] as string) ?? "regression"
-				const argv = ["packages/mailwoman/out/cli/index.js", "eval", "gauntlet"]
+				const argv = ["packages/mailwoman/out/cli/main.js", "eval", "gauntlet"]
 
 				if (layer !== "all") {
 					argv.push("--layer", layer)
@@ -187,7 +187,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
 				// The promotion battery is `mailwoman eval promote --check <spec>`; a wrong
 				// subcommand can exit 0 with no verdict, so the job "succeeds" silently.
-				const argv = ["packages/mailwoman/out/cli/index.js", "eval", "promote", "--check", check, "--out-dir", outDir]
+				const argv = ["packages/mailwoman/out/cli/main.js", "eval", "promote", "--check", check, "--out-dir", outDir]
 
 				for (const [flag, key] of [
 					["--weights-cache", "weights_cache"],
@@ -242,7 +242,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				const job = jobs.start(
 					`cli:${verb}`,
 					process.execPath,
-					["packages/mailwoman/out/cli/index.js", ...argv],
+					["packages/mailwoman/out/cli/main.js", ...argv],
 					registry.repoRoot
 				)
 
@@ -275,7 +275,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				}
 
 				return {
-					command: ["node", "packages/mailwoman/out/cli/index.js", ...argv].join(" "),
+					command: ["node", "packages/mailwoman/out/cli/main.js", ...argv].join(" "),
 					allowlist_reason: verdict.reason,
 					exit_code: finished.exitCode,
 					stdout: finished.stdout,

@@ -45,6 +45,12 @@ describe("manifest-targets", () => {
 		expect(patternDirectory("packages/core", "./lib/*.ts")).toBe("packages/core/lib/")
 	})
 
+	test("maps a target under an extra source root to that root rather than lib/", () => {
+		expect(patternDirectory("packages/zoning", "./out/sdk/*.js", ["sdk"])).toBe("packages/zoning/sdk/")
+		expect(sourceCandidates("packages/zoning", "./out/sdk/cells.d.ts", ["sdk"])[0]).toBe("packages/zoning/sdk/cells.ts")
+		expect(sourceCandidates("packages/zoning", "./out/cells.js", ["sdk"])[0]).toBe("packages/zoning/lib/cells.ts")
+	})
+
 	test("reads a tsconfig glob the way tsc does", () => {
 		expect(tsconfigGlob("./lib/**/*").test("lib/test-kit/index.ts")).toBe(true)
 		expect(tsconfigGlob("./lib/**/*").test("lib/build.ts")).toBe(true)

@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { departementInfo, FR_DEPARTEMENTS } from "#fr/index"
+import { departementInfo, FR_DEPARTEMENTS } from "#fr"
 
 test("departementInfo: metropolitan code → name + région", () => {
 	expect(departementInfo("13")).toEqual({ code: "13", name: "Bouches-du-Rhône", region: "PAC" })

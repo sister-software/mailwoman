@@ -36,7 +36,7 @@ describe("the bundle-graph check", () => {
 		const context = await collectRepoContext()
 
 		const diagnostics = await evaluateBundleRow(
-			{ entry: "@mailwoman/neural/web-loader", platform: "browser", conditions: ["browser"] },
+			{ entry: "@mailwoman/neural/web/loader", platform: "browser", conditions: ["browser"] },
 			context.repoRoot
 		)
 

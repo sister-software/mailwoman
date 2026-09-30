@@ -20,45 +20,10 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
-		"./body": {
-			"types": "./out/body.d.ts",
-			"node": "./lib/body.ts",
-			"default": "./out/body.js"
-		},
-		"./env": {
-			"types": "./out/env.d.ts",
-			"node": "./lib/env.ts",
-			"default": "./out/env.js"
-		},
-		"./bodies": {
-			"types": "./out/bodies/index.d.ts",
-			"node": "./lib/bodies/index.ts",
-			"default": "./out/bodies/index.js"
-		},
-		"./routes": {
-			"types": "./out/routes.d.ts",
-			"node": "./lib/routes.ts",
-			"default": "./out/routes.js"
-		},
-		"./map/camera": {
-			"types": "./out/map/camera.d.ts",
-			"node": "./lib/map/camera.ts",
-			"default": "./out/map/camera.js"
-		},
-		"./features/selected": {
-			"types": "./out/features/selected.d.ts",
-			"node": "./lib/features/selected.ts",
-			"default": "./out/features/selected.js"
-		},
-		"./features/tile-properties": {
-			"types": "./out/features/tile-properties.d.ts",
-			"node": "./lib/features/tile-properties.ts",
-			"default": "./out/features/tile-properties.js"
-		},
-		"./search": {
-			"types": "./out/search/index.d.ts",
-			"node": "./lib/search/index.ts",
-			"default": "./out/search/index.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"scripts": {

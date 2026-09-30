@@ -14,7 +14,7 @@
  *   (`rendered-de`) and the `synth-*` spelling it retired on 2026-09-26.
  */
 
-import { formatAddress } from "@mailwoman/codex/address-format"
+import { formatAddress } from "@mailwoman/codex/address/format"
 
 import type { CanonicalRow } from "#types"
 

@@ -12,7 +12,7 @@ import {
 	normalizeNZDeliveryService,
 	NZ_DELIVERY_SERVICE_TYPES,
 	NZ_PRIVATE_BOX_ALIAS,
-} from "#nz/index"
+} from "#nz"
 
 describe("NZ_DELIVERY_SERVICE_TYPES", () => {
 	it("carries exactly the six ADV358 types", () => {

@@ -5,11 +5,11 @@
  */
 
 export * from "#collections"
-export * from "#decoder/index"
+export * from "#decoder"
 export * from "#strings/escape"
 export * from "#strings/compare"
 export * from "#strings/regexp"
-export * from "#pipeline/index"
-export * from "#resources/index"
-export * from "#tokenization/index"
-export * from "#types/index"
+export * from "#pipeline"
+export * from "#resources"
+export * from "#tokenization"
+export * from "#types"

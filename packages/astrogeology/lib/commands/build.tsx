@@ -11,7 +11,7 @@
 import { Spinner } from "@inkjs/ui"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli/kit"
 import { resolvePath } from "path-ts"
 import type { PathBuilderLike } from "path-ts"
 

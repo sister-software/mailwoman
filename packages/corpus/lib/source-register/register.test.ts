@@ -32,7 +32,7 @@ import {
 	type AddressSourceRegister,
 	type ElectedLicense,
 	type LicenseDecision,
-} from "#source-register/index"
+} from "#source-register"
 import { AddressRole } from "#types"
 
 describe("the committed address-source register", () => {

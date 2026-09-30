@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { titleCaseFR } from "#fr/index"
+import { titleCaseFR } from "#fr"
 
 describe("titleCaseFR", () => {
 	it("capitalizes elements and leaves French particles lowercase", () => {

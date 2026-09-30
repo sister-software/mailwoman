@@ -24,7 +24,7 @@
  *     `last_assistant_message` here is silence rather than a parse attempt.
  *
  *   Register it in `.codex/hooks.json` under `hooks.Stop`; the command path is repo-relative,
- *   matching how `.codex/config.toml` addresses `packages/dev-mcp/lib/cli/index.ts`.
+ *   matching how `.codex/config.toml` addresses `packages/dev-mcp/lib/cli.ts`.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"

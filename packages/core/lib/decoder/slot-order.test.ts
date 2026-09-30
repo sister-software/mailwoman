@@ -16,7 +16,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
  */
 import { describe, expect, it } from "vitest"
 
-import { type AddressNode, type AddressTree, decodeAsJSON, slotNodes } from "#decoder/index"
+import { type AddressNode, type AddressTree, decodeAsJSON, slotNodes } from "#decoder"
 
 function node(tag: ComponentTag, value: string, confidence: number, extra: Partial<AddressNode> = {}): AddressNode {
 	return { tag, value, start: 0, end: value.length, confidence, children: [], ...extra }

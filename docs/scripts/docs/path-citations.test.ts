@@ -51,12 +51,12 @@ describe("refusalFor", () => {
 	})
 
 	it("refuses generated output, whose absence describes the checkout rather than the tree", () => {
-		expect(refusalFor("packages/mailwoman/out/cli/index.js")).toBe(CitationRefusal.Generated)
+		expect(refusalFor("packages/mailwoman/out/cli/main.js")).toBe(CitationRefusal.Generated)
 		expect(refusalFor("docs/build/index.html")).toBe(CitationRefusal.Generated)
 	})
 
 	it("refuses a command line", () => {
-		expect(refusalFor("node packages/mailwoman/lib/cli.ts")).toBe(CitationRefusal.NotAPath)
+		expect(refusalFor("node packages/mailwoman/cli/main.ts")).toBe(CitationRefusal.NotAPath)
 	})
 })
 

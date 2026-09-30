@@ -6,7 +6,7 @@
 
 import { prettyJSON } from "@mailwoman/core/json"
 
-import { CloudflareWorkerPMTiles } from "#protomaps/index"
+import { CloudflareWorkerPMTiles } from "#protomaps"
 import { WorkerRoute } from "#routing"
 
 /**

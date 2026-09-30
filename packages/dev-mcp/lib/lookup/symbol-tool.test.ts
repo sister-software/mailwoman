@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest"
 
 import type { EngineRegistryLike } from "#engine/registry"
 import type { JobRegistry } from "#jobs"
-import { buildToolTable } from "#tools/index"
+import { buildToolTable } from "#tools"
 
 /**
  * A registry that throws on touch proves the search reads the working tree and no other source.
