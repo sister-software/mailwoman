@@ -37,6 +37,20 @@
 				"because": "Every column of every table the GeoPackage declares was listed, so this covers the database's whole schema rather than a sample of its rows. The five tables carry 39, 16, 15, 15 and 15 columns, and none of the 100 identifies a party: there is no owner, holder, occupant or contact column, and no personal name. Every column of the `address` table is INSPIRE address structure, being an identifier, a lifespan date, a position, a locator designator, or a reference to a thoroughfare name, postal descriptor, administrative unit, parcel or building. One value invites a misreading: `position_method` reads `byotherparty`, which is an INSPIRE codelist term for how the position was determined rather than a reference to a party. The schema is the INSPIRE Addresses model, which has no party element."
 			}
 		},
+		"be-property-building-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of agentschap Digitaal Vlaanderen, reached as a WFS 2.0 download service at `https://geo.api.vlaanderen.be/ad/wfs`. **Coverage is the Flemish Region rather than Belgium**: Brussels and Wallonia publish the theme through their own services, so this row is one of three a Belgian build needs. Measured 2026-09-30, `resultType=hits` past index 0 reports 4,563,062 `ad:Address` features, and a page of the type agreed with that count. A bare hits request without a `startIndex` reports 10000 instead, which is a per-request cap rather than a count, so this service must be asked past index 0. It publishes four of the five AD feature types, omitting `ad:AddressAreaName`, and the component types report their own counts separately. An address references its components by the identifier URI its component features publish in `identifier`, such as `https://data.vlaanderen.be/id/straatnaam/6301`, which joins locally. On a page of five addresses, 5 of the 20 references instead address `http://vocab.belgif.be/auth/refnis1995/1000#id`, a term in the Belgian NIS vocabulary, so those administrative-unit components live outside this service and an address carrying one is complete at its source rather than incomplete here.",
+			"upstreamLineage": [
+				"https://geo.api.vlaanderen.be/ad/wfs",
+				"https://metadata.vlaanderen.be/srv/dut/csw?request=GetRecordById&service=CSW&version=2.0.2&ElementSetName=full&id=5c52b299-8f05-4d35-9839-a42934f1e619&OUTPUTSCHEMA=http://www.isotc211.org/2005/gmd"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all four feature types was listed, over 40 features each: 9 on `ad:Address`, 8 on `ad:AdminUnitName`, 8 on `ad:PostalDescriptor` and 7 on `ad:ThoroughfareName`. None of the 32 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a validity date, a position, a locator, a name, a postcode or a component reference. `AD:LocatorName` is the element that needs its own statement, because it is free text of type `GeographicalName` and the one way a family name or a business name reaches an INSPIRE address. This service leaves it empty: 0 of 800 addresses sampled over 40 windows spread across the 4,563,062 populate it, and the `locator` carries only a `designator` and a `level`. The designator values are house numbers typed `LocatorDesignatorTypeValue/addressIdentifierGeneral`. Article 4 of the elected licence requires that a re-use not breach data-protection law, and this reading is the measurement behind that undertaking for this source."
+			}
+		},
 		"ee-property-building-1": {
 			"addressRoles": {
 				"AD:Address": "premise"
