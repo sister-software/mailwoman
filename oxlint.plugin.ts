@@ -352,35 +352,6 @@ const FUNCTION_NODE_TYPES = new Set([
  */
 const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
 
-/**
- * The keys of a node that a walk skips.
- *
- * `parent` would loop, and `range` and `loc` hold no node.
- * `tokens` and `comments` exist on `Program` as lazy getters that deserialize
- * the whole token stream of the file when read.
- *
- * A walk that enumerates values through them pays a full tokenization per file, and the walk reads neither.
- */
-const NON_CHILD_KEYS = new Set(["parent", "range", "loc", "tokens", "comments"])
-
-/**
- * The child nodes of `node`, read key by key so the lazy getters in {@link NON_CHILD_KEYS} stay unread.
- */
-function* childNodes(node: AstNode): Generator<AstNode> {
-	for (const key of Object.keys(node)) {
-		if (NON_CHILD_KEYS.has(key)) continue
-
-		const value: unknown = Reflect.get(node, key)
-		const children = Array.isArray(value) ? value : [value]
-
-		for (const child of children) {
-			if (child && typeof child === "object" && typeof (child as AstNode).type === "string") {
-				yield child as AstNode
-			}
-		}
-	}
-}
-
 const noSyncFSInAsyncRule: Rule = {
 	meta: {
 		name: "no-sync-fs-in-async",
@@ -388,19 +359,23 @@ const noSyncFSInAsyncRule: Rule = {
 		schema: [],
 	},
 	create(context: RuleContext) {
-		/**
-		 * Traverse the AST while tracking whether each node is inside an async function.
-		 */
-		function walk(node: AstNode, insideAsync: boolean): void {
-			let asyncHere = insideAsync
+		// Whether the innermost enclosing function or synchronous scope is async,
+		// one entry per scope on the path from the program to the current node.
+		// Module scope is synchronous.
+		const asyncScopes: boolean[] = []
 
-			if (FUNCTION_NODE_TYPES.has(node.type)) {
-				asyncHere = node.async === true
-			} else if (SYNC_SCOPE_NODE_TYPES.has(node.type)) {
-				asyncHere = false
-			}
+		const enter = (node: AstNode): void => {
+			asyncScopes.push(FUNCTION_NODE_TYPES.has(node.type) && node.async === true)
+		}
 
-			if (asyncHere && node.type === "CallExpression" && node.callee?.type === "Identifier") {
+		const exit = (): void => {
+			asyncScopes.pop()
+		}
+
+		const visitors: Record<string, (node: AstNode) => void> = {
+			CallExpression(node: AstNode) {
+				if (asyncScopes.at(-1) !== true || node.callee?.type !== "Identifier") return
+
 				const helper = ASYNC_FILESYSTEM_HELPERS.get(node.callee.name ?? "")
 
 				if (helper) {
@@ -411,18 +386,15 @@ const noSyncFSInAsyncRule: Rule = {
 							`\`await\` is legal on this line. Use ${helper}.`,
 					})
 				}
-			}
-
-			for (const child of childNodes(node)) {
-				walk(child, asyncHere)
-			}
-		}
-
-		return {
-			Program(node: AstNode) {
-				walk(node, false)
 			},
 		}
+
+		for (const type of [...FUNCTION_NODE_TYPES, ...SYNC_SCOPE_NODE_TYPES]) {
+			visitors[type] = enter
+			visitors[`${type}:exit`] = exit
+		}
+
+		return visitors
 	},
 }
 
@@ -910,17 +882,6 @@ function syncDisposableSource(node: AstNode, locals: ReadonlySet<string>): strin
 }
 
 /**
- * Walk `node` and its children, calling `visit` on each.
- */
-function walkTree(node: AstNode, visit: (node: AstNode) => void): void {
-	visit(node)
-
-	for (const child of childNodes(node)) {
-		walkTree(child, visit)
-	}
-}
-
-/**
  * Take a synchronously-disposed resource with `using`.
  */
 const noAwaitUsingSyncDisposableRule: Rule = {
@@ -930,34 +891,38 @@ const noAwaitUsingSyncDisposableRule: Rule = {
 		schema: [],
 	},
 	create(context: RuleContext) {
+		// Same-file helpers whose return type names a synchronously-disposed resource.
+		// A helper may be declared after its use, so the declarations wait for `Program:exit`.
+		const locals = new Set<string>()
+		const awaitUsingDeclarations: AstNode[] = []
+
 		return {
-			Program(program: AstNode) {
-				const locals = new Set<string>()
+			FunctionDeclaration(node: AstNode) {
+				if (node.id?.type !== "Identifier") return
 
-				walkTree(program, (node) => {
-					if (node.type === "FunctionDeclaration" && node.id?.type === "Identifier") {
-						if (namesSyncDisposable((node as ESTreeNode).returnType?.typeAnnotation)) {
-							locals.add(node.id.name ?? "")
-						}
+				if (namesSyncDisposable((node as ESTreeNode).returnType?.typeAnnotation)) {
+					locals.add(node.id.name ?? "")
+				}
+			},
+			VariableDeclarator(node: AstNode) {
+				if (node.id?.type !== "Identifier") return
 
-						return
-					}
+				const initializer = node.init
 
-					if (node.type !== "VariableDeclarator" || node.id?.type !== "Identifier") return
+				if (initializer?.type !== "ArrowFunctionExpression" && initializer?.type !== "FunctionExpression") return
 
-					const initializer = node.init
-
-					if (initializer?.type !== "ArrowFunctionExpression" && initializer?.type !== "FunctionExpression") return
-
-					if (namesSyncDisposable((initializer as ESTreeNode).returnType?.typeAnnotation)) {
-						locals.add(node.id.name ?? "")
-					}
-				})
-
-				walkTree(program, (node) => {
-					if (node.type !== "VariableDeclaration" || node.kind !== "await using") return
-
-					for (const declarator of node.declarations ?? []) {
+				if (namesSyncDisposable((initializer as ESTreeNode).returnType?.typeAnnotation)) {
+					locals.add(node.id.name ?? "")
+				}
+			},
+			VariableDeclaration(node: AstNode) {
+				if (node.kind === "await using") {
+					awaitUsingDeclarations.push(node)
+				}
+			},
+			"Program:exit"() {
+				for (const declaration of awaitUsingDeclarations) {
+					for (const declarator of declaration.declarations ?? []) {
 						const initializer = initializedExpression(declarator.init)
 
 						if (!initializer) continue
@@ -975,7 +940,7 @@ const noAwaitUsingSyncDisposableRule: Rule = {
 								"which is the shape a `TemporaryDirectory` removing its directory needs.",
 						})
 					}
-				})
+				}
 			},
 		}
 	},

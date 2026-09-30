@@ -25,9 +25,29 @@ function reportsFor(ruleName: string, node: TestNode): string[] {
 		},
 	})
 
-	listeners[node.type]?.(node)
+	deliverToListeners(listeners, node)
 
 	return messages
+}
+
+/**
+ * Deliver `node` and its descendants to `listeners` the way oxlint does: the type
+ * listener on entry, the children in key order, then the `:exit` listener.
+ */
+function deliverToListeners(listeners: Record<string, ((node: TestNode) => void) | undefined>, node: TestNode): void {
+	listeners[node.type]?.(node)
+
+	for (const [key, value] of Object.entries(node)) {
+		if (key === "parent" || key === "range" || key === "loc") continue
+
+		for (const child of Array.isArray(value) ? value : [value]) {
+			if (child && typeof child === "object" && typeof (child as TestNode).type === "string") {
+				deliverToListeners(listeners, child as TestNode)
+			}
+		}
+	}
+
+	listeners[`${node.type}:exit`]?.(node)
 }
 
 function commentReports(value: string): string[] {
@@ -402,4 +422,53 @@ test("no-await-using-sync-disposable leaves an asynchronously-disposed resource 
 	}
 
 	expect(reportsFor("no-await-using-sync-disposable", awaitUsingProgram(stack))).toEqual([])
+})
+
+/**
+ * A program holding one function whose body is a bare call to `callee`.
+ */
+function functionCallingProgram(async: boolean, callee: string, functionType = "FunctionDeclaration"): TestNode {
+	return {
+		type: "Program",
+		range: [0, 0],
+		body: [
+			{
+				type: functionType,
+				range: [0, 0],
+				async,
+				id: identifier("read"),
+				body: {
+					type: "BlockStatement",
+					range: [0, 0],
+					body: [{ type: "ExpressionStatement", range: [0, 0], expression: call(identifier(callee), false) }],
+				},
+			},
+		],
+	}
+}
+
+test("no-sync-fs-in-async reports a sync filesystem call inside an async function and names the helper", () => {
+	const messages = reportsFor("no-sync-fs-in-async", functionCallingProgram(true, "readFileSync"))
+
+	expect(messages).toHaveLength(1)
+	expect(messages[0]).toMatch(/readFileSync.*@mailwoman\/core\/fs/u)
+})
+
+test("no-sync-fs-in-async leaves a sync function and an unlisted call alone", () => {
+	expect(reportsFor("no-sync-fs-in-async", functionCallingProgram(false, "readFileSync"))).toEqual([])
+	expect(reportsFor("no-sync-fs-in-async", functionCallingProgram(true, "readFile"))).toEqual([])
+})
+
+test("no-sync-fs-in-async treats a nested sync function as its own scope", () => {
+	const program = functionCallingProgram(true, "readFileSync")
+	const outer = (program.body as TestNode[])[0]!
+
+	const inner = functionCallingProgram(false, "readFileSync", "FunctionExpression")
+
+	// The async outer function only contains a sync inner function that makes the call.
+	;(outer.body as TestNode).body = [
+		{ type: "ExpressionStatement", range: [0, 0], expression: (inner.body as TestNode[])[0]! },
+	]
+
+	expect(reportsFor("no-sync-fs-in-async", program)).toEqual([])
 })
