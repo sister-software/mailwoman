@@ -49,6 +49,68 @@ export {
  */
 export type AddressScript = "local" | "latin"
 
+/**
+ * Where a layout's print order was read from.
+ *
+ * Every layout in this package comes from one of the first three.
+ * `PostalStandardS42` exists because `#2323` asks which standard a layout cites,
+ * and the answer for every country today is a dataset rather than a postal standard.
+ *
+ * A layout takes that value once somebody transcribes the country's own S42 addressing
+ * template and can name the document it came from.
+ */
+export const LayoutBasis = {
+	/**
+	 * libaddressinput's `fmt` field, with `%A` expanded into this repository's street tags.
+	 */
+	LibAddressInputFormat: "libaddressinput-fmt",
+	/**
+	 * libaddressinput's `lfmt` field, which states a country's Latin print order.
+	 */
+	LibAddressInputLatinFormat: "libaddressinput-lfmt",
+	/**
+	 * Hand-authored for a locale this project publishes weights for, and checked
+	 * against real addresses on a board.
+	 * Its skeleton still starts from the country's `fmt`.
+	 */
+	BoardChecked: "board-checked",
+	/**
+	 * Transcribed from the country's UPU S42 addressing template.
+	 */
+	PostalStandardS42: "upu-s42",
+} as const
+
+/**
+ * One of the {@link LayoutBasis} values.
+ */
+export type LayoutBasis = (typeof LayoutBasis)[keyof typeof LayoutBasis]
+
+/**
+ * What every entry in {@linkcode GENERATED_ADDRESS_LAYOUTS} was derived from.
+ *
+ * The basis is recorded per table rather than per entry because each table is derived
+ * by one procedure from one input, so a per-entry copy could disagree with how its
+ * entry was produced. {@linkcode layoutBasisForCountry} answers the question for one
+ * country by naming the table {@linkcode layoutForCountry} would read.
+ */
+export const GENERATED_LAYOUT_BASIS = LayoutBasis.LibAddressInputFormat
+
+/**
+ * What every entry in {@linkcode GENERATED_LATIN_ADDRESS_LAYOUTS} was derived from.
+ *
+ * Its generator reads `lfmt` rather than `fmt`, which is the only difference
+ * from {@linkcode GENERATED_LAYOUT_BASIS}.
+ */
+export const GENERATED_LATIN_LAYOUT_BASIS = LayoutBasis.LibAddressInputLatinFormat
+
+/**
+ * What every entry in {@linkcode ADDRESS_LAYOUTS} was derived from.
+ *
+ * Each of those entries starts from the country's `fmt` skeleton and was then checked against
+ * real addresses on a board, so the board rather than the dataset settled its final order.
+ */
+export const HAND_AUTHORED_LAYOUT_BASIS = LayoutBasis.BoardChecked
+
 const { attention, venue, house_number, street, dependent_locality, locality, subregion, region, postcode, country } =
 	SLOTS
 
@@ -311,6 +373,36 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 	}
 
 	return hand ?? GENERATED_ADDRESS_LAYOUTS[code] ?? null
+}
+
+/**
+ * Returns what the layout {@linkcode layoutForCountry} answers for this country was
+ * derived from, or `null` when no layout exists for it.
+ *
+ * The resolution repeats {@linkcode layoutForCountry}'s order so that the basis
+ * describes the layout a caller actually receives.
+ * A country whose Latin and local orders differ has a different basis per script.
+ */
+export function layoutBasisForCountry(
+	countryCode: string | null | undefined,
+	script?: AddressScript
+): LayoutBasis | null {
+	if (!countryCode) return null
+
+	const code = countryCode.trim().toUpperCase()
+
+	if (script === "latin" && GENERATED_LATIN_ADDRESS_LAYOUTS[code]) return GENERATED_LATIN_LAYOUT_BASIS
+
+	const hand = ADDRESS_LAYOUTS[code]
+	const local = GENERATED_LOCAL_ADDRESS_LAYOUTS[code]
+
+	if (script === "local" && hand && local && layoutPrintsLargestFirst(hand) !== layoutPrintsLargestFirst(local)) {
+		return GENERATED_LAYOUT_BASIS
+	}
+
+	if (hand) return HAND_AUTHORED_LAYOUT_BASIS
+
+	return GENERATED_ADDRESS_LAYOUTS[code] ? GENERATED_LAYOUT_BASIS : null
 }
 
 /**
