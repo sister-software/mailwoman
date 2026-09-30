@@ -27,7 +27,10 @@ CLI_STALE_SRC=""
 if [ -f "$CLI_REF" ]; then
 	# cli-native holds the specs of the native commands (license, doctor, geocode …); the reference reads them from
 	# the compiled CLI too, so a spec edit there is the same staleness as one under commands/.
-	CLI_STALE_SRC=$(find packages/mailwoman/cli/commands packages/mailwoman/cli/kit packages/mailwoman/cli/native \( -name '*.tsx' -o -name '*.ts' \) -newer "$CLI_REF" -print -quit 2>/dev/null)
+	# A colocated test is excluded: `packages/mailwoman/tsconfig.json` excludes `./**/*.test.ts`, so no compile reads
+	# one and no compile can make the reference newer than one. Since the roots were split, tests sit beside their
+	# modules under cli/kit, and a test edit alone left this guard unclearable.
+	CLI_STALE_SRC=$(find packages/mailwoman/cli/commands packages/mailwoman/cli/kit packages/mailwoman/cli/native \( -name '*.tsx' -o -name '*.ts' \) ! -name '*.test.ts' ! -name '*.test.tsx' -newer "$CLI_REF" -print -quit 2>/dev/null)
 fi
 
 if [ -n "$STAGED" ]; then

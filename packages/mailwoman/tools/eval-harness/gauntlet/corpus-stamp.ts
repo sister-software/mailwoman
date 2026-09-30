@@ -110,7 +110,7 @@ export async function assertCorpusStampFresh(
 		throw new Error(
 			`[gauntlet] regression.db carries no corpus stamp (pre-2026-08-06 artifact) — refusing to grade against it.\n` +
 				`  live corpus: ${liveHash} (${rows.length} cases)\n` +
-				`  Rebuild it: yarn compile && node mailwoman/out/cli.js eval gauntlet-build regression-db`
+				`  Rebuild it: yarn compile && node mailwoman/out/cli/main.js eval gauntlet-build regression-db`
 		)
 	}
 
@@ -121,6 +121,6 @@ export async function assertCorpusStampFresh(
 			`  db stamp:    ${stamp.corpus_hash} (${stamp.case_count} cases, built ${stamp.built_at})\n` +
 			`  live corpus: ${liveHash} (${rows.length} cases)\n` +
 			`  Likely cause: the DB predates your edits to cases/<cc>/*.jsonl, or it was built from a stale compiled ` +
-			`tree. Recompile, then rebuild: yarn compile && node mailwoman/out/cli.js eval gauntlet-build regression-db`
+			`tree. Recompile, then rebuild: yarn compile && node mailwoman/out/cli/main.js eval gauntlet-build regression-db`
 	)
 }

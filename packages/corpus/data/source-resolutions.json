@@ -1,0 +1,22 @@
+{
+	"$comment": "Source fields a review resolved by reading a publisher's data, applied by `buildSourceRegister` over the rows it derives from the research CSV. An input to the build rather than an edit of its output, for the same reason as `license-decisions.json`: the build rewrites the register whole, so a field recorded in the output is erased by the next run with no error and a normal-looking count.",
+	"$whyNotTheCSV": "The research CSV records `address_role`, `coverage` and `upstream` as the placeholders `varies`, `country-specific` and the empty string on all 389 of its non-rail rows, and has no column for a personal-data review. That CSV is the record of what one research pass found on 2026-09-18, so a later review records its own findings here rather than by rewriting the pass's record.",
+	"$shape": "Each key is a `sourceID` the register declares. Each value carries any of `addressRoles`, `coverage`, `upstreamLineage` and `personalDataReview`, which replace the derived row's values. See `@mailwoman/corpus/source-register`'s `AddressSourceRecord`.",
+	"$addressRoles": "Keyed by the address column's path in the published record, because a publication can carry two roles on one record. `ingestEligibilityProblems` requires at least one column to have a role.",
+	"$upstreamLineage": "The endpoint or dataset this source's copy was taken from, so two register rows fed by one upstream submission count as one observation rather than two. A URL when the upstream is not itself a register row.",
+	"resolutions": {
+		"au-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=procuringEntity].address": "facility"
+			},
+			"coverage": "OCDS releases for Apr 2007 through Sep 2026, retrieved monthly by the OCP Data Registry, last on 2026-09-13. Measured on the 2022 release: 51,829 contracting processes, each carrying one supplier party and one procuring-entity party. A supplier address gives locality, region and countryName on 51,829 of 51,829 rows, a postcode on 51,395 (99.16%), and a non-empty street line on 15,118 (29.17%). A procuring-entity address gives a region on 5,371 (10.36%) and a street line on 4,261 (8.22%). The release is federal procurement reporting rather than a national premise register, so it covers the parties that contracted with the Commonwealth and no other premises.",
+			"upstreamLineage": ["https://app.swaggerhub.com/apis/austender/ocds-api/1.1"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "The publication names natural persons and carries addresses for them. Measured on the 2022 release: 149 of 17,373 distinct supplier names take the `Surname, Firstname` form over 179 rows, 43 of those rows carrying a street line, and `Upton, David Gregory` is published at `3 Sloan Rd, Hawthorndene SA 5051`. A sole trader's reported address can be their home, and the record does not distinguish the two. The analysis that would move this to `assessed` is a decision rather than a measurement, and the measurement it would rest on is in the retained receipt.",
+				"record": "internal/strategy/rights-receipts/au-2026-09-30/README.md"
+			}
+		}
+	}
+}

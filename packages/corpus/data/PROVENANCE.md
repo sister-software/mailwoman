@@ -11,6 +11,8 @@ source's terms. Generated, **not hand-edited**.
 mailwoman corpus source-register \
   --inventory      ../mailwoman-internal/research/global-address-jurisdiction-inventory-v3.csv \
   --sources        ../mailwoman-internal/research/global-functional-authority-corpora-v2.csv \
+  --decisions      packages/corpus/data/license-decisions.json \
+  --resolutions    packages/corpus/data/source-resolutions.json \
   --register-version 0.1.0 \
   --authored-at    2026-09-18 \
   --source-version global-address-corpus-spec-v3
@@ -24,12 +26,19 @@ nothing versioned them and a reviewer could not tell which copy produced the reg
 is the committed record here, and it carries every field a reader needs to check a row: the
 publisher, the retrieved URL, and the research pass.
 
-There is a third input, and it is committed: `--decisions` defaults to `license-decisions.json`
-beside this file, and holds every licence decision somebody made by reading a publisher's terms. The
-build derives each decision as `unchecked` from the research pass's access labels and applies the
-recorded ones over that, so a decision survives a rebuild. Recording one in the register instead
-would be erased by the next run with no error, because the write below replaces the file whole
-(#2351). The file is empty today, which is why every decision in the register reads `unchecked`.
+Two further inputs are committed beside this file, and both exist because the write below replaces the
+register whole: a value recorded in the register itself is erased by the next run with no error and a
+normal-looking count.
+
+`--decisions` defaults to `license-decisions.json` and holds every licence decision somebody made by
+reading a publisher's terms. The build derives each decision as `unchecked` from the research pass's
+access labels and applies the recorded ones over that, so a decision survives a rebuild (#2351).
+
+`--resolutions` defaults to `source-resolutions.json` and holds the source fields a review resolved:
+`addressRoles`, `coverage`, `upstreamLineage` and `personalDataReview`. The research CSV records the
+first three as the placeholders `varies`, `country-specific` and the empty string on all 389 of its
+non-rail rows, and has no column for a personal-data review, so a review records its findings here
+rather than by rewriting the record of what one research pass found on 2026-09-18 (#2323).
 
 The `oxfmt` pass is required — committed JSON is oxfmt-clean, which `JSON.stringify` cannot
 reproduce. The generator is deterministic, so the artifact is reproducible from the same inputs.
@@ -195,10 +204,15 @@ copy they were read from, that copy's version where the publisher gives one, and
 not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
 register that fails its audit, so an incomplete entry never reaches the committed artifact.
 
-**The file is empty.** Every one of the register's 389 decisions therefore reads `unchecked`. Electing
-them is necessary and not sufficient: `ingestEligibilityProblems` also refuses all 389 sources for an
-unresolved `addressRole` and unmeasured `coverage`, which no licence decision touches, so clearing
-this alone moves the ingest-eligible count from 0 to 0.
+**One of the register's 389 decisions is recorded.** AusTender's publisher, the Australian Department
+of Finance, grants `CC-BY-3.0-AU` in the AusTender Terms of Use §5.1, retained at
+`internal/strategy/rights-receipts/au-2026-09-30/`. The other 388 read `unchecked`.
+
+Electing terms is necessary and not sufficient. `ingestEligibilityProblems` also requires a resolved
+address role per column, measured coverage, and a personal-data review that does not read `present`,
+none of which a licence decision touches; those live in `source-resolutions.json`. AusTender has all
+four of its fields resolved and stays ineligible, because its personal-data reading is `present`. The
+ingest-eligible count is 0 of 389.
 
 ### Why there are 389 of them rather than 12
 
@@ -216,6 +230,35 @@ The cost falls on a publisher that genuinely serves several jurisdictions. INSEE
 France and nine overseas territories, so it holds ten decisions, and a reviewer who reads its terms
 once records that conclusion ten times. That is the direction to err in: an over-wide election is the
 failure review cannot undo.
+
+## `source-resolutions.json` — source fields a review resolved (#2323)
+
+Hand-written, and an input to the register build for the same reason as `license-decisions.json`: the
+build rewrites the register whole.
+
+Each key is a `sourceID` the register declares, and each value carries any of `addressRoles`,
+`coverage`, `upstreamLineage` and `personalDataReview`. `buildSourceRegister` applies these over the
+rows it derives from the research CSV and refuses a resolution naming a source the register does not
+carry, because a resolution that resolves nothing is a typo or a source that has been removed.
+
+The fields live here rather than in the CSV because the CSV is the record of one research pass. All 389
+of its non-rail rows write `varies` for `address_role`, `country-specific` for `coverage` and an empty
+`upstream`, and the pass has no personal-data column at all. Editing those placeholders would change
+what the pass is recorded as having found.
+
+`addressRoles` is keyed by the address column's path in the published record rather than holding one
+role for the source, because a publication can carry two roles on one record. AusTender's OCDS release
+gives a `counterparty` address for the supplier and a `facility` address for the procuring entity on
+every contracting process. Taiwan's GCIS register gives a registered company address and a tax-office
+business address in separate columns. `ingestEligibilityProblems` requires at least one column to have
+a role, and the audit refuses an empty map, which would read as resolved while stating nothing.
+
+**One source of 389 is resolved.** AusTender, `au-procurement-grants-1`, has all four fields recorded
+from a measurement of the 2022 OCDS release, retained with the terms at
+`internal/strategy/rights-receipts/au-2026-09-30/`. It remains ineligible for ingest on one condition:
+its `personalDataReview` reads `present`, because the release publishes named natural persons with
+street addresses. Moving that to `assessed` needs a completed analysis, which the register requires be
+named by location.
 
 ## `training-manifests/<version>.json` — what reached one base corpus (#2375)
 

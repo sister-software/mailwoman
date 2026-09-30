@@ -470,11 +470,18 @@ export interface AddressSourceRecord {
 	sourceURL?: string
 	note?: string
 	/**
-	 * The role that the source's addresses play, such as a registered seat or a premise.
+	 * The role each of the source's address columns carries, keyed by that
+	 * column's path in the published record.
 	 *
-	 * A source is ineligible for ingest until this is set.
+	 * A source is ineligible for ingest until at least one column has a role.
+	 * One role per source cannot describe a publication that carries two roles on one record:
+	 * AusTender's OCDS release gives a supplier address and a procuring-entity address on
+	 * every contracting process, and Taiwan's GCIS register gives a registered company address
+	 * and a tax-office business address in separate columns.
+	 *
+	 * A source whose every address carries one role records one entry keyed by the field that holds it.
 	 */
-	addressRole?: AddressRole
+	addressRoles?: Readonly<Record<string, AddressRole>>
 	/**
 	 * The upstream sources that this source copies from, where known.
 	 *
@@ -500,7 +507,7 @@ export interface AddressSourceRecord {
  * A listed field must be absent from every row.
  * An unlisted field must appear on at least one row.
  */
-export const UNRESOLVED_FIELDS = ["addressRole", "upstreamLineage", "coverage", "personalDataReview"] as const
+export const UNRESOLVED_FIELDS = ["addressRoles", "upstreamLineage", "coverage", "personalDataReview"] as const
 
 /**
  * One of the {@link UNRESOLVED_FIELDS}.

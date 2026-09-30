@@ -78,20 +78,54 @@ describe("the committed address-source register", () => {
 		expect(byStatus(SourceStatus.VerifiedCorpusStale)).toBe(1)
 	})
 
-	it("declares the fields no source resolved, and no source resolves one", () => {
-		expect([...register.unresolved].toSorted()).toEqual([...UNRESOLVED_FIELDS].toSorted())
-
+	it("declares a field unresolved only while no source carries it", () => {
+		// AusTender resolves all four, so the array is empty.
+		// The audit checks both directions.
+		// A listed field and a populated row therefore cannot coexist.
 		for (const field of register.unresolved) {
+			expect(UNRESOLVED_FIELDS).toContain(field)
 			expect(register.sources.filter((row) => row[field] !== undefined)).toHaveLength(0)
+		}
+
+		for (const field of UNRESOLVED_FIELDS) {
+			if (register.unresolved.includes(field)) continue
+
+			expect(register.sources.filter((row) => row[field] !== undefined).length).toBeGreaterThan(0)
 		}
 	})
 
-	it("holds no source eligible for ingest, because no licence has been reviewed", () => {
-		expect(register.licenses.every((decision) => decision.state === LicenseReviewState.Unchecked)).toBe(true)
-
+	it("holds no source eligible for ingest", () => {
 		for (const source of register.sources) {
 			expect(ingestEligibilityProblems(source, register).length).toBeGreaterThan(0)
 		}
+	})
+
+	it("blocks AusTender on its personal-data reading alone, every other condition being met", () => {
+		// The worked example of #2323's step 6: one source taken through all five conditions.
+		// Its licence is elected and its address roles and coverage are resolved.
+		// The publication also gives street addresses for named natural persons.
+		// `present` records that reading, and ingest refuses it.
+		const austender = register.sources.find((source) => source.sourceID === "au-procurement-grants-1")!
+		const decision = register.licenses.find((entry) => entry.licenseID === austender.license)!
+
+		expect(decision.state).toBe(LicenseReviewState.Elected)
+		expect(austender.status).toBe(SourceStatus.VerifiedCorpus)
+		expect(Object.keys(austender.addressRoles ?? {}).length).toBeGreaterThan(0)
+		expect(austender.coverage).toBeDefined()
+		expect(austender.personalDataReview?.reading).toBe(PersonalDataReading.Present)
+
+		expect(ingestEligibilityProblems(austender, register)).toHaveLength(1)
+	})
+
+	it("carries one elected licence and leaves the rest unchecked", () => {
+		const byState = new Map<string, number>()
+
+		for (const decision of register.licenses) {
+			byState.set(decision.state, (byState.get(decision.state) ?? 0) + 1)
+		}
+
+		expect(byState.get(LicenseReviewState.Elected)).toBe(1)
+		expect(byState.get(LicenseReviewState.Unchecked)).toBe(register.licenses.length - 1)
 	})
 
 	it("gives every source its own license decision, so one reading cannot grant many", () => {
@@ -136,7 +170,7 @@ describe("auditAddressSourceRegister", () => {
 		// The structural audit does not read the field.
 		contentDigest: "",
 		provenance: { source: "test" },
-		unresolved: ["addressRole", "upstreamLineage", "coverage", "personalDataReview"],
+		unresolved: ["addressRoles", "upstreamLineage", "coverage", "personalDataReview"],
 		licenses: [
 			{
 				licenseID: "unchecked-test",
@@ -236,6 +270,27 @@ describe("auditAddressSourceRegister", () => {
 		})
 
 		expect(problems.some((problem) => problem.startsWith('"coverage" is declared unresolved'))).toBe(true)
+	})
+
+	it("refuses an empty `addressRoles`, which reads as resolved and states no role", () => {
+		const problems = auditAddressSourceRegister({
+			...base,
+			sources: [{ ...base.sources[0]!, addressRoles: {} }],
+		})
+
+		expect(problems.some((problem) => problem.includes("carries an empty `addressRoles`"))).toBe(true)
+	})
+
+	it("refuses a column whose role is outside the `AddressRole` vocabulary", () => {
+		const problems = auditAddressSourceRegister({
+			...base,
+			// A role a reviewer invented reaches the register unless the audit reads the vocabulary.
+			sources: [{ ...base.sources[0]!, addressRoles: { "party.address": "head-office" as AddressRole } }],
+		})
+
+		expect(problems).toContain(
+			'source "zz-health-1" gives column "party.address" the role "head-office", which is not an `AddressRole`'
+		)
 	})
 })
 
@@ -343,7 +398,7 @@ describe("applyLicenseDecisions", () => {
 			version: "0.0.0",
 			contentDigest: "",
 			provenance: { source: "test" },
-			unresolved: ["addressRole", "upstreamLineage", "coverage", "personalDataReview"],
+			unresolved: ["addressRoles", "upstreamLineage", "coverage", "personalDataReview"],
 			licenses,
 			jurisdictions: [
 				{
@@ -412,7 +467,7 @@ describe("permission by operation", () => {
 		geometry: SourceGeometry.Unresolved,
 		license: "terms-under-review",
 		researchPass: ResearchPass.WebResearch,
-		addressRole: AddressRole.Premise,
+		addressRoles: { address: AddressRole.Premise },
 		coverage: "measured national, 2026-09",
 		personalDataReview: {
 			reading: PersonalDataReading.Absent,
@@ -426,7 +481,7 @@ describe("permission by operation", () => {
 			version: "0.0.0",
 			contentDigest: "",
 			provenance: { source: "test" },
-			unresolved: ["addressRole", "upstreamLineage", "coverage"],
+			unresolved: ["addressRoles", "upstreamLineage", "coverage"],
 			licenses: [decision],
 			jurisdictions: [
 				{

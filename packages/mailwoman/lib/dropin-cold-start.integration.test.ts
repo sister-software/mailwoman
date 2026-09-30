@@ -18,11 +18,15 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const PHOTON_CLI = workspacePath("photon", "out", "cli.js")
-const NOMINATIM_CLI = workspacePath("nominatim", "out", "cli.js")
-const LIBPOSTAL_CLI = workspacePath("libpostal", "out", "cli.js")
+// Each drop-in's `bin` is `./out/cli/main.js`, which is where the `cli` root's
+// project reference emits `cli/main.ts`.
+// An `out/cli.js` left over from before the roots were split still resolves,
+// so a path literal naming it reads as passing against a stale build of the old layout.
+const PHOTON_CLI = workspacePath("photon", "out", "cli", "main.js")
+const NOMINATIM_CLI = workspacePath("nominatim", "out", "cli", "main.js")
+const LIBPOSTAL_CLI = workspacePath("libpostal", "out", "cli", "main.js")
 const MAILWOMAN_CLI = await mailwomanCLIPath()
-const MCP_CLI = workspacePath("mcp", "out", "cli.js")
+const MCP_CLI = workspacePath("mcp", "out", "cli", "main.js")
 const MCP_PACKAGE_JSON = workspacePath("mcp", "package.json")
 
 const hasPhotonCLI = await pathExists(PHOTON_CLI)

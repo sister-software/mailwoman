@@ -172,7 +172,7 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 
 		// Ingestion requires a declared address role and measured coverage, while
 		// `upstreamLineage` affects linkage and plays no part in admission.
-		const withRole = sources.filter((source) => source.addressRole !== undefined)
+		const withRole = sources.filter((source) => Object.keys(source.addressRoles ?? {}).length > 0)
 		const withCoverage = sources.filter((source) => source.coverage !== undefined)
 
 		const addressRole: StageReading = !sources.length

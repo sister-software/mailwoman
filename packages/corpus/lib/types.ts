@@ -28,6 +28,15 @@ export const AddressRole = {
 	 */
 	RegisteredOffice: "registered-office",
 	/**
+	 * The address a third party records for a transacting party on its own transaction record,
+	 * such as the supplier on a government contract notice.
+	 *
+	 * The party supplied the address to the recording body rather than to a registrar.
+	 * No registrar filed it as a seat, and no address register confirmed it as a premise.
+	 * A sole trader's entry can hold a home address.
+	 */
+	Counterparty: "counterparty",
+	/**
 	 * The place where post is delivered.
 	 * This can be a post-office box.
 	 */

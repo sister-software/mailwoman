@@ -2,6 +2,51 @@
 	"$comment": "Licence decisions somebody made by reading a publisher's terms. The register's own build generates every decision as `unchecked` from the research pass's access labels, which is correct — that pass recorded what a register costs to reach and opened nobody's terms. This file is where a decision that was made gets recorded, and `buildSourceRegister` applies these over the generated defaults. It is an input to the build rather than an edit of its output, so a rebuild preserves what is here instead of overwriting it.",
 	"$howToAdd": "Read the publisher's terms. Store the copy you read somewhere a later reader can open it, and name that location in `retrievedCopy` — a link to today's page is not a copy. Then add one entry here keyed by the `licenseID` the register already uses for that source, and rebuild. `auditAddressSourceRegister` refuses an elected record missing `electedTerms`, `retrievedCopy` or `electedBecause`, and a refused record missing `refusedBecause`, so an incomplete entry fails the build rather than entering the register.",
 	"$shape": "Each key is a licenseID the register declares. Each value is an ElectedLicense or RefusedLicense minus its `licenseID`, which the build fills from the key. See `@mailwoman/corpus/source-register`'s types.",
-	"$empty": "No decision has been recorded yet, so all 12 of the register's licence decisions read `unchecked`. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also refuses every one of the 389 sources for an unresolved address role and unmeasured coverage, which no licence decision touches. See #2351 for this file and #2323 for the unresolved fields.",
-	"decisions": {}
+	"$state": "One decision of the register's 389 is recorded. Electing terms is necessary and not sufficient: `ingestEligibilityProblems` also requires a resolved address role per column, measured coverage, and a personal-data review that is not `present`, which no licence decision touches. Those live in `source-resolutions.json`. See #2351 for this file and #2323 for the source fields.",
+	"decisions": {
+		"unchecked-national-terms-au-australian-department-of-finance": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 3.0 Australia",
+			"spdx": "CC-BY-3.0-AU",
+			"termsVersion": "3.0 Australia",
+			"retrievedCopy": "internal/strategy/rights-receipts/au-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "AusTender's Terms of Use §5.1 offers one grant and no alternative: with the exception of the Commonwealth Coat of Arms, Approach to Market material and where otherwise noted, all materials on AusTender are licensed under CC BY 3.0 AU. §5.4 withholds Approach to Market material, which is the tender documentation a buyer publishes and which the OCDS release does not contain — the OCP Data Registry reports 0 documents for this publication. §6.1 requires two attribution lines rather than one: that AusTender materials are released by the Department of Finance, and that they are subject to change and should be verified at www.tenders.gov.au.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A grants a licence to 'Reproduce the Work', which is what copying the published bulk file performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A grants the right to 'create and Reproduce one or more Derivative Works', which covers reading the postal addresses out of the copied file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A grants the right to 'create and Reproduce one or more Derivative Works'. A token and tag corpus built from the rows is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A reserves no act of analysis, and §3C reserves only rights not expressly granted. Fitting a model reproduces the Work into the training process and produces a derivative, both of which §3A grants."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 AU §3A grants the right to 'Distribute and publicly perform the Work, a Derivative Work or the Work as incorporated in any Collection'. §4A conditions it: the copy travels under this licence with its URI, notices stay intact, and no technological measure may restrict a recipient. §6.1 of AusTender's terms adds its two attribution lines."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a Derivative Work of the rows is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for ODbL, and it arises here in the same shape. Nothing in the retrieved terms answers it, and it plays no part in ingest."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "CC BY 3.0 AU §4A states 'You are not granted the right to sublicense the Work.' A recipient takes their rights from the licensor under §9 rather than from this repository."
+				}
+			}
+		}
+	}
 }

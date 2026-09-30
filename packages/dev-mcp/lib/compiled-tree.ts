@@ -7,7 +7,8 @@
  *
  *   This server imports source, so `out/` is normally absent from its import path (see `tree-fingerprint.ts`).
  *   The gauntlet writes its full report to stdout. Here stdout is reserved for JSON-RPC messages, so running the gauntlet
- *   in-process would corrupt the transport. The server spawns `out/cli.js`, which makes stale compiled files relevant.
+ *   in-process would corrupt the transport. The server spawns `out/cli/main.js`, which makes stale compiled files
+ *   relevant.
  *
  *   A stale compiled tree can load a deleted case array, write a database, print "built", and exit with status 0.
  *   Later evals then grade a corpus absent from the artifact. The guard refuses that tree because a warning would leave

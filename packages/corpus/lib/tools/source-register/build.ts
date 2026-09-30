@@ -239,6 +239,14 @@ export interface BuildSourceRegisterOptions {
 	 * A path that does not exist is read as no decisions recorded.
 	 */
 	decisionsPath?: PathBuilderLike
+	/**
+	 * Source fields a review resolved, applied over the rows this build derives from the research CSV.
+	 *
+	 * An input rather than an edit of the output, for the same reason as {@linkcode
+	 * BuildSourceRegisterOptions.decisionsPath}: this build rewrites the register whole.
+	 * A path that does not exist is read as no resolutions recorded.
+	 */
+	resolutionsPath?: PathBuilderLike
 	version: string
 	/**
 	 * ISO 8601 calendar date the research pass was taken, `yyyy-MM-DD`.
@@ -498,7 +506,11 @@ async function readSources(
 		const role = readUnresolvedColumn(record["address_role"], "address_role", row)
 
 		if (role) {
-			source.addressRole = mapped(ADDRESS_ROLE_BY_NAME, role, "address_role", row)
+			// The research pass records one role for a whole source and names no column,
+			// so the role is filed under the record's address field.
+			// A source carrying two roles on one record gets a column-by-column reading
+			// in `source-resolutions.json` instead.
+			source.addressRoles = { address: mapped(ADDRESS_ROLE_BY_NAME, role, "address_role", row) }
 		}
 
 		const coverage = readUnresolvedColumn(record["coverage"], "coverage", row)
@@ -568,6 +580,70 @@ interface LicenseDecisionsFile {
 }
 
 /**
+ * The source fields a review resolves, which the research CSV records as placeholders.
+ *
+ * The CSV holds the research pass's findings and is a working document of that pass,
+ * so a later review records its own findings here rather than by editing the pass's record.
+ */
+type SourceResolution = Pick<
+	AddressSourceRecord,
+	"addressRoles" | "coverage" | "upstreamLineage" | "personalDataReview"
+>
+
+/**
+ * The shape of `source-resolutions.json`: source id to the fields a review resolved for it.
+ */
+interface SourceResolutionsFile {
+	resolutions?: Record<string, SourceResolution>
+}
+
+/**
+ * Source resolutions read from `resolutionsPath`, keyed by source id.
+ *
+ * An absent file answers an empty map.
+ * A file that exists and cannot be parsed raises, because reading it as empty would
+ * drop somebody's recorded review without saying so.
+ */
+async function readSourceResolutions(
+	resolutionsPath: PathBuilderLike | undefined
+): Promise<Map<string, SourceResolution>> {
+	if (!resolutionsPath || !(await pathExists(resolutionsPath))) return new Map()
+
+	const file = await readLocalJSONFile<SourceResolutionsFile>(resolutionsPath)
+
+	return new Map(Object.entries(file.resolutions ?? {}))
+}
+
+/**
+ * Merges each recorded resolution onto the source whose id it holds.
+ *
+ * @throws When a resolution's source id is absent from the register.
+ * Such an entry is a typo or a source that has been removed.
+ * Keeping it silently would leave a review whose fields reach no row, which reads as work already done.
+ */
+export function applySourceResolutions(
+	sources: readonly AddressSourceRecord[],
+	recorded: ReadonlyMap<string, SourceResolution>
+): AddressSourceRecord[] {
+	const known = new Set(sources.map((source) => source.sourceID))
+
+	for (const sourceID of recorded.keys()) {
+		if (!known.has(sourceID)) {
+			throw new Error(
+				`a recorded source resolution names ${stringifyJSON(sourceID)}, which the register does not carry. ` +
+					"A resolution that resolves nothing is a typo or a source that has been removed."
+			)
+		}
+	}
+
+	return sources.map((source) => {
+		const resolution = recorded.get(source.sourceID)
+
+		return resolution ? { ...source, ...resolution } : source
+	})
+}
+
+/**
  * Licence decisions read from `decisionsPath`, keyed by licence id.
  *
  * An absent file answers an empty map, but a file that exists and cannot be parsed raises,
@@ -595,12 +671,14 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 	const scopes = new Map<string, LicenseScope>()
 	const jurisdictions = await readJurisdictions(options.inventoryPath, fired)
 
-	const { sources, discoveryRailRowsDropped } = await readSources(
+	const { sources: derived, discoveryRailRowsDropped } = await readSources(
 		options.sourcesPath,
 		licenseByStatement,
 		fired,
 		scopes
 	)
+
+	const sources = applySourceResolutions(derived, await readSourceResolutions(options.resolutionsPath))
 
 	for (const [from] of RETIRED_NOTE_REWRITES) {
 		if (!fired.has(from)) {

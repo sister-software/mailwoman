@@ -95,7 +95,7 @@ export async function finalizePromotionVerdict(options: FinalizeVerdictOptions):
 
 	console.log(
 		`\nledger (#885): on promote, append this run —\n` +
-			`  node packages/mailwoman/out/cli.js eval ledger-append \\\n` +
+			`  node packages/mailwoman/out/cli/main.js eval ledger-append \\\n` +
 			`    --out-dir ${options.outDir} --model-version <npm-semver> \\\n` +
 			`    --run-id ${options.label.replaceAll(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
 			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${options.card}`
