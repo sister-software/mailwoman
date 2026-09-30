@@ -262,21 +262,33 @@ every contracting process. Taiwan's GCIS register gives a registered company add
 business address in separate columns. `ingestEligibilityProblems` requires at least one column to have
 a role, and the audit refuses an empty map, which would read as resolved while stating nothing.
 
-**Eleven sources of 389 are resolved**, and ten of the eleven have all four fields. AusTender,
-`au-procurement-grants-1`, is recorded from a measurement of the 2022 OCDS release. The nine SIRENE
-territories are recorded from INSEE's own `dessin de fichier`. `gb-business-register-1` has its role,
-coverage and lineage and no personal-data review, so it is the eleventh with three of four. Each is
-retained under `internal/strategy/rights-receipts/`.
+**Sixteen sources of 389 are resolved**, and fifteen of the sixteen have every field their row can
+carry. AusTender and five OCDS procurement releases are recorded from whole-year measurements of the
+published data. The nine SIRENE territories are recorded from INSEE's own `dessin de fichier`.
+`gb-business-register-1` has its role, coverage and lineage and no personal-data review, so it is the
+sixteenth with three of four. Each is retained under `internal/strategy/rights-receipts/`.
 
-Every one of the ten stays ineligible on the same single condition: `personalDataReview` reads
-`present`. Moving one to `assessed` needs a completed analysis, which the register requires be named by
-location.
+**Fifteen sources now have one blocking condition each rather than four.** Fourteen read
+`personalDataReview: present`, and moving one to `assessed` needs a completed analysis which the register
+requires be named by location. The fifteenth is Uruguay, refused on its address role: no party object in
+127,885 carries an address field of any kind, so that publication is reachable in bulk and is not an
+address source.
 
-The three sources measured so far each place the role differently, which is why the field is a map
-keyed by a path. AusTender carries two roles in two column families on one record. Companies House
-carries one role in one family. SIRENE carries the role on a row-level flag: `etablissementSiege` says
-whether the establishment is its legal unit's seat, so the same columns are a `registered-office`
-address on one row and a `facility` address on the next.
+Every measured source places the role differently, which is why the field is a map keyed by a path rather
+than one role per source.
+
+- AusTender carries two roles in two column families on one record.
+- Companies House carries one role in one family.
+- SIRENE carries it on a row-level flag: `etablissementSiege` says whether the establishment is its legal
+  unit's seat, so the same columns are a `registered-office` address on one row and a `facility` address
+  on the next.
+- An OCDS release keys addresses by party role, and the roles differ per publisher. Germany uses fifteen
+  where AusTender uses two. Italy's `supplier` role carries no address at all, so its addresses are a
+  `buyer`'s and a `payer`'s, which is AusTender's shape inverted. Chile carries a region and neither a
+  postcode nor a locality on any of 544,754 party objects.
+
+An OCDS role takes a role here only where OCDS's own codelist defines it. Germany's eight extension roles
+take none rather than a guessed one.
 
 ## `training-manifests/<version>.json` — what reached one base corpus (#2375)
 

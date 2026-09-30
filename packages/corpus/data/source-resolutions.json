@@ -6,7 +6,77 @@
 	"$upstreamLineage": "The endpoint or dataset this source's copy was taken from, so two register rows fed by one upstream submission count as one observation rather than two. A URL when the upstream is not itself a register row.",
 	"$sireneRepetition": "Nine rows below are one source, INSEE's SIRENE establishment register, split by overseas territory. The fields repeat because the register carries one row per jurisdiction and each row's coverage statement is about that territory, while the column layout and the diffusion mechanism are SIRENE's and identical throughout.",
 	"$sireneSecondAddress": "SIRENE's establishment file carries a second address family, the `2`-suffixed columns, which INSEE labels only `adresse secondaire` — `complementAdresse2Etablissement` reads `Complément d'adresse secondaire`. What role that address plays is unstated, so it takes no entry in `addressRoles` rather than a guessed one, and the coverage text names it so a reader knows the column exists.",
+	"$ocdsPartyRoles": "An OCDS release keys its addresses by party role, so `addressRoles` names roles rather than columns for those sources. A role is assigned only where OCDS's own codelist defines it, retrieved from `https://standard.open-contracting.org/1.1/en/codelists/partyRole.csv`: `buyer`, `procuringEntity`, `payer`, `funder` and `reviewBody` are bodies acting in the process, so their address is an office they operate and reads `facility`; `supplier` and `tenderer` are the transacting party, so theirs reads `counterparty`. Germany's release also uses eight roles from an extension whose codelist neither the 1.1 nor the latest list defines — `processContactPoint`, `reviewContactPoint`, `submissionReceiptBody`, `mediationBody`, `evaluationBody`, `procurementServiceProvider`, `leadTenderer`, `subcontractor` — and those take no role here rather than a guessed one.",
 	"resolutions": {
+		"it-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=payer].address": "facility"
+			},
+			"coverage": "ANAC's OCDS release, Jan 2020 through Sep 2025 per the OCP Data Registry, 1,474,656 parties and 0 documents. Measured over the whole 2025 file, 3,963,957 bytes: 9,405 contracting processes and 29,823 party objects in three roles — supplier 11,075, buyer 9,381, payer 9,367. A buyer carries locality, postalCode, countryName and streetAddress on 9,381 of 9,381 rows. A payer carries a postcode on 9,355, a locality on 9,292 and a street line on 2,555. **The supplier role carries no address field at all**, so every address in this release belongs to a public body rather than to a contracting counterparty. Postcodes include the literal placeholder `N.A.`, which a reader has to treat as absent rather than as a code.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/117"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Two of 11,075 supplier party names take the `Surname, Firstname` form, so the publication names identifiable natural persons and `absent` would be wrong. Neither carries a street line, and no address-bearing role in this release is a counterparty role: the addresses belong to buyers and payers, which are Italian public entities. So an adapter reading only `buyer` and `payer` addresses would carry no natural-person address, which makes this the strongest candidate of the ten for an `assessed` determination. Recording that determination is a decision rather than a measurement, and the measurement is in the receipt.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"zm-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=tenderer].address": "counterparty",
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=procuringEntity].address": "facility"
+			},
+			"coverage": "ZPPA's OCDS release, Aug 2016 through May 2026 per the OCP Data Registry, 483,215 parties and 115,495 documents. Measured over the whole 2026 file, 13,244,085 bytes: 26,157 contracting processes and 62,736 party objects in four roles — tenderer 36,146, buyer 26,590, procuringEntity 26,590, supplier 5,014. A tenderer carries region, locality, countryName and streetAddress on 36,146 of 36,146 rows and a postcode on 29,982. Buyer and procuringEntity carry the same four on 26,590 of 26,590, and a sample shows one party holding both roles. A supplier carries region, locality and countryName on 5,014. The street field sometimes holds a post-office box — the Civil Aviation Authority reads `P.O.Box 50137` in `streetAddress` — so the field's grammar is mixed and a premise parser trained on it would see mailing forms.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/3"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "No supplier or tenderer name among 36,146 counterparty party objects takes the `Surname, Firstname` form, so that measure found no natural person. It is a lower bound rather than a clearance: a sole trader who trades under their own name without the comma is missed, and every counterparty role here carries a street address on 100% of rows. Reaching `absent` needs a measure that does not depend on one naming convention.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"uy-procurement-grants-1": {
+			"coverage": "ARCE's OCDS release, Nov 2017 through Sep 2026 per the OCP Data Registry, 1,451,895 parties and 786,024 documents. Measured over the whole 2026 file, 17,636,512 bytes: 57,650 contracting processes and 127,885 party objects in two roles, supplier 70,235 and procuringEntity 57,650. **No party carries a non-empty address field of any kind.** So this publication is not an address source, and its `addressRoles` stays unresolved because there is no address column to assign a role to. The register row reads `verified-corpus`, which records that a bulk corpus is reachable rather than that it carries addresses.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/43"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The release carries no address field on any party, and no supplier or procuring-entity name among 70,235 counterparty party objects takes the `Surname, Firstname` form. With no address to carry, a corpus built from this release would hold no record about an identifiable natural person. The reading follows from the address measurement rather than from a separate analysis."
+			}
+		},
+		"de-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=procuringEntity].address": "facility",
+				"parties[roles=payer].address": "facility",
+				"parties[roles=funder].address": "facility",
+				"parties[roles=reviewBody].address": "facility",
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=tenderer].address": "counterparty"
+			},
+			"coverage": "The federal Procurement Office's OCDS release, Oct 2020 through Sep 2026 per the OCP Data Registry, 1,491,413 parties and 824,807 documents. Measured over the whole 2026 file, 102,848,828 bytes: 154,378 contracting processes and 315,007 party objects in **fifteen** roles — buyer 157,642, reviewBody 73,557, processContactPoint 57,216, tenderer 53,382, supplier 52,766, reviewContactPoint 34,573, submissionReceiptBody 18,797, mediationBody 8,610, procurementServiceProvider 7,445, evaluationBody 4,188, procuringEntity 3,755, funder 1,043, payer 1,013, leadTenderer 566, subcontractor 563. A reviewBody carries a locality on 73,556, a postcode on 73,539 and a street line on 65,366. A processContactPoint carries a locality and countryName on 57,216 and a street line on 55,310. A tenderer carries a locality and countryName on 52,980. Region codes are NUTS rather than names — `DED2D`, `DE91C` — and countryName is the alpha-3 `DEU`. Eight of the fifteen roles take no entry in `addressRoles`, because the extension defining them is not in the codelist this pass retrieved.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/136"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Ten of 53,940 counterparty party names take the `Surname, Firstname` form and nine carry a street line. Three are unambiguous natural persons with a residential-looking address: `Tausendfreund, Bettina` at `Neuer Markt 54, 53340 Meckenheim`, `Supervision-Roy, Jan Roy` at `Pastor-Sander-Bogen 11, 37083 Göttingen`, and `Fröschlein-Dienste, Jörg Schneider` at `Mühlstrasse 17, 01844 NEUSTADT`. The inverted-name form is a lower bound, so the true count is higher.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"cl-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=tenderer].address": "counterparty",
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=procuringEntity].address": "facility"
+			},
+			"coverage": "ChileCompra's OCDS release, Jan 2022 through May 2026 per the OCP Data Registry, 11,619,010 parties and 4,864,820 documents — the largest of the ten procurement publications. Measured over the whole 2026 file, 185,742,438 bytes: 170,410 contracting processes and 544,754 party objects in four roles — tenderer 266,559, supplier 209,702, procuringEntity 170,402, buyer 170,402. A tenderer carries a street line on 265,699 and a region on 264,579; a supplier a street line on 208,380; buyer and procuringEntity a region on 170,120 each and a street line on 164,705. **No party carries a postcode or a locality**, so the admin tail is a region name alone. Region values carry a trailing space (`Región del Biobío `) and party names are doubled around a pipe (`X | X`), both of which a reader has to normalize. The registry also serves a `2029.jsonl.gz` of 0 bytes, so a contracting process is dated four years ahead.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/144"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Two of 374,352 counterparty party names take the `Surname, Firstname` form and both are organizations whose name contains a comma, `CEPAL, Naciones Unidas` and `Xpertis, SpA`, so that measure found no natural person. It is a lower bound rather than a clearance: Chilean sole traders trade under their own names, tenderer and supplier carry a street line on 265,699 and 208,380 rows, and no measure here depends on anything but one naming convention.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
 		"bl-business-legal-1": {
 			"addressRoles": {
 				"adresseEtablissement where etablissementSiege is true": "registered-office",
