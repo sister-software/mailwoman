@@ -578,7 +578,8 @@ async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
 		let text: string
 
 		try {
-			// The TypeScript sources come from the context, which already holds them; other files are read once here.
+			// The context already holds the TypeScript sources.
+			// Every other file is read once here.
 			text = await (TYPESCRIPT_SOURCE.test(trackedPath)
 				? readContextSource(context, trackedPath)
 				: readLocalTextFile(trackedPath))

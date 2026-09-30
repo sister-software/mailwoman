@@ -393,7 +393,8 @@ jobs:
         with:
           filters: |
             lexicon:
-              - 'packages/mailwoman/lib/gazetteer-pipeline/**'
+              - 'packages/mailwoman/tools/gazetteer-pipeline/**'
+              - 'packages/mailwoman/tools/gazetteer-pipeline.ts'
               - 'data/gazetteer/**'
               - 'packages/core/data/libpostal/**'
               - 'packages/codex/**'
@@ -411,7 +412,7 @@ jobs:
           fi
 
           echo "needed=false" >> "$GITHUB_OUTPUT"
-          echo "::notice title=lexicon-full SKIPPED::Nothing under mailwoman/gazetteer-pipeline/, data/gazetteer/, core/data/libpostal/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws were asserted, against the fixture layer in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were not exercised. lexicon-nightly.yml and the release check carry those."
+          echo "::notice title=lexicon-full SKIPPED::Nothing under mailwoman/tools/gazetteer-pipeline/, data/gazetteer/, core/data/libpostal/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws were asserted, against the fixture layer in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were not exercised. lexicon-nightly.yml and the release check carry those."
           {
             echo "## lexicon-full: skipped (path-conditional)"
             echo ""
@@ -610,7 +611,6 @@ jobs:
               - 'packages/neural-weights-en-nz/**'
               - 'packages/variant-aliases/**'
               - 'packages/tiger/**'
-              - 'packages/formatter/**'
               - 'packages/record/**'
               - 'packages/match/**'
               - 'packages/registry/**'
@@ -641,7 +641,6 @@ jobs:
               # --- Root config that affects packaging ---
               - 'package.json'
               - 'tsconfig.json'
-              - 'tsconfig.base.json'
               - 'release.config.json'
               - 'yarn.lock'
               - '.nvmrc'
