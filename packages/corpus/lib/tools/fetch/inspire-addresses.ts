@@ -316,32 +316,92 @@ export async function readFeaturePage(
 }
 
 /**
+ * A void reason written as its bare term where a void object would otherwise sit.
+ *
+ * Estonia writes `"unpopulated"` as the value of an unused component slot.
+ * The terms are the local names of the INSPIRE void-reason codelist.
+ *
+ * Only `unpopulated` was measured.
+ * The other two are here because that codelist has three members, so a service
+ * writing one of them writes one of these.
+ */
+const VOID_REASON_TEXT = new Set(["unpopulated", "unknown", "withheld"])
+
+/**
+ * A flattened component slot, as GeoServer writes one: `component3_xlink_href`.
+ */
+const FLATTENED_COMPONENT = /^component\d*_xlink_href$/iu
+
+/**
  * Every `component` reference an address carries, as the service wrote them.
+ *
+ * Two encodings appear across the services measured.
+ * Slovakia and Flanders write a `component` array of objects carrying `@href`.
+ *
+ * Estonia writes one flat property per slot, `component1_xlink_href` through `component6_xlink_href`,
+ * and fills an unused slot with the string `unpopulated` rather than with a void object.
+ * Reading only the array reported 0 references for every Estonian address, where each carries four.
+ *
+ * A reference may leave the service: Estonia's first three slots address its Administrative
+ * Units theme at `AU_haldusyksused` rather than its Addresses theme.
+ * That is a reference this module reads and {@linkcode resolveComponents} reports as unjoined
+ * against Addresses features, which is the honest answer rather than a dropped reference.
  */
 export function componentReferences(feature: GeoJSONFeature): readonly string[] {
-	const component = feature.properties?.["component"]
+	const properties = feature.properties ?? {}
+	const component = properties["component"]
 	const entries = Array.isArray(component) ? component : component === undefined ? [] : [component]
 
-	return entries
-		.map((entry) =>
-			typeof entry === "object" && entry !== null ? String((entry as Record<string, unknown>)["@href"] ?? "") : ""
-		)
-		.filter((href) => href.length > 0)
+	const fromArray = entries.map((entry) =>
+		typeof entry === "object" && entry !== null ? String((entry as Record<string, unknown>)["@href"] ?? "") : ""
+	)
+
+	const fromSlots = Object.keys(properties)
+		.filter((key) => FLATTENED_COMPONENT.test(key))
+		.toSorted()
+		.map((key) => {
+			const value = properties[key]
+
+			return typeof value === "string" ? value : ""
+		})
+
+	return [...fromArray, ...fromSlots]
+		.map((href) => href.trim())
+		.filter((href) => href.length > 0 && !VOID_REASON_TEXT.has(href.toLowerCase()))
 }
 
 /**
- * The key a component reference joins on, or `null` where this reference states none.
+ * The query parameters a `GetFeature` reference states its target's id in,
+ * each spelled as the service wrote it.
  *
- * Two shapes appear in the services measured.
+ * Slovakia writes a stored query, `…&id=AdminUnitName.15345`.
+ * Estonia writes the WFS KVP parameter, `…&featureID=120275`.
+ *
+ * A reader that knows only `id` returns the whole URL as the key for Estonia's references,
+ * and no identifier equals a URL, so every one reads as unjoined.
+ */
+const REFERENCE_ID_PARAMETERS = ["id", "featureID", "featureid", "FEATUREID", "resourceID", "RESOURCEID"] as const
+
+/**
+ * The key a component reference joins on, or `null` where the reference is not a URL.
+ *
+ * Three shapes appear across the services measured, and the difference is
+ * where the key sits rather than whether one exists.
  * Slovakia writes a stored-query URL whose `id` parameter carries the feature
  * id, `…&id=AdminUnitName.15345`.
  *
- * Flanders writes an external vocabulary URI, `http://vocab.belgif.be/auth/refnis1995/1000#id`,
- * which points at a term in another register rather than at a feature of this service.
+ * Estonia writes a `GetFeature` URL whose `featureID` parameter carries it.
  *
- * Returning `null` for the second keeps it apart from a resolvable reference.
- * A caller that treats an unresolvable reference as a missing component would
- * record a complete address as incomplete.
+ * Flanders writes an identifier URI, `https://data.vlaanderen.be/id/straatnaam/6301`,
+ * which is the value its `ad:ThoroughfareName` features publish in `identifier`.
+ *
+ * A fragment is dropped because a reference may carry one where the identifier does not:
+ * `http://vocab.belgif.be/auth/refnis1995/1000#id` addresses the same term as that URI without it.
+ *
+ * Whether a key joins is not a property of its spelling, so this reads a key and
+ * {@linkcode resolveComponents} decides joinability against the features a service published.
+ * Deciding it here from the URL's shape reported 15 of Flanders' 20 references as belonging
+ * to another register when every one of them addresses a feature of the same service.
  */
 export function componentJoinKey(href: string): string | null {
 	let url: URL
@@ -352,53 +412,108 @@ export function componentJoinKey(href: string): string | null {
 		return null
 	}
 
-	const id = url.searchParams.get("id")
+	for (const parameter of REFERENCE_ID_PARAMETERS) {
+		const id = url.searchParams.get(parameter)
 
-	if (id) return id
+		if (id) return id
+	}
 
-	// A stored-query URL states its id as a parameter.
-	// Anything else is another register's term.
-	return null
+	url.hash = ""
+
+	return url.toString()
+}
+
+/**
+ * The key a component feature publishes for an address to reference it by.
+ *
+ * `identifier.value` is the INSPIRE external object identifier, which is what
+ * Flanders writes on both sides of the join.
+ * `gml_id` is the fallback for a service that publishes no identifier,
+ * and a stored-query reference addresses that id.
+ */
+export function componentIdentifier(feature: GeoJSONFeature): string | null {
+	const identifier = feature.properties?.["identifier"]
+
+	if (typeof identifier === "object" && identifier !== null) {
+		const value = (identifier as Record<string, unknown>)["value"]
+
+		if (typeof value === "string" && value.length) return value
+	}
+
+	if (typeof identifier === "string" && identifier.length) return identifier
+
+	const gmlID = feature.properties?.["gml_id"] ?? feature.id
+
+	return gmlID === undefined || gmlID === null ? null : String(gmlID)
 }
 
 /**
  * What a pass over one service established about its references.
  *
- * A caller reads this rather than inferring from a count of joined addresses, because an address
- * whose components live in another register is complete at the source and unjoinable here.
+ * `joined` and `unjoined` are counted against the component features the caller supplied,
+ * so a caller that paged part of a component type reads `unjoined` as "not among
+ * the features read" rather than as "absent from the service".
+ * `unjoinedExample` is there to be looked at for that reason: a reference into another register
+ * and a reference past the end of a page look identical in the counts and different in the URL.
  */
 export interface ComponentResolution {
 	/**
-	 * References whose key this module could read.
+	 * References whose key equals an identifier among the component features supplied.
 	 */
-	resolvable: number
+	joined: number
 	/**
-	 * References that point at a term in another register, with one example.
+	 * References whose key matched no supplied component feature, with one example.
 	 */
-	external: number
-	externalExample: string | null
+	unjoined: number
+	unjoinedExample: string | null
+	/**
+	 * References this module could not read a key from at all.
+	 */
+	unreadable: number
 }
 
 /**
- * Counts how many of an address page's component references this module can join.
+ * Joins an address page's component references against the component features supplied.
  */
-export function resolveComponents(features: readonly GeoJSONFeature[]): ComponentResolution {
-	let resolvable = 0
-	let external = 0
-	let externalExample: string | null = null
+export function resolveComponents(
+	addresses: readonly GeoJSONFeature[],
+	components: readonly GeoJSONFeature[]
+): ComponentResolution {
+	const identifiers = new Set<string>()
 
-	for (const feature of features) {
-		for (const href of componentReferences(feature)) {
-			if (componentJoinKey(href)) {
-				resolvable++
+	for (const feature of components) {
+		const identifier = componentIdentifier(feature)
+
+		if (identifier !== null) {
+			identifiers.add(identifier)
+		}
+	}
+
+	let joined = 0
+	let unjoined = 0
+	let unreadable = 0
+	let unjoinedExample: string | null = null
+
+	for (const address of addresses) {
+		for (const href of componentReferences(address)) {
+			const key = componentJoinKey(href)
+
+			if (key === null) {
+				unreadable++
 
 				continue
 			}
 
-			external++
-			externalExample ??= href
+			if (identifiers.has(key)) {
+				joined++
+
+				continue
+			}
+
+			unjoined++
+			unjoinedExample ??= href
 		}
 	}
 
-	return { resolvable, external, externalExample }
+	return { joined, unjoined, unjoinedExample, unreadable }
 }

@@ -14,6 +14,7 @@ import { describe, expect, it } from "vitest"
 import {
 	AD_FEATURE_TYPES,
 	adFeatureTypeOf,
+	componentIdentifier,
 	componentJoinKey,
 	componentReferences,
 	isVoided,
@@ -243,9 +244,55 @@ describe("component references", () => {
 		},
 	}
 
+	/**
+	 * Estonia writes one flat property per component slot and fills an unused slot with a bare
+	 * void reason, so slots 4 and 5 state that no component exists rather than naming one.
+	 */
+	const estonianAddress: GeoJSONFeature = {
+		type: "Feature",
+		geometry: { type: "Point", coordinates: [23.2, 58.6] },
+		properties: {
+			component1_xlink_href:
+				"https://inspire.geoportaal.ee/geoserver/AU_haldusyksused/ows?service=WFS&request=GetFeature&id=AU.AdministrativeUnit.1",
+			component1_xlink_title: "Harju maakond",
+			component4_xlink_href: "unpopulated",
+			component5_xlink_href: "unpopulated",
+			component6_xlink_href:
+				"https://inspire.geoportaal.ee/geoserver/AD_Address/ows?service=WFS&request=GetFeature&id=AD.Address_ThoroughfareName.92",
+		},
+	}
+
+	/**
+	 * The features the two services publish for the references above to join against.
+	 */
+	const slovakComponents: readonly GeoJSONFeature[] = [
+		{ type: "Feature", geometry: null, properties: { gml_id: "AdminUnitName.15345" } },
+		{ type: "Feature", geometry: null, properties: { gml_id: "PostalDescriptor.95144" } },
+	]
+
+	const flemishComponents: readonly GeoJSONFeature[] = [
+		{
+			type: "Feature",
+			geometry: null,
+			properties: { identifier: { value: "https://data.vlaanderen.be/id/straatnaam/1000" } },
+		},
+	]
+
 	it("reads every reference an address carries", () => {
 		expect(componentReferences(slovakAddress)).toHaveLength(2)
 		expect(componentReferences({ ...slovakAddress, properties: {} })).toHaveLength(0)
+	})
+
+	it("reads a flattened component slot, and reads a bare void reason as no reference", () => {
+		// Reading only the `component` array reported 0 references for every Estonian
+		// address, where each carries four.
+		const references = componentReferences(estonianAddress)
+
+		expect(references).toHaveLength(2)
+		expect(references).not.toContain("unpopulated")
+
+		expect(references[0]).toContain("AU_haldusyksused")
+		expect(references[1]).toContain("AD.Address_ThoroughfareName.92")
 	})
 
 	it("joins on the feature id a stored-query reference carries", () => {
@@ -254,24 +301,74 @@ describe("component references", () => {
 		).toBe("AdminUnitName.15345")
 	})
 
-	it("reports a reference into another register as unjoinable rather than as missing", () => {
-		// Flanders points at a term in the Belgian NIS vocabulary.
-		// That address is complete at its source and its component lives elsewhere,
-		// which is a different fact from a component that is absent.
-		expect(componentJoinKey("http://vocab.belgif.be/auth/refnis1995/1000#id")).toBeNull()
-		expect(componentJoinKey("not a url")).toBeNull()
-
-		const resolution = resolveComponents([flemishAddress])
-
-		expect(resolution.resolvable).toBe(0)
-		expect(resolution.external).toBe(2)
-		expect(resolution.externalExample).toBe("http://vocab.belgif.be/auth/refnis1995/1000#id")
+	it("joins on featureID as well as id, which is the parameter Estonia writes", () => {
+		expect(
+			componentJoinKey(
+				"https://inspire.geoportaal.ee/geoserver/AD_Address/ows?service=WFS&request=GetFeature&typeNames=AD_Address%3AAD.Address_PostalDescriptor&featureID=120275"
+			)
+		).toBe("120275")
 	})
 
-	it("counts the two kinds separately across a page", () => {
-		const resolution = resolveComponents([slovakAddress, flemishAddress])
+	it("joins an identifier URI on itself, dropping a fragment the identifier does not carry", () => {
+		// Flanders writes the identifier its component features publish, and writes a fragment
+		// on the vocabulary reference that the vocabulary's own term does not carry.
+		expect(componentJoinKey("https://data.vlaanderen.be/id/straatnaam/6301")).toBe(
+			"https://data.vlaanderen.be/id/straatnaam/6301"
+		)
 
-		expect(resolution.resolvable).toBe(2)
-		expect(resolution.external).toBe(2)
+		expect(componentJoinKey("http://vocab.belgif.be/auth/refnis1995/1000#id")).toBe(
+			"http://vocab.belgif.be/auth/refnis1995/1000"
+		)
+
+		expect(componentJoinKey("not a url")).toBeNull()
+	})
+
+	it("reads the identifier a component feature publishes, preferring the INSPIRE one over gml_id", () => {
+		expect(componentIdentifier(flemishComponents[0]!)).toBe("https://data.vlaanderen.be/id/straatnaam/1000")
+		expect(componentIdentifier(slovakComponents[0]!)).toBe("AdminUnitName.15345")
+		expect(componentIdentifier({ type: "Feature", geometry: null, properties: {} })).toBeNull()
+	})
+
+	it("decides joinability against the features a service published rather than against a URL's shape", () => {
+		// Deciding from the shape reported 15 of Flanders' 20 references as another register's,
+		// when each addresses a feature of the same service.
+		const resolution = resolveComponents([flemishAddress], flemishComponents)
+
+		expect(resolution.joined).toBe(1)
+		expect(resolution.unjoined).toBe(1)
+		expect(resolution.unjoinedExample).toBe("http://vocab.belgif.be/auth/refnis1995/1000#id")
+		expect(resolution.unreadable).toBe(0)
+	})
+
+	it("reports an unjoined reference rather than assuming the component is absent", () => {
+		// The component features supplied hold neither key, and an address referencing a
+		// feature past the end of a page reads the same as one referencing another register.
+		// The caller looks at `unjoinedExample` to tell them apart.
+		const resolution = resolveComponents([slovakAddress, flemishAddress], [])
+
+		expect(resolution.joined).toBe(0)
+		expect(resolution.unjoined).toBe(4)
+	})
+
+	it("counts a reference it cannot read a key from separately from one that did not join", () => {
+		const unreadable: GeoJSONFeature = {
+			type: "Feature",
+			geometry: null,
+			properties: { component: [{ "@href": "AdminUnitName.15345" }] },
+		}
+
+		const resolution = resolveComponents([unreadable], slovakComponents)
+
+		expect(resolution.unreadable).toBe(1)
+		expect(resolution.joined).toBe(0)
+		expect(resolution.unjoined).toBe(0)
+	})
+
+	it("joins every reference across a page when both services' components are supplied", () => {
+		const resolution = resolveComponents([slovakAddress, flemishAddress], [...slovakComponents, ...flemishComponents])
+
+		expect(resolution.joined).toBe(3)
+		expect(resolution.unjoined).toBe(1)
+		expect(resolution.unjoinedExample).toBe("http://vocab.belgif.be/auth/refnis1995/1000#id")
 	})
 })

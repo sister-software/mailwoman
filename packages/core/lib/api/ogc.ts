@@ -316,6 +316,14 @@ const COUNT_PROBE_SIZE = 10
  * The tell is that a page of the same type returns more features than the count admits,
  * so this asks for one page and refuses a count that page contradicts.
  *
+ * A missing `numberMatched` can also be transient.
+ * Slovakia's `rageo.minv.sk/geoserver/ad/wfs` answered one request out of nine with
+ * no such attribute and the other eight with `1704196`.
+ *
+ * This reports that response as unusable rather than inventing a count,
+ * so a caller that needs the number retries, through `APIClient`'s `retry` configuration
+ * or by reading the `numberMatched` a feature page carries.
+ *
  * @param options.subject Names the layer in the reason, where the caller reads more than one.
  */
 export async function readCheckedWFSFeatureCount(
