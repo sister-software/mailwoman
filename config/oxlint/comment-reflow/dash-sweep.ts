@@ -8,7 +8,7 @@
  *   Only that use moves. A paired dash around an aside stays. A dash introducing a noun phrase stays too.
  *
  *   Paragraphs are joined before rewriting and emitted as one line each. `mailwoman/comment-reflow` re-breaks them
- *   afterwards, so line layout is deliberately not this script's business: run `yarn fix:oxlint` after a sweep.
+ *   afterwards, so line layout is deliberately not this script's business: run `yarn fix:oxc` after a sweep.
  */
 
 /// <reference types="node" />
