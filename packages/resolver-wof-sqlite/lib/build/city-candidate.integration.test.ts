@@ -1,7 +1,8 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { buildCandidateTable } from "#build/candidate"
 import { WOFCandidateTableLookup } from "#candidate/lookup"
@@ -52,7 +53,9 @@ async function attachPostalCityIndex(path: PathBuilderLike): Promise<void> {
 		.execute()
 }
 
-beforeEach(async () => {
+// The lookups open both artifacts read-only, and the side-index is attached once to a copy,
+// so the tests without it read the unmodified build.
+beforeAll(async () => {
 	scratch = await temporaryDirectory("mailwoman-pcc-")
 	const input = scratch.path("admin.db")
 	candidatePath = scratch.path("candidate.db")
@@ -60,9 +63,26 @@ beforeEach(async () => {
 	await buildCandidateTable({ input, output: candidatePath, postcodes: [] })
 })
 
-afterEach(async () => {
-	scratch[Symbol.asyncDispose]()
+afterAll(async () => {
+	await scratch[Symbol.asyncDispose]()
 })
+
+let indexedCandidate: Promise<PathBuilder> | undefined
+
+/**
+ * A copy of the candidate artifact with the postal-city side-index attached.
+ */
+function withPostalCityIndex(): Promise<PathBuilder> {
+	indexedCandidate ??= (async () => {
+		const indexedPath = scratch.path("candidate-postal-city.db")
+		await copyFileTo(candidatePath, indexedPath)
+		await attachPostalCityIndex(indexedPath)
+
+		return indexedPath
+	})()
+
+	return indexedCandidate
+}
 
 describe("WOFCandidateTableLookup postal-city side-index", () => {
 	test("WITHOUT the side-index, a postal-city query resolves to the far distractor (the gap)", async () => {
@@ -74,8 +94,7 @@ describe("WOFCandidateTableLookup postal-city side-index", () => {
 	})
 
 	test("WITH the side-index, an exact (name_key, postcode) hit resolves to the geographic locality", async () => {
-		await attachPostalCityIndex(candidatePath)
-		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: await withPostalCityIndex() })
 
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		expect(hits).toHaveLength(1)
@@ -85,8 +104,7 @@ describe("WOFCandidateTableLookup postal-city side-index", () => {
 	})
 
 	test("a BARE query (no postcode) is untouched — bare 'Antioch' still resolves to the CA distractor", async () => {
-		await attachPostalCityIndex(candidatePath)
-		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: await withPostalCityIndex() })
 
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
@@ -94,16 +112,14 @@ describe("WOFCandidateTableLookup postal-city side-index", () => {
 	})
 
 	test("a postcode NOT in the side-index falls through to the normal probe", async () => {
-		await attachPostalCityIndex(candidatePath)
-		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: await withPostalCityIndex() })
 
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "99999", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
 	})
 
 	test("a NON-locality request (region) does not consult the locality side-index", async () => {
-		await attachPostalCityIndex(candidatePath)
-		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: await withPostalCityIndex() })
 
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "region", postcode: "37013", country: "US" })
 		expect(hits.every((h) => h.name !== "Nashville")).toBe(true)

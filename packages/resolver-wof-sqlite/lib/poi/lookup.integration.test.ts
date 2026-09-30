@@ -18,7 +18,7 @@ import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import {
 	POI_H3_RESOLUTION,
@@ -228,14 +228,16 @@ async function buildFixture(path: PathBuilderLike): Promise<void> {
 let scratch: TemporaryDirectory
 let dbPath: PathBuilder
 
-beforeEach(async () => {
+// Every test reads the fixture: `POILookup` opens it read-only through `SQLiteLookup`,
+// and the index checks open their own read-only client, so one build serves the file.
+beforeAll(async () => {
 	scratch = await temporaryDirectory("mailwoman-poi-lookup-")
 	dbPath = scratch.path("poi.db")
 	await buildFixture(dbPath)
 })
 
-afterEach(async () => {
-	scratch[Symbol.asyncDispose]()
+afterAll(async () => {
+	await scratch[Symbol.asyncDispose]()
 })
 
 describe("POILookup", () => {

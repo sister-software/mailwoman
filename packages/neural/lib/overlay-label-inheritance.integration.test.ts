@@ -54,10 +54,25 @@ const baseline = HAVE_WEIGHTS.get("en-US")
 	? await readLabelsFromModelCard((await resolveWeights({ locale: "en-US" })).modelCardPath)
 	: undefined
 
+// Both tests of a locale read the same classifier: one reads its readonly `labels`,
+// the other parses, and neither changes the instance, so each locale's model loads once.
+const classifiers = new Map<string, Promise<NeuralAddressClassifier>>()
+
+function classifierFor(locale: string): Promise<NeuralAddressClassifier> {
+	let classifier = classifiers.get(locale)
+
+	if (!classifier) {
+		classifier = NeuralAddressClassifier.loadFromWeights({ locale })
+		classifiers.set(locale, classifier)
+	}
+
+	return classifier
+}
+
 describe("weights overlays inherit their base's label vocabulary", () => {
 	for (const locale of LOCALES) {
 		test.skipIf(!HAVE_WEIGHTS.get(locale))(`${locale} decodes with the model's full vocabulary`, async () => {
-			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
+			const classifier = await classifierFor(locale)
 
 			// A direct `labels` check rather than a parse assertion: a wrong vocabulary
 			// throws on the first parse.
@@ -70,7 +85,7 @@ describe("weights overlays inherit their base's label vocabulary", () => {
 		})
 
 		test.skipIf(!HAVE_WEIGHTS.get(locale))(`${locale} parses without an emission-width mismatch`, async () => {
-			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
+			const classifier = await classifierFor(locale)
 
 			await expect(classifier.parse("350 5th Ave, New York, NY 10118")).resolves.toBeDefined()
 		})

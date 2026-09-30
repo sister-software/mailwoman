@@ -39,15 +39,35 @@ function extractJSON(stdout: string): unknown {
 	return parseJSONStrict(cleaned.slice(objStart, objEnd + 1))
 }
 
+const debugOutputs = new Map<string, Promise<string>>()
+
+/**
+ * The stdout of `parse --debug <input>`.
+ *
+ * One spawn serves every test that parses the same input, because each test
+ * reads the captured text into its own object.
+ */
+function parseDebug(input: string): Promise<string> {
+	let output = debugOutputs.get(input)
+
+	if (!output) {
+		output = runFile(process.execPath, [cliBin, "parse", "--debug", input], {
+			env: childEnv({ NODE_NO_WARNINGS: "1" }),
+			maxBuffer: 4 * 1024 * 1024,
+		}).then(({ stdout }) => stdout)
+
+		debugOutputs.set(input, output)
+	}
+
+	return output
+}
+
 describe("parse --debug (runtime pipeline)", () => {
 	test("US ZIP+4 fast-path emits PipelineResult with path='fast-path' + timing + tree", async () => {
 		// Bare US ZIP+4 hits the fast-path (postcode_only kind, unambiguous us_zip4 hit).
 		// Doesn't require neural weights.
 		// The fast-path tree is built from QueryShape.
-		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
-			env: childEnv({ NODE_NO_WARNINGS: "1" }),
-			maxBuffer: 4 * 1024 * 1024,
-		})
+		const stdout = await parseDebug("10118-1234")
 
 		const result = extractJSON(stdout) as Record<string, unknown>
 
@@ -77,10 +97,7 @@ describe("parse --debug (runtime pipeline)", () => {
 	}, 20_000)
 
 	test("locality_only fast-path identifies single-word inputs", async () => {
-		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "Paris"], {
-			env: childEnv({ NODE_NO_WARNINGS: "1" }),
-			maxBuffer: 4 * 1024 * 1024,
-		})
+		const stdout = await parseDebug("Paris")
 
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const kind = result["kind"] as Record<string, unknown>
@@ -88,10 +105,7 @@ describe("parse --debug (runtime pipeline)", () => {
 	}, 20_000)
 
 	test("queryShape carries the detected known-format hit for postcode inputs", async () => {
-		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
-			env: childEnv({ NODE_NO_WARNINGS: "1" }),
-			maxBuffer: 4 * 1024 * 1024,
-		})
+		const stdout = await parseDebug("10118-1234")
 
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const shape = result["queryShape"] as Record<string, unknown>
@@ -100,10 +114,7 @@ describe("parse --debug (runtime pipeline)", () => {
 	}, 20_000)
 
 	test("normalize records the offsetMap so consumers can map spans back to raw", async () => {
-		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "  Paris  "], {
-			env: childEnv({ NODE_NO_WARNINGS: "1" }),
-			maxBuffer: 4 * 1024 * 1024,
-		})
+		const stdout = await parseDebug("  Paris  ")
 
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const normalized = result["normalized"] as Record<string, unknown>

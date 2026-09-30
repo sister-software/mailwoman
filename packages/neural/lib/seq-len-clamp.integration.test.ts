@@ -42,9 +42,23 @@ const TAIL = "1600 Amphitheatre Parkway, Mountain View, California, 94043, Unite
  */
 const PREFIX = "Attention Accounts Payable Department Global Logistics Division "
 
+let loadedClassifier: Promise<NeuralAddressClassifier> | undefined
+
+/**
+ * The en-US classifier, loaded by the first test that asks for it.
+ *
+ * `parse` and `traceParse` take their options per call and write no instance state,
+ * so every test can read the same instance.
+ */
+function enUSClassifier(): Promise<NeuralAddressClassifier> {
+	loadedClassifier ??= NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+
+	return loadedClassifier
+}
+
 describe.skipIf(!haveModel)("sequence-length clamp", () => {
 	test("an address that tokenizes PAST the model limit parses instead of throwing", async () => {
-		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+		const classifier = await enUSClassifier()
 		// Six repeats produce about 394 characters, past the 128-piece limit.
 		// This is the shortest case that threw.
 		const long = PREFIX.repeat(6) + TAIL
@@ -60,7 +74,7 @@ describe.skipIf(!haveModel)("sequence-length clamp", () => {
 		// with the repair on, `Cannot read properties of undefined` with it off —
 		// which made the crash look like a word-consistency bug.
 		// It was upstream of both.
-		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+		const classifier = await enUSClassifier()
 		const long = PREFIX.repeat(6) + TAIL
 
 		await expect(classifier.parse(long, { enforceWordConsistency: false })).resolves.toBeDefined()
@@ -68,7 +82,7 @@ describe.skipIf(!haveModel)("sequence-length clamp", () => {
 	})
 
 	test("pieces are clamped to the emissions the model returned", async () => {
-		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+		const classifier = await enUSClassifier()
 		const trace = await classifier.traceParse(PREFIX.repeat(10) + TAIL)
 
 		// The invariant the crash violated: one row of emissions per piece, whatever the input length.
@@ -77,7 +91,7 @@ describe.skipIf(!haveModel)("sequence-length clamp", () => {
 	})
 
 	test("an input UNDER the limit is untouched by the clamp", async () => {
-		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+		const classifier = await enUSClassifier()
 		const trace = await classifier.traceParse(TAIL)
 
 		expect(trace.pieces).toHaveLength(trace.logits.length)
