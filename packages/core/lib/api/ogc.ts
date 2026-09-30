@@ -200,16 +200,30 @@ export async function readOGCCollectionBBox(
 }
 
 /**
- * The feature count a WFS reports for one type.
- *
- * `resultType=hits`, which returns the count without a single geometry.
- *
- * @param options.subject Names the layer in the refusal, where the caller reads more than one.
+ * Options shared by the two WFS count readers.
  */
-export async function readWFSFeatureCount(
+export interface ReadWFSFeatureCountOptions {
+	wfsURL: string
+	typeNames: string
+	context: string
+	/**
+	 * Names the layer in the refusal, where the caller reads more than one.
+	 */
+	subject?: string
+}
+
+/**
+ * The `numberMatched` attribute a `resultType=hits` request reported, as the service spelled it.
+ *
+ * The root element's attribute rather than the first match anywhere in the body.
+ * The count describes the collection.
+ *
+ * A regex cannot distinguish it from the same attribute repeated on a nested member.
+ */
+async function readReportedNumberMatched(
 	client: Pick<APIClient, "fetch">,
-	options: { wfsURL: string; typeNames: string; context: string; subject?: string }
-): Promise<number> {
+	options: ReadWFSFeatureCountOptions & { startIndex?: number }
+): Promise<string | undefined> {
 	const { data } = await client.fetch<string>({
 		method: "GET",
 		url: options.wfsURL,
@@ -220,15 +234,31 @@ export async function readWFSFeatureCount(
 			request: "GetFeature",
 			typeNames: options.typeNames,
 			resultType: "hits",
+			...(options.startIndex === undefined ? {} : { startIndex: String(options.startIndex), count: "1" }),
 		},
 	})
 
 	assertNoOGCServiceException(data, options.context)
 
-	// The root element's attribute rather than the first match anywhere in the body:
-	// The count describes the collection.
-	// A regex cannot distinguish it from the same attribute repeated on a nested member.
-	const numberMatched = rootAttribute(data, "numberMatched", { xml: true })
+	return rootAttribute(data, "numberMatched", { xml: true })
+}
+
+/**
+ * The feature count a WFS reports for one type.
+ *
+ * `resultType=hits`, which returns the count without a single geometry.
+ *
+ * This takes the service's word for the count.
+ * A caller that cannot check the number against the publisher's own figure reads
+ * {@linkcode readCheckedWFSFeatureCount} instead, which asks a second time.
+ *
+ * @param options.subject Names the layer in the refusal, where the caller reads more than one.
+ */
+export async function readWFSFeatureCount(
+	client: Pick<APIClient, "fetch">,
+	options: ReadWFSFeatureCountOptions
+): Promise<number> {
+	const numberMatched = await readReportedNumberMatched(client, options)
 	const subject = options.subject === undefined ? "" : ` for ${options.subject}`
 
 	if (numberMatched === undefined) {
@@ -246,4 +276,100 @@ export async function readWFSFeatureCount(
 	}
 
 	return Number(numberMatched)
+}
+
+/**
+ * How much a service's own feature count is worth.
+ *
+ * `reported` is the number the service stated, and `usable` says whether a second read agreed with it.
+ * A caller records the count only where `usable` is true and records `because` otherwise,
+ * so that a service which cannot count is told apart from one that counted a small number.
+ */
+export interface CheckedWFSFeatureCount {
+	reported: number | null
+	usable: boolean
+	because: string
+}
+
+/**
+ * Features per page in the request that checks a reported count.
+ *
+ * Small enough to cost one page and large enough that a service capping its own
+ * count at 1 returns more features than the count admits.
+ */
+const COUNT_PROBE_SIZE = 10
+
+/**
+ * The feature count a WFS reports for one type, checked against a page of that type.
+ *
+ * Two INSPIRE Addresses services measured on 2026-09-30 answer a bare `resultType=hits`
+ * request wrongly, in opposite directions, and the number alone tells a reader neither.
+ *
+ * Flanders (`geo.api.vlaanderen.be/ad/wfs`) answers `numberMatched="10000"` without a `startIndex`
+ * and `4563062` with one, so the first request meets a per-request cap rather than counting the type.
+ * This asks past index 0 for that reason.
+ *
+ * Poland (`mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`) answers `numberMatched="1"`
+ * at every `startIndex`, for a national address register.
+ * A reader that takes the number records one address for a country.
+ *
+ * The tell is that a page of the same type returns more features than the count admits,
+ * so this asks for one page and refuses a count that page contradicts.
+ *
+ * @param options.subject Names the layer in the reason, where the caller reads more than one.
+ */
+export async function readCheckedWFSFeatureCount(
+	client: Pick<APIClient, "fetch">,
+	options: ReadWFSFeatureCountOptions & { probeSize?: number }
+): Promise<CheckedWFSFeatureCount> {
+	const probeSize = options.probeSize ?? COUNT_PROBE_SIZE
+	const numberMatched = await readReportedNumberMatched(client, { ...options, startIndex: 1 })
+
+	if (numberMatched === undefined) {
+		return { reported: null, usable: false, because: "the hits response carried no numberMatched attribute" }
+	}
+
+	if (!/^\d+$/u.test(numberMatched)) {
+		// WFS 2.0 permits `unknown`, which declines to count rather than counting none.
+		return {
+			reported: null,
+			usable: false,
+			because: `the service answered numberMatched=${stringifyJSON(numberMatched)}, declining to count its matches`,
+		}
+	}
+
+	const reported = Number(numberMatched)
+
+	// A page of the same type settles whether the count describes the type or the request.
+	const { data: probe } = await client.fetch<string>({
+		method: "GET",
+		url: options.wfsURL,
+		responseType: "text",
+		params: {
+			service: "WFS",
+			version: "2.0.0",
+			request: "GetFeature",
+			typeNames: options.typeNames,
+			count: String(probeSize),
+		},
+	})
+
+	assertNoOGCServiceException(probe, options.context)
+
+	const returned = rootAttribute(probe, "numberReturned", { xml: true })
+	const observed = returned !== undefined && /^\d+$/u.test(returned) ? Number(returned) : null
+
+	if (observed !== null && observed > reported) {
+		return {
+			reported,
+			usable: false,
+			because: `the service reported numberMatched=${reported} and then returned ${observed} features of the same type, so the count describes its own response rather than the type`,
+		}
+	}
+
+	return {
+		reported,
+		usable: true,
+		because: `a page of ${observed ?? probeSize} features agreed with the reported count`,
+	}
 }

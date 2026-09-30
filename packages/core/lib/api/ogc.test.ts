@@ -7,21 +7,10 @@
  *   a count, a refusal to count and a malformed response.
  */
 
-import type { AxiosResponse } from "axios"
 import { describe, expect, it } from "vitest"
 
-import { type APIClient, OGCServiceError, readOGCServiceException, readWFSFeatureCount } from "#api"
-
-/**
- * The one method {@linkcode readWFSFeatureCount} reaches.
- *
- * `fetch` resolves a full axios response.
- * Only `data` is read, so the stub states that field and asserts the shape once
- * rather than hand-building headers and a config.
- */
-const clientReturning = (data: string): Pick<APIClient, "fetch"> => ({
-	fetch: async <T>() => ({ data: data as T }) as AxiosResponse<T>,
-})
+import { OGCServiceError, readCheckedWFSFeatureCount, readOGCServiceException, readWFSFeatureCount } from "#api"
+import { stubFetchingBodies } from "#api/test/transport"
 
 const options = { wfsURL: "https://example.invalid/wfs", typeNames: "layer", context: "test", subject: "zones" }
 
@@ -29,23 +18,78 @@ describe("readWFSFeatureCount", () => {
 	it("reads the count off the root element", async () => {
 		const body = '<wfs:FeatureCollection numberMatched="1274" numberReturned="0"/>'
 
-		expect(await readWFSFeatureCount(clientReturning(body), options)).toBe(1274)
+		expect(await readWFSFeatureCount(stubFetchingBodies(body), options)).toBe(1274)
 	})
 
 	it("reads a count of zero as a count, not as a missing attribute", async () => {
-		expect(await readWFSFeatureCount(clientReturning('<wfs:FeatureCollection numberMatched="0"/>'), options)).toBe(0)
+		expect(await readWFSFeatureCount(stubFetchingBodies('<wfs:FeatureCollection numberMatched="0"/>'), options)).toBe(0)
 	})
 
 	it('refuses numberMatched="unknown" by naming it, since declining to count is not a count of none', async () => {
 		const body = '<wfs:FeatureCollection numberMatched="unknown"/>'
 
-		await expect(readWFSFeatureCount(clientReturning(body), options)).rejects.toThrow(/declined to count/u)
+		await expect(readWFSFeatureCount(stubFetchingBodies(body), options)).rejects.toThrow(/declined to count/u)
 	})
 
 	it("refuses a response carrying no numberMatched at all", async () => {
-		await expect(readWFSFeatureCount(clientReturning("<wfs:FeatureCollection/>"), options)).rejects.toThrow(
+		await expect(readWFSFeatureCount(stubFetchingBodies("<wfs:FeatureCollection/>"), options)).rejects.toThrow(
 			/carried no numberMatched/u
 		)
+	})
+})
+
+describe("readCheckedWFSFeatureCount", () => {
+	it("accepts a count a page agrees with", async () => {
+		const count = await readCheckedWFSFeatureCount(
+			stubFetchingBodies(
+				'<wfs:FeatureCollection numberMatched="1704196" numberReturned="0"/>',
+				'<wfs:FeatureCollection numberMatched="1704196" numberReturned="10"/>'
+			),
+			options
+		)
+
+		expect(count).toEqual({ reported: 1_704_196, usable: true, because: expect.stringContaining("10 features") })
+	})
+
+	it("refuses a count that returns more features than it admits", async () => {
+		// Poland's INSPIRE Addresses service answers numberMatched="1" at every
+		// startIndex for a national address register.
+		// Recording that number would report one address for a country.
+		const count = await readCheckedWFSFeatureCount(
+			stubFetchingBodies(
+				'<wfs:FeatureCollection numberMatched="1" numberReturned="0"/>',
+				'<wfs:FeatureCollection numberMatched="1" numberReturned="10"/>'
+			),
+			options
+		)
+
+		expect(count.usable).toBe(false)
+		expect(count.reported).toBe(1)
+		expect(count.because).toMatch(/describes its own response rather than the type/u)
+	})
+
+	it("reports a declined count as unread rather than as none", async () => {
+		const count = await readCheckedWFSFeatureCount(
+			stubFetchingBodies(
+				'<wfs:FeatureCollection numberMatched="unknown"/>',
+				'<wfs:FeatureCollection numberReturned="0"/>'
+			),
+			options
+		)
+
+		expect(count.usable).toBe(false)
+		expect(count.reported).toBeNull()
+		expect(count.because).toMatch(/declining to count/u)
+	})
+
+	it("reports a missing attribute rather than assuming one", async () => {
+		const count = await readCheckedWFSFeatureCount(
+			stubFetchingBodies("<wfs:FeatureCollection/>", "<wfs:FeatureCollection/>"),
+			options
+		)
+
+		expect(count.usable).toBe(false)
+		expect(count.because).toMatch(/no numberMatched attribute/u)
 	})
 })
 
@@ -84,6 +128,8 @@ describe("readOGCServiceException", () => {
 
 describe("readWFSFeatureCount over an exception report", () => {
 	it("refuses a ServiceExceptionReport that arrived on a 200 instead of reading it as a missing count", async () => {
-		await expect(readWFSFeatureCount(clientReturning(INVALID_COLUMN), options)).rejects.toBeInstanceOf(OGCServiceError)
+		await expect(readWFSFeatureCount(stubFetchingBodies(INVALID_COLUMN), options)).rejects.toBeInstanceOf(
+			OGCServiceError
+		)
 	})
 })

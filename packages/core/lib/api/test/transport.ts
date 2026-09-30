@@ -15,10 +15,14 @@
  *
  *   Everything here is built structurally with `isAxiosError: true` and `config`/`code`/`response`.
  *   The adapter uses `APIClientConfig["axios"]` because the packages under test reach Axios integrations through
- *   `@mailwoman/core`. This module imports only the core type and JSON helper.
+ *   `@mailwoman/core`. Where an axios type has to be named, such as the response
+ *   {@linkcode stubFetchingBodies} resolves, it is named here rather than by the calling test,
+ *   so a workspace that stubs a request needs no `axios` dependency of its own.
  */
 
-import type { APIClientConfig } from "#api/APIClient"
+import type { AxiosResponse } from "axios"
+
+import type { APIClient, APIClientConfig } from "#api/APIClient"
 import { stringifyJSON } from "#json"
 
 const HTTP_OK = 200
@@ -112,6 +116,31 @@ export interface StubTransportOptions {
 	 * when it validates one (BDC's `{ data: [] }`, say).
 	 */
 	defaultBody?: unknown
+}
+
+/**
+ * A client answering each `fetch` with the next of `bodies`, holding on the last once exhausted.
+ *
+ * A reader that takes `Pick<APIClient, "fetch">` reads only `data`, so the stub states
+ * that field alone rather than building headers and a config.
+ * Passing several bodies scripts a reader that asks twice, such as a count checked against a page.
+ *
+ * This lives beside {@linkcode stubTransport} so that a workspace which does not
+ * depend on `axios` can still stub the method: the axios type is named here,
+ * in core, rather than by the test that calls this.
+ */
+export function stubFetchingBodies(...bodies: string[]): Pick<APIClient, "fetch"> {
+	let call = 0
+
+	return {
+		fetch: async <T>() => {
+			const body = bodies[Math.min(call, bodies.length - 1)] ?? ""
+
+			call++
+
+			return { data: body as T } as AxiosResponse<T>
+		},
+	}
 }
 
 /**

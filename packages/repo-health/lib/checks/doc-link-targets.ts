@@ -218,6 +218,7 @@ export const EXTERNAL_DOC_NAMES: Readonly<Record<string, string>> = {
 	readFileSync: "node:fs",
 	WhosOnFirstClassifier: "the Pelias parser's dictionary classifier",
 	DynamicQuantizeLinear: "the ONNX operator",
+	ImplementsResultPaging: "the WFS 2.0 capabilities constraint",
 }
 
 interface DocLinkSweep {
