@@ -129,13 +129,18 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
  * A build restores the three directories above.
  * A removal from `scratchpad/` stays permanent.
  *
+ * `.claude/state/` holds the session's link to its GitHub issue.
+ * The task-intake skill removes that link at close-out.
+ *
+ * `.gitignore` excludes the directory, and the development MCP rewrites the link on the next intake.
+ *
  * `.yarn/` is excluded because it holds the tracked yarn binary.
  *
  * Only {@link REMOVER} gets this exemption.
  * The hook can remove these paths safely, but a hand-written file such as
  * `out/<subpath>.d.ts` would stand in for source that does not exist.
  */
-const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules|scratchpad)(?:\/|$)|\.tsbuildinfo$/u
+const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules|scratchpad|\.claude\/state)(?:\/|$)|\.tsbuildinfo$/u
 
 const REMOVER = "rm"
 
@@ -164,7 +169,8 @@ const DETACHED_LAUNCH_GUIDANCE =
  * The advice for a {@link REMOVER} refusal.
  */
 const REMOVAL_GUIDANCE =
-	"Removing DERIVED output is admitted: a path under `out/`, `dist/` or `node_modules/`, or a `*.tsbuildinfo`, read " +
+	"Removing DERIVED output is admitted: a path under `out/`, `dist/`, `node_modules/`, `scratchpad/` or " +
+	"`.claude/state/`, or a `*.tsbuildinfo`, read " +
 	"after any `..` is resolved. Anything else inside the repository is tracked or is someone's scratch file — remove a " +
 	"tracked path with `git rm`, so the index and the worktree agree. A target this hook cannot read, such as one behind " +
 	"a variable, is never derived; name the path in full."

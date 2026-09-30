@@ -5,7 +5,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { buildCandidateTable } from "#build/candidate"
 import { rankByPrimaryPreference, WOFCandidateTableLookup } from "#candidate/lookup"
@@ -198,7 +198,9 @@ function buildFixturePostcodes(path: PathBuilderLike): void {
 	`)
 }
 
-beforeEach(async () => {
+// The lookups only read the built artifact, and a test that needs a variant copies
+// it under another name, so one build serves the whole file.
+beforeAll(async () => {
 	scratch = await temporaryDirectory("mailwoman-candidate-lookup-")
 	const input = scratch.path("admin.db")
 	const pc = scratch.path("postcodes.db")
@@ -208,8 +210,8 @@ beforeEach(async () => {
 	await buildCandidateTable({ input, output: candidatePath, postcodes: [pc] })
 })
 
-afterEach(async () => {
-	scratch[Symbol.asyncDispose]()
+afterAll(async () => {
+	await scratch[Symbol.asyncDispose]()
 })
 
 describe("WOFCandidateTableLookup", () => {
@@ -721,7 +723,11 @@ describe("Postcode-containment coherence (Mechanism 2)", () => {
 	}
 
 	test("B2-1: the postal-city short-circuit is untouched — an exact (name, postcode) hit wins with the flag on or off", async () => {
-		using db = new DatabaseClient<WOFDatabase>(candidatePath)
+		// The postal-city table is added to a copy, because the B2-2 tests below read the artifact without one.
+		const postalCityPath = scratch.path("candidate-postal-city.db")
+		await copyFileTo(candidatePath, postalCityPath)
+
+		using db = new DatabaseClient<WOFDatabase>(postalCityPath)
 
 		db.exec(
 			"CREATE TABLE postal_city_candidate (name_key TEXT, postcode TEXT, spr_id INTEGER, name TEXT, latitude REAL, longitude REAL)"
@@ -736,7 +742,7 @@ describe("Postcode-containment coherence (Mechanism 2)", () => {
 			-122.44
 		)
 
-		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: postalCityPath })
 
 		const off = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
 		const on = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))
@@ -856,7 +862,7 @@ describe("WOFCandidateTableLookup — importance", () => {
 		`)
 	}
 
-	beforeEach(async () => {
+	beforeAll(async () => {
 		const input = scratch.path("admin-scored.db")
 		const importance = scratch.path("importance.db")
 		scoredPath = scratch.path("candidate-scored.db")

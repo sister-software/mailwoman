@@ -194,6 +194,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// The hook admits this path inside the tree while it refuses other path writers.
 		["a directory inside the tree", `mkdir -p packages/mailwoman/tools/dev-tools/codex`],
 		["the state directory a linked session writes", `mkdir -p .claude/state`],
+		["unlinking the issue at task close-out", `rm -f .claude/state/linked-issue`],
 		["clearing a workspace's build output", `rm -rf packages/repo-health/out`],
 		[
 			"removing a declaration map the compiler orphaned",
