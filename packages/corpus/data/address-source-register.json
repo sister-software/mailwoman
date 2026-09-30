@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "5155e86b0b1fb8ee0a1da245e21777634d14345700ef5af6ca3d0a653658cdb4",
+	"contentDigest": "9632ae2f0af3aee96660260950b0084b51d5c20ae05643e06119fe973ac53348",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -7381,7 +7381,7 @@
 			"upstreamLineage": ["https://data.open-contracting.org/en/publication/3"],
 			"personalDataReview": {
 				"reading": "present",
-				"because": "No supplier or tenderer name among 36,146 counterparty party objects takes the `Surname, Firstname` form, so that measure found no natural person. It is a lower bound rather than a clearance: a sole trader who trades under their own name without the comma is missed, and every counterparty role here carries a street address on 100% of rows. Reaching `absent` needs a measure that does not depend on one naming convention.",
+				"because": "Two measures were run and neither establishes `absent`. No supplier or tenderer name among 36,146 counterparty party objects takes the `Surname, Firstname` form. Every one of those 36,146 carries an organization identifier under scheme `ZM-PCR`, and that settles nothing about the party's kind: PACRA registers sole-proprietor business names alongside companies, so both kinds of party carry the number. Of 9,500 distinct counterparty names, 853 carry no legal-form marker, and a sole trader trading under a shop name reads as a business by every shape test — `KAVULAMUNGU BARGAIN CENTRE` and `NDANJI SHOPPING CENTRE` among them. Every counterparty role here carries a street address on 100% of rows, so the exposure is whatever share of those 9,500 are individuals, which no measure available here bounds.",
 				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
 			}
 		},
@@ -7523,7 +7523,7 @@
 			"upstreamLineage": ["https://data.open-contracting.org/en/publication/144"],
 			"personalDataReview": {
 				"reading": "present",
-				"because": "Two of 374,352 counterparty party names take the `Surname, Firstname` form and both are organizations whose name contains a comma, `CEPAL, Naciones Unidas` and `Xpertis, SpA`, so that measure found no natural person. It is a lower bound rather than a clearance: Chilean sole traders trade under their own names, tenderer and supplier carry a street line on 265,699 and 208,380 rows, and no measure here depends on anything but one naming convention.",
+				"because": "Two measures were run and neither establishes `absent`. Two of 374,352 counterparty party names take the `Surname, Firstname` form and both are organizations whose name holds a comma, `CEPAL, Naciones Unidas` and `Xpertis, SpA`. Every one of the 374,352 carries an identifier, 374,151 under `CL-RUT` and 201 under `CL-MP`, and the Rol Único Tributario is issued to natural persons as well as to companies, so it settles nothing about the party's kind. Of 38,271 distinct names, 17,994 carry no legal-form marker, and most of that count is the measure's own artifact: `SKY AIRLINE S A` and `GASCO GLP S A` spell `sociedad anónima` as `S A` with a space. Tenderer and supplier carry a street line on 265,699 and 208,380 rows, so the exposure is whatever share of those 38,271 are individuals, which no measure available here bounds.",
 				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
 			}
 		},
