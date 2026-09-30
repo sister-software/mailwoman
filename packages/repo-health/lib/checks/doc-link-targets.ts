@@ -17,11 +17,11 @@
  *   is the name that exists nowhere at all.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { parseContextSource, readContextSources } from "#context"
 import { PACKAGE_SOURCE_PATH, trackedSourcePaths } from "#tracked-sources"
 
 /**
@@ -87,8 +87,8 @@ function isDeclarationShaped(target: string): boolean {
  * Line and plain block comments are left out because only a doc comment's
  * backticked names read as promises about the code.
  */
-function docComments(text: string, file: string): Array<{ pos: number; text: string }> {
-	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)
+function docComments(source: ts.SourceFile): Array<{ pos: number; text: string }> {
+	const { text } = source
 	const seen = new Set<number>()
 	const comments: Array<{ pos: number; text: string }> = []
 
@@ -129,10 +129,10 @@ interface DocTarget {
  * Targets come back in document order.
  * A string literal that spells a doc comment is skipped, such as a test's planted source file.
  */
-function docTargets(text: string, file: string): DocTarget[] {
+function docTargets(source: ts.SourceFile): DocTarget[] {
 	const targets: DocTarget[] = []
 
-	for (const comment of docComments(text, file)) {
+	for (const comment of docComments(source)) {
 		for (const match of comment.text.matchAll(LINK_TAG)) {
 			const target = match.groups?.["target"] ?? ""
 
@@ -158,15 +158,7 @@ function docTargets(text: string, file: string): DocTarget[] {
  *
  * A doc comment may point to an external identifier or a local declaration.
  */
-function spelledNames(text: string, file: string, into: Set<string>): void {
-	const source = ts.createSourceFile(
-		file,
-		text,
-		ts.ScriptTarget.Latest,
-		false,
-		file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-	)
-
+function spelledNames(source: ts.SourceFile, into: Set<string>): void {
 	const visit = (node: ts.Node): void => {
 		if (ts.isIdentifier(node) || ts.isPrivateIdentifier(node)) {
 			into.add(node.text)
@@ -245,27 +237,32 @@ async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 	const paths = await trackedSourcePaths(context, { existingOnly: true })
 	const judged = { test: (path: string) => PACKAGE_SOURCE_PATH.test(path) && path.endsWith(".ts") }
 
-	const texts = new Map<string, string>()
+	// A judged path ends in `.ts`, so its doc comments are read from the same tree its names are.
+	const sources = new Map<string, ts.SourceFile>()
 	const known = new Set<string>()
+
+	await readContextSources(context, paths)
 
 	for (const path of paths) {
 		const file = relative(context.repoRoot, path)
-		const text = await readLocalTextFile(path)
+		const source = await parseContextSource(context, path)
 
 		if (judged.test(file)) {
-			texts.set(file, text)
+			sources.set(file, source)
 		}
 
-		spelledNames(text, file, known)
+		spelledNames(source, known)
 	}
 
 	const dangling: DanglingLink[] = []
 	const admitted = new Set<string>()
 
-	for (const [file, text] of texts) {
+	for (const [file, source] of sources) {
 		if (file === SELF) continue
 
-		for (const { offset, target } of docTargets(text, file)) {
+		const { text } = source
+
+		for (const { offset, target } of docTargets(source)) {
 			// A dotted target is satisfied by its head: `Foo.bar` is reachable when `Foo` is.
 			const head = target.split(".")[0]!
 
@@ -290,7 +287,7 @@ async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 	}
 
 	// The register lives in this file, so a tree without it — a planted test tree — has no entry to judge.
-	const staleExternals = texts.has(SELF) ? Object.keys(EXTERNAL_DOC_NAMES).filter((name) => !admitted.has(name)) : []
+	const staleExternals = sources.has(SELF) ? Object.keys(EXTERNAL_DOC_NAMES).filter((name) => !admitted.has(name)) : []
 
 	return {
 		dangling: dangling.toSorted((a, b) => a.file.localeCompare(b.file) || a.line - b.line),
