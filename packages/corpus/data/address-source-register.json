@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "a124e7b7ca756c7521d9ed1443722051a0c50baceea239e2e90a08e7a6493f1b",
+	"contentDigest": "5155e86b0b1fb8ee0a1da245e21777634d14345700ef5af6ca3d0a653658cdb4",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -1480,10 +1480,47 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Commercial-registration authority in GA, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-gb-companies-house",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Companies House in GB, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-mx-es-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Companies House licenses the product on data.gov.uk, under the title `Basic Company Data`. Two retained records agree: the CKAN API answers `organization: Companies House`, `license_id: cc-by`, `license_title: Creative Commons Attribution` and `license_url: http://www.opendefinition.org/licenses/cc-by`, and the dataset page reads `Publisher Companies House … Licence Creative Commons Attribution`. The record's resources include `http://download.companieshouse.gov.uk/BasicCompanyData-part1.zip`, which is the Free Company Data Product whose own download page states only `This snapshot is provided free of charge` and names no license. So the license sits on the publisher's data.gov.uk entry rather than on the file's download page. Two cautions are recorded rather than resolved. Neither retained record states a CC BY version, so no `spdx` is set here: writing one would make an unstated version machine-readable through `electedLicenseLabel`, which feeds the share-alike filter. Reading the version off the publisher is the work that would settle it. And a second data.gov.uk entry titled `Companies House - Free Company Data Product` is published by the London Borough of Barnet with `license_id: notspecified`, so reading the entry whose title matches the product name would have answered that no license exists.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY grants the right to reproduce and share the material in any medium or format, which is what copying the published snapshot performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY grants remixing, transforming and building upon the material, which covers reading the nine `RegAddress.` columns out of the snapshot."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY reserves no act of analysis and grants building upon the material for any purpose, commercially included."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY grants redistribution in any medium, conditioned on crediting Companies House, linking the license, and stating that changes were made."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and neither retained record states it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY grants no sublicensing right and instead offers every downstream recipient a license from the licensor directly. Whether that satisfies a commercial agreement is a drafting question these records do not answer."
+				}
+			},
+			"licenseID": "unchecked-national-terms-gb-companies-house"
 		},
 		{
 			"licenseID": "unchecked-national-terms-gd-government-of-grenada-caipo",
