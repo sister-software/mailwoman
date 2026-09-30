@@ -10,6 +10,7 @@ import { z } from "zod"
 
 import {
 	assertValeClean,
+	assertValeCleanDiff,
 	fetchGitHubIssue,
 	fetchGitHubPullRequest,
 	linkIssue,
@@ -201,12 +202,17 @@ const PULL_REQUEST_INPUT_SCHEMA = z.object({
 export interface GitHubToolOverrides {
 	run?: RunGitHub
 	lint?: typeof assertValeClean
+	/**
+	 * Checks only the lines a replacement introduces, for the two actions that rewrite an existing body.
+	 */
+	lintDiff?: typeof assertValeCleanDiff
 	branch?: (cwd: string) => Promise<string>
 }
 
 export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = {}): [DevTool, DevTool] {
 	const run = overrides.run ?? runGitHub
 	const lint = overrides.lint ?? assertValeClean
+	const lintDiff = overrides.lintDiff ?? assertValeCleanDiff
 	const branch = overrides.branch ?? currentBranch
 
 	const issueTool: DevTool = {
@@ -262,7 +268,7 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
 				const body = replaceTaskBlock(issue.body, renderTasks(request.tasks))
 
-				await lint(body)
+				await lintDiff(issue.body, body)
 				await run(["issue", "edit", String(request.issue_number), "--repo", REPO, "--body", body], { cwd })
 
 				return { action: request.action, issue: await fetchGitHubIssue(REPO, request.issue_number, run) }
@@ -281,7 +287,12 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 			if (!request.title && !request.body) throw new Error("An issue edit requires `title` or `body`.")
 
 			if (request.body) {
-				await lint(request.body)
+				// Only the lines this edit introduces are checked.
+				// A rule that lands after the issue was written would otherwise refuse every edit
+				// until the author's earlier prose is rewritten.
+				const current = await fetchGitHubIssue(REPO, request.issue_number, run)
+
+				await lintDiff(current.body, request.body)
 			}
 
 			await run(

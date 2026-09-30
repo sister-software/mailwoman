@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
 	assertValeClean,
+	assertValeCleanDiff,
 	replaceTaskBlock,
 	resolveCheckout,
 	taskBlockIsComplete,
@@ -68,6 +69,47 @@ describe("GitHub prose and task blocks", () => {
 				{ Check: "Mailwoman.Rule", Message: "Rewrite this.", Severity: "error", Match: "Body", Line: 1 },
 			])
 		).rejects.toThrow(/Mailwoman\.Rule at line 1/)
+	})
+
+	it("checks a line the replacement introduces", async () => {
+		await expect(
+			assertValeCleanDiff("Kept line.", "Kept line.\nNew line.", async (text) => [
+				{ Check: "styles.Rule", Message: "Rewrite this.", Severity: "error", Match: text, Line: 1 },
+			])
+		).rejects.toThrow(/styles\.Rule at line 2/)
+	})
+
+	it("passes a line the replacement preserves, whatever a later rule says about it", async () => {
+		// A rule that lands after an issue is written would otherwise refuse every edit to it.
+		const held = "A sentence a later rule refuses."
+
+		await expect(
+			assertValeCleanDiff(held, `${held}\n${held}`, async (text) => [
+				{ Check: "styles.Rule", Message: "Rewrite this.", Severity: "error", Match: text, Line: 1 },
+			])
+		).resolves.toBeUndefined()
+	})
+
+	it("runs no check when the replacement adds no line", async () => {
+		let ran = false
+
+		await assertValeCleanDiff("One.\nTwo.", "One.", async () => {
+			ran = true
+
+			return []
+		})
+
+		expect(ran).toBe(false)
+	})
+
+	it("reports the line number in the replacement rather than in the added-line document", async () => {
+		// Vale numbers its lines against the text it was handed.
+		// That text holds only the added lines.
+		await expect(
+			assertValeCleanDiff("Kept.", "Kept.\nFirst added.\nSecond added.", async () => [
+				{ Check: "styles.Rule", Message: "Rewrite this.", Severity: "error", Match: "Second added.", Line: 2 },
+			])
+		).rejects.toThrow(/styles\.Rule at line 3/)
 	})
 
 	it("updates only the marker-owned task block", () => {

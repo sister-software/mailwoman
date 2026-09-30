@@ -1,3 +1,6 @@
 ZIP Code
 Licence Ouverte
 Open Licence
+Open Government Licence
+Singapore Open Data Licence
+Norwegian Licence for Open Government Data

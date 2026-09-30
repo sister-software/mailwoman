@@ -11,6 +11,7 @@ import { gitCommonDirectory, workingTreeRoot } from "@mailwoman/core/git"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { isAbsolute, PathBuilder } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { lintReply, type ValeAlert } from "#hooks/vale/check-core"
 
@@ -121,6 +122,59 @@ export async function assertValeClean(
 	const findings = errors.map((alert) => `${alert.Check} at line ${alert.Line}: ${alert.Message}`).join("\n")
 
 	throw new Error(`Vale rejected the GitHub prose:\n${findings}`)
+}
+
+/**
+ * Line-for-line splitting options that match `String.prototype.split` on a line feed.
+ *
+ * `TextSpliterator` trims each row and drops an empty one by default.
+ * Both would break a line comparison: a trimmed row no longer matches the body it came
+ * from byte-for-byte, and a dropped row moves every line number after it.
+ */
+const BODY_LINES = { trim: false, skipEmpty: false } as const
+
+/**
+ * Rejects an error-severity Vale finding on a line the replacement introduces.
+ *
+ * A rule that lands after an issue is written makes every line of that issue's body a finding.
+ * A whole-body check therefore refuses an edit until the author's earlier prose is rewritten
+ * to rules it predates, and an edit that appends a task list should not require that rewrite.
+ *
+ * Only a line absent from `previous` reaches Vale here.
+ * A finding reports its line number in `next`, so the message points at the line the
+ * author is looking at rather than at a position in the added-line document.
+ *
+ * A replacement that adds no line passes without running Vale.
+ */
+export async function assertValeCleanDiff(
+	previous: string,
+	next: string,
+	lint: (text: string) => Promise<ValeAlert[]> = lintReply
+): Promise<void> {
+	const held = TextSpliterator.from(previous, BODY_LINES).toSet()
+
+	const added = TextSpliterator.from(next, BODY_LINES)
+		.map((line, index) => ({ line, number: index + 1 }))
+		.filter((entry) => !held.has(entry.line))
+		.toArray()
+
+	if (!added.length) return
+
+	const errors = (await lint(added.map((entry) => entry.line).join("\n"))).filter((alert) => alert.Severity === "error")
+
+	if (!errors.length) return
+
+	const findings = errors
+		.map((alert) => {
+			// Vale numbers its lines against the added-line document.
+			// The report maps each one back to the line the author sees in the replacement body.
+			const source = added[alert.Line - 1]
+
+			return `${alert.Check} at line ${source?.number ?? alert.Line}: ${alert.Message}`
+		})
+		.join("\n")
+
+	throw new Error(`Vale rejected the GitHub prose the edit introduces:\n${findings}`)
 }
 
 /**
