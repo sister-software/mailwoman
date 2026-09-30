@@ -2,10 +2,15 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
+import { afterAll, afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildCandidateTable, type PlaceAttrs, stageCountryDisplayNames } from "#build/candidate"
+import {
+	type BuildCandidateResult,
+	buildCandidateTable,
+	type PlaceAttrs,
+	stageCountryDisplayNames,
+} from "#build/candidate"
 import type { CandidateDatabase } from "#candidate/schema"
 import { ALIAS_SEPARATOR } from "#fts"
 import type { WOFDatabase } from "#schema"
@@ -180,13 +185,36 @@ afterEach(async () => {
 	scratch[Symbol.asyncDispose]()
 })
 
-describe("buildCandidateTable", () => {
-	test("builds a denormalized single-probe row for each primary, keyed by the shared normalizer", async () => {
-		const input = scratch.path("admin.db")
-		const output = scratch.path("candidate.db")
+let adminOnlyScratch: TemporaryDirectory | undefined
+let adminOnlyBuild: Promise<{ output: PathBuilder; result: BuildCandidateResult }> | undefined
+
+/**
+ * The candidate table built from the unmodified admin fixture with no other source.
+ *
+ * Several tests assert on this same build: each opens the output read-only and reads
+ * the result's counts, so one build in its own directory serves all of them.
+ * A test that changes the fixture or adds a source builds its own table in the per-test directory.
+ */
+function adminOnlyCandidate(): Promise<{ output: PathBuilder; result: BuildCandidateResult }> {
+	adminOnlyBuild ??= (async () => {
+		adminOnlyScratch = await temporaryDirectory("mailwoman-candidate-admin-only-")
+		const input = adminOnlyScratch.path("admin.db")
+		const output = adminOnlyScratch.path("candidate.db")
 		buildFixtureAdmin(input)
 
-		const result = await buildCandidateTable({ input, output })
+		return { output, result: await buildCandidateTable({ input, output }) }
+	})()
+
+	return adminOnlyBuild
+}
+
+afterAll(async () => {
+	await adminOnlyScratch?.[Symbol.asyncDispose]()
+})
+
+describe("buildCandidateTable", () => {
+	test("builds a denormalized single-probe row for each primary, keyed by the shared normalizer", async () => {
+		const { output, result } = await adminOnlyCandidate()
 
 		expect(result.primaries).toBe(5)
 		expect(result.places).toBe(5)
@@ -289,10 +317,7 @@ describe("buildCandidateTable", () => {
 	})
 
 	test("keys diacritic names by their folded form — build/query parity by construction", async () => {
-		const input = scratch.path("admin.db")
-		const output = scratch.path("candidate.db")
-		buildFixtureAdmin(input)
-		await buildCandidateTable({ input, output })
+		const { output } = await adminOnlyCandidate()
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
@@ -304,10 +329,7 @@ describe("buildCandidateTable", () => {
 	})
 
 	test("explodes alt-name bags into resolvable alias rows pointing at the primary", async () => {
-		const input = scratch.path("admin.db")
-		const output = scratch.path("candidate.db")
-		buildFixtureAdmin(input)
-		const result = await buildCandidateTable({ input, output })
+		const { output, result } = await adminOnlyCandidate()
 
 		expect(result.aliases).toBe(3)
 
@@ -320,10 +342,7 @@ describe("buildCandidateTable", () => {
 	})
 
 	test("carries region abbreviations from place_abbr", async () => {
-		const input = scratch.path("admin.db")
-		const output = scratch.path("candidate.db")
-		buildFixtureAdmin(input)
-		const result = await buildCandidateTable({ input, output })
+		const { output, result } = await adminOnlyCandidate()
 		expect(result.abbrevs).toBe(1)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -371,11 +390,7 @@ describe("buildCandidateTable", () => {
 	})
 
 	test("without a names table the alias pass has no official evidence and refuses nothing", async () => {
-		const input = scratch.path("admin.db")
-		const output = scratch.path("candidate.db")
-		buildFixtureAdmin(input)
-
-		const result = await buildCandidateTable({ input, output })
+		const { result } = await adminOnlyCandidate()
 
 		expect(result.regionOfficialRefused).toBe(0)
 	})
@@ -387,7 +402,7 @@ describe("buildCandidateTable", () => {
 		buildFixtureAdmin(input)
 		buildFixtureLocalities(localities)
 
-		const baseline = await buildCandidateTable({ input, output: scratch.path("baseline.db") })
+		const { result: baseline } = await adminOnlyCandidate()
 		const result = await buildCandidateTable({ input, output, localities: [localities] })
 
 		expect(result.ancestorRows).toBe(baseline.ancestorRows + 2)
@@ -470,10 +485,7 @@ describe("buildCandidateTable", () => {
 	})
 
 	test("materializes the output at page_size 8192 (the httpvfs chunk alignment)", async () => {
-		const input = scratch.path("admin.db")
-		const output = scratch.path("candidate.db")
-		buildFixtureAdmin(input)
-		await buildCandidateTable({ input, output })
+		const { output } = await adminOnlyCandidate()
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
@@ -573,11 +585,7 @@ describe("buildCandidateTable", () => {
 		})
 
 		test("without a score source the column exists and is empty — and the result says so", async () => {
-			const input = scratch.path("admin.db")
-			const output = scratch.path("candidate.db")
-			buildFixtureAdmin(input)
-
-			const result = await buildCandidateTable({ input, output })
+			const { output, result } = await adminOnlyCandidate()
 
 			expect(result.importanceScored).toBeUndefined()
 			expect(result.importanceFiltered).toBeUndefined()

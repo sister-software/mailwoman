@@ -15,11 +15,11 @@
  *   The `debt` check pins the count so the number ratchets down. this check names each site.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { parseContextSource, readContextSources } from "#context"
 import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#tracked-sources"
 
 /**
@@ -77,15 +77,8 @@ function hasExportModifier(node: ts.FunctionDeclaration): boolean {
 	return (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)
 }
 
-function functionSites(file: string, text: string): FunctionSite[] {
-	const source = ts.createSourceFile(
-		file,
-		text,
-		ts.ScriptTarget.Latest,
-		false,
-		file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-	)
-
+function functionSites(file: string, source: ts.SourceFile): FunctionSite[] {
+	const { text } = source
 	const sites: FunctionSite[] = []
 
 	for (const statement of source.statements) {
@@ -128,12 +121,18 @@ export async function findPrivateNameShadows(context: RepoContext): Promise<Priv
 	const exportedBy = new Map<string, string[]>()
 	const privates: FunctionSite[] = []
 
-	for (const path of paths) {
+	const read = paths.filter((path) => {
 		const file = relative(context.repoRoot, path)
 
-		if (file.includes("/test/") || file.endsWith(".d.ts")) continue
+		return !file.includes("/test/") && !file.endsWith(".d.ts")
+	})
 
-		for (const site of functionSites(file, await readLocalTextFile(path))) {
+	await readContextSources(context, read)
+
+	for (const path of read) {
+		const file = relative(context.repoRoot, path)
+
+		for (const site of functionSites(file, await parseContextSource(context, path))) {
 			if (site.exported) {
 				exportedBy.set(site.name, [...(exportedBy.get(site.name) ?? []), site.file])
 			} else {

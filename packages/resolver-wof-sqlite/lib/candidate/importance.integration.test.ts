@@ -9,7 +9,7 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate/importance"
 import type { WOFDatabase } from "#schema"
@@ -64,14 +64,16 @@ function buildFixtureSource(path: PathBuilderLike): void {
 	`)
 }
 
-beforeEach(async () => {
+// `loadImportanceIndex` opens the source read-only and each test loads its own index,
+// so one source serves the whole file.
+beforeAll(async () => {
 	scratch = await temporaryDirectory("mailwoman-candidate-importance-")
 	sourcePath = scratch.path("importance.db")
 	buildFixtureSource(sourcePath)
 })
 
-afterEach(async () => {
-	scratch[Symbol.asyncDispose]()
+afterAll(async () => {
+	await scratch[Symbol.asyncDispose]()
 })
 
 describe("loadImportanceIndex", () => {

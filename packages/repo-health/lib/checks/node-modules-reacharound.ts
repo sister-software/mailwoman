@@ -21,6 +21,7 @@ import { join, relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { readContextSource, readContextSources } from "#context"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
@@ -88,12 +89,9 @@ const ALLOWED: Record<string, string> = {
  */
 async function listCandidateSources(context: RepoContext): Promise<string[]> {
 	const tracked = await trackedSourcePaths(context, { existingOnly: true })
+	const texts = await readContextSources(context, tracked)
 
-	const found = await Promise.all(
-		tracked.map(async (path) => ((await readLocalTextFile(path)).includes("node_modules") ? path : null))
-	)
-
-	return found.filter((path): path is NonNullable<typeof path> => path !== null).toSorted()
+	return tracked.filter((_path, index) => texts[index]!.includes("node_modules")).toSorted()
 }
 
 /**
@@ -193,7 +191,7 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 
 				if (key in ALLOWED) return
 
-				for (const hit of findReachArounds(await readLocalTextFile(path), path)) {
+				for (const hit of findReachArounds(await readContextSource(context, path), path)) {
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
 						message: `hand-assembled node_modules path: ${hit.text}`,

@@ -19,6 +19,7 @@ import { findDanglingLinks } from "#checks/doc-link-targets"
 import { findDuplicateShapes } from "#checks/duplicate-exported-shape"
 import { findAffixPairs } from "#checks/export-name-affix"
 import { findPrivateNameShadows } from "#checks/private-name-shadows"
+import { parseContextSource, readContextSource, readContextSources } from "#context"
 import { trackedSourcePaths } from "#tracked-sources"
 
 export interface DebtCounters {
@@ -396,6 +397,11 @@ const UNCOUNTED = [
 ]
 
 /**
+ * A tracked TypeScript source, the files the sub-checks below also read through the context.
+ */
+const TYPESCRIPT_SOURCE = /\.tsx?$/u
+
+/**
  * Regex for retired vocabulary matches.
  */
 const BANNED_VOCABULARY =
@@ -536,17 +542,11 @@ async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
 		})
 	)
 
-	for (const path of paths) {
-		const text = await readLocalTextFile(path)
+	const texts = await readContextSources(context, paths)
 
-		const source = ts.createSourceFile(
-			path,
-			text,
-			ts.ScriptTarget.Latest,
-			false,
-			path.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-		)
-
+	for (const [index, path] of paths.entries()) {
+		const text = texts[index]!
+		const source = await parseContextSource(context, path)
 		const workspacePackage = workspacePackages.find(({ directory }) => path.startsWith(`${directory}/`))
 
 		// Tests may self-import by package name.
@@ -578,7 +578,11 @@ async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
 		let text: string
 
 		try {
-			text = await readLocalTextFile(trackedPath)
+			// The context already holds the TypeScript sources.
+			// Every other file is read once here.
+			text = await (TYPESCRIPT_SOURCE.test(trackedPath)
+				? readContextSource(context, trackedPath)
+				: readLocalTextFile(trackedPath))
 		} catch {
 			continue
 		}

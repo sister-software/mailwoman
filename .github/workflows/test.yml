@@ -4,7 +4,7 @@
 # publish.yml auto-merges the release PR on it, so do not rename that job.
 #
 # The legs split by what they need.
-# - static, unit-fast and react need no gazetteer data and run on GitHub-hosted runners.
+# - static, unit-fast, react and earth need no gazetteer data and run on GitHub-hosted runners.
 # - unit-slow, lexicon-full and smoke read databases or weights under $MAILWOMAN_DATA_ROOT.
 #   They run on self-hosted runners with the `mailwoman-data` label.
 # A data-dependent test added to unit-fast therefore fails on the hosted runner instead of
@@ -393,7 +393,8 @@ jobs:
         with:
           filters: |
             lexicon:
-              - 'packages/mailwoman/lib/gazetteer-pipeline/**'
+              - 'packages/mailwoman/tools/gazetteer-pipeline/**'
+              - 'packages/mailwoman/tools/gazetteer-pipeline.ts'
               - 'data/gazetteer/**'
               - 'packages/core/data/libpostal/**'
               - 'packages/codex/**'
@@ -411,7 +412,7 @@ jobs:
           fi
 
           echo "needed=false" >> "$GITHUB_OUTPUT"
-          echo "::notice title=lexicon-full SKIPPED::Nothing under mailwoman/gazetteer-pipeline/, data/gazetteer/, core/data/libpostal/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws were asserted, against the fixture layer in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were not exercised. lexicon-nightly.yml and the release check carry those."
+          echo "::notice title=lexicon-full SKIPPED::Nothing under mailwoman/tools/gazetteer-pipeline/, data/gazetteer/, core/data/libpostal/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws were asserted, against the fixture layer in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were not exercised. lexicon-nightly.yml and the release check carry those."
           {
             echo "## lexicon-full: skipped (path-conditional)"
             echo ""
@@ -466,8 +467,9 @@ jobs:
 
 
   # The root sweep excludes browser-mode suites because vitest/browser fails under the forks pool.
-  # This leg is the only CI coverage for @mailwoman/react and the map apps.
-
+  # The react and earth legs are the only CI coverage for @mailwoman/react and the map apps. The
+  # Earth smoke runs in its own leg because it is the longest suite here, and in one job the other
+  # suites waited on it.
   react:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -507,8 +509,6 @@ jobs:
 
       - name: Test react (browser mode)
         run: yarn workspace @mailwoman/react test:browser
-      - name: Earth shell smoke
-        run: yarn workspace @mailwoman/earth test:browser
 
       # The planetary smoke test builds and runs once per body.
       - name: Moon smoke
@@ -523,6 +523,48 @@ jobs:
       # The license worker tests need the Workers runtime, so the root sweep excludes them.
       - name: Test license worker (Workers pool)
         run: yarn test:license-worker
+
+  # The Earth smoke builds the app and loads its model and gazetteer in Chromium. Its Playwright
+  # configuration runs one worker, so the suite runs serially inside this job.
+  earth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # The key hashes every file that `tsc -b` reads, and the .tsbuildinfo files live inside out/.
+      # The step has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current. It must run before the install, or hashFiles walks node_modules.
+      - name: Restore compiled tree
+        uses: actions/cache@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: out-${{ runner.os }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/tsconfig*.json', 'yarn.lock') }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          # Hosted runners start without a Yarn global cache, so this leg caches the store.
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      # `--with-deps` installs the Chromium system libraries with sudo, which hosted runners allow.
+      - name: Install Playwright chromium (Earth smoke)
+        run: yarn workspace @mailwoman/earth exec playwright install --with-deps chromium
+
+      - name: Earth shell smoke
+        run: yarn workspace @mailwoman/earth test:browser
 
   # The smoke test packs every published workspace, installs the tarballs into a fresh project and
   # runs the compiled CLI. It catches undeclared dependencies, unshipped files and eager top-level
@@ -569,7 +611,6 @@ jobs:
               - 'packages/neural-weights-en-nz/**'
               - 'packages/variant-aliases/**'
               - 'packages/tiger/**'
-              - 'packages/formatter/**'
               - 'packages/record/**'
               - 'packages/match/**'
               - 'packages/registry/**'
@@ -600,7 +641,6 @@ jobs:
               # --- Root config that affects packaging ---
               - 'package.json'
               - 'tsconfig.json'
-              - 'tsconfig.base.json'
               - 'release.config.json'
               - 'yarn.lock'
               - '.nvmrc'
@@ -659,7 +699,7 @@ jobs:
   # The ruleset and release auto-merge require this `test` check. `if: always()` makes it report
   # after a leg fails, because a skipped required check blocks the merge.
   test:
-    needs: [data-fleet, static, unit-fast, unit-slow, conformance-scope, lexicon-check, lexicon-full, react, smoke]
+    needs: [data-fleet, static, unit-fast, unit-slow, conformance-scope, lexicon-check, lexicon-full, react, earth, smoke]
     if: always()
     # The aggregator runs hosted so that it still reports when the lab fleet is down.
     runs-on: ubuntu-latest
@@ -668,7 +708,7 @@ jobs:
       # A skipped leg fails the check unless the data fleet is down. lexicon-full is left out of the
       # skip test because it skips whenever no lexicon path changed.
       - name: Fail if any leg failed
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.data-fleet.outputs.up == 'true' && (needs.static.result == 'skipped' || needs.unit-fast.result == 'skipped' || needs.unit-slow.result == 'skipped' || needs.conformance-scope.result == 'skipped' || needs.lexicon-check.result == 'skipped' || needs.react.result == 'skipped' || needs.smoke.result == 'skipped')) }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.data-fleet.outputs.up == 'true' && (needs.static.result == 'skipped' || needs.unit-fast.result == 'skipped' || needs.unit-slow.result == 'skipped' || needs.conformance-scope.result == 'skipped' || needs.lexicon-check.result == 'skipped' || needs.react.result == 'skipped' || needs.earth.result == 'skipped' || needs.smoke.result == 'skipped')) }}
         run: |
           echo "::error::a test leg did not succeed: ${{ toJSON(needs.*.result) }}"
           exit 1
@@ -676,7 +716,7 @@ jobs:
       - name: Green, but without the data legs
         if: ${{ needs.data-fleet.outputs.up != 'true' }}
         run: |
-          echo "::warning title=PARTIAL CHECK::static, unit-fast and react passed. unit-slow and smoke were SKIPPED. No mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run did not exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not publish a release off it."
+          echo "::warning title=PARTIAL CHECK::static, unit-fast, react and earth passed. unit-slow and smoke were SKIPPED. No mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run did not exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not publish a release off it."
           {
             echo "## test: GREEN (partial — no data fleet)"
             echo ""
@@ -685,6 +725,7 @@ jobs:
             echo "| static | hosted | ${{ needs.static.result }} |"
             echo "| unit-fast | hosted | ${{ needs.unit-fast.result }} |"
             echo "| react | hosted | ${{ needs.react.result }} |"
+            echo "| earth | hosted | ${{ needs.earth.result }} |"
             echo "| unit-slow | \`mailwoman-data\` | ${{ needs.unit-slow.result }} |"
             echo "| smoke | \`mailwoman-data\` | ${{ needs.smoke.result }} |"
             echo "| lexicon-full | \`mailwoman-data\` | ${{ needs.lexicon-full.result }} |"
@@ -694,4 +735,4 @@ jobs:
 
       - name: All legs green
         if: ${{ needs.data-fleet.outputs.up == 'true' }}
-        run: echo "static, unit, react, smoke — all green"
+        run: echo "static, unit, react, earth, smoke — all green"

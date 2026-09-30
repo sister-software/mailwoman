@@ -1,8 +1,9 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { buildCandidateTable } from "#build/candidate"
 import {
@@ -91,7 +92,9 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 let scratch: TemporaryDirectory
 let candidatePath: PathBuilder
 
-beforeEach(async () => {
+// The readers open the artifact read-only, and the two tests that drop the sidecar
+// tables work on their own copies, so one build serves the whole file.
+beforeAll(async () => {
 	scratch = await temporaryDirectory("mailwoman-candidate-ancestors-")
 	const input = scratch.path("admin.db")
 	candidatePath = scratch.path("candidate.db")
@@ -99,8 +102,8 @@ beforeEach(async () => {
 	await buildCandidateTable({ input, output: candidatePath })
 })
 
-afterEach(async () => {
-	scratch[Symbol.asyncDispose]()
+afterAll(async () => {
+	await scratch[Symbol.asyncDispose]()
 })
 
 function intervalOf(db: DatabaseClient<WOFDatabase>, id: number): IntervalLabel | undefined {
@@ -165,12 +168,15 @@ describe("the candidate ancestors sidecar", () => {
 	})
 
 	test(": an artifact without the sidecar emits NO parent_id — absence is the artifact's, not a root claim", async () => {
-		using patch = new DatabaseClient<WOFDatabase>(candidatePath)
+		const sansSidecarPath = scratch.path("candidate-sans-sidecar-find.db")
+		await copyFileTo(candidatePath, sansSidecarPath)
+
+		using patch = new DatabaseClient<WOFDatabase>(sansSidecarPath)
 
 		patch.exec(`DROP TABLE ${CANDIDATE_ANCESTOR_TABLE}; DROP TABLE ${CANDIDATE_INTERVAL_TABLE};`)
 		patch.destroy()
 
-		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: sansSidecarPath })
 
 		const hits = await lk.findPlace({ text: "Weimar", placetype: ["locality", "localadmin"], limit: 5 })
 
@@ -268,11 +274,14 @@ describe("the candidate ancestors sidecar", () => {
 		expect(n).toBe(1)
 	})
 
-	test("an artifact without the sidecar reports the capability ABSENT — never [] dressed as an answer", () => {
-		using db = new DatabaseClient<WOFDatabase>(candidatePath)
+	test("an artifact without the sidecar reports the capability ABSENT — never [] dressed as an answer", async () => {
+		const sansSidecarPath = scratch.path("candidate-sans-sidecar-capability.db")
+		await copyFileTo(candidatePath, sansSidecarPath)
+
+		using db = new DatabaseClient<WOFDatabase>(sansSidecarPath)
 		db.exec(`DROP TABLE ${CANDIDATE_ANCESTOR_TABLE}; DROP TABLE ${CANDIDATE_INTERVAL_TABLE};`)
 
-		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: sansSidecarPath })
 
 		expect(lk.ancestors).toBeUndefined()
 	})

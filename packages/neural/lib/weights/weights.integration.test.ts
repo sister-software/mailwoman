@@ -62,6 +62,20 @@ function findChildPieceIndex(pieces: ReadonlyArray<{ piece: string }>, word: str
 
 const NO_MATCH_PAIR_INDEX: PairIndexLike = { probe: () => undefined }
 
+let enGBLoad: Promise<NeuralAddressClassifier> | undefined
+
+/**
+ * The en-gb classifier, loaded once by the first test that asks for it after linking the dev weights.
+ *
+ * Every en-gb test passes its prior overrides per call, and `parse`, `parseJSON`
+ * and `traceParse` write no instance state, so the tests can share one instance.
+ */
+function enGBClassifier(): Promise<NeuralAddressClassifier> {
+	enGBLoad ??= NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+
+	return enGBLoad
+}
+
 describe("resolveWeights — explicit-path mode", () => {
 	test.skipIf(!haveModel)("returns the explicit paths verbatim when both are valid", async () => {
 		const r = await resolveWeights({ modelPath: MODEL_PATH, tokenizerPath: TOKENIZER_PATH })
@@ -132,7 +146,7 @@ describe("resolveWeights — package auto-resolve", () => {
 
 			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
 
-			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+			const cls = await enGBClassifier()
 			const tree = await cls.parse("10 Downing Street, London SW1A 2AA")
 			expect(tree.roots.length).toBeGreaterThan(0)
 		},
@@ -196,7 +210,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			expect(resolver.header.country).toBe("gb")
 			expect(resolver.probe("fishburn", "stocktonontees")?.tag).toBe("dependent_locality")
 
-			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+			const cls = await enGBClassifier()
 			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 			const placetypePairRecord = trace.priors.find((p) => p.kind === "placetypePair")
 
@@ -213,7 +227,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			const r = await resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
-			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+			const cls = await enGBClassifier()
 
 			const biasedTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 
@@ -240,7 +254,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
-			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+			const cls = await enGBClassifier()
 
 			const wiredTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 			expect(wiredTrace.priors.find((p) => p.kind === "placetypePair")?.applied).toBe(true)
@@ -269,7 +283,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 
 			expect(resolver.probe("holland fen", "lincoln")?.tag).toBe("dependent_locality")
 
-			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+			const cls = await enGBClassifier()
 
 			const json = await cls.parseJSON(GB_WIDE_MARGIN_ADDRESS, {
 				placetypePair: { index: resolver, probeMode: "window" },
@@ -292,7 +306,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			expect(resolver.header.transitionBeta).toBe(5)
 			expect(resolver.probe("upton", "bude")?.tag).toBe("dependent_locality")
 
-			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+			const cls = await enGBClassifier()
 			const row = "12 Church Road Glenfield Leicester LE3 8DP"
 
 			const betaLessView: PairIndexLike = { probe: (c, p) => resolver.probe(c, p), delta: resolver.delta }

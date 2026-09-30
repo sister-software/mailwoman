@@ -18,11 +18,11 @@
  *       // repo-health-ignore export-name-affix -- <reason>
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { parseContextSource, readContextSources } from "#context"
 import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#tracked-sources"
 
 /**
@@ -88,8 +88,8 @@ function containedRuns(name: string): string[] {
 	return [...runs]
 }
 
-function exportedFunctionSites(file: string, text: string): ExportSite[] {
-	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)
+function exportedFunctionSites(file: string, source: ts.SourceFile): ExportSite[] {
+	const { text } = source
 	const sites: ExportSite[] = []
 
 	for (const statement of source.statements) {
@@ -140,12 +140,19 @@ export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]>
 
 	const sites: ExportSite[] = []
 
-	for (const path of paths) {
+	const read = paths.filter((path) => {
 		const file = relative(context.repoRoot, path)
 
-		if (file.includes("/test/") || file.endsWith(".d.ts")) continue
+		return !file.includes("/test/") && !file.endsWith(".d.ts")
+	})
 
-		sites.push(...exportedFunctionSites(file, await readLocalTextFile(path)))
+	await readContextSources(context, read)
+
+	// Every path here ends in `.ts`, so this is the tree the other checks parse by default.
+	for (const path of read) {
+		const source = await parseContextSource(context, path, { scriptKind: ts.ScriptKind.TS })
+
+		sites.push(...exportedFunctionSites(relative(context.repoRoot, path), source))
 	}
 
 	const byLowerName = new Map<string, ExportSite[]>()

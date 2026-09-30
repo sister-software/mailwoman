@@ -65,9 +65,23 @@ function parseStdoutJSON(stdout: string): unknown {
 
 const ADDRESS = "350 5th Ave, New York, NY 10118"
 
+let absentPlainParse: Promise<{ stdout: string; stderr: string; code: number }> | undefined
+
+/**
+ * The plain `parse --locale pt-BR` run under the stub home.
+ *
+ * Two tests assert on the same invocation, and each reads the captured strings
+ * without changing them, so one spawn serves both.
+ */
+function runAbsentPlainParse(): Promise<{ stdout: string; stderr: string; code: number }> {
+	absentPlainParse ??= runCLI(["parse", "--locale", ABSENT_LOCALE, ADDRESS], absentEnv())
+
+	return absentPlainParse
+}
+
 describe("Loud weights fallback — weights ABSENT (non-interactive / piped stdin)", () => {
 	test("plain parse: warns on stderr, still emits parseable JSON on stdout, exit 0", async () => {
-		const { stdout, stderr, code } = await runCLI(["parse", "--locale", ABSENT_LOCALE, ADDRESS], absentEnv())
+		const { stdout, stderr, code } = await runAbsentPlainParse()
 
 		expect(code).toBe(0)
 		expect(stderr).toContain("neural weights not found")
@@ -101,7 +115,7 @@ describe("Loud weights fallback — weights ABSENT (non-interactive / piped stdi
 	}, 30_000)
 
 	test("stdout carries the machine payload ONLY — the notice never leaks off stderr", async () => {
-		const { stdout, stderr } = await runCLI(["parse", "--locale", ABSENT_LOCALE, ADDRESS], absentEnv())
+		const { stdout, stderr } = await runAbsentPlainParse()
 
 		expect(stdout).not.toContain("⚠")
 		expect(stdout).not.toMatch(/neural weights/u)
