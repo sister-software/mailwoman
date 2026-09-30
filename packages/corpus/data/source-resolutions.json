@@ -37,6 +37,20 @@
 				"because": "Every column of every table the GeoPackage declares was listed, so this covers the database's whole schema rather than a sample of its rows. The five tables carry 39, 16, 15, 15 and 15 columns, and none of the 100 identifies a party: there is no owner, holder, occupant or contact column, and no personal name. Every column of the `address` table is INSPIRE address structure, being an identifier, a lifespan date, a position, a locator designator, or a reference to a thoroughfare name, postal descriptor, administrative unit, parcel or building. One value invites a misreading: `position_method` reads `byotherparty`, which is an INSPIRE codelist term for how the position was determined rather than a reference to a party. The schema is the INSPIRE Addresses model, which has no party element."
 			}
 		},
+		"sk-property-building-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Ministerstvo vnútra Slovenskej republiky, reached as a WFS 2.0 download service at `https://rageo.minv.sk/geoserver/ad/wfs`. The service publishes all five AD feature types and advertises `ImplementsResultPaging`, so a build pages each type rather than downloading a file. Measured 2026-10-01, `resultType=hits` past index 0 reports 1,704,196 `ad:Address` features, 29,315 `ad:ThoroughfareName`, 3,015 `ad:AdminUnitName`, 1,769 `ad:AddressAreaName` and 1,415 `ad:PostalDescriptor`, and a page of each type agreed with its count. The register record states a national spatial scope and a `footprint_geo` of `Slovenská Republika` at a 100% match. Two reader notes. This service answered one `resultType=hits` request of nine with no `numberMatched` attribute and the other eight with `1704196`, so a caller reads that response as unusable and retries rather than recording a count. And an address references its components through a stored-query URL whose `id` parameter carries the target's feature id, of which 15 of 23 on a page of five addresses joined against the first 1,000 features of each component type, the remaining 8 addressing features past those pages.",
+			"upstreamLineage": [
+				"https://rageo.minv.sk/geoserver/ad/wfs",
+				"https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all five feature types was listed, over 40 features each: 10 on `ad:Address`, 10 on `ad:AdminUnitName`, 8 on `ad:AddressAreaName`, 8 on `ad:PostalDescriptor` and 8 on `ad:ThoroughfareName`. None of the 44 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan or validity date, a status, a position, a locator, a name, a postcode or a component reference. `AD:LocatorName` is the element that needs its own statement, because it is free text of type `GeographicalName` and the one way a family name or a business name reaches an INSPIRE address. This service omits it structurally: its `locator` object carries `designator` and `level` and no `name` key at all, and the designator values are address numbers typed `LocatorDesignatorTypeValue/addressNumber`. The sampled measurement agrees, at 0 of 800 addresses over 40 windows spread across the 1,704,196. The traversal was checked against Estonia, which populates the element on every address, to establish that a reader finding nothing here is reading a service that writes nothing rather than failing to look: Estonia flattens the path to `locator_addresslocator_name_locatorname_name_spelling_text` while Slovakia nests it, so each service needs its own traversal and a single reader run against both would have reported one of them wrongly."
+			}
+		},
 		"be-property-building-1": {
 			"addressRoles": {
 				"AD:Address": "premise"

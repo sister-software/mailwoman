@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "8aec4b4df746c26be3e0769a3d6c8906670986d51078b59da707dce7cab914c9",
+	"contentDigest": "3601b9142bb602651c3e3b15a2e1a4dac78809f1f161638a900a1e92d912ddca",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -1072,6 +1072,51 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to sg-mixed-regulatory-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "The Ministry states one condition of use and states it twice, in its own register and in that register's INSPIRE export. Reaching it took reading an error body rather than another search: the export URL the service's own capabilities document writes answers HTTP 422 with `{\"loc\":[\"path\",\"collection_record_id\"],\"msg\":\"value is not a valid uuid\"}`, which places the id in the PATH where the capabilities put it in the query, and a second 422 enumerates the permitted `export_format` values, among which `gmd` does not appear. `https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72`, 9,335 bytes, sha256 `0937d4bffc3f3078e27aad12dc3649469969ec407a022da81125f2656ff6ff38`, is the record: `title` `INSPIRE - Adresy`, `unit_name` `Ministerstvo vnútra Slovenskej republiky`, `hierarchy_level` `dataset`, `status` `published`, `date_stamp` `2025-05-28`. It ties to the measured service by its own `downloadable_urls`, which holds exactly `https://rageo.minv.sk/geoserver/ad/wfs?service=WFS&version=2.0.0&request=GetCapabilities`, and its `spatial_scopes` reads the INSPIRE codelist term `national` with a `footprint_geo` of `Slovenská Republika` at a 100% match. Its `use_constraints` reads `Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)`. The same record exported as `export_format=inspire_xml`, 18,955 bytes, sha256 `710e0fc3216645b5c4014a4044dbaff86adc07da390b8a06b0e99055decdf28e`, carries `accessConstraints` and `useConstraints` both as `otherRestrictions`, the ISO code meaning that the statement is in `otherConstraints`, and two `otherConstraints` values: `Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)` and `Neuplatňujú sa žiadne podmienky`. That phrase renders INSPIRE's controlled value for no conditions applying to access and use, in Slovak, as ČÚZK's `žádné podmínky neplatí` does in Czech. The parenthetical adds the publisher's own identification of it as CC0. No version accompanies that label, so `spdx` and `termsVersion` are left out and `electedTerms` records the publisher's words, the same treatment Czechia's entry receives. The record also reads `is_opendata_allowed` and `is_hvd_compliant` true, so the Ministry publishes this as a high-value dataset under the Open Data Directive. The CC BY 4.0 an earlier pass recorded for Slovakia belongs to the geodesy authority's ATOM feed at `inspirews.skgeodesy.sk` and grants nothing over this service, which is a different publisher.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The statement is that no conditions apply to access and use, so paging the service's GeoJSON is unreserved. The capabilities document agrees on price with `<Fees>NONE</Fees>`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply reserves no act, so reading the designator and the component references out of a feature is unreserved. CC0, which the publisher names, waives extraction and database rights explicitly."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No condition attaches to adaptation, so joining the five feature types into a token and tag corpus is unreserved."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No condition attaches to any purpose, so fitting a model on the rows is unreserved."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply imposes no attribution condition, and CC0 imposes none either. Crediting the Ministry stays good practice and neither statement requires it."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question that stands open under CC BY and ODbL, whether trained weights are a derivative of the rows, does not arise where the publisher states that no conditions apply and names CC0, which waives the rights that would make the answer matter."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply leaves no right that would need sublicensing. CC0 §3 adds a fallback licence to exercise all those rights unconditionally where the waiver is ineffective in law, and it runs to the public rather than to one recipient."
+				}
+			},
+			"licenseID": "unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky"
 		},
 		{
 			"licenseID": "unchecked-access-free-tw-tw-business-legal-1",
@@ -10364,6 +10409,34 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every property of all five feature types was listed, over 40 features each: 37 on `AD.Address`, 20 on `AD.Address_AdminUnitName`, 15 on `AD.Address_ThoroughfareName`, 15 on `AD.Address_AddressAreaName` and 14 on `AD.Address_PostalDescriptor`. None of the 101 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a position, a locator, a name or a component reference. `AD:LocatorName` needs its own statement because it is free text of type `GeographicalName`, which is how a family name or a business name reaches an INSPIRE address, and this publisher populates it where the Dutch, Czech and Danish themes leave it empty: 1,200 of 1,200 addresses sampled over 60 windows spread across the 729,973, reaching 664 distinct locality paths, carry a value. Every one of those 1,200 states its `LocatorNameTypeValue` as `siteName` (829) or `buildingName` (371), which are place designations in the INSPIRE codelist, and no value takes the given-name-and-family-name shape: 0 of 1,200 carry two capitalized words, while 105 carry a hyphen. The values are Estonian farm and site names, which is how a rural Estonian address designates its addressable unit, as in `Saare maakond, Muhu vald, Raugi küla, Jüri`. Some are the genitive of a personal given name, `Jüri`, `Jaani`, `Mardi` and `Hansi` among them, which is the traditional pattern of naming a farm after a historical householder rather than a reference to the present occupant, and the compounds confirm it: `Vana-Käspri` and `Uue-Tooma` read as the old and the new holding of a named farm. No element asserts a party, states a surname, or carries a person identifier."
+			}
+		},
+		{
+			"sourceID": "sk-property-building-1",
+			"iso2": "SK",
+			"sector": "property-building",
+			"name": "INSPIRE - Adresy",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Ministry of the Interior of the Slovak Republic and operator of the national address register; publishes the INSPIRE Addresses (AD) theme as a direct-access Web Feature Service covering the whole country",
+			"geometry": "present",
+			"license": "unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "WFS 2.0 download service; paged GetFeature in GeoJSON or GML",
+			"publisher": "Ministerstvo vnútra Slovenskej republiky",
+			"sourceURL": "https://rageo.minv.sk/geoserver/ad/wfs",
+			"note": "A feature is an address point with an address-number designator that references a thoroughfare name, a postal descriptor and administrative units. It carries no party.",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Ministerstvo vnútra Slovenskej republiky, reached as a WFS 2.0 download service at `https://rageo.minv.sk/geoserver/ad/wfs`. The service publishes all five AD feature types and advertises `ImplementsResultPaging`, so a build pages each type rather than downloading a file. Measured 2026-10-01, `resultType=hits` past index 0 reports 1,704,196 `ad:Address` features, 29,315 `ad:ThoroughfareName`, 3,015 `ad:AdminUnitName`, 1,769 `ad:AddressAreaName` and 1,415 `ad:PostalDescriptor`, and a page of each type agreed with its count. The register record states a national spatial scope and a `footprint_geo` of `Slovenská Republika` at a 100% match. Two reader notes. This service answered one `resultType=hits` request of nine with no `numberMatched` attribute and the other eight with `1704196`, so a caller reads that response as unusable and retries rather than recording a count. And an address references its components through a stored-query URL whose `id` parameter carries the target's feature id, of which 15 of 23 on a page of five addresses joined against the first 1,000 features of each component type, the remaining 8 addressing features past those pages.",
+			"upstreamLineage": [
+				"https://rageo.minv.sk/geoserver/ad/wfs",
+				"https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all five feature types was listed, over 40 features each: 10 on `ad:Address`, 10 on `ad:AdminUnitName`, 8 on `ad:AddressAreaName`, 8 on `ad:PostalDescriptor` and 8 on `ad:ThoroughfareName`. None of the 44 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan or validity date, a status, a position, a locator, a name, a postcode or a component reference. `AD:LocatorName` is the element that needs its own statement, because it is free text of type `GeographicalName` and the one way a family name or a business name reaches an INSPIRE address. This service omits it structurally: its `locator` object carries `designator` and `level` and no `name` key at all, and the designator values are address numbers typed `LocatorDesignatorTypeValue/addressNumber`. The sampled measurement agrees, at 0 of 800 addresses over 40 windows spread across the 1,704,196. The traversal was checked against Estonia, which populates the element on every address, to establish that a reader finding nothing here is reading a service that writes nothing rather than failing to look: Estonia flattens the path to `locator_addresslocator_name_locatorname_name_spelling_text` while Slovakia nests it, so each service needs its own traversal and a single reader run against both would have reported one of them wrongly."
 			}
 		},
 		{
