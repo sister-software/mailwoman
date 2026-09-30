@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "7ab4a408c60390cbc1579487bad200388a8480c2ff55501450a24b63eb7772f9",
+	"contentDigest": "a124e7b7ca756c7521d9ed1443722051a0c50baceea239e2e90a08e7a6493f1b",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -2739,7 +2739,7 @@
 			"termsVersion": "0.1",
 			"retrievedCopy": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/ocp-uy-publication-43.html",
 			"retrievedAt": "2026-09-30",
-			"electedBecause": "The OCP Data Registry publishes this release under `Licencia de Datos Abiertos - Uruguay Versión 0.1` and quotes the licence's own clauses on the page, so the retained bytes carry the terms rather than a label alone. The licence names no SPDX identifier, which is why none is recorded. The Authorization clause grants, `for commercial and non-commercial use`, that the data `may be: alienated, reproduced, distributed, published, translated, adapted, transformed, communicated or made available to the public through any form or procedure; merged with own and third-party data, and can be combined to form new and independent data sets; integrated into business processes, products and internal and external applications in public and private electronic networks`. The Note of Origin clause conditions all of it: `the name of the provider, the reference to the “Open Data License - Uruguay”. the reference to the data set that is being used`, and `Changes, editions, new designs or modifications must be mentioned in the note of origin`. The licensor's own page at catalogodatos.gub.uy answers HTTP 404, so the registry's quotation is the copy retained.",
+			"electedBecause": "The OCP Data Registry publishes this release under `Licencia de Datos Abiertos - Uruguay Versión 0.1` and quotes the licence's own clauses on the page, so the retained bytes carry the terms rather than a label alone. ARCE's own data page corroborates it and gives the licence a statutory basis: `La siguiente licencia de datos abiertos de Uruguay está incluida en el Decreto N° 54/017 de 20 de febrero de 2017 reglamentario del art. 82 de la Ley 19.355 de 19 de diciembre de 2015`. So this is the one OCDS election of the five that rests on the licensor rather than on the registry alone. The licence names no SPDX identifier, which is why none is recorded. The Authorization clause grants, `for commercial and non-commercial use`, that the data `may be: alienated, reproduced, distributed, published, translated, adapted, transformed, communicated or made available to the public through any form or procedure; merged with own and third-party data, and can be combined to form new and independent data sets; integrated into business processes, products and internal and external applications in public and private electronic networks`. The Note of Origin clause conditions all of it: `the name of the provider, the reference to the “Open Data License - Uruguay”. the reference to the data set that is being used`, and `Changes, editions, new designs or modifications must be mentioned in the note of origin`. The licensor's own page at catalogodatos.gub.uy answers HTTP 404, so the registry's quotation is the copy retained.",
 			"operations": {
 				"fetch": {
 					"permission": "permitted",
@@ -11271,7 +11271,13 @@
 			"access": "public web directory",
 			"publisher": "Holy See Supervisory and Financial Information Authority (ASIF)",
 			"sourceURL": "https://www.asif.va/ENG/EntiVigilati.aspx",
-			"note": "Public supervised-entity list exposes the regulated entity and Vatican postal address."
+			"note": "Public supervised-entity list exposes the regulated entity and Vatican postal address.",
+			"coverage": "ASIF's list of supervised entities for the Holy See, read from `https://www.asif.va/en/list-of-supervised-entities`. **The register row's `sourceURL` is stale**: the recorded `https://www.asif.va/ENG/EntiVigilati.aspx` answers HTTP 404, and the path above is the current one. The whole page is 3,254 bytes and the list has one member, `Institute for the Works of Religion (IOR)`, named without an address. The only address on the page is ASIF's own footer, `Palazzo San Carlo, 00120 Città del Vaticano`, which belongs to the regulator rather than to a supervised entity. So the register row's note that the list `exposes the regulated entity and Vatican postal address` is not borne out, and this publication is not an address source. `addressRoles` stays unresolved because there is no address column to assign a role to.",
+			"upstreamLineage": ["https://www.asif.va/en/list-of-supervised-entities"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The list has one member and it is an institution, the Institute for the Works of Religion. The page gives no address for it and names no natural person, so a corpus built from this publication would hold no record about an identifiable person. The reading follows from the page being read in full at 3,254 bytes rather than from a sample."
+			}
 		},
 		{
 			"sourceID": "wf-public-administration-1",

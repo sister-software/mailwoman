@@ -8,6 +8,14 @@
 	"$sireneSecondAddress": "SIRENE's establishment file carries a second address family, the `2`-suffixed columns, which INSEE labels only `adresse secondaire` — `complementAdresse2Etablissement` reads `Complément d'adresse secondaire`. What role that address plays is unstated, so it takes no entry in `addressRoles` rather than a guessed one, and the coverage text names it so a reader knows the column exists.",
 	"$ocdsPartyRoles": "An OCDS release keys its addresses by party role, so `addressRoles` names roles rather than columns for those sources. A role is assigned only where OCDS's own codelist defines it, retrieved from `https://standard.open-contracting.org/1.1/en/codelists/partyRole.csv`: `buyer`, `procuringEntity`, `payer`, `funder` and `reviewBody` are bodies acting in the process, so their address is an office they operate and reads `facility`; `supplier` and `tenderer` are the transacting party, so theirs reads `counterparty`. Germany's release also uses eight roles from an extension whose codelist neither the 1.1 nor the latest list defines — `processContactPoint`, `reviewContactPoint`, `submissionReceiptBody`, `mediationBody`, `evaluationBody`, `procurementServiceProvider`, `leadTenderer`, `subcontractor` — and those take no role here rather than a guessed one.",
 	"resolutions": {
+		"va-finance-1": {
+			"coverage": "ASIF's list of supervised entities for the Holy See, read from `https://www.asif.va/en/list-of-supervised-entities`. **The register row's `sourceURL` is stale**: the recorded `https://www.asif.va/ENG/EntiVigilati.aspx` answers HTTP 404, and the path above is the current one. The whole page is 3,254 bytes and the list has one member, `Institute for the Works of Religion (IOR)`, named without an address. The only address on the page is ASIF's own footer, `Palazzo San Carlo, 00120 Città del Vaticano`, which belongs to the regulator rather than to a supervised entity. So the register row's note that the list `exposes the regulated entity and Vatican postal address` is not borne out, and this publication is not an address source. `addressRoles` stays unresolved because there is no address column to assign a role to.",
+			"upstreamLineage": ["https://www.asif.va/en/list-of-supervised-entities"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The list has one member and it is an institution, the Institute for the Works of Religion. The page gives no address for it and names no natural person, so a corpus built from this publication would hold no record about an identifiable person. The reading follows from the page being read in full at 3,254 bytes rather than from a sample."
+			}
+		},
 		"sj-business-legal-1": {
 			"addressRoles": {
 				"forretningsadresse": "registered-office",
