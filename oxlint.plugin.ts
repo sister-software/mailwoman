@@ -352,6 +352,35 @@ const FUNCTION_NODE_TYPES = new Set([
  */
 const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
 
+/**
+ * The keys of a node that a walk skips.
+ *
+ * `parent` would loop, and `range` and `loc` hold no node.
+ * `tokens` and `comments` exist on `Program` as lazy getters that deserialize
+ * the whole token stream of the file when read.
+ *
+ * A walk that enumerates values through them pays a full tokenization per file, and the walk reads neither.
+ */
+const NON_CHILD_KEYS = new Set(["parent", "range", "loc", "tokens", "comments"])
+
+/**
+ * The child nodes of `node`, read key by key so the lazy getters in {@link NON_CHILD_KEYS} stay unread.
+ */
+function* childNodes(node: AstNode): Generator<AstNode> {
+	for (const key of Object.keys(node)) {
+		if (NON_CHILD_KEYS.has(key)) continue
+
+		const value: unknown = Reflect.get(node, key)
+		const children = Array.isArray(value) ? value : [value]
+
+		for (const child of children) {
+			if (child && typeof child === "object" && typeof (child as AstNode).type === "string") {
+				yield child as AstNode
+			}
+		}
+	}
+}
+
 const noSyncFSInAsyncRule: Rule = {
 	meta: {
 		name: "no-sync-fs-in-async",
@@ -384,18 +413,8 @@ const noSyncFSInAsyncRule: Rule = {
 				}
 			}
 
-			for (const [key, value] of Object.entries(node)) {
-				if (key === "parent" || key === "range" || key === "loc") continue
-
-				if (Array.isArray(value)) {
-					for (const child of value) {
-						if (child && typeof child === "object" && typeof (child as AstNode).type === "string") {
-							walk(child as AstNode, asyncHere)
-						}
-					}
-				} else if (value && typeof value === "object" && typeof (value as AstNode).type === "string") {
-					walk(value as AstNode, asyncHere)
-				}
+			for (const child of childNodes(node)) {
+				walk(child, asyncHere)
 			}
 		}
 
@@ -896,16 +915,8 @@ function syncDisposableSource(node: AstNode, locals: ReadonlySet<string>): strin
 function walkTree(node: AstNode, visit: (node: AstNode) => void): void {
 	visit(node)
 
-	for (const [key, value] of Object.entries(node)) {
-		if (key === "parent" || key === "range" || key === "loc") continue
-
-		const children = Array.isArray(value) ? value : [value]
-
-		for (const child of children) {
-			if (child && typeof child === "object" && typeof (child as AstNode).type === "string") {
-				walkTree(child as AstNode, visit)
-			}
-		}
+	for (const child of childNodes(node)) {
+		walkTree(child, visit)
 	}
 }
 
