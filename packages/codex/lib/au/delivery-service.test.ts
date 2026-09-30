@@ -11,7 +11,7 @@ import {
 	isAuDeliveryService,
 	matchAuDeliveryService,
 	normalizeAuDeliveryService,
-} from "#au/index"
+} from "#au"
 
 describe("AU_DELIVERY_SERVICE_DESIGNATORS", () => {
 	it("carries the verbatim AMAS table size and the documented no-number exceptions", () => {

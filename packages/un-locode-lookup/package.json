@@ -8,26 +8,27 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "packages/un-locode-lookup"
 	},
-	"bin": "./out/cli.js",
+	"bin": "./out/cli/main.js",
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"README.md",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
+		"cli/**/*.ts",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
 	"imports": {
+		"#cli/*": {
+			"types": "./out/cli/*.d.ts",
+			"node": "./cli/*.ts",
+			"default": "./out/cli/*.js"
+		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -41,15 +42,15 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./build": {
-			"types": "./out/build.d.ts",
-			"node": "./lib/build.ts",
-			"default": "./out/build.js"
+		"./cli/*": {
+			"types": "./out/cli/*.d.ts",
+			"node": "./cli/*.ts",
+			"default": "./out/cli/*.js"
 		},
-		"./schema": {
-			"types": "./out/schema.d.ts",
-			"node": "./lib/schema.ts",
-			"default": "./out/schema.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { isNZPostcode, normalizeNZPostcode, NZ_POSTCODE_PATTERN } from "#nz/index"
+import { isNZPostcode, normalizeNZPostcode, NZ_POSTCODE_PATTERN } from "#nz"
 
 test("NZ_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {
 	expect(NZ_POSTCODE_PATTERN.test("7942")).toBe(true)

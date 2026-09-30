@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { FR_DEPARTEMENTS, FR_REGIONS, isFrenchRegionCode, lookupFrenchRegion } from "#fr/index"
+import { FR_DEPARTEMENTS, FR_REGIONS, isFrenchRegionCode, lookupFrenchRegion } from "#fr"
 
 describe("FR_REGIONS", () => {
 	it("covers all 18 régions (13 metropolitan + 5 overseas)", () => {

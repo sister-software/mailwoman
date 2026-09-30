@@ -10,7 +10,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { readRequiredChannels } from "@mailwoman/neural/weights-channels"
+import { readRequiredChannels } from "@mailwoman/neural/weights/channels"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { poiDatabaseRoot, wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
@@ -29,7 +29,7 @@ import {
 	openSealedArtifact,
 	type LookupResult,
 	type LookupRow,
-} from "#lookup/index"
+} from "#lookup"
 import {
 	type CandidateDelta,
 	diffCandidateRows,

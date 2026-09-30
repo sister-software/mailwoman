@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { BODY_CONFIGS } from "#bodies/index"
+import { BODY_CONFIGS } from "#bodies"
 import { PLANETARY_BODIES } from "#body"
 
 test.each([...PLANETARY_BODIES])("%s: the config names its own body, host, tilesets and identity", (body) => {

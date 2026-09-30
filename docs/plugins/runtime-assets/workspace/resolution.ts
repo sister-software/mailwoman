@@ -43,17 +43,6 @@ export async function resolvePackageFile(packageName: string, subpath: string): 
 }
 
 /**
- * Resolve a directory package subpath such as `decoder/index.ts`.
- */
-export async function resolvePackageDirectoryEntry(packageName: string, subpath: string): Promise<string | null> {
-	const source = resolvePackagePathFrom(import.meta.url, packageName, SourceDirectoryName, subpath, "index.ts")
-
-	if (await pathExists(source)) return source
-
-	return existingCompiledFile(resolvePackagePathFrom(import.meta.url, packageName, "out", subpath, "index.js"))
-}
-
-/**
  * An alias that points at a missing file breaks the client bundle at its first import.
  *
  * A skipped alias falls through to the package's exports map.

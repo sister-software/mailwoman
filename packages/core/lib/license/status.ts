@@ -18,7 +18,7 @@ import type { CacheRequestConfig } from "axios-cache-interceptor"
 import { APIClient, type APIClientConfig } from "#api/APIClient"
 import { $public } from "#env"
 import { ResourceError } from "#errors/schema"
-import { silentLogger } from "#logging/index"
+import { silentLogger } from "#logging"
 import { withoutTrailingSlashes } from "#strings/format"
 
 /**

@@ -104,7 +104,7 @@ export const HELPER_HOMES: readonly HelperHome[] = [
 	{
 		id: "address-order",
 		signature: { kind: "template-properties", properties: ["locality", "region", "postcode"] },
-		specifier: "@mailwoman/codex/address-format",
+		specifier: "@mailwoman/codex/address/format",
 		symbol: "formatAddressRow",
 		reason:
 			"the United States postal order, written as a template. Which components a country prints, in what order, " +

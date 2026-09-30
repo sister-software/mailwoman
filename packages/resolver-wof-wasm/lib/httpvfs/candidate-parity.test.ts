@@ -8,7 +8,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { WOFCandidateTableLookup as NodeCandidateLookup } from "@mailwoman/resolver-wof-sqlite"
-import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"

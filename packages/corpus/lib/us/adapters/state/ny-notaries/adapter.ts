@@ -14,7 +14,7 @@
  *   License: stamped `"Public Domain"` per New York state government open-data terms.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 

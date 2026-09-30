@@ -30,7 +30,7 @@ import { $ } from "zx"
 const GENERATED_SURFACES: ReadonlyArray<{ file: string; generator: readonly string[] }> = [
 	{
 		file: "packages/mailwoman/man/mailwoman.1",
-		generator: ["packages/mailwoman/out/cli/index.js", "dev", "generate", "man-page"],
+		generator: ["packages/mailwoman/out/cli/main.js", "dev", "generate", "man-page"],
 	},
 	{ file: "docs/articles/developers/reference/cli.mdx", generator: ["docs/scripts/generate-cli-reference.ts"] },
 ]
@@ -44,7 +44,7 @@ export async function releaseGeneratedSurfaces(
 	repoRoot: string,
 	log: (line: string) => void
 ): Promise<GeneratedSurfaceState[]> {
-	const compiledCLI = resolvePath(repoRoot, "packages/mailwoman/out/cli/index.js")
+	const compiledCLI = resolvePath(repoRoot, "packages/mailwoman/out/cli/main.js")
 
 	if (!(await pathExists(compiledCLI))) {
 		throw new Error(

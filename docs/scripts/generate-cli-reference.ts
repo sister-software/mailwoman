@@ -225,7 +225,7 @@ const packagePath = resolvePackageDirectory("mailwoman")
 /**
  * The directory of compiled command modules.
  */
-export const COMMANDS_DIRECTORY = packagePath("out", "commands")
+export const COMMANDS_DIRECTORY = packagePath("out", "cli", "commands")
 /**
  * The directory of compiled native commands.
  * The generator merges them into the command tree.

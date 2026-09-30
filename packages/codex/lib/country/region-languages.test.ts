@@ -6,8 +6,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { officialLanguagesAlpha3, regionLanguagesAlpha3 } from "#country/index"
-import { coOfficialLanguagesForProvince, ES_PROVINCE_CO_OFFICIAL_LANGUAGES } from "#es/index"
+import { officialLanguagesAlpha3, regionLanguagesAlpha3 } from "#country"
+import { coOfficialLanguagesForProvince, ES_PROVINCE_CO_OFFICIAL_LANGUAGES } from "#es"
 
 describe("officialLanguagesAlpha3", () => {
 	it("answers the three-letter spellings only, and nothing for an unknown country", () => {

@@ -423,30 +423,30 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
 	[
-		"packages/mailwoman/lib/eval-harness/gauntlet/cases/",
+		"packages/mailwoman/tools/eval-harness/gauntlet/cases/",
 		"board rows are register data and carry real building names verbatim: Kew Gate, Singapore",
 	],
 	["evals/", "the score ledger's rows are dated notes on committed board cases"],
 	// Records cite receipts by historical path.
 	// Keep those paths byte-exact.
 	[
-		"packages/mailwoman/lib/eval-harness/baselines.json",
+		"packages/mailwoman/tools/eval-harness/baselines.json",
 		"the precision note cites a scratchpad script by its historical path",
 	],
 	[
-		"packages/mailwoman/lib/eval-harness/specs/v2.3.0-nl-postcode.json",
+		"packages/mailwoman/tools/eval-harness/specs/v2.3.0-nl-postcode.json",
 		"the us.postcode revision cites its evidence receipt by historical path",
 	],
 	[
-		"packages/mailwoman/lib/eval-harness/specs/v5.2.0-nordic.json",
+		"packages/mailwoman/tools/eval-harness/specs/v5.2.0-nordic.json",
 		"the us.postcode revision cites its evidence receipt by historical path",
 	],
 	[
-		"packages/mailwoman/lib/eval-harness/specs/v5.3.0-family.json",
+		"packages/mailwoman/tools/eval-harness/specs/v5.3.0-family.json",
 		"the us.postcode revision cites its evidence receipt by historical path",
 	],
 	[
-		"packages/mailwoman/lib/eval-harness/specs/v6.0.0-shipped-baseline.json",
+		"packages/mailwoman/tools/eval-harness/specs/v6.0.0-shipped-baseline.json",
 		"the provenance note cites the v264 battery run by its historical path",
 	],
 	[
@@ -457,20 +457,24 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/corpus/data/", "the sub-venue lexicon: an airport gate is a real sub-venue token"],
 	["packages/corpus/lib/recipes/sub/venue", "sub-venue recipes name the physical gate"],
 	["packages/corpus/lib/tools/sub/venue", "sub-venue tooling names the physical gate"],
+	["packages/corpus/lib/subvenue/", "the sub-venue lexicon readers name the physical gate"],
 	["packages/corpus/lib/tools/overture-subvenue.ts", "sub-venue extraction names the physical gate"],
 	["packages/corpus/lib/tools/fetch/", "sub-venue source fetchers name the physical gate"],
-	["packages/osm/lib/sdk/extract/subvenue/index.ts", "sub-venue extraction names the physical gate"],
-	["packages/osm/lib/sdk/extract/subvenue/rules.ts", "the sub-venue tag rules name the physical gate"],
-	["packages/osm/lib/sdk/extract/subvenue/subvenue.test.ts", "sub-venue extraction tests name the physical gate"],
+	["packages/osm/sdk/extract/subvenue.ts", "sub-venue extraction names the physical gate"],
+	["packages/osm/sdk/extract/subvenue/rules.ts", "the sub-venue tag rules name the physical gate"],
+	["packages/osm/sdk/extract/subvenue/subvenue.test.ts", "sub-venue extraction tests name the physical gate"],
 	["packages/neural/lib/venue-structure.ts", "venue structure names the physical gate"],
 	["packages/neural/lib/span/proposal-prior.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.test.ts", "span proposal tests name the physical gate"],
 	["packages/core/lib/decoder/containment.ts", "containment names the physical gate"],
 	["packages/mailwoman/lib/geocode/result.ts", "the result shape names the physical gate"],
-	["packages/mailwoman/lib/eval-harness/conformance/punctuation.ts", "punctuation conformance names the physical gate"],
 	[
-		"packages/mailwoman/lib/eval-harness/conformance/punctuation.test.ts",
+		"packages/mailwoman/tools/eval-harness/conformance/punctuation.ts",
+		"punctuation conformance names the physical gate",
+	],
+	[
+		"packages/mailwoman/tools/eval-harness/conformance/punctuation.test.ts",
 		"punctuation conformance tests name the physical gate",
 	],
 	["packages/mailwoman/lib/venue-structure-confounds.integration.test.ts", "venue confounds name the physical gate"],
@@ -483,21 +487,21 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["docs/static/sbom/", "an SBOM describes a published tarball; rewriting it fails verification"],
 	["docs/static/img/", "binary images"],
 	[
-		"packages/mailwoman/lib/eval-harness/semantic-utility/",
+		"packages/mailwoman/tools/eval-harness/semantic-utility/",
 		"a pre-registered probe definition is frozen by content hash; rewriting it breaks every receipt that cites the hash",
 	],
 	[
-		"packages/mailwoman/lib/eval-harness/phase-2-decision/",
+		"packages/mailwoman/tools/eval-harness/phase-2-decision/",
 		"a pre-registered decision definition is frozen by content hash; rewriting it breaks every receipt that cites the hash",
 	],
 	["packages/neural/test/fixtures/", "a binary tokenizer model"],
 	["data/gazetteer/", "gazetteer place names"],
 	[
-		"packages/mailwoman/lib/eval-harness/fixtures/",
+		"packages/mailwoman/tools/eval-harness/fixtures/",
 		"eval fixtures hold real addresses: Norwegian streets end in gate, and GB venues are named Gate",
 	],
 	[
-		"packages/mailwoman/lib/eval-harness/gauntlet/cases/gb/regression.jsonl",
+		"packages/mailwoman/tools/eval-harness/gauntlet/cases/gb/regression.jsonl",
 		"the Manchester case is a real venue, Gate 12",
 	],
 	["docs/static/benchmarks/", "benchmark panels hold real addresses such as Hobsons Gate"],

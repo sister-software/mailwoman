@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { isNLPostcodeKey, NL_PC6_KEY_PATTERN } from "#nl/index"
+import { isNLPostcodeKey, NL_PC6_KEY_PATTERN } from "#nl"
 
 test("isNLPostcodeKey: accepts the compact, upper-case PC6 key", () => {
 	expect(isNLPostcodeKey("1012LG")).toBe(true)

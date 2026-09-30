@@ -18,8 +18,8 @@
  * `--count`. With-replacement draws at a large `--count` would produce a large duplicate rate.
  */
 
-import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
-import { formatAddress } from "@mailwoman/codex/address-format"
+import { extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
+import { formatAddress } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"

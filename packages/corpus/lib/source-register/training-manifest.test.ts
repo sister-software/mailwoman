@@ -22,7 +22,7 @@ import {
 	sourcesNotPermitting,
 	trainingManifestDigest,
 	type LicenseDecision,
-} from "#source-register/index"
+} from "#source-register"
 
 const elected: LicenseDecision = {
 	licenseID: "testland-open-data",

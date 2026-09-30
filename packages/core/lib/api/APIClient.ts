@@ -25,9 +25,9 @@ import {
 	retryDelayMs,
 	type RetryOptions,
 } from "#api/retry"
-import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
+import { ConsoleLogger, type IRuntimeLogger } from "#logging"
 
-export { type IRuntimeLogger } from "#logging/index"
+export { type IRuntimeLogger } from "#logging"
 
 const MS_PER_MINUTE = 60_000
 

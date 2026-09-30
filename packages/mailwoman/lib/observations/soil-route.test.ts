@@ -25,12 +25,12 @@ import {
 	fixtureDelineations,
 	fixtureOutline,
 	fixtureSource,
-} from "@mailwoman/soil/test-kit"
+} from "@mailwoman/soil/sdk/test-kit"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "#geocode"
-import { createSoilCapabilityRoute } from "#observations/index"
+import { createSoilCapabilityRoute } from "#observations"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
 	return { start: 0, end: 0, confidence: 1, children: [], ...partial }

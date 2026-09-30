@@ -129,10 +129,10 @@ not enough.
 
 ```bash
 # Self-check on the shipped default (regression + metamorphic):
-node packages/mailwoman/out/cli/index.js eval gauntlet
+node packages/mailwoman/out/cli/main.js eval gauntlet
 
 # Promote check for a candidate model (adds the held-out candidate-vs-prod z-test):
-node packages/mailwoman/out/cli/index.js eval gauntlet --candidate ./out/<version>/model.onnx [--source us]
+node packages/mailwoman/out/cli/main.js eval gauntlet --candidate ./out/<version>/model.onnx [--source us]
 ```
 
 A non-zero exit blocks the ship. The Gauntlet has three layers (`mailwoman/eval-harness/gauntlet/`):
@@ -215,7 +215,7 @@ this information from the artifact before the log existed.
 
 ```bash
 yarn compile
-node packages/mailwoman/out/cli/index.js gazetteer build admin        # ~10 min; builds to admin-global-priority.REBUILD.db
+node packages/mailwoman/out/cli/main.js gazetteer build admin        # ~10 min; builds to admin-global-priority.REBUILD.db
 ```
 
 One command runs the whole pipeline: WOF ingest → Overture divisions (real `division_area` extents +
@@ -224,7 +224,7 @@ country nodes, #1015) → GeoNames folds → freeze (ancestors closure → `ance
 2026-07-07 rebuild missed) → FTS (`place_search` + `place_bbox`) → the **structural verify step** → seal
 0444 → build-log append.
 
-The verify step also runs standalone with `node packages/mailwoman/out/cli/index.js gazetteer verify --db <path>`.
+The verify step also runs standalone with `node packages/mailwoman/out/cli/main.js gazetteer verify --db <path>`.
 It checks a per-country node census against the committed baseline (`gazetteer-pipeline/verify-baseline.ts`,
 which covers the #1026 failure, where count checks passed while 95 countries lost their country node). It
 also checks the coverage floor, a VT→Vermont abbreviation spot-check, `place_abbr` presence, FTS/bbox
@@ -239,7 +239,7 @@ old vs new DB). The two `**neural**` rows must match:
 ```bash
 PC=$MAILWOMAN_DATA_ROOT/db/wof/postalcode-us.db
 for db in admin-global-priority.db admin-global-priority.REBUILD.db; do
-  node packages/mailwoman/out/cli/index.js eval oa-resolver \
+  node packages/mailwoman/out/cli/main.js eval oa-resolver \
     --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 --default-country US \
     --model <v.onnx> --tokenizer <tok.model> --model-card neural-weights-en-us/model-card.json \
     --model-anchor-lookup <anchor.json> \
@@ -306,12 +306,12 @@ The manual recipe below performs the same steps one at a time, for reference and
 #    mailwoman/gazetteer-pipeline/admin/fold-geonames.ts, run by `mailwoman gazetteer build`).
 # (the standalone script is retired — the fold lives in the pipeline and `gazetteer build`
 #  runs it; for a fold-on-copy without a full rebuild, `mailwoman gazetteer build --help`.)
-node packages/mailwoman/out/cli/index.js gazetteer build   # admin (fold included) → candidate, turnkey
+node packages/mailwoman/out/cli/main.js gazetteer build   # admin (fold included) → candidate, turnkey
 # 1. Build the candidate table from the FOLDED admin DB + the postcode databases. The FTS5-trigram fuzzy
 #    index (typo tolerance — Manchestr→Manchester) is baked in by build-candidate now; no separate step.
 #    --postcodes is repeatable: US + the WOF intl extract (NL/FR/DE/ES/IT) + the GeoNames intl extract (PT/AU)
 #    + Overture-derived postcode centroids (CA + the EU-coverage locales), each built with
-#      node packages/mailwoman/out/cli/index.js eval es-postcode-centroids --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
+#      node packages/mailwoman/out/cli/main.js eval es-postcode-centroids --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
 #    (--pc-len 0 = no lpad, the Overture-to-Overture / non-numeric-format case). Each ZIP becomes a
 #    `postalcode` candidate row so findPlace(postalcode) resolves directly, and postcodes resolve ~100%
 #    at ~1-2km even where the locality misses (LT 0→100%, NO 75→100%, FI/SK 80→100%). The demo cascade
@@ -330,7 +330,7 @@ node resolver-wof-sqlite/out/build-candidate-cli.js \
 mkdir -p /tmp/stage/gazetteer/<NEW_VERSION>
 ln -s $MAILWOMAN_DATA_ROOT/db/wof/candidate-global.db /tmp/stage/gazetteer/<NEW_VERSION>/candidate.db
 set -a; . ./.env; set +a
-node packages/mailwoman/lib/dev-tools/data/publish-demo-assets-to-r2.run.ts --src /tmp/stage --prefix mailwoman
+node packages/mailwoman/tools/dev-tools/data/publish-demo-assets-to-r2.run.ts --src /tmp/stage --prefix mailwoman
 # 4. The map-highlight sibling (wof-polygons.db) builds from --admin now (the --points wof-hot.db source is
 #    gone): mailwoman gazetteer polygons --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
 ```
@@ -427,7 +427,7 @@ these updates in `main` before staging anything:
 4. Regenerate the capabilities manifest. The fail-closed capabilities delta check reads it, and without a regeneration the generator's `$comment` names the wrong model. The generator **refuses to run if a `capabilities` block already exists**, so rewrite the card without that block first, then run:
    ```bash
    yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
-   node packages/mailwoman/out/cli/index.js eval capability-manifest \
+   node packages/mailwoman/out/cli/main.js eval capability-manifest \
      --model $MAILWOMAN_DATA_ROOT/.../model-v<NNN>-step-<step>-int8.onnx \
      --tokenizer $MAILWOMAN_DATA_ROOT/.../tokenizer.model \
      --model-card neural-weights-en-us/model-card.json --write
@@ -457,14 +457,14 @@ because the model was evaluated against that lexicon, and it can differ by a few
 ### Step 3 — stage HF, then R2, then verify both backends agree
 
 ```bash
-HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/index.js release hf v<NEW> \
+HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/main.js release hf v<NEW> \
   --locale en-us --label "..." --description "..." \
   --model <src>/.../model.onnx --tokenizer ... --model-card ... --fst <src>/.../fst-en-US.bin \
   --wof-hot <src>/.../wof-hot.db --gazetteer-lexicon <src>/.../anchor-lexicon-v1.json \
   --postcodes "<csv of postcode-*.bin>" --pair-indexes "<csv of pair-index-*.bin, if any locale ships one>" \
   --polygons <src>/.../wof-polygons.db --steps <step> --set-default
 
-set -a; . ./.env; set +a; node packages/mailwoman/lib/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <src>
+set -a; . ./.env; set +a; node packages/mailwoman/tools/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <src>
 ```
 
 The flag list above does not define what a release must stage, and this prose has gone stale before.
@@ -487,7 +487,7 @@ basename as the Latin base's graph but different bytes, so it is never staged in
 and no `releases.json` entry is written, because the demo does not serve it.
 
 ```bash
-HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/index.js release hf v<CJK CARD VERSION> \
+HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/main.js release hf v<CJK CARD VERSION> \
   --locale cjk --label "…" --description "…" \
   --model $MAILWOMAN_DATA_ROOT/models/<run>/served-package/model.onnx \
   --char-vocab $MAILWOMAN_DATA_ROOT/models/<run>/served-package/char-vocab.json \
@@ -762,7 +762,7 @@ runs from CI through OIDC, with **no npm credentials anywhere**. The order is:
 1. **Stage the model on HF first.** Run this on the operator's host. It needs only the HF token and no npm auth:
 
    ```bash
-   HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/index.js release hf v<version> \
+   HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/main.js release hf v<version> \
      --locale en-us \
      --model <model.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json \
      --fst <fst-en-US.bin> --wof-hot <wof-hot.db> --set-default
@@ -780,7 +780,7 @@ runs from CI through OIDC, with **no npm credentials anywhere**. The order is:
 >
 > ```bash
 > set -a; . ./.env; set +a   # RCLONE_S3_PUBLIC_* creds
-> node packages/mailwoman/lib/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <staged-dir>
+> node packages/mailwoman/tools/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <staged-dir>
 > ```
 >
 > Verify with `curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq .defaultVersion`
@@ -891,7 +891,7 @@ client-only bug that cannot wait), revisit the sync decision before reaching for
 
 ```bash
 yarn compile
-node packages/mailwoman/out/cli/index.js clients generate
+node packages/mailwoman/out/cli/main.js clients generate
 ```
 
 The command emits all 8 OpenAPI documents, generates the Python package, and assembles the Rust crate. It

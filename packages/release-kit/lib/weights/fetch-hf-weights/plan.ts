@@ -12,7 +12,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import { $private } from "#env/index"
+import { $private } from "#env"
 import { literalFilesEntries } from "#pack/verify-tarball"
 import { releaseWorkspaces } from "#release/stage"
 

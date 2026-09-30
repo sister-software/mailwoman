@@ -12,7 +12,7 @@ import { resolvePath } from "path-ts"
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
 import { describeObservedRate, type Selection } from "#power"
-import { curveByStratum, errorClasses, reliabilityCurve, thresholdTable } from "#reliability/index"
+import { curveByStratum, errorClasses, reliabilityCurve, thresholdTable } from "#reliability"
 import {
 	coarsePlacerReliabilitySample,
 	ComponentAggregate,

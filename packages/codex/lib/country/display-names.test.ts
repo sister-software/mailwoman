@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { countryDisplayNames, enumerateCountryDisplayNames } from "#country/index"
+import { countryDisplayNames, enumerateCountryDisplayNames } from "#country"
 
 describe("enumerateCountryDisplayNames", () => {
 	it("supplies the exact surfaces the bare-toponym probe could not resolve", () => {

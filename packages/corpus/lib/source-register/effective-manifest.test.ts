@@ -14,7 +14,7 @@ import {
 	provenanceRefusals,
 	type EpochMixtureAudit,
 	type TrainingManifest,
-} from "#source-register/index"
+} from "#source-register"
 
 const corpusManifest: TrainingManifest = {
 	manifestID: "corpus-training-manifest",

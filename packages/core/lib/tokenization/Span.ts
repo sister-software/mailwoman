@@ -8,7 +8,7 @@
  */
 
 import type { Displayable } from "#resources/debugging"
-import type { Alpha3bLanguageCode } from "#resources/languages/index"
+import type { Alpha3bLanguageCode } from "#resources/languages"
 import type { LibPostalLanguageCode } from "#resources/libpostal"
 import { Graph } from "#tokenization/Graph"
 // Imported via deep relative path (not @mailwoman/core/classification) to avoid a runtime cycle:

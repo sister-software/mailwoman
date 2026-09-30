@@ -10,8 +10,8 @@
 import { describe, expect, it } from "vitest"
 
 import { assessAdminCoherence, type AdminCoherenceWinner } from "#admin-coherence"
-import { toGauntletResult } from "#eval-harness/gauntlet/harness"
 import type { GeocodeResult } from "#geocode"
+import { toGauntletResult } from "#tools/eval-harness/gauntlet/harness"
 
 /**
  * A candidate-tier locality winner with a country code and no ancestry.

@@ -18,10 +18,10 @@ import {
 	taskBlockIsComplete,
 	type GitHubIssue,
 	type RunGitHub,
-} from "#github/index"
+} from "#github"
 import { JobRegistry, type Job } from "#jobs"
 import { stubEngineRegistry } from "#test/stub-registry"
-import { githubTools } from "#tools/index"
+import { githubTools } from "#tools"
 
 let fixtures = new AsyncDisposableStack()
 

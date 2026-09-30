@@ -32,7 +32,7 @@ import {
 	layoutForCountry,
 	layoutPrintsLargestFirst,
 	lineJoinForCountry,
-} from "#address/layouts/index"
+} from "#address/layouts"
 import { joinRendering, renderAddress } from "#address/render"
 import type { ComponentTag } from "#component"
 

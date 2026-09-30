@@ -12,7 +12,7 @@ import {
 	LicenseObligation,
 	licenseIdentifiers,
 	summarizeLicense,
-} from "#license/index"
+} from "#license"
 
 describe("summarizeLicense", () => {
 	it("names ODbL's attribution and share-alike", () => {

@@ -21,7 +21,7 @@ import {
 	mailwomanSpans,
 	SpanVerdict,
 	type ParseComparisonRow,
-} from "#parse/compare/index"
+} from "#parse/compare"
 import { describeObservedRate } from "#power"
 import { inputSetProvenance } from "#tool-kit"
 

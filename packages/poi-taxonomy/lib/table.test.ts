@@ -8,8 +8,8 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, it } from "vitest"
 
-import { lookupPOIBrand as nodeLookupPOIBrand } from "#brands/index"
-import { lookupPOICategory as nodeLookupPOICategory } from "#lookup/index"
+import { lookupPOIBrand as nodeLookupPOIBrand } from "#brands"
+import { lookupPOICategory as nodeLookupPOICategory } from "#lookup"
 import { createPOIBrandLookup, createPOITaxonomyLookup } from "#table"
 import type { BrandRecord, CategoryRecord, POIBrandTable, POITaxonomyTable } from "#types"
 

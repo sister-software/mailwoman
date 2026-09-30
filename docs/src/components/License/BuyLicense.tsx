@@ -19,7 +19,7 @@ import {
 	PRICE_YEARLY,
 	PRICE_YEARLY_PER_MONTH,
 	TERMS_PATH,
-} from "@mailwoman/license-worker/sdk/constants"
+} from "@mailwoman/license-worker/client/constants"
 import type React from "react"
 
 import styles from "./styles.module.css"

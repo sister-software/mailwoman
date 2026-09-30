@@ -7,7 +7,7 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { GradeRequest } from "#compare/index"
+import type { GradeRequest } from "#compare"
 import type { ConfoundReading } from "#confound"
 import type { ExternalAnswer } from "#external-arm"
 import { DISTANCE_THRESHOLDS_KM, hitAt } from "#geo-grade"

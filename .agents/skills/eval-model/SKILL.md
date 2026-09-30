@@ -79,7 +79,7 @@ for addr in \
   "400 Broad St, Seattle, WA 98109" \
   "90210"; do
   echo "=== $addr ==="
-  node packages/mailwoman/out/cli/index.js parse --format xml "$addr" 2>/dev/null
+  node packages/mailwoman/out/cli/main.js parse --format xml "$addr" 2>/dev/null
 done
 ```
 

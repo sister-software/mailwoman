@@ -26,8 +26,8 @@ import {
 } from "@mailwoman/query-shape"
 import { beforeAll, describe, expect, test } from "vitest"
 
-import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { poiTaxonomyLookup } from "#poi"
+import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 
 /**
  * The pre-intent scorer set `classifyKindSync` can reach, minus the intent scorers

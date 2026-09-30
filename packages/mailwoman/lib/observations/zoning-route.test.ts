@@ -18,12 +18,18 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import type { QueryKind } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { buildZoningDatabase } from "@mailwoman/zoning/sdk/build-zoning"
-import { fixtureFeatures, fixtureSource, FIXTURE_ORIGIN, FIXTURE_PLANS, FIXTURE_SIDE } from "@mailwoman/zoning/test-kit"
+import {
+	fixtureFeatures,
+	fixtureSource,
+	FIXTURE_ORIGIN,
+	FIXTURE_PLANS,
+	FIXTURE_SIDE,
+} from "@mailwoman/zoning/sdk/test-kit"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "#geocode"
-import { createZoningDesignationRoute, describeZoningDesignation } from "#observations/index"
+import { createZoningDesignationRoute, describeZoningDesignation } from "#observations"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
 	return { start: 0, end: 0, confidence: 1, children: [], ...partial }

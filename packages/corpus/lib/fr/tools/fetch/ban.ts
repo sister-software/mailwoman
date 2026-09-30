@@ -25,8 +25,8 @@ import { makeDirectories, removePath, writeLocalFile } from "@mailwoman/core/fs/
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { downloadToFile, loadManifestEntries, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, loadManifestEntries, writeManifest } from "#tools/fetch/download"
 
 /**
  * Bytes per KiB — the divisor for human-readable sizes.

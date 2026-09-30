@@ -22,11 +22,10 @@
 	},
 	"files": [
 		"out/",
-		"*.ts",
-		"**/*.ts",
-		"!*.test.ts",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -44,30 +43,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./autocomplete": {
-			"types": "./out/autocomplete.d.ts",
-			"node": "./lib/autocomplete.ts",
-			"default": "./out/autocomplete.js"
-		},
-		"./builder": {
-			"types": "./out/builder.d.ts",
-			"node": "./lib/builder.ts",
-			"default": "./out/builder.js"
-		},
-		"./reader": {
-			"types": "./out/reader.d.ts",
-			"node": "./lib/reader.ts",
-			"default": "./out/reader.js"
-		},
-		"./types": {
-			"types": "./out/types.d.ts",
-			"node": "./lib/types.ts",
-			"default": "./out/types.js"
-		},
-		"./format": {
-			"types": "./out/format.d.ts",
-			"node": "./lib/format.ts",
-			"default": "./out/format.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"engines": {

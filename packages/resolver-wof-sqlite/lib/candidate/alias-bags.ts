@@ -10,7 +10,7 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
-import { ALIAS_SEPARATOR } from "#fts/index"
+import { ALIAS_SEPARATOR } from "#fts"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 

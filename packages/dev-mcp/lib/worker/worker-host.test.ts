@@ -85,7 +85,7 @@ describe("WorkerHost restart", () => {
 					label: "check:v9.0.0-base",
 					state: "running",
 					elapsed_s: 41,
-					command: "node out/cli/index.js eval promote --check v9.0.0-base",
+					command: "node out/cli.js eval promote --check v9.0.0-base",
 				},
 				// The job finished successfully and has a verdict on disk.
 				// A relaunch would repeat completed work.
@@ -105,7 +105,7 @@ describe("WorkerHost restart", () => {
 				job_id: "job-1",
 				label: "check:v9.0.0-base",
 				elapsed_s: 41,
-				command: "node out/cli/index.js eval promote --check v9.0.0-base",
+				command: "node out/cli.js eval promote --check v9.0.0-base",
 			},
 		])
 

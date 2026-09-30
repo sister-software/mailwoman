@@ -14,19 +14,19 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"data/**/*.json",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
+		"tools/**/*.ts",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!lib/scripts/**",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"imports": {
+		"#tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
+		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -40,46 +40,16 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./table": {
-			"types": "./out/table.d.ts",
-			"node": "./lib/table.ts",
-			"default": "./out/table.js"
-		},
-		"./overpass": {
-			"types": "./out/overpass.d.ts",
-			"node": "./lib/overpass.ts",
-			"default": "./out/overpass.js"
-		},
-		"./venue-word-hints": {
-			"types": "./out/venue-word-hints.d.ts",
-			"node": "./lib/venue-word-hints.ts",
-			"default": "./out/venue-word-hints.js"
-		},
 		"./data/*.json": "./data/*.json",
-		"./brands": {
-			"types": "./out/brands/index.d.ts",
-			"node": "./lib/brands/index.ts",
-			"default": "./out/brands/index.js"
+		"./tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
 		},
-		"./lookup": {
-			"types": "./out/lookup/index.d.ts",
-			"node": "./lib/lookup/index.ts",
-			"default": "./out/lookup/index.js"
-		},
-		"./scripts/generate-taxonomy": {
-			"types": "./out/scripts/generate-taxonomy.d.ts",
-			"node": "./lib/scripts/generate-taxonomy.ts",
-			"default": "./out/scripts/generate-taxonomy.js"
-		},
-		"./types": {
-			"types": "./out/types.d.ts",
-			"node": "./lib/types.ts",
-			"default": "./out/types.js"
-		},
-		"./packaged-data": {
-			"types": "./out/packaged-data.d.ts",
-			"node": "./lib/packaged-data.ts",
-			"default": "./out/packaged-data.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

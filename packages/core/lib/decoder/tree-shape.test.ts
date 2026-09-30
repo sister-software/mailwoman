@@ -8,8 +8,8 @@
 
 import { describe, expect, test } from "vitest"
 
+import { collectNodes, decodeAsJSON, slotNodes, walkNodes } from "#decoder"
 import { buildAddressTree } from "#decoder/build-tree"
-import { collectNodes, decodeAsJSON, slotNodes, walkNodes } from "#decoder/index"
 import { tok } from "#test/decoder-fixtures"
 
 const RAW = "Village of Fae, Camino Real, Carmel-By-The-Sea, CA 93921"

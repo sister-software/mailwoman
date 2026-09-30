@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest"
 
 import { JobRegistry } from "#jobs"
 import { stubEngine as buildEngine, stubEngineRegistry } from "#test/stub-registry"
-import { buildToolTable, type DevTool } from "#tools/index"
+import { buildToolTable, type DevTool } from "#tools"
 
 /**
  * A session whose answer is a pure function of the input, so a test can make

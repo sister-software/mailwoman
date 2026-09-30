@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { errorClasses, reliabilityCurve, thresholdTable, type Observation } from "#reliability/index"
+import { errorClasses, reliabilityCurve, thresholdTable, type Observation } from "#reliability"
 
 /**
  * `n` observations at one confidence, of which `correct` are right.

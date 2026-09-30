@@ -15,7 +15,7 @@ import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/d
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
+import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build/candidate"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"

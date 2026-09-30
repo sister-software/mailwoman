@@ -95,7 +95,7 @@ The same image includes the three compatible servers. Override the command:
 # Nominatim-compatible — /search /reverse /status, port 8080
 docker run --rm -p 8080:8080 -v /path/to/data:/data:ro \
   ghcr.io/sister-software/mailwoman:latest \
-  node node_modules/@mailwoman/nominatim/out/cli.js serve
+  node node_modules/@mailwoman/nominatim/out/cli/main.js serve
 ```
 
 The image's built-in health check targets `:3000/health`. If you override the command without

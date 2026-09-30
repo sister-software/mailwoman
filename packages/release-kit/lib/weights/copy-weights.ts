@@ -18,7 +18,7 @@ import {
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath } from "path-ts"
 
-import { $public } from "#env/index"
+import { $public } from "#env"
 import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "#weights/derived-weights-key"
 
 /**
@@ -329,7 +329,7 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 
 	await removePathIfPresent(binDest)
 
-	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli/index.js")
+	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli/main.js")
 
 	const r = spawnProcessSync(
 		process.execPath,
@@ -388,7 +388,7 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 
 	await removePathIfPresent(binDest)
 
-	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli/index.js")
+	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli/main.js")
 
 	const r = spawnProcessSync(
 		process.execPath,

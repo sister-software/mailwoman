@@ -9,7 +9,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
-const HOOK_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "vale", "response", "check", "index.ts")
+const HOOK_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "vale", "response", "check.ts")
 
 function runHook(lastAssistantMessage: string, stopHookActive = false): string {
 	const result = spawnProcessSync(process.execPath, [HOOK_PATH], {

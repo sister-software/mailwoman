@@ -9,7 +9,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { exactMatchIDs, officialNameIDs } from "#exact-match"
-import { foldQueryText } from "#fts/index"
+import { foldQueryText } from "#fts"
 import { populationBoostTerm, type RankingWeights } from "#ranking-weights"
 import type { RawSearchRow } from "#search-fetch"
 import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "#types"

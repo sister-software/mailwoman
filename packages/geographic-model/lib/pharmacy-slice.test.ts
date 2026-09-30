@@ -33,12 +33,8 @@ import {
 	ValidationIssueCode,
 } from "#index"
 import { loadGeographicModelDirectory } from "#load"
-import {
-	compileAuthoredGeographicModel,
-	packagedModelPaths,
-	readCompiledGeographicModel,
-	REGENERATE_ARTIFACT_COMMAND,
-} from "#scripts/build-artifact"
+import { packagedModelPaths, readCompiledGeographicModel } from "#packaged"
+import { compileAuthoredGeographicModel, REGENERATE_ARTIFACT_COMMAND } from "#tools/build-artifact"
 
 const PHARMACY = toConceptID("pharmacy")
 const DRUGSTORE = toConceptID("drugstore")

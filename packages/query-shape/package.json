@@ -13,15 +13,10 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -44,35 +39,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./character-class": {
-			"types": "./out/character-class.d.ts",
-			"node": "./lib/character-class.ts",
-			"default": "./out/character-class.js"
-		},
-		"./types": {
-			"types": "./out/types.d.ts",
-			"node": "./lib/types.ts",
-			"default": "./out/types.js"
-		},
-		"./compute": {
-			"types": "./out/compute.d.ts",
-			"node": "./lib/compute.ts",
-			"default": "./out/compute.js"
-		},
-		"./known-formats": {
-			"types": "./out/known-formats.d.ts",
-			"node": "./lib/known-formats.ts",
-			"default": "./out/known-formats.js"
-		},
-		"./region-abbreviations": {
-			"types": "./out/region-abbreviations.d.ts",
-			"node": "./lib/region-abbreviations.ts",
-			"default": "./out/region-abbreviations.js"
-		},
-		"./segmentation": {
-			"types": "./out/segmentation.d.ts",
-			"node": "./lib/segmentation.ts",
-			"default": "./out/segmentation.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

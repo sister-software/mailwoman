@@ -12,7 +12,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 // The package declares no `./cli` export, so this reads the bin the manifest actually publishes.
-const CLI_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "cli", "index.ts")
+const CLI_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "cli.ts")
 
 /**
  * Worker boot imports the whole Mailwoman graph.

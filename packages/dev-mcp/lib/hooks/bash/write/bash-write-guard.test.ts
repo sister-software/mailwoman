@@ -192,7 +192,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// A directory has no content for the symbol precheck to read.
 		// Git also leaves empty directories untracked.
 		// The hook admits this path inside the tree while it refuses other path writers.
-		["a directory inside the tree", `mkdir -p packages/mailwoman/lib/dev-tools/codex`],
+		["a directory inside the tree", `mkdir -p packages/mailwoman/tools/dev-tools/codex`],
 		["the state directory a linked session writes", `mkdir -p .claude/state`],
 		["clearing a workspace's build output", `rm -rf packages/repo-health/out`],
 		[
@@ -216,7 +216,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a Modal volume read", `modal volume ls mailwoman-training /output-v540/checkpoints`],
 		[
 			"the detached launcher itself",
-			`node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log /tmp/r.log -- modal run -d x.py`,
+			`node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log /tmp/r.log -- modal run -d x.py`,
 		],
 		["a release checksum", `sha256sum /tmp/package.tgz`],
 		["a database probe", `sqlite3 /tmp/wof.db 'select count(*) from place'`],

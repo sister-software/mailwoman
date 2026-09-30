@@ -14,13 +14,7 @@ import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { relative } from "path-ts"
 
-import {
-	extractDeclaredSymbols,
-	findDeclarations,
-	formatFindings,
-	readWriteIntent,
-	selectReportable,
-} from "#symbol/index"
+import { extractDeclaredSymbols, findDeclarations, formatFindings, readWriteIntent, selectReportable } from "#symbol"
 
 async function main(): Promise<void> {
 	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)

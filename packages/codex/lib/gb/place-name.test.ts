@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { titleCaseGB } from "#gb/index"
+import { titleCaseGB } from "#gb"
 
 describe("titleCaseGB", () => {
 	it("title-cases plain ALL-CAPS words", () => {

@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { hardCountrySafelistFromCoverage, type CountryCoverageFact } from "#resolver/index"
+import { hardCountrySafelistFromCoverage, type CountryCoverageFact } from "#resolver"
 
 const FACT = (country: string, hardFilterSafe: boolean): CountryCoverageFact => ({
 	country,

@@ -7,7 +7,7 @@
  * verbatim. The downstream affix-relabel step splits `street_prefix` from that value.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"

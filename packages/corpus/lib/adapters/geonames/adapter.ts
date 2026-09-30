@@ -9,7 +9,7 @@
  *   file is missing, rows omit that component.
  */
 
-import { componentsPresentIn } from "@mailwoman/codex/address-format"
+import { componentsPresentIn } from "@mailwoman/codex/address/format"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { PathBuilder } from "path-ts"

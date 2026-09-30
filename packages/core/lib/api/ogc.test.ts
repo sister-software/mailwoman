@@ -10,7 +10,7 @@
 import type { AxiosResponse } from "axios"
 import { describe, expect, it } from "vitest"
 
-import { type APIClient, OGCServiceError, readOGCServiceException, readWFSFeatureCount } from "#api/index"
+import { type APIClient, OGCServiceError, readOGCServiceException, readWFSFeatureCount } from "#api"
 
 /**
  * The one method {@linkcode readWFSFeatureCount} reaches.

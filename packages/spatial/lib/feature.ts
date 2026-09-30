@@ -5,7 +5,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { GeometryLiteral } from "#geometries/index"
+import type { GeometryLiteral } from "#geometries"
 
 export interface IdentifiableGeoFeature {
 	GEOID: string | number

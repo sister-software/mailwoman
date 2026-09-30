@@ -10,7 +10,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { containedNameCandidates, formatFindings } from "#symbol/index"
+import { containedNameCandidates, formatFindings } from "#symbol"
 import { runHook } from "#test/hook-harness"
 
 const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "symbol-precheck.ts")

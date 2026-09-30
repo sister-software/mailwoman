@@ -9,6 +9,7 @@
 
 import { expect, test } from "vitest"
 
+import { SUBVENUE_PROMOTIONS } from "#subvenue/promotions"
 import {
 	applyPromotions,
 	buildSubVenueLexicon,
@@ -25,7 +26,6 @@ import {
 	type SubVenueSurface,
 	surfacesFromWikidata,
 } from "#tools/sub/venue/lexicon"
-import { SUBVENUE_PROMOTIONS } from "#tools/sub/venue/promotions"
 
 /**
  * A minimal sparql envelope in the exact shape wdqs serves.

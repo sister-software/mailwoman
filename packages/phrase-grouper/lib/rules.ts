@@ -5,7 +5,7 @@
  */
 
 import { isFloorDesignatorToken } from "@mailwoman/codex/us/floor-designator"
-import { isStreetSuffixToken } from "@mailwoman/codex/us/street-suffix"
+import { isStreetSuffixToken } from "@mailwoman/codex/us/street/suffix"
 import { isUnitDesignatorToken } from "@mailwoman/codex/us/unit-designator"
 import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import { isRegionAbbreviationToken, type QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"

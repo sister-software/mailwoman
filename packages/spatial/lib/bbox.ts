@@ -9,7 +9,7 @@
 import { toRad } from "#coordinate/formats"
 import type { PolygonLiteral, SolidPolygonPath } from "#geometries/polygon"
 import { clampLatitude, wrapLongitude } from "#position"
-import { CoordinateProjection } from "#projection/index"
+import { CoordinateProjection } from "#projection"
 
 /**
  * Kilometres per degree of latitude.

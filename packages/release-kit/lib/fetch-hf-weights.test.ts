@@ -12,7 +12,7 @@ import { resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import { releaseWorkspaces } from "#release/stage"
-import { hfVersionBase, planCharFamilyArtifacts, planWeightsMaterialization } from "#weights/fetch-hf-weights/index"
+import { hfVersionBase, planCharFamilyArtifacts, planWeightsMaterialization } from "#weights/fetch-hf-weights"
 
 const repoRoot = repoRootPath()
 const CJK = "packages/neural-weights-cjk"

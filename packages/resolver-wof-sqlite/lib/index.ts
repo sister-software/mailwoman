@@ -94,7 +94,7 @@ export {
 	type ResolvedConvention,
 	type ScoringWeights,
 	type Strategy,
-} from "#convention/index"
+} from "#convention"
 
 export { SqliteConventionSource } from "#sqlite/convention-source"
 
@@ -108,9 +108,9 @@ export {
 	placeSearchFTSExists,
 	type BuildPlaceSearchFTSOpts,
 	type BuildPlaceSearchFTSResult,
-} from "#fts/index"
+} from "#fts"
 
-export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "#ancestry/index"
+export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "#ancestry"
 
 export {
 	WOFReverseGeocoder,
@@ -121,7 +121,7 @@ export {
 } from "#reverse"
 
 export { AddressPointInterpolator } from "#address/point/interpolation"
-export { AddressPointSqliteLookup } from "#address/point/index"
+export { AddressPointSqliteLookup } from "#address/point"
 
 export {
 	STREET_CENTROID_COLUMNS,
@@ -130,7 +130,7 @@ export {
 } from "#street/centroid/schema"
 
 export type { StreetCentroidDatabase, StreetCentroidTable } from "#street/centroid/schema"
-export { StreetCentroidSqliteLookup } from "#street/centroid/index"
+export { StreetCentroidSqliteLookup } from "#street/centroid"
 
 export {
 	StreetInterpolator,

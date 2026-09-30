@@ -16,7 +16,7 @@ import {
 	readRefreshCredentials,
 	writeLicenseKeyFile,
 	writeRefreshCredentials,
-} from "#license/index"
+} from "#license"
 
 describe("the config-root license files", () => {
 	let scratch: Awaited<ReturnType<typeof temporaryDirectory>>

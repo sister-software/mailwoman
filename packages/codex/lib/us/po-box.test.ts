@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { isPOBox, isUSPoBoxDesignator, matchPOBox, normalizePOBox } from "#us/index"
+import { isPOBox, isUSPoBoxDesignator, matchPOBox, normalizePOBox } from "#us"
 
 test("isPOBox: recognizes the USPS designator phrases with an id", () => {
 	for (const yes of [

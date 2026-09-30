@@ -11,7 +11,7 @@ import { APIClient, type APIClientConfig } from "#api/APIClient"
 import { ResourceError } from "#errors/schema"
 import { docsSiteURL } from "#license/docs-site"
 import type { PublishedLicenseKeys } from "#license/register"
-import { silentLogger } from "#logging/index"
+import { silentLogger } from "#logging"
 
 /**
  * Path of the well-known register that lists published signing keys.

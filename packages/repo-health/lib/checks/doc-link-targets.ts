@@ -22,7 +22,7 @@ import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
-import { trackedSourcePaths } from "#tracked-sources"
+import { PACKAGE_SOURCE_PATH, trackedSourcePaths } from "#tracked-sources"
 
 /**
  * A link tag and its target, up to the first separator: `{@link foo}`, `{@linkcode Foo.bar | text}`.
@@ -241,9 +241,9 @@ interface DocLinkSweep {
  */
 async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 	// The vocabulary is read from every tracked TypeScript file, tests included,
-	// while only a doc comment under `packages/*/lib` is judged against it.
+	// while only a doc comment under a package's source roots is judged against it.
 	const paths = await trackedSourcePaths(context, { existingOnly: true })
-	const judged = /^packages\/[^/]+\/lib\/.*\.ts$/u
+	const judged = { test: (path: string) => PACKAGE_SOURCE_PATH.test(path) && path.endsWith(".ts") }
 
 	const texts = new Map<string, string>()
 	const known = new Set<string>()

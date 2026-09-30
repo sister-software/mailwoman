@@ -33,7 +33,7 @@ export function resolvePackageDirectory<Name extends string = string>(packageNam
  *
  * A package-root anchor gives the same path from the source tree, the compiled
  * `out/` tree and a published tarball.
- * For example, `resolvePackagePath("mailwoman", "lib", "eval-harness", "baselines.json")`.
+ * For example, `resolvePackagePath("mailwoman", "tools", "eval-harness", "baselines.json")`.
  *
  * @throws `ERR_MODULE_NOT_FOUND` when the package is not installed.
  */

@@ -14,7 +14,7 @@ import {
 	licenseNamedIn,
 	mentionsShareAlike,
 	readLicenseRecord,
-} from "#license/index"
+} from "#license"
 
 /**
  * The `spliced-sub-venue` value, verbatim from 120,000 rows of `v0.7.0-de-holdout`.

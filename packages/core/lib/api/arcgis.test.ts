@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { ArcGISServiceError, assertNoArcGISError, readArcGISError } from "#api/index"
+import { ArcGISServiceError, assertNoArcGISError, readArcGISError } from "#api"
 
 const INVALID_TOKEN = {
 	error: {

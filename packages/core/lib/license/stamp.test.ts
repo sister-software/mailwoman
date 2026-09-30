@@ -16,7 +16,7 @@ import {
 	licenseNoticeLines,
 	licensePageURL,
 	verifyLicenseKey,
-} from "#license/index"
+} from "#license"
 
 const EXPRESSION = "AGPL-3.0-only OR LicenseRef-Commercial"
 const pair = await generateLicenseSigningKeyPair()

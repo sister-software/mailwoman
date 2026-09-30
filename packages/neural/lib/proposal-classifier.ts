@@ -12,7 +12,7 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import type { Span } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal, ClassifierContext, ProposalClassifier, Section } from "@mailwoman/core/types"
 
-import type { NeuralAddressClassifier } from "#classifier/index"
+import type { NeuralAddressClassifier } from "#classifier"
 import { STAGE2_TAGS } from "#labels"
 
 export interface NeuralProposalClassifierConfig {

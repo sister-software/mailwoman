@@ -16,8 +16,8 @@
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 
-import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
-import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
+import { downloadToFile, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "usgov-hrsa-fqhc"
 const FILENAME = "Health_Center_Service_Delivery_and_LookAlike_Sites.csv"

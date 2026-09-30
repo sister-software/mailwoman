@@ -6176,7 +6176,7 @@ __metadata:
     typescript: "npm:@typescript/typescript6@^6.0.2"
     zod: "npm:^4.5.4"
   bin:
-    mwdev-mcp: ./lib/cli/index.ts
+    mwdev-mcp: ./lib/cli.ts
   languageName: unknown
   linkType: soft
 
@@ -6374,7 +6374,7 @@ __metadata:
     mailwoman: "workspace:*"
     zod: "npm:^4.5.4"
   bin:
-    libpostal: ./out/cli.js
+    libpostal: ./out/cli/main.js
   languageName: unknown
   linkType: soft
 
@@ -6425,7 +6425,7 @@ __metadata:
     pbf: "npm:^5.1.2"
     pmtiles: "npm:^4.5.0"
   bin:
-    map-tui: ./out/cli/index.js
+    map-tui: ./out/cli/main.js
   languageName: unknown
   linkType: soft
 
@@ -6457,7 +6457,7 @@ __metadata:
     path-ts: "npm:^2.5.0"
     zod: "npm:^4.5.4"
   bin:
-    mailwoman-mcp: ./out/cli.js
+    mailwoman-mcp: ./out/cli/main.js
   languageName: unknown
   linkType: soft
 
@@ -6632,7 +6632,7 @@ __metadata:
     spliterator: "npm:^8.1.0"
     zod: "npm:^4.5.4"
   bin:
-    nominatim: ./out/cli.js
+    nominatim: ./out/cli/main.js
   languageName: unknown
   linkType: soft
 
@@ -6654,7 +6654,7 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
   bin:
-    nuts-lookup: ./out/cli.js
+    nuts-lookup: ./out/cli/main.js
   languageName: unknown
   linkType: soft
 
@@ -6667,6 +6667,7 @@ __metadata:
     "@mailwoman/release-kit": "workspace:*"
     "@mailwoman/repo-health": "workspace:*"
     "@mailwoman/storage-kit": "workspace:*"
+    path-ts: "npm:^2.5.0"
   bin:
     mwops: ./lib/cli.ts
   languageName: unknown
@@ -6706,7 +6707,7 @@ __metadata:
     mailwoman: "workspace:*"
     zod: "npm:^4.5.4"
   bin:
-    photon: ./out/cli.js
+    photon: ./out/cli/main.js
   languageName: unknown
   linkType: soft
 
@@ -7058,7 +7059,7 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     path-ts: "npm:^2.5.0"
   bin:
-    timezone-lookup: ./out/cli.js
+    timezone-lookup: ./out/cli/main.js
   languageName: unknown
   linkType: soft
 
@@ -7071,7 +7072,7 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     spliterator: "npm:^8.1.0"
   bin:
-    un-locode-lookup: ./out/cli.js
+    un-locode-lookup: ./out/cli/main.js
   languageName: unknown
   linkType: soft
 
@@ -20074,8 +20075,8 @@ __metadata:
     react:
       optional: true
   bin:
-    mailwoman: ./out/cli/index.js
-    mw: ./out/cli/index.js
+    mailwoman: ./out/cli/main.js
+    mw: ./out/cli/main.js
   languageName: unknown
   linkType: soft
 

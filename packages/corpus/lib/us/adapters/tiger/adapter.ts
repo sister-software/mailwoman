@@ -12,9 +12,9 @@
  * TIGER is public domain, so every emitted row is stamped `"Public Domain"`.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
+import type { TIGERDatabase } from "@mailwoman/tiger/schema"
 
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"

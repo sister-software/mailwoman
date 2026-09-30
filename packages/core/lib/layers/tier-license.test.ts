@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { assertTierMatchesLicense, LayerTier, polygonLayerManifest } from "#layers/index"
+import { assertTierMatchesLicense, LayerTier, polygonLayerManifest } from "#layers"
 
 describe("assertTierMatchesLicense", () => {
 	it("accepts a shipped tier on an attribution-only grant", () => {

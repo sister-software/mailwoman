@@ -72,7 +72,7 @@ The golden set (`data/eval/golden/v0.1.2`) includes a small hand-labeled adversa
 
 ### `perturb-golden.ts` — the one-off arena
 
-`packages/mailwoman/lib/dev-tools/perturb-golden.run.ts` takes golden rows and applies perturbations designed to break rule-based parsers, such as stripping the delimiters, lowercasing everything, or joining the region to the postcode as `OR97214`. It keeps the component labels intact. Its purpose is to show that a contextual model degrades more gracefully than a rule parser that depends on delimiters. It is a generator you run on demand. No standing check runs it.
+`packages/mailwoman/tools/dev-tools/perturb-golden.run.ts` takes golden rows and applies perturbations designed to break rule-based parsers, such as stripping the delimiters, lowercasing everything, or joining the region to the postcode as `OR97214`. It keeps the component labels intact. Its purpose is to show that a contextual model degrades more gracefully than a rule parser that depends on delimiters. It is a generator you run on demand. No standing check runs it.
 
 ## The coverage matrix
 

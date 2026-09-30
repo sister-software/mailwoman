@@ -20,11 +20,11 @@ import { collectNodes } from "@mailwoman/core/decoder"
 import {
 	type AblationPlace,
 	COINCIDENT_PLACE_KM,
+	collapseCoincident,
 	DECISIVE_MARGIN_LOG10,
 	dominanceMarginLog10,
-} from "#eval-harness/gauntlet/ablation/expectation"
-import { collapseCoincident } from "#eval-harness/gauntlet/ablation/gazetteer"
-import { tierRank } from "#eval-harness/gauntlet/ablation/scoring"
+	tierRank,
+} from "#ablation/expectation"
 
 /**
  * The fields of a resolver place that this module reads.

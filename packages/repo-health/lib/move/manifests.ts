@@ -8,7 +8,7 @@
  * file can move without a consumer noticing.
  *
  * One source file maps to up to three targets because a workspace narrows `rootDir` to `lib/` and emits to
- * `out/`, and every one has to move together.
+ * `out/`, and every one has to move together. A root beside `lib/` emits to `out/<root>/`.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -18,16 +18,24 @@ import { resolvePath } from "path-ts"
 import type { ManifestRewrite } from "#move/types"
 
 const SOURCE_ROOTS = new Set(["lib", "src"])
+/**
+ * Roots beside `lib/` that compile as their own project and emit under `out/<root>/`.
+ */
+const EXTRA_SOURCE_ROOTS = new Set(["sdk", "tools", "cli"])
 const SOURCE_EXTENSION = /\.tsx?$/u
 
 function targetsFor(packageRelative: string): string[] {
 	const targets = [`./${packageRelative}`]
 	const [root, ...rest] = packageRelative.split("/")
 
-	if (root && SOURCE_ROOTS.has(root) && rest.length) {
-		const emitted = rest.join("/").replace(SOURCE_EXTENSION, "")
+	if (!root || !rest.length) return targets
 
+	const emitted = rest.join("/").replace(SOURCE_EXTENSION, "")
+
+	if (SOURCE_ROOTS.has(root)) {
 		targets.push(`./out/${emitted}.js`, `./out/${emitted}.d.ts`)
+	} else if (EXTRA_SOURCE_ROOTS.has(root)) {
+		targets.push(`./out/${root}/${emitted}.js`, `./out/${root}/${emitted}.d.ts`)
 	}
 
 	return targets

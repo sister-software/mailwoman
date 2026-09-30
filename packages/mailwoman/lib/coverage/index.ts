@@ -1,9 +1,0 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- */
-
-export * from "#coverage/census"
-export * from "#coverage/core"
-export * from "#coverage/readings"

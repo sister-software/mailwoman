@@ -37,7 +37,7 @@ running script.
 | `mailwoman/geocode`                | `geocodeAddress`, `parseForGeocode`, `USStateDatabaseProvider`, `geocodeStream`, the result types |
 | `mailwoman/resolver-backend`       | `createResolverBackend` and `resolveCandidateDBPath`                                              |
 | `@mailwoman/core/data-root`        | `dataRootPath` and the other data-root path helpers                                               |
-| `mailwoman/cli-kit`                | Ink helpers for building an interactive command                                                   |
+| `mailwoman/cli/kit`                | Ink helpers for building an interactive command                                                   |
 | `mailwoman/test-kit`               | The parser test helpers                                                                           |
 | `mailwoman/poi`                    | The POI intent stage and executor                                                                 |
 | `@mailwoman/poi-taxonomy/overpass` | `emitOverpassQL`, the OverpassQL export for a matched POI intent                                  |
@@ -173,7 +173,7 @@ them. A package that resolves but ships no binaries fails loudly rather than fal
 cache — that is the metadata-only checkout trap, and silence there would look like a working install.
 
 The method is Node-only: it imports `onnxruntime-node` and `node:fs` dynamically. In a browser, use
-`loadNeuralClassifierFromURLs` from `@mailwoman/neural/web-loader`. Both runtimes are optional peer
+`loadNeuralClassifierFromURLs` from `@mailwoman/neural/web/loader`. Both runtimes are optional peer
 dependencies, so whichever side you are on, install it yourself: `onnxruntime-node` on a server,
 `onnxruntime-web` in a browser build.
 

@@ -130,6 +130,47 @@ export async function changedFiles(
 }
 
 /**
+ * The renames between `ref` and the working tree, as repo-relative `{from, to}` pairs.
+ *
+ * Rename detection runs with git's default similarity threshold.
+ * The output is read NUL-delimited, where each rename is a status field followed by its two paths.
+ */
+export async function renamesSince(
+	ref: string,
+	repoRoot: PathBuilderLike = repoRootPathBuilder
+): Promise<Array<{ from: string; to: string }>> {
+	const fields = (await git(["diff", "--name-status", "-M", "-z", ref], repoRoot, 64 * 1024 * 1024)).split("\0")
+	const renames: Array<{ from: string; to: string }> = []
+
+	for (let index = 0; index < fields.length;) {
+		const status = fields[index]!
+
+		if (!status) break
+
+		if (status.startsWith("R") || status.startsWith("C")) {
+			if (status.startsWith("R")) {
+				renames.push({ from: fields[index + 1]!, to: fields[index + 2]! })
+			}
+
+			index += 3
+		} else {
+			index += 2
+		}
+	}
+
+	return renames
+}
+
+/**
+ * Every path `ref` tracks, repo-relative, read NUL-delimited.
+ */
+export async function filesAtRef(ref: string, repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string[]> {
+	const output = await git(["ls-tree", "-r", "--name-only", "-z", ref], repoRoot, 64 * 1024 * 1024)
+
+	return output.split("\0").filter((path) => path.length)
+}
+
+/**
  * Every tracked path, repo-relative, optionally narrowed by git pathspecs.
  *
  * Read NUL-delimited so a path with a newline or a non-ascii byte survives.

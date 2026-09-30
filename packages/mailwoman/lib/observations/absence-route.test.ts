@@ -32,20 +32,20 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import {
+	createAbsenceObservationRoute,
+	describeAbsenceObservation,
+	recoverCoverageResolution,
+	type AbsenceObservationRoute,
+} from "#observations"
+import { readCommittedModel } from "#observations/committed-model"
+import {
 	auditAbsenceProbeDefinition,
 	loadAbsenceProbeDefinition,
 	absenceProbeDefinitionHash,
 	ABSENCE_PROBE_DEFINITION_PATH,
 	ABSENCE_PROBE_FREEZE_PATH,
 	type AbsenceProbeDefinition,
-} from "#eval-harness/absence-observation/probe"
-import { readCommittedModel } from "#observations/committed-model"
-import {
-	createAbsenceObservationRoute,
-	describeAbsenceObservation,
-	recoverCoverageResolution,
-	type AbsenceObservationRoute,
-} from "#observations/index"
+} from "#tools/eval-harness/absence-observation/probe"
 
 const COVERAGE_RESOLUTION = 6
 

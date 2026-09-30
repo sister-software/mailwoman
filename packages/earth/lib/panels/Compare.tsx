@@ -89,7 +89,7 @@ export const Compare: React.FC<CompareProps> = ({
 				setLoading(true)
 				setBackend("")
 
-				const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
+				const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
 
 				const { classifier: cls, diagnostics } = await loadNeuralClassifierFromURLs({
 					...neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM }),

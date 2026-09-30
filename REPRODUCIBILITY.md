@@ -73,7 +73,7 @@ md5 below is the v4.2.0 artifact's and predates the `onnxscript` bump.
 Check your local env against the set:
 
 ```bash
-node packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts   # exits nonzero on any mismatch
+node packages/mailwoman/tools/dev-tools/verify-export-quant-versions.run.ts   # exits nonzero on any mismatch
 ```
 
 ## Eval procedure invariants

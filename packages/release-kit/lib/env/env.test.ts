@@ -8,7 +8,7 @@ import { $private as corePrivate, $public as corePublic } from "@mailwoman/core/
 import { $public as resolverPublic } from "@mailwoman/resolver-wof-sqlite/env"
 import { afterEach, expect, test, vi } from "vitest"
 
-import { $private, $public } from "#env/index"
+import { $private, $public } from "#env"
 
 afterEach(() => vi.unstubAllEnvs())
 

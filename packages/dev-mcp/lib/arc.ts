@@ -6,7 +6,7 @@
 
 import { dRuleCountries, type ProtectedCountry, readScopeConfig } from "@mailwoman/core/scope-config"
 
-import { runCompare } from "#compare/index"
+import { runCompare } from "#compare"
 import type { EngineRegistryLike } from "#engine/registry"
 import type { ComparedRow } from "#tool-kit"
 

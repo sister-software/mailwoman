@@ -13,7 +13,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 
-import type { Span } from "#tokenization/index"
+import type { Span } from "#tokenization"
 
 /**
  * A section is a sub-span of the input that a classifier receives as one unit.

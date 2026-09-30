@@ -9,8 +9,8 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { PathBuilder } from "path-ts"
 import { afterAll, afterEach, describe, expect, test } from "vitest"
 
-import { mailwomanCLIPath } from "#cli/kit/metadata"
 import { $public } from "#env"
+import { mailwomanCLIPath } from "#metadata"
 import { conventionCandidateDBPath } from "#resolver-backend"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 

@@ -14,8 +14,8 @@ import { sha256File } from "@mailwoman/core/hash"
 import { prettyJSON } from "@mailwoman/core/json"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { writeManifest } from "#tools/fetch/download"
 
 const SLUG = "wikidata-subvenue"
 

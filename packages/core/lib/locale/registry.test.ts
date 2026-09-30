@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { enUS, frFR, jaJP } from "#locale/profiles/index"
+import { enUS, frFR, jaJP } from "#locale/profiles"
 import { InMemoryLocaleRegistry } from "#locale/registry"
 
 describe("InMemoryLocaleRegistry — registration", () => {

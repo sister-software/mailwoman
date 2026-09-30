@@ -8,7 +8,7 @@
  *   ambiguous terms that could otherwise be stripped.
  */
 
-import { foldForKey } from "@mailwoman/codex/address-key"
+import { foldForKey } from "@mailwoman/codex/address/key"
 
 /**
  * A canonicalized organization name.

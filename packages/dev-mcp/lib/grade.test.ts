@@ -5,8 +5,8 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
-import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
+import type { SeedCase } from "mailwoman/tools/eval-harness/gauntlet/cases/seed-case"
+import type { GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { describe, expect, it } from "vitest"
 
 import { caseCarriesTruth, gradeRow, seedToCaseTable, significance } from "#grade"

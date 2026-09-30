@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isCanadianDirectional, isCanadianStreetWord } from "#ca/index"
+import { isCanadianDirectional, isCanadianStreetWord } from "#ca"
 
 describe("isCanadianStreetWord", () => {
 	it("matches English street types, case-insensitive", () => {

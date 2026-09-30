@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { type GoldenStreetRow, relabelGoldenStreetRow } from "#tools/golden/relabel-street/index"
+import { type GoldenStreetRow, relabelGoldenStreetRow } from "#tools/golden/relabel-street"
 
 const row = (components: Record<string, string>, extra: Partial<GoldenStreetRow> = {}): GoldenStreetRow => ({
 	raw: "(unused by the row-level relabel)",

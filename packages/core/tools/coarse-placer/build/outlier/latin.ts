@@ -1,0 +1,204 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Latin-script off-map outlier exposure for the coarse-placer. The `other` class is trained on
+ *   non-Latin and non-CJK scripts (Cyrillic, Arabic, …) from WOF names, so off-map countries
+ *   written in Latin script (Poland, Brazil, Mexico, …) still mis-place to a trained Latin country,
+ *   the "Latin-off-map residual". The fix assembles real off-map addresses from the Overture
+ *   per-country address parquet and appends them as `country: "other"`.
+ *
+ *   Discipline: countries split into train (their rows feed train/val `other`) and heldout (rows go
+ *   only to the dedicated test file), so generalization to off-map countries the model never saw
+ *   stays measurable. The in-map test.jsonl is left untouched so the before/after in-map regression
+ *   check stays clean. The Latin metric lives in its own file.
+ *
+ *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
+ *   dedicated test file and appends fresh `other` rows (so don't run it twice onto the same splits
+ *   without rebuilding train/val).
+ *
+ *   Run: `mailwoman placer build-dataset --outliers latin [--per-country 6000] [--overture
+ *   $MAILWOMAN_DATA_ROOT/overture/<release>]` (default: the addresses-theme pin, `OVERTURE_ADDRESSES_RELEASE`)
+ */
+
+import { type PathBuilderLike, resolvePath } from "path-ts"
+
+import { hashFNV1a } from "#coarse-placer/fnv-hash"
+import { dataRootPath } from "#data-root"
+import { errorMessage } from "#errors/schema"
+import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
+import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
+import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#tools/coarse-placer/outlier-rows"
+import { defaultDataDir } from "#tools/coarse-placer/paths"
+
+interface LatinTestRow {
+	raw: string
+	country: string
+	group: string
+	srcCountry: string
+}
+
+/**
+ * Options for {@linkcode buildOutlierLatin}.
+ */
+export interface BuildOutlierLatinOptions {
+	/**
+	 * Rows sampled per off-map country.
+	 *
+	 * Default 6000.
+	 */
+	perCountry?: number
+	/**
+	 * Overture release dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/overture/<OVERTURE_ADDRESSES_RELEASE>`.
+	 */
+	overture?: PathBuilderLike
+	/**
+	 * Dataset dir the `other` rows append to.
+	 *
+	 * Default `<repo>/data/coarse-placer`.
+	 */
+	data?: PathBuilderLike
+}
+
+/**
+ * Result of {@linkcode buildOutlierLatin}.
+ */
+export interface BuildOutlierLatinResult {
+	train: number
+	val: number
+	test: number
+}
+
+/**
+ * Off-map (not among the trained countries) and Latin-script.
+ *
+ * Train feeds the `other` class.
+ * Heldout is test-only.
+ *
+ * BR/MX are the Latin off-map train exposure and CA/LI are the heldout probe,
+ * the hard near-twins of in-map US/DE.
+ * Watch other-Latin recall in the openset eval.
+ */
+const TRAIN_COUNTRIES = ["BR", "MX"]
+const HELDOUT_COUNTRIES = ["CA", "LI"]
+
+/**
+ * Address_levels arrives as a list (node-api) or its string repr.
+ * Pull the value strings out.
+ */
+function levelValues(al: unknown): string[] {
+	if (Array.isArray(al)) return al.flatMap((x) => (x && x.value ? [String(x.value)] : []))
+	const s = String(al ?? "")
+	const out: string[] = []
+
+	for (const m of s.matchAll(/'value':\s*'([^']*)'/g)) {
+		out.push(m[1]!)
+	}
+
+	if (!out.length) {
+		for (const m of s.matchAll(/"value":\s*"([^"]*)"/g)) {
+			out.push(m[1]!)
+		}
+	}
+
+	return out
+}
+
+/**
+ * Overture locality: `postal_city`, falling back to the last (then first) `address_levels` value.
+ */
+function overtureLocality(r: Record<string, unknown>): string {
+	const levels = levelValues(r.address_levels)
+
+	return (r.postal_city ? String(r.postal_city) : "") || levels.at(-1) || levels[0] || ""
+}
+
+/**
+ * Coarse-placer Overture Latin-off-map outlier builder.
+ * See the module doc.
+ */
+export async function buildOutlierLatin(
+	options: BuildOutlierLatinOptions = {},
+	report?: (line: string) => void
+): Promise<BuildOutlierLatinResult> {
+	const PER = options.perCountry ?? 6000
+	const overtureDir = options.overture || dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE)
+	const dataDir = options.data || defaultDataDir()
+
+	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
+	const { DuckDBInstance } = await import("@duckdb/node-api")
+	const duck = await (await DuckDBInstance.create()).connect()
+
+	async function rowsFor(cc: string): Promise<string[]> {
+		const f = resolvePath(overtureDir, `addresses-${cc.toLowerCase()}.parquet`)
+		let res
+
+		try {
+			res = await duck.runAndReadAll(
+				`SELECT number, street, postcode, postal_city, address_levels FROM read_parquet('${f}') LIMIT ${PER}`
+			)
+		} catch (error) {
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message rather than a file.
+			report?.(`  ${cc}: SKIP (${errorMessage(error).split("\n")[0]})`)
+
+			return []
+		}
+
+		return collectOutlierRows(res.getRowObjects().map((r) => assembleOutlierRow(r, { locality: overtureLocality })))
+	}
+
+	const trainAppend: string[] = []
+	const valAppend: string[] = []
+	const testRows: LatinTestRow[] = []
+
+	for (const cc of TRAIN_COUNTRIES) {
+		const rows = (await rowsFor(cc)).toSorted((a, b) => hashFNV1a(a) - hashFNV1a(b))
+		const nVal = Math.floor(rows.length * 0.1)
+		const nTest = Math.floor(rows.length * 0.1)
+		const val = rows.slice(0, nVal)
+		const test = rows.slice(nVal, nVal + nTest)
+		const train = rows.slice(nVal + nTest)
+
+		for (const raw of train) {
+			trainAppend.push(raw)
+		}
+
+		for (const raw of val) {
+			valAppend.push(raw)
+		}
+
+		for (const raw of test) {
+			testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc })
+		}
+
+		report?.(`  TRAIN ${cc}: ${rows.length} (train ${train.length} / val ${val.length} / test ${test.length})`)
+	}
+
+	for (const cc of HELDOUT_COUNTRIES) {
+		const rows = await rowsFor(cc)
+
+		for (const raw of rows) {
+			testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc })
+		}
+
+		report?.(`  HELDOUT ${cc}: ${rows.length} (test-only)`)
+	}
+
+	;(duck as { disconnect?: () => void }).disconnect?.()
+
+	await appendLocalTextFile(otherRowsJSONL(trainAppend), resolvePath(dataDir, "train.jsonl"))
+	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
+
+	await writeLocalJSONLFile(testRows, resolvePath(dataDir, "test-latin-offmap-overture.jsonl"))
+
+	report?.(`\nappended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
+
+	report?.(
+		`wrote test-latin-offmap-overture.jsonl: ${testRows.length} rows (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
+	)
+
+	return { train: trainAppend.length, val: valAppend.length, test: testRows.length }
+}

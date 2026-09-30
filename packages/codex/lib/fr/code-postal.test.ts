@@ -12,7 +12,7 @@ import {
 	isCodePostal,
 	normalizeCodePostal,
 	regionForCodePostal,
-} from "#fr/index"
+} from "#fr"
 
 describe("normalizeCodePostal", () => {
 	it("strips an F- prefix and whitespace to the bare five digits", () => {

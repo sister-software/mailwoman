@@ -1,0 +1,217 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Tests the same-data benchmark arms and scorer on small synthetic fixtures.
+ *
+ *   A replay miss records an `error`, because the fixture failed rather than the resolver. The scorer
+ *   excludes such rows from every metric. `assertEqualEvidence` compares the evidence receipts that
+ *   the arms return.
+ */
+
+import type { AddressTree } from "@mailwoman/core/decoder"
+import { describe, expect, it } from "vitest"
+
+import { runBaselineArm, runResolverArm } from "#tools/eval-harness/same-data/arms"
+import {
+	assertEqualEvidence,
+	candidatePool,
+	canonicalQueryKey,
+	SAME_DATA_SCHEMA_VERSION,
+	type SameDataCandidate,
+	type SameDataFixtureRow,
+	type SameDataPanelRow,
+} from "#tools/eval-harness/same-data/fixture"
+import { armMetrics } from "#tools/eval-harness/same-data/score"
+
+const SPRINGFIELD_IL: SameDataCandidate = {
+	id: 101,
+	name: "Springfield",
+	placetype: "locality",
+	country: "US",
+	lat: 39.8017,
+	lon: -89.6437,
+	score: 12,
+	population: 114_394,
+	exactMatch: true,
+}
+
+const SPRINGFIELD_MA: SameDataCandidate = {
+	id: 202,
+	name: "Springfield",
+	placetype: "locality",
+	country: "US",
+	lat: 42.1015,
+	lon: -72.5898,
+	score: 11,
+	population: 155_929,
+	exactMatch: true,
+}
+
+function tree(raw: string, value: string): AddressTree {
+	return {
+		raw,
+		roots: [{ tag: "locality", value, start: 0, end: value.length, confidence: 0.95, children: [] }],
+	}
+}
+
+/**
+ * Returns the three lookups that the walk makes for a bare place name.
+ *
+ * The walk looks up the locality, then checks whether the token is a country or a region.
+ * A fixture must record all three, or the replay misses.
+ */
+function lookupsFor(text: string, candidates: SameDataCandidate[]) {
+	const queries = [
+		{ text, placetype: "locality", limit: 5 },
+		{ text, placetype: "country", limit: 1, excludeNameRoles: ["abbr", "gloss"] },
+		{ text, placetype: "region", limit: 1, excludeNameRoles: ["abbr", "gloss"] },
+	]
+
+	return queries.map((query, index) => ({
+		key: canonicalQueryKey(query),
+		query,
+		candidates: index === 0 ? candidates : [],
+	}))
+}
+
+function fixtureFor(id: string, candidates: SameDataCandidate[], text = "Springfield"): SameDataFixtureRow {
+	const lookups = lookupsFor(text, candidates)
+
+	return {
+		id,
+		schemaVersion: SAME_DATA_SCHEMA_VERSION,
+		tree: tree(text, text),
+		lookups,
+		pool: candidatePool(lookups),
+	}
+}
+
+function panelFor(id: string, placeIDs: number[], goldPresent: boolean): SameDataPanelRow {
+	return {
+		id,
+		stratum: goldPresent ? "unambiguous" : "gold_absent",
+		query: "Springfield",
+		goldPresent,
+		gold: {
+			geonameid: "4250542",
+			placeIDs,
+			name: "Springfield",
+			country: "US",
+			admin1: "IL",
+			lat: 39.8017,
+			lon: -89.6437,
+			population: 114_394,
+		},
+		source: { register: "geonames:cities15000", license: "CC-BY-4.0", attribution: "GeoNames" },
+	}
+}
+
+describe("same-data synthetic smoke (#2261)", () => {
+	it("grades a selection correct when it names any member of the gold identity set", async () => {
+		const panel = panelFor("smoke-correct", [999, 101], true)
+		const result = await runResolverArm("mailwoman", panel, fixtureFor("smoke-correct", [SPRINGFIELD_IL]), {})
+
+		expect(result.selection).toBe("101")
+		expect(result.correct).toBe(true)
+		expect(result.error).toBeUndefined()
+	})
+
+	it("reports a wrong-area selection with its distance rather than only a verdict", async () => {
+		const panel = panelFor("smoke-area", [101], true)
+		const result = await runResolverArm("mailwoman", panel, fixtureFor("smoke-area", [SPRINGFIELD_MA]), {})
+
+		expect(result.correct).toBe(false)
+		expect(result.wrongArea).toBe(true)
+		expect(result.distanceKm).toBeGreaterThan(25)
+	})
+
+	it("records a replay miss as an ERROR, never as an abstention", async () => {
+		const panel = panelFor("smoke-miss", [101], true)
+		// The locality lookup answers exactly one query.
+		const starved = fixtureFor("smoke-miss", [SPRINGFIELD_IL])
+
+		starved.lookups = starved.lookups.filter((lookup) => lookup.query.placetype !== "locality")
+		starved.pool = candidatePool(starved.lookups)
+
+		const result = await runResolverArm("mailwoman", panel, starved, {})
+
+		expect(result.error).toMatch(/replay miss/)
+		expect(result.selection).toBeNull()
+
+		// The scorer must not count the row as an abstention.
+		const metrics = armMetrics("mailwoman", "unambiguous", new Map([[panel.id, panel]]), [result])
+
+		expect(metrics.errors).toBe(1)
+		expect(metrics.n).toBe(0)
+		expect(metrics.abstentions).toBe(0)
+	})
+
+	it("counts a true abstention when the withheld-gold fixture offers nothing", async () => {
+		const panel = panelFor("smoke-absent", [101], false)
+		const result = await runResolverArm("mailwoman", panel, fixtureFor("smoke-absent", []), {})
+
+		expect(result.error).toBeUndefined()
+		expect(result.selection).toBeNull()
+
+		const metrics = armMetrics("mailwoman", "gold_absent", new Map([[panel.id, panel]]), [result])
+
+		expect(metrics.abstentionPrecision).toStrictEqual({ numerator: 1, denominator: 1, value: 1 })
+		expect(metrics.falseSelection).toStrictEqual({ numerator: 0, denominator: 1, value: 0 })
+	})
+
+	it("measures selection accuracy over the gold-present rows rather than over every scored row", async () => {
+		const present = panelFor("smoke-mixed-present", [101], true)
+		const absent = panelFor("smoke-mixed-absent", [], false)
+
+		const results = [
+			await runResolverArm("mailwoman", present, fixtureFor("smoke-mixed-present", [SPRINGFIELD_IL]), {}),
+			await runResolverArm("mailwoman", absent, fixtureFor("smoke-mixed-absent", [SPRINGFIELD_MA]), {}),
+		]
+
+		const metrics = armMetrics(
+			"mailwoman",
+			"pooled",
+			new Map([
+				[present.id, present],
+				[absent.id, absent],
+			]),
+			results
+		)
+
+		expect(metrics.n).toBe(2)
+		expect(metrics.selectionAccuracy).toStrictEqual({ numerator: 1, denominator: 1, value: 1 })
+	})
+
+	it("catches two arms that read different evidence for one row", async () => {
+		const panel = panelFor("smoke-unequal", [101], true)
+		const rich = fixtureFor("smoke-unequal", [SPRINGFIELD_IL, SPRINGFIELD_MA])
+		const poor = fixtureFor("smoke-unequal", [SPRINGFIELD_IL])
+
+		const first = await runResolverArm("mailwoman", panel, rich, {})
+		const second = runBaselineArm(panel, poor)
+
+		const problems = assertEqualEvidence([first.evidence, second.evidence])
+
+		expect(problems.length).toBeGreaterThan(0)
+		expect(problems.map((problem) => problem.problem).join(" ")).toContain("different candidate ids")
+	})
+
+	it("reads equal evidence when both arms are handed the same row", async () => {
+		const panel = panelFor("smoke-equal", [101], true)
+		const evidence = fixtureFor("smoke-equal", [SPRINGFIELD_IL, SPRINGFIELD_MA])
+
+		const first = await runResolverArm("mailwoman", panel, evidence, {})
+		const second = runBaselineArm(panel, evidence)
+
+		expect(assertEqualEvidence([first.evidence, second.evidence])).toEqual([])
+	})
+
+	it("carries a machine-readable mechanism on a resolver selection", async () => {
+		const panel = panelFor("smoke-mechanism", [101], true)
+		const result = await runResolverArm("mailwoman", panel, fixtureFor("smoke-mechanism", [SPRINGFIELD_IL]), {})
+
+		expect(result.mechanism).toMatch(/^picked:/)
+	})
+})

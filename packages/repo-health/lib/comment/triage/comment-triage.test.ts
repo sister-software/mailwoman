@@ -1,7 +1,7 @@
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { heuristicLeads, pythonSourceComments, sourceComments } from "#comment/triage/index"
+import { heuristicLeads, pythonSourceComments, sourceComments } from "#comment/triage"
 
 describe("sourceComments", () => {
 	it("keeps every TypeScript scanner comment with its source range", () => {

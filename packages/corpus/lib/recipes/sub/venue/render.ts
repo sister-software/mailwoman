@@ -5,8 +5,8 @@
  * @file Renders labelled pieces into sub-venue rows in a sampled case register and a per-country address order.
  */
 
-import { layoutForCountry } from "@mailwoman/codex/address-layouts"
-import { type ComponentDict, renderAddress } from "@mailwoman/codex/address-render"
+import { layoutForCountry } from "@mailwoman/codex/address/layouts"
+import { type ComponentDict, renderAddress } from "@mailwoman/codex/address/render"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { isPresent } from "@mailwoman/core/objects"
 

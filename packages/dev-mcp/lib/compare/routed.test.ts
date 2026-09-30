@@ -1,7 +1,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { runCompare } from "#compare/index"
+import { runCompare } from "#compare"
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import type { ResolvedInput } from "#input-sets"
 import type { RoutedMailwomanArm } from "#routed-mailwoman-arm"

@@ -12,7 +12,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { ExternalArm } from "#arms"
-import { runCompare } from "#compare/index"
+import { runCompare } from "#compare"
 import type { EngineRegistryLike } from "#engine/registry"
 import { ExternalGeocoderClient } from "#external-arm"
 import { stubEngine, stubEngineRegistry } from "#test/stub-registry"

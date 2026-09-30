@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { assertPublishable, refusalsForPublication } from "#layers/index"
+import { assertPublishable, refusalsForPublication } from "#layers"
 
 /**
  * The `candidate` bundle as its manifest recorded it on 2026-09-26.

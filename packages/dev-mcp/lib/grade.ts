@@ -13,9 +13,9 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
-import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
-import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
+import type { SeedCase } from "mailwoman/tools/eval-harness/gauntlet/cases/seed-case"
+import type { GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
+import type { GauntletCaseTable } from "mailwoman/tools/eval-harness/gauntlet/schema"
 
 /**
  * The z at which a two-sided 95% test rejects.

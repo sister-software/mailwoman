@@ -36,11 +36,11 @@ on the 26M-row national set.
 #    → $MAILWOMAN_DATA_ROOT/db/ban/sources/   (or reuse an existing corpus/sources/ban)
 
 # 2. Build the national extract (writes $MAILWOMAN_DATA_ROOT/db/ban/address-points-fr.db, sealed 0444):
-node packages/ban/out/scripts/build/address-point-database.js \
+node packages/ban/out/tools/build/address-point-database.js \
   --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
 
 # Validate on a few départements first (transient; skips the provenance rewrite):
-node packages/ban/out/scripts/build/address-point-database.js --depts 48,2A,05 --out /tmp/ban-sample.db
+node packages/ban/out/tools/build/address-point-database.js --depts 48,2A,05 --out /tmp/ban-sample.db
 ```
 
 The build records provenance (source URL, license, release, row count, md5) in `ban/ATTRIBUTION.json` at

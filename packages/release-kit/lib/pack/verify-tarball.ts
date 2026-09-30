@@ -66,17 +66,51 @@ export function collectMissingFileEntries(files: unknown, shipped: Set<string>):
 }
 
 /**
- * Returns the concrete `exports` targets that the tarball does not contain.
+ * Returns every `*` pattern target in an exports or imports map.
  */
-export function collectMissingExportTargets(exports: unknown, shipped: Set<string>): string[] {
-	return collectExportTargets(exports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped))
+function collectPatternTargets(map: unknown): string[] {
+	if (typeof map === "string") return map.includes("*") ? [map] : []
+
+	if (!map || typeof map !== "object") return []
+
+	return Object.values(map).flatMap(collectPatternTargets)
 }
 
 /**
- * Which concrete package-import targets are absent from the tarball.
+ * Reports whether at least one shipped path matches a single-`*` pattern target.
+ *
+ * Node substitutes the `*` with any string, including one that contains `/`.
+ */
+function isPatternShipped(target: string, shipped: Set<string>): boolean {
+	const [prefix, suffix] = normalizeEntry(target).split("*") as [string, string]
+
+	for (const path of shipped) {
+		if (path.length > prefix.length + suffix.length && path.startsWith(prefix) && path.endsWith(suffix)) return true
+	}
+
+	return false
+}
+
+/**
+ * Returns the `exports` targets that the tarball does not contain.
+ *
+ * A concrete target must be shipped, and a `*` pattern target must match at least one shipped file.
+ */
+export function collectMissingExportTargets(exports: unknown, shipped: Set<string>): string[] {
+	return [
+		...collectExportTargets(exports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped)),
+		...collectPatternTargets(exports).filter((target) => !isPatternShipped(target, shipped)),
+	]
+}
+
+/**
+ * Returns the package-import targets that the tarball does not contain, under the same rules as exports.
  */
 export function collectMissingImportTargets(imports: unknown, shipped: Set<string>): string[] {
-	return collectExportTargets(imports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped))
+	return [
+		...collectExportTargets(imports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped)),
+		...collectPatternTargets(imports).filter((target) => !isPatternShipped(target, shipped)),
+	]
 }
 
 function collectBinTargets(bin: unknown): string[] {

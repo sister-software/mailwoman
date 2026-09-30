@@ -10,22 +10,22 @@
  * No module in the root graph imports CSS, so the bare package import is Node-safe
  * and hosts load `@mailwoman/react/styles.css` themselves.
  */
-export * from "#common/index"
+export * from "#common"
 /**
  * Re-exports `POIExplorer`, a POI-intent tester that needs no weights or network, with its related exports.
  */
-export * from "#poi/index"
+export * from "#poi"
 /**
  * Re-exports `PipelineExplorer`, a parse-and-resolve tester with model
  * and gazetteer access injected by the host.
  * It also exports the explorer's related declarations.
  */
-export * from "#pipeline/index"
+export * from "#pipeline"
 /**
  * Re-exports `useReleaseRuntime`, the Node-safe hook that loads a release manifest
  * and each selected version's assets through a host-injected loader.
  */
-export * from "#runtime/index"
+export * from "#runtime"
 
 /**
  * Re-exports the map surface's types only, because its runtime lives behind the
@@ -42,4 +42,4 @@ export type {
 	OverlaySpec,
 	Suggestion,
 	VersionOption,
-} from "#map/index"
+} from "#map"

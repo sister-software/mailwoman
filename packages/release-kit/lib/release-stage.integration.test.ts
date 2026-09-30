@@ -18,7 +18,7 @@ import { $ } from "zx"
 
 import { literalFilesEntries, verifyTarball } from "#pack/verify-tarball"
 import { assertWorkspacePublishable, checkReleaseListIdentity, SANCTIONED_RELEASE_ABSENCES } from "#release/stage"
-import { planWeightsMaterialization } from "#weights/fetch-hf-weights/index"
+import { planWeightsMaterialization } from "#weights/fetch-hf-weights"
 
 const fixtures = new AsyncDisposableStack()
 

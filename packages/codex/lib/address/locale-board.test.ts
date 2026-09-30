@@ -21,7 +21,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { ADDRESS_LAYOUTS, LINE_JOINS } from "#address/layouts/index"
+import { ADDRESS_LAYOUTS, LINE_JOINS } from "#address/layouts"
 import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
 
 interface BoardRow {

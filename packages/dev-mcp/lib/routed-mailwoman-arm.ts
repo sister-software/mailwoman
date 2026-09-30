@@ -16,8 +16,8 @@ import {
 	type GauntletDeps,
 	type GauntletDepsOptions,
 	type GauntletResult,
-} from "mailwoman/eval-harness/gauntlet/harness"
-import { overlayLocale } from "mailwoman/eval-harness/gauntlet/routing"
+} from "mailwoman/tools/eval-harness/gauntlet/harness"
+import { overlayLocale } from "mailwoman/tools/eval-harness/gauntlet/routing"
 import { type PathBuilderLike, relative, resolvePath, sep } from "path-ts"
 
 import type { EngineConfig } from "#engine/registry"

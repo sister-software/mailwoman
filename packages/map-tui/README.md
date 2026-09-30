@@ -64,7 +64,7 @@ The committed test fixture, a hand-authored extract of southeast Portland, lets 
 without downloading anything:
 
 ```sh
-node map-tui/out/cli.js \
+node map-tui/out/cli/main.js \
   --tiles map-tui/test/fixtures/portland.pmtiles \
   --lat 45.5034 --lon -122.6023 --zoom 12
 ```

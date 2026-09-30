@@ -117,7 +117,7 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 		entry: "@mailwoman/core/license/key",
 		platform: "neutral",
 		conditions: WORKER_CONDITIONS,
-		mustInclude: [/license\/key\/index\.js$/u],
+		mustInclude: [/license\/key\.js$/u],
 	},
 	{
 		entry: "@mailwoman/core/license/register",
@@ -138,7 +138,7 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 	browserRow("@mailwoman/resolver-wof-wasm/httpvfs/poi"),
 	browserRow("@mailwoman/neural/viterbi"),
 	browserRow("mailwoman/browser-runtime", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
-	browserRow("@mailwoman/neural/web-loader", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
+	browserRow("@mailwoman/neural/web/loader", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
 	browserRow("@mailwoman/cartographer/planetary"),
 	browserRow("@mailwoman/astrogeology/search/tokens"),
 	browserRow("@mailwoman/astrogeology/schema/nomenclature"),

@@ -21,14 +21,14 @@ export * from "#abbreviations"
 export * from "#component"
 export * from "#normalize"
 export * from "#placetype-map"
-export * as au from "#au/index"
-export * as ca from "#ca/index"
-export * as de from "#de/index"
-export * as fr from "#fr/index"
-export * as gb from "#gb/index"
-export * as jp from "#jp/index"
+export * as au from "#au"
+export * as ca from "#ca"
+export * as de from "#de"
+export * as fr from "#fr"
+export * as gb from "#gb"
+export * as jp from "#jp"
 export * as levels from "#level-semantics"
-export * as nz from "#nz/index"
+export * as nz from "#nz"
 
 export {
 	AREA_POSTCODE_FINER_THAN_LOCALITY,
@@ -40,4 +40,4 @@ export {
 	UNIT_GRADE_POSTCODE,
 } from "#postcode/systems"
 
-export * as us from "#us/index"
+export * as us from "#us"

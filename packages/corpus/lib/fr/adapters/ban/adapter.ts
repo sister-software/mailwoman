@@ -19,7 +19,7 @@
  * honors `opts.limit`, `opts.signal`, and `opts.country` (which errors when country is not FR).
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"

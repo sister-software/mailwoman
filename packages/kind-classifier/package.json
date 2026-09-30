@@ -13,15 +13,10 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -39,25 +34,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./classify": {
-			"types": "./out/classify.d.ts",
-			"node": "./lib/classify.ts",
-			"default": "./out/classify.js"
-		},
-		"./intent-rules": {
-			"types": "./out/intent/rules.d.ts",
-			"node": "./lib/intent/rules.ts",
-			"default": "./out/intent/rules.js"
-		},
-		"./rules": {
-			"types": "./out/rules.d.ts",
-			"node": "./lib/rules.ts",
-			"default": "./out/rules.js"
-		},
-		"./poi": {
-			"types": "./out/poi.d.ts",
-			"node": "./lib/poi.ts",
-			"default": "./out/poi.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

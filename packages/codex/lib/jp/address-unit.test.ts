@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isJapaneseAdminSuffix, JP_ADMIN_SUFFIXES, JP_BLOCK_MARKERS, stripAdminSuffix } from "#jp/index"
+import { isJapaneseAdminSuffix, JP_ADMIN_SUFFIXES, JP_BLOCK_MARKERS, stripAdminSuffix } from "#jp"
 
 describe("JP_ADMIN_SUFFIXES / JP_BLOCK_MARKERS", () => {
 	it("carries the prefecture-level and city-level admin markers", () => {

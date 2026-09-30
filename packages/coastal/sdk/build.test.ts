@@ -1,0 +1,369 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it. NCERM publishes no
+ *   coverage statement, so a point inside the footprint but outside every polygon is `unknown` with no
+ *   designation rather than the authority's Zone 1.
+ */
+
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
+import { rectangleRing } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+import { CoastalContainmentPath, CoastalErosionLookup, CoastalReadingKind } from "#index"
+import type { CoastalDatabase } from "#schema"
+import { assertNoNegativeClaim, buildCoastalDatabase, type BuildCoastalResult } from "#sdk/build-coastal"
+import type { CoastalSourceFeature } from "#sdk/ingest"
+import {
+	fixtureFeature,
+	fixtureFeatures,
+	fixtureInstabilityFeatures,
+	fixtureSource,
+	FIXTURE_ORIGIN,
+	FIXTURE_SCENARIOS,
+	FIXTURE_SIDE,
+} from "#sdk/test-kit"
+import { NCERM_LAYER_NAME } from "#vocabulary"
+
+const INDEX_RESOLUTION = 10
+const COVERAGE_RESOLUTION = 6
+
+const NFI = FIXTURE_SCENARIOS.noIntervention.key
+const SMP = FIXTURE_SCENARIOS.withPlan.key
+
+let scratch: TemporaryDirectory
+let databasePath: PathBuilder
+let result: BuildCoastalResult
+let lookup: CoastalErosionLookup
+
+/**
+ * A point inside the first fixture band, where both scenarios have a polygon.
+ */
+const INSIDE_BAND_A = {
+	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
+	longitude: FIXTURE_ORIGIN.lon + FIXTURE_SIDE / 2,
+}
+
+/**
+ * A point far from every fixture band, in the same waters.
+ */
+const OUTSIDE_EVERY_BAND = {
+	latitude: FIXTURE_ORIGIN.lat + 0.2,
+	longitude: FIXTURE_ORIGIN.lon + 0.2,
+}
+
+/**
+ * Build one artifact from a feature list, into its own scratch directory.
+ */
+async function build(
+	features: CoastalSourceFeature[] = fixtureFeatures(),
+	out = "coastal-england.db"
+): Promise<{ path: PathBuilder; result: BuildCoastalResult }> {
+	const path = scratch.path(out)
+
+	const built = await buildCoastalDatabase({
+		source: fixtureSource(features),
+		out: path,
+		sourceVintage: "2024-11-28",
+		buildCmd: "vitest",
+		buildSHA: "fixture",
+		createdAt: "2026-08-28T00:00:00.000Z",
+		indexResolution: INDEX_RESOLUTION,
+		coverageResolution: COVERAGE_RESOLUTION,
+	})
+
+	return { path, result: built }
+}
+
+beforeAll(async () => {
+	scratch = await temporaryDirectory("mw-coastal-")
+
+	const built = await build()
+
+	databasePath = built.path
+	result = built.result
+	lookup = new CoastalErosionLookup({ databasePath })
+}, 120_000)
+
+afterAll(() => {
+	lookup[Symbol.dispose]()
+	scratch[Symbol.asyncDispose]()
+})
+
+describe("the sealed artifact", () => {
+	it("writes every fixture feature and seals the file read-only", async () => {
+		expect(result.erosionFeatures).toBe(5)
+		expect(result.instabilityFeatures).toBe(1)
+		expect(result.scenarioCounts[NFI]).toBe(4)
+		expect(result.scenarioCounts[SMP]).toBe(1)
+
+		// 0o444 — sealed, per the layer interface's build-then-swap discipline.
+		expect((await statPath(databasePath)).mode & 0o777).toBe(0o444)
+	})
+
+	it("declares the layer, its index resolution and its licence in the manifest", () => {
+		expect(lookup.identity.manifest.name).toBe(NCERM_LAYER_NAME)
+		expect(lookup.identity.manifest.spineKeys.h3?.column).toBe("coastal_zone_cell.h3_cell")
+		expect(lookup.identity.indexResolution).toBe(INDEX_RESOLUTION)
+		expect(lookup.identity.coverageResolution).toBe(COVERAGE_RESOLUTION)
+		expect(lookup.identity.manifest.license).toBe("OGL-UK-3.0")
+		expect(lookup.identity.manifest.attribution).toContain("Environment Agency")
+	})
+
+	it("keys the truth table by scenario and by the authority's feature id, never by the frontage", () => {
+		using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+
+		const rows = database.prepare("SELECT area_id, scenario_key, frontage_id FROM coastal_zone_area").all() as Array<{
+			area_id: string
+			scenario_key: string
+			frontage_id: number
+		}>
+
+		// Every fixture feature has frontage 1000.
+		// The real product repeats a frontage ID within one layer.
+		// A build keyed on it would collapse five rows into one.
+		expect(new Set(rows.map((row) => row.frontage_id))).toEqual(new Set([1000]))
+		expect(rows).toHaveLength(5)
+		expect(new Set(rows.map((row) => row.area_id)).size).toBe(5)
+		expect(rows.filter((row) => row.scenario_key === NFI)).toHaveLength(4)
+	})
+
+	it("indexes a polygon narrower than a cell rather than dropping it", () => {
+		using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+
+		const sliver = database
+			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id = ?")
+			.get(`${NFI}:4`) as { n: number }
+
+		// A polyfill keyed on cell centres returns no cells for a 5 m square.
+		// A feature indexed to no cell reads downstream as absent.
+		// The failure the per-part zero-cell guard exists to make impossible.
+		expect(sliver.n).toBeGreaterThan(0)
+	})
+})
+
+describe("scenario scoping", () => {
+	it("answers the same coordinate differently under two scenarios, each naming its own", () => {
+		const underNFI = lookup.lookup(INSIDE_BAND_A.latitude, INSIDE_BAND_A.longitude, NFI)
+		const underSMP = lookup.lookup(INSIDE_BAND_A.latitude, INSIDE_BAND_A.longitude, SMP)
+
+		expect(underNFI.kind).toBe(CoastalReadingKind.Designated)
+		expect(underSMP.kind).toBe(CoastalReadingKind.Designated)
+
+		expect(underNFI.scenario.key).toBe(NFI)
+		expect(underSMP.scenario.key).toBe(SMP)
+
+		expect(underNFI.designations.map((designation) => designation.distanceM)).toEqual([12])
+		expect(underSMP.designations.map((designation) => designation.distanceM)).toEqual([310])
+	})
+
+	it("carries the shoreline-management policy only where the scenario has one", () => {
+		const underNFI = lookup.lookup(INSIDE_BAND_A.latitude, INSIDE_BAND_A.longitude, NFI)
+		const underSMP = lookup.lookup(INSIDE_BAND_A.latitude, INSIDE_BAND_A.longitude, SMP)
+
+		expect(underNFI.designations[0]!.policy).toBeUndefined()
+		expect(underSMP.designations[0]!.policy?.mediumTermInterpretation).toBe("Erosion restricted")
+	})
+
+	it("refuses a probe naming a scenario the layer does not hold", () => {
+		expect(() => lookup.lookup(INSIDE_BAND_A.latitude, INSIDE_BAND_A.longitude, "SMP_2105_50CC")).toThrow(
+			/not a scenario this layer holds/u
+		)
+	})
+
+	it("answers a point inside a hole as outside the polygon", () => {
+		const holeCentre = {
+			latitude: FIXTURE_ORIGIN.lat + 2.5 * FIXTURE_SIDE,
+			longitude: FIXTURE_ORIGIN.lon + FIXTURE_SIDE / 2,
+		}
+
+		expect(lookup.lookup(holeCentre.latitude, holeCentre.longitude, NFI).kind).toBe(CoastalReadingKind.Unknown)
+	})
+})
+
+describe("the meaning-of-zero inversion", () => {
+	it("reads a point outside every polygon as unknown, never as an absence designation", () => {
+		const reading = lookup.lookup(OUTSIDE_EVERY_BAND.latitude, OUTSIDE_EVERY_BAND.longitude, NFI)
+
+		expect(reading.kind).toBe(CoastalReadingKind.Unknown)
+		expect(reading.designations).toEqual([])
+		expect(reading.containment).toBe(CoastalContainmentPath.NoZoneCell)
+		expect(reading.coverageLimit).toMatch(/no coverage statement/u)
+	})
+
+	it("names its scenario even on an unknown reading", () => {
+		expect(lookup.lookup(OUTSIDE_EVERY_BAND.latitude, OUTSIDE_EVERY_BAND.longitude, SMP).scenario.key).toBe(SMP)
+	})
+
+	it("writes every coverage row on source_present, so none of them supports an exclusion", () => {
+		using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+
+		const rows = database
+			.prepare("SELECT h3_cell, completeness, basis, observed_rows FROM layer_coverage")
+			.all() as Array<{ h3_cell: number; completeness: number; basis: string | null; observed_rows: number }>
+
+		expect(rows.length).toBeGreaterThan(0)
+		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
+
+		for (const row of rows) {
+			expect(row.basis).toBe(CoverageBasis.SourcePresent)
+			expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
+			expect(row.observed_rows).toBeGreaterThan(0)
+		}
+	})
+
+	it("refuses to write a coverage row that would license a negative claim", () => {
+		expect(() =>
+			assertNoNegativeClaim([{ h3Cell: 1, completeness: 1, basis: CoverageBasis.Designated, observedRows: 0 }])
+		).toThrow(/supports an EXCLUSION/u)
+
+		expect(() =>
+			assertNoNegativeClaim([{ h3Cell: 1, completeness: 1, basis: CoverageBasis.Surveyed, observedRows: 0 }])
+		).toThrow(/supports an EXCLUSION/u)
+
+		expect(() =>
+			assertNoNegativeClaim([{ h3Cell: 1, completeness: 1, basis: CoverageBasis.SourcePresent, observedRows: 1 }])
+		).not.toThrow()
+	})
+
+	it("refuses to OPEN an artifact whose coverage would license a negative claim", () => {
+		const path = scratch.path("tampered.db")
+
+		using source = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+
+		source.exec(`VACUUM INTO '${path}'`)
+
+		using tampered = new DatabaseClient<CoastalDatabase>(path)
+
+		// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `without rowid` and has none.
+		tampered.exec(
+			`UPDATE layer_coverage SET basis = '${CoverageBasis.Designated}' ` +
+				"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"
+		)
+
+		expect(() => new CoastalErosionLookup({ databasePath: path })).toThrow(/supports an EXCLUSION/u)
+	})
+})
+
+describe("ground instability", () => {
+	it("stores the two ground-instability layers apart and never answers an erosion question from one", () => {
+		const instability = fixtureInstabilityFeatures()[0]!
+		const ring = instability.polygons[0]![0]!
+
+		const centre = {
+			longitude: (ring[0]![0]! + ring[2]![0]!) / 2,
+			latitude: (ring[0]![1]! + ring[2]![1]!) / 2,
+		}
+
+		expect(lookup.lookup(centre.latitude, centre.longitude, NFI).kind).toBe(CoastalReadingKind.Unknown)
+
+		const readings = lookup.groundInstabilityAt(centre.latitude, centre.longitude)
+
+		expect(readings).toHaveLength(1)
+		expect(readings[0]!.kind).toBe("zone")
+		expect(readings[0]!.location).toBe("Fixture Cliff")
+	})
+
+	it("keeps ground-instability polygons out of the erosion cell index entirely", () => {
+		using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+
+		const rows = database
+			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id LIKE 'zone:%' OR area_id LIKE 'recession:%'")
+			.get() as { n: number }
+
+		expect(rows.n).toBe(0)
+	})
+})
+
+describe("the declared domains", () => {
+	it("throws on a policy value the authority never published", async () => {
+		const features = fixtureFeatures()
+		const withPlan = features.find((feature) => feature.scenario.key === SMP)!
+
+		await expect(build([{ ...withPlan, mtPolicy: "Hold the Line" }], "bad-policy.db")).rejects.toThrow(
+			/declared policy domain/u
+		)
+	})
+
+	it("throws on a defence type outside the domain, even after case folding", async () => {
+		const features = fixtureFeatures()
+
+		await expect(
+			build([{ ...features[0]!, defenceType: "Vertical Wall - Titanium" }], "bad-defence.db")
+		).rejects.toThrow(/declared defence domain/u)
+	})
+
+	it("accepts the source's own inconsistent capitalization and stores it verbatim", async () => {
+		const features = fixtureFeatures()
+		const built = await build([{ ...features[0]!, defenceType: "Sheet piles" }], "folded-defence.db")
+
+		using database = new DatabaseClient<CoastalDatabase>(built.path, { readOnly: true })
+
+		const row = database.prepare("SELECT defence_type FROM coastal_zone_area").get() as { defence_type: string }
+
+		expect(row.defence_type).toBe("Sheet piles")
+	})
+
+	it("carries the anomalous rows as published rather than coercing them", async () => {
+		const features = fixtureFeatures()
+		const withPlan = features.find((feature) => feature.scenario.key === SMP)!
+
+		const built = await build(
+			[
+				{
+					...withPlan,
+					mtPolicy: " ",
+					mtPolicyInterpretation: " ",
+					ltPolicy: " ",
+					ltPolicyInterpretation: " ",
+					defenceType: " ",
+					publishedYear: 0,
+				},
+			],
+			"anomalous.db"
+		)
+
+		using database = new DatabaseClient<CoastalDatabase>(built.path, { readOnly: true })
+
+		const row = database.prepare("SELECT mt_policy, published_year FROM coastal_zone_area").get() as {
+			mt_policy: string
+			published_year: number
+		}
+
+		// A single space rather than an empty string.
+		// A reader testing `=== ""` finds no empty string and reports these as ordinary.
+		expect(row.mt_policy).toBe(" ")
+		expect(row.published_year).toBe(0)
+	})
+})
+
+describe("the area cross-check", () => {
+	it("agrees with the source's own area on rings whose holes nest properly", () => {
+		const { area } = result
+
+		if (area.witness !== "source") throw new Error("the fixture supplies source areas, so the witness is the source")
+
+		expect(area.relativeGap).toBeLessThan(0.01)
+	})
+
+	it("refuses a build whose rings do not add up to the source's own area", async () => {
+		const { lon, lat } = FIXTURE_ORIGIN
+
+		const doubled = fixtureFeature(
+			9,
+			FIXTURE_SCENARIOS.noIntervention,
+			[[rectangleRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)]],
+			// Twice the area the rings actually cover.
+			// The shape a hole read as an exterior ring produces.
+			{ sourceAreaM2: 2 * 1_200_000 }
+		)
+
+		await expect(build([doubled], "bad-area.db")).rejects.toThrow(/encoded rings total/u)
+	})
+})

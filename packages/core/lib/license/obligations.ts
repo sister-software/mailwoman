@@ -8,7 +8,7 @@
  */
 
 import { stringifyJSON } from "#json"
-import type { LicenseKeyVerification } from "#license/key/index"
+import type { LicenseKeyVerification } from "#license/key"
 import type { LicenseKeyPublication } from "#license/publication"
 
 /**

@@ -14,27 +14,22 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"imports": {
 		"#adapters/utils": {
-			"types": "./out/adapters/utils/index.d.ts",
-			"node": "./lib/adapters/utils/index.ts",
-			"default": "./out/adapters/utils/index.js"
+			"types": "./out/adapters/utils.d.ts",
+			"node": "./lib/adapters/utils.ts",
+			"default": "./out/adapters/utils.js"
 		},
 		"#build": {
-			"types": "./out/build/index.d.ts",
-			"node": "./lib/build/index.ts",
-			"default": "./out/build/index.js"
+			"types": "./out/build.d.ts",
+			"node": "./lib/build.ts",
+			"default": "./out/build.js"
 		},
 		"#runner": {
 			"types": "./out/runner.d.ts",
@@ -46,7 +41,7 @@
 			"node": "./lib/synthesizers/utils.ts",
 			"default": "./out/synthesizers/utils.js"
 		},
-		"#test-kit": "./lib/test-kit/index.ts",
+		"#test-kit": "./lib/test-kit.ts",
 		"#test-kit/corpus-recipe": "./lib/test-kit/corpus-recipe.ts",
 		"#types": {
 			"types": "./out/types.d.ts",
@@ -54,14 +49,14 @@
 			"default": "./out/types.js"
 		},
 		"#utils": {
-			"types": "./out/utils/index.d.ts",
-			"node": "./lib/utils/index.ts",
-			"default": "./out/utils/index.js"
+			"types": "./out/utils.d.ts",
+			"node": "./lib/utils.ts",
+			"default": "./out/utils.js"
 		},
 		"#tools": {
-			"types": "./out/tools/index.d.ts",
-			"node": "./lib/tools/index.ts",
-			"default": "./out/tools/index.js"
+			"types": "./out/tools.d.ts",
+			"node": "./lib/tools.ts",
+			"default": "./out/tools.js"
 		},
 		"#*": {
 			"types": "./out/*.d.ts",
@@ -76,276 +71,11 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./env": {
-			"types": "./out/env.d.ts",
-			"node": "./lib/env.ts",
-			"default": "./out/env.js"
-		},
-		"./types": {
-			"types": "./out/types.d.ts",
-			"node": "./lib/types.ts",
-			"default": "./out/types.js"
-		},
-		"./registers": {
-			"types": "./out/registers.d.ts",
-			"node": "./lib/registers.ts",
-			"default": "./out/registers.js"
-		},
 		"./data/*": "./data/*",
-		"./au/*": {
-			"types": "./out/au/*.d.ts",
-			"node": "./lib/au/*.ts",
-			"default": "./out/au/*.js"
-		},
-		"./cn/*": {
-			"types": "./out/cn/*.d.ts",
-			"node": "./lib/cn/*.ts",
-			"default": "./out/cn/*.js"
-		},
-		"./cz/*": {
-			"types": "./out/cz/*.d.ts",
-			"node": "./lib/cz/*.ts",
-			"default": "./out/cz/*.js"
-		},
-		"./de/*": {
-			"types": "./out/de/*.d.ts",
-			"node": "./lib/de/*.ts",
-			"default": "./out/de/*.js"
-		},
-		"./fr/*": {
-			"types": "./out/fr/*.d.ts",
-			"node": "./lib/fr/*.ts",
-			"default": "./out/fr/*.js"
-		},
-		"./international/*": {
-			"types": "./out/international/*.d.ts",
-			"node": "./lib/international/*.ts",
-			"default": "./out/international/*.js"
-		},
-		"./jp/*": {
-			"types": "./out/jp/*.d.ts",
-			"node": "./lib/jp/*.ts",
-			"default": "./out/jp/*.js"
-		},
-		"./kr/*": {
-			"types": "./out/kr/*.d.ts",
-			"node": "./lib/kr/*.ts",
-			"default": "./out/kr/*.js"
-		},
-		"./nl/*": {
-			"types": "./out/nl/*.d.ts",
-			"node": "./lib/nl/*.ts",
-			"default": "./out/nl/*.js"
-		},
-		"./no/*": {
-			"types": "./out/no/*.d.ts",
-			"node": "./lib/no/*.ts",
-			"default": "./out/no/*.js"
-		},
-		"./sg/*": {
-			"types": "./out/sg/*.d.ts",
-			"node": "./lib/sg/*.ts",
-			"default": "./out/sg/*.js"
-		},
-		"./si/*": {
-			"types": "./out/si/*.d.ts",
-			"node": "./lib/si/*.ts",
-			"default": "./out/si/*.js"
-		},
-		"./south-asia/*": {
-			"types": "./out/south-asia/*.d.ts",
-			"node": "./lib/south-asia/*.ts",
-			"default": "./out/south-asia/*.js"
-		},
-		"./tw/*": {
-			"types": "./out/tw/*.d.ts",
-			"node": "./lib/tw/*.ts",
-			"default": "./out/tw/*.js"
-		},
-		"./us/*": {
-			"types": "./out/us/*.d.ts",
-			"node": "./lib/us/*.ts",
-			"default": "./out/us/*.js"
-		},
-		"./ve/*": {
-			"types": "./out/ve/*.d.ts",
-			"node": "./lib/ve/*.ts",
-			"default": "./out/ve/*.js"
-		},
-		"./utils": {
-			"types": "./out/utils/index.d.ts",
-			"node": "./lib/utils/index.ts",
-			"default": "./out/utils/index.js"
-		},
-		"./runner": {
-			"types": "./out/runner.d.ts",
-			"node": "./lib/runner.ts",
-			"default": "./out/runner.js"
-		},
-		"./source-register": {
-			"types": "./out/source-register/index.d.ts",
-			"node": "./lib/source-register/index.ts",
-			"default": "./out/source-register/index.js"
-		},
-		"./build": {
-			"types": "./out/build/index.d.ts",
-			"node": "./lib/build/index.ts",
-			"default": "./out/build/index.js"
-		},
-		"./build/*": {
-			"types": "./out/build/*.d.ts",
-			"node": "./lib/build/*.ts",
-			"default": "./out/build/*.js"
-		},
-		"./directory": {
-			"types": "./out/directory.d.ts",
-			"node": "./lib/directory.ts",
-			"default": "./out/directory.js"
-		},
-		"./fingerprints": {
-			"types": "./out/fingerprints.d.ts",
-			"node": "./lib/fingerprints.ts",
-			"default": "./out/fingerprints.js"
-		},
-		"./surfaces/*": {
-			"types": "./out/surfaces/*.d.ts",
-			"node": "./lib/surfaces/*.ts",
-			"default": "./out/surfaces/*.js"
-		},
-		"./synthesizers/*": {
-			"types": "./out/synthesizers/*.d.ts",
-			"node": "./lib/synthesizers/*.ts",
-			"default": "./out/synthesizers/*.js"
-		},
-		"./recipes/*": {
-			"types": "./out/recipes/*.d.ts",
-			"node": "./lib/recipes/*.ts",
-			"default": "./out/recipes/*.js"
-		},
-		"./adapters/utils": {
-			"types": "./out/adapters/utils/index.d.ts",
-			"node": "./lib/adapters/utils/index.ts",
-			"default": "./out/adapters/utils/index.js"
-		},
-		"./adapters": {
-			"types": "./out/adapters/index.d.ts",
-			"node": "./lib/adapters/index.ts",
-			"default": "./out/adapters/index.js"
-		},
-		"./adapters/*": {
-			"types": "./out/adapters/*.d.ts",
-			"node": "./lib/adapters/*.ts",
-			"default": "./out/adapters/*.js"
-		},
-		"./tools": {
-			"types": "./out/tools/index.d.ts",
-			"node": "./lib/tools/index.ts",
-			"default": "./out/tools/index.js"
-		},
-		"./parquet/shuffle": {
-			"types": "./out/parquet/shuffle.d.ts",
-			"node": "./lib/parquet/shuffle.ts",
-			"default": "./out/parquet/shuffle.js"
-		},
-		"./parquet/*": {
-			"types": "./out/parquet/*.d.ts",
-			"node": "./lib/parquet/*.ts",
-			"default": "./out/parquet/*.js"
-		},
-		"./tools/postcode-triples": {
-			"types": "./out/tools/postcode-triples.d.ts",
-			"node": "./lib/tools/postcode-triples.ts",
-			"default": "./out/tools/postcode-triples.js"
-		},
-		"./tools/audit": {
-			"types": "./out/tools/audit.d.ts",
-			"node": "./lib/tools/audit.ts",
-			"default": "./out/tools/audit.js"
-		},
-		"./tools/gauntlet-inputs": {
-			"types": "./out/tools/gauntlet-inputs.d.ts",
-			"node": "./lib/tools/gauntlet-inputs.ts",
-			"default": "./out/tools/gauntlet-inputs.js"
-		},
-		"./tools/golden-relabel-street": {
-			"types": "./out/tools/golden/relabel-street/index.d.ts",
-			"node": "./lib/tools/golden/relabel-street/index.ts",
-			"default": "./out/tools/golden/relabel-street/index.js"
-		},
-		"./tools/migrate-source-names": {
-			"types": "./out/tools/migrate/source-names.d.ts",
-			"node": "./lib/tools/migrate/source-names.ts",
-			"default": "./out/tools/migrate/source-names.js"
-		},
-		"./tools/migrate-overlay-parquet": {
-			"types": "./out/tools/migrate/overlay-parquet.d.ts",
-			"node": "./lib/tools/migrate/overlay-parquet.ts",
-			"default": "./out/tools/migrate/overlay-parquet.js"
-		},
-		"./tools/migrate-recipe-output": {
-			"types": "./out/tools/migrate/recipe-output.d.ts",
-			"node": "./lib/tools/migrate/recipe-output.ts",
-			"default": "./out/tools/migrate/recipe-output.js"
-		},
-		"./tools/overture-subvenue": {
-			"types": "./out/tools/overture-subvenue.d.ts",
-			"node": "./lib/tools/overture-subvenue.ts",
-			"default": "./out/tools/overture-subvenue.js"
-		},
-		"./tools/sub-venue-lexicon": {
-			"types": "./out/tools/sub/venue/lexicon.d.ts",
-			"node": "./lib/tools/sub/venue/lexicon.ts",
-			"default": "./out/tools/sub/venue/lexicon.js"
-		},
-		"./tools/sub-venue-promotions": {
-			"types": "./out/tools/sub/venue/promotions.d.ts",
-			"node": "./lib/tools/sub/venue/promotions.ts",
-			"default": "./out/tools/sub/venue/promotions.js"
-		},
-		"./tools/fetch/download": {
-			"types": "./out/tools/fetch/download/index.d.ts",
-			"node": "./lib/tools/fetch/download/index.ts",
-			"default": "./out/tools/fetch/download/index.js"
-		},
-		"./tools/fetch/ppd": {
-			"types": "./out/tools/fetch/ppd.d.ts",
-			"node": "./lib/tools/fetch/ppd.ts",
-			"default": "./out/tools/fetch/ppd.js"
-		},
-		"./utils/tokenize": {
-			"types": "./out/utils/tokenize.d.ts",
-			"node": "./lib/utils/tokenize.ts",
-			"default": "./out/utils/tokenize.js"
-		},
-		"./utils/golden": {
-			"types": "./out/utils/golden.d.ts",
-			"node": "./lib/utils/golden.ts",
-			"default": "./out/utils/golden.js"
-		},
-		"./utils/license": {
-			"types": "./out/utils/license.d.ts",
-			"node": "./lib/utils/license.ts",
-			"default": "./out/utils/license.js"
-		},
-		"./utils/split": {
-			"types": "./out/utils/split.d.ts",
-			"node": "./lib/utils/split.ts",
-			"default": "./out/utils/split.js"
-		},
-		"./utils/wof-json": {
-			"types": "./out/utils/wof-json.d.ts",
-			"node": "./lib/utils/wof-json.ts",
-			"default": "./out/utils/wof-json.js"
-		},
-		"./test-kit": {
-			"types": "./out/test-kit/index.d.ts",
-			"node": "./lib/test-kit/index.ts",
-			"default": "./out/test-kit/index.js"
-		},
-		"./test-kit/corpus-recipe": {
-			"types": "./out/test-kit/corpus-recipe.d.ts",
-			"node": "./lib/test-kit/corpus-recipe.ts",
-			"default": "./out/test-kit/corpus-recipe.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

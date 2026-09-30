@@ -142,7 +142,7 @@ whole page life. That measurement cannot state the claim:
   and several dozen terrarium elevation tiles. The buffer is long gone before a vector tile is asked
   for, so "three entries" measures the buffer rather than the network.
 - And the tiles come from the host that was counted:
-  `packages/tile-worker/lib/protomaps/index.ts:72` builds the template as
+  `packages/tile-worker/lib/protomaps.ts:72` builds the template as
   `https://tiles.mailwoman.ai/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles demonstrably rendered, so
   requests to that host were made and went unrecorded. The two observations cannot both be true,
   and the measurement is the one that is wrong.

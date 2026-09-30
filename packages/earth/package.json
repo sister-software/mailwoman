@@ -21,20 +21,10 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
-		"./routes": {
-			"types": "./out/routes.d.ts",
-			"node": "./lib/routes.ts",
-			"default": "./out/routes.js"
-		},
-		"./config": {
-			"types": "./out/config.d.ts",
-			"node": "./lib/config.ts",
-			"default": "./out/config.js"
-		},
-		"./explorers/ModelVisualizer/helpers": {
-			"types": "./out/explorers/ModelVisualizer/helpers.d.ts",
-			"node": "./lib/explorers/ModelVisualizer/helpers.ts",
-			"default": "./out/explorers/ModelVisualizer/helpers.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"scripts": {

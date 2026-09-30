@@ -23,7 +23,7 @@ import { conventionCandidateDBPath } from "mailwoman/resolver-backend"
 
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
-import { openSealedArtifact } from "#lookup/index"
+import { openSealedArtifact } from "#lookup"
 import { provenanceFor, type Provenance } from "#tool-kit"
 
 /**

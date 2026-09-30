@@ -22,7 +22,7 @@ import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
 
-import { replaceTaskBlock } from "#github/index"
+import { replaceTaskBlock } from "#github"
 
 const MAX_SYNC_PASSES = 5
 const LOCK_RETRY_MS = 100

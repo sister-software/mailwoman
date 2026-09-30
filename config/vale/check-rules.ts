@@ -5,7 +5,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Fixture test for `config/vale/styles/*.yml` (the published-prose and agent-reply rules) and
- *   `config/vale/.vale-chat.ini` — see `packages/dev-mcp/lib/hooks/vale/response/check/index.ts`).
+ *   `config/vale/.vale-chat.ini` — see `packages/dev-mcp/lib/hooks/vale/response/check.ts`).
  *
  *   There is no vitest harness for a set of Vale YAML rule files, so this is the test. Each style
  *   has two fixtures. The dirty one is written to trip every rule file at least once, and also

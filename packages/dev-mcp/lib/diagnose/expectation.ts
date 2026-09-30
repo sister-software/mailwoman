@@ -5,10 +5,10 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
-import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
-import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 import type { GeocodeRun } from "mailwoman/geocode"
+import { checkCase } from "mailwoman/tools/eval-harness/gauntlet/check-case"
+import { toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
+import type { GauntletCaseTable } from "mailwoman/tools/eval-harness/gauntlet/schema"
 
 import { caseCarriesTruth, seedToCaseTable } from "#grade"
 import type { ResolvedInput } from "#input-sets"

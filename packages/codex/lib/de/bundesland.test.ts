@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { DE_BUNDESLAENDER, isGermanStateCode, lookupGermanState } from "#de/index"
+import { DE_BUNDESLAENDER, isGermanStateCode, lookupGermanState } from "#de"
 
 describe("DE_BUNDESLAENDER", () => {
 	it("covers all 16 Bundesländer", () => {

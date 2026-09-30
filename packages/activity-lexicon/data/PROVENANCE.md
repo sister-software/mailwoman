@@ -27,7 +27,7 @@ measurement, and a consumer may not read it as one.
 The first two checks run inside this package (`auditActivityLexicon`, which `readActivityLexicon`
 refuses a failing lexicon on). The last two need artifacts this package does not depend on, and run
 where those artifacts are held —
-`packages/mailwoman/lib/eval-harness/poi/lexicon-attestation.test.ts`.
+`packages/mailwoman/tools/eval-harness/poi/lexicon-attestation.test.ts`.
 
 ### What an entry may not do
 
@@ -59,7 +59,7 @@ it says.
 2. Name the record that attests it, in one of the four classes above, and quote the text it rests on.
 3. Write the note a future reviewer would need to decide whether the entry still belongs.
 4. Run the phrase-collision census
-   (`node packages/mailwoman/lib/dev-tools/activity-phrase-collision-census.run.ts --db <poi.db>`) and
+   (`node packages/mailwoman/tools/dev-tools/activity-phrase-collision-census.run.ts --db <poi.db>`) and
    commit the refreshed report. A new phrase whose subject a name or category lexicon already claims
    never reaches an activity route at all, and the census is where that is visible.
 5. Bump `version`.

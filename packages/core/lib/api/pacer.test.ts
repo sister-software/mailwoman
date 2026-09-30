@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { ClockLike } from "#api/index"
+import type { ClockLike } from "#api"
 import { RequestPacer } from "#api/pacer"
 import { createFakeClock, drainMicrotasks, maxCountInSlidingWindow, VirtualClock } from "#api/test/clocks"
 

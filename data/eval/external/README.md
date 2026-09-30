@@ -244,16 +244,16 @@ All three arenas run through one push-button script:
 ```bash
 yarn compile   # harness resolves @mailwoman/neural to its compiled out/ tree
 # default shipped weights:
-node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
+node packages/mailwoman/tools/dev-tools/external-arenas.run.ts
 # against a fresh export (e.g. v0.7.2 int8):
 MODEL=/path/model.int8.onnx TOKENIZER=/path/tokenizer.model \
-  MODELCARD=/path/model-card.json node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
+  MODELCARD=/path/model-card.json node packages/mailwoman/tools/dev-tools/external-arenas.run.ts
 ```
 
 It regenerates the perturbation arena, runs each arena with `--symmetric-match
 --postcode-repair`, and prints the three-bucket table (neural-only / both /
 v0-only / both-fail) per arena plus a by-edge_class breakdown for the postal
-arena (`packages/mailwoman/lib/dev-tools/summarize-arenas.run.ts`).
+arena (`packages/mailwoman/tools/dev-tools/summarize-arenas.run.ts`).
 
 ## Done / next
 

@@ -12,7 +12,9 @@
 	"files": [
 		"lib",
 		"out",
-		"README.md"
+		"README.md",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"imports": {
@@ -29,15 +31,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./registry": {
-			"types": "./out/registry.d.ts",
-			"node": "./lib/registry.ts",
-			"default": "./out/registry.js"
-		},
-		"./sudo": {
-			"types": "./out/sudo.d.ts",
-			"node": "./lib/sudo.ts",
-			"default": "./out/sudo.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"dependencies": {

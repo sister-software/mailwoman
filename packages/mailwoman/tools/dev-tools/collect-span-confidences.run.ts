@@ -1,0 +1,221 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Stage 2 of the confidence-calibration pipeline. Runs the shipped model over the calibration set
+ *   (`build-calibration-set.py`) and emits one record per predicted span pairing its raw softmax
+ *   confidence with a correct/incorrect label, the `(score, correct?)` pairs the isotonic fitter
+ *   (`fit-isotonic-calibration.py`) consumes.
+ *
+ *   Calibration is over predictions (spans the model emitted). It measures how often the model is
+ *   right when it emits tag T at confidence C. Iterate the decoded tree's spans. Use gold only
+ *   used only to label them.
+ *
+ *   The span confidence is the decoder's own per-node value (`AddressNode.confidence`, the mean of
+ *   the span's per-token softmax probabilities, in `core/decoder/build-tree.ts`). That is exactly the
+ *   `conf=` a resolver or a human reads off the XML, so it is the quantity to calibrate.
+ *
+ *   The model is constructed exactly as `oa-resolver-eval.ts` builds it (same parseOpts), so the
+ *   confidences match the canonical eval path.
+ *
+ *   The `correct?` score uses these rules:
+ *
+ *   - OA rows (`partial:true`) grade only {locality, region, postcode}, the tags in OA gold. A
+ *       predicted tag OA can't see is unlabelable and skipped, since OA's silence is not a negative.
+ *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold. A predicted
+ *       tag the address lacks is wrong.
+ *   - The street family {street, street_prefix, street_suffix} is one equivalence class so the model's
+ *       street decomposition isn't penalized against the corpus's coarse `street` gold.
+ *   - Value match is normalized exact or either-direction substring (handles fragmentation like "Saint"
+ *       vs "Saint Paul" and decomposition like "Ave" vs "Elm Ave").
+ *
+ *   Run: node packages/mailwoman/tools/dev-tools/collect-span-confidences.run.ts\
+ *   --model neural-weights-en-us/model.onnx\
+ *   --tokenizer neural-weights-en-us/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json\
+ *   --set data/eval/calibration/calibration-set.jsonl\
+ *   --out data/eval/calibration/confidences.jsonl
+ */
+
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { JSONSpliterator } from "spliterator"
+
+import { valueMatch } from "#tools/dev-tools/value-match"
+
+// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+const { values: rawValues } = parseArguments({
+	options: {
+		"anchor-lookup": { type: "string" },
+		"gazetteer-lexicon": { type: "string" },
+		limit: { type: "string" },
+		model: { type: "string" },
+		"model-card": { type: "string" },
+		out: { type: "string" },
+		set: { type: "string" },
+		tokenizer: { type: "string" },
+	},
+	allowPositionals: true,
+})
+
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as {
+	"anchor-lookup"?: string
+	"gazetteer-lexicon"?: string
+	limit?: string
+	model?: string
+	"model-card"?: string
+	out?: string
+	set?: string
+	tokenizer?: string
+}
+
+interface CalibRow {
+	raw: string
+	gold: [string, string][]
+	country: string
+	source: "oa" | "corpus"
+	partial: boolean
+}
+
+interface ConfRecord {
+	conf: number
+	correct: boolean
+	tag: string
+	country: string
+	source: "oa" | "corpus"
+}
+
+const STREET_FAMILY = new Set(["street", "street_prefix", "street_suffix"])
+const OA_GRADABLE = new Set(["locality", "region", "postcode"])
+
+/**
+ * Collapse the street decomposition into one matching class.
+ * Everything else maps to itself.
+ */
+function tagClass(tag: string): string {
+	return STREET_FAMILY.has(tag) ? "street" : tag
+}
+
+/**
+ * Grade one predicted span against a row's gold.
+ *
+ * @returns `null` when the span is unlabelable (OA can't see this tag), else `true`/`false`.
+ */
+function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean | null {
+	if (row.partial) {
+		if (!OA_GRADABLE.has(predTag)) return null
+		const goldVals = row.gold.filter(([t]) => t === predTag).map(([, v]) => v)
+
+		if (!goldVals.length) return null
+
+		return goldVals.some((g) => valueMatch(predValue, g))
+	}
+
+	const cls = tagClass(predTag)
+	const goldVals = row.gold.filter(([t]) => tagClass(t) === cls).map(([, v]) => v)
+
+	if (!goldVals.length) return false
+
+	return goldVals.some((g) => valueMatch(predValue, g))
+}
+
+async function main(): Promise<void> {
+	const setPath = values["set"] || "data/eval/calibration/calibration-set.jsonl"
+	const outPath = values["out"] || "data/eval/calibration/confidences.jsonl"
+	const limit = Number(values["limit"] || "0") || Infinity
+
+	const rows: CalibRow[] = await JSONSpliterator.fromAsync<CalibRow>(setPath).take(limit).toArray()
+
+	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
+	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
+
+	const modelCard = await readLocalJSONFile<{ labels: string[] }>(
+		values["model-card"] || "packages/neural-weights-en-us/model-card.json"
+	)
+
+	const [tokenizer, runner] = await Promise.all([
+		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "packages/neural-weights-en-us/tokenizer.model"),
+		ONNXRunner.create(values["model"] || "packages/neural-weights-en-us/model.onnx"),
+	])
+
+	// The calibrator must describe the model as deployed.
+	// Anchor, gazetteer, suppression, conventions, or the span bridge change span confidences.
+	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
+	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
+	const gazPath = values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json"
+
+	const neural = new NeuralAddressClassifier({
+		tokenizer,
+		runner,
+		labels: modelCard.labels,
+		postcodeAnchorLookup: parseAnchorLookup(await readLocalJSONFile(anchorPath)),
+		gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(gazPath)),
+		suppressGazetteerNearPostcode: true,
+		addressSystemConventions: "auto",
+		bridgePunctuationGaps: true,
+	})
+
+	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
+
+	const records: ConfRecord[] = []
+	let unlabelable = 0
+	let i = 0
+
+	for (const row of rows) {
+		i++
+
+		if (i % 1000 === 0) {
+			console.error(`  ${i}/${rows.length}  (${records.length} gradable spans)`)
+		}
+
+		// onnxruntime-node accumulates native tensor memory across runs faster than JS
+		// GC reclaims it, so periodic forced GC is required.
+		// Run with `node --expose-gc` for full calibration sets (8000 rows).
+		// This is a no-op without the flag.
+		if (i % 50 === 0) {
+			;(globalThis as { gc?: () => void }).gc?.()
+		}
+
+		let tree: AddressTree
+
+		try {
+			tree = await neural.parse(row.raw, parseOpts)
+		} catch {
+			continue
+		}
+
+		for (const span of flattenTreeNodes(tree)) {
+			const correct = gradeSpan(span.tag, span.value, row)
+
+			if (correct === null) {
+				unlabelable++
+
+				continue
+			}
+
+			records.push({ conf: span.confidence, correct, tag: span.tag, country: row.country, source: row.source })
+		}
+	}
+
+	await writeLocalJSONLFile(records, outPath)
+	const n = records.length
+	const acc = records.filter((r) => r.correct).length / n
+	const meanConf = records.reduce((a, r) => a + r.conf, 0) / n
+	const byOa = records.filter((r) => r.source === "oa")
+	const byCorpus = records.filter((r) => r.source === "corpus")
+
+	console.error(`\nwrote ${n} gradable spans → ${outPath}  (${unlabelable} unlabelable skipped)`)
+	console.error(
+		`  overall: acc=${acc.toFixed(4)}  meanConf=${meanConf.toFixed(4)}  gap(conf-acc)=${(meanConf - acc).toFixed(4)}`
+	)
+	console.error(`  OA spans=${byOa.length}  corpus spans=${byCorpus.length}`)
+}
+
+runIfScript(import.meta, main)

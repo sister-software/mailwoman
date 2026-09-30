@@ -4,16 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Render a `ComponentTag`-keyed dict into a country-localized string — the inverse of the parser. The order
- *   lives in `@mailwoman/codex/address-layouts`, as data. This module is the public surface over
+ *   lives in `@mailwoman/codex/address/layouts`, as data. This module is the public surface over
  *   {@linkcode renderAddress}.
  */
 
-import {
-	defaultScriptForCountry,
-	layoutForCountry,
-	lineJoinForCountry,
-	type AddressScript,
-} from "#address/layouts/index"
+import { defaultScriptForCountry, layoutForCountry, lineJoinForCountry, type AddressScript } from "#address/layouts"
 import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
 import { COMPONENT_TAGS, type ComponentTag } from "#component"
 

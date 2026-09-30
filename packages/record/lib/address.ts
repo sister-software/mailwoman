@@ -5,8 +5,8 @@
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
-import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address-format"
-import { canonicalKey } from "@mailwoman/codex/address-key"
+import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address/format"
+import { canonicalKey } from "@mailwoman/codex/address/key"
 import type { GeoCoordinate } from "@mailwoman/spatial"
 
 /**
@@ -63,7 +63,7 @@ export interface PostalAddress {
 
 	/**
 	 * Holds the normalized, deterministic match key used for blocking, built by
-	 * `canonicalKey` from `@mailwoman/codex/address-key`.
+	 * `canonicalKey` from `@mailwoman/codex/address/key`.
 	 */
 	canonicalKey: string
 

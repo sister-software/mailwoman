@@ -26,11 +26,10 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"data/**/*.json",
-		"*.ts",
-		"**/*.ts",
-		"!*.test.ts",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -48,15 +47,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./lexicon": {
-			"types": "./out/lexicon.d.ts",
-			"node": "./lib/lexicon.ts",
-			"default": "./out/lexicon.js"
-		},
-		"./types": {
-			"types": "./out/types.d.ts",
-			"node": "./lib/types.ts",
-			"default": "./out/types.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

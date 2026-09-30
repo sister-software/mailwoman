@@ -18,7 +18,7 @@ import {
 	runGitHub,
 	taskBlockIsComplete,
 	type RunGitHub,
-} from "#github/index"
+} from "#github"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 const REPO = "sister-software/mailwoman"

@@ -20,7 +20,7 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from <DATA_ROOT>/db/wof/candidate.db and the BAN extract from <DATA_ROOT>/db/ban/address-points-fr.db.
 
 import { banDatabaseRoot } from "@mailwoman/ban/paths"
-import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
+import { BANRegionDatabaseProvider } from "@mailwoman/ban/region-database-provider"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"

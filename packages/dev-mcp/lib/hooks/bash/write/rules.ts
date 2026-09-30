@@ -154,7 +154,7 @@ const WRAPPER_ARGUMENT = /^(?:-|\d)/u
  * The advice for the two Modal launch refusals.
  */
 const DETACHED_LAUNCH_GUIDANCE =
-	"Launch it through `node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
+	"Launch it through `node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
 	"which spawns the client in its own session and exits, so no signal aimed at this shell can reach it. Modal's `-d` " +
 	"does not make the client disposable: when the client dies Modal answers `Received a cancellation signal` and stops " +
 	"the container mid-training. Watch the run by polling the volume for its next checkpoint rather than by holding the client " +

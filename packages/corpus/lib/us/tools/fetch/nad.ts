@@ -43,8 +43,8 @@ import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "usgov-nad"
 

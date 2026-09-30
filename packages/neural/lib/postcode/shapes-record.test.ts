@@ -11,7 +11,7 @@
  *   check needs a repo-root resolver.
  */
 
-import { POSTCODE_SHAPES, POSTCODE_SHAPES_VERSION } from "@mailwoman/codex/postcode-shapes"
+import { POSTCODE_SHAPES, POSTCODE_SHAPES_VERSION } from "@mailwoman/codex/postcode/shapes"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"

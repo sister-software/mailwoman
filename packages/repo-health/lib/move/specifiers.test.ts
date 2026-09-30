@@ -70,7 +70,7 @@ describe("packageSpecifiersFor", () => {
 describe("relativeSpecifier", () => {
 	test("keeps the explicit extension the repository writes", () => {
 		expect(
-			relativeSpecifier("packages/corpus/lib/recipes/index.ts", "packages/corpus/lib/recipes/fr/order.ts", true)
+			relativeSpecifier("packages/fixture/lib/recipes/registry.ts", "packages/fixture/lib/recipes/fr/order.ts", true)
 		).toBe("./fr/order.ts")
 	})
 

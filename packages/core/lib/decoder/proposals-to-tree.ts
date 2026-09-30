@@ -9,8 +9,8 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 
 import type { AddressNode, AddressTree } from "#decoder/types"
-import type { Span } from "#tokenization/index"
-import type { ClassificationProposal, ClassificationProposalSource } from "#types/index"
+import type { Span } from "#tokenization"
+import type { ClassificationProposal, ClassificationProposalSource } from "#types"
 
 /**
  * Builds a flat address tree with one root per proposal, sorted by start offset.

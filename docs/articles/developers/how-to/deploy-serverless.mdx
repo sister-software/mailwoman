@@ -236,7 +236,7 @@ The `onnxruntime` check is the one that catches a trim that went too far.
   serves one geocode at a time no matter how deep the request queue gets. Scale with instances.
   [Geocode a large file at volume](./batch-geocode-at-volume.mdx) measures this.
 - **There is no GPU path in Node.** WebGPU exists only in the browser runtime
-  (`@mailwoman/neural/web-onnx-runner`); removing the CUDA provider above has no cost because no code path
+  (`@mailwoman/neural/web/onnx-runner`); removing the CUDA provider above has no cost because no code path
   loads it.
 - **Cold start is about 1.1 s and the model load is 70% of it.** If your platform charges for
   initialization time, budget for it rather than trying to shrink it.

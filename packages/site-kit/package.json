@@ -20,35 +20,10 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
-		"./build-info": {
-			"types": "./out/build-info.d.ts",
-			"node": "./lib/build-info.ts",
-			"default": "./out/build-info.js"
-		},
-		"./vite/build-info": {
-			"types": "./out/vite/build-info.d.ts",
-			"node": "./lib/vite/build-info.ts",
-			"default": "./out/vite/build-info.js"
-		},
-		"./playwright/chrome-interface": {
-			"types": "./out/playwright/chrome-interface.d.ts",
-			"node": "./lib/playwright/chrome-interface.ts",
-			"default": "./out/playwright/chrome-interface.js"
-		},
-		"./vite/pwa": {
-			"types": "./out/vite/pwa.d.ts",
-			"node": "./lib/vite/pwa.ts",
-			"default": "./out/vite/pwa.js"
-		},
-		"./vite/stage-sqljs": {
-			"types": "./out/vite/stage-sqljs.d.ts",
-			"node": "./lib/vite/stage-sqljs.ts",
-			"default": "./out/vite/stage-sqljs.js"
-		},
-		"./playwright": {
-			"types": "./out/playwright.d.ts",
-			"node": "./lib/playwright.ts",
-			"default": "./out/playwright.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"dependencies": {

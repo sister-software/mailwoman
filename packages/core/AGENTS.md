@@ -10,7 +10,7 @@ cache lookup, bounded retry when `retry` is configured, response caching, and `R
 Callers branch on `error.status` or `isTransientResourceError(error)` instead of matching error text.
 Inject a clock and use `@mailwoman/core/api/test-clocks` in timing tests.
 
-`packages/filer/lib/sdk/sec-client.ts` is the primary example. `packages/bdc/lib/sdk/client.ts` shows
+`packages/filer/sdk/sec-client.ts` is the primary example. `packages/bdc/sdk/client.ts` shows
 binary responses and per-request `cache: false`.
 
 `requestsPerMinute` computes a cooldown of `60000 / N` after the previous dispatch. It does not enforce
@@ -18,8 +18,8 @@ a full-minute window: a measured configuration of 10 dispatched 100 requests per
 `minRequestIntervalMs` to `60000 / N` when the host requires that interval.
 
 Use `APIClient` for repeated API requests with small responses. Keep direct streaming transfers for
-multi-gigabyte archives, including `packages/osm/lib/sdk/fetch.ts` and
-`packages/tiger/lib/sdk/download.ts`; buffering or caching those responses would change their memory and
+multi-gigabyte archives, including `packages/osm/sdk/fetch.ts` and
+`packages/tiger/sdk/download.ts`; buffering or caching those responses would change their memory and
 disk behavior.
 
 ## Filesystem and paths

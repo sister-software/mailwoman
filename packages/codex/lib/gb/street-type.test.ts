@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { GB_STREET_TYPES, isBritishStreetWord } from "#gb/index"
+import { GB_STREET_TYPES, isBritishStreetWord } from "#gb"
 
 describe("GB_STREET_TYPES", () => {
 	it("spans the common core and the distinctively British vocabulary", () => {

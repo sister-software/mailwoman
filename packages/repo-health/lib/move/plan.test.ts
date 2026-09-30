@@ -15,7 +15,7 @@ import { readLocalTextFile, realPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { git } from "@mailwoman/core/git"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePath } from "path-ts"
 import { describe, expect, test } from "vitest"
 
@@ -134,6 +134,78 @@ describe("planModuleMoves", () => {
 
 		expect(plan.scanned.tracked).toBe(6)
 		expect(plan.scanned.read).toBe(5)
+	})
+})
+
+/**
+ * The fixture manifest with its `exports` replaced, keeping every other field.
+ */
+function manifestWithExports(exports: Record<string, unknown>) {
+	return {
+		file: `${PACKAGE}/package.json`,
+		text: stringifyJSON({ ...parseJSONStrict<object>(FILES[`${PACKAGE}/package.json`]!), exports }),
+	}
+}
+
+describe("planModuleMoves with a replaced manifest", () => {
+	test("rewrites a bare specifier whose subpath key the replacement removes", async () => {
+		await using fixtureDirectory = await fixture()
+
+		const plan = await planModuleMoves(fixtureDirectory.context, [], {
+			manifests: [
+				manifestWithExports({
+					"./kitchen/*": { types: "./out/recipes/*.d.ts", node: "./lib/recipes/*.ts", default: "./out/recipes/*.js" },
+				}),
+			],
+		})
+
+		expect(plan.unresolved).toEqual([])
+		expect(plan.manifestRewrites).toEqual([])
+
+		expect(plan.rewrites.map((rewrite) => `${rewrite.file}: ${rewrite.specifier} -> ${rewrite.replacement}`)).toEqual([
+			`${PACKAGE}/test/fr-fragment.test.ts: @fixture/recipes/recipes/fr-fragment -> @fixture/recipes/kitchen/fr-fragment`,
+		])
+	})
+
+	test("leaves a specifier the replacement still resolves to the same file", async () => {
+		await using fixtureDirectory = await fixture()
+
+		const plan = await planModuleMoves(fixtureDirectory.context, [], {
+			manifests: [manifestWithExports({ "./*": { types: "./out/*.d.ts", node: "./lib/*.ts", default: "./out/*.js" } })],
+		})
+
+		expect(plan.unresolved).toEqual([])
+		expect(plan.rewrites).toEqual([])
+	})
+
+	test("reports a specifier the replacement leaves no key for", async () => {
+		await using fixtureDirectory = await fixture()
+
+		const plan = await planModuleMoves(fixtureDirectory.context, [], {
+			manifests: [manifestWithExports({ ".": { node: "./lib/index.ts" } })],
+		})
+
+		expect(plan.unresolved.map((entry) => `${entry.file}: ${entry.specifier}`)).toEqual([
+			`${PACKAGE}/test/fr-fragment.test.ts: @fixture/recipes/recipes/fr-fragment`,
+		])
+	})
+
+	test("writes the replacement when applied", async () => {
+		await using fixtureDirectory = await fixture()
+		const { context } = fixtureDirectory
+
+		const replacement = manifestWithExports({
+			"./kitchen/*": { types: "./out/recipes/*.d.ts", node: "./lib/recipes/*.ts", default: "./out/recipes/*.js" },
+		})
+
+		const result = await applyModuleMoves(context, await planModuleMoves(context, [], { manifests: [replacement] }))
+
+		expect(result.verified).toBe(1)
+		expect(await readLocalTextFile(resolvePath(context.repoRoot, replacement.file))).toBe(replacement.text)
+
+		expect(await readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/test/fr-fragment.test.ts`))).toContain(
+			`from "@fixture/recipes/kitchen/fr-fragment"`
+		)
 	})
 })
 

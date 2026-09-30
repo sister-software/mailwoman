@@ -1,5 +1,5 @@
 import type { ResolvedWeights } from "@mailwoman/neural/weights"
-import type { GauntletDeps, GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
+import type { GauntletDeps, GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { resolvePathBuilder } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
 

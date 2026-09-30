@@ -6,7 +6,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
-import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"
+import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/cli/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { z } from "zod"
 

@@ -8,7 +8,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli/kit"
 
 import { verifyBody } from "#build/verify"
 import { parseBody } from "#commands/options"
