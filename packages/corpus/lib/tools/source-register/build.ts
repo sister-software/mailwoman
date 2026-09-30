@@ -593,7 +593,10 @@ interface SharedDecisionReference {
 	sameAs: string
 }
 
-interface LicenseDecisionsFile {
+/**
+ * The shape of `license-decisions.json`.
+ */
+export interface LicenseDecisionsFile {
 	decisions?: Record<string, RecordedDecision | SharedDecisionReference>
 	/**
 	 * Decision bodies that several licence ids reuse, keyed by a name the ids refer to.
@@ -679,11 +682,23 @@ export function applySourceResolutions(
 async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined): Promise<Map<string, LicenseDecision>> {
 	if (!decisionsPath || !(await pathExists(decisionsPath))) return new Map()
 
-	const file = await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath)
+	return resolveRecordedDecisions(await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath))
+}
+
+/**
+ * Turns a decisions file into decisions keyed by licence id, resolving every `sameAs` reference.
+ *
+ * The id comes from the key, so a record cannot disagree with the licence it is filed under.
+ * `auditAddressSourceRegister` decides whether the resolved fields form a well-formed decision, so this
+ * function checks only that the file declares a reading for each reference.
+ *
+ * @throws When a `sameAs` reads a reading absent from `sharedReadings`.
+ * Such a reference would otherwise produce a decision carrying no terms, which the audit
+ * would report as an unknown review state rather than as the typo it is.
+ */
+export function resolveRecordedDecisions(file: LicenseDecisionsFile): Map<string, LicenseDecision> {
 	const shared = file.sharedReadings ?? {}
 
-	// The id comes from the key, so a record cannot disagree with the licence it is filed under.
-	// `auditAddressSourceRegister` decides whether the fields form a well-formed decision.
 	return new Map(
 		Object.entries(file.decisions ?? {}).map(([licenseID, recorded]) => {
 			if (!isSharedReference(recorded)) return [licenseID, { ...recorded, licenseID } as LicenseDecision]

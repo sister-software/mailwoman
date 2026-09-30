@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { AddressSourceRecord } from "#source-register"
-import { applySourceResolutions, readUnresolvedColumn } from "#tools"
+import { applySourceResolutions, readUnresolvedColumn, resolveRecordedDecisions } from "#tools"
 import { AddressRole } from "#types"
 
 describe("readUnresolvedColumn", () => {
@@ -45,6 +45,59 @@ describe("readUnresolvedColumn", () => {
 
 	it("does not check a non-role column against the role vocabulary", () => {
 		expect(readUnresolvedColumn("head office", "coverage", 42)).toBe("head office")
+	})
+})
+
+describe("resolveRecordedDecisions", () => {
+	it("gives every licence id that names one shared reading its own decision", () => {
+		const resolved = resolveRecordedDecisions({
+			sharedReadings: {
+				"one-publisher": {
+					state: "elected",
+					electedTerms: "Some Open Licence 1.0",
+					retrievedCopy: "internal/strategy/rights-receipts/somewhere/",
+					electedBecause: "the publisher offers one grant",
+				},
+			},
+			decisions: {
+				"unchecked-a": { sameAs: "one-publisher" },
+				"unchecked-b": { sameAs: "one-publisher" },
+			},
+		})
+
+		expect([...resolved.keys()]).toEqual(["unchecked-a", "unchecked-b"])
+
+		// Each carries its own id, which is what keeps one reading from becoming one wide election.
+		expect(resolved.get("unchecked-a")).toMatchObject({ licenseID: "unchecked-a", state: "elected" })
+		expect(resolved.get("unchecked-b")).toMatchObject({ licenseID: "unchecked-b", state: "elected" })
+	})
+
+	it("reads a decision written out in full without consulting the shared readings", () => {
+		const resolved = resolveRecordedDecisions({
+			decisions: {
+				"unchecked-c": {
+					state: "refused",
+					refusedBecause: "the publisher reserves all rights and states no grant",
+				},
+			},
+		})
+
+		expect(resolved.get("unchecked-c")).toEqual({
+			licenseID: "unchecked-c",
+			state: "refused",
+			refusedBecause: "the publisher reserves all rights and states no grant",
+		})
+	})
+
+	it("refuses a `sameAs` naming a reading the file does not declare", () => {
+		// The reference would otherwise resolve to an object with no `state`, which the
+		// audit reports as an unknown review state rather than as the typo it is.
+		expect(() =>
+			resolveRecordedDecisions({
+				sharedReadings: {},
+				decisions: { "unchecked-d": { sameAs: "absent-reading" } },
+			})
+		).toThrow(/licence "unchecked-d" reads `sameAs` "absent-reading", which `sharedReadings` does not declare/u)
 	})
 })
 

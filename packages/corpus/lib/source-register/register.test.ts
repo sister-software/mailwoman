@@ -119,6 +119,28 @@ describe("the committed address-source register", () => {
 		expect(ingestEligibilityProblems(austender, register)).toHaveLength(1)
 	})
 
+	it("states a reason on every refused decision, and refuses the sources pointing at one", () => {
+		// A refusal records that the terms were read and no grant was found,
+		// which is a different fact from `unchecked`.
+		// The reason is what a later request to the publisher starts from, so the audit
+		// requires it and this holds that the committed refusals carry one.
+		const refused = register.licenses.filter((decision) => decision.state === LicenseReviewState.Refused)
+
+		expect(refused.length).toBeGreaterThan(0)
+
+		for (const decision of refused) {
+			expect(decision.state === LicenseReviewState.Refused && decision.refusedBecause, decision.licenseID).toBeTruthy()
+
+			const pointing = register.sources.filter((source) => source.license === decision.licenseID)
+
+			expect(pointing.length, decision.licenseID).toBeGreaterThan(0)
+
+			for (const source of pointing) {
+				expect(ingestEligibilityProblems(source, register).join("\n"), source.sourceID).toMatch(/is refused/u)
+			}
+		}
+	})
+
 	it("gives each SIRENE territory its own decision carrying one shared reading of INSEE's terms", async () => {
 		// One publisher holds SIRENE across mainland France and its overseas territories,
 		// and a decision is scoped to one publisher in one jurisdiction.
