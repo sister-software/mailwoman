@@ -27,6 +27,7 @@ import { describe, expect, it } from "vitest"
 import { isAlternation, isLayout, isSlot, type AddressAtom, type AddressLayout } from "#address/layout"
 import { ADDRESS_LAYOUTS, layoutForCountry } from "#address/layouts"
 import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
+import { S42_ADDRESS_LAYOUTS } from "#address/layouts/s42"
 
 /**
  * Libaddressinput's placeholder vocabulary in this project's tag names; `%A` is the one opaque
@@ -160,7 +161,7 @@ describe("the generated layout table matches libaddressinput", () => {
 		}
 	})
 
-	it("answers null for a country the dataset gives no usable order", () => {
+	it("answers null for a country no source states an order for", () => {
 		const unusable = [...countryFormats].filter(([, fmt]) => !fmt || !skeletonOfFormat(fmt).length).map(([cc]) => cc)
 
 		// Absence is a real answer here: rendering no text beats inventing an order.
@@ -168,8 +169,19 @@ describe("the generated layout table matches libaddressinput", () => {
 		// `fmt` shows up as a failure rather than as silence.
 		expect(unusable).toHaveLength(55)
 
+		// A country the dataset leaves unusable may still have an approved S42 template.
+		// Its Standardized Address Format Description states an order this repository read.
+		// That is a second source rather than a second reading of the same one.
 		for (const country of unusable) {
-			expect(layoutForCountry(country), `${country} has no layout`).toBeNull()
+			const layout = layoutForCountry(country)
+
+			if (S42_ADDRESS_LAYOUTS[country]) {
+				expect(layout, `${country} reads its order from a SAFD`).toBe(S42_ADDRESS_LAYOUTS[country])
+
+				continue
+			}
+
+			expect(layout, `${country} has no layout`).toBeNull()
 		}
 	})
 })

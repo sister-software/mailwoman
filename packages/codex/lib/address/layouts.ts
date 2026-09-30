@@ -41,6 +41,7 @@ import {
 	GENERATED_LOCAL_ADDRESS_LAYOUTS,
 	HAND_AUTHORED_FORMAT_SKELETONS,
 } from "#address/layouts/generated"
+import { S42_ADDRESS_LAYOUTS, S42_READ_LAYOUTS } from "#address/layouts/s42"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 import type { ComponentTag } from "#component"
 
@@ -49,6 +50,8 @@ export {
 	GENERATED_LATIN_ADDRESS_LAYOUTS,
 	GENERATED_LOCAL_ADDRESS_LAYOUTS,
 } from "#address/layouts/generated"
+
+export { S42_ADDRESS_LAYOUTS, S42_LAYOUT_RECORDS, S42_READ_LAYOUTS, type S42LayoutRecord } from "#address/layouts/s42"
 
 /**
  * Which script an address is written in when a country writes two different orders:
@@ -334,7 +337,9 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 		return local
 	}
 
-	return hand ?? GENERATED_ADDRESS_LAYOUTS[code] ?? null
+	// A SAFD entry is last because it exists only where libaddressinput states `fmt: null`.
+	// Reading it ahead of a generated skeleton would replace a stated order with a second reading of one.
+	return hand ?? GENERATED_ADDRESS_LAYOUTS[code] ?? S42_ADDRESS_LAYOUTS[code] ?? null
 }
 
 /**
@@ -371,7 +376,11 @@ export function conventionClaimForCountry(
 	const local = GENERATED_LOCAL_ADDRESS_LAYOUTS[code]
 	const hand = ADDRESS_LAYOUTS[code]
 
-	if (!generated && !latin && !local && !hand) return null
+	// A jurisdiction whose libaddressinput record states `fmt: null` is in no rendering table.
+	// Its SAFD is the one source that speaks for it.
+	const s42 = S42_READ_LAYOUTS[code] ?? S42_ADDRESS_LAYOUTS[code]
+
+	if (!generated && !latin && !local && !hand && !s42) return null
 
 	const observations: ConventionObservation[] = []
 
@@ -421,19 +430,25 @@ export function conventionClaimForCountry(
 		)
 	}
 
-	// A country in UPU's template inventory has an approved crosswalk of its own
-	// address semantics, and no template has been retrieved.
-	// `Unread` says a document exists to go and read, which is what separates these 72
-	// from the jurisdictions that have no crosswalk to read at all.
+	// A country in UPU's template inventory has an approved crosswalk of its address semantics.
+	// A retrieved template states an order and therefore answers the claim.
+	// `Unread` on the rest says a document exists to go and read.
+	// That separates these 72 from the jurisdictions with no crosswalk to read at all.
 	const cohort = s42CohortForJurisdiction(code)
 
 	if (cohort) {
 		observations.push(
-			conventionObservation(
-				ConventionSource.PostalStandardS42,
-				ObservationStance.Unread,
-				`UPU S42 template for ${code}, cohort ${cohort}, not retrieved`
-			)
+			s42
+				? conventionObservation(
+						ConventionSource.PostalStandardS42,
+						stanceFromLayout(claim, s42, printedTags(s42)),
+						`UPU Standardized Address Format Description for ${code}, cohort ${cohort}, retrieved 2026-09-30`
+					)
+				: conventionObservation(
+						ConventionSource.PostalStandardS42,
+						ObservationStance.Unread,
+						`UPU S42 template for ${code}, cohort ${cohort}, not retrieved`
+					)
 		)
 	}
 

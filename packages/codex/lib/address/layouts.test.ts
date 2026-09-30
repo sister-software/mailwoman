@@ -27,6 +27,7 @@ import {
 	GENERATED_LATIN_ADDRESS_LAYOUTS,
 	HAND_AUTHORED_FORMAT_SKELETONS,
 } from "#address/layouts/generated"
+import { S42_ADDRESS_LAYOUTS, S42_READ_LAYOUTS } from "#address/layouts/s42"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 
 const CLAIMS = Object.values(ConventionClaimID)
@@ -118,21 +119,31 @@ describe("conventionClaimForCountry", () => {
 		expect(lines.observations.map((entry) => entry.source)).not.toContain(ConventionSource.OpenCageAddressFormatting)
 	})
 
-	it("marks an S42 template unread where one exists, and omits the source where none does", () => {
-		// The stance separates the two states a single boolean would merge: a country with a template has
-		// an approved crosswalk waiting to be read, and a country without one has no such document.
+	it("reads a retrieved S42 template and marks the rest unread", () => {
+		// The stance separates three states a single boolean would merge.
+		// A template this repository has read can be set against the other sources.
+		// A template nobody has read is waiting.
+		// A jurisdiction outside the inventory has no such document at all.
 		const codes = [...new Set([...Object.keys(GENERATED_ADDRESS_LAYOUTS), ...Object.keys(ADDRESS_LAYOUTS)])]
 
 		for (const code of codes) {
 			const observations = conventionClaimForCountry(ConventionClaimID.PostcodePrecedesLocality, code)!.observations
 			const s42 = observations.find((entry) => entry.source === ConventionSource.PostalStandardS42)
 
-			if (s42CohortForJurisdiction(code)) {
-				expect(s42, code).toBeDefined()
-				expect(s42!.stance, code).toBe(ObservationStance.Unread)
-				expect(s42!.kind, code).toBe(ObservationKind.ApprovedCrosswalk)
-			} else {
+			if (!s42CohortForJurisdiction(code)) {
 				expect(s42, code).toBeUndefined()
+
+				continue
+			}
+
+			expect(s42, code).toBeDefined()
+			expect(s42!.kind, code).toBe(ObservationKind.ApprovedCrosswalk)
+
+			if (S42_READ_LAYOUTS[code] || S42_ADDRESS_LAYOUTS[code]) {
+				expect(s42!.stance, code).not.toBe(ObservationStance.Unread)
+				expect(s42!.readFrom, code).toMatch(/retrieved/u)
+			} else {
+				expect(s42!.stance, code).toBe(ObservationStance.Unread)
 			}
 		}
 	})
