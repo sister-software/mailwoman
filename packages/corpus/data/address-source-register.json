@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "2fcf972df6c0a6756d99f2e18b962f5657de7aaa7c250e54ed3e98938a5d6c7b",
+	"contentDigest": "fbe4fe7698dc8c40c829d290f5dc345240c9cc473f7072a384eecbb01876b66b",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -7589,7 +7589,7 @@
 			],
 			"personalDataReview": {
 				"reading": "absent",
-				"because": "Every element name in `ES.BFA.AD.gml` was counted over all 5,902,666 bytes, so this covers the file rather than its first features. It holds 49 distinct element names across 1,357 address features, and none of them identifies a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name. The seven names outside the address and geometry vocabulary are `FeatureMember`, `identifier`, `versionId`, `withinScopeOf`, and the three INSPIRE geographical-name attributes `transliterationScheme`, `grammaticalGender` and `grammaticalNumber`, each of which describes a place name rather than a person. The file follows the INSPIRE Addresses schema, which has no party element for another municipality to populate."
+				"because": "Every element name in `ES.BFA.AD.gml` was counted over all 5,902,666 bytes, so this covers the file rather than its first features. It holds 49 distinct element names across 1,357 address features, and none of them is a party element: there is no owner, holder, `titular`, occupant or contact element. **`AD:LocatorName` needs its values read rather than its name counted.** The INSPIRE Addresses guideline types it as a free-text `GeographicalName` and states that it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Bizkaia populates it on 1,357 of 1,357 features, and every value read is an internal cadastral reference rather than a name: they take the form `48 001 CL\\TRAÑAETXOSTE(00066) 004`, which concatenates the municipality code 48001, a street-type abbreviation, the street name, its cadastral code and the house number. All 1,357 are distinct and each restates the address's own components. No value names a person."
 			}
 		},
 		{
@@ -7618,7 +7618,7 @@
 			],
 			"personalDataReview": {
 				"reading": "absent",
-				"because": "Every element name in `ES.GFA.AD.gml` was counted over all 313,162,472 bytes, so this covers the whole province rather than a sample of it. It holds 49 distinct element names across 68,744 address features, and every one of the 49 belongs to the INSPIRE address, geographical-name or geometry vocabulary. No element identifies a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name."
+				"because": "Every element name in `ES.GFA.AD.gml` was counted over all 313,162,472 bytes, so this covers the whole province rather than a sample of it. It holds 49 distinct element names across 68,744 address features, and none is a party element: there is no owner, holder, `titular`, occupant or contact element. **This source needs the `AD:LocatorName` values read, and they are the case the standard warns about.** The INSPIRE Addresses guideline types that element as a free-text `GeographicalName` and states it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Gipuzkoa populates it on 46,365 of 68,744 features, giving 30,452 distinct values, and every value read is a building name published as a Basque and Spanish pair: `Gasolinera` with `Gasolindegia`, `Ayuntamiento` with `Udaletxea`, `Pabellón` with `Pabilioia`. Many are farmhouses, `Agirre, baserria` with `Agirre, caserío` and `Etxeberri, baserria` with `Etxeberri, caserío`, and a Basque baserri name is commonly also a surname. **The reading stays `absent` because these name the building rather than its occupant.** They are carried inside `GN:GeographicalName`, with the nativeness, name-status and language structure a toponym takes, and the guideline states that a locator name is not the addressee. A corpus built from this source therefore holds a place name whose etymology may be a family name, rather than a record about an identifiable person. Reading this field was the check the element census missed: that census treated `LocatorName` as place vocabulary without opening it."
 			}
 		},
 		{

@@ -134,11 +134,15 @@ export const S42_LAYOUT_RECORDS: Readonly<Record<string, S42LayoutRecord>> = {
 }
 
 /**
- * SAFD layouts kept for comparison, not rendering.
+ * SAFD layouts kept for comparison rather than for rendering.
  *
- * `layoutForCountry` uses {@linkcode S42_ADDRESS_LAYOUTS}, not this table.
+ * `layoutForCountry` reads {@linkcode S42_ADDRESS_LAYOUTS} alone.
+ * This table sets the approved crosswalk against libaddressinput and the board.
  *
- * Includes the eight countries below plus GB.
+ * That comparison turns the `upu-s42` observation from `unread` into a stance.
+ *
+ * It holds the eight countries below plus the United Kingdom, whose template was retrieved
+ * and whose printed order the board already states.
  */
 export const S42_READ_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 	// SAFD lines: PO-BOX, SUB-BLDG-NAME, BLDG-NAME, BLDG-NO-THORO, DEP-LOC,
