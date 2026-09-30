@@ -133,8 +133,8 @@ provenance vocabulary. A layer database already embeds `layer_manifest` (`source
 
 `data/address-source-register.json`, read through `@mailwoman/corpus/source-register`, records which
 jurisdictions exist, what research has resolved for each, and what is known about every source's
-terms. It is a backlog made checkable: **four rows of 393 are ingest-eligible today**, and
-`ingestEligibilityProblems()` answers for the other 389 with the reasons rather than a bare `false`.
+terms. It is a backlog made checkable: **five rows of 393 are ingest-eligible today**, and
+`ingestEligibilityProblems()` answers for the other 388 with the reasons rather than a bare `false`.
 
 Two tables. The jurisdiction table enumerates all 250 — every ISO 3166-1 alpha-2 code plus the
 operational `XK` — whether or not anybody found a source; the source table holds 393 rows across 240

@@ -162,8 +162,8 @@ listed there must be absent from every row, and a field not listed must be prese
 The array is empty today, because a review has resolved each of the four on at least one source.
 
 Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of 393 sources it
-admits four, every one of them a Spanish cadastral address theme, and answers the other 389 with the
-reasons below.
+admits five, four Spanish cadastral address themes and Italy's ANAC procurement release, and answers
+the other 388 with the reasons below.
 
 ### Licences: 28 read, 365 unchecked
 
@@ -289,18 +289,27 @@ cadastral address themes are each recorded from an element census over a whole G
 being Gipuzkoa's 313,162,472 bytes and 68,744 features. Each is retained under
 `internal/strategy/rights-receipts/`.
 
-**Four sources are ingest-eligible and sixteen have one blocking condition each.** Fifteen of the sixteen
-read `personalDataReview: present`, and moving one to `assessed` needs a completed analysis which the
-register requires be named by location. The sixteenth is Uruguay, refused on its address role: no party
-object in 127,885 carries an address field of any kind, so that publication is reachable in bulk and is
-not an address source.
+**Five sources are ingest-eligible and fifteen have one blocking condition each.** Fourteen of the
+fifteen read `personalDataReview: present`. The fifteenth is Uruguay, refused on its address role: no
+party object in 127,885 carries an address field of any kind, so that publication is reachable in bulk
+and is not an address source.
 
-Every eligible source is a Spanish cadastral address theme: the Dirección General del Catastro's, and
-the three foral cadastres of Bizkaia, Gipuzkoa and Navarra. They are the publications measured so far
-that carry addresses and identify no party. The 25 `verified-corpus` sources that came before them are
-business registers and procurement portals, where the address belongs to a party and some of those
-parties are natural persons trading on their own account. A cadastral address theme records the place
-instead, and the INSPIRE Addresses schema those four follow has no element for a party at all.
+Four of the five eligible sources are Spanish cadastral address themes: the Dirección General del
+Catastro's, and the three foral cadastres of Bizkaia, Gipuzkoa and Navarra. The INSPIRE Addresses
+schema they follow has no element for a party at all, so they identify no person by construction.
+
+The fifth is Italy's ANAC procurement release, and it is eligible for a different reason.
+`internal/strategy/personal-data-policy-2026-09-30.md` records the operator's decision that a corpus
+carries the addresses of organizations and no address of an identifiable natural person. Italy's
+release names natural persons among its suppliers and records an address for none of them: 0 of
+11,075 supplier parties carry an `address` object, and every address in the release sits on `buyer`
+or `payer`, both Italian public entities. Its `addressRoles` names those two fields alone. That
+reading is `assessed` rather than `absent`, because the publication does name people.
+
+The other `verified-corpus` sources are business registers and procurement portals where the address
+belongs to a party, and some of those parties are natural persons trading on their own account. The
+policy document records why a name-shape filter, an organization identifier and a diffusion-status
+filter each fail to separate the two kinds of party.
 
 Every measured source places the role differently, which is why the field is a map keyed by a path rather
 than one role per source.

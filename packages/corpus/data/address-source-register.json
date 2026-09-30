@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "5f9e3f166897a8489c6002b626e9c030a885b77647a3726de780184c23d1d6fc",
+	"contentDigest": "53287633dca18c2560d86a546ed7d5edf5b7fbbf0adec626a57c3b2303ba7196",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -7721,9 +7721,9 @@
 			"coverage": "ANAC's OCDS release, Jan 2020 through Sep 2025 per the OCP Data Registry, 1,474,656 parties and 0 documents. Measured over the whole 2025 file, 3,963,957 bytes: 9,405 contracting processes and 29,823 party objects in three roles — supplier 11,075, buyer 9,381, payer 9,367. A buyer carries locality, postalCode, countryName and streetAddress on 9,381 of 9,381 rows. A payer carries a postcode on 9,355, a locality on 9,292 and a street line on 2,555. **The supplier role carries no address field at all**, so every address in this release belongs to a public body rather than to a contracting counterparty. Postcodes include the literal placeholder `N.A.`, which a reader has to treat as absent rather than as a code.",
 			"upstreamLineage": ["https://data.open-contracting.org/en/publication/117"],
 			"personalDataReview": {
-				"reading": "present",
-				"because": "Two of 11,075 supplier party names take the `Surname, Firstname` form, so the publication names identifiable natural persons and `absent` would be wrong. Neither carries a street line, and no address-bearing role in this release is a counterparty role: the addresses belong to buyers and payers, which are Italian public entities. So an adapter reading only `buyer` and `payer` addresses would carry no natural-person address, which makes this the strongest candidate of the ten for an `assessed` determination. Recording that determination is a decision rather than a measurement, and the measurement is in the receipt.",
-				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+				"reading": "assessed",
+				"because": "The publication names identifiable natural persons and records an address for none of them, which is what this reading turns on. Two of 11,075 supplier party names take the `Surname, Firstname` form, so `absent` would be wrong. **The supplier role carries no `address` object at all**: 0 of 11,075 supplier parties hold one, re-measured on 2026-09-30 over the whole 2025 file, 9,405 contracting processes and 29,823 party objects. Every address in the release sits on `buyer`, 9,381 of 9,381, or on `payer`, 9,359 of 9,367, and both roles are held by Italian public entities. This source's `addressRoles` names those two fields alone, so an adapter built from the register reads no supplier field. A false-positive check on the reading: 35 party objects carry both an address and an inverted `Surname, Firstname` name, and reading all 35 finds public bodies whose name holds a comma, such as `SETTORE PATRIMONIO, AMBIENTE E LAVORI PUBBLICI` and `PARCO NAZIONALE DEL CILENTO, VALLO DI DIANO E ALBURNI`. The policy this reading applies is that a corpus carries no address of an identifiable natural person and does carry the addresses of organizations.",
+				"record": "internal/strategy/personal-data-policy-2026-09-30.md, with the underlying measurement in internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
 			}
 		},
 		{
