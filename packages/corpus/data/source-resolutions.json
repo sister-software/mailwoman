@@ -23,6 +23,20 @@
 				"because": "Every element name in `A.ES.SDGC.AD.55101.gml` was counted over all 11,861,975 bytes, so this covers the file rather than its first features. It holds 48 distinct element names and none of them names a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name of any kind. The only names are 505 `AD:ThoroughfareName`, 5 `AD:PostalDescriptor` and 1 `AD:AdminUnitName`. The file declares the INSPIRE Addresses 3.0 schema at `urn:x-inspire:specification:gmlas:Addresses:3.0`, which has no party element for another municipality to populate, so the reading rests on the schema as well as on the one municipality read. This is what separates the row from the other 25 `verified-corpus` sources: each of those is a business register or a procurement portal where the address belongs to a party, and some of those parties are natural persons trading on their own account. The cadastre's AD theme records the place. The ownership data that Spanish cadastral records also hold travels through a separate protected channel and appears nowhere in this dataset."
 			}
 		},
+		"dk-property-building-1": {
+			"addressRoles": {
+				"address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Klimadatastyrelsen, reached through the ATOM download service at `https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml`, 3,130 bytes, sha256 `5a32be44b186586dbef5efa24bd200b3d2d85afebb74172250f5dd977d3ddbea`. Denmark serves this theme as a GeoPackage rather than as GML, which is why `addressRoles` is keyed by a table name instead of an element name. The feed holds one entry covering the whole country. Its dataset is `DK_INSPIRE_Addresses.zip`, 101,406,038 bytes, sha256 `0b4e13e27307659ac64065e8f67301b4eb649faa35e6e29f8f443f51c91c5141`, whose member `ad_inspire.gpkg` is 391,258,112 bytes. The database declares five tables in `gpkg_contents`: `address` with 599,999 rows, `thoroughfarename` with 112,488, `addressareaname` with 7,840, `postaldescriptor` with 1,089 and `adminunitname` with 105. **Treat 599,999 as a possible export cap rather than as Denmark's address count**: it is one short of a round 600,000, and the national address register holds several times that. Establishing the true extent means asking the publisher or finding a second distribution. Two reader notes. The feed writes its one entry as `<entry xml:lang=\"da\">`, so a reader matching a bare `<entry>` finds none. And the Atom entry's href returns the weblink's listing page; the file needs `&realfilename=DK_INSPIRE_Addresses.zip` appended.",
+			"upstreamLineage": [
+				"https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml",
+				"https://ftp.sdfe.dk/main.html?download&weblink=39593534f26800b910ef341fa8ec6aec&realfilename=DK_INSPIRE_Addresses.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every column of every table the GeoPackage declares was listed, so this covers the database's whole schema rather than a sample of its rows. The five tables carry 39, 16, 15, 15 and 15 columns, and none of the 100 identifies a party: there is no owner, holder, occupant or contact column, and no personal name. Every column of the `address` table is INSPIRE address structure, being an identifier, a lifespan date, a position, a locator designator, or a reference to a thoroughfare name, postal descriptor, administrative unit, parcel or building. One value invites a misreading: `position_method` reads `byotherparty`, which is an INSPIRE codelist term for how the position was determined rather than a reference to a party. The schema is the INSPIRE Addresses model, which has no party element."
+			}
+		},
 		"nl-property-building-1": {
 			"addressRoles": {
 				"AD:Address": "premise"

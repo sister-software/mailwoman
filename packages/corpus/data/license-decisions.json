@@ -360,6 +360,50 @@
 				}
 			}
 		},
+		"unchecked-access-free-dk-klimadatastyrelsen": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Klimadatastyrelsen states one licence and states it twice, once as a label and once as an identifier. `https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml`, 3,130 bytes, sha256 `5a32be44b186586dbef5efa24bd200b3d2d85afebb74172250f5dd977d3ddbea`, carries `<rights>CC BY 4.0</rights>` and a `describedby` link to `https://creativecommons.org/licenses/by/4.0/deed.da`, the Danish deed page for that licence. The version is stated, so `spdx` reads `CC-BY-4.0`, and CC BY 4.0 carries no share-alike term. The feed's `author` names `Klimadatastyrelsen`, which is the agency that succeeded SDFE and still serves the data from the `sdfe.dk` host.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce and share the Licensed Material in whole, which is what retrieving the zipped GeoPackage performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which covers reading the designator and component columns out of the `address` table."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, commercial purposes included, with §3(a)(1)(B) requiring that modifications be indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing in any medium, conditioned by §3(a) on crediting Klimadatastyrelsen, retaining the copyright notice, linking the licence, and indicating modifications."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the licence text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 §2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right. Whether that satisfies a commercial agreement is a drafting question this text does not answer."
+				}
+			}
+		},
 		"unchecked-access-free-nl-kadaster": {
 			"state": "elected",
 			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
