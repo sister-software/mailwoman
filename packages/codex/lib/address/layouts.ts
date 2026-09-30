@@ -39,6 +39,7 @@ import {
 	GENERATED_ADDRESS_LAYOUTS,
 	GENERATED_LATIN_ADDRESS_LAYOUTS,
 	GENERATED_LOCAL_ADDRESS_LAYOUTS,
+	HAND_AUTHORED_FORMAT_SKELETONS,
 } from "#address/layouts/generated"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 import type { ComponentTag } from "#component"
@@ -377,8 +378,10 @@ export function conventionClaimForCountry(
 	// libaddressinput settles which components print and in what order,
 	// so its `fmt` answers a line-order claim.
 	// Its `lfmt` is a second statement by the same source about the Latin order.
+	// A hand-authored country appears in no rendering table, so its `fmt` comes from the
+	// skeleton table, which exists for this comparison rather than for printing.
 	for (const [layout, readFrom] of [
-		[local ?? generated, READ_FROM.generated],
+		[local ?? generated ?? HAND_AUTHORED_FORMAT_SKELETONS[code], READ_FROM.generated],
 		[latin, READ_FROM.latin],
 	] as const) {
 		if (!layout) continue

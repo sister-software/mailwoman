@@ -168,6 +168,7 @@ const specsDirectory = resolvePackageDirectory("@mailwoman/core")("data", "chrom
 const entries: string[] = []
 const latinEntries: string[] = []
 const localEntries: string[] = []
+const handAuthoredEntries: string[] = []
 const usedSlots = new Set<string>()
 const streetNodes = new Set<string>()
 let withoutFormat = 0
@@ -197,8 +198,6 @@ for (const file of await Globerator.files("json", {
 		}
 	}
 
-	if (HAND_AUTHORED.has(code)) continue
-
 	if (!metadata.fmt) {
 		withoutFormat++
 
@@ -209,6 +208,15 @@ for (const file of await Globerator.files("json", {
 
 	if (!source) {
 		withoutFormat++
+
+		continue
+	}
+
+	// A hand-authored country's skeleton is emitted to its own table rather than to the one below.
+	// The rendering tables stay disjoint, so exactly one of them owns each country's printed order,
+	// and the skeleton is still readable as what the dataset says about a country the board settled.
+	if (HAND_AUTHORED.has(code)) {
+		handAuthoredEntries.push(`\t// ${metadata.fmt.replaceAll("\n", "\\n")}\n\t${code}: addr\`${source}\`,`)
 
 		continue
 	}
@@ -269,6 +277,18 @@ ${latinEntries.join("\n\n")}
 export const GENERATED_LOCAL_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 ${localEntries.join("\n\n")}
 }
+
+/**
+ * The \`fmt\` skeleton for the countries whose printed layout is hand-authored, for comparison rather than for
+ * rendering.
+ *
+ * \`layoutForCountry\` never reads this table. It exists so that libaddressinput's statement about a board locale can be
+ * set against the board's own. The other tables cannot supply that statement, because the rendering tables stay
+ * disjoint and a hand-authored country therefore appears in none of them.
+ */
+export const HAND_AUTHORED_FORMAT_SKELETONS: Readonly<Record<string, AddressLayout>> = {
+${handAuthoredEntries.join("\n\n")}
+}
 `
 
 const outPath = resolvePackageDirectory("@mailwoman/codex")("lib", "address", "layouts", "generated.ts")
@@ -276,6 +296,7 @@ const outPath = resolvePackageDirectory("@mailwoman/codex")("lib", "address", "l
 await writeLocalTextFile(emitted, outPath)
 
 console.log(
-	`wrote ${entries.length} layouts and ${latinEntries.length} Latin variants to ${outPath}; ` +
+	`wrote ${entries.length} layouts, ${latinEntries.length} Latin variants and ` +
+		`${handAuthoredEntries.length} hand-authored skeletons to ${outPath}. ` +
 		`${withoutFormat} countries carry no usable fmt`
 )

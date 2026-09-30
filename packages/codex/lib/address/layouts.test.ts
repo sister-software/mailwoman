@@ -22,7 +22,11 @@ import {
 	observationsDisagree,
 } from "#address/convention-claims"
 import { ADDRESS_LAYOUTS, conventionClaimForCountry, layoutForCountry } from "#address/layouts"
-import { GENERATED_ADDRESS_LAYOUTS, GENERATED_LATIN_ADDRESS_LAYOUTS } from "#address/layouts/generated"
+import {
+	GENERATED_ADDRESS_LAYOUTS,
+	GENERATED_LATIN_ADDRESS_LAYOUTS,
+	HAND_AUTHORED_FORMAT_SKELETONS,
+} from "#address/layouts/generated"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 
 const CLAIMS = Object.values(ConventionClaimID)
@@ -63,21 +67,36 @@ describe("conventionClaimForCountry", () => {
 		)
 	})
 
-	it("has no dataset observation to set against the board for nine of the twelve board locales", () => {
-		// `GENERATED_ADDRESS_LAYOUTS` omits every hand-authored country, and the Latin
-		// and local tables hold only the eight whose two scripts print different orders.
-		// So for the nine board locales outside that eight, this package carries the
-		// board's layout as the only statement, and the comparison most worth seeing
-		// is the one that cannot be made. libaddressinput's `fmt` for those nine is in
-		// `packages/core/data/chromium-i18n/ssl-address/` rather than in a table here,
-		// which is why the observation is absent rather than contradicting.
+	it("sets a dataset observation against the board for every board locale", () => {
+		// The rendering tables stay disjoint, so a hand-authored country appears in none of them
+		// and for a while no dataset statement could be read for the twelve locales that matter most.
+		// `HAND_AUTHORED_FORMAT_SKELETONS` holds their `fmt` skeleton for this comparison alone,
+		// so every board locale now carries both statements and a disagreement between them is visible.
 		const unmatched = Object.keys(ADDRESS_LAYOUTS).filter((code) => {
 			const claim = conventionClaimForCountry(ConventionClaimID.PostcodePrecedesLocality, code)!
 
 			return !claim.observations.some((entry) => entry.source === ConventionSource.LibAddressInput)
 		})
 
-		expect(unmatched.toSorted()).toEqual(["AU", "DE", "ES", "FR", "GB", "IN", "IT", "NZ", "US"])
+		expect(unmatched).toEqual([])
+
+		for (const code of Object.keys(ADDRESS_LAYOUTS)) {
+			const sources = conventionClaimForCountry(ConventionClaimID.PostcodePrecedesLocality, code)!.observations.map(
+				(entry) => entry.source
+			)
+
+			expect(sources, code).toContain(ConventionSource.MailwomanBoard)
+			expect(sources, code).toContain(ConventionSource.LibAddressInput)
+		}
+	})
+
+	it("keeps the skeleton table out of the rendering path", () => {
+		// `layoutForCountry` must keep answering the board's layout for a board locale.
+		// A skeleton that reached rendering would replace a layout checked against
+		// real addresses with one derived from a dataset.
+		for (const code of Object.keys(HAND_AUTHORED_FORMAT_SKELETONS)) {
+			expect(layoutForCountry(code), code).toBe(ADDRESS_LAYOUTS[code])
+		}
 	})
 
 	it("cites libaddressinput alone for a country with no board entry", () => {
