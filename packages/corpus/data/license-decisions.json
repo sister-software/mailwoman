@@ -360,6 +360,93 @@
 				}
 			}
 		},
+		"unchecked-access-free-nl-kadaster": {
+			"state": "elected",
+			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
+			"spdx": "CC0-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "Kadaster states one licence and states it as a URL rather than as prose. `https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml`, 2,247 bytes, sha256 `36c587f04c6c4e57c71fd03ff253d85df3c8d796b9c12c26159dda1e0262effe`, carries two `rights` elements and both read `https://creativecommons.org/publicdomain/zero/1.0/deed.nl`. That is the Dutch-language deed page for CC0 1.0 Universal, which is a public-domain dedication rather than a licence with conditions. The version is in the identifier, so `spdx` reads `CC0-1.0`. CC0 carries no attribution condition and no share-alike term, which makes this the least conditioned grant in the register.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 §3 waives every copyright and related right the Affirmer holds, to the greatest extent permitted by law, so copying the published GML is unreserved."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same waiver covers extraction and database rights, which §2 names among the rights waived, so reading the address fields out of the file is unreserved."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2 waives the rights to reproduce, adapt, distribute and perform, in every medium and for any purpose, so producing a token and tag corpus from the rows is unreserved."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act at all, so fitting a model on the rows is unreserved."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2 waives the distribution right without condition. Crediting Kadaster stays good practice and CC0 requires it nowhere."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question that stands open under CC BY and ODbL, whether trained weights are a derivative of the rows, does not arise here: CC0 waives the rights that would make the answer matter, and §3 adds a fallback licence to exercise all those rights unconditionally where the waiver is ineffective in law."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§3's fallback grant is `royalty-free, non transferable, non sublicensable, non exclusive, irrevocable and unconditional`, and it runs to the public rather than to one recipient, so a downstream party holds it directly. The waiver in §2 leaves no right that would need sublicensing."
+				}
+			}
+		},
+		"unchecked-access-free-cz-czech-office-for-surveying-mapping-and-cadast": {
+			"state": "elected",
+			"electedTerms": "žádné podmínky neplatí",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-09-30",
+			"electedBecause": "ČÚZK states one condition of use and states it uniformly. `https://atom.cuzk.gov.cz/AD/AD.xml`, 8,373,817 bytes, sha256 `9b1d51a721ab601fa74307cce5ce20f74d12dd29512f87be29cd1072f0a2d83b`, carries 6,259 `rights` elements and every one of the 6,259 reads `žádné podmínky neplatí`, which renders INSPIRE's controlled value `no conditions apply to access and use` in Czech. The first municipality feed retrieved from it, `CZ-00025712-CUZK_AD_584061.xml`, carries the same text. That is a denominator of every rights element the feed holds rather than a sample. No licence instrument is named, so no `spdx` is written here and `electedTerms` records the publisher's own words. A caution is recorded rather than resolved: the INSPIRE controlled value states the absence of a legal restriction on access and use, and it is not a copyright licence, so what it grants beyond access and use rests on Czech law rather than on this text.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`No conditions apply to access and use` places no restriction on obtaining the data, which is what retrieving each municipality's zipped GML performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same statement places no condition on use, so reading the address fields out of the GML is within it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No stated condition restricts modification of the data once accessed."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The statement reserves no act of analysis, and fitting a model is a use of the data."
+				},
+				"redistribute-data": {
+					"permission": "unreviewed",
+					"because": "The INSPIRE value speaks to access and use. Whether it also waives the right to republish the dataset is a question of Czech law that the text does not answer, and ČÚZK names no licence instrument that would."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The statement says nothing about a work fitted from the data, so whether a released model carries any obligation is unread."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No instrument is named, so there is no sublicensing clause to read either way."
+				}
+			}
+		},
 		"unchecked-access-free-es-gobierno-de-navarra": {
 			"state": "elected",
 			"electedTerms": "Creative Commons Attribution 4.0 International",

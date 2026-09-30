@@ -23,6 +23,35 @@
 				"because": "Every element name in `A.ES.SDGC.AD.55101.gml` was counted over all 11,861,975 bytes, so this covers the file rather than its first features. It holds 48 distinct element names and none of them names a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name of any kind. The only names are 505 `AD:ThoroughfareName`, 5 `AD:PostalDescriptor` and 1 `AD:AdminUnitName`. The file declares the INSPIRE Addresses 3.0 schema at `urn:x-inspire:specification:gmlas:Addresses:3.0`, which has no party element for another municipality to populate, so the reading rests on the schema as well as on the one municipality read. This is what separates the row from the other 25 `verified-corpus` sources: each of those is a business register or a procurement portal where the address belongs to a party, and some of those parties are natural persons trading on their own account. The cadastre's AD theme records the place. The ownership data that Spanish cadastral records also hold travels through a separate protected channel and appears nowhere in this dataset."
 			}
 		},
+		"nl-property-building-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Kadaster, reached through the ATOM download service at `https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml`, 2,247 bytes, sha256 `36c587f04c6c4e57c71fd03ff253d85df3c8d796b9c12c26159dda1e0262effe`. The feed holds one entry covering the whole country rather than one per municipality, so this row's coverage is national and measured rather than inferred from a sample. That entry is `https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz`, 819,465,603 bytes, sha256 `7ea1e45ee200327468eab8c8089a46ad99c334606cae19df7ba334cfae34cd5f`, which expands to 29,677,448,685 bytes of GML holding **10,066,060 address features**. That is the largest measured address count of any source in this register.",
+			"upstreamLineage": [
+				"https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml",
+				"https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in the decompressed GML was counted over all 29,677,448,685 bytes, read as a stream, so this covers the whole country rather than a sample of it. The file holds 49 distinct element names across 10,066,060 address features, and none of them identifies a party: there is no owner, holder, occupant or contact element, and no personal name. The four names outside the address, geographical-name and geometry vocabulary are `identifier`, `nameParts`, `PartOfName` and `part`, and the last three are the INSPIRE structure that splits a thoroughfare name into its components. The file follows the INSPIRE Addresses schema, which has no party element."
+			}
+		},
+		"cz-property-building-1": {
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Czech Office for Surveying, Mapping and Cadastre, reached through the ATOM download service at `https://atom.cuzk.gov.cz/AD/AD.xml`, 8,373,817 bytes, sha256 `9b1d51a721ab601fa74307cce5ce20f74d12dd29512f87be29cd1072f0a2d83b`. The feed lists 6,258 entries, one dataset feed per municipality, and each dataset feed offers the same data in two projections, EPSG:5514 and EPSG:4258. The measured instance is the first entry, municipality 584061, whose EPSG:5514 archive is 25,248 bytes and whose one member `584061.xml` is 1,164,835 bytes holding 304 address features. The other 6,257 municipalities were not measured, and 304 features in one municipality is too small a sample to estimate the country's total from. The archive's central directory records the member size as `0xFFFFFFFF`, which is the ZIP64 sentinel rather than the real length.",
+			"upstreamLineage": [
+				"https://atom.cuzk.gov.cz/AD/AD.xml",
+				"https://atom.cuzk.cz/AD/datasetFeeds/CZ-00025712-CUZK_AD_584061.xml",
+				"https://services.cuzk.gov.cz/gml/inspire/ad/epsg-5514/584061.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `584061.xml` was counted over all 1,164,835 bytes, so this covers the file rather than its first features. It holds 53 distinct element names across 304 address features, and none of them identifies a party: there is no owner, holder, occupant or contact element, and no personal name. The four names outside the address, geographical-name and geometry vocabulary are `member`, `SpatialDataSet`, `identifier` and `metadata`, each of which describes the document rather than a person. The scope is one municipality of 6,258; the reading extends to the rest through the INSPIRE Addresses schema, which has no party element for another municipality to populate."
+			}
+		},
 		"es-mixed-regulatory-3": {
 			"addressRoles": {
 				"AD:Address": "premise"
