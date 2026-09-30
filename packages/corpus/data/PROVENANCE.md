@@ -165,10 +165,10 @@ Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of
 admits four, every one of them a Spanish cadastral address theme, and answers the other 389 with the
 reasons below.
 
-### Licences: 25 read, 368 unchecked
+### Licences: 28 read, 365 unchecked
 
-All 393 rows point at a decision record of their own. 22 are `elected`, 3 are `refused`, and the
-other 368 read `unchecked`, which is a finding rather than a placeholder. The 247 web-researched rows
+All 393 rows point at a decision record of their own. 22 are `elected`, 6 are `refused`, and the
+other 365 read `unchecked`, which is a finding rather than a placeholder. The 247 web-researched rows
 read `CHECK NATIONAL / DATASET TERMS` verbatim. The other 143 carry an access label from the original
 memo — `Free`, `Free-reg`, `Gated`, `Licensed` — which says what the download costs and grants
 nothing, so treating one as permissive would admit a source on a sentence about price.
@@ -207,7 +207,7 @@ copy they were read from, that copy's version where the publisher gives one, and
 not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
 register that fails its audit, so an incomplete entry never reaches the committed artifact.
 
-**Twenty-five of the register's 393 decisions are recorded**, 22 elected and 3 refused. AusTender's
+**Twenty-eight of the register's 393 decisions are recorded**, 22 elected and 6 refused. AusTender's
 publisher, the Australian Department of Finance, grants `CC-BY-3.0-AU` in the AusTender Terms of Use
 §5.1. DENUE's publisher, INEGI, grants its own free-use terms. INSEE grants `Licence Ouverte 2.0` over
 SIRENE in each of nine overseas territories. The Dirección General del Catastro grants its own INSPIRE
@@ -215,7 +215,11 @@ access-and-use licence over the cadastral addresses of 52 Spanish territorial of
 foral councils that publish through the same national feed grant their own terms over the rest of
 Spain's cadastral addresses: Navarra under `CC-BY-4.0`, Gipuzkoa under `CC-BY-SA-4.0`, and Bizkaia
 under a statement naming no instrument. Each is retained under
-`internal/strategy/rights-receipts/`. The other 368 read `unchecked`.
+`internal/strategy/rights-receipts/`. Six publishers refuse in their own words: the Banque Centrale
+des Comores, the ISPF and the Government of Tokelau reserve all rights in a site footer, Kenya's PPRA
+and the Central Bank of Libya do the same, and Kosovo's PPRC publishes terms whose clause 12(c)
+reserves copying, reproduction and derivative works except by its express written agreement. The
+other 365 read `unchecked`.
 
 A decision may name a body declared once under `sharedReadings` rather than restating it. One publisher
 can hold a licence over several jurisdictions, and a decision is scoped to one publisher in one

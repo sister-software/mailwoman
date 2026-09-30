@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "24de2f11711e48f121eb0bfd68aa2e2e387b57d0ab6d11277943067857adb1ce",
+	"contentDigest": "5f9e3f166897a8489c6002b626e9c030a885b77647a3726de780184c23d1d6fc",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -2032,10 +2032,10 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to National Tax Agency in JP, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-ke-kenya-public-procurement-regulatory-authority",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Kenya Public Procurement Regulatory Authority (PPRA) in KE, so electing it grants that publisher's sources in that jurisdiction alone."
+			"refusedBecause": "The PPRA reserves all rights in its own footer, `PPRA © 2024 All Rights Reserved`, and its site carries no data license, no open-data statement and no reuse permission. Three further paths on that host answer HTTP 404 (`/terms-of-use/`, `/privacy-policy/`, `/copyright/`) and `/downloads/` answers 403; the 404 body is the same 58,133 bytes each time. The retained home page is 119,357 bytes, sha256 `d6d2f936c885591588ebe3074aeffd42a176bba767c8f1106092312d50407df0`. Earlier passes recorded this host as failing at the network layer, which was an artifact of the `www` prefix: `www.ppra.go.ke` fails and `ppra.go.ke` answers HTTP 200, so the publisher's terms had never been read rather than been read and found empty. A footer notice is a site-wide assertion rather than a statement about the data, so a request to the authority could still produce a grant; its own site publishes `info@ppra.go.ke`.",
+			"licenseID": "unchecked-national-terms-ke-kenya-public-procurement-regulatory-authority"
 		},
 		{
 			"licenseID": "unchecked-national-terms-ke-office-of-the-attorney-general-and-department",
@@ -2164,10 +2164,10 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Register of Enterprises of the Republic of Latvia in LV, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-ly-central-bank-of-libya",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Central Bank of Libya in LY, so electing it grants that publisher's sources in that jurisdiction alone."
+			"refusedBecause": "The Central Bank of Libya reserves all rights in its own footer, `© All rights reserved 2026، The Central Bank of Libya.`, and its site carries no data license and no reuse permission. Its English home page holds no licensing term in 222,200 bytes and it publishes no terms-of-use page; `/en/terms-of-use/` answers HTTP 404 and the contact page, 147,508 bytes, sha256 `765d8a3adabde677eee5c8afcc2d4be1cf36d26b2e6d8d2498586cc2974750a4`, carries the footer and nothing further. The only address the site publishes is `webdesign@email.ly`, which belongs to whoever built the site rather than to the bank, so a request goes through the contact form at `https://cbl.gov.ly/en/contact/`. Do not substitute a third party's dataset: a humdata query for Libya returns five `cc-by` datasets, every one published by the World Bank Group or the AfDB rather than by the central bank.",
+			"licenseID": "unchecked-national-terms-ly-central-bank-of-libya"
 		},
 		{
 			"licenseID": "unchecked-national-terms-ma-moroccan-industrial-and-commercial-property-o",
@@ -3102,10 +3102,10 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Kosovo Business Registration Agency in XK, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-xk-public-procurement-regulatory-commission-pprc",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Public Procurement Regulatory Commission (PPRC) in XK, so electing it grants that publisher's sources in that jurisdiction alone."
+			"refusedBecause": "The PPRC's own terms document refuses reproduction and derivative works, and names the route to permission. `https://e-prokurimi.rks-gov.net/Home/Manuals//TermsAndConditions/KushtetDheTermatE-prokurimi.pdf`, 405,856 bytes, sha256 `fbb08255e3294050245d87aa43c3d4ea0b66be66773676416c2312897a43f06c`, is titled `Kushtet dhe Termat për Përdorimin e Sistemit të Prokurimit Elektronik – Marrëveshja e Përdoruesit` and is six pages, read in full. Clause 12(b) states that all contents in the system are the property of the KRPP. Clause 12(c) states `Asnjë përdorues nuk mund të kopjojë, modifikojë, publikojë, transmetojë, transferojë ose shesë, riprodhojë, krijojë vepra derivative, shpërndajë, shfaqë ose në ndonjë mënyrë të shfrytëzojë ndonjë nga përmbajtjet, tërësisht ose pjesërisht, me përjashtim i) kur ju lejohet me ligjet dhe rregulloret e prokurimit publik të Republikës së Kosovës, ose ii) me marrëveshjen e shprehur me shkrim të KRPP-së`: no user may copy, modify, publish, transmit, transfer, sell, reproduce, create derivative works from, distribute or display any of the contents, in whole or in part, except where the Republic of Kosovo's public procurement law permits it or by the express written agreement of the KRPP. Copying, extracting and fitting a model are each among the reserved acts. Two limits on this reading are recorded rather than resolved. The document governs the e-procurement portal and names the OCDS export nowhere, so whether the export is `contents in this system` is a reading rather than a statement; the export is a rendering of the portal's own records, which is why the refusal is taken as covering it. And clause 12(c)(ii) names a route to permission, so a written request to the KRPP could reverse this. The register's earlier record rested on the OCP Data Registry reading `License: -`, which is a third party's empty field rather than the publisher's statement, and this replaces it with the publisher's own words.",
+			"licenseID": "unchecked-national-terms-xk-public-procurement-regulatory-commission-pprc"
 		},
 		{
 			"licenseID": "unchecked-national-terms-ye-ministry-of-industry-and-trade-registration-a",
