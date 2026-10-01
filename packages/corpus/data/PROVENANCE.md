@@ -406,6 +406,11 @@ the boundary. Poland's type holds 8,625,921 features, measured in 51 requests. T
 a service which answers two different `startIndex` values with the same leading feature, because
 paging an ignored parameter would measure the page cap instead.
 
+**`Fees` and `AccessConstraints` can disagree in the same document.** Austria's BEV Addresses service
+states `Fees` `no conditions apply` and `AccessConstraints` `restricted`, and its path carries a
+customer token. Reading the fee field alone records that service as free when its own access field
+says otherwise, so both are read before a service is called reachable.
+
 **An HTTP 422 is a validation message naming the fix, where a 404 is an absence.** The export URL in
 Slovakia's own capabilities document answers 422 with
 `{"loc":["path","collection_record_id"],"msg":"value is not a valid uuid"}`, which places the id in
