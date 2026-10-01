@@ -37,7 +37,7 @@ access labels and applies the recorded ones over that, so a decision survives a 
 
 `--resolutions` defaults to `source-resolutions.json` and holds the source fields a review resolved:
 `addressRoles`, `coverage`, `upstreamLineage` and `personalDataReview`. The research CSV records the
-first three as the placeholders `varies`, `country-specific` and the empty string on all 403 of its
+first three as the placeholders `varies`, `country-specific` and the empty string on all 404 of its
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
@@ -71,7 +71,7 @@ concluding the publisher renamed itself.
 | file                                           |  rows | what is read                                                           |
 | ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
 | `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
-| `global-functional-authority-corpora-v2.csv`   | 2,403 | the 403 rows naming a national source; 2,000 are dropped               |
+| `global-functional-authority-corpora-v2.csv`   | 2,404 | the 404 rows naming a national source; 2,000 are dropped               |
 
 The 2,000 dropped rows carry `origin = global_research_rail`: eight global discovery lookups the
 pass repeated once per jurisdiction, which collapse to eight distinct row bodies ignoring the `iso2`
@@ -82,8 +82,8 @@ README's procedure and not rows here.
 
 `global-functional-authority-corpora-v2.csv` has an `address_role`, a `coverage` and an `upstream`
 column, and the register declares all three unresolved. That is not the build dropping usable data.
-Over the 403 rows it keeps, `address_role` reads `varies` on all 403, `coverage` reads
-`country-specific` on all 403, and `upstream` is empty on all 403. The first two are the research
+Over the 404 rows it keeps, `address_role` reads `varies` on all 404, `coverage` reads
+`country-specific` on all 404, and `upstream` is empty on all 404. The first two are the research
 pass saying it did not determine the field per source.
 
 The build reads the columns and refuses to carry a placeholder, because
@@ -118,7 +118,7 @@ hand-written by design — that file is an input to this build, not an output of
 ### What the register carries
 
 Two tables rather than one nested list. The jurisdiction table is a complete 250-row enumeration;
-the source table is zero or more rows per jurisdiction, 403 over 240 of them. Nesting the second
+the source table is zero or more rows per jurisdiction, 404 over 240 of them. Nesting the second
 inside the first would make a jurisdiction nobody researched structurally identical to one whose
 list happens to be empty, and no reader could tell which they were looking at.
 
@@ -148,12 +148,12 @@ repository already has locale tiers 1 through 5 in `scope.config.json` and the
 
 Say this plainly rather than making a reader discover it by querying:
 
-- **`addressRole` — 0 of 403.** Every row reads `varies`. The specification's section 2 asks for a
+- **`addressRole` — 0 of 404.** Every row reads `varies`. The specification's section 2 asks for a
   role per source and the pass recorded none, so the research CSV cannot say whether any of these
   sources holds premises, registered offices or mailing addresses.
-- **`upstreamLineage` — 0 of 403.** No row records what it was copied from, so two databases carrying
+- **`upstreamLineage` — 0 of 404.** No row records what it was copied from, so two databases carrying
   one upstream submission cannot yet be collapsed into the single observation they are.
-- **`coverage` — 0 of 403.** Every row reads `country-specific`, which is a scope rather than a
+- **`coverage` — 0 of 404.** Every row reads `country-specific`, which is a scope rather than a
   measurement. A national portal is not evidence of national coverage.
 
 A later review resolves these per source in `source-resolutions.json`, and the register's `unresolved`
@@ -161,13 +161,13 @@ array names any field no row carries yet. The audit checks that claim in both di
 listed there must be absent from every row, and a field not listed must be present on at least one.
 The array is empty today, because a review has resolved each of the four on at least one source.
 
-Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of 403 sources it
-admits fifteen, fourteen national or regional address publications and Italy's ANAC procurement
+Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of 404 sources it
+admits sixteen, fifteen national or regional address publications and Italy's ANAC procurement
 release, and answers the other 388 with the reasons below.
 
-### Licences: 38 read, 365 unchecked
+### Licences: 39 read, 365 unchecked
 
-All 403 rows point at a decision record of their own. 32 are `elected`, 6 are `refused`, and the
+All 404 rows point at a decision record of their own. 33 are `elected`, 6 are `refused`, and the
 other 365 read `unchecked`, which is a finding rather than a placeholder. The 247 web-researched rows
 read `CHECK NATIONAL / DATASET TERMS` verbatim. The other 143 carry an access label from the original
 memo — `Free`, `Free-reg`, `Gated`, `Licensed` — which says what the download costs and grants
@@ -207,7 +207,7 @@ copy they were read from, that copy's version where the publisher gives one, and
 not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
 register that fails its audit, so an incomplete entry never reaches the committed artifact.
 
-**Thirty-eight of the register's 403 decisions are recorded**, 32 elected and 6 refused. AusTender's
+**Thirty-nine of the register's 404 decisions are recorded**, 33 elected and 6 refused. AusTender's
 publisher, the Australian Department of Finance, grants `CC-BY-3.0-AU` in the AusTender Terms of Use
 §5.1. DENUE's publisher, INEGI, grants its own free-use terms. INSEE grants `Licence Ouverte 2.0` over
 SIRENE in each of nine overseas territories. Kadaster dedicates the Dutch address theme to the public
@@ -240,11 +240,11 @@ have exactly one blocking condition left, and fifteen of the sixteen are blocked
 reading alone.** That makes the personal-data question one decision gating fifteen sources rather than
 a question about one. The sixteenth is Uruguay, blocked on its address role instead.
 
-### Why there are 403 of them rather than 12
+### Why there are 404 of them rather than 12
 
 A decision is scoped to one publisher in one jurisdiction, so the register carries one per source.
 Keying a decision by the research pass's access label alone made it as wide as the label:
-`CHECK NATIONAL / DATASET TERMS` covered 247 of the 403 sources across 222 publishers, and `Free`
+`CHECK NATIONAL / DATASET TERMS` covered 247 of the 404 sources across 222 publishers, and `Free`
 covered 103. Recording one election against either would have granted every source under it on a
 single reading of one publisher's terms.
 
@@ -288,9 +288,9 @@ every contracting process. Taiwan's GCIS register gives a registered company add
 business address in separate columns. `ingestEligibilityProblems` requires at least one column to have
 a role, and the audit refuses an empty map, which would read as resolved while stating nothing.
 
-**Thirty-two sources of 403 carry at least one resolved field, and twenty-nine carry all four.** AusTender
+**Thirty-three sources of 404 carry at least one resolved field, and thirty carry all four.** AusTender
 and five OCDS procurement releases are recorded from whole-year measurements of the published data.
-The nine SIRENE territories are recorded from INSEE's own `dessin de fichier`. Seven of the fourteen
+The nine SIRENE territories are recorded from INSEE's own `dessin de fichier`. Seven of the fifteen
 address publications are recorded from an element census over a whole GML file, the largest being the
 Netherlands' 29,677,448,685 bytes and 10,066,060 features and the newest Wallonia's 5,163,917,131
 bytes and 1,772,312 features. Denmark's is recorded from the column schema of its GeoPackage instead,
@@ -311,19 +311,20 @@ names equal its 1,830,903 `gml:featureMember` elements exactly. A first pass rep
 counts as 1,772,315, 1,772,316 and 1,772,314, which is how a chunked reader that re-scans its own
 overlap announces itself.
 
-**Fifteen sources are ingest-eligible and fifteen have one blocking condition each.** Fourteen of the
+**Sixteen sources are ingest-eligible and fifteen have one blocking condition each.** Fourteen of the
 fifteen read `personalDataReview: present`. The fifteenth is Uruguay, refused on its address role: no
 party object in 127,885 carries an address field of any kind, so that publication is reachable in bulk
 and is not an address source.
 
-Fourteen of the fifteen eligible sources are national or regional address publications of EU member
+Fifteen of the sixteen eligible sources are national or regional address publications of EU member
 states: Spain's Dirección General del Catastro, the three foral cadastres of Bizkaia, Gipuzkoa and
 Navarra, the Netherlands' Kadaster under CC0 1.0, Denmark's Klimadatastyrelsen under CC BY 4.0,
 Czechia's ČÚZK, Estonia's Maa- ja Ruumiamet under CC0 1.0, Slovakia's Ministerstvo vnútra and
 Poland's GUGiK under the INSPIRE controlled value for an absence of conditions, the Flemish Region's
 agentschap Digitaal Vlaanderen under the Modellicentie voor gratis hergebruik Vlaanderen v1.0, the
 Walloon Region's Service public de Wallonie under CC BY 4.0, Finland's Suomen ympäristökeskus under
-CC BY 4.0, and France's IGN under Licence Ouverte 2.0.
+CC BY 4.0, France's IGN under Licence Ouverte 2.0, and Luxembourg's Administration du cadastre et de
+la topographie under CC0 1.0.
 
 **The largest of them is France's Base Adresse Nationale at 26,117,350 rows**, measured by parsing
 the whole file, against the `plus de 25 millions d'adresses` its publisher states. Poland's 8,625,921

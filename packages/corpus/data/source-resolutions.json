@@ -66,6 +66,20 @@
 				"because": "Every property of all five feature types was listed, over 40 features each: 10 on `ad:Address`, 10 on `ad:AdminUnitName`, 8 on `ad:AddressAreaName`, 8 on `ad:PostalDescriptor` and 8 on `ad:ThoroughfareName`. None of the 44 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan or validity date, a status, a position, a locator, a name, a postcode or a component reference. `AD:LocatorName` is the element that needs its own statement, because it is free text of type `GeographicalName` and the one way a family name or a business name reaches an INSPIRE address. This service omits it structurally: its `locator` object carries `designator` and `level` and no `name` key at all, and the designator values are address numbers typed `LocatorDesignatorTypeValue/addressNumber`. The sampled measurement agrees, at 0 of 800 addresses over 40 windows spread across the 1,704,196. The traversal was checked against Estonia, which populates the element on every address, to establish that a reader finding nothing here is reading a service that writes nothing rather than failing to look: Estonia flattens the path to `locator_addresslocator_name_locatorname_name_spelling_text` while Slovakia nests it, so each service needs its own traversal and a single reader run against both would have reported one of them wrongly."
 			}
 		},
+		"lu-property-building-1": {
+			"addressRoles": {
+				"rue": "premise"
+			},
+			"coverage": "BD-Adresses, published by the Administration du cadastre et de la topographie through `data.public.lu` as three bulk files, of which `addresses.csv` is 28,186,967 bytes as retrieved on 2026-10-01 against the 28,186,970 the portal records. **Measured 179,622 data rows** by reading the whole file, which is every line of its 179,624 less the header and the trailing newline. It is semicolon-delimited with 13 columns and every row splits into 13 fields, so no value contains a semicolon. **The publisher states that this is a subset**: `La BD-Adresses est un sous-ensemble des adresses figurant dans le registre national des localités et des rues`, enriched with coordinates and georeferenced on the cadastral parcel and the digitised cadastral plan, so 179,622 is the published subset rather than Luxembourg's address count. Positions come twice, as `lat_wgs84` and `lon_wgs84` and as `coord_est_luref` and `coord_nord_luref` in the national grid. It is updated weekly, `last_modified` `2026-09-28T02:31:48.330000+00:00`, and the portal also offers forward and reverse geocoding APIs over the same data at `apiv3.geoportail.lu`.",
+			"upstreamLineage": [
+				"https://data.public.lu/api/1/datasets/adresses-georeferencees-bd-adresses/",
+				"https://download.data.public.lu/resources/adresses-georeferencees-bd-adresses/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The file declares its columns in a header and every one of the 179,622 rows carries exactly those 13 fields, so all 13 were read rather than sampled for a fourteenth: `rue`, `numero`, `localite`, `code_postal`, `id_caclr_rue`, `id_caclr_bat`, `lat_wgs84`, `lon_wgs84`, `coord_est_luref`, `coord_nord_luref`, `id_geoportail`, `commune` and `lau2`. None identifies a party: there is no owner, occupant, holder or contact column and no personal name. `id_caclr_rue` and `id_caclr_bat` are the national register's street and building identifiers, and a building identifier names a building rather than whoever occupies it. `lau2` is the European local administrative unit code. The addresses read as `Kaesfurterstrooss;20;Hupperdange;9755`, a street, a number, a locality and a postcode."
+			}
+		},
 		"fr-property-building-1": {
 			"addressRoles": {
 				"nom_voie": "premise"
