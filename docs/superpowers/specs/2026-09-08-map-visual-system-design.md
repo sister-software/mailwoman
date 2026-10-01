@@ -47,16 +47,16 @@ navbar that does not exist outside Docusaurus.
 `packages/cartographer/lib/planetary/layers.ts:93` and `packages/cartographer/lib/base/buildings.ts:117`
 both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mailwoman.ai/protomaps/fonts/<stack>/0-255.pbf` returned:
 
-| Stack                                                                 | Result            |
-| --------------------------------------------------------------------- | ----------------- |
-| `Noto Sans Regular`                                                   | 200, 76,044 bytes |
-| `Noto Sans Medium`                                                    | 200, 77,628 bytes |
-| `Noto Sans Italic`                                                    | 200, 79,344 bytes |
-| `Fira Code Regular`                                                   | 200, 75,442 bytes |
-| `Fira Code Medium`                                                    | 200, 78,848 bytes |
-| `Fira Sans Regular`, `Fira Sans Medium`, `Fira Sans Italic`           | 404               |
-| `Open Sans Regular` (MapLibre's default stack)                        | 404               |
-| `Noto Sans Bold`, `Iosevka Nexus Regular`, `Arial Unicode MS Regular` | 404               |
+| Stack                                                       | Result            |
+| ----------------------------------------------------------- | ----------------- |
+| `Noto Sans Regular`                                         | 200, 76,044 bytes |
+| `Noto Sans Medium`                                          | 200, 77,628 bytes |
+| `Noto Sans Italic`                                          | 200, 79,344 bytes |
+| `Fira Code Regular`                                         | 200, 75,442 bytes |
+| `Fira Code Medium`                                          | 200, 78,848 bytes |
+| `Fira Sans Regular`, `Fira Sans Medium`, `Fira Sans Italic` | 404               |
+| `Open Sans Regular` (MapLibre's default stack)              | 404               |
+| `Noto Sans Bold`, `Arial Unicode MS Regular`                | 404               |
 
 MapLibre renders no text at all when a glyph range fails, so requesting an absent stack is a defect in
 itself, and `#styles/fonts` now holds the served names. It does not explain the missing planetary labels,
@@ -127,10 +127,10 @@ MapLibre's default grey ramp.
 | chrome   | `--mw-navy: #00093a`      | absent                                        |
 | accents  | `--mw-amber`, `--mw-teal` | absent                                        |
 | hairline | `--mw-line: #b9d8ec`      | absent                                        |
-| type     | Iosevka Nexus Web / Mono  | `system-ui`, and the UA default on `<button>` |
+| type     | Bliss Pro / Fira Code     | `system-ui`, and the UA default on `<button>` |
 
-The typeface is already served from `public.mailwoman.ai` as two `@font-face` files totalling 20 KB in
-`docs/src/css/fonts/`, on an origin both apps already preconnect to.
+Both typefaces are served from `public.mailwoman.ai` and declared in `docs/src/css/fonts/BlissPro.css` and
+`docs/src/css/fonts/FiraCode.css`, on an origin both apps already preconnect to.
 
 ### Three font families without a type system
 
@@ -164,7 +164,7 @@ above the address field. The right-hand panel lists internal style-layer counts 
    holds as `--mw-magenta`.
 7. **The typeface is bound per role, and the binding is expected to change.** A rule never refers to a
    font family directly. It refers to a scale role, and each scale role maps to one of five face roles.
-   Iosevka Nexus is currently bound to all five and is not assumed permanent. A swap edits
+   Bliss Pro is bound to `display` and `text`, and Fira Code to `number`, `code` and `glyph`. A swap edits
    `font.family.*` and no other token. Map labels carry a separate binding, `font.family.map`, because
    MapLibre draws them from a signed-distance-field range rather than a `@font-face`. Its value must be a
    stack the bucket serves, which today means `Noto Sans Regular`, `Noto Sans Medium` or
@@ -191,7 +191,7 @@ packages/react/lib/tokens/
   material.tokens.json      DTCG composites for the glass materials
 packages/react/styleframe.config.ts
 packages/react/tokens.css   generated, exported as @mailwoman/react/tokens.css
-packages/react/fonts.css    the two Iosevka @font-face blocks, re-homed from docs
+packages/react/fonts.css    the Bliss Pro and Fira Code @font-face blocks
 ```
 
 ### Primitive layer
@@ -272,9 +272,9 @@ to a scale role, and each scale role maps to a face role. A typeface change edit
 | `font.family.code`    | Identifiers, JSON, file paths                               | Monospaced, with `0`/`O` and `1`/`l` distinguishable                                  |
 | `font.family.glyph`   | Control glyphs — close, chevron, compass letter, microphone | Monochrome, inherits color and size, sits on the text baseline                        |
 
-Iosevka Nexus satisfies all five today, with its mono variant covering number, code and glyph. That is
-why using a single face has caused no problems yet, and also why no record currently states which role a
-rule wanted. The role bindings make a future swap an edit to `font.family.*` and no other token.
+Bliss Pro covers `display` and `text`. Its default figures are proportional and it has no `tnum` feature,
+so `number` binds to Fira Code with `code` and `glyph`. The role bindings make a future swap an edit to
+`font.family.*` and no other token.
 
 ### Scale roles
 
@@ -398,8 +398,5 @@ Each phase is deployable on its own.
 
 ## Open items
 
-- Which face replaces Iosevka Nexus, and against which of the five role requirements it is judged. The
-  role table is the acceptance list: tabular lining figures for `number`, a distinguishable `0`/`O` and
-  `1`/`l` for `code`, baseline-aligned monochrome marks for `glyph`.
 - Whether Earth's basemap gains category color and icon markers for POI labels, in the Google register.
   That is a basemap style change in `@mailwoman/cartographer` and a larger piece than the chrome work.

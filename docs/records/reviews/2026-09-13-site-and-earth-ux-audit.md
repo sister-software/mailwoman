@@ -282,27 +282,23 @@ where the rest of this genre already lives.
 Measured on a cold load of `mailwoman.ai`: the six WOFF2 files all start at **~1570 ms**, and the document
 has **zero `<link rel="preload">` for fonts** (only `mailwoman-seal-magenta.svg`). The chain is
 HTML → `styles.*.css` → parse → discover `@font-face` → cross-origin fetch to `public.mailwoman.ai`. With
-`font-display: swap` on all 48 faces (`docs/src/css/fonts/IosevkaNexus.css`,
-`IosevkaNexusMono.css`), every visitor gets a guaranteed flash plus a reflow.
+`font-display: swap` on every face (`docs/src/css/fonts/BlissPro.css`, `FiraCode.css`), every visitor
+gets a flash plus a reflow.
 
-The reflow is the worse half: the fallback stack is
-`"Iosevka Nexus Web", "Iosevka", system-ui, …` (`docs/src/css/theme-light.css:57`). `system-ui` is
-substantially wider than Iosevka Nexus, so the swap re-wraps every line on the page. No rule declares
+The reflow is the worse half: the fallback stack is `"Bliss Pro Web", system-ui, …`
+(`docs/src/css/theme-light.css`). `system-ui` has different metrics from Bliss Pro, so the swap re-wraps
+every line on the page. No rule declares
 `size-adjust` / `ascent-override` / `descent-override` for a metric-matched fallback.
 
 Four fixes, in order of payoff:
 
-1. `preload` the four faces that paint above the fold (Regular 400, Book 450, Bold 700, Mono Regular
-   400). Everything else can stay lazy. The `preconnect` to `public.mailwoman.ai`
+1. `preload` the four faces that paint above the fold (Bliss Pro Regular 400, Medium 500, Bold 700, and
+   the Fira Code variable face). Everything else can stay lazy. The `preconnect` to `public.mailwoman.ai`
    (`docusaurus.config.ts:71`) saves the handshake but not the CSS-parse discovery delay.
 2. Add a metric-matched `@font-face` fallback (`local("system-ui")` + `size-adjust`) so the swap does not
    move text.
 3. Consider self-hosting the four critical faces on the docs origin and leaving the rest on
    `public.mailwoman.ai` — removes a connection from the critical path entirely.
-4. 48 faces are declared, 6 load. Worth trimming the declaration set or splitting the rarely-used
-   stretches into a second sheet.
-
-Minor, same file: the proportional font's bucket path is misspelled — `/fonts/IoveskaNexus/…` (Iovesk**a** rather than Iosevka) while the mono path is spelled correctly. It 200s today, so it is a rename-hazard rather than a bug.
 
 ---
 
