@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "a7ff2f2aca6f4ae4ecd7f246a69a1a098054a31f32a098c82acd5f22692f9c6a",
+	"contentDigest": "873f028cb69c9768c6b1a7ab9ec511737067ff8287a5b464d63b60e527c971eb",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -72,6 +72,51 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to be-business-legal-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licence CC-BY 4.0, as the Service public de Wallonie states it",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "The SPW states the grant in its dataset record and restates the access position in its ATOM feed. The dataset record is `b62f8405-2ce3-449f-8a61-5fc2f38d8b73`, retrieved at `https://metawal.wallonie.be/geonetwork/srv/fre/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=b62f8405-2ce3-449f-8a61-5fc2f38d8b73`, 53,789 bytes, sha256 `071bcc76467210369f4ba9384a155ff2d589db7782277494b6c06cb5d0c78917`, titled `INSPIRE - Points d'adresses en Wallonie (BE)`. Its three `otherConstraints` values are the whole statement: `Pas de limitation d'accès public à cette donnée.`, then `Licence CC-BY 4.0 : L'utilisateur peut utiliser et modifier les données pour en dériver une œuvre. Il peut publier les données et l'œuvre dérivée à condition de citer les sources.`, then the attribution string `Source : Service public de Wallonie (SPW) - INSPIRE - Points d'adresses en Wallonie (BE) (2017-11-20) https://geodata.wallonie.be/id/b62f8405-2ce3-449f-8a61-5fc2f38d8b73`. The publisher therefore names the instrument, states its version, and spells out in its own words what the instrument permits: use, modification into a derived work, and publication of both the data and the derived work on condition that the sources are cited. The service feed at `https://geoservices.wallonie.be/inspire/atom/AD_Service.xml`, 9,935 bytes, sha256 `46c3db24852e6f68`, adds `Accès libre et gratuit au service pour tout public` and the INSPIRE codelist term `noLimitations`, which are access statements rather than the use grant. The dataset feed names the file this row was measured from.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce and share the Licensed Material in whole, which is what retrieving the zipped GML performs, and the feed states free access to the service."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, and the publisher's own gloss states that the user may use and modify the data to derive a work."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, commercial purposes included, with §3(a)(1)(B) requiring that modifications be indicated. The publisher's gloss names derivation of a work explicitly."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing in any medium, conditioned by §3(a) on crediting the licensor. The SPW has specified the credit to use, which is the `Source : Service public de Wallonie (SPW) …` string its record carries."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records. The publisher's gloss permits publishing a derived work with attribution, which answers the question for a work that is one, and leaves open whether weights are."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 §2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right. Whether that satisfies a commercial agreement is a drafting question this text does not answer."
+				}
+			},
+			"licenseID": "unchecked-access-free-be-service-public-de-wallonie-spw"
 		},
 		{
 			"licenseID": "unchecked-access-free-br-br-business-legal-1",
@@ -538,6 +583,51 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. Scoped to Instituto Nacional de Estadística in ES, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Creative Commons Nimeä 4.0 Kansainvälinen",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "SYKE's record states a licence that applies to part of what SYKE publishes, and the publisher's own terms page says which part. The record is `{DBD610F4-3392-44CD-B601-BAE8FA547A57}`, retrieved at `https://paikkatietohakemisto.fi/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=%7BDBD610F4-3392-44CD-B601-BAE8FA547A57%7D`, 35,124 bytes, sha256 `f6bff27a362a9fc5`, titled `Rakennetun ympäristön tietojärjestelmän rakennusten osoitetiedot` with `organisationName` `Suomen ympäristökeskus`. Its `otherConstraints` reads `Avoimen tiedon osalta Creative Commons Nimeä 4.0 Kansainvälinen https://www.syke.fi/fi/ymparistotieto/kayttolupa-ja-vastuut Lähde: Syke Ryhti Muiden tietotuotteiden osalta käyttöehdot on määritelty tietoluvassa.`: for the open-data part, CC BY 4.0 with the attribution `Lähde: Syke Ryhti`, and for other data products the terms are set in a data permit. A second `otherConstraints` reads `no limitations` against `accessConstraints` `otherRestrictions`. The split matters, so the publisher's terms page was read: `https://www.syke.fi/fi/ymparistotieto/kayttolupa-ja-vastuut`, 127,800 bytes, sha256 `df1a8c8603c0db75bf018c8c8e0ffdaeb814c494d1128cfac9abc7f3aac392e4`, states `Suomen ympäristökeskuksen (Syke) avointen aineistojen käyttölupa on Creative Commons Nimeä 4.0 Kansainvälinen`, that the data may be used freely in every way provided the source is named as the licensor's name and the dataset's name, and that datasets under different terms have those terms described in their own metadata and interface. The two files this row records are named `open_address.csv.gz` and `open_address.json.gz`, served from SYKE's own host and linked from this record's distribution, so they are the open-data part the first clause grants. Finland's other address publication is refused on the publisher's own terms rather than overlooked: `Väestötietojärjestelmän rakennus- ja huoneistotiedot`, the population register's building and dwelling data, states `Tietojen käyttöön saaminen edellyttää Digi- ja väestötietoviraston myöntämää käyttöoikeuslupaa.`, which requires a permit from the Digital and Population Data Services Agency.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce and share the Licensed Material in whole, which is what downloading the gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which covers reading the street, house-number and postcode columns out of a row. The terms page states that the data may be used in every way subject to the source being named."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, commercial purposes included, with §3(a)(1)(B) requiring that modifications be indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing in any medium, conditioned by §3(a) on crediting the licensor. SYKE specifies the credit as the licensor's name and the dataset's name, and this record's own form of it is `Lähde: Syke Ryhti`."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and neither the licence text nor SYKE's terms page answers it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 §2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right. Whether that satisfies a commercial agreement is a drafting question this text does not answer."
+				}
+			},
+			"licenseID": "unchecked-access-free-fi-suomen-ymp-rist-keskus"
 		},
 		{
 			"licenseID": "unchecked-access-free-fr-fr-business-legal-1",
@@ -10457,6 +10547,35 @@
 			}
 		},
 		{
+			"sourceID": "fi-property-building-1",
+			"iso2": "FI",
+			"sector": "property-building",
+			"name": "Rakennetun ympäristön tietojärjestelmän rakennusten osoitetiedot",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Finnish Environment Institute and operator of the Ryhti built-environment information system; publishes the national building address data as an open bulk file alongside the INSPIRE Addresses theme",
+			"geometry": "present",
+			"license": "unchecked-access-free-fi-suomen-ymp-rist-keskus",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV and JSON for the whole country",
+			"publisher": "Suomen ympäristökeskus",
+			"sourceURL": "https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz",
+			"note": "A row carries the coordinates, the street name and house number in Finnish and Swedish, the postal office name, the postcode and the municipality number. It carries no party.",
+			"addressRoles": {
+				"address_fin": "premise",
+				"address_swe": "premise"
+			},
+			"coverage": "The national building address data of the Ryhti built-environment information system, published by Suomen ympäristökeskus as two bulk files rather than through a service: `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz`, 351,500,842 bytes, and `open_address.json.gz`, 427,348,698 bytes. **Measured 3,862,373 address rows on 2026-10-01**, by streaming the gzipped CSV whole and parsing it, so this is a count of the file rather than an estimate from a sample. Its header declares 24 column names and every one of the 3,862,373 rows holds exactly 24 fields, with no ragged row. The addresses are bilingual: `address_fin` and `address_swe` carry the whole address per language, as `Rannikontie 4a` and `Rannikkovägen 4a` for one Espoo row whose `postal_office_fin` reads `ESPOO` and `postal_office_swe` reads `ESBO`, and the Swedish columns are populated where a municipality is Swedish-speaking. `addressRoles` is keyed by both, because each is a complete address rather than a part. The server states a `content-length` for both files and answers a `Range` request with HTTP 200 and the whole body, so a partial read is unavailable and a reader streams and stops instead.",
+			"upstreamLineage": [
+				"https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz",
+				"https://paikkatietohakemisto.fi/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=%7BDBD610F4-3392-44CD-B601-BAE8FA547A57%7D"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The file declares its columns in a header, so the review reads all 24 of them rather than sampling for a twenty-fifth: `X`, `Y`, `Z`, `address_key`, `building_key`, `address_fin`, `address_swe`, `postal_office_fin`, `postal_office_swe`, `address_number`, `address_name_fin`, `address_name_swe`, `number_part_of_address_number`, `number_part_of_address_number2`, `municipality_number`, `subdivision_letter_of_address_number`, `subdivision_letter_of_address_number2`, `postal_code`, `location_srid`, `modified_timestamp_utc`, `structure_key`, `area_key`, `deviation_object_key` and `location_permit_object_key`. Every one of the 3,862,373 rows carries exactly these 24 fields, so no row introduces a column the header omits. None of the 24 identifies a party: there is no owner, occupant, holder or contact column and no personal name. The six `_key` columns are UUIDs referencing objects of the information system, being an address, a building, a structure, an area, a deviation and a location permit, and a permit object is a permit rather than its holder. Ten rows sampled at 200,000-row intervals span the country, from Espoo to Ii to Vesanto, and each carries a street name and a house number where this publication's addresses sit."
+			}
+		},
+		{
 			"sourceID": "pl-property-building-1",
 			"iso2": "PL",
 			"sector": "property-building",
@@ -10539,6 +10658,35 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every property of all four feature types was listed, over 40 features each: 9 on `ad:Address`, 8 on `ad:AdminUnitName`, 8 on `ad:PostalDescriptor` and 7 on `ad:ThoroughfareName`. None of the 32 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a validity date, a position, a locator, a name, a postcode or a component reference. `AD:LocatorName` is the element that needs its own statement, because it is free text of type `GeographicalName` and the one way a family name or a business name reaches an INSPIRE address. This service leaves it empty: 0 of 800 addresses sampled over 40 windows spread across the 4,563,062 populate it, and the `locator` carries only a `designator` and a `level`. The designator values are house numbers typed `LocatorDesignatorTypeValue/addressIdentifierGeneral`. Article 4 of the elected licence requires that a re-use not breach data-protection law, and this reading is the measurement behind that undertaking for this source."
+			}
+		},
+		{
+			"sourceID": "be-property-building-2",
+			"iso2": "BE",
+			"sector": "property-building",
+			"name": "INSPIRE - Points d'adresses en Wallonie (BE)",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Regional government of Wallonia and holder of the ICAR address-point register; publishes the INSPIRE Addresses (AD) theme for the Walloon Region as a predefined-dataset ATOM download service",
+			"geometry": "present",
+			"license": "unchecked-access-free-be-service-public-de-wallonie-spw",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "ATOM download service; one zipped GML for the whole region",
+			"publisher": "Service public de Wallonie (SPW)",
+			"sourceURL": "https://geoservices.wallonie.be/inspire/atom/AD_Service.xml",
+			"note": "A feature is an address point with a house-number designator that references a thoroughfare name, an address-area name, a postal descriptor and an administrative unit. It carries no party. Coverage is the Walloon Region rather than Belgium.",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Service public de Wallonie, reached as a predefined-dataset ATOM download service at `https://geoservices.wallonie.be/inspire/atom/AD_Service.xml`. **Coverage is the Walloon Region rather than Belgium**: Flanders publishes its own service and Brussels publishes separately, so this row is one of three a Belgian build needs, and it sits beside `be-property-building-1` for the same reason. The dataset feed offers one archive for the whole region, `AD.Addresses.gml.zip`, 106,665,832 bytes, sha256 `8eebae71d793632c22c9902e8420bc50e0e572c97de15b7d10051b29b59e208a`, whose single member `AD.Addresses.gml` is 5,163,917,131 bytes in ETRS89 / LAEA Europe (EPSG:3035). **Measured 1,772,312 `ad:Address` features over the whole file rather than a sample.** The same file carries its components: 55,766 `ad:ThoroughfareName`, 1,963 `ad:AddressAreaName`, 598 `ad:PostalDescriptor` and 264 `ad:AdminUnitName`, so a build needs no second request to resolve a component. Five counts reconcile exactly, which is the check that the census read the file rather than its own buffer boundaries: `ad:Address`, `ad:AddressLocator`, `ad:GeographicPosition`, `ad:locator` and `ad:position` each appear 1,772,312 times, and 1,772,312 addresses plus the four component counts equal the 1,830,903 `gml:featureMember` elements the file holds. Each address carries exactly 6 `ad:component` references, 10,633,872 over the file.",
+			"upstreamLineage": [
+				"https://geoservices.wallonie.be/inspire/atom/AD_Service.xml",
+				"https://geoservices.wallonie.be/inspire/atom/AD_Dataset_b62f8405-2ce3-449f-8a61-5fc2f38d8b73.xml",
+				"https://geoservices.wallonie.be/geotraitement/spwdatadownload/results/b62f8405-2ce3-449f-8a61-5fc2f38d8b73/AD.Addresses.gml.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name the file ever uses was counted over all 5,163,917,131 bytes, so this is a denominator of the whole publication rather than a sample of its features. The file uses 56 distinct element names and **`ad:locatorName` is not among them: it appears 0 times, as does `ad:LocatorName`**. That element is the free-text `GeographicalName` through which a family name or a business name reaches an INSPIRE address, and this publisher never writes it. The 113,763 `ad:name` elements all sit inside the three name component types rather than on an address, which their own counts settle: 57,997 `gn:GeographicalName` plus 55,766 `ad:ThoroughfareNameValue` equals 113,763 exactly, and the component features carrying them are 55,766 thoroughfare names, 1,963 address-area names and 264 administrative-unit names, all of them place names. No element of the INSPIRE Addresses model identifies a party, and none of the 56 here is an owner, occupant, holder or contact."
 			}
 		},
 		{

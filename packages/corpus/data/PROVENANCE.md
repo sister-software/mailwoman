@@ -37,7 +37,7 @@ access labels and applies the recorded ones over that, so a decision survives a 
 
 `--resolutions` defaults to `source-resolutions.json` and holds the source fields a review resolved:
 `addressRoles`, `coverage`, `upstreamLineage` and `personalDataReview`. The research CSV records the
-first three as the placeholders `varies`, `country-specific` and the empty string on all 400 of its
+first three as the placeholders `varies`, `country-specific` and the empty string on all 402 of its
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
@@ -71,7 +71,7 @@ concluding the publisher renamed itself.
 | file                                           |  rows | what is read                                                           |
 | ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
 | `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
-| `global-functional-authority-corpora-v2.csv`   | 2,400 | the 400 rows naming a national source; 2,000 are dropped               |
+| `global-functional-authority-corpora-v2.csv`   | 2,402 | the 402 rows naming a national source; 2,000 are dropped               |
 
 The 2,000 dropped rows carry `origin = global_research_rail`: eight global discovery lookups the
 pass repeated once per jurisdiction, which collapse to eight distinct row bodies ignoring the `iso2`
@@ -82,8 +82,8 @@ README's procedure and not rows here.
 
 `global-functional-authority-corpora-v2.csv` has an `address_role`, a `coverage` and an `upstream`
 column, and the register declares all three unresolved. That is not the build dropping usable data.
-Over the 400 rows it keeps, `address_role` reads `varies` on all 400, `coverage` reads
-`country-specific` on all 400, and `upstream` is empty on all 400. The first two are the research
+Over the 402 rows it keeps, `address_role` reads `varies` on all 402, `coverage` reads
+`country-specific` on all 402, and `upstream` is empty on all 402. The first two are the research
 pass saying it did not determine the field per source.
 
 The build reads the columns and refuses to carry a placeholder, because
@@ -118,7 +118,7 @@ hand-written by design — that file is an input to this build, not an output of
 ### What the register carries
 
 Two tables rather than one nested list. The jurisdiction table is a complete 250-row enumeration;
-the source table is zero or more rows per jurisdiction, 400 over 240 of them. Nesting the second
+the source table is zero or more rows per jurisdiction, 402 over 240 of them. Nesting the second
 inside the first would make a jurisdiction nobody researched structurally identical to one whose
 list happens to be empty, and no reader could tell which they were looking at.
 
@@ -148,12 +148,12 @@ repository already has locale tiers 1 through 5 in `scope.config.json` and the
 
 Say this plainly rather than making a reader discover it by querying:
 
-- **`addressRole` — 0 of 400.** Every row reads `varies`. The specification's section 2 asks for a
+- **`addressRole` — 0 of 402.** Every row reads `varies`. The specification's section 2 asks for a
   role per source and the pass recorded none, so the research CSV cannot say whether any of these
   sources holds premises, registered offices or mailing addresses.
-- **`upstreamLineage` — 0 of 400.** No row records what it was copied from, so two databases carrying
+- **`upstreamLineage` — 0 of 402.** No row records what it was copied from, so two databases carrying
   one upstream submission cannot yet be collapsed into the single observation they are.
-- **`coverage` — 0 of 400.** Every row reads `country-specific`, which is a scope rather than a
+- **`coverage` — 0 of 402.** Every row reads `country-specific`, which is a scope rather than a
   measurement. A national portal is not evidence of national coverage.
 
 A later review resolves these per source in `source-resolutions.json`, and the register's `unresolved`
@@ -161,13 +161,13 @@ array names any field no row carries yet. The audit checks that claim in both di
 listed there must be absent from every row, and a field not listed must be present on at least one.
 The array is empty today, because a review has resolved each of the four on at least one source.
 
-Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of 400 sources it
-admits twelve, eleven INSPIRE Addresses themes and Italy's ANAC procurement release, and answers the
-other 388 with the reasons below.
+Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of 402 sources it
+admits fourteen, thirteen INSPIRE Addresses themes and Italy's ANAC procurement release, and answers
+the other 388 with the reasons below.
 
-### Licences: 35 read, 365 unchecked
+### Licences: 37 read, 365 unchecked
 
-All 400 rows point at a decision record of their own. 29 are `elected`, 6 are `refused`, and the
+All 402 rows point at a decision record of their own. 31 are `elected`, 6 are `refused`, and the
 other 365 read `unchecked`, which is a finding rather than a placeholder. The 247 web-researched rows
 read `CHECK NATIONAL / DATASET TERMS` verbatim. The other 143 carry an access label from the original
 memo — `Free`, `Free-reg`, `Gated`, `Licensed` — which says what the download costs and grants
@@ -207,7 +207,7 @@ copy they were read from, that copy's version where the publisher gives one, and
 not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
 register that fails its audit, so an incomplete entry never reaches the committed artifact.
 
-**Thirty-five of the register's 400 decisions are recorded**, 29 elected and 6 refused. AusTender's
+**Thirty-seven of the register's 402 decisions are recorded**, 31 elected and 6 refused. AusTender's
 publisher, the Australian Department of Finance, grants `CC-BY-3.0-AU` in the AusTender Terms of Use
 §5.1. DENUE's publisher, INEGI, grants its own free-use terms. INSEE grants `Licence Ouverte 2.0` over
 SIRENE in each of nine overseas territories. Kadaster dedicates the Dutch address theme to the public
@@ -240,11 +240,11 @@ have exactly one blocking condition left, and fifteen of the sixteen are blocked
 reading alone.** That makes the personal-data question one decision gating fifteen sources rather than
 a question about one. The sixteenth is Uruguay, blocked on its address role instead.
 
-### Why there are 400 of them rather than 12
+### Why there are 402 of them rather than 12
 
 A decision is scoped to one publisher in one jurisdiction, so the register carries one per source.
 Keying a decision by the research pass's access label alone made it as wide as the label:
-`CHECK NATIONAL / DATASET TERMS` covered 247 of the 400 sources across 222 publishers, and `Free`
+`CHECK NATIONAL / DATASET TERMS` covered 247 of the 402 sources across 222 publishers, and `Free`
 covered 103. Recording one election against either would have granted every source under it on a
 single reading of one publisher's terms.
 
@@ -288,31 +288,49 @@ every contracting process. Taiwan's GCIS register gives a registered company add
 business address in separate columns. `ingestEligibilityProblems` requires at least one column to have
 a role, and the audit refuses an empty map, which would read as resolved while stating nothing.
 
-**Twenty-nine sources of 400 carry at least one resolved field, and twenty-six carry all four.** AusTender
+**Thirty-one sources of 402 carry at least one resolved field, and twenty-eight carry all four.** AusTender
 and five OCDS procurement releases are recorded from whole-year measurements of the published data.
-The nine SIRENE territories are recorded from INSEE's own `dessin de fichier`. Six of the eleven
-INSPIRE Addresses themes are recorded from an element census over a whole GML file, the largest being
-the Netherlands' 29,677,448,685 bytes and 10,066,060 features. Denmark's is recorded from the column
-schema of its GeoPackage instead, because it publishes the theme as a database. The other four are
-recorded from every element of every feature type their WFS publishes, because none of them publishes
-a file: five types and 101 properties for Estonia, five and 44 for Slovakia, four and 32 for Flanders,
-and one type and 19 elements for Poland. Each is retained under
-`internal/strategy/rights-receipts/`.
+The nine SIRENE territories are recorded from INSEE's own `dessin de fichier`. Seven of the thirteen
+address publications are recorded from an element census over a whole GML file, the largest being the
+Netherlands' 29,677,448,685 bytes and 10,066,060 features and the newest Wallonia's 5,163,917,131
+bytes and 1,772,312 features. Denmark's is recorded from the column schema of its GeoPackage instead,
+because it publishes the theme as a database, and Finland's from the header of its CSV, every row of
+which carries exactly the 24 fields that header declares. The remaining four are recorded from every
+element of every feature type their WFS publishes, because none of them publishes a file: five types
+and 101 properties for Estonia, five and 44 for Slovakia, four and 32 for Flanders, and one type and
+19 elements for Poland. Each is retained under `internal/strategy/rights-receipts/`.
 
-**Twelve sources are ingest-eligible and fifteen have one blocking condition each.** Fourteen of the
+**A whole-file census answers what a sample cannot.** Wallonia's 56 element names were counted over
+all 5,163,917,131 bytes, which establishes that `ad:locatorName` appears 0 times in the publication
+rather than 0 times in the rows that were read. The count is self-checking: `ad:Address`,
+`ad:AddressLocator`, `ad:GeographicPosition`, `ad:locator` and `ad:position` each appear 1,772,312
+times, as a GML file holds one of each per address, and those 1,772,312 addresses plus the file's
+55,766 thoroughfare names, 1,963 address-area names, 598 postal descriptors and 264 administrative-unit
+names equal its 1,830,903 `gml:featureMember` elements exactly. A first pass reported those five
+counts as 1,772,315, 1,772,316 and 1,772,314, which is how a chunked reader that re-scans its own
+overlap announces itself.
+
+**Fourteen sources are ingest-eligible and fifteen have one blocking condition each.** Fourteen of the
 fifteen read `personalDataReview: present`. The fifteenth is Uruguay, refused on its address role: no
 party object in 127,885 carries an address field of any kind, so that publication is reachable in bulk
 and is not an address source.
 
-Eleven of the twelve eligible sources are INSPIRE Addresses (AD) themes: Spain's Dirección General del
-Catastro, the three foral cadastres of Bizkaia, Gipuzkoa and Navarra, the Netherlands' Kadaster under
-CC0 1.0, Denmark's Klimadatastyrelsen under CC BY 4.0, Czechia's ČÚZK, Estonia's Maa- ja
-Ruumiamet under CC0 1.0, Slovakia's Ministerstvo vnútra and Poland's GUGiK under the INSPIRE
-controlled value for an absence of conditions, and the Flemish Region's agentschap Digitaal
-Vlaanderen under the Modellicentie voor gratis hergebruik Vlaanderen v1.0. The INSPIRE Addresses
-model has no element for a party, so a party reaches a harmonised publication only through a
-free-text name element. INSPIRE Annex I makes Addresses a mandatory theme for every EU member state,
-so the remaining twenty are the place to look for more.
+Thirteen of the fourteen eligible sources are national or regional address publications of EU member
+states: Spain's Dirección General del Catastro, the three foral cadastres of Bizkaia, Gipuzkoa and
+Navarra, the Netherlands' Kadaster under CC0 1.0, Denmark's Klimadatastyrelsen under CC BY 4.0,
+Czechia's ČÚZK, Estonia's Maa- ja Ruumiamet under CC0 1.0, Slovakia's Ministerstvo vnútra and
+Poland's GUGiK under the INSPIRE controlled value for an absence of conditions, the Flemish Region's
+agentschap Digitaal Vlaanderen under the Modellicentie voor gratis hergebruik Vlaanderen v1.0, the
+Walloon Region's Service public de Wallonie under CC BY 4.0, and Finland's Suomen ympäristökeskus
+under CC BY 4.0. The INSPIRE Addresses model has no element for a party, so a party reaches a
+harmonised publication only through a free-text name element. INSPIRE Annex I makes Addresses a
+mandatory theme for every EU member state, so the remaining states are the place to look for more.
+
+**Belgium takes three rows and Finland's is not an INSPIRE service at all.** Belgium's regions publish
+separately, so Flanders, Wallonia and Brussels each need their own row, of which the first two are
+recorded. Finland's eligible publication is a pair of bulk files on the publisher's own host rather
+than a WFS or an ATOM feed, which is why `addressRoles` keys it by two CSV columns, `address_fin` and
+`address_swe`, each holding a complete address in its own language.
 
 **A service may answer the theme's name with the national schema.** Poland's download service
 publishes one feature type, `ms:AD.Address`, whose element names are the Polish register's own
@@ -341,14 +359,23 @@ the path to `locator_addresslocator_name_locatorname_name_spelling_text`. One tr
 both would report one of them wrongly, which is why each service's measurement states the shape it
 read, and why Slovakia's traversal was checked against Estonia before its 0 was recorded.
 
-Those publishers state five different grants, which is worth knowing before anyone assumes a
+Those publishers state six different grants, which is worth knowing before anyone assumes a
 mandatory EU theme comes with uniform terms. Kadaster and Maa- ja Ruumiamet dedicate to the public
-domain, Denmark and Navarra license under CC BY 4.0, Gipuzkoa under CC BY-SA 4.0, ČÚZK, the Slovak
-Ministerstvo vnútra and Poland's GUGiK state the INSPIRE controlled value for an absence of
-conditions, each in its own language, and Flanders
-grants its own model licence for free re-use, whose article 4 makes attribution the sole condition and
-whose article 5 leaves the licensee holding the intellectual property in works created from the data.
-The Directive mandates the data rather than its licence.
+domain, Denmark, Navarra, Wallonia and Finland's SYKE license under CC BY 4.0, Gipuzkoa under
+CC BY-SA 4.0, ČÚZK, the Slovak Ministerstvo vnútra and Poland's GUGiK state the INSPIRE controlled
+value for an absence of conditions, each in its own language, Catastro and Bizkaia grant their own
+access-and-use terms, and Flanders grants its own model licence for free re-use, whose article 4 makes
+attribution the sole condition and whose article 5 leaves the licensee holding the intellectual
+property in works created from the data. The Directive mandates the data rather than its licence.
+
+**A publisher may state a licence that covers part of what it publishes.** SYKE's record reads
+`Avoimen tiedon osalta Creative Commons Nimeä 4.0 Kansainvälinen … Muiden tietotuotteiden osalta
+käyttöehdot on määritelty tietoluvassa`: CC BY 4.0 for the open-data part, and a data permit for other
+products. Reading the first clause alone would grant what the second withholds, so the publisher's own
+terms page settles which files are which, and the two this register records are named `open_address`.
+Finland's other address publication states the permit requirement outright: the population register's
+building and dwelling data reads `Tietojen käyttöön saaminen edellyttää Digi- ja väestötietoviraston
+myöntämää käyttöoikeuslupaa`.
 
 A member state's WFS states its own access terms in fields that are not the data's licence. `Fees`
 and `AccessConstraints` in a capabilities document describe what calling the service costs, and the
