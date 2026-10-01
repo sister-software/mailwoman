@@ -55,11 +55,10 @@
 	--ifm-font-color-base-inverse: var(--ifm-color-content-inverse);
 	--ifm-font-color-secondary: var(--ifm-color-content-secondary);
 
-	/* FIX: list the *exact* production families first; fall back to the
-	   open-source Iosevka (loaded via ../colors_and_type.css) then system. */
+	/* Bliss Pro has no monospace style, so code keeps Iosevka Nexus Mono. */
 	--ifm-font-family-base:
-		"Iosevka Nexus Web", "Iosevka", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans,
-		sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+		"Bliss Pro Web", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 	--ifm-font-family-monospace:
 		"Iosevka Nexus Mono Web", "Iosevka", "SF Mono", "Roboto Mono", "Segoe UI Mono", "Courier New", "Courier",
 		"monospace";

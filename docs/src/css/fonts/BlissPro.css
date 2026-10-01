@@ -1,0 +1,79 @@
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 200;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-ExtraLight.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 200;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-ExtraLightItalic.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 400;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 400;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Italic.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 500;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Medium.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 500;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-MediumItalic.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 700;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Bold.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 700;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-BoldItalic.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 900;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Heavy.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 900;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-HeavyItalic.woff2") format("woff2");
+}

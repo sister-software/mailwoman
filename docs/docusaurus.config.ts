@@ -69,9 +69,9 @@ const config: Config = {
 		// Any other face still loads lazily.
 		...(
 			[
-				"IoveskaNexus/WOFF2/IosevkaNexus-Regular.woff2",
-				"IoveskaNexus/WOFF2/IosevkaNexus-Book.woff2",
-				"IoveskaNexus/WOFF2/IosevkaNexus-Bold.woff2",
+				"BlissPro/WOFF2/BlissPro.woff2",
+				"BlissPro/WOFF2/BlissPro-Medium.woff2",
+				"BlissPro/WOFF2/BlissPro-Bold.woff2",
 				"IosevkaNexusMono/WOFF2/IosevkaNexusMono-Regular.woff2",
 			] as const
 		).map((file) => ({
@@ -228,7 +228,7 @@ const config: Config = {
 				},
 				theme: {
 					customCss: [
-						"./src/css/fonts/IosevkaNexus.css",
+						"./src/css/fonts/BlissPro.css",
 						"./src/css/fonts/IosevkaNexusMono.css",
 						"./src/css/theme-light.css",
 						"./src/css/theme-dark.css",

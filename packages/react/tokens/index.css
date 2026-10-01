@@ -21,9 +21,9 @@
 	--warning-base: oklch(75% 0.15 75);
 	--danger-base: oklch(58% 0.2 25);
 	--info-base: oklch(65% 0.13 230);
-	--font-family-display: "Iosevka Nexus Web", "Iosevka", system-ui, sans-serif;
-	--font-family-text: "Iosevka Nexus Web", "Iosevka", system-ui, sans-serif;
-	--font-family-number: "Iosevka Nexus Web", "Iosevka", system-ui, sans-serif;
+	--font-family-display: "Bliss Pro Web", system-ui, sans-serif;
+	--font-family-text: "Bliss Pro Web", system-ui, sans-serif;
+	--font-family-number: "Iosevka Nexus Mono Web", "Iosevka", ui-monospace, "SF Mono", monospace;
 	--font-family-code: "Iosevka Nexus Mono Web", "Iosevka", ui-monospace, "SF Mono", monospace;
 	--font-family-glyph: "Iosevka Nexus Mono Web", "Iosevka", ui-monospace, monospace;
 	--font-family-map: "Noto Sans Regular";

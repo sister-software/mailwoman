@@ -90,9 +90,14 @@ const infoBase = variable("info-base", "oklch(65% 0.13 230)")
  *
  * The `glyph` face needs monochrome marks that sit on the text baseline.
  */
-const fontFamilyDisplay = variable("font-family-display", `"Iosevka Nexus Web", "Iosevka", system-ui, sans-serif`)
-const fontFamilyText = variable("font-family-text", `"Iosevka Nexus Web", "Iosevka", system-ui, sans-serif`)
-const fontFamilyNumber = variable("font-family-number", `"Iosevka Nexus Web", "Iosevka", system-ui, sans-serif`)
+const fontFamilyDisplay = variable("font-family-display", `"Bliss Pro Web", system-ui, sans-serif`)
+const fontFamilyText = variable("font-family-text", `"Bliss Pro Web", system-ui, sans-serif`)
+
+// Bliss Pro ships proportional default figures and no `tnum` feature, so numbers take the mono face.
+const fontFamilyNumber = variable(
+	"font-family-number",
+	`"Iosevka Nexus Mono Web", "Iosevka", ui-monospace, "SF Mono", monospace`
+)
 
 const fontFamilyCode = variable(
 	"font-family-code",
