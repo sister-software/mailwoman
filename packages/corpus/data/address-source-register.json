@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "06a0234b8ad49bad6f4509c2eab65d3d1dad799c3541f216095a47d27f85be25",
+	"contentDigest": "dcd0236fc5a690aeb829e16ac91f3f3c6750f6f60674f1d74c38fc6ff374c8ee",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -2213,6 +2213,12 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Aruba Chamber of Commerce and Industry in AW, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
+			"licenseID": "unchecked-national-terms-aw-directie-infrastructuur-en-planning-dip",
+			"state": "unchecked",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"note": "The research pass recorded the register and did not open its terms. Scoped to Directie Infrastructuur en Planning (DIP) in AW, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
 			"licenseID": "unchecked-national-terms-ax-government-of-land-finnish-patent-and-registr",
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
@@ -2346,6 +2352,12 @@
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Caribbean Netherlands chambers/registration authorities in BQ, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"licenseID": "unchecked-national-terms-bq-kadaster-bonaire-kadaster-sint-eustatius-and",
+			"state": "unchecked",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"note": "The research pass recorded the register and did not open its terms. Scoped to Kadaster Bonaire, Kadaster Sint Eustatius and Kadaster Saba in BQ, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
 			"licenseID": "unchecked-national-terms-bs-registrar-general-company-registration-author",
@@ -2513,6 +2525,12 @@
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Curaçao Chamber of Commerce and Industry in CW, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"licenseID": "unchecked-national-terms-cw-kadaster-cura-ao-and-domeinbeheer",
+			"state": "unchecked",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"note": "The research pass recorded the register and did not open its terms. Scoped to Kadaster Curaçao and Domeinbeheer in CW, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
 			"licenseID": "unchecked-national-terms-cx-australian-securities-and-investments-commiss",
@@ -3839,6 +3857,12 @@
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
 			"note": "The research pass recorded the register and did not open its terms. Scoped to National Registers Center in SV, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"licenseID": "unchecked-national-terms-sx-government-of-sint-maarten-and-kadaster-st-ma",
+			"state": "unchecked",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"note": "The research pass recorded the register and did not open its terms. Scoped to Government of Sint Maarten and Kadaster St. Maarten in SX, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
 			"licenseID": "unchecked-national-terms-sx-sint-maarten-chamber-of-commerce-and-industry",
@@ -13463,6 +13487,74 @@
 				"reading": "absent",
 				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
 			}
+		},
+		{
+			"sourceID": "bq-property-building-1",
+			"iso2": "BQ",
+			"sector": "property-building",
+			"name": "Kadaster BES — the island land registries of Bonaire, Sint Eustatius and Saba",
+			"status": "verified-authority",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Each island registry is a Land Registry and Mapping Organization that registers administrative and spatial property data and the rights involved, and is responsible for national mapping; each operates under the Kadasterwet BES",
+			"geometry": "unresolved",
+			"license": "unchecked-national-terms-bq-kadaster-bonaire-kadaster-sint-eustatius-and",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "over the counter against a published tariff; the Downloads pages carry forms rather than data",
+			"publisher": "Kadaster Bonaire, Kadaster Sint Eustatius and Kadaster Saba",
+			"sourceURL": "https://bes.kadaster.nl/",
+			"note": "The three registries are kadorbonaire.com at Kaya Irlanda 17 Bonaire, kadastersinteustatius.org at Fort Oranjestraat 5 St. Eustatius and kadastersaba.org at Paris Hill Road 10 Saba, each named by the official bes.kadaster.nl index. Each publishes New tariffs 2026 and a Regulation on tariffs. The Dutch BAG does not reach these islands: the PDOK locatieserver answers 66 hits for Bonaire and every one is a mainland street carrying the name, as Bonaire Apeldoorn and Bonaire Zoetermeer show.",
+			"upstreamLineage": ["https://www.kadaster.nl/kadaster-bes-eilanden"]
+		},
+		{
+			"sourceID": "aw-property-building-1",
+			"iso2": "AW",
+			"sector": "property-building",
+			"name": "Directie Infrastructuur en Planning spatial data",
+			"status": "verified-authority",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "The planning directorate at Sabana Blanco 68 Oranjestad publishes Aruba's spatial planning map and holds the ROPV land-use register",
+			"geometry": "unresolved",
+			"license": "unchecked-national-terms-aw-directie-infrastructuur-en-planning-dip",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "no open address service located on 2026-10-01",
+			"publisher": "Directie Infrastructuur en Planning (DIP)",
+			"sourceURL": "https://www.dip.aw/",
+			"note": "The ROPV Aruba web app is owned by the private firm BuroVijn with empty licenseInfo and accessInformation, no orgId, and a data document naming 0 service URLs. gis.infra.aw opens a socket on 443 and times out at the HTTP layer. data-aruba.opendata.arcgis.com serves a 5572-byte shell whose dataset API is unscoped and returns all of ArcGIS Hub.",
+			"upstreamLineage": ["https://gis.infra.aw/"]
+		},
+		{
+			"sourceID": "cw-property-building-1",
+			"iso2": "CW",
+			"sector": "property-building",
+			"name": "Kadaster Curaçao and the government's land administration",
+			"status": "verified-authority",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "The island land registry and the government's land administration office hold Curaçao's property and address data",
+			"geometry": "unresolved",
+			"license": "unchecked-national-terms-cw-kadaster-cura-ao-and-domeinbeheer",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "kadaster.cw answers HTTP 403 to two user agents; no open address service located",
+			"publisher": "Kadaster Curaçao and Domeinbeheer",
+			"sourceURL": "https://kadaster.cw/",
+			"note": "kadaster.cw resolves to a Cloudflare address and answers HTTP 403 to both a plain and a browser user agent. curacaodata.cbs.cw is the statistics bureau's content site: its /api/manifest is a progressive-web-app manifest and /api/datasets answers HTTP 404. Four geoportal and open-data hostnames under gobiernu.cw have no A record.",
+			"upstreamLineage": ["https://domeinbeheer.cw/"]
+		},
+		{
+			"sourceID": "sx-property-building-1",
+			"iso2": "SX",
+			"sector": "property-building",
+			"name": "The government ArcGIS Server and Kadaster Sint Maarten",
+			"status": "verified-authority",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "The government runs the territory's spatial data server and the island Kadaster registers property",
+			"geometry": "unresolved",
+			"license": "unchecked-national-terms-sx-government-of-sint-maarten-and-kadaster-st-ma",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "the ArcGIS Server is open without a key and carries no address layer; opendata.sintmaartengov.org answers HTTP 503",
+			"publisher": "Government of Sint Maarten and Kadaster St. Maarten",
+			"sourceURL": "https://gis.sintmaartengov.org/arcgis/rest/services",
+			"note": "The server was enumerated whole on 2026-10-01: 5 services across 4 folders, namely Landborder_SintMaarten_SaintMartin, Hosted/Ortho_FR_2018, Hosted/Ortho_SXM_2020 and Thematic_Serv/PriorityBuildings_V4 as both FeatureServer and MapServer. Fundamental_Serv and Utilities declare 0 services, so the absence of an address layer is measured over the complete list rather than inferred.",
+			"upstreamLineage": ["https://kadaster.sx/"]
 		},
 		{
 			"sourceID": "hk-property-building-1",
