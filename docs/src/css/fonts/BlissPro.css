@@ -1,9 +1,43 @@
+/*
+ * Each Bliss Pro face is split by `unicode-range` into a Latin file and an extended file (Latin Extended-A,
+ * Greek, Cyrillic, math). A browser downloads the extended file only for a page that uses one of its codepoints.
+ *
+ * "Bliss Pro Fallback" scales Arial to Bliss Pro's average advance and vertical metrics, so text keeps its line
+ * breaks when the web font swaps in.
+ */
+
+@font-face {
+	font-family: "Bliss Pro Fallback";
+	src: local("Arial");
+	size-adjust: 92%;
+	ascent-override: 103.6%;
+	descent-override: 26.2%;
+	line-gap-override: 0%;
+}
+
 @font-face {
 	font-family: "Bliss Pro Web";
 	font-display: swap;
 	font-weight: 200;
 	font-style: normal;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-ExtraLight.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-ExtraLight-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 200;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-ExtraLight-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }
 
 @font-face {
@@ -11,7 +45,24 @@
 	font-display: swap;
 	font-weight: 200;
 	font-style: italic;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-ExtraLightItalic.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-ExtraLightItalic-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 200;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-ExtraLightItalic-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }
 
 @font-face {
@@ -19,7 +70,24 @@
 	font-display: swap;
 	font-weight: 400;
 	font-style: normal;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 400;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }
 
 @font-face {
@@ -27,7 +95,24 @@
 	font-display: swap;
 	font-weight: 400;
 	font-style: italic;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Italic.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Italic-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 400;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Italic-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }
 
 @font-face {
@@ -35,7 +120,24 @@
 	font-display: swap;
 	font-weight: 500;
 	font-style: normal;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Medium.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Medium-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 500;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Medium-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }
 
 @font-face {
@@ -43,7 +145,24 @@
 	font-display: swap;
 	font-weight: 500;
 	font-style: italic;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-MediumItalic.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-MediumItalic-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 500;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-MediumItalic-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }
 
 @font-face {
@@ -51,7 +170,24 @@
 	font-display: swap;
 	font-weight: 700;
 	font-style: normal;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Bold.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Bold-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 700;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Bold-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }
 
 @font-face {
@@ -59,7 +195,24 @@
 	font-display: swap;
 	font-weight: 700;
 	font-style: italic;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-BoldItalic.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-BoldItalic-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 700;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-BoldItalic-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }
 
 @font-face {
@@ -67,7 +220,24 @@
 	font-display: swap;
 	font-weight: 900;
 	font-style: normal;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Heavy.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Heavy-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 900;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-Heavy-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }
 
 @font-face {
@@ -75,5 +245,22 @@
 	font-display: swap;
 	font-weight: 900;
 	font-style: italic;
-	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-HeavyItalic.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-HeavyItalic-Latin.woff2") format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+		U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+FB01-FB02;
+}
+
+@font-face {
+	font-family: "Bliss Pro Web";
+	font-display: swap;
+	font-weight: 900;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/BlissPro/WOFF2/BlissPro-HeavyItalic-Extended.woff2") format("woff2");
+	unicode-range:
+		U+0100-0129, U+012B-012C, U+012E-0130, U+0132-0137, U+0139-0148, U+014A-0151, U+0154-017E, U+0192, U+01FA-01FF,
+		U+0218-0219, U+02C7, U+02D8-02D9, U+02DB, U+02DD, U+0315, U+0326, U+0386, U+0388-038A, U+038C, U+038E-0393,
+		U+0395-03A1, U+03A3-03CE, U+0400-045F, U+0462-0463, U+0472-0475, U+0490-0491, U+1E80-1E85, U+1EF2-1EF3, U+2070,
+		U+2074-2089, U+208D-208E, U+2113, U+2116-2117, U+212E, U+2153-2154, U+215B-215E, U+2202, U+2206, U+220F, U+2211,
+		U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA;
 }

@@ -17,7 +17,7 @@
 	--ifm-color-emphasis-600: #6e6e6e;
 	--ifm-background-surface-color: #ffffff;
 	--ifm-font-family-base:
-		system-ui, -apple-system, "Segoe UI", roboto, ubuntu, cantarell, "Noto Sans", sans-serif, "Helvetica Neue", arial;
+		system-ui, -apple-system, "Segoe UI", roboto, ubuntu, cantarell, sans-serif, "Helvetica Neue", arial;
 	--ifm-font-family-monospace: "SFMono-Regular", consolas, "Liberation Mono", menlo, courier, monospace;
 
 	font-family: var(--ifm-font-family-base);

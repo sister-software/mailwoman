@@ -69,9 +69,9 @@ const config: Config = {
 		// Any other face still loads lazily.
 		...(
 			[
-				"BlissPro/WOFF2/BlissPro.woff2",
-				"BlissPro/WOFF2/BlissPro-Medium.woff2",
-				"BlissPro/WOFF2/BlissPro-Bold.woff2",
+				"BlissPro/WOFF2/BlissPro-Latin.woff2",
+				"BlissPro/WOFF2/BlissPro-Medium-Latin.woff2",
+				"BlissPro/WOFF2/BlissPro-Bold-Latin.woff2",
 				"FiraCode/WOFF2/FiraCode-VF.woff2",
 			] as const
 		).map((file) => ({
