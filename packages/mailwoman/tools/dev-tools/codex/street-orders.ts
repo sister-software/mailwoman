@@ -70,6 +70,16 @@ export const LOCAL_STREET_NODES: Readonly<Record<string, "han">> = {
  *
  * The layout generator in `@mailwoman/codex/address/layouts` then defaults to number-first.
  *
+ * **That default is silent, and it is wrong for a dependency of a number-last state.**
+ * 41 of the register's 250 jurisdictions state no order here.
+ * Most take the default correctly, because their sovereign is also number-first: the French
+ * territories under `FR`, the US ones under `US`, the Crown dependencies under `GB`, and Canada.
+ *
+ * `AX` and `SJ` are stated below because their sovereigns read number-last, so the default
+ * reversed them. **`BQ`, `LI`, `SM` and `VA` are the remaining suspects.** Each is a dependency
+ * or enclave of a number-last state, namely `NL`, `CH` and `IT`, and each still takes the default.
+ * None has been checked against a published address, which is what an entry here needs.
+ *
  * To refresh the table, read each country's `address_template` from `templates.json`.
  * Collapse each `{{#first}}` alternation to the `{{{road}}}` it contains,
  * because a road inside an alternation is a fallback for a place name.
@@ -89,6 +99,10 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	AT: "number-last",
 	AU: "number-first",
 	AW: "number-last",
+	// Åland is Finnish territory under Finnish postal rules, and `FI` reads `number-last`.
+	// OpenCage states no template for it, and the generator's fallback would write
+	// `number-first`, which is the mainland's order reversed.
+	AX: "number-last",
 	AZ: "number-first",
 	BA: "number-last",
 	BB: "number-first",
@@ -245,6 +259,10 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	SE: "number-last",
 	SG: "number-first",
 	SI: "number-last",
+	// Measured rather than inherited: Kartverket's own `adresseTekst` column reads `Vei 223 8`
+	// and `Vei 500 1` for Longyearbyen, so Svalbard writes the street before the number as Norway does.
+	// OpenCage states no template for it, and the generator's fallback would write `8 Vei 223`.
+	SJ: "number-last",
 	SK: "number-last",
 	SL: "number-first",
 	SN: "number-first",

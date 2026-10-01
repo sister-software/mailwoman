@@ -127,7 +127,7 @@ ${country}`,
 	// %O%n%N%n%A%nAX-%Z %C%nÅLAND
 	AX: addr`${venue}
 ${attention}
-${numberFirstStreet}
+${numberLastStreet}
 ${dependent_locality}
 AX-${postcode} ${locality}
 ${country}`,
@@ -1295,7 +1295,7 @@ ${country}`,
 	// %N%n%O%n%A%n%Z %C
 	SJ: addr`${attention}
 ${venue}
-${numberFirstStreet}
+${numberLastStreet}
 ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
