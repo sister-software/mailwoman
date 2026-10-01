@@ -8,7 +8,7 @@ import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { BAN_ADAPTER_ID, createBanAdapter } from "#fr/adapters/ban/adapter"
+import { BAN_ADAPTER_ID, createBanAdapter } from "#adapters/ban/adapter"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 

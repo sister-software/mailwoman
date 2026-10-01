@@ -8,16 +8,23 @@
  *   The module registers every built-in adapter with `defaultAdapterRegistry` when loaded. The CLI
  *   (`commands/corpus/list.tsx`, `commands/corpus/run.tsx`) imports it once at startup.
  *
- *   Adapters under construction live in their own subdirectories (`./wof-admin-json/`, `./ban/`, ...)
- *   and are added to the `BUILTIN_ADAPTERS` list here as they come online. Tests that need a
- *   pristine registry should construct their own `InMemoryAdapterRegistry` instead of mutating the
- *   default.
+ *   Each adapter has its own directory, and which parent it sits under states how many jurisdictions
+ *   it serves. An adapter that emits one country code lives under that country, at
+ *   `lib/<iso2>/adapters/<id>/`: G-NAF pins every row to `AU`, the FCC and USGov readers to `US`, and
+ *   `wof-admin-jp` to `JP`, each throwing on any other `opts.country`. An adapter that emits several
+ *   country codes lives here, at `lib/adapters/<id>/`, which holds the aggregators
+ *   (`./openaddresses/`, `./osm/`, `./overture/`, `./geonames/`, `./wof/`, `./po-box/`) and `./ban/`,
+ *   whose publisher covers France and ten overseas jurisdictions from one schema.
+ *
+ *   A new adapter joins the `BUILTIN_ADAPTERS` list below. A test that needs a pristine registry
+ *   constructs its own `InMemoryAdapterRegistry` rather than mutating the default.
  *
  *   The WOF adapters keep their canonical ids, `wof-admin` and `wof-postalcode`, so existing
- *   `mailwoman corpus build` callsites continue to work. The `./wof-admin-json/` and
- *   `./wof-postalcode-json/` directories hold the implementations.
+ *   `mailwoman corpus build` callsites continue to work. `./wof/admin/json/` and
+ *   `./wof/postalcode-json/` hold the implementations.
  */
 
+import { banAdapter } from "#adapters/ban/adapter"
 import { geonamesAdapter } from "#adapters/geonames/adapter"
 import { geonamesPostalAdapter } from "#adapters/geonames/postal/adapter"
 import { openaddressesAdapter } from "#adapters/openaddresses/adapter"
@@ -27,7 +34,6 @@ import { defaultAdapterRegistry } from "#adapters/utils"
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"
 import { gnafAdapter } from "#au/adapters/gnaf/adapter"
-import { banAdapter } from "#fr/adapters/ban/adapter"
 import type { CorpusAdapter } from "#types"
 import { fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
 import { stateHiSchoolsAdapter } from "#us/adapters/state/hi-schools/adapter"
@@ -83,7 +89,7 @@ for (const adapter of BUILTIN_ADAPTERS) {
 	}
 }
 
-export { BAN_ADAPTER_ID, banAdapter } from "#fr/adapters/ban/adapter"
+export { BAN_ADAPTER_ID, banAdapter } from "#adapters/ban/adapter"
 export { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
 
 export {
