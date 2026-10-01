@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "f5b928fca99da7a35558157cfb259f7334928719d1d86404304218cd7fff5a39",
+	"contentDigest": "06a0234b8ad49bad6f4509c2eab65d3d1dad799c3541f216095a47d27f85be25",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -2903,6 +2903,12 @@
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Hong Kong Companies Registry in HK, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"licenseID": "unchecked-national-terms-hk-lands-department-and-digital-policy-office",
+			"state": "unchecked",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"note": "The research pass recorded the register and did not open its terms. Scoped to Lands Department and Digital Policy Office in HK, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
 			"licenseID": "unchecked-national-terms-hn-chamber-of-commerce-mercantile-registration-a",
@@ -13457,6 +13463,23 @@
 				"reading": "absent",
 				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
 			}
+		},
+		{
+			"sourceID": "hk-property-building-1",
+			"iso2": "HK",
+			"sector": "property-building",
+			"name": "Address Lookup Service and the CSDI Address framework theme",
+			"status": "verified-authority",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Lands Department holds Hong Kong's premises address data and the Digital Policy Office publishes it; CSDI carries Address as one of its framework spatial data themes",
+			"geometry": "unresolved",
+			"license": "unchecked-national-terms-hk-lands-department-and-digital-policy-office",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "query-only lookup at als.gov.hk; CSDI offers OGC WFS, WMS, ArcGIS REST and a Dataset API",
+			"publisher": "Lands Department and Digital Policy Office",
+			"sourceURL": "https://www.als.gov.hk/",
+			"note": "DATA.GOV.HK Terms of Use grant browse, download, distribute, reproduce, hyperlink and print for commercial purposes free of charge against attribution. The words adapt, modify, derivative, alter and translate appear nowhere in the 9289-character document, so adaptation is neither granted nor prohibited and transform and train are unsupported. ALS returns structured bilingual premises addresses with EngStreet, BuildingNoFrom, EngEstate and DcDistrict and their Chinese counterparts.",
+			"upstreamLineage": ["https://portal.csdi.gov.hk/csdi-webpage/"]
 		},
 		{
 			"sourceID": "ax-property-building-1",
