@@ -429,6 +429,15 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
 	[
+		"packages/corpus/fixtures/",
+		"an adapter fixture is address rows, and a street type is a common noun in its own language: " +
+			"`gate` is Norwegian for street, so `Karl Johans gate` is the most ordinary address Norway has",
+	],
+	[
+		"packages/corpus/lib/adapters/matrikkelen/adapter.test.ts",
+		"the assertions quote the rendered form of those fixture rows, so they carry the same street types",
+	],
+	[
 		"packages/mailwoman/tools/eval-harness/gauntlet/cases/",
 		"board rows are register data and carry real building names verbatim: Kew Gate, Singapore",
 	],

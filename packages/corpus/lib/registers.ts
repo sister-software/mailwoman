@@ -48,6 +48,13 @@ export const SourceRegister = {
 	 */
 	BaseAdresseNationale: "fr-ban",
 	/**
+	 * Kartverket's `Matrikkelen - Adresse`, the Norwegian cadastre's address table.
+	 *
+	 * The prefix is the publisher's own country, as `fr-ban`'s is, and the dataset
+	 * covers Svalbard beside the mainland.
+	 */
+	MatrikkelenAdresse: "no-matrikkelen-adresse",
+	/**
 	 * HM Land Registry Price Paid Data, England and Wales.
 	 */
 	LandRegistryPricePaid: "gb-hm-land-registry-ppd",

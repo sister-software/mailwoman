@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "89f4d540c34f05c93566520701933fe09663305626f5d7567032c5423b6f5b21",
+	"contentDigest": "38bf540034df2c607064bc0f05a535ab09d33924f3c9fb13000d8e18f9e88847",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -11240,6 +11240,7 @@
 			"publisher": "Kartverket",
 			"sourceURL": "https://kartkatalog.geonorge.no/metadata/matrikkelen-adresse/f7df7a18-b30f-4745-bd64-d0863812350c",
 			"note": "A row carries the full address text, the street name, number and letter, the postcode and postal place, the municipality and a position. It carries no party.",
+			"adapterID": "matrikkelen",
 			"addressRoles": {
 				"adresseTekst": "premise"
 			},
@@ -13630,6 +13631,7 @@
 				"https://nedlasting.geonorge.no/api/codelists/area/f7df7a18-b30f-4745-bd64-d0863812350c",
 				"https://kartkatalog.geonorge.no/api/getdata/f7df7a18-b30f-4745-bd64-d0863812350c"
 			],
+			"adapterID": "matrikkelen",
 			"addressRoles": {
 				"adresseTekst": "premise"
 			},

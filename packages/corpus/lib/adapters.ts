@@ -27,6 +27,7 @@
 import { banAdapter } from "#adapters/ban/adapter"
 import { geonamesAdapter } from "#adapters/geonames/adapter"
 import { geonamesPostalAdapter } from "#adapters/geonames/postal/adapter"
+import { matrikkelenAdapter } from "#adapters/matrikkelen/adapter"
 import { openaddressesAdapter } from "#adapters/openaddresses/adapter"
 import { osmAdapter } from "#adapters/osm/adapter"
 import { overtureAdapter } from "#adapters/overture/adapter"
@@ -66,6 +67,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	geonamesAdapter,
 	geonamesPostalAdapter,
 	banAdapter,
+	matrikkelenAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
 	overtureAdapter,
@@ -90,6 +92,7 @@ for (const adapter of BUILTIN_ADAPTERS) {
 }
 
 export { BAN_ADAPTER_ID, banAdapter } from "#adapters/ban/adapter"
+export { MATRIKKELEN_ADAPTER_ID, matrikkelenAdapter } from "#adapters/matrikkelen/adapter"
 export { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
 
 export {
