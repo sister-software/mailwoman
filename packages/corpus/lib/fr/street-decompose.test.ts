@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
+import { decomposeFrStreet } from "#fr/street-decompose"
 
 describe("decomposeFrStreet", () => {
 	it("single-word street type prefix", () => {

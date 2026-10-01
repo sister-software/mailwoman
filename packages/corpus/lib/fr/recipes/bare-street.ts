@@ -9,7 +9,7 @@
 import { FR_VOIE_TYPES } from "@mailwoman/codex/fr"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
+import { decomposeFrStreet } from "#fr/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
