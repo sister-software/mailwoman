@@ -340,6 +340,37 @@
 				}
 			}
 		},
+		"unchecked-access-free-sj-kartverket": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same dataset and the same instrument as `unchecked-access-free-no-kartverket`, which stays the home of the reading of Kartverket's metadata record. That record, `https://kartkatalog.geonorge.no/api/getdata/f7df7a18-b30f-4745-bd64-d0863812350c`, states CC BY 4.0 across five agreeing fields for `Matrikkelen - Adresse` as a whole, so the grant is the dataset's rather than the mainland extract's. What this decision adds is the evidence that Svalbard is part of that dataset instead of a separate publication. **Geonorge's area codelist for this dataset identifier lists 375 areas, and Svalbard appears twice in it**: `{\"type\":\"kommune\",\"name\":\"Svalbard\",\"code\":\"2100\"}` and `{\"type\":\"fylke\",\"name\":\"Svalbard\",\"code\":\"21\"}`, beside `{\"type\":\"landsdekkende\",\"name\":\"Hele landet\",\"code\":\"0000\"}` which is the mainland row's area. The area extract answers at the dataset's conventional download path: `https://nedlasting.geonorge.no/geonorge/Basisdata/MatrikkelenAdresse/CSV/Basisdata_2100_Svalbard_4258_MatrikkelenAdresse_CSV.zip`, 58,079 bytes, sha256 `71f348ba6f0aeb7b3fb111b17616e1cd33ccf28d08129a70d538db317180727d`, holding `matrikkelenAdresse.csv` at 321,491 bytes dated 2026-09-08. Its 46 columns are the mainland file's 46, read from this file rather than carried over. Kartverket publishes one dataset under one license and offers it per area, so electing here records a scope the instrument already covers rather than a second grant. The register's other Svalbard row, `sj-business-legal-1`, is Brønnøysundregistrene's Enhetsregisteret under NLOD 2.0, which is a different publisher and a different instrument; this decision leaves it untouched.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants reproduction and distribution of the licensed material, which is what downloading the area archive performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants the right to reproduce and share the material and to produce adapted material, which covers reading `adresseTekst`, `adressenavn`, `nummer`, `postnummer` and `poststed` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Producing and reproducing adapted material is granted, and normalising a row into this repository's components is adaptation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the licensed rights for any purpose, commercial purposes included, and attaches no share-alike term. Its one obligation is attribution with the licence notice, which the release artifacts carry."
+				}
+			}
+		},
 		"unchecked-access-free-bl-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
 		"unchecked-access-free-gf-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
 		"unchecked-access-free-gp-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
