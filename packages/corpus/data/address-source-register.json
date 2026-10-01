@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "0c3fa5e42a5b4512d2e7d489887834c2c4199c0f17296f18cb53707f6ea5b74c",
+	"contentDigest": "4ed5bf51ba59fb5f947302fddc01d96fda42bde15a26641465dd6d8cfd36e15d",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -117,6 +117,38 @@
 				}
 			},
 			"licenseID": "unchecked-access-free-be-service-public-de-wallonie-spw"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-bl-institut-national-de-l-information-g-ographiq"
 		},
 		{
 			"licenseID": "unchecked-access-free-br-br-business-legal-1",
@@ -839,6 +871,70 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to gb-property-building-3 alone."
 		},
 		{
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-gf-institut-national-de-l-information-g-ographiq"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-gp-institut-national-de-l-information-g-ographiq"
+		},
+		{
 			"licenseID": "unchecked-access-free-ie-ie-charity-nonprofit-1",
 			"state": "unchecked",
 			"publisherStatement": "Free",
@@ -971,6 +1067,70 @@
 		},
 		{
 			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-mf-institut-national-de-l-information-g-ographiq"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-mq-institut-national-de-l-information-g-ographiq"
+		},
+		{
+			"state": "elected",
 			"electedTerms": "Términos de Libre Uso de la Información del INEGI",
 			"retrievedCopy": "internal/strategy/rights-receipts/mx-gb-2026-09-27/mx-inegi-terminos.html, sha256 97e97599169f75f455877e85edffcf941d512f56c5c00197ebfec783d802c67a",
 			"retrievedAt": "2026-09-27",
@@ -1017,6 +1177,38 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to mx-mixed-regulatory-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-nc-institut-national-de-l-information-g-ographiq"
 		},
 		{
 			"state": "elected",
@@ -1238,6 +1430,38 @@
 		},
 		{
 			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-pf-institut-national-de-l-information-g-ographiq"
+		},
+		{
+			"state": "elected",
 			"electedTerms": "Brak warunków dostępu i użytkowania",
 			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
 			"retrievedAt": "2026-10-01",
@@ -1280,6 +1504,70 @@
 				}
 			},
 			"licenseID": "unchecked-access-free-pl-g-wny-urz-d-geodezji-i-kartografii"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-pm-institut-national-de-l-information-g-ographiq"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-re-institut-national-de-l-information-g-ographiq"
 		},
 		{
 			"licenseID": "unchecked-access-free-registration-de-de-mixed-regulatory-1",
@@ -1668,6 +1956,38 @@
 			"state": "unchecked",
 			"publisherStatement": "Free/varied",
 			"note": "An access label: free in part, varying by dataset. It states no grant. The research pass recorded no publisher, so this decision is scoped to se-business-legal-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			},
+			"licenseID": "unchecked-access-free-yt-institut-national-de-l-information-g-ographiq"
 		},
 		{
 			"licenseID": "unchecked-access-licensed-cn-cn-business-legal-3",
@@ -12821,6 +13141,286 @@
 			"note": "The land survey's WFS declares 477 type names across 42 workspaces and none matches staðfang, heimilisfang or gata, so the survey publishes no address type.",
 			"upstreamLineage": ["https://island.is/s/hms"],
 			"coverage": "Staðfangaskrá is the Icelandic address register, held by Húsnæðis- og byggingarstofnun, the housing and construction authority that absorbed the property registry. **Its rows were not reached on 2026-10-01 and this coverage value records what each host answered rather than a measurement.** Eleven hosts were asked over three passes. `fasteignaskra.is` presents a certificate whose only subject alternative name is `DNS:*.fasteignaskra.is`, which excludes the apex, so every HTTPS request fails `ERR_TLS_CERT_ALTNAME_INVALID`; a raw socket connects on port 443 and on port 80, and port 80 answers HTTP 301 to the same failing HTTPS origin. `hms.is` and `www.fasteignaskra.is` answer HTTP 429 with a 33,938-byte body to three user agents including a browser one. `api.fasteignaskra.is` completes a TLS 1.3 handshake against a valid `*.fasteignaskra.is` certificate and answers a constant 39-byte `{\"status\":400,\"message\":\"Bad request\"}` at `/`, `/v1`, `/v1/stadfong`, `/swagger/index.html`, `/swagger/v1/swagger.json` and `/upplysingar`. `gataskra.skra.is` and `gogn.hms.is` have no A record. `opingogn.is` resolves to three addresses and serves Stafrænt Ísland, a service page of 933 characters of text, answering HTTP 404 at `/dataset`, `/search` and both CKAN API paths; `island.is/opin-gogn` answers HTTP 404 and `gagnatorg.is` serves an application shell of 11 characters. The national land survey's WFS at `gis.lmi.is/geoserver` declares 477 type names across 42 workspaces and **0 of them match `staðfang`, `heimilisfang` or `gata`**, so the survey publishes no address type. `skra.is`, the national population register, answers HTTP 200 and holds population and citizenship data rather than the address register."
+		},
+		{
+			"sourceID": "gp-property-building-1",
+			"iso2": "GP",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 971",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-gp-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-971.csv.gz",
+			"note": "Measured 163423 rows over 23 columns on 2026-10-01, 32 communes and 32 postcodes from 97100 to 97190.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 971, Guadeloupe, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-971.csv.gz`, 6,324,477 gzipped bytes. **Measured 163,423 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 32 communes and 32 postcodes running from 97100 to 97190. `nom_ld` is populated on 16.3% of rows. Samples: `202 Chemin de Bois Rimbault, 97123 Baillif` and `75 Ruelle des Anthuriums, 97123 Baillif`.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "mq-property-building-1",
+			"iso2": "MQ",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 972",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-mq-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-972.csv.gz",
+			"note": "Measured 138460 rows over 23 columns on 2026-10-01, 34 communes and 30 postcodes.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 972, Martinique, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-972.csv.gz`, 5,833,282 gzipped bytes. **Measured 138,460 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 34 communes and 30 postcodes, so two communes share a postcode with another. `nom_ld` is populated on 47.3% of rows. Samples: `70 Allée des Moubins, 97216 L'Ajoupa-Bouillon` and `927 Avenue des Fromagers, 97216 L'Ajoupa-Bouillon`.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "gf-property-building-1",
+			"iso2": "GF",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 973",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-gf-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-973.csv.gz",
+			"note": "Measured 60904 rows over 23 columns on 2026-10-01, 21 communes and 21 postcodes.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 973, French Guiana, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-973.csv.gz`, 2,416,354 gzipped bytes. **Measured 60,904 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 21 communes and 21 postcodes. `nom_ld` is populated on 11.4% of rows. Samples: `5 Rue Gaston Monnerville, 97390 Régina` and `54 Piste Inery, 97390 Régina`, where `Piste` is a local street type the metropolitan file carries rarely.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "re-property-building-1",
+			"iso2": "RE",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 974",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-re-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-974.csv.gz",
+			"note": "Measured 340941 rows over 23 columns on 2026-10-01, the largest of the ten territories, 24 communes and 37 postcodes.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 974, Réunion, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-974.csv.gz`, 13,559,672 gzipped bytes, the largest of the ten. **Measured 340,941 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 24 communes, which is the whole territory, and 37 postcodes. `nom_ld` is populated on 2.8% of rows, the lowest of the ten, so a Réunion address is usually a street and number without a lieu-dit. Samples: `28 Chemin Bras Petard, 97412 Bras-Panon` and `87 bis Chemin Bras Petard, 97412 Bras-Panon`, the second showing `rep` carrying `bis`.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "pm-property-building-1",
+			"iso2": "PM",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 975",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-pm-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-975.csv.gz",
+			"note": "Measured 3049 rows over 23 columns on 2026-10-01, 2 communes and the single postcode 97500.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 975, Saint Pierre and Miquelon, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-975.csv.gz`, 93,161 gzipped bytes, the smallest populated file of the ten. **Measured 3,049 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 2 communes, which is the whole territory, and the single postcode 97500. `nom_ld` is populated on 3.7% of rows. Samples: `16 Rue du Baron de l’Esperance, 97500 Miquelon-Langlade` and `46 Rue du Baron de l’Esperance, 97500 Miquelon-Langlade`, which carry a typographic apostrophe rather than an ASCII one.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "yt-property-building-1",
+			"iso2": "YT",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 976",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-yt-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-976.csv.gz",
+			"note": "Measured 52588 rows over 23 columns on 2026-10-01, 17 communes and 10 postcodes.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 976, Mayotte, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-976.csv.gz`, 2,078,251 gzipped bytes. **Measured 52,588 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 17 communes, which is the whole territory, and 10 postcodes. `nom_ld` is populated on 39.8% of rows. Samples: `521 Rue Madi Mwamba, 97630 Acoua` and `79 Escalier Hamada Assani, 97630 Acoua`, the second showing `Escalier` as a street type, which suits the terrain and is rare in the metropolitan file.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "bl-property-building-1",
+			"iso2": "BL",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 977",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-bl-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-977.csv.gz",
+			"note": "Measured 5553 rows over 23 columns on 2026-10-01, one commune and the single postcode 97133; nom_ld is populated on 99.8% of rows.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 977, Saint Barthélemy, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-977.csv.gz`, 240,822 gzipped bytes. **Measured 5,553 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. One commune and the single postcode 97133. `nom_ld`, the lieu-dit, is populated on 99.8% of rows, the highest share of the ten territories, so an address here is usually a named locality beside a street. Samples: `502 Chemin Marguerite, 97133 Saint-Barthélemy` and `363 Route de Anse des Cayes, 97133 Saint-Barthélemy`.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "mf-property-building-1",
+			"iso2": "MF",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 978",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-mf-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-978.csv.gz",
+			"note": "Measured 7363 rows over 23 columns on 2026-10-01, one commune and the single postcode 97150.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 978, Saint Martin, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-978.csv.gz`, 342,205 gzipped bytes. **Measured 7,363 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. One commune and the single postcode 97150. `nom_ld` is populated on 97.4% of rows. The register carries the French side of the island; Sint Maarten is the separate jurisdiction `SX`. Samples: `2 Allée Rey, 97150 Saint-Martin` and `368 Rue de l'Escale, 97150 Saint-Martin`.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "pf-property-building-1",
+			"iso2": "PF",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 987",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-pf-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-987.csv.gz",
+			"note": "Measured 7713 rows over 23 columns on 2026-10-01, 3 communes. nom_voie is empty on 958 rows where the commune supplied a number and a point, so this is the one territory below 100%. Distinct from the refused Institut de la statistique de la Polynesie francaise, which is another publisher.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 987, French Polynesia, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-987.csv.gz`, 256,688 gzipped bytes. **Measured 7,713 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. **This is the one territory whose `nom_voie` is below 100%: it is empty on 958 rows, which is 12.4%.** Those 958 rows were read in full and each carries `numero`, `code_insee`, `nom_commune`, a position and `source_nom_voie` `commune`, with no `code_postal`, so the commune supplied a house number and a point without a street name; every one is in `98736` Pirae. The file names 3 communes and 2 postcodes, 98714 and 98735, against French Polynesia's 48 communes, so this publication is a small part of the territory rather than a national register. `https://api-adresse.data.gouv.fr/search/` returns `Avenue de Tipaerui 98714 Papeete` as `type` `street` with `context` `987, Polynésie française`. Samples: `7 Arati’a Farevai 1, 98735 Tumaraa` and `249 Aroa Tehurui (rt 130), 98735 Tumaraa`.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "nc-property-building-1",
+			"iso2": "NC",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale — department 988",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same national geographic institute and same reference database as the metropolitan extract; BAN publishes one file per INSEE department code",
+			"geometry": "present",
+			"license": "unchecked-access-free-nc-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV per department updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-988.csv.gz",
+			"note": "Measured 51702 rows over 23 columns on 2026-10-01, 7 communes and 7 postcodes.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "Base Adresse Nationale department 988, New Caledonia, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-988.csv.gz`, 1,446,155 gzipped bytes. **Measured 51,702 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 7 communes and 7 postcodes: 98800, 98809, 98817, 98825, 98835, 98859 and 98889. New Caledonia has 33 communes, so this publication covers 7 of them and is partial in a way the row count alone does not show. `https://api-adresse.data.gouv.fr/search/` returns `Rue Jacques Iekawe 98800 Nouméa` as `type` `street` with `context` `988, Nouvelle-Calédonie`. Samples: `10 Rue des Sapins, 98825 Pouembout` and `149 Rue des Sapins, 98825 Pouembout`.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
 		}
 	]
 }

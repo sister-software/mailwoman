@@ -37,7 +37,7 @@ access labels and applies the recorded ones over that, so a decision survives a 
 
 `--resolutions` defaults to `source-resolutions.json` and holds the source fields a review resolved:
 `addressRoles`, `coverage`, `upstreamLineage` and `personalDataReview`. The research CSV records the
-first three as the placeholders `varies`, `country-specific` and the empty string on all 409 of its
+first three as the placeholders `varies`, `country-specific` and the empty string on all 419 of its
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
@@ -71,7 +71,7 @@ concluding the publisher renamed itself.
 | file                                           |  rows | what is read                                                           |
 | ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
 | `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
-| `global-functional-authority-corpora-v2.csv`   | 2,409 | the 409 rows naming a national source; 2,000 are dropped               |
+| `global-functional-authority-corpora-v2.csv`   | 2,419 | the 419 rows naming a national source; 2,000 are dropped               |
 
 The 2,000 dropped rows carry `origin = global_research_rail`: eight global discovery lookups the
 pass repeated once per jurisdiction, which collapse to eight distinct row bodies ignoring the `iso2`
@@ -82,8 +82,8 @@ README's procedure and not rows here.
 
 `global-functional-authority-corpora-v2.csv` has an `address_role`, a `coverage` and an `upstream`
 column, and the register declares all three unresolved. That is not the build dropping usable data.
-Over the 409 rows it keeps, `address_role` reads `varies` on all 409, `coverage` reads
-`country-specific` on all 409, and `upstream` is empty on all 409. The first two are the research
+Over the 419 rows it keeps, `address_role` reads `varies` on all 419, `coverage` reads
+`country-specific` on all 419, and `upstream` is empty on all 419. The first two are the research
 pass saying it did not determine the field per source.
 
 The build reads the columns and refuses to carry a placeholder, because
@@ -118,7 +118,7 @@ hand-written by design — that file is an input to this build, not an output of
 ### What the register carries
 
 Two tables rather than one nested list. The jurisdiction table is a complete 250-row enumeration;
-the source table is zero or more rows per jurisdiction, 409 over 240 of them. Nesting the second
+the source table is zero or more rows per jurisdiction, 419 over 240 of them. Nesting the second
 inside the first would make a jurisdiction nobody researched structurally identical to one whose
 list happens to be empty, and no reader could tell which they were looking at.
 
@@ -148,12 +148,12 @@ repository already has locale tiers 1 through 5 in `scope.config.json` and the
 
 Say this plainly rather than making a reader discover it by querying:
 
-- **`addressRole` — 0 of 409.** Every row reads `varies`. The specification's section 2 asks for a
+- **`addressRole` — 0 of 419.** Every row reads `varies`. The specification's section 2 asks for a
   role per source and the pass recorded none, so the research CSV cannot say whether any of these
   sources holds premises, registered offices or mailing addresses.
-- **`upstreamLineage` — 0 of 409.** No row records what it was copied from, so two databases carrying
+- **`upstreamLineage` — 0 of 419.** No row records what it was copied from, so two databases carrying
   one upstream submission cannot yet be collapsed into the single observation they are.
-- **`coverage` — 0 of 409.** Every row reads `country-specific`, which is a scope rather than a
+- **`coverage` — 0 of 419.** Every row reads `country-specific`, which is a scope rather than a
   measurement. A national portal is not evidence of national coverage.
 
 A later review resolves these per source in `source-resolutions.json`, and the register's `unresolved`
@@ -161,16 +161,16 @@ array names any field no row carries yet. The audit checks that claim in both di
 listed there must be absent from every row, and a field not listed must be present on at least one.
 The array is empty today, because a review has resolved each of the four on at least one source.
 
-Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of 409 sources it
-admits seventeen, sixteen national or regional address publications and Italy's ANAC procurement
-release, and answers the other 392 with the reasons below.
+Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of 419 sources it
+admits twenty-seven, twenty-six national, regional or territorial address publications and Italy's
+ANAC procurement release, and answers the other 392 with the reasons below.
 
-### Licenses: 42 read, 367 unchecked
+### Licenses: 52 read, 367 unchecked
 
-All 409 rows point at a decision record of their own. 35 are `elected`, 7 are `refused`, and the
+All 419 rows point at a decision record of their own. 45 are `elected`, 7 are `refused`, and the
 other 367 read `unchecked`, which is a finding rather than a placeholder. The 248 web-researched rows
 read `CHECK NATIONAL / DATASET TERMS` verbatim. The other 161 carry an access label from the original
-memo — `Free` on 118 rows, `Free-reg` on 15, `Gated` on 2, `Licensed` on 1 and `Varied` on 1, with
+memo — `Free` on 128 rows, `Free-reg` on 15, `Gated` on 2, `Licensed` on 1 and `Varied` on 1, with
 six compound labels over the remaining 24, as `Free/varied` on 7 and `Free/gated` on 6 are — which
 says what the download costs and grants
 nothing, so treating one as permissive would admit a source on a sentence about price.
@@ -209,7 +209,7 @@ copy they were read from, that copy's version where the publisher gives one, and
 not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
 register that fails its audit, so an incomplete entry never reaches the committed artifact.
 
-**Forty-two of the register's 409 decisions are recorded**, 35 elected and 7 refused. AusTender's
+**Fifty-two of the register's 419 decisions are recorded**, 45 elected and 7 refused. AusTender's
 publisher, the Australian Department of Finance, grants `CC-BY-3.0-AU` in the AusTender Terms of Use
 §5.1. DENUE's publisher, INEGI, grants its own free-use terms. INSEE grants `Licence Ouverte 2.0` over
 SIRENE in each of nine overseas territories. Kadaster dedicates the Dutch address theme to the public
@@ -249,12 +249,12 @@ have exactly one blocking condition left, and fifteen of the sixteen are blocked
 reading alone.** That makes the personal-data question one decision gating fifteen sources rather than
 a question about one. The sixteenth is Uruguay, blocked on its address role instead.
 
-### Why there are 409 of them rather than 12
+### Why there are 419 of them rather than 12
 
 A decision is scoped to one publisher in one jurisdiction, so the register carries one per source.
 Keying a decision by the research pass's access label alone made it as wide as the label:
-`CHECK NATIONAL / DATASET TERMS` covers 248 of the 409 sources across 223 publishers, and `Free`
-covers 118 across 21. Recording one election against either would have granted every source under it on a
+`CHECK NATIONAL / DATASET TERMS` covers 248 of the 419 sources across 223 publishers, and `Free`
+covers 128 across 21. Recording one election against either would have granted every source under it on a
 single reading of one publisher's terms.
 
 Spain was the worked case of the same defect inside one row. `es-mixed-regulatory-1` was named
@@ -297,7 +297,7 @@ every contracting process. Taiwan's GCIS register gives a registered company add
 business address in separate columns. `ingestEligibilityProblems` requires at least one column to have
 a role, and the audit refuses an empty map, which would read as resolved while stating nothing.
 
-**Thirty-seven sources of 409 carry at least one resolved field, and thirty-three carry all four.** AusTender
+**Forty-seven sources of 419 carry at least one resolved field, and forty-three carry all four.** AusTender
 and five OCDS procurement releases are recorded from whole-year measurements of the published data.
 The nine SIRENE territories are recorded from INSEE's own `dessin de fichier`. Seven of the fifteen
 address publications are recorded from an element census over a whole GML file, the largest being the

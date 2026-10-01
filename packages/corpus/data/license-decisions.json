@@ -99,6 +99,37 @@
 				}
 			}
 		},
+		"ign-ban-lov2-territories": {
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same database and the same instrument as `unchecked-access-free-fr-institut-national-de-l-information-g-ographiq`, applied to ten jurisdictions that the register carries as their own ISO 3166-1 codes. That decision records the reading of IGN's conditions of use at `https://adresse.data.gouv.fr/cgu` and of the dataset's `license` `lov2` on `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, and it stays the home of the reading for the whole-country extract it was made about. What this body adds is the evidence that the grant reaches these ten territories, which the metropolitan file alone does not show. **The Base Adresse Nationale publishes one gzipped CSV per INSEE department code beside the national extract, at the same path and under the same dataset record.** `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/` lists 107 department files, among them the three-digit codes 971, 972, 973, 974, 975, 976, 977, 978, 984, 986, 987, 988 and 989. Ten of those answer HTTP 200 with data and all ten carry the same 23-column header as the national file, read from each file rather than assumed: Guadeloupe 163,423 rows, Martinique 138,460, French Guiana 60,904, Réunion 340,941, Saint Pierre and Miquelon 3,049, Mayotte 52,588, Saint Barthélemy 5,553, Saint Martin 7,363, French Polynesia 7,713 and New Caledonia 51,702, which is 831,696 rows measured on 2026-10-01 with no ragged row in any file. `https://api-adresse.data.gouv.fr/search/` returns these as `type` `street` with `context` `987, Polynésie française` and `988, Nouvelle-Calédonie`, so the publisher treats them as part of the same address base rather than as a separate product. IGN's conditions state the institute's mission over `plus de 25 millions d'adresses sur le territoire français`, and the French territories are part of that territory, which is why no separate grant is needed for them. **French Polynesia needs one distinction kept.** The register separately refuses the Institut de la statistique de la Polynésie française, which reserves its rights over its own publications; that is a different publisher from IGN and says nothing about this file. Electing here does not disturb that refusal.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information freely and for any purpose, which is what downloading one department's gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading `numero`, `nom_voie`, `code_postal` and `nom_commune` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits adapting, modifying and combining the Information with other information, which is what normalising a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so training a model on the Information falls inside `librement, pour tout usage`. The licence's one obligation is attribution of the source and the date of the last update, which the release artifacts carry."
+				}
+			}
+		},
 		"insee-sirene-lov2": {
 			"state": "elected",
 			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
@@ -309,6 +340,16 @@
 				}
 			}
 		},
+		"unchecked-access-free-bl-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
+		"unchecked-access-free-gf-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
+		"unchecked-access-free-gp-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
+		"unchecked-access-free-mf-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
+		"unchecked-access-free-mq-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
+		"unchecked-access-free-nc-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
+		"unchecked-access-free-pf-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
+		"unchecked-access-free-pm-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
+		"unchecked-access-free-re-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
+		"unchecked-access-free-yt-institut-national-de-l-information-g-ographiq": { "sameAs": "ign-ban-lov2-territories" },
 		"unchecked-national-terms-bl-insee": { "sameAs": "insee-sirene-lov2" },
 		"unchecked-national-terms-gf-insee": { "sameAs": "insee-sirene-lov2" },
 		"unchecked-national-terms-gp-insee": { "sameAs": "insee-sirene-lov2" },
