@@ -8,7 +8,7 @@ name `planetary` is the conventional umbrella term in planetary cartography and 
 **Supersedes:** the application half of the uploaded "Planetary Maps for Mailwoman" proposal.
 **Receipt:** PR #2209 opened 2026-09-08 over the archives published as moon `20260907-109dfab8` and mars
 `20260907-e60bcc6a`. The dashboard setup creates the two Workers Builds projects, and the public bucket's CORS rule
-already admits both production origins. The preview serves on port 7770, the one local origin that rule admits.
+already admits both production origins. The preview serves on port 7771, the one local origin that rule admits.
 
 ## The problem
 

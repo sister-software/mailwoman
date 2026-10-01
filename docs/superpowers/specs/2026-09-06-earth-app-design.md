@@ -245,7 +245,7 @@ Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
 - The docs site builds under `rspackBundler` (`cd docs && yarn build`, EXIT=0).
 - Registers: unchanged since the shell PR (#2196).
 - Workers Builds: the project from the shell PR; the bucket's CORS rule admits `https://earth.mailwoman.ai` and
-  `http://localhost:7770` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
+  `http://localhost:7771` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
 
 ## Out of scope
 
