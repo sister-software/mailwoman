@@ -505,6 +505,20 @@ export interface AddressSourceRecord {
 	 * A source without a review is ineligible for ingest.
 	 */
 	personalDataReview?: PersonalDataReview
+	/**
+	 * The id of the corpus adapter that emits this source's rows.
+	 *
+	 * A corpus row carries its adapter's id in `source` and its jurisdiction in `country`,
+	 * and the register scopes a source to one publisher in one jurisdiction,
+	 * so that pair addresses one record here.
+	 * One adapter can serve several records: the `ban` reader emits eleven jurisdictions
+	 * from one schema, and each is its own source under its own license decision.
+	 *
+	 * A source that declares no adapter produces no rows, so a build sees zero rows
+	 * under it and has none to admit or refuse.
+	 * Declaring one is what lets `readSourceEligibility` answer for a row at all.
+	 */
+	adapterID?: string
 }
 
 /**

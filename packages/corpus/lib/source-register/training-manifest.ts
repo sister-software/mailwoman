@@ -68,6 +68,9 @@ export interface TrainingManifest {
 	/**
 	 * Sources the build refused, with the reasons, so the record shows what was
 	 * left out as well as what went in.
+	 *
+	 * Each key is `<adapter id>:<ISO 3166-1 alpha-2>`, the pair that addresses one register source,
+	 * because one adapter can emit several jurisdictions and each carries its own license decision.
 	 */
 	refused: Record<string, readonly string[]>
 	totalRows: number

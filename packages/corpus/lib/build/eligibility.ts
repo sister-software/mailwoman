@@ -11,15 +11,37 @@ import { ingestEligibilityProblems, readAddressSourceRegister, type LicenseDecis
 import type { CanonicalRow } from "#types"
 
 /**
- * Every register source's ingest-eligibility reasons keyed by the adapter id in its rows.
+ * The key a row is looked up under: the adapter that emitted it and the jurisdiction it describes.
  *
+ * The register scopes a source to one publisher in one jurisdiction,
+ * so an adapter id alone cannot address a record.
+ * One adapter serves several: `ban` emits eleven jurisdictions from one schema
+ * and each is its own source under its own license decision.
+ */
+export function sourceEligibilityKey(adapterID: string, iso2: string): string {
+	return `${adapterID}:${iso2.toUpperCase()}`
+}
+
+/**
+ * Every register source's ingest-eligibility reasons, keyed by the adapter
+ * and jurisdiction of the rows that carry it.
+ *
+ * A source declaring no `adapterID` is absent from the map, because no adapter emits it
+ * and no row can arrive under it.
  * An empty array is the only value a caller may read as permission.
- * An absent source is refused rather than admitted.
+ * An absent key is refused rather than admitted.
  */
 export async function readSourceEligibility(): Promise<ReadonlyMap<string, readonly string[]>> {
 	const register = await readAddressSourceRegister()
+	const keyed = new Map<string, readonly string[]>()
 
-	return new Map(register.sources.map((source) => [source.sourceID, ingestEligibilityProblems(source, register)]))
+	for (const source of register.sources) {
+		if (source.adapterID === undefined) continue
+
+		keyed.set(sourceEligibilityKey(source.adapterID, source.iso2), ingestEligibilityProblems(source, register))
+	}
+
+	return keyed
 }
 
 /**
@@ -53,17 +75,20 @@ export function createIneligibilityReader(eligibility: ReadonlyMap<string, reado
 		read: (row) => {
 			if (!eligibility) return null
 
-			const cached = refused.get(row.source)
+			const key = sourceEligibilityKey(row.source, row.country)
+			const cached = refused.get(key)
 
 			if (cached) return cached
 
-			const problems = eligibility.get(row.source) ?? [
-				`the register names no source ${stringifyJSON(row.source)}, so nothing has been reviewed for it`,
+			const problems = eligibility.get(key) ?? [
+				`no register source declares ${stringifyJSON(row.source)} as its adapter in ${stringifyJSON(row.country)}, ` +
+					"so this row's publication has not been reviewed. Set `adapterID` on the source in " +
+					"`source-resolutions.json` once a review has elected it.",
 			]
 
 			if (!problems.length) return null
 
-			refused.set(row.source, problems)
+			refused.set(key, problems)
 
 			return problems
 		},

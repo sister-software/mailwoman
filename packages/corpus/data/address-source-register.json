@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "dcd0236fc5a690aeb829e16ac91f3f3c6750f6f60674f1d74c38fc6ff374c8ee",
+	"contentDigest": "89f4d540c34f05c93566520701933fe09663305626f5d7567032c5423b6f5b21",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -11312,6 +11312,7 @@
 			"publisher": "Institut national de l'information géographique et forestière (IGN)",
 			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-france.csv.gz",
 			"note": "A row carries the house number, the street name, the postcode, the commune and a position. It carries no party; the correspondence the publisher describes is between a non-nominative address and a geographic position.",
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13255,6 +13256,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13283,6 +13285,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13311,6 +13314,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13339,6 +13343,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13367,6 +13372,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13395,6 +13401,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13423,6 +13430,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13451,6 +13459,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13479,6 +13488,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},
@@ -13648,6 +13658,7 @@
 				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
 				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
 			],
+			"adapterID": "ban",
 			"addressRoles": {
 				"nom_voie": "premise"
 			},

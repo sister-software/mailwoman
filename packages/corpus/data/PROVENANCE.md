@@ -169,6 +169,16 @@ Ask `ingestEligibilityProblems()` rather than reading a status as permission. Of
 admits twenty-nine, twenty-eight national, regional or territorial address publications and Italy's
 ANAC procurement release, and answers the other 397 with the reasons below.
 
+**A source reaches a build only through the adapter it names.** `adapterID` records which corpus
+adapter emits a source's rows, `readSourceEligibility` keys each declaring source by
+`<adapterID>:<ISO2>`, and `createIneligibilityReader` looks a row up by its own `source` and
+`country`. The pair is the key because the register scopes a source to one publisher in one
+jurisdiction while one adapter can serve several: `ban` emits eleven jurisdictions from one schema,
+each under its own license decision. Eleven sources declare an adapter today, all of them BAN's, so a
+release-eligible build admits those eleven and refuses every other row with the jurisdiction named.
+A source that declares no adapter stays out of that map, which is correct rather than restrictive,
+since no adapter emits it and no row can arrive under it.
+
 ### Licenses: 54 read, 372 unchecked
 
 All 426 rows point at a decision record of their own. 47 are `elected`, 7 are `refused`, and the

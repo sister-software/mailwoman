@@ -187,8 +187,17 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.total_aligned_rows).toBe(0)
 		expect(manifest.excluded_by_eligibility).toBeGreaterThan(0)
 
-		expect(Object.keys(manifest.ineligible_sources)).toEqual(["wof-admin"])
-		expect(manifest.ineligible_sources["wof-admin"]?.[0]).toContain("the register names no source")
+		// A refusal is keyed by the adapter and the jurisdiction together, so one adapter reading
+		// three countries records which of them went unreviewed rather than one entry for all three.
+		expect(Object.keys(manifest.ineligible_sources).toSorted()).toEqual([
+			"wof-admin:FR",
+			"wof-admin:NL",
+			"wof-admin:US",
+		])
+
+		expect(manifest.ineligible_sources["wof-admin:US"]?.[0]).toContain(
+			'no register source declares "wof-admin" as its adapter in "US"'
+		)
 	})
 
 	it("keeps a refused source out of the synthetic rows fanned from it", async () => {
