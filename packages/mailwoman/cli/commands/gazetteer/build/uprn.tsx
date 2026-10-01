@@ -16,9 +16,15 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
-import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	phaseReporter,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -60,22 +66,10 @@ const GazetteerBuildUPRN: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
+	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
-	}
-
-	return null // progress streams to stderr until the summary lands
+	return <CommandSummaryLines lines={state.result} />
 }
 
 export default GazetteerBuildUPRN

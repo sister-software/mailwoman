@@ -230,6 +230,27 @@ export function CommandTaskResult<T>({ state, running, done }: CommandTaskResult
 }
 
 /**
+ * Renders a finished command's summary as a column, marking the first line and coloring it green.
+ *
+ * {@linkcode CommandTaskResult} puts its whole result inside one green `Text`,
+ * which suits a one-line verdict.
+ * A command that reports several lines needs a `Box` column instead, and Ink rejects a
+ * `Box` nested in a `Text`, so that layout cannot come from the `done` prop.
+ *
+ * Every line after the first is indented to the width of the mark, so the block
+ * reads as one result rather than as several verdicts.
+ */
+export function CommandSummaryLines({ lines }: { lines: readonly string[] }): React.ReactElement {
+	return h(
+		Box,
+		{ flexDirection: "column" },
+		lines.map((line, index) =>
+			h(Text, { key: index, color: index === 0 ? "green" : undefined }, index === 0 ? "✓ " : "  ", line)
+		)
+	)
+}
+
+/**
  * Creates a function that writes build-phase progress lines to stderr.
  */
 export function phaseReporter(prefix = "  "): (phase: string, detail?: string) => void {

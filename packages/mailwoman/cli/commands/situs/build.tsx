@@ -41,11 +41,11 @@ import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { countRows, indexExists } from "@mailwoman/sqlite/introspection"
-import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
 import {
 	type CommandSpec,
+	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
 	positiveInteger,
@@ -318,22 +318,10 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
+	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
-	}
-
-	return null // progress streams to stderr until the summary lands
+	return <CommandSummaryLines lines={state.result} />
 }
 
 export default SitusBuild

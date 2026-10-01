@@ -33,10 +33,16 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	splitCountryCodes,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
@@ -282,22 +288,10 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
+	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
-	}
-
-	return null // progress streams to stderr until the summary lands
+	return <CommandSummaryLines lines={state.result} />
 }
 
 export default GazetteerPolygons

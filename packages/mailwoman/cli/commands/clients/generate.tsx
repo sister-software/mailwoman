@@ -51,31 +51,28 @@ const ClientsGenerate: CommandComponent<typeof spec> = ({ options }) => {
 		(result) => (result.ok ? 0 : 1)
 	)
 
+	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	if (state.status === "done") {
-		const { ok, checks, receipt } = state.result
+	const { ok, checks, receipt } = state.result
 
-		return (
-			<Box flexDirection="column">
-				<CheckList checks={checks} verdict={ok} />
-				{ok && (
-					<Box flexDirection="column" marginTop={1}>
-						<Text>version: {receipt.version}</Text>
-						<Text>specs: {receipt.specsDir}</Text>
-						<Text>
-							python: {receipt.pythonDir}
-							{receipt.pythonWheel ? ` (${receipt.pythonWheel})` : ""}
-						</Text>
-						<Text>rust: {receipt.rustDir}</Text>
-						<Text>elapsed: {receipt.elapsedSeconds.toFixed(1)}s</Text>
-					</Box>
-				)}
-			</Box>
-		)
-	}
-
-	return null // progress streams to stderr until the summary lands
+	return (
+		<Box flexDirection="column">
+			<CheckList checks={checks} verdict={ok} />
+			{ok && (
+				<Box flexDirection="column" marginTop={1}>
+					<Text>version: {receipt.version}</Text>
+					<Text>specs: {receipt.specsDir}</Text>
+					<Text>
+						python: {receipt.pythonDir}
+						{receipt.pythonWheel ? ` (${receipt.pythonWheel})` : ""}
+					</Text>
+					<Text>rust: {receipt.rustDir}</Text>
+					<Text>elapsed: {receipt.elapsedSeconds.toFixed(1)}s</Text>
+				</Box>
+			)}
+		</Box>
+	)
 }
 
 export default ClientsGenerate
