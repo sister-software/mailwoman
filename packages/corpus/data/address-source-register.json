@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "be115705f8311022f369fc80b0c37d8adf9b39e5e848e913555a97ba933cf5f8",
+	"contentDigest": "35624ba5006235e6cbdc5ec7bdcd131cc21157b5275e5582475f2cfa7d37f6a6",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -1275,6 +1275,49 @@
 			"state": "unchecked",
 			"publisherStatement": "Free-reg",
 			"note": "An access label: free after registration. It states no grant. The research pass recorded no publisher, so this decision is scoped to us-professional-licensing-1 alone."
+		},
+		{
+			"state": "refused",
+			"publisherStatement": "Free",
+			"refusedBecause": "Lantmäteriet refuses reuse in the feed that serves the data, so this is a decision rather than an absence of one. `https://api.lantmateriet.se/belagenhetsadress/atom/v1.2/inspire/ad`, 506,461 bytes with 229 entries, carries a rights element reading `Produkten omfattas av upphovsrätt. Avtal för användning krävs, avgifter för användning tas ut`: the product is under copyright, an agreement is required for use, and fees are charged for use. The research pass's access label for this row reads `Free`, which is what prompted the reading and is contradicted by it; the label describes reaching the feed rather than using the product. Three of the seven `INGEST_OPERATIONS` are therefore refused on the publisher's own words rather than left unreviewed, and the route to permission is an agreement with Lantmäteriet, which nobody has sought. Recorded in `internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/` as the one EU member state whose publisher refuses in its own words.",
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The feed states that an agreement is required for use and that fees are charged. Retrieving the product without that agreement is the use the publisher conditions."
+				},
+				"extract": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The product is stated to be under copyright with use conditioned on an agreement, so reading its fields is conditioned too."
+				},
+				"transform": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "A derivative of a product whose use requires an agreement requires that agreement."
+				},
+				"train": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "Fitting a model on the product is a use, and the publisher conditions every use on an agreement and a fee."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The publisher reserves copyright and charges for use, so redistribution is outside what it grants."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "Whether weights are a derivative does not arise where the underlying use is refused."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "No licence is granted to sublicense, and the publisher's route is a bilateral agreement."
+				}
+			},
+			"licenseID": "unchecked-access-free-se-lantm-teriet"
 		},
 		{
 			"licenseID": "unchecked-access-free-sg-sg-education-1",
@@ -10637,6 +10680,22 @@
 				"reading": "absent",
 				"because": "Every property of all five feature types was listed, over 40 features each: 37 on `AD.Address`, 20 on `AD.Address_AdminUnitName`, 15 on `AD.Address_ThoroughfareName`, 15 on `AD.Address_AddressAreaName` and 14 on `AD.Address_PostalDescriptor`. None of the 101 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a position, a locator, a name or a component reference. `AD:LocatorName` needs its own statement because it is free text of type `GeographicalName`, which is how a family name or a business name reaches an INSPIRE address, and this publisher populates it where the Dutch, Czech and Danish themes leave it empty: 1,200 of 1,200 addresses sampled over 60 windows spread across the 729,973, reaching 664 distinct locality paths, carry a value. Every one of those 1,200 states its `LocatorNameTypeValue` as `siteName` (829) or `buildingName` (371), which are place designations in the INSPIRE codelist, and no value takes the given-name-and-family-name shape: 0 of 1,200 carry two capitalized words, while 105 carry a hyphen. The values are Estonian farm and site names, which is how a rural Estonian address designates its addressable unit, as in `Saare maakond, Muhu vald, Raugi küla, Jüri`. Some are the genitive of a personal given name, `Jüri`, `Jaani`, `Mardi` and `Hansi` among them, which is the traditional pattern of naming a farm after a historical householder rather than a reference to the present occupant, and the compounds confirm it: `Vana-Käspri` and `Uue-Tooma` read as the old and the new holding of a named farm. No element asserts a party, states a surname, or carries a person identifier."
 			}
+		},
+		{
+			"sourceID": "se-property-building-1",
+			"iso2": "SE",
+			"sector": "property-building",
+			"name": "Belägenhetsadress INSPIRE (AD)",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "National land survey of Sweden and holder of the address register; publishes the INSPIRE Addresses (AD) theme as a predefined-dataset ATOM download service under a chargeable agreement",
+			"geometry": "present",
+			"license": "unchecked-access-free-se-lantm-teriet",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "ATOM download service; use requires an agreement and carries fees",
+			"publisher": "Lantmäteriet",
+			"sourceURL": "https://api.lantmateriet.se/belagenhetsadress/atom/v1.2/inspire/ad",
+			"note": "The feed states that the product is under copyright and that an agreement and fees are required for use. Recorded so that the refusal is a decision rather than an absence."
 		},
 		{
 			"sourceID": "lu-property-building-1",

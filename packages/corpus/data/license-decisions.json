@@ -492,6 +492,48 @@
 				}
 			}
 		},
+		"unchecked-access-free-se-lantm-teriet": {
+			"state": "refused",
+			"publisherStatement": "Free",
+			"refusedBecause": "Lantmäteriet refuses reuse in the feed that serves the data, so this is a decision rather than an absence of one. `https://api.lantmateriet.se/belagenhetsadress/atom/v1.2/inspire/ad`, 506,461 bytes with 229 entries, carries a rights element reading `Produkten omfattas av upphovsrätt. Avtal för användning krävs, avgifter för användning tas ut`: the product is under copyright, an agreement is required for use, and fees are charged for use. The research pass's access label for this row reads `Free`, which is what prompted the reading and is contradicted by it; the label describes reaching the feed rather than using the product. Three of the seven `INGEST_OPERATIONS` are therefore refused on the publisher's own words rather than left unreviewed, and the route to permission is an agreement with Lantmäteriet, which nobody has sought. Recorded in `internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/` as the one EU member state whose publisher refuses in its own words.",
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The feed states that an agreement is required for use and that fees are charged. Retrieving the product without that agreement is the use the publisher conditions."
+				},
+				"extract": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The product is stated to be under copyright with use conditioned on an agreement, so reading its fields is conditioned too."
+				},
+				"transform": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "A derivative of a product whose use requires an agreement requires that agreement."
+				},
+				"train": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "Fitting a model on the product is a use, and the publisher conditions every use on an agreement and a fee."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The publisher reserves copyright and charges for use, so redistribution is outside what it grants."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "Whether weights are a derivative does not arise where the underlying use is refused."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "No licence is granted to sublicense, and the publisher's route is a bilateral agreement."
+				}
+			}
+		},
 		"unchecked-access-free-lu-administration-du-cadastre-et-de-la-topograph": {
 			"state": "elected",
 			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
