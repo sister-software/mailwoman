@@ -35,6 +35,10 @@ export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
 	"MU",
 	"MZ",
 	"RU",
+	// San Marino writes the comma where Italy, which surrounds it, writes none.
+	// Measured on its own institutions' published addresses: `Via del Voltone, 120` from the central
+	// bank, `Contrada Omerelli, 20` and `Viale Antonio Onofri, 87` from the state university.
+	"SM",
 	"SY",
 	"TG",
 	"TM",
@@ -75,10 +79,17 @@ export const LOCAL_STREET_NODES: Readonly<Record<string, "han">> = {
  * Most take the default correctly, because their sovereign is also number-first: the French
  * territories under `FR`, the US ones under `US`, the Crown dependencies under `GB`, and Canada.
  *
- * `AX` and `SJ` are stated below because their sovereigns read number-last, so the default
- * reversed them. **`BQ`, `LI`, `SM` and `VA` are the remaining suspects.** Each is a dependency
- * or enclave of a number-last state, namely `NL`, `CH` and `IT`, and each still takes the default.
- * None has been checked against a published address, which is what an entry here needs.
+ * `AX`, `BQ`, `LI`, `SJ` and `SM` are stated below because their sovereigns
+ * or neighbors read number-last, so the default reversed them.
+ * Each entry's comment quotes the published addresses it was read from.
+ *
+ * **`VA` is left unstated deliberately.** The Vatican's interior addressing uses a building
+ * or courtyard name with the postcode and no number, as `Cortile Belvedere`
+ * and `Via del Pellegrino, 00120 Città del Vaticano` do.
+ * A street with a number appears only on the Roman streets of its extraterritorial buildings,
+ * `Via della Conciliazione 54` and `Piazza Pia 3`, which exercises Italy's order rather than the Vatican's.
+ *
+ * An entry here needs a published address that exercises the order, and the addresses read so far do not.
  *
  * To refresh the table, read each country's `address_template` from `templates.json`.
  * Collapse each `{{#first}}` alternation to the `{{{road}}}` it contains,
@@ -116,6 +127,16 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	BM: "number-first",
 	BN: "number-first",
 	BO: "number-last",
+	// Measured across all three islands, which each have their own government and land
+	// registry: `Kaya Irlanda 17` and `Kaya Grandi 30` on Bonaire, `Fort Oranjestraat #5`
+	// and `Kennip Road 11` on Sint Eustatius, `Paris Hill Road 10` and `Powerstreet 1` on Saba.
+	// Ten numbered addresses agreed and none put the number first.
+	// Sint Eustatius writes a `#` before the number, which is a prefix rather than an order.
+	// This entry is correct and currently inert: libaddressinput states no `fmt` for `BQ`,
+	// so the generator emits no layout and `formatAddressRow` answers `null` for it,
+	// as it does for `AW`, `CW` and `SX`.
+	// No source in those four jurisdictions is ingest-eligible, so no row depends on it yet.
+	BQ: "number-last",
 	BR: "number-last",
 	BS: "number-last",
 	BT: "number-last",
@@ -200,6 +221,10 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	LA: "number-first",
 	LB: "number-first",
 	LC: "number-last",
+	// Measured on the national postal operator's own address, `Alte Zollstrasse 11, 9494 Schaan`,
+	// and agreeing across the government, the parliament, the courts, the national hospital
+	// and the Landesbank: `Peter-Kaiser-Platz 1`, `Spaniagasse 1`, `Heiligkreuz 25`, `Städtle 44`.
+	LI: "number-last",
 	LK: "number-first",
 	LR: "number-last",
 	LS: "number-first",
@@ -265,6 +290,12 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	SJ: "number-last",
 	SK: "number-last",
 	SL: "number-first",
+	// Measured on the central bank, the state university, the social-security institute
+	// and the state public-works agency: `Via del Voltone, 120`, `Contrada Omerelli, 20`,
+	// `Via Scialoja, 20`, `Strada del Lavoro, 75`.
+	// San Marino also writes a comma between the street and the number, so it is in
+	// {@linkcode COMMA_JOINED_STREET_COUNTRIES} as well, which Italy is not.
+	SM: "number-last",
 	SN: "number-first",
 	SO: "number-last",
 	SR: "number-last",

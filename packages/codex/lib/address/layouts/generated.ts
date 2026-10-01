@@ -788,7 +788,7 @@ ${country}`,
 	// %O%n%N%n%A%nFL-%Z %C
 	LI: addr`${venue}
 ${attention}
-${numberFirstStreet}
+${numberLastStreet}
 ${dependent_locality}
 FL-${postcode} ${locality}
 ${country}`,
@@ -1311,7 +1311,7 @@ ${country}`,
 	// %N%n%O%n%A%n%Z %C
 	SM: addr`${attention}
 ${venue}
-${numberFirstStreet}
+${numberLastCommaStreet}
 ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
