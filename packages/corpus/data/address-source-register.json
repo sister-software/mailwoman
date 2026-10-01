@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "40f8ca4ca7628deac74957a63ed90d1881c6d1470d0d4b63533d35e10cb63a21",
+	"contentDigest": "f5b928fca99da7a35558157cfb259f7334928719d1d86404304218cd7fff5a39",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -21,6 +21,38 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to au-mixed-regulatory-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Creative Commons Nimeä 4.0 Kansainvälinen",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same file and the same instrument as `unchecked-access-free-fi-suomen-ymp-rist-keskus`, which stays the home of the reading of SYKE's metadata record `{DBD610F4-3392-44CD-B601-BAE8FA547A57}` and of the publisher's terms page. That record's `otherConstraints` grants CC BY 4.0 for the open-data part with the attribution `Lähde: Syke Ryhti`, over `Rakennetun ympäristön tietojärjestelmän rakennusten osoitetiedot` as a whole, so the grant is the dataset's rather than mainland Finland's. **Åland is part of Finland and its municipalities carry Finnish municipality numbers, so the question was whether the file includes them, and it does.** Parsing `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz` whole on 2026-10-01 found all sixteen Åland municipality numbers present over 32,518 rows. One publication, one license, and Åland inside it, so this records a scope the instrument already covers rather than a second grant. **A caution belongs with this election.** Every field in that file is double-quoted, so a reader that splits a line on `,` misaligns the columns: the first attempt at this measurement did that, reported 0 of Åland's 16 municipalities and 460 distinct municipality numbers against Finland's 308, and was wrong on both counts. The register's other Åland row, `ax-business-legal-1`, is the Government of Åland with the Finnish Patent and Registration Office and is a different publisher, which this decision leaves untouched.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants reproduction and distribution of the licensed material, which is what downloading the gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants reproduction and the production of adapted material, which covers reading `address_fin`, `address_swe`, `postal_code` and `municipality_number` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Producing and reproducing adapted material is granted, and normalising a bilingual row into this repository's components is adaptation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the licensed rights for any purpose, commercial purposes included, with no share-alike term. Its obligation is attribution, and SYKE states the form it wants: `Lähde: Syke Ryhti`."
+				}
+			},
+			"licenseID": "unchecked-access-free-ax-suomen-ymp-rist-keskus-syke"
 		},
 		{
 			"state": "elected",
@@ -11283,7 +11315,7 @@
 				"address_fin": "premise",
 				"address_swe": "premise"
 			},
-			"coverage": "The national building address data of the Ryhti built-environment information system, published by Suomen ympäristökeskus as two bulk files rather than through a service: `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz`, 351,500,842 bytes, and `open_address.json.gz`, 427,348,698 bytes. **Measured 3,862,373 address rows on 2026-10-01**, by streaming the gzipped CSV whole and parsing it, so this is a count of the file rather than an estimate from a sample. Its header declares 24 column names and every one of the 3,862,373 rows holds exactly 24 fields, with no ragged row. The addresses are bilingual: `address_fin` and `address_swe` carry the whole address per language, as `Rannikontie 4a` and `Rannikkovägen 4a` for one Espoo row whose `postal_office_fin` reads `ESPOO` and `postal_office_swe` reads `ESBO`, and the Swedish columns are populated where a municipality is Swedish-speaking. `addressRoles` is keyed by both, because each is a complete address rather than a part. The server states a `content-length` for both files and answers a `Range` request with HTTP 200 and the whole body, so a partial read is unavailable and a reader streams and stops instead.",
+			"coverage": "The national building address data of the Ryhti built-environment information system, published by Suomen ympäristökeskus as two bulk files rather than through a service: `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz`, 351,500,842 bytes, and `open_address.json.gz`, 427,348,698 bytes. **Measured 3,862,373 address rows on 2026-10-01**, by streaming the gzipped CSV whole and parsing it, so this is a count of the file rather than an estimate from a sample. Its header declares 24 column names and every one of the 3,862,373 rows holds exactly 24 fields, with no ragged row. **This file is republished in place and both figures moved within the same day.** A second read on 2026-10-01, taken while measuring Åland, found it 351,288,399 bytes, sha256 `a72150c10c025bd37279038f42f68ac50b985f82aabd299f2d8a4a6779203a46`, holding 3,862,609 rows, which is 212,443 bytes smaller and 236 rows longer. Both counts are correct for the edition they read, and a size or row count quoted for this source needs the date and digest beside it. **Every field in the file is double-quoted**, on all 3,862,609 lines of that edition, so a reader must respect RFC 4180 quoting; splitting a line on `,` misaligns every column and makes the field count look ragged. The addresses are bilingual: `address_fin` and `address_swe` carry the whole address per language, as `Rannikontie 4a` and `Rannikkovägen 4a` for one Espoo row whose `postal_office_fin` reads `ESPOO` and `postal_office_swe` reads `ESBO`, and the Swedish columns are populated where a municipality is Swedish-speaking. `addressRoles` is keyed by both, because each is a complete address rather than a part. The server states a `content-length` for both files and answers a `Range` request with HTTP 200 and the whole body, so a partial read is unavailable and a reader streams and stops instead.",
 			"upstreamLineage": [
 				"https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz",
 				"https://paikkatietohakemisto.fi/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=%7BDBD610F4-3392-44CD-B601-BAE8FA547A57%7D"
@@ -13424,6 +13456,34 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "ax-property-building-1",
+			"iso2": "AX",
+			"sector": "property-building",
+			"name": "Ryhti national building address data — the Åland municipalities",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Same institute and same Ryhti built-environment file as the Finnish row; Åland is part of Finland and its sixteen municipalities carry Finnish municipality numbers",
+			"geometry": "present",
+			"license": "unchecked-access-free-ax-suomen-ymp-rist-keskus-syke",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; one gzipped CSV for the whole country",
+			"publisher": "Suomen ympäristökeskus (SYKE)",
+			"sourceURL": "https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz",
+			"note": "Measured 32518 rows across all 16 Aland municipalities on 2026-10-01 by parsing the whole file with quote-aware CSV reading; Mariehamn 4660 rows, Jomala 4211, Sottunga 332. Every field in the file is double-quoted, so a naive split on comma misaligns columns and reports Aland absent.",
+			"upstreamLineage": [
+				"https://paikkatietohakemisto.fi/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=%7BDBD610F4-3392-44CD-B601-BAE8FA547A57%7D"
+			],
+			"addressRoles": {
+				"address_fin": "premise",
+				"address_swe": "premise"
+			},
+			"coverage": "The Åland municipalities inside the Ryhti built-environment address file SYKE publishes for Finland, at `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz`. Åland is part of Finland and its sixteen municipalities carry Finnish municipality numbers, so this is a slice of one national file rather than a separate publication. **Measured 32,518 rows on 2026-10-01** by parsing the whole 351,288,399-byte file, sha256 `a72150c10c025bd37279038f42f68ac50b985f82aabd299f2d8a4a6779203a46`, and counting `municipality_number`. **All sixteen municipalities are present**: Mariehamn 478 with 4,660 rows, Jomala 170 with 4,211, Finström 060 with 3,054, Lemland 417 with 2,993, Saltvik 736 with 2,581, Eckerö 043 with 2,318, Hammarland 076 with 2,261, Sund 771 with 1,887, Geta 065 with 1,612, Föglö 062 with 1,596, Vårdö 941 with 1,459, Brändö 035 with 1,032, Lumparland 438 with 989, Kumlinge 295 with 864, Kökar 318 with 669 and Sottunga 766 with 332. Åland is Swedish-speaking, so `address_swe` is the populated address column here where mainland rows lean on `address_fin`, and `addressRoles` keys both because each carries a whole address. **The file double-quotes every field**, which is a property of the file rather than of some rows: 3,862,609 of 3,862,609 lines contain a quote character. A reader that splits a line on `,` misaligns every column, and under that misreading this measurement first returned 0 Åland municipalities and 460 distinct `municipality_number` values against the 308 a quote-aware parse finds.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "This is the same file as `fi-property-building-1`, whose 24 columns were read in full and hold no owner, occupant, holder or contact. The Åland rows carry the same 24 columns, since the header is the file's: `X`, `Y`, `Z`, `address_key`, `building_key`, `address_fin`, `address_swe`, `postal_office_fin`, `postal_office_swe`, `address_number`, `address_name_fin`, `address_name_swe`, `number_part_of_address_number`, `number_part_of_address_number2`, `municipality_number`, `subdivision_letter_of_address_number`, `subdivision_letter_of_address_number2`, `postal_code`, `location_srid` and the remaining geometry and key columns. `address_key` and `building_key` identify an address and a building rather than a person, and the two `postal_office` columns hold a postal place name in each language. No column is a free-text name of the kind that made Switzerland's `BDG_NAME` refusable."
 			}
 		},
 		{

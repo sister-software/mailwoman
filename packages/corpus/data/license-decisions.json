@@ -340,6 +340,37 @@
 				}
 			}
 		},
+		"unchecked-access-free-ax-suomen-ymp-rist-keskus-syke": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Nimeä 4.0 Kansainvälinen",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is the same publisher, the same file and the same instrument as `unchecked-access-free-fi-suomen-ymp-rist-keskus`, which stays the home of the reading of SYKE's metadata record `{DBD610F4-3392-44CD-B601-BAE8FA547A57}` and of the publisher's terms page. That record's `otherConstraints` grants CC BY 4.0 for the open-data part with the attribution `Lähde: Syke Ryhti`, over `Rakennetun ympäristön tietojärjestelmän rakennusten osoitetiedot` as a whole, so the grant is the dataset's rather than mainland Finland's. **Åland is part of Finland and its municipalities carry Finnish municipality numbers, so the question was whether the file includes them, and it does.** Parsing `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz` whole on 2026-10-01 found all sixteen Åland municipality numbers present over 32,518 rows. One publication, one license, and Åland inside it, so this records a scope the instrument already covers rather than a second grant. **A caution belongs with this election.** Every field in that file is double-quoted, so a reader that splits a line on `,` misaligns the columns: the first attempt at this measurement did that, reported 0 of Åland's 16 municipalities and 460 distinct municipality numbers against Finland's 308, and was wrong on both counts. The register's other Åland row, `ax-business-legal-1`, is the Government of Åland with the Finnish Patent and Registration Office and is a different publisher, which this decision leaves untouched.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants reproduction and distribution of the licensed material, which is what downloading the gzipped CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants reproduction and the production of adapted material, which covers reading `address_fin`, `address_swe`, `postal_code` and `municipality_number` out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Producing and reproducing adapted material is granted, and normalising a bilingual row into this repository's components is adaptation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the licensed rights for any purpose, commercial purposes included, with no share-alike term. Its obligation is attribution, and SYKE states the form it wants: `Lähde: Syke Ryhti`."
+				}
+			}
+		},
 		"unchecked-access-free-sj-kartverket": {
 			"state": "elected",
 			"electedTerms": "Creative Commons Attribution 4.0 International",
