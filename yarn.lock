@@ -6278,7 +6278,7 @@ __metadata:
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    fastify: "npm:^5.12.3"
+    fastify: "npm:^5.12.5"
     fastify-plugin: "npm:^6.0.0"
     mailwoman: "workspace:^"
   peerDependencies:
@@ -16673,9 +16673,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fastify@npm:^5.12.3":
-  version: 5.12.3
-  resolution: "fastify@npm:5.12.3"
+"fastify@npm:^5.12.5":
+  version: 5.12.5
+  resolution: "fastify@npm:5.12.5"
   dependencies:
     "@fastify/ajv-compiler": "npm:^4.0.5"
     "@fastify/error": "npm:^4.0.0"
@@ -16692,7 +16692,7 @@ __metadata:
     secure-json-parse: "npm:^4.0.0"
     semver: "npm:^7.6.0"
     toad-cache: "npm:^3.7.0"
-  checksum: 10/549a4ea5751786328b13f396adc08b9b1804f30a0ae3fb5c8ec0c25ffb0b405b1418132fa22d7ecb32c76a41f7f249111011bfbee1396b828ff02c4821f3e055
+  checksum: 10/282ec56b8bc153b9b0048409ebd060fc20372284589aaac35e5f2b45f0f84a85bd1b5199caed10cbc7cfc7b5cf406d3188c544f3e3f5f59c602eed2c37b645b9
   languageName: node
   linkType: hard
 
