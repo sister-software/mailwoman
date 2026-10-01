@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "3601b9142bb602651c3e3b15a2e1a4dac78809f1f161638a900a1e92d912ddca",
+	"contentDigest": "a7ff2f2aca6f4ae4ecd7f246a69a1a098054a31f32a098c82acd5f22692f9c6a",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -958,6 +958,51 @@
 			"state": "unchecked",
 			"publisherStatement": "Free/restricted",
 			"note": "An access label: free in part, restricted in part. It states no grant. The research pass recorded no publisher, so this decision is scoped to ph-business-legal-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Brak warunków dostępu i użytkowania",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "GUGiK states one condition of use, in the dataset record its own capabilities document links per feature type. `https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses?service=WFS&version=2.0.0&request=GetCapabilities`, 19,120 bytes, sha256 `08bfb0a382ed474ba533beb56177028f58c6ba28691bc1e9591e8a88f5bcd5dd`, states `<Fees>No fees</Fees>` and `<AccessConstraints>No constraints</AccessConstraints>`, which are the OGC service fields. Its `ms:AD.Address` feature type carries a `MetadataURL` for CSW record `a3990e57-5f0f-4bd6-94c9-47d46b692087`, retrieved at `http://mapy.geoportal.gov.pl/wss/service/CSWINSP/guest/CSWStartup?request=GetRecordById&service=CSW&version=2.0.2&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&Id=a3990e57-5f0f-4bd6-94c9-47d46b692087`, 26,698 bytes, sha256 `c2a86692a4adbcc08c0fe29e7046aab11f048788e7140994c793da2885d40f42`. That record states `title` `Adresy Addresses`, `organisationName` `Główny Urząd Geodezji i Kartografii (GUGiK) Head Office of Geodesy and Cartography`, `fileIdentifier` equal to the id the capabilities named, and `dateStamp` `2019-07-20`. Its `useConstraints` reads `inne ograniczenia`, the Polish rendering of the ISO code `otherRestrictions`, which means the statement sits in `otherConstraints`, and the two `otherConstraints` values read `Brak warunków dostępu i użytkowania` and `Brak ograniczeń w publicznym dostępie`: no conditions for access and use, and no limitations on public access. Those render INSPIRE's controlled values, as ČÚZK's `žádné podmínky neplatí` does in Czech and the Slovak Ministry's `Neuplatňujú sa žiadne podmienky` does in Slovak. No licence instrument is named, so no `spdx` and no `termsVersion` are written here and `electedTerms` records the publisher's own words, which is Czechia's treatment. The record ties to the measured service by its own `linkage`, which holds `https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses?REQUEST=GetCapabilities&SERVICE=WFS`, and its `code` values `AD`, `PRG.AD` and `http://iip.gugik.gov.pl/id/dataset/PL.PZGiK.200/PRG.AD` name the national dataset the theme derives from. One caution is recorded rather than smoothed over: the service's `inspire_dls:SpatialDataSetIdentifier` states the literal `mycode`, so the identifier that is meant to tie a download service to its dataset is an unreplaced placeholder here, and the per-feature-type `MetadataURL` is the tie that works.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The statement is that no conditions apply to access and use, so paging the service's GML is unreserved. The capabilities document agrees on price with `No fees`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply reserves no act, so reading the locality, street, house number and postcode columns out of a feature is unreserved."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No condition attaches to adaptation, so producing a token and tag corpus from the rows is unreserved. This payload needs no join across feature types, because each feature carries the whole address."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No condition attaches to any purpose, so fitting a model on the rows is unreserved."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply imposes no attribution condition. Crediting GUGiK stays good practice and the statement requires it nowhere."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question that stands open under CC BY and ODbL, whether trained weights are a derivative of the rows, does not arise where the publisher states that no conditions apply to use."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply leaves no right that would need sublicensing, and it is made to the public rather than to one recipient."
+				}
+			},
+			"licenseID": "unchecked-access-free-pl-g-wny-urz-d-geodezji-i-kartografii"
 		},
 		{
 			"licenseID": "unchecked-access-free-registration-de-de-mixed-regulatory-1",
@@ -10409,6 +10454,35 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every property of all five feature types was listed, over 40 features each: 37 on `AD.Address`, 20 on `AD.Address_AdminUnitName`, 15 on `AD.Address_ThoroughfareName`, 15 on `AD.Address_AddressAreaName` and 14 on `AD.Address_PostalDescriptor`. None of the 101 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a position, a locator, a name or a component reference. `AD:LocatorName` needs its own statement because it is free text of type `GeographicalName`, which is how a family name or a business name reaches an INSPIRE address, and this publisher populates it where the Dutch, Czech and Danish themes leave it empty: 1,200 of 1,200 addresses sampled over 60 windows spread across the 729,973, reaching 664 distinct locality paths, carry a value. Every one of those 1,200 states its `LocatorNameTypeValue` as `siteName` (829) or `buildingName` (371), which are place designations in the INSPIRE codelist, and no value takes the given-name-and-family-name shape: 0 of 1,200 carry two capitalized words, while 105 carry a hyphen. The values are Estonian farm and site names, which is how a rural Estonian address designates its addressable unit, as in `Saare maakond, Muhu vald, Raugi küla, Jüri`. Some are the genitive of a personal given name, `Jüri`, `Jaani`, `Mardi` and `Hansi` among them, which is the traditional pattern of naming a farm after a historical householder rather than a reference to the present occupant, and the compounds confirm it: `Vana-Käspri` and `Uue-Tooma` read as the old and the new holding of a named farm. No element asserts a party, states a surname, or carries a person identifier."
+			}
+		},
+		{
+			"sourceID": "pl-property-building-1",
+			"iso2": "PL",
+			"sector": "property-building",
+			"name": "Polska usługa pobierania INSPIRE dla tematu Adresy",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "National surveying and mapping authority for Poland; publishes the INSPIRE Addresses (AD) theme as a direct-access Web Feature Service derived from the Państwowy Rejestr Granic",
+			"geometry": "present",
+			"license": "unchecked-access-free-pl-g-wny-urz-d-geodezji-i-kartografii",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "WFS 2.0 download service; paged GetFeature in GML only",
+			"publisher": "Główny Urząd Geodezji i Kartografii",
+			"sourceURL": "https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses",
+			"note": "A feature carries the locality, the street, the house number, the postcode and the whole address as one string. The payload is the Polish register's own schema rather than the harmonised INSPIRE model. It carries no party.",
+			"addressRoles": {
+				"ms:AD.Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Główny Urząd Geodezji i Kartografii, reached as a WFS 2.0 download service at `https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`. **Measured 8,625,921 `ms:AD.Address` features on 2026-10-01, and the service states none of that itself.** It answers a bare `resultType=hits` with `numberMatched=\"1000\"`, which is MapServer's default feature cap, the same request at `startIndex=1` with `1`, and a feature page with `numberMatched=\"unknown\"`. The count comes from `countWFSFeaturesByPaging` in `@mailwoman/core/api`, which takes the largest `startIndex` that still returns a feature by doubling and then bisecting: 51 requests, with a page of 5 at index 8,625,919 returning exactly the 2 the count implies. **The payload is the Polish register's own schema rather than the harmonised INSPIRE Addresses model.** A feature is a MapServer row whose element names are the register's columns, so a build needs no join across feature types and no component resolution: `adres` carries the whole address as one string, as in `Piotrków Trybunalski 1 Maja 10`, beside `miejscowosc`, `ulica`, `numer` and `kod` separately, with `teryt`, `simc` and `ulic` as the national register codes. The service publishes this one feature type, and no `ad:ThoroughfareName`, `ad:PostalDescriptor` or `ad:AdminUnitName` type exists to join to. The theme derives from the Państwowy Rejestr Granic, and the feature ids name their upstream register, as in `PL.ZIPIN.3742.EMUiA_9945001100000172050`, which is the municipal address register EMUiA. It serves four GML flavours and no JSON, so a build reads GML. One caution: the service's `inspire_dls:SpatialDataSetIdentifier` states the literal `mycode`, an unreplaced placeholder, so the per-feature-type `MetadataURL` is what ties this service to its dataset record.",
+			"upstreamLineage": [
+				"https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses",
+				"http://mapy.geoportal.gov.pl/wss/service/CSWINSP/guest/CSWStartup?request=GetRecordById&service=CSW&version=2.0.2&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&Id=a3990e57-5f0f-4bd6-94c9-47d46b692087",
+				"http://iip.gugik.gov.pl/id/dataset/PL.PZGiK.200/PRG.AD"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "This service publishes the Polish register's schema rather than the INSPIRE model, so the review asks what its columns are rather than whether `AD:LocatorName` is populated. Over 1,000 features read across 40 windows spread through the 8,625,921, reaching 116 distinct localities, the features carry 19 element names and never a twentieth. All 19 are address or register structure: `id`, `gml_id` and `lokalnyid` are identifiers, `jednostkaadmnistracyjna` is the administrative-unit path, `miejscowosc`, `miejscowosc_lower` and `czescmiejscowosci` are locality spellings, `ulica`, `ulica_pol` and `ulica_skr` are street spellings, `numer` is the house number, `kod` is the postcode, `teryt`, `simc` and `ulic` are national register codes, `status` and the dates `data_od` and `wazny_od` are lifecycle fields, and `adres` is the concatenation of the others. None of the 19 names an owner, occupant, holder or contact, and the register this derives from records addressable units rather than their residents. Two columns are present on every feature and populated on none of the 1,000: `status` and `czescmiejscowosci`. The street columns are populated on 741 of 1,000, which is the share of sampled addresses sitting on a named street rather than on a locality alone. A name-shape test flags 119 `ulica` values and 113 `miejscowosc` values as carrying two capitalised words, and reading them settles what that is: Polish streets are commonly named for people, as in `kard. Stefana Wyszyńskiego`, `Krzysztofa Kamila Baczyńskiego` and `księdza Biskupa Władysława Bandurskiego`, and multi-word place names account for the rest, as in `Piotrków Trybunalski` and `Nakło nad Notecią`. A commemorative street name is the name of a street, and both columns are place elements by definition, so neither identifies a party to the address."
 			}
 		},
 		{

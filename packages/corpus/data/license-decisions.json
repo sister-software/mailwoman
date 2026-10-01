@@ -404,6 +404,50 @@
 				}
 			}
 		},
+		"unchecked-access-free-pl-g-wny-urz-d-geodezji-i-kartografii": {
+			"state": "elected",
+			"electedTerms": "Brak warunków dostępu i użytkowania",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "GUGiK states one condition of use, in the dataset record its own capabilities document links per feature type. `https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses?service=WFS&version=2.0.0&request=GetCapabilities`, 19,120 bytes, sha256 `08bfb0a382ed474ba533beb56177028f58c6ba28691bc1e9591e8a88f5bcd5dd`, states `<Fees>No fees</Fees>` and `<AccessConstraints>No constraints</AccessConstraints>`, which are the OGC service fields. Its `ms:AD.Address` feature type carries a `MetadataURL` for CSW record `a3990e57-5f0f-4bd6-94c9-47d46b692087`, retrieved at `http://mapy.geoportal.gov.pl/wss/service/CSWINSP/guest/CSWStartup?request=GetRecordById&service=CSW&version=2.0.2&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&Id=a3990e57-5f0f-4bd6-94c9-47d46b692087`, 26,698 bytes, sha256 `c2a86692a4adbcc08c0fe29e7046aab11f048788e7140994c793da2885d40f42`. That record states `title` `Adresy Addresses`, `organisationName` `Główny Urząd Geodezji i Kartografii (GUGiK) Head Office of Geodesy and Cartography`, `fileIdentifier` equal to the id the capabilities named, and `dateStamp` `2019-07-20`. Its `useConstraints` reads `inne ograniczenia`, the Polish rendering of the ISO code `otherRestrictions`, which means the statement sits in `otherConstraints`, and the two `otherConstraints` values read `Brak warunków dostępu i użytkowania` and `Brak ograniczeń w publicznym dostępie`: no conditions for access and use, and no limitations on public access. Those render INSPIRE's controlled values, as ČÚZK's `žádné podmínky neplatí` does in Czech and the Slovak Ministry's `Neuplatňujú sa žiadne podmienky` does in Slovak. No licence instrument is named, so no `spdx` and no `termsVersion` are written here and `electedTerms` records the publisher's own words, which is Czechia's treatment. The record ties to the measured service by its own `linkage`, which holds `https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses?REQUEST=GetCapabilities&SERVICE=WFS`, and its `code` values `AD`, `PRG.AD` and `http://iip.gugik.gov.pl/id/dataset/PL.PZGiK.200/PRG.AD` name the national dataset the theme derives from. One caution is recorded rather than smoothed over: the service's `inspire_dls:SpatialDataSetIdentifier` states the literal `mycode`, so the identifier that is meant to tie a download service to its dataset is an unreplaced placeholder here, and the per-feature-type `MetadataURL` is the tie that works.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The statement is that no conditions apply to access and use, so paging the service's GML is unreserved. The capabilities document agrees on price with `No fees`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply reserves no act, so reading the locality, street, house number and postcode columns out of a feature is unreserved."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No condition attaches to adaptation, so producing a token and tag corpus from the rows is unreserved. This payload needs no join across feature types, because each feature carries the whole address."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No condition attaches to any purpose, so fitting a model on the rows is unreserved."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply imposes no attribution condition. Crediting GUGiK stays good practice and the statement requires it nowhere."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question that stands open under CC BY and ODbL, whether trained weights are a derivative of the rows, does not arise where the publisher states that no conditions apply to use."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A statement that no conditions apply leaves no right that would need sublicensing, and it is made to the public rather than to one recipient."
+				}
+			}
+		},
 		"unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky": {
 			"state": "elected",
 			"electedTerms": "Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)",

@@ -7,9 +7,17 @@
  *   a count, a refusal to count and a malformed response.
  */
 
+import type { AxiosResponse } from "axios"
 import { describe, expect, it } from "vitest"
 
-import { OGCServiceError, readCheckedWFSFeatureCount, readOGCServiceException, readWFSFeatureCount } from "#api"
+import {
+	type APIClient,
+	countWFSFeaturesByPaging,
+	OGCServiceError,
+	readCheckedWFSFeatureCount,
+	readOGCServiceException,
+	readWFSFeatureCount,
+} from "#api"
 import { stubFetchingBodies } from "#api/test/transport"
 
 const options = { wfsURL: "https://example.invalid/wfs", typeNames: "layer", context: "test", subject: "zones" }
@@ -90,6 +98,75 @@ describe("readCheckedWFSFeatureCount", () => {
 
 		expect(count.usable).toBe(false)
 		expect(count.because).toMatch(/no numberMatched attribute/u)
+	})
+})
+
+describe("countWFSFeaturesByPaging", () => {
+	/**
+	 * A service holding `extent` features that answers a page honestly and states
+	 * no usable count, which is the shape Poland's does.
+	 * It records every `startIndex` it was asked for.
+	 */
+	const servingExtent = (extent: number, asked: number[] = []): Pick<APIClient, "fetch"> => ({
+		fetch: async <T>(config?: { params?: Record<string, unknown> }) => {
+			const startIndex = Number(config?.params?.["startIndex"] ?? 0)
+			const count = Number(config?.params?.["count"] ?? 1)
+
+			asked.push(startIndex)
+
+			const returned = Math.max(0, Math.min(count, extent - startIndex))
+
+			const members = Array.from(
+				{ length: returned },
+				(_unused, offset) => `<wfs:member><ms:AD.Address gml:id="AD.Address.${startIndex + offset}"/></wfs:member>`
+			).join("")
+
+			return {
+				data: `<wfs:FeatureCollection numberMatched="unknown" numberReturned="${returned}">${members}</wfs:FeatureCollection>` as T,
+			} as AxiosResponse<T>
+		},
+	})
+
+	const pagingOptions = { ...options, outputFormat: "text/xml; subtype=gml/3.2.1" }
+
+	it("measures the extent of a type whose own count is unusable", async () => {
+		const measured = await countWFSFeaturesByPaging(servingExtent(8_625_921), pagingOptions)
+
+		expect(measured.count).toBe(8_625_921)
+		expect(measured.confirmed).toBe(true)
+	})
+
+	it("costs about twice the base-two logarithm of the extent, rather than a request per feature", async () => {
+		const asked: number[] = []
+		const measured = await countWFSFeaturesByPaging(servingExtent(8_625_921, asked), pagingOptions)
+
+		// 51 requests measured Poland's service on 2026-10-01, so the bound is held near that.
+		expect(measured.requests).toBeLessThanOrEqual(60)
+		expect(asked).toHaveLength(measured.requests)
+	})
+
+	it("reads an empty type as zero rather than searching for a boundary", async () => {
+		const measured = await countWFSFeaturesByPaging(servingExtent(0), pagingOptions)
+
+		expect(measured).toEqual({ count: 0, requests: 1, confirmed: true })
+	})
+
+	it("measures a type holding one feature", async () => {
+		const measured = await countWFSFeaturesByPaging(servingExtent(1), pagingOptions)
+
+		expect(measured.count).toBe(1)
+	})
+
+	it("refuses a service that ignores startIndex rather than measuring its page cap", async () => {
+		// Every page is the first, so the search would double forever and report the cap.
+		const ignoring: Pick<APIClient, "fetch"> = {
+			fetch: async <T>() =>
+				({
+					data: '<wfs:FeatureCollection numberReturned="2"><wfs:member><ms:AD.Address gml:id="AD.Address.0"/></wfs:member></wfs:FeatureCollection>' as T,
+				}) as AxiosResponse<T>,
+		}
+
+		await expect(countWFSFeaturesByPaging(ignoring, pagingOptions)).rejects.toThrow(/ignoring startIndex/u)
 	})
 })
 

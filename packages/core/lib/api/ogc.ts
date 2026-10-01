@@ -309,12 +309,19 @@ const COUNT_PROBE_SIZE = 10
  * and `4563062` with one, so the first request meets a per-request cap rather than counting the type.
  * This asks past index 0 for that reason.
  *
- * Poland (`mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`) answers `numberMatched="1"`
- * at every `startIndex`, for a national address register.
- * A reader that takes the number records one address for a country.
+ * Poland (`mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`) states three different
+ * numbers for one type and none of them is its count, measured 2026-10-01.
+ * A bare request answers `numberMatched="1000"`, which is MapServer's default feature cap.
+ *
+ * The same request at `startIndex=1` answers `1`.
+ * A feature page answers `numberMatched="unknown"`.
+ * Its type holds 8,625,921 features.
  *
  * The tell is that a page of the same type returns more features than the count admits,
  * so this asks for one page and refuses a count that page contradicts.
+ * A service answering this way is counted by paging instead: the count is the largest
+ * `startIndex` that still returns a feature, which a doubling search followed by a bisection
+ * finds in about 2·log2(n) requests, and a page straddling that index confirms the boundary.
  *
  * A missing `numberMatched` can also be transient.
  * Slovakia's `rageo.minv.sk/geoserver/ad/wfs` answered one request out of nine with
@@ -380,4 +387,134 @@ export async function readCheckedWFSFeatureCount(
 		usable: true,
 		because: `a page of ${observed ?? probeSize} features agreed with the reported count`,
 	}
+}
+
+/**
+ * A feature count measured by paging, with the work it took.
+ */
+export interface PagedWFSFeatureCount {
+	count: number
+	/**
+	 * Requests this measurement sent, which is the cost a caller is choosing to pay.
+	 */
+	requests: number
+	/**
+	 * Whether a page straddling the last index returned the features the count implies.
+	 */
+	confirmed: boolean
+}
+
+/**
+ * The ceiling the doubling search refuses to pass.
+ *
+ * A service that answers every `startIndex` with a feature is ignoring the parameter,
+ * and the search would otherwise double until it overflowed.
+ * No address type reaches this size.
+ */
+const PAGING_COUNT_CEILING = 2 ** 34
+
+/**
+ * The feature count a type holds, measured by asking which indices hold a feature.
+ *
+ * For a service whose own `resultType=hits` cannot be trusted, which
+ * {@linkcode readCheckedWFSFeatureCount} reports as `usable: false`.
+ * What such a service still answers truthfully is whether a feature exists at a given
+ * `startIndex`, so the count is the largest index that returns one, plus one.
+ *
+ * The search doubles upward until a request returns a page of zero features, then bisects.
+ * It costs about 2·log2(n) requests: 51 for Poland's 8,625,921 features.
+ *
+ * A page straddling the last index then confirms the boundary.
+ * `confirmed` carries that answer to the caller, because a service that caps a
+ * page would make the bisection stop early.
+ *
+ * The measurement means something only where paging works.
+ * A service that ignores `startIndex` answers every page with the first.
+ *
+ * A search over such a service measures its page cap.
+ * This therefore refuses a service whose first two pages return the same leading feature.
+ *
+ * @param options.identify Reads a feature page's leading feature id, for the paging check.
+ * A caller whose service writes a shape this module cannot parse supplies its own.
+ */
+export async function countWFSFeaturesByPaging(
+	client: Pick<APIClient, "fetch">,
+	options: ReadWFSFeatureCountOptions & {
+		outputFormat: string
+		identify?: (body: string) => string | null
+	}
+): Promise<PagedWFSFeatureCount> {
+	let requests = 0
+
+	const read = async (startIndex: number, count: number): Promise<{ returned: number | null; body: string }> => {
+		requests++
+
+		const { data } = await client.fetch<string>({
+			method: "GET",
+			url: options.wfsURL,
+			responseType: "text",
+			params: {
+				service: "WFS",
+				version: "2.0.0",
+				request: "GetFeature",
+				typeNames: options.typeNames,
+				outputFormat: options.outputFormat,
+				count: String(count),
+				startIndex: String(startIndex),
+			},
+		})
+
+		assertNoOGCServiceException(data, options.context)
+
+		const returned = rootAttribute(data, "numberReturned", { xml: true })
+
+		return { returned: returned !== undefined && /^\d+$/u.test(returned) ? Number(returned) : null, body: data }
+	}
+
+	const leading = options.identify ?? ((body: string) => /gml:id="([^"]+)"/u.exec(body)?.[1] ?? null)
+
+	const first = await read(0, 2)
+
+	// An empty type needs no paging check and no search, so it costs the one request already spent.
+	if (first.returned === 0) return { count: 0, requests, confirmed: true }
+
+	const second = await read(2, 2)
+
+	if (leading(first.body) !== null && leading(first.body) === leading(second.body)) {
+		throw new Error(
+			`${options.context}: the service answered startIndex 0 and startIndex 2 with the same leading feature, so it is ignoring startIndex and a count measured by paging it would be this service's page cap rather than its feature count`
+		)
+	}
+
+	const exists = async (index: number): Promise<boolean> => (await read(index, 1)).returned !== 0
+
+	let low = 0
+	let high = 1
+
+	while (await exists(high)) {
+		low = high
+		high *= 2
+
+		if (high > PAGING_COUNT_CEILING) {
+			throw new Error(
+				`${options.context}: a feature was returned at every index up to ${low}, past the ceiling this search accepts, so the service is answering any index rather than reporting its extent`
+			)
+		}
+	}
+
+	while (high - low > 1) {
+		const middle = Math.floor((low + high) / 2)
+
+		if (await exists(middle)) {
+			low = middle
+		} else {
+			high = middle
+		}
+	}
+
+	const count = low + 1
+	const straddleStart = Math.max(0, count - 2)
+	const straddle = await read(straddleStart, 5)
+
+	return { count, requests, confirmed: straddle.returned === count - straddleStart }
 }
