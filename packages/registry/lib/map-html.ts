@@ -17,7 +17,9 @@ const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HP
 
 const BASEMAP_SOURCE_ID = "basemap-v4"
 const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
-const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
+// The glyph mirror and its Bliss Pro stacks, as `@mailwoman/cartographer/styles/fonts` documents them.
+const GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf"
+const MAP_FONTS = { regular: "Bliss Pro Regular", bold: "Bliss Pro Medium", italic: "Bliss Pro Italic" }
 const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light"
 
 /**
@@ -141,7 +143,7 @@ export function toMapHTML(
 			entities: { type: "geojson", data: { type: "FeatureCollection", features } },
 		},
 		layers: [
-			...(layers(BASEMAP_SOURCE_ID, namedFlavor(flavorName), { lang: "en" }) as unknown[]),
+			...(layers(BASEMAP_SOURCE_ID, { ...namedFlavor(flavorName), ...MAP_FONTS }, { lang: "en" }) as unknown[]),
 			{
 				id: "mw-entities",
 				type: "circle",

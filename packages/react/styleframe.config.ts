@@ -90,8 +90,12 @@ const infoBase = variable("info-base", "oklch(65% 0.13 230)")
  *
  * The `glyph` face needs monochrome marks that sit on the text baseline.
  */
-const fontFamilyDisplay = variable("font-family-display", `"Bliss Pro Web", system-ui, sans-serif`)
-const fontFamilyText = variable("font-family-text", `"Bliss Pro Web", system-ui, sans-serif`)
+const fontFamilyDisplay = variable(
+	"font-family-display",
+	`"Bliss Pro Web", "Bliss Pro Fallback", system-ui, sans-serif`
+)
+
+const fontFamilyText = variable("font-family-text", `"Bliss Pro Web", "Bliss Pro Fallback", system-ui, sans-serif`)
 
 // Bliss Pro ships proportional default figures and no `tnum` feature, so numbers take the mono face.
 const fontFamilyNumber = variable("font-family-number", `"Fira Code Web", ui-monospace, "SF Mono", monospace`)
@@ -106,7 +110,7 @@ const fontFamilyGlyph = variable("font-family-glyph", `"Fira Code Web", ui-monos
  *
  * The value must be a stack that the glyph host serves.
  */
-const fontFamilyMap = variable("font-family-map", `"Noto Sans Regular"`)
+const fontFamilyMap = variable("font-family-map", `"Bliss Pro Regular"`)
 
 const fontSizeDisplay = variable("font-size-display", "2.125rem")
 const fontSizeTitle = variable("font-size-title", "1.375rem")

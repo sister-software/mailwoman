@@ -49,14 +49,13 @@ both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mail
 
 | Stack                                                       | Result            |
 | ----------------------------------------------------------- | ----------------- |
-| `Noto Sans Regular`                                         | 200, 76,044 bytes |
-| `Noto Sans Medium`                                          | 200, 77,628 bytes |
-| `Noto Sans Italic`                                          | 200, 79,344 bytes |
+| `Bliss Pro Regular`                                         | 200, 68,296 bytes |
+| `Bliss Pro Medium`                                          | 200, 69,731 bytes |
+| `Bliss Pro Italic`                                          | 200, 72,314 bytes |
 | `Fira Code Regular`                                         | 200, 75,442 bytes |
 | `Fira Code Medium`                                          | 200, 78,848 bytes |
 | `Fira Sans Regular`, `Fira Sans Medium`, `Fira Sans Italic` | 404               |
 | `Open Sans Regular` (MapLibre's default stack)              | 404               |
-| `Noto Sans Bold`, `Arial Unicode MS Regular`                | 404               |
 
 MapLibre renders no text at all when a glyph range fails, so requesting an absent stack is a defect in
 itself, and `#styles/fonts` now holds the served names. It does not explain the missing planetary labels,
@@ -167,8 +166,8 @@ above the address field. The right-hand panel lists internal style-layer counts 
    Bliss Pro is bound to `display` and `text`, and Fira Code to `number`, `code` and `glyph`. A swap edits
    `font.family.*` and no other token. Map labels carry a separate binding, `font.family.map`, because
    MapLibre draws them from a signed-distance-field range rather than a `@font-face`. Its value must be a
-   stack the bucket serves, which today means `Noto Sans Regular`, `Noto Sans Medium` or
-   `Noto Sans Italic`.
+   stack the bucket serves, which today means `Bliss Pro Regular`, `Bliss Pro Medium` or
+   `Bliss Pro Italic`.
 8. **Base UI is deferred until a specific need arises.** None of the 74 workspaces uses a UI library
    today. The whole inventory across `@mailwoman/react`, `packages/earth` and `packages/planetary` is six
    element types: 13 `<button>`, 10 `<label>`, 10 `<input>`, 6 `<summary>`, 6 `<select>`, 6 `<details>`.
@@ -334,11 +333,11 @@ component. Both apps ship as installable PWAs through `vite-plugin-pwa` and neit
 
 ### Labels
 
-- `"text-font"` becomes `["Noto Sans Regular"]` in `planetary/layers.ts` and `base/buildings.ts`. This
+- `"text-font"` becomes `["Bliss Pro Regular"]` in `planetary/layers.ts` and `base/buildings.ts`. This
   alone restores every planetary nomenclature label and Earth's building labels.
 - A tiered treatment matching the reference: region-scale features (`ME`, `PL`, `OC`, `TA`) uppercase and
-  letterspaced, which `layers.ts` already does; water-analogue and basin names in `Noto Sans Italic`;
-  point features in `Noto Sans Regular`. Size continues to interpolate on `diameterKm`.
+  letterspaced, which `layers.ts` already does; water-analogue and basin names in `Bliss Pro Italic`;
+  point features in `Bliss Pro Regular`. Size continues to interpolate on `diameterKm`.
 - A `repo-health` check refuses a `text-font` value that is not in the bucket's served set, so the class
   of defect above cannot ship again.
 

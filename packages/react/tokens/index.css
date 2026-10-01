@@ -21,12 +21,12 @@
 	--warning-base: oklch(75% 0.15 75);
 	--danger-base: oklch(58% 0.2 25);
 	--info-base: oklch(65% 0.13 230);
-	--font-family-display: "Bliss Pro Web", system-ui, sans-serif;
-	--font-family-text: "Bliss Pro Web", system-ui, sans-serif;
+	--font-family-display: "Bliss Pro Web", "Bliss Pro Fallback", system-ui, sans-serif;
+	--font-family-text: "Bliss Pro Web", "Bliss Pro Fallback", system-ui, sans-serif;
 	--font-family-number: "Fira Code Web", ui-monospace, "SF Mono", monospace;
 	--font-family-code: "Fira Code Web", ui-monospace, "SF Mono", monospace;
 	--font-family-glyph: "Fira Code Web", ui-monospace, monospace;
-	--font-family-map: "Noto Sans Regular";
+	--font-family-map: "Bliss Pro Regular";
 	--font-size-display: 2.125rem;
 	--font-size-title: 1.375rem;
 	--font-size-headline: 1.0625rem;

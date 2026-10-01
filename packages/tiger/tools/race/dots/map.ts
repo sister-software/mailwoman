@@ -84,7 +84,10 @@ const PMTILES_VERSION = "4.4.1"
 
 const BASEMAP_SOURCE_ID = "basemap-v4"
 const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
-const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
+// The glyph mirror and its Bliss Pro stacks, as `@mailwoman/cartographer/styles/fonts` documents them.
+// Cartographer depends on this package, so these values are restated here rather than imported.
+const GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf"
+const MAP_FONTS = { regular: "Bliss Pro Regular", bold: "Bliss Pro Medium", italic: "Bliss Pro Italic" }
 const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light"
 
 /**
@@ -148,7 +151,7 @@ export async function raceDotsMap(
 			dots: { type: "vector", url: "pmtiles://" + PMTILES_URL },
 		},
 		layers: [
-			...(layers(BASEMAP_SOURCE_ID, namedFlavor("light"), { lang: "en" }) as unknown[]),
+			...(layers(BASEMAP_SOURCE_ID, { ...namedFlavor("light"), ...MAP_FONTS }, { lang: "en" }) as unknown[]),
 			{
 				id: "race-dots",
 				type: "circle",
