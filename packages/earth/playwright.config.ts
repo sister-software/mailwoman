@@ -1,6 +1,7 @@
 import { previewConfig } from "@mailwoman/site-kit/playwright"
 
-// Port 7770 is the local origin the public data bucket's cors rule already admits.
-// On any other port the browser refuses every model, gazetteer and sprite fetch
-// and the geocoder never becomes ready.
-export default previewConfig({ port: 7770, remoteURLVariable: "MAILWOMAN_EARTH_URL" })
+// The public data bucket's CORS rule must admit http://localhost:7771.
+// On a port it does not admit, the browser refuses every model, gazetteer
+// and sprite fetch and the geocoder never becomes ready.
+// The docs dev server holds port 7770.
+export default previewConfig({ port: 7771, remoteURLVariable: "MAILWOMAN_EARTH_URL" })

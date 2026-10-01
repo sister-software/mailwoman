@@ -168,7 +168,7 @@ observed**. It has never been reproduced in a browser tab a human was looking at
 That does not prove the app is fine. A visible tab might still stall for its own reasons, and the
 original report deserves a look. It does mean there is currently no evidence of a bug here. The next
 step is a five-minute check in a visible tab rather than a fix:
-`yarn workspace @mailwoman/earth preview`, open `http://localhost:7770`, run a query, watch.
+`yarn workspace @mailwoman/earth preview`, open `http://localhost:7771`, run a query, watch.
 
 **How to measure it properly**, for whoever picks this up: a Performance-panel recording across the
 resolve, which shows long tasks and main-thread occupancy directly — or

@@ -226,7 +226,7 @@ in that path.
 Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
 
 - Parity: `packages/earth/test/browser/100-demo-cold-load.spec.ts` and `200-demo-resolve.spec.ts` run against the
-  preview on port 7770 with the real assets; the remaining ten specs cover the FST autocomplete, the street tier, the
+  preview on port 7771 with the real assets; the remaining ten specs cover the FST autocomplete, the street tier, the
   postcode anchors, the viewport and device biases, the debug trace and the theme. The cold-load stall that read as
   "one load in five" was `public.mailwoman.ai` resetting the 38 MB model download partway through; the artifact fetch
   now buffers the body inside a three-attempt retry (`mailwoman/browser-runtime/fetch`), and the fixture ends its
@@ -245,7 +245,7 @@ Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
 - The docs site builds under `rspackBundler` (`cd docs && yarn build`, EXIT=0).
 - Registers: unchanged since the shell PR (#2196).
 - Workers Builds: the project from the shell PR; the bucket's CORS rule admits `https://earth.mailwoman.ai` and
-  `http://localhost:7770` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
+  `http://localhost:7771` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
 
 ## Out of scope
 
