@@ -72,7 +72,7 @@ const config: Config = {
 				"BlissPro/WOFF2/BlissPro.woff2",
 				"BlissPro/WOFF2/BlissPro-Medium.woff2",
 				"BlissPro/WOFF2/BlissPro-Bold.woff2",
-				"IosevkaNexusMono/WOFF2/IosevkaNexusMono-Regular.woff2",
+				"FiraCode/WOFF2/FiraCode-VF.woff2",
 			] as const
 		).map((file) => ({
 			tagName: "link",
@@ -229,7 +229,7 @@ const config: Config = {
 				theme: {
 					customCss: [
 						"./src/css/fonts/BlissPro.css",
-						"./src/css/fonts/IosevkaNexusMono.css",
+						"./src/css/fonts/FiraCode.css",
 						"./src/css/theme-light.css",
 						"./src/css/theme-dark.css",
 						"./src/css/markdown.css",
@@ -254,7 +254,7 @@ const config: Config = {
 		mermaid: {
 			theme: { light: "base", dark: "base" },
 			options: {
-				fontFamily: '"Iosevka Nexus Mono Web", "Iosevka", monospace',
+				fontFamily: '"Fira Code Web", monospace',
 				flowchart: { htmlLabels: false, curve: "basis", padding: 18 },
 				themeVariables: { primaryColor: "#ffffff", lineColor: "#21201c" },
 			},

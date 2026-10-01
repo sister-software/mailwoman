@@ -94,17 +94,9 @@ const fontFamilyDisplay = variable("font-family-display", `"Bliss Pro Web", syst
 const fontFamilyText = variable("font-family-text", `"Bliss Pro Web", system-ui, sans-serif`)
 
 // Bliss Pro ships proportional default figures and no `tnum` feature, so numbers take the mono face.
-const fontFamilyNumber = variable(
-	"font-family-number",
-	`"Iosevka Nexus Mono Web", "Iosevka", ui-monospace, "SF Mono", monospace`
-)
-
-const fontFamilyCode = variable(
-	"font-family-code",
-	`"Iosevka Nexus Mono Web", "Iosevka", ui-monospace, "SF Mono", monospace`
-)
-
-const fontFamilyGlyph = variable("font-family-glyph", `"Iosevka Nexus Mono Web", "Iosevka", ui-monospace, monospace`)
+const fontFamilyNumber = variable("font-family-number", `"Fira Code Web", ui-monospace, "SF Mono", monospace`)
+const fontFamilyCode = variable("font-family-code", `"Fira Code Web", ui-monospace, "SF Mono", monospace`)
+const fontFamilyGlyph = variable("font-family-glyph", `"Fira Code Web", ui-monospace, monospace`)
 
 /**
  * The SDF font stack for map labels.

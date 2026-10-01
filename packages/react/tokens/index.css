@@ -23,9 +23,9 @@
 	--info-base: oklch(65% 0.13 230);
 	--font-family-display: "Bliss Pro Web", system-ui, sans-serif;
 	--font-family-text: "Bliss Pro Web", system-ui, sans-serif;
-	--font-family-number: "Iosevka Nexus Mono Web", "Iosevka", ui-monospace, "SF Mono", monospace;
-	--font-family-code: "Iosevka Nexus Mono Web", "Iosevka", ui-monospace, "SF Mono", monospace;
-	--font-family-glyph: "Iosevka Nexus Mono Web", "Iosevka", ui-monospace, monospace;
+	--font-family-number: "Fira Code Web", ui-monospace, "SF Mono", monospace;
+	--font-family-code: "Fira Code Web", ui-monospace, "SF Mono", monospace;
+	--font-family-glyph: "Fira Code Web", ui-monospace, monospace;
 	--font-family-map: "Noto Sans Regular";
 	--font-size-display: 2.125rem;
 	--font-size-title: 1.375rem;

@@ -55,13 +55,12 @@
 	--ifm-font-color-base-inverse: var(--ifm-color-content-inverse);
 	--ifm-font-color-secondary: var(--ifm-color-content-secondary);
 
-	/* Bliss Pro has no monospace style, so code keeps Iosevka Nexus Mono. */
+	/* Bliss Pro has no monospace style, so code sets in Fira Code. */
 	--ifm-font-family-base:
 		"Bliss Pro Web", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif,
 		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 	--ifm-font-family-monospace:
-		"Iosevka Nexus Mono Web", "Iosevka", "SF Mono", "Roboto Mono", "Segoe UI Mono", "Courier New", "Courier",
-		"monospace";
+		"Fira Code Web", "SF Mono", "Roboto Mono", "Segoe UI Mono", "Courier New", "Courier", "monospace";
 
 	--ifm-font-size-base: 100%;
 	--ifm-font-weight-light: 300;

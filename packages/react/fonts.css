@@ -1,9 +1,10 @@
 /**
  * The brand typefaces, served from the same origin every app already preconnects to.
  *
- * Six faces, not every face the families ship. Each `@font-face` is a network fetch on first paint, and the token
+ * Five faces, not every face the families ship. Each `@font-face` is a network fetch on first paint, and the token
  * layer binds only these: Bliss Pro regular, medium and bold for running text and headings, Bliss Pro italic for a
- * caption, and two Iosevka Nexus Mono weights for the `code`, `number` and `glyph` roles. Bliss Pro provides no 600,
+ * caption, and the variable Fira Code face (weights 300 to 700) for the `code`, `number` and `glyph` roles. Bliss Pro
+ * has monospace figures in no face, which is why `number` sets in Fira Code. Bliss Pro provides no 600,
  * so `--font-weight-semibold: 600` matches the 700 face by the CSS weight-matching rules rather than being synthesized.
  *
  * A rule never names a family here — it names a scale role from `tokens.css`, which names one of the five face
@@ -43,17 +44,9 @@
 }
 
 @font-face {
-	font-family: "Iosevka Nexus Mono Web";
+	font-family: "Fira Code Web";
 	font-display: swap;
-	font-weight: 400;
+	font-weight: 300 700;
 	font-style: normal;
-	src: url("https://public.mailwoman.ai/fonts/IosevkaNexusMono/WOFF2/IosevkaNexusMono-Regular.woff2") format("woff2");
-}
-
-@font-face {
-	font-family: "Iosevka Nexus Mono Web";
-	font-display: swap;
-	font-weight: 450;
-	font-style: normal;
-	src: url("https://public.mailwoman.ai/fonts/IosevkaNexusMono/WOFF2/IosevkaNexusMono-Book.woff2") format("woff2");
+	src: url("https://public.mailwoman.ai/fonts/FiraCode/WOFF2/FiraCode-VF.woff2") format("woff2");
 }

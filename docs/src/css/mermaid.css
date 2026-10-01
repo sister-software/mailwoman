@@ -8,7 +8,7 @@
 	.messageText,
 	.noteText,
 	text.actor {
-		font-family: var(--ifm-font-family-monospace, "Iosevka Nexus Mono Web", "Iosevka", monospace) !important;
+		font-family: var(--ifm-font-family-monospace, "Fira Code Web", monospace) !important;
 	}
 
 	/* =====================  FLOWCHART  ======================================== */
