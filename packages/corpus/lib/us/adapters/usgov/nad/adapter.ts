@@ -7,6 +7,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { US_STATE_ABBREVIATIONS } from "@mailwoman/codex/us/state"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { resolvePathBuilder } from "path-ts"
@@ -65,65 +66,15 @@ interface NADRecord {
 	Plus_4?: string | null
 }
 
-const US_STATES_SET = new Set([
-	"AL",
-	"AK",
-	"AZ",
-	"AR",
-	"CA",
-	"CO",
-	"CT",
-	"DE",
-	"DC",
-	"FL",
-	"GA",
-	"HI",
-	"ID",
-	"IL",
-	"IN",
-	"IA",
-	"KS",
-	"KY",
-	"LA",
-	"ME",
-	"MD",
-	"MA",
-	"MI",
-	"MN",
-	"MS",
-	"MO",
-	"MT",
-	"NE",
-	"NV",
-	"NH",
-	"NJ",
-	"NM",
-	"NY",
-	"NC",
-	"ND",
-	"OH",
-	"OK",
-	"OR",
-	"PA",
-	"RI",
-	"SC",
-	"SD",
-	"TN",
-	"TX",
-	"UT",
-	"VT",
-	"VA",
-	"WA",
-	"WV",
-	"WI",
-	"WY",
-	// NAD also covers these territories.
-	"PR",
-	"GU",
-	"VI",
-	"AS",
-	"MP",
-])
+/**
+ * The USPS abbreviations a NAD row's `State` must match, taken from codex rather than restated.
+ *
+ * `US_STATE_ABBREVIATIONS` holds the 50 states, the District of Columbia and the five primary territories.
+ * That is the set NAD publishes under, so this adapter keeps no list of its own.
+ *
+ * The two had identical membership when they were reconciled, at 56 entries each.
+ */
+const US_STATES_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIONS)
 
 function nonEmpty(...values: Array<string | null | undefined>): string | undefined {
 	for (const v of values) {
