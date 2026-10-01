@@ -492,6 +492,50 @@
 				}
 			}
 		},
+		"unchecked-access-free-fr-institut-national-de-l-information-g-ographiq": {
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is a separate reading from the register's `insee-sirene-lov2` body, which it would be wrong to reuse: that body's evidence is INSEE's dataset page for SIRENE, and this is IGN's publication of a different database. `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, 12,127 bytes, sha256 `092f348c4eaf172fdd88a51c8fc21c0108af91a58bee85b6eb882c91829a3eb8`, answers `title` `Base Adresse Nationale`, `license` `lov2`, `frequency` `daily` and four resources of which the first is `Base d'Adresse Nationale au format CSV`. The publisher's own conditions of use at `https://adresse.data.gouv.fr/cgu`, 101,658 bytes, sha256 `c9b10b9d2223c945a48ece8d778ade92026136d1f561ba7b87e705b34ffe60f3`, state in article 1 that `L'Institut national de l'information géographique et forestière (IGN) a pour mission d'administrer et de diffuser la Base Adresse Nationale, base de données de référence des adresses en France, contenant la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique de plus de 25 millions d'adresses sur le territoire français`, and that the BAN is one of the nine databases of the `service public des données de référence`. The same site states `Sauf mention explicite de propriété intellectuelle détenue par des tiers, les contenus de ce site sont proposés sous licence etalab-2.0`, which is a statement about the site; the `license: lov2` on the dataset itself is the statement about the data. Two features of the publisher's wording matter to this register. The database is described as holding `adresse non nominative` — a non-nominative address — which is the publisher characterising its own content as carrying no name. And the communes are the authorities competent to create addresses, with ANCT supporting their publication into the BAN, so the upstream is municipal and IGN is the distributor. Licence Ouverte 2.0 requires attribution of the source and the date of the last update, carries no share-alike term, and states that it was designed to be compatible with any free licence requiring attribution at a minimum.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information, freely and for any purpose, which is what downloading the national CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading the house number, street name, postcode and commune out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants adaptation, modification and combination with other information, commercial purposes included, subject only to the attribution condition."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 reserves no act of analysis and grants reuse for any purpose, so fitting a model on the rows is granted."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants distribution and redistribution, conditioned on acknowledging the authorship of the Information by naming the source and the date of its last update, and on not suggesting that the reuse carries official status."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a derivative of the Information under Licence Ouverte 2.0 is the same question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for CC BY, and this licence's text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "Licence Ouverte 2.0 grants a non-exclusive, free, worldwide and perpetual right to the reuser and states no sublicensing right, so whether a downstream recipient holds it by taking the Information under the same standing licence is a question the text does not answer."
+				}
+			}
+		},
 		"unchecked-access-free-fi-suomen-ymp-rist-keskus": {
 			"state": "elected",
 			"electedTerms": "Creative Commons Nimeä 4.0 Kansainvälinen",

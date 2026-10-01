@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "873f028cb69c9768c6b1a7ab9ec511737067ff8287a5b464d63b60e527c971eb",
+	"contentDigest": "c18e0e78fd4ed336517b55b57f904288232cf5ee7ded365418afe48748dd7a2a",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -664,6 +664,51 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to fr-telecom-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "This is a separate reading from the register's `insee-sirene-lov2` body, which it would be wrong to reuse: that body's evidence is INSEE's dataset page for SIRENE, and this is IGN's publication of a different database. `https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/`, 12,127 bytes, sha256 `092f348c4eaf172fdd88a51c8fc21c0108af91a58bee85b6eb882c91829a3eb8`, answers `title` `Base Adresse Nationale`, `license` `lov2`, `frequency` `daily` and four resources of which the first is `Base d'Adresse Nationale au format CSV`. The publisher's own conditions of use at `https://adresse.data.gouv.fr/cgu`, 101,658 bytes, sha256 `c9b10b9d2223c945a48ece8d778ade92026136d1f561ba7b87e705b34ffe60f3`, state in article 1 that `L'Institut national de l'information géographique et forestière (IGN) a pour mission d'administrer et de diffuser la Base Adresse Nationale, base de données de référence des adresses en France, contenant la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique de plus de 25 millions d'adresses sur le territoire français`, and that the BAN is one of the nine databases of the `service public des données de référence`. The same site states `Sauf mention explicite de propriété intellectuelle détenue par des tiers, les contenus de ce site sont proposés sous licence etalab-2.0`, which is a statement about the site; the `license: lov2` on the dataset itself is the statement about the data. Two features of the publisher's wording matter to this register. The database is described as holding `adresse non nominative` — a non-nominative address — which is the publisher characterising its own content as carrying no name. And the communes are the authorities competent to create addresses, with ANCT supporting their publication into the BAN, so the upstream is municipal and IGN is the distributor. Licence Ouverte 2.0 requires attribution of the source and the date of the last update, carries no share-alike term, and states that it was designed to be compatible with any free licence requiring attribution at a minimum.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the right to reproduce, copy and publish the Information, freely and for any purpose, which is what downloading the national CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same grant covers extracting and transforming the Information, which is reading the house number, street name, postcode and commune out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants adaptation, modification and combination with other information, commercial purposes included, subject only to the attribution condition."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 reserves no act of analysis and grants reuse for any purpose, so fitting a model on the rows is granted."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants distribution and redistribution, conditioned on acknowledging the authorship of the Information by naming the source and the date of its last update, and on not suggesting that the reuse carries official status."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a derivative of the Information under Licence Ouverte 2.0 is the same question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records for CC BY, and this licence's text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "Licence Ouverte 2.0 grants a non-exclusive, free, worldwide and perpetual right to the reuser and states no sublicensing right, so whether a downstream recipient holds it by taking the Information under the same standing licence is a question the text does not answer."
+				}
+			},
+			"licenseID": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq"
 		},
 		{
 			"licenseID": "unchecked-access-free-gb-gb-business-legal-1",
@@ -10544,6 +10589,35 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every property of all five feature types was listed, over 40 features each: 37 on `AD.Address`, 20 on `AD.Address_AdminUnitName`, 15 on `AD.Address_ThoroughfareName`, 15 on `AD.Address_AddressAreaName` and 14 on `AD.Address_PostalDescriptor`. None of the 101 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a position, a locator, a name or a component reference. `AD:LocatorName` needs its own statement because it is free text of type `GeographicalName`, which is how a family name or a business name reaches an INSPIRE address, and this publisher populates it where the Dutch, Czech and Danish themes leave it empty: 1,200 of 1,200 addresses sampled over 60 windows spread across the 729,973, reaching 664 distinct locality paths, carry a value. Every one of those 1,200 states its `LocatorNameTypeValue` as `siteName` (829) or `buildingName` (371), which are place designations in the INSPIRE codelist, and no value takes the given-name-and-family-name shape: 0 of 1,200 carry two capitalized words, while 105 carry a hyphen. The values are Estonian farm and site names, which is how a rural Estonian address designates its addressable unit, as in `Saare maakond, Muhu vald, Raugi küla, Jüri`. Some are the genitive of a personal given name, `Jüri`, `Jaani`, `Mardi` and `Hansi` among them, which is the traditional pattern of naming a farm after a historical householder rather than a reference to the present occupant, and the compounds confirm it: `Vana-Käspri` and `Uue-Tooma` read as the old and the new holding of a named farm. No element asserts a party, states a surname, or carries a person identifier."
+			}
+		},
+		{
+			"sourceID": "fr-property-building-1",
+			"iso2": "FR",
+			"sector": "property-building",
+			"name": "Base Adresse Nationale",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "National geographic institute charged with administering and distributing the Base Adresse Nationale; one of the nine reference databases of the service public des données de référence",
+			"geometry": "present",
+			"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; gzipped CSV for the whole country updated daily",
+			"publisher": "Institut national de l'information géographique et forestière (IGN)",
+			"sourceURL": "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-france.csv.gz",
+			"note": "A row carries the house number, the street name, the postcode, the commune and a position. It carries no party; the correspondence the publisher describes is between a non-nominative address and a geographic position.",
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "The Base Adresse Nationale, published by IGN as one gzipped CSV for the whole country at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-france.csv.gz`. **Measured 26,117,350 address rows on 2026-10-01** by streaming and parsing the whole file, which makes this the largest publication in the register. The publisher's own conditions of use state `plus de 25 millions d'adresses sur le territoire français`, so the measurement agrees with the figure IGN states. The file is semicolon-delimited, declares 23 column names in its header, and every one of the 26,117,350 rows holds exactly 23 fields with no ragged row. **It is updated daily**, and the size moved between two requests minutes apart: 941,372,511 bytes on a HEAD and 941,775,136 bytes on the GET that was parsed, so a size recorded for this file is a size on a date. `addressRoles` is keyed by `nom_voie` because the address is assembled from separate columns rather than carried whole in one: `numero`, `rep`, `nom_voie`, `code_postal` and `nom_commune`, with `nom_afnor` holding the street name in the postal normalisation and `libelle_acheminement` the postal routing label. Positions come twice, projected in `x` and `y` and as `lon` and `lat`, and `type_position` states what the position denotes, with `entrée`, `parcelle` and `segment` among its values.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-france.csv.gz",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/",
+				"https://adresse.data.gouv.fr/cgu"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`, a non-nominative address beside a position. The file bears that out. All 23 declared columns were read rather than sampled for a twenty-fourth: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every one of the 26,117,350 rows carries exactly these 23 fields, so no row introduces a column the header omits. None of the 23 identifies a party: there is no owner, occupant, holder or contact column and no personal name. `cad_parcelles` is a cadastral parcel reference, which identifies a parcel rather than whoever holds it, and `source_position` and `source_nom_voie` name the body that supplied a value, reading `commune` on the sampled rows. Street names honour people in France as they do in Poland, as `Rue Bernard Capelle` and `Rue Thomas Edison` among the sampled rows show, and `nom_voie` is a street-name column by definition. Eight rows sampled at two-million-row intervals span the country, from Ain to Finistère to Morbihan."
 			}
 		},
 		{
