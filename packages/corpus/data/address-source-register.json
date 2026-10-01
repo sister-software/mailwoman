@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "35624ba5006235e6cbdc5ec7bdcd131cc21157b5275e5582475f2cfa7d37f6a6",
+	"contentDigest": "5eb5d1f6ce83b5e45a09ea18841e7435d3428c17bc5848c5cd8fee9516aa9b72",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -171,6 +171,50 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to ca-telecom-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Nutzungsbedingungen für kostenlose Geodaten und Geodienste (OGD) von swisstopo",
+			"termsVersion": "2022-08-26",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "swisstopo links its own terms from the dataset, which is how they were found rather than guessed: four candidate terms URLs answered HTTP 404, and the STAC collection at `https://data.geo.admin.ch/api/stac/v1/collections/ch.swisstopo.amtliches-gebaeudeadressverzeichnis` carries a link with `rel: license` pointing at `https://www.swisstopo.admin.ch/ogd-conditions`, titled `Terms of use`, alongside `providers` naming `Federal Office of Topography - swisstopo` with the roles `producer` and `licensor`. The collection's own `license` field reads `proprietary`, which is swisstopo's marker for its own conditions rather than an instrument; reading that field as the licence would record this publication as closed. The conditions, 261,514 bytes, sha256 `1f717c01937fff78`, published 26 August 2022, state in clause 2 that `The free geodata and geoservices of swisstopo may be used, distributed and made accessible. Furthermore, they may be enriched and processed and also used commercially. A reference to the source is mandatory.`, and they specify the source reference to attach, of which the English form is `Federal Office of Topography swisstopo` and the short form `©swisstopo`. Clause 1 grounds this in the Federal Act on Geoinformation and its ordinance. Clause 3 is the one condition worth carrying forward: `In the event of excessive use of the geoservices infrastructure, access may be restricted or refused`, and swisstopo may then conclude a contract with the user. That clause governs the geoservices infrastructure, and this row records a file download rather than a service. The publisher's own page for the directory states that it is published `for use free of charge by everyone` and `can be used by the public administration, as well as by companies for commercial purposes`. **This election grants the terms and does not make the source ingest-eligible**: its `personalDataReview` reads `present`, which `ingestEligibilityProblems` refuses on its own.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 2 grants use, distribution and making accessible, and the publisher's page states the directory is free of charge for everyone. The download is a file rather than a geoservice, so clause 3's excessive-use condition does not reach it."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 2 grants that the data `may be enriched and processed`, which covers reading the street label, house number and postcode out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants processing and commercial use, subject to the mandatory source reference."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 2 reserves no act of analysis and grants commercial use, so fitting a model on the rows is granted. The source reference is owed on any resulting publication."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 2 grants distribution and making accessible, conditioned on attaching one of the specified source references, which for English is `Federal Office of Topography swisstopo`."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a representation or publication requiring the source reference, and whether they are a derivative at all, is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records. Clause 2 names digital representations, publications and dissemination, which does not settle weights."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The conditions grant use to the user and state no sublicensing right, and clause 3 contemplates a contract for heavy use, so whether a downstream recipient holds these terms directly is a question the text does not answer."
+				}
+			},
+			"licenseID": "unchecked-access-free-ch-bundesamt-f-r-landestopografie-swisstopo"
 		},
 		{
 			"licenseID": "unchecked-access-free-ch-ch-business-legal-1",
@@ -1014,6 +1058,51 @@
 				}
 			},
 			"licenseID": "unchecked-access-free-nl-kadaster"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
+			"retrievedAt": "2026-10-01",
+			"electedBecause": "Kartverket states the instrument and its URL in the dataset's own metadata record. `https://kartkatalog.geonorge.no/api/getdata/f7df7a18-b30f-4745-bd64-d0863812350c`, 25,866 bytes, sha256 `487ceecc28d73089`, answers `Title` `Matrikkelen - Adresse` and `Organization` `Kartverket`, with constraints that agree across five fields: `AccessConstraints` `Åpne data`, `OtherConstraints` `Ingen juridiske begrensninger.`, `OtherConstraintsLink` `https://creativecommons.org/licenses/by/4.0/`, `OtherConstraintsLinkText` `Creative Commons BY 4.0 (CC BY 4.0)`, `UseConstraints` `Lisens`, `UseLimitations` `Ingen begrensninger på bruk er oppgitt.` and `OtherConstraintsAccess` the INSPIRE codelist term `noLimitations`. The version is in the identifier, so `spdx` reads `CC-BY-4.0` and no share-alike term applies. `SecurityConstraints` reads `Ugradert` with `SecurityConstraintsNote` `Matrikkelloven`, which cites the Matrikkel act rather than restricting this distribution. The record's abstract describes the content: official physical addresses registered in the Matrikkel, each either a Vegadresse such as `Storgata 10` or a Matrikkeladresse such as `33/2-2`. The Matrikkel holds owner data under restriction, and this distribution carries none of it, which the column census establishes rather than assumes.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce and share the Licensed Material in whole, which is what downloading the whole-country archive performs, and the record states `Åpne data`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which covers reading `adresseTekst`, the street name, number and postcode out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, commercial purposes included, with §3(a)(1)(B) requiring that modifications be indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. The record adds `Ingen begrensninger på bruk er oppgitt.`"
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing in any medium, conditioned by §3(a) on crediting Kartverket, retaining the copyright notice, linking the licence and indicating modifications."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the licence text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 §2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right. Whether that satisfies a commercial agreement is a drafting question this text does not answer."
+				}
+			},
+			"licenseID": "unchecked-access-free-no-kartverket"
 		},
 		{
 			"licenseID": "unchecked-access-free-no-no-business-legal-1",
@@ -10679,6 +10768,63 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every property of all five feature types was listed, over 40 features each: 37 on `AD.Address`, 20 on `AD.Address_AdminUnitName`, 15 on `AD.Address_ThoroughfareName`, 15 on `AD.Address_AddressAreaName` and 14 on `AD.Address_PostalDescriptor`. None of the 101 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a position, a locator, a name or a component reference. `AD:LocatorName` needs its own statement because it is free text of type `GeographicalName`, which is how a family name or a business name reaches an INSPIRE address, and this publisher populates it where the Dutch, Czech and Danish themes leave it empty: 1,200 of 1,200 addresses sampled over 60 windows spread across the 729,973, reaching 664 distinct locality paths, carry a value. Every one of those 1,200 states its `LocatorNameTypeValue` as `siteName` (829) or `buildingName` (371), which are place designations in the INSPIRE codelist, and no value takes the given-name-and-family-name shape: 0 of 1,200 carry two capitalized words, while 105 carry a hyphen. The values are Estonian farm and site names, which is how a rural Estonian address designates its addressable unit, as in `Saare maakond, Muhu vald, Raugi küla, Jüri`. Some are the genitive of a personal given name, `Jüri`, `Jaani`, `Mardi` and `Hansi` among them, which is the traditional pattern of naming a farm after a historical householder rather than a reference to the present occupant, and the compounds confirm it: `Vana-Käspri` and `Uue-Tooma` read as the old and the new holding of a named farm. No element asserts a party, states a surname, or carries a person identifier."
+			}
+		},
+		{
+			"sourceID": "ch-property-building-1",
+			"iso2": "CH",
+			"sector": "property-building",
+			"name": "Amtliches Verzeichnis der Gebäudeadressen",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Federal office of topography and publisher of the official directory of building addresses compiled from the Federal Statistical Office's Buildings and Dwellings Register and the cadastral survey",
+			"geometry": "present",
+			"license": "unchecked-access-free-ch-bundesamt-f-r-landestopografie-swisstopo",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; zipped CSV Interlis 2 and file geodatabase updated daily",
+			"publisher": "Bundesamt für Landestopografie swisstopo",
+			"sourceURL": "https://data.geo.admin.ch/api/stac/v1/collections/ch.swisstopo.amtliches-gebaeudeadressverzeichnis",
+			"note": "A row carries the street label, the house number, the postcode and place, the municipality and canton, a building category and a position. A building-name column carries a personal name on some residential rows.",
+			"addressRoles": {
+				"STN_LABEL": "premise"
+			},
+			"coverage": "The official directory of building addresses, published by swisstopo from the Federal Statistical Office's Buildings and Dwellings Register supplemented with cadastral survey data. `amtliches-gebaeudeadressverzeichnis_ch_2056.csv.zip` is 143,235,177 bytes and its single member is 468,306,734 bytes. **Measured 3,303,210 data rows on 2026-10-01**, 17 columns, every row holding exactly 17 fields. The address is assembled from `STN_LABEL`, `ADR_NUMBER`, `ZIP_LABEL`, `COM_NAME` and `COM_CANTON`, with street labels in German, French and Italian as the canton dictates, so one file carries `Grellingerstrasse`, `Route du Clos` and `Via Cantonale`. `ADR_STATUS` reads `real` on 3,251,832 rows and `planned` on 51,378, so 1.56% of the file describes an address that does not yet exist. `BDG_CATEGORY` splits the file usefully: `residential` 1,605,916, `non_residential` 1,258,886, `other_residential` 221,041, `special` 129,630, `partly_residential` 84,901 and `temporary` 2,836. **The publisher states a coverage caveat**: in fewer than ten municipalities the directory is not yet available or not fully available, pending harmonisation of the cadastral survey and register data. It is updated daily and also published as Interlis 2 and an ESRI file geodatabase, in LV95.",
+			"upstreamLineage": [
+				"https://data.geo.admin.ch/api/stac/v1/collections/ch.swisstopo.amtliches-gebaeudeadressverzeichnis",
+				"https://data.geo.admin.ch/ch.swisstopo.amtliches-gebaeudeadressverzeichnis/amtliches-gebaeudeadressverzeichnis_ch/amtliches-gebaeudeadressverzeichnis_ch_2056.csv.zip",
+				"https://www.swisstopo.admin.ch/en/official-directory-of-building-addresses"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "**This is the first address publication in the register whose free-text name column carries natural persons' names, and it is why that column is opened rather than assumed empty.** Sixteen of the 17 columns are structure: identifiers (`ADR_EGAID`, `STR_ESID`, `BDG_EGID`, `ADR_EDID`), a street label, a house number, a building category, a postcode and place, a municipality number, name and canton, a status, an official flag, a modification date and a position. The seventeenth is `BDG_NAME`, a free-text building name, populated on 20,989 of the 3,303,210 rows, which is 0.64%. Every populated value was read rather than sampled: 1,158 match a two-capitalised-word shape, of which 684 carry a structure word in German, French or Italian and describe a building, as `Garage Romiglios`, `Einstellgarage Beltrametti`, `Alphütte Pürt` and `Résidence La Pran` do. The remaining 474 were read individually, and most are Italian-language building and facility names concentrated in Ticino, as `Monti Incella`, `Capanna Basodino`, `Officine SBB CFF FFS` and `Azienda Agricola` are. **At least twelve are a surname and a given name on a row whose `BDG_CATEGORY` reads `residential`**: `Chaignat Aimée` in Jura, `Rutz Nelly`, `Maggiorini Tullio`, `Maggiorini Jole`, `Frigerio Cesare Vittorio`, `Stern Flavia`, `Pozzi Castelli Tamara`, `MTI DELLA COSTA-GUIDOTTI RENZO`, `TRAVERSE-MEILI PFEIFFER`, `TRAVERSE-LANDOLT ARMIN` and `RONCO BALINO-KUHN` in Ticino, and `NB EFH Lauber Jörg` in Valais. A surname and a given name beside a residential address identifies a natural person at their home, which is the class `ingestEligibilityProblems` refuses and which this repository decided on 2026-09-30 it would not carry. A further set pairs a surname with a structure word, as `Autounterstand Scherrer`, `Holzbaracke Tscherrig`, `Carport Stuck` and `Dépôt Fournier Georges` do, and whether those name an owner or a business is not settled here. **Whether a build that never reads `BDG_NAME` changes this reading is a question for the operator and counsel rather than for this record**: the 16 remaining columns carry no party, and the register records the source as published."
+			}
+		},
+		{
+			"sourceID": "no-property-building-1",
+			"iso2": "NO",
+			"sector": "property-building",
+			"name": "Matrikkelen - Adresse",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "National mapping authority and holder of the Matrikkel; publishes the official physical addresses of Norway as a whole-country bulk file",
+			"geometry": "present",
+			"license": "unchecked-access-free-no-kartverket",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; zipped CSV GML and four other formats for the whole country",
+			"publisher": "Kartverket",
+			"sourceURL": "https://kartkatalog.geonorge.no/metadata/matrikkelen-adresse/f7df7a18-b30f-4745-bd64-d0863812350c",
+			"note": "A row carries the full address text, the street name, number and letter, the postcode and postal place, the municipality and a position. It carries no party.",
+			"addressRoles": {
+				"adresseTekst": "premise"
+			},
+			"coverage": "Matrikkelen - Adresse, published by Kartverket as a whole-country bulk file. `Basisdata_0000_Norge_4258_MatrikkelenAdresse_CSV.zip` is 151,705,546 bytes and its member `matrikkelenAdresse.csv` is 812,548,530 bytes; the same extract in EPSG:25833 is 156,927,276 bytes and the GML 351,576,939. **Measured 2,603,354 data rows on 2026-10-01**, 46 columns, every row holding exactly 46 fields. `adresseTekst` carries the whole address, so `addressRoles` keys that column; the parts are also separate, as `adressenavn`, `nummer`, `bokstav`, `postnummer` and `poststed`. `adressetype` splits the file as the publisher's abstract describes: `vegadresse` on 2,568,832 rows and `matrikkeladresse` on 34,522, which is 1.33%, the latter reading as a cadastral reference such as `Øvrabø, 124/1` rather than a street address. Three access points are carried per address, `atkomst`, `sommeratkomst` and `vinteratkomst`, each with its own identifier and coordinates, which is a Norwegian feature rather than a duplicate. Geonorge's download API takes an order with area, format and projection selection, and the whole country is also published at a conventional path as area code `0000`, `Hele landet`, in CSV and GML.",
+			"upstreamLineage": [
+				"https://kartkatalog.geonorge.no/api/getdata/f7df7a18-b30f-4745-bd64-d0863812350c",
+				"https://nedlasting.geonorge.no/geonorge/Basisdata/MatrikkelenAdresse/CSV/Basisdata_0000_Norge_4258_MatrikkelenAdresse_CSV.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The Matrikkel holds owner data under the restriction its own act imposes, so the question for this distribution is whether any of it travels with the addresses. All 46 columns were read: identifiers, municipality number and name, address type, address code, street name, number and letter, the four cadastral numbers, two address-text forms, a projection code and coordinates, postcode and postal place, and the names and numbers of the statistical unit, parish, urban settlement and electoral district, which are place names. None is an owner, occupant, holder or contact column. Two columns needed their own measurement. `adressetilleggsnavn` is the free-text name an address may carry, the same class as Estonia's `AD:LocatorName` and Switzerland's `BDG_NAME`: it is populated on 23,972 of the 2,603,354 rows, which is 0.92%, and its `adressetilleggsnavnKilde` records where each value came from, reading `matrikkeladressenavn` 9,207 times, `tildeltAvKommunen` 7,975, `krevdAvEier` 5,871 and `anmodetAvHjemmelshaver` 919. Forty values of two capitalised words were read and every one is a place or facility name, as `Søndre Vælsvann`, `Ytre Sandstøl`, `Øvre Maudal`, `Telavåg Idrettspark` and `Nettstasjon Lyse` are, with no personal name among them. `organisasjonsnummer` is populated on all 2,603,354 rows, which rules out a per-address occupant outright, and it holds 1,147 distinct values across 358 municipalities of which 1,146 appear in exactly one municipality, so it identifies a small set of legal entities per municipality rather than anything per address. An organisation number identifies a legal entity in any case, which is the class this repository carries."
 			}
 		},
 		{
