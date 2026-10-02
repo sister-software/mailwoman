@@ -25,6 +25,7 @@
 			}
 		},
 		"dk-property-building-1": {
+			"adapterID": "dk-inspire",
 			"addressRoles": {
 				"address": "premise"
 			},
@@ -39,6 +40,7 @@
 			}
 		},
 		"pl-property-building-1": {
+			"adapterID": "emuia",
 			"addressRoles": {
 				"ms:AD.Address": "premise"
 			},
@@ -54,6 +56,7 @@
 			}
 		},
 		"sk-property-building-1": {
+			"adapterID": "sk-inspire",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -83,6 +86,7 @@
 			}
 		},
 		"ax-property-building-1": {
+			"adapterID": "ryhti",
 			"addressRoles": {
 				"address_fin": "premise",
 				"address_swe": "premise"
@@ -304,6 +308,7 @@
 			}
 		},
 		"fi-property-building-1": {
+			"adapterID": "ryhti",
 			"addressRoles": {
 				"address_fin": "premise",
 				"address_swe": "premise"
@@ -319,6 +324,7 @@
 			}
 		},
 		"be-property-building-2": {
+			"adapterID": "wallonie",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -334,6 +340,7 @@
 			}
 		},
 		"be-property-building-1": {
+			"adapterID": "vlaanderen",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -348,6 +355,7 @@
 			}
 		},
 		"ee-property-building-1": {
+			"adapterID": "ads",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -362,6 +370,7 @@
 			}
 		},
 		"nl-property-building-1": {
+			"adapterID": "nl-kadaster",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -376,6 +385,7 @@
 			}
 		},
 		"cz-property-building-1": {
+			"adapterID": "cz-cuzk",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},

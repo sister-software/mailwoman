@@ -89,3 +89,28 @@ export async function writeDelimitedFixture<P extends PathBuilderLike>(
 
 	return filePath
 }
+
+/**
+ * Whether a test that calls a publisher's live service should run.
+ *
+ * CI's `unit-slow` leg runs every `*.integration.test.ts`, and the required
+ * `test` context fails when that leg does.
+ * A test calling a foreign government host therefore makes a merge depend on that host's
+ * availability: Poland's address service answered `ECONNRESET` mid-run on 2026-10-02
+ * and reddened a local preflight that had passed an hour earlier.
+ *
+ * So a live-service test is opt-in, and the suite reports it as skipped
+ * rather than passing on a check it did not make.
+ * Run one with `MAILWOMAN_LIVE_PUBLISHER_TESTS=1 yarn vitest --run --config vitest.slow.config.ts <file>`.
+ *
+ * A test reading a committed fixture needs this switch unset, and most of
+ * each harvester's coverage is there.
+ * The switch is for the assertions only the publisher can answer: that a URL still serves,
+ * that a feed still states what the register recorded, that a harvest the adapter can read comes back.
+ *
+ * It reads `process.env` directly, because it is a per-run test switch rather than
+ * project configuration and so has no entry in `@mailwoman/core/env`.
+ */
+export const LIVE_PUBLISHER_TESTS =
+	// oxlint-disable-next-line sister-software/no-process-globals -- stated in the block above.
+	process.env.MAILWOMAN_LIVE_PUBLISHER_TESTS === "1"

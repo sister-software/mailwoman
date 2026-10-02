@@ -15,7 +15,6 @@ import {
 	AD_FEATURE_TYPES,
 	adFeatureTypeOf,
 	componentIdentifier,
-	componentJoinKey,
 	componentReferences,
 	isVoided,
 	readFeaturePage,
@@ -190,9 +189,26 @@ describe("paging", () => {
 		expect(page.numberMatched).toBeNull()
 	})
 
-	it("refuses a body that is not the JSON it asked for", async () => {
+	it("refuses a WFS 2.0 exception report as a report rather than as unparseable JSON", async () => {
+		// This body used to reach `JSON.parse` and surface as "not JSON", because the
+		// detector knew only the OGC 1.x `ServiceExceptionReport` spelling.
+		// A service's refusal is now named as one.
 		await expect(
 			readFeaturePage(stubFetchingBodies("<ows:ExceptionReport/>"), {
+				wfsURL: "https://example.invalid/wfs",
+				typeName: "ad:Address",
+				outputFormat: "application/json",
+				count: 10,
+				startIndex: 0,
+				supportsPaging: true,
+				context: "test",
+			})
+		).rejects.toThrow(/exception report/u)
+	})
+
+	it("refuses a body that is not the JSON it asked for and is not a report either", async () => {
+		await expect(
+			readFeaturePage(stubFetchingBodies("<html><body>maintenance</body></html>"), {
 				wfsURL: "https://example.invalid/wfs",
 				typeName: "ad:Address",
 				outputFormat: "application/json",
@@ -293,34 +309,6 @@ describe("component references", () => {
 
 		expect(references[0]).toContain("AU_haldusyksused")
 		expect(references[1]).toContain("AD.Address_ThoroughfareName.92")
-	})
-
-	it("joins on the feature id a stored-query reference carries", () => {
-		expect(
-			componentJoinKey("https://rageo.minv.sk/geoserver/ad/ows?service=WFS&request=GetFeature&id=AdminUnitName.15345")
-		).toBe("AdminUnitName.15345")
-	})
-
-	it("joins on featureID as well as id, which is the parameter Estonia writes", () => {
-		expect(
-			componentJoinKey(
-				"https://inspire.geoportaal.ee/geoserver/AD_Address/ows?service=WFS&request=GetFeature&typeNames=AD_Address%3AAD.Address_PostalDescriptor&featureID=120275"
-			)
-		).toBe("120275")
-	})
-
-	it("joins an identifier URI on itself, dropping a fragment the identifier does not carry", () => {
-		// Flanders writes the identifier its component features publish, and writes a fragment
-		// on the vocabulary reference that the vocabulary's own term does not carry.
-		expect(componentJoinKey("https://data.vlaanderen.be/id/straatnaam/6301")).toBe(
-			"https://data.vlaanderen.be/id/straatnaam/6301"
-		)
-
-		expect(componentJoinKey("http://vocab.belgif.be/auth/refnis1995/1000#id")).toBe(
-			"http://vocab.belgif.be/auth/refnis1995/1000"
-		)
-
-		expect(componentJoinKey("not a url")).toBeNull()
 	})
 
 	it("reads the identifier a component feature publishes, preferring the INSPIRE one over gml_id", () => {

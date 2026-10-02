@@ -26,13 +26,8 @@
 import { assertNoOGCServiceException, type APIClient } from "@mailwoman/core/api"
 import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
 
-/**
- * The WFS version this module speaks.
- *
- * 2.0.0 is the version that defines `startIndex` paging and the `hits` result type,
- * and it is what every service measured for this module advertises.
- */
-const WFS_VERSION = "2.0.0"
+import { componentJoinKey } from "#inspire/address"
+import { WFS_VERSION } from "#tools/fetch/wfs-harvest"
 
 /**
  * The feature types an INSPIRE Addresses service publishes.
@@ -115,6 +110,14 @@ export interface WFSCapabilities {
 	 * Reading past the first page of such a service silently repeats page one.
 	 */
 	supportsPaging: boolean
+	/**
+	 * The `CountDefault` the service advertises, or `null` where it advertises none.
+	 *
+	 * The largest page the service will serve, which is also the number its own
+	 * `numberMatched` reports when that number is a cap rather than a count.
+	 * Estonia advertises 1000000 and Poland 1000, measured 2026-10-02.
+	 */
+	countDefault: number | null
 	/**
 	 * The qualified type name for each AD feature type the service publishes, keyed by the local name.
 	 *
@@ -215,10 +218,15 @@ export async function readWFSCapabilities(
 	// The other JSON-ish formats carry a different envelope, so they are left out rather than tried.
 	const jsonFormats = ["application/json", "application/geo+json"].filter((format) => outputFormats.includes(format))
 
+	const countDefault = /<(?:\w+:)?Constraint\s+name="CountDefault"[\s\S]{0,240}?<(?:\w+:)?DefaultValue>\s*(\d+)\s*</iu
+		.exec(data)
+		?.at(1)
+
 	return {
 		outputFormats,
 		jsonFormat: jsonFormats[0] ?? null,
 		jsonFormats,
+		countDefault: countDefault === undefined ? null : Number(countDefault),
 		supportsPaging: /ImplementsResultPaging[\s\S]{0,120}?>\s*(?:TRUE|true)\s*</u.test(data),
 		typeNames,
 	}
@@ -236,6 +244,13 @@ export interface FeaturePage<Feature> {
 	 */
 	numberMatched: number | null
 	numberReturned: number
+	/**
+	 * The `timeStamp` the service dated the page with, or `null` where it stated none.
+	 *
+	 * The service's own clock rather than the caller's, which is what a manifest
+	 * records to date a page against the service that served it.
+	 */
+	timeStamp: string | null
 }
 
 /**
@@ -265,6 +280,15 @@ export async function readFeaturePage(
 		startIndex: number
 		supportsPaging: boolean
 		context: string
+		/**
+		 * The property the service orders the results by, where it honors one.
+		 *
+		 * Paging without an ordering rests on the service returning the same features in
+		 * the same order for every request, which no WFS guarantees.
+		 * Estonia honors `sortBy=gml_id` and Flanders answers HTTP 504 for its identifier,
+		 * so the parameter is the caller's to supply or leave out.
+		 */
+		sortBy?: string | null
 	}
 ): Promise<FeaturePage<GeoJSONFeature>> {
 	if (options.startIndex > 0 && !options.supportsPaging) {
@@ -285,14 +309,18 @@ export async function readFeaturePage(
 			outputFormat: options.outputFormat,
 			count: String(options.count),
 			startIndex: String(options.startIndex),
+			...(options.sortBy ? { sortBy: options.sortBy } : {}),
 		},
 	})
 
 	assertNoOGCServiceException(data, options.context)
 
-	const payload = tryParsingJSON<{ features?: GeoJSONFeature[]; numberMatched?: unknown; numberReturned?: unknown }>(
-		data
-	)
+	const payload = tryParsingJSON<{
+		features?: GeoJSONFeature[]
+		numberMatched?: unknown
+		numberReturned?: unknown
+		timeStamp?: unknown
+	}>(data)
 
 	if (!payload) {
 		throw new TypeError(
@@ -312,6 +340,7 @@ export async function readFeaturePage(
 		features: payload.features,
 		numberMatched,
 		numberReturned: payload.features.length,
+		timeStamp: typeof payload.timeStamp === "string" ? payload.timeStamp : null,
 	}
 }
 
@@ -368,59 +397,6 @@ export function componentReferences(feature: GeoJSONFeature): readonly string[] 
 	return [...fromArray, ...fromSlots]
 		.map((href) => href.trim())
 		.filter((href) => href.length > 0 && !VOID_REASON_TEXT.has(href.toLowerCase()))
-}
-
-/**
- * The query parameters a `GetFeature` reference states its target's id in,
- * each spelled as the service wrote it.
- *
- * Slovakia writes a stored query, `…&id=AdminUnitName.15345`.
- * Estonia writes the WFS KVP parameter, `…&featureID=120275`.
- *
- * A reader that knows only `id` returns the whole URL as the key for Estonia's references,
- * and no identifier equals a URL, so every one reads as unjoined.
- */
-const REFERENCE_ID_PARAMETERS = ["id", "featureID", "featureid", "FEATUREID", "resourceID", "RESOURCEID"] as const
-
-/**
- * The key a component reference joins on, or `null` where the reference is not a URL.
- *
- * Three shapes appear across the services measured, and the difference is
- * where the key sits rather than whether one exists.
- * Slovakia writes a stored-query URL whose `id` parameter carries the feature
- * id, `…&id=AdminUnitName.15345`.
- *
- * Estonia writes a `GetFeature` URL whose `featureID` parameter carries it.
- *
- * Flanders writes an identifier URI, `https://data.vlaanderen.be/id/straatnaam/6301`,
- * which is the value its `ad:ThoroughfareName` features publish in `identifier`.
- *
- * A fragment is dropped because a reference may carry one where the identifier does not:
- * `http://vocab.belgif.be/auth/refnis1995/1000#id` addresses the same term as that URI without it.
- *
- * Whether a key joins is not a property of its spelling, so this reads a key and
- * {@linkcode resolveComponents} decides joinability against the features a service published.
- * Deciding it here from the URL's shape reported 15 of Flanders' 20 references as belonging
- * to another register when every one of them addresses a feature of the same service.
- */
-export function componentJoinKey(href: string): string | null {
-	let url: URL
-
-	try {
-		url = new URL(href)
-	} catch {
-		return null
-	}
-
-	for (const parameter of REFERENCE_ID_PARAMETERS) {
-		const id = url.searchParams.get(parameter)
-
-		if (id) return id
-	}
-
-	url.hash = ""
-
-	return url.toString()
 }
 
 /**
@@ -498,7 +474,7 @@ export function resolveComponents(
 		for (const href of componentReferences(address)) {
 			const key = componentJoinKey(href)
 
-			if (key === null) {
+			if (key === undefined) {
 				unreadable++
 
 				continue

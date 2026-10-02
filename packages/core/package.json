@@ -602,6 +602,11 @@
 			"node": "./lib/html/document.ts",
 			"default": "./out/html/document.js"
 		},
+		"./html/elements": {
+			"types": "./out/html/elements.d.ts",
+			"node": "./lib/html/elements.ts",
+			"default": "./out/html/elements.js"
+		},
 		"./tools/*": {
 			"types": "./out/tools/*.d.ts",
 			"node": "./tools/*.ts",

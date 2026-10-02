@@ -25,7 +25,9 @@ export class OGCServiceError extends Error {
 	public readonly serviceException: string
 
 	constructor(context: string, serviceException: string) {
-		super(`${context}: the service returned a ServiceExceptionReport — ${serviceException}`)
+		// The report's own element name is left out, because both the OGC 1.x `ServiceExceptionReport`
+		// and the WFS 2.0 `ows:ExceptionReport` arrive here and naming one of them misreported the other.
+		super(`${context}: the service returned an exception report — ${serviceException}`)
 
 		this.name = "OGCServiceError"
 		this.serviceException = serviceException
@@ -45,6 +47,26 @@ export class OGCServiceError extends Error {
  * The opening tag, without its terminator — the prefix `<ServiceExceptionReport …>` unhelpfully shares.
  */
 const EXCEPTION_OPEN = "<ServiceException"
+
+/**
+ * The element a WFS 2.0 service carries its message in, with an optional namespace prefix.
+ *
+ * OGC 1.x answers `<ServiceExceptionReport>` holding `<ServiceException>`.
+ * WFS 2.0 answers `<ows:ExceptionReport>` holding `<ows:Exception exceptionCode="…">`
+ * and `<ows:ExceptionText>`, so a reader that knows only the 1.x spelling passes
+ * a 2.0 report through as a valid body.
+ *
+ * Flanders' `ad:AddressRepresentation` answers HTTP 400 with one of these on every
+ * `startIndex`, and that report reached a caller as though it were a feature page.
+ *
+ * The prefix is optional, because a service may bind the OWS namespace as the default one.
+ */
+const OWS_EXCEPTION_TEXT_OPEN = /<(?:([\w.-]+):)?ExceptionText(?:\s[^>]*)?>/u
+
+/**
+ * The attribute a WFS 2.0 report states its condition in, such as `ows:exceptionCode/NoApplicableCode`.
+ */
+const OWS_EXCEPTION_CODE = /exceptionCode\s*=\s*"([^"]*)"/u
 
 /**
  * The inner text of the first real `<ServiceException>` element.
@@ -89,17 +111,53 @@ function exceptionText(body: string): string | undefined {
 }
 
 /**
- * The `<ServiceException>` text inside an OGC exception report, or `undefined` when the body is not one.
+ * The text of an `ExceptionText` element, with or without a namespace prefix.
+ *
+ * The prefix is captured so the closing tag matches the one the document opened,
+ * which keeps a prefixed element from closing on an unprefixed one.
+ */
+function owsExceptionText(body: string): string | undefined {
+	const open = OWS_EXCEPTION_TEXT_OPEN.exec(body)
+
+	if (!open) return undefined
+
+	const prefix = open[1]
+	const contentStart = open.index + open[0].length
+	const end = body.indexOf(prefix ? `</${prefix}:ExceptionText>` : "</ExceptionText>", contentStart)
+
+	// An unclosed element reads as unreadable rather than as empty, as the 1.x path does.
+	if (end === -1) return undefined
+
+	return body.slice(contentStart, end)
+}
+
+/**
+ * The exception message inside an OGC or OWS exception report, or `undefined` for a body that is neither.
+ *
+ * Both dialects are read, because a report shares the HTTP status a real answer arrives on
+ * and a caller that recognizes one spelling parses the other as data.
+ * `ServiceExceptionReport` contains `ExceptionReport`, so one detection serves both.
+ *
+ * A WFS 2.0 message is prefixed with its `exceptionCode` when the report states one,
+ * since `ows:exceptionCode/NoApplicableCode` and `ows:exceptionCode/InvalidParameterValue`
+ * are what distinguish a malformed request from a refused one.
  *
  * Split from the request so the detection is testable against captured bodies.
- * The report arrives with an XML declaration and an `xmlns` of `http://www.opengis.net/ogc`.
  */
 export function readOGCServiceException(body: string): string | undefined {
-	if (!body.includes("ServiceExceptionReport")) return undefined
+	if (!body.includes("ExceptionReport")) return undefined
 
-	// A body remains an exception report when its exception element cannot be read.
-	// A successful empty answer would misrepresent this exception report.
-	return decodeXML((exceptionText(body) ?? "the report carried no readable ServiceException element").trim())
+	if (body.includes("ServiceExceptionReport")) {
+		// A body remains an exception report when its exception element cannot be read.
+		// A successful empty answer would misrepresent this exception report.
+		return decodeXML((exceptionText(body) ?? "the report carried no readable ServiceException element").trim())
+	}
+
+	const message = owsExceptionText(body)
+	const code = OWS_EXCEPTION_CODE.exec(body)?.[1]?.trim()
+	const text = decodeXML((message ?? "the report carried no readable ExceptionText element").trim())
+
+	return code ? `${code}: ${text}` : text
 }
 
 /**
@@ -382,10 +440,44 @@ export async function readCheckedWFSFeatureCount(
 		}
 	}
 
+	// A page no larger than the reported count agrees with it whatever the truth is,
+	// so agreement alone does not establish that the count describes the type.
+	// Asking for one feature at the reported index does: a service holding exactly that many has none there.
+	//
+	// Poland's address service is why this request exists.
+	// It answers `numberMatched="1000"`, which is MapServer's own feature cap, and its pages cap
+	// at 1,000 too, so a 10-feature probe agreed with 1,000 while the type held 8,626,951 on 2026-10-02.
+	// A caller trusting that would have stored 1,000 features and recorded the type as read whole.
+	const { data: beyond } = await client.fetch<string>({
+		method: "GET",
+		url: options.wfsURL,
+		responseType: "text",
+		params: {
+			service: "WFS",
+			version: "2.0.0",
+			request: "GetFeature",
+			typeNames: options.typeNames,
+			count: "1",
+			startIndex: String(reported),
+		},
+	})
+
+	assertNoOGCServiceException(beyond, options.context)
+
+	const beyondReturned = rootAttribute(beyond, "numberReturned", { xml: true })
+
+	if (beyondReturned !== undefined && /^[1-9]\d*$/u.test(beyondReturned)) {
+		return {
+			reported,
+			usable: false,
+			because: `the service reported numberMatched=${reported} and then returned a feature at startIndex=${reported}, so the count is a floor rather than the type's size`,
+		}
+	}
+
 	return {
 		reported,
 		usable: true,
-		because: `a page of ${observed ?? probeSize} features agreed with the reported count`,
+		because: `a page of ${observed ?? probeSize} features agreed with the reported count, and startIndex=${reported} returned none`,
 	}
 }
 

@@ -10,10 +10,16 @@
  *
  *   Each adapter has its own directory, and the publisher decides which parent it sits under. An
  *   adapter reading one country's publisher lives under that country, at `lib/<iso2>/adapters/<id>/`:
- *   G-NAF under `au`, the FCC and USGov readers under `us`, BAN under `fr`, and Kartverket's
- *   Matrikkelen under `no`. A national publisher stays there even when its own files cover that
- *   state's dependencies, because the publisher is what the adapter reads: BAN carries France and ten
- *   overseas jurisdictions, and Matrikkelen carries Norway and Svalbard.
+ *   G-NAF under `au`, Digitaal Vlaanderen under `be`, ČÚZK under `cz`, Klimadatastyrelsen under
+ *   `dk`, Maa- ja Ruumiamet under `ee`, Ryhti under `fi`, BAN under `fr`, Kartverket's Matrikkelen
+ *   under `no`, EMUiA under `pl`, and the FCC and USGov readers under `us`. A national publisher
+ *   stays there even when its own files cover that state's dependencies, because the publisher is
+ *   what the adapter reads: BAN carries France and ten overseas jurisdictions, Matrikkelen carries
+ *   Norway and Svalbard, and Ryhti's one national file carries Åland beside the Finnish mainland.
+ *
+ *   Flanders is the counter-case worth stating. Its adapter sits under `be` and covers the Flemish
+ *   Region alone, because Brussels and Wallonia publish the INSPIRE theme through their own
+ *   services, so Belgium needs three adapters rather than one.
  *
  *   An adapter reading a publisher that is not any one country's lives here, at `lib/adapters/<id>/`.
  *   That is the aggregators, `./openaddresses/`, `./osm/`, `./overture/`, `./geonames/` and `./wof/`,
@@ -36,8 +42,18 @@ import { defaultAdapterRegistry } from "#adapters/registry"
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"
 import { gnafAdapter } from "#au/adapters/gnaf/adapter"
+import { brusselsAdapter } from "#be/adapters/brussels/adapter"
+import { vlaanderenAdapter } from "#be/adapters/vlaanderen/adapter"
+import { wallonieAdapter } from "#be/adapters/wallonie/adapter"
+import { czCuzkAdapter } from "#cz/adapters/cuzk/adapter"
+import { dkInspireAdapter } from "#dk/adapters/inspire/adapter"
+import { adsAdapter } from "#ee/adapters/ads/adapter"
+import { ryhtiAdapter } from "#fi/adapters/ryhti/adapter"
 import { banAdapter } from "#fr/adapters/ban/adapter"
+import { nlKadasterAdapter } from "#nl/adapters/kadaster/adapter"
 import { matrikkelenAdapter } from "#no/adapters/matrikkelen/adapter"
+import { emuiaAdapter } from "#pl/adapters/emuia/adapter"
+import { skInspireAdapter } from "#sk/adapters/inspire/adapter"
 import type { CorpusAdapter } from "#types"
 import { fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
 import { stateHiSchoolsAdapter } from "#us/adapters/state/hi-schools/adapter"
@@ -71,6 +87,16 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	geonamesPostalAdapter,
 	banAdapter,
 	matrikkelenAdapter,
+	ryhtiAdapter,
+	czCuzkAdapter,
+	dkInspireAdapter,
+	adsAdapter,
+	emuiaAdapter,
+	vlaanderenAdapter,
+	wallonieAdapter,
+	brusselsAdapter,
+	nlKadasterAdapter,
+	skInspireAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
 	overtureAdapter,
