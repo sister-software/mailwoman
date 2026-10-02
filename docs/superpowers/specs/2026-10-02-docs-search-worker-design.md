@@ -187,8 +187,11 @@ refused with status 400 when it is empty or longer than 200 characters.
 
 1. The lexical arm and the vector arm run concurrently.
 2. The lexical arm quotes each token of `q`, appends `*` to the last token, and queries `records_fts`
-   ordered by `bm25(records_fts, 10.0, 1.0)`, then `level`, then `position`, for 40 rows. When that
-   returns zero rows and `q` has at least 3 characters, it queries `records_trigram` in the same way.
+   ordered by `bm25(records_fts, 10.0, 1.0)`, then `level`, then `position`, for 40 rows. A token
+   without a letter or digit is dropped. When the primary query returns zero rows, the arm queries
+   `records_trigram` with the `OR` of every three-character window of every token, in the same order.
+   A trigram phrase alone matches substrings, so a misspelled word matches only through its windows:
+   the record that shares the largest number of windows with the query ranks first.
 3. The vector arm embeds `q` and queries Vectorize for the nearest 40 entries, then reads their rows
    from D1.
 4. Reciprocal rank fusion scores each record as the sum of `1 / (60 + rank)` over the arms that
@@ -219,6 +222,10 @@ failed lexical arm yields status 502, because D1 also holds the rows the vector 
 
 Responses carry `Access-Control-Allow-Origin` for `SITE_ORIGIN` and for `http://localhost:3000`, and
 `Cache-Control: public, max-age=300`. A request past the rate limit receives status 429.
+
+`GET /health` returns the stored record count and the latest row of `ingest_runs`. The deploy workflow
+fetches it as the deploy receipt. `POST /ingest` answers status 409 with the reason when a run is
+refused.
 
 ### Search modal
 
