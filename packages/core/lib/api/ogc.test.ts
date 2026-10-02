@@ -201,6 +201,63 @@ describe("readOGCServiceException", () => {
 
 		expect(readOGCServiceException(nested)).toBe("Invalid query - access denied.")
 	})
+
+	it("reads a WFS 2.0 report, which states its condition in an attribute", () => {
+		// Flanders' `ad:AddressRepresentation` answers this on every `startIndex`,
+		// and a reader knowing only the OGC 1.x spelling passed it through as a feature page.
+		const ows = `<?xml version="1.0" encoding="UTF-8"?>
+<ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/1.1" version="2.0.0">
+	<ows:Exception exceptionCode="NoApplicableCode">
+		<ows:ExceptionText>java.lang.RuntimeException: Failed to get property: {http://www.opengis.net/wfs/2.0}boundedBy</ows:ExceptionText>
+	</ows:Exception>
+</ows:ExceptionReport>`
+
+		expect(readOGCServiceException(ows)).toBe(
+			"NoApplicableCode: java.lang.RuntimeException: Failed to get property: {http://www.opengis.net/wfs/2.0}boundedBy"
+		)
+	})
+
+	it("reads a WFS 2.0 report whose OWS namespace is the default one", () => {
+		const unprefixed = `<ExceptionReport xmlns="http://www.opengis.net/ows/1.1">
+	<Exception exceptionCode="InvalidParameterValue" locator="outputFormat">
+		<ExceptionText>Failed to find response for output format geojson</ExceptionText>
+	</Exception>
+</ExceptionReport>`
+
+		expect(readOGCServiceException(unprefixed)).toBe(
+			"InvalidParameterValue: Failed to find response for output format geojson"
+		)
+	})
+
+	it("reports a WFS 2.0 report that states no message as unreadable rather than as empty", () => {
+		const bare = `<ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/1.1">
+	<ows:Exception exceptionCode="NoApplicableCode" />
+</ows:ExceptionReport>`
+
+		expect(readOGCServiceException(bare)).toBe("NoApplicableCode: the report carried no readable ExceptionText element")
+	})
+
+	it("decodes entities in a WFS 2.0 message", () => {
+		const encoded = `<ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/1.1"><ows:Exception exceptionCode="InvalidParameterValue"><ows:ExceptionText>Unknown namespace &#39;AD_Address&#39;</ows:ExceptionText></ows:Exception></ows:ExceptionReport>`
+
+		expect(readOGCServiceException(encoded)).toBe("InvalidParameterValue: Unknown namespace 'AD_Address'")
+	})
+
+	it("answers in linear time on a WFS 2.0 report whose message is never closed", () => {
+		const unclosed = `<ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/1.1"><ows:ExceptionText>${"x".repeat(200_000)}`
+		const started = performance.now()
+
+		expect(readOGCServiceException(unclosed)).toMatch(/no readable ExceptionText/u)
+		expect(performance.now() - started).toBeLessThan(1000)
+	})
+
+	it("returns nothing for a 2.0 feature collection, whose root shares no name with a report", () => {
+		expect(
+			readOGCServiceException(
+				'<wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0" numberMatched="unknown"/>'
+			)
+		).toBeUndefined()
+	})
 })
 
 describe("readWFSFeatureCount over an exception report", () => {

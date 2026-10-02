@@ -29,7 +29,7 @@
 
 import { type APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { elementText, rootAttribute } from "@mailwoman/core/html/document"
+import { rootAttribute } from "@mailwoman/core/html/document"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { VlaanderenHarvest } from "#be/adapters/vlaanderen/adapter"
@@ -100,34 +100,6 @@ export interface FeaturePageBody {
 	numberMatched: number | null
 }
 
-/**
- * Refuses a body that is a WFS 2.0 exception report.
- *
- * `assertNoOGCServiceException` from `@mailwoman/core/api` detects the OGC 1.x shape, keying on
- * `ServiceExceptionReport`. WFS 2.0 answers with `ows:ExceptionReport` carrying `ows:ExceptionText`,
- * which that detector does not recognize, so this service's own refusals arrive as an ordinary body:
- * `ad:AddressRepresentation` answers every `startIndex` with HTTP 400
- * `ows:ExceptionCode/NoApplicableCode` and
- * `java.lang.RuntimeException: Failed to get property:
- * {http://www.opengis.net/wfs/2.0}boundedBy`. Writing one into a harvest would store a refusal as a
- * page of no features.
- *
- * Both checks run, because a GeoServer instance may answer either shape.
- *
- * @throws When the body is an exception report, naming the code and the text it carried.
- */
-export function assertNoOWSExceptionReport(body: string): void {
-	if (!body.includes("ExceptionReport")) return
-
-	const text = elementText(body, "ExceptionText", { xml: true })?.trim()
-	const code = /exceptionCode="([^"]*)"/u.exec(body)?.[1]
-
-	throw new Error(
-		`vlaanderen ad wfs: the service answered an ows:ExceptionReport` +
-			`${code ? ` with exceptionCode ${code}` : ""}: ${text || "the report carried no readable ows:ExceptionText"}`
-	)
-}
-
 function readCount(body: string, attribute: string): number | null {
 	const value = rootAttribute(body, attribute, { xml: true })
 
@@ -151,8 +123,10 @@ export async function readVlaanderenPage(
 		params: { service: "WFS", version: WFS_VERSION, request: "GetFeature", ...params },
 	})
 
+	// `assertNoOGCServiceException` reads both the OGC 1.x and the WFS 2.0 report shapes,
+	// and this service answers the 2.0 one: `ad:AddressRepresentation` refuses every `startIndex`
+	// with HTTP 400 `NoApplicableCode`, which would otherwise be stored as a page of no features.
 	assertNoOGCServiceException(data, "vlaanderen ad wfs")
-	assertNoOWSExceptionReport(data)
 
 	return {
 		body: data,

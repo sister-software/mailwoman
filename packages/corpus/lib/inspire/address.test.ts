@@ -18,6 +18,7 @@ import {
 	placeName,
 	postalDescriptorCode,
 	thoroughfareName,
+	voidDesignatorTypes,
 	voidReason,
 } from "#inspire/address"
 
@@ -173,6 +174,50 @@ describe("componentHrefs", () => {
 
 		// The third component in the fixture carries `xlink:href=""`.
 		expect(componentHrefs(address!)).toHaveLength(2)
+	})
+})
+
+describe("voidDesignatorTypes", () => {
+	const VOID_NUMBER = `<r ${NS}><ad:Address gml:id="v">
+		<ad:locator><ad:AddressLocator>
+			<ad:designator><ad:LocatorDesignator>
+				<ad:designator xsi:nil="true" nilReason="http://inspire.ec.europa.eu/codelist/VoidReasonValue/Unknown" />
+				<ad:type xlink:href="http://inspire.ec.europa.eu/codelist/LocatorDesignatorTypeValue/buildingIdentifier" />
+			</ad:LocatorDesignator></ad:designator>
+		</ad:AddressLocator></ad:locator>
+	</ad:Address></r>`
+
+	it("separates a void designator from one the publisher never wrote", async () => {
+		const [voided] = await features(VOID_NUMBER, "ad:Address")
+		const [czech] = await features(CZ, "ad:Address")
+
+		// The void row states a `buildingIdentifier` it could not give a value for,
+		// so the type is absent from `designatorsByType` and present here.
+		expect(designatorsByType(voided!).has("buildingIdentifier")).toBe(false)
+		expect(voidDesignatorTypes(voided!).has("buildingIdentifier")).toBe(true)
+
+		// Czechia's row states a value, so the type appears in neither the void set nor as empty.
+		expect(designator(designatorsByType(czech!), "buildingIdentifier")).toBe("502")
+		expect(voidDesignatorTypes(czech!).size).toBe(0)
+	})
+
+	it("answers an empty set for an address with no locator", async () => {
+		const [address] = await features(`<r ${NS}><ad:Address gml:id="x" /></r>`, "ad:Address")
+
+		expect(voidDesignatorTypes(address!).size).toBe(0)
+	})
+
+	it("counts a void value whose own type is void, which cannot be placed", async () => {
+		const bothVoid = `<r ${NS}><ad:Address><ad:locator><ad:AddressLocator>
+			<ad:designator><ad:LocatorDesignator>
+				<ad:designator xsi:nil="true" />
+				<ad:type xsi:nil="true" />
+			</ad:LocatorDesignator></ad:designator>
+		</ad:AddressLocator></ad:locator></ad:Address></r>`
+
+		const [address] = await features(bothVoid, "ad:Address")
+
+		expect(voidDesignatorTypes(address!).has("")).toBe(true)
 	})
 })
 

@@ -189,9 +189,26 @@ describe("paging", () => {
 		expect(page.numberMatched).toBeNull()
 	})
 
-	it("refuses a body that is not the JSON it asked for", async () => {
+	it("refuses a WFS 2.0 exception report as a report rather than as unparseable JSON", async () => {
+		// This body used to reach `JSON.parse` and surface as "not JSON", because the
+		// detector knew only the OGC 1.x `ServiceExceptionReport` spelling.
+		// A service's refusal is now named as one.
 		await expect(
 			readFeaturePage(stubFetchingBodies("<ows:ExceptionReport/>"), {
+				wfsURL: "https://example.invalid/wfs",
+				typeName: "ad:Address",
+				outputFormat: "application/json",
+				count: 10,
+				startIndex: 0,
+				supportsPaging: true,
+				context: "test",
+			})
+		).rejects.toThrow(/exception report/u)
+	})
+
+	it("refuses a body that is not the JSON it asked for and is not a report either", async () => {
+		await expect(
+			readFeaturePage(stubFetchingBodies("<html><body>maintenance</body></html>"), {
 				wfsURL: "https://example.invalid/wfs",
 				typeName: "ad:Address",
 				outputFormat: "application/json",

@@ -114,6 +114,8 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
 
 		const value = childElement(locatorDesignator, "ad:designator")
 
+		// A void designator is reported by `voidDesignatorTypes` rather than here, because a
+		// value the publisher marked unknown is not a value and must not reach a component.
 		if (!value || isVoid(value)) continue
 
 		const existing = byType.get(name)
@@ -135,6 +137,44 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
  * Czechia asks for `buildingIdentifier`, the Netherlands for `addressNumber`,
  * Wallonia for `LocatorDesignatorTypeValue/addressIdentifierGeneral`.
  */
+/**
+ * The locator-designator types this address marks void, by their INSPIRE type name.
+ *
+ * {@linkcode designatorsByType} leaves a void designator out, so on its own it cannot
+ * separate a value the publisher marked unknown from one the publisher never wrote.
+ * The repository's partial-read rule needs that separation: an unreadable requested
+ * value has to be reported rather than turned into an absence.
+ *
+ * A caller reads this when the difference changes what it does.
+ * An adapter that refuses a row carrying no house number should report a void `buildingIdentifier` as
+ * a value it could not read, and an absent one as an address the publisher states has no number.
+ */
+export function voidDesignatorTypes(address: MarkupElement): ReadonlySet<string> {
+	const voided = new Set<string>()
+	const locator = elementAtPath(address, "ad:locator", "ad:AddressLocator")
+
+	if (!locator) return voided
+
+	for (const wrapper of childElements(locator, "ad:designator")) {
+		const locatorDesignator = childElement(wrapper, "ad:LocatorDesignator")
+
+		if (!locatorDesignator) continue
+
+		const value = childElement(locatorDesignator, "ad:designator")
+
+		if (!value || !isVoid(value)) continue
+
+		const type = childElement(locatorDesignator, "ad:type")
+		const name = type && !isVoid(type) ? (codelistValue(type.attributes["xlink:href"]) ?? type.text) : undefined
+
+		// A void value whose own type is void or absent cannot be placed, so it is reported under
+		// the empty name rather than dropped, which keeps the address's unreadable parts countable.
+		voided.add(name || "")
+	}
+
+	return voided
+}
+
 export function designator(
 	byType: ReadonlyMap<string, readonly string[]>,
 	...types: readonly string[]
