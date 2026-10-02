@@ -80,7 +80,7 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { openReadStream } from "@mailwoman/core/fs/streams"
-import { streamMarkupElements, type MarkupElement } from "@mailwoman/core/html/elements"
+import type { MarkupElement } from "@mailwoman/core/html/elements"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -98,6 +98,7 @@ import {
 	voidDesignatorTypes,
 } from "#inspire/address"
 import { UnresolvedComponentReferenceError, VoidDesignatorError } from "#inspire/errors"
+import { streamInspireRows } from "#inspire/stream"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -150,7 +151,7 @@ export const NL_KADASTER_DEFAULT_LICENSE = "CC0-1.0"
  * All four are read in one pass, because the document writes the referenced features and the addresses
  * interleaved over 29,677,448,685 bytes and a pass per type would inflate the download once per type.
  */
-const FEATURE_TYPES = ["ad:Address", "ad:ThoroughfareName", "ad:AddressAreaName", "ad:AdminUnitName"] as const
+const COMPONENT_TYPES = ["ad:ThoroughfareName", "ad:AddressAreaName", "ad:AdminUnitName"] as const
 
 /**
  * What one referenced feature contributes to an address.
@@ -232,61 +233,20 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				/**
-				 * The value of every referenced feature read so far, by its `gml:id`.
-				 */
-				const referenced = new Map<string, ReferencedValue>()
-				/**
-				 * Addresses naming a reference the pass had not yet indexed when they arrived.
-				 *
-				 * The measured prefix writes 300,318 referenced features ahead of its first address
-				 * and deferred 0 of 345,309, so this list stays empty on the published document.
-				 * It exists because only the document's own ordering separates a reference
-				 * that has not arrived yet from one the publisher never wrote.
-				 */
-				const deferred: MarkupElement[] = []
-
-				for await (const element of streamMarkupElements(documentChunks(documentPath), FEATURE_TYPES, {
-					xml: true,
+				// The published document writes 300,318 referenced features ahead of its first address
+				// and held 0 of 345,309 measured, so the driver's holding list stays empty here.
+				// It exists because only the document's own ordering separates a reference
+				// that has not arrived yet from one the publisher never wrote.
+				for await (const row of streamInspireRows<ReferencedValue>({
+					chunks: documentChunks(documentPath),
+					componentElements: COMPONENT_TYPES,
+					// One string per feature rather than its subtree, which holds 300,318 strings
+					// instead of 300,318 trees.
+					index: referencedValue,
+					compose: (address, referenced, final) => composeRow(address, referenced, { final }),
+					limit: opts.limit === undefined ? undefined : opts.limit - emitted,
+					signal: opts.signal,
 				})) {
-					if (opts.signal?.aborted) break
-
-					if (element.name !== "ad:Address") {
-						const id = element.attributes["gml:id"]
-
-						if (id) {
-							referenced.set(id, referencedValue(element))
-						}
-
-						continue
-					}
-
-					if (opts.limit !== undefined && emitted >= opts.limit) break
-
-					const row = composeRow(element, referenced)
-
-					if (row === "deferred") {
-						deferred.push(element)
-
-						continue
-					}
-
-					if (!row) continue
-
-					yield row
-
-					emitted++
-				}
-
-				for (const element of deferred) {
-					if (opts.signal?.aborted) break
-
-					if (opts.limit !== undefined && emitted >= opts.limit) break
-
-					const row = composeRow(element, referenced, { final: true })
-
-					if (!row || row === "deferred") continue
-
 					yield row
 
 					emitted++

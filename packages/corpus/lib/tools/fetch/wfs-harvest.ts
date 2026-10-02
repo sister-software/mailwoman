@@ -32,7 +32,7 @@
  *    below the requested size is read whole instead of being read in strides that skip features.
  */
 
-import { assertNoOGCServiceException, type APIClient, type CheckedWFSFeatureCount } from "@mailwoman/core/api"
+import { APIClient, assertNoOGCServiceException, type CheckedWFSFeatureCount } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readFileRange, tryStat } from "@mailwoman/core/fs/readers"
 import { appendLocalTextFile, makeDirectories, removePathIfPresent, truncateFile } from "@mailwoman/core/fs/writers"
@@ -41,7 +41,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { readManifest, writeManifest } from "#tools/fetch/download"
+import { readManifest, writeManifest, type FetchSummary } from "#tools/fetch/download"
 
 /**
  * The WFS version this repository's harvesters speak.
@@ -826,4 +826,118 @@ export async function harvestPagedWFS(options: PagedWFSHarvestOptions): Promise<
 	await writeManifest(manifestPath, manifest)
 
 	return manifest
+}
+
+/**
+ * What a registered `mailwoman corpus fetch` entry needs to run one service's harvest.
+ */
+export interface RunWFSHarvestOptions {
+	/**
+	 * The slug the harvest is written under and reported by, which matches the adapter's own id.
+	 */
+	slug: string
+
+	/**
+	 * Where the harvest directory sits, as the fetch registry hands it over.
+	 */
+	outRoot: (segment: string) => PathBuilderLike
+
+	/**
+	 * The data file inside the harvest directory, which is also the adapter's `inputPath`.
+	 */
+	filename: string
+
+	/**
+	 * What a stored manifest has to agree with before its harvest counts as current.
+	 */
+	expect: HarvestCurrencyExpectation
+
+	/**
+	 * The name the client reports itself under.
+	 */
+	displayName: string
+
+	/**
+	 * The floor between two requests to one government host.
+	 */
+	minRequestIntervalMs: number
+
+	/**
+	 * Runs the harvest against a client the caller does not own.
+	 */
+	harvest: (client: Pick<APIClient, "fetch">) => Promise<WFSHarvestManifest>
+
+	/**
+	 * A client to use rather than constructing one, which a test supplies.
+	 */
+	client?: Pick<APIClient, "fetch">
+
+	/**
+	 * A page cap, which makes an incomplete harvest a success.
+	 */
+	maxPages?: number
+}
+
+/**
+ * Runs one service's harvest and reports it as a fetch registry entry does.
+ *
+ * Estonia and Poland wrote this sequence twice: ask whether the harvest on disk is
+ * already current, construct a paced client unless the caller supplied one, run,
+ * report, and decide whether an incomplete harvest is a failure.
+ * A third WFS source would have written it a third time.
+ *
+ * The currency check runs before any request, so a complete harvest or a bounded
+ * probe that already holds its pages makes no request at all.
+ *
+ * A bounded run stops short by instruction rather than by failure, so a page cap the caller
+ * asked for reads as a success while an incomplete harvest without one reads as a failure.
+ */
+export async function runWFSHarvest(
+	options: RunWFSHarvestOptions,
+	report?: (line: string) => void
+): Promise<FetchSummary> {
+	report?.(`=== ${options.slug}`)
+
+	const destination = options.outRoot(options.slug)
+
+	const current = await readCurrentHarvest({
+		outputDir: destination,
+		filename: options.filename,
+		context: options.slug,
+		expect: options.expect,
+		maxPages: options.maxPages,
+	})
+
+	if (current) {
+		report?.(
+			`  ✓ Already harvested: ${current.features_written} features over ${current.pages.length} pages — no request made.`
+		)
+
+		return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
+	}
+
+	let manifest: WFSHarvestManifest
+
+	if (options.client) {
+		manifest = await options.harvest(options.client)
+	} else {
+		// Bounded retry, because a harvest is many requests and one 5xx would otherwise end the run.
+		await using client = new APIClient({
+			displayName: options.displayName,
+			minRequestIntervalMs: options.minRequestIntervalMs,
+			retry: true,
+		})
+
+		manifest = await options.harvest(client)
+	}
+
+	report?.(
+		`  ${manifest.complete ? "✓" : "partial:"} ${manifest.features_written} features over ${manifest.pages.length} pages, ${manifest.bytes} bytes`
+	)
+
+	const bounded = options.maxPages !== undefined && manifest.pages.length >= options.maxPages
+
+	return manifest.complete || bounded
+		? { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
+		: { fetched: 0, skipped: 0, failed: 1, failedCodes: [options.slug] }
 }

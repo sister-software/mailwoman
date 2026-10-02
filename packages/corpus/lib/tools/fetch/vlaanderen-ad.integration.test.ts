@@ -20,9 +20,10 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { describe, expect, it } from "vitest"
 
 import { createVlaanderenAdapter } from "#be/adapters/vlaanderen/adapter"
+import { LIVE_PUBLISHER_TESTS } from "#test-kit"
 import { harvestVlaanderenAD, MAX_PAGE_SIZE } from "#tools/fetch/vlaanderen-ad"
 
-describe("harvestVlaanderenAD against the live service", () => {
+describe.runIf(LIVE_PUBLISHER_TESTS)("harvestVlaanderenAD against the live service", () => {
 	it("writes a harvest the adapter reads into rows", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-vlaanderen-live-")
 

@@ -60,7 +60,7 @@
  * after truncating back to the last page boundary.
  */
 
-import { APIClient, countWFSFeaturesByPaging, readCheckedWFSFeatureCount } from "@mailwoman/core/api"
+import { countWFSFeaturesByPaging, readCheckedWFSFeatureCount, type APIClient } from "@mailwoman/core/api"
 import type { PathBuilderLike } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
@@ -68,7 +68,7 @@ import { readWFSCapabilities, type WFSCapabilities } from "#tools/fetch/inspire-
 import {
 	collectionOpeningTag,
 	harvestPagedWFS,
-	readCurrentHarvest,
+	runWFSHarvest,
 	readWFSMarkupPage,
 	rootContent,
 	statedFeatureCount,
@@ -331,60 +331,30 @@ export async function fetchEMUiAPL(
 	options: FetchEMUiAPLOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	report?.(`=== ${SLUG}`)
-
-	const destination = options.outRoot(SLUG)
+	// The service caps a page at 1,000, so a larger request is answered with 1,000 either way
+	// and the manifest records what was asked for rather than what arrived.
 	const pageSize = Math.min(options.pageSize ?? PL_EMUIA_PAGE_SIZE, PL_EMUIA_PAGE_SIZE)
 
-	// Asked before any request, so a current harvest costs none.
-	const current = await readCurrentHarvest({
-		outputDir: destination,
-		filename: PL_EMUIA_HARVEST_FILE,
-		context: CONTEXT,
-		expect: { wfsURL: PL_EMUIA_WFS, sortBy: PL_EMUIA_SORT_BY, pageSize },
-		maxPages: options.maxPages,
-	})
-
-	if (current) {
-		report?.(
-			`  ✓ Already harvested: ${current.features_written} features over ${current.pages.length} pages — no request made.`
-		)
-
-		return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
-	}
-
-	const run = async (client: Pick<APIClient, "fetch">): Promise<WFSHarvestManifest> =>
-		await harvestEMUiAPL(client, {
-			outputDir: destination,
-			pageSize,
-			maxPages: options.maxPages,
-			measureCount: options.measureCount,
-			signal: options.signal,
-			report,
-		})
-
-	let manifest: WFSHarvestManifest
-
-	if (options.client) {
-		manifest = await run(options.client)
-	} else {
-		// Bounded retry, because a full harvest is 8,627 requests and a single 5xx would otherwise end the run.
-		await using client = new APIClient({
+	return await runWFSHarvest(
+		{
+			slug: SLUG,
+			outRoot: options.outRoot,
+			filename: PL_EMUIA_HARVEST_FILE,
+			expect: { wfsURL: PL_EMUIA_WFS, sortBy: PL_EMUIA_SORT_BY, pageSize },
 			displayName: "pl-emuia",
 			minRequestIntervalMs: MIN_REQUEST_INTERVAL_MS,
-			retry: true,
-		})
-
-		manifest = await run(client)
-	}
-
-	report?.(
-		`  ${manifest.complete ? "✓" : "partial:"} ${manifest.features_written} features over ${manifest.pages.length} pages, ${manifest.bytes} bytes`
+			client: options.client,
+			maxPages: options.maxPages,
+			harvest: async (client) =>
+				await harvestEMUiAPL(client, {
+					outputDir: options.outRoot(SLUG),
+					pageSize,
+					maxPages: options.maxPages,
+					measureCount: options.measureCount,
+					signal: options.signal,
+					report,
+				}),
+		},
+		report
 	)
-
-	const bounded = options.maxPages !== undefined && manifest.pages.length >= options.maxPages
-
-	return manifest.complete || bounded
-		? { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
-		: { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 }

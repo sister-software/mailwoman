@@ -22,6 +22,7 @@ import {
 	ryhtiInputPath,
 	fetchRyhti,
 } from "#fi/tools/fetch/ryhti"
+import { LIVE_PUBLISHER_TESTS } from "#test-kit"
 import { readManifest } from "#tools/fetch/download"
 
 const TIMEOUT_MS = 120_000
@@ -39,7 +40,7 @@ const FULL_FETCH = process.env.MAILWOMAN_RYHTI_FULL_FETCH === "1"
  */
 const FULL_FETCH_TIMEOUT_MS = 1_800_000
 
-describe("readRyhtiHead against paikkatiedot.ymparisto.fi", () => {
+describe.runIf(LIVE_PUBLISHER_TESTS)("readRyhtiHead against paikkatiedot.ymparisto.fi", () => {
 	it(
 		"states a length and a modification time, which is what the re-run check compares",
 		async () => {
@@ -79,7 +80,7 @@ describe("readRyhtiHead against paikkatiedot.ymparisto.fi", () => {
 	)
 })
 
-describe("fetchRyhti against paikkatiedot.ymparisto.fi", () => {
+describe.runIf(LIVE_PUBLISHER_TESTS)("fetchRyhti against paikkatiedot.ymparisto.fi", () => {
 	it.runIf(FULL_FETCH)(
 		"writes the CSV the adapter reads, then asks for nothing on a second run",
 		async () => {

@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest"
 
 import { createCzCuzkAdapter } from "#cz/adapters/cuzk/adapter"
 import { CZ_CUZK_REQUEST_INTERVAL_MS, type CzCuzkHarvestManifest, harvestCzCuzk } from "#cz/tools/fetch/cuzk"
+import { LIVE_PUBLISHER_TESTS } from "#test-kit"
 import { readManifest } from "#tools/fetch/download"
 
 /**
@@ -24,7 +25,7 @@ const MUNICIPALITIES = ["584061", "584282"]
  */
 const TIMEOUT_MS = 180_000
 
-describe("harvestCzCuzk against atom.cuzk.gov.cz", () => {
+describe.runIf(LIVE_PUBLISHER_TESTS)("harvestCzCuzk against atom.cuzk.gov.cz", () => {
 	it(
 		"harvests the named municipalities and leaves archives the adapter can open",
 		async () => {

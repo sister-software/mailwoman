@@ -28,7 +28,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { streamMarkupElements, type MarkupElement } from "@mailwoman/core/html/elements"
+import type { MarkupElement } from "@mailwoman/core/html/elements"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -45,6 +45,7 @@ import {
 	thoroughfareName,
 } from "#inspire/address"
 import { inspireGMLChunks } from "#inspire/archive"
+import { streamInspireRows } from "#inspire/stream"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -69,16 +70,13 @@ export const CZ_CUZK_COUNTRIES: readonly string[] = ["CZ"]
 export const CZ_CUZK_LICENSE = "no conditions apply to access and use"
 
 /**
- * The INSPIRE feature types the adapter reads from one archive.
+ * The feature types an address references, which the adapter indexes as they arrive.
  *
- * `ad:Address` carries the number inline.
- * The other four hold the street, the postcode and the two place names an address references.
- *
- * They are read in the same pass, because an archive writes them interleaved
- * with the addresses rather than ahead of them.
+ * `ad:Address` carries its number inline and is read by the driver rather than listed here.
+ * These four hold the street, the postcode and the two place names, and they are read in the same pass
+ * because an archive writes them interleaved with the addresses rather than ahead of them.
  */
-const FEATURE_TYPES = [
-	"ad:Address",
+const COMPONENT_TYPES = [
 	"ad:ThoroughfareName",
 	"ad:PostalDescriptor",
 	"ad:AdminUnitName",
@@ -165,66 +163,26 @@ export function createCzCuzkAdapter(): CorpusAdapter {
 
 			let emitted = 0
 
+			// One archive per municipality, each a document whose references resolve inside it,
+			// so the index is per archive rather than shared across the 6,258.
 			for (const archivePath of await archivePaths(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				{
-					/**
-					 * Every referenced feature in this member, by its `gml:id`.
-					 */
-					const referenced = new Map<string, MarkupElement>()
-					/**
-					 * Addresses naming a reference the pass had not yet indexed when they arrived.
-					 */
-					const deferred: MarkupElement[] = []
+				for await (const row of streamInspireRows<MarkupElement>({
+					chunks: inspireGMLChunks(archivePath, GML_MEMBER),
+					componentElements: COMPONENT_TYPES,
+					// The subtree is kept, because one feature answers a street, a postcode
+					// or a place name depending on which type it is.
+					index: (feature) => feature,
+					compose: (address, referenced, final) => composeRow(address, referenced, { final }),
+					limit: opts.limit === undefined ? undefined : opts.limit - emitted,
+					signal: opts.signal,
+				})) {
+					yield row
 
-					for await (const element of streamMarkupElements(inspireGMLChunks(archivePath, GML_MEMBER), FEATURE_TYPES, {
-						xml: true,
-					})) {
-						if (opts.signal?.aborted) break
-
-						if (element.name !== "ad:Address") {
-							const id = element.attributes["gml:id"]
-
-							if (id) {
-								referenced.set(id, element)
-							}
-
-							continue
-						}
-
-						if (opts.limit !== undefined && emitted >= opts.limit) break
-
-						const row = composeRow(element, referenced)
-
-						if (row === "deferred") {
-							deferred.push(element)
-
-							continue
-						}
-
-						if (!row) continue
-
-						yield row
-
-						emitted++
-					}
-
-					for (const element of deferred) {
-						if (opts.signal?.aborted) break
-
-						if (opts.limit !== undefined && emitted >= opts.limit) break
-
-						const row = composeRow(element, referenced, { final: true })
-
-						if (!row || row === "deferred") continue
-
-						yield row
-
-						emitted++
-					}
+					emitted++
 				}
 			}
 		},

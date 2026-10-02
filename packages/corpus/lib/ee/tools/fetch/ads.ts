@@ -37,7 +37,7 @@
  * and the manifest records them per page instead.
  */
 
-import { APIClient, readCheckedWFSFeatureCount, type ReadWFSFeatureCountOptions } from "@mailwoman/core/api"
+import { readCheckedWFSFeatureCount, type APIClient, type ReadWFSFeatureCountOptions } from "@mailwoman/core/api"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
@@ -45,7 +45,7 @@ import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { readFeaturePage, readWFSCapabilities } from "#tools/fetch/inspire-addresses"
 import {
 	harvestPagedWFS,
-	readCurrentHarvest,
+	runWFSHarvest,
 	statedFeatureCount,
 	type HarvestedPayload,
 	type WFSHarvestManifest,
@@ -244,61 +244,27 @@ export type FetchADSEEOptions = BaseFetchOptions &
  * no request, and an interrupted one resumes at the page after the last that reached disk.
  */
 export async function fetchADSEE(options: FetchADSEEOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	report?.(`=== ${SLUG}`)
-
-	const destination = options.outRoot(SLUG)
 	const pageSize = options.pageSize ?? EE_ADS_PAGE_SIZE
 
-	// Asked before the capabilities document, so a current harvest costs no request.
-	const current = await readCurrentHarvest({
-		outputDir: destination,
-		filename: EE_ADS_HARVEST_FILE,
-		context: CONTEXT,
-		expect: { wfsURL: EE_ADS_WFS, sortBy: EE_ADS_SORT_BY, pageSize },
-		maxPages: options.maxPages,
-	})
-
-	if (current) {
-		report?.(
-			`  ✓ Already harvested: ${current.features_written} features over ${current.pages.length} pages — no request made.`
-		)
-
-		return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
-	}
-
-	const run = async (client: Pick<APIClient, "fetch">): Promise<WFSHarvestManifest> =>
-		await harvestADSEE(client, {
-			outputDir: destination,
-			pageSize,
-			maxPages: options.maxPages,
-			signal: options.signal,
-			report,
-		})
-
-	let manifest: WFSHarvestManifest
-
-	if (options.client) {
-		manifest = await run(options.client)
-	} else {
-		// Bounded retry, because a full harvest is 76 requests and a single 5xx would otherwise end the run.
-		await using client = new APIClient({
+	return await runWFSHarvest(
+		{
+			slug: SLUG,
+			outRoot: options.outRoot,
+			filename: EE_ADS_HARVEST_FILE,
+			expect: { wfsURL: EE_ADS_WFS, sortBy: EE_ADS_SORT_BY, pageSize },
 			displayName: "ee-ads",
 			minRequestIntervalMs: MIN_REQUEST_INTERVAL_MS,
-			retry: true,
-		})
-
-		manifest = await run(client)
-	}
-
-	report?.(
-		`  ${manifest.complete ? "✓" : "partial:"} ${manifest.features_written} features over ${manifest.pages.length} pages, ${manifest.bytes} bytes`
+			client: options.client,
+			maxPages: options.maxPages,
+			harvest: async (client) =>
+				await harvestADSEE(client, {
+					outputDir: options.outRoot(SLUG),
+					pageSize,
+					maxPages: options.maxPages,
+					signal: options.signal,
+					report,
+				}),
+		},
+		report
 	)
-
-	// A bounded run stops short by instruction rather than by failure, so the page cap the
-	// caller asked for is a success and an incomplete harvest without one is not.
-	const bounded = options.maxPages !== undefined && manifest.pages.length >= options.maxPages
-
-	return manifest.complete || bounded
-		? { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
-		: { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 }

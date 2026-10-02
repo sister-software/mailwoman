@@ -20,8 +20,9 @@ import { describe, expect, it } from "vitest"
 
 import { createEMUiAAdapter } from "#pl/adapters/emuia/adapter"
 import { harvestEMUiAPL, PL_EMUIA_HARVEST_FILE } from "#pl/tools/fetch/emuia"
+import { LIVE_PUBLISHER_TESTS } from "#test-kit"
 
-describe("harvestEMUiAPL against the live service", () => {
+describe.runIf(LIVE_PUBLISHER_TESTS)("harvestEMUiAPL against the live service", () => {
 	it("writes a GML document the adapter reads into rows", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-emuia-live-")
 		await using client = new APIClient({ displayName: "pl-emuia" })

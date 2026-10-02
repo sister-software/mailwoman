@@ -21,8 +21,9 @@ import { describe, expect, it } from "vitest"
 
 import { createADSAdapter } from "#ee/adapters/ads/adapter"
 import { EE_ADS_HARVEST_FILE, harvestADSEE } from "#ee/tools/fetch/ads"
+import { LIVE_PUBLISHER_TESTS } from "#test-kit"
 
-describe("harvestADSEE against the live service", () => {
+describe.runIf(LIVE_PUBLISHER_TESTS)("harvestADSEE against the live service", () => {
 	it("writes a JSONL file the adapter reads into rows", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-ads-live-")
 		await using client = new APIClient({ displayName: "ee-ads" })
