@@ -47,11 +47,14 @@ describe("readWFSFeatureCount", () => {
 })
 
 describe("readCheckedWFSFeatureCount", () => {
-	it("accepts a count a page agrees with", async () => {
+	it("accepts a count a page agrees with and no feature sits past", async () => {
+		// Slovakia's shape: the hits count, a page agreeing with it, and an empty page at the
+		// count's own index, which is what a service holding exactly that many answers.
 		const count = await readCheckedWFSFeatureCount(
 			stubFetchingBodies(
 				'<wfs:FeatureCollection numberMatched="1704196" numberReturned="0"/>',
-				'<wfs:FeatureCollection numberMatched="1704196" numberReturned="10"/>'
+				'<wfs:FeatureCollection numberMatched="1704196" numberReturned="10"/>',
+				'<wfs:FeatureCollection numberMatched="1704196" numberReturned="0"/>'
 			),
 			options
 		)
@@ -60,9 +63,6 @@ describe("readCheckedWFSFeatureCount", () => {
 	})
 
 	it("refuses a count that returns more features than it admits", async () => {
-		// Poland's INSPIRE Addresses service answers numberMatched="1" at every
-		// startIndex for a national address register.
-		// Recording that number would report one address for a country.
 		const count = await readCheckedWFSFeatureCount(
 			stubFetchingBodies(
 				'<wfs:FeatureCollection numberMatched="1" numberReturned="0"/>',
@@ -74,6 +74,42 @@ describe("readCheckedWFSFeatureCount", () => {
 		expect(count.usable).toBe(false)
 		expect(count.reported).toBe(1)
 		expect(count.because).toMatch(/describes its own response rather than the type/u)
+	})
+
+	it("refuses a count a page cannot exceed, which agreement alone cannot detect", async () => {
+		// Poland's INSPIRE Addresses service answers numberMatched="1000", MapServer's
+		// own feature cap, and caps its pages at 1,000 as well.
+		// A 10-feature probe therefore agrees with the count while the type held 8,626,951 on 2026-10-02.
+		// Only the third request separates them: a service holding 1,000 features returns
+		// none at startIndex=1000, and this one returns a feature.
+		const count = await readCheckedWFSFeatureCount(
+			stubFetchingBodies(
+				'<wfs:FeatureCollection numberMatched="1000" numberReturned="0"/>',
+				'<wfs:FeatureCollection numberMatched="unknown" numberReturned="10"/>',
+				'<wfs:FeatureCollection numberMatched="unknown" numberReturned="1"/>'
+			),
+			options
+		)
+
+		expect(count.usable).toBe(false)
+		expect(count.reported).toBe(1000)
+		expect(count.because).toMatch(/a floor rather than the type's size/u)
+	})
+
+	it("accepts a count whose index answers an absent numberReturned rather than a feature", async () => {
+		// A service that states no `numberReturned` on the probe past the count has not shown a
+		// feature there, so the count stands rather than being refused on a missing attribute.
+		const count = await readCheckedWFSFeatureCount(
+			stubFetchingBodies(
+				'<wfs:FeatureCollection numberMatched="42" numberReturned="0"/>',
+				'<wfs:FeatureCollection numberReturned="10"/>',
+				"<wfs:FeatureCollection/>"
+			),
+			options
+		)
+
+		expect(count.usable).toBe(true)
+		expect(count.reported).toBe(42)
 	})
 
 	it("reports a declined count as unread rather than as none", async () => {

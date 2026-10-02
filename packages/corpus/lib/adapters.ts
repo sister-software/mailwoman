@@ -42,14 +42,18 @@ import { defaultAdapterRegistry } from "#adapters/registry"
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"
 import { gnafAdapter } from "#au/adapters/gnaf/adapter"
+import { brusselsAdapter } from "#be/adapters/brussels/adapter"
 import { vlaanderenAdapter } from "#be/adapters/vlaanderen/adapter"
+import { wallonieAdapter } from "#be/adapters/wallonie/adapter"
 import { czCuzkAdapter } from "#cz/adapters/cuzk/adapter"
 import { dkInspireAdapter } from "#dk/adapters/inspire/adapter"
 import { adsAdapter } from "#ee/adapters/ads/adapter"
 import { ryhtiAdapter } from "#fi/adapters/ryhti/adapter"
 import { banAdapter } from "#fr/adapters/ban/adapter"
+import { nlKadasterAdapter } from "#nl/adapters/kadaster/adapter"
 import { matrikkelenAdapter } from "#no/adapters/matrikkelen/adapter"
 import { emuiaAdapter } from "#pl/adapters/emuia/adapter"
+import { skInspireAdapter } from "#sk/adapters/inspire/adapter"
 import type { CorpusAdapter } from "#types"
 import { fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
 import { stateHiSchoolsAdapter } from "#us/adapters/state/hi-schools/adapter"
@@ -89,6 +93,10 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	adsAdapter,
 	emuiaAdapter,
 	vlaanderenAdapter,
+	wallonieAdapter,
+	brusselsAdapter,
+	nlKadasterAdapter,
+	skInspireAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
 	overtureAdapter,

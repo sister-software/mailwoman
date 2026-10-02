@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "04a8c54ea92021318bb72618123b68e5570201fda76cc05acf24fd9fe3c27c63",
+	"contentDigest": "da52b008c8de4bd2a97d162a310a7ba97d85910b21c0e0e887e32d7f7689c84c",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -11098,6 +11098,7 @@
 			"publisher": "Kadaster",
 			"sourceURL": "https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml",
 			"note": "The feature is an address point with a house-number designator and a thoroughfare name. It carries no party.",
+			"adapterID": "nl-kadaster",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -11406,6 +11407,7 @@
 			"publisher": "Ministerstvo vnútra Slovenskej republiky",
 			"sourceURL": "https://rageo.minv.sk/geoserver/ad/wfs",
 			"note": "A feature is an address point with an address-number designator that references a thoroughfare name, a postal descriptor and administrative units. It carries no party.",
+			"adapterID": "sk-inspire",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -11463,6 +11465,7 @@
 			"publisher": "Service public de Wallonie (SPW)",
 			"sourceURL": "https://geoservices.wallonie.be/inspire/atom/AD_Service.xml",
 			"note": "A feature is an address point with a house-number designator that references a thoroughfare name, an address-area name, a postal descriptor and an administrative unit. It carries no party. Coverage is the Walloon Region rather than Belgium.",
+			"adapterID": "wallonie",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},

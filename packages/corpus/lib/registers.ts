@@ -93,6 +93,35 @@ export const SourceRegister = {
 	 */
 	VlaanderenInspireAddresses: "be-vlaanderen-inspire-ad",
 	/**
+	 * The INSPIRE Addresses theme of the Service public de Wallonie, out of its ICAR register.
+	 *
+	 * Coverage is the Walloon Region.
+	 * Flanders and Brussels publish the theme through their own services,
+	 * so a Belgian build reads three registers.
+	 */
+	WallonieInspireAddresses: "be-wallonie-inspire-ad",
+	/**
+	 * The INSPIRE Addresses theme of the Brussels Regional Informatics Centre, out of UrbIS.
+	 *
+	 * Coverage is the Brussels-Capital Region.
+	 * The address-source register holds no row for this publisher, so no license is elected
+	 * and `createIneligibilityReader` refuses every row the adapter emits.
+	 *
+	 * The id exists so the adapter can name its publication once a row is written.
+	 */
+	BrusselsInspireAddresses: "be-brussels-inspire-ad",
+	/**
+	 * The INSPIRE Addresses theme of Kadaster, the Dutch cadastre.
+	 *
+	 * One ATOM entry serves the whole country as a single gzipped GML.
+	 */
+	KadasterInspireAddresses: "nl-kadaster-inspire-ad",
+	/**
+	 * The INSPIRE Addresses theme the Ministerstvo vnútra Slovenskej republiky serves
+	 * out of the national address register, as a paged WFS 2.0.
+	 */
+	SlovakiaInspireAddresses: "sk-minv-inspire-ad",
+	/**
 	 * HM Land Registry Price Paid Data, England and Wales.
 	 */
 	LandRegistryPricePaid: "gb-hm-land-registry-ppd",

@@ -440,10 +440,44 @@ export async function readCheckedWFSFeatureCount(
 		}
 	}
 
+	// A page no larger than the reported count agrees with it whatever the truth is,
+	// so agreement alone does not establish that the count describes the type.
+	// Asking for one feature at the reported index does: a service holding exactly that many has none there.
+	//
+	// Poland's address service is why this request exists.
+	// It answers `numberMatched="1000"`, which is MapServer's own feature cap, and its pages cap
+	// at 1,000 too, so a 10-feature probe agreed with 1,000 while the type held 8,626,951 on 2026-10-02.
+	// A caller trusting that would have stored 1,000 features and recorded the type as read whole.
+	const { data: beyond } = await client.fetch<string>({
+		method: "GET",
+		url: options.wfsURL,
+		responseType: "text",
+		params: {
+			service: "WFS",
+			version: "2.0.0",
+			request: "GetFeature",
+			typeNames: options.typeNames,
+			count: "1",
+			startIndex: String(reported),
+		},
+	})
+
+	assertNoOGCServiceException(beyond, options.context)
+
+	const beyondReturned = rootAttribute(beyond, "numberReturned", { xml: true })
+
+	if (beyondReturned !== undefined && /^[1-9]\d*$/u.test(beyondReturned)) {
+		return {
+			reported,
+			usable: false,
+			because: `the service reported numberMatched=${reported} and then returned a feature at startIndex=${reported}, so the count is a floor rather than the type's size`,
+		}
+	}
+
 	return {
 		reported,
 		usable: true,
-		because: `a page of ${observed ?? probeSize} features agreed with the reported count`,
+		because: `a page of ${observed ?? probeSize} features agreed with the reported count, and startIndex=${reported} returned none`,
 	}
 }
 

@@ -27,22 +27,18 @@
  * the data, so neither is read here.
  */
 
-import { type APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"
+import type { APIClient } from "@mailwoman/core/api"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { rootAttribute } from "@mailwoman/core/html/document"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { VlaanderenHarvest } from "#be/adapters/vlaanderen/adapter"
+import { readWFSMarkupPage, WFS_VERSION } from "#tools/fetch/wfs-harvest"
 
 /**
  * The service this module harvests.
  */
 export const VLAANDEREN_AD_WFS = "https://geo.api.vlaanderen.be/ad/wfs"
-
-/**
- * The WFS version the service advertises and this module speaks.
- */
-const WFS_VERSION = "2.0.0"
 
 /**
  * The `outputFormat` the harvest is written in.
@@ -100,14 +96,12 @@ export interface FeaturePageBody {
 	numberMatched: number | null
 }
 
-function readCount(body: string, attribute: string): number | null {
-	const value = rootAttribute(body, attribute, { xml: true })
-
-	return value !== undefined && /^\d+$/u.test(value) ? Number(value) : null
-}
-
 /**
  * Issues one `GetFeature` against the service.
+ *
+ * `#tools/fetch/wfs-harvest` owns the request, the exception check and the counts,
+ * which every markup-serving WFS in this directory shares.
+ * This states the service and its context.
  *
  * @throws When the service answers an OGC exception report, so a 400 carrying
  * `ows:ExceptionCode/NoApplicableCode` raises rather than being written into the harvest as a page.
@@ -116,23 +110,9 @@ export async function readVlaanderenPage(
 	client: Pick<APIClient, "fetch">,
 	params: Readonly<Record<string, string>>
 ): Promise<FeaturePageBody> {
-	const { data } = await client.fetch<string>({
-		method: "GET",
-		url: VLAANDEREN_AD_WFS,
-		responseType: "text",
-		params: { service: "WFS", version: WFS_VERSION, request: "GetFeature", ...params },
-	})
+	const page = await readWFSMarkupPage(client, { wfsURL: VLAANDEREN_AD_WFS, context: "vlaanderen ad wfs", params })
 
-	// `assertNoOGCServiceException` reads both the OGC 1.x and the WFS 2.0 report shapes,
-	// and this service answers the 2.0 one: `ad:AddressRepresentation` refuses every `startIndex`
-	// with HTTP 400 `NoApplicableCode`, which would otherwise be stored as a page of no features.
-	assertNoOGCServiceException(data, "vlaanderen ad wfs")
-
-	return {
-		body: data,
-		numberReturned: readCount(data, "numberReturned"),
-		numberMatched: readCount(data, "numberMatched"),
-	}
+	return { body: page.body, numberReturned: page.numberReturned, numberMatched: page.numberMatched }
 }
 
 /**
