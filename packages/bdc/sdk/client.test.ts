@@ -100,10 +100,10 @@ beforeEach(async () => {
 	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
 })
 
-afterEach(() => {
+afterEach(async () => {
 	vi.unstubAllEnvs()
 	vi.useRealTimers()
-	dataRoot[Symbol.asyncDispose]()
+	await dataRoot[Symbol.asyncDispose]()
 })
 
 /**

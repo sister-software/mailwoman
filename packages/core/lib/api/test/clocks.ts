@@ -90,7 +90,8 @@ export function createFakeClock(startAt = 0): FakeClock {
 	return {
 		sleepCalls,
 		now: () => current,
-		sleep: async (ms: number) => {
+		sleep: async (ms: number, signal?: AbortSignal) => {
+			signal?.throwIfAborted()
 			sleepCalls.push(ms)
 			current += ms
 		},
@@ -127,11 +128,28 @@ export class VirtualClock implements ClockLike {
 		return this.#now
 	}
 
-	public sleep(ms: number): Promise<void> {
+	public sleep(ms: number, signal?: AbortSignal): Promise<void> {
 		this.sleepCalls.push(ms)
 
-		return new Promise<void>((resolve) => {
-			this.#pending.push({ deadline: this.#now + ms, resolve })
+		return new Promise<void>((resolve, reject) => {
+			signal?.throwIfAborted()
+
+			const pending = {
+				deadline: this.#now + ms,
+				resolve: () => {
+					signal?.removeEventListener("abort", onAbort)
+					resolve()
+				},
+			}
+
+			const onAbort = () => {
+				this.#pending.splice(this.#pending.indexOf(pending), 1)
+				reject(signal?.reason)
+			}
+
+			this.#pending.push(pending)
+
+			signal?.addEventListener("abort", onAbort, { once: true })
 		})
 	}
 

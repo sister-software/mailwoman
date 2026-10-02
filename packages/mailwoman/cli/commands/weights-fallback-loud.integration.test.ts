@@ -28,9 +28,9 @@ beforeAll(async () => {
 	await writeLocalTextFile("not a real onnx graph", stubDir.path("model.onnx"))
 })
 
-afterAll(() => {
-	homeStub[Symbol.asyncDispose]()
-	stubDir[Symbol.asyncDispose]()
+afterAll(async () => {
+	await homeStub[Symbol.asyncDispose]()
+	await stubDir[Symbol.asyncDispose]()
 })
 
 function absentEnv(extra: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {

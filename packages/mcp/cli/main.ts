@@ -214,7 +214,7 @@ const deps: MCPToolDeps = {
 
 		using db = new DatabaseClient<BDCDatabase>(q.databasePath, { readOnly: true })
 
-		return filingLandscape(db, { geoids: q.geoids, h3Cells: q.h3Cells })
+		return await filingLandscape(db, { geoids: q.geoids, h3Cells: q.h3Cells })
 	},
 
 	async plausibilityCheck(q) {
@@ -268,7 +268,7 @@ const deps: MCPToolDeps = {
 
 		using db = (await openFilerDatabaseIfPresent(q.databasePath))!
 
-		return familyRollup(db, {
+		return await familyRollup(db, {
 			familyID: q.familyID,
 			nodeID: q.nodeID,
 			asOf: q.asOf,

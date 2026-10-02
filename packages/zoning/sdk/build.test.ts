@@ -76,9 +76,9 @@ beforeAll(async () => {
 	lookup = new ZoningLookup({ databasePath })
 }, 120_000)
 
-afterAll(() => {
+afterAll(async () => {
 	lookup[Symbol.dispose]()
-	scratch[Symbol.asyncDispose]()
+	await scratch[Symbol.asyncDispose]()
 })
 
 describe("the sealed artifact", () => {

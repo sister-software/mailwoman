@@ -95,7 +95,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
 	lookup[Symbol.dispose]()
-	scratch[Symbol.asyncDispose]()
+	await scratch[Symbol.asyncDispose]()
 })
 
 /**

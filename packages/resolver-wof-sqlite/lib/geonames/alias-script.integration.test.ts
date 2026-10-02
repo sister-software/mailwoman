@@ -95,9 +95,9 @@ beforeAll(async () => {
 	await ingestGeonamesAliases(db, ["HK"], dir.path, (event) => events.push(event))
 })
 
-afterAll(() => {
+afterAll(async () => {
 	db.destroy()
-	dir[Symbol.asyncDispose]()
+	await dir[Symbol.asyncDispose]()
 })
 
 function namesFor(spelling: string): Row[] {

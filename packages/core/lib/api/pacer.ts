@@ -109,7 +109,9 @@ export class RequestPacer {
 	 * A caller that needs a hard sliding-window ceiling with no jitter headroom should
 	 * pace fractionally under the published rate rather than exactly at it.
 	 */
-	public async acquire(): Promise<void> {
+	public async acquire(signal?: AbortSignal): Promise<void> {
+		signal?.throwIfAborted()
+
 		const now = this.#clock.now()
 		const grantAt = Math.max(this.#nextGrantAt, now)
 
@@ -118,7 +120,9 @@ export class RequestPacer {
 		const waitMs = grantAt - now
 
 		if (waitMs > 0) {
-			await this.#clock.sleep(Math.ceil(waitMs))
+			await this.#clock.sleep(Math.ceil(waitMs), signal)
 		}
+
+		signal?.throwIfAborted()
 	}
 }

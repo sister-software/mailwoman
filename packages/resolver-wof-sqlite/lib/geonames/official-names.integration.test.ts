@@ -105,9 +105,9 @@ beforeAll(async () => {
 	)
 })
 
-afterAll(() => {
-	dir[Symbol.asyncDispose]()
-	altDir[Symbol.asyncDispose]()
+afterAll(async () => {
+	await dir[Symbol.asyncDispose]()
+	await altDir[Symbol.asyncDispose]()
 })
 
 test("V2 tags mark the official-language preferred name; transliterations and historic forms stay 0", async () => {

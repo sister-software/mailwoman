@@ -135,7 +135,7 @@ export class StreetInterpolator<
 	 *
 	 * A caller-supplied connection is not in here, so disposal cannot reach it.
 	 */
-	readonly #resources = new DisposableStack()
+	readonly #resources: DisposableStack
 	readonly #byPostcode:
 		| PreparedAll<[postcode: string, street: RouteKey, minNumber: number, maxNumber: number], SegmentRow>
 		| undefined
@@ -143,10 +143,12 @@ export class StreetInterpolator<
 	readonly #radiusCalibration: number | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseClient<DB> }) {
+		using resources = new DisposableStack()
+
 		if (opts.database) {
 			this.#db = opts.database
 		} else if (opts.dbPath) {
-			this.#db = this.#resources.use(new DatabaseClient<DB>(opts.dbPath, { readOnly: true }))
+			this.#db = resources.use(new DatabaseClient<DB>(opts.dbPath, { readOnly: true }))
 		} else {
 			throw new Error("StreetInterpolator: one of dbPath or database is required")
 		}
@@ -182,6 +184,8 @@ export class StreetInterpolator<
 				this.#radiusCalibration = value
 			}
 		}
+
+		this.#resources = resources.move()
 	}
 
 	/**

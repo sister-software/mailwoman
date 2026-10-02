@@ -181,7 +181,8 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
 }
 
 async function openpoischemadb(resolutionOverride = 9): Promise<DatabaseClient<layerschemadatabase>> {
-	const kdb = DatabaseClient.temp<layerschemadatabase>()
+	using resources = new DisposableStack()
+	const kdb = resources.use(DatabaseClient.temp<layerschemadatabase>())
 
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
@@ -201,11 +202,13 @@ async function openpoischemadb(resolutionOverride = 9): Promise<DatabaseClient<l
 		createdAt: `${ASOF_DATE}T00:00:00Z`,
 	})
 
+	resources.move()
+
 	return kdb
 }
 
 async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDeps }> {
-	const stack = new AsyncDisposableStack()
+	await using stack = new AsyncDisposableStack()
 	const bdc = stack.use(await buildBDCFixture())
 	const poi = stack.use(await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR]))
 	const poischemadb = stack.use(await openpoischemadb())
@@ -213,7 +216,7 @@ async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDe
 
 	await writeLayerCoverage(poischemadb, [{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 1 }])
 
-	return Object.assign(stack, {
+	return Object.assign(stack.move(), {
 		deps: { bdcDB: bdc.db, poi: { lookup: poiLookup, schemadb: poischemadb } },
 	})
 }
