@@ -94,8 +94,13 @@ export const ES_NAVARRA_COUNTRIES: readonly string[] = ["ES"]
  * `Addresses_ServiceATOM_Navarra.xml` reads `This layer is published under the terms of the license
  * Creative Commons Attribution 4.0 International (CC BY 4.0)`, and all 272 of its entries repeat it.
  * The version is stated, so the register records `CC-BY-4.0` as the SPDX identifier.
+ *
+ * The row carries that identifier rather than the licence's title.
+ * `licenseVerdict` resolves an identifier and reads a title as unrecognized,
+ * and a row whose licence resolves to no expression has unknown obligations
+ * rather than none, which the build reports separately from a refusal.
  */
-export const ES_NAVARRA_LICENSE = "Creative Commons Attribution 4.0 International"
+export const ES_NAVARRA_LICENSE = "CC-BY-4.0"
 
 /**
  * The member of a partition's archive that holds the GML.

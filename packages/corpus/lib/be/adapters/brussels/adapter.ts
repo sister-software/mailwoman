@@ -165,16 +165,18 @@ export const BRUSSELS_COUNTRIES: readonly string[] = ["BE"]
 /**
  * The licence label recorded on every row.
  *
- * It is deliberately not an SPDX id.
- * The address-source register holds no row for this publisher, so no decision has been elected,
- * and a row stamped `CC-BY-4.0` would state a grant this repository has not reviewed.
+ * The register's source `be-property-building-3` elects `CC-BY-4.0` for Paradigm, read from
+ * the `gmd:useConstraints` of ISO 19139 record `260abd6f-c5b4-4a79-aa80-d6c265002d65`,
+ * which names `URBIS_ADM_Adresses.zip` among its distributions.
+ * That record governs this archive rather than Paradigm's other address product,
+ * the BeSt Brussels register, which is CC0-1.0.
  *
- * The spelling follows the register's own `unchecked-…` convention for a licence whose
- * review has not run, and the share-alike prefix filter matches no part of it.
- *
- * When a register row is elected, this constant becomes that decision's `electedLicenseLabel`.
+ * The value is the SPDX identifier rather than the licence's title, because
+ * `licenseVerdict` resolves an identifier and reads a title as unrecognized.
+ * This constant previously held `unreviewed-be-brussels-urbis`, which resolved to no expression,
+ * so these rows carried unknown obligations into a build that had no way to filter them.
  */
-export const BRUSSELS_DEFAULT_LICENSE = "unreviewed-be-brussels-urbis"
+export const BRUSSELS_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
  * The archive member holding the GML.

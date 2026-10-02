@@ -46,6 +46,7 @@ import {
 import { isVoid, voidReason } from "#inspire/address"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
+import { LicensePolicy, licenseVerdict } from "#utils/license"
 
 const scratch = useScratchDir("brussels")
 
@@ -61,7 +62,7 @@ function run(adapterOptions: Partial<Parameters<typeof runAdapter>[0]["adapterOp
 }
 
 describe("brussels adapter against the fixture member", () => {
-	it("emits a row per readable address under a label that reads as unreviewed", async () => {
+	it("emits a row per readable address under the register's elected CC BY 4.0", async () => {
 		const manifest = await run()
 
 		// Ten addresses, nine readable: the tenth writes its postal-zone reference empty.
@@ -72,9 +73,12 @@ describe("brussels adapter against the fixture member", () => {
 
 		expect(rows).toHaveLength(9)
 
-		// The address-source register holds no row for this publisher, so no licence has
-		// been elected and the label must not read as an SPDX grant.
-		expect(BRUSSELS_DEFAULT_LICENSE).toBe("unreviewed-be-brussels-urbis")
+		// The register elects CC-BY-4.0 for Paradigm, and the row carries the SPDX identifier
+		// so that `licenseVerdict` resolves it.
+		// A licence title resolves to no expression, which a build reads as unknown
+		// obligations rather than as none.
+		expect(BRUSSELS_DEFAULT_LICENSE).toBe("CC-BY-4.0")
+		expect(licenseVerdict(BRUSSELS_DEFAULT_LICENSE, LicensePolicy.ShareAlikeFree, []).resolved).toBe(true)
 		expect(rows.every((row) => row.license === BRUSSELS_DEFAULT_LICENSE)).toBe(true)
 		expect(rows.every((row) => row.source === BRUSSELS_ADAPTER_ID)).toBe(true)
 		expect(rows.every((row) => row.register === BRUSSELS_SOURCE_REGISTER)).toBe(true)

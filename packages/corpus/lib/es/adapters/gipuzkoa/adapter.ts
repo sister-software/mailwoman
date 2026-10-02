@@ -102,8 +102,14 @@ export const ES_GIPUZKOA_COUNTRIES: readonly string[] = ["ES"]
  * Its feed states attribution alone and its website states CC BY 4.0, and the register
  * records why the stricter reading is the one to err towards: the share-alike filter reads
  * this label, so recording CC BY 4.0 would hide an obligation the publisher may hold.
+ *
+ * The value is the SPDX identifier the register elected rather than the licence's title,
+ * because `licenseVerdict` resolves an identifier and reads a title as unrecognized.
+ * Under `LicensePolicy.ShareAlikeFree` the title returns `{refusal: null, mentionsShareAlike: false}`
+ * and `CC-BY-SA-4.0` returns `{refusal: "share-alike-carried"}`, so the title admits
+ * these rows to a corpus assembled to hold no share-alike source.
  */
-export const ES_GIPUZKOA_LICENSE = "Creative Commons Attribution-ShareAlike 4.0 International"
+export const ES_GIPUZKOA_LICENSE = "CC-BY-SA-4.0"
 
 /**
  * The member of the archive that holds the GML.
