@@ -20,6 +20,7 @@ import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import type { BuildStage } from "@mailwoman/corpus"
+import { BuildProfile } from "@mailwoman/corpus/build/types"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { LicensePolicy } from "@mailwoman/corpus/utils/license"
 import { Box, Text } from "ink"
@@ -33,6 +34,13 @@ import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandCompo
  * Derived from {@linkcode LicensePolicy} so a value added there reaches the CLI.
  */
 const LICENSE_POLICIES: readonly LicensePolicy[] = Object.values(LicensePolicy)
+
+/**
+ * The accepted `--profile` values, for the flag's validation message.
+ *
+ * Derived from {@linkcode BuildProfile} so a value added there reaches the CLI.
+ */
+const BUILD_PROFILES: readonly BuildProfile[] = Object.values(BuildProfile)
 
 /**
  * `--inputs` accepts a bare path string when an adapter needs no extra options.
@@ -79,6 +87,16 @@ export const spec = {
 			validate: (value) => Number.isInteger(value) && value >= 0,
 			validationMessage: "--shuffle-seed must be a non-negative integer.",
 			description: "Seed for --shuffle-window",
+		},
+		profile: {
+			type: "string",
+			default: BuildProfile.Exploratory,
+			validate: (value): boolean => BUILD_PROFILES.includes(value as BuildProfile),
+			validationMessage: `--profile must be one of ${BUILD_PROFILES.join(", ")}.`,
+			description:
+				"Whether a row's source must be eligible for ingest before the row enters: " +
+				"exploratory admits every row an adapter yields, and release-eligible admits a row only " +
+				"when the address-source register marks its source eligible",
 		},
 		"license-policy": {
 			type: "string",
@@ -180,6 +198,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			rowsPerFile: options.rowsPerFile,
 			shuffleWindow: options.shuffleWindow,
 			shuffleSeed: options.shuffleSeed,
+			profile: options.profile as BuildProfile,
 			licensePolicy: options.licensePolicy as LicensePolicy,
 			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : undefined,
 			onProgress: (name, message) => setStage({ name, message }),
@@ -193,6 +212,8 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			refusedByLicense: m.excluded_by_license,
 			refusedKinds: m.refused_by_license_kind,
 			unresolvedLicenseRows: m.admitted_unresolved_license_rows,
+			refusedByEligibility: m.excluded_by_eligibility,
+			ineligibleSources: Object.keys(m.ineligible_sources),
 		}
 	})
 
@@ -216,6 +237,12 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 						: ""}
 					, {done.unresolvedLicenseRows} admitted whose license resolves to no expression
 				</Text>
+				{done.ineligibleSources.length ? (
+					<Text color="yellow">
+						profile {options.profile}: {done.refusedByEligibility} rows refused from {done.ineligibleSources.join(", ")}
+						. MANIFEST.json records each reason under `ineligible_sources`.
+					</Text>
+				) : null}
 				<Text dimColor>{options.out}</Text>
 			</Box>
 		)

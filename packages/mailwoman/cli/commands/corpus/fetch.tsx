@@ -24,12 +24,17 @@ import {
 
 const sources = [
 	"acra-sg",
+	"ads-ee",
 	"ban",
+	"cz-cuzk",
+	"dk-inspire",
+	"emuia-pl",
 	"gcis-tw",
 	"houjin-jp",
 	"juso-kr",
 	"localdata-kr",
 	"nad",
+	"ryhti",
 	"geonames-dump",
 	"geonames-postal",
 	"hrsa",
@@ -75,7 +80,11 @@ type Options = OptionsOf<typeof spec>
 async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
 	const {
 		fetchACRASG,
+		fetchADSEE,
 		fetchBan,
+		fetchCzCuzk,
+		fetchDKAddresses,
+		fetchEMUiAPL,
 		fetchGCISTW,
 		fetchGeonamesDumps,
 		fetchGeonamesPostal,
@@ -88,6 +97,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchNPPES,
 		fetchOpenAddresses,
 		fetchOurAirports,
+		fetchRyhti,
 		fetchStateHISchools,
 		fetchStateSources,
 		fetchTigerFull,
@@ -99,6 +109,16 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 	switch (source) {
 		case "acra-sg":
 			return fetchACRASG(base, reportToStderr)
+		case "ads-ee":
+			return fetchADSEE(base, reportToStderr)
+		case "cz-cuzk":
+			return fetchCzCuzk(base, reportToStderr)
+		case "dk-inspire":
+			return fetchDKAddresses(base, reportToStderr)
+		case "emuia-pl":
+			return fetchEMUiAPL(base, reportToStderr)
+		case "ryhti":
+			return fetchRyhti(base, reportToStderr)
 		case "gcis-tw":
 			return fetchGCISTW(base, reportToStderr)
 		case "houjin-jp":

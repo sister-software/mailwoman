@@ -474,7 +474,9 @@ export async function downloadRyhti(
 export async function fetchRyhti(options: FetchRyhtiOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	await using client = new APIClient({ displayName: SLUG, retry: true })
 
-	return downloadRyhti(client, {
+	// Awaited rather than returned: `await using` disposes the client when this scope exits,
+	// and a disposed `APIClient` refuses every later request.
+	return await downloadRyhti(client, {
 		outputDir: options.outRoot(SLUG),
 		keepCompressed: options.keepCompressed,
 		verifyDigest: options.verifyDigest,

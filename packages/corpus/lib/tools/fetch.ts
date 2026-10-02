@@ -6,10 +6,15 @@
  * Registers the corpus source fetchers. They download raw files and manifests for the adapters to read.
  */
 
+import { fetchCzCuzk } from "#cz/tools/fetch/cuzk"
+import { fetchDKAddresses } from "#dk/tools/fetch/inspire"
+import { fetchADSEE } from "#ee/tools/fetch/ads"
+import { fetchRyhti } from "#fi/tools/fetch/ryhti"
 import { fetchBan } from "#fr/tools/fetch/ban"
 import { fetchHoujinJP } from "#jp/tools/fetch/houjin"
 import { fetchJusoKR } from "#kr/tools/fetch/juso"
 import { fetchLocaldataKR } from "#kr/tools/fetch/localdata"
+import { fetchEMUiAPL } from "#pl/tools/fetch/emuia"
 import { fetchACRASG } from "#sg/tools/fetch/acra"
 import { fetchGeonamesDumps } from "#tools/fetch/geonames/dump"
 import { fetchGeonamesPostal } from "#tools/fetch/geonames/postal"
@@ -26,7 +31,11 @@ import { fetchStateSources } from "#us/tools/fetch/state/sources"
 import { fetchTigerFull } from "#us/tools/fetch/tiger-full"
 
 export * from "#sg/tools/fetch/acra"
+export * from "#ee/tools/fetch/ads"
 export * from "#fr/tools/fetch/ban"
+export * from "#cz/tools/fetch/cuzk"
+export * from "#pl/tools/fetch/emuia"
+export * from "#dk/tools/fetch/inspire"
 export * from "#tw/tools/fetch/gcis"
 export * from "#tools/fetch/geonames/dump"
 export * from "#tools/fetch/geonames/postal"
@@ -39,6 +48,7 @@ export * from "#us/tools/fetch/nad"
 export * from "#us/tools/fetch/nppes"
 export * from "#tools/fetch/openaddresses"
 export * from "#tools/fetch/ourairports"
+export * from "#fi/tools/fetch/ryhti"
 export * from "#us/tools/fetch/state/hi-schools"
 export * from "#us/tools/fetch/state/sources"
 export * from "#us/tools/fetch/tiger-full"
@@ -49,12 +59,17 @@ export * from "#tools/fetch/wikidata-subvenue"
  */
 export const FETCH_SOURCES = {
 	"acra-sg": fetchACRASG,
+	"ads-ee": fetchADSEE,
 	ban: fetchBan,
+	"cz-cuzk": fetchCzCuzk,
+	"dk-inspire": fetchDKAddresses,
+	"emuia-pl": fetchEMUiAPL,
 	"gcis-tw": fetchGCISTW,
 	"houjin-jp": fetchHoujinJP,
 	"juso-kr": fetchJusoKR,
 	"localdata-kr": fetchLocaldataKR,
 	nad: fetchNAD,
+	ryhti: fetchRyhti,
 	"geonames-dump": fetchGeonamesDumps,
 	"geonames-postal": fetchGeonamesPostal,
 	hrsa: fetchHRSA,

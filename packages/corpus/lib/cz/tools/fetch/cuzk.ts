@@ -684,7 +684,9 @@ export async function fetchCzCuzk(options: FetchCzCuzkOptions, report?: (line: s
 		retry: true,
 	})
 
-	return harvestCzCuzk(client, {
+	// Awaited rather than returned: `await using` disposes the client when this scope exits,
+	// and a disposed `APIClient` refuses every later request.
+	return await harvestCzCuzk(client, {
 		outputDir: options.outRoot(SLUG),
 		projection: options.projection,
 		municipalities: options.municipalities,
