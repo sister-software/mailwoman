@@ -225,13 +225,31 @@ Responses carry `Access-Control-Allow-Origin` for `SITE_ORIGIN` and for `http://
 `@mailwoman/react` gains `search/SearchModal` and a `search/client` module that calls the worker and
 returns `SearchResponse`. The modal:
 
-- opens on `Ctrl+K`, `Cmd+K` and `/`, and closes on `Escape`;
+- opens on `Ctrl+K`, `Cmd+K` and `/`;
 - sends the query 150 ms after the last keystroke and aborts the previous request;
 - groups hits by `hierarchy[0]` and renders the heading path with the snippet below it;
-- moves the selection with the arrow keys and navigates on `Enter`;
-- states the condition in words when the request fails or returns zero hits;
-- follows the dialog accessibility pattern: focus trap, `role="dialog"`, a labeled combobox input and
-  a listbox of results.
+- states the condition in words when the request fails or returns zero hits.
+
+The modal is built from native elements, and the platform supplies the behavior those elements
+define.
+
+- The container is a `<dialog>` opened with `showModal()`. The browser supplies the focus trap, the
+  inert background, the `::backdrop`, the close on `Escape` and the return of focus to the navbar
+  button. The component adds no focus-trap code and no `role="dialog"` attribute. A click on the
+  backdrop closes the dialog through `closedby="any"` where the browser supports it and through a
+  click handler on the `<dialog>` element elsewhere.
+- The query field is `<input type="search">` inside a `<form role="search">`. It carries
+  `role="combobox"`, `aria-autocomplete="list"`, `aria-expanded`, `aria-controls` for the result list
+  and `aria-activedescendant` for the selected hit. DOM focus stays on the input for the whole
+  session.
+- The result list is an element with `role="listbox"`. Each `hierarchy[0]` group has `role="group"`
+  and an `aria-labelledby` reference to its heading. Each hit has `role="option"`, a stable `id` and
+  `aria-selected`, and contains an `<a href>` so that a pointer click, a middle click and "open in new
+  tab" navigate as ordinary links.
+- `ArrowDown` and `ArrowUp` move `aria-activedescendant` and wrap at the ends. `Home` and `End` select
+  the first and last hit. `Enter` navigates to the selected hit.
+- An `aria-live="polite"` region announces the hit count, the zero-hit condition and a request
+  failure.
 
 `docs` swizzles the theme `SearchBar` to render a navbar button that mounts the modal. The worker
 origin comes from a `customFields.searchOrigin` entry in `docs/docusaurus.config.ts`. The `algolia`
