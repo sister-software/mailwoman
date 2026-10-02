@@ -26,6 +26,8 @@
 import { assertNoOGCServiceException, type APIClient } from "@mailwoman/core/api"
 import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
 
+import { componentJoinKey } from "#inspire/address"
+
 /**
  * The WFS version this module speaks.
  *
@@ -371,59 +373,6 @@ export function componentReferences(feature: GeoJSONFeature): readonly string[] 
 }
 
 /**
- * The query parameters a `GetFeature` reference states its target's id in,
- * each spelled as the service wrote it.
- *
- * Slovakia writes a stored query, `…&id=AdminUnitName.15345`.
- * Estonia writes the WFS KVP parameter, `…&featureID=120275`.
- *
- * A reader that knows only `id` returns the whole URL as the key for Estonia's references,
- * and no identifier equals a URL, so every one reads as unjoined.
- */
-const REFERENCE_ID_PARAMETERS = ["id", "featureID", "featureid", "FEATUREID", "resourceID", "RESOURCEID"] as const
-
-/**
- * The key a component reference joins on, or `null` where the reference is not a URL.
- *
- * Three shapes appear across the services measured, and the difference is
- * where the key sits rather than whether one exists.
- * Slovakia writes a stored-query URL whose `id` parameter carries the feature
- * id, `…&id=AdminUnitName.15345`.
- *
- * Estonia writes a `GetFeature` URL whose `featureID` parameter carries it.
- *
- * Flanders writes an identifier URI, `https://data.vlaanderen.be/id/straatnaam/6301`,
- * which is the value its `ad:ThoroughfareName` features publish in `identifier`.
- *
- * A fragment is dropped because a reference may carry one where the identifier does not:
- * `http://vocab.belgif.be/auth/refnis1995/1000#id` addresses the same term as that URI without it.
- *
- * Whether a key joins is not a property of its spelling, so this reads a key and
- * {@linkcode resolveComponents} decides joinability against the features a service published.
- * Deciding it here from the URL's shape reported 15 of Flanders' 20 references as belonging
- * to another register when every one of them addresses a feature of the same service.
- */
-export function componentJoinKey(href: string): string | null {
-	let url: URL
-
-	try {
-		url = new URL(href)
-	} catch {
-		return null
-	}
-
-	for (const parameter of REFERENCE_ID_PARAMETERS) {
-		const id = url.searchParams.get(parameter)
-
-		if (id) return id
-	}
-
-	url.hash = ""
-
-	return url.toString()
-}
-
-/**
  * The key a component feature publishes for an address to reference it by.
  *
  * `identifier.value` is the INSPIRE external object identifier, which is what
@@ -498,7 +447,7 @@ export function resolveComponents(
 		for (const href of componentReferences(address)) {
 			const key = componentJoinKey(href)
 
-			if (key === null) {
+			if (key === undefined) {
 				unreadable++
 
 				continue

@@ -11,6 +11,7 @@ import {
 	adminUnitLevel,
 	codelistValue,
 	componentHrefs,
+	componentJoinKey,
 	designator,
 	designatorsByType,
 	isVoid,
@@ -70,9 +71,9 @@ const CZ = `<base:SpatialDataSet xmlns:base="http://inspire.ec.europa.eu/schemas
 /**
  * A Dutch address, trimmed from the real file.
  *
- * The Netherlands types its number `addressNumber`, writes the postcode inline as
- * a `postalDeliveryIdentifier`, publishes no `ad:PostalDescriptor`, and writes an
- * empty-but-present `ad:designator` for an absent extension.
+ * The Netherlands types its number `addressNumber`, writes the postcode inline as a
+ * `LocatorDesignatorTypeValue/postalDeliveryIdentifier`, publishes no `ad:PostalDescriptor`,
+ * and writes an empty-but-present `ad:designator` for an absent extension.
  */
 const NL = `<gml:FeatureCollection ${NS}>
 	<ad:Address gml:id="nl-imbag-ad-address.0003200000133985">
@@ -172,6 +173,63 @@ describe("componentHrefs", () => {
 
 		// The third component in the fixture carries `xlink:href=""`.
 		expect(componentHrefs(address!)).toHaveLength(2)
+	})
+})
+
+describe("componentJoinKey", () => {
+	it("reads a local fragment, which the Netherlands, Wallonia and Brussels write", () => {
+		expect(componentJoinKey("#nl-imbag-ad-thoroughfarename.0003300000117203")).toBe(
+			"nl-imbag-ad-thoroughfarename.0003300000117203"
+		)
+	})
+
+	it("reads Czechia's Id parameter, whose capital letter a case-sensitive lookup misses", () => {
+		// A reader matching only `id` returned this whole URL, and no `gml:id` equals a URL,
+		// so all 5,460 references in one municipality read as unjoinable.
+		expect(
+			componentJoinKey(
+				"http://services.cuzk.cz/wfs/inspire-ad-wfs.asp?service=WFS&storedQuery_id=urn:ogc:def:query:OGC-WFS::GetFeatureById&Id=TF.48674"
+			)
+		).toBe("TF.48674")
+	})
+
+	it("reads the same file's other casing of the stored-query key", () => {
+		expect(
+			componentJoinKey("http://services.cuzk.cz/wfs/inspire-au-wfs.asp?service=WFS&StoredQuery_id=urn&Id=AU.4.584061")
+		).toBe("AU.4.584061")
+	})
+
+	it("joins on the feature id a stored-query reference carries", () => {
+		expect(
+			componentJoinKey("https://rageo.minv.sk/geoserver/ad/ows?service=WFS&request=GetFeature&id=AdminUnitName.15345")
+		).toBe("AdminUnitName.15345")
+	})
+
+	it("joins on featureID as well as id, which is the parameter Estonia writes", () => {
+		expect(
+			componentJoinKey(
+				"https://inspire.geoportaal.ee/geoserver/AD_Address/ows?service=WFS&request=GetFeature&typeNames=AD_Address%3AAD.Address_PostalDescriptor&featureID=120275"
+			)
+		).toBe("120275")
+	})
+
+	it("joins an identifier URI on itself, dropping a fragment the identifier does not carry", () => {
+		// Flanders writes the identifier its component features publish, and writes a fragment
+		// on the vocabulary reference that the vocabulary's own term does not carry.
+		expect(componentJoinKey("https://data.vlaanderen.be/id/straatnaam/6301")).toBe(
+			"https://data.vlaanderen.be/id/straatnaam/6301"
+		)
+
+		expect(componentJoinKey("http://vocab.belgif.be/auth/refnis1995/1000#id")).toBe(
+			"http://vocab.belgif.be/auth/refnis1995/1000"
+		)
+	})
+
+	it("answers undefined for an href that is neither a fragment nor a URL", () => {
+		expect(componentJoinKey("not a url")).toBeUndefined()
+		expect(componentJoinKey("")).toBeUndefined()
+		expect(componentJoinKey("   ")).toBeUndefined()
+		expect(componentJoinKey("#")).toBeUndefined()
 	})
 })
 

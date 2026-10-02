@@ -11,18 +11,22 @@
  *
  * 1. The wrapper. Czechia writes `base:SpatialDataSet` with `base:member`. The Netherlands,
  *    Wallonia and Brussels write `gml:FeatureCollection` with `gml:featureMember`.
- * 2. The reference form. Czechia's `ad:component` href is an absolute WFS `GetFeatureById` URL
+ * 2. The reference form. Czechia's `ad:component` href is an absolute WFS stored-query URL
  *    whose `Id=` parameter is the key. The Netherlands, Wallonia and Brussels write a local `#`
  *    fragment. Flanders writes an absolute data URI that a caller rewrites into a `resourceId`.
  * 3. Where the postcode lives. Czechia and Wallonia reference an `ad:PostalDescriptor`; the
- *    Netherlands puts it inline as a `postalDeliveryIdentifier` locator and publishes no
+ *    Netherlands puts it inline as a `LocatorDesignatorTypeValue/postalDeliveryIdentifier` locator and publishes no
  *    `ad:PostalDescriptor` at all.
  * 4. The locator vocabulary. Czechia types its number `buildingIdentifier`, the Netherlands
- *    `addressNumber`, Wallonia `addressIdentifierGeneral`, Brussels `buildingIdentifier`.
+ *    `addressNumber`, Wallonia `LocatorDesignatorTypeValue/addressIdentifierGeneral`, Brussels
+ *    `buildingIdentifier`.
  *
  * So this module exposes the primitives and leaves composition to each adapter. A configuration
  * object describing those four axes would have to be right about publishers whose files nobody has
- * read yet. Four small functions carry no such claim.
+ * read yet. A handful of small functions carries no such claim.
+ *
+ * The reference form is the exception, because its shapes are enumerable and measured:
+ * {@linkcode componentJoinKey} reads all four.
  */
 
 import { childElement, childElements, elementAtPath, type MarkupElement } from "@mailwoman/core/html/elements"
@@ -77,9 +81,10 @@ export function voidReason(element: MarkupElement | undefined): string | undefin
  *
  * One `ad:AddressLocator` carries a designator per part of the number, each in its
  * own `ad:LocatorDesignator` beside an `ad:type` naming what it is.
- * Czechia writes two, `č.ev.` typed `buildingIdentifierPrefix` and `502` typed
- * `buildingIdentifier`; the Netherlands writes four, including an empty `addressNumberExtension`
- * and the postcode as `postalDeliveryIdentifier`.
+ * Czechia writes two, `č.ev.` typed `buildingIdentifierPrefix` and `502` typed `buildingIdentifier`.
+ *
+ * The Netherlands writes four, including an empty `LocatorDesignatorTypeValue/addressNumberExtension`
+ * and the postcode as `LocatorDesignatorTypeValue/postalDeliveryIdentifier`.
  *
  * A type may repeat, so each key holds a list in document order.
  * A designator the publisher wrote empty contributes an empty string, which is a value the publisher
@@ -126,8 +131,9 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
 /**
  * The first non-empty designator among `types`, in the order given.
  *
- * A caller states its publisher's vocabulary and its own precedence: Czechia asks for
- * `buildingIdentifier`, the Netherlands for `addressNumber`, Wallonia for `addressIdentifierGeneral`.
+ * A caller states its publisher's vocabulary and its own precedence:
+ * Czechia asks for `buildingIdentifier`, the Netherlands for `addressNumber`,
+ * Wallonia for `LocatorDesignatorTypeValue/addressIdentifierGeneral`.
  */
 export function designator(
 	byType: ReadonlyMap<string, readonly string[]>,
@@ -147,7 +153,7 @@ export function designator(
 /**
  * Every `ad:component` reference on an address, as written.
  *
- * The href is returned verbatim, because turning it into a key is the one thing the publishers do not share.
+ * The href is returned verbatim, and {@linkcode componentJoinKey} turns it into a join key.
  * A component whose href is absent or empty is skipped.
  *
  * Brussels writes `<ad:component xlink:href=""/>` on 9 addresses, and those 9 therefore
@@ -165,6 +171,68 @@ export function componentHrefs(address: MarkupElement): readonly string[] {
 	}
 
 	return hrefs
+}
+
+/**
+ * The query parameters a WFS stored-query reference carries its feature id in.
+ *
+ * Each publisher picked a spelling, and the match below ignores case, so Czechia's `Id`
+ * and Slovakia's `id` both resolve without naming each casing separately.
+ * A reader that knew only `id` returned Czechia's whole URL as the key, and no `gml:id`
+ * equals a URL, so all 5,460 of one municipality's references read as unjoinable.
+ */
+const REFERENCE_ID_PARAMETERS = new Set(["id", "featureid", "resourceid"])
+
+/**
+ * The key a component reference joins on.
+ *
+ * Four shapes appear across the publishers measured, and they differ in
+ * where the key sits rather than in whether one exists:
+ *
+ * | publisher | href | key |
+ * | --- | --- | --- |
+ * | Netherlands, Wallonia, Brussels | `#nl-imbag-ad-thoroughfarename.0003300000117203` | the fragment |
+ * | Czechia | `…inspire-ad-wfs.asp?…&Id=TF.48674` | `TF.48674` |
+ * | Slovakia | `…ad/ows?…&id=AdminUnitName.15345` | `AdminUnitName.15345` |
+ * | Flanders | `https://data.vlaanderen.be/id/straatnaam/6301` | the URI itself |
+ *
+ * A URI with no id parameter is its own key, which is what Flanders publishes on both sides of the join.
+ * Its fragment is dropped, because a reference may carry one where the identifier does not:
+ * `http://vocab.belgif.be/auth/refnis1995/1000#id` addresses the same term as that URI without it.
+ *
+ * Whether a key joins is not a property of its spelling, so this reads a key
+ * and the caller decides joinability against the features the publisher actually served.
+ * Deciding it here from the URL's shape once reported 15 of Flanders' 20 references as
+ * belonging to another register when every one of them addressed a feature of the same service.
+ *
+ * @returns The key, or undefined when the href is neither a fragment nor a URL.
+ */
+export function componentJoinKey(href: string): string | undefined {
+	const trimmed = href.trim()
+
+	if (!trimmed) return undefined
+
+	if (trimmed.startsWith("#")) return trimmed.slice(1) || undefined
+
+	let url: URL
+
+	try {
+		url = new URL(trimmed)
+	} catch {
+		return undefined
+	}
+
+	for (const [parameter, value] of url.searchParams) {
+		if (!REFERENCE_ID_PARAMETERS.has(parameter.toLowerCase())) continue
+
+		const id = value.trim()
+
+		if (id) return id
+	}
+
+	url.hash = ""
+
+	return url.toString()
 }
 
 /**

@@ -15,7 +15,6 @@ import {
 	AD_FEATURE_TYPES,
 	adFeatureTypeOf,
 	componentIdentifier,
-	componentJoinKey,
 	componentReferences,
 	isVoided,
 	readFeaturePage,
@@ -293,34 +292,6 @@ describe("component references", () => {
 
 		expect(references[0]).toContain("AU_haldusyksused")
 		expect(references[1]).toContain("AD.Address_ThoroughfareName.92")
-	})
-
-	it("joins on the feature id a stored-query reference carries", () => {
-		expect(
-			componentJoinKey("https://rageo.minv.sk/geoserver/ad/ows?service=WFS&request=GetFeature&id=AdminUnitName.15345")
-		).toBe("AdminUnitName.15345")
-	})
-
-	it("joins on featureID as well as id, which is the parameter Estonia writes", () => {
-		expect(
-			componentJoinKey(
-				"https://inspire.geoportaal.ee/geoserver/AD_Address/ows?service=WFS&request=GetFeature&typeNames=AD_Address%3AAD.Address_PostalDescriptor&featureID=120275"
-			)
-		).toBe("120275")
-	})
-
-	it("joins an identifier URI on itself, dropping a fragment the identifier does not carry", () => {
-		// Flanders writes the identifier its component features publish, and writes a fragment
-		// on the vocabulary reference that the vocabulary's own term does not carry.
-		expect(componentJoinKey("https://data.vlaanderen.be/id/straatnaam/6301")).toBe(
-			"https://data.vlaanderen.be/id/straatnaam/6301"
-		)
-
-		expect(componentJoinKey("http://vocab.belgif.be/auth/refnis1995/1000#id")).toBe(
-			"http://vocab.belgif.be/auth/refnis1995/1000"
-		)
-
-		expect(componentJoinKey("not a url")).toBeNull()
 	})
 
 	it("reads the identifier a component feature publishes, preferring the INSPIRE one over gml_id", () => {

@@ -55,6 +55,44 @@ export const SourceRegister = {
 	 */
 	MatrikkelenAdresse: "no-matrikkelen-adresse",
 	/**
+	 * The INSPIRE Addresses theme of the Czech Office for Surveying, Mapping and Cadastre.
+	 *
+	 * ČÚZK publishes one zipped GML per municipality, 6,258 of them, through an ATOM service.
+	 */
+	CuzkInspireAddresses: "cz-cuzk-inspire-addresses",
+	/**
+	 * Suomen ympäristökeskus' Ryhti built-environment system, whose building address data
+	 * covers Åland's sixteen municipalities beside the Finnish mainland in one national file.
+	 *
+	 * The prefix is the publisher's own country, as `fr-ban`'s is.
+	 */
+	RyhtiBuildingAddress: "fi-ryhti-building-address",
+	/**
+	 * Klimadatastyrelsen's INSPIRE Addresses theme for Denmark, published as a GeoPackage.
+	 *
+	 * One address is a join across five tables rather than a row.
+	 */
+	DKInspireAddresses: "dk-inspire-addresses",
+	/**
+	 * Estonia's Aadressiandmete süsteem, served as the INSPIRE Addresses theme by Maa- ja Ruumiamet.
+	 *
+	 * The tail is the system the theme is served out of.
+	 */
+	EstoniaADS: "ee-ads-aadress",
+	/**
+	 * The municipal EMUiA address registers, reaching the INSPIRE Addresses theme through
+	 * the Państwowy Rejestr Granic and served by Główny Urząd Geodezji i Kartografii.
+	 */
+	PolandEMUiA: "pl-emuia-adresy",
+	/**
+	 * The INSPIRE Addresses theme of agentschap Digitaal Vlaanderen.
+	 *
+	 * Coverage is the Flemish Region rather than Belgium.
+	 * Brussels and Wallonia publish the theme through their own services,
+	 * so a Belgian build reads three registers.
+	 */
+	VlaanderenInspireAddresses: "be-vlaanderen-inspire-ad",
+	/**
 	 * HM Land Registry Price Paid Data, England and Wales.
 	 */
 	LandRegistryPricePaid: "gb-hm-land-registry-ppd",
