@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "38bf540034df2c607064bc0f05a535ab09d33924f3c9fb13000d8e18f9e88847",
+	"contentDigest": "04a8c54ea92021318bb72618123b68e5570201fda76cc05acf24fd9fe3c27c63",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -11126,6 +11126,7 @@
 			"publisher": "Czech Office for Surveying Mapping and Cadastre",
 			"sourceURL": "https://atom.cuzk.gov.cz/AD/AD.xml",
 			"note": "The feature is an address point with a house-number designator and a thoroughfare name. It carries no party.",
+			"adapterID": "cz-cuzk",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -11155,6 +11156,7 @@
 			"publisher": "Klimadatastyrelsen",
 			"sourceURL": "https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml",
 			"note": "The address table carries a house-number designator and references a thoroughfare name and a postal descriptor. It carries no party column.",
+			"adapterID": "dk-inspire",
 			"addressRoles": {
 				"address": "premise"
 			},
@@ -11183,6 +11185,7 @@
 			"publisher": "Maa- ja Ruumiamet",
 			"sourceURL": "https://inspire.geoportaal.ee/geoserver/AD_Address/wfs",
 			"note": "A feature is an address point with an address identifier designator and a site or building name. It carries no party.",
+			"adapterID": "ads",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -11343,6 +11346,7 @@
 			"publisher": "Suomen ympäristökeskus",
 			"sourceURL": "https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz",
 			"note": "A row carries the coordinates, the street name and house number in Finnish and Swedish, the postal office name, the postcode and the municipality number. It carries no party.",
+			"adapterID": "ryhti",
 			"addressRoles": {
 				"address_fin": "premise",
 				"address_swe": "premise"
@@ -11372,6 +11376,7 @@
 			"publisher": "Główny Urząd Geodezji i Kartografii",
 			"sourceURL": "https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses",
 			"note": "A feature carries the locality, the street, the house number, the postcode and the whole address as one string. The payload is the Polish register's own schema rather than the harmonised INSPIRE model. It carries no party.",
+			"adapterID": "emuia",
 			"addressRoles": {
 				"ms:AD.Address": "premise"
 			},
@@ -11429,6 +11434,7 @@
 			"publisher": "agentschap Digitaal Vlaanderen",
 			"sourceURL": "https://geo.api.vlaanderen.be/ad/wfs",
 			"note": "A feature is an address point with a house-number designator that references a street name and a postal descriptor. It carries no party. Coverage is the Flemish Region rather than Belgium.",
+			"adapterID": "vlaanderen",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -13602,6 +13608,7 @@
 			"upstreamLineage": [
 				"https://paikkatietohakemisto.fi/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=%7BDBD610F4-3392-44CD-B601-BAE8FA547A57%7D"
 			],
+			"adapterID": "ryhti",
 			"addressRoles": {
 				"address_fin": "premise",
 				"address_swe": "premise"
