@@ -269,7 +269,7 @@ describe("createITANACAdapter over a fetched directory", () => {
 		const rows = await Array.fromAsync(createITANACAdapter().rows({ inputPath: scratch.path }))
 
 		// One release per edition, and the two editions hold the same release, so the two rows are identical.
-		// Deduplication is `runAdapter`'s, not the adapter's.
+		// `runAdapter` owns deduplication, and the adapter emits one row per party occurrence.
 		expect(rows).toHaveLength(2)
 		expect(rows[0]?.raw).toBe("AGENZIA INTERREGIONALE PER IL FIUME PO AIPO, VIA GIUSEPPE GARIBALDI 75, 43121 PARMA")
 	})

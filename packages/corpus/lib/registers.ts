@@ -126,8 +126,10 @@ export const SourceRegister = {
 	 *
 	 * Coverage is Spain outside the foral cadastres: 52 of the 55 entries in the national
 	 * ATOM feed, one province feed each, listing one zipped GML per municipality.
-	 * The other three entries link the publications below, which state their own terms,
-	 * so Spain needs four registers.
+	 * The other three entries link the publications below.
+	 *
+	 * Each of those states its own terms.
+	 * Spain therefore needs four registers.
 	 */
 	CatastroInspireAddresses: "es-catastro-inspire-ad",
 	/**

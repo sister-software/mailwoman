@@ -54,8 +54,10 @@ import { loadCollectionFiles, resumableDownload, writeManifest } from "#tools/fe
  * The publication the registry serves this release under.
  *
  * Italy has four publications on the registry and id 117 is ANAC's.
- * Id 87 is OpenTender's Italian publication, which runs to March 2024 and comes from a
- * different body, so reading the country alone would take the wrong one.
+ * Id 87 is OpenTender's Italian publication.
+ *
+ * It runs to March 2024 and comes from a different body.
+ * Reading the country alone would take the wrong publication.
  */
 export const IT_ANAC_PUBLICATION_ID = 117
 

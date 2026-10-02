@@ -156,9 +156,10 @@ export const IT_ANAC_ATTRIBUTION = "Autorità Nazionale Anticorruzione (ANAC), v
 /**
  * The two party roles the adapter reads.
  *
- * The register's `addressRoles` names these two fields and no other, because the
- * `supplier` role — the one role whose parties are contracting counterparties
- * rather than public bodies — publishes no `address` object.
+ * The register's `addressRoles` names these two fields alone.
+ * The `supplier` role is the one role whose parties are contracting counterparties
+ * rather than public bodies.
+ * That role publishes no `address` object.
  */
 export const IT_ANAC_PARTY_ROLES: readonly string[] = ["buyer", "payer"]
 
@@ -180,7 +181,7 @@ export const ANACRefusal = {
 	 */
 	AddressAbsent: "address-absent",
 	/**
-	 * The address states no locality, so nothing places it.
+	 * The address states no locality, so no component places it.
 	 */
 	LocalityAbsent: "locality-absent",
 	/**
@@ -278,9 +279,11 @@ const ITALIAN_COUNTRY_NAMES: ReadonlySet<string> = new Set(["italy", "italia", "
 /**
  * `numero civico` written as a marker in front of the number.
  *
- * The marker must start its own token, which is what keeps the final `N` of `VIA THOMAS ALVA EDISON
- * 10/D` out of the match, and it must be followed by a digit, so a street whose name ends in one of
- * these words is untouched.
+ * The marker must start its own token.
+ * That keeps the final `N` of `VIA THOMAS ALVA EDISON 10/D` out of the match.
+ *
+ * The marker must also be followed by a digit.
+ * A street whose name ends in one of these words keeps that word.
  */
 const CIVIC_MARKER = /(?<=^|[\s,])(?:n|nr|num|civ|civico)\s*\.?\s*(?=\d)/giu
 
@@ -336,7 +339,7 @@ function fieldValue(value: string | null | undefined): string {
  *
  * `locality` is the publisher's own value for this party, which is what
  * authorizes removing the trailing copy.
- * Passing an empty string removes nothing.
+ * An empty string leaves the line as it is.
  */
 export function normalizeANACStreetLine(line: string, locality: string): string {
 	let work = line.replaceAll(/\s+/gu, " ").trim()
