@@ -141,6 +141,7 @@ import {
 	voidDesignatorTypes,
 } from "#inspire/address"
 import { inspireGMLChunks } from "#inspire/archive"
+import { InspireArchiveError } from "#inspire/errors"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -229,20 +230,6 @@ const COMPONENT_TYPES = [
 ] as const
 
 /**
- * Raised when the archive cannot answer what the adapter asked it for.
- *
- * A file holding no component feature cannot be read as a smaller publication:
- * every address references all six components, so an empty index turns every row
- * into a row with no street rather than into fewer rows.
- */
-export class WallonieArchiveError extends Error {
-	constructor(message: string) {
-		super(`${WALLONIE_ADAPTER_ID} adapter: ${message}`)
-
-		this.name = "WallonieArchiveError"
-	}
-}
-
 /**
  * The components an address references, keyed by the `gml:id` its `#` fragment names.
  */
@@ -270,7 +257,7 @@ export interface WallonieComponentIndex {
 /**
  * Indexes the four component types in one pass over the member.
  *
- * @throws {@linkcode WallonieArchiveError} when a component states no `gml:id`,
+ * @throws {@linkcode InspireArchiveError} when a component states no `gml:id`,
  * when two components share one, or when the pass ends with an empty index.
  */
 export async function readWallonieComponents(
@@ -290,13 +277,17 @@ export async function readWallonieComponents(
 		const id = feature.attributes["gml:id"]
 
 		if (!id) {
-			throw new WallonieArchiveError(`a ${feature.name} feature carries no gml:id, so nothing can reference it`)
+			throw new InspireArchiveError(
+				WALLONIE_ADAPTER_ID,
+				`a ${feature.name} feature carries no gml:id, so no address can reference it`
+			)
 		}
 
 		// Every one of 58,591 component ids measured is distinct.
 		// An overwritten entry would substitute one street for another on every address naming it.
 		if (seen.has(id)) {
-			throw new WallonieArchiveError(
+			throw new InspireArchiveError(
+				WALLONIE_ADAPTER_ID,
 				`two component features share the gml:id ${stringifyJSON(id)}. All 58,591 ids in the file ` +
 					`measured are distinct, so a reference can no longer be resolved to one feature.`
 			)
@@ -342,7 +333,8 @@ export async function readWallonieComponents(
 		["ad:AddressAreaName", areas],
 	] as const) {
 		if (!index.size) {
-			throw new WallonieArchiveError(
+			throw new InspireArchiveError(
+				WALLONIE_ADAPTER_ID,
 				`the archive holds no ${typeName} feature this adapter can join. Every address references all ` +
 					`four component types, so an empty index turns every row into a row with no street rather ` +
 					`than into fewer rows.`

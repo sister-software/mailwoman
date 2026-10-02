@@ -50,3 +50,22 @@ export class VoidDesignatorError extends Error {
 		this.name = "VoidDesignatorError"
 	}
 }
+
+/**
+ * Raised when a publication's archive cannot answer what the adapter asked it for.
+ *
+ * An archive holding no component feature is not a smaller publication.
+ * Every address references a fixed set of components, so an empty index turns
+ * each row into a row with no street rather than into fewer rows, which is the
+ * absence the repository's partial-read rule refuses.
+ *
+ * The adapter id carries which publisher failed, so one class serves every
+ * publisher that ships its theme as one archive.
+ */
+export class InspireArchiveError extends Error {
+	constructor(adapterID: string, message: string) {
+		super(`${adapterID} adapter: ${message}`)
+
+		this.name = "InspireArchiveError"
+	}
+}

@@ -131,6 +131,7 @@ import {
 	voidDesignatorTypes,
 } from "#inspire/address"
 import { inspireGMLChunks } from "#inspire/archive"
+import { InspireArchiveError } from "#inspire/errors"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -235,20 +236,6 @@ const COMPONENTS_PER_ADDRESS = 7
 const NIS_CODED_NAME = /^(\d+)\s*\((.*)\)$/u
 
 /**
- * Raised when the archive cannot answer what the adapter asked it for.
- *
- * A file holding no component feature cannot be read as a smaller publication:
- * every address references all seven components, so an empty index turns every row
- * into a row with no street rather than into fewer rows.
- */
-export class BrusselsArchiveError extends Error {
-	constructor(message: string) {
-		super(`${BRUSSELS_ADAPTER_ID} adapter: ${message}`)
-
-		this.name = "BrusselsArchiveError"
-	}
-}
-
 /**
  * A place name with the publisher's NIS code removed.
  *
@@ -308,7 +295,7 @@ export interface BrusselsComponentIndex {
  * The pass runs to the end of the member rather than stopping at the first address, because the
  * component-before-address order is a measurement of this file rather than a rule of the schema.
  *
- * @throws {@linkcode BrusselsArchiveError} when a component states no `gml:id`,
+ * @throws {@linkcode InspireArchiveError} when a component states no `gml:id`,
  * when two components share one, or when the pass ends with an empty index.
  */
 export async function readBrusselsComponents(
@@ -327,13 +314,17 @@ export async function readBrusselsComponents(
 		const id = feature.attributes["gml:id"]
 
 		if (!id) {
-			throw new BrusselsArchiveError(`a ${feature.name} feature states no gml:id, so nothing can reference it`)
+			throw new InspireArchiveError(
+				BRUSSELS_ADAPTER_ID,
+				`a ${feature.name} feature states no gml:id, so no address can reference it`
+			)
 		}
 
 		// Every one of 6,287 component ids measured is distinct.
 		// An overwritten entry would substitute one street for another on every address naming it.
 		if (seen.has(id)) {
-			throw new BrusselsArchiveError(
+			throw new InspireArchiveError(
+				BRUSSELS_ADAPTER_ID,
 				`two component features share the gml:id ${stringifyJSON(id)}. All 6,287 ids in the file ` +
 					`measured are distinct, so a reference can no longer be resolved to one feature.`
 			)
@@ -372,7 +363,8 @@ export async function readBrusselsComponents(
 		["ad:AdminUnitName", municipalities],
 	] as const) {
 		if (!index.size) {
-			throw new BrusselsArchiveError(
+			throw new InspireArchiveError(
+				BRUSSELS_ADAPTER_ID,
 				`the archive holds no ${typeName} feature this adapter can join. Every address references all ` +
 					`three component types, so an empty index turns every row into a row with no street rather ` +
 					`than into fewer rows.`

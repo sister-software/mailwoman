@@ -28,9 +28,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { streamMarkupElements, type MarkupElement } from "@mailwoman/core/html/elements"
-import AdmZip from "adm-zip"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -46,6 +44,7 @@ import {
 	postalDescriptorCode,
 	thoroughfareName,
 } from "#inspire/address"
+import { inspireGMLChunks } from "#inspire/archive"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -87,30 +86,17 @@ const FEATURE_TYPES = [
 ] as const
 
 /**
- * The GML members of one archive, as a stream of bytes.
+ * The member of a municipality's archive that holds the GML.
  *
- * ČÚZK's central directory records the member's size as the ZIP64 sentinel `0xFFFFFFFF` on at
- * least one archive, so a reader that trusts the directory's length reads the wrong number of bytes.
- * `adm-zip` inflates the member rather than reading that field, which is why
- * the archive is opened through it.
- */
-/**
- * One already-inflated member as the chunk sequence the markup reader takes.
+ * ČÚZK names it for the municipality, as `584282.xml`, and ships one member per archive,
+ * so the extension selects it without the adapter knowing the code.
  *
- * A municipality's GML is inflated whole, because the largest member measured is
- * 5,552,976 bytes and `adm-zip` inflates rather than streaming.
- * The reader still slices it for decoding, so the member never becomes one oversized string.
+ * ČÚZK's central directory records the member's size as the ZIP64 sentinel `0xFFFFFFFF`
+ * on at least one archive, so a reader trusting that slot reads the wrong length.
+ * `readZipEntry`, which {@linkcode inspireGMLChunks} uses, reads the ZIP64 extra field
+ * where the real length lives.
  */
-async function* memberChunks(gml: Buffer): AsyncIterable<Uint8Array> {
-	yield gml
-}
-
-function archiveMembers(archive: Buffer): readonly Buffer[] {
-	return new AdmZip(archive)
-		.getEntries()
-		.filter((entry) => !entry.isDirectory && entry.entryName.toLowerCase().endsWith(".xml"))
-		.map((entry) => entry.getData())
-}
+const GML_MEMBER = /\.xml$/iu
 
 /**
  * The series prefix a street name makes unnecessary.
@@ -184,7 +170,7 @@ export function createCzCuzkAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				for (const gml of archiveMembers(await readLocalBuffer(archivePath))) {
+				{
 					/**
 					 * Every referenced feature in this member, by its `gml:id`.
 					 */
@@ -194,7 +180,9 @@ export function createCzCuzkAdapter(): CorpusAdapter {
 					 */
 					const deferred: MarkupElement[] = []
 
-					for await (const element of streamMarkupElements(memberChunks(gml), FEATURE_TYPES, { xml: true })) {
+					for await (const element of streamMarkupElements(inspireGMLChunks(archivePath, GML_MEMBER), FEATURE_TYPES, {
+						xml: true,
+					})) {
 						if (opts.signal?.aborted) break
 
 						if (element.name !== "ad:Address") {
