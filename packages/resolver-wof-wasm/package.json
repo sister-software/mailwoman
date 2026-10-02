@@ -20,7 +20,10 @@
 		"!**/*.test.tsx"
 	],
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./lib/httpvfs/range-worker.ts",
+		"./out/httpvfs/range-worker.js"
+	],
 	"imports": {
 		"#test/*": "./test/*.ts",
 		"#*": {
