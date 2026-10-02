@@ -30,7 +30,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { renderGermanRow, type LocaleBaseTuple } from "#surfaces/locale"

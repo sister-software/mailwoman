@@ -13,7 +13,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { defaultAdapterRegistry } from "#adapters/utils"
+import { defaultAdapterRegistry } from "#adapters/registry"
 import { runAdapterPhase } from "#build/adapters"
 import { runAlignPhase } from "#build/align"
 import { readRegisterDecisions, readSourceEligibility } from "#build/eligibility"

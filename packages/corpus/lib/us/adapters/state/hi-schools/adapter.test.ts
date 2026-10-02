@@ -9,7 +9,7 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 import writeXlsxFile, { type SheetData } from "write-excel-file/node"
 
-import { InMemoryAdapterRegistry } from "#adapters/utils"
+import { InMemoryAdapterRegistry } from "#adapters/registry"
 import { writeDelimitedFixture } from "#test-kit"
 import {
 	createStateHiSchoolsAdapter,

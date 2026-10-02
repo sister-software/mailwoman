@@ -13,7 +13,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { makeLcg } from "@mailwoman/core/random"
 import { TextSpliterator } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { defaultRecipeSource } from "#recipes/sources"
 import {
 	poBoxTemplateLocale,

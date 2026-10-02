@@ -13,7 +13,9 @@ import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
-import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
+import { canonicalDedupKey } from "#adapters/dedup-key"
+import type { AdapterRegistry } from "#adapters/registry"
+import { streamingSha256, type StreamingHasher } from "#adapters/sha256-stream"
 import { FingerprintSet } from "#fingerprints"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 

@@ -16,6 +16,11 @@
  *
  * The pool is read in full and Fisher-Yates shuffled with the seeded prng before slicing to
  * `--count`. With-replacement draws at a large `--count` would produce a large duplicate rate.
+ *
+ * A row's jurisdiction comes from its INSEE commune code, as it does in the `ban` adapter reading
+ * the same files. The BAN fetcher downloads departments 971, 972, 973, 974 and 976 beside the
+ * metropolitan ones, so this recipe emits Guadeloupe, Martinique, French Guiana, Réunion and
+ * Mayotte rows, and labeling them `FR` would mislabel their country and their locale.
  */
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
@@ -29,7 +34,9 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
+import { composeHouseNumber } from "#adapters/street-line"
+import { countryOfInseeCode } from "#fr/insee-country"
 import { decomposeFrStreet } from "#fr/street-decompose"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
@@ -52,6 +59,14 @@ interface LieuDitTuple {
 	postcode: string | null
 	locality: string
 	dependentLocality: string
+	/**
+	 * The row's INSEE commune code, which decides its jurisdiction.
+	 *
+	 * BAN's overseas department files carry the same columns as the metropolitan ones,
+	 * so a recipe that reads the fetched BAN directory receives Guadeloupe, Martinique,
+	 * French Guiana, Réunion and Mayotte rows beside the metropolitan ones.
+	 */
+	codeInsee: string | null
 }
 
 /**
@@ -116,6 +131,7 @@ async function readLieuDitPool(banDir: PathBuilderLike): Promise<LieuDitTuple[]>
 				postcode: rec.postcode,
 				locality: rec.city,
 				dependentLocality: rec.lieuDit,
+				codeInsee: rec.codeInsee,
 			})
 
 			deptCount++
@@ -129,13 +145,6 @@ async function readLieuDitPool(banDir: PathBuilderLike): Promise<LieuDitTuple[]>
 	)
 
 	return pool
-}
-
-/**
- * `house_number` = `numero` + folded `rep` ("10 bis"), matching the `ban` adapter's own composition.
- */
-function composeHouseNumber(numero: string, rep: string | null): string {
-	return rep ? `${numero} ${rep}` : numero
 }
 
 /**
@@ -181,9 +190,17 @@ export const frLieuditRecipe: CorpusRecipe = {
 		let emitted = 0
 		let skipped = 0
 		let countryAppended = 0
+		/**
+		 * Rows that drew a country append where codex states no surface form for the jurisdiction.
+		 *
+		 * Counted so the run reports the gap rather than passing over it.
+		 */
+		let countrySurfaceFormAbsent = 0
+		const byCountry = new Map<string, number>()
 
 		for (const t of selected) {
-			const house = composeHouseNumber(t.numero, t.rep)
+			const house = composeHouseNumber(t.numero, t.rep ?? "", " ")
+			const country = countryOfInseeCode(t.codeInsee ?? "")
 			const decomposed = decomposeFrStreet(t.street)
 
 			const components: Partial<Record<ComponentTag, string>> = {
@@ -207,7 +224,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 			// The envelope form is the house and street line, the lieu-dit by itself on
 			// its own line, then the postcode and commune line.
 			// That is La Poste's line 5.
-			let raw = formatAddress(components, "FR")
+			let raw = formatAddress(components, country)
 
 			if (!raw) {
 				skipped++
@@ -215,18 +232,29 @@ export const frLieuditRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Country-append: ~`countryFraction` of the time, append an explicit "France" surface
+			// Country-append: ~`countryFraction` of the time, append an explicit country surface
 			// form onto the trailing (postcode+commune) line plus a `country` component.
 			// The model relearns to emit country when present without over-firing it on the country-less rows.
 			// `countryFraction <= 0` (the default) never draws from `random`,
 			// so the byte-stream is unaffected when the flag is unset.
+			//
+			// Codex states surface forms for `FR` alone among the jurisdictions BAN covers, so an overseas
+			// row draws from `random` and then leaves `raw` and `components.country` as they were.
+			// The draw happens either way, which keeps the byte-stream a function of `countryFraction`
+			// rather than of the mixture of jurisdictions in the input files.
 			if (countryFraction > 0 && random() < countryFraction) {
-				const forms = COUNTRY_SURFACE_FORMS.FR
-				const form = sample(forms, random)
-				raw = `${raw}, ${form}`
-				components.country = form
+				const forms: readonly string[] | undefined =
+					COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
 
-				countryAppended++
+				if (forms) {
+					const form = sample(forms, random)
+					raw = `${raw}, ${form}`
+					components.country = form
+
+					countryAppended++
+				} else {
+					countrySurfaceFormAbsent++
+				}
 			}
 
 			const sourceID = stableSourceID(source, {
@@ -240,8 +268,10 @@ export const frLieuditRecipe: CorpusRecipe = {
 			const canonical: CanonicalRow = {
 				raw,
 				components,
-				country: "FR",
-				locale: "fr-FR",
+				country,
+				// Every jurisdiction BAN publishes writes its addresses in French,
+				// so the language is constant and the region carries the jurisdiction.
+				locale: `fr-${country}`,
 				source,
 				source_id: sourceID,
 				corpus_version: "",
@@ -258,10 +288,22 @@ export const frLieuditRecipe: CorpusRecipe = {
 
 			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_base_id: null }))
 
+			byCountry.set(country, (byCountry.get(country) ?? 0) + 1)
+
 			emitted++
 		}
 
 		console.error(`  emitted=${emitted} skipped=${skipped} country-appended=${countryAppended} pool=${pool.length}`)
+
+		const jurisdictions = [...byCountry].toSorted((a, b) => b[1] - a[1])
+
+		console.error(`  jurisdictions: ${jurisdictions.map(([code, n]) => `${code}=${n}`).join(" ")}`)
+
+		if (countrySurfaceFormAbsent > 0) {
+			console.error(
+				`  ${countrySurfaceFormAbsent} rows drew a country append and codex states no surface form for their jurisdiction`
+			)
+		}
 
 		return { emitted, skipped }
 	},

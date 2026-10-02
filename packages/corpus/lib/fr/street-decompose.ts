@@ -15,7 +15,7 @@
  *   Sources street types from `core/data/libpostal/dictionaries/fr/street_types.txt`.
  */
 
-import { loadLibpostalDictionary } from "#adapters/utils"
+import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"
 
 /**
  * Tokens a BAN street needs before a type/article/name decomposition is attempted.

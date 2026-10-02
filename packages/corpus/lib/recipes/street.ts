@@ -9,7 +9,7 @@
 
 import { makeLcg } from "@mailwoman/core/utils"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { alignAndWrite, readTuples, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"

@@ -8,7 +8,11 @@ import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { countryOfMunicipality, createMatrikkelenAdapter, MATRIKKELEN_ADAPTER_ID } from "#adapters/matrikkelen/adapter"
+import {
+	countryOfMunicipality,
+	createMatrikkelenAdapter,
+	MATRIKKELEN_ADAPTER_ID,
+} from "#no/adapters/matrikkelen/adapter"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 

@@ -16,7 +16,7 @@ import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"

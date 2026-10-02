@@ -434,7 +434,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 			"`gate` is Norwegian for street, so `Karl Johans gate` is the most ordinary address Norway has",
 	],
 	[
-		"packages/corpus/lib/adapters/matrikkelen/adapter.test.ts",
+		"packages/corpus/lib/no/adapters/matrikkelen/adapter.test.ts",
 		"the assertions quote the rendered form of those fixture rows, so they carry the same street types",
 	],
 	[

@@ -14,7 +14,7 @@ import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { PathBuilder } from "path-ts"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 

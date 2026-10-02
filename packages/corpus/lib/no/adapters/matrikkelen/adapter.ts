@@ -25,7 +25,9 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { UnsupportedCountryError } from "#adapters/errors"
+import { stableSourceID } from "#adapters/source-id"
+import { composeHouseNumber } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -75,20 +77,6 @@ export function countryOfMunicipality(kommunenummer: string): string {
 	return kommunenummer.trim() === SVALBARD_MUNICIPALITY ? "SJ" : "NO"
 }
 
-/**
- * Composes the house number from `nummer` and the letter that may follow it.
- *
- * Kartverket splits `12B` into `nummer` 12 and `bokstav` B, and writes them joined in `adresseTekst`.
- */
-function composeHouseNumber(nummer: string, bokstav: string): string {
-	const number = nummer.trim()
-	const letter = bokstav.trim()
-
-	if (!number) return ""
-
-	return letter ? `${number}${letter}` : number
-}
-
 export function createMatrikkelenAdapter(): CorpusAdapter {
 	return {
 		id: MATRIKKELEN_ADAPTER_ID,
@@ -100,9 +88,7 @@ export function createMatrikkelenAdapter(): CorpusAdapter {
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			if (opts.country && !MATRIKKELEN_COUNTRIES.includes(opts.country)) {
-				throw new Error(
-					`matrikkelen adapter: the dataset covers ${MATRIKKELEN_COUNTRIES.join(", ")}, got country=${opts.country}`
-				)
+				throw new UnsupportedCountryError(MATRIKKELEN_ADAPTER_ID, MATRIKKELEN_COUNTRIES, opts.country)
 			}
 
 			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
@@ -134,6 +120,8 @@ export function createMatrikkelenAdapter(): CorpusAdapter {
 					}
 
 					const street = (record.adressenavn ?? "").trim()
+					// Kartverket splits `12B` into `nummer` 12 and `bokstav` B, and writes
+					// them joined with no separator in `adresseTekst`.
 					const house = composeHouseNumber(record.nummer ?? "", record.bokstav ?? "")
 					const postcode = (record.postnummer ?? "").trim()
 					const locality = (record.poststed ?? "").trim()

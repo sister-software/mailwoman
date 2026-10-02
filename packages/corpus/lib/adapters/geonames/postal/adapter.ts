@@ -10,7 +10,7 @@
 import { componentsPresentIn } from "@mailwoman/codex/address/format"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 

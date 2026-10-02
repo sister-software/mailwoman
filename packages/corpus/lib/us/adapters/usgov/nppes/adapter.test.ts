@@ -8,7 +8,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
-import { InMemoryAdapterRegistry } from "#adapters/utils"
+import { InMemoryAdapterRegistry } from "#adapters/registry"
 import { writeDelimitedFixture } from "#test-kit"
 import {
 	createUsgovNPPESAdapter,

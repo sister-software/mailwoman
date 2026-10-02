@@ -86,7 +86,15 @@ function nonEmpty(...values: Array<string | null | undefined>): string | undefin
 	return undefined
 }
 
-function composeHouseNumber(r: NADRecord): string | undefined {
+/**
+ * The house number a NAD record states, read from its own four columns.
+ *
+ * NAD publishes `AddNo_Full` already assembled and the parts beside it, so this prefers the
+ * assembled column and falls back to joining `AddNum_Pre`, `Add_Number` and `AddNum_Suf`.
+ * The shared `composeHouseNumber` in `#adapters/street-line` joins exactly two columns with
+ * one separator, so it fits a publisher that splits the number in two rather than in four.
+ */
+function nadHouseNumber(r: NADRecord): string | undefined {
 	const full = (r.AddNo_Full ?? "").toString().trim()
 
 	if (full) return full
@@ -203,7 +211,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 					if (!postcode) continue
 
 					const decomposed = decomposeNADStreet(record)
-					const houseNumber = composeHouseNumber(record)
+					const houseNumber = nadHouseNumber(record)
 					const venue = nonEmpty(record.LandmkName)
 					const unit = nonEmpty(record.Unit, record.Building, record.Floor, record.Room)
 

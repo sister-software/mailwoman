@@ -29,7 +29,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/arguments"
-import { canonicalDedupKey } from "@mailwoman/corpus/adapters/utils"
+import { canonicalDedupKey } from "@mailwoman/corpus/adapters/dedup-key"
 import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { PathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"

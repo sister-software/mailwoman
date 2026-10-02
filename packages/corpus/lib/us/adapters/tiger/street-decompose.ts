@@ -9,7 +9,7 @@
  * agree on the vocabulary.
  */
 
-import { loadLibpostalDictionary } from "#adapters/utils"
+import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"
 
 const [DIRECTIONALS, STREET_TYPES] = await Promise.all([
 	loadLibpostalDictionary("en", "directionals.txt"),

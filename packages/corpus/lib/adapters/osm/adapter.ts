@@ -16,7 +16,7 @@ import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import { TextSpliterator } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 

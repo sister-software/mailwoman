@@ -8,13 +8,16 @@
  *   The module registers every built-in adapter with `defaultAdapterRegistry` when loaded. The CLI
  *   (`commands/corpus/list.tsx`, `commands/corpus/run.tsx`) imports it once at startup.
  *
- *   Each adapter has its own directory, and which parent it sits under states how many jurisdictions
- *   it serves. An adapter that emits one country code lives under that country, at
- *   `lib/<iso2>/adapters/<id>/`: G-NAF pins every row to `AU`, the FCC and USGov readers to `US`, and
- *   `wof-admin-jp` to `JP`, each throwing on any other `opts.country`. An adapter that emits several
- *   country codes lives here, at `lib/adapters/<id>/`, which holds the aggregators
- *   (`./openaddresses/`, `./osm/`, `./overture/`, `./geonames/`, `./wof/`, `./po-box/`) and `./ban/`,
- *   whose publisher covers France and ten overseas jurisdictions from one schema.
+ *   Each adapter has its own directory, and the publisher decides which parent it sits under. An
+ *   adapter reading one country's publisher lives under that country, at `lib/<iso2>/adapters/<id>/`:
+ *   G-NAF under `au`, the FCC and USGov readers under `us`, BAN under `fr`, and Kartverket's
+ *   Matrikkelen under `no`. A national publisher stays there even when its own files cover that
+ *   state's dependencies, because the publisher is what the adapter reads: BAN carries France and ten
+ *   overseas jurisdictions, and Matrikkelen carries Norway and Svalbard.
+ *
+ *   An adapter reading a publisher that is not any one country's lives here, at `lib/adapters/<id>/`.
+ *   That is the aggregators, `./openaddresses/`, `./osm/`, `./overture/`, `./geonames/` and `./wof/`,
+ *   plus `./po-box/`.
  *
  *   A new adapter joins the `BUILTIN_ADAPTERS` list below. A test that needs a pristine registry
  *   constructs its own `InMemoryAdapterRegistry` rather than mutating the default.
@@ -24,17 +27,17 @@
  *   `./wof/postalcode-json/` hold the implementations.
  */
 
-import { banAdapter } from "#adapters/ban/adapter"
 import { geonamesAdapter } from "#adapters/geonames/adapter"
 import { geonamesPostalAdapter } from "#adapters/geonames/postal/adapter"
-import { matrikkelenAdapter } from "#adapters/matrikkelen/adapter"
 import { openaddressesAdapter } from "#adapters/openaddresses/adapter"
 import { osmAdapter } from "#adapters/osm/adapter"
 import { overtureAdapter } from "#adapters/overture/adapter"
-import { defaultAdapterRegistry } from "#adapters/utils"
+import { defaultAdapterRegistry } from "#adapters/registry"
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"
 import { gnafAdapter } from "#au/adapters/gnaf/adapter"
+import { banAdapter } from "#fr/adapters/ban/adapter"
+import { matrikkelenAdapter } from "#no/adapters/matrikkelen/adapter"
 import type { CorpusAdapter } from "#types"
 import { fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
 import { stateHiSchoolsAdapter } from "#us/adapters/state/hi-schools/adapter"
@@ -91,8 +94,8 @@ for (const adapter of BUILTIN_ADAPTERS) {
 	}
 }
 
-export { BAN_ADAPTER_ID, banAdapter } from "#adapters/ban/adapter"
-export { MATRIKKELEN_ADAPTER_ID, matrikkelenAdapter } from "#adapters/matrikkelen/adapter"
+export { BAN_ADAPTER_ID, banAdapter } from "#fr/adapters/ban/adapter"
+export { MATRIKKELEN_ADAPTER_ID, matrikkelenAdapter } from "#no/adapters/matrikkelen/adapter"
 export { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
 
 export {

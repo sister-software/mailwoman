@@ -27,7 +27,10 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { UnsupportedCountryError } from "#adapters/errors"
+import { stableSourceID } from "#adapters/source-id"
+import { composeHouseNumber } from "#adapters/street-line"
+import { countryOfInseeCode, INSEE_COUNTRIES } from "#fr/insee-country"
 import { decomposeFrStreet } from "#fr/street-decompose"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
@@ -55,71 +58,6 @@ interface BanRow {
 	nom_commune: string
 }
 
-/**
- * The ISO 3166-1 alpha-2 code of each overseas department BAN publishes, by its INSEE prefix.
- *
- * An INSEE commune code is five characters.
- * A metropolitan code's department is its first two, including `2A` and `2B` for Corsica,
- * and an overseas code's department is its first three.
- *
- * Every overseas prefix begins `97` or `98`, so three characters separate the
- * two cases without a length test.
- *
- * `984` and `986` are mapped although IGN publishes both files with no header line
- * and no rows, so a row appearing under either is labeled rather than read as metropolitan.
- * `989` Clipperton has no ISO 3166-1 alpha-2 code assigned to it, so a row there
- * has nowhere correct to go and this map leaves it out.
- */
-const COUNTRY_BY_INSEE_DEPARTMENT: Readonly<Record<string, string>> = {
-	"971": "GP",
-	"972": "MQ",
-	"973": "GF",
-	"974": "RE",
-	"975": "PM",
-	"976": "YT",
-	"977": "BL",
-	"978": "MF",
-	"984": "TF",
-	"986": "WF",
-	"987": "PF",
-	"988": "NC",
-}
-
-/**
- * Every jurisdiction this adapter can emit, so a caller's `--country` is checked
- * against the set rather than against one value.
- *
- * `TF` and `WF` are in the set and currently yield no rows, because the adapter describes
- * what BAN publishes rather than what the address-source register has elected.
- */
-export const BAN_COUNTRIES: readonly string[] = ["FR", ...Object.values(COUNTRY_BY_INSEE_DEPARTMENT)]
-
-/**
- * The country a row belongs to, read from its INSEE commune code.
- *
- * A code outside the overseas prefixes is metropolitan France.
- * An empty or short code also reads `FR`, because every file this adapter accepts is BAN's
- * and a missing commune code does not move the row to another country.
- */
-export function countryOfInseeCode(codeInsee: string): string {
-	return COUNTRY_BY_INSEE_DEPARTMENT[codeInsee.trim().slice(0, 3)] ?? "FR"
-}
-
-/**
- * Compose `house_number` from `numero` + `rep`.
- *
- * BAN uses `rep` for repetition indices ("bis", "ter", "quater") that follow the house number.
- * Result: `"10 bis"`, `"45"`, etc.
- */
-function composeHouseNumber(numero: string, rep: string): string {
-	const n = numero.trim()
-	const r = rep.trim()
-
-	if (!n) return ""
-
-	return r ? `${n} ${r}` : n
-}
-
 export function createBanAdapter(): CorpusAdapter {
 	return {
 		id: BAN_ADAPTER_ID,
@@ -131,8 +69,8 @@ export function createBanAdapter(): CorpusAdapter {
 			"Base Adresse Nationale: house-number-level street addresses for France and ten overseas jurisdictions.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			if (opts.country && !BAN_COUNTRIES.includes(opts.country)) {
-				throw new Error(`ban adapter: BAN publishes ${BAN_COUNTRIES.join(", ")}, got country=${opts.country}`)
+			if (opts.country && !INSEE_COUNTRIES.includes(opts.country)) {
+				throw new UnsupportedCountryError(BAN_ADAPTER_ID, INSEE_COUNTRIES, opts.country)
 			}
 
 			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
@@ -153,7 +91,9 @@ export function createBanAdapter(): CorpusAdapter {
 				// so one extract spanning several departments can be read once per country.
 				if (opts.country && country !== opts.country) continue
 
-				const house = composeHouseNumber(record.numero ?? "", record.rep ?? "")
+				// BAN stores a repetition index ("bis", "ter", "quater") in `rep`,
+				// which follows the number as a separate word.
+				const house = composeHouseNumber(record.numero ?? "", record.rep ?? "", " ")
 				const street = record.nom_voie ?? ""
 				const postcode = record.code_postal ?? ""
 				const locality = record.nom_commune ?? ""

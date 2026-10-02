@@ -16,7 +16,7 @@ import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator, TextSpliterator } from "spliterator"
 
-import { stableSourceIDFromParts } from "#adapters/utils"
+import { stableSourceIDFromParts } from "#adapters/source-id"
 import type { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 

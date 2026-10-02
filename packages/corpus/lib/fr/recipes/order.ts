@@ -15,7 +15,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"

@@ -24,7 +24,7 @@ import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { splitStreetLine } from "#adapters/utils"
+import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"

@@ -22,7 +22,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { matchCase } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { readCSVRecords, readOATuples, recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"
