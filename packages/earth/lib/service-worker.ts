@@ -13,7 +13,7 @@
  * malformed" — a torn chunk is refetched once with `cache: "no-store"`, and the readers' own cache-busting retry
  * stays as the backstop for browsers without service workers.
  *
- * Non-database requests are never intercepted. The handler does not call `respondWith` for them. sql.js-httpvfs issues
+ * Non-database requests are never intercepted. The handler does not call `respondWith` for them. The range reader issues
  * range reads as synchronous XHR inside a dedicated worker. Those reads still route through this handler because the
  * worker inherits its creator document's controller. The page posts {@link PruneMessage} after it selects a release
  * and drops chunks from other releases.

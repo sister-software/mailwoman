@@ -237,13 +237,13 @@ Two constraints ride on that:
 ## Resolve addresses in the browser
 
 Components are not coordinates. [Earth](https://earth.mailwoman.ai/) resolves them by range-loading a 2.88 GB gazetteer
-over HTTP: `sql.js-httpvfs` fetches only the SQLite pages a lookup touches, which the gazetteer's own
-build notes put at about a dozen range requests per session. That implementation is docs-site code rather
+over HTTP: a read-only SQLite VFS fetches only the chunks a lookup touches, which is three to five range
+requests for a cold name lookup. That implementation is docs-site code rather
 than a published package, and two things stand between it and your page.
 
-The worker is one. `sql.js-httpvfs` runs SQLite in a `Worker`, and a `Worker` cannot be constructed
+The worker is one. The reader runs `@sqlite.org/sqlite-wasm` in a `Worker`, and a `Worker` cannot be constructed
 from a cross-origin script URL, so its worker JS and its `.wasm` must be served from your own origin
-even when the database itself is remote. The demo carries a `sqljsBaseURL` option for exactly that
+even when the database itself is remote. The demo carries a `sqliteRuntimeBaseURL` option for exactly that
 reason.
 
 The data is the other. `@mailwoman/resolver-wof-wasm` is the published browser lookup, and its

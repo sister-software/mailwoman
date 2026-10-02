@@ -157,8 +157,14 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			)
 		}
 
-		const { STREET_SEGMENT_COLUMNS, createStreetSegmentTable, createStreetSegmentIndexes, writeInterpCalibration } =
-			segmentSchema
+		const {
+			STREET_SEGMENT_COLUMNS,
+			STREET_SEGMENT_STAGE_TABLE,
+			clusterStreetSegments,
+			createStreetSegmentTable,
+			createStreetSegmentIndexes,
+			writeInterpCalibration,
+		} = segmentSchema
 
 		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
@@ -202,10 +208,13 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			kdb.exec("PRAGMA journal_mode = WAL;")
 			// The schema comes from the shared builder so that the reader and this writer agree.
 			await createStreetSegmentTable(kdb)
+			await createStreetSegmentTable(kdb, STREET_SEGMENT_STAGE_TABLE)
 			await writeInterpCalibration(kdb, calibration)
 
+			// Rows load into the stage in source order.
+			// `clusterStreetSegments` then writes `street_segment` in probe-key order.
 			const insert = kdb.prepare(
-				`INSERT INTO street_segment (${STREET_SEGMENT_COLUMNS.join(", ")})
+				`INSERT INTO ${STREET_SEGMENT_STAGE_TABLE} (${STREET_SEGMENT_COLUMNS.join(", ")})
 						 VALUES (${STREET_SEGMENT_COLUMNS.map(() => "?").join(", ")})`
 			)
 
@@ -282,6 +291,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			}
 
 			kdb.exec("COMMIT")
+			await clusterStreetSegments(kdb)
 			await createStreetSegmentIndexes(kdb)
 			kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 
@@ -299,7 +309,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			schemaVersion: 1,
 			// Build-local only: no artifact publishes it.
 			tier: LayerTier.BuildLocal,
-			license: "public-domain",
+			license: "LicenseRef-USGov-Public-Domain",
 			attribution: "US Census Bureau TIGER/Line",
 			source: "tiger",
 			sourceVintage: options.release,

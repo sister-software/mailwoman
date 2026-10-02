@@ -20,7 +20,10 @@
 		"!**/*.test.tsx"
 	],
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./lib/httpvfs/range-worker.ts",
+		"./out/httpvfs/range-worker.js"
+	],
 	"imports": {
 		"#test/*": "./test/*.ts",
 		"#*": {
@@ -55,7 +58,6 @@
 		"@sqlite.org/sqlite-wasm": "^3.53.0-build1",
 		"h3-js": "^4.5.0",
 		"path-ts": "^2.5.0",
-		"sql.js-httpvfs": "^0.8.12",
 		"zod": "^4.5.4"
 	}
 }

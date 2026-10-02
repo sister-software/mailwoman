@@ -6,22 +6,8 @@
 
 import { isUSStateAbbreviation } from "@mailwoman/codex/us"
 
-import { loadHTTPVFSDatabase, WOFCandidateTableLookup } from "#httpvfs/resolver"
-
-type CandidateHTTPVFSWorker = Awaited<ReturnType<typeof loadHTTPVFSDatabase>>
-
-let candidateWorkerPromise: Promise<CandidateHTTPVFSWorker> | undefined
-
-function loadCandidateWorker(gazetteerURL: string, sqljsBaseURL: string): Promise<CandidateHTTPVFSWorker> {
-	if (!candidateWorkerPromise) {
-		candidateWorkerPromise = loadHTTPVFSDatabase(gazetteerURL, sqljsBaseURL).catch((error: unknown) => {
-			candidateWorkerPromise = undefined
-			throw error
-		})
-	}
-
-	return candidateWorkerPromise
-}
+import type { RangeDatabase } from "#httpvfs/database"
+import { WOFCandidateTableLookup } from "#httpvfs/resolver"
 
 /**
  * Describes the locality that {@link resolveAnchorCenter} placed an anchor at, by its centroid and name.
@@ -59,20 +45,19 @@ function splitAnchor(text: string): { localityText: string; regionText?: string 
 /**
  * Resolves an anchor such as "Springfield, IL" to a locality center using
  * only the admin candidate gazetteer.
+ * The caller opens that database with `openRangeDatabase`.
  *
  * @returns `null` when no place resolves.
  */
 export async function resolveAnchorCenter(
-	gazetteerURL: string,
-	sqljsBaseURL: string,
+	candidateDatabase: RangeDatabase,
 	anchorText: string
 ): Promise<AnchorCenter | null> {
 	const trimmed = anchorText.trim()
 
 	if (!trimmed) return null
 
-	const worker = await loadCandidateWorker(gazetteerURL, sqljsBaseURL)
-	const lookup = new WOFCandidateTableLookup(worker)
+	const lookup = new WOFCandidateTableLookup(candidateDatabase)
 
 	const { localityText, regionText } = splitAnchor(trimmed)
 

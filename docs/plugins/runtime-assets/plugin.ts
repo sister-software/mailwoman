@@ -2,14 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Docusaurus runtime-asset staging and bundle-policy entry point: the sql.js worker the explainers resolve
- *   through. It also registers the MapLibre worker that the dashboard map spawns. The plugin configures webpack aliases
+ * @file Docusaurus runtime-asset staging and bundle-policy entry point: the SQLite range worker the explainers
+ *   resolve through. It also registers the MapLibre worker that the dashboard map spawns. The plugin configures webpack aliases
  *   and shims for packages the explainers import. It exposes the published data-bundle summary as page-global data.
  */
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { stageSQLJSAssets } from "@mailwoman/resolver-wof-wasm/host-assets"
+import { stageSQLiteRuntimeAssets } from "@mailwoman/resolver-wof-wasm/host-assets"
 import { resolvePath } from "path-ts"
 
 import { stageMapLibreWorker } from "./artifacts.ts"
@@ -32,9 +32,9 @@ export default async function runtimeAssetsPlugin(context: LoadContext): Promise
 
 		async loadContent() {
 			await makeDirectories(staticDir)
-			const sqljsDir = resolvePath(staticDir, "sqljs")
-			await makeDirectories(sqljsDir)
-			await stageSQLJSAssets(sqljsDir)
+			const sqliteDir = resolvePath(staticDir, "sqlite")
+			await makeDirectories(sqliteDir)
+			await stageSQLiteRuntimeAssets(sqliteDir)
 			const maplibreDir = resolvePath(staticDir, "maplibre")
 			await makeDirectories(maplibreDir)
 			await stageMapLibreWorker(maplibreDir)

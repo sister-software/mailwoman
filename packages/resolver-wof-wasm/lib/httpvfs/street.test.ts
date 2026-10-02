@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Unit tests for the demo's street tier: the httpvfs situs/interp lookups
- *   (HTTPVFSAddressPointLookup, HTTPVFSInterpolator) against a node:sqlite-backed stub worker that
- *   mimics sql.js-httpvfs's `db.exec` interface ([] on no rows, else [{columns, values}]), plus
- *   `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory extracts — no $MAILWOMAN_DATA_ROOT
+ *   (HTTPVFSAddressPointLookup, HTTPVFSInterpolator) against a node:sqlite-backed stub of the
+ *   range-read database handle, plus `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory extracts — no $MAILWOMAN_DATA_ROOT
  *   dependency, CI-safe. Integration against real extracts is the docs site's street-tier browser
  *   spec.
  */
@@ -17,7 +16,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
 import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator, resolveStreet } from "#httpvfs/street"
-import { registerOpenDatabases, stubWorker, trackDatabase } from "#test/httpvfs-stub-worker"
+import { registerOpenDatabases, stubRangeDatabase, trackDatabase } from "#test/range-database-stub"
 
 registerOpenDatabases()
 
@@ -68,28 +67,28 @@ function interpDB(): DatabaseClient<AddressPointDatabase> {
 
 describe("HTTPVFSAddressPointLookup", () => {
 	test("finds an exact point by postcode + street + number", async () => {
-		const lk = new HTTPVFSAddressPointLookup(stubWorker(situsDB()))
+		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()))
 		const hit = await lk.find({ street: "Main St", number: "100", postcode: "10001" })
 		expect(hit).toMatchObject({ lat: 40.75, lon: -73.99, source: "overture:test" })
 	})
 
 	test("falls back to locality scope when no postcode hit", async () => {
-		const lk = new HTTPVFSAddressPointLookup(stubWorker(situsDB()))
+		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()))
 		const hit = await lk.find({ street: "Main St", number: "100", locality: "New York" })
 		expect(hit?.lat).toBe(40.75)
 	})
 
 	test("returns null on a miss and on a tableless extract", async () => {
-		const lk = new HTTPVFSAddressPointLookup(stubWorker(situsDB()))
+		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()))
 		expect(await lk.find({ street: "Main St", number: "999", postcode: "10001" })).toBeNull()
-		const empty = new HTTPVFSAddressPointLookup(stubWorker(db((d) => d.exec("CREATE TABLE _x(a)"))))
+		const empty = new HTTPVFSAddressPointLookup(stubRangeDatabase(db((d) => d.exec("CREATE TABLE _x(a)"))))
 		expect(await empty.find({ street: "Main St", number: "100", postcode: "10001" })).toBeNull()
 	})
 })
 
 describe("HTTPVFSInterpolator", () => {
 	test("interpolates a house number within a segment range", async () => {
-		const lk = new HTTPVFSInterpolator(stubWorker(interpDB()))
+		const lk = new HTTPVFSInterpolator(stubRangeDatabase(interpDB()))
 		const hit = await lk.find({ street: "Main St", number: "150", postcode: "10001" }) // even, mid-range
 		expect(hit?.interpolated).toBe(true)
 		expect(hit?.method).toBe("tiger_range")
@@ -101,9 +100,9 @@ describe("HTTPVFSInterpolator", () => {
 	})
 
 	test("rejects non-numeric house numbers and tableless extracts", async () => {
-		const lk = new HTTPVFSInterpolator(stubWorker(interpDB()))
+		const lk = new HTTPVFSInterpolator(stubRangeDatabase(interpDB()))
 		expect(await lk.find({ street: "Main St", number: "12B", postcode: "10001" })).toBeNull()
-		const empty = new HTTPVFSInterpolator(stubWorker(db((d) => d.exec("CREATE TABLE _x(a)"))))
+		const empty = new HTTPVFSInterpolator(stubRangeDatabase(db((d) => d.exec("CREATE TABLE _x(a)"))))
 		expect(await empty.find({ street: "Main St", number: "150", postcode: "10001" })).toBeNull()
 	})
 })

@@ -77,7 +77,6 @@ const BROWSER_EXTERNALS = [
 	"onnxruntime-web/*",
 	"onnxruntime-node",
 	"maplibre-gl",
-	"sql.js-httpvfs",
 	"@sqlite.org/*",
 ] as const
 

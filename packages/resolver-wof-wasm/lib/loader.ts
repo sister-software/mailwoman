@@ -9,10 +9,9 @@
  *   API's "opfs"-flavored constructor in transient mode. The full-fetch approach is fine for a
  *   bundle this size. The browser holds the slim database in RAM for the session.
  *   HTTP/2 and gzip reduce the 35 MB transfer to one RTT plus transfer time.
- *   A VFS approach would require hundreds of byte-range requests.
  *
- *   When we eventually want incremental loading (Phase B.x), this is the point to swap — keep
- *   `WOFWasmPlaceLookup` unchanged and replace the loader with a `sql.js-httpvfs`-style VFS.
+ *   A database too large to hold in memory is read by range requests instead, through
+ *   `openRangeDatabase` in `httpvfs/database.ts`.
  */
 
 import sqlite3InitModule, { type Database, type Sqlite3Static } from "@sqlite.org/sqlite-wasm"

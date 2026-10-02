@@ -23,15 +23,17 @@ export interface PolygonDB {
 }
 
 /**
- * Open the crisp-polygon DB via sql.js-httpvfs: a single `select geom where id=?` touches about
- * one page, so the browser fetches a few KB of the 19 MB file rather than the whole thing.
+ * Open the crisp-polygon DB for range reads: a single `select geom where id=?` walks one B-tree path,
+ * so the browser fetches that path's chunks of the 19 MB file rather than the whole thing.
  */
-export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<PolygonDB> {
-	const { loadHTTPVFSDatabase, makeHTTPVFSPolygonLookup } =
-		await import("@mailwoman/resolver-wof-wasm/httpvfs/resolver")
+export async function loadPolygonDB(url: string, sqliteRuntimeBaseURL: string): Promise<PolygonDB> {
+	const [{ openRangeDatabase }, { makeRangePolygonLookup }] = await Promise.all([
+		import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
+		import("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
+	])
 
-	const worker = await loadHTTPVFSDatabase(url, sqljsBaseURL)
-	const lookup = makeHTTPVFSPolygonLookup(worker)
+	const database = await openRangeDatabase(url, sqliteRuntimeBaseURL)
+	const lookup = makeRangePolygonLookup(database)
 
 	return {
 		get: (id: number) => lookup.get(id) as Promise<PlaceGeometry | null>,
