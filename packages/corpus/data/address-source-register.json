@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "0e80a8fac9da6d90a0a5ec4328e68dd983c5b8700befc78e79b9626edffe4f00",
+	"contentDigest": "f73b0f32cae59cdda3aefd15862daf49be6da457cc54bfeaeee9dd08a9a3a804",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -8495,6 +8495,7 @@
 			"publisher": "Dirección General del Catastro",
 			"sourceURL": "https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml",
 			"note": "The AD theme is an address point at a building entrance carrying a house-number designator; a thoroughfare name; a postcode and a municipality. It carries no party.",
+			"adapterID": "es-catastro",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -8538,6 +8539,7 @@
 			"publisher": "Diputación Foral de Bizkaia",
 			"sourceURL": "https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml",
 			"note": "A feature is an address point with a house-number designator and a thoroughfare name. It carries no party.",
+			"adapterID": "es-bizkaia",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -8567,6 +8569,7 @@
 			"publisher": "Diputación Foral de Gipuzkoa",
 			"sourceURL": "https://b5m.gipuzkoa.eus/inspire/download/addresses.xml",
 			"note": "A feature is an address point with a house-number designator and a thoroughfare name. It carries no party.",
+			"adapterID": "es-gipuzkoa",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -8596,6 +8599,7 @@
 			"publisher": "Gobierno de Navarra",
 			"sourceURL": "https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml",
 			"note": "A feature is an address point with a house-number designator and a thoroughfare name. It carries no party.",
+			"adapterID": "es-navarra",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},

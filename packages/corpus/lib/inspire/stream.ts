@@ -19,6 +19,13 @@
  * A publisher that writes every reference before any address, as Wallonia, Brussels and Slovakia do,
  * needs no holding and indexes in a pass of its own instead. Those adapters call
  * `streamMarkupElements` directly.
+ *
+ * A publisher that writes every reference *after* its addresses needs the opposite of holding, and
+ * {@linkcode streamIndexedInspireRows} serves it. The Dirección General del Catastro and the
+ * Diputación Foral de Gipuzkoa both do: Catastro's Ceuta member writes its 511 reference features in
+ * the last 530,000 of 11,861,975 bytes, and Gipuzkoa writes its 4,516 in the last 6,722,000 of
+ * 313,162,472. Holding would mean holding every address. That is 68,744 subtrees for Gipuzkoa and
+ * the whole of Madrid for Catastro, so those two read the member twice and index first.
  */
 
 import type { MarkupElement } from "@mailwoman/core/html/elements"
@@ -177,6 +184,76 @@ export async function* streamInspireRows<Indexed>(
 		// `deferred` after the document ended is a caller that ignored `final`,
 		// and the row is refused rather than held again, which would never terminate.
 		if (!row || row === "deferred") continue
+
+		yield row
+
+		emitted++
+	}
+}
+
+/**
+ * How to read one publisher's document twice, indexing its references before reading its addresses.
+ */
+export interface StreamIndexedInspireRowsOptions<Indexed> extends Omit<
+	StreamInspireRowsOptions<Indexed>,
+	"chunks" | "compose"
+> {
+	/**
+	 * Opens the document's bytes.
+	 *
+	 * Called once per pass, so it must deliver the same bytes each time.
+	 *
+	 * A factory rather than an iterable, because a byte stream is consumed by the first pass.
+	 * `inspireGMLChunks` inflates the archive member again, which is what makes the
+	 * second pass cheap relative to holding every address.
+	 */
+	chunks: () => AsyncIterable<string | Uint8Array>
+
+	/**
+	 * Builds a row from an address and the complete reference index.
+	 *
+	 * There is no `final` argument and no deferral: the first pass has read the whole document,
+	 * so a reference resolving to no feature is a value the reader asked for and could not read.
+	 * The caller raises on one rather than writing the address without it.
+	 */
+	compose: (address: MarkupElement, referenced: ReadonlyMap<string, Indexed>) => CanonicalRow | undefined
+}
+
+/**
+ * The rows one document holds, read with its reference index already complete.
+ *
+ * The first pass reads only the component elements and the second only the addresses,
+ * so the resident set is the index rather than the addresses.
+ * The rows arrive in the publisher's own order, which {@linkcode streamInspireRows}
+ * cannot promise because it answers a held address last.
+ */
+export async function* streamIndexedInspireRows<Indexed>(
+	options: StreamIndexedInspireRowsOptions<Indexed>
+): AsyncIterable<CanonicalRow> {
+	const addressElement = options.addressElement ?? "ad:Address"
+	const key = options.key ?? gmlID
+	const referenced = new Map<string, Indexed>()
+
+	for await (const feature of streamMarkupElements(options.chunks(), options.componentElements, { xml: true })) {
+		if (options.signal?.aborted) return
+
+		const id = key(feature)
+
+		if (id) {
+			referenced.set(id, options.index(feature))
+		}
+	}
+
+	let emitted = 0
+
+	for await (const address of streamMarkupElements(options.chunks(), addressElement, { xml: true })) {
+		if (options.signal?.aborted) return
+
+		if (options.limit !== undefined && emitted >= options.limit) return
+
+		const row = options.compose(address, referenced)
+
+		if (!row) continue
 
 		yield row
 

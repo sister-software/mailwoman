@@ -20,6 +20,11 @@
  * 4. The locator vocabulary. Czechia types its number `buildingIdentifier`, the Netherlands
  *    `addressNumber`, Wallonia `LocatorDesignatorTypeValue/addressIdentifierGeneral`, Brussels
  *    `buildingIdentifier`.
+ * 5. The prefix's case. Seven publishers write `ad:` and `gn:`. The Dirección General del Catastro
+ *    and the Gobierno de Navarra bind the same namespaces to `AD:` and `GN:`. The Catastro also
+ *    states a designator type and an administrative level as element text, `1` and `4`, where
+ *    everyone else writes a codelist URI. The readers below therefore match an element name
+ *    without regard to case, and accept either form of a coded value.
  *
  * So this module exposes the primitives and leaves composition to each adapter. A configuration
  * object describing those four axes would have to be right about publishers whose files nobody has
@@ -29,7 +34,72 @@
  * {@linkcode componentJoinKey} reads all four.
  */
 
-import { childElement, childElements, elementAtPath, type MarkupElement } from "@mailwoman/core/html/elements"
+import type { MarkupElement } from "@mailwoman/core/html/elements"
+
+/**
+ * Whether an element's name is `wanted`, ignoring the case of both.
+ *
+ * The prefix a document binds a namespace to is the document's own choice.
+ * Seven publishers write `ad:Address` and `gn:text`.
+ *
+ * The Dirección General del Catastro and the Gobierno de Navarra bind the same
+ * two namespaces to `AD:` and `GN:`.
+ * A reader comparing the name exactly finds neither a locator nor a street
+ * nor a postcode in either Spanish file.
+ *
+ * That reads as an address carrying none rather than as a prefix this repository had not met.
+ *
+ * The prefix is still compared, because it carries the namespace and the namespace carries the meaning.
+ * The Service public de Wallonie writes three `gml:name` elements inside each
+ * `ad:ThoroughfareName`, ahead of the `ad:name` that holds the street.
+ *
+ * A reader that dropped the prefix and matched on `name` alone read the first of those three
+ * and found no street on any of Wallonia's 58,591 thoroughfare features.
+ */
+export function inspireNameIs(name: string, wanted: string): boolean {
+	return name.toLowerCase() === wanted.toLowerCase()
+}
+
+/**
+ * The first child of `element` named `name`, ignoring case.
+ *
+ * `name` is written with the prefix the INSPIRE guideline uses, which is the
+ * prefix eight of the nine publishers write.
+ * The case-insensitive sibling of `childElement` from `@mailwoman/core/html/elements`,
+ * which compares the name exactly as a general markup reader must.
+ */
+export function inspireChild(element: MarkupElement, name: string): MarkupElement | undefined {
+	return element.children.find((child) => inspireNameIs(child.name, name))
+}
+
+/**
+ * Every child of `element` named `name`, in document order, ignoring case.
+ *
+ * The case-insensitive sibling of `childElements` from `@mailwoman/core/html/elements`,
+ * for the same reason {@linkcode inspireChild} is.
+ */
+export function inspireChildren(element: MarkupElement, name: string): readonly MarkupElement[] {
+	return element.children.filter((child) => inspireNameIs(child.name, name))
+}
+
+/**
+ * The element reached by walking `path` from `element`, taking the first match at each step.
+ *
+ * The case-insensitive sibling of `elementAtPath` from `@mailwoman/core/html/elements`.
+ * An INSPIRE value sits five or six elements down, so the path form reads better than
+ * a chain of {@linkcode inspireChild} calls and reports the same absence.
+ */
+export function inspireElementAt(element: MarkupElement, ...path: readonly string[]): MarkupElement | undefined {
+	let current: MarkupElement | undefined = element
+
+	for (const step of path) {
+		if (!current) return undefined
+
+		current = inspireChild(current, step)
+	}
+
+	return current
+}
 
 /**
  * The final segment of an INSPIRE codelist URI, which is the value's name.
@@ -95,16 +165,16 @@ export function voidReason(element: MarkupElement | undefined): string | undefin
  */
 export function designatorsByType(address: MarkupElement): ReadonlyMap<string, readonly string[]> {
 	const byType = new Map<string, string[]>()
-	const locator = elementAtPath(address, "ad:locator", "ad:AddressLocator")
+	const locator = inspireElementAt(address, "ad:locator", "ad:AddressLocator")
 
 	if (!locator) return byType
 
-	for (const wrapper of childElements(locator, "ad:designator")) {
-		const locatorDesignator = childElement(wrapper, "ad:LocatorDesignator")
+	for (const wrapper of inspireChildren(locator, "ad:designator")) {
+		const locatorDesignator = inspireChild(wrapper, "ad:LocatorDesignator")
 
 		if (!locatorDesignator) continue
 
-		const type = childElement(locatorDesignator, "ad:type")
+		const type = inspireChild(locatorDesignator, "ad:type")
 
 		if (!type || isVoid(type)) continue
 
@@ -112,7 +182,7 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
 
 		if (!name) continue
 
-		const value = childElement(locatorDesignator, "ad:designator")
+		const value = inspireChild(locatorDesignator, "ad:designator")
 
 		// A void designator is reported by `voidDesignatorTypes` rather than here, because a
 		// value the publisher marked unknown is not a value and must not reach a component.
@@ -151,20 +221,20 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
  */
 export function voidDesignatorTypes(address: MarkupElement): ReadonlySet<string> {
 	const voided = new Set<string>()
-	const locator = elementAtPath(address, "ad:locator", "ad:AddressLocator")
+	const locator = inspireElementAt(address, "ad:locator", "ad:AddressLocator")
 
 	if (!locator) return voided
 
-	for (const wrapper of childElements(locator, "ad:designator")) {
-		const locatorDesignator = childElement(wrapper, "ad:LocatorDesignator")
+	for (const wrapper of inspireChildren(locator, "ad:designator")) {
+		const locatorDesignator = inspireChild(wrapper, "ad:LocatorDesignator")
 
 		if (!locatorDesignator) continue
 
-		const value = childElement(locatorDesignator, "ad:designator")
+		const value = inspireChild(locatorDesignator, "ad:designator")
 
 		if (!value || !isVoid(value)) continue
 
-		const type = childElement(locatorDesignator, "ad:type")
+		const type = inspireChild(locatorDesignator, "ad:type")
 		const name = type && !isVoid(type) ? (codelistValue(type.attributes["xlink:href"]) ?? type.text) : undefined
 
 		// A void value whose own type is void or absent cannot be placed, so it is reported under
@@ -200,17 +270,53 @@ export function designator(
  * carry no postal zone, which a caller must report rather than read as a resolved component.
  */
 export function componentHrefs(address: MarkupElement): readonly string[] {
-	const hrefs: string[] = []
+	return componentLinks(address).map((link) => link.href)
+}
 
-	for (const component of childElements(address, "ad:component")) {
+/**
+ * One `ad:component` reference, with the title the publisher wrote beside it.
+ */
+export interface ComponentLink {
+	/**
+	 * The `xlink:href`, trimmed and otherwise as written.
+	 */
+	readonly href: string
+
+	/**
+	 * The `xlink:title`, or undefined where the reference carries none.
+	 */
+	readonly title?: string
+}
+
+/**
+ * Every `ad:component` reference on an address, with its title.
+ *
+ * Most publishers repeat the referenced feature's own value in `xlink:title`, and their adapters
+ * read the resolved feature instead, because a title is a copy and the feature is the record.
+ *
+ * The Gobierno de Navarra is the case that needs the title.
+ * Its references leave the file: a thoroughfare reference is the bare string `ThoroughfareName`
+ * and an administrative-unit reference addresses a CartoCiudad stored query.
+ *
+ * The title is the only statement of the street name, the postcode and the place names
+ * that its own file carries, so its adapter reads titles and resolves no reference.
+ *
+ * A component whose href is absent or empty is skipped, as in {@linkcode componentHrefs}.
+ */
+export function componentLinks(address: MarkupElement): readonly ComponentLink[] {
+	const links: ComponentLink[] = []
+
+	for (const component of inspireChildren(address, "ad:component")) {
 		const href = component.attributes["xlink:href"]?.trim()
 
-		if (href) {
-			hrefs.push(href)
-		}
+		if (!href) continue
+
+		const title = component.attributes["xlink:title"]?.trim()
+
+		links.push(title ? { href, title } : { href })
 	}
 
-	return hrefs
+	return links
 }
 
 /**
@@ -287,7 +393,14 @@ export function componentJoinKey(href: string): string | undefined {
  * @returns The text, or undefined when any step is absent or the name is void.
  */
 export function geographicalNameText(feature: MarkupElement, ...prefix: readonly string[]): string | undefined {
-	const name = elementAtPath(feature, ...prefix, "gn:GeographicalName", "gn:spelling", "gn:SpellingOfName", "gn:text")
+	const name = inspireElementAt(
+		feature,
+		...prefix,
+		"gn:GeographicalName",
+		"gn:spelling",
+		"gn:SpellingOfName",
+		"gn:text"
+	)
 
 	if (!name || isVoid(name)) return undefined
 
@@ -318,7 +431,7 @@ export function placeName(feature: MarkupElement): string | undefined {
  * because this reader returns what the publisher wrote.
  */
 export function postalDescriptorCode(feature: MarkupElement): string | undefined {
-	const code = childElement(feature, "ad:postCode")
+	const code = inspireChild(feature, "ad:postCode")
 
 	if (!code || isVoid(code)) return undefined
 
@@ -336,7 +449,7 @@ export function postalDescriptorCode(feature: MarkupElement): string | undefined
  * A caller picks the finest level it wants by this value rather than by the order the references appear.
  */
 export function adminUnitLevel(feature: MarkupElement): string | undefined {
-	const level = childElement(feature, "ad:level")
+	const level = inspireChild(feature, "ad:level")
 
 	if (!level || isVoid(level)) return undefined
 
