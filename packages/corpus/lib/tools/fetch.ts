@@ -11,9 +11,11 @@ import { fetchDKAddresses } from "#dk/tools/fetch/inspire"
 import { fetchADSEE } from "#ee/tools/fetch/ads"
 import { fetchRyhti } from "#fi/tools/fetch/ryhti"
 import { fetchBan } from "#fr/tools/fetch/ban"
+import { fetchITANAC } from "#it/tools/fetch/anac"
 import { fetchHoujinJP } from "#jp/tools/fetch/houjin"
 import { fetchJusoKR } from "#kr/tools/fetch/juso"
 import { fetchLocaldataKR } from "#kr/tools/fetch/localdata"
+import { fetchBDAdresses } from "#lu/tools/fetch/bd-adresses"
 import { fetchEMUiAPL } from "#pl/tools/fetch/emuia"
 import { fetchACRASG } from "#sg/tools/fetch/acra"
 import { fetchGeonamesDumps } from "#tools/fetch/geonames/dump"
@@ -32,7 +34,9 @@ import { fetchTigerFull } from "#us/tools/fetch/tiger-full"
 
 export * from "#sg/tools/fetch/acra"
 export * from "#ee/tools/fetch/ads"
+export * from "#it/tools/fetch/anac"
 export * from "#fr/tools/fetch/ban"
+export * from "#lu/tools/fetch/bd-adresses"
 export * from "#cz/tools/fetch/cuzk"
 export * from "#pl/tools/fetch/emuia"
 export * from "#dk/tools/fetch/inspire"
@@ -61,11 +65,13 @@ export const FETCH_SOURCES = {
 	"acra-sg": fetchACRASG,
 	"ads-ee": fetchADSEE,
 	ban: fetchBan,
+	"bd-adresses": fetchBDAdresses,
 	"cz-cuzk": fetchCzCuzk,
 	"dk-inspire": fetchDKAddresses,
 	"emuia-pl": fetchEMUiAPL,
 	"gcis-tw": fetchGCISTW,
 	"houjin-jp": fetchHoujinJP,
+	"it-anac": fetchITANAC,
 	"juso-kr": fetchJusoKR,
 	"localdata-kr": fetchLocaldataKR,
 	nad: fetchNAD,

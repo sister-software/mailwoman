@@ -480,6 +480,7 @@
 			}
 		},
 		"it-procurement-grants-1": {
+			"adapterID": "it-anac",
 			"addressRoles": {
 				"parties[roles=buyer].address": "facility",
 				"parties[roles=payer].address": "facility"

@@ -33,6 +33,7 @@ const sources = [
 	"emuia-pl",
 	"gcis-tw",
 	"houjin-jp",
+	"it-anac",
 	"juso-kr",
 	"localdata-kr",
 	"nad",
@@ -82,6 +83,10 @@ export const spec = {
 		"dry-run": { type: "boolean", default: false, description: "Print planned downloads" },
 		month: { type: "string", description: "juso-kr month as YYYYMM (default: the latest listed)" },
 		categories: { type: "string", description: "localdata-kr category slugs, comma-separated (default: all)" },
+		editions: {
+			type: "string",
+			description: "it-anac editions, comma-separated: a year, undated, or full (default: full)",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -102,6 +107,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchHoujinJP,
 		fetchHRSA,
 		fetchIMLSPLS,
+		fetchITANAC,
 		fetchJusoKR,
 		fetchLocaldataKR,
 		fetchNAD,
@@ -136,6 +142,11 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGCISTW(base, reportToStderr)
 		case "houjin-jp":
 			return fetchHoujinJP(base, reportToStderr)
+		case "it-anac":
+			return fetchITANAC(
+				{ ...base, editions: options.editions === undefined ? undefined : extractDelimited(options.editions) },
+				reportToStderr
+			)
 		case "juso-kr":
 			return fetchJusoKR({ ...base, month: options.month }, reportToStderr)
 		case "localdata-kr":

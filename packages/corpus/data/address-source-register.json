@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "403268815dc616900b8b50ae8f6ca2336c23bcb72b8f26d19f7b1f505917f894",
+	"contentDigest": "0e80a8fac9da6d90a0a5ec4328e68dd983c5b8700befc78e79b9626edffe4f00",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -8808,6 +8808,7 @@
 			"publisher": "Autorità Nazionale Anticorruzione (ANAC)",
 			"sourceURL": "https://data.open-contracting.org/en/search/",
 			"note": "OCP registry reports data through Sep 2025.",
+			"adapterID": "it-anac",
 			"addressRoles": {
 				"parties[roles=buyer].address": "facility",
 				"parties[roles=payer].address": "facility"

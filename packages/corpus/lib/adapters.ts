@@ -11,7 +11,9 @@
  *   Each adapter has its own directory, and the publisher decides which parent it sits under. An
  *   adapter reading one country's publisher lives under that country, at `lib/<iso2>/adapters/<id>/`:
  *   G-NAF under `au`, Digitaal Vlaanderen under `be`, ČÚZK under `cz`, Klimadatastyrelsen under
- *   `dk`, Maa- ja Ruumiamet under `ee`, Ryhti under `fi`, BAN under `fr`, Kartverket's Matrikkelen
+ *   `dk`, Maa- ja Ruumiamet under `ee`, Ryhti under `fi`, BAN under `fr`, ANAC under `it`, the
+ *   Administration du
+ *   cadastre et de la topographie under `lu`, Kartverket's Matrikkelen
  *   under `no`, EMUiA under `pl`, and the FCC and USGov readers under `us`. A national publisher
  *   stays there even when its own files cover that state's dependencies, because the publisher is
  *   what the adapter reads: BAN carries France and ten overseas jurisdictions, Matrikkelen carries
@@ -50,6 +52,8 @@ import { dkInspireAdapter } from "#dk/adapters/inspire/adapter"
 import { adsAdapter } from "#ee/adapters/ads/adapter"
 import { ryhtiAdapter } from "#fi/adapters/ryhti/adapter"
 import { banAdapter } from "#fr/adapters/ban/adapter"
+import { itANACAdapter } from "#it/adapters/anac/adapter"
+import { bdAdressesAdapter } from "#lu/adapters/bd-adresses/adapter"
 import { nlKadasterAdapter } from "#nl/adapters/kadaster/adapter"
 import { matrikkelenAdapter } from "#no/adapters/matrikkelen/adapter"
 import { emuiaAdapter } from "#pl/adapters/emuia/adapter"
@@ -96,6 +100,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	wallonieAdapter,
 	brusselsAdapter,
 	nlKadasterAdapter,
+	bdAdressesAdapter,
 	skInspireAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
@@ -112,6 +117,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	stateTxNotariesAdapter,
 	stateNyNotariesAdapter,
 	stateHiSchoolsAdapter,
+	itANACAdapter,
 ]
 
 for (const adapter of BUILTIN_ADAPTERS) {

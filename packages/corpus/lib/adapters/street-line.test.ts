@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { composeHouseNumber, splitStreetLine } from "#adapters/street-line"
+import { composeHouseNumber, splitStreetLine, splitTrailingStreetLine } from "#adapters/street-line"
 
 describe("splitStreetLine", () => {
 	it("splits a standard urban address into house_number + street", () => {
@@ -36,6 +36,59 @@ describe("splitStreetLine", () => {
 	it("returns null for empty or whitespace-only input", () => {
 		expect(splitStreetLine("")).toBeNull()
 		expect(splitStreetLine("   ")).toBeNull()
+	})
+})
+
+describe("splitTrailingStreetLine", () => {
+	it("splits a number-last line into street + house_number", () => {
+		expect(splitTrailingStreetLine("VIA GIUSEPPE GARIBALDI 75")).toEqual({
+			house_number: "75",
+			street: "VIA GIUSEPPE GARIBALDI",
+		})
+	})
+
+	it("accepts a comma between the street and the number", () => {
+		expect(splitTrailingStreetLine("VIA INDIPENDENZA, 41")).toEqual({ house_number: "41", street: "VIA INDIPENDENZA" })
+		expect(splitTrailingStreetLine("SANTA CROCE,489")).toEqual({ house_number: "489", street: "SANTA CROCE" })
+	})
+
+	it("keeps a subdivided number whole and closes up its separator", () => {
+		expect(splitTrailingStreetLine("VIA PASTRENGO 2/TER")).toEqual({ house_number: "2/TER", street: "VIA PASTRENGO" })
+
+		expect(splitTrailingStreetLine("VIA FILIPPO PALUMBO 16/18")).toEqual({
+			house_number: "16/18",
+			street: "VIA FILIPPO PALUMBO",
+		})
+
+		expect(splitTrailingStreetLine("VIA PERUGIA 2 / A")).toEqual({ house_number: "2/A", street: "VIA PERUGIA" })
+	})
+
+	it("recognizes a single letter written against the number", () => {
+		expect(splitTrailingStreetLine("VIA TERME DI TRAIANO 39A")).toEqual({
+			house_number: "39A",
+			street: "VIA TERME DI TRAIANO",
+		})
+	})
+
+	it("collapses a publisher's inner whitespace", () => {
+		expect(splitTrailingStreetLine("VIA  CONSOLATO DEL MARE 41")).toEqual({
+			house_number: "41",
+			street: "VIA CONSOLATO DEL MARE",
+		})
+	})
+
+	it("returns street-only for a line that ends in anything but a number", () => {
+		expect(splitTrailingStreetLine("PIAZZA CASTELLO")).toEqual({ street: "PIAZZA CASTELLO" })
+		expect(splitTrailingStreetLine("VIALE ROMA SNC")).toEqual({ street: "VIALE ROMA SNC" })
+	})
+
+	it("requires a separator, so a digit written against the street name stays in it", () => {
+		expect(splitTrailingStreetLine("VIA SALARIA3")).toEqual({ street: "VIA SALARIA3" })
+	})
+
+	it("returns null for empty or whitespace-only input", () => {
+		expect(splitTrailingStreetLine("")).toBeNull()
+		expect(splitTrailingStreetLine("   ")).toBeNull()
 	})
 })
 

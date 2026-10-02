@@ -6,9 +6,14 @@
  *   Reading a house number and a street out of the columns a publisher supplies.
  *
  * Publishers divide the same address two ways. Some write one street line that holds the number and
- * the street together, which {@linkcode splitStreetLine} separates. Others write the number across
+ * the street together, which {@linkcode splitStreetLine} separates for a number-first country and
+ * {@linkcode splitTrailingStreetLine} for a number-last one. Others write the number across
  * two columns, which {@linkcode composeHouseNumber} joins. Every adapter facing either shape uses
  * these, so an edge case fixed here is fixed for all of them.
+ *
+ * Which of the two split functions a country takes is `STREET_ORDERS` in
+ * `packages/mailwoman/tools/dev-tools/codex/street-orders.ts`, whose values reach the generated
+ * layouts `@mailwoman/codex/address/layouts` serves.
  */
 
 /**
@@ -59,6 +64,49 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
 	if (match) return { house_number: match[1], street: match[2]!.trim() }
 
 	return { street: trimmed }
+}
+
+/**
+ * A trailing house number on a number-last street line contains digits,
+ * an optional single alpha suffix written against them (`39A`), and an optional slash-
+ * or hyphen-joined subdivision (`2/TER`, `16/18`, `12-B`).
+ *
+ * The street and the number are separated by whitespace, a comma, or both,
+ * because a publisher in a number-last country may write either: Italy's ANAC release
+ * carries `VIA INDIPENDENZA, 41` and `VIA MAZZINI 7` in the same column.
+ * The separator is required, so `VIA1` stays one street name.
+ *
+ * Group 1 starts at `\S` and the lazy `.*?` is bounded by that required separator,
+ * so a run of whitespace between the two groups has one split rather than every possible split.
+ * That is the same backtracking argument {@linkcode HOUSE_NUMBER_PREFIX} records, read from the other end.
+ */
+export const HOUSE_NUMBER_SUFFIX = /^(\S.*?)[\s,]+(\d+[A-Za-z]?(?:\s*[/-]\s*[0-9A-Za-z]{1,4})?)$/u
+
+/**
+ * Split a number-last street line on {@link HOUSE_NUMBER_SUFFIX}.
+ *
+ * A number-last country writes the number after the street name, which is what
+ * `STREET_ORDERS` records for Italy, Germany, Finland and 150 other jurisdictions.
+ * Whitespace inside the line is collapsed, and the separators inside a subdivided
+ * number are closed up, so `VIA PERUGIA 2 / A` yields `2/A`.
+ *
+ * @returns `null` for blank input.
+ * A line that ends in anything but a number becomes a single `street` value
+ * rather than being mangled, as `PIAZZA CASTELLO` and `VIALE ROMA SNC` do.
+ * A caller that treats an unplaced number inside such a line as a defect tests
+ * the returned `street` for a digit.
+ * This function leaves that decision to the caller, because a street name can legitimately hold a digit.
+ */
+export function splitTrailingStreetLine(line: string): SplitStreetLine | null {
+	const trimmed = line.replaceAll(/\s+/gu, " ").trim()
+
+	if (!trimmed) return null
+
+	const match = HOUSE_NUMBER_SUFFIX.exec(trimmed)
+
+	if (!match) return { street: trimmed }
+
+	return { house_number: match[2]!.replaceAll(/\s*([/-])\s*/gu, "$1"), street: match[1]!.trim() }
 }
 
 /**

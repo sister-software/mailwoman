@@ -122,6 +122,52 @@ export const SourceRegister = {
 	 */
 	SlovakiaInspireAddresses: "sk-minv-inspire-ad",
 	/**
+	 * The INSPIRE Addresses theme of the Dirección General del Catastro.
+	 *
+	 * Coverage is Spain outside the foral cadastres: 52 of the 55 entries in the national
+	 * ATOM feed, one province feed each, listing one zipped GML per municipality.
+	 * The other three entries link the publications below, which state their own terms,
+	 * so Spain needs four registers.
+	 */
+	CatastroInspireAddresses: "es-catastro-inspire-ad",
+	/**
+	 * The INSPIRE Addresses theme of the Diputación Foral de Bizkaia.
+	 *
+	 * Coverage is the province of Bizkaia, as 112 municipality archives.
+	 * The archives carry addresses alone, and the features they reference are served
+	 * by the publisher's WFS rather than by the ATOM feed.
+	 */
+	BizkaiaInspireAddresses: "es-bizkaia-inspire-ad",
+	/**
+	 * The INSPIRE Addresses theme of the Diputación Foral de Gipuzkoa.
+	 *
+	 * One ATOM entry serves the whole province as a single zipped GML.
+	 */
+	GipuzkoaInspireAddresses: "es-gipuzkoa-inspire-ad",
+	/**
+	 * The INSPIRE Addresses theme of the Gobierno de Navarra.
+	 *
+	 * The province is split across 272 zipped GML partitions, each titled `Address Navarra`
+	 * rather than named for a municipality.
+	 */
+	NavarraInspireAddresses: "es-navarra-inspire-ad",
+	/**
+	 * BD-Adresses, the georeferenced address file the Administration du cadastre et de
+	 * la topographie publishes for Luxembourg through `data.public.lu`.
+	 *
+	 * The publisher describes it as a subset of the national register of localities and streets,
+	 * enriched with coordinates, so the publication is narrower than that register.
+	 */
+	BDAdresses: "lu-act-bd-adresses",
+	/**
+	 * The OCDS release Autorità Nazionale Anticorruzione publishes for Italy's National Database
+	 * of Public Contracts, reached through the Open Contracting Partnership's Data Registry.
+	 *
+	 * Every address in the release belongs to a contracting authority or a paying office,
+	 * because the `supplier` role carries no address object.
+	 */
+	ANACContracts: "it-anac-ocds-contracts",
+	/**
 	 * HM Land Registry Price Paid Data, England and Wales.
 	 */
 	LandRegistryPricePaid: "gb-hm-land-registry-ppd",
