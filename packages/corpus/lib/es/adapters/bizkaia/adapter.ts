@@ -81,14 +81,13 @@
  * stays an open question rather than one this adapter resolved.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { type MarkupElement, streamMarkupElements } from "@mailwoman/core/html/elements"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
-import { stableSourceID } from "#adapters/source-id"
+import { cadastralRow } from "#es/cadastre"
 import {
 	adminUnitLevel,
 	componentHrefs,
@@ -330,47 +329,19 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Mark
 		}
 	}
 
-	const place = locality ?? settlement
-
-	if (!place) return undefined
-
-	const components: CanonicalRow["components"] = {}
-	const house = bizkaiaHouseNumber(designatorsByType(address))
-
-	if (house) {
-		components.house_number = house
-	}
-
-	if (street) {
-		components.street = street
-	}
-
-	if (postcode) {
-		components.postcode = postcode
-	}
-
-	components.locality = place
-
-	if (settlement && locality && settlement !== locality) {
-		components.dependent_locality = settlement
-	}
-
-	const rendered = formatAddressRow(components, "ES", { singleLine: true })
-
-	if (!rendered) return undefined
-
-	const { raw, components: aligned } = rendered
-
-	return {
-		raw,
-		components: aligned,
-		country: "ES",
-		locale: "es-ES",
-		source: ES_BIZKAIA_ADAPTER_ID,
-		source_id: addressID ? `${ES_BIZKAIA_ADAPTER_ID}-${addressID}` : stableSourceID(ES_BIZKAIA_ADAPTER_ID, aligned),
-		corpus_version: "",
-		license: ES_BIZKAIA_LICENSE,
-	}
+	// Bizkaia's number is read by its own reader rather than `spanishHouseNumber`, because its
+	// designator packs a fixed-width number field that the other three cadastres do not write.
+	return cadastralRow(
+		{
+			street,
+			house: bizkaiaHouseNumber(designatorsByType(address)),
+			postcode,
+			locality,
+			settlement,
+			addressID,
+		},
+		{ adapterID: ES_BIZKAIA_ADAPTER_ID, license: ES_BIZKAIA_LICENSE }
+	)
 }
 
 /**

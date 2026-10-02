@@ -55,14 +55,12 @@
  * letter, `18 A` and `34 A` in Eulate, which is kept as the publisher wrote it.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { type MarkupElement, streamMarkupElements } from "@mailwoman/core/html/elements"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
-import { stableSourceID } from "#adapters/source-id"
-import { spanishHouseNumber } from "#es/cadastre"
+import { cadastralRow, spanishHouseNumber } from "#es/cadastre"
 import {
 	codelistValue,
 	componentJoinKey,
@@ -246,49 +244,20 @@ function composeRow(address: MarkupElement): CanonicalRow | undefined {
 	}
 
 	const { street, postcode, locality, settlement } = navarraReferencedTitles(address)
-	const place = locality ?? settlement
 
-	if (!place) return undefined
-
-	const components: CanonicalRow["components"] = {}
-	const house = spanishHouseNumber(designatorsByType(address), HOUSE_NUMBER_TYPE)
-
-	if (house) {
-		components.house_number = house
-	}
-
-	if (street) {
-		components.street = street
-	}
-
-	if (postcode) {
-		components.postcode = postcode
-	}
-
-	components.locality = place
-
-	// The fifth-order title is a *concejo* within the municipality where the two differ,
-	// and repeats the municipality where they do not.
-	if (settlement && locality && settlement !== locality) {
-		components.dependent_locality = settlement
-	}
-
-	const rendered = formatAddressRow(components, "ES", { singleLine: true })
-
-	if (!rendered) return undefined
-
-	const { raw, components: aligned } = rendered
-
-	return {
-		raw,
-		components: aligned,
-		country: "ES",
-		locale: "es-ES",
-		source: ES_NAVARRA_ADAPTER_ID,
-		source_id: addressID ? `${ES_NAVARRA_ADAPTER_ID}-${addressID}` : stableSourceID(ES_NAVARRA_ADAPTER_ID, aligned),
-		corpus_version: "",
-		license: ES_NAVARRA_LICENSE,
-	}
+	// Navarra's settlement is a fifth-order title, a *concejo* within the municipality, which
+	// `cadastralRow` writes as a dependent locality only where it differs from the municipality.
+	return cadastralRow(
+		{
+			street,
+			house: spanishHouseNumber(designatorsByType(address), HOUSE_NUMBER_TYPE),
+			postcode,
+			locality,
+			settlement,
+			addressID,
+		},
+		{ adapterID: ES_NAVARRA_ADAPTER_ID, license: ES_NAVARRA_LICENSE }
+	)
 }
 
 /**

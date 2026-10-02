@@ -55,14 +55,12 @@
  * check of the address the publisher would print.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { MarkupElement } from "@mailwoman/core/html/elements"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
-import { stableSourceID } from "#adapters/source-id"
-import { referenceStatesNoValue, spanishHouseNumber } from "#es/cadastre"
+import { cadastralRow, referenceStatesNoValue, spanishHouseNumber } from "#es/cadastre"
 import {
 	adminUnitLevel,
 	componentHrefs,
@@ -222,47 +220,17 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Mark
 		}
 	}
 
-	const place = locality ?? settlement
-
-	if (!place) return undefined
-
-	const components: CanonicalRow["components"] = {}
-	const house = spanishHouseNumber(designatorsByType(address), HOUSE_NUMBER_TYPE)
-
-	if (house) {
-		components.house_number = house
-	}
-
-	if (street) {
-		components.street = street
-	}
-
-	if (postcode) {
-		components.postcode = postcode
-	}
-
-	components.locality = place
-
-	if (settlement && locality && settlement !== locality) {
-		components.dependent_locality = settlement
-	}
-
-	const rendered = formatAddressRow(components, "ES", { singleLine: true })
-
-	if (!rendered) return undefined
-
-	const { raw, components: aligned } = rendered
-
-	return {
-		raw,
-		components: aligned,
-		country: "ES",
-		locale: "es-ES",
-		source: ES_GIPUZKOA_ADAPTER_ID,
-		source_id: addressID ? `${ES_GIPUZKOA_ADAPTER_ID}-${addressID}` : stableSourceID(ES_GIPUZKOA_ADAPTER_ID, aligned),
-		corpus_version: "",
-		license: ES_GIPUZKOA_LICENSE,
-	}
+	return cadastralRow(
+		{
+			street,
+			house: spanishHouseNumber(designatorsByType(address), HOUSE_NUMBER_TYPE),
+			postcode,
+			locality,
+			settlement,
+			addressID,
+		},
+		{ adapterID: ES_GIPUZKOA_ADAPTER_ID, license: ES_GIPUZKOA_LICENSE }
+	)
 }
 
 /**

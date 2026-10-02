@@ -13,7 +13,11 @@
  * number or a postcode.
  */
 
+import { formatAddressRow } from "@mailwoman/codex/address/format"
+
+import { stableSourceID } from "#adapters/source-id"
 import { designator } from "#inspire/address"
+import type { CanonicalRow } from "#types"
 
 /**
  * The *sin número* tokens the Spanish cadastres write, lower-cased for comparison.
@@ -76,4 +80,113 @@ export function spanishHouseNumber(
  */
 export function referenceStatesNoValue(key: string): boolean {
 	return key.trim().endsWith(".")
+}
+
+/**
+ * What a cadastre's reader has read from one address, before it becomes a row.
+ *
+ * Each of the four readers resolves these from a different file layout, and `cadastralRow` turns any
+ * of them into the same row, so the layout stays in the adapter and the row shape has one home.
+ */
+export interface CadastralAddress {
+	/**
+	 * The thoroughfare name the address references, absent where the publisher writes none.
+	 */
+	street: string | undefined
+	/**
+	 * The house number this cadastre's own designator type states.
+	 */
+	house: string | undefined
+	/**
+	 * The postal descriptor's code.
+	 */
+	postcode: string | undefined
+	/**
+	 * The municipality-level administrative unit's name.
+	 */
+	locality: string | undefined
+	/**
+	 * The address-area name, which is a settlement within the municipality.
+	 */
+	settlement: string | undefined
+	/**
+	 * The publisher's own identifier for the address, which keys `source_id` where it exists.
+	 */
+	addressID: string | undefined
+}
+
+/**
+ * What distinguishes one cadastre's rows from another's.
+ *
+ * The licence differs per publisher, so it is passed rather than derived: Gipuzkoa's register
+ * entry elects `CC-BY-SA-4.0` where the other three elect no share-alike obligation.
+ */
+export interface CadastralSource {
+	adapterID: string
+	license: string
+}
+
+/**
+ * One canonical row from what a Spanish cadastre states about one address.
+ *
+ * All four cadastres publish the INSPIRE Addresses theme, so they agree on how an
+ * address becomes a row even though each writes a different file layout.
+ * The municipality supplies the locality.
+ *
+ * The address area supplies a dependent locality only where the two differ.
+ * The line renders in Spain's order.
+ *
+ * Composing that in each adapter repeated 42 lines four times.
+ *
+ * Returns `undefined` in two cases: the address carries neither a municipality
+ * nor an address area, which would leave the row without a locality, or `formatAddressRow`
+ * returns `undefined` for the components it was given.
+ */
+export function cadastralRow(address: CadastralAddress, source: CadastralSource): CanonicalRow | undefined {
+	const place = address.locality ?? address.settlement
+
+	if (!place) return undefined
+
+	const components: CanonicalRow["components"] = {}
+
+	if (address.house) {
+		components.house_number = address.house
+	}
+	if (address.street) {
+		components.street = address.street
+	}
+	if (address.postcode) {
+		components.postcode = address.postcode
+	}
+
+	components.locality = place
+
+	// The address area is a settlement within the municipality where the two names differ,
+	// and repeats the municipality where they do not.
+	// Writing the repetition would state a dependent locality the publisher does not hold.
+	if (address.settlement && address.locality && address.settlement !== address.locality) {
+		components.dependent_locality = address.settlement
+	}
+
+	const rendered = formatAddressRow(components, "ES", { singleLine: true })
+
+	if (!rendered) return undefined
+
+	const { raw, components: aligned } = rendered
+
+	return {
+		raw,
+		components: aligned,
+		country: "ES",
+		locale: "es-ES",
+		// `register` is left to `runAdapter`, which stamps the adapter's own
+		// declaration onto a row that omits it.
+		// Setting it here would state per row what the adapter already states once.
+		source: source.adapterID,
+		source_id: address.addressID
+			? `${source.adapterID}-${address.addressID}`
+			: stableSourceID(source.adapterID, aligned),
+		corpus_version: "",
+		license: source.license,
+	}
 }
