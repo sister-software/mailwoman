@@ -14,18 +14,23 @@
 			"label": "GB",
 			"kind": "alnum",
 			"pattern": "\\b[A-Z]{1,2}\\d[A-Z\\d]?\\s+\\d[A-Z]{2}\\b",
+			"whole": "^[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}$",
+			"wholeNote": "The space is optional here and required in `pattern`, because the anchored form tests a span a caller has already isolated as a candidate postcode, where SW1A1AA is an ordinary way to write it. Inside free text that same glue is forgeable, so the scan form keeps the space.",
 			"note": "Outward + space + inward: SW1A 1AA, EH8 9YL, W1J 9PN, IP13 6SU, B12 8QX."
 		},
 		{
 			"label": "CA",
 			"kind": "alnum",
 			"pattern": "\\b[A-Z]\\d[A-Z]\\s?\\d[A-Z]\\d\\b",
+			"whole": "^[A-Z]\\d[A-Z]\\s?\\d[A-Z]\\d$",
 			"note": "A1A 1A1, space optional: M5V 2T6, H2X 2T6, H3B 1A3."
 		},
 		{
 			"label": "IE",
 			"kind": "alnum",
 			"pattern": "\\b(?:[A-Z]\\d{2}|D6W)\\s+[A-Z\\d]{4}\\b",
+			"whole": "^(?:[A-Z]\\d{2}|D6W)\\s?[A-Z\\d]{4}$",
+			"wholeNote": "The space is optional here and required in `pattern` for the reason the GB row states: an anchored test receives a span a caller already isolated, so D02AF30 is readable, while the same glue inside free text is forgeable.",
 			"note": "Eircode: routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part — D02 AF30, T12 X70A, F91 Y5CY. Space REQUIRED: a glued 7-alnum blob is too forgeable for the ADD path. No GB collision, because a letter+2-digit GB outward always has a 3-character inward (B12 8QX), never 4."
 		},
 		{
@@ -38,6 +43,7 @@
 			"label": "NL",
 			"kind": "alnum",
 			"pattern": "\\b\\d{4}\\s?[A-Z]{2}\\b",
+			"whole": "^\\d{4}\\s?[A-Z]{2}$",
 			"note": "1234 AB / 1234AB — space optional, glued is common. The US \"2737 CA\" collision (a ZIP+4 tail followed by a state) is settled by longest-match-wins, which lets the ZIP+4 claim it."
 		},
 		{

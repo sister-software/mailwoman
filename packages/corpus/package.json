@@ -21,11 +21,6 @@
 	],
 	"type": "module",
 	"imports": {
-		"#adapters/utils": {
-			"types": "./out/adapters/utils.d.ts",
-			"node": "./lib/adapters/utils.ts",
-			"default": "./out/adapters/utils.js"
-		},
 		"#build": {
 			"types": "./out/build.d.ts",
 			"node": "./lib/build.ts",
