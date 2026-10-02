@@ -89,17 +89,31 @@ export interface StreamMarkupOptions {
  * outermost occurrence and ends when that one closes, so one `ad:Address` arrives
  * once however many `ad:Address` elements its own subtree contains.
  *
+ * Several names read one document once.
+ * An INSPIRE collection writes the features an address references before the addresses
+ * themselves, so a caller that indexes `ad:ThoroughfareName` and reads `ad:Address` in
+ * one pass avoids decompressing an 819 MB download once per element type.
+ *
+ * A requested name nested inside another is still skipped, because capture
+ * runs to the outermost element's close.
+ *
  * @param chunks The document's bytes or text, in order.
  * A Node `Readable` satisfies this.
- * @param name The tag to yield, spelled as the document spells it.
+ * @param name The tag or tags to yield, spelled as the document spells them.
  * @throws When the parser reports a malformed document, so an unreadable input raises
  * rather than ending the iteration early and reading as a short document.
  */
 export async function* streamMarkupElements(
 	chunks: AsyncIterable<string | Uint8Array>,
-	name: string,
+	name: string | readonly string[],
 	options: StreamMarkupOptions = {}
 ): AsyncIterable<MarkupElement> {
+	/**
+	 * The tags to yield.
+	 *
+	 * A set rather than a comparison, so the cost of asking for several names is the cost of asking for one.
+	 */
+	const wanted = new Set(typeof name === "string" ? [name] : name)
 	/**
 	 * Elements completed by the chunk being parsed, drained after each write.
 	 */
@@ -108,6 +122,13 @@ export async function* streamMarkupElements(
 	 * The open ancestry inside the element being captured, outermost first.
 	 */
 	const open: MutableElement[] = []
+	/**
+	 * The requested tag currently being captured.
+	 *
+	 * With several requested names, the close that ends a capture is the one matching
+	 * the tag capture began on, rather than any requested name.
+	 */
+	let capturing: string | undefined
 	let depth = 0
 	let failure: Error | undefined
 
@@ -115,15 +136,18 @@ export async function* streamMarkupElements(
 		{
 			onopentag(tag, attributes) {
 				if (!open.length) {
-					if (tag !== name) return
+					if (!wanted.has(tag)) return
+
+					capturing = tag
 
 					open.push({ name: tag, attributes: { ...attributes }, children: [], text: "" })
 
 					return
 				}
 
-				// Depth counts the nested same-name elements, so capture ends at the right close.
-				if (tag === name) {
+				// Depth counts the nested occurrences of the tag being captured, so capture ends
+				// at the right close rather than at an inner element of the same name.
+				if (tag === capturing) {
 					depth += 1
 				}
 
@@ -143,7 +167,7 @@ export async function* streamMarkupElements(
 				if (!open.length) return
 
 				if (open.length === 1) {
-					if (tag !== name) return
+					if (tag !== capturing) return
 
 					if (depth > 0) {
 						depth -= 1
@@ -152,11 +176,12 @@ export async function* streamMarkupElements(
 					}
 
 					completed.push(open.pop()!)
+					capturing = undefined
 
 					return
 				}
 
-				if (tag === name && depth > 0) {
+				if (tag === capturing && depth > 0) {
 					depth -= 1
 				}
 
@@ -170,6 +195,14 @@ export async function* streamMarkupElements(
 	)
 
 	const decoder = new TextDecoder("utf-8")
+
+	/**
+	 * The largest string decoded from one chunk.
+	 *
+	 * Eight mebibytes sits well under V8's maximum string length while keeping the number
+	 * of parser writes proportional to the document rather than to the chunk size.
+	 */
+	const MAX_DECODED_CHUNK = 8 * 1024 * 1024
 
 	const raise = (): void => {
 		if (failure) throw new Error(`streamMarkupElements: the parser refused the document: ${failure.message}`)
@@ -185,15 +218,37 @@ export async function* streamMarkupElements(
 		children: element.children.map(finish),
 	})
 
+	/**
+	 * The text of one chunk, in pieces small enough for `TextDecoder` to return a string.
+	 *
+	 * A caller that buffers a whole document and yields it once would otherwise
+	 * ask for a string past V8's maximum length.
+	 * The decoder's state carries across the pieces, so a multi-byte character spanning
+	 * a slice boundary survives, as it does across chunks.
+	 */
+	const decodePieces = (chunk: Uint8Array): string[] => {
+		if (chunk.length <= MAX_DECODED_CHUNK) return [decoder.decode(chunk, { stream: true })]
+
+		const pieces: string[] = []
+
+		for (let offset = 0; offset < chunk.length; offset += MAX_DECODED_CHUNK) {
+			pieces.push(decoder.decode(chunk.subarray(offset, offset + MAX_DECODED_CHUNK), { stream: true }))
+		}
+
+		return pieces
+	}
+
 	for await (const chunk of chunks) {
 		if (options.signal?.aborted) return
 
-		parser.write(typeof chunk === "string" ? chunk : decoder.decode(chunk, { stream: true }))
+		for (const piece of typeof chunk === "string" ? [chunk] : decodePieces(chunk)) {
+			parser.write(piece)
 
-		raise()
+			raise()
 
-		while (completed.length) {
-			yield finish(completed.shift()!)
+			while (completed.length) {
+				yield finish(completed.shift()!)
+			}
 		}
 	}
 

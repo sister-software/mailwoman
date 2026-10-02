@@ -162,6 +162,36 @@ describe("streamMarkupElements", () => {
 		expect(found[0]!.attributes["gml:id"]).toBe("AD.1")
 	})
 
+	it("reads several names from one document in document order", async () => {
+		const found = await Array.fromAsync(streamMarkupElements(once(GML), ["ad:Address", "ad:component"], { xml: true }))
+
+		// The addresses' own components nest inside a captured address, so capture runs
+		// to the outermost close and they are not yielded again.
+		expect(found.map((e) => e.name)).toEqual(["ad:Address", "ad:Address"])
+	})
+
+	it("picks up a sibling name the document writes outside the other", async () => {
+		const mixed = `<r><t id="1"/><a id="x"><t id="nested"/></a><t id="2"/></r>`
+		const found = await Array.fromAsync(streamMarkupElements(once(mixed), ["a", "t"], { xml: true }))
+
+		expect(found.map((e) => `${e.name}:${e.attributes.id}`)).toEqual(["t:1", "a:x", "t:2"])
+	})
+
+	it("decodes a chunk larger than one string, so a buffered document still reads", async () => {
+		// One chunk over the 8 MiB decode bound, with a multi-byte character on the boundary
+		// so a per-slice decoder without carried state would corrupt it.
+		const filler = "x".repeat(8 * 1024 * 1024)
+		const document = `<r>${filler}<a>Mäenpääntie 16</a>${filler}</r>`
+
+		async function* single(): AsyncIterable<Uint8Array> {
+			yield new TextEncoder().encode(document)
+		}
+
+		const [only] = await Array.fromAsync(streamMarkupElements(single(), "a", { xml: true }))
+
+		expect(only!.text).toBe("Mäenpääntie 16")
+	})
+
 	it("reads an element whose text arrives across several chunks", async () => {
 		async function* split(): AsyncIterable<string> {
 			yield `<r><ad:Address xmlns:ad="x"><ad:v>Kome`
