@@ -56,7 +56,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { RYHTI_ADAPTER_ID } from "#fi/adapters/ryhti/adapter"
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
 import { readManifest, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
-import { assertRequiredColumns, readDelimitedHeader } from "#tools/fetch/header"
+import { assertHeaderColumns, readDelimitedHeader } from "#tools/fetch/header"
 
 /**
  * The one file SYKE publishes for this theme.
@@ -189,7 +189,7 @@ export function readRyhtiColumns(path: PathBuilderLike): Promise<readonly string
  * rather than an empty string on every row the adapter emits.
  */
 export function assertRyhtiColumns(columns: readonly string[], context: string): void {
-	assertRequiredColumns(columns, FI_RYHTI_REQUIRED_COLUMNS, context)
+	assertHeaderColumns(columns, FI_RYHTI_REQUIRED_COLUMNS, context)
 }
 
 export interface DownloadRyhtiOptions {
