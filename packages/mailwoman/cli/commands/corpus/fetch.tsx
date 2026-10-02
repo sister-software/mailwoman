@@ -8,6 +8,7 @@
  *   timestamp, byte count, sha256).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
@@ -26,6 +27,7 @@ const sources = [
 	"acra-sg",
 	"ads-ee",
 	"ban",
+	"bd-adresses",
 	"cz-cuzk",
 	"dk-inspire",
 	"emuia-pl",
@@ -56,7 +58,15 @@ export const spec = {
 	description: "Fetch a corpus source",
 	positionals: [{ name: "source", required: true, choices: sources, description: "Corpus source ID" }],
 	options: {
-		"out-root": { type: "string", default: "data/corpus/sources", description: "Destination root" },
+		// A fetched source is a data-root artifact, and `corpus build`'s manifest resolves every
+		// `inputPath` against `$MAILWOMAN_DATA_ROOT`, so the default writes where the build reads.
+		// The previous default, `data/corpus/sources`, sat inside a tracked repository directory with
+		// no ignore rule covering it, so one `corpus fetch ban` left 4.6 GB in the working tree.
+		"out-root": {
+			type: "string",
+			default: dataRootPath("corpus", "sources").toString(),
+			description: "Destination root, under the data root unless this names another",
+		},
 		mode: { type: "string", choices: ["featureserver", "bulk"], description: "NAD fetch strategy" },
 		"nad-url": { type: "string", description: "NAD bulk URL" },
 		"chunk-size": { type: "number", description: "NAD records per output file" },
@@ -82,6 +92,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchACRASG,
 		fetchADSEE,
 		fetchBan,
+		fetchBDAdresses,
 		fetchCzCuzk,
 		fetchDKAddresses,
 		fetchEMUiAPL,
@@ -111,6 +122,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchACRASG(base, reportToStderr)
 		case "ads-ee":
 			return fetchADSEE(base, reportToStderr)
+		case "bd-adresses":
+			return fetchBDAdresses(base, reportToStderr)
 		case "cz-cuzk":
 			return fetchCzCuzk(base, reportToStderr)
 		case "dk-inspire":

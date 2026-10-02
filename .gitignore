@@ -133,6 +133,11 @@ data/eval/golden/candidates/
 # calibration-set.jsonl + the fitted isotonic table ARE committed; the per-span dump is not.
 data/eval/calibration/confidences.jsonl
 
+# Fetched corpus source data. `corpus fetch` writes to $MAILWOMAN_DATA_ROOT, and this covers a run
+# that points --out-root back into the tree: a publisher's bulk download is reproducible from its
+# manifest and belongs in the data root. One BAN fetch is 4.6 GB over 101 department files.
+data/corpus/sources/
+
 # Local env files (R2 credentials, etc.) — keep out of git
 .env
 .env.*
