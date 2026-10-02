@@ -17,7 +17,7 @@ carries. Regenerate with:
 node packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts --refresh
 ```
 
-Corpus counts were taken over `0.6.0-register-surface`, cached 2026-09-23T19:04:47.757Z, 697,675,170 rows.
+Corpus counts were taken over `0.7.0-de-holdout`, cached 2026-09-29T03:33:36.285Z, 697,653,209 rows.
 **Admitted by** shows the shipped graph whose training config admits the jurisdiction. Admission is per
 graph and the two shipped graphs partition the world between them, so the column reads the union of
 `scope.config.json`'s registered configs rather than any one of them. `corpus-python/src/mailwoman_train/configs/v4.4.0-suffix-boundary-v2-base-60k.yaml`
@@ -74,8 +74,8 @@ are data-only overlays over it.
 | `IN` | India                                        | 18,179,272 rows, declined |       6,000 | —           | 1,565,157 | en-in   |     2/3 |
 | `GB` | United Kingdom                               | 13,822,140 rows           |     813,781 | en-us       | 3,642,151 | en-gb   | 106/152 |
 | `CN` | China                                        | 7,624,794 rows, declined  |           0 | cjk         | 1,660,173 | zh-cn   |    2/23 |
-| `NL` | Netherlands                                  | 3,283,535 rows            |     179,176 | en-us       |   416,037 | —       |     2/2 |
-| `DE` | Germany                                      | 3,269,242 rows            |     383,693 | en-us       |   286,179 | de-de   |    8/16 |
+| `NL` | Netherlands                                  | 3,283,390 rows            |     179,176 | en-us       |   416,037 | —       |     2/2 |
+| `DE` | Germany                                      | 3,247,426 rows            |     362,573 | en-us       |   286,179 | de-de   |    8/16 |
 | `IT` | Italy                                        | 2,959,301 rows            |     160,305 | en-us       |   315,086 | it-it   |    6/13 |
 | `JP` | Japan                                        | 1,764,537 rows, declined  |           0 | cjk         |   323,024 | ja-jp   |    6/11 |
 | `ES` | Spain                                        | 1,715,427 rows            |     175,972 | en-us       |   178,099 | es-es   |   12/26 |
