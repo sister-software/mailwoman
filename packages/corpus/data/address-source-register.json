@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "da52b008c8de4bd2a97d162a310a7ba97d85910b21c0e0e887e32d7f7689c84c",
+	"contentDigest": "403268815dc616900b8b50ae8f6ca2336c23bcb72b8f26d19f7b1f505917f894",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -104,6 +104,44 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to be-business-legal-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution (CC-BY) 4.0, as Paradigm states it",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/be-brussels-2026-10-02/",
+			"retrievedAt": "2026-10-02",
+			"electedBecause": "Paradigm states the grant in the ISO 19139 record for the publication this row covers. The record is `260abd6f-c5b4-4a79-aa80-d6c265002d65`, retrieved at `https://catalog.datastore.brussels/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=260abd6f-c5b4-4a79-aa80-d6c265002d65`, 60,730 bytes, sha256 `c77e395d1c5371ab3fc60387f328465c7376c281c196963693f99ee7c88f7d44`, titled `INSPIRE - Addresses`. It carries two `gmd:resourceConstraints` blocks. The `gmd:accessConstraints` block anchors `http://inspire.ec.europa.eu/metadata-codelist/LimitationsOnPublicAccess/noLimitations`, which is an access statement rather than the use grant. The `gmd:useConstraints` block anchors `https://creativecommons.org/licenses/by/4.0/` and reads `Creative Commons Attribution (CC-BY) - citation requise de la source de la donnée. La licence complète est disponible ici : https://creativecommons.org/licenses/by/4.0/legalcode`, repeated as `#EN`, `#FR` and `#NL` localized strings. The record names `https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip` among its distributions, which is the archive `#be/adapters/brussels/adapter` reads, so this record governs these rows rather than one of the publisher's other address products. Paradigm publishes a second address product under a different instrument: record `a8c9ccde-5c2b-11ed-913a-900f0cda5d5c`, 68,156 bytes, sha256 `4807756bc60f137d1b30e1ad588a089b298255f6201857fdd10be8ba658df138`, titled `Brussels address register`, distributes the BeSt Brussels files and anchors `https://creativecommons.org/publicdomain/zero/1.0/deed.en` for CC0. That product is not what this row covers.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce and share the Licensed Material in whole, which is what retrieving `URBIS_ADM_Adresses.zip` performs, and the record's `gmd:accessConstraints` block anchors the INSPIRE codelist term `noLimitations` for public access."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which is what reading address components out of the GML produces."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, commercial purposes included, with §3(a)(1)(B) requiring that modifications be indicated. Rendering a component set into an address line is such an adaptation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) places no field-of-use limit on adaptation, and §2(a)(1) states the licence covers any purpose including commercial. Training a sequence labeler on the rendered lines is adaptation for a purpose the grant does not except."
+				}
+			},
+			"obligations": {
+				"attribution": {
+					"permission": "required",
+					"because": "CC BY 4.0 §3(a)(1) requires the licensee to retain identification of the creator and a copyright notice, and the publisher's own words in the record state `citation requise de la source de la donnée`."
+				}
+			},
+			"licenseID": "unchecked-access-free-be-paradigm"
 		},
 		{
 			"state": "elected",
@@ -11289,10 +11327,11 @@
 			"publisher": "Administration du cadastre et de la topographie",
 			"sourceURL": "https://data.public.lu/fr/datasets/adresses-georeferencees-bd-adresses/",
 			"note": "A row carries the street, the house number, the locality, the postcode, the commune and two coordinate pairs. It carries no party. The publisher states that this is a subset of the national register.",
+			"adapterID": "bd-adresses",
 			"addressRoles": {
 				"rue": "premise"
 			},
-			"coverage": "BD-Adresses, published by the Administration du cadastre et de la topographie through `data.public.lu` as three bulk files, of which `addresses.csv` is 28,186,967 bytes as retrieved on 2026-10-01 against the 28,186,970 the portal records. **Measured 179,622 data rows** by reading the whole file, which is every line of its 179,624 less the header and the trailing newline. It is semicolon-delimited with 13 columns and every row splits into 13 fields, so no value contains a semicolon. **The publisher states that this is a subset**: `La BD-Adresses est un sous-ensemble des adresses figurant dans le registre national des localités et des rues`, enriched with coordinates and georeferenced on the cadastral parcel and the digitised cadastral plan, so 179,622 is the published subset rather than Luxembourg's address count. Positions come twice, as `lat_wgs84` and `lon_wgs84` and as `coord_est_luref` and `coord_nord_luref` in the national grid. It is updated weekly, `last_modified` `2026-09-28T02:31:48.330000+00:00`, and the portal also offers forward and reverse geocoding APIs over the same data at `apiv3.geoportail.lu`.",
+			"coverage": "BD-Adresses, published by the Administration du cadastre et de la topographie through `data.public.lu` as three bulk files, of which `addresses.csv` is 28,186,970 bytes as retrieved on 2026-10-02, matching the 28,186,970 the portal records and the md5 `c2df2f3c18b846144bb5d5dc57fc14ca` it states; sha256 `604da1f7cb0017134ccc8deae6f77942634a95a920d224579aafc42e43178ad7`. The three bytes by which the 2026-10-01 retrieval read short are the UTF-8 byte-order mark the file opens with, `EF BB BF`, which the portal's own count includes. **Measured 179,622 data rows** by reading the whole file with `CSVSpliterator`, which is every line of its 179,624 less the header and the trailing newline. It is semicolon-delimited with 13 columns and every row holds exactly 13 fields, so no value contains a semicolon. **22 rows nonetheless need a quote-aware reader**: they RFC 4180-quote `rue` and double its interior quotes, as `\"Cité \"\"Pënscherbierg\"\"\"` and `\"Cité \"\"bei der Kapell\"\"\"`, so a naive split on `;` still yields 13 fields and passes a field-count check while carrying the publisher's quoting into the value. The same file holds 0 fields with an embedded newline and 0 carriage returns. `id_geoportail` is distinct on all 179,622 rows and ends in `_<id_caclr_rue>_<numero>` on 179,607 of the 179,607 rows that state a number, which is the only publisher-side restatement of a composed value here: the file publishes no preformatted address line. `numero` is empty on 15 rows, bare digits on 162,273, letter-suffixed on 17,087, a hyphenated range on 239 and `BIS` or `bis` on eight. `rue` is the file's one street-name column and carries no language tag, with 133,449 values opening on a French generic and the rest including plainly Luxembourgish forms such as `Am Stengber` and `Um Reebou`, so a row's written language is not recorded by the publisher. **The publisher states that this is a subset**: `La BD-Adresses est un sous-ensemble des adresses figurant dans le registre national des localités et des rues`, enriched with coordinates and georeferenced on the cadastral parcel and the digitised cadastral plan, so 179,622 is the published subset rather than Luxembourg's address count. Positions come twice, as `lat_wgs84` and `lon_wgs84` and as `coord_est_luref` and `coord_nord_luref` in the national grid. It is updated weekly, `last_modified` `2026-09-28T02:31:48.330000+00:00`, and the portal also offers forward and reverse geocoding APIs over the same data at `apiv3.geoportail.lu`.",
 			"upstreamLineage": [
 				"https://data.public.lu/api/1/datasets/adresses-georeferencees-bd-adresses/",
 				"https://download.data.public.lu/resources/adresses-georeferencees-bd-adresses/"
@@ -13678,6 +13717,32 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		{
+			"sourceID": "be-property-building-3",
+			"iso2": "BE",
+			"sector": "property-building",
+			"name": "INSPIRE - Addresses (Brussels-Capital Region)",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Regional informatics centre of the Brussels-Capital Region and publisher of the UrbIS reference data; publishes the INSPIRE Addresses (AD) theme for the region as a bare HTTPS download",
+			"geometry": "present",
+			"license": "unchecked-access-free-be-paradigm",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "direct download; one zipped GML for the whole region with no ATOM feed for this theme",
+			"publisher": "Paradigm",
+			"sourceURL": "https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip",
+			"note": "The ISO 19139 record 260abd6f-c5b4-4a79-aa80-d6c265002d65 states useConstraints CC-BY-4.0 and accessConstraints noLimitations, and names this archive as its distribution. Paradigm's other address product, the BeSt Brussels register in record a8c9ccde-5c2b-11ed-913a-900f0cda5d5c, is CC0-1.0 and carries an ATOM feed; the two are separate publications under separate licenses. Measured 225660 ad:Address, 6238 ad:ThoroughfareName, 26 ad:PostalDescriptor and 23 ad:AdminUnitName on 2026-10-02, reconciling against 231947 gml:featureMember elements. The archive's last-modified is 2022-12-01.",
+			"upstreamLineage": ["https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip"],
+			"adapterID": "brussels",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Paradigm, reached as a bare HTTPS download at `https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip`, 11,521,182 bytes, whose single member `UrbAdm_Adresses.gml` is 474,245,978 bytes. **Coverage is the Brussels-Capital Region rather than Belgium**: Flanders publishes its own service and Wallonia publishes separately, so this row is the third of three a Belgian build needs and it sits beside `be-property-building-1` and `be-property-building-2` for that reason. Brussels publishes no INSPIRE ATOM feed for this theme, so there is no `<updated>` element to poll and the download is a bare URL; the archive's `last-modified` is `Thu, 01 Dec 2022 07:57:50 GMT`, which makes it the oldest of the three Belgian regional publications. **Measured 225,660 `ad:Address` features over the whole member rather than a sample**, by `inspire-element-census.run.ts`, which counted all 48 distinct element names the file uses. It carries its components in the same file: 6,238 `ad:ThoroughfareName`, 26 `ad:PostalDescriptor` and 23 `ad:AdminUnitName`, and it publishes no `ad:AddressAreaName`, so a build needs no second request to resolve a component. The counts reconcile, which is the check that the census read the file rather than its own chunk boundaries: 225,660 addresses plus 6,287 component features equals the 231,947 `gml:featureMember` elements, and 231,947 is also the count of `gml:identifier`, `ad:inspireId`, `base:localId`, `ad:beginLifespanVersion` and `ad:validFrom`, one per member. The region is bilingual and the file records it: 12,476 `ad:ThoroughfareNameValue` over 6,238 thoroughfare-name features is exactly two spellings per street, and `gn:language` appears 12,574 times.",
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name the file ever uses was counted over all 474,245,978 decoded bytes of the member, so this is a denominator of the whole publication rather than a sample of its features. The file uses 48 distinct element names and **`ad:locatorName` is not among them: it appears 0 times, as does `ad:LocatorName`**. That element is the free-text `GeographicalName` through which a family name or a business name reaches an INSPIRE address, and this publisher never writes it. The 24,998 `ad:name` elements and 52 `ad:postName` elements sum to 25,050, which equals the 12,574 `gn:GeographicalName` plus 12,476 `ad:ThoroughfareNameValue` the file carries, and those sit on the component features rather than on an address: 6,238 thoroughfare names, 26 postal descriptors and 23 administrative-unit names, all of them place names. The census ran through `inspireGMLChunks`, the same reader the adapter uses, carrying the text after each chunk's final `<` into the next chunk and decoding with a stateful decoder, so neither a split tag nor a split multi-byte character could hide an occurrence."
 			}
 		}
 	]

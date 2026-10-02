@@ -858,6 +858,43 @@
 				}
 			}
 		},
+		"unchecked-access-free-be-paradigm": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution (CC-BY) 4.0, as Paradigm states it",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/be-brussels-2026-10-02/",
+			"retrievedAt": "2026-10-02",
+			"electedBecause": "Paradigm states the grant in the ISO 19139 record for the publication this row covers. The record is `260abd6f-c5b4-4a79-aa80-d6c265002d65`, retrieved at `https://catalog.datastore.brussels/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=260abd6f-c5b4-4a79-aa80-d6c265002d65`, 60,730 bytes, sha256 `c77e395d1c5371ab3fc60387f328465c7376c281c196963693f99ee7c88f7d44`, titled `INSPIRE - Addresses`. It carries two `gmd:resourceConstraints` blocks. The `gmd:accessConstraints` block anchors `http://inspire.ec.europa.eu/metadata-codelist/LimitationsOnPublicAccess/noLimitations`, which is an access statement rather than the use grant. The `gmd:useConstraints` block anchors `https://creativecommons.org/licenses/by/4.0/` and reads `Creative Commons Attribution (CC-BY) - citation requise de la source de la donnée. La licence complète est disponible ici : https://creativecommons.org/licenses/by/4.0/legalcode`, repeated as `#EN`, `#FR` and `#NL` localized strings. The record names `https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip` among its distributions, which is the archive `#be/adapters/brussels/adapter` reads, so this record governs these rows rather than one of the publisher's other address products. Paradigm publishes a second address product under a different instrument: record `a8c9ccde-5c2b-11ed-913a-900f0cda5d5c`, 68,156 bytes, sha256 `4807756bc60f137d1b30e1ad588a089b298255f6201857fdd10be8ba658df138`, titled `Brussels address register`, distributes the BeSt Brussels files and anchors `https://creativecommons.org/publicdomain/zero/1.0/deed.en` for CC0. That product is not what this row covers.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce and share the Licensed Material in whole, which is what retrieving `URBIS_ADM_Adresses.zip` performs, and the record's `gmd:accessConstraints` block anchors the INSPIRE codelist term `noLimitations` for public access."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which is what reading address components out of the GML produces."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, commercial purposes included, with §3(a)(1)(B) requiring that modifications be indicated. Rendering a component set into an address line is such an adaptation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) places no field-of-use limit on adaptation, and §2(a)(1) states the licence covers any purpose including commercial. Training a sequence labeler on the rendered lines is adaptation for a purpose the grant does not except."
+				}
+			},
+			"obligations": {
+				"attribution": {
+					"permission": "required",
+					"because": "CC BY 4.0 §3(a)(1) requires the licensee to retain identification of the creator and a copyright notice, and the publisher's own words in the record state `citation requise de la source de la donnée`."
+				}
+			}
+		},
 		"unchecked-access-free-be-service-public-de-wallonie-spw": {
 			"state": "elected",
 			"electedTerms": "Licence CC-BY 4.0, as the Service public de Wallonie states it",

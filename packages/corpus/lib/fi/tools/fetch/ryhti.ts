@@ -52,11 +52,11 @@ import { openReadStream, openWriteStream, pipeline, Readable } from "@mailwoman/
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
-import { CSVSpliterator } from "spliterator"
 
 import { RYHTI_ADAPTER_ID } from "#fi/adapters/ryhti/adapter"
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
 import { readManifest, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
+import { assertRequiredColumns, readDelimitedHeader } from "#tools/fetch/header"
 
 /**
  * The one file SYKE publishes for this theme.
@@ -173,30 +173,13 @@ export async function readRyhtiHead(client: Pick<APIClient, "fetch">, url = FI_R
 /**
  * The header line's column names, read from the decompressed file.
  *
- * Read through `CSVSpliterator`, which is the reader the adapter uses, rather than through
- * a split of this module's own: which columns the publisher quotes is a property of the
- * edition, and a second reader would be a second answer to that question.
- * `columnScan: "rows"` keeps the first row from decoding the whole file,
- * which the default `"auto"` does even for one row.
+ * The file is comma-separated, so {@linkcode readDelimitedHeader} is called without a delimiter.
  *
  * @throws When the file holds no row at all, so an empty or truncated file reports itself
  * rather than reading as a file with no columns.
  */
-export async function readRyhtiColumns(path: PathBuilderLike): Promise<readonly string[]> {
-	const [header] = await Array.fromAsync(
-		CSVSpliterator.fromAsync<string[]>(path, {
-			header: false,
-			mode: "array",
-			columnScan: "rows",
-			take: 1,
-		})
-	)
-
-	if (!header) {
-		throw new Error(`${path.toString()}: the file holds no row, so its header could not be read`)
-	}
-
-	return header
+export function readRyhtiColumns(path: PathBuilderLike): Promise<readonly string[]> {
+	return readDelimitedHeader(path)
 }
 
 /**
@@ -206,15 +189,7 @@ export async function readRyhtiColumns(path: PathBuilderLike): Promise<readonly 
  * rather than an empty string on every row the adapter emits.
  */
 export function assertRyhtiColumns(columns: readonly string[], context: string): void {
-	const present = new Set(columns)
-	const absent = FI_RYHTI_REQUIRED_COLUMNS.filter((column) => !present.has(column))
-
-	if (absent.length) {
-		throw new Error(
-			`${context}: the header names ${columns.length} columns and not ${absent.join(", ")}, which ` +
-				`#fi/adapters/ryhti/adapter reads by name`
-		)
-	}
+	assertRequiredColumns(columns, FI_RYHTI_REQUIRED_COLUMNS, context)
 }
 
 export interface DownloadRyhtiOptions {
