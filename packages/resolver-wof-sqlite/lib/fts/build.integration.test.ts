@@ -41,7 +41,7 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-	scratch[Symbol.asyncDispose]()
+	await scratch[Symbol.asyncDispose]()
 })
 
 describe("buildPlaceSearchFTS", () => {

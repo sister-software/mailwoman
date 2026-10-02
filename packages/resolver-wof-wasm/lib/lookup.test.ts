@@ -112,7 +112,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-	scratch[Symbol.asyncDispose]()
+	await scratch[Symbol.asyncDispose]()
 })
 
 describe("WOFWasmPlaceLookup", () => {

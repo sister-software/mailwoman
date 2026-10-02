@@ -74,15 +74,17 @@ export class AddressPointInterpolator<
 	 * A connection handed in by a caller is not in here, so disposal cannot reach it.
 	 * Ownership is membership rather than a flag a later branch checks.
 	 */
-	readonly #resources = new DisposableStack()
+	readonly #resources: DisposableStack
 	readonly #fallback: StreetInterpolator | undefined
 	readonly #byPostcode: PreparedAll<[postcode: string, street: RouteKey, number: number], PointRow> | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseClient<DB>; fallback?: StreetInterpolator }) {
+		using resources = new DisposableStack()
+
 		if (opts.database) {
 			this.#db = opts.database
 		} else if (opts.dbPath) {
-			this.#db = this.#resources.use(new DatabaseClient<DB>(opts.dbPath, { readOnly: true }))
+			this.#db = resources.use(new DatabaseClient<DB>(opts.dbPath, { readOnly: true }))
 		} else {
 			throw new Error("AddressPointInterpolator: one of dbPath or database is required")
 		}
@@ -101,6 +103,8 @@ export class AddressPointInterpolator<
 					AND CAST(number AS INTEGER) != ?`
 			)
 		}
+
+		this.#resources = resources.move()
 	}
 
 	find(query: InterpolationQuery): InterpolatedHit | null {

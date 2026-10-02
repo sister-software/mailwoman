@@ -73,9 +73,9 @@ beforeAll(async () => {
 	lookup = new FloodZoneLookup({ databasePath })
 })
 
-afterAll(() => {
+afterAll(async () => {
 	lookup[Symbol.dispose]()
-	scratch[Symbol.asyncDispose]()
+	await scratch[Symbol.asyncDispose]()
 })
 
 describe("buildFloodDatabase", () => {

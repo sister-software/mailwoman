@@ -43,7 +43,16 @@ export interface APIClientConfig {
 	 */
 	logger?: IRuntimeLogger
 
+	/**
+	 * Cache storage belongs to its caller unless `disposeCacheStorage` is true.
+	 */
 	caching?: CacheOptions
+
+	/**
+	 * This option transfers cache storage ownership to the client.
+	 * The default is false.
+	 */
+	disposeCacheStorage?: boolean
 
 	/**
 	 * How many requests to make per minute before enforcing a cooldown: a budget model —
@@ -112,6 +121,10 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	readonly #clock: ClockLike
 	readonly #pacer: RequestPacer | null
 	readonly #retryPolicy: ResolvedRetryPolicy
+	readonly #shutdown = new AbortController()
+	readonly #requestsInFlight = new Set<Promise<void>>()
+	readonly #disposeStorage: (() => void | PromiseLike<void>) | undefined
+	#disposePromise: Promise<void> | null = null
 
 	public get $cooldown(): Promise<void> {
 		return this.#cooldownWithResolvers?.promise || Promise.resolve()
@@ -143,6 +156,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			...config.axios,
 			adapter: async (requestConfig) => {
 				await this.acquireDispatchSlot()
+				this.#shutdown.signal.throwIfAborted()
 
 				return delegateAdapter(requestConfig)
 			},
@@ -160,6 +174,26 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		} else {
 			this.axios = axiosInstance
 		}
+
+		const storedCache = config.caching?.storage
+
+		if (config.disposeCacheStorage === true) {
+			if (isAsyncDisposable(storedCache)) {
+				this.#disposeStorage = () => storedCache[Symbol.asyncDispose]()
+			} else if (storedCache && Symbol.dispose in storedCache) {
+				const dispose = storedCache[Symbol.dispose]
+
+				if (typeof dispose === "function") {
+					this.#disposeStorage = () => dispose.call(storedCache)
+				}
+			}
+		}
+
+		this.axios.interceptors.request.use((requestConfig) => {
+			this.#shutdown.signal.throwIfAborted()
+
+			return requestConfig
+		})
 
 		this.axios.interceptors.response.use((response: CacheAxiosResponse | AxiosResponse) => {
 			const cachedLabel = (response as CacheAxiosResponse).cached ? " (cached)" : "(uncached)"
@@ -192,6 +226,21 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * Each retry re-enters the adapter, so a retry burst cannot outrun the pacer.
 	 */
 	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+		this.#shutdown.signal.throwIfAborted()
+
+		const completed = Promise.withResolvers<void>()
+
+		this.#requestsInFlight.add(completed.promise)
+
+		try {
+			return await this.#fetch<T>(options)
+		} finally {
+			this.#requestsInFlight.delete(completed.promise)
+			completed.resolve()
+		}
+	}
+
+	async #fetch<T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> {
 		const method = options.method?.toUpperCase() || "GET"
 
 		// `mergeConfig` prefers a per-request `adapter` over the instance default.
@@ -204,6 +253,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		const { adapter: _callerAdapter, ...safeOptions } = options
 
 		for (let attempt = 1; ; attempt++) {
+			this.#shutdown.signal.throwIfAborted()
 			this.logger.debug(`${method}: ${options.url}`)
 
 			try {
@@ -211,7 +261,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			} catch (error) {
 				const directive = classifyAxiosFailure(error)
 
-				if (!directive.retryable || attempt >= this.#retryPolicy.maxAttempts) {
+				if (this.#shutdown.signal.aborted || !directive.retryable || attempt >= this.#retryPolicy.maxAttempts) {
 					// Always throws — `Promise<never>` is assignable to this method's return type.
 					return await delegateAxiosError(error)
 				}
@@ -222,7 +272,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 					`Retrying ${method} ${options.url} in ${waitMs}ms (attempt ${attempt}/${this.#retryPolicy.maxAttempts}).`
 				)
 
-				await this.#clock.sleep(waitMs)
+				await this.#clock.sleep(waitMs, this.#shutdown.signal)
 			}
 		}
 	}
@@ -245,7 +295,9 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 */
 	protected acquireDispatchSlot = async (): Promise<void> => {
 		for (;;) {
-			await this.#pacer?.acquire()
+			this.#shutdown.signal.throwIfAborted()
+			await this.#pacer?.acquire(this.#shutdown.signal)
+			this.#shutdown.signal.throwIfAborted()
 
 			const pending = this.#cooldownWithResolvers
 
@@ -297,35 +349,62 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	protected setCooldown = (nextCooldown: number): void => {
+		this.#shutdown.signal.throwIfAborted()
+
 		const nextCooldownWithResolvers = Promise.withResolvers<void>()
 
 		this.#cooldownWithResolvers = nextCooldownWithResolvers
 		this.dispatchEvent(new Event("cooldown_start"))
 
-		void this.#clock.sleep(Math.max(nextCooldown, 0)).then(() => {
-			this.#requestCountWithinCooldown = 0
+		void this.#clock
+			.sleep(Math.max(nextCooldown, 0), this.#shutdown.signal)
+			.then(() => {
+				if (this.#shutdown.signal.aborted) return
 
-			if (this.#cooldownWithResolvers === nextCooldownWithResolvers) {
-				this.#cooldownWithResolvers = null
-			}
+				this.#requestCountWithinCooldown = 0
 
-			nextCooldownWithResolvers.resolve()
+				if (this.#cooldownWithResolvers === nextCooldownWithResolvers) {
+					this.#cooldownWithResolvers = null
+				}
 
-			this.dispatchEvent(new Event("cooldown_end"))
-		})
+				nextCooldownWithResolvers.resolve()
+
+				this.dispatchEvent(new Event("cooldown_end"))
+			})
+			.catch((error: unknown) => {
+				if (!this.#shutdown.signal.aborted) {
+					this.logger.error(error)
+				}
+			})
 	}
 
-	public async [Symbol.asyncDispose](): Promise<void> {
+	/**
+	 * Disposal stops queued requests and waits for active fetches to complete.
+	 *
+	 * It then releases owned cache storage.
+	 * Repeated calls return the same cleanup promise.
+	 */
+	public [Symbol.asyncDispose](): Promise<void> {
+		if (this.#disposePromise) return this.#disposePromise
+
+		const completed = Promise.withResolvers<void>()
+
+		this.#disposePromise = completed.promise
+		this.#shutdown.abort(new Error(`${this.config.displayName}: API client is disposed`))
+
 		const pending = this.#cooldownWithResolvers
 
 		this.#cooldownWithResolvers = null
 		pending?.resolve()
 
-		const storedCache = this.config.caching?.storage
+		void this.#disposeResources().then(completed.resolve, completed.reject)
 
-		if (isAsyncDisposable(storedCache)) {
-			await storedCache[Symbol.asyncDispose]()
-		}
+		return completed.promise
+	}
+
+	async #disposeResources(): Promise<void> {
+		await Promise.all(this.#requestsInFlight)
+		await this.#disposeStorage?.()
 	}
 
 	public override toString() {

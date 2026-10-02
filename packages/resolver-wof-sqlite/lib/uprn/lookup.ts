@@ -73,20 +73,23 @@ export class UPRNLookup implements Disposable {
 	 * Ownership is membership: a connection handed in by a caller is not in here,
 	 * so disposal cannot reach it.
 	 */
-	readonly #resources = new DisposableStack()
+	readonly #resources: DisposableStack
 
 	readonly #coordinateProbe: ReturnType<DatabaseClient["prepare"]>
 
 	constructor(opts: UPRNLookupOpts) {
+		using resources = new DisposableStack()
+
 		if (opts.database) {
 			this.#db = opts.database
 		} else if (opts.databasePath) {
-			this.#db = this.#resources.use(new DatabaseClient<UPRNDatabase>(opts.databasePath, { readOnly: true }))
+			this.#db = resources.use(new DatabaseClient<UPRNDatabase>(opts.databasePath, { readOnly: true }))
 		} else {
 			throw new Error("UPRNLookup needs `databasePath` or `database`")
 		}
 
 		this.#coordinateProbe = this.#db.prepare("SELECT lat, lon FROM uprn WHERE uprn = ?")
+		this.#resources = resources.move()
 	}
 
 	/**

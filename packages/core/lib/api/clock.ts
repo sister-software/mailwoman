@@ -30,17 +30,31 @@ export interface ClockLike {
 	now(): number
 	/**
 	 * Resolve after at least `ms` milliseconds of this clock's time.
+	 *
+	 * Reject with the signal's reason and cancel the timer when the signal aborts.
 	 */
-	sleep(ms: number): Promise<void>
+	sleep(ms: number, signal?: AbortSignal): Promise<void>
 }
 
 /**
- * The real-time {@linkcode ClockLike}, used whenever a caller doesn't inject one.
+ * The system clock implements {@linkcode ClockLike} for callers that do not inject one.
  */
 export const systemClock: ClockLike = {
 	now: () => Date.now(),
-	sleep: (ms) =>
-		new Promise<void>((resolve) => {
-			setTimeout(resolve, ms)
+	sleep: (ms, signal) =>
+		new Promise<void>((resolve, reject) => {
+			signal?.throwIfAborted()
+
+			const timer = setTimeout(() => {
+				signal?.removeEventListener("abort", onAbort)
+				resolve()
+			}, ms)
+
+			const onAbort = () => {
+				clearTimeout(timer)
+				reject(signal?.reason)
+			}
+
+			signal?.addEventListener("abort", onAbort, { once: true })
 		}),
 }

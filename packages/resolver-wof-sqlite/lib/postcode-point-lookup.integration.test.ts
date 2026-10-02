@@ -60,9 +60,9 @@ beforeAll(async () => {
 	lookup = new WOFPostcodeLookup([intl, us])
 })
 
-afterAll(() => {
+afterAll(async () => {
 	lookup[Symbol.dispose]()
-	dir[Symbol.asyncDispose]()
+	await dir[Symbol.asyncDispose]()
 })
 
 describe("WOFPostcodeLookup", () => {

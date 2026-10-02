@@ -51,8 +51,8 @@ beforeEach(async () => {
 	cacheDir = await temporaryDirectory("sec-client-test-")
 })
 
-afterEach(() => {
-	cacheDir[Symbol.asyncDispose]()
+afterEach(async () => {
+	await cacheDir[Symbol.asyncDispose]()
 	vi.useRealTimers()
 })
 

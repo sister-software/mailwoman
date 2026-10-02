@@ -29,8 +29,8 @@ import {
 
 let scratch: TemporaryDirectory | undefined
 
-afterEach(() => {
-	scratch?.[Symbol.asyncDispose]()
+afterEach(async () => {
+	await scratch?.[Symbol.asyncDispose]()
 	scratch = undefined
 })
 

@@ -77,9 +77,9 @@ beforeAll(async () => {
 	lookup = new SoilCapabilityLookup({ databasePath })
 })
 
-afterAll(() => {
+afterAll(async () => {
 	lookup[Symbol.dispose]()
-	scratch[Symbol.asyncDispose]()
+	await scratch[Symbol.asyncDispose]()
 })
 
 describe("the fixture build", () => {

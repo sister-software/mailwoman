@@ -7,7 +7,7 @@
 
 import { AxiosError, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 import { buildMemoryStorage, buildStorage } from "axios-cache-interceptor"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { APIClient } from "#api/APIClient"
 import { isTransientResourceError, ResourceErrorKind, resourceErrorKind } from "#api/responses"
@@ -42,11 +42,163 @@ describe("APIClient: disposal", () => {
 		const client = new APIClient({
 			displayName: "dispose-probe",
 			caching: { storage },
+			disposeCacheStorage: true,
 		})
 
 		await client[Symbol.asyncDispose]()
 
 		expect(disposeCount).toBe(1)
+	})
+
+	it("disposes synchronous storage exactly once", async () => {
+		const dispose = vi.fn()
+		const storage = Object.assign(buildMemoryStorage(), { [Symbol.dispose]: dispose })
+		const client = new APIClient({ displayName: "sync-storage", caching: { storage }, disposeCacheStorage: true })
+		const first = client[Symbol.asyncDispose]()
+
+		expect(client[Symbol.asyncDispose]()).toBe(first)
+		await first
+		expect(dispose).toHaveBeenCalledTimes(1)
+	})
+
+	it("prefers asynchronous disposal when storage supports both protocols", async () => {
+		const dispose = vi.fn()
+		const asyncDispose = vi.fn(async () => {})
+
+		const storage = Object.assign(buildMemoryStorage(), {
+			[Symbol.dispose]: dispose,
+			[Symbol.asyncDispose]: asyncDispose,
+		})
+
+		await using client = new APIClient({ displayName: "dual-storage", caching: { storage }, disposeCacheStorage: true })
+
+		await client[Symbol.asyncDispose]()
+		expect(asyncDispose).toHaveBeenCalledTimes(1)
+		expect(dispose).not.toHaveBeenCalled()
+	})
+
+	it.each([undefined, false])(
+		"leaves shared storage open when disposeCacheStorage is %s",
+		async (disposeCacheStorage) => {
+			const dispose = vi.fn()
+			const storage = Object.assign(buildMemoryStorage(), { [Symbol.dispose]: dispose })
+			const client = new APIClient({ displayName: "shared-storage", caching: { storage }, disposeCacheStorage })
+
+			await client[Symbol.asyncDispose]()
+			expect(dispose).not.toHaveBeenCalled()
+		}
+	)
+
+	it.each([
+		{ name: "cooldown", config: { requestsPerMinute: 1 } },
+		{ name: "pacing", config: { minRequestIntervalMs: 1000 } },
+	])("rejects requests waiting for $name without advancing the clock", async ({ config }) => {
+		const clock = new VirtualClock()
+		const { axios, calls } = stubTransport([{ body: { ok: true } }])
+		const client = new APIClient({ displayName: "queued-disposal", clock, axios, ...config })
+
+		await client.fetch(get("/first"))
+
+		const pending = client.fetch(get("/queued"))
+		const rejected = pending.catch((error: unknown) => error)
+
+		await drainMicrotasks()
+		await client[Symbol.asyncDispose]()
+		expect(await rejected).toMatchObject({ message: expect.stringContaining("API client is disposed") })
+		expect(calls).toEqual(["/first"])
+		expect(clock.now()).toBe(0)
+		await expect(client.fetch(get("/after-disposal"))).rejects.toThrow("API client is disposed")
+		await expect(client.axios(get("/direct-after-disposal"))).rejects.toThrow("API client is disposed")
+	})
+
+	it("cancels retry backoff without dispatching another attempt", async () => {
+		const clock = new VirtualClock()
+		const { axios, calls } = stubTransport([{ status: 503 }])
+		const client = new APIClient({ displayName: "retry-disposal", clock, axios, retry: true })
+		const pending = client.fetch(get("/retry"))
+		const rejected = pending.catch((error: unknown) => error)
+
+		await drainMicrotasks()
+		expect(clock.sleepCalls).toHaveLength(1)
+		await client[Symbol.asyncDispose]()
+		expect(await rejected).toMatchObject({ message: expect.stringContaining("API client is disposed") })
+		expect(calls).toEqual(["/retry"])
+		expect(clock.now()).toBe(0)
+	})
+
+	it("waits for an active fetch before disposing its cache", async () => {
+		const response = Promise.withResolvers<void>()
+		const dispose = vi.fn()
+		const storage = Object.assign(buildMemoryStorage(), { [Symbol.dispose]: dispose })
+
+		const client = new APIClient({
+			displayName: "active-disposal",
+			caching: { storage },
+			disposeCacheStorage: true,
+			axios: {
+				adapter: async (config) => {
+					await response.promise
+
+					return { config, data: { ok: true }, status: 200, statusText: "OK", headers: {} }
+				},
+			},
+		})
+
+		const pending = client.fetch(get("/active"))
+
+		await drainMicrotasks()
+
+		const disposed = client[Symbol.asyncDispose]()
+
+		await drainMicrotasks()
+		expect(dispose).not.toHaveBeenCalled()
+		response.resolve()
+		await expect(pending).resolves.toMatchObject({ data: { ok: true } })
+		await disposed
+		expect(dispose).toHaveBeenCalledTimes(1)
+	})
+
+	it("propagates cache cleanup failures and returns the same rejected promise", async () => {
+		const error = new Error("storage cleanup failed")
+
+		const dispose = vi.fn(() => {
+			throw error
+		})
+
+		const storage = Object.assign(buildMemoryStorage(), { [Symbol.dispose]: dispose })
+		const client = new APIClient({ displayName: "failed-disposal", caching: { storage }, disposeCacheStorage: true })
+		const disposed = client[Symbol.asyncDispose]()
+
+		await expect(disposed).rejects.toBe(error)
+		expect(client[Symbol.asyncDispose]()).toBe(disposed)
+		expect(dispose).toHaveBeenCalledTimes(1)
+	})
+
+	it("preserves an active request's failure and stops retries during shutdown", async () => {
+		const response = Promise.withResolvers<void>()
+		const failure = new AxiosError("connection lost", AxiosError.ERR_NETWORK)
+
+		const adapter = vi.fn(async () => {
+			await response.promise
+
+			throw failure
+		})
+
+		const client = new APIClient({ displayName: "active-failure", axios: { adapter }, retry: true })
+		const pending = client.fetch(get("/active"))
+		const rejected = pending.catch((error: unknown) => error)
+
+		await drainMicrotasks()
+
+		const disposed = client[Symbol.asyncDispose]()
+
+		response.resolve()
+		const error = await rejected
+
+		expect(error).toBeInstanceOf(ResourceError)
+		expect(error).toMatchObject({ cause: failure })
+		await disposed
+		expect(adapter).toHaveBeenCalledTimes(1)
 	})
 })
 

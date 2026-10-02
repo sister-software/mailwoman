@@ -80,9 +80,9 @@ beforeAll(async () => {
 	await ingestGeonamesAliases(db, ["GE"], dir.path, () => {}, { adminForCountries: new Set(["GE"]) })
 })
 
-afterAll(() => {
+afterAll(async () => {
 	db.destroy()
-	dir[Symbol.asyncDispose]()
+	await dir[Symbol.asyncDispose]()
 })
 
 test("folds the country (PCLI) and region (ADM1) as admin spr rows", () => {

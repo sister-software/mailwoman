@@ -80,9 +80,9 @@ beforeEach(async () => {
 	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
 })
 
-afterEach(() => {
+afterEach(async () => {
 	vi.unstubAllEnvs()
-	dataRoot[Symbol.asyncDispose]()
+	await dataRoot[Symbol.asyncDispose]()
 })
 
 describe("buildStreetComponents", () => {
