@@ -64,6 +64,10 @@ const ADMITTED = new Set([
 	"wc",
 	"which",
 	"xxd",
+	// Recipe outputs publish zstd-compressed and no repository code compresses them,
+	// so rebuilding one calls this command.
+	// It derives its output from its arguments like `sha256sum`.
+	"zstd",
 	"gh",
 	"git",
 	// `mkdir` creates no file content and cannot overwrite a file.
