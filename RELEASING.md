@@ -265,8 +265,8 @@ build log (`data/gazetteer/wof-build-manifest.json`). Commit it with the swap.
 ### Step 5 — propagating to the demo/browser (rebuild the candidate gazetteer)
 
 The swap above updates the **full** local gazetteer, so every Node eval and the Node resolver see the new
-coverage immediately. The **browser demo does not.** It loads these tiers over `sql.js-httpvfs` (byte-range
-SQLite):
+coverage immediately. The **browser demo does not.** It loads these tiers through the range VFS in
+`@mailwoman/resolver-wof-wasm` (byte-range SQLite):
 
 - **Admin tier** (locality/region/postcode): the global **candidate table**, through `WofCandidateTableLookup`
   in `docs/src/shared/httpvfs-resolver.ts` → `adminGazetteerUrl()` in `resources.tsx`.
@@ -353,10 +353,8 @@ and not any(http.request.headers["range"][*] != "")
 ```
 
 Action: **Block**. (Deployed 2026-06-20 on the `sister.software` zone, `http_request_firewall_custom`
-phase. Verified: scraper GET → 403, demo `Range` GET → 206, VFS `HEAD` → 200.) Legitimate `sql.js-httpvfs`
-traffic always sends `Range`, so it passes. The rule is scoped to `GET` intentionally. The VFS sends a
-range-less **HEAD** to probe the file length on open, so blocking all methods would break the demo's cold
-start. (The rule covers the candidate, the situs/interpolation street databases, and `wof-polygons.db`. You
+phase. Verified: scraper GET → 403, demo `Range` GET → 206.) The range VFS sends `Range` on every request and
+reads the file length from the first response's `Content-Range`, so its traffic passes. (The rule covers the candidate, the situs/interpolation street databases, and `wof-polygons.db`. You
 can use Managed Challenge instead of Block, or tighten it to `contains "/mailwoman/gazetteer/"`.) Cloudflare
 custom rules take a few minutes to propagate to all edges, so do not conclude that the rule failed from a
 test in the first ~60 s.

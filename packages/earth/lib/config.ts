@@ -21,23 +21,23 @@ export interface EarthConfig {
 	 */
 	basemapTileJSONURL: URL
 	/**
-	 * Same-origin base for the staged sql.js-httpvfs runtime files (the UMD, the worker and the wasm).
+	 * Same-origin base for the staged range worker and sqlite-wasm runtime files.
 	 *
 	 * A worker script has to come from the page's own origin.
 	 * This is a path on that origin, rather than a URL on the data origin.
 	 */
-	sqljsBaseURL: string
+	sqliteRuntimeBaseURL: string
 }
 
 /**
  * The production origins: the public R2 bucket that serves every artifact
  * and the tile worker's custom domain.
  *
- * The sql.js files are staged under `public/` by the build.
+ * The SQLite runtime files are staged under `public/` by the build.
  */
 export const PRODUCTION_CONFIG: EarthConfig = {
 	dataOriginURL: new URL("https://public.mailwoman.ai/"),
 	tileWorkerURL: new URL("https://tiles.mailwoman.ai/"),
 	basemapTileJSONURL: new URL("https://tiles.mailwoman.ai/basemap-v4.json"),
-	sqljsBaseURL: "/sqljs",
+	sqliteRuntimeBaseURL: "/sqlite",
 }

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Types for the pipeline (parse + resolve) explorer. The runtime is injected as a {@link PipelineRuntime},
- *   keeping onnxruntime-web, sql.js-httpvfs and node builtins out of this package's browser graph.
+ *   keeping onnxruntime-web, sqlite-wasm and node builtins out of this package's browser graph.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"

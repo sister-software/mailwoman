@@ -92,10 +92,10 @@ export function releasesManifestURL(locale: string): string {
 }
 
 /**
- * Returns the same-origin path of the sql.js-httpvfs runtime assets.
+ * Returns the same-origin path of the staged range worker and sqlite-wasm runtime.
  */
-export function sqljsBaseURL(siteBaseURL: string): string {
-	return `${siteBaseURL}mailwoman/sqljs`
+export function sqliteRuntimeBaseURL(siteBaseURL: string): string {
+	return `${siteBaseURL}mailwoman/sqlite`
 }
 
 /**

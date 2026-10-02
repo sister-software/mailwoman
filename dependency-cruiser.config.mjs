@@ -15,8 +15,8 @@
  *
  * `out/` is tsc's emit and `dist/` an app's Vite output — bundled chunks whose
  * cycles are the bundler's, not the source graph's.
- * `public/sqljs/` is the sql.js-httpvfs runtime staged by `@mailwoman/site-kit/vite/stage-sqljs`;
- * it is gitignored, and the readers load it by URL.
+ * `public/sqlite/` is the range worker and sqlite-wasm runtime staged by
+ * `@mailwoman/site-kit/vite/stage-sqlite-runtime`; it is gitignored, and the readers load it by URL.
  *
  * `packages/react/tokens/index.ts` is the TypeScript companion `styleframe build` writes
  * beside the CSS it compiles, and `.gitignore` carries the reason nothing imports it:
@@ -25,7 +25,7 @@
  * has run the file is an orphan by construction, and a fresh checkout never has it.
  */
 const GENERATED_TREES =
-	"(?:^|/)(?:out|dist|node_modules|public/sqljs|sentencepiece[.]mjs)(?:/|$)|^packages/react/tokens/index[.]ts$"
+	"(?:^|/)(?:out|dist|node_modules|public/sqlite|sentencepiece[.]mjs)(?:/|$)|^packages/react/tokens/index[.]ts$"
 
 /**
  * Modules an external runner, a bundler, or an export condition loads BY path,

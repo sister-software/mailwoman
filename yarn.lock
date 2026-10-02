@@ -6926,7 +6926,6 @@ __metadata:
     "@sqlite.org/sqlite-wasm": "npm:^3.53.0-build1"
     h3-js: "npm:^4.5.0"
     path-ts: "npm:^2.5.0"
-    sql.js-httpvfs: "npm:^0.8.12"
     zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
@@ -13924,13 +13923,6 @@ __metadata:
   dependencies:
     delayed-stream: "npm:~1.0.0"
   checksum: 10/2e969e637d05d09fa50b02d74c83a1186f6914aae89e6653b62595cc75a221464f884f55f231b8f4df7a49537fba60bdc0427acd2bf324c09a1dbb84837e36e4
-  languageName: node
-  linkType: hard
-
-"comlink@npm:^4.3.0":
-  version: 4.4.2
-  resolution: "comlink@npm:4.4.2"
-  checksum: 10/ecee53b5b4536b3aa3f7636c383f831e68fbc013def77665cc7fad873d72cfa23b994e1ec4b49e83e4e909c1089a03acae03a523e33a5e5ed938cdb613456434
   languageName: node
   linkType: hard
 
@@ -26250,15 +26242,6 @@ __metadata:
   bin:
     spliterator: out/node/cli/index.js
   checksum: 10/dcd2abf1a4ba551f69740b406cca0d0bd45173d45e6168501ab02de5028672e948667fba609346d157baaf30630b82a0e5e9e96d9efb7b2de93cefbb2314ead9
-  languageName: node
-  linkType: hard
-
-"sql.js-httpvfs@npm:^0.8.12":
-  version: 0.8.12
-  resolution: "sql.js-httpvfs@npm:0.8.12"
-  dependencies:
-    comlink: "npm:^4.3.0"
-  checksum: 10/8a7f7f69a6be0e61deb6450009172e207d905da62d63ec144ec688ac2e78c4b502b8a213dbcb7f815211f0c00e9dc958e705e207c4e6e05c21efef6f61f33346
   languageName: node
   linkType: hard
 

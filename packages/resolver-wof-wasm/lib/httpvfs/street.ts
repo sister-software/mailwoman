@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Street-level (situs and interpolation) lookups over a sql.js-httpvfs worker, the browser twins of
+ * Street-level (situs and interpolation) lookups over a range-read database, the browser twins of
  * `@mailwoman/resolver-wof-sqlite`'s `AddressPointSqliteLookup` and `StreetInterpolator`. They run the
- * same SQL and shared normalizers as the node classes, async over the Comlink-proxied worker's
- * `db.exec`. `HTTPVFSInterpolator` must keep its parity preference and range scoping in lockstep with
+ * same SQL and shared normalizers as the node classes, async over a {@link RangeDatabase}.
+ * `HTTPVFSInterpolator` must keep its parity preference and range scoping in lockstep with
  * `StreetInterpolator`.
  */
 
@@ -21,21 +21,19 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
-import { memoizeResettable, rowsFromExec, tableExists } from "#httpvfs/rows"
+import { memoizeResettable, type RangeDatabase, tableExists } from "#httpvfs/database"
 
-/**
- * The minimal worker handle the lookups need, the same shape `loadHTTPVFSDatabase` returns.
- */
-export interface HTTPVFSDB {
-	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
-}
+const ADDRESS_POINT_BY_POSTCODE =
+	"SELECT lat, lon, source, release FROM address_point WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1"
 
-/**
- * Inline a string literal for SQL.
- *
- * An inline implementation avoids parameter marshaling over Comlink.
- */
-const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
+const ADDRESS_POINT_BY_LOCALITY =
+	"SELECT lat, lon, source, release FROM address_point WHERE locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1"
+
+const SEGMENT_COLUMNS = "from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release"
+
+const SEGMENTS_BY_POSTCODE = `SELECT ${SEGMENT_COLUMNS} FROM street_segment WHERE postcode = ? AND street_norm = ? AND min_hn <= ? AND max_hn >= ?`
+
+const SEGMENTS_BY_STREET = `SELECT ${SEGMENT_COLUMNS} FROM street_segment WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ?`
 
 export interface StreetPointHit {
 	lat: number
@@ -50,21 +48,20 @@ export interface StreetPointHit {
  * Postcode scope first, locality fallback.
  */
 export class HTTPVFSAddressPointLookup {
-	#worker: HTTPVFSDB
+	readonly #database: RangeDatabase
 	/**
-	 * One memoized round trip to confirm the extract includes `address_point`,
-	 * graceful on a tableless extract.
+	 * One memoized query to confirm the extract includes `address_point`, graceful on a tableless extract.
 	 */
 	readonly #hasTable: () => Promise<boolean>
-	#locale: StreetLocale
+	readonly #locale: StreetLocale
 
 	/**
 	 * `streetLocale` must match the extract's build locale (the node class's interface).
 	 * Default "us".
 	 */
-	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
-		this.#worker = worker
-		this.#hasTable = memoizeResettable(() => tableExists(worker, "address_point"))
+	constructor(database: RangeDatabase, opts: { streetLocale?: StreetLocale } = {}) {
+		this.#database = database
+		this.#hasTable = memoizeResettable(() => tableExists(database, "address_point"))
 		this.#locale = opts.streetLocale ?? "us"
 	}
 
@@ -80,21 +77,14 @@ export class HTTPVFSAddressPointLookup {
 
 		if (!streetNorm || !number) return null
 
-		const select = (where: string): string =>
-			`SELECT lat, lon, source, release FROM address_point WHERE ${where} LIMIT 1`
-
-		let rows: Record<string, unknown>[] = []
-
-		/**
-		 * Run one address-point probe and hand back its rows.
-		 */
-		const probe = async (where: string): Promise<Record<string, unknown>[]> =>
-			rowsFromExec(await this.#worker.db.exec(select(where)))
+		let rows: StreetPointHit[] = []
 
 		if (query.postcode) {
-			rows = await probe(
-				`postcode = ${sqlStr(query.postcode.trim())} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
-			)
+			rows = await this.#database.query<StreetPointHit>(ADDRESS_POINT_BY_POSTCODE, [
+				query.postcode.trim(),
+				streetNorm,
+				number,
+			])
 		}
 
 		if (!rows.length && query.locality) {
@@ -105,9 +95,7 @@ export class HTTPVFSAddressPointLookup {
 					? stripArrondissement(normalizeLocalityForKey(query.locality))
 					: normalizeLocalityForKey(query.locality)
 
-			rows = await probe(
-				`locality_norm = ${sqlStr(localityKey)} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
-			)
+			rows = await this.#database.query<StreetPointHit>(ADDRESS_POINT_BY_LOCALITY, [localityKey, streetNorm, number])
 		}
 
 		const r = rows[0]
@@ -135,15 +123,15 @@ export interface StreetInterpHit {
  * Postcode-scoped, abstaining on cross-ZIP ambiguity.
  */
 export class HTTPVFSInterpolator {
-	#worker: HTTPVFSDB
+	readonly #database: RangeDatabase
 	/**
-	 * One memoized round trip to confirm the extract includes `street_segment`.
+	 * One memoized query to confirm the extract includes `street_segment`.
 	 */
 	readonly #hasTable: () => Promise<boolean>
 
-	constructor(worker: HTTPVFSDB) {
-		this.#worker = worker
-		this.#hasTable = memoizeResettable(() => tableExists(worker, "street_segment"))
+	constructor(database: RangeDatabase) {
+		this.#database = database
+		this.#hasTable = memoizeResettable(() => tableExists(database, "street_segment"))
 	}
 
 	async find(query: { street: string; number: string; postcode?: string }): Promise<StreetInterpHit | null> {
@@ -153,22 +141,13 @@ export class HTTPVFSInterpolator {
 
 		if (!streetNorm || !/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
-		const cols = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
 
 		let rows: Record<string, unknown>[]
 
 		if (query.postcode) {
-			rows = rowsFromExec(
-				await this.#worker.db.exec(
-					`SELECT ${cols} FROM street_segment WHERE postcode = ${sqlStr(query.postcode.trim())} AND street_norm = ${sqlStr(streetNorm)} AND min_hn <= ${n} AND max_hn >= ${n}`
-				)
-			)
+			rows = await this.#database.query(SEGMENTS_BY_POSTCODE, [query.postcode.trim(), streetNorm, n, n])
 		} else {
-			rows = rowsFromExec(
-				await this.#worker.db.exec(
-					`SELECT ${cols} FROM street_segment WHERE street_norm = ${sqlStr(streetNorm)} AND min_hn <= ${n} AND max_hn >= ${n}`
-				)
-			)
+			rows = await this.#database.query(SEGMENTS_BY_STREET, [streetNorm, n, n])
 
 			// No scope: a name matching ranges across several ZIPs is ambiguous, so abstain.
 			if (new Set(rows.map((r) => String(r.postcode ?? ""))).size > 1) return null

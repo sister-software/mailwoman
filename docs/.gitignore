@@ -11,8 +11,8 @@
 /static/mailwoman/*.db
 /static/mailwoman/*.bin
 /static/mailwoman/*.json
-# sql.js-httpvfs worker/wasm — staged into the Pages deploy at build time by the runtime-assets plugin.
-/static/mailwoman/sqljs/
+# The range worker and sqlite-wasm runtime — staged into the Pages deploy at build time by the runtime-assets plugin.
+/static/mailwoman/sqlite/
 # MapLibre's tile worker + the module it imports — staged same-origin by the runtime-assets plugin.
 /static/mailwoman/maplibre/
 

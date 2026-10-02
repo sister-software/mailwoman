@@ -15,7 +15,7 @@
  *   {@link STREET_SEGMENT_COLUMNS} so it cannot drift from the DDL.
  */
 
-import type { Kysely } from "kysely"
+import { type Kysely, sql } from "kysely"
 
 import type { RouteKey } from "#street/normalize"
 
@@ -140,11 +140,20 @@ export const STREET_SEGMENT_COLUMNS = [
 ] as const
 
 /**
- * Create the `street_segment` table, called before the streaming bulk load.
+ * The staging table the builder bulk-loads in source order before {@link clusterStreetSegments}
+ * copies its rows into `street_segment` in probe-key order.
  */
-export async function createStreetSegmentTable(db: Kysely<StreetSegmentDatabase>): Promise<void> {
+export const STREET_SEGMENT_STAGE_TABLE = "street_segment_stage"
+
+/**
+ * Create the `street_segment` table, or the staging table with the same columns.
+ */
+export async function createStreetSegmentTable(
+	db: Kysely<StreetSegmentDatabase>,
+	table: "street_segment" | typeof STREET_SEGMENT_STAGE_TABLE = "street_segment"
+): Promise<void> {
 	await db.schema
-		.createTable("street_segment")
+		.createTable(table)
 		.addColumn("street_norm", "text", (c) => c.notNull())
 		.addColumn("side", "text", (c) => c.notNull())
 		.addColumn("from_hn", "integer", (c) => c.notNull())
@@ -185,14 +194,59 @@ export async function writeInterpCalibration(
 }
 
 /**
- * Create the two probe indexes the reader relies on (postcode-scope, street-scope).
+ * The physical row order of `street_segment`: street first, then postcode and range.
+ *
+ * The browser reads the extract over HTTP range requests.
+ * Both probe forms fetch their matching rows from the table.
+ *
+ * In this order the postcode-scoped probe reads one contiguous run of rows.
+ * The street-only probe reads within one street's contiguous block.
+ *
+ * The staging rowid is the last key, so rows with equal keys keep their source order.
+ * The readers break span ties by that order.
+ */
+const STREET_SEGMENT_CLUSTER_ORDER = "street_norm, postcode, min_hn, max_hn, rowid"
+
+/**
+ * Copy the staged rows into `street_segment` in key order and drop the stage.
+ *
+ * The order is {@link STREET_SEGMENT_CLUSTER_ORDER}.
+ *
+ * `street_segment` stays a rowid table, because `postcode` is nullable.
+ * A `WITHOUT ROWID` primary key forbids a null column.
+ * Loading in key order gives the same page locality.
+ *
+ * Run {@link createStreetSegmentIndexes} and `VACUUM` afterwards.
+ */
+export async function clusterStreetSegments(db: Kysely<StreetSegmentDatabase>): Promise<void> {
+	const columns = STREET_SEGMENT_COLUMNS.join(", ")
+
+	await sql
+		.raw(
+			`INSERT INTO street_segment (${columns}) SELECT ${columns} FROM ${STREET_SEGMENT_STAGE_TABLE} ORDER BY ${STREET_SEGMENT_CLUSTER_ORDER}`
+		)
+		.execute(db)
+
+	await db.schema.dropTable(STREET_SEGMENT_STAGE_TABLE).execute()
+}
+
+/**
+ * Create the two probe indexes the readers use (postcode-scope, street-scope).
+ *
+ * Each index carries `max_hn`.
+ * SQLite therefore rejects a range ending below the house number from the index entry.
+ * The rejected row's table page is never fetched.
  */
 export async function createStreetSegmentIndexes(db: Kysely<StreetSegmentDatabase>): Promise<void> {
 	await db.schema
 		.createIndex("idx_seg_postcode")
 		.on("street_segment")
-		.columns(["postcode", "street_norm", "min_hn"])
+		.columns(["postcode", "street_norm", "min_hn", "max_hn"])
 		.execute()
 
-	await db.schema.createIndex("idx_seg_street").on("street_segment").columns(["street_norm", "min_hn"]).execute()
+	await db.schema
+		.createIndex("idx_seg_street")
+		.on("street_segment")
+		.columns(["street_norm", "min_hn", "max_hn"])
+		.execute()
 }

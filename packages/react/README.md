@@ -14,7 +14,7 @@ they are built from:
   injected `runLiveSearch` probe, so the httpvfs/worker implementation never enters this package's graph.
 - **`PipelineExplorer`** is a parse and resolve tester driven by an **injected `PipelineRuntime`**. The
   host supplies `runParse` (compute shape → classify → resolve) and the heavy visualizers as `panels`,
-  which keeps onnxruntime-web, sql.js-httpvfs, and node builtins out of this package entirely.
+  which keeps onnxruntime-web, sqlite-wasm, and node builtins out of this package entirely.
 
 The headless hooks, `usePOISearch` and `useParsePipeline`, own the state machines. The presentational
 units (`QueryInput`, `SubjectPanel`, `OverpassBlock`, `LiveResultsBlock`, `ComponentTable`,

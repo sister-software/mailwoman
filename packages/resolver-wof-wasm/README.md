@@ -37,7 +37,19 @@ for (const m of matches) {
 
 `loadSlimWofDatabase` currently fetches the whole DB and opens it in memory via `sqlite3_deserialize`. For the ~35 MB default slim build that's a one-RTT transfer + a one-shot in-memory open — typically sub-second on broadband, and after that every query is in-process WASM.
 
-For larger DBs or low-bandwidth users, the future path is to swap the loader for an HTTP-VFS implementation (à la `sql.js-httpvfs`) so SQLite pages get fetched lazily via byte-range. The `WofWasmPlaceLookup` class is loader-agnostic — only the loader changes.
+A database too large to hold in memory is read by HTTP range requests. `openRangeDatabase` from `@mailwoman/resolver-wof-wasm/httpvfs/database` starts a worker that runs `@sqlite.org/sqlite-wasm` over a read-only VFS, and each read fetches one 64 KiB chunk of the remote file.
+
+```ts
+import { openRangeDatabase } from "@mailwoman/resolver-wof-wasm/httpvfs/database"
+import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/resolver"
+
+const database = await openRangeDatabase("https://example.com/candidate.db", "/sqlite")
+const lookup = new WOFCandidateTableLookup(database)
+```
+
+The second argument is a same-origin directory that holds the worker script and the sqlite-wasm runtime. `stageSQLiteRuntimeAssets` from `@mailwoman/resolver-wof-wasm/host-assets` copies those files into it at build time. The server must answer `Range` requests with `206` and a `Content-Range` header.
+
+The lookups in `httpvfs/` take the returned `RangeDatabase`: `WOFCandidateTableLookup` for place names, `HTTPVFSAddressPointLookup` and `HTTPVFSInterpolator` for street addresses, and `searchPOICategory` for points of interest.
 
 ## Bundle the package
 
