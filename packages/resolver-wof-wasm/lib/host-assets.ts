@@ -13,7 +13,6 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 import { RANGE_WORKER_FILE, SQLITE_RUNTIME_MODULE_FILE } from "#httpvfs/database"
@@ -74,7 +73,11 @@ export async function stageSQLiteRuntimeAssets(destDir: PathBuilderLike): Promis
 	// `sqlite3.wasm` is the one file of the runtime directory the package's export map names.
 	const wasm = tryResolvePackageSpecifier(import.meta.url, "@sqlite.org/sqlite-wasm", "sqlite3.wasm")
 
-	if (!wasm) {
+	// This module is also loaded by Docusaurus as CommonJS, where `import.meta.resolve` is unavailable.
+	// The package directory is therefore found through `createRequire`, by way of its own manifest.
+	const manifest = tryResolvePackageSpecifier(import.meta.url, "@mailwoman/resolver-wof-wasm", "package.json")
+
+	if (!wasm || !manifest) {
 		console.warn("[host-assets] @sqlite.org/sqlite-wasm not resolvable — range reader assets not staged")
 
 		return false
@@ -83,7 +86,7 @@ export async function stageSQLiteRuntimeAssets(destDir: PathBuilderLike): Promis
 	const runtimeDir = dirname(wasm)
 
 	const sources: Array<[file: string, source: PathBuilderLike]> = [
-		[RANGE_WORKER_FILE, resolvePackagePath("@mailwoman/resolver-wof-wasm", "out", "httpvfs", RANGE_WORKER_FILE)],
+		[RANGE_WORKER_FILE, resolvePath(dirname(manifest), "out", "httpvfs", RANGE_WORKER_FILE)],
 		...SQLITE_RUNTIME_FILES.map((file): [string, PathBuilderLike] => [file, resolvePath(runtimeDir, file)]),
 	]
 

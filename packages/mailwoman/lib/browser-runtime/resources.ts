@@ -101,16 +101,29 @@ export function sqliteRuntimeBaseURL(siteBaseURL: string): string {
 /**
  * Returns a street-extract URL.
  *
- * National extracts use a dated path.
- * US state extracts use an undated path.
+ * National extracts and US state interpolation extracts use a dated path.
+ * US state situs extracts use an undated path.
  */
 export function streetExtractURL(slug: string, kind: "situs" | "interp"): string {
 	if (NATIONAL_STREET_SLUGS.has(slug)) {
 		return `${ASSET_BASE_URL}street/${slug}/${NATIONAL_STREET_EXTRACT_VERSION}/${kind}.db`
 	}
 
+	if (kind === "interp") {
+		return `${ASSET_BASE_URL}street/us/${slug}/${US_INTERPOLATION_EXTRACT_VERSION}/interp.db`
+	}
+
 	return `${ASSET_BASE_URL}street/us/${slug}/${kind}.db`
 }
+
+/**
+ * Version of the published US state interpolation extracts.
+ *
+ * The browser caches range chunks by URL and offset, so a rebuilt extract is published
+ * under a new version and never over an existing URL.
+ * Update it after uploading rebuilt extracts.
+ */
+export const US_INTERPOLATION_EXTRACT_VERSION = "2026-10-02"
 
 /**
  * Slugs of the national street extracts.
