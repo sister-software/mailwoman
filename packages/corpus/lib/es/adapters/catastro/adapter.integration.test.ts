@@ -83,7 +83,13 @@ async function publisherAnswer(reference: string): Promise<PublisherAnswer> {
 	const blocks = [...xml.matchAll(/<dir>[\s\S]*?<\/dir>/gu)].map((match) => match[0])
 
 	return {
-		streets: new Set(blocks.map((dir) => [text(dir, "tv"), text(dir, "nv")].filter(Boolean).join(" "))),
+		// `tv` is the street type and `nv` its name, and the service omits either one, so the pair is
+		// joined through a predicate that narrows away an absent field rather than through `Boolean`.
+		streets: new Set(
+			blocks.map((dir) =>
+				[text(dir, "tv"), text(dir, "nv")].filter((part): part is string => part !== undefined).join(" ")
+			)
+		),
 		// `pnp` and `plp` concatenate: `13` and `D` make `13D`.
 		// A `pnp` of `0` with no `plp`, or no `pnp` at all, is the Cadastre holding no number,
 		// which its own `ldt` shows by rendering none and which the GML writes as `S-N`.
@@ -169,7 +175,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("es-catastro rows against the OVC Consulta_
 	)
 
 	it(
-		"still serves the member the fixture was cut from",
+		"still serves the member the fixture was copied from",
 		async () => {
 			const response = await fetch(
 				"https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/55/55101-CEUTA/A.ES.SDGC.AD.55101.zip"
