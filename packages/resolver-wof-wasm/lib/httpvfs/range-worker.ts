@@ -225,6 +225,40 @@ function installRangeVFS(sqlite3: Sqlite3Static, file: RemoteFile): void {
 	})
 }
 
+async function fetchWhole(url: string): Promise<Uint8Array> {
+	const response = await fetch(url)
+
+	if (!response.ok || !response.body) throw new Error(`${url} returned HTTP ${response.status}`)
+
+	const body = url.endsWith(".gz") ? response.body.pipeThrough(new DecompressionStream("gzip")) : response.body
+
+	return new Uint8Array(await new Response(body).arrayBuffer())
+}
+
+function openInMemory(sqlite3: Sqlite3Static, bytes: Uint8Array): Database {
+	const db = new sqlite3.oo1.DB(":memory:", "c")
+	const pointer = sqlite3.wasm.alloc(bytes.byteLength)
+
+	sqlite3.wasm.heap8u().set(bytes, pointer)
+
+	const rc = sqlite3.capi.sqlite3_deserialize(
+		db.pointer!,
+		"main",
+		pointer,
+		bytes.byteLength,
+		bytes.byteLength,
+		sqlite3.capi.SQLITE_DESERIALIZE_FREEONCLOSE | sqlite3.capi.SQLITE_DESERIALIZE_READONLY
+	)
+
+	if (rc !== sqlite3.capi.SQLITE_OK) {
+		sqlite3.wasm.dealloc(pointer)
+		db.close()
+		throw new Error(`sqlite3_deserialize failed: ${sqlite3.capi.sqlite3_js_rc_str(rc)}`)
+	}
+
+	return db
+}
+
 async function open(request: Extract<RangeWorkerCall, { type: "open" }>): Promise<RangeWorkerResults["open"]> {
 	const { default: initialize } = (await import(
 		/* @vite-ignore */ /* webpackIgnore: true */ request.runtimeModuleURL
@@ -242,6 +276,20 @@ async function open(request: Extract<RangeWorkerCall, { type: "open" }>): Promis
 		chunks: new Map(),
 		requests: 0,
 		bytes: 0,
+	}
+
+	if (request.strategy === "whole") {
+		const bytes = await fetchWhole(request.databaseURL)
+
+		// One request, counted at the decompressed size.
+		file.size = bytes.byteLength
+		file.requests = 1
+		file.bytes = bytes.byteLength
+
+		remote = file
+		database = openInMemory(sqlite3, bytes)
+
+		return { sqliteVersion: sqlite3.capi.sqlite3_libversion() }
 	}
 
 	// The first chunk holds the database header, and its response gives the file's length.
