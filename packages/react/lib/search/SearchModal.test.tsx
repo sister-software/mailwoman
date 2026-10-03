@@ -63,7 +63,9 @@ test("renders hits as options in labeled groups and selects the first", async ()
 	expect(document.getElementById(groups[0]!.getAttribute("aria-labelledby")!)?.textContent).toBe("Reference")
 	expect(input.getAttribute("aria-activedescendant")).toBe(options[0]!.id)
 	expect(options[0]!.getAttribute("aria-selected")).toBe("true")
-	expect(options[1]!.querySelector("a")?.getAttribute("href")).toBe("/b#section")
+	expect(options[1]!.tagName).toBe("A")
+	expect(options[1]!.getAttribute("href")).toBe("/b#section")
+	expect(options[1]!.querySelector("a, button, input, [tabindex]")).toBeNull()
 	expect(options[0]!.querySelector("mark")?.textContent).toBe("Snippet")
 })
 
@@ -112,7 +114,7 @@ test("keeps the results of the latest query when an earlier response arrives lat
 	await vi.waitFor(() => expect(pending.has("ab")).toBe(true))
 
 	pending.get("ab")!(response("ab", ["/latest"]))
-	await vi.waitFor(() => expect(container.querySelector('[role="option"] a')?.getAttribute("href")).toBe("/latest"))
+	await vi.waitFor(() => expect(container.querySelector('[role="option"]')?.getAttribute("href")).toBe("/latest"))
 
 	pending.get("a")!(response("a", ["/stale"]))
 
@@ -120,7 +122,7 @@ test("keeps the results of the latest query when an earlier response arrives lat
 		setTimeout(resolve, 50)
 	})
 
-	expect(container.querySelector('[role="option"] a')?.getAttribute("href")).toBe("/latest")
+	expect(container.querySelector('[role="option"]')?.getAttribute("href")).toBe("/latest")
 })
 
 test("shows the corrected query, and announces zero hits and a failure in the live region", async () => {

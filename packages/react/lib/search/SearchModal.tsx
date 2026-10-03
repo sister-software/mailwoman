@@ -261,24 +261,22 @@ export function SearchModal({ open, onClose, onNavigate, search }: SearchModalPr
 							{group.category}
 						</div>
 						{group.entries.map(({ hit, order }) => (
-							<div
+							// The option is the link itself: an option may not contain an interactive element, and
+							// `option` is an allowed role on `a[href]`, which keeps the URL for open-in-new-tab.
+							<a
 								key={order}
 								id={optionID(order)}
 								role="option"
 								aria-selected={order === selected}
+								href={hitHref(hit)}
+								tabIndex={-1}
 								className="mw-search__option"
 								onPointerMove={() => setSelected(order)}
+								onClick={(event) => onLinkClick(event, hit)}
 							>
-								<a
-									href={hitHref(hit)}
-									tabIndex={-1}
-									className="mw-search__link"
-									onClick={(event) => onLinkClick(event, hit)}
-								>
-									<span className="mw-search__title">{title(hit)}</span>
-									{hit.snippet !== "" && <span className="mw-search__snippet">{highlighted(hit)}</span>}
-								</a>
-							</div>
+								<span className="mw-search__title">{title(hit)}</span>
+								{hit.snippet !== "" && <span className="mw-search__snippet">{highlighted(hit)}</span>}
+							</a>
 						))}
 					</div>
 				))}

@@ -38,5 +38,14 @@ export default defineConfig({
 				["list", { printSteps: true }],
 				["html", { open: "never" }],
 			],
-	projects: [{ name: "build" }],
+	projects: [
+		{ name: "build" },
+		// The search suite drives a served production build: `yarn workspace @mailwoman/docs serve` listens on 7770.
+		{
+			name: "search",
+			testDir: "./test/e2e",
+			timeout: 30_000,
+			use: { baseURL: "http://localhost:7770" },
+		},
+	],
 })

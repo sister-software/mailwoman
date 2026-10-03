@@ -22,15 +22,15 @@ export interface SearchRecord {
 	 */
 	url: string
 	/**
-	 * The heading id the record links to; the empty string for the top of the page.
+	 * The heading id the record links to, or the empty string for the top of the page.
 	 */
 	anchor: string
 	/**
-	 * Seven entries, `lvl0` through `lvl6`; `null` below the record's own level.
+	 * Seven entries, `lvl0` through `lvl6`, with `null` below the record's own level.
 	 */
 	hierarchy: (string | null)[]
 	/**
-	 * Aggregated text under the heading; the empty string for a heading without body text.
+	 * Aggregated text under the heading, or the empty string for a heading without body text.
 	 */
 	content: string
 	/**

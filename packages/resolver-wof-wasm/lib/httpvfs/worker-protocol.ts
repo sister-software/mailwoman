@@ -23,8 +23,8 @@ export interface OpenRequest {
 	/**
 	 * `range` reads pages on demand through the HTTP range VFS.
 	 *
-	 * `whole` fetches the file once, inflates a `.gz` URL, and opens the bytes in memory;
-	 * it suits a file small enough to download in one request.
+	 * `whole` fetches the file once, inflates a `.gz` URL, and opens the bytes in memory.
+	 * It suits a file small enough to download in one request.
 	 */
 	strategy: "range" | "whole"
 	databaseURL: string

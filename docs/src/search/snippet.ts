@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The excerpt a hit displays, with the character ranges that matched a query token. Matching here is
- *   a case-insensitive substring search; it marks what to emphasize and takes no part in ranking.
+ *   The excerpt a hit displays, with the character ranges that matched a query token. The match here is
+ *   a case-insensitive substring search. It marks what to emphasize and takes no part in ranking.
  */
 
 /**
