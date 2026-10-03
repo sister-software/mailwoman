@@ -39,7 +39,7 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 		event === "pull_request"
 			? (await git(["diff", "--name-only", "--no-renames", "-z", `${base}...${head}`, "--"], root, 64 * 1024 * 1024))
 					.split("\0")
-					.filter(Boolean)
+					.filter((path) => path.length > 0)
 			: []
 	const files = await trackedFiles(root)
 	const release = await readLocalJSONFile<{

@@ -328,7 +328,8 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 			"Create and maintain the pull request that closes an implementation issue. Creation requires a completed " +
 			"marker-owned issue task list, Vale-checks the PR body, creates the PR from the current branch of `checkout` " +
 			"(default: the server's checkout), and starts a " +
-			"tracked `gh pr checks --watch --fail-fast` job. Poll the returned job through `mwdev_job`.",
+			"tracked `gh pr checks --watch --fail-fast` job. Poll the returned job through `mwdev_job`. " +
+			"Creation leaves CI review incomplete. After reviewing CI, call `complete`; it verifies the current head before handoff.",
 		inputSchema: PULL_REQUEST_INPUT_SCHEMA,
 		handler: async (raw) => {
 			const cwd = await resolveCheckout(deps.registry.repoRoot, CHECKOUT_SCHEMA.parse(raw).checkout)
@@ -341,6 +342,7 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 				}))
 				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
 				const task = `Review successful CI for PR #${request.pull_request_number} on its current head.`
+				if (!issue.body.includes(task)) throw new Error(`Issue #${request.issue_number} has no CI review task for this PR.`)
 				const body = issue.body.replace(`- [ ] ${task}`, `- [x] ${task}`)
 				if (!taskBlockIsComplete(body)) throw new Error(`Issue #${request.issue_number} still has incomplete tasks.`)
 				await run(["issue", "edit", String(request.issue_number), "--repo", REPO, "--body", body], { cwd })
