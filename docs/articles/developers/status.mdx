@@ -1,17 +1,17 @@
 ---
 title: What ships today
-description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 10.0.0.
+description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 10.1.0.
 role: reference
 source-of-truth: package.json versions + `mailwoman doctor` + the eval ledger at evals/scores-by-version.json
 ---
 
 # What ships today
 
-:::info[Verified as of release 10.0.0, model 9.1.0]
+:::info[Verified as of release 10.1.0, model 10.1.0]
 
-Every figure on this page was re-measured on 2026-09-14 against the published artifacts. The release
-process refuses to publish if the model version in this box is older than the model the release
-ships.
+The model figures were measured on 2026-10-03 against the 10.1.0 release artifact. The package total
+adds the model and model-card size changes to 10.0.0's published total. The release process refuses
+to publish if the model version in this box is older than the model the release ships.
 
 :::
 
@@ -23,7 +23,9 @@ per-tag accuracy. Those numbers are in the eval ledger
 ([`evals/scores-by-version.json`](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json))
 and in the dated eval reports next to it.
 
-Every artifact size below was measured on 2026-09-14 against the files this release publishes.
+The model's size was measured on 2026-10-03, and the other artifact sizes on 2026-09-14, against the
+files each release publishes. 10.1.0 carries 9.1.0's en-us, fr-fr and en-gb FSTs, pair indexes, postcode
+tables and lexicons unchanged.
 
 ## Version
 
@@ -32,8 +34,8 @@ weights package version therefore follows the release instead of the model's own
 
 | Fact                | Value                                                                 |
 | ------------------- | --------------------------------------------------------------------- |
-| Release             | `10.0.0`                                                              |
-| Model version       | `9.1.0` — the Latin base, unchanged since release `9.1.0`             |
+| Release             | `10.1.0`                                                              |
+| Model version       | `10.1.0` — the Latin base, v7.2.0-address-systems step 60,000         |
 | Node floor          | `>=24.18.0` (the `engines` field on the `mailwoman` entry package)    |
 | Module format       | ESM only                                                              |
 | License             | `AGPL-3.0-only OR LicenseRef-Commercial`                              |
@@ -61,8 +63,9 @@ and build tooling, which are installed as dependencies of these packages.
 
 ## Model artifacts
 
-`@mailwoman/neural-weights-en-us` publishes 15 files totaling 75,120,759 bytes (75.1 MB). That
-figure measures the published tarball instead of the working tree, and you can reproduce it:
+`@mailwoman/neural-weights-en-us` publishes 15 files totaling 75,159,031 bytes (75.2 MB): 10.0.0's
+published 75,120,759 bytes, plus 32,474 for the model and 5,798 for the model card. Reproduce the
+figure from the published tarball instead of the working tree:
 
 ```bash
 npm view @mailwoman/neural-weights-en-us dist.unpackedSize dist.fileCount
@@ -72,7 +75,7 @@ Seven files account for most of the size:
 
 | File                               | Bytes      | Size    | What it is                           |
 | ---------------------------------- | ---------- | ------- | ------------------------------------ |
-| `model.onnx`                       | 39,419,629 | 39.4 MB | The int8-quantized model, opset 17   |
+| `model.onnx`                       | 39,452,103 | 39.5 MB | The int8-quantized model, opset 17   |
 | `fst-en-us.bin`                    | 21,757,160 | 21.8 MB | The gazetteer prior index            |
 | `locality-surface-lexicon-v7.json` | 8,633,963  | 8.6 MB  | Locality surface forms               |
 | `postcode-us.bin`                  | 1,904,322  | 1.9 MB  | The US postcode anchor table         |
@@ -81,7 +84,7 @@ Seven files account for most of the size:
 | `fst-street-morphology.bin`        | 327,516    | 0.3 MB  | The street-morphology emission prior |
 
 The remaining eight files (the model card, the four soft-feed lexicons, two calibration tables and
-the manifest) total 104,616 bytes.
+the manifest) total 110,414 bytes.
 
 The model card describes the model's structure:
 
@@ -91,6 +94,7 @@ The model card describes the model's structure:
 | Maximum sequence length | 128 tokens                              |
 | Tokenizer vocabulary    | 73,143 SentencePiece pieces             |
 | Output labels           | 33 BIO labels over 16 component tags    |
+| Locale hint             | 39 address systems, plus a "no hint" id |
 | Quantization            | int8 dynamic, quantized from fp32       |
 
 The gazetteer is a separate download and is not part of any npm package. The published build is

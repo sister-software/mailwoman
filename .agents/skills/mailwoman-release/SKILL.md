@@ -72,69 +72,112 @@ For a **model release**, on a branch off current `main`:
    en-gb's linker reads this file to verify its own link. Skip `files_md5` and the en-gb guard fails
    comparing new bytes against the old digest, which reads as a broken link rather than a missed edit.
 
-4. **Both dev linkers pin the model FILENAME and neither derives it.** A promotion that edits only
-   the card and `release.config.json` leaves a dev checkout resolving the previous model:
+4. **The dev linkers read the model filename from `release.config.json`.** Run
+   `node packages/neural-weights-en-us/scripts/link-dev-weights.ts` and the en-gb equivalent after
+   editing the config. en-gb prints `model.onnx digest ok` when its link matches the en-us card's
+   `files_md5`. Check `grep -rl "<old model basename>" --exclude-dir=node_modules .` too: a hit outside
+   `scratchpad/`, `.worktrees/` and dated records under `docs/records/` is a file that still names the old model.
 
-   | file                                                            | constant                           |
-   | --------------------------------------------------------------- | ---------------------------------- |
-   | `packages/neural-weights-en-us/scripts/link-dev-weights.ts`     | `DEFAULT_MODEL`                    |
-   | `packages/neural-weights-en-gb/scripts/link-dev-weights.ts`     | `SRC_MODEL`                        |
-   | `packages/neural-weights-base-latn/scripts/link-dev-weights.ts` | source model — PARKED, unpublished |
+5. **Point the card's `fisher_artifact` at the new run's Fisher.** The CI weights fetch reads the
+   file and sidecar names from this block. A from-scratch run writes `fisher-diag-v1.npz` and
+   `fisher-diag-v1.json` into its final checkpoint directory on the Modal volume. Download both, copy
+   them to `fisher-diag-v1-model-<target>.{npz,json}`, and set `file`, `sidecar`, `md5` and the
+   parameter count in the `$comment`.
 
-   Verify with `grep -rl "<old model basename>" --exclude-dir=node_modules .` before opening the PR;
-   every hit outside `scratchpad/` is a file that still has to move. Then run `link-dev-weights` for
-   en-us and en-gb — en-gb's #397 guard is what proves the pair moved together.
+6. **A new graph input or output changes the card and every caller.** v7.2.0 added `locale_hint`, so
+   the 10.1.0 card gained `address_systems`. The runtime must also work for a caller that builds
+   `NeuralAddressClassifier` or calls `runner.infer` without reading the card: `createScorer`, the
+   browser loader's warm-up `infer([0])`, the runner tests and the evaluation tools all do. For a new
+   input, give the runtime a default it can feed without the card (`locale_hint` takes `-1`, which the
+   graph's `Gather` reads as the last, "no hint" row), and add an export test that pins it.
+
+7. **Run the live-pipeline suites against the materialized candidate.** `yarn mwops release copy-weights`
+   (Step 2) replaces `packages/neural-weights-en-us/model.onnx`, which the gauntlet harness, the
+   conformance suites, the structural-validity test and the confound board load. Until it runs they
+   refuse with a `files_md5` mismatch. After it runs, root `yarn test` grades the candidate: a row the
+   candidate breaks fails there, and an exemption the candidate repairs fails as stale. Record each
+   accepted regression in its suite's exemption list with the parse it produces and an issue reference.
 
    `weights.tokenizer` / `weights.tokenizerVersion` change only when the tokenizer changed.
    Confirm by md5 rather than by run name: a from-scratch run reuses the shipped tokenizer unless the recipe replaces it, and
    assuming otherwise stages the wrong one into the bundle.
 
-5. The `neural-weights-fr-fr` card version lags by long-standing convention (publish.yml cp's the
+8. The `neural-weights-fr-fr` card version lags by long-standing convention (publish.yml cp's the
    en-us model into fr-fr) — leave it unless the operator says otherwise.
-6. Commit the build scripts + the recipe config + `sync_v0XX` for reproducibility. Push, open PR,
-   let CI (`test`) go green, then **merge to main** (the publish runs off `main`).
+9. Commit the build scripts + the recipe config + `sync_v0XX` for reproducibility. Push, then open
+   the PR with `mwdev_pull_request` (the Bash hook refuses `gh pr create`); it requires an issue whose
+   task list is complete, created with `mwdev_issue`. Let CI (`test`) go green, then **merge to main**
+   (the publish runs off `main`).
 
 For a **code-only release**: skip the card/release.config/HF work entirely — just merge the code PRs;
 the version bump happens in the publish dispatch.
 
 ## Step 2 — stage weights to HF (MODEL RELEASE ONLY — the CI prerequisite)
 
-The workflow's "Fetch weight binaries from Hugging Face" step pulls `model.onnx`, `tokenizer.model`,
-`postcode-us.bin`, `postcode-fr.bin` from the PUBLIC HF bucket at `en-us/v<cardVersion>/`. Stage them
-there first, or the real run fails the `[ -s "$f" ]` guard.
+The workflow's `yarn mwops release fetch-hf-weights` step pulls every artifact the weights packages
+declare from the PUBLIC HF bucket at `en-us/v<cardVersion>/`. Stage them there first, or the real run
+fails before publishing. The fetch plan, not this runbook, decides the set, so verify with the fetch
+itself rather than trusting a list.
 
 ```bash
-# Materialize the binaries into the workspaces (reads release.config.json → the new int8;
-# BUILDS postcode-us.bin / postcode-fr.bin):
+# Materialize the binaries into the workspaces (reads release.config.json → the new int8):
 yarn mwops release copy-weights
-md5sum neural-weights-en-us/model.onnx   # MUST equal your Step-1 int8 md5 (a stale leftover reads wrong)
+md5sum packages/neural-weights-en-us/model.onnx   # MUST equal your Step-1 int8 md5
 
-# Per-locale FST gazetteers (#1318 — MODEL-INDEPENDENT): copy-weights.ts already materialized them
-# (fst-en-us.bin, fst-fr-fr.bin, fst-en-gb.bin) into each neural-weights-<locale>/ workspace. Stage
-# them with --fsts (LOWERCASE npm basenames) — publish.yml's preflight REQUIRES all three or the CI
-# publish fails at the files-guard. En-nz ships none. (--fst singular is the SEPARATE demo asset:
-# the BCP-47-cased fst-en-US.bin the demo fetcher expects — omit it unless also repointing the demo.)
-
-# Stage (HF_TOKEN from .env; hf CLI authed as the org). Uploads to en-us/v<target>/ (additive, safe).
-# The list below MUST cover every artifact publish.yml's preflight checks (model, tokenizer, all three
-# postcodes, both pair-indexes, all three FSTs) or the real run stops at the preflight:
+# Stage (HF_TOKEN from .env). Uploads to en-us/v<target>/ (additive, safe). This is the 10.1.0 set:
+# every locale's FST and pair index, three postcode binaries, the street-morphology FST, both
+# evidence lexicons and the Fisher pair. --fsts takes LOWERCASE npm basenames. --fst singular is the
+# separate demo asset (fst-en-US.bin); omit it unless also repointing the demo.
+W=packages/neural-weights
 HF_TOKEN=$(grep -E '^HF_TOKEN=' .env | sed 's/^[^=]*=//') \
 node packages/mailwoman/out/cli/main.js release hf v<target> \
   --locale en-us \
-  --model neural-weights-en-us/model.onnx \
-  --tokenizer neural-weights-en-us/tokenizer.model \
-  --model-card neural-weights-en-us/model-card.json \
-  --fsts neural-weights-en-us/fst-en-us.bin,neural-weights-fr-fr/fst-fr-fr.bin,neural-weights-en-gb/fst-en-gb.bin \
-  --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin \
-  --pair-indexes neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin \
+  --model $W-en-us/model.onnx \
+  --tokenizer $W-en-us/tokenizer.model \
+  --model-card $W-en-us/model-card.json \
+  --fsts $W-en-us/fst-en-us.bin,$W-fr-fr/fst-fr-fr.bin,$W-en-gb/fst-en-gb.bin,$W-de-de/fst-de-de.bin,$W-es-es/fst-es-es.bin,$W-it-it/fst-it-it.bin,$W-en-us/fst-street-morphology.bin \
+  --postcodes $W-en-us/postcode-us.bin,$W-fr-fr/postcode-fr.bin,$W-en-gb/postcode-gb.bin \
+  --pair-indexes $W-en-us/pair-index-us.bin,$W-fr-fr/pair-index-fr.bin,$W-en-gb/pair-index-gb.bin,$W-en-nz/pair-index-nz.bin,$W-de-de/pair-index-de.bin,$W-en-in/pair-index-in.bin,$W-es-es/pair-index-es.bin,$W-it-it/pair-index-it.bin \
   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
   --country-lexicon data/gazetteer/country-surface-lexicon-v1.json \
+  --street-type-lexicon $W-en-us/street-type-lexicon-v3.json \
+  --locality-surface-lexicon $W-en-us/locality-surface-lexicon-v7.json \
+  --fisher <dir>/fisher-diag-v1-model-<target>.npz,<dir>/fisher-diag-v1-model-<target>.json \
+  --steps <training steps> \
   --label "v<target> — <one-liner>" --description "<what changed + headline metrics>"
 # Do NOT pass --set-default — that repoints the DEMO (Step 5) rather than the npm publish.
+
+# Verify with the CI fetch itself. Exit 0 means every declared artifact resolved; a 404 line names
+# each one still missing. Re-run the upload with it added, then fetch again.
+yarn mwops release fetch-hf-weights --into <scratch dir>
 ```
 
-The script self-verifies each artifact is reachable via HTTPS. Confirm `en-us/v<target>/model.onnx`
-returns HTTP 200 before dispatching.
+Check that the fetched `packages/neural-weights-en-us/model.onnx` under the scratch dir has the
+Step-1 md5 before dispatching.
+
+**Upload the previous release's data files, not the data root's.** `copy-weights` materializes the
+FSTs and pair indexes from `$MAILWOMAN_DATA_ROOT`, which may hold a rebuild no release has published:
+at 10.1.0 the en-us, fr-fr and en-gb FSTs and every pair index there differed from 9.1.0's. A model
+release that uploads them also changes the gazetteer prior without a measurement. Download those files
+from `en-us/v<previous card version>/` and pass the downloaded copies to `--fsts` and
+`--pair-indexes`. Then compare each file's HTTP `content-length` in the two release directories; a
+file that differs should be one the release meant to change.
+
+## Step 2b — the release metadata surfaces (the prepare dispatch checks them)
+
+`mode=prepare` runs `yarn mwops release verify-metadata`, which stops the dispatch unless three
+surfaces name the new model version. Commit all three on main before dispatching:
+
+1. **The eval ledger.** Append the promotion check's run with
+   `node packages/mailwoman/out/cli/main.js eval ledger-append --out-dir <promotion out-dir> --model-version <target> --run-id <label>-<yyyymmdd> --model-path "@mailwoman/neural-weights-en-us@<target>" --card packages/neural-weights-en-us/model-card.json`.
+   A check that graded FAIL on a floor the operator accepted needs `--operator-exception <metric>`.
+2. **The release matrix.** Add a row for `<target>` at the top of "## The matrix" in
+   `docs/engineering/releases.mdx`, and move `(current)` to it.
+3. **The status page.** Update the `:::info[Verified as of …]` box, the version table and the model
+   artifact sizes in `docs/articles/developers/status.mdx`. Change only figures you measured or can
+   compute exactly, and say which in the box.
+
+Run `yarn mwops release verify-metadata` locally before dispatching.
 
 ## Step 3 — dispatch the CI publish (two-phase, PR-based; dry-run first)
 

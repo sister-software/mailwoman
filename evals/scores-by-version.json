@@ -1400,6 +1400,47 @@
 				}
 			},
 			"notes": "[graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/home/lab/Projects/mailwoman/scratchpad/gate-v440-60k-int8-wc]"
+		},
+		{
+			"run_id": "v720-address-systems-20261003",
+			"model_version": "10.1.0",
+			"model_path": "@mailwoman/neural-weights-en-us@10.1.0",
+			"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-eval battery (v9.0.0-base): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-10-03",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 8000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.1,
+					"country_homograph": 89.8,
+					"micro": 86.8,
+					"locality": 86.4,
+					"region": 88.9,
+					"street": 77.4,
+					"street_prefix": 98,
+					"street_suffix": 100,
+					"unit": 98.5,
+					"po_box_real": 96.9,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.5,
+					"house_number": 99.1,
+					"region": 37.4,
+					"cedex_real": 98.8
+				},
+				"de": {
+					"native_locality_anchor_on": 91.6
+				},
+				"arena": {
+					"perturb": 63
+				}
+			},
+			"notes": "v7.2.0-address-systems step 60000. us.region 88.9 against the 89.4 floor, accepted by the operator with the D-rule rows in #2439. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the eval spec's revision comment): us.region. [graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/cb44fdf4-0f2d-41d1-a357-67226673a2d5/scratchpad/promotion-v720-b]"
 		}
 	]
 }
