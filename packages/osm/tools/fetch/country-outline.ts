@@ -11,7 +11,7 @@
  *   because geoBoundaries states one per boundary rather than one for the collection.
  *
  *   Usage:
- *     node packages/osm/tools/fetch-country-outline.ts --iso3 RUS --iso3 CHN
+ *     node packages/osm/tools/fetch/country-outline.ts --iso3 RUS --iso3 CHN
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

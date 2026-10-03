@@ -7,7 +7,7 @@
  *   The heavy half (gdal over the PBF) runs here. the adapter streams the result. See `sdk/corpus-jsonl.ts` for the row
  *   shape and the ODbL note.
  *
- *   `--within` names a country outline (`tools/fetch-country-outline.ts` writes them). A Geofabrik extract
+ *   `--within` names a country outline (`tools/fetch/country-outline.ts` writes them). A Geofabrik extract
  *   holds addresses across the country's land borders, and a record whose point lies outside the outline
  *   is counted and left out. `--without`, which repeats, takes a neighbor's outline. A record inside one
  *   is left out too. That settles a border where the country's own outline is coarser than its neighbor's.

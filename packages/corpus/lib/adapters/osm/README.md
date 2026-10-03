@@ -77,7 +77,7 @@ rather than a name stays refused.
 Every refused record and every discarded component increments a reason in the run's `MANIFEST.json`
 `dropped` map (`row:street-not-a-name`, `component:house_number:not-designator`, …). The extract's own
 counts, per GDAL layer, sit in the `<jsonl>.stats.json` sidecar `emit-corpus-jsonl` writes, beside the
-`<pbf>.receipt.json` that `tools/fetch-extract.ts` writes for the PBF.
+`<pbf>.receipt.json` that `tools/fetch/extract.ts` writes for the PBF.
 
 Mappers write whole lines into `addr:housenumber` (`House 34, Road 4, Sector 9`) and `addr:street`; those
 rows keep the street and lose the number, or are skipped. A comma in `addr:city` is the neighborhood ahead of the

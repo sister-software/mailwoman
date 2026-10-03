@@ -280,7 +280,7 @@ the fine-tune rather than of the Russian rows. The d1000 regressions outside the
 | artifact                         | location                                                                                                                                                       |
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | OSM receipts and funnel counts   | `$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/*.receipt.json`, `db/osm/corpus/*.stats.json`, each adapter `MANIFEST.json` `dropped` map                               |
-| Country outlines                 | `$MAILWOMAN_DATA_ROOT/db/osm/outlines/<ISO3>-ADM0.geojson` with receipts; `packages/osm/tools/fetch-country-outline.ts`, `packages/osm/sdk/country-outline.ts` |
+| Country outlines                 | `$MAILWOMAN_DATA_ROOT/db/osm/outlines/<ISO3>-ADM0.geojson` with receipts; `packages/osm/tools/fetch/country-outline.ts`, `packages/osm/sdk/country-outline.ts` |
 | Shared semantic tag registry     | `corpus-python/src/mailwoman_train/semantic_tags.py`; model cards carry `semantic_tags`                                                                        |
 | New-country config with holdouts | `corpus-python/src/mailwoman_train/configs/v7.1.0-osm-exposure-60k.yaml`; `defaultHoldouts()` in `packages/corpus/lib/utils/split.ts`                          |
 | Wallonia decision and rendering  | `packages/corpus/lib/be/adapters/wallonie/adapter.ts`                                                                                                          |

@@ -10,7 +10,7 @@
  *   and its receipt is written only when missing.
  *
  *   Usage:
- *     node packages/osm/tools/fetch-extract.ts --region russia --region asia/china
+ *     node packages/osm/tools/fetch/extract.ts --region russia --region asia/china
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
