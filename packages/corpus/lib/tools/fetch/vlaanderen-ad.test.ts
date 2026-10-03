@@ -136,6 +136,55 @@ describe("harvestVlaanderenAD", () => {
 		expect(harvest.retrievedAt).toBe("2026-10-02T02:51:14.514Z")
 	})
 
+	it("takes a page already on disk without requesting it again", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-vlaanderen-resume-")
+
+		const bodies = [
+			collection('numberMatched="2" numberReturned="0"'),
+			collection('numberReturned="2"', "<wfs:member/><wfs:member/>"),
+			collection('numberMatched="1" numberReturned="0"'),
+			collection('numberReturned="1"', "<wfs:member/>"),
+			collection('numberMatched="1" numberReturned="0"'),
+			collection('numberReturned="1"', "<wfs:member/>"),
+			collection('numberMatched="3" numberReturned="0"'),
+			collection('numberReturned="2" timeStamp="2026-10-02T02:51:14.514Z"', "<wfs:member/><wfs:member/>"),
+			collection('numberReturned="0"'),
+		]
+
+		const first = stubClient(bodies)
+
+		await harvestVlaanderenAD(first, { outputDir: scratch.path, pageSize: 2, componentPageSize: 2 })
+
+		// The second run's bodies are its own sequence rather than the first run's, because
+		// `stubFetchingBodies` answers positionally and a resumed run asks for fewer pages:
+		// three component counts, the address count, and the empty page that ends the address harvest.
+		const second = stubClient([
+			collection('numberMatched="2" numberReturned="0"'),
+			collection('numberMatched="1" numberReturned="0"'),
+			collection('numberMatched="1" numberReturned="0"'),
+			collection('numberMatched="3" numberReturned="0"'),
+			collection('numberReturned="0"'),
+		])
+
+		const resumed = await harvestVlaanderenAD(second, {
+			outputDir: scratch.path,
+			pageSize: 2,
+			componentPageSize: 2,
+		})
+
+		// The second run reports the same harvest as the first.
+		expect(resumed.addressPages).toEqual([{ startIndex: 0, file: "address-0000000000.gml", numberReturned: 2 }])
+		expect(resumed.components.ThoroughfareName).toEqual(["thoroughfare-name.gml"])
+
+		// Every page came off disk, so the only requests are the four `resultType=hits` counts
+		// and the empty page that ends the address harvest.
+		// The service answered HTTP 400 on one page of a whole-region run after 1.8 GB,
+		// and without this the next run re-downloads all of it.
+		const pageRequests = second.asked.filter((params) => params.resultType !== "hits")
+
+		expect(pageRequests.map((params) => params.startIndex)).toEqual(["2"])
+	})
+
 	it("pages a component type past the page cap, under one file per page", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-vlaanderen-harvest-")
 
