@@ -29,6 +29,9 @@
  */
 @import url("./tokens/index.css") layer(tokens);
 
+/* The docs search modal keeps its rules beside its component. */
+@import url("./lib/search/search.css") layer(components);
+
 @layer reset {
 	/*
 	 * Every box is measured by its border. The default is `content-box`, where `width`, `height` and `max-height`

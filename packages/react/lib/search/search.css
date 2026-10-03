@@ -1,0 +1,137 @@
+/* ---------------------------------------------------------------------------
+ * The docs search modal.
+ *
+ * The native <dialog> has zero padding, so the only click whose target is the dialog element itself is a click on
+ * the backdrop. The padding sits on the form, the results and the status line instead.
+ *
+ * The selected option is marked by an inset accent bar as well as a fill, so the selection holds 3:1 against the
+ * panel without depending on the fill alone. Every value names a semantic token from tokens.css.
+ * --------------------------------------------------------------------------- */
+
+.mw-search {
+	width: min(40rem, 92vw);
+	max-height: 70vh;
+	margin: 12vh auto 0;
+	padding: 0;
+	overflow: hidden;
+	color: var(--color-text-primary);
+	font-family: var(--font-family-text);
+	font-size: var(--font-size-callout);
+	line-height: var(--line-height-body);
+	background: var(--color-background-raised);
+	border: 1px solid var(--control-border);
+	border-radius: var(--radius-panel);
+	box-shadow: var(--material-glass-shadow);
+}
+
+.mw-search[open] {
+	display: flex;
+	flex-direction: column;
+}
+
+.mw-search::backdrop {
+	background: oklch(0% 0 264 / 0.5);
+}
+
+.mw-search__form {
+	padding: var(--space-5);
+	border-bottom: 1px solid var(--color-separator);
+}
+
+.mw-search__input {
+	width: 100%;
+	min-height: 44px;
+	padding: var(--space-3) var(--space-4);
+	color: var(--control-foreground);
+	font: inherit;
+	font-size: var(--font-size-body);
+	background: var(--control-background);
+	border: 1px solid var(--control-border);
+	border-radius: var(--radius-control);
+}
+
+.mw-search__input:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 1px;
+}
+
+.mw-search__corrected {
+	margin: 0;
+	padding: var(--space-3) var(--space-5) 0;
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-footnote);
+}
+
+.mw-search__results {
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: var(--space-3) var(--space-4);
+	overflow-y: auto;
+}
+
+.mw-search__category {
+	padding: var(--space-4) var(--space-4) var(--space-2);
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-footnote);
+	font-weight: var(--font-weight-semibold);
+}
+
+.mw-search__option {
+	border-radius: var(--radius-control);
+}
+
+.mw-search__option[aria-selected="true"] {
+	background: var(--color-background-sunken);
+	box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.mw-search__link {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	padding: var(--space-3) var(--space-4);
+	color: inherit;
+	text-decoration: none;
+}
+
+.mw-search__title {
+	font-size: var(--font-size-subheadline);
+	font-weight: var(--font-weight-semibold);
+}
+
+.mw-search__snippet {
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-footnote);
+}
+
+.mw-search__snippet mark {
+	color: var(--color-text-primary);
+	font-weight: var(--font-weight-semibold);
+	background: var(--color-accent-background);
+	border-radius: var(--radius-tick);
+}
+
+.mw-search__status {
+	margin: 0;
+	padding: var(--space-3) var(--space-5);
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-footnote);
+	border-top: 1px solid var(--color-separator);
+}
+
+.mw-search__status:empty {
+	display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.mw-search[open] {
+		animation: mw-search-open var(--duration-standard) var(--easing-decelerate);
+	}
+}
+
+@keyframes mw-search-open {
+	from {
+		opacity: 0;
+		transform: translateY(calc(var(--space-4) * -1));
+	}
+}
