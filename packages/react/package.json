@@ -21,6 +21,7 @@
 		"tokens/tokens.resolver.json",
 		"lib/**/*.ts",
 		"lib/**/*.tsx",
+		"lib/**/*.css",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
 		"!**/*.stories.ts",
@@ -77,6 +78,21 @@
 			"types": "./out/common/KindBadge.d.ts",
 			"node": "./lib/common/KindBadge.tsx",
 			"default": "./out/common/KindBadge.js"
+		},
+		"./search": {
+			"types": "./out/search.d.ts",
+			"node": "./lib/search.ts",
+			"default": "./out/search.js"
+		},
+		"./search/SearchModal": {
+			"types": "./out/search/SearchModal.d.ts",
+			"node": "./lib/search/SearchModal.tsx",
+			"default": "./out/search/SearchModal.js"
+		},
+		"./search/types": {
+			"types": "./out/search/types.d.ts",
+			"node": "./lib/search/types.ts",
+			"default": "./out/search/types.js"
 		},
 		"./map/AppIdentity": {
 			"types": "./out/map/AppIdentity.d.ts",

@@ -21,6 +21,15 @@ const env = process.env
 
 const CI = !!env.CI
 
+// oxlint-disable-next-line sister-software/no-process-globals -- the same carve-out: the selected projects are Playwright's argv
+const argv = process.argv
+
+const projectFlags = argv.flatMap((arg, index) =>
+	arg === "--project" ? [argv[index + 1]] : arg.startsWith("--project=") ? [arg.slice("--project=".length)] : []
+)
+
+const SEARCH_ONLY = projectFlags.length > 0 && projectFlags.every((name) => name === "search")
+
 export default defineConfig({
 	testDir: "./test/build",
 	forbidOnly: CI,
@@ -38,5 +47,25 @@ export default defineConfig({
 				["list", { printSteps: true }],
 				["html", { open: "never" }],
 			],
-	projects: [{ name: "build" }],
+	projects: [
+		{ name: "build" },
+		// The search suite drives the production build in `docs/build`, served on 7770 by the web server below.
+		{
+			name: "search",
+			testDir: "./test/e2e",
+			timeout: 30_000,
+			use: { baseURL: "http://localhost:7770" },
+		},
+	],
+	// Playwright's web server is configuration-wide, and the `build` project writes `docs/build`
+	// rather than reading it, so the server starts only when the run selects the `search` project alone.
+	// A running `yarn workspace @mailwoman/docs serve` is reused.
+	webServer: SEARCH_ONLY
+		? {
+				command: "yarn docusaurus serve --port 7770 --no-open",
+				url: "http://localhost:7770",
+				reuseExistingServer: true,
+				timeout: 60_000,
+			}
+		: undefined,
 })

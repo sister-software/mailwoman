@@ -127,6 +127,39 @@ class RangeWorkerClient implements RangeDatabase {
 	}
 }
 
+function runtimeBase(runtimeBaseURL: string): URL {
+	return new URL(runtimeBaseURL.endsWith("/") ? runtimeBaseURL : `${runtimeBaseURL}/`, globalThis.location.href)
+}
+
+/**
+ * Opens the SQLite database at `databaseURL` by fetching the whole file into memory.
+ *
+ * A URL ending in `.gz` is inflated in the worker.
+ * Use this for a file small enough to download in one request, such as the docs
+ * search index; `openRangeDatabase` suits a file read in pieces.
+ */
+export async function openWholeDatabase(databaseURL: string, runtimeBaseURL: string): Promise<RangeDatabase> {
+	const base = runtimeBase(runtimeBaseURL)
+	const client = new RangeWorkerClient(new URL(RANGE_WORKER_FILE, base).href)
+
+	try {
+		await client.call({
+			type: "open",
+			strategy: "whole",
+			databaseURL: new URL(databaseURL, globalThis.location.href).href,
+			runtimeModuleURL: new URL(SQLITE_RUNTIME_MODULE_FILE, base).href,
+			chunkSize: 0,
+		})
+
+		await client.query("SELECT count(*) FROM sqlite_master")
+
+		return client
+	} catch (error) {
+		client.terminate()
+		throw error
+	}
+}
+
 /**
  * Opens the SQLite database at `databaseURL` for range-request reads.
  *
@@ -141,7 +174,7 @@ export async function openRangeDatabase(
 	runtimeBaseURL: string,
 	options: RangeDatabaseOptions = {}
 ): Promise<RangeDatabase> {
-	const base = new URL(runtimeBaseURL.endsWith("/") ? runtimeBaseURL : `${runtimeBaseURL}/`, globalThis.location.href)
+	const base = runtimeBase(runtimeBaseURL)
 
 	const open = async (url: string): Promise<RangeDatabase> => {
 		const client = new RangeWorkerClient(new URL(RANGE_WORKER_FILE, base).href)
@@ -149,6 +182,7 @@ export async function openRangeDatabase(
 		try {
 			await client.call({
 				type: "open",
+				strategy: "range",
 				databaseURL: new URL(url, globalThis.location.href).href,
 				runtimeModuleURL: new URL(SQLITE_RUNTIME_MODULE_FILE, base).href,
 				chunkSize: options.chunkSize ?? DEFAULT_CHUNK_SIZE,

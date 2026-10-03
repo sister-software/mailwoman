@@ -143,6 +143,7 @@ const config: Config = {
 			},
 		],
 		"./plugins/runtime-assets/plugin.ts",
+		"./plugins/search-index/plugin.ts",
 		[
 			// Wraps docusaurus-plugin-glossary with the same validation, tooltips and remark.
 			// Adds a custom page with tag filters and a category TOC.
@@ -258,11 +259,6 @@ const config: Config = {
 				flowchart: { htmlLabels: false, curve: "basis", padding: 18 },
 				themeVariables: { primaryColor: "#ffffff", lineColor: "#21201c" },
 			},
-		},
-		algolia: {
-			appId: "1AEXFQAAAJ",
-			indexName: "Mailwoman Site",
-			apiKey: "637194a77c844e7df987b51d59505272",
 		},
 		navbar: {
 			title: "Mailwoman",
