@@ -6,6 +6,7 @@
  */
 
 import { pathExists, readLink, isSymbolicLink, statPath, type Dirent } from "@mailwoman/core/fs/readers"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -18,20 +19,20 @@ import { Globerator } from "spliterator/node/fs"
  */
 export const Provenance = {
 	/**
-	 * Carries a `layer_manifest` row — source, vintage, build command, build sha.
+	 * Has a `layer_manifest` row — source, vintage, build command, build sha.
 	 */
 	Manifested: "manifested",
 	/**
 	 * A built artifact with no manifest.
 	 *
-	 * Rebuilding it means knowing which command made it, which is knowledge held
-	 * by a person rather than by the file.
+	 * The builder requires knowledge of which command made it.
+	 * A person may know that command even when the file does not record it.
 	 */
 	Unprovenanced: "unprovenanced",
 	/**
 	 * Not ours to reproduce — a third party's artifact we keep for comparison.
 	 *
-	 * Counting these as debt would make the number unimprovable and therefore useless.
+	 * The number would never improve if the inventory counted these as debt.
 	 */
 	Foreign: "foreign",
 	/**
@@ -48,8 +49,10 @@ export type Provenance = (typeof Provenance)[keyof typeof Provenance]
  * Directories whose contents belong to someone else, with the reason.
  *
  * Keyed on the first path segment under the data root.
- * A list rather than a heuristic: "is this ours" is a fact about intent, and guessing
- * it from the filename is how a real gap gets excused as foreign.
+ * Use a list instead of a heuristic.
+ *
+ * "Is this ours" is a fact about intent.
+ * A filename-based guess lets a real gap pass as foreign.
  */
 export const FOREIGN_ROOTS: Record<string, string> = {
 	"pelias-rig": "a Pelias comparison rig — a third party's build, kept to measure against",
@@ -67,7 +70,8 @@ export interface LayerManifest {
 	version: string
 	tier: string
 	/**
-	 * The SPDX expression the build admitted, which `refusalsForPublication` reads beside `tier`.
+	 * The SPDX expression the build admitted.
+	 * `refusalsForPublication` reads it beside `tier`.
 	 *
 	 * A row written before the column existed leaves it undefined.
 	 * An absent expression is an unstated one rather than a permissive one.
@@ -79,6 +83,17 @@ export interface LayerManifest {
 	build_cmd: string
 	build_sha: string
 	created_at: string
+	/**
+	 * JSON object of publisher name to the record count that publisher supplied to the build.
+	 *
+	 * A row written before the column existed leaves it undefined.
+	 * A build that recorded no count also leaves it undefined.
+	 *
+	 * The count is of the build's input rather than the rows the artifact kept.
+	 * It cannot be recovered afterwards because Overture removes a release from
+	 * its bucket once a newer one lands.
+	 */
+	source_records?: string
 }
 
 export interface InventoryEntry {
@@ -113,11 +128,11 @@ export interface InventoryReport {
 	/**
 	 * Databases that were found but not opened, because they sit under a foreign root.
 	 *
-	 * Named so the report's denominator is auditable rather than implied.
+	 * The name lets readers audit the report's denominator.
 	 */
 	skippedForeign: number
 	/**
-	 * The depth the walk stopped at, and the directories it declined to descend into.
+	 * The depth where the walk stopped and the directories it declined to enter.
 	 *
 	 * A report that silently bounded its own search would read as coverage.
 	 */
@@ -155,7 +170,7 @@ export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest
  * and an unbounded walk would spend minutes in directories that contain no databases.
  * Foreign roots are not descended into at all.
  *
- * They are counted and named, which is cheaper and states the same fact.
+ * The inventory records each row and its name at lower cost.
  */
 async function findDatabases(
 	dataRoot: PathBuilder,
@@ -206,9 +221,10 @@ async function findDatabases(
 /**
  * Classify one database.
  *
- * `lstat` before `stat`: a symlinked artifact must report both the link
- * and the size of what it points at, and `stat` alone silently answers for the target
- * while `lstat` alone silently answers for the link.
+ * Run `lstat` before `stat` for a symlinked artifact.
+ * The report must include the link and the size of its target.
+ *
+ * `stat` by itself answers only for the target; `lstat` by itself answers only for the link.
  */
 async function inventoryEntry(dataRoot: string, path: string): Promise<InventoryEntry> {
 	const rel = relative(dataRoot, path)
@@ -246,8 +262,8 @@ export async function takeInventory(options: {
 	// The report records the root and each entry's path as strings.
 	const dataRoot = root.toString()
 	// A database sits three segments down, at `db/<layer>/<file>.db`, since the `db/` group added a level.
-	// A bound of two stops the walk at `db/<layer>/`, and the report then describes
-	// a data root holding zero databases.
+	// A bound of two stops the walk at `db/<layer>/`.
+	// The report then describes a data root holding zero databases.
 	const maxDepth = options.maxDepth ?? 3
 	const { paths, skippedForeign } = await findDatabases(root, maxDepth)
 	const entries = await Promise.all(paths.map((path) => inventoryEntry(dataRoot, path)))
@@ -270,8 +286,9 @@ export async function takeInventory(options: {
  * The one sentence a caller relays.
  *
  * The denominator excludes foreign and unreadable artifacts deliberately:
- * the number is meant to be improvable, and a rate that counts artifacts nobody intends
- * to provenance can never reach 100% no matter what is fixed.
+ * the number is meant to be improvable.
+ * A rate that counts artifacts outside our provenance scope to provenance can
+ * never reach 100% no matter what is fixed.
  */
 export function inventorySentence(report: InventoryReport): string {
 	const ours = report.counts.manifested + report.counts.unprovenanced
@@ -289,8 +306,9 @@ export function inventorySentence(report: InventoryReport): string {
 /**
  * Whether a recorded `build_cmd` names something that still exists in this repo.
  *
- * A manifest is only worth as much as its build command, and two ways of being
- * worthless were measured on the shipped artifacts.
+ * A manifest is only as useful as its build command.
+ * Shipped artifacts showed two ways of being worthless were measured on the shipped artifacts.
+ *
  * `osm/address-points-{de,gb,nz}-*.db` record `node osm/out/scripts/build-rooftop-database.js`,
  * a path the workspace regroup moved to `packages/osm/...`
  *
@@ -299,7 +317,7 @@ export function inventorySentence(report: InventoryReport): string {
  * And `osm/address-points-au-au.db` records `node scratchpad/build-gnaf-rooftop-database.ts`,
  * which exists on the machine that built it and nowhere else, because `scratchpad/` is gitignored.
  *
- * Both artifacts pass every "has a manifest" check and neither can be rebuilt from what it says.
+ * Both artifacts pass every "has a manifest" check and neither can be rebuilt from its recorded contents.
  * So presence of a manifest is not the property worth counting on its own.
  *
  * The check is deliberately shallow: any token that looks like a path
@@ -325,6 +343,54 @@ export async function buildCommandGaps(buildCmd: string, repoRoot: PathBuilderLi
 /**
  * The command that would rebuild an artifact, or the reason none is known.
  */
+/**
+ * The terms a manifested artifact records, as one line for the text report.
+ *
+ * A manifest row written before the `license` column existed leaves it undefined.
+ * This reports that state as unrecorded rather than as an absence of obligations.
+ *
+ * An artifact whose provenance is anything other than `Manifested` has no `layer_manifest` row to read.
+ * It returns `null` so the caller omits the line.
+ */
+export function licenseHint(entry: InventoryEntry): string | null {
+	if (entry.provenance !== Provenance.Manifested) return null
+
+	const manifest = entry.manifest!
+	const license = manifest.license ?? "license unrecorded in layer_manifest"
+	const attribution = manifest.attribution ? ` — attribution: ${manifest.attribution}` : ""
+
+	return `${license}${attribution}`
+}
+
+/**
+ * The input record counts a manifested artifact records, as one line for the text report.
+ *
+ * Returns `null` when the artifact records no count at all, so the caller omits
+ * the line rather than printing a zero.
+ * An artifact built before the `source_records` column exists is in that state.
+ * So is an artifact whose build did not count its inputs.
+ */
+export function sourceRecordsHint(entry: InventoryEntry): string | null {
+	if (entry.provenance !== Provenance.Manifested) return null
+
+	const recorded = entry.manifest!.source_records
+
+	if (!recorded) return null
+
+	const counts = tryParsingJSON<Record<string, number>>(recorded)
+
+	if (!counts) return `source_records is present and unreadable: ${recorded}`
+
+	const entries = Object.entries(counts)
+
+	if (!entries.length) return "the build counted its inputs and recorded no publisher"
+
+	return entries
+		.toSorted((left, right) => right[1] - left[1])
+		.map(([publisher, rows]) => `${publisher} ${rows.toLocaleString()}`)
+		.join(", ")
+}
+
 export function rebuildHint(entry: InventoryEntry): string {
 	if (entry.provenance === Provenance.Manifested) return entry.manifest!.build_cmd
 

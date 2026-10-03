@@ -2,31 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `intersection` recipe — the real-pair intersection training recipe (#487). The model scored
- *   0.0 on intersection_a/b because the training mix had zero intersection-labeled rows. This is
- *   the missing data. Ported from the root build script it replaced.
+ *   `intersection` recipe, the real-pair intersection training source.
  *
- *   street pairs are real: the same tiger 2023 edges extraction as the eval builder
- *   (scripts/eval/build-intersection-real.ts) — a node where two road edges (mtfcc S1*) with
+ *   Street pairs are real. The extraction matches the eval builder
+ *   (`scripts/eval/build-intersection-real.ts`). A node where two road edges (mtfcc S1*) with
  *   distinct FULLNAMEs meet is a real crossing. Real pairs avoid teaching fake street-street
  *   co-occurrences.
  *
- *   leakage policy (mirrors the affix recipe's VT discipline):
+ *   Leakage policy (mirrors the affix recipe's VT discipline):
  *
  *   - train counties: Cook IL (grid city) + Morris NJ (suburb).
- *   - golden (`--golden`) county: Washington VT (rural) only — the corpus defaultHoldout state.
+ *   - golden (`--golden`) county: Washington VT (rural) only, the corpus defaultHoldout state.
  *   - Every crossing in data/eval/external/intersection-real.jsonl is excluded from both modes, by node
  *       id and by order-insensitive name pair (the eval shares all three counties).
  *
- *   rendering: junction-format variety — padded/tight `&` and `/`, `and`, `at`, `@`, leading-phrase
- *   `corner of` / `intersection of` — crossed with tails (bare / `, ST` / `, ST ZIP` / `, City, ST
- *   [ZIP]`) and case variants. ZIPs are the crossing's own tiger edge zipl (real); the locality
- *   tail comes from the OA Cook-county ZIP→city majority map.
+ *   Junction-format variety includes padded and tight `&` and `/`, `and`, `at`, `@`, and the
+ *   leading phrases `corner of` and `intersection of`, crossed with tails (bare / `, ST` / `, ST ZIP` /
+ *   `, City, ST [ZIP]`) and case variants. ZIPs are the crossing's own tiger edge zipl (real). The
+ *   locality tail comes from the OA Cook-county ZIP→city majority map.
  *
- *   audit: every emitted row is label-checked on the RAW surface via the #519 char-offset span
- *   triple. Any violation fails the build (throws). A JSON audit report lands next to the output.
+ *   Audit: every emitted row is label-checked on the RAW surface via the char-offset span triple. Any
+ *   violation fails the build (throws). A JSON audit report lands next to the output.
  *
- *   External inputs (`--edges-dir`, opts.edgesDir. both already on disk — do not re-download):
+ *   External inputs (`--edges-dir` and opts.edgesDir, both already on disk. Do not re-download):
  *
  *   - <edges-dir>/tl_2023_{17031,34027,50023}_edges.shp (unzipped tiger 2023 edges. default
  *       `$MAILWOMAN_DATA_ROOT/census/tiger2023-edges`, where `mailwoman situs interpolation` puts them)
@@ -45,9 +43,10 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { openDuckDB } from "#parquet/duckdb"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { weightedPick } from "#synthesizers/utils"
 import type { CanonicalRow, LabeledRow } from "#types"
 import { alignRow } from "#utils"
@@ -93,8 +92,7 @@ interface Crossing {
  * Junction forms.
  *
  * Weights favor the common connectors.
- * The tight (unpadded) variants and leading phrases get enough mass to register
- * (each ≥5%) — they're the audited gaps the old synth missed.
+ * The tight (unpadded) variants and leading phrases each account for at least 5% of the mass.
  */
 interface Form {
 	id: string
@@ -115,10 +113,14 @@ const FORMS: readonly Form[] = [
 ]
 
 /**
- * Tail forms. ~55% bare (the v0.7.2 lesson: an always-present tail taught the model
- * to read post-intersection text as a locality and fumble bare "X & Y").
+ * Tail forms.
+ * About 55% bare.
  *
- * City tails require a ZIP→city hit (Cook only); ZIP tails require the edge to carry a zipl.
+ * An always-present tail teaches the model to read post-intersection text as a locality,
+ * so the bare form keeps a majority.
+ * City tails require a ZIP→city hit (Cook only).
+ *
+ * ZIP tails require the edge to include a zipl.
  * Misses downgrade to the region tail.
  */
 interface Tail {
@@ -204,7 +206,7 @@ async function readEvalExclusions(): Promise<{ nodes: Set<number>; pairs: Set<st
  * Extract real crossings from one county's tiger edges shapefile.
  *
  * Same query shape as the eval builder (2 incident distinct S1* FULLNAMEs at a node, both names >=6 chars),
- * plus the edge zipl so tails can carry the crossing's own ZIP.
+ * plus the edge zipl so tails can include the crossing's own ZIP.
  * Hash-ordered for seed-stable determinism.
  */
 async function extractCrossings(
@@ -259,7 +261,6 @@ async function extractCrossings(
 async function buildZipCityMap(): Promise<Map<string, string>> {
 	const counts = new Map<string, Map<string, number>>()
 
-	// zip → Map(city → n)
 	for await (const row of readZippedCSVRecords(OA_COOK.zip, OA_COOK.csv)) {
 		const city = row.city ?? ""
 		const zip = row.postcode ?? ""
@@ -344,12 +345,12 @@ function renderRow(
 
 	// Components keep their original case. alignRow matches case-insensitively
 	// and labels the tokens of the (cased) raw.
-	// The parquet row carries tokens+labels only.
+	// The parquet row contains tokens+labels only.
 	return { raw, components, formID: form.id, tailID: tail.id, caseID: casing.id }
 }
 
 /**
- * Label-correctness audit for one aligned row, on the RAW surface via the #519 span triple.
+ * Label-correctness audit for one aligned row, on the RAW surface via the char-offset span triple.
  *
  * @returns A list of violations (empty = clean).
  * Re-derives the span checks independent of `alignRow`'s own assertion,
@@ -393,7 +394,6 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 		errors.push(`span count ${span_tags.length} != components ${compCount}`)
 	}
 
-	// Raw-surface reconstruction: each component's single span selects the component verbatim out of raw.
 	for (const [tag, value] of Object.entries(components)) {
 		if (value == null) continue
 		const indices = span_tags.map((t, i) => (t === tag ? i : -1)).filter((i) => i >= 0)
@@ -450,8 +450,8 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behavior it exercises.
+ * See `description` below for the generated surface form.
  */
 export const intersectionRecipe: CorpusRecipe = {
 	name: "intersection",
@@ -464,10 +464,9 @@ export const intersectionRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		// The root build script this recipe replaced seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 40_000
-		const source = opts.sourceName ?? "synth-intersection"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-intersection")
 		const edgesDir = opts.edgesDir ?? DEFAULT_EDGES_DIR
 		const counties = opts.golden ? GOLDEN_COUNTIES : TRAIN_COUNTIES
 		const exclusions = await readEvalExclusions()

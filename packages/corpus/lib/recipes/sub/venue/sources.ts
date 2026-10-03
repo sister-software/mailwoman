@@ -4,21 +4,17 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { sample } from "@mailwoman/core/random"
-import { upperFirst } from "@mailwoman/core/strings/case"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
+import { upperFirst } from "@mailwoman/normalize/case"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
+import { classifyIdentifier, readSubVenueJSONL } from "#subvenue/harvest"
+import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "#subvenue/promotions"
+import type { SubVenueLexiconTable } from "#subvenue/table"
 import type { LocaleBaseTuple } from "#surfaces/locale"
 import { weightedPick } from "#synthesizers/utils"
-import {
-	classifyIdentifier,
-	readSubVenueJSONL,
-	type SubVenueLexiconTable,
-	SUBVENUE_PROMOTIONS,
-	type SubVenuePromotion,
-} from "#tools"
 
 /**
  * Resolves the path of the packaged sub-venue lexicon.
@@ -41,9 +37,10 @@ const MIN_NAME_LENGTH = 4
 const MAX_ATTESTED_TOKENS = 4
 
 /**
- * Reports whether a name has a usable length, contains a letter, and lacks route punctuation.
+ * Reports whether a name has usable length and contains a letter.
+ * It also rejects route punctuation.
  *
- * The check also rejects a single lowercase token, which is usually a code.
+ * The check also rejects a single lowercase token because it represents a code in this source.
  */
 export function isCleanName(name: string): boolean {
 	if (name.length < MIN_NAME_LENGTH || name.length > MAX_VENUE_NAME_LENGTH) return false
@@ -189,7 +186,7 @@ const SIGN_IDENTIFIER_ATOM = /^(?:[0-9]{1,3}|[A-Za-z]|[A-Za-z][0-9]{1,3}|[0-9]{1
  * Reports whether a value is a short sign identifier, such as `12`, `B` or `A3`,
  * or a range of two identifiers joined by `-` or `/`.
  *
- * Shape classification alone accepts some values that this check rejects, so callers apply both.
+ * Shape classification by itself accepts some values that this check rejects, so callers apply both.
  */
 export function isSignIdentifier(value: string): boolean {
 	const parts = value.split(/[/-]/)

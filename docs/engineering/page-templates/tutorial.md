@@ -27,7 +27,7 @@ sidebar_position: 3
 5. **What you have now.** The finished artifact, described in two sentences.
 6. **Next.** At most two links.
 
-## Opening move
+## Start here
 
 Open with the artifact the reader will hold at the end and the time it takes to get there, then move
 straight to prerequisites.

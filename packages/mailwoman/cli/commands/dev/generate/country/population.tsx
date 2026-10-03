@@ -1,0 +1,42 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman dev generate country-population` regenerates `codex/country/population.ts`, the
+ *   per-country population table, from GeoNames countryInfo.txt. This is network codegen and the
+ *   output is committed for provenance.
+ */
+
+import { Text } from "ink"
+
+import { type CommandSpec, CommandTaskResult, reportToStderr, useCommandTask } from "#cli-kit"
+
+/**
+ * Native command-line interface consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "country-population",
+	description: "Generate country population data",
+} as const satisfies CommandSpec
+
+const DevGenerateCountryPopulation = () => {
+	const state = useCommandTask(async () => {
+		const { generateCountryPopulation } = await import("#tools/dev-tools/codex/country/population")
+
+		return generateCountryPopulation({}, reportToStderr)
+	})
+
+	if (state.status !== "done") return <CommandTaskResult state={state} />
+
+	if (state.status === "done") {
+		return (
+			<Text color="green">
+				✓ wrote {state.result.outPath} ({state.result.countries} countries)
+			</Text>
+		)
+	}
+
+	return null
+}
+
+export default DevGenerateCountryPopulation

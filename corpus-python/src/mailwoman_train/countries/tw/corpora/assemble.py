@@ -1,12 +1,13 @@
 """The two passes that turn eligible Overture-TW rows into a corpus.
 
-Pass 1 counts eligible rows per 縣市, sums each district's coordinates and lists the agencies, drawing
-no rows. Pass 2 selects under the quotas pass 1 set. Both stream the same parquet in the same order,
-which is what makes the second pass's exact selectors land on the rows the first counted.
+Pass 1 counts eligible rows per 縣市 and sums each district's coordinates. It also lists the agencies
+without drawing rows. Pass 2 selects under the quotas from pass 1. Both passes stream the same parquet
+in the same order. This lets pass 2's exact selectors land on rows counted by pass 1.
 
-One `random.Random` feeds the selectors, the shuffle, each row's register and the country prefix, in
-that order. Adding, dropping or reordering a draw reshuffles which addresses a seeded build trains on,
-and no artifact says so.
+One `random.Random` feeds the selectors and then the shuffle. It feeds each row's register and the
+country prefix in that order.
+Any added, dropped, or reordered draw reshuffles which addresses a seeded build trains on.
+No artifact records that change.
 """
 
 from __future__ import annotations
@@ -55,9 +56,9 @@ from .rows import (
 class SourceSurvey:
     """Pass 1's answer: the quotas pass 2 selects under, plus the sums the centroids come from.
 
-    The centroid sums cover every eligible row rather than the selected ones: a board row is scored
-    against its district's centre, and a centre from the handful of rows selection kept is a different
-    place.
+    The centroid sums cover every eligible row rather than only selected rows. A board row is scored
+    against its district's center. A center computed from the few rows selection kept represents a
+    different place.
     """
 
     scanned: int
@@ -85,8 +86,8 @@ class Selection:
 def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     """Pass 1: count eligible rows per 縣市, sum each district's coordinates, list the agencies. Draws no rows.
 
-    The agency list is not bookkeeping: the Taiwanese licence voids its grant on a missing attribution,
-    so the report carries the datasets the rows came from.
+    The agency list is not bookkeeping: the Taiwanese license voids its grant on a missing attribution,
+    so the report lists the datasets the rows came from.
     """
     pool_counts: Counter[str] = Counter()
     dropped: Counter[str] = Counter()
@@ -203,7 +204,7 @@ def write_splits(
 
 
 def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> list[dict[str, Any]]:
-    """Write the held-out board: every row carries its coordinate and its routing fields."""
+    """Write the held-out board: every row includes its coordinate and routing fields."""
     board_records: list[dict[str, Any]] = []
     with (out_dir / "tw-board.jsonl").open("w", encoding="utf-8") as handle:
         for row in selection.board:

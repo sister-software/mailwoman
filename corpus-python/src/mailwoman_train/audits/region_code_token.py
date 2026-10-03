@@ -2,7 +2,7 @@
 
 WHY THIS EXISTS. `Swiss Chalet, 92 Laurel Rd, Gander, NL A1V 0A9, Canada` answers `country: NL` — the
 Netherlands — with `Canada` written in full at the end of the same string (#2299). `NL` is a Canadian
-province code and an ISO alpha-2 country code, and the model reads whichever one the corpus attested
+province code and an ISO alpha-2 country code. The model reads whichever interpretation the corpus attested
 more. A claim that one reading outweighs the other is a claim about counts, so this module counts them,
 at the definitions stated here and at both sampling levels.
 
@@ -11,9 +11,9 @@ contested set falls out of the data rather than out of a table that would be a s
 codex's. A code with a count under one tag only is not contested. a code with counts under both is.
 
 BOTH LEVELS, BECAUSE AUGMENTATION WRITES REGIONS. `augment_region_prob` appends a region surface to a
-row that did not carry one, so the emitted stream carries region codes the drawn stream does not. A
-count taken at the draw level alone understates the region side by exactly the augmentation's share,
-which is the error this module exists to avoid rather than commit. The sampling mirrors
+row that lacked one, so the emitted stream includes region codes absent from the drawn stream. A
+draw-level counts understate the region side by exactly the augmentation's share. This module measures
+the emitted stream to capture that region signal. The sampling mirrors
 `audit_epoch_mixture` and `census_opening_token` — same stream, same seed convention, same budget — so
 a count here is comparable with an exposure reported there.
 """
@@ -32,6 +32,7 @@ from ..config import load_config
 from ..data.emit import EmitPolicy, emit_row
 from ..data.loader import _raw_row_stream
 from ..data.source_reps import resolve_config_reps
+from .epoch_mixture.passes import config_augment, config_augment_exclude_sources
 
 
 def code_shaped(token: str) -> bool:
@@ -42,9 +43,8 @@ def code_shaped(token: str) -> bool:
 def _tag(label: str) -> str | None:
     """The tag a token OPENS, or None.
 
-    Only a `B-` label counts. A two-letter token inside a longer span is part of a name rather than a
-    code the row attests on its own, and counting it would credit `St. John's, NL` and `Newfoundland
-    and Labrador` to the same evidence.
+    Only a `B-` label counts. A two-letter token inside a longer span is part of a name.
+    The count would credit `St. John's, NL` and `Newfoundland and Labrador` as the same evidence.
     """
     return label[2:] if label.startswith("B-") else None
 
@@ -165,16 +165,8 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
         country_weights=cfg.data.country_weights,
         source_weights=cfg.data.source_weights,
         coarse_filter=cfg.data.coarse_filter,
-        augment={
-            "directional": cfg.data.augment_directional_prob,
-            "region": cfg.data.augment_region_prob,
-            "glue": cfg.data.augment_glue_prob,
-            "case": getattr(cfg.data, "augment_case_prob", 0.0),
-            "punct_drop": cfg.data.augment_punct_drop_prob,
-            "upper_case": getattr(cfg.data, "augment_upper_case_prob", 0.0),
-            "ordinal": cfg.data.augment_ordinal_prob,
-        },
-        augment_exclude_sources=tuple(getattr(cfg.data, "augment_exclude_sources", ()) or ()),
+        augment=config_augment(cfg.data),
+        augment_exclude_sources=config_augment_exclude_sources(cfg.data),
     )
 
     meta = report["meta"]

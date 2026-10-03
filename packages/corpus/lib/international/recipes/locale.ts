@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Samples real address tuples for one country, renders them in native or international order, and emits aligned
- *   rows. Sampling and rendering use separate seeded generators.
+ *   Samples real address tuples for one country and renders them in native or international order.
+ *   It emits aligned rows. The recipe samples and renders with separate seeded generators.
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
@@ -17,8 +17,9 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import type { CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { type LocaleBaseTuple, type RenderedLocaleRow, renderLocaleRow } from "#surfaces/locale"
 import { SurfaceOrigin } from "#types"
@@ -40,8 +41,9 @@ export interface LocalePart {
 	/**
 	 * Reads Spain's raw CNIG schema.
 	 *
-	 * `poblacion` is the settlement, `municipio` is its parent, and the street
-	 * joins `tipo_vial` and `nombre_via`.
+	 * `poblacion` is the settlement.
+	 * `municipio` is its parent.
+	 * The street combines `tipo_vial` with `nombre_via`.
 	 */
 	cnigRaw?: boolean
 }
@@ -71,7 +73,7 @@ export interface LocaleCountrySource {
  */
 const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	DE: {
-		source: "synth-german",
+		source: defaultRecipeSource("synth-german"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.4.0",
 		parts: [
@@ -80,55 +82,55 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		],
 	},
 	FR: {
-		source: "synth-fr",
+		source: defaultRecipeSource("synth-fr"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.4.0",
 		parts: [{ zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }],
 	},
 	NL: {
-		source: "synth-nl",
+		source: defaultRecipeSource("synth-nl"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nl", "countrywide.csv") }],
 	},
 	IT: {
-		source: "synth-it",
+		source: defaultRecipeSource("synth-it"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ zip: dataRootPath("oa-cache", "it__countrywide.zip"), csv: "it/countrywide.csv" }],
 	},
 	PT: {
-		source: "synth-pt",
+		source: defaultRecipeSource("synth-pt"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "pt", "countrywide.csv") }],
 	},
 	CH: {
-		source: "synth-ch",
+		source: defaultRecipeSource("synth-ch"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "ch", "countrywide.csv") }],
 	},
 	HR: {
-		source: "synth-hr",
+		source: defaultRecipeSource("synth-hr"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "hr", "countrywide.csv") }],
 	},
 	SK: {
-		source: "synth-sk",
+		source: defaultRecipeSource("synth-sk"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "sk", "countrywide.csv") }],
 	},
 	LU: {
-		source: "synth-lu",
+		source: defaultRecipeSource("synth-lu"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "lu", "countrywide.csv") }],
 	},
 	ES: {
-		source: "synth-es",
+		source: defaultRecipeSource("synth-es"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
@@ -145,14 +147,14 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	NZ: {
 		// NZ stores the city in `district` and the suburb in `city`.
 		// The source has no postcodes.
-		source: "synth-nz",
+		source: defaultRecipeSource("synth-nz"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 	GB: {
 		// Price Paid Data stores the postal town in `district` and an optional dependent locality in `city`.
-		source: "synth-gb",
+		source: defaultRecipeSource("synth-gb"),
 		register: SourceRegister.LandRegistryPricePaid,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"), districtAsLocality: true }],
@@ -160,7 +162,8 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 }
 
 /**
- * The reservoir size per part, which bounds memory use.
+ * The reservoir size per part.
+ * This value bounds memory use.
  */
 const RESERVOIR_CAP = 1_200_000
 
@@ -170,15 +173,15 @@ const RESERVOIR_CAP = 1_200_000
 const ES_SPACE_JOIN_FRACTION = 0.5
 
 /**
- * The share of NL rows that keep the source postcode form, which has no space.
+ * The share of NL rows that keep the source postcode form without a space.
  */
 const NL_GLUED_POSTCODE_FRACTION = 0.5
 
 /**
  * Cleans a city value.
  *
- * Returns `null` for a value with a comma or four digits, and strips a trailing
- * parenthesized code of one to three letters.
+ * Returns `null` for a value with a comma or four digits.
+ * Strips a trailing parenthesized code of one to three letters.
  */
 export function cleanCityNoise(city: string): string | null {
 	if (/,|\d{4}/.test(city)) return null
@@ -369,8 +372,8 @@ export function applyDistrictAsLocalityOverride(part: LocalePart, override: bool
 }
 
 /**
- * Returns the country's `pedaniaParts` when the override is true and they exist,
- * and its default parts otherwise.
+ * Returns the country's `pedaniaParts` when the override is true and that property exists.
+ * Returns the default parts in all other cases.
  */
 export function resolveLocaleParts(countrySource: LocaleCountrySource, override: boolean | undefined): LocalePart[] {
 	return override === true && countrySource.pedaniaParts ? countrySource.pedaniaParts : countrySource.parts
@@ -394,7 +397,7 @@ export const localeRecipe: CorpusRecipe = {
 		{
 			flag: "--district-as-locality / --no-district-as-locality",
 			description:
-				"Override the per-part districtAsLocality mapping for this run. Unset (default) leaves each COUNTRY_SOURCES part's own value untouched — every existing build stays byte-identical. ES additionally switches to the pedanía (poblacion→dependent_locality) source when passed as true — combine with --source-name synth-es-pedania.",
+				"Override the per-part districtAsLocality mapping for this run. Unset (default) leaves each COUNTRY_SOURCES part's own value untouched — every existing build stays byte-identical. ES additionally switches to the pedanía (poblacion→dependent_locality) source when passed as true — combine with --source-name rendered-es-pedania.",
 		},
 	],
 	async run(opts, write) {
@@ -421,7 +424,10 @@ export const localeRecipe: CorpusRecipe = {
 			throw new Error(`--country-fraction must be in [0, 1], got ${countryFraction}`)
 		}
 
-		const source = opts.sourceName ?? countrySource.source
+		// `COUNTRY_SOURCES` and `RECIPE_SOURCES` both use the retired spelling as their key.
+		// This lookup decides the vocabulary this recipe writes in one place
+		// rather than in twelve table entries.
+		const source = opts.sourceName ?? defaultRecipeSource(countrySource.source)
 		const count = opts.count ?? 4000
 		// When unset, each part keeps its own setting.
 		// True also selects the ES pedanía parts.
@@ -436,7 +442,7 @@ export const localeRecipe: CorpusRecipe = {
 			const effectivePart = applyDistrictAsLocalityOverride(parts[pi]!, districtAsLocalityOverride)
 			const t = await readTuples(effectivePart, reservoirRng)
 
-			// Spreading an array this large into `push` would overflow the stack.
+			// A spread of an array this large into `push` would overflow the stack.
 			for (const x of t) {
 				pool.push(x)
 			}

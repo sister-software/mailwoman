@@ -52,7 +52,7 @@ export interface DerivedFormAttestation {
 export interface RegionalRegisterAttestation {
 	kind: "regional-register"
 	/**
-	 * The committed record that carries the register split, e.g. a `@mailwoman/poi-taxonomy` synonym phrase.
+	 * The committed record that stores the register split, e.g. a `@mailwoman/poi-taxonomy` synonym phrase.
 	 */
 	reference: string
 	/**
@@ -60,7 +60,8 @@ export interface RegionalRegisterAttestation {
 	 */
 	base: string
 	/**
-	 * The locales of the referenced record, which the entry's `locales` copy.
+	 * The locales of the referenced record.
+	 * The entry copies them into `locales`.
 	 */
 	detail: string
 }
@@ -73,7 +74,8 @@ export interface RegionalRegisterAttestation {
 export interface ConceptDescriptionAttestation {
 	kind: "concept-description"
 	/**
-	 * The cited concept identifier, which equals the entry's `activity`.
+	 * The cited concept identifier.
+	 * It equals the entry's `activity`.
 	 */
 	reference: string
 	/**
@@ -97,7 +99,7 @@ export type ActivityPhraseAttestation =
 export interface ActivityPhraseEntry {
 	/**
 	 * The text a person types.
-	 * Matching compares normalized forms.
+	 * The matcher compares normalized forms.
 	 */
 	phrase: string
 	/**
@@ -139,7 +141,8 @@ export interface ActivityPhraseLexicon {
  *
  * - `unscoped`: the entry declares no locales and matches any locale.
  * - `exact`: the entry declares the query's locale tag.
- * - `language`: only the language subtag matches, which is weaker evidence for a regional phrase.
+ * - `language`: only the language subtag matches.
+ *   This is weaker evidence for a regional phrase.
  */
 export type ActivityPhraseLocaleScope = "unscoped" | "exact" | "language"
 

@@ -30,7 +30,7 @@ const round = (n: number, decimals: number) => {
 	return Math.round(n * f) / f
 }
 
-// A rooftop point coarsened to the neighbourhood.
+// A rooftop point coarsened to the neighborhood.
 const coarse = { lat: round(result.lat, 2), lon: round(result.lon, 2) }
 // { lat: 40.75, lon: -73.99 }
 ```
@@ -56,6 +56,6 @@ toGeohash(40.7484, -73.9857, 5) // ≈ 4.9 km: "dr5ru"
 | 5           | ~4.9 km   |
 | 4           | ~39 km    |
 
-Because the cell boundaries are fixed, every address inside `dr5ru` shares the prefix — you can group, join, or count by the truncated string and know that two records in the same cell really are neighbours. Store the geohash rather than the point, and the precision you didn't keep is precision you can't leak.
+Because the cell boundaries are fixed, every address inside `dr5ru` shares the prefix — you can group, join, or count by the truncated string and know that two records in the same cell really are neighbors. Store the geohash rather than the point, and the precision you didn't keep is precision you can't leak.
 
 One thing to name directly: coarsening is one-way by design, but it is not anonymity. A precision-6 cell over a rural address can still hold exactly one house. If the guarantee you need is "this point cannot be traced to a person," coarsening is a layer rather than the whole answer — pair it with aggregation thresholds (suppress any cell with fewer than _k_ records) before anything goes public. See [Privacy policy & legal posture](../licensing/privacy.md) for where Mailwoman's own data-handling design sits relative to this.

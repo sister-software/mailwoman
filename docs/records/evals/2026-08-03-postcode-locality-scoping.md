@@ -183,7 +183,7 @@ systems."
 **The existing change declines on purpose.** `countryFromPostcodeFormat` (#928, default-ON since
 2026-07-06) is the one postcode→country mechanism in the tree. It covers GB, CA and IE — the
 letter-containing formats — and its docstring is explicit that these "never match a US ZIP / NL / FR
-code." It returns `null` for every 5-digit code. Extending it to 5-digit shapes is not a fix; it is
+code." It returns `null` for every 5-digit code. A 5-digit extension would not fix this; it would be
 a coin-flip between four countries.
 
 Note also that it lives in `mailwoman/geocode-core.ts`, on the `geocode` path only. The
@@ -279,7 +279,7 @@ Two things make it a decision rather than a patch:
 **(a) It has to be allowed to override `defaultCountry`, and today nothing is.** The subordination
 is deliberate and appears three times: `hardCountryFor`'s
 `if (existing.hardCountry || existing.defaultCountry) return undefined`; the `#lookupAndPick`
-precedence chain; `geocode-core`'s `!opts.defaultCountry` check on the #928 prior. Changing that
+precedence chain; `geocode-core`'s `!opts.defaultCountry` check on the #928 prior. A precedence change
 precedence is the real decision, and it is the _same_ decision the coarse placer already lost with
 a 0.99999-confidence FR call. Whatever rule is written should cover both.
 

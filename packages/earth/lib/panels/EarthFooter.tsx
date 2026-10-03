@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The deployed page is the real runtime, so anything the fake path alone carries renders nowhere a visitor can see; `status` is the only thing the two paths may differ by.
+ *   The deployed page is the real runtime, so anything present only in the fake path renders nowhere a visitor can see; `status` is the only thing the two paths may differ by.
  */
 
 import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
@@ -14,7 +14,7 @@ import type { ReactNode } from "react"
 /**
  * The basemap's credits belong to whoever renders the tiles.
  *
- * Each source is a licence obligation rather than a courtesy, so it links to the licence it discharges.
+ * Each source is a license obligation rather than a courtesy, so it links to the license it discharges.
  */
 const BASEMAP_ATTRIBUTION = [
 	<a key="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
@@ -43,8 +43,9 @@ const ATTRIBUTION = [
 
 export interface EarthFooterProps {
 	/**
-	 * Which artifact is loading, since the progress bar only says how far along.
-	 * Absent on the canned runtime, which loads no artifact.
+	 * Which artifact is loading, since the progress bar only reports progress.
+	 *
+	 * The canned runtime loads no artifact, so this component is absent there.
 	 */
 	status?: ReactNode
 }

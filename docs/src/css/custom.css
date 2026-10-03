@@ -129,3 +129,23 @@ html {
 	background: var(--ifm-color-primary-dark);
 	color: var(--ifm-color-white);
 }
+
+/* The navbar search control (src/theme/SearchBar.tsx). It sits on the navy navbar in both themes, so it
+   takes the navbar's link color and a translucent outline rather than a filled field. */
+.navbar__search-button {
+	margin: 0 0.5rem;
+	padding: 0.3rem 0.9rem;
+	border: 1px solid color-mix(in srgb, var(--ifm-navbar-link-color) 40%, transparent);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--ifm-navbar-link-color);
+	font: inherit;
+	cursor: pointer;
+}
+.navbar__search-button:hover {
+	border-color: var(--ifm-navbar-link-color);
+}
+.navbar__search-button:focus-visible {
+	outline: 2px solid var(--ifm-color-primary);
+	outline-offset: 2px;
+}

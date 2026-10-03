@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Manage local Pelias and Photon containers and query their loopback endpoints. Building indexes and downloading
- *   source data remain manual. Queries report observations only; `mwdev_compare` performs scored comparisons.
+ *   This module manages local Pelias and Photon containers and queries their loopback endpoints.
+ *   Operators build indexes and download source data manually. Queries report observations only; `mwdev_compare` performs scored comparisons.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -75,7 +75,7 @@ function rigScriptPath(...segments: string[]): string {
 }
 
 /**
- * Local rig containers, endpoints, and query paths.
+ * Local rig containers, endpoints and query paths.
  * Containers are listed in startup order.
  */
 export const ENGINE_RIGS = {

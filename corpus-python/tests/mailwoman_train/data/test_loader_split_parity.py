@@ -51,7 +51,7 @@ SCHEMA = pa.schema(
 )
 
 #: Each entry is (raw, [(token, tag)]) — spans and BIO labels are derived from the pairs, so the
-#: fixture cannot carry an offset that disagrees with its own text.
+#: fixture cannot store an offset that disagrees with its own text.
 TEMPLATES: list[tuple[str, list[tuple[str, str]]]] = [
     (
         "{n} N Main St, Springfield IL 62704",

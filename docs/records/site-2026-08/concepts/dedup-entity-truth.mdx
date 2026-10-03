@@ -7,7 +7,7 @@ tags:
   - evals
 ---
 
-# Choosing the dedup yardstick — why org-name rather than NPI
+# Choose the dedup yardstick: org name or NPI?
 
 "How good is the matcher at deduplication?" sounds like a question with one
 number for an answer. The answer depends on which ruler you measure against.
@@ -89,7 +89,7 @@ NPI-truth was scoring as an error.
 That result also settled the model question. An earlier experiment added
 "corroboration" features aimed at reducing over-merges, and precision did not
 move. The gold set explains why: there was almost no over-merge to reduce.
-Optimizing the scorer for precision here targets errors that do not exist. The
+The scorer's precision objective targets errors that do not exist here. The
 ruler was the thing that needed to change.
 
 ## The discipline

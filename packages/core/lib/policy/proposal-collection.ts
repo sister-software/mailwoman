@@ -6,8 +6,8 @@
  */
 
 import type { PolicyRegistry } from "#policy/policy"
+import type { ClassificationProposal, ClassifierContext, ProposalClassifier } from "#types"
 import type { Section } from "#types/classifier"
-import type { ClassificationProposal, ClassifierContext, ProposalClassifier } from "#types/index"
 
 /**
  * Run each classifier on each section.

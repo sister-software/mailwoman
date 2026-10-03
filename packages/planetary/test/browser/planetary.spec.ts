@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The smoke over a built body: the preview serves whichever body it was built for, and the spec reads it from
- *   `build.json` rather than assuming one. It reaches the real archives on `tiles.mailwoman.ai` and the search
- *   artifact on `public.mailwoman.ai`, so it needs the network, as the Earth production smoke does.
+ *   Smoke-tests a built body. The preview serves the body recorded in `build.json`.
+ *   The spec requests real archives, so it needs network access.
  */
 
 import { expect, test } from "@playwright/test"
@@ -35,10 +34,8 @@ test("the globe loads for the built body, search finds a known feature, selectio
 		.first()
 		.click()
 
-	// `FeaturePanel` rides `MapSheet` rather than carrying its own panel, so the selected
-	// feature is an `<aside>` the sheet names for the feature — `aria-label={title}` with
-	// `title={feature.name}` — where it used to be an `<article>` holding that name as text.
-	// Reading it by role and name asserts the panel is FOR this feature, which the text match only implied.
+	// Read the panel by role and name to verify that it belongs to this feature.
+	// A text match by itself would not establish that.
 	await expect(page).toHaveURL(/\/feature\/\d+$/u)
 	await expect(page.getByRole("complementary", { name: known.name })).toBeVisible()
 
@@ -52,9 +49,8 @@ test("an unknown path is the not-found view, not the globe", async ({ page }) =>
 })
 
 test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
-	// Both archive origins are refused for the whole page: the identity strip is the app's
-	// own chrome, so it must render before, during and after a load that never finishes,
-	// and asserting it that way costs no archive fetch.
+	// Both archive origins are refused so the identity strip must render before,
+	// during and after a load that never finishes.
 	await page.route("https://tiles.mailwoman.ai/**", (route) => route.abort())
 	await page.route("https://public.mailwoman.ai/**", (route) => route.abort())
 
@@ -67,9 +63,8 @@ test("the footer carries the docs link and the commit the build was made from", 
 		"https://mailwoman.ai/docs"
 	)
 
-	// The commit link resolves against build.json.
-	// It only a built deployment serves.
-	// Therefore, this asserts the shape rather than a particular sha.
+	// The commit link resolves against `build.json`, which only a built deployment serves,
+	// so assert its shape rather than a particular sha.
 	const commit = footer.locator("a[href*='/commit/']")
 
 	await expect(commit).toBeVisible()
@@ -81,12 +76,9 @@ test("the footer carries the docs link and the commit the build was made from", 
 })
 
 /**
- * MapLibre parses vector tiles and rasterizes glyph ranges inside a web worker.
- * Only raster tiles decode on the main thread.
+ * MapLibre parses vector tiles and rasterizes glyph ranges inside a web worker, so a worker that
+ * never runs leaves the hillshade drawing and every label missing with no page-visible error.
  *
- * So a worker that never runs leaves the hillshade drawing and every label missing, and it says
- * no error: the worker's script URL is served by the SPA fallback as index.html at status 200,
- * and parsing html as a module fails inside the worker where no page listener sees it.
  * These assertions read the two observable consequences.
  */
 test("the map worker runs: nomenclature tiles and glyph ranges are requested", async ({ page }) => {

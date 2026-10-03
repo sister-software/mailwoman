@@ -2,41 +2,44 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `ban`: Base Adresse Nationale CSV adapter (FR street-level).
+ * `ban`: Base Adresse Nationale CSV adapter, street-level over eleven jurisdictions.
  *
- *   Input: a CSV dump from `adresse.data.gouv.fr` (semicolon-separated, ~25M rows nationally). The
- *   adapter only reads the small set of columns needed for the corpus:
+ * Input is a semicolon-separated CSV dump from `adresse.data.gouv.fr`. The adapter reads `numero`
+ * as `house_number`, `rep` as a repetition index appended to it, `nom_voie` as `street`,
+ * `code_postal` as `postcode`, and `nom_commune` as `locality`. BAN carries no region column, so
+ * region is left to the wof-postalcode and wof-admin cross-reference at corpus build time.
  *
- *   - `numero` → `house_number`
- *   - `rep` → repetition index ("bis", "ter") appended to house_number
- *   - `nom_voie` → `street` (full road name. includes the prefix "Rue", "Avenue", etc.)
- *   - `code_postal` → `postcode`
- *   - `nom_commune` → `locality`
+ * IGN publishes one file per INSEE department beside the whole-country extract, and the overseas
+ * departments carry the same 23-column header as the metropolitan rows. A row's country is therefore
+ * derived from `code_insee` rather than asserted by the caller, which reads the same whether the
+ * input is one department's file or an extract spanning several.
  *
- *   `region` and `country` are not in BAN. The adapter stamps `country: "FR"` on every row. region is
- *   left for the wof-postalcode + wof-admin cross-reference at corpus build time (a future pass.
- *   for Phase 1 the row's region is simply absent).
+ * The official BAN is dual-licensed under Licence Ouverte 2.0 and ODbL.
+ * This adapter elects Licence Ouverte 2.0. Its terms permit training with attribution.
+ * It records that license on every row. The model card must include BAN attribution.
  *
- *   License: the official BAN (adresse.data.gouv.fr) is dual-licensed — Licence Ouverte 2.0 (Etalab,
- *   attribution-only) or ODbL (share-alike). We elect Licence Ouverte 2.0 (issue #26 Tier B:
- *   allowed for training with attribution. the ODbL option's share-alike obligation would defeat
- *   the proprietary-weights goal). Stamped onto every row as `Licence Ouverte 2.0` — not the older
- *   conservative `ODbL-1.0` label, which wrongly read as Tier-C-denied in the corpus license audit.
- *   The model card must carry the BAN attribution (Tier B obligation).
- *
- *   The adapter is streaming-aware: `CSVSpliterator.fromAsync` reads the `;`-delimited dump row by
- *   row, so a 25M-row file never sits in memory. Honors `opts.limit` for fixture / smoke runs,
- *   `opts.signal` for cancellation, and `opts.country` for a self-consistency check (errors if
- *   country !== FR).
+ * The adapter streams with `CSVSpliterator.fromAsync`, so a 25M-row file never sits in memory. It
+ * honors `opts.limit` and `opts.signal`. `opts.country` is optional: when set it both rejects a
+ * jurisdiction BAN does not publish and keeps only the rows of the one named.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
-import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
+import { UnsupportedCountryError } from "#adapters/errors"
+import { stableSourceID } from "#adapters/source-id"
+import { composeHouseNumber } from "#adapters/street-line"
+import { countryOfInseeCode, INSEE_COUNTRIES } from "#fr/insee-country"
+import { decomposeFrStreet } from "#fr/street-decompose"
 import { SourceRegister } from "#registers"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
+import {
+	AddressRole,
+	type AdapterOptions,
+	type CanonicalRow,
+	type CorpusAdapter,
+	countDropped,
+	SurfaceOrigin,
+} from "#types"
 
 /**
  * Registry id for this adapter.
@@ -49,7 +52,7 @@ export const BAN_ADAPTER_ID = "ban"
  * Subset of BAN CSV columns the adapter consults.
  *
  * Everything else is ignored.
- * Declaring the shape explicitly catches column-name drift early if BAN evolves its schema.
+ * The explicit shape catches column-name drift early if BAN evolves its schema.
  */
 interface BanRow {
 	id: string
@@ -57,22 +60,8 @@ interface BanRow {
 	rep: string
 	nom_voie: string
 	code_postal: string
+	code_insee: string
 	nom_commune: string
-}
-
-/**
- * Compose `house_number` from `numero` + `rep`.
- *
- * BAN uses `rep` for repetition indices ("bis", "ter", "quater") that follow the house number.
- * Result: `"10 bis"`, `"45"`, etc.
- */
-function composeHouseNumber(numero: string, rep: string): string {
-	const n = numero.trim()
-	const r = rep.trim()
-
-	if (!n) return ""
-
-	return r ? `${n} ${r}` : n
 }
 
 export function createBanAdapter(): CorpusAdapter {
@@ -81,12 +70,13 @@ export function createBanAdapter(): CorpusAdapter {
 		defaultLicense: "Licence Ouverte 2.0",
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.BaseAdresseNationale,
-		surface: SurfaceOrigin.Attested,
-		description: "Base Adresse Nationale (FR): house-number-level street addresses (~25M rows).",
+		surface: SurfaceOrigin.Rendered,
+		description:
+			"Base Adresse Nationale: house-number-level street addresses for France and ten overseas jurisdictions.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			if (opts.country && opts.country !== "FR") {
-				throw new Error(`ban adapter: only FR supported, got country=${opts.country}`)
+			if (opts.country && !INSEE_COUNTRIES.includes(opts.country)) {
+				throw new UnsupportedCountryError(BAN_ADAPTER_ID, INSEE_COUNTRIES, opts.country)
 			}
 
 			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
@@ -101,14 +91,39 @@ export function createBanAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const house = composeHouseNumber(record.numero ?? "", record.rep ?? "")
+				const country = countryOfInseeCode(record.code_insee ?? "")
+
+				// A caller that named one jurisdiction gets that jurisdiction's rows,
+				// so one extract spanning several departments can be read once per country.
+				if (opts.country && country !== opts.country) continue
+
+				// BAN stores a repetition index ("bis", "ter", "quater") in `rep`,
+				// which follows the number as a separate word.
+				const house = composeHouseNumber(record.numero ?? "", record.rep ?? "", " ")
 				const street = record.nom_voie ?? ""
 				const postcode = record.code_postal ?? ""
 				const locality = record.nom_commune ?? ""
 
-				if (!street || !locality) continue
+				// A row with a number and a commune but no street name is a premise BAN numbers
+				// within the commune, as all 958 of French Polynesia's Pirae rows are.
+				// It renders no street line, so it is refused and counted.
+				if (!street) {
+					countDropped(opts, "row:street-absent")
 
-				if (!house && !postcode) continue
+					continue
+				}
+
+				if (!locality) {
+					countDropped(opts, "row:locality-absent")
+
+					continue
+				}
+
+				if (!house && !postcode) {
+					countDropped(opts, "row:house-number-and-postcode-absent")
+
+					continue
+				}
 
 				const decomposed = decomposeFrStreet(street)
 
@@ -134,9 +149,13 @@ export function createBanAdapter(): CorpusAdapter {
 					components.locality = locality
 				}
 
-				const rendered = formatAddressRow(components, "FR", { singleLine: true })
+				const rendered = formatAddressRow(components, country, { singleLine: true })
 
-				if (!rendered) continue
+				if (!rendered) {
+					countDropped(opts, "row:render-failed")
+
+					continue
+				}
 
 				const { raw, components: aligned } = rendered
 
@@ -145,8 +164,10 @@ export function createBanAdapter(): CorpusAdapter {
 				yield {
 					raw,
 					components: aligned,
-					country: "FR",
-					locale: "fr-FR",
+					country,
+					// Every jurisdiction BAN publishes writes its addresses in French,
+					// so the language is constant and the region carries the jurisdiction.
+					locale: `fr-${country}`,
 					source: BAN_ADAPTER_ID,
 					source_id: sourceID,
 					corpus_version: "",

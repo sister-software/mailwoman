@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Blocking — candidate generation. Comparing every pair is O(n²) (a million records is a trillion
- *   comparisons), so we only score pairs that share a cheap key. This is where the geocode-first
+ *   The blocking stage generates candidate pairs. An all-pairs comparison is O(n²): a million records require a trillion
+ *   comparisons. This stage scores pairs that share a cheap key. This is where the geocode-first
  *   bet pays off: two records resolving to the same place land in the same spatial cell regardless
  *   of how their address strings are spelled, so geography is the primary block.
  *
  *   A {@link BlockingKey} maps a record to zero or more string keys. records sharing any key become
  *   candidates. Keys compose as a _union_ (the standard multi-pass approach — high recall from
- *   cheap rules): block on the spatial cell or the canonical key or the postcode, and a pair that
- *   any rule catches is scored. {@link conjunction} builds the and-style key Geo-ER uses
+ *   cheap rules): block on the spatial cell, canonical key, or postcode. A pair caught by
+ *   any rule is scored. {@link conjunction} builds the and-style key Geo-ER uses
  *   (`name-cell and geo-cell`) when a single rule is too loose.
  *
  *   Recall is the priority. A pair the blocker never proposes can never match, the most dangerous
- *   silent failure in record linkage. So the spatial grid is generous and neighbour-expanded by
- *   default, and any block too large to scan is _reported_, never silently dropped.
+ *   silent failure in record linkage. The spatial grid is generous and neighbor-expanded by
+ *   default. The code reports any block too large to scan instead of dropping it silently.
  */
 
 import type { GeoCoordinate } from "@mailwoman/spatial"
@@ -36,9 +36,9 @@ export type BlockingKey<R> = (record: R) => string[]
  * so a pair straddling a cell boundary still meets.
  *
  * Note: an equal-_degree_ grid (longitude cells shrink toward the poles)
- * and neighbour expansion inflates block sizes ~9×; an equal-area H3/geohash index
- * with a single-cell + neighbour-query is the refinement.
- * Behaviour — proximity co-blocking — is the same.
+ * and neighbor expansion inflates block sizes ~9×; an equal-area H3/geohash index
+ * with a single-cell + neighbor-query is the refinement.
+ * Behavior — proximity co-blocking — is the same.
  */
 export function geoCellKey<R>(
 	extract: (record: R) => GeoCoordinate | null | undefined,

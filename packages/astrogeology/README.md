@@ -55,7 +55,7 @@ The shapefiles' CRS is each body's own, which PROJ refuses to relate to WGS84 an
 
 ## Tool prerequisites
 
-GDAL 3.x with the MBTiles driver (`ogr2ogr`, `ogrinfo`, `gdaldem`, `gdal_translate`, `gdaladdo`, `gdalinfo`), `tippecanoe` 2.x, and the `pmtiles` CLI 1.x, all on the path. A missing tool fails a command with the tool's name. The fixture build under `test/integration/` runs the same chain over `test/fixtures/` and needs the same tools, which the lab's self-hosted runners carry.
+GDAL 3.x with the MBTiles driver (`ogr2ogr`, `ogrinfo`, `gdaldem`, `gdal_translate`, `gdaladdo`, `gdalinfo`), `tippecanoe` 2.x, and the `pmtiles` CLI 1.x, all on the path. A missing tool fails a command with the tool's name. The fixture build in `lib/fixture-build.integration.test.ts` runs the same chain over `test/fixtures/` and needs the same tools, which the lab's self-hosted runners carry.
 
 ## Attribution
 

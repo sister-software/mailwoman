@@ -155,7 +155,7 @@ def test_every_span_covers_the_text_it_claims(built: dict[str, Any]) -> None:
 
 def test_the_fixture_holds_out_a_district_and_keeps_the_attribution(built: dict[str, Any]) -> None:
     assert built["report"]["board_districts"] >= 1, "no held-out 鄉鎮市區 — the bucket floor missed the fixture"
-    assert built["report"]["attribution"], "the report carries no source agency, which the licence requires"
+    assert built["report"]["attribution"], "the report carries no source agency, which the license requires"
     assert built["centroids"], "no district centroid landed. Therefore, no board row can be scored"
 
 

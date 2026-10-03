@@ -66,7 +66,7 @@ was not needed. The v8-cjk 2k probe (#2034) uses the corrected figure as its com
 
 ## 5. What this does not decide
 
-- Shipping. This is a training-check record rather than a release: the JP model has no serving path yet
+- Ship status. This is a training-check record rather than a release: the JP model has no serving path yet
   (char-path inference, weights packaging, and the `ja-jp` overlay are the next arc). The ledger
   keys by shipped npm model versions and does not take this row.
 - The head-LR change (`classifier_learning_rate: 1e-3`, a 2× head/body ratio). The run converged

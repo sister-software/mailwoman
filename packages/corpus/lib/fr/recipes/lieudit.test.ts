@@ -5,18 +5,20 @@
  *   Tests for the `fr-lieudit` recipe: end-to-end over a small fixture BAN département directory
  *   (mirroring `ban/sdk/ban.test.ts`'s header/row shape), verifying the dependent_locality/locality
  *   mapping, the own-line raw rendering, junk-row exclusion (delegated to `ban/sdk`'s `cleanLieuDit`),
- *   determinism under a fixed seed, and the `--country-fraction` append.
+ *   determinism under a fixed seed. It also tests the `--country-fraction` append.
  */
 
 import { gzip } from "@mailwoman/core/fs/compression"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { frLieuditRecipe } from "@mailwoman/corpus/fr/recipes/lieudit"
-import type { RecipeOptions } from "@mailwoman/corpus/recipes/scaffold"
-import type { RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
+
+import { frLieuditRecipe } from "#fr/recipes/lieudit"
+import type { RecipeOptions } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
+import type { RecipeRow } from "#test-kit/corpus-recipe"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -59,7 +61,7 @@ describe("fr-lieudit recipe", () => {
 		expect(parsed.components!.dependent_locality).toBe("Le Bourg")
 		expect(parsed.components!.locality).toBe("Altier")
 		expect(parsed.raw).toBe("6 Route de Pomaret\nLe Bourg\n48800 Altier")
-		expect(parsed.source).toBe("synth-fr-lieudit")
+		expect(parsed.source).toBe(defaultRecipeSource("synth-fr-lieudit"))
 		// The dependent_locality line sits before the postcode+commune line.
 		const lieuIdx = parsed.raw.indexOf("Le Bourg")
 		const cityIdx = parsed.raw.indexOf("48800 Altier")

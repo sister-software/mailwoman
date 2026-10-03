@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetch the GeoNames per-country postal-code exports — the only source in this family that carries a
+ *   Fetch the GeoNames per-country postal-code exports — the only source in this family that includes a
  *   `(postcode, locality, region)` triple with the names inline.
  *
  *   Source : https://download.geonames.org/export/zip/<CC>.zip
@@ -14,8 +14,8 @@
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download"
 
 /**
  * The status that means the source does not publish this country rather than that the transfer failed.
@@ -47,7 +47,7 @@ export interface FetchGeonamesPostalOptions extends BaseFetchOptions {
 	/**
 	 * Export directory to read from.
 	 *
-	 * Defaults to GeoNames' own, so the 404-is-coverage behaviour can be exercised against a local server.
+	 * Defaults to GeoNames' own, so the 404-is-coverage behavior can be exercised against a local server.
 	 */
 	baseURL?: string
 }
@@ -77,8 +77,8 @@ interface GeonamesPostalManifest {
 
 /**
  * Download the requested GeoNames postal zips into `<outRoot>/geonames-postal/` with
- * a sibling `manifest.json`; a country the source does not carry is counted as failed
- * and named in `failedCodes` without stopping the rest.
+ * a sibling `manifest.json`; a country the source does not cover is counted as failed
+ * and recorded in `failedCodes` without stopping the rest.
  */
 export async function fetchGeonamesPostal(
 	options: FetchGeonamesPostalOptions,

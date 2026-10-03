@@ -33,7 +33,7 @@
 #   4. `mwdev_promotion_eval --spec v9.0.0-base` must pass every floor with no FR, GB or DE row
 #      regression, and US `postcode` per-tag F1 must stay at 95.6%.
 #
-# `packages/mailwoman/lib/dev-tools/locality/stratified-panel.run.ts --stratify shape --per-region 400`
+# `packages/mailwoman/tools/dev-tools/locality/stratified-panel.run.ts --stratify shape --per-region 400`
 # rebuilds `$MAILWOMAN_DATA_ROOT/eval/coord/us-shape-stratified.jsonl`.
 #
 # The receipts below stop the run before the GPU starts if the US source does not draw.

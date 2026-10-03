@@ -40,7 +40,7 @@ has the most value in the register users type.
 
 - TS painting: reproduce the `gazetteer_char_paint`/`realign_gazetteer_to_pieces` semantics for
   both channels in `@mailwoman/neural`. The anchor-lexicon TS painter is the template, and each
-  lexicon's `rules` block already documents the word-normalization rules. Training and inference
+  lexicon's `rules` block already documents the word-normalization rules. The training and inference
   must compute the features byte-for-byte identically. Golden fixtures generated from the Python
   painter test this.
 - ONNX export gains the two graph inputs (`export_onnx` wiring). The node and browser classifiers

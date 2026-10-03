@@ -26,6 +26,7 @@ import type { AUTuple, NZTuple, Rendered, USTuple } from "#recipes/po/box/cedex/
 import { renderPmbUs, renderPoBoxUs } from "#recipes/po/box/cedex/us"
 import { CLASS_MIX } from "#recipes/po/box/cedex/vocabulary"
 import { recipeSourceID, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeMilitaryPoBoxRow } from "#synthesizers/po-box"
 import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
@@ -48,7 +49,7 @@ const pickClass = (draw: number): string => {
 }
 
 /**
- * Generate PO-box and cedex rows from US, French, Canadian, Australian, and New Zealand source pools.
+ * Generate PO-box and cedex rows from source pools in the US, France, Canada, Australia and New Zealand.
  */
 export const poBoxCedexRecipe: CorpusRecipe = {
 	name: "po-box-cedex",
@@ -58,7 +59,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 50_000
-		const source = opts.sourceName ?? "synth-po-box-cedex"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-po-box-cedex")
 		const usPool: USTuple[] = []
 
 		for (const sourceEntry of opts.golden ? [US_EVAL_SOURCE] : US_TRAIN_SOURCES) {

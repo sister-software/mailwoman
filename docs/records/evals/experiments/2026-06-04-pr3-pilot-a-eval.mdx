@@ -60,7 +60,7 @@ Bautzner Straße 101, 01099 Dresden
   v072 : locality="Dresden"  street="Bautzner Straße 101"  postcode="01099"
 ```
 
-The pilot drops the **trailing city** (locality → O) once it has committed to `street house [postcode]`. The aux locale head correctly identifies German (locale_acc 0.95–0.97 throughout training) — but a FiLM scale/shift over per-token features never imposes "a locality must still live at the end of this string." Knowing the country is not the same as keeping the city.
+The pilot drops the **trailing city** (locality → O) once it has committed to `street house [postcode]`. The aux locale head correctly identifies German (locale_acc 0.95–0.97 throughout training) — but a FiLM scale/shift over per-token features never imposes "a locality must still live at the end of this string." A country label does not ensure that the model preserves the city.
 
 ## US — healthy, the failure is German-specific
 
@@ -114,7 +114,7 @@ Exported step-10000 and re-ran the same DE evals to test whether German locality
 | Berlin locality            |      34.2% |      34.2% |  0.0 |
 | Sachsen locality           |      16.8% |      16.9% | +0.1 |
 
-Doubling the training moved German locality essentially zero — Berlin is pinned at 34.2% at _both_ checkpoints. The collapse is a **converged failure mode** the model settled into by step-10000 and stays in rather than an undertraining artifact. A 100k run of this recipe would not cross the 70% bar. So "just train longer" is off the table, and the fix has to be structural.
+A twofold increase in training barely moved German locality — Berlin remained at 34.2% at _both_ checkpoints. The collapse is a **converged failure mode** the model reached by step-10000 rather than an undertraining artifact. A 100k run of this recipe would not cross the 70% bar. So "just train longer" is off the table, and the fix has to be structural.
 
 ## Open questions for the operator
 

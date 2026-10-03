@@ -26,7 +26,7 @@ The modules:
 
 - `tables.py` — the surface pairs each expansion draws from.
 - `splice.py` — editing a row's text and re-targeting its tokens, labels and spans.
-- `apply.py` — which augmentations fire for one row, and the DRAW ORDER that decides it.
+- `apply.py` — augmentation choices for one row. It also defines the draw order.
 """
 
 from __future__ import annotations

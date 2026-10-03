@@ -8,7 +8,7 @@
  *   see how old the measurement is. `BundleSize` and `BundleFileCount` render one bundle's figure inline for the prose
  *   around the tables.
  *
- *   A page that asks for a bundle the registry does not carry fails the build here rather than rendering a blank.
+ *   A page that asks for a bundle absent from the registry fails the build here rather than rendering a blank.
  *
  *   Usage in MDX:
  *
@@ -146,6 +146,79 @@ export const ServedBundlesTable: React.FC = () => {
 				snapshot. The database license is the license on the database as a whole, which ODbL grants separately from
 				rights in the contents, and it is unmeasured until an artifact records one.
 			</p>
+		</>
+	)
+}
+
+/**
+ * The rights table on `/license`: who published each bundle's rows, the SPDX expression
+ * this repository records for it, along with the terms each publisher uses.
+ *
+ * The page previously included these three columns as hand-typed markdown.
+ * The registry is the source for each publisher and license expression.
+ *
+ * `mailwoman data bom` serializes that record for each artifact.
+ */
+export const BundleRightsTable: React.FC = () => {
+	const data = useRuntimeAssets()
+
+	return (
+		<table>
+			<thead>
+				<tr>
+					<th>Bundle</th>
+					<th>Published by</th>
+					<th>Expression</th>
+					<th>Terms as the publisher names them</th>
+				</tr>
+			</thead>
+			<tbody>
+				{data.bundles.map((bundle) => (
+					<tr key={bundle.name}>
+						<td>
+							<code>{bundle.name}</code>
+						</td>
+						<td>{bundle.rights.publishers.join("; ")}</td>
+						<td>
+							<code>{bundle.rights.expression}</code>
+						</td>
+						<td>{bundle.rights.terms.join(" ")}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	)
+}
+
+/**
+ * The obligations each bundle places on an operator and any obligation without an assessment.
+ *
+ * `mailwoman data pull` prints the same two lists before any bytes move.
+ */
+export const BundleObligationsList: React.FC = () => {
+	const data = useRuntimeAssets()
+
+	return (
+		<>
+			{data.bundles.map((bundle) => (
+				<div key={bundle.name}>
+					<h4>
+						<code>{bundle.name}</code>
+					</h4>
+					<p>You must:</p>
+					<ul>
+						{bundle.rights.conditions.map((condition) => (
+							<li key={condition}>{condition}</li>
+						))}
+					</ul>
+					<p>Unresolved:</p>
+					<ul>
+						{bundle.rights.unresolved.map((question) => (
+							<li key={question}>{question}</li>
+						))}
+					</ul>
+				</div>
+			))}
 		</>
 	)
 }

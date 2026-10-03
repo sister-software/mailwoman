@@ -3,7 +3,7 @@
 
 /**
  *   The pinned fetch. A source lands under `$MAILWOMAN_DATA_ROOT/astrogeology/<body>/source/` and its byte count and
- *   SHA-256 go into `sources.lock.json`, which is committed and which this module alone writes. A cached file whose
+ *   SHA-256 go into `sources.lock.json`, which is committed and which only this module writes. A cached file whose
  *   size differs from the lock, a product whose size differs from the source table, or a re-fetch whose hash differs
  *   from the lock all refuse, naming both values: no pin drifts silently.
  *
@@ -138,8 +138,8 @@ export async function downloadPinned(
 		)
 	}
 
-	// Re-read before writing: a transfer runs for minutes, and a lock read before it
-	// started would write back over every pin another fetch recorded meanwhile.
+	// Re-read the lock before writing because a transfer can run for minutes.
+	// An earlier read could overwrite pins another fetch recorded meanwhile.
 	await writeLock({
 		...(await readLock()),
 		[source.id]: { url: source.url, bytes, sha256, fetchedAt: isoSeconds(), ...(snapshot ? { snapshot } : {}) },

@@ -73,7 +73,7 @@ Once stable training is achieved, the next steps:
 
 ### Joint decode as default
 
-The reconciler (Stage 5) currently operates behind an opt-in flag. Wiring it as the default path requires:
+The reconciler (Stage 5) currently operates behind an opt-in flag. The default path requires:
 
 - TS-side per-span logit aggregation (softmax over phrase-grouper spans) to feed top-K to the reconciler.
 - Evaluation against the kryptonite catalogue (NY-NY Steakhouse, Paris TX, St. Petersburg FL).
@@ -100,7 +100,7 @@ The reconciler (Stage 5) currently operates behind an opt-in flag. Wiring it as 
 
 - **Multi-language understanding.** We are not training a model that reads prose in 50 languages. We are training one that labels tokens in addresses for the locales we ship.
 - **Generative output.** The neural classifier labels existing tokens. It does not write text.
-- **Replacing upstream projects.** Mailwoman uses Pelias, libpostal, OSM, WOF, and other open data as sources and inspiration. It is a complementary project rather than a competitor.
+- **Relationship to upstream projects.** Mailwoman uses Pelias, libpostal, OSM, WOF, and other open data as sources and inspiration. It complements those projects.
 
 ## See also
 

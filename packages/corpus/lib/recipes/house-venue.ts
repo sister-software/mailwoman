@@ -4,7 +4,7 @@
 /**
  *   `house-venue` recipe — synthetic house_number+venue+street co-occurrence rows: tuples →
  *   {@link synthesizeHouseVenueRow} → aligned LabeledRow. The v0.6.3 corrective companion to the
- *   no-street recipe: every row carries both house_number and venue, restoring the house_number
+ *   no-street recipe: every row includes both house_number and venue, restoring the house_number
  *   signal that no-street's distributional shift cost the model. Ported from the root build script
  *   it replaced.
  */
@@ -18,6 +18,7 @@ import {
 	SYNTHETIC_TUPLE_LICENSE as LICENSE,
 	type CorpusRecipe,
 } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "#synthesizers/house-venue"
 import { SurfaceOrigin } from "#types"
 
@@ -30,13 +31,15 @@ import { SurfaceOrigin } from "#types"
 const HOUSE_VENUE_PROVENANCE = {
 	register: null,
 	surface: SurfaceOrigin.Invented,
+	// An invented row has no underlying record to name.
+	baseSourceID: null,
 }
 
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behavior it exercises.
+ * See `description` below for the generated surface form.
  */
 export const houseVenueRecipe: CorpusRecipe = {
 	name: "house-venue",
@@ -46,7 +49,7 @@ export const houseVenueRecipe: CorpusRecipe = {
 		if (!opts.input) throw new Error("house-venue recipe requires --input <tuples.jsonl>")
 		// The root build script this recipe replaced seeded the LCG via makeRandom(opts.seed) (s = seed).
 		const random = makeLcg(opts.seed)
-		const source = opts.sourceName ?? "synth-house-venue"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-house-venue")
 		let read = 0
 		let emitted = 0
 		let skipped = 0

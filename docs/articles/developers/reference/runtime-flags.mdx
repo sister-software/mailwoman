@@ -60,7 +60,7 @@ The change has a real edge: a machine that had `candidate.db` sitting at the con
 running on the FTS backend switches backends on upgrade, with no configuration edited. `none` is the
 way back.
 
-Setting both `MAILWOMAN_CANDIDATE_DB` and `MAILWOMAN_WOF_DB` is not an error, and the candidate
+Both `MAILWOMAN_CANDIDATE_DB` and `MAILWOMAN_WOF_DB` may be set at once. The candidate
 backend wins. With a reachable `candidate.db`, `mailwoman parse --resolve` and `mailwoman geocode`
 need no gazetteer path at all. `mailwoman registry run` is the exception: it checks for
 `MAILWOMAN_WOF_DB` or `--resolve-db` at startup and refuses to run without one, then ignores the path

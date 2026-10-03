@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_interface` tool definition — the description an agent reads, the input schema, and the handler wiring.
+ *   The `mwdev_interface` tool definition provides the description, input schema and handler wiring an agent reads.
  *   The measurement lives in `../interface-report.ts`.
  */
 
@@ -23,7 +23,7 @@ export const interfaceTool = ({ registry }: DevToolDeps): DevTool => ({
 		"over: that asks whether a parse-path MECHANISM signals on any row, this asks whether a decoder INTERFACE " +
 		"breaks on any row. A ZERO MEANS OPPOSITE THINGS FOR THE TWO CHECKS and they are never summed — `illegal-edge` " +
 		"is enforced by the tree builder at construction, so zero is the designed state and any count is a builder " +
-		"regression; `stranded-dependent` is real model behaviour, so its zero is ambiguous until you know the tag " +
+		"regression; `stranded-dependent` is real model behavior, so its zero is ambiguous until you know the tag " +
 		"appeared at all, and every stranding count is therefore reported beside how many rows produced that tag. " +
 		"Duplicate tags are diagnostic rather than violations: the report groups their row counts by tag and by " +
 		"sibling, nested, or separate-branch topology, with row IDs and full inputs, without changing validateTree.",

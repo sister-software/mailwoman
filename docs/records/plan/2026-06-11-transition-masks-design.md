@@ -20,7 +20,7 @@ matrix (which is structural-BIO-only today). Candidate first rows, each with mea
 
 ## The pre-registered failure mode (DeepSeek, 2026-06-10 — the one keeper from that consult)
 
-Banning `I-postcode → B-street` does not make the orphan digit correct — it forces the
+The rule that forbids `I-postcode → B-street` does not make the orphan digit correct — it forces the
 probability somewhere, and the most likely refuge is `I-postcode`: the digit gets ABSORBED INTO
 the postcode, corrupting it worse than the split did ("4711" + street "0 …" at least kept four
 correct digits; "47110…" absorbing a house number corrupts the field outright). Any transition-

@@ -2,18 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Casing of British place and street names.
- *
- *   Price Paid Data ships every field upper-case.
- *   All-caps is out of domain for a model trained on natural casing (#690).
+ *   Normalizes casing of British place and street names.
+ *   Price Paid Data ships every field in uppercase. Models trained on natural casing see uppercase as out-of-domain text.
  */
 
 import { titleCase } from "spliterator/casing"
 
 /**
- * Joining particles that stay lowercase mid-name, between words and between hyphen segments:
- * `Barrow upon Soar`, `Weston-super-Mare`, `Wells next the Sea`.
- * A leading particle is capitalized (`The Green`).
+ * These particles stay lowercase mid-name between words and hyphen segments (`Barrow upon
+ * Soar`, `Weston-super-Mare`), with a leading particle capitalized (`The Green`).
  */
 export const GB_PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
 	"upon",
@@ -39,11 +36,8 @@ export const GB_PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Titlecases an all-caps GB place or street name, keeping {@link GB_PLACE_NAME_PARTICLES}
- * lowercase after the first word.
- *
- * Apostrophe-separated segments are cased on their own (`D'Arcy`, `James'`) except a possessive `'s`.
- * Whitespace is collapsed and trimmed, as the source pads its fields.
+ * Titlecase an all-caps GB place or street name, keeping {@link GB_PLACE_NAME_PARTICLES}
+ * lowercase after the first word and casing apostrophe segments on their own.
  */
 export function titleCaseGB(value: string): string {
 	return titleCase(value.trim().replaceAll(/\s+/gu, " "), { particles: GB_PLACE_NAME_PARTICLES })

@@ -8,6 +8,7 @@ from torch import nn
 from ...features.phrase_priors import PHRASE_FEATURE_DIM
 from ...labels import NUM_LOCALES
 from .. import serialization
+from .address_system import CoarseEncoderAddressSystem
 from .channels import CoarseEncoderChannels
 from .construct import CoarseEncoderConstruct, resolve_label_map
 from .decode import CoarseEncoderDecode
@@ -25,6 +26,7 @@ class MailwomanCoarseEncoder(
     CoarseEncoderHeads,
     CoarseEncoderChannels,
     CoarseEncoderLosses,
+    CoarseEncoderAddressSystem,
     CoarseEncoderDecode,
 ):
     def __init__(
@@ -76,6 +78,12 @@ class MailwomanCoarseEncoder(
         char_embed_dim: int = 64,
         char_kernel_sizes: tuple[int, ...] = (3, 4, 5),
         id_to_label: dict[int, str] | None = None,
+        use_address_system_head: bool = False,
+        num_address_systems: int = 0,
+        address_system_loss_weight: float = 0.0,
+        use_locale_hint: bool = False,
+        locale_hint_drop_prob: float = 0.5,
+        locale_hint_noise_prob: float = 0.05,
     ) -> None:
         super().__init__()
         self.num_labels = num_labels
@@ -144,6 +152,18 @@ class MailwomanCoarseEncoder(
         )
 
         self._init_weights()
+        # Built after `_init_weights`, which draws every parameter registered before it from the global RNG.
+        # Building these first would shift those draws, and a run with both flags off would stop
+        # reproducing earlier runs.
+        self._build_address_system(
+            hidden_size=hidden_size,
+            use_address_system_head=use_address_system_head,
+            num_address_systems=num_address_systems,
+            address_system_loss_weight=address_system_loss_weight,
+            use_locale_hint=use_locale_hint,
+            locale_hint_drop_prob=locale_hint_drop_prob,
+            locale_hint_noise_prob=locale_hint_noise_prob,
+        )
 
     def forward(
         self,
@@ -163,6 +183,8 @@ class MailwomanCoarseEncoder(
         locality_surface_features: torch.Tensor | None = None,
         locality_surface_confidence: torch.Tensor | None = None,
         char_ids: torch.Tensor | None = None,
+        address_system_ids: torch.Tensor | None = None,
+        locale_hint_ids: torch.Tensor | None = None,
     ) -> _CoarseEncoderOutput:
         h = self._embed_inputs(
             input_ids=input_ids,
@@ -179,12 +201,14 @@ class MailwomanCoarseEncoder(
             locality_surface_features=locality_surface_features,
             locality_surface_confidence=locality_surface_confidence,
         )
+        h = self._apply_locale_hint(h, locale_hint_ids=locale_hint_ids, address_system_ids=address_system_ids)
         bsz, seq = h.shape[0], h.shape[1]
         return self._encode_and_score(
             h,
             attention_mask=attention_mask,
             labels=labels,
             locale_ids=locale_ids,
+            address_system_ids=address_system_ids,
             gazetteer_features=gazetteer_features,
             bsz=bsz,
             seq=seq,
@@ -197,6 +221,7 @@ class MailwomanCoarseEncoder(
         attention_mask: torch.Tensor | None,
         labels: torch.Tensor | None,
         locale_ids: torch.Tensor | None,
+        address_system_ids: torch.Tensor | None,
         gazetteer_features: torch.Tensor | None,
         bsz: int,
         seq: int,
@@ -211,14 +236,23 @@ class MailwomanCoarseEncoder(
 
         h = self.final_ln(h)
 
-        locale_logits: torch.Tensor | None = None
-        if self.use_locale_conditioning and self.locale_head is not None and self.locale_film is not None:
+        pooled: torch.Tensor | None = None
+        if self.use_locale_conditioning or self.use_address_system_head:
             if attention_mask is not None:
                 m = attention_mask.to(torch.float32).unsqueeze(-1)
                 pooled = (h.float() * m).sum(dim=1) / m.sum(dim=1).clamp(min=1.0)
             else:
                 pooled = h.float().mean(dim=1)
             pooled = pooled.to(h.dtype)
+        address_system_logits = self._address_system_logits(pooled)
+
+        locale_logits: torch.Tensor | None = None
+        if (
+            pooled is not None
+            and self.use_locale_conditioning
+            and self.locale_head is not None
+            and self.locale_film is not None
+        ):
             locale_logits = self.locale_head(pooled)
 
             film = self.locale_film(pooled)
@@ -252,7 +286,16 @@ class MailwomanCoarseEncoder(
             locale_logits=locale_logits,
             affix_logits=affix_logits,
         )
-        return _CoarseEncoderOutput(logits=logits, loss=loss, locale_logits=locale_logits, span_scores=span_scores_out)
+        loss = self._address_system_loss(
+            loss, address_system_logits=address_system_logits, address_system_ids=address_system_ids
+        )
+        return _CoarseEncoderOutput(
+            logits=logits,
+            loss=loss,
+            locale_logits=locale_logits,
+            span_scores=span_scores_out,
+            address_system_logits=address_system_logits,
+        )
 
     def forward_mlm(
         self,

@@ -2,14 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `release.clean` removes whole generated trees rather than asking TypeScript to enumerate the outputs it still
- *   knows. That distinction removes orphaned files left behind after a source rename or branch switch.
- *
- *   A retired workspace is the case the registered list cannot reach. Removing a workspace takes its manifest and its
- *   source, and leaves the `out/` tree and `tsconfig.tsbuildinfo` that `tsc` had already written beside them. Those
- *   sit under a directory `packages/*` still matches, so `sherif` reports it and no operation cleans it. A full clean now
- *   sweeps those directories too, and the sweep removes only generated names and then the directory itself, once
- *   no other entry is left in it.
+ *   `release.clean` removes whole generated trees rather than asking TypeScript to enumerate the outputs it still knows, so orphaned files left by a source rename or branch switch are removed too.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
@@ -34,11 +27,10 @@ const cleanOutput = z.object({
 })
 
 /**
- * `release.clean` — remove generated workspace output, build metadata,
- * and Docker's non-workspace TypeScript output.
+ * `release.clean` — remove generated workspace output and build metadata.
+ * Also remove Docker's non-workspace TypeScript output.
  *
  * A package name limits the cleanup to one registered workspace.
- * Absent means the entire checkout.
  */
 export const cleanOperation = defineOperation({
 	id: "release.clean",
@@ -70,7 +62,6 @@ export const cleanOperation = defineOperation({
 
 		// `docker` is a root TypeScript project but deliberately not a Yarn workspace:
 		// its manifest consumes published npm packages.
-		// Preserve the coverage of the former `tsc -b --clean` root script when cleaning the entire checkout.
 		if (!input.workspace) {
 			directoryTargets.push(resolvePath(context.repoRoot, "docker", "out"))
 			directoryTargets.push(resolvePath(context.repoRoot, "docker", "dist"))
@@ -78,10 +69,8 @@ export const cleanOperation = defineOperation({
 			fileTargets.push(resolvePath(context.repoRoot, "docker", "tsconfig.test.tsbuildinfo"))
 		}
 
-		// A retired workspace is swept separately from the registered ones,
-		// because `cleanDirectory` recreates what it empties.
-		// That is right for a workspace whose `out/` is about to be written again,
-		// and it would leave exactly the empty shell this sweep exists to remove.
+		// `cleanDirectory` recreates the directory it empties.
+		// Sweep retired workspaces separately so their empty shells are removed.
 		const retired = input.workspace ? [] : await retiredWorkspaceDirectories(context.repoRoot)
 		const retiredRoots = retired.map((directory) => resolvePath(context.repoRoot, directory).toString())
 
@@ -146,8 +135,8 @@ export const cleanOperation = defineOperation({
 				files.push(displayPath)
 			}
 
-			// The shell goes only when the generated names were all it held.
-			// A dry run has removed no entry, so the reading discounts the names it would have taken.
+			// The shell goes only when the generated names were all it held. a dry run
+			// discounts the names it would have removed.
 			const generated = new Set<string>([...directoryNames, ...buildMetadataNames])
 
 			const remaining = (

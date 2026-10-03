@@ -1,6 +1,6 @@
 """Checks that the `modal run` command in each recipe header still resolves.
 
-These tests check that the launcher module, the named recipe, the selected function and the staged
+These tests check that the launcher module, the recipe identifier, the selected function and the staged
 corpus version all still exist. Only `modal run` commands are checked: a header's local
 `python -m mailwoman_train train --config <path>` command takes a filesystem path instead of the
 bare filename the launcher expects.
@@ -43,7 +43,10 @@ PRESENT = {path.name for path in RECIPES}
 
 
 def _launchable() -> set[str]:
-    """Return the function names that `launch.train_remote` exports in `__all__`, parsed rather than imported because the module imports the Modal SDK, which this checkout does not install."""
+    """Return the function names exported by `launch.train_remote` in `__all__`.
+
+    Parse the module rather than importing it because this checkout lacks the Modal SDK.
+    """
     tree = ast.parse(ENTRY_POINT.read_text(encoding="utf-8"))
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(getattr(t, "id", "") == "__all__" for t in node.targets):

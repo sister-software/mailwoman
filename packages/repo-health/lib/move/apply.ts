@@ -7,7 +7,7 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { runFile } from "@mailwoman/core/process"
+import { git } from "@mailwoman/core/git"
 import { dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -15,7 +15,14 @@ import type { RepoContext } from "#check"
 import { emittedMoves } from "#move/literals"
 import { createMoveResolver } from "#move/resolution"
 import { spliceText, type TextEdit } from "#move/splice"
-import type { ManifestRewrite, ModuleMove, ModuleMovePlan, PathLiteralRewrite, SpecifierRewrite } from "#move/types"
+import type {
+	ManifestReplacement,
+	ManifestRewrite,
+	ModuleMove,
+	ModuleMovePlan,
+	PathLiteralRewrite,
+	SpecifierRewrite,
+} from "#move/types"
 
 /**
  * Options for {@linkcode applyModuleMoves}.
@@ -34,6 +41,7 @@ export interface ModuleMoveResult {
 	moves: ModuleMove[]
 	rewrites: SpecifierRewrite[]
 	manifestRewrites: ManifestRewrite[]
+	manifestReplacements: ManifestReplacement[]
 	pathLiterals: PathLiteralRewrite[]
 	/**
 	 * The count of rewritten specifiers that resolve to their target in the moved tree.
@@ -70,7 +78,7 @@ function editsByFile(plan: ModuleMovePlan): Map<string, TextEdit[]> {
 }
 
 /**
- * Removes each source directory the moves emptied, and each parent that becomes empty with it.
+ * Removes source directories emptied by the moves and their parents when those parents become empty.
  *
  * `git mv` leaves the emptied directory on disk.
  * An existence check would otherwise still find the old path.
@@ -114,8 +122,9 @@ async function rewriteFile(repoRoot: string, file: string, edits: readonly TextE
 }
 
 /**
- * Moves the files with `git mv`, rewrites the planned specifiers, manifest targets
- * and path literals, and then re-resolves each rewritten specifier.
+ * Moves files with `git mv`, rewrites planned specifiers, manifest targets
+ * and path literals, and writes replacement manifests.
+ * It then resolves each rewritten specifier again.
  *
  * The function throws before touching anything when the plan has an unresolved specifier.
  * After the move, it throws when a rewritten specifier resolves elsewhere
@@ -138,6 +147,7 @@ export async function applyModuleMoves(
 			moves: plan.moves,
 			rewrites: plan.rewrites,
 			manifestRewrites: plan.manifestRewrites,
+			manifestReplacements: plan.manifestReplacements,
 			pathLiterals: plan.pathLiterals,
 			verified: 0,
 			dryRun: true,
@@ -146,7 +156,7 @@ export async function applyModuleMoves(
 
 	for (const move of plan.moves) {
 		await makeDirectories(resolvePath(context.repoRoot, dirname(move.to)))
-		await runFile("git", ["mv", move.from, move.to], { cwd: context.repoRoot, encoding: "utf8" })
+		await git(["mv", move.from, move.to], context.repoRoot)
 	}
 
 	await removeEmptiedDirectories(
@@ -158,6 +168,10 @@ export async function applyModuleMoves(
 
 	for (const [file, edits] of editsByFile(plan)) {
 		await rewriteFile(context.repoRoot, file, edits)
+	}
+
+	for (const replacement of plan.manifestReplacements) {
+		await writeLocalTextFile(replacement.text, resolvePath(context.repoRoot, replacement.file))
 	}
 
 	const resolver = createMoveResolver(context.repoRoot, [])
@@ -198,6 +212,7 @@ export async function applyModuleMoves(
 		moves: plan.moves,
 		rewrites: plan.rewrites,
 		manifestRewrites: plan.manifestRewrites,
+		manifestReplacements: plan.manifestReplacements,
 		pathLiterals: plan.pathLiterals,
 		verified: plan.rewrites.length,
 		dryRun: false,

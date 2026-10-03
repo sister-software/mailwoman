@@ -1,4 +1,7 @@
-"""Every fragment renderer agrees with its own text across a split, because `raw` and its char offsets are built separately and a disagreement still trains, exports, and scores."""
+"""Check that each fragment renderer's text agrees with its character offsets.
+
+The builder creates them separately. Incorrect spans can pass through training. The model can then export and score.
+"""
 
 from __future__ import annotations
 
@@ -39,7 +42,7 @@ CASES: dict[str, dict[str, Any]] = {
 
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_every_span_covers_the_text_it_claims(name: str) -> None:
-    """`raw[start:end]` is the surface rather than a neighbour and not an off-by-one substring of it."""
+    """`raw[start:end]` is the surface rather than a neighbor and not an off-by-one substring of it."""
     row = CASES[name]
     raw = row["raw"]
     triple = zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)
@@ -52,7 +55,7 @@ def test_every_span_covers_the_text_it_claims(name: str) -> None:
 
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_the_spans_reconstruct_the_row_in_order(name: str) -> None:
-    """Concatenating the covered surfaces in span order returns every token in order, catching a cursor that advances by the wrong separator width while still producing spans inside `raw`."""
+    """Concatenate covered surfaces in span order to return every token and catch cursors that advance by the wrong separator width while keeping spans inside `raw`."""
     row = CASES[name]
     raw = row["raw"]
     covered = [raw[start:end] for start, end in zip(row["span_starts"], row["span_ends"], strict=True)]
@@ -70,7 +73,7 @@ def test_one_label_per_token(name: str) -> None:
 
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_each_field_opens_with_b_and_continues_with_i(name: str) -> None:
-    """An `I-` with no `B-` before it is a field that starts mid-span, which decodes as a fragment."""
+    """An `I-` with no preceding `B-` starts a field mid-span. The decoder treats it as a fragment."""
     row = CASES[name]
     previous: str | None = None
 

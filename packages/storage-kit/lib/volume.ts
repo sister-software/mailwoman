@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The volume spec every storage operation shares: which disk, mounted where, and which subtrees opt out of
+ *   The volume spec every storage operation shares: which disk, mounted where and which subtrees opt out of
  *   compression.
  *
  *   btrfs compresses in 128 KiB extents while a SQLite page read is 4 KiB, so a random page read decompresses the
@@ -13,7 +13,7 @@
  *   One entry rather than a list of every directory that happens to hold a database. The property propagates to
  *   children created after it is set, at any depth, so a database written into `db/` next year is uncompressed
  *   without anyone remembering to extend a list. The flat alternative was already wrong when it was written: it
- *   named eight directories and missed `address-points` and `interpolation`, which hold 54 and 52 databases.
+ *   listed eight directories and missed `address-points` and `interpolation`, which hold 54 and 52 databases.
  */
 
 import { z } from "zod"

@@ -1,13 +1,13 @@
 """Count what a row's OPENING token teaches, at both the draw level and the emitted level.
 
 A count is only comparable when its definition and sampling level travel with it, so the narrow
-openings are named here and counted at both levels. Reading an opening more or less narrowly does not
-shade the answer, it REVERSES it, which is why the whole-row counters exist alongside the opening ones.
+the token list lives here and is counted at both levels. A new opening-token definition can
+reverse the answer. Whole-row counters show the difference.
 
 The two levels disagree: pass 1 counts rows straight off the sampler, while pass 2 expands the same
 stream through the augmentation policy and counts what fills the trainer's row budget. Augmentation
-expands long addresses, so a short-row source keeps a smaller part of a fixed budget, and a ratio
-mixing the two levels is meaningless.
+expands long addresses. A short-row source then uses a smaller share of the fixed budget. Ratios that
+mix these levels are meaningless.
 
 The sampling mirrors `audit_epoch_mixture` exactly — same stream, same seed convention, same budget —
 so a count here is comparable with an exposure reported there. The one deliberate difference is
@@ -28,6 +28,7 @@ from ..config import load_config
 from ..data.emit import EmitPolicy, emit_row
 from ..data.loader import _raw_row_stream
 from ..data.source_reps import resolve_config_reps
+from .epoch_mixture.passes import config_augment, config_augment_exclude_sources
 
 
 def _digits(token: str) -> bool:
@@ -45,8 +46,8 @@ def _opening_counts(tokens: list[str], labels: list[str]) -> list[str]:
 
     three_then_two = len(tokens) >= 2 and len(first) == 3 and _digits(tokens[1]) and len(tokens[1]) == 2
 
-    # A row of exactly two tokens is the shape the failing input has and the corpus never carried: the
-    # opening is shared with every in-context row that starts on its postcode, so an opening count alone
+    # A row of exactly two tokens matches the failing input. The corpus never included it, so the
+    # opening is shared with every in-context row that starts on its postcode, so its count by itself
     # cannot separate `100 00` from `100 00 Praha, Czechia`. Row length is what separates them.
     whole_row = len(tokens) == 2
 
@@ -98,9 +99,9 @@ def census(
 ) -> dict[str, Any]:
     """Count every opening over ``draws`` rows, at the draw level and again at the emitted level.
 
-    ``augment_exclude_sources`` is honoured because both passes run `emit.emit_row`, the same function
+    ``augment_exclude_sources`` is honored because both passes run `emit.emit_row`, the same function
     the trainer runs: a listed source bypasses augmentation entirely, so it emits exactly what it drew
-    while its neighbours expand.
+    while its neighbors expand.
     """
 
     def stream(rng: random.Random) -> Iterator[dict[str, Any]]:
@@ -191,8 +192,8 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
     corpus_dir = Path(cfg.data.corpus_dir)
     resolve_config_reps(cfg, corpus_dir)
 
-    # Raise rather than fall back to a default epoch length: a census counted over a different number
-    # of rows than the audit reports is not comparable with it, and no downstream check would say so.
+    # A census over a different number of rows is not comparable with the audit.
+    # No downstream check reports this difference.
     epoch_rows = draws or getattr(cfg.data, "train_rows_per_epoch", None)
     if not epoch_rows:
         raise ValueError("config has no train_rows_per_epoch — pass --draws for the epoch length")
@@ -204,16 +205,8 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
         country_weights=cfg.data.country_weights,
         source_weights=cfg.data.source_weights,
         coarse_filter=cfg.data.coarse_filter,
-        augment={
-            "directional": cfg.data.augment_directional_prob,
-            "region": cfg.data.augment_region_prob,
-            "glue": cfg.data.augment_glue_prob,
-            "case": getattr(cfg.data, "augment_case_prob", 0.0),
-            "punct_drop": cfg.data.augment_punct_drop_prob,
-            "upper_case": getattr(cfg.data, "augment_upper_case_prob", 0.0),
-            "ordinal": cfg.data.augment_ordinal_prob,
-        },
-        augment_exclude_sources=tuple(getattr(cfg.data, "augment_exclude_sources", ()) or ()),
+        augment=config_augment(cfg.data),
+        augment_exclude_sources=config_augment_exclude_sources(cfg.data),
     )
 
     meta = report["meta"]

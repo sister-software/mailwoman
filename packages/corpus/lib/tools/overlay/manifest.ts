@@ -33,7 +33,7 @@ type ManifestFile = Record<string, unknown> & { path: string; source?: string }
 /**
  * The legacy manifest keys for the file list and the rows per file.
  *
- * Existing corpora are immutable and still use these keys, so readers accept both
+ * Earlier corpora are immutable and still use these keys, so readers accept both
  * spellings and writers emit only the current ones.
  * The keys are built by concatenation because a repository check bans the legacy word.
  */
@@ -83,7 +83,7 @@ function baseRowsPerFile(base: BaseManifest): unknown {
 }
 
 /**
- * One parquet file to add, with the source label that its rows carry.
+ * One parquet file to add, with the source label in its rows.
  */
 export interface OverlayFile {
 	parquet: string
@@ -92,7 +92,7 @@ export interface OverlayFile {
 	 * The split that the file's rows belong to.
 	 * The default is `train`.
 	 *
-	 * `val` and `test` are allowed only for files that `splitOverlaySlice` named,
+	 * `val` and `test` are allowed only for files that `splitOverlaySlice` returned,
 	 * so that the holdout policy chooses held-out rows.
 	 */
 	split?: SplitName
@@ -112,17 +112,21 @@ export function splitFromFilename(parquet: string): SplitName | null {
 /**
  * Reads one overlay parquet and describes it for the manifest.
  *
- * The `source` argument is what the caller believes the file holds, and the file itself
- * is what the loader reads: `file_source_counts` groups the rows, never the manifest.
- * So a caller passing a stale label writes a manifest that disagrees with its own rows, the run
- * trains on the rows, and the next plan derived from that manifest carries the stale label forward.
+ * The loader groups rows by `file_source_counts`.
+ * The manifest records the `source` value supplied by the caller.
+ *
+ * A stale argument therefore writes a manifest that disagrees with the rows.
+ * The run trains on the rows.
+ *
+ * The next plan then repeats the stale label from the manifest.
  *
  * This reads the column and refuses the mismatch rather than recording the claim.
  *
  * `source_id` is materialized rather than aggregated because `first_source_id`
  * and `last_source_id` mean the first and last row of the file.
- * DuckDB's `first` and `last` aggregates read whichever row a parallel scan
- * reaches first, which is not the same thing.
+ * DuckDB's `first` and `last` aggregates read whichever row a parallel scan reaches first.
+ *
+ * That result can differ from the first and last rows in the file.
  */
 async function descriptor(
 	localPath: string,
@@ -130,7 +134,7 @@ async function descriptor(
 	split: SplitName,
 	source: string
 ): Promise<ParquetFileDescriptor> {
-	// One per file, and `assembleOverlayManifest` calls this once per file.
+	// `assembleOverlayManifest` calls this once for each file.
 	using db = await openDuckDB()
 
 	const result = await db.runAndReadAll(`SELECT source_id, source FROM read_parquet('${escapeSQLString(localPath)}')`)
@@ -166,6 +170,63 @@ async function descriptor(
 /**
  * Options for {@link assembleOverlayManifest}.
  */
+/**
+ * The filename {@linkcode assembleOverlayManifest} writes its plan under, beside `MANIFEST.json`.
+ */
+export const OVERLAY_PLAN_FILE = "OVERLAY_PLAN.json"
+
+/**
+ * What one overlay assembly was asked to add, written beside the manifest it produced.
+ *
+ * The next assembly on the same base reads this rather than reconstructing the file list.
+ * Reconstruction makes it possible for an overlay to contain a stale list of
+ * files into a later corpus version.
+ */
+export interface OverlayPlan {
+	corpusVersion: string
+	overlayBase: string | null
+	baseManifest: string
+	modalRoot: string
+	note: string
+	appliedAt: string
+	/**
+	 * Each added file with the route its split came from.
+	 *
+	 * `route` reads `split-slice` when the filename includes the split suffix written by the command.
+	 * `caller` reads the split supplied as an argument.
+	 *
+	 * A hand-placed split reached `v0.6.0-register-surface` through the second route
+	 * and put 770 of DE's 3,987 validation `source_id`s in train.
+	 * The filename was the only place that showed this (#2359).
+	 */
+	files: Array<{ parquet: string; source: string; split: SplitName; route: SplitRoute }>
+}
+
+/**
+ * How one overlay file's split was decided.
+ */
+export const SplitRoute = {
+	/**
+	 * `corpus split-slice` applied `splitForRow` to every row and wrote the split into the filename.
+	 */
+	SplitSlice: "split-slice",
+
+	/**
+	 * The caller supplied the split.
+	 * The holdout policy never saw these rows.
+	 */
+	Caller: "caller",
+} as const
+
+export type SplitRoute = (typeof SplitRoute)[keyof typeof SplitRoute]
+
+/**
+ * Which route decided one file's split.
+ */
+export function splitRouteFor(parquet: string): SplitRoute {
+	return splitFromFilename(parquet) ? SplitRoute.SplitSlice : SplitRoute.Caller
+}
+
 export interface OverlayManifestOptions {
 	base: string
 	newDir: PathBuilderLike
@@ -207,8 +268,8 @@ export function localManifestFilePath(path: string): string {
 /**
  * Writes a corpus manifest that keeps every file of `args.base` and appends `args.files`.
  *
- * A `val` or `test` file must have the `.<split>.parquet` name that `splitOverlaySlice`
- * writes, which shows that the holdout policy chose its rows.
+ * A `val` or `test` file must use the `.<split>.parquet` suffix written by `splitOverlaySlice`.
+ * The suffix shows that the holdout policy chose its rows.
  * A `train` file has no naming requirement.
  *
  * @throws When the base lists no files or a held-out file lacks the matching filename suffix.
@@ -233,7 +294,8 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		}
 	}
 
-	// Held-out rows must come from the holdout policy, which encodes the split in the filename.
+	// Held-out rows must come from the holdout policy.
+	// The filename records the split.
 	// A caller that picks held-out rows by hand can leak them into train.
 	for (const file of args.files) {
 		if (!file.split || file.split === "train") continue
@@ -294,16 +356,51 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 			test: base.counts.test + addedRows.test,
 		},
 		total_rows: base.total_rows + addedRows.train + addedRows.val + addedRows.test,
+		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
+		// This value in the artifact prevents a reader from deriving an attribution table
+		// from `slices` and treating the base build's set as the whole.
+		// The overlay sources listed here have their own terms, recorded per source in
+		// `packages/corpus/lib/recipes/sources.ts` and per row in the `license` column itself.
+		licenses_cover:
+			`no license set is measured here. The base build's MANIFEST.json covers the rows it aligned, and ` +
+			`these ${added.length} added file(s) carry their own: ${[...new Set(args.files.map((file) => file.source))].toSorted().join(", ")}.`,
 	}
 
 	const out = newDir("MANIFEST.json")
 	await writeLocalJSONFile(manifest, out)
 
+	// The plan is written beside the manifest it produced, because the previous overlay
+	// assembly's plan existed only as three scripts in a session scratch directory
+	// and was copied into the next assembly as a hand-written list.
+	// Commit this file under `packages/corpus/data/builds/<version>/`.
+	const plan: OverlayPlan = {
+		corpusVersion: args.version,
+		overlayBase: base.corpus_version ?? null,
+		baseManifest: args.base,
+		modalRoot: args.modalRoot,
+		note: manifest.note,
+		appliedAt: new Date().toISOString(),
+		files: args.files.map((file) => ({
+			parquet: file.parquet,
+			source: file.source,
+			split: file.split ?? "train",
+			route: splitRouteFor(file.parquet),
+		})),
+	}
+
+	const planPath = newDir(OVERLAY_PLAN_FILE)
+
+	await writeLocalJSONFile(plan, planPath)
+
+	console.log(`wrote ${planPath}`)
 	console.log(`wrote ${out}`)
 	console.log(`  files: ${manifest.slices.length} (${kept.length} base kept, +${added.length} added)`)
 	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)
 
-	for (const file of added) {
-		console.log(`  ${file.source} ${file.split}: ${file.rows} rows (${file.bytes} bytes)`)
+	// The route prints beside the split, because a hand-placed split is otherwise visible only in a filename.
+	for (const [index, file] of added.entries()) {
+		const route = plan.files[index]?.route ?? SplitRoute.Caller
+
+		console.log(`  ${file.source} ${file.split} via ${route}: ${file.rows} rows (${file.bytes} bytes)`)
 	}
 }

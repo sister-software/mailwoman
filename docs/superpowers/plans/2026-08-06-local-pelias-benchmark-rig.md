@@ -7,7 +7,7 @@ under Docker Compose, scoped to the data we hold, plus a three-arm controlled co
 mailwoman 9.0.0 and same-day hosted geocode.earth.
 
 Method notes: the design came from a three-turn DeepSeek consult (session
-`019fd8b2-63e4-71f6-931b-0f197276cdf8`). Following the consult calibration practice, the plan adopts
+`019fd8b2-63e4-71f6-931b-0f197276cdf8`). The plan follows the consult calibration practice and adopts
 the consult's structural contributions. Its three required factual claims are **preregistered as
 falsifiers to run before any import** (§2) rather than trusted. No step below runs until the
 falsifiers are graded.
@@ -31,7 +31,7 @@ PIP is omitted because the rig does no reverse geocoding. The build uses one cus
 ES index. At 420 queries, separate per-country projects would add complexity without adding
 accuracy.
 
-**Pinning:** the `pelias/docker` release is pinned by commit and image digests, never by floating
+**Pinned artifacts:** the `pelias/docker` release is pinned by commit and image digests, never by floating
 tags. Data vintages are pinned by a SHA-256 manifest (§4).
 
 **Data mapping (ours → Pelias):**
@@ -120,7 +120,7 @@ before any import runs:
   the planet, and the files need no manual placement. This replaces the earlier manual-placement
   caution.
 
-**Staging state (2026-08-07):**
+**Stage state (2026-08-07):**
 
 - All 10 country PBFs are downloaded (12.2 GB, resumable, marker present).
 - OA fr and de are extracted from europe.zip. GB needs no OA because it relies on OSM.
@@ -128,7 +128,7 @@ before any import runs:
   sampling frame rather than post-hoc cleanup. The state list is derived from the truth
   coordinates, never from query strings, and is verified before scoring. The US index is annotated
   "US subset: N states".
-- Remaining fetches are panel-state OA-us, TIGER ADDRFEAT counties, and per-state PBFs for the
+- The fetches still needed are panel-state OA-us, TIGER ADDRFEAT counties, and per-state PBFs for the
   polyline reduces. All of them wait on panel reconstruction.
 
 ## §3 — Per-country acceptance probes (before any benchmark row)
@@ -156,7 +156,7 @@ columns: `truth_type` (`rooftop / venue / city-only`) and `local_coverage_hint`
 (`OA_point / TIGER_range / OSM_address / OSM_interpolation / WOF_only`). The @1km result depends on
 `truth_type`, so it is reported per stratum and never silently blended.
 
-**Scoring, locked before running:**
+**Score criteria, fixed before runs:**
 
 - Only the top-1 result counts.
 - Distance is haversine, with thresholds at 1/5/25 km.
@@ -186,7 +186,7 @@ what our scoping removed and limits what the local numbers can claim.
 - [ ] Data manifest: SHA-256 for every OA CSV, WOF sqlite, TIGER shapefile, OSM PBF, polylines file
 - [ ] `pelias.json` hash + compose overrides (`ES_JAVA_OPTS`, memory caps)
 - [ ] Panel file hash; per-row `truth_type` + `local_coverage_hint` assigned
-- [ ] Scoring definition (§4 verbatim), scorer command + hash, determinism check
+- [ ] Score definition (§4 verbatim), scorer command + hash, determinism check
 - [ ] Distance formula + thresholds; no-result + tie-break definitions; equivalence margin
 - [ ] Bootstrap seed + resamples
 - [ ] §2 falsifier outcomes, graded
@@ -223,7 +223,7 @@ These arms use the same panel, host and PBFs. One download feeds all three syste
   serving the index standalone. `komoot/photon` is pinned, and its JVM is capped at 6–8 GB. It runs
   alone, with the Postgres buffers lowered. Every practical path requires Nominatim.
   `photon.komoot.io` is an unpinned reference only and is never a scored arm.
-- **Ordering, one step at a time:** Pelias imports → Nominatim import → Photon export. At 16 GB the
+- **Order, one step at a time:** Pelias imports → Nominatim import → Photon export. At 16 GB the
   steps cannot overlap.
 - **Arms:** five scored arms: mailwoman 9.0.0, local Pelias, local Nominatim, local Photon, and
   hosted geocode.earth (the primary hosted arm). Public nominatim.openstreetmap.org at 1 rps serves

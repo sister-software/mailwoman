@@ -2,25 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Refuse a workspace manifest whose `license` field is not the repository's expression in an admissible SPDX form.
+ *   Refuse a workspace manifest whose `license` field is not the repository's expression in an admissible SPDX
+ *   form.
  *
- *   The `license` field is what npm shows on a package page and what a consumer's own audit reads, so it is the
- *   published statement of the terms a release ships under. Two failure classes reach consumers through it and neither
- *   one breaks a build.
+ *   The `license` field states the terms shipped in a release. Two failure classes reach consumers
+ *   through this field without breaking a build. A deprecated identifier such as `AGPL-3.0` omits
+ *   `-only` or `-or-later`. `summarizeLicense` reports it as `recognized: false` with an empty
+ *   obligation list. A workspace that omits the commercial branch contradicts the public license page.
  *
- *   A deprecated identifier states less than it appears to. `AGPL-3.0` names neither the `-only` nor the `-or-later`
- *   variant, and `summarizeLicense` in `@mailwoman/core/license` reports it `recognized: false` with an empty
- *   obligation list. A reader who checks the obligations without checking the flag sees a package that requires
- *   no obligations.
- *
- *   A workspace omitting the commercial branch contradicts the public license page, which states that every release
- *   ships under both.
- *
- *   The root manifest is the reference rather than a constant here, for the same reason `version-sync` reads it: one
- *   place states the expression, and the root's own field is checked for admissibility before it is used as the
- *   reference. A workspace that needs different terms is a rights question rather than a formatting one, so it belongs
- *   in `docs/engineering/reference/artifact-rights-inventory.mdx` and in the manifests it governs, never in an
- *   exception list here.
+ *   The root manifest provides the reference expression. The check validates its own field for
+ *   admissibility before using it. A workspace that needs different terms raises a rights question.
+ *   Record that decision in `docs/engineering/reference/artifact-rights-inventory.mdx` and the
+ *   manifests it governs instead of adding an exception here.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -77,8 +70,8 @@ export const packageLicenseCheck: RepoCheck = {
 		const rootDeclared = await readDeclaredLicense(context.repoRoot, "package.json")
 
 		if (typeof rootDeclared !== "string") {
-			// Without the root's expression there is no expression to compare the workspaces against,
-			// and reporting 75 identical failures would bury the one that has to be fixed first.
+			// Without the root's expression, the check has no basis for comparison.
+			// One failure per workspace would bury the root error that must be fixed first.
 			return [rootDeclared]
 		}
 

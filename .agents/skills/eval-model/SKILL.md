@@ -79,7 +79,7 @@ for addr in \
   "400 Broad St, Seattle, WA 98109" \
   "90210"; do
   echo "=== $addr ==="
-  node packages/mailwoman/out/cli/index.js parse --format xml "$addr" 2>/dev/null
+  node packages/mailwoman/out/cli/main.js parse --format xml "$addr" 2>/dev/null
 done
 ```
 
@@ -103,6 +103,6 @@ take it to the board.
 
 - `.agents/skills/training-arc/SKILL.md` — the protocol, and the controls that precede a number
 - `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` — which evals decide a change; iron rule 6 is the D-rule
-- `packages/core/test/unit/pipeline/grouper-audit.test.ts` — the audit no-op test for the v0.5.3 collapse pattern
+- `packages/core/lib/pipeline/grouper-audit.test.ts` — the audit no-op test for the v0.5.3 collapse pattern
 - `docs/records/evals/model-versions/2026-05-27-v0.5.3-diagnostic-training-review.mdx` — the eval that
   produced the smoke presets

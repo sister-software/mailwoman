@@ -9,7 +9,7 @@ a locale profile that lists the tag.
 ## The FR-specific scoping call, made before any build
 
 WOF's French neighborhood records are Paris **quartiers**, such as "Des Halles", "Palais Royal" and
-"Saint-Germain l'Auxerrois" (5,473 pairs nationally). Shipping those as the FR pair source would be
+"Saint-Germain l'Auxerrois" (5,473 pairs nationally). Those pairs as the FR pair source would be
 a mistake. The reasons are worth stating, because the US instance made the opposite decision:
 
 - A quartier **never appears in a French postal address.** French addresses contain a number,
@@ -20,7 +20,7 @@ a mistake. The reasons are worth stating, because the US instance made the oppos
 Pinsonnac / 12210 Montpeyroux`.
 
 The FR source is therefore BAN's `nom_ld` field (DINUM/IGN, Licence Ouverte 2.0) rather than WOF.
-The mechanism is the same, and the source is chosen by what the postal format carries. Using WOF
+The mechanism is the same, and the source is chosen by what the postal format carries. WOF
 would produce a technically valid index that biases toward spans real French addresses never
 contain.
 
@@ -49,7 +49,7 @@ a lieu-dit pair index moves this board the way GB's index moved its board from 0
   whether the mechanism works rather than whether it generalizes. R5's B-R5.3 carried the same
   caveat, and the report must state it explicitly.
 
-Failing B-R6.1 or B-R6.2 stops the ship regardless of B-R6.3.
+A failure of B-R6.1 or B-R6.2 stops the ship regardless of B-R6.3.
 
 ## The readings — and the two decode-path defects the FR instance exposed
 

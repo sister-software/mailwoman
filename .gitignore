@@ -79,12 +79,9 @@ storybook-static
 
 # Coverage (vitest/istanbul report dirs).
 #
-# ANCHORED, NOT BARE. This was `coverage`, which matches a directory of that name at ANY depth — so it
-# swallowed every SOURCE directory that legitimately carries the word, and the repository grew a negation
-# per casualty: the `mailwoman coverage` command, cartographer's fog-of-war module, two docs trees. Each
-# was found the same way, by `git add` refusing a path whose siblings were already tracked, and the list
-# was always one rename behind — the prefix fold added two more (`mailwoman/lib/coverage/`,
-# `mailwoman/test/unit/coverage/`) and would have wanted a fifth and sixth negation.
+# The rule is anchored to the root. A bare `coverage` matches a directory of that name at any depth,
+# which ignores source directories such as `packages/mailwoman/lib/coverage/` and cartographer's
+# coverage module.
 #
 # Vitest writes its report to `<root>/coverage` (the default `reportsDirectory`), and nothing writes a
 # per-package one, so anchoring the rule to the root covers the real output and stops claiming source.
@@ -118,7 +115,7 @@ docs/static/mailwoman/*.model
 docs/static/mailwoman/*.db
 docs/static/mailwoman/*.bin
 docs/static/mailwoman/*.json
-docs/static/mailwoman/sqljs/
+docs/static/mailwoman/sqlite/
 docs/static/mailwoman/pair-index/
 
 .claude/settings.local.json
@@ -135,6 +132,11 @@ data/eval/golden/candidates/
 # Calibration confidences (#59): derivable from calibration-set.jsonl + the model, 3 MB. The frozen
 # calibration-set.jsonl + the fitted isotonic table ARE committed; the per-span dump is not.
 data/eval/calibration/confidences.jsonl
+
+# Fetched corpus source data. `corpus fetch` writes to $MAILWOMAN_DATA_ROOT, and this covers a run
+# that points --out-root back into the tree: a publisher's bulk download is reproducible from its
+# manifest and belongs in the data root. One BAN fetch is 4.6 GB over 101 department files.
+data/corpus/sources/
 
 # Local env files (R2 credentials, etc.) — keep out of git
 .env

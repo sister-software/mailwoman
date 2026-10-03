@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   TrainingCharts — interactive training metrics dashboard pulling from the Trackio API. Shows
- *   train_loss, val_loss, val_macro_f1, and per-component F1 scores as pure SVG line charts with
- *   hover tooltips.
+ *   TrainingCharts is an interactive training metrics dashboard that reads from the Trackio API.
+ *   It renders `train_loss`, `val_loss`, and `val_macro_f1` as SVG line charts. Each chart uses an SVG line.
+ *   Hover tooltips show per-component F1 scores.
  *
  *   Usage in MDX:
  *
@@ -27,7 +27,7 @@ import styles from "./styles.module.css"
 // ── Constants ───────────────────────────────────────────────────────────
 
 /**
- * Residual bands the chart colours against, in the loss units plotted.
+ * Residual bands the chart colors against, in the loss units plotted.
  *
  * Presentation only.
  */

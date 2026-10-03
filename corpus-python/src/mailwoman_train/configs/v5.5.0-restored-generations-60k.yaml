@@ -19,7 +19,7 @@
 #
 # what IT cost, measured. Of 685,187,151 corpus rows, the bare two-token `NNN NN` shape appears zero
 # times, so `100 00` is out of distribution and the reading is generalization. The in-context `NNN NN`
-# rows labelled postcode are 12,759 of them, all in the dropped `-v21`. Samples per epoch teaching that
+# rows labeled postcode are 12,759 of them, all in the dropped `-v21`. Samples per epoch teaching that
 # opening under v5.4.0's mixture: postcode 0.0, house_number 443.7. v5.3.0 read it as a postcode against
 # a 393:0 gradient and v5.4.0 does not — 31/32 held-out CZ/SK postcodes under v5.0.0, v5.2.0 and v5.3.0,
 # then 0/32 under v5.4.0, with the seed pair agreeing at 31/32 so the collapse is not seed noise.
@@ -40,7 +40,7 @@
 #   2. `fr.bare_street_intact` in the promotion battery, which reads 95 against a floor of 75 while
 #      64,122 of its rows sit out. FR is tier 1, so a drop here disqualifies the arm outright even
 #      though the rows being added are the ones the check exists for.
-#   3. The four `*-street-name-fr-*` and `synth-fr-fragment` neighbours, because `-v22` is a different
+#   3. The four `*-street-name-fr-*` and `synth-fr-fragment` neighbors, because `-v22` is a different
 #      generation and not merely more of the same rows.
 #
 # The target-family boards stay what v5.4.0 won and must not give any of it back: `sg/register.jsonl`

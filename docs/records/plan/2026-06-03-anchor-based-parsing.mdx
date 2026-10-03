@@ -75,11 +75,11 @@ with calibrated confidence rather than a high-precision hard ruling.
 These anchors use the same mechanism, with a salience-weighted place gazetteer + fuzzy/alias matching in place of a regex.
 The **router** (see coarse placer) chooses one of three pipeline placements by query type:
 
-| Query type                       | Example                                              | Pipeline placement                                                                         |
-| -------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Bare landmark / POI              | `Empire State Building`, `Shibuya 109`, `Odori Park` | **Skip the parser** and resolve directly as a venue. Running BIO on it hallucinates spans. |
-| Distinctive street in an address | `350 Fifth Avenue`, `10 Downing Street`              | Anchor **conditions** the parser (strong city/country prior); parser still runs.           |
-| Distinctive district / component | `Ginza`, `2-Chōme`                                   | Locality/neighborhood anchor; conditions parser + resolver.                                |
+| Query type                       | Example                                              | Pipeline placement                                                                               |
+| -------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Bare landmark / POI              | `Empire State Building`, `Shibuya 109`, `Odori Park` | **Skip the parser** and resolve directly as a venue. BIO labels on this input hallucinate spans. |
+| Distinctive street in an address | `350 Fifth Avenue`, `10 Downing Street`              | Anchor **conditions** the parser (strong city/country prior); parser still runs.                 |
+| Distinctive district / component | `Ginza`, `2-Chōme`                                   | Locality/neighborhood anchor; conditions parser + resolver.                                      |
 
 **Guardrails:**
 
@@ -90,7 +90,7 @@ The **router** (see coarse placer) chooses one of three pipeline placements by q
    Avenue exist in dozens of towns (weak, multi-modal prior). Anchors emit a posterior over candidates
    and must not over-commit on a common name ("Broadway Avenue, Springfield" must not anchor to NYC).
 3. **Concepts are outside the parser's scope.** "The Hajj" refers to a place (Mecca) without being a place
-   name. Resolving it is semantic entity-linking, or concept-aliasing, which belongs to a different subsystem near the
+   name. Its resolution is semantic entity-linking, or concept-aliasing, which belongs to a different subsystem near the
    resolver (where "Macca's → McDonald's" alias logic conceptually lives). The parser stays out of it.
    If that subsystem grew into a general world-knowledge base, its surface would become unbounded.
 
@@ -98,7 +98,7 @@ The **router** (see coarse placer) chooses one of three pipeline placements by q
 
 ### Script routes; address-system conditions within
 
-Routing has to be cheap _and_ reliable, and **script** is both: a Unicode-block regex, free and exact.
+The routing check has to be cheap _and_ reliable, and **script** is both: a Unicode-block regex, free and exact.
 Address-system similarity is the _right_ clustering for the model's job (UK and US share a script but
 differ in system; DE and AT share a system across a language border), yet it is **not detectable
 pre-parse**, since knowing the system is most of the parse, which makes routing on it circular. So the
@@ -129,7 +129,7 @@ trained with a little outlier exposure (unseen scripts as an "other" class) so i
 own competence. Below threshold it **abstains**, returning "probably East Asian, off my loaded map"
 instead of a confident mis-parse. It runs first, gives an instant coarse answer, and decides which script
 extract to download. This supports selective geography as a product: ship ~28 MB that places any input
-coarsely, then fetch the region you care about for street-level detail. Loading is tiered, so the whole
+coarsely, then fetch the region you care about for street-level detail. The data loads in tiers, so the whole
 world never needs to stay resident.
 
 ### Does conditioning really isolate, orpaper over?

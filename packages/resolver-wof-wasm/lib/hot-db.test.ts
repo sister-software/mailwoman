@@ -1,0 +1,116 @@
+import type { ComponentTag } from "@mailwoman/codex/component"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { aroundAll, describe, expect, test } from "vitest"
+
+import type { MailwomanLookupLike } from "#browser-cascade"
+import { runCascade } from "#browser-cascade"
+import { $public } from "#env"
+import { loadSlimWOFDatabase } from "#loader"
+import { WOFWasmPlaceLookup } from "#lookup"
+
+const HOT_DB_PATH = $public.MAILWOMAN_WOF_HOT_DB
+
+const BROOKLYN_BOROUGH = 421_205_765
+const NEW_YORK_LOCALITY = 85_977_539
+
+describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_HOT_DB)", () => {
+	let wasmLookup: WOFWasmPlaceLookup
+
+	const asCascadeLookup = (l: WOFWasmPlaceLookup): MailwomanLookupLike => l as MailwomanLookupLike
+
+	aroundAll(async (runSuite) => {
+		const bytes = await readLocalBuffer(HOT_DB_PATH!)
+		const { db } = await loadSlimWOFDatabase({ source: bytes })
+		using lookup = new WOFWasmPlaceLookup({ db })
+
+		wasmLookup = lookup
+		await runSuite()
+	})
+
+	describe("WASM lookup", () => {
+		test('"Brooklyn" locality query → Brooklyn-the-borough (NYC), not Brooklyn Park MN', async () => {
+			const matches = await wasmLookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: BROOKLYN_BOROUGH, name: "Brooklyn", placetype: "borough" })
+			expect(matches[0]?.exactMatch).toBe(true)
+		})
+
+		test('"New York City" → the New York locality via its WOF alias', async () => {
+			const matches = await wasmLookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: NEW_YORK_LOCALITY, name: "New York", placetype: "locality" })
+			expect(matches[0]?.exactMatch).toBe(true)
+		})
+	})
+
+	describe("Demo resolution (runCascade — the shared resolveTree over the WASM lookup,)", () => {
+		const node = (tag: ComponentTag, value: string, children: AddressNode[] = []): AddressNode => ({
+			tag,
+			value,
+			confidence: 0.95,
+			children,
+			start: 0,
+			end: 0,
+		})
+
+		const tree = (raw: string, roots: AddressNode[]): AddressTree => ({ raw, roots })
+
+		test('Locality "Brooklyn" alone → the borough', async () => {
+			const hits = await runCascade(
+				asCascadeLookup(wasmLookup),
+				tree("Brooklyn", [node("locality", "Brooklyn")]),
+				"Brooklyn"
+			)
+
+			expect(hits[0]?.id).toBe(BROOKLYN_BOROUGH)
+		})
+
+		test('Locality "brooklyn" under region "new york" → the borough (parent scope narrows)', async () => {
+			const hits = await runCascade(
+				asCascadeLookup(wasmLookup),
+				tree("brooklyn, new york, ny", [node("region", "new york", [node("locality", "brooklyn")])]),
+				"brooklyn, new york, ny"
+			)
+
+			expect(hits[0]?.id).toBe(BROOKLYN_BOROUGH)
+		})
+
+		test('Locality "New York City" → the New York locality', async () => {
+			const hits = await runCascade(
+				asCascadeLookup(wasmLookup),
+				tree("New York City", [node("locality", "New York City")]),
+				"New York City"
+			)
+
+			expect(hits[0]?.id).toBe(NEW_YORK_LOCALITY)
+		})
+
+		test("an unresolvable parsed region does not sink the locality (parentFallback recall)", async () => {
+			const hits = await runCascade(
+				asCascadeLookup(wasmLookup),
+				tree("Brooklyn, Zzyzx Nonexistia", [node("region", "Zzyzx Nonexistia", [node("locality", "Brooklyn")])]),
+				"Brooklyn, Zzyzx Nonexistia"
+			)
+
+			expect(hits[0]?.id).toBe(BROOKLYN_BOROUGH)
+		})
+	})
+
+	describe("Node lookup (resolver-wof-sqlite) — parity on the same DB", () => {
+		test('"Brooklyn" locality query → the borough (placetype expansion + alias-bag exact tier)', async () => {
+			using lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
+
+			const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: BROOKLYN_BOROUGH, name: "Brooklyn", placetype: "borough" })
+			expect(matches[0]?.exactMatch).toBe(true)
+		})
+
+		test('"New York City" → the New York locality via the alias bag (no names table on the slim DB)', async () => {
+			using lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
+
+			const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: NEW_YORK_LOCALITY, name: "New York" })
+			expect(matches[0]?.exactMatch).toBe(true)
+		})
+	})
+})

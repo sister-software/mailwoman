@@ -27,7 +27,7 @@ list of contributing sources.
 
 The wording separates three terms that are easy to confuse.
 
-Crediting Who's On First is **recommended**. Linking back to the license is **required**. The
+The project **recommends** crediting Who's On First and **requires** a link to the license. The
 Creative Commons Zero designation covers the **format and structure**, in those words, and does not
 cover the records.
 

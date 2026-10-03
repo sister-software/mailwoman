@@ -90,7 +90,7 @@ def fitted(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
 
 #: How far a rebuilt figure may sit from the committed one and still count as unmoved.
 #:
-#: The table carries full-precision floats off numpy reductions whose last digit depends on SIMD
+#: The table stores full-precision floats from numpy reductions whose last digit depends on SIMD
 #: width, so an exact comparison would pin the host as well as the code. A fit that actually changed
 #: moves ECE in the third decimal.
 TOLERANCE = 1e-9
@@ -113,7 +113,7 @@ def test_the_table_matches_the_committed_reference(fitted: dict[str, Any]) -> No
     """The artifact a decoder loads: the metrics, the subgroups, the curve and the 20 bins."""
     expected = json.loads(REFERENCE.read_text())["table"]
     actual = dict(fitted["table"])
-    # `created_from` is the fixture's own scratch path, which differs every run.
+    # `created_from` stores the fixture's scratch path. That path differs every run.
     expected.pop("created_from", None)
     actual.pop("created_from", None)
     assert actual == approximately(expected)

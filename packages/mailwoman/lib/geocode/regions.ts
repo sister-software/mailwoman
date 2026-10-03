@@ -142,11 +142,12 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
  * Opens and caches per-state address-point and interpolation lookups,
  * so each state's databases open once per batch.
  *
- * Paths resolve through the `releases.json` manifest when one exists. {@link reload} swaps
- * in a newly published version, and {@link close} releases every cached handle.
+ * Paths resolve through the `releases.json` manifest when one exists. {@link reload}
+ * swaps in a newly published version. {@link close} releases every cached handle.
  *
  * Because `for` is synchronous, {@linkcode warm} probes every US state and territory path up front.
- * Construct instances with {@linkcode USStateDatabaseProvider.create}, which warms before returning.
+ * Construct instances with {@linkcode USStateDatabaseProvider.create}.
+ * It warms before returning.
  */
 export class USStateDatabaseProvider implements RegionDatabaseProvider<string, RegionDatabases> {
 	readonly #factory: RegionDatabaseFactory
@@ -170,7 +171,8 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 	}
 
 	/**
-	 * Constructs a provider, reads the release manifest, and warms the path map.
+	 * Constructs a provider.
+	 * It reads the release manifest and warms the path map.
 	 */
 	static async create(factory: RegionDatabaseFactory, dataRoot: PathBuilderLike): Promise<USStateDatabaseProvider> {
 		const root = resolvePath(dataRoot)
@@ -229,7 +231,8 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 	}
 
 	/**
-	 * Re-reads the manifest and database paths, and reopens any cached state whose path changed.
+	 * Re-reads the manifest and database paths.
+	 * It reopens cached states whose paths changed.
 	 *
 	 * The replaced handles stay open until the next reload.
 	 * Lookups are synchronous, so no query still holds one by then.

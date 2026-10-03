@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   CSV → SQLite ingestion utility. Implemented from the earlier draft's `sdk/data/csv.ts`.
+ * CSV → SQLite ingest tool.
  *
- *   Reads a CSV file, infers column types from a sample of rows, creates a SQLite table, and imports
- *   the data. Handles quoted fields, NULL normalization, and duplicate column name disambiguation.
+ * The tool reads a CSV and samples rows to infer column types.
+ * It creates a SQLite table and imports all rows.
+ * It handles quoted fields, null-like values and duplicate column names.
  *
- *   ## Usage
+ * ## Usage
  *
  *   ```sh
  *   mailwoman corpus ingest-csv \
@@ -16,12 +17,15 @@
  *   --output /data/corpus/sources/usgov-nppes/nppes.db
  * ```
  *
- *   Options: --input <path> CSV file to ingest (required) --table <name> SQLite table name (default:
- *   derived from input filename) --output <path> SQLite database path (default: input dir /
- *   table.db) --sample <n> Rows to sample for type inference (default: 100) --separator <char>
- *   Field separator (default: ,) --skip <n> Lines to skip before header (default: 0) --no-header
- *   CSV has no header row — columns will be col_0, col_1, etc. --dry-run Infer schema and print
- *   create table, but don't import
+ * Options:
+ * --input <path> Required CSV path
+ * --table <name> Table name (default: from filename)
+ * --output <path> DB path (default: input dir/<table>.db)
+ * --sample <n> Rows used for type inference (default: 100)
+ * --separator <char> Field delimiter (default: ,)
+ * --skip <n> Lines to skip before header (default: 0)
+ * --no-header Treat CSV as headerless (col_0, col_1, ...)
+ * --dry-run Print inferred schema, skip import
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -35,7 +39,8 @@ import { CSVSpliterator } from "spliterator"
 // #region Column name normalization
 
 /**
- * @deprecated belongs in core, if really needed. spliterator should handle this.
+ * @deprecated This helper may belong in core.
+ * Keep it here until then.
  */
 function normalizeColumnName(raw: string): string {
 	return (
@@ -130,12 +135,8 @@ interface IngestOptions {
 }
 
 async function runIngest(opts: IngestOptions): Promise<void> {
-	// `header: false` with `drop` is what expresses `--skip N`: the spliterator's own header
-	// handling consumes the first row as the header, and `drop` counts from the row after it,
-	// so a preamble before the header has to be dropped here and the header row taken by hand.
-	// Quote handling is end-to-end (quoted delimiters, doubled quotes); `skipEmpty` drops
-	// blank lines that readline would have turned into all-null rows.
-	// The early `break` closes the file descriptor.
+	// Keep parser header handling off so `--skip` works predictably.
+	// We read the header row ourselves.
 	const rows = (): AsyncIterable<string[]> =>
 		CSVSpliterator.fromAsync<string[]>(opts.inputPath, {
 			header: false,
@@ -143,7 +144,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 			drop: opts.skipLines,
 		})
 
-	// Read the header and sample rows before inferring the SQLite schema.
+	// Read header + sample rows to infer schema.
 	process.stderr.write(`Reading ${opts.inputPath} for schema inference...\n`)
 
 	let headerRow: string[] | null = null
@@ -167,20 +168,20 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		throw new Error("No header line found in CSV")
 	}
 
-	// Normalize and deduplicate the input column names.
+	// Normalize and dedupe column names.
 	let rawHeaders: string[]
 
 	if (opts.hasHeader && headerRow) {
 		rawHeaders = headerRow
 	} else {
-		// Auto-generate column names: col_0, col_1, ...
+		// No header: generate col_0, col_1, ...
 		const numCols = sampleRows[0]?.length ?? 0
 		rawHeaders = Array.from({ length: numCols }, (_, i) => `col_${i}`)
 	}
 
 	const colNames = dedupColumns(rawHeaders.map(normalizeColumnName))
 
-	// Infer each column's SQLite type from its sample values.
+	// Infer each column type from samples.
 	const columns: ColumnInfo[] = colNames.map((name, i) => {
 		const samples = sampleRows.map((row) => {
 			const raw = row[i] ?? ""
@@ -194,10 +195,9 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		return info
 	})
 
-	// Generate the table definition and insert statement from the inferred schema.
+	// Build CREATE TABLE and INSERT SQL.
 	const colDefs = columns.map((c) => `"${c.name}" ${c.type}`).join(",\n  ")
-	// Raw DDL by design: the column set + types are inferred from the CSV at runtime (colDefs above),
-	// so a Kysely builder loop would just wrap the same dynamic strings with ceremony and no type safety.
+	// Raw SQL is intentional: columns and types are dynamic at runtime.
 	const createTableSQL = `CREATE TABLE IF NOT EXISTS "${opts.tableName}" (\n  ${colDefs}\n);`
 
 	const tempCols = columns.map((c) => `"${c.name}"`).join(", ")
@@ -211,23 +211,18 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		return
 	}
 
-	// Create the database, then import every input row.
+	// Create database and import rows.
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	await makeDirectories(dirname(opts.outputPath))
 
-	// `Database` — the empty schema — deliberately rather than by default:
-	// `createTableSQL` is built from the columns and types inferred from the CSV at runtime,
-	// so there is no table this file could name at compile time.
-	// Every write below goes through `exec`/`prepare` for the same reason.
+	// Empty schema type is intentional: table shape is runtime-generated.
 	using db = new DatabaseClient<Database>(opts.outputPath)
 	db.exec("PRAGMA journal_mode = OFF") // faster for bulk import
 	db.exec("PRAGMA synchronous = OFF")
 
 	db.exec(createTableSQL)
 
-	// Use the .import approach via a temp table, then insert into ...
-	// Select to handle NULL normalization and type coercion. better-sqlite3 doesn't support .import
-	// natively, so we use a different approach: Read the CSV line-by-line and insert in a transaction.
+	// Insert line-by-line in batches (no native .import here).
 	process.stderr.write(`Importing rows...\n`)
 
 	const insertStmt = db.prepare(
@@ -237,8 +232,8 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	let imported = 0
 	let headerSkipped = false
 
-	// node:sqlite has no `db.transaction(fn)` wrapper.
-	// Use raw begin/commit around the batch.
+	// node:sqlite has no transaction helper.
+	// The code uses BEGIN/COMMIT.
 	const doInsert = () => {
 		db.exec("BEGIN")
 
@@ -277,7 +272,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 			return v
 		})
 
-		// Pad or truncate to column count
+		// Pad or trim to expected column count.
 		while (values.length < columns.length) {
 			values.push(null)
 		}
@@ -297,7 +292,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		}
 	}
 
-	// Flush remaining
+	// Flush remaining rows.
 	if (batch.length) {
 		doInsert()
 		imported += batch.length
@@ -305,7 +300,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 	process.stderr.write(`  Imported ${imported.toLocaleString()} rows into "${opts.tableName}"\n`)
 
-	// Build a basic index on the first text column (likely the primary key)
+	// Create a simple index on the first text column.
 	const firstTextCol = columns.find((c) => c.type === "TEXT")
 
 	if (firstTextCol) {
@@ -336,7 +331,8 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 }
 
 /**
- * Flag-shaped options for {@linkcode ingestCSV} — `table`/`output` derive from `input` when omitted.
+ * Options for {@linkcode ingestCSV}.
+ * `table` and `output` default from `input`.
  */
 export interface IngestCSVOptions {
 	input: string
@@ -352,9 +348,7 @@ export interface IngestCSVOptions {
 /**
  * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows.
  *
- * @throws When `input` is missing. note(phase1): progress narration still writes stderr directly.
- * This predates the report-callback interface and the write sites are deep in the type-inference helpers.
- * Thread a report param if a caller ever needs to capture it.
+ * @throws When `input` does not exist.
  */
 export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	if (!(await pathExists(options.input))) {

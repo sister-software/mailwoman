@@ -28,8 +28,8 @@ letter-containing, and its country posteriors name exactly three countries: US (
 FR (27,119). A GB outward code is letter-containing by construction, so no training example ever put a
 non-zero value in slot 4.
 
-`postcode-gb.bin` is the only artifact that does — and it is not a rare event. Replaying
-`buildAnchorFeatures`'s own recognizer (alphanumeric run → `lookup.get(UPPER)`) over the golden board:
+`postcode-gb.bin` is the only artifact that does — and it is not a rare event. A replay of
+`buildAnchorFeatures`'s recognizer (alphanumeric run → `lookup.get(UPPER)`) over the golden board showed:
 
 ```
 locale en-gb · anchorLookupPath neural-weights-en-gb/postcode-gb.bin
@@ -37,7 +37,7 @@ anchor lookup keys: 2951
 anchor fired on 106/120 rows
 ```
 
-106 of 120 is every row on that board carrying a postcode. Shipping the binary pushed essentially every
+All 106 of the 120 rows on that board carry a postcode. The binary pushed essentially every
 GB parse along an input direction the encoder has no learned response to.
 
 The general rule this inverts is worth stating, because the overlay's own README used to state the other
@@ -50,7 +50,7 @@ saw for every GB example it has ever been shown; a value is the out-of-distribut
 Model `model-v401-base-step-060000-int8.onnx`; `pair-index-gb.bin` 30,825 pairs, δ=10, β=5,
 parentDelta=5. Production runtime pipeline (`createRuntimePipeline` with the classifier only — what
 `mailwoman parse` builds with no `--resolve` and no `MAILWOMAN_WOF_DB`), locale `en-gb`. Three registers
-per row: as-written, lowercase, UPPERCASE. Grading is exact match on the tag's concatenated span, folded
+per row: as-written, lowercase, UPPERCASE. The evaluator uses exact match on the tag's concatenated span, folded
 to uppercase with whitespace stripped.
 
 `mailwoman/eval-harness/fixtures/gb-golden.jsonl`, 120 rows — 106 carry a postcode, 69 carry a
@@ -91,7 +91,7 @@ anchor lookup keys: 42317
 anchor fired on 20/100 rows
 ```
 
-Removing it moves the hash (`8505fdee…` over the same 300 parses), so the channel is required for
+The hash changes when the artifact is removed (`8505fdee…` over the same 300 parses), so the channel is required for
 `en-us` and this change did not touch it.
 
 **FR, byte-stable too.** Same instrument, the 46 FR rows × 3 registers, graded with `postcode-gb.bin`

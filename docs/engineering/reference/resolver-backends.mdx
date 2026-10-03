@@ -10,7 +10,7 @@ comparison between them compared four conditions instead of two.
 |             | `WOFSQLitePlaceLookup` (FTS)               | `WOFCandidateTableLookup` (candidate)     |
 | ----------- | ------------------------------------------ | ----------------------------------------- |
 | Index       | FTS5 over the admin distribution           | byte-range candidate table, clustered     |
-| Ranking     | bm25 + exact-match tiering                 | population-first, country-agnostic        |
+| Order       | bm25 + exact-match tiering                 | population-first, country-agnostic        |
 | Postcodes   | none in the admin distribution             | 3.66 M rows                               |
 | Exonyms     | literal string match only                  | `name_key` aliases (`Munich` → `München`) |
 | Selected by | fallback when no candidate.db is reachable | **the default** — see below               |
@@ -116,7 +116,7 @@ threshold on both tier-1 locales.
 
 Do not grade "the deepest coordinated node". The candidate table carries 3.66 M postcodes, and the
 FTS admin distribution has none, so "deepest" means _postcode_ on one arm and _locality_ on the
-other. Grading that way on the FR set reports a 54-row gain at sub-km distance. That gain
+other. That comparison on the FR set reports a 54-row gain at sub-km distance. That gain
 compares a commune centroid (0.5 km from the address) against a postcode-area centroid (7 km).
 French communes are small, and one postcode spans several of them. Choose a named tier and grade
 both arms at that tier.
@@ -162,8 +162,8 @@ stderr, so a caller can see the missing capability directly. The report does not
    on purpose, so that migrated evals reproduce the retired scripts' numbers. It needs an explicit
    flag before the class is removed.
 
-Removing FTS before completing these steps breaks the pin, ~16 test suites, and every
-`MAILWOMAN_CANDIDATE_DB=none` caller. Those callers would lose all resolution instead of falling
+The pin, ~16 test suites, and every `MAILWOMAN_CANDIDATE_DB=none` caller depend on completing these steps before removing FTS.
+Those callers would lose all resolution instead of falling
 back.
 
 ## Scores are not comparable across backends

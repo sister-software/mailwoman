@@ -47,9 +47,9 @@ publisher's own spelling survives a prose sweep. `nlod-2.0.md` is an example.
 
 ## What could not be retrieved, and what that means
 
-A failed automated fetch leaves a text unretrieved, and it does not indicate a prohibition. Recording the failure
-keeps the two cases apart, because a register that only carries decisions would show a source with no archived terms
-and a source whose terms refuse use in the same way.
+A failed automated fetch leaves a text unretrieved, and it does not indicate a prohibition. The register records
+that failure separately from a license restriction. A register that listed only decisions would show a source with
+no archived terms and a source whose terms refuse use in the same way.
 
 | target                   | attempt                                                    | result                         |
 | ------------------------ | ---------------------------------------------------------- | ------------------------------ |

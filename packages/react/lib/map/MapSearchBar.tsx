@@ -49,7 +49,8 @@ export interface MapSearchBarProps {
 	/**
 	 * A query is running.
 	 *
-	 * Draws a progress hairline along the pill's lower edge, which takes no layout.
+	 * Draws a progress hairline along the pill's lower edge.
+	 * The hairline takes no layout space.
 	 */
 	busy?: boolean
 	/**

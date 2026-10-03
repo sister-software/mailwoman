@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Carry an overlay parquet onto the current row schema, without its recipe output.
+ * @file Convert an overlay parquet to the current row schema, without its recipe output.
  *   `mailwoman-derived-tuples` wherever the upstream was not recorded.
  */
 
@@ -13,6 +13,7 @@ import { once } from "@mailwoman/core/utils/events"
 import type { PathBuilderLike } from "path-ts"
 
 import { openParquetRowStream } from "#parquet/streams"
+import { retiredSourceName } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { jsonlToParquet } from "#tools/jsonl-to-parquet"
 import { surfaceForSource } from "#tools/migrate/recipe-output"
@@ -74,7 +75,9 @@ export const OVERLAY_REGISTERS: Record<string, string | null> = {
 /**
  * Read an INT64 span offset back as a plain number.
  *
- * DuckDB returns an INT64 as a BigInt, which `stringifyJSON` refuses.
+ * DuckDB returns INT64 values as `BigInt`.
+ * `stringifyJSON` refuses `BigInt` values.
+ *
  * The current schema declares the span triple INT32 because `raw` is a short
  * address string, so every in-range value is lossless.
  *
@@ -110,7 +113,13 @@ export interface OverlayMigrationSummary {
  * The register for one overlay source, refusing a source this map does not name.
  */
 export function registerForSource(source: string): string | null {
-	if (!(source in OVERLAY_REGISTERS)) {
+	// The map keys on the retired spelling.
+	// A corpus that uses the current spelling needs the retired key for this lookup.
+	// Otherwise each row fails as though it had no register.
+	// That failure misstates a renamed source as an unrecorded one.
+	const key = retiredSourceName(source)
+
+	if (!(key in OVERLAY_REGISTERS)) {
 		throw new Error(
 			`No register recorded for overlay source ${stringifyJSON(source)}. Read the recipe that writes it and ` +
 				`add it to OVERLAY_REGISTERS: the publication it renders, or null when the row names no record, or ` +
@@ -118,12 +127,12 @@ export function registerForSource(source: string): string | null {
 		)
 	}
 
-	return OVERLAY_REGISTERS[source] ?? null
+	return OVERLAY_REGISTERS[key] ?? null
 }
 
 /**
  * Rewrite one overlay parquet onto the current row schema, staged through
- * {@linkcode jsonlToParquet} so it carries the same column list as every other overlay.
+ * {@linkcode jsonlToParquet} so it has the same column list as every other overlay.
  */
 export async function migrateOverlayParquet(
 	input: PathBuilderLike,

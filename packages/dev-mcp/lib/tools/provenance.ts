@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_provenance` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the interface, and the description is the
- *   required half of it.
+ *   The `mwdev_provenance` tool definition provides the agent-facing description and input schema.
+ *   Its handler reads provenance in the package root.
  */
 
 import { z } from "zod"

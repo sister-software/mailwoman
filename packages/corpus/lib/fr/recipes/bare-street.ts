@@ -8,17 +8,28 @@
 import { FR_VOIE_TYPES } from "@mailwoman/codex/fr"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
+import { decomposeFrStreet } from "#fr/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
 /**
  * Shared provenance for postcode-free BAN rows.
  */
+/**
+ * Resolved once, because `source_id` includes the source as its prefix and a pair
+ * that disagreed would name a source no row of this output declares.
+ */
+const FR_BARE_STREET_SOURCE = defaultRecipeSource("synth-fr-bare-street")
+
 const FR_BARE_STREET_PROVENANCE = {
 	register: SourceRegister.BaseAdresseNationale,
 	surface: SurfaceOrigin.Composed,
+	// The BAN record behind each row exists.
+	// The tuple file has no `sourceID` to identify it.
+	// The extraction must emit that ID to populate this field (#2359).
+	baseSourceID: null,
 }
 
 /**
@@ -70,8 +81,8 @@ export const frBareStreetRecipe: CorpusRecipe = {
 						components: { street: fullStreet } as Record<string, string>,
 						country: "FR",
 						locale: "fr-FR",
-						source: "synth-fr-bare-street",
-						source_id: recipeSourceID("synth-fr-bare-street", {
+						source: FR_BARE_STREET_SOURCE,
+						source_id: recipeSourceID(FR_BARE_STREET_SOURCE, {
 							street: fullStreet,
 							f: "bare-nonvoie",
 							v: String(read),
@@ -95,7 +106,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Rotate comma-separated, compact, abbreviated, and street-only variants.
+			// Rotate comma-separated, compact, abbreviated and street-only variants.
 			const form = read % 4
 			const prefixSurface = form >= 2 ? (FR_VOIE_ABBREV[prefix.toLowerCase()] ?? prefix) : prefix
 
@@ -120,14 +131,14 @@ export const frBareStreetRecipe: CorpusRecipe = {
 						? `${prefix} ${street}`
 						: `${number} ${prefixSurface} ${street} ${locality}`
 
-			const source_id = recipeSourceID("synth-fr-bare-street", { ...components, f: String(form), v: String(read) })
+			const source_id = recipeSourceID(FR_BARE_STREET_SOURCE, { ...components, f: String(form), v: String(read) })
 
 			const canonical = {
 				raw,
 				components,
 				country: "FR",
 				locale: "fr-FR",
-				source: "synth-fr-bare-street",
+				source: FR_BARE_STREET_SOURCE,
 				source_id,
 				corpus_version: "0.9.4",
 				license:

@@ -25,43 +25,26 @@ const CLEAR_SCREEN = "\u001B[2J"
 const CLEAR_LINE = "\u001B[2K"
 const REVERSE_VIDEO = "\u001B[7m"
 
-/**
- * Rows reserved at the bottom of the terminal for the status bar.
- */
 const STATUS_BAR_ROWS = 1
 
-/**
- * Terminal size used when the output reports none or reports zero.
- *
- * A pty opened without a window size reports 0 columns and 0 rows.
- */
 const FALLBACK_COLUMNS = 80
 const FALLBACK_ROWS = 24
 
 /**
- * Minimum pane size.
- *
  * A zero-sized pane would divide by zero in the projection.
  */
 const MIN_COLUMNS = 4
 const MIN_PANE_ROWS = 1
 
-/**
- * Fraction of the pane that one arrow-key press pans.
- */
 const PAN_FRACTION = 0.125
 
-/**
- * Latitude limit of the Web Mercator tile pyramid, in degrees.
- */
 const MERCATOR_LATITUDE_LIMIT = 85.05112878
 
 const COORDINATE_DIGITS = 4
 
 /**
- * The subset of a readable stream the browser uses.
- *
- * The interface is structural so that `process.stdin` and test doubles both satisfy it.
+ * The subset of a readable stream the browser uses, kept structural so that
+ * `process.stdin` and test doubles both satisfy it.
  */
 export interface BrowserInput {
 	setRawMode?(mode: boolean): unknown
@@ -105,9 +88,7 @@ interface DragAnchor {
 }
 
 /**
- * Clips a string to a number of cells, counting code points.
- *
- * Counting code points keeps `slice` from splitting a surrogate pair.
+ * Code-point counts keep `slice` from splitting a surrogate pair.
  */
 function clipToCells(text: string, cells: number): string {
 	const codePoints = Array.from(text)
@@ -116,15 +97,8 @@ function clipToCells(text: string, cells: number): string {
 }
 
 /**
- * A full-screen terminal map browser built on `MapRenderer`.
- *
- * The browser owns terminal modes, viewport state and output.
- * `blitFrame` copies each rendered frame into an `AsciifyTerminal`, which writes only changed cells.
- *
- * The bottom row is the status bar, and the terminal pane excludes it.
- *
- * {@link MapBrowser.restore} undoes every mode change made by {@link MapBrowser.start}.
- * It is idempotent so that the normal exit path, a signal handler and an `exit` hook can all call it.
+ * A full-screen terminal map browser built on `MapRenderer` that owns terminal modes,
+ * viewport state and output, leaving the bottom row as a status bar.
  */
 export class MapBrowser {
 	private readonly source: TileSource
@@ -149,10 +123,8 @@ export class MapBrowser {
 	private resolveExit: ((code: number) => void) | null = null
 
 	/**
-	 * Trailing bytes of the last chunk that form an incomplete escape sequence.
-	 *
-	 * Passing them to the next `decodeInputChunk` call keeps a mouse report split
-	 * across two reads from decoding as an Esc keypress.
+	 * The next `decodeInputChunk` call receives trailing bytes from an incomplete escape sequence
+	 * so a mouse report split across reads does not decode as an Esc keypress.
 	 */
 	private pendingInput = ""
 
@@ -191,9 +163,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Runs until the user quits, resolving with the process exit code (0 for a normal quit, 130 for Ctrl+C).
-	 *
-	 * The terminal is restored before this resolves.
+	 * Runs until the user quits, resolving with the exit code (0 for a normal quit, 130 for Ctrl+C)
+	 * after the terminal is restored.
 	 */
 	async run(): Promise<number> {
 		this.start()
@@ -208,10 +179,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Asks the browser to exit with a code.
-	 *
-	 * A signal handler may call it.
-	 * Calls after the first have no effect.
+	 * Asks the browser to exit with a code, ignoring calls after the first
+	 * so that a signal handler may call it.
 	 */
 	requestExit(code: number): void {
 		const resolve = this.resolveExit
@@ -222,9 +191,6 @@ export class MapBrowser {
 		resolve(code)
 	}
 
-	/**
-	 * Enters the alternate screen and takes over input. {@link restore} reverses it.
-	 */
 	start(): void {
 		if (this.started) return
 
@@ -241,11 +207,6 @@ export class MapBrowser {
 		this.scheduleRender()
 	}
 
-	/**
-	 * Restores the terminal modes changed by {@link start}.
-	 *
-	 * The method is idempotent, so every exit path may call it.
-	 */
 	restore(): void {
 		if (!this.started || this.restored) return
 
@@ -296,9 +257,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Moves the center by a cell delta.
-	 *
-	 * The delta is applied in world pixels so that one step covers the same screen distance at every latitude.
+	 * Moves the center by a cell delta in world pixels, so one step covers the
+	 * same screen distance at every latitude.
 	 */
 	private panByCells(columns: number, rows: number): void {
 		const center = lonLatToWorldPx(this.centerLon, this.centerLat, this.zoom)
@@ -317,9 +277,6 @@ export class MapBrowser {
 		this.centerLat = clamp(lat, -MERCATOR_LATITUDE_LIMIT, MERCATOR_LATITUDE_LIMIT)
 	}
 
-	/**
-	 * Returns the longitude and latitude at the center of a pane cell.
-	 */
 	private cellToLonLat(column: number, row: number): { lon: number; lat: number } {
 		const center = lonLatToWorldPx(this.centerLon, this.centerLat, this.zoom)
 		const originX = center.x - (this.columns * SUBPIXEL_COLUMNS_PER_CELL) / 2
@@ -333,10 +290,7 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Zooms by whole levels.
-	 *
-	 * When an anchor cell is given, the center shifts so the point under the anchor stays under it.
-	 * Otherwise the pane center stays fixed.
+	 * Zooms by whole levels, shifting the center so the point under an anchor cell stays under it.
 	 */
 	private zoomBy(delta: number, anchor: { column: number; row: number } | null): void {
 		const next = clamp(this.zoom + delta, this.source.minZoom, this.source.maxZoom)
@@ -387,9 +341,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Pans relative to the drag's starting point.
-	 *
-	 * Summing per-report deltas would drift because each report is rounded to a whole cell.
+	 * Pans relative to the drag's starting point, because summing per-report deltas
+	 * would drift as each report is rounded to a whole cell.
 	 */
 	private continueDrag(column: number, row: number): void {
 		const anchor = this.drag
@@ -411,9 +364,7 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Ends a drag.
-	 *
-	 * A press and release without motion counts as a click, which centers the map on the clicked cell.
+	 * A press and release without motion counts as a click that centers the map on the clicked cell.
 	 */
 	private endDrag(): void {
 		const anchor = this.drag
@@ -431,9 +382,6 @@ export class MapBrowser {
 		this.scheduleRender()
 	}
 
-	/**
-	 * Reads the terminal size and sizes the pane to exclude the status bar.
-	 */
 	private measure(): void {
 		// The `||` operator also replaces the 0 that a pty without a window size reports.
 		const columns = Math.floor(this.output.columns || FALLBACK_COLUMNS)
@@ -446,10 +394,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Requests a frame.
-	 *
-	 * Renders never overlap.
-	 * Requests that arrive during a render collapse into one follow-up render.
+	 * Requests a frame, collapsing requests that arrive during a render into one
+	 * follow-up so renders never overlap.
 	 */
 	private scheduleRender(): void {
 		if (this.renderInFlight) {
@@ -487,11 +433,10 @@ export class MapBrowser {
 		try {
 			const frame = await this.renderer.renderFrame(viewport)
 
-			// Writing after a restore would draw over the user's shell.
+			// A write after restore would draw over the user's shell.
 			if (this.restored) return
 
-			// A resize during the render makes this frame the wrong shape.
-			// The resize schedules its own render.
+			// A resize during the render makes this frame the wrong shape and schedules its own render.
 			if (frame.columns !== this.columns || frame.rows !== this.paneRows) return
 
 			this.error = null

@@ -1,0 +1,91 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Reads a hand-acquired archive from a vintage-dated `<data-root>/db/nsul/<yyyy-MM>/` directory. No download
+ *   step runs. The command verifies the archive against the sidecar and writes a sealed, atomically-swapped artifact.
+ *
+ *   Coverage includes England, Scotland and Wales. ONS's open terms exclude Northern Ireland postcode data.
+ *   The layer's coverage rows record that exclusion.
+ *
+ *   The pipeline module is lazy-imported so `--help` never faults without the optional
+ *   `@mailwoman/resolver-wof-sqlite` peer.
+ */
+
+import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { Box, Text } from "ink"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
+
+/**
+ * Native command-line interface consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "nsul",
+	description: "Build the ONS NSUL UPRN-to-postcode layer database (GB).",
+	options: {
+		"source-dir": {
+			type: "string",
+			description:
+				"Acquisition dir holding NSUL_E<epoch>_<MON>_<YYYY>.zip. Default: newest <data-root>/db/nsul/<YYYY-MM>",
+		},
+		out: { type: "string", description: "Output path. Default <data-root>/db/nsul/nsul.db" },
+		"uprn-db": {
+			type: "string",
+			description: "The uprn.db to take coordinates from. Default <data-root>/db/uprn/uprn.db",
+		},
+	},
+} as const satisfies CommandSpec
+
+const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
+	const state = useCommandTask(async () => {
+		const { repoRootPath } = await import("@mailwoman/core/paths")
+		const { buildSHA } = await import("#gazetteer/stamp-manifest")
+		const { buildNSULLayer, NSUL_COVERAGE_NOTE, nsulVintageLabel } = await import("#gazetteer/nsul-layer")
+
+		const result = await buildNSULLayer({
+			sourceDir: options.sourceDir,
+			out: options.out,
+			uprnDatabasePath: options.uprnDB,
+			buildSHA: buildSHA(repoRootPath()),
+			onPhase: phaseReporter(),
+		})
+
+		const regions = Object.entries(result.readByRegion)
+			.map(([region, count]) => `${region} ${count.toLocaleString()}`)
+			.join(" · ")
+
+		return [
+			`nsul layer: ${result.out} (${await formatFileSize(result.out)})`,
+			`${result.inserted.toLocaleString()} UPRN→postcode rows — NSUL ${nsulVintageLabel(result.vintage)}, coordinates from uprn.db ${result.uprnLayerVersion}`,
+			`read ${result.read.toLocaleString()} = inserted ${result.inserted.toLocaleString()} + malformed ${result.skippedMalformed.toLocaleString()} + duplicate ${result.skippedDuplicate.toLocaleString()} + no-postcode ${result.skippedNoPostcode.toLocaleString()} + no-coordinate ${result.skippedNoCoordinate.toLocaleString()}`,
+			`by region: ${regions}`,
+			`coverage ${result.coverageCells.toLocaleString()} res-6 cells (basis: designated)`,
+			`archive md5 ${result.archiveMD5}`,
+			result.mismatches.length ? `CHECK VIOLATIONS: ${result.mismatches.join(" · ")}` : "every check holds",
+			NSUL_COVERAGE_NOTE,
+			"license + the four NSUL attribution statements in the layer manifest",
+			result.sealed ? "sealed 0444" : "NOT SEALED",
+			`${(result.durationMs / 1000).toFixed(0)} s`,
+		]
+	})
+
+	if (state.status !== "done") return <CommandTaskResult state={state} />
+
+	if (state.status === "done") {
+		return (
+			<Box flexDirection="column">
+				{state.result.map((line, i) => (
+					<Text key={i} color={i === 0 ? "green" : undefined}>
+						{i === 0 ? "✓ " : "  "}
+						{line}
+					</Text>
+				))}
+			</Box>
+		)
+	}
+
+	return null
+}
+
+export default GazetteerBuildNSUL

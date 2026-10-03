@@ -2,21 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The three copies of the third-party notices agree on which modules are MIT-derived, and each named module
- *   says so in its own header.
+ * @file The three copies of the third-party notices list the same MIT-derived modules.
+ *   Each listed module records its origin in its own header.
  *
- *   Mailwoman began as a fork of Pelias Parser under the MIT license, and MIT conditions its grant on the copyright
- *   notice and the permission notice accompanying copies of the covered software. Discharging that depends on the
- *   notice being accurate about which modules it covers, and three files describe them: the repository notices, the
- *   documentation site's page, and the copy inside `@mailwoman/core` that npm ships to a consumer.
+ *   Mailwoman began as a fork of Pelias Parser under the MIT license. The license requires copies of the covered
+ *   software to include its copyright and permission notices. Three files describe the covered modules.
+ *   The repository holds one notice. The documentation site holds a second page. npm ships the third inside `@mailwoman/core`.
  *
- *   No check compared the three, and they drifted in both directions. Two named rule-based classifiers and a solver
- *   that were deleted in v7.0.0, which claims an obligation over code no package contains. None named the surviving
- *   modules by path, so a rename would have left a notice pointing nowhere with no error anywhere.
- *
- *   The check is mechanical. It reads the module paths each notice names, holds the three sets equal, requires each
- *   named file to exist, and requires each one's header to carry the derivation. It does not judge how derived a
- *   module is, which is not a question a repository check can answer.
+ *   The check reads the module paths in each notice and compares the three sets.
+ *   It verifies that every listed file exists and that each file header records the derivation.
+ *   It does not assess how much of a module comes from the original project.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -27,8 +22,8 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 /**
  * The three notice files, each with the audience that reads it.
  *
- * `packages/core/THIRD_PARTY_NOTICES.md` is the one in the `files` array of `@mailwoman/core`, so it
- * is the only copy that reaches somebody who installs the package rather than opening the repository.
+ * The `packages/core` copy is the only one in `@mailwoman/core`'s `files` array,
+ * so it is the one that reaches an installer.
  */
 const NOTICE_FILES: ReadonlyArray<readonly [path: string, audience: string]> = [
 	["THIRD_PARTY_NOTICES.md", "the repository's notices"],
@@ -37,60 +32,54 @@ const NOTICE_FILES: ReadonlyArray<readonly [path: string, audience: string]> = [
 ]
 
 /**
- * The package the MIT-derived modules live in.
- *
- * Their paths are written relative to it in every notice.
+ * The package the MIT-derived modules live in, relative to which every notice writes their paths.
  */
 const DERIVED_PACKAGE = "packages/core"
 
 /**
- * The module paths a notice names, as `lib/tokenization/<name>.ts`.
+ * The module paths in a notice use the form `lib/tokenization/<name>.ts`.
  *
- * Matching the path rather than a module name is what makes a rename fail the check: a moved
- * file stops existing at the path the notice prints, and the notice is what a licensee reads.
+ * A path match makes a rename fail the check because licensees read the notice.
  */
 function derivedModulePaths(text: string): Set<string> {
 	return new Set(text.match(/lib\/tokenization\/[A-Za-z]+\.ts/gu))
 }
 
 /**
- * The sentence a header carries to record the derivation.
+ * The sentence a header includes to record the derivation.
  *
- * A file's own header is where a reader of that file looks, and a notice
- * elsewhere in the tree does not reach them.
+ * Readers find it in the file header.
+ * A separate notice elsewhere in the tree may not reach them.
  */
 const HEADER_MARKER = "Pelias Parser, MIT"
 
 /**
- * The condition MIT attaches to its grant, as the license states it.
+ * MIT requires each copy of the software to include this notice.
  *
- * The copy that ships has to reproduce it rather than link to it, since a consumer
- * holds the tarball and not the upstream repository.
+ * The shipped copy reproduces the text because consumers receive the tarball.
  */
 const PERMISSION_NOTICE = "shall be included in all copies or substantial portions of the Software"
 
 /**
- * The text with its blockquote markers stripped and every whitespace run folded to one space.
+ * The function strips blockquote markers and folds whitespace runs to one space.
  *
- * The license text is quoted prose that the repository formatter rewraps to its
- * own width, so matching the license's sentence against the raw file would fail
- * on a reflow that changed no text a licensee reads.
+ * The repository formatter rewraps this quoted license.
+ * A raw-text comparison would fail after a reflow that leaves the license content unchanged.
  *
- * `@mailwoman/normalize`'s `collapseWhitespace` is a different operation: it keeps
- * newlines as segment separators and returns an offset map for address text.
- * This folds newlines away and returns a string.
+ * `@mailwoman/normalize`'s `collapseWhitespace` keeps newlines as segment separators
+ * and returns an offset map for address text, so it is a different operation.
  */
 function foldQuotedProse(text: string): string {
 	return text.replaceAll(/^[\t >]+/gmu, "").replaceAll(/\s+/gu, " ")
 }
 
 /**
- * The file that has to carry {@link PERMISSION_NOTICE} in full.
+ * The file that has to include {@link PERMISSION_NOTICE} in full.
  */
 const SHIPPED_NOTICE = "packages/core/THIRD_PARTY_NOTICES.md"
 
 /**
- * The `third-party-notices` check: the notices agree, name files that exist, and each file says so itself.
+ * The `third-party-notices` check compares notice files and verifies each listed file's header.
  */
 export const thirdPartyNoticesCheck: RepoCheck = {
 	id: "third-party-notices",

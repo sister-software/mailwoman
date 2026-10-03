@@ -8,7 +8,7 @@
  * agree on the vocabulary.
  */
 
-import { loadLibpostalDictionary } from "#adapters/utils"
+import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"
 
 const [DIRECTIONALS, STREET_TYPES] = await Promise.all([
 	loadLibpostalDictionary("en", "directionals.txt"),
@@ -24,8 +24,8 @@ export interface DecomposedStreet {
 /**
  * Decompose a US street name into prefix/name/suffix components.
  *
- * Conservative, emitting a prefix or suffix only for a clear directional or street-type
- * keyword, and returning the original as `street` when no pattern matches.
+ * Conservative, emitting a prefix or suffix only for a clear directional or street-type keyword.
+ * It returns the original as `street` when no pattern matches.
  */
 export function decomposeStreet(fullname: string): DecomposedStreet {
 	const trimmed = fullname.trim()

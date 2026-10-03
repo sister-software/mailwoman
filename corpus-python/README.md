@@ -21,7 +21,7 @@ module that contains it.
 
 `launch/` is the second package. It holds the Modal launcher, one module per role, and
 `launch/AGENTS.md` is its runbook. Run it with `-m` from this directory
-(`modal run -m launch.train_remote::<name>`). Running it by file path puts `launch/` itself on
+(`modal run -m launch.train_remote::<name>`). The command fails when run by file path because `launch/` itself goes on
 `sys.path`, and the package's relative imports then fail. The docstring of
 `launch/train_remote.py` lists what each module owns.
 
@@ -106,7 +106,7 @@ On gfx1103, bf16 training ran stably at micro-batch sizes up to 64 and hung at 9
 
 This directory holds one Python file, kept outside the package on purpose. `verify_toolchain.py`
 imports only the standard library, and the pre-commit hook and `package.json` invoke it as bare
-`python3`. Moving it into the package would make every commit depend on a synced virtual
+`python3`. A move into the package would make every commit depend on a synced virtual
 environment.
 
 ## Phase 2 training CLI (`mailwoman_train`)
@@ -158,9 +158,9 @@ weights packages tagged as smoke builds in their README.
 
 SentencePiece is a native binary dependency without maintained Node bindings for **training**. The
 JS ports support inference only. PyTorch and Transformers are also primarily Python libraries.
-Keeping the Python side standalone has two effects:
+The Python side stays standalone for two reasons:
 
 - The TS pipeline can build, test and ship without a Python toolchain on every CI runner.
-- Training (slow, GPU-bound) stays separate from the streaming corpus build (fast, JS).
+- Slow, GPU-bound training stays separate from the fast JS streaming corpus build.
 
 `DECISIONS.md` gives the formal rationale for each decision.

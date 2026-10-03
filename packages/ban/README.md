@@ -24,7 +24,7 @@ attribution:
   `ban:fr`, and the resolver should display
   _"© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)"_.
 
-## Building the database
+## Build the database
 
 BAN's per-département dumps land under `$MAILWOMAN_DATA_ROOT/…/ban/` (or the corpus source dir). The build
 streams them without an external CLI or DuckDB, so it has few dependencies and does not run out of memory
@@ -36,11 +36,11 @@ on the 26M-row national set.
 #    → $MAILWOMAN_DATA_ROOT/db/ban/sources/   (or reuse an existing corpus/sources/ban)
 
 # 2. Build the national extract (writes $MAILWOMAN_DATA_ROOT/db/ban/address-points-fr.db, sealed 0444):
-node packages/ban/out/scripts/build/address-point-database.js \
+node packages/ban/out/tools/build/address-point-database.js \
   --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
 
 # Validate on a few départements first (transient; skips the provenance rewrite):
-node packages/ban/out/scripts/build/address-point-database.js --depts 48,2A,05 --out /tmp/ban-sample.db
+node packages/ban/out/tools/build/address-point-database.js --depts 48,2A,05 --out /tmp/ban-sample.db
 ```
 
 The build records provenance (source URL, license, release, row count, md5) in `ban/ATTRIBUTION.json` at

@@ -12,13 +12,13 @@ tags:
 
 Type a query below to see how Mailwoman handles it. The kind classifier decides whether the query is a POI query or an address. The tester then extracts the subject, which is either a taxonomy category (`hospital`, `drinking fountain`) or a chain brand (`chevron`, `applebee's`). It splits off the location anchor and renders an OverpassQL export you can paste into [Overpass Turbo](https://overpass-turbo.eu/).
 
-Intent detection runs entirely in your browser without a network request. It uses the same `matchPOISubject`, `createKindClassifier`, and OverpassQL emitter that Mailwoman ships as a library in [`@mailwoman/kind-classifier`](https://www.npmjs.com/package/@mailwoman/kind-classifier) and [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy). A brand subject resolves to its Wikidata QID from the same brand table the runtime uses. Pressing "Search live" on a category result sends byte-range HTTP requests against the published gazetteer and POI layer. That step uses no server-side code or model weights, but it does need a network connection.
+Intent detection runs entirely in your browser without a network request. It uses the same `matchPOISubject`, `createKindClassifier`, and OverpassQL emitter that Mailwoman ships as a library in [`@mailwoman/kind-classifier`](https://www.npmjs.com/package/@mailwoman/kind-classifier) and [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy). A brand subject resolves to its Wikidata QID from the same brand table the runtime uses. A click on "Search live" for a category result sends byte-range HTTP requests against the published gazetteer and POI layer. That step uses no server-side code or model weights, but it does need a network connection.
 
 import { POIExplorer } from "@site/src/components/POIExplorer/POIExplorer"
 
 <POIExplorer />
 
-## Reading the result
+## Read the result
 
 - **Kind badge.** This badge shows the Stage 2.5 kind classifier's verdict (`poi_query`, `structured_address`, …) with its confidence. Expand it to see the runner-up kinds.
 - **Category chip.** When the kind is `poi_query`, this chip shows which taxonomy category the subject phrase matched.

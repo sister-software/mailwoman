@@ -7,7 +7,19 @@
  *   Every file writer creates the parent directory first.
  */
 
-import { appendFile, chmod, copyFile, cp, mkdir, rename, rm, symlink, utimes, writeFile } from "node:fs/promises"
+import {
+	appendFile,
+	chmod,
+	copyFile,
+	cp,
+	mkdir,
+	rename,
+	rm,
+	symlink,
+	truncate,
+	utimes,
+	writeFile,
+} from "node:fs/promises"
 
 import { dirname, type PathBuilderLike, resolvePath } from "path-ts"
 import { createNewlineWriter } from "spliterator"
@@ -32,9 +44,9 @@ export function makeDirectories<T extends PathBuilderLike[]>(...paths: T): Promi
 /**
  * Creates one directory and rejects with `EEXIST` when the path already exists.
  *
- * A non-recursive `mkdir` is an atomic test-and-set, and the repository's inter-process
- * locks depend on it. {@linkcode makeDirectories} succeeds on an existing directory,
- * so it cannot replace this function for a lock.
+ * A non-recursive `mkdir` is an atomic test-and-set.
+ * The repository's inter-process locks depend on it. {@linkcode makeDirectories} succeeds
+ * on an existing directory, so it cannot replace this function for a lock.
  */
 export function makeDirectoryExclusive(path: PathBuilderLike): Promise<void> {
 	return mkdir(path.toString()).then(() => undefined)
@@ -58,8 +70,9 @@ export type BufferLike =
  * Writes a local text file.
  *
  * A string is written as is.
- * Any other iterable of strings is written one element per line, and every line
- * ends with a newline, including the last.
+ * Any other iterable of strings is written one element per line.
+ *
+ * Every line ends with a newline, including the last.
  * An empty iterable writes an empty file.
  *
  * @see {@linkcode writeLocalJSONFile} for a JSON-specific writer that pretty-prints and adds a trailing newline.
@@ -189,7 +202,7 @@ export async function writePrivateTextFile<S extends PathBuilderLike[]>(
 	const filePath = resolvePath(...pathSegments)
 
 	await makeDirectories(dirname(filePath))
-	// Setting the mode at creation keeps a new file private from the start.
+	// The mode at creation keeps a new file private from the start.
 	// `writeFile` keeps an existing file's mode, so `changeMode` also runs afterwards.
 	await writeFile(filePath, await content, { encoding: "utf8", mode: 0o600 })
 	await changeMode(filePath, 0o600)
@@ -296,6 +309,28 @@ export function removeFile(path: PathBuilderLike, cachedStats?: Stats): Promise<
  */
 export function removePathIfPresent(path: PathBuilderLike): Promise<void> {
 	return rm(path.toString(), { recursive: true, force: true })
+}
+
+/**
+ * Shortens a file to `length` bytes, discarding everything past that offset.
+ *
+ * A resumed append-only pass uses this to return an output to the offset its checkpoint recorded,
+ * so the bytes a partial run wrote after the checkpoint are removed rather than duplicated.
+ *
+ * @throws {Error} If the file is shorter than `length`, because the checkpoint then describes
+ * bytes the file does not have and extending it with zeroes would corrupt the output.
+ */
+export async function truncateFile(path: PathBuilderLike, length: number): Promise<void> {
+	const stats = await statPath(path)
+
+	if (stats.size < length) {
+		throw new Error(
+			`Cannot truncate ${path.toString()} to ${length} bytes: the file holds ${stats.size}. ` +
+				`Truncating upward would pad the file with zero bytes.`
+		)
+	}
+
+	await truncate(path.toString(), length)
 }
 
 /**

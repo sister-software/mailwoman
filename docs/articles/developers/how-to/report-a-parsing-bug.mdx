@@ -17,7 +17,7 @@ you have already ruled out the two configurations that produce a wrong-looking r
 
 ## 1. Rule out the two false alarms
 
-Both of these look like parser bugs and are not. Checking takes one command each.
+Both of these look like parser bugs. You can check each with one command.
 
 **A missing coordinate on a parse-only install.** `mailwoman parse` never resolves anything; it returns
 components. If you expected a latitude/longitude, you wanted `mailwoman geocode` and a gazetteer.

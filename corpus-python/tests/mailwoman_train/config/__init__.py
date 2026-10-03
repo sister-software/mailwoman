@@ -1,1 +1,1 @@
-"""Tests for `mailwoman_train.config`: the schema, and the strict load that refuses an unknown key."""
+"""Test `mailwoman_train.config` schema and strict loading of unknown keys."""

@@ -1,6 +1,6 @@
-"""Talking to the API, and checking what comes back.
+"""Call the API and validate its response.
 
-`validate_components` enforces the surface-form invariant every generated row must carry: each
+`validate_components` enforces the surface-form invariant every generated row must satisfy: each
 component value is an exact substring of the raw address, so a row that violates it would train a
 span pointing at no token.
 """

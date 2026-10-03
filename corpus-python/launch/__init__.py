@@ -1,6 +1,6 @@
-"""The Modal launcher: staging corpora onto the volume, and starting a GPU run.
+"""The Modal launcher stages corpora onto the volume. It starts a GPU run.
 
-The directory is `launch/` and not `modal/` because a directory named for the package it imports
+The directory is `launch/` and not `modal/` because it imports the `modal` package
 shadows it. With no `__init__.py`, `modal/` became a namespace package that won the import, so
 `import modal` inside this tree answered a module with `__file__` of None and the SDK was
 unreachable even when installed.

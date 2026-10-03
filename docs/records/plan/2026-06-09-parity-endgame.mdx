@@ -41,7 +41,7 @@ default-off and byte-stable in PR #468.
 ## The three governing principles
 
 **1. Model-first, lexicon-as-evidence.** The central correction from that review is that no
-deterministic override ever replaces the model's output. _Training_ covers closed-vocab tags
+deterministic override ever replaces the model's output. The model learns closed-vocab tags
 (balanced extracts with homograph contrast). The gazetteer enters as a
 **soft input-layer clue**, a per-token candidate-tag set the model conditions on,
 and never as a post-parse verdict. Measured grounding: the balanced country extract took

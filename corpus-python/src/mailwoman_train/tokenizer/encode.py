@@ -1,8 +1,8 @@
-"""Encoding one corpus row into the tensors a training step reads.
+"""Encode one corpus row as the tensors a training step reads.
 
 This is where the soft-feed channels are assembled. Each channel is optional and absent by
 default, so a row encoded without one is byte-identical to what the pre-channel recipe produced.
-Every channel projects onto the same pieces the labels do, and pads to the same width.
+Every channel projects onto the same pieces as the labels. Each channel uses the same width.
 """
 
 from __future__ import annotations
@@ -30,11 +30,11 @@ def require_whole_span_triple(
     span_ends: Sequence[int] | None,
     span_tags: Sequence[str] | None,
 ) -> SpanTriple | None:
-    """The span triple when the row carries one, `None` when it carries none, RAISE in between.
+    """The span triple when the row has all three values, `None` when it has none, RAISE in between.
 
-    A partial triple is a corpus writer that emitted two of three columns. Falling back to the
-    token path there would encode the row against labels the writer had already replaced, and the
-    result trains without complaint.
+    A partial triple means a corpus writer emitted two of three columns. The encoder's fallback to the
+    token path there would encode the row against labels the writer had already replaced.
+    The resulting model would train without complaint.
     """
     present = [part is not None for part in (span_starts, span_ends, span_tags)]
     if not any(present):
@@ -57,7 +57,7 @@ def fit_channel(
     """Truncate a painted channel to `max_length` and zero-pad it to the width the labels use.
 
     Every channel lands on the same pieces the labels do, so it must end the same width. A channel
-    padded to a different one produces a tensor the collate cannot stack, which surfaces as a shape
+    padded to a different width produces a tensor the collate cannot stack. That surfaces as a shape
     error somewhere else entirely.
     """
     feats, confs = painted
@@ -83,7 +83,7 @@ def paint_anchor(
 
     `"shaped"` paints on postcode-SHAPED spans rather than gold postcode labels (#220/#723),
     mirroring inference's `neural/postcode-anchor.ts` — so the model trains on the anchor firing on
-    house-numbers-that-look-like-ZIPs and learns to override it. It reads the raw text alone and
+    house-numbers-that-look-like-ZIPs and learns to override it. It reads only the raw text and
     ignores tokens, labels and spans. The other two modes follow the label source: a row with a
     span triple takes the postcode range off the spans, a row without it off the tokens.
     """
@@ -116,12 +116,12 @@ def encode_row(
     Truncates to ``max_length`` SP pieces. Pads to ``max_length`` with the SP ``pad_id`` and
     fills the label tail with ``IGNORE_INDEX`` so cross-entropy ignores the padding.
 
-    **Label source** (#519, the v0.5.0 char-offset migration): when the row carries the span
+    **Label source** (#519, the v0.5.0 char-offset migration): when the row has the span
     triple (``span_starts``/``span_ends``/``span_tags``), the per-char label array is built FROM
     THE SPANS and the token-quantized path is skipped — intra-span punctuation pieces get the
-    span's label, which the token path structurally cannot express. Rows without spans use the
+    span's label. The token path cannot represent that alignment. Rows without spans use the
     legacy ``tokens``/``labels`` path unchanged, so the loader reads both corpus generations
-    during the transition. the token path is deleted once v0.5.0 lands. This is one storage
+    during the transition. The token path is deleted once v0.5.0 lands. This is one storage
     format change in flight rather than a permanent dual-format fork.
 
     When ``anchor_lookup`` is supplied (the postcode-anchor pilot, #239/#240), also returns
@@ -132,8 +132,8 @@ def encode_row(
 
     When ``gazetteer_lexicon`` is supplied (the gazetteer anchor, #464), also returns
     ``gazetteer_features`` ``(max_length, lexicon.feature_dim)`` and ``gazetteer_confidence``
-    ``(max_length,)`` — candidate-tag-set clues painted from the RAW SURFACE only (never labels.
-    identical computation at train and inference, and identical under both label sources).
+    ``(max_length,)`` — candidate-tag-set clues painted from the RAW SURFACE only (never labels).
+    Train and inference compute the same values under either label source.
     Absent → omitted (back-compat).
     """
     triple = require_whole_span_triple(span_starts, span_ends, span_tags)

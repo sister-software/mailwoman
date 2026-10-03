@@ -24,10 +24,10 @@ export interface ModuleSpecifierOptions {
  * Every module specifier `source` imports, re-exports, or dynamically imports,
  * in document order, as the string literal that holds it.
  *
- * A rewriter needs the node rather than its text: two specifiers in one file can read alike,
- * and the offsets are the only thing that tells them apart. {@linkcode moduleSpecifiers}
- * is the text-only reading of the same walk, so a guard that counts specifiers
- * and a fixer that edits them can never disagree about which ones exist.
+ * A rewriter needs the node rather than its text.
+ * Two specifiers in one file can read alike. and the offsets are the only thing that tells them
+ * apart. {@linkcode moduleSpecifiers} is the text-only reading of the same walk, so a guard
+ * that counts specifiers and a fixer that edits them can never disagree about which ones exist.
  *
  * String-literal-like specifiers are collected.
  * A no-substitution template literal counts, since `` import(`./x.ts`) ``

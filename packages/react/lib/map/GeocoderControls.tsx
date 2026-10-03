@@ -31,33 +31,15 @@ import { VersionPicker } from "./VersionPicker.tsx"
  * Props for {@linkcode GeocoderControls}.
  */
 export interface GeocoderControlsProps {
-	/**
-	 * The geocoder runtime supplied by the host.
-	 */
 	runtime: GeocoderRuntime
-	/**
-	 * The parse and resolve state.
-	 */
 	geocode: UseGeocode
-	/**
-	 * The place-autocomplete combobox state.
-	 */
 	autocomplete: UsePlaceAutocomplete
-	/**
-	 * The compare-mode state.
-	 */
 	compare: UseCompareState
 	/**
 	 * A query from the URL to run once the runtime is ready.
 	 */
 	initialQuery?: string | null
-	/**
-	 * Panels supplied by the host.
-	 */
 	panels: GeocoderPanels
-	/**
-	 * The example chips.
-	 */
 	presets: ReadonlyArray<Preset>
 	/**
 	 * The input placeholder.
@@ -65,21 +47,12 @@ export interface GeocoderControlsProps {
 	 * The field also selects its value on focus while it still equals this text.
 	 */
 	placeholder: string
-	/**
-	 * The map instance used by the compass, label picking, and layer controls.
-	 */
 	map?: MapInstance | null
 	/**
 	 * Called before each user-initiated query, so the host can write the query to its URL.
 	 */
 	onSubmitQuery?: (query: string) => void
-	/**
-	 * Called when the user selects a model version.
-	 */
 	onSelectVersion: (version: string) => void
-	/**
-	 * Called when the user toggles the forced WASM backend.
-	 */
 	onForceWASMChange: (forceWASM: boolean) => void
 	/**
 	 * Whether the developer panel starts open.
@@ -108,9 +81,9 @@ const DRAG_TRAVEL_PX = 3
 const OVERSCROLL_PROMOTE_PX = 8
 
 /**
- * Renders the search panel, result panel, map control rail, and side sheets over the map.
+ * Renders the search and result panels, map control rail and side sheets over the map.
  *
- * On narrow screens the search panel is a bottom drawer that the user can drag between detents.
+ * On narrow screens, users can drag the search panel between bottom-drawer detents.
  */
 export function GeocoderControls({
 	runtime,
@@ -154,7 +127,8 @@ export function GeocoderControls({
 			floor: viewport * 0.15,
 			// A drag released below this height dismisses the result.
 			dismissBelow: viewport * 0.28,
-			// At or below this height the drawer counts as collapsed, and the control rail returns.
+			// At or below this height, the drawer counts as collapsed.
+			// The control rail then returns.
 			collapsedBelow: viewport * 0.2,
 		}
 	}, [])
@@ -194,7 +168,7 @@ export function GeocoderControls({
 
 			if (!drag) return
 
-			// Dragging up makes the drawer taller, so the delta is inverted against the pointer's y.
+			// An upward drag makes the drawer taller, so the delta is inverted against the pointer's y.
 			const delta = drag.startY - event.clientY
 
 			if (Math.abs(delta) > DRAG_TRAVEL_PX) {
@@ -208,8 +182,8 @@ export function GeocoderControls({
 		[sheetDetents]
 	)
 
-	// A tap, the handle's keyboard activation, and the handle's `aria-expanded` all
-	// use this midpoint to decide which detent the drawer is at.
+	// A tap, keyboard activation of the handle and the handle's `aria-expanded` state
+	// all use this midpoint to select the drawer detent.
 	const detentMidpoint = useCallback(() => {
 		const { medium, large } = sheetDetents()
 
@@ -236,7 +210,8 @@ export function GeocoderControls({
 		const midpoint = (medium + large) / 2
 		const current = sheetRef.current?.getBoundingClientRect().height ?? medium
 
-		// A press without travel is a tap, which toggles between the two detents.
+		// A press without travel counts as a tap.
+		// It toggles between the two detents.
 		if (!drag.moved) {
 			toggleDetent()
 
@@ -340,7 +315,8 @@ export function GeocoderControls({
 		void geocode.submit(initialQuery)
 	}, [initialQuery, runtime.ready, geocode])
 
-	// Crossing the drawer breakpoint clears a dragged height, which would otherwise clip the desktop column.
+	// A drawer-breakpoint crossing clears any dragged height.
+	// The height could clip the desktop column.
 	useEffect(() => {
 		const query = globalThis.matchMedia(DRAWER_LAYOUT)
 		const onChange = () => setSheetHeight(null)
@@ -351,7 +327,7 @@ export function GeocoderControls({
 	}, [])
 
 	// A user pan, zoom, or rotate shrinks the drawer to its floor detent without dismissing the result.
-	// Programmatic camera moves, such as the fly-to after a query, carry no `originalEvent` and are ignored.
+	// Programmatic camera moves, such as the fly-to after a query, have no `originalEvent` and are ignored.
 	useEffect(() => {
 		if (!map) return
 
@@ -392,7 +368,7 @@ export function GeocoderControls({
 		return () => document.removeEventListener("keydown", onKeyDown)
 	}, [openSheet])
 
-	// Clicking a map label searches for its name.
+	// A map-label click searches for its name.
 	const pickLabel = useCallback(
 		(name: string) => {
 			geocode.setText(name)
@@ -430,12 +406,8 @@ export function GeocoderControls({
 		<>
 			<MapProgressBar active={bundleLoading} fraction={fraction} label="Loading the geocoder" />
 
-			{/*
-			 * One panel holds the search, the examples, and the result.
-			 *
-			 * On desktop it is a left column sized to its content.
-			 * On narrow screens it is a bottom drawer.
-			 */}
+			{/* One panel holds the search, examples and result. On desktop it is a left column sized to its content.
+			    On narrow screens it is a bottom drawer. */}
 			<section
 				className="mw-map-panel"
 				aria-label="Search and results"
@@ -446,7 +418,10 @@ export function GeocoderControls({
 				onPointerCancel={onPanelPointerUp}
 				{...(sheetHeight === null ? {} : { style: { maxHeight: `${Math.round(sheetHeight)}px` } })}
 			>
-				{/* The header holds the grab bar and the search field, and it stays pinned while the result scrolls. */}
+				{/*
+				 * The header holds the grab bar and search field.
+				 * It stays pinned while the result scrolls.
+				 */}
 				<div className="mw-map-panel__header" onPointerDown={onHeaderPointerDown}>
 					<div className="mw-map-panel__grip">
 						{/* The handle appears only with a result, because there is no content to expand without one. */}
@@ -568,12 +543,8 @@ export function GeocoderControls({
 				) : null}
 			</section>
 
-			{/*
-			 * Every floating control lives in this one rail so none can overlap.
-			 *
-			 * The compass has its own group because it appears and disappears.
-			 * The rail hides while the drawer is raised.
-			 */}
+			{/* Every floating control uses this rail to prevent overlap. The compass has its own group because it appears
+			    and disappears. The rail hides while the drawer is raised. */}
 			<MapControlStack label="Map controls" className={drawerRaised ? "mw-map-control-stack--drawer-open" : undefined}>
 				<MapControlGroup>
 					<MapControlButton

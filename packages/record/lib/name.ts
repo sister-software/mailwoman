@@ -257,7 +257,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	if (!tokens.length) return Object.keys(result).length ? result : null
 
-	// 3. Leading titles → prefix.
+	// 3. Titles at the start become the prefix.
 	const prefixParts: string[] = []
 
 	while (tokens.length > 1 && TITLES.has(norm(tokens[0]!))) {
@@ -268,7 +268,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		result.prefix = prefixParts.join(" ")
 	}
 
-	// 4. Trailing suffixes → suffix (a single name token must remain).
+	// 4. Suffixes at the end become the suffix, while one name token must remain.
 	const suffixParts: string[] = []
 
 	while (tokens.length > 1 && SUFFIXES.has(norm(tokens.at(-1)!))) {
@@ -339,8 +339,9 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 /**
  * The order a person name prints in.
  *
- * Western / romanized only, the same scope {@linkcode parsePersonName} declares: a family-first
- * system is not this order reversed, and inventing one here would be worse than having none.
+ * Western / romanized only, the same scope {@linkcode parsePersonName} declares.
+ * A family-first system does not use this order in reverse.
+ * An invented order here would be worse than having none.
  */
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]
 
@@ -359,13 +360,15 @@ export type PersonNameStyle = "full" | "short"
 /**
  * Render a {@linkcode PersonName} back to a string — the inverse of {@linkcode parsePersonName}.
  *
- * `"full"` prints every part the parser identified except the nickname, which is an
- * alternative to the given name rather than an addition to it.
- * `"short"` prints what a person is addressed by, which is the form a display label and a match key want.
+ * `"full"` prints every part the parser identified except the nickname.
+ * A nickname is an alternative to the given name rather than an addition to it.
+ *
+ * `"short"` prints what a person is addressed by.
+ * Display labels and match keys use this form.
  *
  * The particle travels with the surname in both styles.
- * The parser stores it separately so the matcher can compare `Vega` independently of
- * `de la`; printing them apart would produce a name nobody wrote.
+ * The parser stores it separately so the matcher can compare `Vega` independently of `de la`;
+ * printing them apart would produce a form absent from the input name.
  */
 export function formatPersonName(name: PersonName | null | undefined, style: PersonNameStyle = "full"): string {
 	if (!name) return ""

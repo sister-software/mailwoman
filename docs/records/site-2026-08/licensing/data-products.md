@@ -7,7 +7,7 @@ hide_footer: true
 
 # Database products catalog
 
-Mailwoman consists of an engine and a set of databases. The engine is one npm install, and its terms are on the [licensing overview](./index.md). The databases are separate artifacts with their own provenance, sizes, and terms. Their terms differ because each database inherits obligations from the public register it was compiled from, which often surprises people.
+Mailwoman consists of an engine and a set of databases. The engine is one npm install, and its terms are on the [licensing overview](./index.md). The databases are separate artifacts with their own provenance, sizes, and terms. Their terms differ because each database inherits obligations from its source register. Maintainers who expect one license to cover every database can be surprised by those differences.
 
 This page lists the databases, with one entry per artifact. Each entry covers what the artifact contains, where the data came from, what the upstream license requires, whether we distribute the artifact or ship you the builder, and how current it is. If you are deciding what to load into a product, read this page alongside [data licensing & provenance](./data-provenance.md), which covers the same sources from the legal side.
 
@@ -22,7 +22,9 @@ This page lists the databases, with one entry per artifact. Each entry covers wh
 
 **Cadence** describes current practice rather than a goal. Most of these artifacts are rebuilt when coverage changes or an ingest bug is fixed. They have no fixed schedule. Each entry states when that is the case.
 
-Every artifact is a **sealed** SQLite file. It is built to a temp path, verified, swapped into place, and then set to `chmod 0444`. Updates are full rebuilds. None of these artifacts is a live database you write to.
+Every artifact is a **sealed** SQLite file. The build writes it to a temporary path. The process verifies
+the file before swapping it into place, then sets its permissions to `chmod 0444`. Updates are full
+rebuilds. None of these artifacts is a live database you write to.
 
 ## The shelf at a glance
 
@@ -115,7 +117,7 @@ This is layer #1 on the [spatial-layer interface](https://github.com/sister-soft
 
 **Approximate size.** 3.7 GB sealed.
 
-**Build.** `mailwoman gazetteer build poi --countries US,CA,MX,FR`. The [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx) is the full build/verify/publish procedure, including the Overture schema problems that first-time builders usually hit.
+**Build.** `mailwoman gazetteer build poi --countries US,CA,MX,FR`. The [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx) is the full build/verify/publish procedure, including Overture schema problems reported by first-time builders.
 
 :::info[The ODbL half of POI is a different artifact]
 
@@ -284,7 +286,7 @@ These packages are the parser itself, distributed as data-only npm packages that
 
 **Model.** Version 7.0.0, the base trained from scratch. It is ONNX int8, dynamically quantized from fp32, with opset 17, max sequence 128, six layers at hidden size 384, vocabulary 73,143, and roughly 29M parameters. It is **37.6 MB int8** (146.6 MB fp32). The en-US package README prints older size and vocabulary figures. `model-card.json` is the authoritative source.
 
-**Training data.** The corpus is compiled only from permissive sources by construction. The corpus build filters share-alike rows through `SHARE_ALIKE_PATTERN` (`--exclude-share-alike`). The model card's attribution list names HM Land Registry PPD (OGL v3.0), LINZ-derived OpenAddresses NZ (CC-BY 4.0), BAN (Licence Ouverte 2.0), Overture Addresses (CDLA-Permissive-2.0), and several per-country OpenAddresses sets. **No ODbL source appears.** The CC-BY and OGL sources carry real attribution obligations, which travel with the model card.
+**Corpus sources.** The corpus is compiled only from permissive sources by construction. The corpus build filters share-alike rows through `SHARE_ALIKE_PATTERN` (`--exclude-share-alike`). The model card's attribution list names HM Land Registry PPD (OGL v3.0), LINZ-derived OpenAddresses NZ (CC-BY 4.0), BAN (Licence Ouverte 2.0), Overture Addresses (CDLA-Permissive-2.0), and several per-country OpenAddresses sets. **No ODbL source appears.** The CC-BY and OGL sources carry real attribution obligations, which travel with the model card.
 
 :::danger[Correction, 2026-09-27: the filter cited above never ran]
 
@@ -299,11 +301,16 @@ The paragraph's third and fourth sentences are about the model card's own attrib
 unaffected. What is corrected is the mechanism the second sentence offers as the reason to believe them.
 [The data licensing page](./data-provenance.md) carries the same correction with the replacement named.
 
+Its third sentence also gives `CDLA-Permissive-2.0` for Overture Addresses. That identifier is the
+Places grant. Overture declares no identifier for the Addresses theme and lists the upstream register per
+country instead, so those rows carry the register's terms. The model card now reads that way, and
+`docs/engineering/reference/artifact-rights-inventory.mdx` carries the citation.
+
 :::
 
 **Tier:** shipped, on two backends that must agree. npm hosts the packages, and the public Hugging Face bucket `sister-software/mailwoman` hosts the binaries that the CI publish job downloads.
 
-**Cadence.** No cadence is committed. Versions are lockstep: every workspace, including the weights, shares one version per release. A weights package version therefore tracks the release number rather than the model's own lineage. Most releases change only code. Promoting a newly trained model to the default is a deliberate, larger operation. The model's own identity is recorded in `model_lineage` on the card.
+**Cadence.** No cadence is committed. Versions are lockstep: every workspace, including the weights, shares one version per release. A weights package version therefore tracks the release number rather than the model's own lineage. Most releases change only code. The team promotes a newly trained model to the default in a separate, larger operation. The model's own identity is recorded in `model_lineage` on the card.
 
 **Note on card drift.** The overlay model cards are not bumped automatically at release, so their `version` fields lag the base. Read `model_lineage` and `files_md5` rather than the overlay card's version number.
 
@@ -319,7 +326,7 @@ unaffected. What is corrected is the mechanism the second sentence offers as the
 
 **Intended tier.** Candidate for shipped. The open problem is size, because the public-domain source leaves no licensing question. A nationwide fixed-broadband vintage has on the order of 10⁸ rows. The likely result is a shipped pilot-state subset with build-local for the rest, following the POI layer's approach of piloting before scaling.
 
-**Intended cadence.** `versioned-refresh`: re-issued under the same name for each BDC vintage, with each issue sealed. The `as_of_date` would be carried as `source_vintage` and reported on every answer. Filing data is always valid only as of a specific vintage.
+**Intended cadence.** `versioned-refresh`: re-issued under the same name for each BDC vintage, with each issue sealed. The `as_of_date` would appear as `source_vintage` on every answer. Each filing record applies to one specific vintage.
 
 **The fixed boundary.** The CostQuest Fabric, the licensed map from BSL id to a precise rooftop point, is **never ingested, shipped, or used to derive data**. All spatial work happens at public block granularity plus the address spine we already own.
 
@@ -334,7 +341,7 @@ unaffected. What is corrected is the mechanism the second sentence offers as the
 ## See also
 
 - [Data licensing & provenance](./data-provenance.md): the per-source license table, the ODbL boundary, and what counsel still needs to confirm.
-- [Pricing](../../../articles/pricing.mdx): the engine's tiers and the OEM band for shipping Mailwoman inside a product you license to others.
+- [Engine tiers and OEM pricing](../../../articles/pricing.mdx): the engine's tiers and the OEM band for shipping Mailwoman inside a product you license to others.
 - [Spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx): the schema every layer database embeds, and the source of the tier vocabulary on this page.
 - [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx): the worked build/verify/publish example.
 - [Data, locales, and coverage](../concepts/data-locales-and-coverage.mdx): the same layers, described by what they can and cannot resolve.

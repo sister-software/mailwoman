@@ -133,7 +133,7 @@ it, and the record says otherwise.
 **Run B's own pre-registered sheet: 5 PASS, 1 FAIL (G3 invariance, 4 new violations), 2 MIXED,
 1 INCONCLUSIVE, and 5 NOT SCORED.** Five of fourteen bars had no instrument on the host — missing
 fixtures, an absent harness, an absent reference. A check where a third of the bars cannot be
-evaluated is incomplete. Supplying the missing instruments is bounded work (§4).
+evaluated is incomplete. The missing instruments are bounded work (§4).
 
 ### 2.2 The gauntlet
 
@@ -576,14 +576,14 @@ This review's first finding is the gap between what the receipts show and what t
 The measurements are accurate. The narrative built on top of them has drifted. A release row quotes
 two failing floors as gains. "88/88" is a denominator after six demotions. The `README` promises
 calibrated confidences that a default consumer does not get. A 12-point arena drop exists in one
-JSON file and nowhere else. Closing that gap takes a week of writing rather than a quarter of
-engineering. Once it is closed, each claim the project makes about being done will match a receipt.
+JSON file and nowhere else. The team can close that gap with a week of writing rather than a
+quarter of engineering. Each project claim about completion can then match a receipt.
 
 ---
 
 ## Corrections to numbers in circulation
 
-| Circulating                    | Actual                                                                                                                                                                                     |
+| Claim                          | Actual                                                                                                                                                                                     |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | "gauntlet 88/88"               | 88 is the count of **blocking** rows after six failing rows were demoted on 2026-08-05/06. The last measured run is #1525's **92/94 conditional, 177 tracked**. No results artifact exists |
 | "279/400 pass"                 | 400 candidates → 7 `partial_match` parked → **393 through the pipeline**; 279 pass = 71.0% of 393, 69.75% of 400                                                                           |

@@ -16,8 +16,9 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { EVAL_SOURCE, TRAIN_SOURCES, type UnitSource } from "#recipes/unit/sources"
 import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
@@ -119,7 +120,7 @@ const VENUES: readonly string[] = [
 /**
  * Share of tails that write a comma before the postcode.
  *
- * A bare number alone in a later comma segment appears nowhere else in the mixture,
+ * A bare number by itself in a later comma segment appears nowhere else in the mixture,
  * so this is the only counter-evidence for that segment.
  */
 const COMMA_POSTCODE_WEIGHT = 0.15
@@ -229,7 +230,7 @@ export const unitRecipe: CorpusRecipe = {
 		if (opts.count == null) throw new Error("unit recipe requires --count <N>")
 		const count = opts.count
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-unit"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-unit")
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
 
 		const pool: UnitTuple[] = []
@@ -257,8 +258,9 @@ export const unitRecipe: CorpusRecipe = {
 			const base = pool[Math.floor(random() * N)]!
 			const unit = makeUnit(random, base.oaUnit)
 			const { raw, components } = renderUnit(random, base, unit)
-			// The rendered component rather than the designator form handed in: `full-comma-bare` writes the
-			// identifier alone, so checking the pre-render string would refuse every row of that layout.
+			// The rendered component rather than the designator form handed in:
+			// `full-comma-bare` writes the identifier by itself, so checking the pre-render
+			// string would refuse every row of that layout.
 			const rendered = components.unit
 
 			// The unit must survive verbatim in raw, else alignment can't label it.

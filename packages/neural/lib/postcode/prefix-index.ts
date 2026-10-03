@@ -17,7 +17,8 @@ const MAX_EXACT_WOF_ID = Number.MAX_SAFE_INTEGER
 /**
  * One administrative place that a postcode prefix lies within.
  *
- * The file stores each ancestor once in a dictionary, and nodes reference it by index.
+ * The file stores each ancestor once in a dictionary.
+ * Nodes reference it by index.
  */
 export interface PostcodePrefixAncestor {
 	/**
@@ -26,12 +27,13 @@ export interface PostcodePrefixAncestor {
 	placetype: string
 
 	/**
-	 * The Who's On First id, which consumers join against the gazetteer.
+	 * The Who's On First ID that consumers join against the gazetteer.
 	 */
 	wofID: number
 
 	/**
-	 * The display name, which keeps a trace readable without a gazetteer lookup.
+	 * The display name.
+	 * It keeps a trace readable without a gazetteer lookup.
 	 */
 	name: string
 }
@@ -94,14 +96,14 @@ export interface PostcodePrefixHeader {
 	 * The sub-national scope slug and filename suffix, such as `"gb-esw"` for
 	 * Code-Point Open or `"gb-ni"` for the BT districts.
 	 *
-	 * It separates files for one country that come from registers with different licences and coverage.
+	 * It separates files for one country that come from registers with different licenses and coverage.
 	 */
 	scope: string
 	schemaVersion: 1
 
 	/**
 	 * The prefix granularities in the node table, such as `["outward"]` for GB
-	 * or `["3"]` for US sectional centres.
+	 * or `["3"]` for US sectional centers.
 	 */
 	levels: readonly string[]
 
@@ -129,7 +131,8 @@ export interface PostcodePrefixHeader {
 	tier: PostcodePrefixTier
 
 	/**
-	 * The source licence attribution, which stays with any copy of the artifact.
+	 * The source license attribution.
+	 * Keep it with every copy of the artifact.
 	 */
 	attribution: string
 
@@ -142,7 +145,9 @@ export interface PostcodePrefixHeader {
 	coverageNote: string
 
 	/**
-	 * The emission bias magnitude, which stays absent until calibration measures a value.
+	 * The emission bias magnitude.
+	 *
+	 * It stays absent until calibration measures a value.
 	 * No consumer reads it.
 	 */
 	delta?: number
@@ -431,7 +436,9 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	}
 
 	/**
-	 * The header's country code, which a load site uses to reject an index built for another country.
+	 * The header's country code.
+	 *
+	 * A load site uses it to reject an index built for another country.
 	 */
 	get country(): string {
 		return this.header.country
@@ -449,7 +456,7 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	/**
 	 * Returns the node for one prefix, or `null` when the index has none.
 	 *
-	 * A miss is neutral unless the header's `coverageNote` says the register is complete.
+	 * A miss is neutral unless the header's `coverageNote` reports that the register is complete.
 	 */
 	probe(prefix: string): PostcodePrefixNode | null {
 		return this.#nodes.get(prefix) ?? null

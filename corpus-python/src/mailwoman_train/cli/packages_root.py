@@ -13,9 +13,9 @@ def find_packages_root() -> Path:
     """The workspace `packages/` directory, found by walking up for the repo root.
 
     Searches for a parent holding both `packages/` and `package.json` rather than counting hops. A
-    hop count encodes this file's depth, so moving the module changes where the bundles get
-    written — and the previous count was one too high, which sent the search past the repo root to
-    a directory with no `packages/` at all.
+    A hop count encodes this file's depth, so moving the module changes where bundles get written.
+    The previous count was one too high. It sent the search past the repo root to a directory without
+    `packages/`.
 
     RAISES when no parent qualifies. The fallback was a relative `Path("packages")`, so a package
     build outside a checkout wrote `./packages/neural-weights-<locale>/` under the working

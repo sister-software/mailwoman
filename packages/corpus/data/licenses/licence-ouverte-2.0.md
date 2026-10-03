@@ -12,8 +12,8 @@ The canonical page `https://www.etalab.gouv.fr/licence-ouverte-open-licence/` no
 
 > droit non exclusif et gratuit de libre « Réutilisation » de l'« Information »
 
-Covering commercial and non-commercial purposes, and the acts of communicating, reproducing, adapting, modifying,
-distributing and exploiting commercially.
+The grant covers commercial and non-commercial purposes. It permits communicating, reproducing,
+adapting, modifying, distributing, and exploiting the information commercially.
 
 ## The condition, quoted
 

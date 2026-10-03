@@ -3,17 +3,18 @@
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { BAN_ADAPTER_ID, createBanAdapter } from "@mailwoman/corpus/fr/adapters/ban/adapter"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { describe, expect, it } from "vitest"
+
+import { BAN_ADAPTER_ID, createBanAdapter } from "#fr/adapters/ban/adapter"
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("ban")
 
 const fixtureCSV = workspacePath("corpus", "fixtures", "ban", "sample.csv")
 
 describe("ban adapter against fixture sample.csv", () => {
-	it("emits a row per CSV record with FR country + Licence Ouverte (the elected BAN license, #26)", async () => {
+	it("emits a row per CSV record under Licence Ouverte (the elected BAN license, #26)", async () => {
 		const manifest = await runAdapter({
 			adapter: createBanAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
@@ -21,15 +22,64 @@ describe("ban adapter against fixture sample.csv", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		expect(manifest.yielded).toBe(7)
+		// The fixture holds 18 records and the Pirae row carries no `nom_voie`, which the
+		// street check drops, as it drops 958 of French Polynesia's 7,713 published rows.
+		expect(manifest.yielded).toBe(17)
 
 		const rows = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)
 
-		expect(rows).toHaveLength(7)
-		expect(rows.every((r) => r.country === "FR")).toBe(true)
-		expect(rows.every((r) => r.locale === "fr-FR")).toBe(true)
+		expect(rows).toHaveLength(17)
 		expect(rows.every((r) => r.license === "Licence Ouverte 2.0")).toBe(true)
 		expect(rows.every((r) => r.source === BAN_ADAPTER_ID)).toBe(true)
+		// One language across every jurisdiction, with the region carrying the jurisdiction.
+		expect(rows.every((r) => r.locale === `fr-${r.country}`)).toBe(true)
+	})
+
+	it("reads each row's country from its INSEE commune code", async () => {
+		await runAdapter({
+			adapter: createBanAdapter(),
+			adapterOptions: { inputPath: fixtureCSV },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const rows = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)
+		const byCountry = new Map<string, number>()
+
+		for (const row of rows) {
+			byCountry.set(row.country, (byCountry.get(row.country) ?? 0) + 1)
+		}
+
+		expect(Object.fromEntries(byCountry)).toEqual({
+			FR: 7,
+			GP: 1,
+			MQ: 1,
+			GF: 1,
+			RE: 1,
+			PM: 1,
+			YT: 1,
+			BL: 1,
+			MF: 1,
+			PF: 1,
+			NC: 1,
+		})
+	})
+
+	it("keeps only the named jurisdiction's rows when --country is given", async () => {
+		const manifest = await runAdapter({
+			adapter: createBanAdapter(),
+			adapterOptions: { inputPath: fixtureCSV, country: "GP" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		expect(manifest.yielded).toBe(1)
+
+		const rows = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)
+
+		expect(rows[0]!.country).toBe("GP")
+		expect(rows[0]!.locale).toBe("fr-GP")
+		expect(rows[0]!.raw).toBe("202 Chemin de Bois Rimbault, 97123 Baillif")
 	})
 
 	it("composes the canonical FR raw line", async () => {
@@ -58,7 +108,7 @@ describe("ban adapter against fixture sample.csv", () => {
 		expect(champs?.components.house_number).toBe("1 bis")
 	})
 
-	it("rejects non-FR --country", async () => {
+	it("rejects a jurisdiction BAN does not publish", async () => {
 		await expect(
 			runAdapter({
 				adapter: createBanAdapter(),
@@ -66,7 +116,7 @@ describe("ban adapter against fixture sample.csv", () => {
 				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
-		).rejects.toThrow(/only FR supported/)
+		).rejects.toThrow(/the dataset covers FR, GP/)
 	})
 
 	it("honors --limit", async () => {

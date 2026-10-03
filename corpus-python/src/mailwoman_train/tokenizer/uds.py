@@ -1,4 +1,4 @@
-"""The strings SentencePiece must keep whole, and how they reach it.
+"""Keep selected strings whole in SentencePiece and explain how they reach it.
 
 A user-defined symbol bypasses unigram inference and is always emitted as one piece. Two things
 about them are easy to get wrong and both live here: the LITERAL a caller writes is not the literal
@@ -18,7 +18,7 @@ from pathlib import Path
 # - **Country abbreviations** the corpus mentions but the unigram model might split.
 # - **US state codes** (50 + DC) — short two-letter chunks adjacent to postcodes. without
 #   UDS the unigram tokenizer can fragment ``NY 10001`` into ``N`` + ``Y`` + `` 10001``
-#   under some merges. Keeping state codes atomic preserves the region→postcode adjacency
+#   under some merges. Atomic state codes preserve the region→postcode adjacency
 #   the classifier relies on.
 # - **Common postal markers** (PO Box, Cedex, BP) — fixed surface forms. cheaper to put in
 #   the vocab once than to learn them from frequency.

@@ -1,6 +1,6 @@
 """The `--smoke-mode` flag, shared by the two commands that train.
 
-`constant` overrides whatever schedule the recipe named; `long-tail` changes no behavior but warns.
+`constant` overrides the schedule in the recipe; `long-tail` changes no behavior but warns.
 """
 
 from __future__ import annotations

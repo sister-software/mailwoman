@@ -1,17 +1,29 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { appendLocalTextFile, removeFile, removePath } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
-import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof/admin/json/adapter"
-import { buildCorpus, BuildProfile, type BuildStage } from "@mailwoman/corpus/build"
-import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
-import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
-import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "@mailwoman/corpus/utils/license"
 import type { PathBuilder } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
+import {
+	assertHeapForAdapters,
+	buildCorpus,
+	BuildProfile,
+	RESIDENT_ADAPTER_HEAP_FLOOR_BYTES,
+	type BuildStage,
+} from "#build"
+import type { AlignCheckpoint } from "#build/checkpoint"
+import type { ParquetRow } from "#parquet/schema"
+import { openParquetRowStream } from "#parquet/streams"
+import type { ParquetManifest } from "#parquet/writers"
+import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "#utils/license"
 
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")
 
@@ -22,7 +34,22 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-	scratch[Symbol.asyncDispose]()
+	await scratch[Symbol.asyncDispose]()
+})
+
+describe("assertHeapForAdapters", () => {
+	const floor = RESIDENT_ADAPTER_HEAP_FLOOR_BYTES
+
+	it("refuses a resident-record adapter under the floor and names the setting that raises it", () => {
+		expect(() => assertHeapForAdapters(["ban", "wof-admin"], 4 * 1024 ** 3)).toThrow(
+			/wof-admin.*max-old-space-size=20480/s
+		)
+	})
+
+	it("admits the same adapter at the floor, and admits any other adapter below it", () => {
+		expect(() => assertHeapForAdapters(["wof-admin", "wof-postalcode"], floor)).not.toThrow()
+		expect(() => assertHeapForAdapters(["ban", "tiger", "usgov-nad"], 512 * 1024 ** 2)).not.toThrow()
+	})
 })
 
 describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
@@ -157,12 +184,21 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.total_aligned_rows).toBe(0)
 		expect(manifest.excluded_by_eligibility).toBeGreaterThan(0)
 
-		expect(Object.keys(manifest.ineligible_sources)).toEqual(["wof-admin"])
-		expect(manifest.ineligible_sources["wof-admin"]?.[0]).toContain("the register names no source")
+		// A refusal is keyed by the adapter and the jurisdiction together, so one adapter reading
+		// three countries records which of them went unreviewed rather than one entry for all three.
+		expect(Object.keys(manifest.ineligible_sources).toSorted()).toEqual([
+			"wof-admin:FR",
+			"wof-admin:NL",
+			"wof-admin:US",
+		])
+
+		expect(manifest.ineligible_sources["wof-admin:US"]?.[0]).toContain(
+			'no register source declares "wof-admin" as its adapter in "US"'
+		)
 	})
 
 	it("keeps a refused source out of the synthetic rows fanned from it", async () => {
-		// An augmentation carries its ancestor's `source`, so the eligibility check must run
+		// An augmentation inherits its ancestor's `source`, so the eligibility check must run
 		// before `synthesizeRow` for the ancestor's refusal to cover the fan-out.
 		const withSynth = await buildCorpus({
 			outputDir: scratch.path("release-eligible-synth"),
@@ -255,5 +291,155 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.total_aligned_rows).toBe(0)
 		// The license set records what the adapters yielded rather than what survived the refusal.
 		expect(manifest.licenses["CC0-1.0"]).toBe(manifest.excluded_by_license)
+	})
+
+	it("aligns one intermediate to the same four digests twice, which is what makes a resumed align safe", async () => {
+		// A resumed build reuses an adapter's canonical rows and re-runs the align phase over them.
+		// That is sound only where the phase is a function of its input: the split routing,
+		// the augmentation draw and the write order all have to land the same way on a second pass.
+		// This pins the four files the phase writes rather than the row counts,
+		// because a count matches across two runs that ordered their rows differently.
+		const digests = async (outDir: PathBuilder): Promise<Record<string, string>> => {
+			const named: Record<string, string> = {}
+
+			for (const name of ["labeled-train.jsonl", "labeled-val.jsonl", "labeled-test.jsonl", "quarantine.jsonl"]) {
+				const path = outDir("intermediate", name)
+
+				named[name] = (await pathExists(path)) ? await sha256File(path) : "absent"
+			}
+
+			return named
+		}
+
+		const options = {
+			corpusVersion: "0.1.0",
+			adapters: [wofAdminAdapter],
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
+			synthesize: true,
+		} as const
+
+		const firstDir = scratch.path("align-1")
+		const secondDir = scratch.path("align-2")
+
+		await buildCorpus({ ...options, outputDir: firstDir })
+		await buildCorpus({ ...options, outputDir: secondDir })
+
+		const first = await digests(firstDir)
+
+		expect(await digests(secondDir)).toEqual(first)
+		// A run that wrote no labeled rows would pass a digest comparison of two empty files.
+		expect(first["labeled-train.jsonl"]).not.toBe("absent")
+	})
+})
+
+describe("buildCorpus resume", () => {
+	const options = {
+		corpusVersion: "0.1.0",
+		adapters: [wofAdminAdapter],
+		adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
+		synthesize: true,
+	} as const
+
+	const alignDigests = async (outDir: PathBuilder): Promise<Record<string, string>> => {
+		const named: Record<string, string> = {}
+
+		for (const name of ["labeled-train.jsonl", "labeled-val.jsonl", "labeled-test.jsonl", "quarantine.jsonl"]) {
+			const path = outDir("intermediate", name)
+
+			named[name] = (await pathExists(path)) ? await sha256File(path) : "absent"
+		}
+
+		return named
+	}
+
+	afterEach(() => {
+		vi.unstubAllEnvs()
+	})
+
+	const parquetManifest = (outDir: PathBuilder) =>
+		readLocalJSONFile<ParquetManifest>(outDir("corpus-v0.1.0", "MANIFEST.json"))
+
+	it("reuses the aligned rows and the parquet files a finished build recorded", async () => {
+		const outDir = scratch.path("build")
+		const first = await buildCorpus({ ...options, outputDir: outDir })
+		const firstParquet = await parquetManifest(outDir)
+		const firstDigests = await alignDigests(outDir)
+
+		const checkpoint = await readLocalJSONFile<AlignCheckpoint>(outDir("intermediate", "align-checkpoint.json"))
+
+		expect(checkpoint.completed_adapters).toEqual(["wof-admin"])
+		expect(checkpoint.aligned).toBe(first.total_aligned_rows)
+		expect(checkpoint.offsets.train).toBe((await statPath(outDir("intermediate", "labeled-train.jsonl"))).size)
+
+		const stages: string[] = []
+
+		vi.stubEnv("MAILWOMAN_RESUME", "1")
+
+		const second = await buildCorpus({
+			...options,
+			outputDir: outDir,
+			onProgress: (_stage, message) => stages.push(message),
+		})
+
+		expect(stages.some((message) => message.startsWith("resumed align after wof-admin"))).toBe(true)
+		expect(second.total_aligned_rows).toBe(first.total_aligned_rows)
+		expect(second.splits.counts).toEqual(first.splits.counts)
+		expect(second.slices.total_rows).toBe(first.slices.total_rows)
+
+		const secondParquet = await parquetManifest(outDir)
+
+		expect(secondParquet.slices.map((slice) => slice.sha256)).toEqual(firstParquet.slices.map((s) => s.sha256))
+		expect(await alignDigests(outDir)).toEqual(firstDigests)
+	})
+
+	it("discards bytes written past the checkpoint rather than appending after them", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const trainPath = outDir("intermediate", "labeled-train.jsonl")
+		const before = await sha256File(trainPath)
+
+		// Stands for the rows an interrupted adapter wrote after the last checkpoint.
+		// The checkpoint's accumulators do not count them, so a resume that appended would
+		// report fewer rows than the file holds and every later reader would accept that count.
+		await appendLocalTextFile(`${stringifyJSON({ raw: "partial row from an interrupted run" })}\n`, trainPath)
+
+		expect(await sha256File(trainPath)).not.toBe(before)
+
+		vi.stubEnv("MAILWOMAN_RESUME", "1")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		expect(await sha256File(trainPath)).toBe(before)
+	})
+
+	it("refuses to resume under align settings the checkpoint was not written under", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		vi.stubEnv("MAILWOMAN_RESUME", "1")
+
+		await expect(buildCorpus({ ...options, outputDir: outDir, synthesize: false })).rejects.toThrow(
+			/resume refused.*align-checkpoint\.json/s
+		)
+	})
+
+	it("refuses to resume when a recorded parquet file is no longer on disk", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const recorded = (await parquetManifest(outDir)).slices[0]!
+
+		await removeFile(recorded.path)
+		await removePath(outDir("intermediate", "align-checkpoint.json"))
+
+		vi.stubEnv("MAILWOMAN_RESUME", "1")
+
+		await expect(buildCorpus({ ...options, outputDir: outDir })).rejects.toThrow(
+			/resume refused.*no file sits at that path/s
+		)
 	})
 })

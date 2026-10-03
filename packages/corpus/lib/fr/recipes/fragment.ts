@@ -4,8 +4,9 @@
 /**
  *   Generates French street fragments without a postcode from BAN tuples.
  *
- *   The output mixes designator-led streets, some with a house number, and bare commune names as counterexamples.
- *   `--exclude-surfaces` is required so that streets on the fragment evaluation board stay out of training. Training on
+ *   The output mixes designator-led streets with bare commune names as counterexamples.
+ *   Some streets include a house number.
+ *   `--exclude-surfaces` keeps streets on the fragment evaluation board out of training. A model trained on
  *   these rows needs the French `street_prefix` loss mask disabled.
  */
 
@@ -14,8 +15,9 @@ import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
+import { decomposeFrStreet } from "#fr/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
@@ -23,9 +25,19 @@ import { SurfaceOrigin } from "#types"
  * The provenance for every row.
  * Street and commune names both come from BAN.
  */
+/**
+ * Resolved once, because `source_id` includes the source as its prefix and a pair
+ * that disagreed would name a source no row of this output declares.
+ */
+const FR_FRAGMENT_SOURCE = defaultRecipeSource("synth-fr-fragment")
+
 const FR_FRAGMENT_PROVENANCE = {
 	register: SourceRegister.BaseAdresseNationale,
 	surface: SurfaceOrigin.Composed,
+	// The BAN record behind each row exists.
+	// The tuple file has no `sourceID` to identify it.
+	// The extraction must emit that ID to populate this field (#2359).
+	baseSourceID: null,
 }
 
 /**
@@ -70,7 +82,7 @@ const ALNUM_HOUSE_NUMBER_SHARE = 0.25
 export const frFragmentRecipe: CorpusRecipe = {
 	name: "fr-fragment",
 	description:
-		"FR street fragments with NO house number (#727 T2): the house-number-licence change — bare/particle/date-name/homonym + the bare-locality counter",
+		"FR street fragments with NO house number (#727 T2): the house-number-license change — bare/particle/date-name/homonym + the bare-locality counter",
 	mode: "tuples",
 	options: [
 		{
@@ -170,7 +182,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 				klass = alnum ? "alnum-housenumber" : "street-housenumber"
 			}
 
-			const sourceID = recipeSourceID("synth-fr-fragment", { ...components, v: String(read) })
+			const sourceID = recipeSourceID(FR_FRAGMENT_SOURCE, { ...components, v: String(read) })
 
 			if (
 				alignAndWrite(
@@ -180,7 +192,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 						components,
 						country: "FR",
 						locale: "fr-FR",
-						source: "synth-fr-fragment",
+						source: FR_FRAGMENT_SOURCE,
 						source_id: sourceID,
 						corpus_version: "0.9.4",
 						license: "Synthetic — fr-fragment; (street, commune) from BAN (Base Adresse Nationale, Licence Ouverte)",
@@ -204,7 +216,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 		for (let i = 0; i < wanted && pool.length; i++) {
 			// The fragment evaluation board uses title-cased commune names.
 			const name = titleCaseFR(sample(pool, random))
-			const sourceID = recipeSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
+			const sourceID = recipeSourceID(FR_FRAGMENT_SOURCE, { locality: name, v: `neg-${i}` })
 
 			if (
 				alignAndWrite(
@@ -214,7 +226,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 						components: { locality: name },
 						country: "FR",
 						locale: "fr-FR",
-						source: "synth-fr-fragment",
+						source: FR_FRAGMENT_SOURCE,
 						source_id: sourceID,
 						corpus_version: "0.9.4",
 						license: "Synthetic — fr-fragment counter-distribution; commune from BAN (Licence Ouverte)",

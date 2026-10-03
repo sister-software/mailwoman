@@ -52,7 +52,7 @@ The following are not settled here. They are listed so nobody reads silence as a
 - **Whether the observation's advisory code extends the existing query-intent vocabulary or widens the
   carrier** (§5.5). This is also shared with both siblings.
 - **The license contradictions on the two EU shoreline products** (§2.8). Each is reported as a
-  contradiction. Resolving them is work for counsel rather than engineering.
+  contradiction. Counsel must resolve them rather than engineering.
 
 The issue put two things out of scope, and this record keeps them out: any ranking or abstention
 change, and any erosion modeling of our own. The layer records what an authority states, in the
@@ -68,7 +68,7 @@ a geometry, or a consumer question:
 - **Coastal erosion** — the retreat of a shoreline. Measured in meters of horizontal displacement,
   published by coastal authorities as risk zones or by geological surveys as rates along a shore.
 - **Soil erosion** — the loss of soil from a land surface by water or wind. Measured in tonnes per
-  hectare per year, published by soil and agriculture agencies, and almost always **modelled** rather
+  hectare per year, published by soil and agriculture agencies, and almost always **modeled** rather
   than observed.
 
 No authority pools them, so a layer that did would be this record's invention. Every section below
@@ -319,7 +319,7 @@ What is excluded, in USGS's own completeness report:
 and from the supplemental information: "Long-term rates of shoreline change were calculated using a
 linear regression rate based on available shoreline data for **a minimum 50-year period**."
 
-Bluffs, armoured shore, muddy and marsh shore, most sheltered bay and estuary shore, and the Great
+Bluffs, armored shore, muddy and marsh shore, most sheltered bay and estuary shore, and the Great
 Lakes are therefore outside the product. So are Alaska (separate regional releases), Hawaii (only OFR
 2011-1009, covering Kauai, Oahu and Maui) and the territories. **There is no national short-term rate
 file.** The item has exactly one child and one data archive, `..._Rates_LT.zip`, and short-term rates
@@ -357,7 +357,7 @@ one archive of 170,567,367 bytes, scenarios from 25 cm to 500 cm of sea-level ri
 catalogue is fully client-rendered and has no server-side registry API (five candidate paths, all 404
 or 302→404), so the registry was parsed out of the page's own bundle
 (`digitalcoast/js/data-ba67936f.js`, 7,095,204 bytes): **3,645 dataset records across 49 collections.**
-Only **2** carry the `erosion` tag and both are lidar acquisitions. Matching every title against
+Only **2** carry the `erosion` tag and both are lidar acquisitions. A title search across all candidate sources
 `/shorelin|erosion|change rate|accretion|bluff/i` returns **10**, all shoreline position, lidar,
 hardened-shoreline classification or demographics. No collection is a shoreline-change collection.
 
@@ -368,7 +368,7 @@ What NOAA does hold that touches the subject:
   NOT BE USED FOR LEGALLY BINDING APPLICATIONS**", and the dataset page calls it "a screening tool for
   very local or site-specific management decisions". A land-to-water transition across epochs would be
   an _inference_ rather than a published rate.
-- **Shoreline vectors** — CUSP (1:1,000–1:24,000, seven regional archives totalling 985.8 MB measured),
+- **Shoreline vectors** — CUSP (1:1,000–1:24,000, seven regional archives totaling 985.8 MB measured),
   the Historical Composite Shoreline (199,999,440 bytes) and the Historical Medium Resolution Shoreline
   (14,436,491 bytes, average 1:70,000). All three state where a shoreline **is**, at one vintage. They
   are inputs to a rate, never a rate.
@@ -399,7 +399,7 @@ dataset id `9fede91f-5acd-4fd2-9bd8-98153fa3c2ff`, file-dataset id
 `76509b7e-15e3-40ac-ac5c-bcc2fce4e71a`,
 [data.gov.uk slug `national-coastal-erosion-risk-mapping-ncerm-national-2024`](https://www.data.gov.uk/dataset/e75374d5-ef4b-4f9f-abc1-6aefde4627b7).
 
-**Checking the name mattered, because the old record follows the flood-zone pattern exactly.** A CKAN
+**The name check mattered because the old record follows the flood-zone pattern exactly.** A CKAN
 `package_search?q=NCERM` returns three records. The 2018–2021 record
 (`87badb85-3b4e-4a31-8a67-06972ee9aa93`) has `resources: []`, `files: []` and `publishedStatus:
 "retired"`, with a note pointing at the replacement. The flood survey documented the same emptied
@@ -588,7 +588,7 @@ as "no limitations to public access", because the restriction sits in a field ne
 
 **The EEA publishes no soil-erosion indicators.** This was checked by enumeration rather than by
 search. The complete indicator listing was pulled through the Plone REST API (546 items, 89 of them
-`ims_indicator`). Grepping all 89 titles for `erosion|coast|soil|shorelin|sediment|degrad` returns
+`ims_indicator`). A search across all 89 titles for `erosion|coast|soil|shorelin|sediment|degrad` returns
 four, and none is about erosion. Site-wide `SearchableText=erosion` returns 167 items: 43 Document, 42
 topic pages, 28 infographics, 16 briefings, 15 static maps, and **zero indicators and zero datasets**.
 
@@ -658,7 +658,7 @@ service returns **HTTP 401** to anonymous requests, exactly as Article 18(1) req
 - **Global shoreline change projections** (Vousdoukas et al.), 55,139,380 bytes, CSV, 2050 and 2100 under
   RCP4.5 and RCP8.5 with percentiles. These are projections, for sandy coastlines only.
 
-**EMODnet Geology's coastal-behaviour products are two different things under one name**, and both were
+**EMODnet Geology's coastal-behavior products are two different things under one name**, and both were
 measured. _Field data_ (`tno:coastal_migration_fd_*`) is a survey compilation of **219,599 features**
 on ~50 m segments (measured median 49.2 m), with attributes `id, fid, migration, migrationrate,
 period`. It has **no country field at all**, so per-country provenance cannot be recovered from the
@@ -669,7 +669,7 @@ A consumer must account for three findings about it:
 
 1. **It is a patchwork, and reading only the head misreports it.** A stratified sample (20 offsets ×
    400 = 8,000 of 219,599) shows availability arriving in contiguous contributor blocks: one offset gave
-   400 `-9999`, another 400 nulls, another 400 usable. **Reading the head alone reports 85.0 % `-9999`.
+   400 `-9999`, another 400 nulls, another 400 usable. **The head alone reports 85.0 % `-9999`.
    The stratified read reports 23.8 % `-9999`, 18.6 % null, and 57.7 % usable.**
 2. **Class and rate disagree, under three different thresholds.** On 4,613 field rows with a usable rate,
    `migration = 'stable'` has `migrationrate` exactly 0.000 in all 3,098 cases, which is a fill value
@@ -699,7 +699,7 @@ A consumer must account for three findings about it:
   obvious candidate exists but ships no resources. Defra's `Soil Erosion and Compaction Risk Groups` (CKAN
   `3524b81e-9968-460a-a8aa-8ec2397d9dde`) is **retired with `num_resources: 0`**, and its note reads
   "This dataset has been withdrawn while it is being reviewed and updated." Cranfield's LandIS erosion
-  page returns **HTTP 404**, and the LandIS data index carries no erosion link. An organisation-scoped
+  page returns **HTTP 404**, and the LandIS data index carries no erosion link. An organization-scoped
   query against the new open LandIS portal returned **71 items, zero containing "erosion"**.
 
 ### 2.10 The inventory, side by side
@@ -771,14 +771,14 @@ the source's own resolution and its own words permit.
 | **NRW NCERM (Wales)**                         | coastal | The same shape on the **previous generation's vocabulary** (three periods from a 2005 base, percentile bands) rather than interchangeable with England's.                                                                                                                                                                                                             |
 | **Dynamic Coast (Scotland)**                  | coastal | A per-polygon claim under a stated emissions scenario, with an **explicit prohibition on property-level assessment** in its own access constraints.                                                                                                                                                                                                                   |
 | **NI High Level Risk Appraisal**              | coastal | A **per-coastline-segment banding** over 122 features carrying one attribute. A national screening statement and no finer claim.                                                                                                                                                                                                                                      |
-| **ESDAC RUSLE2015**                           | soil    | A **100 m modelled hillslope claim** rather than a parcel claim — the model's inputs (land cover, a DEM, crop statistics) carry no parcel identity, and two of its five factors are 500 m and one is 1 km.                                                                                                                                                            |
+| **ESDAC RUSLE2015**                           | soil    | A **100 m modeled hillslope claim** rather than a parcel claim — the model's inputs (land cover, a DEM, crop statistics) carry no parcel identity, and two of its five factors are 500 m and one is 1 km.                                                                                                                                                             |
 | **ESDAC NUTS2 indicator**                     | soil    | A **per-NUTS2-region claim** over 271 polygons, and no claim about any location inside a region.                                                                                                                                                                                                                                                                      |
 | **GloSEM (distributed)**                      | soil    | A **25 km claim** — country or large-region scale. The 100 m variant covers croplands only.                                                                                                                                                                                                                                                                           |
-| **PESERA**                                    | soil    | A **1 km modelled claim**, 2004, marked obsolete by the EEA.                                                                                                                                                                                                                                                                                                          |
+| **PESERA**                                    | soil    | A **1 km modeled claim**, 2004, marked obsolete by the EEA.                                                                                                                                                                                                                                                                                                           |
 | **EUROSION / CLC2000 Coastline**              | coastal | A **per-segment categorical trend claim** on a 1:100,000 line with ~50 m accuracy, from 2002–2004, with 33 % of segments carrying no class. Not convertible into a rate.                                                                                                                                                                                              |
 | **Copernicus Coastal Zones**                  | —       | A **0.5 ha land-cover claim** within 10 km of the coast, and **no erosion claim of any kind**.                                                                                                                                                                                                                                                                        |
 | **JRC LISCOAST shoreline**                    | coastal | A **per-transect claim at ~142 m** carrying a net displacement in meters over 1984–2015 — and none at all above 63° N.                                                                                                                                                                                                                                                |
-| **EMODnet Geology coastal behaviour**         | coastal | A **per-segment claim at ~50 m (field) or ~288 m (satellite)** whose class was set by an unnamed national method under one of three thresholds, over a patchwork with 42 % of field rows unusable.                                                                                                                                                                    |
+| **EMODnet Geology coastal behavior**          | coastal | A **per-segment claim at ~50 m (field) or ~288 m (satellite)** whose class was set by an unnamed national method under one of three thresholds, over a patchwork with 42 % of field rows unusable.                                                                                                                                                                    |
 
 ### 3.3 Coverage honesty — England, and the one thing the pilot cannot yet claim
 
@@ -812,7 +812,7 @@ This record lists two candidate footprint sources, and **neither was verified** 
 - **The frontage geometry behind `frontageid`**, which every erosion-zone feature carries. Whether the
   EA publishes the frontages themselves, rather than only their id, was not established.
 
-Deriving the footprint from the union of the erosion polygons is forbidden, for the same reason the
+Do not derive the footprint from the union of the erosion polygons, for the same reason the
 flood survey forbids deriving `flood_map_extent` from the hazard polygons. The union of "at risk" areas
 differs from the mapped area, and that difference is the entire content of a negative answer.
 
@@ -828,7 +828,7 @@ differs from the mapped area, and that difference is the entire content of a neg
 
 <!-- vale on -->
 
-2. **The 16 anomalous rows.** Sixteen features per layer carry blank policy and defence fields and
+2. **The 16 anomalous rows.** Sixteen features per layer carry blank policy and defense fields and
    `published = 0`. The source does not document whether they are a defect or a placeholder. A builder
    must carry them as-is rather than drop or coerce them.
 
@@ -845,7 +845,7 @@ hazard" nor "low hazard", and it must be stored apart from the four rating class
 arability layer keeps `unrated_share` apart from capability class 8.
 
 The erosion-class column carries the same hazard at a larger scale: `erocl` is NULL on **64.6 %** of
-components. Reading NULL as "no erosion observed" would be wrong about two rows in three.
+components. A NULL value does not mean "no erosion observed". That interpretation would be wrong about two rows in three.
 
 ### 3.5 Coverage honesty — the shoreline-change products
 
@@ -856,7 +856,7 @@ reflects geography rather than erosion.
 
 The USGS product has three further absences. Each is distinct, and none of them is a coverage gap:
 
-1. **Off the sandy open-ocean shore**: bluffs, armour, marsh, estuaries, and the Great Lakes. USGS's own
+1. **Off the sandy open-ocean shore**: bluffs, armor, marsh, estuaries, and the Great Lakes. USGS's own
    completeness report excludes them. They have no row and support no claim.
 2. **Fewer than three shorelines, or a failed geomorphology constraint**: a transect that USGS declined
    to rate. It also has no row.
@@ -876,8 +876,8 @@ date and scenario. It adds no erosion score, severity ordering, or cross-country
 quantities.
 
 The builder carries each declared domain as a closed set and **throws** on a value outside it. An
-unknown code indicates a source-schema change, which a reader most needs to know about. Coercing it to a
-nearest neighbour or to NULL would turn "the source changed" into "there is no value here".
+unknown code indicates a source-schema change, which a reader most needs to know about. When a reader coerces it to a
+nearest neighbor or to NULL would turn "the source changed" into "there is no value here".
 
 The measurements lead to two source-specific parsing rules:
 
@@ -994,8 +994,8 @@ times the size a single-scenario layer would produce. That is the pilot's real s
 why §4.5 asks for the measurement per scenario rather than pooled.
 
 `erosion_ground_instability` is a separate table because it describes a different hazard with a
-different schema (`local_auth`, `smp_pu1`…`smp_pu5`, `rearscarpr`) and has only 160 features. Folding
-it into the erosion zones would let a reader answer an erosion question from a landslide polygon.
+different schema (`local_auth`, `smp_pu1`…`smp_pu5`, `rearscarpr`) and has only 160 features. A combined
+table would let a reader answer an erosion question from a landslide polygon.
 
 ### 4.4 Manifest fields
 
@@ -1082,7 +1082,7 @@ Five reasons support the choice, in order of weight.
    established that absence inside England is a designation. **NCERM reverses that.** Absence inside
    England mostly means "not the coast", and the source publishes no way to distinguish it from "coast,
    and not at risk". A builder that generalized the flood rule would produce a well-formed wrong answer
-   over the whole country. Meeting that reversal on the second layer, rather than the fifth, justifies
+   over the whole country. This reversal on the second layer, rather than the fifth, justifies
    the pilot.
 
 The USGS National Shoreline Change compilation stays in the inventory as the natural second layer: CC0,
@@ -1108,7 +1108,7 @@ with a hole, and a narrow strip thinner than one cell. The fixtures assert the f
 - The twelve scenario layers stay separable, and a probe that does not specify a scenario is refused.
 - A zone whose ring is deliberately re-ordered is stored byte-identically to the source rather than
   normalized.
-- An undeclared policy or defence code throws rather than being coerced.
+- An undeclared policy or defense code throws rather than being coerced.
 - A ground-instability polygon never answers an erosion question.
 
 **Smoke.** One Shoreline Management Plan area from the real geodatabase. This verifies what fixtures
@@ -1144,13 +1144,13 @@ itself and puts a layer open on the default construction path. The flag lands wi
 [runtime-flag register](../../engineering/reference/runtime-flags.mdx) in the same change. Under SCOPE
 invariant 5, a flag with no register row is a warning sign.
 
-**Ranking is unchanged, and byte-stability is the receipt.** The same query, with and without the layer
+**The layer leaves rank order unchanged, and byte-stability is the receipt.** The same query, with and without the layer
 attached, returns an identical result plus one advisory. That follows from how the carrier is
 constructed: it reads no candidate, coordinate or ordering, and a test pins that.
 
 **What the observation says.** It reports the scenario, horizon and climate allowance it answered
 under; the cumulative erosion distance as published; the Shoreline Management Plan policy and its
-interpretation where the scenario carries one; the defence type; the product and authority; the edition
+interpretation where the scenario carries one; the defense type; the product and authority; the edition
 and its dates; the containment reading (`whole` cell, or a ray-cast against a specific polygon); and the
 coverage basis. In the pilot the basis is `source_present`, so it permits no negative claim. That is
 enough for a reader to re-derive the claim rather than accept it.
@@ -1229,7 +1229,7 @@ absent polygon is reported as "this product makes no statement here" and never a
 risk". The source does not distinguish a location off the coast from a location on the coast outside
 the risk area. The observation states what the map assigns at a location under a named scenario and
 never whether a property will erode, because the authority itself declines that second statement in
-its published metadata. Ranking, abstention and every existing result field are unchanged. The
+its published metadata. Rank order, abstention and every existing result field are unchanged. The
 observation is additive, attributed, and off by default.
 
 ## 7. The builder-issue outline
@@ -1321,7 +1321,7 @@ These gaps are recorded as gaps. No gap below was filled in with a plausible gue
   coverage statement, license, extent and schema were not read. Whether the frontage geometry behind
   `frontageid` is published at all was not established. **This one fact would move the pilot from
   `source_present` to `designated`, and the builder issue should settle it first.**
-- **The 16 anomalous NCERM rows per layer** (blank policy and defence fields, `published = 0`). Their
+- **The 16 anomalous NCERM rows per layer** (blank policy and defense fields, `published = 0`). Their
   existence is measured, and the EA documents no meaning for them.
 - **Whether a GOV.UK public erosion checker exists.** `https://www.gov.uk/check-coastal-erosion-risk`
   returns 404. The two live flood-checking services were not tested with a postcode to see whether they
@@ -1358,11 +1358,10 @@ These gaps are recorded as gaps. No gap below was filled in with a plausible gue
 - **The `geossNonCommercial` versus CC BY 4.0 conflict** on the JRC global shoreline dataset. Both
   statements sit in the same distribution folder, and no third document resolving them was found.
 - **EMODnet's CC-BY versus CC BY-SA conflict.** The portal terms page states CC-BY 4.0 only.
-  `…/en/terms-use` returns **403**, so a qualifying statement may exist behind it. Anything carried
-  should be treated as share-alike, and that is a question for counsel.
+  `…/en/terms-use` returns **403**, so a qualifying statement may exist behind it. Treat any qualification it carries as share-alike until counsel resolves the terms.
 - **Per-country provenance in EMODnet field data.** The layer has no country attribute, and the ISO
   record lists only a point of contact. Contributor blocks are visible in the stratified sample but are
-  unlabelled.
+  unlabeled.
 - **The EUROSION `DOCUMENTATION/` folder**, including `d2134 data_access_conditions_v2.0.pdf` (468,824
   bytes). It was listed but not read. It is the one document that could qualify the
   acknowledgement-only wording.
@@ -1379,7 +1378,7 @@ caught each one:
 2. An EMODnet request carrying `propertyName=…` reported four columns as 100 % null. The projection had
    dropped the columns, and a re-fetch without a projection returned real values. Every class figure in
    §2.8 comes from the unprojected read.
-3. Reading the head of the EMODnet field-data layer reports **85.0 %** unusable, while a stratified read
+3. The head of the EMODnet field-data layer reports **85.0 %** unusable, while a stratified read
    over 20 offsets reports **23.8 %**. The head was one contributor's block.
 4. Northern Ireland's erosion record shows **0 resources** on data.gov.uk but carries GeoJSON and
    shapefile on OpenDataNI, so the zero is a harvest gap rather than an absence. Those files then return
@@ -1387,5 +1386,5 @@ caught each one:
    first. Three further NI records showing zero resources were **not** followed up, and their zeros
    must not be read as absences.
 5. An unscoped `?q=erosion` against the LandIS portal returned 10 hits, all of them global federated
-   results from other countries, while the organisation-scoped query returned **zero**. The unscoped
+   results from other countries, while the organization-scoped query returned **zero**. The unscoped
    answer would have reported a product that does not exist.

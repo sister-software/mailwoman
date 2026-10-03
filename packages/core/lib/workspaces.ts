@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The root manifest's `workspaces` field, expanded to the directories it names: only a single trailing `*` segment is
- *   supported, a literal entry that names no manifest is an error rather than an empty result, and a pattern this reader
- *   cannot expand must refuse rather than report no matches.
+ *   This function expands the root manifest's `workspaces` field to the directories it names.
+ *   It supports only a single trailing `*` segment.
+ *   A literal entry without a manifest is an error instead of an empty result.
+ *   The function refuses patterns it cannot expand instead of reporting no matches.
  */
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -22,7 +23,7 @@ async function isWorkspaceDirectory(repoRoot: PathBuilderLike, directory: string
 
 export interface ReadWorkspaceDirectoriesOptions {
 	/**
-	 * Skip a literal entry whose directory carries no manifest instead of failing,
+	 * Skip a literal entry whose directory has no manifest instead of failing,
 	 * for reading a checkout at an older ref that predates a workspace the field names.
 	 *
 	 * @default false
@@ -31,15 +32,18 @@ export interface ReadWorkspaceDirectoriesOptions {
 }
 
 /**
- * Repo-relative workspace directories, in the field's order: a literal entry stays where it is, and a
- * `parent/*` entry expands to every child of `parent` that carries a `package.json`, sorted by name.
+ * Returns repo-relative workspace directories in the field's order.
+ *
+ * A literal entry stays where it is.
+ * A `parent/*` entry expands to child directories that contain a `package.json`, sorted by name.
  */
 export async function readWorkspaceDirectories(
 	repoRoot: PathBuilderLike,
 	options: ReadWorkspaceDirectoriesOptions = {}
 ): Promise<string[]> {
 	const manifest = await readPackageJSON(resolvePath(repoRoot, "package.json"))
-	// The field is either the pattern array or yarn's object form, which nests the same patterns under `packages`.
+	// The field is either the pattern array or Yarn's object form.
+	// Yarn's object form nests the same patterns under `packages`.
 	const entries = Array.isArray(manifest.workspaces) ? manifest.workspaces : (manifest.workspaces?.packages ?? [])
 
 	if (!entries.length) throw new Error(`${resolvePath(repoRoot, "package.json")} declares no workspaces`)
@@ -103,7 +107,7 @@ export async function isRegisteredWorkspace(repoRoot: PathBuilderLike, directory
 }
 
 /**
- * Directories under a `parent/*` pattern that carry no `package.json`, the complement
+ * Directories under a `parent/*` pattern that contain no `package.json`, the complement
  * of {@link readWorkspaceDirectories}: a directory with no manifest is no workspace,
  * but a retired workspace's compiled `out/` remains.
  */

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_sources` tool definition — the description an agent reads, the input schema, and the handler wiring.
+ *   The `mwdev_sources` tool definition provides the description, input schema and handler wiring an agent reads.
  *   The census itself lives in `../source-census.ts`; this file is the interface.
  */
 
@@ -95,7 +95,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const asked = countries ?? []
 		const missing = asked.filter((code) => !byCountry[code]?.length)
 
-		// When the caller named countries, an artifact holding none of them is noise —
+		// When the caller supplies country filters, an artifact holding none of them is noise —
 		// 29 lines of zeros buries the two that matter.
 		// The absence is still reported, in `summary` and by a country's empty `by_country` entry.
 		// What is dropped is the per-artifact restatement of it.

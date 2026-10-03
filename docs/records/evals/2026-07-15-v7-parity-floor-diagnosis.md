@@ -35,8 +35,8 @@ it.
 
 Two structural findings under this:
 
-**1. The tokenizer covers the diacritics but over-fragments the words.** Probing the SP v0.9.0
-tokenizer: `á ã ó ß Å` are all single covered pieces (only RO `ț` byte-falls-back). But diacritic
+**1. The tokenizer covers the diacritics but over-fragments the words.** The SP v0.9.0 tokenizer
+covers `á ã ó ß Å` as single pieces (only RO `ț` byte-falls-back). But diacritic
 words shatter — `Kájovská` → `▁K á j ovská`, `Magalhães` → `▁Mag al h ã es`. The heavy sub-word
 fragmentation rather than byte-fallback, is what corrupts the span surface when the model tags some pieces
 and drops others. This is a tokenizer _granularity_ gap for CZ/PT/PL/RO (the FR/Nordic splices didn't
@@ -70,7 +70,7 @@ distribution.**
 
 ## Contextful vs bare: the gap holds in both subsets
 
-Splitting the 321 live fixtures by whether the gold carries admin context (locality/region/country):
+I split the 321 live fixtures by whether the gold carries admin context (locality/region/country):
 
 | subset     |   n | street | house_number | postcode |
 | ---------- | --: | -----: | -----------: | -------: |

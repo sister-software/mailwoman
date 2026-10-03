@@ -2,21 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Verifies the boundary-stress synthesizer (#375) aligns cleanly through the real `alignRow`
- *   aligner — the gold boundary the model should learn must survive tokenization + BIO labeling.
- *   Each shape asserts the stress-relevant tags land in order. the bulk run confirms the
- *   overwhelming majority align (no quarantine).
+ *   Verifies that boundary-stress rows align cleanly through the real `alignRow` aligner, so the
+ *   gold boundary survives tokenization and BIO labeling.
  */
 
 import { mulberry32 } from "@mailwoman/core/random"
+import { describe, expect, it } from "vitest"
+
 import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,
 	type SynthesizedBoundaryStressRow,
-} from "@mailwoman/corpus/synthesizers/boundary-stress"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
-import { describe, expect, it } from "vitest"
+} from "#synthesizers/boundary-stress"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
 	return {
@@ -24,7 +23,7 @@ function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
 		source: "synth-boundary-stress",
 		source_id: "synth-boundary-stress:test",
 		// CanonicalRow requires a country.
-		// The synthesized row carries only the locale it was minted for.
+		// The synthesized row includes only the locale it was minted for.
 		country: r.locale.split("-")[1] ?? "DE",
 		corpus_version: "0.0.0-test",
 		license: "synthetic fixture — not distributed",

@@ -50,13 +50,13 @@ import {
 } from "#adapters/wof/json-rows"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
+import { buildAncestorNameIndex, walkFeatures, type AncestorNames, type WOFRecord } from "#utils"
 
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
  *
- * Per-adapter deliberately (the postalcode adapter carries its own): each table is a
- * record filter for its adapter's emission set rather than a shared vocabulary.
+ * Per-adapter deliberately (the postalcode adapter has its own): each table is a record
+ * filter for its adapter's emission set rather than a shared vocabulary.
  */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {
@@ -96,7 +96,7 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
  * OpenCage template produces the canonicalized form (`"United States of America"`),
  * matching the legacy SQLite adapter's behavior.
  */
-export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): WOFVariantSpec[] {
+export function variantsFor(row: WOFRecord, ancestry: AncestorNames, selfName: string): WOFVariantSpec[] {
 	const selfTag = placetypeToTag(row.placetype)
 
 	if (!selfTag) return []
@@ -106,9 +106,9 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 	// See `WOFVariantSpec.hierarchy`.
 	const hierarchy = true
 
-	const region = ancestry.find((a) => placetypeToTag(a.placetype) === "region")
-	const country = ancestry.find((a) => placetypeToTag(a.placetype) === "country")
-	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country?.name ?? row.country
+	const region = ancestry.region
+	const country = ancestry.country
+	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country ?? row.country
 
 	const variants: WOFVariantSpec[] = []
 
@@ -121,7 +121,7 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 				variants.push({
 					hierarchy,
 					suffix: "with-region",
-					components: { [selfTag]: selfName, region: region.name },
+					components: { [selfTag]: selfName, region },
 				})
 			}
 
@@ -129,7 +129,7 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 				variants.push({
 					hierarchy,
 					suffix: "with-region-country",
-					components: { [selfTag]: selfName, region: region.name, country: countryDisplay },
+					components: { [selfTag]: selfName, region, country: countryDisplay },
 				})
 			} else if (!region && country) {
 				variants.push({
@@ -200,7 +200,7 @@ export const WOF_ADMIN_ADAPTER_ID = "wof-admin"
  * Construct the wof-admin JSON-bundle adapter.
  *
  * The adapter is stateless across runs.
- * Calling this twice with the same input directory produces byte-identical `canonical.jsonl`
+ * Two calls with the same input directory produce byte-identical `canonical.jsonl`
  * (records are emitted in sorted `wof:id` order to be insensitive to filesystem walk ordering).
  */
 export function createWOFAdminAdapter(): CorpusAdapter {
@@ -209,7 +209,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 		defaultLicense: "CC0-1.0",
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.WhosOnFirst,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"Who's On First admin GeoJSON bundles (countries, regions, counties, localities) — multi-name variants per record.",
 
@@ -231,7 +231,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 				byID.set(rec.id, rec)
 			}
 
-			const ancestry = buildAncestryIndex(byID)
+			const ancestry = buildAncestorNameIndex(byID, placetypeToTag)
 
 			// Pass 2: emit rows in sorted-id order for deterministic jsonl.
 			yield* emitWOFJSONRows({

@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/* oxlint-disable mailwoman/prefer-home -- this module is the US arm of the cedex recipe, named so in its path, and its
-   sibling arms carry the other countries. A layout call would answer the same string for the only country that reaches
+/* oxlint-disable mailwoman/prefer-home -- this module is the US arm of the cedex recipe, identified by its path. Its
+ sibling arms cover the other countries. A layout call would answer the same string for the only country that reaches
    it. */
 
 import { sample } from "@mailwoman/core/random"

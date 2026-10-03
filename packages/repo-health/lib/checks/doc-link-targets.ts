@@ -2,32 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file A `{@link}` or `{@linkcode}` naming a symbol with no declaration. The tag reads as a promise that the thing
- *   exists, and an agent following one implements the name instead of finding the code: `readPackageJSONFile` was
- *   never a declaration anywhere in this repository, only a `@see {@linkcode …}` target, and it was written twice
- *   before anyone noticed there was no declaration to find.
+ * @file This check finds `{@link}` or `{@linkcode}` tags that point to undeclared symbols.
+ *   Readers can follow a tag as a promise that the symbol exists.
  *
- *   what IT checks. A bare identifier target — `{@link foo}`, `{@linkcode Foo.bar}` — against the set of names
- *   the tree declares or imports anywhere. A URL target, a path, and a `{@link foo | text}` label are all left alone.
- *   The name set is repository-wide rather than per-file on purpose: a link to a name declared in another package is
- *   correct and common, so a per-file rule would report thousands of them.
+ *   A bare identifier target such as `{@link foo}` or `{@linkcode Foo.bar}` is checked against every identifier
+ *   the tree declares or imports. URL targets and file paths are handled as addresses. A `{@link foo | text}`
+ *   label supplies its own display text. The identifier set covers the repository because links may point across packages.
  *
- *   A backticked name inside a doc comment is read the same way when it is shaped like a declaration: a call such
- *   as `` `parse()` ``, or a camel-case name with at least two humps such as `` `readPackageJSONFile` ``. A short
- *   backticked word (`` `db` ``, `` `lat` ``, a CLI flag, a wire field) is prose and is not judged. A backticked name
- *   the tree never declares carries the same false promise as a link tag, and is reported the same way.
+ *   A backticked token inside a doc comment is checked when it has declaration shape. Examples include
+ *   `` `parse()` `` and camel-case `` `readPackageJSONFile` ``. Short tokens such as `` `db` `` and `` `lat` ``
+ *   remain prose. The same applies to CLI flags and wire fields.
  *
- *   that width is the limit, and it is stated rather than hidden: a tag naming a symbol that exists somewhere but not
- *   where the reader can reach it still passes. What this refuses is the name that exists nowhere at all, which is the
- *   case that sends someone off to write it.
+ *   A tag naming a symbol that exists somewhere but not where the reader can reach it still passes. What this refuses
+ *   is the name that exists nowhere at all.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
-import { trackedSourcePaths } from "#tracked-sources"
+import { parseContextSource, readContextSources } from "#context"
+import { PACKAGE_SOURCE_PATH, trackedSourcePaths } from "#tracked-sources"
 
 /**
  * A link tag and its target, up to the first separator: `{@link foo}`, `{@linkcode Foo.bar | text}`.
@@ -41,9 +36,8 @@ const LINK_TAG = /\{@link(?:code|plain)?\s+(?<target>[^}\s|]+)/gu
 const BACKTICKED_NAME = /`(?<target>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\(\))?)`/gu
 
 /**
- * A capital that opens a new camel-case component: one after a lowercase letter or digit,
- * or one that closes a run of capitals before a lowercase letter.
- * `readPackageJSONFile` has three, `GeoCoordinate` one.
+ * A capital that opens a new camel-case component: one after a lowercase letter
+ * or digit, or one closing a run of capitals before a lowercase letter.
  */
 const HUMP = /(?<=[a-z0-9])[A-Z]|(?<=[A-Z])[A-Z](?=[a-z])/gu
 
@@ -67,15 +61,12 @@ function isJudgeable(target: string): boolean {
 const FILE_EXTENSION_TAIL = /\.[a-z0-9]{1,4}$/u
 
 /**
- * Whether a backticked name is shaped like a declaration: a camel-case name with at
- * least {@linkcode HUMP_FLOOR} humps, or a call with at least one.
+ * Whether a backticked name is shaped like a declaration: a camel-case name
+ * with at least {@linkcode HUMP_FLOOR} humps, or a call with at least one,
+ * judged by its head since the head is what resolves.
  *
- * A single word, called or not, is prose, and prose may spell anything:
- * `` `float()` `` is Python's and `` `hsl()` `` is CSS's.
- *
- * A dotted name is judged by its head, since the head is what resolves:
- * `` `str.isupper()` `` is a call on a word.
- * A name with no lowercase letter is a code such as a postcode.
+ * Single-word tokens remain prose with or without call syntax.
+ * A token without a lowercase letter is a code, such as a postcode.
  */
 function isDeclarationShaped(target: string): boolean {
 	if (FILE_EXTENSION_TAIL.test(target)) return false
@@ -93,11 +84,11 @@ function isDeclarationShaped(target: string): boolean {
 /**
  * Every doc comment in the file, as its text.
  *
- * Line comments and plain block comments are left out: a doc comment describes a declaration,
- * and a name it backticks is read as a promise about the code.
+ * Line and plain block comments are left out because only a doc comment's
+ * backticked names read as promises about the code.
  */
-function docComments(text: string, file: string): Array<{ pos: number; text: string }> {
-	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)
+function docComments(source: ts.SourceFile): Array<{ pos: number; text: string }> {
+	const { text } = source
 	const seen = new Set<number>()
 	const comments: Array<{ pos: number; text: string }> = []
 
@@ -133,20 +124,23 @@ interface DocTarget {
 }
 
 /**
- * Every `{@link}` target and every declaration-shaped backticked name in the file, in document order.
+ * Every `{@link}` target and declaration-shaped backticked name in the file's doc comments.
+ *
+ * Targets come back in document order.
+ * A string literal that spells a doc comment is skipped, such as a test's planted source file.
  */
-function docTargets(text: string, file: string): DocTarget[] {
+function docTargets(source: ts.SourceFile): DocTarget[] {
 	const targets: DocTarget[] = []
 
-	for (const match of text.matchAll(LINK_TAG)) {
-		const target = match.groups?.["target"] ?? ""
+	for (const comment of docComments(source)) {
+		for (const match of comment.text.matchAll(LINK_TAG)) {
+			const target = match.groups?.["target"] ?? ""
 
-		if (isJudgeable(target)) {
-			targets.push({ offset: match.index, target })
+			if (isJudgeable(target)) {
+				targets.push({ offset: comment.pos + match.index, target })
+			}
 		}
-	}
 
-	for (const comment of docComments(text, file)) {
 		for (const match of comment.text.matchAll(BACKTICKED_NAME)) {
 			const target = match.groups?.["target"] ?? ""
 
@@ -160,21 +154,11 @@ function docTargets(text: string, file: string): DocTarget[] {
 }
 
 /**
- * Every identifier the file spells, in a declaration or a use.
+ * Every identifier the file spells in a declaration or use, including external-library identifiers.
  *
- * A name the code reaches on an external library (`toLowerCase`, `readFileSync`) is as
- * real as one the tree declares, and a doc comment may point at either.
- * This is the vocabulary a link in this repository may name.
+ * A doc comment may point to an external identifier or a local declaration.
  */
-function spelledNames(text: string, file: string, into: Set<string>): void {
-	const source = ts.createSourceFile(
-		file,
-		text,
-		ts.ScriptTarget.Latest,
-		false,
-		file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-	)
-
+function spelledNames(source: ts.SourceFile, into: Set<string>): void {
 	const visit = (node: ts.Node): void => {
 		if (ts.isIdentifier(node) || ts.isPrivateIdentifier(node)) {
 			into.add(node.text)
@@ -206,26 +190,29 @@ export interface DanglingLink {
 }
 
 /**
- * This module's own repo-relative path, excluded from the sweep it performs: the header has to spell
- * the tag shapes it looks for, and `{@link foo}` in an explanation is an example rather than a promise.
- *
- * `debt.ts` excludes itself from its own vocabulary count for the same reason.
+ * This module's own repo-relative path, excluded from the sweep it performs because the
+ * header spells the tag shapes it looks for and an example there is not a promise.
  */
 const SELF = "packages/repo-health/lib/checks/doc-link-targets.ts"
 
 /**
- * Declaration-shaped identifiers of another project that a doc comment may spell:
- * a library's export, a service's wire field, a compiler option.
+ * Declaration-shaped identifiers of another project that a doc comment may spell —
+ * a library's export, a service's wire field, a compiler option — keyed by the
+ * head of a dotted name, each entry stating its owner.
  *
- * Each entry states its owner, so a reader can tell it from a stale name of this repository.
- * The register is keyed by the head of a dotted name.
- *
- * An entry no judged doc comment spells any more is reported, so the register
- * cannot outlive the prose it admits.
+ * An entry no judged doc comment spells is reported, so the register cannot outlive the prose it admits.
  */
 export const EXTERNAL_DOC_NAMES: Readonly<Record<string, string>> = {
 	InferTupleMember: "@earlier-draft/core",
 	ServiceExceptionReport: "the OGC service exception report element",
+	addressNumber2ndExtension: "the INSPIRE LocatorDesignatorTypeValue codelist",
+	addressNumberExtension: "the INSPIRE LocatorDesignatorTypeValue codelist",
+	addressIdentifierGeneral: "the INSPIRE LocatorDesignatorTypeValue codelist",
+	buildingIdentifierPrefix: "the INSPIRE LocatorDesignatorTypeValue codelist",
+	postalDeliveryIdentifier: "the INSPIRE LocatorDesignatorTypeValue codelist",
+	postalDeliveryPoint: "the INSPIRE LocatorLevelValue codelist",
+	PagingIsTransactionSafe: "an OGC filter-capabilities conformance flag",
+	GetFeatureById: "the WFS stored query",
 	fileDataSetId: "the Environment Agency file service's wire field",
 	selectAttrbDBDwldList: "the juso.go.kr portal endpoint",
 	ODbL: "the SPDX license identifier",
@@ -238,6 +225,8 @@ export const EXTERNAL_DOC_NAMES: Readonly<Record<string, string>> = {
 	getEditsForFileRename: "the TypeScript language service",
 	readFileSync: "node:fs",
 	WhosOnFirstClassifier: "the Pelias parser's dictionary classifier",
+	DynamicQuantizeLinear: "the ONNX operator",
+	ImplementsResultPaging: "the WFS 2.0 capabilities constraint",
 }
 
 interface DocLinkSweep {
@@ -249,36 +238,40 @@ interface DocLinkSweep {
 }
 
 /**
- * Every doc target the tree never declares, and every register entry the tree no longer needs.
+ * Every doc target the tree does not declare and every register entry the tree no longer needs.
  */
 async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
-	// The vocabulary is read from every tracked TypeScript file, tests and docs included,
-	// since a name a test spells is one the tree knows.
-	// Only a doc comment under packages/*/lib is judged against it.
+	// The vocabulary is read from every tracked TypeScript file, tests included,
+	// while only a doc comment under a package's source roots is judged against it.
 	const paths = await trackedSourcePaths(context, { existingOnly: true })
-	const judged = /^packages\/[^/]+\/lib\/.*\.ts$/u
+	const judged = { test: (path: string) => PACKAGE_SOURCE_PATH.test(path) && path.endsWith(".ts") }
 
-	const texts = new Map<string, string>()
+	// A judged path ends in `.ts`, so its doc comments are read from the same tree its names are.
+	const sources = new Map<string, ts.SourceFile>()
 	const known = new Set<string>()
+
+	await readContextSources(context, paths)
 
 	for (const path of paths) {
 		const file = relative(context.repoRoot, path)
-		const text = await readLocalTextFile(path)
+		const source = await parseContextSource(context, path)
 
 		if (judged.test(file)) {
-			texts.set(file, text)
+			sources.set(file, source)
 		}
 
-		spelledNames(text, file, known)
+		spelledNames(source, known)
 	}
 
 	const dangling: DanglingLink[] = []
 	const admitted = new Set<string>()
 
-	for (const [file, text] of texts) {
+	for (const [file, source] of sources) {
 		if (file === SELF) continue
 
-		for (const { offset, target } of docTargets(text, file)) {
+		const { text } = source
+
+		for (const { offset, target } of docTargets(source)) {
 			// A dotted target is satisfied by its head: `Foo.bar` is reachable when `Foo` is.
 			const head = target.split(".")[0]!
 
@@ -291,8 +284,8 @@ async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 
 			if (known.has(head) || isKeyword(head)) continue
 
-			// A language built-in is a legitimate target and belongs to no file.
-			// Asked of the runtime rather than kept as a list, which would go stale against the platform.
+			// A language built-in is a legitimate target and belongs to no file,
+			// asked of the runtime rather than kept as a list that would go stale.
 			if (head in globalThis) continue
 
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- counting newlines in a string already resident.
@@ -302,9 +295,8 @@ async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 		}
 	}
 
-	// The register lives in this file.
-	// A tree without it, such as a planted test tree, has no entry to judge.
-	const staleExternals = texts.has(SELF) ? Object.keys(EXTERNAL_DOC_NAMES).filter((name) => !admitted.has(name)) : []
+	// The register lives in this file, so a tree without it — a planted test tree — has no entry to judge.
+	const staleExternals = sources.has(SELF) ? Object.keys(EXTERNAL_DOC_NAMES).filter((name) => !admitted.has(name)) : []
 
 	return {
 		dangling: dangling.toSorted((a, b) => a.file.localeCompare(b.file) || a.line - b.line),
@@ -320,8 +312,8 @@ export async function findDanglingLinks(context: RepoContext): Promise<DanglingL
 }
 
 /**
- * The check: each dangling link as a warning, because a tag promising a symbol that
- * does not exist is how a name gets implemented instead of imported.
+ * Each dangling link as a warning, because a tag promising a symbol that does not
+ * exist is how a name gets implemented instead of imported.
  */
 export const docLinkTargetsCheck: RepoCheck = {
 	id: "doc-link-targets",

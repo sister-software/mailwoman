@@ -30,7 +30,7 @@ than to this file.
 ### `libpostal/`
 
 Fetched by `mailwoman dev download libpostal-resources`
-(`packages/core/lib/tools/download/libpostal-resources.ts`). Upstream is
+(`packages/core/tools/download/libpostal-resources.ts`). Upstream is
 [libpostal](https://github.com/openvenues/libpostal), MIT, © 2015 openvenues, and the license text is
 vendored at `libpostal/LICENSE`.
 
@@ -40,7 +40,7 @@ vendored at `libpostal/LICENSE`.
 ### `chromium-i18n/`
 
 Fetched by `mailwoman dev download ssl-address`
-(`packages/core/lib/tools/download/ssl-address.ts`), from
+(`packages/core/tools/download/ssl-address.ts`), from
 `chromium-i18n.appspot.com/ssl-address/data/<CC>`, one file per country code. Upstream is Google's
 [libaddressinput](https://github.com/google/libaddressinput), Apache-2.0, and the license text is
 vendored at `chromium-i18n/LICENSE`.
@@ -53,7 +53,7 @@ added upstream appears on the next run rather than needing a list edited here.
 Curated here rather than fetched, which is what `internal` names.
 
 `languages.csv` is the ISO 639 table `generateLanguageTypes`
-(`packages/core/lib/tools/generate-language-types.ts`) reads to regenerate
+(`packages/core/tools/generate-language-types.ts`) reads to regenerate
 `core/lib/resources/languages/types.gen.ts`. Editing the CSV without re-running that tool leaves the
 committed types describing an older table.
 
@@ -75,11 +75,11 @@ origin.
 `meta.json` and `weights.bin`: a multinomial logistic-regression classifier over 29 country classes
 on a 65,536-dimension hashed character-n-gram feature space, with a single temperature fitted on the
 validation split. Written by `mailwoman placer train`
-(`packages/core/lib/coarse-placer/tools/train.ts`). It is first-party work, so no third-party license
+(`packages/core/tools/coarse-placer/train.ts`). It is first-party work, so no third-party license
 attaches to the artifact itself.
 
 Its training rows are assembled by `mailwoman placer build-dataset`
-(`packages/core/lib/coarse-placer/tools/build/dataset.ts`) into
+(`packages/core/tools/coarse-placer/build/dataset.ts`) into
 `<repo>/data/coarse-placer/{train,val,test}.jsonl`. Those files are **not committed** — the directory
 holds 0 tracked files — and on this machine they carry 1,165,072 training rows, 145,629 each for
 validation and test, plus 11,209 in `test-latin-offmap.jsonl`. Each row is `{raw, country}` and

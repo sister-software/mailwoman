@@ -136,8 +136,8 @@ export interface RegionAbbreviationHit {
  * A structural summary of an input string, computed once per query in the runtime pipeline.
  *
  * The summary is cheap enough to compute on every keystroke.
- * It records only structural patterns, such as character class, punctuation
- * and postcode shape, and no place-specific knowledge.
+ * It records only structural patterns, such as character class, punctuation and postcode shape.
+ * It uses no place-specific knowledge.
  */
 export interface QueryShape {
 	characterClass: CharacterClass
@@ -178,7 +178,7 @@ export interface NormalizedInputLite {
  *
  * The `(string & {})` members let `QueryShapeLite` from `@mailwoman/core/pipeline`,
  * whose fields are plain strings, satisfy these views.
- * The named literals still give editor completion.
+ * The enumerated literals still give editor completion.
  */
 export interface KnownFormatHitView {
 	format: KnownFormat | (string & {})

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Project the constraints, evidence, and contributions behind an answer. This function performs no I/O or
+ * @file Project the constraints, evidence and contributions behind an answer. This function performs no I/O or
  *   ranking and preserves the answer's epistemic status alongside its constraints.
  */
 

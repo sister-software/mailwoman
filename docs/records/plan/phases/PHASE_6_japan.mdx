@@ -11,7 +11,7 @@
 - **Structurally different addressing.** JP has no streets. Addresses are nested blocks (chōme/banchi/go). If any core code assumes "street is mandatory," it breaks here.
 - **Different script.** CJK characters expose tokenizer vocabulary limits. SentencePiece with `byte_fallback=true` (set in Phase 1) should handle this, but real test only happens with real JP data.
 - **Excellent open data.** MLIT (国土交通省) publishes complete address data freely. Quality comparable to BAN.
-- **Existing reference implementation.** `japanese-address-parser` Rust crate is a baseline to compare against.
+- **Reference implementation.** The `japanese-address-parser` Rust crate is a baseline to compare against.
 
 ## What must already work before Phase 6
 

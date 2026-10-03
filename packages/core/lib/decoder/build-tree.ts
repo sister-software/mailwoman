@@ -18,8 +18,8 @@
  *
  *   The "nearest" rule (vs "most-recent-prior") is intentional: it makes the decoder independent of
  *   source ordering — e.g. "75004 Paris" attaches postcode to locality even though postcode came
- *   first. Source order is still preserved in the `start`/`end` fields, which the XML serializer
- *   exposes as attributes.
+ *   first. The `start`/`end` fields preserve source order.
+ *   The XML serializer exposes those fields as attributes.
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
@@ -40,23 +40,18 @@ export interface BuildTreeOpts {
 	source?: string
 	sourceID?: string
 	/**
-	 * Addressing system to decode under — selects the containment hierarchy via `containmentFor`.
+	 * Address system to decode under, selecting the containment hierarchy via `containmentFor`.
 	 *
 	 * Stamped onto the returned `AddressTree.system`.
 	 * Omit for the default Western hierarchy.
-	 *
-	 * Today all systems share one map, so this only records intent + threads the discriminator.
-	 * It becomes behavioral when a system-specific map lands (Phase 6 JP).
-	 * See `containment.ts`.
 	 */
 	system?: AddressSystem
 	/**
-	 * Optional confidence calibrator (task #59).
+	 * Optional confidence calibrator.
 	 *
-	 * When provided, each span's mean-of-token-softmax confidence is mapped through it
-	 * before being stamped on the node, so `conf=` reports a calibrated probability
-	 * of correctness rather than the raw softmax.
-	 * OPT-IN — omit for the byte-stable default.
+	 * When provided, each span's mean-of-token-softmax confidence is mapped through it before
+	 * being stamped on the node, so `conf=` reports a calibrated probability of correctness.
+	 * Omit for the byte-stable default.
 	 *
 	 * Build one via `createCalibrator` (`./calibration.ts`).
 	 */
@@ -79,26 +74,25 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 
 // Unicode-aware boundary trim: shrink (start, end) past leading/trailing chars
 // that aren't letters or numbers.
-// Reason: BIO span boundaries from the model occasionally include a preceding comma+ space
-// or trailing punctuation token (the "boundary slip" diagnosed in v0.4.0 — see PHASE_2's v0.4.0 entry).
-// The model's tag attribution is correct, only the boundary is fuzzy.
-// Trimming produces a clean canonical value and clean start/end offsets so downstream
+// The model's tag attribution is correct, only the boundary is fuzzy: BIO span boundaries
+// occasionally include a preceding comma and space or a trailing punctuation token.
+// The trim produces a clean canonical value and clean start/end offsets so downstream
 // consumers slicing raw[start:end] get the same string as node.value.
 //
-// exception: a trailing period directly adjacent to a word character is an
+// Exception: a trailing period directly adjacent to a word character is an
 // abbreviation marker ("Str." / "St." / "Ave.").
-// The model includes these in the span correctly. stripping them loses the abbreviation suffix.
-// We preserve the period when it is immediately preceded by \p{L}\p{N} and not separated
-// by whitespace — the slip pattern we guard against is ", 22220" / "Paris 75004,"
-// / wrapping quotes, where the punctuation is isolated from the word body.
-// (#1519 trailing-dot half)
+// The model includes these in the span correctly.
+// The output loses the abbreviation suffix if it strips those characters.
+// We preserve the period when it is immediately preceded by \p{L}\p{N} and not separated by whitespace.
+// The slip pattern we guard against is ", 22220" / "Paris 75004," / wrapping quotes,
+// where the punctuation is isolated from the word body.
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
 	let s = start
 	let e = end
 	const isWordChar = (i: number): boolean => /[\p{L}\p{N}]/u.test(raw[i] ?? "")
 
-	// Leading trim: skip punctuation not part of an abbreviation prefix
-	// (e.g. Leading "." before a word char is rare but symmetric — preserve it).
+	// The start trim skips punctuation outside an abbreviation prefix.
+	// The code preserves a leading "." before a word character, a rare symmetric case.
 	while (s < e && !isWordChar(s)) {
 		if (raw[s] === "." && s + 1 < e && isWordChar(s + 1)) {
 			// Abbreviation-dot prefix: ".com" style — preserve.
@@ -108,7 +102,7 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 		s++
 	}
 
-	// Trailing trim: skip punctuation, but preserve a trailing abbreviation period.
+	// The end trim skips punctuation but preserves a final abbreviation period.
 	while (e > s && !isWordChar(e - 1)) {
 		if (raw[e - 1] === "." && e - 2 >= s && isWordChar(e - 2)) {
 			// Abbreviation-dot suffix: "Str." / "Ave." — adjacent to the last word char, preserve.
@@ -158,7 +152,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// emits a standalone `▁` word-boundary marker between words and the model labels it
 			// `O` (e.g. "Saint Paul" → "▁Saint"[B-loc], "▁"[O, zero-width], "Paul"[B-loc]).
 			// It is not a real component boundary, so it must not flush the open span.
-			// Keeping the span alive lets the following same-tag `B-` token merge in
+			// The span stays open so the following same-tag `B-` token can merge in
 			// (see the spurious-boundary repair below).
 			// A non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.
 			if (open !== null && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue
@@ -168,16 +162,15 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 		}
 
 		if (prefix === "B" || open === null || open.tag !== tag) {
-			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to
-			// an already-open `X` span is the model fragmenting a multi-word value —
-			// e.g. "Saint Paul" emitted as B-locality B-locality instead of B-locality I-locality
-			// (a real, decode-agnostic emission bug. See scripts/diagnostic/diag-saintalbans.ts).
+			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to an
+			// already-open `X` span is the model fragmenting a multi-word value, e.g. "Saint
+			// Paul" emitted as B-locality B-locality, where the second tag continues the first.
 			// Fold it into the open span.
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only.
-			// A comma or any other separator keeps them distinct, and an intervening
-			// O/different-tag token already nulls/replaces `open` above — so two separate
-			// same-tag spans (e.g. "Springfield, Chicago") are never merged.
+			// A comma or any other separator keeps them distinct.
+			// An intervening O or different-tag token already nulls or replaces `open` above.
+			// Two separate same-tag spans (e.g. "Springfield, Chicago") are never merged.
 			if (prefix === "B" && open !== null && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
 				open.end = tok.end
 				open.confidences.push(tok.confidence)
@@ -191,7 +184,6 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			continue
 		}
 
-		// I- continuation of same tag.
 		open.end = tok.end
 		open.confidences.push(tok.confidence)
 	}

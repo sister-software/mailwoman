@@ -45,9 +45,9 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 }
 
 /**
- * Build an engine double: pass the session behaviour the case reads,
- * while `session` is asserted rather than completed because `GeocodeSession` is the
- * real pipeline's surface, far wider than any test drives.
+ * Build an engine double: pass the session behavior the case reads, while `session`
+ * is asserted rather than completed because `GeocodeSession` is the real pipeline's
+ * surface, far wider than any test drives.
  */
 export function stubEngine(overrides: StubEngineOverrides): Engine {
 	return {
@@ -62,15 +62,16 @@ export function stubEngine(overrides: StubEngineOverrides): Engine {
 }
 
 /**
- * What a case may set on {@link stubEngine}; `session` is required because a tool that acquires
- * an engine always reaches it, and a default one would answer every query with the same silence.
+ * What a case may set on {@link stubEngine}; `session` is required because a
+ * tool that acquires an engine always reaches it.
+ *
+ * A default one would answer every query with the same silence.
  */
 export interface StubEngineOverrides {
 	/**
-	 * The session behaviour this case drives, asserted to `GeocodeSession`
-	 * inside {@link stubEngine}; `unknown` rather than `Partial<GeocodeSession>`
-	 * because a partial checks each member it does carry against the real signature
-	 * and every case here returns a trimmed geocode result on purpose.
+	 * The session behavior this case drives, asserted to `GeocodeSession` inside {@link stubEngine};
+	 * `unknown` rather than `Partial<GeocodeSession>` because a partial checks each member it includes
+	 * against the real signature and every case here returns a trimmed geocode result on purpose.
 	 */
 	session: unknown
 	engineID?: string

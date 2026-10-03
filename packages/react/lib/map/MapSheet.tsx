@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Side panel over the map with a heading, close button, and Escape dismissal.
+ *   Side panel over the map with a heading, close button and Escape dismissal.
  */
 
 import { type ReactNode, useEffect } from "react"
@@ -31,7 +31,8 @@ export function SheetClose({ label, onClose, className }: SheetCloseProps): Reac
 
 export interface MapSheetProps {
 	/**
-	 * The sheet's heading, and its accessible name.
+	 * The sheet's heading.
+	 * It also supplies the accessible name.
 	 */
 	title: string
 	/**

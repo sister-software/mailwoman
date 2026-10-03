@@ -41,7 +41,7 @@ the wrong side of the locality.
 Why is international still ~48% when native is 82%? The model mangles a tail it was never trained on. Our eval
 renders real US-order German with the **region in the tail** — `27 Straußstraße, Berlin, Berlin 12623`, `1
 Talstraße, Mülsen, Sachsen 08132` — but the international synth **dropped the region** (`…, Berlin, 12623`).
-Parsing the eval's rows through v0.9.2 shows exactly that wound:
+The v0.9.2 outputs for the eval's rows show exactly that wound:
 
 ```
 27 Straußstraße, Berlin, Berlin 12623  →  street="straße, Berlin"   (locality DROPPED into street)
@@ -57,7 +57,7 @@ order **with the region in the tail**, matching real US/feed renderings.
 
 - **Per-tag val F1** (anchor-aware, both-order val): locality **0.820**, postcode 1.00, street 0.950,
   house_number 0.998, region 0.703, macro **0.781**. Locality is intact — none of the v0.8.0/PR3 collapse
-  signature. Training was clean (no NaN), `cross_pollution` 0.00% throughout, `locale_acc` 0.965.
+  signature. The run had no NaN, `cross_pollution` stayed at 0.00%, and `locale_acc` was 0.965.
 - **Functional check** — all 6 demo presets parse identically to the v0.6.0 default (the both-order German
   change does not touch US).
 - **No-regression** — US **97.5%** (pilot 96.1%), FR **84.9%** (pilot 85.1%). Both held; the both-order

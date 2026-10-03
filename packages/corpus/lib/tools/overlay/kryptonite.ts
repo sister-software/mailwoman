@@ -21,6 +21,7 @@ import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwo
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { corpusDirectoryName } from "#directory"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE } from "#parquet/schema"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
@@ -85,7 +86,7 @@ export async function buildKryptoniteOverlay(
 	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
 	const outDir = PathBuilder.from(options.outDir)
-	const corpusDir = outDir(`corpus-v${corpusVersion}`)
+	const corpusDir = outDir(corpusDirectoryName(corpusVersion))
 	await makeDirectories(outDir)
 
 	const quarantine: string[] = []
@@ -131,7 +132,7 @@ export async function buildKryptoniteOverlay(
 		total_rows: base.total_rows + newManifest.total_rows,
 	}
 
-	// The v0.3.0 files carry no `source`: they mix sources, so audit.ts falls back to its
+	// The v0.3.0 files have no `source`: they mix sources, so audit.ts falls back to its
 	// first_source_id-prefix inference for them (it re-derives on its own when `source` is absent).
 	const combinedPath = corpusDir("MANIFEST.json")
 	await writeLocalJSONFile(combined, combinedPath)

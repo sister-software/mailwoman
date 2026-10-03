@@ -7,7 +7,7 @@ from `external-arenas.sh` + `per-locale-f1.ts` + the real-OOD scorers — do not
 
 **What changed since 06-09:** the v1.0 consolidation campaign concluded (Runs A/B/C, the
 measured 29M stability ceiling — see `2026-06-10-consolidation-session.md`), Run B shipped
-as **v4.2.0** after a 4/4 ship check (`2026-06-10-night-10-ship-check.md`).
+as **v4.2.0** after a 4/4 ship check.
 
 ## Lens 1 — capability arenas (v4.2.0 int8, TRUE ship config: anchor + gazetteer fed)
 

@@ -1,8 +1,8 @@
-"""Running the audit from a recipe, and printing the mixture where a human will read it.
+"""Run the audit from a recipe. Print the mixture where a human will read it.
 
 The printed summary is not decoration. #1677 was a weight chosen as a number rather than as reps per
-row: the exposure every weight implicitly picks — passes per row — was in nobody's output, so the one
-figure that mattered was the one nobody saw. The reps/row column and the outlier warning below exist to
+row: the exposure every weight implicitly picks — passes per row — was absent from the output, so the one
+figure that mattered was missing from the report. The reps/row column and the outlier warning below exist to
 put it in front of whoever is looking at the mixture.
 """
 
@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from ...data.source_reps import format_derivation, resolve_config_reps
-from .passes import audit_mixture
+from .passes import audit_mixture, config_augment, config_augment_exclude_sources
 from .receipts import CorpusReceiptError, corpus_receipt_binding
 
 #: A source whose per-row exposure exceeds this multiple of the median is almost certainly a mistake.
@@ -59,16 +59,8 @@ def run(
             country_weights=d.country_weights,
             source_weights=d.source_weights,
             coarse_filter=d.coarse_filter,
-            augment={
-                "directional": d.augment_directional_prob,
-                "region": d.augment_region_prob,
-                "glue": getattr(d, "augment_glue_prob", 0.0),
-                "case": getattr(d, "augment_case_prob", 0.0),
-                "punct_drop": getattr(d, "augment_punct_drop_prob", 0.0),
-                "upper_case": getattr(d, "augment_upper_case_prob", 0.0),
-                "ordinal": getattr(d, "augment_ordinal_prob", 0.0),
-            },
-            augment_exclude_sources=getattr(d, "augment_exclude_sources", ()) or (),
+            augment=config_augment(d),
+            augment_exclude_sources=config_augment_exclude_sources(d),
             required_receipts=d.required_corpus_receipts,
         )
     except CorpusReceiptError as exc:
@@ -121,10 +113,10 @@ def _print_receipts(report: dict[str, Any]) -> None:
 
 
 def _print_reps_guard(per_source: dict[str, dict[str, Any]]) -> None:
-    """Warn where one source's per-row exposure dwarfs the rest, and say how to pick reps per row instead.
+    """Warn when one source's per-row exposure dwarfs the rest. Explain how to choose reps per row.
 
-    A source whose row count could not be read is named separately: an unknown exposure is not a safe
-    one, and the outlier comparison could not have considered it.
+    A source whose row count could not be read appears in a separate field. Its exposure is unknown.
+    The outlier comparison omits that source.
     """
     reps_per_row = sorted(s["reps_per_row"] for s in per_source.values() if s.get("reps_per_row"))
     if reps_per_row:

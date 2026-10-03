@@ -93,7 +93,7 @@ export function toDerivedFactID(id: string): DerivedFactID {
 
 /**
  * The concept kinds.
- * Adding a kind requires a reviewed schema revision.
+ * A new kind requires a reviewed schema revision.
  */
 export const ConceptKind = {
 	/**
@@ -105,7 +105,7 @@ export const ConceptKind = {
 	 */
 	Establishment: "establishment",
 	/**
-	 * Something a person does, such as `obtain_medication`.
+	 * A kind of activity, such as `obtain_medication`.
 	 */
 	Activity: "activity",
 } as const
@@ -119,7 +119,7 @@ export type ConceptKind = (typeof ConceptKind)[keyof typeof ConceptKind]
  * How strongly an assertion, observation or derived fact claims that its proposition holds.
  *
  * The values are ordinal in meaning, but the module exports no order
- * so that nobody converts them into weights.
+ * so callers do not convert them into weights.
  */
 export const Modality = {
 	/**
@@ -167,7 +167,8 @@ export const RelationSemantics = {
 export type RelationSemantics = (typeof RelationSemantics)[keyof typeof RelationSemantics]
 
 /**
- * A concept's review status, which tells consumers whether to use the record.
+ * A concept's review status.
+ * It tells consumers whether to use the record.
  */
 export const ConceptStatus = {
 	/**
@@ -270,7 +271,8 @@ export interface RelationAssertion {
 	/**
 	 * ISO 3166-1 alpha-2 codes that scope the claim.
 	 *
-	 * An absent list means the claim has no country scope, which is weaker than a claim about every country.
+	 * An absent list means the claim has no country scope.
+	 * This is weaker than a claim about every country.
 	 */
 	countries?: string[]
 	provenance: SourceProvenance
@@ -312,10 +314,10 @@ export interface ExternalMappingRecord {
 }
 
 /**
- * A proposition stated by a named external source, expressed in this model's vocabulary.
+ * A proposition stated by an identified external source, expressed in this model's vocabulary.
  *
  * Observations stay out of the concept table.
- * Turning one into an authored assertion requires an explicit curation decision with its own provenance.
+ * An authored assertion requires an explicit curation decision with its own provenance.
  */
 export interface SourceObservationRecord {
 	id: ObservationID
@@ -360,11 +362,11 @@ export type DerivationInput =
 	| { kind: typeof DerivationInputKind.DerivedFact; id: DerivedFactID }
 
 /**
- * A fact that a named procedure computed from specific input records.
+ * A fact that an identified procedure computed from specific input records.
  *
  * The record has no provenance field.
- * Its `derivation` and `inputs` serve as provenance, and the validator rejects
- * a fact whose inputs do not resolve.
+ * Its `derivation` and `inputs` serve as provenance.
+ * The validator rejects a fact whose inputs do not resolve.
  */
 export interface DerivedFactRecord {
 	id: DerivedFactID

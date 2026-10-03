@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pure channel packing + output decode shared by the two ONNX runners (`onnx-runner.ts`,
- *   `web-onnx-runner.ts`). Both hosts feed the same fixed-length tensors and read the same
- *   `logits`/`locale_logits`/`span_scores` outputs. this module owns that interface once so the two
- *   cannot drift — the #727 span read was previously duplicated across hosts and held together only
- *   by a parity test. No `onnxruntime-*` import: the runners construct their own `ort.Tensor`s from
- *   the packed `{data, dims}` pairs, which is the only host-specific step.
+ *   Pure channel packing + output decode shared by both ONNX runners, so the fixed-length tensor
+ *   feeds and the `logits`/`locale_logits`/`span_scores` reads cannot drift. It imports no
+ *   `onnxruntime-*` because each runner constructs its own `ort.Tensor`s from the packed
+ *   `{data, dims}` pairs.
  */
 
 import { ANCHOR_FEATURE_DIM } from "#anchor-inference"
@@ -16,7 +14,7 @@ import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATUR
 import type { RequiredChannels } from "#weights/channels"
 
 /**
- * One soft-feed channel as a caller supplies it to `infer`: per-piece feature rows + per-piece confidence.
+ * One soft-feed channel as a caller supplies it to `infer`.
  */
 export interface InferChannel {
 	features: ReadonlyArray<ReadonlyArray<number>>
@@ -24,23 +22,22 @@ export interface InferChannel {
 }
 
 /**
- * The evidence-bundle channels (Option-A) as `infer` receives them.
+ * The evidence-bundle channels as `infer` receives them.
  */
 export interface InferEvidenceChannels {
 	streetType?: InferChannel
 	localitySurface?: InferChannel
+	/**
+	 * The address-system id for a graph with a `locale_hint` input.
+	 *
+	 * The model card's `address_systems.no_hint` id states that no hint is given.
+	 */
+	localeHint?: number
 }
 
 /**
- * The `infer()` signature — one exported type for the three call surfaces that previously restated
- * it (`ONNXRunner.infer`, `WebONNXRunner.infer`, and the classifier's `NeuralRunner` interface).
- *
- * @param tokenIDs The id sequence produced by the tokenizer (no special tokens added).
- * @param anchor Optional postcode-anchor channel (#239/#240) — fed only
- * when the graph declares the anchor inputs.
- * @param gazetteer Optional gazetteer-anchor channel (#464) — same feed interface as the postcode anchor.
- * @param country Optional country-lexicon channel (#1104).
- * @param evidence Optional evidence-bundle channels (Option-A).
+ * The shared `infer()` signature implemented by `ONNXRunner.infer`, `WebONNXRunner.infer`
+ * and the classifier's `NeuralRunner` interface.
  */
 export type InferFunction = (
 	tokenIDs: number[],
@@ -51,7 +48,7 @@ export type InferFunction = (
 ) => Promise<InferResult>
 
 /**
- * The char-path twin of {@link InferFunction}: one S-padded encoding in, per-unit logits out (#2164).
+ * The char-path twin of {@link InferFunction}: one S-padded encoding in, per-unit logits out.
  */
 export type InferCharsFunction = (
 	charIDs: ReadonlyArray<readonly number[]>,
@@ -59,38 +56,28 @@ export type InferCharsFunction = (
 ) => Promise<InferResult>
 
 export interface InferResult {
-	/**
-	 * Logits per token per label, indexed as `logits[tokenIdx][labelIdx]`.
-	 */
 	logits: number[][]
-	/**
-	 * Number of label classes (the inner-dim of the logits tensor).
-	 */
 	numLabels: number
 	/**
-	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order),
-	 * when the model exports it (v1.1.0+, #511 Tier A).
+	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order)
+	 * when the model exports it.
 	 *
-	 * Absent on older bundles — consumers must treat undefined as "no address-system detection available".
+	 * Consumers must treat undefined as no address-system detection available.
 	 */
 	localeLogits?: number[]
 	/**
-	 * #727 stage-2: per-span type scores from the semi-Markov span head (`span_scores` output, v3.x+). Indexed
-	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`,
-	 * of length `lengthIdx + 1` tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the
-	 * weights bundle's `semi-crf-transitions.json`, never hardcoded — the PLACETYPE_ORDER class).
-	 *
-	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span
-	 * decode available" and fall back to the BIO path.
-	 *
-	 * Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays no cost
-	 * (ORT prunes the unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
+	 * The address-system head's logits (`address_system_logits` output), indexed by the
+	 * model card's `address_systems` ids, when the model exports it.
+	 */
+	addressSystemLogits?: number[]
+	/**
+	 * Per-span type scores from the semi-Markov span head, indexed
+	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` for a segment of `lengthIdx + 1`
+	 * tokens. absent on bundles without the head, so consumers fall back to the BIO path.
 	 */
 	spanScores?: number[][][]
 	/**
-	 * Max span length (the `L` axis of {@link spanScores}).
-	 *
-	 * Absent iff `spanScores` is.
+	 * Max span length (the `L` axis of {@link spanScores}); absent iff `spanScores` is.
 	 */
 	maxSpan?: number
 }
@@ -105,7 +92,7 @@ export interface PackedFeed<Data extends Float32Array | BigInt64Array = Float32A
 }
 
 /**
- * The `{data, dims}` view of an output tensor `decodeInferOutput` reads — structurally
+ * The `{data, dims}` view of an output tensor `decodeInferOutput` reads, structurally
  * satisfied by an `ort.Tensor` whose float32 dtype the export interface guarantees.
  */
 export interface OutputTensor {
@@ -114,10 +101,9 @@ export interface OutputTensor {
 }
 
 /**
- * Pack the token ids into the fixed-length `input_ids`/`attention_mask` pair:
- * pad to `fixedSeqLen` with id 0 + mask 0, truncate if longer.
- *
- * `seqLen` is the real (unpadded) length every downstream read trims to.
+ * Pack the token ids into the fixed-length `input_ids`/`attention_mask` pair —
+ * pad to `fixedSeqLen` with id 0 + mask 0 and truncate if longer — and return the
+ * real (unpadded) `seqLen` every downstream read trims to.
  */
 export function packTokenFeed(
 	tokenIDs: number[],
@@ -140,10 +126,8 @@ export function packTokenFeed(
 }
 
 /**
- * Pack a char-path encoding (`char_ids (S, W)` + `attention_mask (S)`, already S-padded by the encoder)
- * into the two int64 tensors the char graph declares.
- *
- * `seqLen` is the count of real units, what the logits are trimmed back to.
+ * Pack a char-path encoding into the two int64 tensors the char graph declares;
+ * `seqLen` is the count of real units the logits are trimmed back to.
  */
 export function packCharFeed(
 	charIDs: ReadonlyArray<readonly number[]>,
@@ -177,11 +161,9 @@ export function packCharFeed(
 }
 
 /**
- * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence`
- * tensors, zero-padded to `fixedSeqLen`.
- *
- * An `undefined` channel packs all zeros — the confidence=0 identity, the model's
- * channel-off behavior for a graph that declares the inputs as mandatory.
+ * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence` tensors,
+ * zero-padded to `fixedSeqLen`; an `undefined` channel packs the confidence=0
+ * identity the model treats as channel-off.
  */
 function packChannelFeed(
 	channel: InferChannel | undefined,
@@ -212,17 +194,9 @@ function packChannelFeed(
 }
 
 /**
- * Pack every soft-feed channel the graph declares, in feed-name order.
- *
- * Every channel is conditioned on the graph's declared inputs: a supplied channel
- * the graph does not declare is never fed (an undeclared feed crashes ORT),
- * and a declared channel the caller did not supply gets the zero-fill confidence=0 identity
- * so the session never throws on a missing required input.
- * The anchor channel historically skipped the declared-input check on the supplied path —
- * an undeclared feed — and now takes the same check as every other channel.
- *
- * `supplied` dims read the channel's own rows.
- * The fallback dim covers the zero-fill path (and, for the evidence channels, a supplied channel with no rows).
+ * Pack every soft-feed channel the graph declares, in feed-name order: a supplied
+ * channel the graph does not declare is never fed (an undeclared feed crashes ORT),
+ * and a declared channel the caller omitted gets the zero-fill confidence=0 identity.
  */
 export function packSoftChannelFeeds(
 	inputNames: readonly string[],
@@ -266,14 +240,40 @@ export function packSoftChannelFeeds(
 }
 
 /**
- * Decode a session's outputs into an {@link InferResult}, trimmed to the real
- * `seqLen` (the pad tail is never real).
+ * The `locale_hint` value a runner feeds when the caller gives no address-system id.
  *
- * `localeLogits` and `spanScores` are optional exactly as the exports are —
- * absent tensors yield absent fields.
+ * The trainer sizes the hint embedding at one row per address system plus a last row for
+ * "no hint", so the card's `address_systems.no_hint` is always the last index.
+ * The exported graph reads the id with an ONNX `Gather`, which counts a negative index from the end,
+ * so `-1` selects that last row without the runner knowing how many systems the model has.
+ */
+export const NO_LOCALE_HINT = -1
+
+/**
+ * Pack the `locale_hint` input when the graph declares one, or return null when it does not.
+ *
+ * A caller without an id gets {@linkcode NO_LOCALE_HINT}, the trained "no hint" behavior.
+ */
+export function packLocaleHintFeed(
+	inputNames: readonly string[],
+	localeHint: number | undefined
+): PackedFeed<BigInt64Array> | null {
+	if (!inputNames.includes("locale_hint")) return null
+
+	return { data: BigInt64Array.of(BigInt(localeHint ?? NO_LOCALE_HINT)), dims: [1] }
+}
+
+/**
+ * Decode a session's outputs into an {@link InferResult} trimmed to the real `seqLen`
+ * (the pad tail is never real); absent tensors yield absent fields.
  */
 export function decodeInferOutput(
-	output: { logits?: OutputTensor; localeLogits?: OutputTensor; spanScores?: OutputTensor },
+	output: {
+		logits?: OutputTensor
+		localeLogits?: OutputTensor
+		spanScores?: OutputTensor
+		addressSystemLogits?: OutputTensor
+	},
 	seqLen: number
 ): InferResult {
 	const logitsTensor = output.logits
@@ -296,12 +296,9 @@ export function decodeInferOutput(
 		logits.push(row)
 	}
 
-	// Locale head (#511 Tier A): present on v1.1.0+ exports, absent (and optional) before.
 	const localeLogits = output.localeLogits ? Array.from(output.localeLogits.data) : undefined
+	const addressSystemLogits = output.addressSystemLogits ? Array.from(output.addressSystemLogits.data) : undefined
 
-	// Span head (#727 stage-2): present on v3.x+ exports.
-	// Same optional interface as the locale head.
-	// A pre-v3 bundle simply has no `span_scores` output and the BIO path is unaffected.
 	const spanTensor = output.spanScores
 	let spanScores: number[][][] | undefined
 	let maxSpan: number | undefined
@@ -314,8 +311,6 @@ export function decodeInferOutput(
 		maxSpan = spanLen
 		spanScores = []
 
-		// Only the first `seqLen` token rows are real.
-		// The rest is the fixed-length pad tail.
 		for (let t = 0; t < seqLen; t++) {
 			const perLength: number[][] = new Array(spanLen)
 
@@ -338,22 +333,17 @@ export function decodeInferOutput(
 		logits,
 		numLabels,
 		...(localeLogits ? { localeLogits } : {}),
+		...(addressSystemLogits ? { addressSystemLogits } : {}),
 		...(spanScores ? { spanScores, maxSpan } : {}),
 	}
 }
 
 /**
- * Back-compat inference of the required soft-feature channels from an ONNX
- * model's declared input names (#718).
+ * Back-compat inference of the required soft-feature channels from a model's declared input names:
+ * a graph exporting `<channel>_features` declared that channel mandatory at train time,
+ * so cards without a `requires` block route through here and the fail-closed guard still guards them.
  *
- * A model that exports `anchor_features` / `gazetteer_features` declared those
- * channels mandatory at train time — feeding zeros is the channel-off identity,
- * but a model trained with the channel is OOD when scored without it.
- * Cards without a `requires` block (every pre-#718 bundle) route through here
- * so the fail-closed guard still guards them.
- *
- * Conventions/bridge are not graph-observable (no dedicated input), so they're
- * left undeclared here — only the card declares them.
+ * Conventions/bridge have no dedicated input and stay undeclared.
  */
 export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): RequiredChannels {
 	const names = new Set(inputNames)

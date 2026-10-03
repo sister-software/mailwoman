@@ -36,7 +36,7 @@ types), the same helpers `mailwoman` commands use.
 DEM archive for MapLibre terrain is a later product, in `terrarium` encoding because that is the encoding
 `packages/cartographer/lib/base/terrain.ts` already reads for Earth.
 
-**Normalize once, at build.** Rendering coordinates are east-positive longitude in −180..180 and
+**Normalize once, at build.** Rendered coordinates use east-positive longitude in −180..180 and
 planetocentric latitude. Source conventions are recorded in the manifest, never guessed in the browser.
 
 **Checksum drift stops the build.** A source whose SHA-256 differs from the pinned value fails the build
@@ -157,7 +157,7 @@ zod schema or whose `body` disagrees with the manifest.
 
 The manifest is the reproducibility record and the input to the app's attribution panel.
 
-### Publishing
+### Publish process
 
 `astrogeology publish --body moon` runs `mailwoman tiles publish --tileset moon --file …` and
 `--tileset moon-hillshade`, then fetches `https://tiles.mailwoman.ai/moon.json` and one low-zoom and
@@ -171,7 +171,7 @@ body-radius parameter: `haversine(a, b, { unit, radiusKm })` with the Earth radi
 the `RADII` table becomes the Earth entry of a per-body table exported for the three bodies. The
 `prefer-home` rule keeps refusing a radius typed anywhere else, which is the point.
 
-### Testing
+### Test plan
 
 - Unit: coordinate normalization (0..360 to −180..180, latitude validation, antimeridian split),
   schema acceptance for a Moon and a Mars feature, rejection of an unknown body and an invalid

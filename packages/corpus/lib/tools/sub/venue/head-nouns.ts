@@ -3,14 +3,14 @@
 
 /**
  * @file Head-noun derivation for the sub-venue lexicon — proposing the addressed form of a designator
- * from the encyclopaedic label a vocabulary source carries.
+ * from the encyclopaedic label a vocabulary source provides.
  *
  * Everything derived lands `curated: false`, because a derivation is a hypothesis a locale's own data confirms or kills.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
 
-import type { SubVenueSurface } from "#tools/sub/venue/table"
+import type { SubVenueSurface } from "#subvenue/table"
 
 /**
  * Diacritic-flattened ascii fold, for comparing a Slavic or Turkish inflection against its Latin root.
@@ -30,14 +30,15 @@ function asciiFold(text: string): string {
  * How many leading characters two ascii-folded forms must share for one to count as the other's inflection.
  *
  * Five, or the id's own length when shorter.
- * At six the Spanish `satélite` is lost, and at four Italian `campo` is admitted and means field.
+ * A limit of six loses Spanish `satélite`.
+ * A limit of four admits Italian `campo`, which means field.
  */
 const HEAD_NOUN_PREFIX_FLOOR = 5
 
 /**
  * The shortest substring a non-Latin head-noun candidate may be.
  *
- * Two, because `楼` alone is "building" and would fire on every Chinese building name.
+ * Two, because `楼` by itself means "building" and would fire on every Chinese building name.
  */
 const NON_LATIN_HEAD_MIN_LENGTH = 2
 
@@ -57,8 +58,9 @@ const LATIN_PHRASE = /^[\p{Script=Latin}\d\s\p{P}]+$/u
 /**
  * The scripts the shared-substring derivation may run on: Han, Hiragana, Katakana, Hangul.
  *
- * Narrower than "not Latin" because a wider run produced unusable Cyrillic, Greek, Arabic,
- * Thai, Burmese and Tamil fragments, and no extract in reach attests those surfaces.
+ * Narrower than a general non-Latin filter.
+ * A wider run produced unusable fragments in six scripts: Cyrillic, Greek, Arabic, Thai, Burmese or Tamil.
+ * No available extract attests those surfaces.
  */
 const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u
 
@@ -118,8 +120,8 @@ export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): Su
 	for (const surface of surfaces) {
 		if (!SHARED_SUBSTRING_SCRIPT.test(surface.phrase)) continue
 
-		// Group `zh`, `zh-cn` and `zh-hant` together: they are writing systems for one vocabulary,
-		// and the simplified/traditional pair is the evidence a shared substring needs.
+		// Group `zh`, `zh-cn`, and `zh-hant` as writing systems for one vocabulary.
+		// The simplified/traditional pair supports a shared substring.
 		const key = `${surface.recordID} ${surface.lang.split(/[-_]/u)[0]!}`
 		const pool = groups.get(key) ?? new Set<string>()
 		pool.add(surface.phrase)
@@ -163,9 +165,11 @@ function commonPrefixLength(a: string, b: string): number {
  * Substrings occurring in at least two distinct members of `pool`, ranked by that count
  * then length, capped at {@link NON_LATIN_HEAD_CANDIDATE_CAP}.
  *
- * A candidate never spans whitespace and must be a whole token of some member where the pool has
- * whitespace, which keeps Korean `공항 터미널` from contributing a fragment straddling the space.
- * Maximal candidates only: one contained in a longer candidate carried by the same
+ * A candidate never spans whitespace.
+ * Where a pool member has spaces, the candidate must be a whole token.
+ *
+ * This keeps Korean `공항 터미널` from contributing a fragment across the space.
+ * Maximal candidates only: one contained in a longer candidate produced by the same
  * number of surfaces is dropped, since counting can never separate the two.
  */
 function sharedSubstringCandidates(pool: ReadonlySet<string>): string[] {

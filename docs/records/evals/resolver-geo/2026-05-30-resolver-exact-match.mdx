@@ -7,14 +7,14 @@ mis-resolved region** — measured on the 2406-row WOF-bootstrap eval.
 ## The bug, root-caused
 
 The end-to-end resolver eval ceiling was 68.9% Acc@1 with a p90 coordinate error
-of 1090 km. Decomposing the failures pinned the cause precisely:
+of 1090 km. The failure breakdown pinned the cause precisely:
 
 - Of neural's 749 eval failures, **100% resolved to a place — just the wrong
   one** (0% were unresolved). So the ceiling is a **resolver-ranking** problem rather than a parser-coverage problem.
 - **77% of the wrong resolutions are >100 km off** (median wrong-error 333 km,
   p90 2624 km) — distances that mean _wrong state_ rather than a local near-miss.
 
-Tracing the wrong-state cases exposed the mechanism. For `Portland, ME` the
+The wrong-state cases exposed the mechanism. For `Portland, ME` the
 resolver resolved the _region_ "ME" to **Missouri**, then correctly scoped the
 locality to its (wrong) parent → Portland, MO. The `findPlace("ME", region, US)`
 candidate list:

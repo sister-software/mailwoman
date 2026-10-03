@@ -12,7 +12,7 @@ import type { Suggestion } from "@mailwoman/react/map/types"
 import { usePlaceAutocomplete } from "@mailwoman/react/map/usePlaceAutocomplete"
 import { useCallback, useRef, useState } from "react"
 
-import type { PlanetarySearch, SearchHit } from "#search/index"
+import type { PlanetarySearch, SearchHit } from "#search"
 
 export interface SearchBoxProps {
 	search: PlanetarySearch | null
@@ -23,7 +23,7 @@ export interface SearchBoxProps {
 export function SearchBox({ search, placeholder, onSelect }: SearchBoxProps) {
 	const [text, setText] = useState("")
 	// The hook picks by suggestion value, a string.
-	// The hits behind the last answer are kept here so a pick maps back to the feature it named.
+	// The hits behind the last answer are kept here so a pick maps back to the selected feature.
 	const lastHits = useRef<Map<string, SearchHit>>(new Map())
 
 	const query = useCallback(

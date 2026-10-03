@@ -13,7 +13,7 @@
 import type { DatabaseClient } from "#client"
 
 /**
- * Whether a table named `name` exists.
+ * Whether a table exists with the value in `name`.
  *
  * An index, view or trigger of that name answers `false`.
  */
@@ -33,7 +33,7 @@ export function countRows<DB>(db: DatabaseClient<DB>, table: string): number {
 }
 
 /**
- * Whether an index named `name` exists.
+ * Whether an index exists with the value in `name`.
  */
 export function indexExists<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	return Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?").get(name))
@@ -53,7 +53,7 @@ export function listTables<DB>(db: DatabaseClient<DB>): string[] {
 }
 
 /**
- * Whether `table` has a column named `column`.
+ * Whether `table` has a column with the value in `column`.
  *
  * The table name is spliced into a pragma, so it must come from the schema, never from input.
  */

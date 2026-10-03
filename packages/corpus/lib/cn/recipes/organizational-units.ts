@@ -4,7 +4,7 @@
 /**
  * @file Labels Chinese rows whose settlement ends in an organizational unit chain.
  *
- *   The unit grammar tags the whole chain as `locality_unit` and its named head as `dependent_locality`. Input is JSONL
+ *   The unit grammar tags the whole chain as `locality_unit` and its head unit as `dependent_locality`. Input is JSONL
  *   with `{ raw, country }`. Rows are aligned per character for the CJK model.
  */
 

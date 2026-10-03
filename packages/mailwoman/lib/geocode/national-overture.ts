@@ -32,11 +32,12 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
  * What is known about the grant on one country's national address-point rows.
  *
  * Two documents can describe the same rows and disagree.
- * Recording the stricter of them states a grant nobody established, and a stricter
- * incorrect attribution is as incorrect as a permissive one.
+ * The stricter reading would state an unverified grant.
  *
- * So an entry holds either a settled expression or the candidate readings
- * and the evidence for each, and the build refuses to stamp an unsettled one.
+ * An incorrect restrictive attribution is as incorrect as an incorrect permissive one.
+ *
+ * So an entry holds either a settled expression or the candidate readings and evidence for each.
+ * The build refuses to stamp an unsettled expression.
  */
 export interface OvertureCountryLicense {
 	/**
@@ -52,18 +53,21 @@ export interface OvertureCountryLicense {
 	 */
 	evidence: readonly string[]
 	/**
-	 * The register `sources[].dataset` records, which is what any research has to be about.
+	 * The register recorded in `sources[].dataset`.
+	 * Research must address this register.
 	 */
 	register: string
 }
 
 /**
- * The grant on each country's national address-point database, which is the upstream register's alone.
+ * The grant on each country's national address-point database comes only from the upstream register.
  *
  * Overture declares no identifier for the addresses theme.
  * Its attribution page gives every other theme one, `CDLA-Permissive-2.0` for places
- * and `ODbL-1.0` for divisions, and for addresses states only that the sources carry
- * permissive open licenses before listing the upstream register per country.
+ * and `ODbL-1.0` for divisions.
+ *
+ * For addresses, Overture states only that the sources use permissive open licenses
+ * before listing the upstream register per country.
  *
  * An expression carrying a second Overture grant would assert a grant Overture does not make.
  *
@@ -74,15 +78,23 @@ const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
 	[
 		"tw",
 		{
-			// Two documents describe the same municipal 門牌 rows and name different grants.
+			// Two documents describe the same municipal 門牌 rows.
+			// They describe two grants, rather than conflicting terms for one grant.
 			// Overture's attribution page gives CC-BY-4.0 for each of the 18 Civil Affairs bodies.
-			// The counsel dossier reads OGDL-Taiwan-1.0, whose attribution failure voids the
-			// grant ab initio and whose §5.2 permits an agency to withdraw data.
-			// Recording either one asserts a reading nobody has made.
-			candidates: ["CC-BY-4.0", "OGDL-Taiwan-1.0"],
+			// Overture redistributes the data under those terms.
+			// The counsel dossier records OGDL-Taiwan-1.0 as the originating agencies' grant.
+			//
+			// A consumer of a row that came through Overture is bound by both,
+			// so the conjunction is the settled reading.
+			// Each identifier has only Attribution in `KNOWN_OBLIGATIONS`.
+			// The conjunction adds no obligation either grant lacks.
+			// A row with one grant would omit the other's conditions.
+			// OGDL-Taiwan-1.0 §5.2 permits an agency to withdraw its data.
+			// An attribution failure voids that grant ab initio.
+			expression: "CC-BY-4.0 AND OGDL-Taiwan-1.0",
 			evidence: [
-				"Overture attribution page, Taiwan section, read 2026-09-25: CC BY 4.0 on all 18 entries",
-				"docs/superpowers/plans/counsel-dossier.md §6: OGDL-Taiwan-1.0 over the municipal 門牌 data",
+				"Overture attribution page, Taiwan section, read 2026-09-25: CC BY 4.0 on all 18 entries — the terms Overture redistributes under",
+				"docs/superpowers/plans/counsel-dossier.md §6: OGDL-Taiwan-1.0 over the municipal 門牌 data — the originating agencies' own grant",
 			],
 			register: "OpenAddresses/<bureau> Civil Affairs",
 		},
@@ -103,7 +115,7 @@ const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
 			// Attribution reads `CartoCiudad CC-BY 4.0 scne.es`.
 			evidence: [
 				"Overture attribution page, Spain entry: scne.es under CC BY 4.0",
-				"IGN license PDF, which the CNIG product page and Overture both link",
+				"IGN license PDF linked by both the CNIG product page and Overture",
 			],
 			register: "OpenAddresses/scne.es",
 		},
@@ -126,8 +138,8 @@ export function overtureCountryLicense(countryCode: string): OvertureCountryLice
  *
  * @throws When the country has no entry, or when its entry holds candidate readings
  * rather than a settled expression.
- * A build that stamped a candidate would record a grant nobody established,
- * and the artifact would carry that claim for as long as it exists.
+ * A build that stamped a candidate would record an unverified grant.
+ * The artifact would preserve that claim for as long as it exists.
  */
 export function licenseForOvertureCountry(countryCode: string): string {
 	const entry = overtureCountryLicense(countryCode)

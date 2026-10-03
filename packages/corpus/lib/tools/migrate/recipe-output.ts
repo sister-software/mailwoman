@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Carry a recipe output written before `recipe`/`register`/`surface` onto the current row schema.
+ * @file Convert a recipe output written before `recipe`/`register`/`surface` to the current row schema.
  *
  * `recipe` and `base_source_id` are renames of `synth_method` and `synth_base_id`, so they assert no new claim.
  * `register` is `mailwoman-derived-tuples` for every row, because naming a publisher would record inference as fact.
@@ -14,6 +14,7 @@ import { once } from "@mailwoman/core/utils/events"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { retiredSourceName } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
@@ -61,12 +62,13 @@ export const RECIPE_SURFACES: Record<string, SurfaceOrigin> = {
 	"synth-pk-register": SurfaceOrigin.Composed,
 	"synth-bd-register": SurfaceOrigin.Composed,
 	"synth-reviewed-postcode-tail": SurfaceOrigin.Composed,
-	// The publisher's own string, carried through by an adapter rather than a recipe.
+	// The publisher's own string, preserved by an adapter rather than a recipe.
 	overture: SurfaceOrigin.Attested,
 	"overture-latam": SurfaceOrigin.Attested,
 	gnaf: SurfaceOrigin.Attested,
 	osm: SurfaceOrigin.Attested,
-	// Written from this repository's own tables, which publish the string verbatim.
+	// Written from this repository's own tables.
+	// They publish the string verbatim.
 	"synth-bare-country": SurfaceOrigin.Attested,
 	"synth-bare-postcode": SurfaceOrigin.Attested,
 	// Drawn rather than read: the box number, the anchor and the venue are the recipe's.
@@ -87,7 +89,11 @@ export interface MigrationSummary {
  * The surface for one source id, refusing a source the table does not name.
  */
 export function surfaceForSource(source: string): SurfaceOrigin {
-	const surface = RECIPE_SURFACES[source]
+	// The table keys on the retired spelling.
+	// A corpus that uses the current spelling needs the retired key for this lookup.
+	// Otherwise each row fails as though it had no surface.
+	// That failure misstates a renamed source as an unrecorded one.
+	const surface = RECIPE_SURFACES[retiredSourceName(source)]
 
 	if (!surface) {
 		throw new Error(

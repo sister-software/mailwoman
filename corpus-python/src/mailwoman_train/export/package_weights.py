@@ -34,6 +34,7 @@ from ..labels import (
     STAGE2_TAGS,
     STAGE3_FINE_TAGS,
     STAGE3_TAGS,
+    resolve_label_set,
 )
 
 
@@ -65,8 +66,21 @@ def build_model_card(
     training_duration_seconds: float,
     base_path: Path,
     package_version: str = "0.1.0",
+    label_set_name: str = "stage3",
+    address_system_count: int = 0,
 ) -> dict[str, Any]:
-    """Construct the ModelCard payload. Fields per Phase 2 §10."""
+    """Construct the ModelCard payload. Fields per Phase 2 §10.
+
+    ``address_system_count`` is the trained model's ``num_address_systems``. A nonzero count writes the
+    ``address_systems`` table a runtime needs to feed the ``locale_hint`` input and to read the
+    ``address_system_logits`` output.
+    """
+    from ..semantic_tags import label_set_contract
+
+    if tuple(resolve_label_set(label_set_name).bio_labels) != tuple(ACTIVE_BIO_LABELS):
+        raise ValueError(
+            f"build_model_card writes ACTIVE_BIO_LABELS as `labels`; label set {label_set_name!r} differs from it"
+        )
     return {
         "name": f"neural-weights-{locale}",
         "version": package_version,
@@ -89,6 +103,10 @@ def build_model_card(
         # compile-time default (STAGE2_BIO_LABELS), preserving back-compat with the
         # v3.0.0 published card which predates this field.
         "labels": list(ACTIVE_BIO_LABELS),
+        # The head's place in the shared semantic tag registry: which global concept each head tag
+        # is, under which registry version. A consumer comparing two families' outputs reads this
+        # rather than matching tag names across label sets.
+        "semantic_tags": label_set_contract(label_set_name),
         "eval": eval_report,
         "known_failure_modes": [
             "underperforms on Hawaiian addresses (sparse in training corpus)",
@@ -109,7 +127,22 @@ def build_model_card(
             "crf_transitions": "crf-transitions.json",
         },
         "base_relpath": str(base_path) if base_path else "",
+        **({"address_systems": address_system_card(address_system_count)} if address_system_count else {}),
     }
+
+
+def address_system_card(count: int) -> dict[str, Any]:
+    """The card's ``address_systems`` table for a model trained with ``count`` address-system ids.
+
+    ``members`` holds only ids below ``count``: a system registered after the model trained has no output
+    in its head and no hint embedding, so the runtime gives its countries ``no_hint``.
+    """
+    from ..address_systems import address_system_table
+
+    members = {
+        member: entry["id"] for entry in address_system_table() if entry["id"] < count for member in entry["members"]
+    }
+    return {"count": count, "no_hint": count, "members": dict(sorted(members.items()))}
 
 
 def export_crf_transitions(model: torch.nn.Module, *, crf_loss_weight: float = 0.0) -> dict[str, Any] | None:
@@ -198,7 +231,7 @@ def render_package_json(locale: str, *, package_version: str = "0.1.0") -> dict[
 
 
 # Per-component F1 floors. Coarse targets are the original Phase 2 §6 0.95 interface.
-# Stage 2 fine labels carry the v0.3.0 issue-spec floors: 0.6 venue, 0.7 street,
+# Stage 2 fine labels must meet the v0.3.0 issue-spec floors: 0.6 venue, 0.7 street,
 # 0.8 house_number (issue #57 "per-iteration success metric"). Tags absent from
 # ACTIVE_TAGS are silently skipped at status-line time.
 _F1_TARGETS: dict[str, float] = {

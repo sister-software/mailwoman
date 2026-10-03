@@ -4,7 +4,7 @@ The inference mask (codex/address-system-conventions.ts + neural/span decode) FO
 are ungrammatical in a detected system. this module supplies the TRAIN-TIME pairing: on rows whose
 gold country has a conventions row, the forbidden label columns are masked out of the CE loss
 (logits to -1e9 → softmax excludes them), so the model learns "this context → these tags do not
-exist" instead of merely being decode-blocked. The v0.9.13 choreography lesson says the pairing is
+exist" instead of merely being decode-blocked. The v0.9.13 choreography report states the pairing is
 essential. this is the same discipline applied to grammar.
 
 MIRROR INTERFACE: the table below mirrors ``codex/address-system-conventions.ts`` (the provenance-

@@ -32,17 +32,17 @@ Items 5 and 6 were pure engineering and landed the day before training started. 
 
 ## What happened
 
-We ran five training runs. Three used the same full recipe at different learning rates, and two were ablations that each dropped one item. All five diverged in the same distinctive way. Training loss dropped monotonically through a long warmup, plateaued at the bottom for several hundred steps, then spiked back up to its starting magnitude over 50-150 steps. Validation macro-F1 mirrored the train loss: it climbed to a peak around the LR's peak step, then collapsed to roughly the random-output baseline.
+We ran five training runs. Three used the same full recipe at different learning rates, and two were ablations that each dropped one item. All five diverged in the same distinctive way. The training loss dropped monotonically through a long warmup, plateaued at the bottom for several hundred steps, then spiked back up to its starting magnitude over 50-150 steps. Validation macro-F1 mirrored the train loss: it climbed to a peak around the LR's peak step, then collapsed to roughly the random-output baseline.
 
 The collapse step shifted with the learning rate:
 
-| Learning rate      | Collapsed at step |
+| LR                 | Collapsed at step |
 | ------------------ | ----------------: |
 | 5e-4 (target)      |               750 |
 | 3e-4               |              1000 |
 | 1.5e-4 (v0.3.0 LR) |              2000 |
 
-All three runs diverged in the same shape, and a lower LR delayed the divergence only partly. Halving the LR delayed the collapse by a factor of 1.3 rather than 2. That ruled out "we picked too high an LR" as the explanation. The destabilizer was in the recipe rather than the learning rate.
+All three runs diverged in the same shape, and a lower LR delayed the divergence only partly. A half-sized LR delayed the collapse by a factor of 1.3 rather than 2. That ruled out "we picked too high an LR" as the explanation. The destabilizer was in the recipe rather than the learning rate.
 
 We then ran the ablations the issue had prescribed:
 
@@ -79,7 +79,7 @@ We shipped the §4-only recipe, which layers the source rebalance on top of v0.3
 
 The shipped checkpoint is `v0_4_0-stableLR-source-only/step-002200`. The architecture is unchanged from v0.3.0 (256-dim, 6 layers, 9M params), and so is the label vocabulary (the same 21 BIO classes). Only the choice of extracts that the training loader oversamples differs.
 
-## Reading the eval numbers
+## Read the eval numbers
 
 Per-tag F1 on golden v0.1.2 (4535 entries):
 

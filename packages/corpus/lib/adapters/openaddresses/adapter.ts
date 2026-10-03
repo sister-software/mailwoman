@@ -2,44 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `openaddresses`: Line-delimited GeoJSON adapter for openaddresses.io exports.
+ * `openaddresses`: line-delimited GeoJSON adapter for openaddresses.io exports.
  *
- *   OpenAddresses publishes country-partitioned address dumps as either CSV or line-delimited GeoJSON
- *   (one `Feature` per line, also called ND-GeoJSON / GeoJSONL). This adapter consumes the
- *   line-delimited GeoJSON shape — it streams cleanly without holding the file in memory, which
- *   matters for the multi-gigabyte national dumps (e.g. `us-northeast.geojsonl`, ~20M rows).
- *
- *   The collection aggregates **hundreds** of underlying sources with **per-source licenses** (city
- *   open-data portals, county GIS departments, state DOTs). The adapter therefore prefers the
- *   per-row `LICENSE` property when present and falls back to the configured `defaultLicense`. The
- *   propagated license travels with each `CanonicalRow` so downstream code can stratify, exclude,
- *   or re-attribute by license at training time.
- *
- *   Country must be explicit (`opts.country` required): OpenAddresses files are organized by country
- *   but the row-level data doesn't include a country code, so the adapter refuses to run without
- *   one. This matches how a `mailwoman corpus build` invocation pins each file to a country via the
- *   inputs JSON.
- *
- *   Properties consumed (per the canonical OpenAddresses schema. both uppercase and lowercase
- *   variants are accepted because legacy dumps used uppercase):
- *
- *   | Property | ComponentTag | | ------------- |
- *   -------------------------------------------------------------- | | `number` | `house_number` |
- *   | `street` | `street` | | `unit` | `unit` (if non-empty) | | `city` | `locality` | | `region` |
- *   `region` (state code for US, province for CA, etc.) | | `postcode` | `postcode` | | `LICENSE` |
- *   per-row `license` override | | `hash` / `id` | `source_id` (prefer `hash`; fall back to `id`;
- *   then synthesize)|
- *
- *   `district` is intentionally not mapped — for US data it carries borough or county and would
- *   inflate alignment quarantine because postal addresses don't include it. Phase 6+ may revisit
- *   for non-US locales where district names do appear on the envelope.
+ * Country must be explicit because OpenAddresses organizes files by country while the row data
+ * has no country code. A per-row `LICENSE` property wins where present and the configured
+ * `defaultLicense` covers the remaining rows. `district` stays unmapped because US data uses it for a borough or county.
+ * The adapter omits that field because mapping it would inflate alignment quarantine.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { createLicenseVerdictCache, LicensePolicy } from "#utils"
@@ -51,8 +26,8 @@ import { createLicenseVerdictCache, LicensePolicy } from "#utils"
  */
 export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
 /**
- * License carried by this source (CC-BY-4.0), attached to each row so downstream
- * consumers inherit the terms rather than having to look them up.
+ * License assigned to each row from this source (CC-BY-4.0), so downstream consumers
+ * inherit the terms rather than having to look them up.
  */
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
@@ -121,17 +96,15 @@ export interface OpenaddressesAdapterOptions {
 	defaultLicense?: string
 
 	/**
-	 * Whether this adapter emits a row whose per-file license carries share-alike.
+	 * Whether this adapter emits a row whose per-file license requires share-alike.
 	 *
 	 * The default is `true`.
-	 * Refusing a share-alike row is a deliberate build-level act, which
 	 * `buildCorpus({ licensePolicy })` and `mw corpus build --license-policy share-alike-free`
-	 * express, rather than a silent adapter default (#26).
+	 * express a refusal at build level.
 	 *
-	 * That path is the normal one, because it reads the obligations of every adapter's
-	 * rows under one policy and records what it refused.
+	 * The policy reads the obligations of every adapter's rows under one policy and records what it refused.
 	 *
-	 * Pass `false` only for an adapter-scoped drop, such as a fixture that must carry one license.
+	 * Pass `false` only for an adapter-scoped drop, such as a fixture that must use one license.
 	 */
 	allowShareAlike?: boolean
 }
@@ -140,25 +113,25 @@ export interface OpenaddressesAdapterOptions {
  * Build an OpenAddresses adapter.
  *
  * The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
- * known to carry a single license throughout (e.g. A pddl-only state extract).
+ * known to use a single license throughout (e.g. a PDDL-only state extract).
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE
 	const allowShareAlike = opts.allowShareAlike ?? true
 	// The same reading the build applies, so an adapter-scoped drop
 	// and a build-level policy refuse the same rows.
-	// OpenAddresses stamps a per-file license, and a file's value can be prose naming
-	// a share-alike register rather than an identifier.
+	// OpenAddresses stamps a per-file license.
+	// A file's value can be prose naming a share-alike register rather than an identifier.
 	const shareAlike = createLicenseVerdictCache(LicensePolicy.ShareAlikeFree)
 
 	return {
 		id: OPENADDRESSES_ADAPTER_ID,
 		defaultLicense,
 		addressRole: AddressRole.Premise,
-		// OpenAddresses redistributes national and municipal registers whose terms differ per file,
-		// and a row's upstream is named by the source file it came from rather than by this adapter.
+		// OpenAddresses redistributes national and municipal registers with terms that differ per file.
+		// A row's source file identifies its upstream, rather than this adapter.
 		register: SourceRegister.OpenAddresses,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "OpenAddresses (global): line-delimited GeoJSON dumps with per-row licenses.",
 
 		async *rows(adapterOpts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -170,9 +143,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 			const country = adapterOpts.country
 
-			// TextSpliterator streams string lines (parseFeatureLine keeps tolerating
-			// blank/`#`/ malformed lines by returning null); passing the path string lets the
-			// lib own + dispose the file handle, including on an early `break`.
+			// The path string lets the library own and dispose the file handle, including on an early `break`.
 			const lines = TextSpliterator.fromAsync(adapterOpts.inputPath)
 
 			let emitted = 0
@@ -195,8 +166,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 					const region = props.region?.trim() ?? ""
 					const postcode = props.postcode?.trim() ?? ""
 
-					// A row is only useful if it has, at minimum, a street + (postcode or locality).
-					// Pure point-only rows would land in quarantine anyway.
+					// A row needs a street plus a postcode or locality, or the aligner quarantines it.
 					if (!street) continue
 
 					if (!city && !postcode) continue

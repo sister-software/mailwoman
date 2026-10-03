@@ -63,7 +63,7 @@ availability. FL and MA are not postal deserts.
 `type` discriminator — so position is the only thing distinguishing the levels. `[1]` is the state.
 `[2]` is the **administrative municipality** (census place / town), which the top NY values give
 away: Hempstead, Brookhaven, Islip, Oyster Bay, Greece, Colonie. Nobody addresses mail to "Greece,
-NY". Joining the two fields where both are present determines the result:
+NY". The two fields determine the result when both are present:
 
 | `address_levels[2]` | `postal_city` |      n |
 | ------------------- | ------------- | -----: |
@@ -82,7 +82,7 @@ Two smaller traps in the same investigation, both worth avoiding next time:
   belongs to another state entirely (a Gainesville TX row, a row whose postcode is literally `111`).
   `@mailwoman/codex/us/zipcode` ships `isZipCode` and `StateAbbreviationZipCodePrefixRecord` for
   exactly this; a hand-typed prefix list in a SQL string is not the tool.
-- Correcting that filter by scoping on `address_levels[1].value = 'NY'` rests on the _same_
+- The filter correction scopes on `address_levels[1].value = 'NY'` and rests on the _same_
   unverified schema reading it was meant to correct. Confirm what a column means before using it to
   validate another column.
 
@@ -101,7 +101,7 @@ All inherit the same hole or carry no city name at all:
 - **`postal-city-alias-us.db`** — models exactly this concept (`postal_city_alias(postcode,
 postal_city, geo_locality, divergent)`) but is built `FROM overture:US`, so it inherits the hole.
   12,088 postcodes, 300 NY-shaped, zero NYC. Its only Brooklyn rows are **IA 52211, CT 06234, MD
-  21225, OH 44144, IL 62059**. Rebuilding it against GeoNames is the natural follow-on.
+  21225, OH 44144, IL 62059**. A GeoNames rebuild is the natural follow-on.
 - **`postalcode-us.db`** — 42,319 postalcode nodes; 11201 / 10001 / 10451 all present, but the
   `names` table has **zero rows** and ancestry returns nothing. No city name anywhere.
 - **`candidate.db`** — postcode nodes are named by the code itself. Brooklyn exists only as a WOF
@@ -115,5 +115,5 @@ postal_city, geo_locality, divergent)`) but is built `FROM overture:US`, so it i
 
 Several sources here carry US postcodes at different vintages, and freshness matters unevenly by
 granularity: the leading digits (sectional center) are near-static, while individual 5-digit
-assignments and their delivery-city labels turn over. Choosing a source on coverage alone is not
+assignments and their delivery-city labels turn over. Coverage alone does not settle the source choice;
 enough — see the follow-up survey.

@@ -20,7 +20,7 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from <DATA_ROOT>/db/wof/candidate.db and the BAN extract from <DATA_ROOT>/db/ban/address-points-fr.db.
 
 import { banDatabaseRoot } from "@mailwoman/ban/paths"
-import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
+import { BANRegionDatabaseProvider } from "@mailwoman/ban/region-database-provider"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -98,7 +98,8 @@ if (!dataRoot) {
 	// oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset
 	process.exit(1)
 
-	// Throwing states the branch's end, since `process.exit` is typed `never` only when the checker can see it.
+	// This throw satisfies the control-flow check because the checker sees
+	// `process.exit` as `never` only in some contexts.
 	throw new Error("unreachable")
 }
 
@@ -129,8 +130,10 @@ interface PanelRow {
 }
 
 /**
- * One graded answer, whose `km` is null when the pipeline returned no coordinate,
- * which {@link summarize} keeps apart from a far-away one.
+ * One graded answer.
+ *
+ * Its `km` is null when the pipeline returned no coordinate. {@link summarize} keeps
+ * that case separate from a coordinate that is far away.
  */
 interface GradedRecord {
 	km: number | null
@@ -186,8 +189,8 @@ async function resample(): Promise<void> {
 		const rowid = 1 + Math.floor(random() * maxRowid)
 		const hit = rowStatement.get(rowid)
 
-		// A drawn rowid can miss or lack a postcode or commune, and both are skipped
-		// rather than retried so the draw stays a pure function of the seed.
+		// A drawn rowid can miss or lack a postcode or commune.
+		// Both are skipped rather than retried so the draw stays a pure function of the seed.
 		if (!hit?.postcode || !hit.locality_norm || !hit.street_raw || !hit.number) continue
 
 		if (seenPostcode.has(hit.postcode)) continue
@@ -234,9 +237,10 @@ async function resample(): Promise<void> {
 //#region Versions
 
 /**
- * The code, model, and reference-data versions a differing re-run must tell apart,
- * reporting the artifact `resolveWeights` actually loaded rather than the one asked for
- * and dereferencing paths past development symlinks.
+ * The stamp reports the code and model versions for a differing rerun.
+ *
+ * It also reports the reference-data version and artifact `resolveWeights` loaded.
+ * Paths resolve through development symlinks.
  */
 async function versionStamp() {
 	const require = createRequire(import.meta.url)

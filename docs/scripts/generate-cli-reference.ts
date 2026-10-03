@@ -224,9 +224,10 @@ const packagePath = resolvePackageDirectory("mailwoman")
 /**
  * The directory of compiled command modules.
  */
-export const COMMANDS_DIRECTORY = packagePath("out", "commands")
+export const COMMANDS_DIRECTORY = packagePath("out", "cli", "commands")
 /**
- * The directory of compiled native commands, which are merged into the command tree.
+ * The directory of compiled native commands.
+ * The generator merges them into the command tree.
  */
 export const NATIVE_COMMANDS_DIRECTORY = packagePath("out", "cli", "native", "commands")
 
@@ -423,7 +424,7 @@ export function renderCLIReference(surface: CLISurface): string {
 	sections.push(
 		"## Exit codes",
 		"",
-		"Every command shares one exit-code interface, owned by `useCommandTask` in `packages/mailwoman/lib/cli/kit`.",
+		"Every command shares one exit-code interface, owned by `useCommandTask` in `packages/mailwoman/cli/kit`.",
 		"",
 		renderTable(
 			["Code", "Meaning", "Next step"],
@@ -440,7 +441,7 @@ export function renderCLIReference(surface: CLISurface): string {
 		"Two behaviors are exceptional because they are not failures.",
 		"",
 		"- `mailwoman doctor` exits `0` when the core checks pass, even when every optional data layer is",
-		"  missing. Parsing works without them.",
+		"  missing. The parser runs without the optional data layers.",
 		"- `mailwoman parse` degrades to the structural stages when the neural weights are absent, prints a",
 		"  warning on `stderr`, and still exits `0`. Standard output stays machine-parseable.",
 		"",
@@ -466,7 +467,7 @@ export function renderCLIReference(surface: CLISurface): string {
 		"build the binary, so a flag string here is the flag string `--help` prints. A test asserts the",
 		"committed page against a fresh render, which turns a stale page into a failing build.",
 		"",
-		`The scope split is deliberate. Publishing all ${surface.totalCommands} commands would bury the ${documentedCount} that run against`,
+		`The scope split is deliberate. A page that covers all ${surface.totalCommands} commands would bury the ${documentedCount} that run against`,
 		"an installed package under training and dataset tooling that requires the repository, its data root,",
 		"and hours of wall clock. The generator refuses to run if it meets a command group it has never been",
 		"told about, so the boundary is a decision someone makes rather than an omission.",

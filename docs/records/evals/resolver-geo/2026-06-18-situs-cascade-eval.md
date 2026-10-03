@@ -86,7 +86,7 @@ retrain and not more gazetteer breadth.
   release the geocoder consumes.
 - **Ship-config parity is partial.** The eval feeds the postcode **anchor** (the dominant channel for
   admin recovery, which reproduces the 98.0% headline) but builds the classifier manually, so it does
-  not yet feed the gazetteer/conventions channels. Routing it through the canonical `createScorer`
+  not yet feed the gazetteer/conventions channels. The canonical `createScorer` path would
   for full ship-config parity is a tracked follow-up; it does not affect the coordinate result here.
 - **Locality-match residual is separate.** The ~2% locality miss is mostly civic-suffix /
   coincident-municipality naming, not absent places — a metric-fairness item, not a coverage hole.

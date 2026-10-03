@@ -6,12 +6,12 @@
  *
  *   The US analog is `us/state.ts`. The informative difference: a US state's two-letter code (`CA`)
  *   is the USPS abbreviation people actually write in an address, whereas a German address almost
- *   never carries the Bundesland at all. It is `PLZ City`, and the state is inferred. So these
+ *   never includes the Bundesland. It is `PLZ City`, and the state is inferred. These
  *   codes matter for resolver region-matching and display rather than for parsing the surface string.
  */
 
 /**
- * Per-state record: ISO 3166-2:DE code, native German name, and the common English exonym.
+ * Per-state record: ISO 3166-2:DE code, native German name and common English exonym.
  */
 export interface GermanStateInfo {
 	/**
@@ -73,8 +73,9 @@ export function isGermanStateCode(input: unknown): input is GermanStateCode {
  *
  * Includes the everyday aliases a parser actually meets: `NRW` for Nordrhein-Westfalen,
  * `Bavaria` for Bayern, `Saxony` for Sachsen.
- * The point is resolver region-matching: a German parse emits a region surface form,
- * and the eval needs to map it to a code without a US-USPS-shaped matcher.
+ * The resolver matches region surface forms from German parses.
+ *
+ * Evaluation maps each form to a code without a matcher shaped for US USPS codes.
  */
 export const DE_STATE_NAME_TO_CODE: ReadonlyMap<string, GermanStateCode> = (() => {
 	const out = new Map<string, GermanStateCode>()

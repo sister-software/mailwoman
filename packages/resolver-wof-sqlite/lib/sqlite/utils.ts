@@ -46,7 +46,8 @@ export function prepareAll<Parameters extends SQLInputValue[], Row, DB>(
 }
 
 /**
- * Returns true when `name` is a table in the open database, and false when the check itself fails.
+ * Returns true when `name` is a table in the open database.
+ * Returns false when the check itself fails.
  *
  * The street-level lookups call it so that an empty extract, such as an interrupted build
  * or a zero-byte file, makes every lookup miss instead of throwing `no such table`.

@@ -21,7 +21,7 @@ from mailwoman_train.types import PieceSpan
 REFERENCE = Path(__file__).parent / "encode-row-channels-reference.json"
 
 #: The row every case encodes, one hit per channel so a channel that stops painting shows as zeros.
-#: The postcode carries no trailing punctuation: the anchor's lookup key is the span's raw surface
+#: The postcode has no trailing punctuation: the anchor's lookup key is the span's raw surface
 #: space-stripped and uppercased.
 RAW = "12 Market St, Burlington, VT 05401 USA"
 TOKENS = ["12", "Market", "St,", "Burlington,", "VT", "05401", "USA"]
@@ -138,7 +138,7 @@ def test_every_channel_pads_to_the_label_width(encoded: dict[str, Any], case: st
 
 
 def test_a_row_without_channels_carries_only_the_three_base_keys(encoded: dict[str, Any]) -> None:
-    """Absent channels are OMITTED, which is what keeps a pre-channel recipe byte-identical."""
+    """Absent channels are omitted. This keeps a pre-channel recipe byte-identical."""
     assert set(encoded["no_channels"]) == {"input_ids", "attention_mask", "labels"}
 
 

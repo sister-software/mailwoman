@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The per-locale releases manifest: the version pointer beside the versioned asset directories, and the one place
- *   its wire keys are read. Every spelling a published manifest has ever carried stays readable here, because a wire
+ *   The per-locale releases manifest stores the version pointer beside versioned asset directories. It is the one place
+ *   its wire keys are read. Every spelling a published manifest has used stays readable here, because a wire
  *   key is a string interface and a reader that drops one turns a release's gazetteer off with no error.
  */
 
@@ -51,9 +51,10 @@ export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB
 	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
 	hasWofDb?: boolean
 	/**
-	 * The spelling the live 2026-08-11 manifest actually carries (WOF caps, lowercase b).
+	 * The spelling the live 2026-08-11 manifest actually uses (WOF caps, lowercase b).
 	 *
-	 * A wire key is a string interface, and every spelling ever published must stay readable here.
+	 * A wire key is a string interface.
+	 * Every spelling ever published must stay readable here.
 	 */
 	hasWOFDb?: boolean
 }
@@ -71,17 +72,18 @@ export interface WireReleasesManifest {
  * Normalize a fetched releases.json into house-cased {@link ReleasesManifest} fields.
  *
  * All manifest consumption goes through here.
- * The wire tolerance lives in exactly one place, and everything past this boundary
- * uses the acronym convention (`hasFST` / `hasWOFDB`).
+ * The wire tolerance lives in exactly one place.
+ *
+ * Everything past this boundary uses the acronym convention (`hasFST` / `hasWOFDB`).
  *
  * Why the tolerance: the 2026-07-01 acronym sweep renamed the reads while the
  * published R2 manifest kept the old keys.
  * Every release read `undefined`, silently disabling the demo's WOF cascade and the FST
  * for three days (zero console errors; "no WOF hits" was the only symptom).
  *
- * The fix is not to freeze the wire keys but to migrate them deliberately:
- * the publisher now writes house-cased keys, this normalizer accepts both generations
- * (old HF mirrors still carry the legacy keys), and the interface test pins all three parties.
+ * The fix is not to freeze the wire keys but to migrate them deliberately: the publisher now writes
+ * house-cased keys, this normalizer accepts both generations (old HF mirrors still use the legacy keys).
+ * The interface test pins all three parties.
  */
 export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesManifest {
 	return {
@@ -92,8 +94,8 @@ export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesMa
 			hasFST: r.hasFST ?? r.hasFst ?? false,
 			// The 2026-08-11 v9.1.0 manifest (live until the next model release) writes
 			// `hasWOFDb` — WOF caps, lowercase b.
-			// The 08-14 casing sweep renamed reader and writer to `hasWOFDB` but missed this third
-			// live spelling, which turned the demo's whole WOF cascade off silently for four days.
+			// The 08-14 casing sweep renamed reader and writer to `hasWOFDB` but missed this third live spelling.
+			// The demo's whole WOF cascade then stayed off silently for four days.
 			hasWOFDB: r.hasWOFDB ?? r.hasWOFDb ?? r.hasWofDb ?? false,
 		})),
 	}

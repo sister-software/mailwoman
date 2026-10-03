@@ -1,4 +1,4 @@
-"""Generating deliberately confusing addresses, one adversarial category at a time.
+"""This module generates deliberately confusing addresses, one adversarial category at a time.
 
 The generation budget is split across the categories by their weight, with a floor of 50 rows each
 so a low-weighted category still produces enough rows to read. Every row is re-validated against
@@ -16,7 +16,7 @@ from .client import LICENSE_LABEL, deepseek_call, deterministic_id, parse_jsonl_
 from .prompts import KRYPTONITE_CATEGORIES, KRYPTONITE_SYSTEM, build_kryptonite_user_prompt
 from .run import Sink, load_checkpoint, run_batches
 
-#: The categories whose addresses are French rather than US. everything else carries the US tags.
+#: The categories whose addresses are French rather than US. Other categories use the US tags.
 FRENCH_CATEGORIES = ("french-saint",)
 
 #: A category's share of the budget never falls below this, however small its weight.

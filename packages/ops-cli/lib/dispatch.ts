@@ -2,23 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mwops`: the private operator CLI. Four verbs, each a view over a registry: `release <operation>` over
- *   `@mailwoman/release-kit`, `shop <operation>` over the license worker's shop, `storage <operation>` over
- *   `@mailwoman/storage-kit`, and `health <check>|all` over `@mailwoman/repo-health`. The three operation registries
- *   share one runner that differs only in the context it builds and the exit code an output earns. It parses
- *   arguments, hands them to the registered capability, and prints the result. Every decision about what happens
- *   belongs to the operation or the check. Kept free of `process` so it is unit-testable: the bin wrapper supplies
- *   argv, stdout, and the exit code.
+ *   `mwops` routes release, shop, storage, and health operations through their registries.
+ *   The `ci-scope` command selects CI suites and writes GitHub Actions outputs.
+ *   Dispatch receives its output streams and checkout path from the entry point.
  *
- *   The health verb performs two mutations, and neither is a check: `health baseline debt` rewrites
- *   `packages/repo-health/baseline.json` from the current readings, and `health fix <check>` applies the mechanical
- *   repair a check's diagnostics describe. Both are exported by repo-health and left out of the check registry, whose
- *   type admits no writer. this is the only caller of either.
+ *   `health` also performs two mutations outside the check registry. Its type admits no writer:
+ *   `health baseline debt` rewrites `packages/repo-health/baseline.json`, and `health fix <check>` applies a
+ *   check's mechanical repair.
  */
 
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { filesAtRef, renamesSince } from "@mailwoman/core/git"
+import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { findOperation, type Operation, type OperationContext } from "@mailwoman/core/scripting"
-import { shopOperations } from "@mailwoman/license-worker/shop"
+import { shopOperations } from "@mailwoman/license-worker/shop/operations"
 import { operations, type ReleaseContext } from "@mailwoman/release-kit"
 import {
 	applyModuleMoves,
@@ -31,14 +28,18 @@ import {
 	planModuleMoves,
 	runCommentInventory,
 	type Diagnostic,
+	type ManifestReplacement,
+	type ModuleMove,
 	type RepoContext,
 	writeBaseline,
 } from "@mailwoman/repo-health"
+import { writeCIScope } from "@mailwoman/repo-health/actions-output"
+import { planPathLiteralRewrites } from "@mailwoman/repo-health/move/literals"
 import { storageOperations, type StorageContext } from "@mailwoman/storage-kit"
+import { resolvePath } from "path-ts"
 
 /**
  * How many times `health fix` re-takes a plan before giving up.
- *
  * See {@link runFix} for why one pass is not enough.
  */
 const MAXIMUM_FIX_PASSES = 8
@@ -49,17 +50,14 @@ export interface DispatchIO {
 	repoRoot: string
 	trackedFiles: () => Promise<readonly string[]>
 	/**
-	 * Whether the process holds root.
-	 *
-	 * Resolved by the bin wrapper — dispatch stays free of `process` so it is unit-testable.
+	 * Whether the process holds root, resolved by the bin wrapper so dispatch stays free of `process`.
 	 */
 	root?: boolean
 }
 
 /**
- * `--key value` and `--flag` pairs into an object an operation's `inputSchema` then coerces and validates.
- *
- * Values stay strings here on purpose: the schema is the one place a type is decided.
+ * `--key value` and `--flag` pairs into an object the operation's `inputSchema` coerces
+ * and validates, so values stay strings here and the schema decides the type.
  */
 export function parseOptions(args: readonly string[]): { options: Record<string, string | boolean>; rest: string[] } {
 	const options: Record<string, string | boolean> = {}
@@ -97,8 +95,11 @@ function usage(io: DispatchIO): number {
 			"  mwops release <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops shop <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
+			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
 			"  mwops health baseline debt        (rewrite packages/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
+			"  mwops health move <from> <to> [<from> <to> …] [--dry-run]   (or --moves <file.json> listing {from, to})",
+			"  mwops health move --literals-since <ref> [--dry-run]   (rewrite path literals left stale by renames since <ref>)",
 			"  mwops health comments [path]      (rebuild the source-comment inventory and its review leads)",
 			"  mwops storage <operation> [--json] [--dry-run] [--key value …]",
 			"",
@@ -115,17 +116,13 @@ function usage(io: DispatchIO): number {
 }
 
 /**
- * One registry as a `mwops` verb.
+ * One registry as a `mwops` verb: its operations and the context each receives.
  *
- * It names where the operations come from, what each one receives beside its input,
- * and how an output decides the exit code.
+ * The registry also defines how an output determines the exit code.
  */
 interface OperationView<TContext extends OperationContext> {
 	verb: string
 	registry: ReadonlyArray<Operation<string, TContext>>
-	/**
-	 * Build the family's context over the base every operation receives.
-	 */
 	context: (base: OperationContext, io: DispatchIO) => TContext
 	/**
 	 * The exit code an output earns.
@@ -134,9 +131,6 @@ interface OperationView<TContext extends OperationContext> {
 	exitCode?: (output: unknown) => number
 }
 
-/**
- * `mwops release`, `mwops shop`, and `mwops storage`: the same view over three registries.
- */
 const releaseView: OperationView<ReleaseContext> = {
 	verb: "release",
 	registry: operations,
@@ -162,10 +156,7 @@ const storageView: OperationView<StorageContext> = {
 }
 
 /**
- * Run one operation of a registry.
- *
- * Parse the options, find the operation by its bare name or dotted id, build the
- * family's context, validate the input, run, and print.
+ * Run one operation of a registry, found by its bare name or dotted id.
  */
 async function runOperation<TContext extends OperationContext>(
 	view: OperationView<TContext>,
@@ -220,10 +211,8 @@ async function runOperation<TContext extends OperationContext>(
 }
 
 /**
- * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings.
- *
- * `debt` is the only counter set with a baseline.
- * The target is named so a second one has a place to go.
+ * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings,
+ * where `debt` is the only counter set.
  */
 async function runBaseline(
 	targets: readonly string[],
@@ -255,14 +244,8 @@ async function runBaseline(
 }
 
 /**
- * `mwops health comments [path]` — rebuild the source-comment inventory and its heuristic review leads.
- *
- * Not a check: it answers a report about the tree rather than a verdict on it,
- * and its leads are for a human reviewer to confirm.
- * It sits under `health` for the same reason `baseline` does.
- *
- * It reads the same tracked-file context every check gets, and CI runs a registered
- * entry point rather than a path into a package's `lib/`.
+ * `mwops health comments [path]` — rebuild the source-comment inventory and its heuristic
+ * review leads, a report about the tree rather than a verdict on it.
  */
 async function runComments(
 	targets: readonly string[],
@@ -283,12 +266,8 @@ async function runComments(
 }
 
 /**
- * `mwops health fix <check>` — apply the mechanical repair for one check.
- *
- * The plan is built and proven before anything is written, so `--dry-run`
- * reports exactly what the write would do.
- * A plan carrying a specifier with no proven replacement is refused by `applyModuleMoves`,
- * which is why this function has no force flag to offer.
+ * `mwops health fix <check>` — apply the mechanical repair for one check, building and proving
+ * the plan before anything is written so `--dry-run` reports exactly what the write would do.
  */
 async function runFix(
 	targets: readonly string[],
@@ -307,33 +286,39 @@ async function runFix(
 	}
 
 	const dryRun = options["dry-run"] === true
-	const passes: Array<{ moves: number; rewrites: number; manifests: number; literals: number; verified: number }> = []
 
-	// A fix can create work for itself: moving `build-outlier-oa.ts` into `build/` leaves
-	// `outlier-oa.ts` beside two siblings that now share `outlier-`.
-	// So the plan is re-taken until the check has no further finding.
-	// The bound is a guard against a rule that never settles rather than an expected
-	// number of passes — the repository's deepest family took two.
+	const passes: Array<{
+		moves: number
+		rewrites: number
+		manifests: number
+		replacements: number
+		literals: number
+		verified: number
+	}> = []
+
+	// A fix can create work for itself, so the plan is re-taken until the check has no further finding.
+	// The bound guards a rule that never settles.
 	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
 		const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
-		const moves = await fix.plan(context)
+		const proposed = await fix.plan(context)
 
-		if (!moves.length) break
+		if (!proposed.moves.length && !proposed.manifests?.length) break
 
-		const plan = await planModuleMoves(context, moves)
+		const plan = await planModuleMoves(context, proposed.moves, { manifests: proposed.manifests })
 		const result = await applyModuleMoves(context, plan, { dryRun })
 
 		passes.push({
 			moves: plan.moves.length,
 			rewrites: plan.rewrites.length,
 			manifests: plan.manifestRewrites.length,
+			replacements: plan.manifestReplacements.length,
 			literals: plan.pathLiterals.length,
 			verified: result.verified,
 		})
 
 		if (options.json !== true) {
 			io.stdout(
-				`${fix.id} pass ${pass + 1}: ${plan.moves.length} move(s), ${plan.rewrites.length} specifier rewrite(s), ${plan.manifestRewrites.length} manifest target(s), ${plan.pathLiterals.length} path literal(s), across ${plan.scanned.read} of ${plan.scanned.tracked} tracked sources\n`
+				`${fix.id} pass ${pass + 1}: ${plan.moves.length} move(s), ${plan.rewrites.length} specifier rewrite(s), ${plan.manifestRewrites.length} manifest target(s), ${plan.manifestReplacements.length} manifest replacement(s), ${plan.pathLiterals.length} path literal(s), across ${plan.scanned.read} of ${plan.scanned.tracked} tracked sources\n`
 			)
 
 			for (const move of plan.moves) {
@@ -372,6 +357,124 @@ async function runFix(
 	return 0
 }
 
+/**
+ * `mwops health move --literals-since <ref>` — rewrite the path literals that
+ * every rename since `ref` left stale.
+ *
+ * The renames come from `git diff --name-status -M <ref>`, and directory renames are judged against
+ * the files `ref` tracked, so a directory counts as moved only when all of its files moved together.
+ */
+async function runLiteralRepair(ref: string, dryRun: boolean, io: DispatchIO): Promise<number> {
+	const renames: ModuleMove[] = await renamesSince(ref, io.repoRoot)
+	const refFiles = await filesAtRef(ref, io.repoRoot)
+	const pathLiterals = await planPathLiteralRewrites(io.repoRoot, refFiles, renames)
+	const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+
+	await applyModuleMoves(
+		context,
+		{
+			moves: [],
+			rewrites: [],
+			manifestRewrites: [],
+			manifestReplacements: [],
+			pathLiterals,
+			unresolved: [],
+			scanned: { read: refFiles.length, tracked: refFiles.length },
+		},
+		{ dryRun }
+	)
+
+	io.stdout(`literals: ${pathLiterals.length} stale path literal(s) from ${renames.length} rename(s) since ${ref}\n`)
+
+	for (const literal of pathLiterals) {
+		io.stdout(`    ${literal.file}: ${literal.path} -> ${literal.replacement}\n`)
+	}
+
+	io.stdout(dryRun ? "Nothing written. Drop --dry-run to apply.\n" : "Rewritten.\n")
+
+	return 0
+}
+
+/**
+ * The `--moves` file: a list of `{from, to}` pairs, or an object that also names replacement manifests.
+ *
+ * Each manifest entry gives the repo-relative `package.json` to replace
+ * and the file holding its new text, so a move into a new source root is planned
+ * against the `imports` and `exports` keys that reach it.
+ */
+type MoveFile = ModuleMove[] | { moves: ModuleMove[]; manifests?: Array<{ file: string; from: string }> }
+
+/**
+ * `mwops health move` — move modules named on the command line or in a JSON file of `{from, to}`
+ * pairs, rewriting every specifier, manifest target and path literal the move invalidates.
+ *
+ * The plan is proven before anything is written, as with `health fix`.
+ */
+async function runMove(
+	targets: readonly string[],
+	options: Record<string, string | boolean>,
+	io: DispatchIO
+): Promise<number> {
+	let moves: ModuleMove[]
+	const manifests: ManifestReplacement[] = []
+
+	if (typeof options["literals-since"] === "string") {
+		return await runLiteralRepair(options["literals-since"], options["dry-run"] === true, io)
+	}
+
+	if (typeof options.moves === "string") {
+		const parsed = parseJSONStrict<MoveFile>(await readLocalTextFile(resolvePath(io.repoRoot, options.moves)))
+
+		moves = Array.isArray(parsed) ? parsed : parsed.moves
+
+		for (const manifest of Array.isArray(parsed) ? [] : (parsed.manifests ?? [])) {
+			manifests.push({
+				file: manifest.file,
+				text: await readLocalTextFile(resolvePath(io.repoRoot, manifest.from)),
+			})
+		}
+	} else {
+		if (!targets.length || targets.length % 2) {
+			io.stderr("mwops health move: give <from> <to> pairs, or --moves <file.json>\n")
+
+			return 2
+		}
+
+		moves = []
+
+		for (let index = 0; index < targets.length; index += 2) {
+			moves.push({ from: targets[index]!, to: targets[index + 1]! })
+		}
+	}
+
+	const dryRun = options["dry-run"] === true
+	const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+	const plan = await planModuleMoves(context, moves, { manifests })
+	const result = await applyModuleMoves(context, plan, { dryRun })
+
+	if (options.json === true) {
+		io.stdout(prettyJSON(result))
+
+		return 0
+	}
+
+	io.stdout(
+		`move: ${plan.moves.length} move(s), ${plan.rewrites.length} specifier rewrite(s), ${plan.manifestRewrites.length} manifest target(s), ${plan.pathLiterals.length} path literal(s), across ${plan.scanned.read} of ${plan.scanned.tracked} tracked sources\n`
+	)
+
+	for (const rewrite of plan.rewrites) {
+		io.stdout(`    ${rewrite.file}: ${rewrite.specifier} -> ${rewrite.replacement}\n`)
+	}
+
+	io.stdout(
+		dryRun
+			? "Nothing written. Drop --dry-run to apply.\n"
+			: `Verified ${result.verified} rewritten specifier(s) against the moved tree. Next: yarn typecheck:tests\n`
+	)
+
+	return 0
+}
+
 async function runHealth(args: readonly string[], io: DispatchIO): Promise<number> {
 	const { options, rest } = parseOptions(args)
 	const id = rest[0]
@@ -381,6 +484,8 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 	if (id === "baseline") return await runBaseline(rest.slice(1), options, io)
 
 	if (id === "fix") return await runFix(rest.slice(1), options, io)
+
+	if (id === "move") return await runMove(rest.slice(1), options, io)
 
 	if (id === "comments") return await runComments(rest.slice(1), options, io)
 
@@ -434,12 +539,14 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
  * Route one invocation.
  *
  * @returns The exit code.
- * Never touches `process`.
  */
 export async function dispatch(args: readonly string[], io: DispatchIO): Promise<number> {
 	const [verb, ...rest] = args
 
 	switch (verb) {
+		case "ci-scope":
+			io.stdout(prettyJSON(await writeCIScope(io.repoRoot)))
+			return 0
 		case "release":
 			return await runOperation(releaseView, rest, io)
 		case "shop":

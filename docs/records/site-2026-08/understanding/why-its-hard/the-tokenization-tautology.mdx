@@ -97,7 +97,7 @@ The output:
 
 To a consumer, this looks like a high-quality parse. Every component has high confidence, and the address structure (street prefix + locality + region) is valid. The confidence numbers do not reveal that "Saint" should be part of the locality, because each individual classifier did its job correctly.
 
-Aggregating per-component confidence hides combination errors. The parser is confident about each piece and wrong about the whole. The consumer trusts the high scores and routes the package to "Street address: Saint, City: Petersburg, FL," which the USPS will reject or misroute.
+Per-component confidence hides combination errors. The parser can label each piece confidently and still get the whole address wrong. The consumer trusts the high scores and routes the package to "Street address: Saint, City: Petersburg, FL," which the USPS will reject or misroute.
 
 ## Why rules can't fix it
 
@@ -147,7 +147,7 @@ The **neural classifier** (Stage 3) then types each proposed span. Because the c
 
 The classifier can disagree with the grouper's boundaries by merging or splitting spans, but it starts from a better prior than independent token-level classification.
 
-The **reconciler** (Stage 5) then picks the joint interpretation that maximizes coherence, which adds cross-component consistency on top of per-span correctness. This stage solves the `NY-NY Steakhouse` problem. Labeling both "NY" tokens as `region` produces a joint parse with two regions for different places, which the resolver's hierarchy cannot reconcile. Treating the "NY" tokens as part of a `venue` name produces a joint-consistent parse, so the reconciler picks that interpretation.
+The **reconciler** (Stage 5) then picks the joint interpretation that maximizes coherence, which adds cross-component consistency on top of per-span correctness. This stage solves the `NY-NY Steakhouse` problem. A `region` label on both "NY" tokens produces a joint parse with two regions for different places, which the resolver's hierarchy cannot reconcile. A `venue` label for the "NY" tokens produces a joint-consistent parse, so the reconciler picks that interpretation.
 
 ## What this doesn't solve
 

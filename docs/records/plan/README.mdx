@@ -50,7 +50,7 @@ reports in `docs/articles/evals/`.
 
 ### Hard constraints (as declared for v1)
 
-- **TypeScript-first.** Inference runtime is `onnxruntime-node`. Training is allowed in Python
+- **TypeScript-first.** Inference runtime is `onnxruntime-node`. The team may train models in Python
   but is not shipped to npm.
 - **Coexistence rather than replacement.** The neural classifier is additive. Rule classifiers are not
   deleted until per-component metrics justify retirement.
@@ -60,7 +60,7 @@ reports in `docs/articles/evals/`.
   third. Each stage ships.
 - **No new ML in places where rules are already correct.** Postcodes are a regex problem. Don't
   burn a model on them.
-- **Schema-first.** Touching `reference/SCHEMA.md` requires a written rationale in the commit.
+- **Schema-first.** A change to `reference/SCHEMA.md` requires a written rationale in the commit.
   Downstream code keys off it.
 
 ### What good looked like

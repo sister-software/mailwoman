@@ -20,9 +20,9 @@ const FAIL_PATTERNS: RegExp[] = [
 	// Workspace-alias regression: webpack failing to find one of our packages.
 	/cannot find module '@mailwoman\//i,
 	// Asset 404 on first-party content.
-	// Both boundaries are required so this matches an HTTP status rather than a digit
-	// run inside a longer token: the demo's debug banner prints the build's commit SHA,
-	// and one hex SHA in every 4,096 begins `404`.
+	// Both boundaries restrict this pattern to an HTTP status.
+	// The demo's debug banner prints the build commit SHA.
+	// One hexadecimal SHA in every 4,096 begins `404`.
 	/\b404\b/i,
 	/net::err_/i,
 ]
@@ -33,8 +33,8 @@ const FAIL_PATTERNS: RegExp[] = [
 const IGNORE_PATTERNS: RegExp[] = [
 	// The data origin resets a long download now and then and the runtime retries it once.
 	// The browser logs the first attempt regardless.
-	// A reset the retry does not recover from surfaces as a loader error or a missing result,
-	// which the readiness wait and the result assertions catch.
+	// A reset that the retry cannot recover from causes a loader error or a missing result.
+	// The readiness wait and result assertions catch both outcomes.
 	/net::ERR_CONNECTION_RESET/,
 	/Removing initializer 'val_/, // onnxruntime cleanup
 	/WebGL.*GPU stall/i,

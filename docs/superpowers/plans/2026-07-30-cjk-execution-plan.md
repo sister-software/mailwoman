@@ -41,7 +41,7 @@ that convert the design into a verdict were never launched. That is what changes
   collapse check) and _cannot_ indict alignment — Phase 0 retired that.
 - **Leg 2 (unification bake-off, checks v9's shape rather than v8):** the same bare char model on the
   Latin corpus vs bare SP on the Latin coord boards. Run in the same session; record the delta.
-- Plumbing owed before launch (the one real code item): the `data_loader.py` char path
+- One code item remains before launch: the `data_loader.py` char path
   (`char_mode` config, `encode_row_units`, char-vocab build) per the interface note's D1/D6.
 
 **Step 2 — on a Leg-1 PASS: Phases 2–5 as written** (schema activation 33→47 with the

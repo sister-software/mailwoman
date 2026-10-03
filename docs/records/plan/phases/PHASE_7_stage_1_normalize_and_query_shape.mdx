@@ -6,7 +6,7 @@
 
 **Depends on:** [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) (the stage interface) and [`QUERY_SHAPE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx) (the QueryShape sub-system design).
 
-**Why these two together:** QueryShape consumes `NormalizedInput.normalized` and produces structural priors that downstream stages thread through. Building them in the same release tests the boundary between them before it becomes hard to change.
+**Why these two together:** QueryShape consumes `NormalizedInput.normalized` and produces structural priors that downstream stages thread through. A shared release tests their boundary before it becomes hard to change.
 
 ## Order of operations
 
@@ -166,7 +166,7 @@ Optional, defer if running long:
 - Stage 2.5 (kind classifier) — separate phase.
 - `runPipeline` coordinator — Phase 8 or later.
 - npm publish of the new packages. They stay internal until they have a consumer.
-- Replacing the existing word tokenizer in `@mailwoman/core`. QueryShape's tokenization is internal-only.
+- The existing word tokenizer in `@mailwoman/core` remains. QueryShape's tokenization is internal-only.
 
 ## When to call this phase done
 

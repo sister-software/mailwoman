@@ -10,8 +10,8 @@ tags:
 
 This page lists the public datasets that [the record-matcher](../../records/site-2026-08/concepts/geocode-first-record-matching.mdx)
 resolves, with their schemas, column mappings, and join keys. They are **real public compliance and reporting
-datasets**. They have **no shared entity key across them**, and each one repeats entities heavily. Resolving them
-into deduplicated, cross-linked entities makes them possible to analyze. Our scope is the **resolution**, and the
+datasets**. They have **no shared entity key across them**, and each one repeats entities heavily. The matcher
+deduplicates and cross-links these records. Those links make cross-dataset analysis possible. Our scope is the **resolution**, and the
 data consumer interprets any correlations that appear.
 
 The data lives in `$MAILWOMAN_DATA_ROOT/record-matcher/sources/`, which is persistent storage rather than `/tmp`.
@@ -64,9 +64,9 @@ records in the dedup benchmark. Secondary practice-location addresses live in th
 
 ### FCC RHC commitments → `SourceRecord` (explode: two records per row)
 
-Each row carries a **Filing HCP** and a **Participating HCP**. Split each row into two records:
+Each row carries the columns `Filing HCP` and `Participating HCP`. Split each row into two records:
 
-| field          | Filing HCP                                    | Participating HCP                                    |
+| field          | `Filing HCP`                                  | `Participating HCP`                                  |
 | -------------- | --------------------------------------------- | ---------------------------------------------------- |
 | `id`           | `Filing HCP`                                  | `Participating HCP`                                  |
 | `organization` | `Filing HCP Name`                             | `Participating HCP Name`                             |

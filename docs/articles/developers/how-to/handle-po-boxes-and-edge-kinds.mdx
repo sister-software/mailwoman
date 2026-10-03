@@ -11,7 +11,7 @@ verified-with: mailwoman 8.7.0
 produce a usable coordinate.
 
 Some location strings are not street addresses. Stage 2.5 of the pipeline sorts the input into one of
-eight kinds before the model runs, and every result includes the kind. Checking the kind is cheaper
+eight kinds before the model runs, and every result includes the kind. A kind check costs less
 than finding the same problem from a coordinate in the wrong hemisphere.
 
 ## Prerequisites
@@ -144,8 +144,8 @@ mailwoman parse --debug "Corner of Broadway and 42nd Street, New York, NY" | jq 
 ```
 
 The kind is `structured_address`, not `intersection`. The intersection rule always scores 0.85, and
-the structured-address rule scores 0.9 for any input with two or more segments. Adding a city and a
-state therefore makes `structured_address` rank higher. Without them, the same phrase classifies as an
+the structured-address rule scores 0.9 for any input with two or more segments. A city and a
+state therefore make `structured_address` rank higher. Without them, the same phrase classifies as an
 intersection:
 
 ```bash
@@ -191,7 +191,7 @@ This ambiguity affects real results. Here are five bare postcodes geocoded witho
 Four of the five are US postcodes that a US reader would expect, and none of them resolved to the US.
 The alphanumeric postcode resolved correctly, because its shape belongs to one country.
 
-**Scope a bare postcode by country.** Scoping fixes some of them:
+**Scope a bare postcode by country.** A country constraint fixes some of them:
 
 ```bash
 mailwoman geocode --default-country US "10001" | jq -c '{lat, lon, postcode, countryCode}'
@@ -201,7 +201,7 @@ mailwoman geocode --default-country US "10001" | jq -c '{lat, lon, postcode, cou
 { "lat": 40.750634, "lon": -73.997176, "postcode": "10001", "countryCode": "US" }
 ```
 
-That coordinate is correctly in Manhattan. Scoping does not fix every postcode:
+That coordinate is correctly in Manhattan. A country constraint does not fix every postcode:
 
 ```bash
 mailwoman geocode --default-country US "20500" | jq -c '{lat, lon, postcode, countryCode}'

@@ -11,7 +11,7 @@
  *   A bare `«region»` form is deliberately absent: teaching it as `region` would fight the
  *   locality/region ambiguity the dominance race arbitrates. A `dependentLocality`, when present,
  *   becomes `«dep_locality», «locality»…`; without it every row begins with the locality and teaches
- *   the model that the first named segment is the locality.
+ *   the model that the first segment is the locality.
  */
 
 import { lookupCanadianProvince } from "@mailwoman/codex/ca"
@@ -26,6 +26,7 @@ import {
 	type CorpusRecipe,
 	recipeSourceID,
 } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 
 /**
@@ -54,8 +55,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 	mode: "tuples",
 	async run(opts, write) {
 		makeMulberry32(opts.seed)
-		const structuredSource = opts.sourceName ?? "synth-trailing-region-structured"
-		const bareSource = opts.sourceName ? `${opts.sourceName}-bare` : "synth-trailing-region"
+		const structuredSource = opts.sourceName ?? defaultRecipeSource("synth-trailing-region-structured")
+		const bareSource = opts.sourceName ? `${opts.sourceName}-bare` : defaultRecipeSource("synth-trailing-region")
 		let read = 0
 		let emitted = 0
 		let skipped = 0
@@ -72,7 +73,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const country = String(t.country ?? "").trim()
 			const dependentLocality = String(t.dependentLocality ?? "").trim()
 
-			// A pair whose region equals its locality carries no signal about the boundary this recipe teaches.
+			// A pair whose region equals its locality provides no signal about the boundary this recipe teaches.
 			if (!locality || !region || locality === region) {
 				skipped++
 
@@ -145,7 +146,15 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				license: "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
 			}
 
-			if (alignAndWrite(write, canonical, "trailing-region", TRAILING_REGION_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed contains no id.
+			// and `null` means the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "trailing-region", {
+					...TRAILING_REGION_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

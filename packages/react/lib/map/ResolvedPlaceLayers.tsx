@@ -1,17 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `<ResolvedPlaceLayers>` — the drop-in that renders a whole {@link MapPlaceRenderSpec} as `<MapCanvas>`
- *   children: the marker(s), the outline, and (optionally) the camera move. This is the declarative
- *   replacement for the demo's imperative marker/bbox/camera redraw effect — a consumer computes the spec
- *   with `useMapPlaceRender(place)` and drops `<ResolvedPlaceLayers spec={spec} />` inside `<MapCanvas>`.
- *
- *   `spec = null` (no result / no candidate) renders no layers, which also unmounts the previous marker +
- *   outline — the teardown the old effect did by hand (`markerRef.remove()`, `clearBbox`) is now just
- *   React unmounting. node-import safety: pulls the map components — `@mailwoman/react/map` only.
- */
-
 import type { ReactNode } from "react"
 
 import type { MapPlaceRenderSpec } from "#map/place-render"
@@ -26,16 +15,12 @@ export interface ResolvedPlaceLayersProps {
 	 */
 	spec: MapPlaceRenderSpec | null
 	/**
-	 * Apply the computed camera target via {@link ResultCamera}. @default true.
-	 *
-	 * Set false when the consumer drives the camera itself
-	 * (e.g. A controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}).
+	 * Apply the computed camera target via {@link ResultCamera}; set false when the consumer drives the camera
+	 * itself (e.g. a controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}). @default true
 	 */
 	applyCamera?: boolean
 	/**
-	 * Animate the camera move.
-	 *
-	 * Forwarded to {@link ResultCamera}. @default true
+	 * Animate the camera move, forwarded to {@link ResultCamera}. @default true
 	 */
 	animateCamera?: boolean
 	/**
@@ -49,7 +34,7 @@ export interface ResolvedPlaceLayersProps {
 }
 
 /**
- * Render the marker(s), outline, and (optional) camera move for one resolved place.
+ * Render the marker(s), outline and optional camera move for one resolved place.
  */
 export function ResolvedPlaceLayers({
 	spec,

@@ -8,5 +8,6 @@
 		"erasableSyntaxOnly": true
 	},
 	"include": ["./lib/**/*"],
-	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"]
+	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [{ "path": "../codex" }]
 }

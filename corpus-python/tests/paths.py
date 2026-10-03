@@ -16,10 +16,10 @@ def _ancestor_holding(marker: str) -> Path:
 #: `corpus-python/`, the directory holding the Python package's own manifest.
 PACKAGE_ROOT = _ancestor_holding("pyproject.toml")
 
-#: The repository root, which is the checkout's own manifest — NOT `PACKAGE_ROOT.parent`, which
-#: would be right only while the Python package sits exactly one level down.
+#: The repository root contains the checkout's own manifest. `PACKAGE_ROOT.parent` works only while
+#: the Python package sits exactly one level below that root.
 REPO_ROOT = _ancestor_holding("package.json")
 
-#: The training package's source, and the recipe directory inside it.
+#: The training package's source and the recipe directory inside it.
 SOURCE_ROOT = PACKAGE_ROOT / "src" / "mailwoman_train"
 CONFIGS = SOURCE_ROOT / "configs"

@@ -1,9 +1,9 @@
-"""Training loop for the Stage 1 coarse token-classification model.
+"""Train the Stage 1 coarse token-classification model.
 
-`train()` below is the order the stages run in: `setup.py` holds what a run decides before its
-first batch, `loop.py` the optimizer loop, and the callbacks what is written as it goes.
-`tests/mailwoman_train/train/test_train_loop_trace.py` pins the CSV shape, the event order and
-the final per-parameter weights, so a stage that moves is a failing test rather than a changed
+`setup.py` holds what a run decides before its first batch. `loop.py` runs the optimizer loop.
+Callbacks write the run's outputs.
+`tests/mailwoman_train/train/test_train_loop_trace.py` pins the CSV shape and event order.
+It also pins final per-parameter weights, so a moved stage fails the test rather than changing the
 model.
 """
 
@@ -18,7 +18,7 @@ import torch
 from ..config import Config
 from ..data.loader import IGNORE_INDEX, iter_batches
 from ..data.source_reps import format_derivation, resolve_config_reps
-from ..evaluation.metrics import cross_pollution, token_f1
+from ..evaluation.metrics import cross_pollution, per_locale_tag_f1, token_f1
 from ..nn.encoder import force_math_sdpa
 from ..protocols import TrainCallback
 from ..tokenizer import Tokenizer
@@ -53,7 +53,9 @@ def _eval_val(
     device: torch.device,
     max_rows: int | None,
 ) -> dict[str, float]:
-    """Streaming val-set eval: mean val loss, token-level macro F1, the cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on.
+    """Evaluate the validation set and return mean loss, token-level macro F1 and cross-pollution regression.
+
+    Include auxiliary locale-head accuracy when self-conditioning is on.
 
     ``tokenizer`` is None on the char path, where ``iter_batches`` encodes per character, so a guard
     that refuses a None tokenizer here would stop every char-mode run at its first eval."""
@@ -96,6 +98,15 @@ def _eval_val(
     metrics["val_rows"] = rows_seen
     row_locale = torch.cat(all_locale_ids, dim=0) if all_locale_ids else None
     metrics.update(cross_pollution(preds, labels, row_locale))
+    metrics.update(
+        per_locale_tag_f1(
+            preds,
+            labels,
+            row_locale,
+            num_labels=len(label_set.bio_labels),
+            bio_labels=label_set.bio_labels,
+        )
+    )
     if all_locale_preds and row_locale is not None:
         locale_pred = torch.cat(all_locale_preds, dim=0)
         valid = row_locale != IGNORE_INDEX
@@ -121,7 +132,7 @@ def train(
     # Mandatory on gfx1103 — flash/mem-efficient sdpa paths crash bf16 on this GPU.
     force_math_sdpa()
     # A reps-targeted source's weight is derived from the corpus row counts and this run's samples,
-    # so the loader samples the mixture the config named in reps per row.
+    # so the loader samples the mixture specified by the config in reps per row.
     derived_reps = resolve_config_reps(cfg)
     if derived_reps:
         print(format_derivation(derived_reps), flush=True)

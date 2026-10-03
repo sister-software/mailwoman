@@ -42,7 +42,7 @@ export interface ForkEntityProbeOpts {
 	/**
 	 * Returns true for a street-type token.
 	 *
-	 * The probe rejects queries containing one so a street name does not match a venue.
+	 * The probe rejects a query containing one so a street name cannot match a venue.
 	 */
 	isStreetGeneric: (token: string) => boolean
 }
@@ -55,10 +55,8 @@ function distanceM(latA: number, lonA: number, latB: number, lonB: number): numb
 }
 
 /**
- * Finds the single entity worldwide whose name key equals the query's, or returns `null`.
- *
- * The probe returns `null` when the query contains a street-type token or
- * when more than one distinct entity matches.
+ * Finds the single entity worldwide whose name key equals the query's, or returns `null`;
+ * a street-type token or more than one distinct match also returns `null`.
  */
 export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): ForkEntityHit | null {
 	const nameKey = normalizeLocalityForKey(rawQuery)
@@ -128,7 +126,7 @@ export interface ForkEntityAnswerTarget {
 }
 
 /**
- * Writes the entity's coordinates, the venue tier, and the admin coherence report to the outcome.
+ * Writes the entity's coordinates, venue tier and admin coherence report to the outcome.
  */
 function applyForkEntityAnswer(
 	result: ForkEntityAnswerTarget,
@@ -176,9 +174,8 @@ export interface VenueAnchor {
 }
 
 /**
- * Returns the venue search radius for an anchor.
- *
- * The radius is tighter when the anchor coordinate came from a unit-grade postcode node.
+ * Returns the venue search radius for an anchor, tighter when the anchor coordinate
+ * came from a unit-grade postcode node.
  */
 export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: readonly AddressNode[]): number {
 	const postcode = collectNodes(
@@ -251,8 +248,7 @@ export function probeVenueNearAnchor(
  * Applies the fork-entity probe, then the optional near-anchor venue refinement.
  *
  * The fork probe runs only for a declared fork with no coordinate.
- * The venue refinement runs only when `poiVenueTier` is set and the current tier is `admin`
- * or `street`, so it never replaces an address-point or interpolation result.
+ * The refinement runs only when `poiVenueTier` is set and the current tier is `admin` or `street`.
  */
 export function applyEntityTiers(
 	result: ForkEntityAnswerTarget & {
@@ -308,13 +304,9 @@ export function applyEntityTiers(
 }
 
 /**
- * Returns the head of a decorated venue name.
- *
- * The head is the text before the first spaced dash, with any trailing parenthetical removed.
- * For example, "The North Face - Covent Garden" becomes "The North Face".
- *
- * It returns null when no text was removed or when the head is a single word,
- * because a one-word head matches too broadly.
+ * Returns the head of a decorated venue name — the text before the first spaced dash,
+ * with any trailing parenthetical removed — or `null` when no text was removed.
+ * A single-word head matches too broadly.
  */
 function venueHeadSegment(venueRaw: string): string | null {
 	let separator = -1
@@ -351,10 +343,9 @@ function venueHeadSegment(venueRaw: string): string | null {
 }
 
 /**
- * Runs {@link probeVenueNearAnchor}, then retries by comparing name heads when it finds no match.
- *
- * The retry compares {@link venueHeadSegment} of the query and of each row.
- * It still requires a single match within the radius, so a chain with two nearby branches returns `null`.
+ * Runs {@link probeVenueNearAnchor}, then retries by comparing {@link venueHeadSegment}
+ * of the query and of each row.
+ * It still requires a single match within the radius.
  */
 export function probeVenueNearAnchorFolded(
 	venueRaw: string,
@@ -365,7 +356,7 @@ export function probeVenueNearAnchorFolded(
 
 	if (exact) return exact
 
-	// Either side may carry the decoration, so the retry runs even when the query has no head to strip.
+	// Either side may include the decoration, so the retry runs even when the query has no head to strip.
 	const queryHead = venueHeadSegment(venueRaw) ?? venueRaw.trim()
 	const queryKey = normalizeLocalityForKey(queryHead)
 

@@ -2,8 +2,8 @@
 
 Two overlays are staged under this head and they are not interchangeable: `staged_overlay` is the
 JP + CN corpus the v8 CJK base trains on, `staged_registries` adds Korea, Taiwan and the three noisy
-register corpora. Each asks the countries in it for their own expectations and adds what belongs to
-the region: the overlay's manifest, its re-sealed character vocabulary, and the markers that say the
+register corpora. Each asks the countries in it for their own expectations. It adds the region's
+manifest and re-sealed character vocabulary. Markers say the
 volume's copy of the training package is the one this recipe needs rather than a stale sync.
 
 A launcher calls these by name from the volume's own copy of the package, so an import failure here
@@ -25,7 +25,7 @@ REGISTRIES_CORPUS = "v8-cjk-regs-2026-09-08"
 
 
 def _overlay_files(versioned: str, corpus: str) -> dict[str, bool]:
-    """The three files every CJK overlay carries, whichever countries are in it."""
+    """The three files every CJK overlay includes, whatever countries it contains."""
     overlay = f"{versioned}/{corpus}"
     return {
         "overlay manifest": os.path.isfile(f"{overlay}/MANIFEST.json"),

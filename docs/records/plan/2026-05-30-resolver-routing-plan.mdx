@@ -32,7 +32,7 @@ A per-input **routing layer** in front of the resolver:
   _resolvability_ (gazetteer support) the routing signal, which optimizes the
   end goal directly. It serves three purposes: online fallback (ambiguous band), offline
   auto-labeler for the scorer, and eval oracle.
-- **No fusion** in v1. Merging v0's flat record with neural's tree is brittle: a
+- **No fusion** in v1. A merge of v0's flat record with neural's tree is brittle: a
   bad `PARENT_OF` nesting corrupts the resolver's parent-constraint inheritance,
   which is its main strength. Revisit only if the data requires it.
 

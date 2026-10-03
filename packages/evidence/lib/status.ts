@@ -7,7 +7,7 @@
  * same rooftop matched against a crowdsourced extract is `observed`, and collapsing them silently upgrades a source's
  * observation into an authority's designation.
  *
- * `Assertion`, whether a relationship is stated by a source or concluded by us, and `AssertedProposition`, which
+ * `Assertion`, whether a relationship is stated by a source or concluded by us. `AssertedProposition` records which
  * proposition a source asserts in a given field, live here because each is defined against this axis.
  */
 
@@ -21,7 +21,7 @@ export const EpistemicStatus = {
 	 */
 	Designated: "designated",
 	/**
-	 * A named source recorded it at a named vintage, such as an OSM node or an Overture row.
+	 * An identified source recorded it at a specific vintage, such as an OSM node or an Overture row.
 	 */
 	Observed: "observed",
 	/**

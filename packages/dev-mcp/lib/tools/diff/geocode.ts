@@ -38,7 +38,7 @@ export const diffGeocodeTool = (deps: DevToolDeps): DevTool => ({
 		"DATA COVERAGE and no model change touches it). A distance delta alone cannot choose between them, which " +
 		"is why grading a tier fall-through against a model wastes a run. Also reports `unchanged` and " +
 		"`coordinate-appeared-or-vanished`, the latter kept separate because an arm returning no coordinate is a " +
-		"different event from moving zero kilometres. Carries the per-span resolution deltas, so a span that kept " +
+		"different event from moving zero kilometers. Carries the per-span resolution deltas, so a span that kept " +
 		"its tag and text while landing on another place is visible.",
 	inputSchema: z.object({
 		inputs: z.array(z.string().min(1)).min(1).max(200).describe("Address strings to geocode on both arms."),
@@ -79,7 +79,7 @@ export const diffGeocodeTool = (deps: DevToolDeps): DevTool => ({
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs
 		const rendered = shown.slice(0, RENDERED_DIFF_LIMIT).map((d) => renderGeocodeDiff(d))
 
-		// Which attribution dominates is the diagnosis, and it decides whether a run was worth grading.
+		// Which attribution dominates determines whether a run was worth grading.
 		// A `tier-changed` majority means the arms differ on data the model never saw.
 		const attributions: Record<string, number> = {}
 

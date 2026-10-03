@@ -58,7 +58,7 @@ import { shouldDropInferredScope } from "#inferred-scope"
 import { thingQueryRefusalMarkers } from "#intent-refusal"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "#interp-calibration"
 // Observation-layer routes are imported from one barrel.
-import { layerDesignationMarkers, type LayerDesignationRoutes } from "#observations/index"
+import { layerDesignationMarkers, type LayerDesignationRoutes } from "#observations"
 import { applyPlusCodeOverride } from "#plus-code-override"
 import type { POIExecutorLookup } from "#poi/executor"
 import { repairPostcodeContradiction } from "#postcode-repair"
@@ -245,7 +245,7 @@ export function deriveGeocodeRegister(parseInput: string, queryShape = computeQu
 }
 
 /**
- * Inputs derived before parse: normalized text, query shape, register, and parse opts.
+ * Inputs derived before parse: normalized text, query shape, register and parse opts.
  */
 export interface GeocodeParseInputs {
 	/**

@@ -22,19 +22,20 @@ export interface BundleArtifact {
 	remotePath: string
 
 	/**
-	 * Gives the destination relative to the data root's `db/` directory,
-	 * which {@link bundleArtifactPath} resolves. {@link resolveBundleArtifacts} rewrites
-	 * a family-tagged artifact's path to its manifest-pinned version.
+	 * Gives the destination relative to the data root's `db/` directory.
+	 * {@link bundleArtifactPath} resolves it. {@link resolveBundleArtifacts} rewrites
+	 * a family-tagged path to its manifest-pinned version.
 	 */
 	localPath: string
 
 	/**
-	 * Says whether the host publishes a `<remotePath>.md5` sidecar that `data pull` verifies against.
+	 * Reports whether the host publishes a `<remotePath>.md5` sidecar that `data pull` verifies against.
 	 */
 	md5Sidecar: boolean
 
 	/**
-	 * Records the surveyed size in bytes, which plans and progress output display.
+	 * Records the surveyed size in bytes.
+	 * Plans and progress output display it.
 	 *
 	 * `data status` without `--check-remote` compares the local file size against
 	 * it exactly, so it must match the published file.
@@ -42,13 +43,14 @@ export interface BundleArtifact {
 	approxBytes: number
 
 	/**
-	 * Names the release family of a per-state US database, which selects its
-	 * pinned version in the release manifest.
+	 * Names the release family of a per-state US database.
+	 * The release manifest uses it to select the pinned version.
 	 */
 	family?: "address-points" | "interpolation"
 
 	/**
-	 * Gives the lowercase US state or territory slug, such as `ca`, which `--only` can also match.
+	 * Gives the lowercase US state or territory slug, such as `ca`.
+	 * The `--only` option can match this value.
 	 */
 	stateSlug?: string
 }
@@ -58,64 +60,74 @@ export interface BundleArtifact {
  */
 export interface BundleSourceCensus {
 	/**
-	 * Names the table whose publisher stamps are tallied, either the per-record
-	 * `address_point` or the one-row `layer_manifest`.
+	 * Names the table whose publisher stamps are tallied.
+	 *
+	 * The value is the per-record `address_point` table or the one-row `layer_manifest` table.
 	 */
 	table: "address_point" | "layer_manifest"
 
 	/**
-	 * Names the column holding the publisher stamp, where a null value tallies as `unstamped`.
+	 * Names the column holding the publisher stamp.
+	 * A null value tallies as `unstamped`.
 	 */
 	column: "source"
 
 	/**
-	 * Says whether a tally counts records (`per-row`) or the single manifest
+	 * Reports whether a tally counts records (`per-row`) or the single manifest
 	 * row of each artifact (`manifest`).
 	 */
 	shape: "per-row" | "manifest"
 
 	/**
-	 * Selects the family to census when a bundle mixes families, so artifacts of
-	 * other families count as out of scope.
+	 * Selects the family to census when a bundle mixes families.
+	 * Artifacts from other families count as out of scope.
 	 */
 	family?: BundleArtifact["family"]
 }
 
 /**
- * Describes a bundle's licensing: who published the data, the terms it is under,
- * what users must do, and the rights questions still open.
+ * Describes a bundle's licensing.
+ *
+ * It records who published the data, its terms, user obligations and open rights questions.
  */
 export interface BundleRights {
 	publishers: readonly string[]
 
 	/**
-	 * The SPDX expression the bundle's artifacts record in their own `layer_manifest`, or, where
-	 * an artifact records none, the expression this registry assigns from the publishers' stated terms.
+	 * The SPDX expression the bundle's artifacts record in their own `layer_manifest`.
 	 *
-	 * A `LicenseRef-` names a grant nobody has resolved to an identifier, and reads as unresolved.
-	 * `mailwoman data pull --refuse` decides on this field, and prints the artifact's own
-	 * expression beside it once the artifact is on disk, so the two disagreeing is visible.
+	 * When an artifact records no expression, this registry assigns one from the publishers' stated terms.
+	 *
+	 * A `LicenseRef-` identifies a grant without a resolved identifier.
+	 * It reads as unresolved.
+	 *
+	 * `mailwoman data pull --refuse` bases its decision on this field.
+	 * Once the artifact is on disk, the command prints the artifact's own expression
+	 * beside it so readers can see a disagreement.
 	 */
 	expression: string
 
 	/**
-	 * Lists the license terms, with one entry per source where the sources differ.
+	 * Lists the license terms.
+	 * Sources with different terms receive separate entries.
 	 */
 	terms: readonly string[]
 
 	/**
-	 * Lists the obligations the operator must meet, which print as `you must:` lines.
+	 * Lists the obligations the operator must meet.
+	 * They print as `you must:` lines.
 	 */
 	conditions: readonly string[]
 
 	/**
-	 * Lists the rights questions still open, which print as `unresolved:` lines.
+	 * Lists open rights questions.
+	 * They print as `unresolved:` lines.
 	 */
 	unresolved: readonly string[]
 }
 
 /**
- * Named downloadable data bundle.
+ * Downloadable data bundle.
  */
 export interface DataBundle {
 	name: string
@@ -125,8 +137,9 @@ export interface DataBundle {
 	rights: BundleRights
 
 	/**
-	 * Says where to count publisher stamps in the artifacts, and is absent
-	 * when the artifacts carry no publisher column.
+	 * Gives the artifact field that contains publisher stamps.
+	 *
+	 * The property is absent when the artifact has no publisher column.
 	 */
 	sourceCensus?: BundleSourceCensus
 }
@@ -221,7 +234,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	candidate: {
 		name: "candidate",
 		description:
-			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries (~2.88 GB).",
+			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries.",
 		artifacts: [
 			{
 				remotePath: "gazetteer/2026-08-25b/candidate.db",
@@ -256,7 +269,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	},
 	poi: {
 		name: "poi",
-		description: "Overture-places POI layer — 13.68M rows across US/CA/MX/FR (~3.89 GB).",
+		description: "Overture-places POI layer, covering the United States, Canada, Mexico and France.",
 		artifacts: [
 			{
 				remotePath: "poi/2026-07-20a/poi.db",
@@ -285,7 +298,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	fr: {
 		name: "fr",
 		description:
-			"French national rooftop address-point database (BAN), with situs points only and no interpolation tier (~6.95 GB).",
+			"French national rooftop address-point database (BAN), with situs points only and no interpolation tier.",
 		artifacts: [
 			{
 				remotePath: "street/fr/2026-07-10/situs.db",
@@ -297,7 +310,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 		rights: {
 			publishers: ["DINUM and IGN, for Base Adresse Nationale"],
 			// Assigned from the elected half of BAN's dual grant.
-			// The lab host's copy of the artifact carries no `layer_manifest`, measured 2026-09-27.
+			// The lab host's copy of the artifact has no `layer_manifest`, measured 2026-09-27.
 			expression: "etalab-2.0",
 			terms: [
 				"Licence Ouverte 2.0, the attribution-only half of BAN's dual grant. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/licence-ouverte-2.0.md.",
@@ -315,8 +328,8 @@ export const BUNDLES: Record<string, DataBundle> = {
 	us: {
 		name: "us",
 		description:
-			"US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, " +
-			"50 states + DC + VI (103 files, ~41.3 GB total). Use --only <slug> to pull a single state.",
+			"US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. " +
+			"Use --only <slug> to pull a single state.",
 		artifacts: usStreetArtifacts(),
 		rights: {
 			publishers: [
@@ -325,7 +338,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"United States Census Bureau, for the TIGER/Line interpolation databases in this bundle",
 			],
 			// Assigned from the publishers' stated terms.
-			// The lab host's per-state copies carry no `layer_manifest`, measured 2026-09-27.
+			// The lab host's per-state copies have no `layer_manifest`, measured 2026-09-27.
 			// `LicenseRef-OpenAddresses-PerSource` stands for the 119 contributing bodies' own terms.
 			// No one has resolved those per source, so the expression reads as unresolved.
 			expression: "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource",
@@ -364,9 +377,10 @@ function describeExpression(expression: string): string {
  * Format publishers, terms, conditions, unresolved rights questions
  * and the recorded expression for terminal output.
  *
- * The prose carries publisher names and conditions no manifest holds.
- * The expression line is what {@link BundleRights.expression} implies, which is what
- * a pull decides on when the artifact is not yet on disk.
+ * The prose contains publisher names and conditions no manifest holds.
+ * The expression line states the implication of {@link BundleRights.expression}.
+ *
+ * A pull uses it to decide when the artifact is not yet on disk.
  */
 export function describeBundleRights(bundle: DataBundle): string[] {
 	const { rights } = bundle
@@ -381,13 +395,16 @@ export function describeBundleRights(bundle: DataBundle): string[] {
 }
 
 /**
- * What one of a bundle's artifacts says for itself on this machine.
+ * The license data found for one bundle artifact on this machine.
  */
 export interface ArtifactTermsObservation {
 	path: string
 	/**
-	 * `absent` when the file is not on disk, `unmanifested` when it carries no `layer_manifest`,
-	 * `unreadable` when opening it failed, and `recorded` when its manifest was read.
+	 * `absent` means the file is not on disk.
+	 *
+	 * `unmanifested` means it has no `layer_manifest`.
+	 * `unreadable` means opening it failed.
+	 * `recorded` means the manifest was read.
 	 */
 	state: "absent" | "unmanifested" | "unreadable" | "recorded"
 	tier?: string
@@ -398,10 +415,12 @@ export interface ArtifactTermsObservation {
 /**
  * Format what the bundle's artifacts on disk record, beside what the registry records.
  *
- * Artifacts are grouped by what they say, so a bundle of a hundred files prints
- * a line per distinct answer rather than per file.
- * An artifact whose own expression differs from the registry's is the finding worth
- * surfacing, and the artifact is the authority for what it carries.
+ * Artifacts are grouped by their recorded values, so a bundle of a hundred files
+ * prints a line per distinct answer rather than per file.
+ * A difference between an artifact's expression and the registry's expression
+ * is the finding worth surfacing.
+ *
+ * The artifact is authoritative for its expression.
  */
 export function describeArtifactTerms(bundle: DataBundle, observations: readonly ArtifactTermsObservation[]): string[] {
 	const groups = new Map<string, { count: number; example: ArtifactTermsObservation }>()
@@ -528,8 +547,9 @@ export interface RemoteArtifactState {
 }
 
 /**
- * Decides whether an artifact needs downloading by comparing MD5 when the
- * remote has one, and otherwise size.
+ * Decides whether an artifact needs downloading.
+ *
+ * It compares MD5 when the remote has one and compares size otherwise.
  *
  * It returns `false` when neither can be compared, so callers should report
  * that the artifact was not verified.

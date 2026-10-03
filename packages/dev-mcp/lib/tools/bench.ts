@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_bench` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the interface, and the description is the
- *   required half of it.
+ *   The `mwdev_bench` tool definition provides the agent-facing description and input schema.
+ *   Its handler calls the measurement in the package root.
  */
 
 import { z } from "zod"
@@ -40,7 +39,7 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 		let cold: { engine_build_ms: number; first_query_ms: number; total_ms: number } | null = null
 
 		if (args["include_cold"]) {
-			// Evicting is what makes this a cold measurement rather than a second warm one.
+			// This eviction makes the measurement cold by removing the cached engine.
 			registry.evictAll()
 
 			const startedAt = Date.now()

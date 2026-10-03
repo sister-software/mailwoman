@@ -6,14 +6,14 @@
 
 **Architecture:** Two packaging defects account for every stub. `@mailwoman/core/objects` imports one predicate from the `spliterator` barrel, which drags that library's Node fs, worker-thread and XLSX readers into the client. The fix is a local predicate. `@mailwoman/neural`'s classifier lazily imports `#classifier/loader`, the Node weights loader, and `webpackIgnore` hides that import only from webpack. The fix is a `browser` condition on that `imports` entry pointing at a module that throws. A table-driven esbuild test covers both fixes. Then the docs plugin drops its stubs, and the docs build confirms it works without them.
 
-**Tech Stack:** TypeScript under Node type stripping, esbuild (already a devDependency of `core` and `neural` at 0.28.2), vitest (the `unit-slow` CI leg runs `packages/*/test/integration/**`), Docusaurus 3 with webpack, Playwright for the docs browser suite.
+**Tech Stack:** TypeScript under Node type stripping, esbuild (already a devDependency of `core` and `neural` at 0.28.2), vitest (the `unit-slow` CI leg runs `packages/**/*.integration.test.ts`), Docusaurus 3 with webpack, Playwright for the docs browser suite.
 
 **Spec:** `docs/superpowers/specs/2026-09-06-browser-export-conditions-design.md`
 
 ## Deviation taken at execution
 
 Task 1 as written would have been the fourth esbuild walk in the repository, beside
-`packages/core/test/integration/worker-bundle.test.ts`, `packages/neural/test/unit/browser-graph.test.ts` and the
+`packages/core/lib/worker-bundle.integration.test.ts`, `packages/neural/lib/browser-graph.test.ts` and the
 timing harness. The operator chose one home: the `bundle-graph` check in `@mailwoman/repo-health`, which absorbs the
 first two files as rows and runs from `yarn health`. Tasks 2 through 6 are unchanged.
 
@@ -23,7 +23,7 @@ first two files as rows and runs from `yarn health`. Tasks 2 through 6 are uncha
 - A moved name gets no compatibility re-export.
 - Done means `webpack-policy.ts` carries zero `node:` stubs and zero client-side aliases for `@mailwoman/*`; the Earth `vite.config.ts` will carry no `resolve.alias` for `@mailwoman/*`.
 - `node:*` imports are permitted only under `packages/core/lib/fs/`; `oxlint.config.ts` refuses them elsewhere. No task adds one.
-- A test imports the package under test through its public exports, never through a `#` specifier. A relative import may reach only a helper under `test/`.
+- A test sits beside the module it covers and imports its own package through the `#` imports map. A shared helper under `test/` is imported through `#test/*`.
 - `process.env` and `process.argv` are never read directly.
 - Comments state invariants rather than history: no dates, issue numbers or "moved from" narration in code.
 - Every commit passes the pre-commit hook (oxlint + oxfmt on staged files). Run `yarn compile` before any test that resolves `default` exports, because those resolve to `out/`.
@@ -47,14 +47,14 @@ The `read-excel-file/node` and `write-excel-file/node` aliases in `webpack-polic
 
 **Files:**
 
-- Create: `packages/neural/test/integration/browser-bundle.test.ts`
+- Create: `packages/neural/lib/browser-bundle.integration.test.ts`
 
 **Interfaces:**
 
 - Consumes: `@mailwoman/core/module/resolvers` `resolvePackagePath(name)`; `esbuild` `build()` with `metafile: true`.
 - Produces: the test rows later tasks turn green. Task 3 relies on the row for `@mailwoman/neural/classifier` asserting `out/classifier/loader-browser.js` is in the bundle and `out/classifier/loader.js` is not.
 
-The test lives in `neural` rather than one file per package because `neural` depends on `core`, both packages' subpaths are public exports, and a second copy of the esbuild walk in `core/test/` would trip `jscpd` (`minTokens: 80`). The existing `packages/core/test/integration/worker-bundle.test.ts` keeps its own shape because it asserts a different condition set.
+The test lives in `neural` rather than one file per package because `neural` depends on `core`, both packages' subpaths are public exports, and a second copy of the esbuild walk in `core/test/` would trip `jscpd` (`minTokens: 80`). The existing `packages/core/lib/worker-bundle.integration.test.ts` keeps its own shape because it asserts a different condition set.
 
 - [ ] **Step 1: Write the test**
 
@@ -293,7 +293,7 @@ Run:
 
 ```bash
 yarn compile
-yarn vitest --run --config vitest.slow.config.ts packages/neural/test/integration/browser-bundle.test.ts
+yarn vitest --run --config vitest.slow.config.ts packages/neural/lib/browser-bundle.integration.test.ts
 ```
 
 Expected: 8 rows pass, 2 fail. `@mailwoman/core/objects` fails on the static-chain assertion listing seven `spliterator` edges (`node:worker_threads`, `stream/web`, `node:stream/web`, `node:url`, `node:stream`, `node:fs`, `node:worker_threads`). `@mailwoman/neural/classifier` fails on `mustInclude` because `loader-browser.js` does not exist yet. If `@mailwoman/neural/web-loader` also fails on the dynamic allowance, the failure message identifies the file. That row should pass, since both dynamic imports are listed.
@@ -301,7 +301,7 @@ Expected: 8 rows pass, 2 fail. `@mailwoman/core/objects` fails on the static-cha
 - [ ] **Step 3: Commit the failing test**
 
 ```bash
-git add packages/neural/test/integration/browser-bundle.test.ts
+git add packages/neural/lib/browser-bundle.integration.test.ts
 git commit -m "test(neural): browser-condition bundle test over the client subpaths (two rows red)"
 ```
 
@@ -312,7 +312,7 @@ git commit -m "test(neural): browser-condition bundle test over the client subpa
 **Files:**
 
 - Modify: `packages/core/lib/objects.ts:9` (the import) and `:115` (the one call site)
-- Test: `packages/neural/test/integration/browser-bundle.test.ts` (row `@mailwoman/core/objects`)
+- Test: `packages/neural/lib/browser-bundle.integration.test.ts` (row `@mailwoman/core/objects`)
 
 **Interfaces:**
 
@@ -342,14 +342,14 @@ Run:
 ```bash
 yarn compile
 yarn oxlint packages/core/lib/objects.ts
-yarn vitest --run --config vitest.slow.config.ts packages/neural/test/integration/browser-bundle.test.ts -t "core/objects"
+yarn vitest --run --config vitest.slow.config.ts packages/neural/lib/browser-bundle.integration.test.ts -t "core/objects"
 ```
 
 Expected: oxlint reports no issue; the row passes with zero static edges. If `prefer-home` reports the predicate, the `HELPER_HOMES` row it names is the home to import from instead; there is none today.
 
 - [ ] **Step 3: Run core's own unit tests for the module**
 
-Run: `yarn vitest --run --config vitest.fast.config.ts packages/core/test/unit`
+Run: `yarn vitest --run --config vitest.fast.config.ts packages/core/lib`
 
 Expected: the same count of passing files as on `main` (run the same command on `main` first if the count is not already known).
 
@@ -369,7 +369,7 @@ git commit -m "fix(core): objects no longer imports the spliterator barrel, whic
 - Create: `packages/neural/lib/classifier/loader-browser.ts`
 - Modify: `packages/neural/package.json` (`imports`, add `"#classifier/loader"` beside the existing `"#onnx-runner"` entry)
 - Modify: `packages/neural/lib/classifier/index.ts:201-227` (the two docstrings)
-- Test: `packages/neural/test/integration/browser-bundle.test.ts` (rows `@mailwoman/neural/classifier`, `@mailwoman/neural/web-loader`)
+- Test: `packages/neural/lib/browser-bundle.integration.test.ts` (rows `@mailwoman/neural/classifier`, `@mailwoman/neural/web-loader`)
 
 **Interfaces:**
 
@@ -448,7 +448,7 @@ Run:
 ```bash
 yarn compile
 yarn oxlint packages/neural/lib/classifier/loader-browser.ts packages/neural/lib/classifier/index.ts
-yarn vitest --run --config vitest.slow.config.ts packages/neural/test/integration/browser-bundle.test.ts
+yarn vitest --run --config vitest.slow.config.ts packages/neural/lib/browser-bundle.integration.test.ts
 ```
 
 Expected: all 10 rows pass. The `classifier` row's bundle contains `neural/out/classifier/loader-browser.js` and not `neural/out/classifier/loader.js`.
@@ -475,7 +475,7 @@ git commit -m "feat(neural): #classifier/loader resolves to a refusing module un
 - Modify: `docs/plugins/demo-assets/webpack-policy.ts` (delete `NODE_BUILTIN_SHIMS`, `EMPTY_NODE_BUILTINS`, `fallbackMap`, the `NormalModuleReplacementPlugin`, the two `*-excel-file/node` aliases, the `emptyShim` parameter)
 - Modify: `docs/plugins/demo-assets/plugin.ts:18,23-24,50` (drop `emptyShim`)
 - Delete: `docs/plugins/demo-assets/node-builtin-stubs.js`, `docs/plugins/demo-assets/node-path-shim.js`, `docs/src/empty-shim.js`
-- Modify: `packages/neural/test/integration/browser-slo.test.ts` (the header paragraph that says the loader "needs the node-builtin shim policy the docs site keeps in `docs/plugins/demo-assets/`")
+- Modify: `packages/neural/lib/web/browser-slo.integration.test.ts` (the header paragraph that says the loader "needs the node-builtin shim policy the docs site keeps in `docs/plugins/demo-assets/`")
 
 **Interfaces:**
 
@@ -495,7 +495,7 @@ The whole file becomes:
  *   What remains here is Docusaurus-specific: the workspace source aliases for development, the SSR bundle's
  *   externals, the WASM asset rule, and a cache key that follows the alias map. Module resolution for `@mailwoman/*`
  *   is NOT rewritten here: a package the client reaches carries a `browser` export condition, and
- *   `packages/neural/test/integration/browser-bundle.test.ts` refuses a Node builtin on the client's static path.
+ *   `packages/neural/lib/browser-bundle.integration.test.ts` refuses a Node builtin on the client's static path.
  */
 
 import { md5Hex } from "@mailwoman/core/hash"
@@ -617,7 +617,7 @@ Expected: pass. `100-demo-cold-load` asserts the page hydrates without style, te
 - [ ] **Step 6: Commit**
 
 ```bash
-git add docs/plugins/demo-assets/webpack-policy.ts docs/plugins/demo-assets/plugin.ts packages/neural/test/integration/browser-slo.test.ts
+git add docs/plugins/demo-assets/webpack-policy.ts docs/plugins/demo-assets/plugin.ts packages/neural/lib/web/browser-slo.integration.test.ts
 git commit -m "chore(docs): the geocoder page bundles with no node: stub, shim or fallback for @mailwoman/*"
 ```
 
@@ -680,7 +680,7 @@ with the outcome (kept on, or the refusing module) stated in the commit body.
 
 Status line: append `Implemented`, today's date, and the PR number once `gh pr create` prints it.
 
-"Proof" section: replace its first sentence with "One table-driven test, `packages/neural/test/integration/browser-bundle.test.ts`, covers every `core` and `neural` subpath the client reaches; `neural` depends on `core`, so both packages' public subpaths are reachable from one file, and a second copy of the esbuild walk would trip `jscpd`. Subpaths in packages `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-wof-wasm`, `resolver-wof-sqlite`) measured clean and are guarded by the Earth app's Vite build."
+"Proof" section: replace its first sentence with "One table-driven test, `packages/neural/lib/browser-bundle.integration.test.ts`, covers every `core` and `neural` subpath the client reaches; `neural` depends on `core`, so both packages' public subpaths are reachable from one file, and a second copy of the esbuild walk would trip `jscpd`. Subpaths in packages `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-wof-wasm`, `resolver-wof-sqlite`) measured clean and are guarded by the Earth app's Vite build."
 
 "Definition of done", second bullet: replace with "`docs/plugins/demo-assets/webpack-policy.ts` carries zero `node:` stubs, zero fallbacks, and zero client-side aliases for `@mailwoman/*`. The SSR-only `onnx-runner` alias is a Docusaurus property and leaves with the geocoder page in the Earth design."
 
@@ -713,7 +713,7 @@ Implements docs/superpowers/specs/2026-09-06-browser-export-conditions-design.md
 
 - @mailwoman/core/objects: a local isIterable; the spliterator barrel is off the client path (7 static node: edges → 0)
 - @mailwoman/neural: #classifier/loader carries a browser condition → classifier/loader-browser.ts (34 node: edges behind the lazy import → 0 in the browser bundle)
-- packages/neural/test/integration/browser-bundle.test.ts: 10 rows, static-chain assertion plus a two-entry dynamic allowance
+- packages/neural/lib/browser-bundle.integration.test.ts: 10 rows, static-chain assertion plus a two-entry dynamic allowance
 - docs/plugins/demo-assets/webpack-policy.ts: 5 shims, 9 empty builtins, 2 excel aliases, the NormalModuleReplacementPlugin and the fallback map deleted; 3 shim files removed
 - rspack: <kept on | refuses <module>>
 

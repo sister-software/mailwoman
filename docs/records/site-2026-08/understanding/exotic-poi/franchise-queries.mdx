@@ -62,7 +62,7 @@ A query for `Walmart` could mean any of the sub-brands. A query for `Walmart Sup
 1. Resolve the location constraint (`Springfield, IL`) to coordinates or an area.
 2. Find the nearest Walmart to that location.
 
-The location constraint is an address or place name, which is the kind of query Mailwoman already handles. The franchise lookup is new. Parsing the location constraint and then querying the franchise index near that location is a **two-stage resolver** query: resolve the place, then find POIs near it.
+The location constraint is an address or place name, which is the kind of query Mailwoman already handles. The franchise lookup is new. The resolver first resolves the place, then queries the franchise index and ranks matching POIs by distance from that place. This is a **two-stage resolver** query.
 
 This is the same pattern as "gas station near Springfield, IL" (amenity + location constraint) but with a named brand instead of a generic category.
 

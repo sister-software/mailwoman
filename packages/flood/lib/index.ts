@@ -50,7 +50,7 @@ export const FloodContainmentPath = {
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * A boundary crosses the cell, so the point was ray-cast against a named polygon.
+	 * A boundary crosses the cell, so the point was ray-cast against a polygon with a label.
 	 */
 	RayCast: "ray_cast",
 	NoZoneCell: "no_zone_cell",
@@ -73,7 +73,7 @@ export interface FloodZoneReading {
 	 */
 	definition?: FloodZoneDefinition
 	/**
-	 * The polygon the ray cast matched on a `ray_cast` reading, named so a reader can fetch and draw it.
+	 * The polygon the ray cast matched on a `ray_cast` reading, identified so a reader can fetch and draw it.
 	 */
 	areaID?: string
 	containment: FloodContainmentPath
@@ -86,7 +86,7 @@ export interface FloodZoneReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not cover, in the authority's own words, carried on every reading
+	 * What the product does not cover, in the authority's own words, included in every reading
 	 * because a Zone 1 answer is silent about surface water, groundwater and defended-area residual risk.
 	 */
 	limits: ReadonlyArray<string>

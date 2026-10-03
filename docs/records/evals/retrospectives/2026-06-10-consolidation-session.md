@@ -140,7 +140,7 @@ The flag-plant claim is made on the artifact users get, with resolver-coupled be
 - **Demo presets** — functional tests before verdicts (house law, [[feedback-functional-before-verdict]]).
 - **int8 spot-check** — quantize, then RE-RUN country + affix + per-locale on the **int8** artifact
   (watch the value_info-strip quant fix, [[project-v4.1.0-release]]). Claim parity on int8 rather than fp32.
-- **Bookkeeping makes it real** — eval-ledger row, dated eval report, re-emit the parity scorecard
+- **The record trail makes it real** — eval-ledger row, dated eval report, re-emit the parity scorecard
   at v4.2.0, and a row in **releases.mdx** (PR #489's "status and releases change together or not
   at all" interface — v4.2.0 is its first test).
 

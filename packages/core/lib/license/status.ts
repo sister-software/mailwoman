@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The client for the license worker's two customer routes: the per-license status a lid answers, and the refresh that
- *   trades a lid and its secret for the current token. Kept outside the `license` barrel like `publication.ts`, because
- *   it carries the http client and the barrel sits on the CLI launcher's path. `unreachable` is a network answer rather than a
- *   verdict: offline verification stands, and every caller says so.
+ *   The client serves two routes on the license worker.
+ *   The status route returns the public status for a license ID.
+ *   The refresh route trades a license ID and secret for the current token.
+ *   The client stays outside the `license` barrel like `publication.ts` because it imports the HTTP client.
+ *   The barrel sits on the CLI launcher's path.
+ *   `unreachable` is a network result rather than a license verdict.
+ *   Callers report it as a network result.
+ *   Offline verification stays valid.
  */
 
 import type { CacheRequestConfig } from "axios-cache-interceptor"
@@ -13,7 +17,7 @@ import type { CacheRequestConfig } from "axios-cache-interceptor"
 import { APIClient, type APIClientConfig } from "#api/APIClient"
 import { $public } from "#env"
 import { ResourceError } from "#errors/schema"
-import { silentLogger } from "#logging/index"
+import { silentLogger } from "#logging"
 import { withoutTrailingSlashes } from "#strings/format"
 
 /**
@@ -87,8 +91,7 @@ function isStatusWord(word: string): word is Exclude<LicenseStatusAnswer, "unrea
 /**
  * Ask the worker for one license's public status.
  *
- * Any answer outside the four words, and any failure to answer, is reported as
- * what it is rather than as a verdict.
+ * The function reports an unrecognized answer or a request failure by its own status value.
  */
 export async function checkLicenseStatus(
 	lid: string,
@@ -109,7 +112,9 @@ export async function checkLicenseStatus(
 /**
  * Trade a lid and its secret for the current token.
  *
- * The worker answers the same 404 for an unknown lid and a wrong secret, which is `not_found` here.
+ * The worker returns the same 404 for an unknown license ID and a wrong secret.
+ * This function maps either response to `not_found`.
+ *
  * The caller verifies the token offline before writing it anywhere.
  */
 export async function refreshLicenseKey(

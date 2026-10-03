@@ -165,17 +165,17 @@ for (const [i, row] of results.entries()) {
 
 **Batch size** is capped at 1 000 addresses (`MAILWOMAN_BATCH_MAX`). A larger body returns a `413`, so split ten thousand addresses into ten requests. The cap is an environment variable, so you can change it on your server without recompiling.
 
-Sorting does help. The first address in a US state loads that state's extract into the cache. A batch that keeps rows from the same state together resolves the later rows with almost no extra cost. If your data is already grouped by region, you get this benefit automatically.
+Sort rows by state to improve cache reuse. The first address in a US state loads that state's extract into the cache. A batch that keeps rows from the same state together resolves the later rows with almost no extra cost. If your data is already grouped by region, you get this benefit automatically.
 
-Asking the server to process several rows at once does not help. The server geocodes a batch one row at a time, and it deliberately has no concurrency setting. A second row cannot progress while the first is in the model, because ONNX Runtime's Node binding holds the JavaScript thread for the whole inference, and the gazetteer reads are also synchronous. We shipped a `MAILWOMAN_BATCH_CONCURRENCY` worker pool and then measured it: throughput stayed at 1.00x from one worker to sixteen. It was removed on 2026-07-16.
+The server gains no throughput by processing several rows at once. It geocodes a batch one row at a time, and it deliberately has no concurrency setting. A second row cannot progress while the first is in the model, because ONNX Runtime's Node binding holds the JavaScript thread for the whole inference, and the gazetteer reads are also synchronous. We shipped a `MAILWOMAN_BATCH_CONCURRENCY` worker pool and then measured it: throughput stayed at 1.00x from one worker to sixteen. The pool was removed on 2026-07-16.
 
-To use more cores, you have to run work on other threads, which the streaming recipes below do. Even then, expect a modest gain. Geocoding is limited by memory and I/O on a shared multi-gigabyte database, and a measured sweep peaked at two workers. [The performance reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/performance.mdx) has the full measurements.
+More cores require work on other threads, as in the streaming recipes below. A measured sweep found 1.4× throughput at two workers. Memory and I/O on the shared multi-gigabyte database limit geocoding. [The performance reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/performance.mdx) has the full measurements.
 
-## Skipping the endpoint entirely
+## Skip the endpoint entirely
 
 If the CSV is already on the machine that has the gazetteer, HTTP only adds overhead. Both recipes below use [spliterator](https://github.com/sister-software/spliterator) to stream the file, so a ten-million-row export uses the same memory as a ten-row one.
 
-### Parsing only, with no gazetteer
+### Parse without a gazetteer
 
 When you want components rather than coordinates, for example to dedupe a mailing list or normalize a column before a join, skip the resolver. This recipe uses no database, so it needs no data root:
 

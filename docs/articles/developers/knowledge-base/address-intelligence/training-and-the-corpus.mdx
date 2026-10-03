@@ -1,10 +1,10 @@
 ---
-title: Training and the corpus
+title: How the corpus trains the model
 description: Where labeled address data comes from, what a training run optimizes, and why an evaluation stands between a better number and a release.
 role: explanation
 ---
 
-# Training and the corpus
+# How the corpus trains the model
 
 ## The question
 
@@ -77,21 +77,21 @@ A training run optimizes one objective: for each piece, put as much score as pos
 label. That objective is per-position cross-entropy, and it is the whole loss. The loss has no
 sequence-level term. It neither rewards a well-formed reading nor penalizes an impossible transition,
 because the decoder enforces those constraints instead. See
-[Decoding and the best path](./decoding-and-viterbi.mdx#why-the-transition-scores-are-constraints-rather-than-weights)
+[How the decoder chooses a path](./decoding-and-viterbi.mdx#why-the-transition-scores-are-constraints-rather-than-weights)
 for the alternatives that were tried and why they did not ship.
 
 Two changes shape what that loss rewards in practice.
 
 **Source weighting.** Sources differ in size by orders of magnitude, so training on the raw mixture
-lets the largest source define what an address looks like. Weighting lets the trainer sample an
+lets the largest source define what an address looks like. Source weighting lets the trainer sample an
 under-represented source at a higher rate than its row count would suggest. It prevents a positional
 failure: a corpus dominated by one source's field order teaches that order instead of the components.
 
 **Labels for pieces that had none.** A sequence labeler learns a tag partly by learning where it
 stops, so adding a new tag sharpens the tags next to it. Before `unit` was a category, the model had
 to assign `Apt 456` some other label, and it assigned `street`. As a result, `street` absorbed
-everything on the road line and had no reliable end. Giving those pieces their own label moved them
-off `street`, and `street` became more precise as a side effect. Adding a category has a cost in
+everything on the road line and had no reliable end. Their own label moved those pieces off `street`,
+and `street` became more precise as a side effect. Each category has a cost in
 general, because two categories that overlap in the data trade one confusion for another. When the
 old label was absorbing a distinct kind of text, the cost is close to zero.
 
@@ -106,7 +106,7 @@ hashing each row's source identifier, and all other rows are used for training.
 A random split would inflate the scores, because addresses on the same street share most of their text. If
 `13 Main St, Springfield, IL` is in training and `15 Main St, Springfield, IL` is in evaluation, the
 model can score well by recalling `Springfield` instead of reading the address. A model could appear
-to generalize while only memorizing place names. Holding out whole regions prevents this. The
+to generalize while only memorizing place names. The regional holdout prevents this. The
 measurement then answers the question that matters for most deployed input: how the model performs
 on a place it has never seen.
 
@@ -119,13 +119,13 @@ division, and nobody can decide after the fact which regions were meant to be un
 A training run produces a checkpoint and a number. Neither is a reason to ship.
 
 The evaluation reports results per tag and per locale instead of as one aggregate. An aggregate score
-moves when one large category moves, and it barely changes when a small category collapses. Shipping
-on an aggregate therefore means shipping without checking the categories that make it up. First-class
+An aggregate score moves when one large category moves and barely changes when a small category collapses. A release based
+on an aggregate therefore skips checking the categories that make it up. First-class
 locales have per-tag floors that block a release when a tag falls below them. Other locales are
 measured, recorded and discussed, but they do not block a release.
 [Locales and tiers](../../reference/locales-and-tiers.mdx) lists which locales are in which tier and
-what each tier means. The key distinction is that a locale counts as supported only when a graded
-evaluation covers it. Training data alone is not enough.
+what each tier means. A locale counts as supported only when a graded evaluation covers it; training
+data alone does not establish support.
 
 Two practices accompany the evaluation.
 
@@ -150,7 +150,7 @@ stays low no matter how much compute goes into training.
 how the region is spelled, and whether the postcode comes first or last. The model then expects those
 conventions in inputs that do not follow them.
 
-**Improvement is not monotonic.** Adding a locale can interfere with an existing one, and adding a
+**Improvement is not monotonic.** A new locale can interfere with an existing one, and a new
 category can trade one confusion for another. For this reason, the evaluation reports per tag and per
 locale instead of a single score with a threshold. A run that improves the headline number can still
 be the wrong one to ship.
@@ -162,7 +162,7 @@ shift case by case instead of reading it off the table.
 ## Related
 
 - [Tokens and labels](./tokens-and-labels.mdx) — the label space alignment produces.
-- [Decoding and the best path](./decoding-and-viterbi.mdx) — what the loss deliberately leaves to decode time.
+- [How the decoder chooses a path](./decoding-and-viterbi.mdx) — what the loss leaves for decode time.
 - [What the model cannot do](./what-the-model-cannot-do.mdx) — where the corpus runs out.
 - [Locales and tiers](../../reference/locales-and-tiers.mdx) — what a claimed locale means, and which
   locales are claimed.

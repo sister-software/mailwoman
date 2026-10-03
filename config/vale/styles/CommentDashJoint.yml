@@ -12,7 +12,7 @@
 ##
 ## `config/oxlint/comment-reflow/joint-sweep.ts` carries the same token and answers what this
 ## reports: a full stop, or a comma where the right half glosses the left rather than standing on
-## its own. Run `yarn comments:joints <file>` and then `yarn fix:oxlint`. The verb and determiner
+## its own. Run `yarn comments:joints <file>` and then `yarn fix:oxc`. The verb and determiner
 ## lists are shared by hand, so a word added here belongs there as well.
 extends: existence
 message: "'%s' joins two clauses with a dash — split the sentence or use a full stop."

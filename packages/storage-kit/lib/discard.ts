@@ -1,19 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Making TRIM work before the filesystem is written, which on a USB-attached SSD is not a given.
- *
- *   The Samsung T7 Shield reports `LBPU=1` (the UNMAP command is supported) and `LBPWS=0` (WRITE SAME with the unmap
- *   bit is not). The kernel's default `provisioning_mode` of `full` wants the latter, so it publishes a discard limit
- *   of zero and `blkdiscard` silently has no effect. A drive that arrives full of someone else's filesystem then has
- *   no free erase blocks, and every write becomes read-modify-write.
- *
- *   Measured on this drive: 2.1 MB/s with 636 ms write latency at the raw block device, against 755 MB/s once the
- *   mode was corrected and the device trimmed. That symptom reads as a failing disk, so `prepare` checks both the
- *   kernel's limit and the device's own claim before it formats anything.
- */
-
 import { $ } from "zx"
 
 export interface DiscardSupport {
@@ -27,7 +14,7 @@ export interface DiscardSupport {
 	 */
 	unmapSupported: boolean
 	/**
-	 * The `scsi_disk` provisioning mode, which USB and SCSI devices carry and NVMe leaves absent.
+	 * The `scsi_disk` provisioning mode, present on USB and SCSI devices and absent on NVMe devices.
 	 */
 	provisioningMode?: string
 	/**
@@ -36,9 +23,6 @@ export interface DiscardSupport {
 	provisioningModePath?: string
 }
 
-/**
- * The bare device name for a path like `/dev/sda`.
- */
 function deviceName(device: string): string {
 	return device.replace(/^\/dev\//, "")
 }
@@ -52,7 +36,8 @@ export async function inspectDiscard(device: string): Promise<DiscardSupport> {
 	const max = await $({ nothrow: true, quiet: true })`cat /sys/block/${name}/queue/discard_max_bytes`
 	const maxBytes = max.exitCode === 0 ? Number(max.stdout.trim()) || 0 : 0
 
-	// `sg_vpd` reads the device's own claim, which is what makes a zero kernel limit correctable.
+	// `sg_vpd` reads the device's own claim.
+	// That lets us correct a zero kernel limit.
 	const vpd = await $({ nothrow: true, quiet: true })`sg_vpd -p lbpv ${device}`
 	const unmapSupported = vpd.exitCode === 0 && /LBPU\)?:\s*1/.test(vpd.stdout)
 
@@ -76,7 +61,6 @@ export async function inspectDiscard(device: string): Promise<DiscardSupport> {
 /**
  * Switch a device whose bridge supports UNMAP but whose kernel mode disables discard.
  *
- * Returns whether anything changed.
  * The write does not survive a replug, so a caller that wants it permanent installs a udev rule as well.
  */
 export async function enableUnmap(support: DiscardSupport): Promise<boolean> {

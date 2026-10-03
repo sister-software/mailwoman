@@ -21,4 +21,4 @@ Offline early-signal for the DEFERRED postcode-anchor resolver re-ranker (task #
 
 The name-surface gold-match metric is blind to country confusion — a US "Berlin" name-matches the German gold "Berlin" while sitting an ocean away. Coordinate error to the OA gold point is the non-gameable signal, so weigh the coord deltas over the name deltas here.
 
-Feeding the anchor's country posterior corrects 38 wrong-country picks and pulls 333 rows >100 km closer to the gold point (median 18.5 km → 17.1 km, 943894 km saved total). That value is invisible to name-match (+0.0%) — exactly the artifact the coordinate-first resolver direction flagged. The re-ranker is worth prototyping; the mean margin (-0.074) is the score gap a soft boost must clear.
+The anchor's country posterior corrects 38 wrong-country picks and pulls 333 rows >100 km closer to the gold point (median 18.5 km → 17.1 km, 943894 km saved total). That value is invisible to name-match (+0.0%) — exactly the artifact the coordinate-first resolver direction flagged. The re-ranker is worth prototyping; the mean margin (-0.074) is the score gap a soft boost must clear.

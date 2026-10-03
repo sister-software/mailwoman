@@ -4,7 +4,7 @@
 /**
  * @generated
  *
- *   generated — run `node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts` to refresh. Do not edit by hand.
+ *   generated — run `node packages/mailwoman/tools/dev-tools/codex/address/layouts.ts` to refresh. Do not edit by hand.
  *
  *   One layout per country, derived from libaddressinput's `fmt` skeleton (which fields print, in what order) and the
  *   street order read once from the OpenCage templates (which slot leads). The `fmt` each was derived from is quoted
@@ -124,10 +124,10 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %O%n%N%n%A%nAX-%Z %C%nÅland
+	// %O%n%N%n%A%nAX-%Z %C%nÅLAND
 	AX: addr`${venue}
 ${attention}
-${numberFirstStreet}
+${numberLastStreet}
 ${dependent_locality}
 AX-${postcode} ${locality}
 ${country}`,
@@ -788,7 +788,7 @@ ${country}`,
 	// %O%n%N%n%A%nFL-%Z %C
 	LI: addr`${venue}
 ${attention}
-${numberFirstStreet}
+${numberLastStreet}
 ${dependent_locality}
 FL-${postcode} ${locality}
 ${country}`,
@@ -1295,7 +1295,7 @@ ${country}`,
 	// %N%n%O%n%A%n%Z %C
 	SJ: addr`${attention}
 ${venue}
-${numberFirstStreet}
+${numberLastStreet}
 ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
@@ -1311,7 +1311,7 @@ ${country}`,
 	// %N%n%O%n%A%n%Z %C
 	SM: addr`${attention}
 ${venue}
-${numberFirstStreet}
+${numberLastCommaStreet}
 ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
@@ -1571,7 +1571,7 @@ ${country}`,
 }
 
 /**
- * Latin-script layouts, for the countries whose Latin print order differs from the one in their own script.
+ * latin-script layouts, for the countries whose Latin print order differs from the one in their own script.
  *
  * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here writes
  * one order in both scripts, so its country-keyed layout serves both.
@@ -1646,9 +1646,8 @@ ${country}`,
 }
 
 /**
- * Local-script layouts for the same countries.
- *
- * The `fmt` skeleton, emitted even where the country is hand-authored.
+ * local-script layouts for the same countries — the `fmt` skeleton, emitted even
+ * where the country is hand-authored.
  *
  * A hand-authored entry states one order, and for Hong Kong that order is the Latin one,
  * so its own script's order has nowhere else to live.
@@ -1720,4 +1719,114 @@ ${dependent_locality}
 ${hanStreet}
 ${venue}
 ${attention}`,
+}
+
+/**
+ * The `fmt` skeleton for the countries whose printed layout is hand-authored,
+ * for comparison rather than for rendering.
+ *
+ * `layoutForCountry` never reads this table.
+ * It exists so that libaddressinput's statement about a board locale can be set against the board's own.
+ *
+ * The other tables cannot supply that statement, because the rendering tables stay disjoint
+ * and a hand-authored country therefore appears in none of them.
+ */
+export const HAND_AUTHORED_FORMAT_SKELETONS: Readonly<Record<string, AddressLayout>> = {
+	// %O%n%N%n%A%n%C %S %Z
+	AU: addr`${venue}
+${attention}
+${numberFirstStreet}
+${dependent_locality}
+${locality} ${region} ${postcode}
+${country}`,
+
+	// %Z%n%S%C%D%n%A%n%O%n%N
+	CN: addr`${country}
+${postcode}
+${region}${locality}${dependent_locality}
+${numberLastStreet}
+${venue}
+${attention}`,
+
+	// %N%n%O%n%A%n%Z %C
+	DE: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
+	// %N%n%O%n%A%n%Z %C %S
+	ES: addr`${attention}
+${venue}
+${numberLastCommaStreet}
+${dependent_locality}
+${postcode} ${locality} ${region}
+${country}`,
+
+	// %O%n%N%n%A%n%Z %C
+	FR: addr`${venue}
+${attention}
+${numberFirstStreet}
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
+	// %N%n%O%n%A%n%C%n%Z
+	GB: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${postcode}
+${country}`,
+
+	// %S%n%C%n%A%n%O%n%N
+	HK: addr`${country}
+${region}
+${locality}
+${dependent_locality}
+${numberFirstStreet}
+${venue}
+${attention}`,
+
+	// %N%n%O%n%A%n%C %Z%n%S
+	IN: addr`${attention}
+${venue}
+${numberFirstCommaStreet}
+${dependent_locality}
+${locality} ${postcode}
+${region}
+${country}`,
+
+	// %N%n%O%n%A%n%Z %C %S
+	IT: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality} ${region}
+${country}`,
+
+	// 〒%Z%n%S%n%A%n%O%n%N
+	JP: addr`${country}
+〒${postcode}
+${region}
+${numberFirstStreet}
+${venue}
+${attention}`,
+
+	// %N%n%O%n%A%n%D%n%C %Z
+	NZ: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality} ${postcode}
+${country}`,
+
+	// %N%n%O%n%A%n%C, %S %Z
+	US: addr`${attention}
+${venue}
+${numberFirstStreet}
+${locality}, ${region} ${postcode}
+${country}`,
 }

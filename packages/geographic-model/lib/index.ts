@@ -3,8 +3,8 @@
 
 /**
  * `@mailwoman/geographic-model` — the world-semantic layer: stable concepts beyond the POI
- * vocabulary, relation definitions, activities and affordances, rule modality, source observations,
- * derived facts, derivation provenance, and deterministic compilation and validation.
+ * vocabulary, relation definitions, activities, affordances, rule modality, source observations,
+ * derived facts, derivation provenance, deterministic compilation, plus validation.
  *
  * The authoring loader (`./load.ts`, the `./load` subpath) is deliberately not re-exported here: it is
  * the only module in the package that touches a filesystem and belongs to the build step rather than
@@ -12,18 +12,17 @@
  *
  * Four things this package must never hold, each owned elsewhere:
  *
- * 1. Ranking policy — no weights, boosts, penalties, or candidate-ordering API. Candidate ordering
- *    belongs to `@mailwoman/resolver`, and the decode objective to `@mailwoman/neural` plus
- *    `@mailwoman/core/decoder`. Knowledge here creates observations and never overrides learned
- *    interpretation.
+ * 1. The resolver owns ranking policy. It defines weights, boosts, penalties and candidate order.
+ *    The resolver package also owns rank order. The neural package and `@mailwoman/core/decoder` own
+ *    the decode objective. This package creates observations and leaves candidate order to the resolver.
  * 2. A second POI vocabulary — external and curated POI categories, their containment hierarchy, the
  *    Overture-leaf translation, the query-phrase lexicon and the brand table belong to
  *    `@mailwoman/poi-taxonomy`; this package maps into those identifiers.
  * 3. A second coverage register — dataset identity and coverage epistemics belong to
  *    `@mailwoman/core/layers`, and an expected-but-absent observation becomes negative evidence only
  *    where `supportsExclusion` permits it there.
- * 4. Empirical affordance statistics — this package owns the stable activity and affordance
- *    identifiers those statistics are fitted against, and no numeric values about them.
+ * 4. Empirical affordance statistics — this package owns the stable activity and affordance identifiers.
+ *    It does not own numeric values fitted against those identifiers.
  *
  * `@mailwoman/core` must not depend on this package: core ships the pipeline interface and roughly
  * 9 MB of reference data to every consumer, so a world-semantics dependency there is one every

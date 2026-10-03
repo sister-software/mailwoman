@@ -13,7 +13,7 @@ this list across major refactors).
 | File                                                                    | Consumer                                                                                                | What it feeds                                                                                                                                                                                                                                                         |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `<lang>/directionals.txt`                                               | `mailwoman/gazetteer-pipeline/evidence-lexicons.ts` (curation languages)                                | The **law-1 directional closure**: locality evidence may never paint onto a directional-ish surface (the v3.19 lesson — US `neighbourhood` rows literally named "Northeast" truncated "3rd Ave NE"). Reaches the model through the locality-surface evidence channel. |
-| `en/directionals.txt`, `en/street_types.txt`                            | `corpus/src/adapters/tiger/street-decompose.ts`                                                         | Splitting raw TIGER street strings into prefix/name/suffix for BIO training gold.                                                                                                                                                                                     |
+| `en/directionals.txt`, `en/street_types.txt`                            | `corpus/src/adapters/tiger/street-decompose.ts`                                                         | The adapter splits raw TIGER street strings into prefix, name, and suffix for BIO training gold.                                                                                                                                                                      |
 | `fr/street_types.txt`                                                   | `corpus/src/adapters/ban/street-decompose.ts`                                                           | Same, for BAN.                                                                                                                                                                                                                                                        |
 | `<lang>/street_types.txt` (all 60 locales that ship one)                | `mailwoman/gazetteer-pipeline/street-morphology.ts` (+ the `gazetteer build street-morphology` command) | `fst-street-morphology.bin` — the browser street-affix filter (survey #1, shipped v8.1.0).                                                                                                                                                                            |
 | `all/given_names.txt`, `all/surnames.txt`, `<lang>/personal_titles.txt` | `evidence-lexicons.ts`                                                                                  | The **person-name tier**: 1-token person-name surfaces blocked as locality evidence.                                                                                                                                                                                  |
@@ -27,8 +27,8 @@ excision, and `core/resources/libpostal.ts`'s generic loader (`prepareLocaleInde
 
 **Deliberately kept anyway, with one exception.** `all/chains.txt` was removed in 2026-08 after an
 explicit migration audit: only 66 of its 504 legacy rows had any exact phrase represented in the
-modern, poi.db-derived brand table, while 438 lacked current source evidence. Importing those rows
-would have promoted a stale global chain list into runtime truth and erased market scope — notably
+modern, poi.db-derived brand table, while 438 lacked current source evidence. If the loader imported
+those rows, it would promote a stale global chain list into runtime truth and erase market scope — notably
 the distinction between a UK pharmacy brand and an ordinary US retail/name query. Brand candidates
 are derived from `poi.db`; category spelling recovery comes from the taxonomy scoped by locale. The
 remaining vestigial files stay
@@ -46,15 +46,15 @@ They answer different questions and live in different places on purpose:
 
 | Tier               | Question it answers                       | Contents                                                               | Lives in                                                                                                  |
 | ------------------ | ----------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Spelling**       | how is text spelled into the model?       | 73k learned subword pieces                                             | the SentencePiece vocab (inside the weights; welded to trained BIO spans)                                 |
+| **Token spelling** | how is text spelled into the model?       | 73k learned subword pieces                                             | the SentencePiece vocab (inside the weights; welded to trained BIO spans)                                 |
 | **Closed classes** | what are the function words of addresses? | directionals, street types, unit types — small, enumerable, stable     | **these dictionaries** + `@mailwoman/codex` → consumed at build/training time (lexicons, FSTs, synthesis) |
 | **Open classes**   | what places exist?                        | millions of changing place names                                       | the WOF gazetteer + FST evidence channels + the resolver (never in the weights)                           |
 | **Query idiom**    | what do people call things?               | brand/variant/amenity phrases (`servo` → fuel, `Macca's` → McDonald's) | `poi-taxonomy` + `variant-aliases`                                                                        |
 
-The old allow/block semantics didn't die with the rules parser — they migrated up a level into
-the **lexicon curation laws** (law-1: directionals never carry locality evidence; the person-name
-tier) and the graded surface-ambiguity classes in the FST rows. Blocking became a condition on
-_evidence painting_ instead of a hard rejection at the token: the open-world version of the same intent.
+The old allow/block semantics moved from the rules parser into the **lexicon curation laws**
+(law-1: directionals never carry locality evidence; the person-name tier) and the graded
+surface-ambiguity classes in the FST rows. The open-world implementation blocks _evidence painting_
+instead of rejecting a token.
 
 ## Descriptive here, normative in codex
 

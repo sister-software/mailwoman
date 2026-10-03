@@ -6,24 +6,24 @@
  *   `readWorkspaceDirectories` over `workspaceDirectories`. The longer name is how a duplicate arrives,
  *   because an author who knew the shorter name would have imported it.
  *
- *   The sibling {@linkcode findPrivateNameShadows} compares names for equality, which finds a copy only when both
- *   authors chose the same word. This compares camelCase component runs instead, which is what an affix leaves behind.
+ *   The sibling {@linkcode findPrivateNameShadows} compares names for equality. It finds a copy only when both
+ *   authors chose the same word. This check compares camelCase component runs to expose an affix.
  *
  *   scoped across packages on purpose. Two names inside one package are usually a deliberate family
  *   (`buildPostcodeLocalityJP` beside `buildPostcodeLocalityBase`); across packages, the shorter name has a public home the
  *   longer one could have imported.
  *
- *   A pair that stays says why, on the line above the longer declaration:
+ *   A pair that stays records why, on the line above the longer declaration:
  *
  *       // repo-health-ignore export-name-affix -- <reason>
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
-import { trackedSourcePaths } from "#tracked-sources"
+import { parseContextSource, readContextSources } from "#context"
+import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#tracked-sources"
 
 /**
  * The comment marker that keeps a deliberate pair out of the census, followed by the reason.
@@ -31,7 +31,7 @@ import { trackedSourcePaths } from "#tracked-sources"
 export const AFFIX_IGNORE_MARKER = "repo-health-ignore export-name-affix --"
 
 /**
- * How many camelCase components a shared run must carry.
+ * How many camelCase components a shared run must include.
  *
  * One-component runs are the vocabulary of the tree — `read`, `build`, `file` —
  * so a floor of one reports nearly every name against nearly every other.
@@ -48,7 +48,7 @@ export interface AffixPair {
 	line: number
 	name: string
 	/**
-	 * The shorter exported name spelled out inside it, and where that one lives.
+	 * The shorter exported name spelled out inside it and the workspace where it lives.
 	 */
 	contains: string
 	containedIn: string[]
@@ -88,8 +88,8 @@ function containedRuns(name: string): string[] {
 	return [...runs]
 }
 
-function exportedFunctionSites(file: string, text: string): ExportSite[] {
-	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)
+function exportedFunctionSites(file: string, source: ts.SourceFile): ExportSite[] {
+	const { text } = source
 	const sites: ExportSite[] = []
 
 	for (const statement of source.statements) {
@@ -132,19 +132,27 @@ function packageOf(file: string): string {
  */
 export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]> {
 	const paths = await trackedSourcePaths(context, {
-		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` alone skips a file directly under `lib/`.
-		globs: ["packages/*/lib/*.ts", "packages/*/lib/**/*.ts"],
+		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` by
+		// itself skips a file directly under `lib/`.
+		globs: PACKAGE_SOURCE_GLOBS.filter((glob) => glob.endsWith(".ts")),
 		existingOnly: true,
 	})
 
 	const sites: ExportSite[] = []
 
-	for (const path of paths) {
+	const read = paths.filter((path) => {
 		const file = relative(context.repoRoot, path)
 
-		if (file.includes("/test/") || file.endsWith(".d.ts")) continue
+		return !file.includes("/test/") && !file.endsWith(".d.ts")
+	})
 
-		sites.push(...exportedFunctionSites(file, await readLocalTextFile(path)))
+	await readContextSources(context, read)
+
+	// Every path here ends in `.ts`, so this is the tree the other checks parse by default.
+	for (const path of read) {
+		const source = await parseContextSource(context, path, { scriptKind: ts.ScriptKind.TS })
+
+		sites.push(...exportedFunctionSites(relative(context.repoRoot, path), source))
 	}
 
 	const byLowerName = new Map<string, ExportSite[]>()
@@ -155,8 +163,8 @@ export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]>
 		byLowerName.set(key, [...(byLowerName.get(key) ?? []), site])
 	}
 
-	// One diagnostic per declaration rather than per matching run and not per overload: an overload
-	// set is one name, and a name containing several shorter names is still one thing to look at.
+	// Emit one diagnostic per declaration.
+	// An overload set has one name, even when the name contains several shorter names.
 	const pairs = new Map<string, AffixPair>()
 
 	for (const site of sites) {

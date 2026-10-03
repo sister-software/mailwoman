@@ -1,4 +1,7 @@
-"""An unverified graph never reaches the output path, and zero parity rows are a refusal rather than a well-formed metrics dict."""
+"""An unverified graph never reaches the output path.
+
+Zero parity rows cause a refusal instead of a well-formed metrics dict.
+"""
 
 from __future__ import annotations
 

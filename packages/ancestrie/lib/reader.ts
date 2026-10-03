@@ -58,8 +58,9 @@ export class Ancestrie implements AncestrieReaderLike {
 	/**
 	 * Open a sealed artifact.
 	 *
-	 * Validates magic, version, and that the buffer covers the layout the header declares.
-	 * Throws rather than reading past either.
+	 * Validates the magic and version.
+	 * It also checks that the buffer covers the layout declared by the header.
+	 * The reader throws when either check fails.
 	 */
 	static from(data: Uint8Array): Ancestrie {
 		const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
@@ -90,7 +91,7 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * The metadata JSON stored at seal time, or `undefined` when the artifact carries none.
+	 * The metadata JSON stored at seal time, or `undefined` when the artifact has no metadata.
 	 */
 	metadata(): JSONValue | undefined {
 		const offset = this.header.metadataOffset
@@ -362,7 +363,7 @@ export class Ancestrie implements AncestrieReaderLike {
 
 			record.payload =
 				(flags & ENTRY_FLAG_PAYLOAD_JSON) === ENTRY_FLAG_PAYLOAD_JSON
-					? // oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf (see the metadata() note): core's JSON helpers cost ~11 MB of shipped data, and corrupt payload bytes should throw rather than soft-fail.
+					? // oxlint-disable-next-line no-restricted-properties -- core's JSON helpers add ~11 MB to shipped data. This leaf parses directly, so corrupt payload bytes throw instead of soft-failing.
 						(JSON.parse(UTF8_DECODER.decode(payloadBytes)) as JSONValue)
 					: payloadBytes
 		}

@@ -24,7 +24,7 @@ The level a postcode resolves to — the municipality — is essentially all poi
 
 If you can't ask "which polygon contains this point," you ask the postal authority "what's the municipality for this postcode," and then you find that municipality in WOF. Japan's postal authority publishes exactly that — **KEN_ALL**, from Japan Post, and crucially a _romanized_ edition whose municipality column reads `SAPPORO SHI CHUO KU`, in the same alphabet as WOF's romanized place names. Authoritative, and matchable.
 
-Getting it was its own small saga: every KEN_ALL download URL we knew was a 404, the new ones are blocked behind JavaScript and a Japan-only fetch, and the file when it finally arrives is CP932/Shift-JIS from 2025. But it arrives, and it carries the one thing WOF's own postcode hierarchy doesn't — the municipality, not just the prefecture (WOF's postcode→admin chain stops at the prefecture, far too coarse).
+The KEN_ALL download took several attempts: the known URLs returned 404, the new URLs require JavaScript and a Japan-only fetch, and the 2025 file uses CP932/Shift-JIS. The file adds municipality data that WOF's postcode hierarchy lacks; WOF's postcode→admin chain stops at the prefecture.
 
 The build is then a different shape feeding the _same_ implementation:
 
@@ -54,7 +54,7 @@ n = 2,000 postcodes, scored two ways:
 
 The 93.9% is the one to trust: GeoNames' municipality field comes from a different lineage than KEN_ALL, so a resolved place agreeing with it isn't the build grading its own homework. Japan resolves its postcodes to the right municipality nine times in ten, with an out-of-distribution parser and no city polygons, because the postcode is language-agnostic and the postal authority is right.
 
-Merging Japan into the shared asset left the European locales **byte-identical** — Germany, France, Britain, and the Netherlands resolve exactly as before; Japan rides alongside them.
+The shared asset kept the European locales **byte-identical** — Germany, France, Britain, and the Netherlands resolve exactly as before, while Japan uses the added data.
 
 ## What it doesn't do yet, and what it proved
 

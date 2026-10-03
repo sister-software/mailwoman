@@ -44,8 +44,8 @@ reason, and this bundle's index is that rule's data source.
 
 Unlike the en-gb sibling, this bundle **ships no postcode-anchor binary**. No
 WOF NZ postcode database exists yet, so the postcode-anchor channel is off for
-en-nz. The loader logs a one-time warning instead of crashing. Building that
-database is the tracked follow-up in `model-card.json`.
+en-nz. The loader logs a one-time warning instead of crashing. The model card
+tracks that database build as a follow-up in `model-card.json`.
 
 ## Intended use
 

@@ -18,7 +18,7 @@ INV[comma-drop]  "1600 Pennsylvania Ave NW, Washington DC"
    tier address_point→admin, coord 38.8977,-77.0365 → 38.9048,-77.0163
 ```
 
-Dropping the comma moved the result ~2 km — from the rooftop to the DC admin centroid. The model absorbed
+The comma-free input moved the result ~2 km — from the rooftop to the DC admin centroid. The model absorbed
 `Washington` into the street span (`street="Pennsylvania Ave NW Washington"`, no locality), so the
 address-point lookup missed and the result fell back a tier. This is **pre-existing** — shipped 6.4.0
 fails it byte-identically; v310 and the digit-ownership model parse it the same way. Whitespace-only
@@ -29,7 +29,7 @@ fails it byte-identically; v310 and the digit-ownership model parse it the same 
 The fix was already built and tested but never enabled in the shipped recipe: `augment_punct_drop_prob`
 (`corpus-python/src/mailwoman_train/augment.py`, 8 unit tests) emits an extra comma-stripped copy of each
 row with the entity spans re-targeted, so the model learns to segment street from locality without leaning
-on the comma. Enabling it at 0.3 closes the case:
+on the comma. A 0.3 probability for this augmentation closes the case:
 
 ```
 "1600 Pennsylvania Ave NW Washington DC"  (no comma)
@@ -63,6 +63,6 @@ xfail. It is not French-specific and not a resolver gap: it is the **no-anchor b
 case. A locality that is the last token with no trailing state or postcode to anchor it. A trailing state
 (`Washington DC`) or a postcode before the locality (`75013 Paris`) anchors the segmentation and resolves
 correctly; a bare terminal toponym is in fact ambiguous against a street continuation, and the punct-drop
-augmentation does not disambiguate it. Closing it needs a locality name-index
+augmentation does not disambiguate it. A locality name-index
 ([#30](https://github.com/sister-software/mailwoman/issues/30)) or a targeted no-anchor augmentation,
 tracked separately. It is low-frequency — nearly all real geocoding traffic carries a postcode or region.

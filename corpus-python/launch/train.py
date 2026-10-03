@@ -1,11 +1,11 @@
-"""The GPU run itself, its wall-clock budget, and the entry point an operator types.
+"""The GPU training run, its wall-clock budget and its command-line entry point.
 
     modal run -d -m launch.train_remote --config <recipe>.yaml --resume auto
 
 Stage what the recipe reads first, with `launch/syncs.py`; this module trains against whatever is
-already on the volume. Two preflights run before the GPU is billed — the corpus receipts on CPU, and
-the wall-clock estimate against this function's timeout — because both failures are otherwise found
-hours in, after the spend.
+already on the volume. Two preflights run before the GPU is billed. The first checks corpus receipts
+on CPU. The second compares the wall-clock estimate with this function's timeout. Without those
+checks, either failure can appear hours into the run, after the spend.
 """
 
 from __future__ import annotations
@@ -149,6 +149,23 @@ def _train_gpu(
             receipt_report,
         )
         print(f"Corpus receipts: verified ({len(cfg.data.required_corpus_receipts)} requirements)")
+
+    if cfg.data.required_validation_coverage:
+        # A locale the D-rule covers needs a validation split able to show a regression against the
+        # shipped model. Without one, `evaluate()` reports the same numbers whatever happened to that
+        # locale. The run then reads as clean. The check runs here so a recipe declaring the floor fails
+        # before the GPU time is spent. `audits.py`'s own docstring already claimed that placement.
+        from pathlib import Path
+
+        from mailwoman_train.audits.validation_coverage import run as verify_validation_coverage
+
+        coverage_report = Path(f"{VOL_MOUNT}/audits/validation-coverage-{Path(config_path).stem}.json")
+        verify_validation_coverage(
+            Path(config_path),
+            json_path=coverage_report,
+            countries=tuple(entry.country.upper() for entry in cfg.data.required_validation_coverage),
+        )
+        print(f"Validation coverage: verified ({len(cfg.data.required_validation_coverage)} locales)")
 
     # Preflight the wall-clock budget: a recipe whose step count cannot fit this function's timeout
     # must fail here rather than die at the wire.

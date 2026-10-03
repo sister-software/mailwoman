@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The comment-reflow rule: which comments are eligible, and where a trailing one lands.
+ * @file The comment-reflow rule: which comments are eligible and where a trailing one lands.
  *
  * Adapted from oxlint-plugin-comment-reflow (MIT, © Diego Haz).
  */
@@ -112,8 +112,9 @@ function protectedComment(source: SourceCode, comment: Comment) {
 /**
  * The lines of a starred block that are missing their `*`, by offset within the block.
  *
- * The opener and the closer are skipped, and so is a line holding only whitespace:
- * a blank line in a starred block is written bare as often as it is written with a star.
+ * The opener and the closer are skipped.
+ * A line holding only whitespace is skipped too: a blank line in a starred block
+ * is written bare as often as it is written with a star.
  */
 function missingStarLines(lines: readonly string[]): { at: number; width: number }[] {
 	const found: { at: number; width: number }[] = []
@@ -173,14 +174,20 @@ export const reflowRule: CreateRule = {
 		const eol = text.includes("\r\n") ? "\r\n" : "\n"
 		const candidates = new Map<number, ESTree.Node[]>()
 
+		// Only a statement or a member can own a trailing comment, so the visitor
+		// is registered for those node types alone.
+		// A `"*"` visitor was called for every node of every file, about seven times as often,
+		// and each call read `loc` before `eligibleNode` could refuse the type.
+		const collect = (node: ESTree.Node): void => {
+			if (!eligibleNode(node)) return
+			const line = node.loc.end.line
+			const nodes = candidates.get(line) ?? []
+			nodes.push(node)
+			candidates.set(line, nodes)
+		}
+
 		return {
-			"*"(node) {
-				if (!eligibleNode(node)) return
-				const line = node.loc.end.line
-				const nodes = candidates.get(line) ?? []
-				nodes.push(node)
-				candidates.set(line, nodes)
-			},
+			...Object.fromEntries([...statements, ...members].map((type) => [type, collect])),
 			"Program:exit"() {
 				const comments = source.getAllComments()
 				const protectedComments = new Set(comments.filter((comment) => protectedComment(source, comment)))

@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { InMemoryAdapterRegistry } from "@mailwoman/corpus/adapters/utils"
-import { writeDelimitedFixture } from "@mailwoman/corpus/test-kit"
+import type { PathBuilder } from "path-ts"
+import { afterAll, beforeEach, describe, expect, it } from "vitest"
+
+import { InMemoryAdapterRegistry } from "#adapters/registry"
+import { writeDelimitedFixture } from "#test-kit"
 import {
 	createUsgovNPPESAdapter,
 	USGOV_NPPES_ADAPTER_ID,
 	USGOV_NPPES_DEFAULT_LICENSE,
-} from "@mailwoman/corpus/us/adapters/usgov/nppes/adapter"
-import type { PathBuilder } from "path-ts"
-import { afterAll, beforeEach, describe, expect, it } from "vitest"
+} from "#us/adapters/usgov/nppes/adapter"
 
 const fixtures = new AsyncDisposableStack()
 

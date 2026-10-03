@@ -10,7 +10,7 @@ nothing checks whether the assumption it rests on held.
 
 ## This is not a suppression problem
 
-Recording it because the session that found it started from the opposite premise. There is **no
+I record this because the session that found it started from the opposite premise. There is **no
 `dependent_locality` suppression** anywhere in the runtime; R5
 (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`) went looking for one and
 overturned the doc that asserted it. The tag is dead **in the model, uniformly**, from a training-side

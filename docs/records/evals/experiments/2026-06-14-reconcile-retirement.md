@@ -1,4 +1,4 @@
-# Retiring joint-reconcile as the default decode path
+# Joint reconciliation leaves the default decode path
 
 _2026-06-14. A reconcile-vs-raw-neural audit, run during the geocoder campaign to quantify how frequently
 the shipped pipeline degrades a parse, found the joint-reconcile path (#427's default since Route A
@@ -10,7 +10,7 @@ to argmax. The destructive piece — the phrase grouper bundling the house numbe
 ## Why we looked
 
 The forward geocoder keys its situs and interpolation tiers on a clean street name plus a separate
-house number. Building the `geocode` CLI, the situs tier silently fell through to the admin centroid on
+house number. When we built the `geocode` CLI, the situs tier silently fell through to the admin centroid on
 addresses it should have nailed. The cause was the runtime pipeline's reconcile stage merging the
 house number and street into one node. We bypassed it in the CLI (raw `classifier.parse` +
 `resolveTree`) and then ran an audit to see how widespread the damage was — because our per-tag evals
@@ -86,8 +86,7 @@ sprint) rather than a deletion.
 
 ## Residual
 
-The destructive piece is the **phrase grouper bundling the house number into `STREET_PHRASE`**. Fixing
-that — so the grouper proposes the bare street phrase and reconcile can separate the number — is the
+The destructive piece is the **phrase grouper bundling the house number into `STREET_PHRASE`**. The grouper must propose the bare street phrase so reconcile can separate the number. That change is the
 prerequisite to ever re-enabling reconcile for the multi-locale work, where its OOD street-intactness is
 useful. Filed as a tracked issue.
 

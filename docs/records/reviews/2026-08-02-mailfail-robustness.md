@@ -40,7 +40,7 @@ Four paths, because they behave differently and carry different risk:
 The raw classifier defaults `enforceWordConsistency` to off; every measurement here passes
 `WORD_CONSISTENCY_SHIP_DEFAULT` so it reflects what a consumer runs.
 
-**Measurement scepticism.** The first resolve run reported zero garbage-to-coordinates, which would
+**Measurement skepticism.** The first resolve run reported zero garbage-to-coordinates, which would
 have been a headline "clean" result. It was wrong: the walker looked for `node.resolved.latitude`,
 and resolved coordinates land on `node.lat` / `node.lon`. A positive control — a real
 address that must resolve — caught it. The control is now the first row of every resolve run, and
@@ -57,7 +57,7 @@ check whose pattern can match the checker is measuring itself.
 
 ---
 
-## Finding 1 — a 325-character real address throws an uncaught TypeError
+## A 325-character real address throws an uncaught TypeError
 
 **Severity: high.** Availability _and_ correctness, on the shipped geocode path, triggered by valid
 input.
@@ -101,15 +101,16 @@ digits=129 pieces=129 -> THREW
 ```
 
 **It fires on plausible addresses.** Address-like text runs about 1.8–2.5 characters per piece, so
-128 pieces is roughly 320 characters. Bisecting a realistic form-concatenated delivery address
-(c/o line, building, floor, suite, street, borough, city, state, ZIP+4, country, delivery window):
+128 pieces is roughly 320 characters. A realistic form-concatenated delivery address
+(c/o line, building, floor, suite, street, borough, city, state, ZIP+4, country, delivery window)
+produced these boundaries:
 
 ```
 last OK length: 320 chars (127 pieces)
 first THROW   : 325 chars (131 pieces)
 ```
 
-This length is common. Shipping systems, CRMs and government forms routinely concatenate address
+This length is common. Address fields in shipping systems, CRMs and government forms routinely combine
 lines to well past 325 characters.
 
 **The 512-character drop-in cap does not guard against this.** `nominatim/cli.ts:67` and
@@ -127,21 +128,21 @@ because a long query "would exceed the model's input window." The cap is roughly
   error"** rather than a process crash. The failure is contained, but a 500 on a valid address is a
   product defect.
 - Library and CLI consumers of `geocodeAddress` get an uncaught `TypeError`.
-- `runPipeline` **does** catch, at `core/pipeline/runtime-pipeline.ts:648` (`safeClassify`). See
-  Finding 4, because that catch hides the failure and produces misleading output.
+- `runPipeline` **does** catch, at `core/pipeline/runtime-pipeline.ts:648` (`safeClassify`).
+  Section 4 describes how that catch hides the failure and produces misleading output.
 
 **Suggested fix.** Truncate `pieces` to the runner's `fixedSeqLen` immediately after
 `classifier.ts:662`, so every downstream array is the same length by construction. That kills both
 throw sites and stops `query-shape-prior.ts` / `span-proposal-prior.ts` allocating
 `pieces.length × labels.length` matrices whose tail rows `addEmissionMatrix` discards anyway. It
 also makes the truncation _visible_ — today a 400-character address is silently parsed from its
-first ~320 characters with no signal to the caller, which is its own reportable defect. Tightening
-`MAX_QUERY_LEN` to ~300 would bound the worst case on two of the four servers but is a
+first ~320 characters with no signal to the caller, which is its own reportable defect. A tighter
+`MAX_QUERY_LEN` of ~300 would bound the worst case on two of the four servers but remains a
 mitigation rather than the fix.
 
 ---
 
-## Finding 2 — `computeQueryShape` is quadratic in segment count
+## `computeQueryShape` is quadratic in segment count
 
 **Severity: high.** Availability. Reachable from every path, including `parseForGeocode`.
 
@@ -158,7 +159,7 @@ Ten times the segments, roughly a hundred times the work. `normalize` over the s
 linear (394.8 ms at 1 MB) and the grouper is linear on this shape, so query-shape is 98% of the
 1 MB cost.
 
-Isolating the sub-stages at 100 KB puts 1,228.9 ms of the 1,266.8 ms in one function:
+A sub-stage measurement at 100 KB assigns 1,228.9 ms of the 1,266.8 ms to one function:
 
 ```
 chars=100023 tok=21217 seg=6063 | tokenize=3.0 classify=1.4 segment=8.0 knownFormats=13.8 regionAbbrev=1228.9 fold=0.1
@@ -181,12 +182,12 @@ A comma-dense input with no whitespace (`"a,"` repeated) hits the same quadratic
 count alone: 3.8 ms → 103.4 ms across a 16× size increase.
 
 **Suggested fix.** Both arrays are position-sorted, so a two-pointer merge makes this O(S + T) with
-no behaviour change. Filtering tokens by `REGION_ABBREV_RE` and class _before_ the segment loop is
-a cheaper partial mitigation but stays quadratic when the abbreviation repeats.
+no behavior change. A cheaper partial mitigation filters tokens by `REGION_ABBREV_RE` and class
+_before_ the segment loop, but stays quadratic when the abbreviation repeats.
 
 ---
 
-## Finding 3 — the phrase grouper is quadratic on capitalized and street-suffix runs
+## The phrase grouper is quadratic on capitalized and street-suffix runs
 
 **Severity: high.** Availability. This is the worst of the three by constant factor.
 
@@ -248,7 +249,7 @@ over the wire.
 
 ---
 
-## Finding 4 — the pipeline masks the classifier crash and substitutes rule-based output
+## The pipeline masks the classifier crash and substitutes rule-based output
 
 **Severity: medium.** Silent wrongness.
 
@@ -257,8 +258,8 @@ over the wire.
 tree from rule-based proposals. The caller gets a normal-looking parse with no indication the model
 never ran.
 
-Instrumenting the pipeline to record whether the inner classifier threw, 10 of 110 probes crashed
-the classifier while the pipeline reported success:
+Instrumentation that recorded whether the inner classifier threw showed that 10 of 110 probes
+crashed the classifier while the pipeline reported success:
 
 | probe                  | bytes | inner throw                           | pipeline output                                                                               |
 | ---------------------- | ----: | ------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -275,14 +276,14 @@ The `num-very-long-digits` row exposes a second, unrelated issue: the emitted `h
 which recomputes `this.end` from the truncated body — so the span's offsets no longer point at the
 input it came from.
 
-**Suggested fix.** Fixing Finding 1 removes the throw, which removes most of this. Independently,
-`safeClassify` swallowing every error with a bare `catch {}` means a model fault is
-indistinguishable from a clean no-match. Surfacing it on `PipelineResult` (a `classifierError`
-field, or a `path` marker) would cost no extra work and make this class self-reporting.
+**Suggested fix.** The Finding 1 fix removes the throw, which removes most of this. Independently,
+when `safeClassify` swallows every error with a bare `catch {}`, a model fault is
+indistinguishable from a clean no-match. A `classifierError` field on `PipelineResult`
+(or a `path` marker) would cost no extra work and make this class self-reporting.
 
 ---
 
-## Finding 5 — garbage resolves to real coordinates
+## Garbage resolves to real coordinates
 
 **Severity: medium.** Silent wrongness rather than availability. Inherent to gazetteer breadth, but
 currently unmitigated.
@@ -349,7 +350,7 @@ following threw, hung, or emitted anything:
 - **Emoji.** Single emoji, ten building emoji, ZWJ family sequences, skin-tone modifiers,
   regional-indicator flags — all emit no component. Keycap sequences (`1️⃣2️⃣3️⃣`) emit
   `{"locality":"3","street":"2","house_number":"1"}`, which is the digits inside them being read rather than an emoji failure.
-- **Encoding stress.** Unpaired high and low surrogates, embedded NUL, BOM, zero-width spaces
+- **Unicode edge cases.** Unpaired high and low surrogates, embedded NUL, BOM, zero-width spaces
   inside tokens, RTL override wrapping, NFD-decomposed accents, fullwidth Latin, non-breaking
   spaces, U+2028/U+2029 — no throw anywhere. The BOM and line-separator cases still parse and
   resolve the underlying address correctly.
@@ -363,7 +364,7 @@ following threw, hung, or emitted anything:
   latitude/longitude pair `40.748817, -73.985428` correctly yields no coordinate.
 
 One untidy case worth a line: `\\x01\\x02\\x03\\x07\\x1b[31m` (control characters plus an ANSI
-colour escape) emits `{"postcode":"31m"}`. Cosmetic, low severity, but the control bytes should
+color escape) emits `{"postcode":"31m"}`. Cosmetic, low severity, but the control bytes should
 have been stripped in Stage 1.
 
 **A predicted problem that is not real.** The static pass flagged
@@ -381,7 +382,7 @@ nobody re-derives it.
 - **No concurrency or sustained-load testing.** Every measurement is a single call on an idle
   process. Event-loop blocking is inferred from wall time on a single-threaded runtime rather than
   observed under load.
-- **No memory-pressure measurement.** RSS and GC behaviour were not instrumented. The
+- **No memory-pressure measurement.** RSS and GC behavior were not instrumented. The
   `pieces.length × labels.length` allocations noted in Finding 1 are read from source rather than measured.
 - **No locale coverage beyond en-US.** The classifier is `loadFromWeights({ locale: "en-US" })`
   throughout. The two quadratics are locale-independent (both are in pre-model stages), but the
@@ -395,7 +396,7 @@ nobody re-derives it.
   stages after query-shape also degrade badly at 60,609 segments — worth its own measurement, but
   not one I have. The 1 MB row in Finding 2 is the stage-level number, which stands on its own.
 - **Not a security review.** SQL-injection- and FTS-syntax-shaped strings were probed for _parser_
-  behaviour. Neither reached a query engine in a way this investigation examined, and no claim is
+  behavior. Neither reached a query engine in a way this investigation examined, and no claim is
   made about injection safety.
 - **The `size` class in the committed fixture is truncated.** Rows above ~10 KB are generated rather than
   committed — a 1 MB JSONL line is a hostile artifact for a test suite. The generator lives in
@@ -414,7 +415,7 @@ nobody re-derives it.
 Classes: `degenerate` 18, `numeric` 16, `symbolic` 14, `script` 21, `size` 3, `structured` 15,
 `adversarial` 18. Bars: 35 `no-throw`, 35 `no-component`, 35 `no-resolve`.
 
-`expect` records the bar the row _should_ meet rather than today's behaviour — 19 rows currently violate
+`expect` records the bar the row _should_ meet rather than today's behavior — 19 rows currently violate
 it, and those are exactly Findings 4 and 5. Control characters, NUL and lone surrogates are
 JSON-escaped; the file was verified to round-trip line-by-line through `JSON.parse` with every
 `raw` byte-identical to its source.
@@ -429,7 +430,7 @@ JSON-escaped; the file was verified to round-trip line-by-line through `JSON.par
 2. **Add `.max()` to the API `address` field** (`api/schema.ts:38,68`). Closes both quadratics on
    the most exposed surface without touching the parser.
 3. **Two-pointer merge in `detectRegionAbbreviations`** (`query-shape/region-abbreviations.ts:28`).
-   O(S + T), no behaviour change.
+   O(S + T), no behavior change.
 4. **Token-count guard in `groupPhrasesSync`** (`phrase-grouper/group.ts:74`), and correct the
    `rules.ts:778-779` complexity comment.
 5. **Surface classifier faults on `PipelineResult`** instead of `safeClassify`'s bare `catch {}`.

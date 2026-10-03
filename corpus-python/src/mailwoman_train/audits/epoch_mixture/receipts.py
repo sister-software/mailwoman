@@ -1,11 +1,11 @@
 """Match drawn rows against corpus receipts and bind a passing audit to its input bytes.
 
 A receipt describes a row shape that a config expects its corpus to contain. The shape can fix a
-source, a country and an ordered component sequence. The receipt also sets the minimum number of
-matching draws per epoch, and the audit raises when a receipt falls short.
+source-country pair plus an ordered component sequence. The receipt also sets the minimum number of
+matching draws per epoch. The audit raises when a receipt falls short.
 
-The binding token is a digest of the config file and the corpus MANIFEST. A GPU run must present
-the token from the CPU preflight, which prevents a passing audit from being reused for other bytes.
+The binding token is a digest of the config file and the corpus MANIFEST. The CPU preflight computes
+the token. A GPU run must present it to tie a passing audit to those bytes.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class CorpusReceiptError(ValueError):
-    """Report a failed receipt audit and carry the full report so the caller can save it."""
+    """Report a failed receipt audit and include the full report so the caller can save it."""
 
     def __init__(self, message: str, report: dict[str, Any]):
         super().__init__(message)
@@ -79,7 +79,7 @@ def verify_corpus_receipt_report(
 def component_sequence(labels: list[str]) -> list[str]:
     """Collapse BIO token labels to their ordered component-span sequence.
 
-    A malformed or orphan label raises. Skipping it would make a parse failure look like a corpus
+    A malformed or orphan label raises. The audit reports that label so a parse failure cannot look like a corpus
     shortfall.
     """
     sequence: list[str] = []

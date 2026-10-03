@@ -87,7 +87,7 @@ population **31,951** and has no seat-town duplicate.
 | Parent     | 85679383 (Trabzon) | 8474473525031             |
 
 **This is the clearest "partial work" signal in the document.** The discrepancy exists because TR was never
-pulled from WOF. It is an acquisition gap rather than a modelling error, and it closes the moment
+pulled from WOF. It is an acquisition gap rather than a modeling error, and it closes the moment
 `whosonfirst-data-admin-tr` is synced.
 
 ### What shipped, and what is still unverified
@@ -172,7 +172,7 @@ Lake             US  county         134 keys   pop      10,855
 
 A country with 428 exonyms is correct. **A neighborhood of 63 people with 221 name keys is not.**
 
-Splitting the 4,000 on that basis:
+The split of 4,000 records on that basis is:
 
 |                                                  | count     |
 | ------------------------------------------------ | --------- |
@@ -194,7 +194,7 @@ near-unique. **Wrong, and measurably so:**
 | `Meer` (afr, "lake")      | 18                          |
 | `Wien` (an actual exonym) | **14**                      |
 
-The actual exonym is shared across _more_ places than the offending noun. Sharing does not separate them.
+The actual exonym is shared across _more_ places than the offending noun. The overlap does not separate them.
 
 **What does look separable** — and this is a hypothesis rather than a finding — is the mismatch between key count
 and prominence. 221 keys on a 63-person neighborhood is anomalous in a way 428 keys on the United States
@@ -202,9 +202,9 @@ is not. Any change based on it needs a board to measure it, rather than a decisi
 
 ### Why this survived
 
-Three reasons worth stating, because they generalise:
+Three reasons worth stating, because they generalize:
 
-1. **The fan-out is invisible per query.** No query asks how many keys one place has, so 19 rows for `to`
+1. **The fan-out is invisible per query.** Queries do not report a place's key count, so 19 rows for `to`
    looks like a busy key rather than a data problem.
 2. **The bad rows are shaped exactly like the good ones.** Both are alt-names in a named language with
    `privateuse=preferred`. Toledo shows why the alias rows are required: abbreviation aliases are how

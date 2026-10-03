@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The `mwdev_inputs` tool definition — the description an agent reads, the input schema, and the handler wiring over
+ * The `mwdev_inputs` tool definition provides the description and input schema an agent reads. It wires the handler over
  * the measurement in the package root.
  */
 

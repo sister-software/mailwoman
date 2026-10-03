@@ -18,7 +18,7 @@ target class.** The model's locality reading is its own.
 
 ## 1. The ingredients are unambiguously present
 
-Walking the shipped FST over the 63 fixtures returns **43 distinct surfaces, 37 of which would fire an
+The shipped FST returns **43 distinct surfaces across the 63 fixtures; 37 would fire an
 emission bias** (`PLACETYPE_TO_BIO` covers country/region/locality/postalcode; `impBias = importance *
 biasScale * maxBias`).
 

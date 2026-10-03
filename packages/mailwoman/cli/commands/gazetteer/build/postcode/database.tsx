@@ -1,0 +1,76 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman gazetteer build postcode-database --country <cc>` — one country's WOF postcode database
+ *   (`postalcode-<cc>.db`): repo ingest → centroid-fill ladder (US: Census zcta + GeoNames. all:
+ *   GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback) → FTS → seal. Replaces the
+ *   reopen-and-mutate `fill-zcta-centroids` / `backfill-postcode-centroids` scripts — fills are build
+ *   steps now. GeoNames-sourced rows are CC-BY 4.0 (attribute "GeoNames (CC-BY 4.0)").
+ */
+
+import { formatFileSize } from "@mailwoman/core/fs/readers"
+
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	phaseReporter,
+	useCommandTask,
+} from "#cli-kit"
+
+/**
+ * Native command-line interface consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-database",
+	description: "Build one country's WOF postcode database.",
+	options: {
+		country: {
+			type: "string",
+			required: true,
+			description: "ISO-2 country (the whosonfirst-data-postalcode-<cc> repo to build)",
+		},
+		out: { type: "string", description: "Output path. Default <data-root>/db/wof/postalcode-<cc>.REBUILD.db" },
+		repos: { type: "string", description: "WOF repos root. Default <data-root>/src/wof-repos" },
+		zcta: { type: "string", description: "Census ZCTA Gazetteer file (US). Default <data-root>/census/…" },
+		"geonames-postal": { type: "string", description: "GeoNames postal dump dir. Default <data-root>/geonames-postal" },
+		admin: { type: "string", description: "Admin gazetteer for parent borrows. Default the live admin DB" },
+	},
+} as const satisfies CommandSpec
+
+const GazetteerBuildPostcodeDatabase: CommandComponent<typeof spec> = ({ options }) => {
+	const state = useCommandTask(async () => {
+		const { buildPostcodeDatabase } = await import("#gazetteer-pipeline")
+
+		const result = await buildPostcodeDatabase({
+			country: options.country,
+			out: options.out,
+			reposDir: options.repos,
+			zctaPath: options.zcta,
+			geonamesPostalDir: options.geonamesPostal,
+			adminPath: options.admin,
+			onPhase: phaseReporter(),
+		})
+
+		return [
+			`postcode database: ${result.out} (${await formatFileSize(result.out)})`,
+			`${result.postcodesIngested.toLocaleString()} postcodes; placed ${result.fills.placedBefore.toLocaleString()} → ${result.fills.placedAfter.toLocaleString()} of ${result.fills.total.toLocaleString()}` +
+				(result.zctaFilled
+					? ` (zcta ${result.zctaFilled.toLocaleString()}` +
+						(result.geonamesUSFilled ? `, geonames-us ${result.geonamesUSFilled.toLocaleString()}` : "") +
+						")"
+					: ""),
+			"sealed 0444",
+			"next: swap per RELEASING.md (postcode databases ride wofExtractPaths)",
+		]
+	})
+
+	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
+	if (state.status !== "done") return <CommandTaskResult state={state} />
+
+	return <CommandSummaryLines lines={state.result} />
+}
+
+export default GazetteerBuildPostcodeDatabase

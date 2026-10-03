@@ -2,21 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   One deterministic pass over everything the repository records about where its published artifacts came from, and
- *   what it does not record.
+ * One deterministic pass over the repository's records about the sources of published artifacts. It also identifies
+ * missing records.
  *
- *   Seven repository checks already hold individual invariants: the notices agree, the rights documents name a
- *   licensor, the generated files equal their writer's output, the register's digest matches its contents. Each
- *   answers its own question and none of them answers the question a release asks, which is whether the chain from a
- *   source's terms to a published tarball closes.
+ * Seven repository checks test individual conditions. The notices agree. Rights documents identify a licensor.
+ * Generated files match their writer's output. The register digest matches its contents. Those checks do not answer
+ * whether a source's terms can be traced to a published tarball. This pass identifies gaps in that chain.
  *
- *   It does not close today, and the value of this pass is saying exactly where. The register holds 389 candidate
- *   sources and admits none of them. No corpus build has written a frozen `TRAINING_SOURCES.json`, so which records
- *   trained a published model is unrecorded rather than recorded-and-unreviewed. Both are reported as what they are.
- *
- *   No part of this report asserts clearance, and a clean report is not one. A section that establishes no fact says so, and the
- *   report separates what it observed from what it could not read. Reading this as permission is the misreading the
- *   whole rights record was built to refuse.
+ * This report does not establish clearance. A clean report also does not establish clearance. Each section states when
+ * it establishes no fact. The report separates observations from unreadable records. The rights record does not grant
+ * permission to use data.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -25,9 +20,12 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import {
 	auditTrainingManifest,
 	ingestEligibilityProblems,
+	provenanceRefusals,
 	readAddressSourceRegister,
+	type EffectiveTrainingManifest,
 	type TrainingManifest,
 } from "@mailwoman/corpus/source-register"
+import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { LICENSE_FILE, PROVENANCE_FILE } from "#weights/rights/files"
@@ -35,14 +33,13 @@ import { SourceUse, type WeightsRightsRecord } from "#weights/rights/record"
 import { weightsRightsRecords } from "#weights/rights/write"
 
 /**
- * What the register admits, and what refuses the rest.
+ * What the register admits and what it refuses.
  */
 export interface SourceRegisterAudit {
 	sources: number
 	/**
 	 * Sources with no eligibility problem.
-	 *
-	 * Zero is the reading today and is a measurement rather than a placeholder.
+	 * Zero is a measurement rather than a placeholder.
 	 */
 	eligible: number
 	/**
@@ -60,7 +57,7 @@ export interface SourceRegisterAudit {
  * Without this the license refusal never appears: every one of the 389 sources points
  * at its own license id, so the message is 389 distinct strings of one source each
  * and a report showing the largest refusals omits the blocker that covers every row.
- * `example` carries one message unaltered, so a reader still sees the real wording.
+ * `example` includes one message unaltered, so a reader still sees the real wording.
  */
 function refusalShape(message: string): string {
 	return message.replaceAll(/"[^"]*"/gu, "<id>")
@@ -85,8 +82,8 @@ export interface PackageRightsAudit {
 	/**
 	 * Entries whose text names no license this reader could find.
 	 *
-	 * The entry may still state terms outside a parenthetical, which is why this
-	 * counts entries rather than declaring them unlicensed.
+	 * The entry may state terms outside a parenthetical.
+	 * The audit counts entries and does not declare them unlicensed.
 	 */
 	entriesNamingNoLicense: number
 	/**
@@ -98,8 +95,10 @@ export interface PackageRightsAudit {
 	/**
 	 * Entries stating no use at all.
 	 *
-	 * Whether the source trained the model is unrecorded, which is a different answer from recorded as
-	 * not having trained it — counting the two together would report an absence as a measurement.
+	 * The records do not establish whether the source trained the model.
+	 * That differs from a record stating the source did not train it.
+	 *
+	 * A combined result would report missing evidence as a measurement.
 	 */
 	entriesStatingNoUse: number
 	/**
@@ -117,7 +116,7 @@ export interface PackageRightsAudit {
 	 */
 	lineageUnresolved: string | null
 	/**
-	 * Whether the manifest's `files` array carries both generated rights filenames.
+	 * Whether the manifest's `files` array includes both generated rights filenames.
 	 *
 	 * A file committed and not listed never reaches a consumer.
 	 */
@@ -147,15 +146,102 @@ export interface TrainingRecordAudit {
 		problems: string[]
 	} | null
 	/**
+	 * What one config's audited epoch actually drew from that corpus, when the repository holds the record.
+	 *
+	 * The frozen manifest states what the corpus holds.
+	 * This states what reached the trainer.
+	 *
+	 * The two differ because of the country filter, source weights, zero weights,
+	 * the sampler and every overlay merged after the frozen manifest was written.
+	 */
+	effective: {
+		config: string
+		seed: number
+		trainingSources: number
+		excludedSources: number
+		/**
+		 * Sources the epoch emitted that the frozen manifest does not record, plus their row totals.
+		 *
+		 * A non-zero count means the frozen manifest covers part of what trained the model.
+		 */
+		emittedButUnrecorded: number
+		emittedButUnrecordedRows: number
+		totalEmittedRows: number
+	} | null
+	/**
 	 * What stops this package's training inputs from being established.
 	 */
 	unresolved: string | null
+	/**
+	 * Why a release may not assert that this package's declared provenance equals what trained it.
+	 *
+	 * An empty array does not state agreement.
+	 * A model card's attribution entries are prose that identifies publishers.
+	 *
+	 * An effective manifest's entries are corpus source IDs.
+	 * No field joins the two.
+	 *
+	 * The refusals below are the ones measurable without that join: no effective manifest
+	 * was read, or the one read covers part of the emitted set.
+	 */
+	provenanceRefusals: string[]
+}
+
+/**
+ * What the committed data bill of materials states about the artifacts a release can deliver.
+ *
+ * The register covers source terms.
+ * The weights records cover what a model shipped.
+ *
+ * The frozen manifests cover what trained it.
+ * None of the three reaches a runtime database.
+ *
+ * A release could publish a bundle whose terms no audited record records.
+ * This is that fourth input.
+ */
+export interface DataBOMAudit {
+	/**
+	 * Repository-relative path of the document this audit read, or `null`
+	 * when none exists for the `mailwoman` version being released.
+	 */
+	path: string | null
+
+	/**
+	 * The `mailwoman` version the document is keyed by.
+	 */
+	version: string
+
+	components: number
+
+	/**
+	 * Components whose expression came from the artifact's own `layer_manifest`.
+	 */
+	fromArtifactManifest: number
+
+	/**
+	 * Components whose expression is this repository's reading of the publishers' stated terms.
+	 *
+	 * The artifact's own `layer_manifest` could not be read for these, so the expression is
+	 * this repository's assertion rather than a reading of the bytes a consumer downloads.
+	 */
+	fromBundleRegistry: number
+
+	/**
+	 * Components carrying `NOASSERTION`, which records a `layer_manifest` row holding no expression.
+	 */
+	withoutExpression: number
+
+	/**
+	 * Every distinct expression in the document, with the component count under each.
+	 */
+	expressions: Array<{ expression: string; components: number }>
 }
 
 export interface RightsAudit {
 	register: SourceRegisterAudit
 	packages: PackageRightsAudit[]
 	training: TrainingRecordAudit[]
+	data: DataBOMAudit
 	/**
 	 * What the pass established, as sentences naming the measurement.
 	 */
@@ -171,10 +257,22 @@ export interface RightsAudit {
 /**
  * Where a frozen training manifest would be read from, relative to the repository root.
  *
- * A corpus build writes it beside the corpus it produced, under the data root, which no release path reads.
- * The repository copy is the one a release can check, and none exists yet.
+ * A corpus build writes it beside its corpus under the data root.
+ * Release paths do not read that location.
+ *
+ * A release can check a repository copy.
+ * The repository currently contains none.
  */
 const FROZEN_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
+
+/**
+ * How many of the data document's license expressions the terminal report prints.
+ *
+ * The count under each is what a reader compares.
+ * The tail is a long list of one-component expressions.
+ * The full set is in the document the line above names.
+ */
+const EXPRESSIONS_SHOWN = 8
 
 /**
  * The register's admissions and refusals.
@@ -255,10 +353,14 @@ async function auditPackage(repoRoot: PathBuilderLike, record: WeightsRightsReco
 }
 
 /**
- * The frozen manifest for a corpus, or `null` when the repository holds none.
+ * Reads the frozen manifest for a corpus.
+ * It returns `null` when the repository holds none.
  *
- * A read that fails for any reason returns `null` and the caller records the corpus as unestablished.
- * It never reports zero sources, which would read as a corpus built from no source.
+ * A failed read returns `null`.
+ * The caller records the corpus as unestablished.
+ *
+ * The function never reports zero sources.
+ * That value would imply a corpus built from no source.
  */
 async function readFrozenManifest(repoRoot: PathBuilderLike, corpusVersion: string): Promise<TrainingManifest | null> {
 	try {
@@ -267,6 +369,46 @@ async function readFrozenManifest(repoRoot: PathBuilderLike, corpusVersion: stri
 		)
 	} catch {
 		return null
+	}
+}
+
+/**
+ * The effective training manifest for a corpus, or `null` when the repository holds none.
+ *
+ * `effective-manifest.run.ts` writes one from the corpus's frozen manifest
+ * and an `audit_epoch_mixture` output.
+ * A read that fails for any reason returns `null`, and the caller records that no release
+ * read one rather than reporting a checkpoint whose training source set is empty.
+ */
+async function readEffectiveManifest(
+	repoRoot: PathBuilderLike,
+	corpusVersion: string
+): Promise<EffectiveTrainingManifest | null> {
+	try {
+		return await readLocalJSONFile<EffectiveTrainingManifest>(
+			resolvePath(repoRoot, FROZEN_MANIFESTS_DIRECTORY, `${corpusVersion}.effective.json`)
+		)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * One effective manifest reduced to the counts the report prints, or `null` when none was read.
+ */
+function effectiveRow(manifest: EffectiveTrainingManifest | null): TrainingRecordAudit["effective"] {
+	if (!manifest) return null
+
+	const unrecorded = Object.values(manifest.emittedButUnrecorded)
+
+	return {
+		config: manifest.config,
+		seed: manifest.seed,
+		trainingSources: manifest.trainingSources.length,
+		excludedSources: Object.keys(manifest.excludedSources).length,
+		emittedButUnrecorded: unrecorded.length,
+		emittedButUnrecordedRows: unrecorded.reduce((sum, rows) => sum + rows, 0),
+		totalEmittedRows: manifest.totalEmittedRows,
 	}
 }
 
@@ -287,22 +429,46 @@ async function auditTraining(
 				package: record.packageName,
 				corpusNamed: null,
 				manifest: null,
+				effective: null,
 				unresolved: record.inherited
 					? `ships no model graph and its card names no corpus; what trained ${record.inherited.package}'s graph is that package's row`
-					: "its model card names no corpus, so there is nothing to look a manifest up by",
+					: "its model card names no corpus, so a manifest lookup has no key",
+				// An empty list reads as agreement.
+				// A card naming no corpus supports no comparison.
+				// The inherited case points at the package that owns the graph rather than repeating its refusal.
+				provenanceRefusals: record.inherited
+					? [
+							`${record.packageName}: its declared provenance is ${record.inherited.package}'s, and whether that ` +
+								`equals what trained the shared graph is that package's row.`,
+						]
+					: [
+							`${record.packageName}: its model card names no corpus, so which sources trained it is ` +
+								`unmeasured and no effective manifest can be looked up.`,
+						],
 			})
 
 			continue
 		}
 
 		const manifest = await readFrozenManifest(repoRoot, corpusNamed)
+		const effective = await readEffectiveManifest(repoRoot, corpusNamed)
+		// The card's attribution entries are prose naming publishers, so the
+		// comparison against the effective manifest's corpus source ids has no key
+		// and `provenanceRefusals` reports it as unmeasured.
+		const declared = null
 
 		if (!manifest) {
 			rows.push({
 				package: record.packageName,
 				corpusNamed,
 				manifest: null,
+				effective: effectiveRow(effective),
 				unresolved: `the card names corpus ${stringifyJSON(corpusNamed)} and no frozen manifest for it exists under ${FROZEN_MANIFESTS_DIRECTORY}, so which records reached this model is unrecorded`,
+				provenanceRefusals: provenanceRefusals({
+					manifest: effective,
+					declared,
+					packageName: record.packageName,
+				}),
 			})
 
 			continue
@@ -320,7 +486,13 @@ async function auditTraining(
 				totalRows: manifest.totalRows,
 				problems,
 			},
+			effective: effectiveRow(effective),
 			unresolved: problems.length ? `its frozen manifest fails its own audit: ${problems.join("; ")}` : null,
+			provenanceRefusals: provenanceRefusals({
+				manifest: effective,
+				declared,
+				packageName: record.packageName,
+			}),
 		})
 	}
 
@@ -342,6 +514,7 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 	}
 
 	const training = await auditTraining(repoRoot, records)
+	const data = await auditDataBOM(repoRoot)
 	const established: string[] = []
 	const unresolved: string[] = []
 
@@ -372,6 +545,20 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 		unresolved.push(
 			`${withoutManifest.length} of ${training.length} packages have no frozen training manifest, so which records trained the model each one ships or inherits is unrecorded.`
 		)
+	}
+
+	const withEffective = training.filter((row) => row.effective)
+
+	if (withEffective.length) {
+		established.push(
+			`${withEffective.length} of ${training.length} packages name a corpus this repository holds an effective training manifest for, which records what one config's audited epoch drew rather than what the corpus holds.`
+		)
+	}
+
+	for (const row of training) {
+		for (const refusal of row.provenanceRefusals) {
+			unresolved.push(refusal)
+		}
 	}
 
 	const unlicensed = packages.reduce((total, entry) => total + entry.entriesNamingNoLicense, 0)
@@ -414,14 +601,115 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 		)
 	}
 
-	return { register, packages, training, established, unresolved }
+	if (!data.path) {
+		unresolved.push(
+			`No data bill of materials exists for mailwoman ${data.version}, so what governs the databases a release ` +
+				`delivers is recorded only as bundle prose. Run \`mailwoman data bom\` to write ${dataBOMPath(data.version)}.`
+		)
+	} else {
+		established.push(
+			`${data.path} describes ${data.components} data artifacts. ${data.fromArtifactManifest} carry the ` +
+				`expression their own layer_manifest records and ${data.fromBundleRegistry} carry the expression this ` +
+				`repository assigns from the publishers' stated terms.`
+		)
+
+		if (data.fromBundleRegistry) {
+			unresolved.push(
+				`${data.fromBundleRegistry} of ${data.components} data artifacts state no expression of their own, so ` +
+					`the document reports this repository's reading of their publishers' terms. A consumer downloading ` +
+					`those files receives bytes that name no license.`
+			)
+		}
+
+		if (data.withoutExpression) {
+			unresolved.push(
+				`${data.withoutExpression} data artifacts carry a layer_manifest row holding no expression, recorded as ` +
+					`NOASSERTION. Their obligations are unrecorded rather than empty.`
+			)
+		}
+	}
+
+	return { register, packages, training, data, established, unresolved }
 }
 
 /**
- * The audit as lines for a terminal.
+ * Read the committed data bill of materials for the version being released.
+ *
+ * The document is generated rather than hand-written, so this audit reports its
+ * recorded value instead of re-deriving it.
+ * An absent document goes into `unresolved` as a missing record.
+ * A release decision reads that field.
+ */
+async function auditDataBOM(repoRoot: PathBuilderLike): Promise<DataBOMAudit> {
+	const manifest = await readPackageJSON(resolvePath(repoRoot, "packages", "mailwoman", "package.json"))
+
+	if (!manifest.version) {
+		throw new Error(`packages/mailwoman/package.json declares no version, so no data document can be named.`)
+	}
+
+	const version = manifest.version
+
+	const path = dataBOMPath(version)
+
+	const empty: DataBOMAudit = {
+		path: null,
+		version,
+		components: 0,
+		fromArtifactManifest: 0,
+		fromBundleRegistry: 0,
+		withoutExpression: 0,
+		expressions: [],
+	}
+
+	let document: DataBOM
+
+	try {
+		document = await readLocalJSONFile<DataBOM>(resolvePath(repoRoot, path))
+	} catch {
+		return empty
+	}
+
+	const byExpression = new Map<string, number>()
+	let fromArtifactManifest = 0
+	let fromBundleRegistry = 0
+	let withoutExpression = 0
+
+	for (const component of document.components) {
+		const expression = component.licenses?.[0]?.expression ?? "NOASSERTION"
+		const basis = component.properties.find((property) => property.name === "mailwoman:licenseBasis")?.value
+
+		byExpression.set(expression, (byExpression.get(expression) ?? 0) + 1)
+
+		if (expression === "NOASSERTION") {
+			withoutExpression++
+		}
+
+		if (basis === LicenseBasis.ArtifactManifest) {
+			fromArtifactManifest++
+		} else if (basis === LicenseBasis.BundleRegistry) {
+			fromBundleRegistry++
+		}
+	}
+
+	return {
+		path,
+		version,
+		components: document.components.length,
+		fromArtifactManifest,
+		fromBundleRegistry,
+		withoutExpression,
+		expressions: [...byExpression.entries()]
+			.map(([expression, components]) => ({ expression, components }))
+			.toSorted((a, b) => b.components - a.components),
+	}
+}
+
+/**
+ * Formats the audit as terminal lines.
  *
  * The unresolved section prints last and is never omitted.
- * A report ending on what it established would read as a verdict, and this pass reaches none.
+ * A report ending on its established findings could read as a verdict.
+ * This pass reaches no verdict.
  */
 export function renderRightsAudit(audit: RightsAudit): string[] {
 	const lines: string[] = [
@@ -441,8 +729,10 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 			`    ${entry.digestsRecorded} of ${entry.artifacts} artifact digests recorded; ${entry.attributionEntries} attribution entries, ${entry.entriesNotTraining} describing data the model did not learn from and ${entry.entriesStatingNoUse} stating no use; ${entry.openQuestions} open questions`
 		)
 
-		// The chain starts with the package itself, so a reader following it sees where it began.
-		// This line is about the base, and printing the package's own name twice on one line reads as a cycle.
+		// The chain starts with the package itself.
+		// That entry helps readers see its origin.
+		// This line describes the base.
+		// A repeated package name would make the chain appear circular.
 		if (entry.lineage.length > 1) {
 			lines.push(`    decodes through ${entry.lineage.slice(1).join(" → ")}`)
 		}
@@ -456,6 +746,36 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 				? `  ${row.package}: ${row.manifest.sources} sources, ${row.manifest.totalRows} rows, profile ${row.manifest.profile}`
 				: `  ${row.package}: ${row.unresolved}`
 		)
+
+		if (row.effective) {
+			lines.push(
+				`    effective under ${row.effective.config} at seed ${row.effective.seed}: ` +
+					`${row.effective.trainingSources} of the manifest's sources drew rows, ` +
+					`${row.effective.excludedSources} excluded, ` +
+					`${row.effective.emittedButUnrecorded} emitted sources the manifest does not name ` +
+					`(${row.effective.emittedButUnrecordedRows} of ${row.effective.totalEmittedRows} rows)`
+			)
+		}
+	}
+
+	lines.push("", `Data artifacts (mailwoman ${audit.data.version}):`)
+
+	if (audit.data.path) {
+		lines.push(
+			`  ${audit.data.path}: ${audit.data.components} components, ` +
+				`${audit.data.fromArtifactManifest} from the artifact's own layer_manifest, ` +
+				`${audit.data.fromBundleRegistry} from the bundle registry`
+		)
+
+		for (const row of audit.data.expressions.slice(0, EXPRESSIONS_SHOWN)) {
+			lines.push(`    ${String(row.components).padStart(4)}  ${row.expression}`)
+		}
+
+		if (audit.data.expressions.length > EXPRESSIONS_SHOWN) {
+			lines.push(`    … ${audit.data.expressions.length - EXPRESSIONS_SHOWN} further expressions`)
+		}
+	} else {
+		lines.push(`  ${dataBOMPath(audit.data.version)} does not exist. Run \`mailwoman data bom\`.`)
 	}
 
 	lines.push("", "Established:")

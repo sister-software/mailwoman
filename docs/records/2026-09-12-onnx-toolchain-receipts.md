@@ -60,7 +60,7 @@ is four minors behind." The npm half of that is wrong: `onnxruntime-web`'s `late
 1.29.0, and every 1.30.0 on npm is a `-dev.` prerelease. The browser was on current stable; the
 Python side was pinned three minors behind the runtime executing its output.
 
-Bumping Python `onnxruntime` 1.26.0 → 1.29.0 to match is **graph-neutral**. Quantizing one fixed
+Python `onnxruntime` 1.26.0 → 1.29.0 is **graph-neutral**. One quantization run on a fixed
 fp32 under each produces a byte-identical int8:
 
 ```
@@ -70,7 +70,7 @@ opset 17 · 508 nodes · 169 initializers · 385 value_info                  (bo
 
 So the bump cannot move what ships.
 
-The two runtimes do **not** execute that graph identically. Running the shipped
+The two runtimes do **not** execute that graph identically. The shipped runtime
 `model-v440-suffix-boundary-v2-step-060000-int8.onnx` under each, on inputs written to disk once and
 read by both processes so the feed is provably the same:
 
@@ -86,7 +86,7 @@ decision the decoder reads is unchanged on every token of every address.
 The right reading is therefore not "the gap was harmless." It is that a graph quantized by one
 runtime and served by another was being checked by an instrument that is not the one in the user's
 hands, and the difference between those instruments is about 1e-1 on a logit — comfortably enough to
-flip a token whose top two labels are close. Closing the gap costs no extra work, since the artifact is
+flip a token whose top two labels are close. The gap closes at no extra work, since the artifact is
 byte-identical either way.
 
 `verify_toolchain.py` now refuses a gap between the pyproject pin and both npm call sites, so the

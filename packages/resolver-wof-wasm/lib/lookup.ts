@@ -2,25 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `WOFWasmPlaceLookup` — browser-side `PlaceLookup` backed by `@sqlite.org/sqlite-wasm`.
+ * `WOFWasmPlaceLookup`, the browser-side `PlaceLookup` backed by `@sqlite.org/sqlite-wasm`.
  *
- *   The lookup filters on text, placetype, limit, country and a bounding box, and re-ranks the
- *   BM25 pool by exact-name tier and population weight with the same shared helpers the Node
- *   resolver uses. It still lacks `WOFSQLitePlaceLookup`'s parentID descendant filter, because the
- *   slim artifact's `parent_id` chain is incomplete, and its near-proximity boost.
+ * The lookup filters on text, placetype, limit, country alongside a bounding box, then re-ranks the
+ * BM25 pool by exact-name tier and population weight using the shared helpers the Node resolver uses.
+ * The slim artifact's `parent_id` chain is incomplete, so this lookup lacks `WOFSQLitePlaceLookup`'s
+ * parentID descendant filter. It also lacks the near-proximity boost.
  *
- *   Internally this is a thin facade over the OO1 DB returned by `loadSlimWOFDatabase`. The SQL it
- *   issues is the SQLite dialect the Node implementation uses, and the alias-bag parser, query fold,
- *   FTS sanitizer and ranking weights are imported from `@mailwoman/resolver-wof-sqlite` so the two
- *   backends share one implementation of each rather than a convention.
+ * Internally this is a thin facade over the OO1 DB returned by `loadSlimWOFDatabase`. It issues SQL in the same
+ * SQLite dialect as the Node implementation. The alias-bag parser, query fold,
+ * FTS sanitizer and ranking weights are imported from `@mailwoman/resolver-wof-sqlite` so the two
+ * backends share one implementation of each rather than a convention.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { CoincidentLocality } from "@mailwoman/core/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "@mailwoman/resolver-wof-sqlite"
 // Browser-safe subpath imports (fts.ts's only node:sqlite import is type-only).
-// The shared alias-bag parser, query fold, FTS sanitizer, and ranking weights keep this
-// backend byte-identical to the Node resolver's exact tier and population re-rank.
+// The shared alias-bag parser and query fold keep this backend byte-identical to Node's exact tier.
+// The shared FTS sanitizer and ranking weights preserve its query and ranking behavior.
 import { aliasBagExactMatch, foldQueryText } from "@mailwoman/resolver-wof-sqlite/fts"
 import { normalizePlacetypes, sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts/query"
 import { DEFAULT_WEIGHTS, populationBoostTerm } from "@mailwoman/resolver-wof-sqlite/ranking-weights"
@@ -39,8 +39,8 @@ export interface WOFWasmPlaceLookupOpts {
  * One `sqlite_master` probe behind the lazy aux-table checks below.
  */
 // repo-health-ignore private-name-shadows-export -- the same probe over a synchronous sqlite-wasm handle.
-// The httpvfs export answers a worker round trip and the sqlite one a node:sqlite client,
-// and no adapter unifies the three handles
+// The httpvfs export answers a worker round trip.
+// The sqlite export answers a node:sqlite client. and no adapter unifies the three handles
 function tableExists(db: Database, name: string): boolean {
 	return db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1`, [name]).length > 0
 }
@@ -50,7 +50,8 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	#hasPopulationCache?: boolean
 	#hasPlaceAbbrCache?: boolean
 	/**
-	 * Lazily-built `admin_id → coincident localities` map from the #403 relation (the slim DB carries it).
+	 * Lazily-built `admin_id` to coincident-localities map from the `coincident_roles`
+	 * relation in the slim DB.
 	 */
 	#coincidentRolesCache?: Map<number, CoincidentLocality[]>
 
@@ -59,7 +60,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	}
 
 	/**
-	 * Lazily probe (once) whether the slim DB carries the `place_population` aux table.
+	 * Lazily probe (once) whether the slim DB contains the `place_population` aux table.
 	 */
 	#hasPopulation(): boolean {
 		if (this.#hasPopulationCache === undefined) {
@@ -70,7 +71,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	}
 
 	/**
-	 * Lazily probe (once) whether the slim DB carries the `place_abbr` aux table (build-slim ≥ #189).
+	 * Lazily probe (once) whether the slim DB contains the `place_abbr` aux table that build-slim adds.
 	 */
 	#hasPlaceAbbr(): boolean {
 		if (this.#hasPlaceAbbrCache === undefined) {
@@ -104,9 +105,9 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		if (!text) return []
 
-		// Postcode-typed queries keep the #920 fused name-law shape.
+		// Postcode-typed queries keep the fused name-law shape.
 		// Everything else splits on intra-token punctuation so hyphenated names reach the FTS
-		// as their real terms (#945) — parity with the resolver-wof-sqlite implementation.
+		// as their real terms, in parity with the resolver-wof-sqlite implementation.
 		const ftsQuery = sanitizeFTSQuery(text, {
 			fuseTokens: normalizePlacetypes(query.placetype)?.includes("postalcode") ?? false,
 		})
@@ -116,17 +117,13 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		const limit = Math.max(1, query.limit ?? 10)
 
 		// FTS5 match on place_search joined to spr.
-		// Placetype + country filters are pushed into the where clause because they
-		// reduce candidate count cheaply.
+		// Placetype and country filters are pushed into the where clause to reduce candidate count cheaply.
 		const conditions: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 		const params: Array<string | number> = [ftsQuery]
 
 		// Shared placetype-equivalence expansion (core/resolver): a `locality` query
-		// must also reach `borough` / `localadmin` rows.
-		// Without it, Brooklyn-the-borough (pop 2.5M, an exact name match) was unreachable
-		// and the fuzzy "Brooklyn Park, MN" won.
-		// Same table the Node resolver uses.
-		// The two backends can't drift.
+		// must also reach `borough` and `localadmin` rows, the same table the Node
+		// resolver uses, so the two backends cannot drift.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
 
 		if (placetypes && placetypes.length) {
@@ -139,22 +136,20 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			params.push(query.country.toUpperCase())
 		}
 
-		// Point-in-bbox filter.
-		// Used to constrain a locality lookup to a parsed region/state's bounds
-		// (e.g. "Roseville, Michigan" → only the Roseville whose centroid sits in Michigan's bbox),
-		// which the broken-in-the-slim-DB parent_id chain can't do via descendant filtering.
+		// Point-in-bbox filter, used to constrain a locality lookup to a parsed region or state's bounds
+		// (for example "Roseville, Michigan" reaches only the Roseville whose centroid sits in Michigan's bbox),
+		// which the incomplete `parent_id` chain in the slim DB cannot do through descendant filtering.
 		if (query.bbox) {
 			conditions.push("spr.latitude BETWEEN ? AND ?", "spr.longitude BETWEEN ? AND ?")
 			params.push(query.bbox.minLat, query.bbox.maxLat, query.bbox.minLon, query.bbox.maxLon)
 		}
 
-		// Over-fetch a pool ordered by raw BM25, then re-rank in JS
-		// (exact-name tier, then population-weighted bm25).
-		// The over-fetch is essential: a famous place can sit a few rows below a tiny
-		// same-name town on raw BM25 ("New York" loses to "West New York" by a hair),
-		// so a tight limit on bm25 alone would truncate it before the re-rank could pull it up.
-		// This mirrors the post-scoring tier + population boost in resolver-wof-sqlite/lookup.ts.
-		// (v1 issued pure bm25, which is why the demo targeted West New York for "New York, NY".)
+		// Over-fetch a pool ordered by raw BM25, then re-rank in JS by exact-name tier
+		// and population-weighted bm25.
+		// The over-fetch is essential.
+		// A famous place can sit a few rows below a tiny same-name town on raw BM25,
+		// so a tight limit would truncate it before the re-rank could pull it up.
+		// This mirrors the post-scoring tier and population boost in resolver-wof-sqlite/lookup.ts.
 		const hasPop = this.#hasPopulation()
 		const pool = Math.max(limit, 50)
 
@@ -189,18 +184,17 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		}>
 
 		const normQuery = foldQueryText(text)
-		// Exact-abbreviation ids: region/state abbreviations live in the slim DB's
-		// `place_abbr` table (carried by build-slim before `names` is dropped).
-		// A candidate whose abbreviation equals the query is an exact match —
-		// same tier as an exact name match — so "VT" → Vermont outranks a foreign region
-		// that merely token-matches "VT" via a multilingual name fragment.
-		// No-op on slim DBs built before place_abbr (the table is absent → empty set).
-		// This is the data-driven replacement for the demo's hardcoded region-abbreviation map
-		// (since deleted); it also generalizes beyond US.
+		// Exact-abbreviation ids: region and state abbreviations live in the slim DB's
+		// `place_abbr` table, added by build-slim before `names` is dropped.
+		// A candidate whose abbreviation equals the query is an exact match, the same tier
+		// as an exact name match, so "VT" reaches Vermont ahead of a foreign region that
+		// merely token-matches "VT" through a multilingual name fragment.
+		// The lookup is a no-op on slim DBs built before `place_abbr`, where the
+		// table is absent and the set is empty.
 		const abbrIDs = this.#abbrExactIDs(text)
 
-		// Strict exact = canonical name or region abbreviation equals the query.
-		// Computed for the whole pool first because the alias tier below only engages
+		// Strict exact means the canonical name or region abbreviation equals the query.
+		// Computed for the whole pool first, since the alias tier below only engages
 		// when no strict exact exists.
 		const strictExact = (row: { name: string; id: number }): boolean =>
 			foldQueryText(row.name) === normQuery || abbrIDs.has(row.id)
@@ -209,12 +203,12 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		return rows
 			.map((row) => {
-				// Alias tier: `alt_names` is the FTS row's alias bag (the slim DB's only surviving alias source),
-				// aliases joined on the boundary-preserving ALIAS_SEPARATOR (#523).
+				// Alias tier: `alt_names` is the FTS row's alias bag, the slim DB's only surviving
+				// alias source, with aliases joined on the boundary-preserving ALIAS_SEPARATOR.
 				// The shared parser does a true per-alias equality check, unrestricted.
-				// On a legacy bag (pre-#523 slim artifact, boundaries lost) it falls back to
-				// padded containment conditioned on "no strictly exact candidate" so interior
-				// fragments ("York" inside "New York City") can't be false-promoted.
+				// On a legacy bag with boundaries lost, it falls back to padded containment
+				// conditioned on "no strictly exact candidate", so interior fragments
+				// ("York" inside "New York City") cannot be false-promoted.
 				// Mirrors the Node resolver's alias tier (`WOFSQLitePlaceLookup.#exactMatchIDs`).
 				const aliasExact = aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
@@ -236,8 +230,8 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				lat: row.latitude,
 				lon: row.longitude,
 				parent_id: row.parent_id ?? undefined,
-				// Surface the exact-match tier so a downstream country re-rank (#369) can keep
-				// the country pin from crossing it — parity with `WOFSQLitePlaceLookup`.
+				// Surface the exact-match tier so a downstream country re-rank can keep the
+				// country pin from crossing it, in parity with `WOFSQLitePlaceLookup`.
 				// See ResolvedPlace.exactMatch.
 				exactMatch: exactTier === 0,
 				bbox:
@@ -258,13 +252,13 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 	/**
 	 * Dual-role localities coincident with an admin id, from the `coincident_roles`
-	 * relation (#403) carried into the slim DB by build-slim.
+	 * relation added to the slim DB by build-slim.
 	 *
-	 * Backs the resolver's hierarchy completion (on by default) in the browser —
+	 * Backs the resolver's hierarchy completion in the browser and
 	 * mirrors `WOFSQLitePlaceLookup.coincidentLocalitiesFor`.
 	 * Returns `[]` when the slim DB predates the relation.
 	 *
-	 * Loaded once + memoized (the relation is ~hundreds of rows).
+	 * Loaded once and memoized, since the relation is a few hundred rows.
 	 */
 	coincidentLocalitiesFor(adminID: number | string): CoincidentLocality[] {
 		const id = typeof adminID === "number" ? adminID : Number(adminID)

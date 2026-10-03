@@ -3,7 +3,7 @@
 **Status:** design approved 2026-09-06. The operator chose export conditions in the owning packages over a new leaf
 package. Implemented 2026-09-07 (PR #2192).
 **Builds on:** the platform-split rule that put `workerd`/`browser` conditions beside `node` in `@mailwoman/core`
-for the license worker (`packages/core/test/integration/worker-bundle.test.ts` is the proof shape), and the
+for the license worker (`packages/core/lib/worker-bundle.integration.test.ts` is the proof shape), and the
 `browser` condition `@mailwoman/neural` already carries on `./onnx-runner`.
 **Precedes:** the Earth app (`2026-09-06-earth-app-design.md`) and the planetary app
 (`2026-09-06-planetary-app-design.md`). Both consume the packages this design fixes, under a second bundler.
@@ -49,7 +49,7 @@ stubs and zero aliases for `@mailwoman/*`, and the Earth `vite.config.ts` carrie
 ### Inventory first
 
 Before any edit, list the `@mailwoman/*` subpaths the docs client bundle reaches. For each, record the
-Node builtin it pulls in and the import that pulls it in. Running `esbuild` with
+Node builtin and the import that introduces it. A run of `esbuild` with
 `conditions: ["browser"]`, `platform: "browser"` and `bundle: true` over each subpath, with the stubs
 removed, reports the exact chain in its error output. The inventory is a table in the PR description
 rather than a comment in code.
@@ -89,9 +89,9 @@ Every bundle walk lives in one place: the `bundle-graph` check in `@mailwoman/re
 conditions a consumer bundles it under. `esbuild` bundles the row, and the check reads the metafile for
 a builtin on a static edge, a dynamic builtin import that no row lists, and files the row says the bundle
 must or must not carry. The same table now holds the two license-key rows under
-`["workerd", "worker", "browser"]` that `packages/core/test/integration/worker-bundle.test.ts` held, and
-the classifier row that `packages/neural/test/unit/browser-graph.test.ts` held. Both files are gone, so
-the repository has one esbuild walk rather than three. `packages/neural/test/integration/browser-slo.test.ts`
+`["workerd", "worker", "browser"]` that `packages/core/lib/worker-bundle.integration.test.ts` held, and
+the classifier row that `packages/neural/lib/browser-graph.test.ts` held. Both files are gone, so
+the repository has one esbuild walk rather than three. `packages/neural/lib/web/browser-slo.integration.test.ts`
 keeps its reduced graph because it measures timing, and it remains the size budget. Subpaths in packages
 that `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-wof-wasm`,
 `resolver-wof-sqlite`) measured clean, and the Earth app's Vite build guards them.
@@ -110,4 +110,4 @@ that `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-
 
 ## Out of scope
 
-Moving any file out of `docs/src/` and renaming anything are out of scope. Both belong to the Earth design.
+The Earth design owns file moves out of `docs/src/` and renames.

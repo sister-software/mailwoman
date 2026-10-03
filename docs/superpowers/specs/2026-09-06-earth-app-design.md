@@ -86,7 +86,7 @@ asset requests do not invoke a Worker.
 Workers Builds configuration lives in the Cloudflare dashboard, so this spec records it and the package
 README repeats it:
 
-| Setting           | Value                                                                                                                                                                  |
+| Parameter         | Value                                                                                                                                                                  |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Root directory    | `packages/earth`                                                                                                                                                       |
 | Build command     | `yarn build` (`tsc -b && vite build`, then the `build.json` emit)                                                                                                      |
@@ -108,7 +108,7 @@ and one basemap tile.
 ### PWA
 
 The app uses `vite-plugin-pwa` in `injectManifest` mode. The service worker source is the range-cache worker moved
-from `docs/static/range-cache-sw.js` to `packages/earth/lib/service-worker.ts`, unchanged in behaviour
+from `docs/static/range-cache-sw.js` to `packages/earth/lib/service-worker.ts`, unchanged in behavior
 (persistence of validated 64 KB range chunks keyed by URL and offset, torn-chunk integrity), with the
 app-shell precache manifest injected at build. Precache holds the shell, hashed JS/CSS, icons, the sqljs
 runtime files, and the manifest. It never precaches a model, a gazetteer database, or a tile.
@@ -192,7 +192,7 @@ verified for the new origin before launch. The check is a `curl` with an `Origin
 behavior does not change, because the browser talks to `public.mailwoman.ai` directly and no Worker sits
 in that path.
 
-### Testing
+### Test plan
 
 - `@mailwoman/react/map`: the fake-runtime component tests, stories and geometry tests stay. The
   runtime hook gets a test with injected loaders and without network access.
@@ -226,7 +226,7 @@ in that path.
 Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
 
 - Parity: `packages/earth/test/browser/100-demo-cold-load.spec.ts` and `200-demo-resolve.spec.ts` run against the
-  preview on port 7770 with the real assets; the remaining ten specs cover the FST autocomplete, the street tier, the
+  preview on port 7771 with the real assets; the remaining ten specs cover the FST autocomplete, the street tier, the
   postcode anchors, the viewport and device biases, the debug trace and the theme. The cold-load stall that read as
   "one load in five" was `public.mailwoman.ai` resetting the 38 MB model download partway through; the artifact fetch
   now buffers the body inside a three-attempt retry (`mailwoman/browser-runtime/fetch`), and the fixture ends its
@@ -245,11 +245,11 @@ Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
 - The docs site builds under `rspackBundler` (`cd docs && yarn build`, EXIT=0).
 - Registers: unchanged since the shell PR (#2196).
 - Workers Builds: the project from the shell PR; the bucket's CORS rule admits `https://earth.mailwoman.ai` and
-  `http://localhost:7770` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
+  `http://localhost:7771` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
 
 ## Out of scope
 
-- Redesigning the geocoder's appearance, the resolver, or the model.
+- The geocoder's appearance, resolver, and model retain their current designs.
 - A generated release manifest in place of `resources.ts`. The version pins move as constants first, and
   the manifest is a follow-up.
 - A Worker script of any kind.

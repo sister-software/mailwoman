@@ -58,9 +58,9 @@ _kinds_ of context, which want two different homes.
   does: it brings gazetteer knowledge into the decision after the parse.
 
 The clean rule: **the parser disambiguates the tag using in-string context; the
-resolver disambiguates the referent using geographic context.** Conflating them is
-how parsers end up either over-committing (guessing which Springfield from text
-alone) or under-committing (refusing to tag "Georgia" at all).
+resolver disambiguates the referent using geographic context.** When parsers combine these jobs, they
+either over-commit (guess which Springfield from text alone) or under-commit (refuse to tag
+"Georgia" at all).
 
 A note on scale, because it surprises people: there are ~195 countries, and the
 country tag still felt hard. The size is not the problem. ~180 country names collide

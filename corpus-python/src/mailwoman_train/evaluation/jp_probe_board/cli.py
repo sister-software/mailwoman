@@ -1,4 +1,4 @@
-"""Printing the read, and running it against a checkpoint.
+"""Print the read and run it against a checkpoint.
 
 torch and the encoder are imported inside `main`, not at module scope, so `score` and `decode` stay
 importable — and testable — without the torch install.

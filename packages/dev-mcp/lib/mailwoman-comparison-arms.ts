@@ -1,5 +1,5 @@
-import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
-import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
+import type { GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
+import { toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 
 import { checkConfounds, type ConfoundReading } from "#confound"
 import {

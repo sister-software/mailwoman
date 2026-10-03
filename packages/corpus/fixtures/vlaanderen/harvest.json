@@ -1,0 +1,19 @@
+{
+	"service": "https://geo.api.vlaanderen.be/ad/wfs",
+	"wfsVersion": "2.0.0",
+	"outputFormat": "application/gml+xml; version=3.2",
+	"retrievedAt": "2026-10-02T02:51:14.514Z",
+	"addressCount": 4563062,
+	"components": {
+		"ThoroughfareName": ["thoroughfare-name.gml"],
+		"PostalDescriptor": ["postal-descriptor.gml"],
+		"AdminUnitName": ["admin-unit-name.gml"]
+	},
+	"addressPages": [
+		{
+			"startIndex": 1200000,
+			"file": "address-1200000.gml",
+			"numberReturned": 9
+		}
+	]
+}

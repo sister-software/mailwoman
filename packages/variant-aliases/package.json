@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/variant-aliases",
-	"version": "10.0.0",
+	"version": "10.1.0",
 	"description": "Regional variant alias table — local terms for amenities/brands blocked by locale. 'servo' → fuel (en-AU), 'マクド' → McDonald's (ja-JP), 'PFK' → KFC (fr-CA).",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -14,15 +14,10 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"data/**/*.json",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -40,10 +35,10 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
-		"./lookup": {
-			"types": "./out/lookup.d.ts",
-			"node": "./lib/lookup.ts",
-			"default": "./out/lookup.js"
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"publishConfig": {

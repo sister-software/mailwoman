@@ -37,7 +37,7 @@ export interface POIPhraseMatch {
 	kind?: "category" | "brand" | "name"
 	/**
 	 * Wikidata QID when known, `kind: "brand"` only.
-	 * Absent when a brand resolved by name alone.
+	 * Absent when a brand resolved using its name only.
 	 */
 	wikidata?: string
 	/**
@@ -47,9 +47,11 @@ export interface POIPhraseMatch {
 	 * A lookup returning several hits means two different things: a phrase index
 	 * returns the categories one typed phrase could name, the curated reading first
 	 * (`credit union` → the `bank` rollup its synonym redirects to), while an affordance
-	 * rung returns every entity kind that affords one activity in a stable enumeration that
-	 * is not a preference, and narrowing to the first would be an invented ordering.
-	 * Set on every member of such a set, so {@link matchPOISubject} carries them all
+	 * rung returns every entity kind that affords one activity in a stable enumeration.
+	 * The enumeration does not express a preference.
+	 *
+	 * The first result would impose an ordering that the source does not provide.
+	 * Set on every member of such a set, so {@link matchPOISubject} returns them all
 	 * and the POI branch searches their union.
 	 *
 	 * Absent, the committed lexicon's shape, keeps the first-hit reading.
@@ -62,8 +64,8 @@ export interface POIPhraseMatch {
 	 * A scope is a statement about establishments, so it is judged against the country of
 	 * the place being searched rather than the caller's locale: the locale is the lens the
 	 * phrase is read through and makes no statement about where the condition is true.
-	 * `matchPOISubject` carries the value untouched, and the POI intent stage
-	 * binds it once the anchor has resolved.
+	 * `matchPOISubject` returns the value unchanged.
+	 * The POI intent stage binds it once the anchor has resolved.
 	 */
 	countryScope?: readonly string[]
 }
@@ -87,7 +89,7 @@ export interface POIQuerySpan {
 /**
  * Which lexicon this hit came from.
  *
- * Existing category lookups set `"category"` as the backward-compatible default.
+ * Category lookups set `"category"` as the backward-compatible default.
  */
 export interface POISubjectMatch {
 	/**
@@ -123,11 +125,13 @@ export interface POISubjectMatch {
  *
  * Linear by construction (no polynomial ReDoS): neither alternative places an unbounded
  * whitespace quantifier before its required literal, the classic `js/polynomial-redos` shape.
- * The comma alternative starts at the literal `,`, the anchor alternative at a single `\s`
- * before a fixed anchor word, and every remaining quantifier is trailing, running only after
- * the required literal has matched, so each start offset does O(1) work and `matchAll` is O(n).
+ * The comma alternative starts at the literal `,`.
  *
- * Behaviour is byte-identical to the previous `\s*,\s*|\s+(?:…)\s+`, because `matchPOISubject`
+ * The anchor alternative starts at one `\s` before a fixed anchor word.
+ * Every remaining quantifier is trailing and runs only after the required literal matches.
+ * Each start offset does O(1) work, so `matchAll` is O(n).
+ *
+ * Behavior is byte-identical to the previous `\s*,\s*|\s+(?:…)\s+`, because `matchPOISubject`
  * trims both the subject and the remainder, so surrounding whitespace is redundant.
  * The leading quantifier only shifted the match start within a whitespace run, while the retained
  * trailing greedy quantifier keeps the match end and thus `matchAll`'s lastIndex identical.
@@ -142,9 +146,11 @@ const MAX_SUBJECT_TOKENS = 8
 
 /**
  * The categories one candidate subject reaches: the whole array when the first hit
- * declares {@link POIPhraseMatch.searchAsSet}, carried as the lookup returned it
- * and never filtered so a rung that flagged only some members keeps every member
- * and the inconsistency stays visible, otherwise the first hit alone.
+ * declares {@link POIPhraseMatch.searchAsSet}, preserved as the lookup returned it
+ * and never filtered, so a rung that flagged only some members keeps every member.
+ *
+ * The inconsistency stays visible.
+ * Otherwise, use only the first hit.
  */
 function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
 	return hits[0]!.searchAsSet ? [...hits] : [hits[0]!]
@@ -159,7 +165,7 @@ function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
  * Returns null when the lexicon never fires, including comma-ridden full addresses
  * whose leading segment is not a phrase.
  *
- * The winning candidate's hits are carried per {@link reachedMatches}.
+ * The winning candidate's hits are listed per {@link reachedMatches}.
  */
 export function matchPOISubject(
 	text: string,
@@ -271,7 +277,7 @@ export function createScorePOIQuery(
  * POI query keeps scoring `poi_query` as before.
  *
  * The coordinator's POI branch accepts both kinds, so the routing is identical either way.
- * The split exists so the marker can say "you named a category and no place".
+ * The split exists so the marker can say "you supplied a category and no place".
  */
 const POI_CATEGORY_CONFIDENCE = 0.93
 
@@ -280,8 +286,10 @@ const POI_CATEGORY_CONFIDENCE = 0.93
  * to search: "tacos", "grocery store", "drinking fountain".
  *
  * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a category.
- * A brand (`kind: "brand"`) is excluded because `POIPhraseMatch.categoryID` then holds
- * the brand's display name, which would make the marker's `categoryID` evidence a lie.
+ * A brand (`kind: "brand"`) is excluded because `POIPhraseMatch.categoryID`
+ * then holds the brand's display name.
+ *
+ * That value would misrepresent the marker's `categoryID` evidence.
  */
 export function createScorePOICategory(
 	lookup: POIPhraseLookup,

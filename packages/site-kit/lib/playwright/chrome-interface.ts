@@ -131,7 +131,8 @@ export async function expectNothingUnderTheFooter(page: Page): Promise<void> {
 }
 
 /**
- * Asserts that `opener` opens one side sheet, and that both the sheet's close button and `opener` close it.
+ * Asserts that `opener` opens one side sheet.
+ * Both the sheet's close button and `opener` close it.
  *
  * On a phone the sheet covers its opener, so the sheet needs its own close button.
  * On a wide screen the opener stays visible, so it must also toggle the sheet closed.
@@ -191,7 +192,7 @@ export async function expectEverySheetControlCloses(page: Page): Promise<string[
 }
 
 /**
- * Asserts that a hit test at the element's centre reaches the element.
+ * Asserts that a hit test at the element's center reaches the element.
  *
  * Playwright's `toBeVisible` passes for an element that an ancestor's `overflow` clips away.
  * A hit test fails for that element because a clipped element receives no hits.
@@ -211,7 +212,7 @@ export async function expectReachable(page: Page, selector: string): Promise<voi
 		target: selector,
 	})
 
-	expect(reached, `${selector} is clipped or covered at its own centre`).toBe(true)
+	expect(reached, `${selector} is clipped or covered at its own center`).toBe(true)
 }
 
 /**

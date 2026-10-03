@@ -6,7 +6,7 @@ Two modes:
 - ``--mode transliteration``: reads seed JSONL lines of US/FR canonical addresses with
   ``components`` ground truth and asks DeepSeek to render each address in a target
   non-Latin script (Russian Cyrillic, Japanese Kana+Kanji, Simplified Chinese, Korean
-  Hangul, Armenian). Each output row carries the transliterated raw + transliterated
+Hangul, Armenian). Each output row stores the transliterated raw + transliterated
   component surface forms (substring-match invariant enforced by the model and
   re-validated locally before write). A rendered row keeps the SEED's ``country`` and
   ``locale`` — a US address written in katakana is a US address — and names how it is
@@ -35,7 +35,7 @@ Outputs canonical JSONL rows compatible with ``corpus/src/types.ts:CanonicalRow`
 Raw DeepSeek responses (HTTP payload bodies) are also persisted to a sidecar JSONL for
 reproducibility — one line per API call with prompt + completion + usage metadata.
 
-Checkpointing: progress is tracked at the request granularity. If interrupted, restart
+The checkpoint records progress at the request granularity. If interrupted, restart
 with the same arguments and previously-completed batches are skipped (matched by their
 deterministic batch_id). The id is derived from the batch's inputs, so a change to that
 derivation invalidates every checkpoint on disk and the only symptom is a larger bill —
@@ -46,7 +46,7 @@ The modules:
 - `client.py` — the API call, the response parser, the component validator, the id function.
 - `prompts.py` — the two system prompts, the script table, the adversarial category table.
 - `run.py` — checkpointed concurrent execution, shared by both modes.
-- `transliteration.py` / `kryptonite.py` — one mode each: what to ask for, and what to keep.
+- `transliteration.py` / `kryptonite.py` — one mode each, defining its prompts and retained rows.
 - `cli.py` — the argument parser and the mode switch.
 """
 

@@ -29,8 +29,7 @@ export interface PostcodeTriple {
 	/**
 	 * The segment before the locality, when the source has one.
 	 *
-	 * A recipe output whose every row begins with the locality teaches that the
-	 * first named segment is the locality.
+	 * A recipe output whose every row begins with the locality teaches that the first segment is the locality.
 	 */
 	dependentLocality?: string
 	locality: string
@@ -42,7 +41,7 @@ export interface PostcodeTriple {
 }
 
 /**
- * Which GeoNames postal column carries the locality for a country.
+ * The GeoNames postal column that contains the locality for a country.
  *
  * `admin2` is the default.
  * For the US it is the inverse, because column 3 is the city and admin2 the county,
@@ -51,7 +50,8 @@ export interface PostcodeTriple {
 export type GeonamesLocalityColumn = "place" | "admin2"
 
 /**
- * Where a country writes the postcode, and the locale tag its rows carry.
+ * Records where a country writes the postcode.
+ * It also records the locale tag in its rows.
  *
  * A country is in this table only when a gauntlet board row attests its surface, because extracting
  * an absent country with the wrong placement teaches a convention that country does not use.
@@ -77,7 +77,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	["IN", { placement: "after_region", locale: "en-IN" }],
 	// Attested by the four `us_city_state_postcode` board rows; `localityColumn` keeps it from training counties.
 	["US", { placement: "after_region", locale: "en-US", localityColumn: "place" }],
-	// The two `br_*` rows carry locality, region and CEP in that order.
+	// The two `br_*` rows list locality, region and CEP in that order.
 	// The default `admin2` column is right here, because BR's export writes the
 	// municipality in column 3 and admin2 alike.
 	["BR", { placement: "after_region", locale: "pt-BR" }],
@@ -190,7 +190,7 @@ interface PreferredNames {
  * then the region's co-official languages, then the gazetteer's own `spr.name`
  * (the English exonym), deduplicated with order kept.
  *
- * Reading `spr.name` alone teaches stripped exonyms (`Balearic Islands`, `Cordoba`)
+ * An input that uses only `spr.name` teaches stripped exonyms (`Balearic Islands`, `Cordoba`)
  * against the forms a user writes.
  */
 export function regionWrittenForms(sprName: string, names: PreferredNames): string[] {
@@ -321,8 +321,8 @@ interface SurfaceReader {
 /**
  * Bind {@link regionWrittenForms} and {@link localityWrittenForm} to an open gazetteer.
  *
- * The languages come from the codex rather than the names table's own language list,
- * whose "preferred" name in a language not spoken in the region is often the parent's.
+ * The languages come from the codex instead of the names table's language list.
+ * The table's "preferred" name may use a language not spoken in the region and may refer to the parent.
  */
 function createSurfaceReader(db: DatabaseClient<WOFDatabase>): SurfaceReader {
 	const preferredStatement = db.prepare(
@@ -382,8 +382,8 @@ export type AdminPair = Omit<PostcodeTriple, "postcode" | "postcodePlacement">
  * Read `(locality, region, country)` pairs for a country straight from the
  * admin gazetteer, with no postcode.
  *
- * A pair per region surface, the same rule {@link readTriplesFromParentJoin} follows,
- * and no postcode is synthesized.
+ * Produces one pair per region surface, following {@link readTriplesFromParentJoin}.
+ * The reader synthesizes no postcode.
  */
 export async function readPairsFromAdmin(
 	countries: readonly string[],
@@ -424,9 +424,8 @@ export async function readPairsFromAdmin(
 			const locality = surfaces.locality(cc, row.locality_id, row.locality)
 
 			for (const region of surfaces.region(cc, row.region_id, row.region)) {
-				// A pair whose region repeats its locality carries no signal about the boundary
-				// the recipe exists for, and the recipe drops it anyway — dropping it here
-				// keeps the country budget from being spent on rows that vanish.
+				// A pair whose region repeats its locality adds no signal about the boundary this recipe measures.
+				// The recipe drops that pair, so filtering it here keeps the country budget for rows that remain.
 				if (region === locality) continue
 
 				out.push({ locality, region, country: row.country ?? "", cc, locale })
@@ -440,9 +439,9 @@ export async function readPairsFromAdmin(
 /**
  * A predicate answering whether a name is a locality the admin gazetteer knows, for one country.
  *
- * The parent-join reader gets this for free.
- * The GeoNames reader does not, and a row teaching a colonia as `locality` trains
- * the locality/dependent_locality boundary the wrong way.
+ * The parent-join reader supplies this field directly.
+ * The GeoNames reader requires this correction because treating a colonia as `locality`
+ * teaches the wrong locality/dependent_locality boundary.
  *
  * @throws When the gazetteer is not on disk, because a predicate that accepted every
  * name would emit unfiltered rows as though the filter had run.
@@ -477,10 +476,11 @@ export async function createKnownLocalityCheck(
 /**
  * Read triples straight out of a GeoNames `<CC>.txt` export, with no join.
  *
- * `admin2` is the locality, `admin1` the region, and column 3 the dependent locality,
- * because reading column 3 as the locality is what taught `Mahatma Gandhi Road` as a city.
- * A country whose export lacks admin1 or admin2 yields zero from this reader,
- * which is correct rather than a gap to route around.
+ * `admin2` supplies the locality, `admin1` supplies the region and column 3 supplies the dependent locality.
+ * A locality value from column 3 taught `Mahatma Gandhi Road` as a city.
+ *
+ * A country whose export lacks admin1 or admin2 yields zero from this reader.
+ * That result is correct and needs no fallback.
  *
  * Hyphen-format countries publish each code twice, so the first surface of a code wins.
  */
@@ -515,14 +515,16 @@ export async function readTriplesFromGeonames(
 
 		if (!postcode || !locality || !region) continue
 
-		// The check applies to the locality rather than to the other column, which for PT/MX/IN is expected
-		// to be a street or a colonia and is emitted as the dependent locality rather than dropped.
+		// The check applies to the locality.
+		// For PT/MX/IN, the other column may hold a street or colonia.
+		// The reader emits that value as the dependent locality instead of dropping it.
 		if (!isKnownLocality(locality)) continue
 
 		// A dependent locality that merely repeats its parent teaches a doubled segment rather than a boundary.
 		const dep = dependentLocality && dependentLocality !== locality ? dependentLocality : ""
 
-		// The bare twin of a punctuated code carries no new fact, and keeping both doubles the country's weight.
+		// The bare twin of a punctuated code adds no new fact.
+		// Both entries would double the country's weight.
 		const key = `${postcode.replaceAll("-", "")} ${locality} ${dep}`
 
 		if (seen.has(key)) continue

@@ -142,8 +142,8 @@ extracts rather than the admin FST. Three direct options, in increasing cost:
 3. **Full address autocomplete** (true Google-Maps): house-number + street + city as one suggestion
    stream. Highest cost; needs a dedicated suggestion index and ranking. A later milestone.
 
-Recommend shipping (1) with the demo, designing the box so (2) slots in. Flagging (3) as its own
-epic — it is more than "wire the existing feature," which is the nuance worth naming up front.
+Recommend shipping (1) with the demo and designing the box so (2) slots in. Make (3) its own
+epic; it requires more than wiring the existing feature.
 
 ## Implementation steps
 

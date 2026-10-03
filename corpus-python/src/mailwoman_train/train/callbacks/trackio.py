@@ -1,9 +1,8 @@
 """The Trackio dashboard mirror of the CSV.
 
-`init_tracker` answers a null tracker whenever tracking is off or the package is absent, and every
-call it returns swallows its own failures. So this callback joins every run unconditionally: a
-disabled tracker costs a method call per interval, and making membership conditional would put the
-same decision in two places.
+`init_tracker` returns a null tracker when tracking is off or the package is absent. The returned
+call handles its own failures. This callback therefore joins every run unconditionally. A disabled
+tracker costs one method call per interval. Conditional membership would duplicate the decision.
 """
 
 from __future__ import annotations
@@ -49,9 +48,9 @@ class TrackioCallback:
     def _dashboard_metrics(self, state: TrainState, metrics: dict[str, float]) -> dict[str, float]:
         """Per-tag F1 beside per-tag support, with F1 OMITTED where support is zero.
 
-        A zero-support tag means the val sample contains no examples of it — a coverage gap. Logging
-        F1 as 0.0 there draws a flat-zero line that reads as a model failure, so the series gets a
-        gap instead and `support.<tag>` says why.
+                A zero-support tag means the val sample contains no examples of it — a coverage gap. Logging
+                F1 as 0.0 there draws a flat-zero line that reads as a model failure, so the series gets a
+        gap instead and `support.<tag>` reports why.
         """
         dashboard: dict[str, float] = {
             "val_loss": float(metrics.get("val_loss", float("nan"))),

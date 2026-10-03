@@ -4,8 +4,8 @@
 /**
  *   `storage.verify` — every property `storage.prepare` was supposed to establish, asserted again from scratch.
  *
- *   This is the operation that makes the preparation non-forgettable. `prepare` ends by calling it, and it re-runs
- *   standalone afterwards, so "did anyone remember to set the compression property on the database subtrees" stops
+ *   This operation makes the preparation verifiable. `prepare` calls it at the end.
+ *   It can also run independently afterward, so "did anyone remember to set the compression property on the database subtrees" stops
  *   being something a person has to hold in their head.
  */
 
@@ -66,7 +66,7 @@ export const verifyOperation = defineOperation({
 			checks.push({ name: `mount option ${expected}`, ok: present, detail: present ? "active" : "missing" })
 		}
 
-		// `compress-force` silently voids every compression=none property below,
+		// `compress-force` silently voids every compression=none property below.
 		// which is invisible until someone measures a query.
 		// Verified on a scratch volume.
 		// See DEFAULT_MOUNT_OPTIONS.

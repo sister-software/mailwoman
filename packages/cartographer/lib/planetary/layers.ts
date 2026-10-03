@@ -9,7 +9,7 @@ import type {
 } from "@maplibre/maplibre-gl-style-spec"
 
 import { PlanetaryHillshadeSourceID, PlanetaryNomenclatureSourceID } from "#planetary/sources"
-import { PROTOMAPS_FONT_REGULAR } from "#styles/fonts"
+import { MAP_FONT_REGULAR } from "#styles/fonts"
 import { LayerID } from "#styles/layers"
 
 export interface PlanetaryPalette {
@@ -21,7 +21,7 @@ export interface PlanetaryPalette {
 	/**
 	 * Where a slope faces the light.
 	 *
-	 * The tiles carry encoded elevation and no colour of their own.
+	 * The tiles store encoded elevation and have no color of their own.
 	 */
 	reliefHighlight: string
 	/**
@@ -102,7 +102,7 @@ export function spaceLayer(palette: PlanetaryPalette): BackgroundLayerSpecificat
 
 /**
  * The relief, shaded at draw time from the body's encoded elevation,
- * since the tiles carry height and no colour.
+ * since the tiles store height and have no color.
  */
 export function hillshadeLayer(palette: PlanetaryPalette): HillshadeLayerSpecification {
 	return {
@@ -110,8 +110,8 @@ export function hillshadeLayer(palette: PlanetaryPalette): HillshadeLayerSpecifi
 		type: "hillshade",
 		source: PlanetaryHillshadeSourceID,
 		paint: {
-			// Under 1: these bodies carry relief far sharper than Earth's relative to their radius,
-			// and unexaggerated shading reads as noise at globe zooms.
+			// Under 1: these bodies have relief sharper than Earth's relative to their radius.
+			// Unexaggerated shading reads as noise at globe zoom levels.
 			"hillshade-exaggeration": 0.6,
 			"hillshade-highlight-color": palette.reliefHighlight,
 			"hillshade-shadow-color": palette.reliefShadow,
@@ -133,7 +133,7 @@ export function labelLayer(palette: PlanetaryPalette): SymbolLayerSpecification 
 		"source-layer": "nomenclature",
 		layout: {
 			"text-field": ["get", "name"],
-			"text-font": [PROTOMAPS_FONT_REGULAR],
+			"text-font": [MAP_FONT_REGULAR],
 			"text-size": ["interpolate", ["linear"], ["coalesce", ["get", "diameterKm"], 0], 0, 11, 100, 14, 1000, 18],
 			"text-transform": ["match", ["get", "featureTypeCode"], REGION_FEATURE_TYPE_CODES, "uppercase", "none"],
 			"text-letter-spacing": ["match", ["get", "featureTypeCode"], REGION_FEATURE_TYPE_CODES, 0.15, 0.02],

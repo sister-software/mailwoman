@@ -3,7 +3,7 @@
 
 /**
  *   Generate canonical and reversed French addresses from real OpenAddresses tuples. Reversed forms
- *   vary postcode, locality, and street order. Optional sub-modes add ordinal house numbers and
+ *   vary postcode, locality and street order. Optional sub-modes add ordinal house numbers and
  *   uppercase localities. `--golden` emits a held-out evaluation set.
  */
 
@@ -14,8 +14,9 @@ import { isPresent } from "@mailwoman/core/objects"
 import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -102,7 +103,7 @@ export const frOrderRecipe: CorpusRecipe = {
 		const count = opts.count
 		// Preserve the legacy random stream for generated rows.
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-fr-order"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-fr-order")
 		const reversedFraction = opts.reversedFraction ?? 0.5
 
 		// Read extra rows to account for filtering and deduplication.
@@ -139,10 +140,10 @@ export const frOrderRecipe: CorpusRecipe = {
 					// Postcode and locality before number and street.
 					raw = `${postcode} ${locality}, ${house_number} ${street}`
 				} else if (variantRoll < REVERSED_VARIANT_B_CUTOFF) {
-					// Locality, postcode, number, and street.
+					// Locality, postcode, number and street.
 					raw = `${locality}, ${postcode}, ${house_number} ${street}`
 				} else if (variantRoll < REVERSED_VARIANT_C_CUTOFF) {
-					// Locality, number, street, and postcode without commas.
+					// Locality, number, street and postcode without commas.
 					raw = `${locality} ${house_number} ${street} ${postcode}`
 				} else {
 					// Postcode, number, street, then locality.
@@ -165,7 +166,7 @@ export const frOrderRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Golden output carries parse truth without corpus metadata.
+			// Golden output includes parse truth without corpus metadata.
 			if (opts.golden) {
 				write(stringifyJSON({ raw, components, country: "FR" }))
 

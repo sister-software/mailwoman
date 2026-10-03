@@ -23,7 +23,7 @@ If the worker treats `finish_reason=length` as a successful completion (most sta
 
 The single best signal is the rejection-pipeline log. If the substring validator (see [Synthetic corpus — alignment validation](./synthetic-corpus-validation.mdx)) starts rejecting rows in batches, with reasons like `not-in-raw:postcode` clustered at end-of-row positions, the LLM responses are being truncated. The validator is doing the right thing. It would silently corrupt the corpus without it.
 
-The second signal is `finish_reason` itself. Logging the distribution per batch shows the truncation rate directly. A healthy run is `finish_reason=stop` >99% of the time; truncation rates above 1% are a configuration bug.
+The second signal is `finish_reason` itself. The per-batch distribution shows the truncation rate directly. A healthy run is `finish_reason=stop` >99% of the time; truncation rates above 1% are a configuration bug.
 
 ## The fix
 
@@ -35,7 +35,7 @@ Three changes to the worker:
 
 ## Why the API does it this way
 
-Reasoning models are still pricing in compute differently than vanilla generation. Reasoning tokens cost the same as output tokens but are not returned to the caller. Charging them against the same budget is the simple model — one number, predictable cost ceiling. The trap is that the parameter name does not advertise the semantic.
+Models that produce reasoning tokens still price compute differently from vanilla generation. Those tokens cost the same as output tokens but are not returned to the caller. A shared budget for reasoning and output tokens gives one predictable cost ceiling. The parameter name does not advertise this meaning.
 
 DeepSeek's documentation does state this, in a sentence buried under the reasoning-effort overview. If you discover the trap by reading the docs, well done. If you discover it by watching your corpus get silently truncated, you are in good company — Thread B2's first run was the first time we hit it inside the lab workflow, and the patch took longer than the original generation would have if we had set the budget right at the start.
 

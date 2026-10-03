@@ -6,5 +6,5 @@ project_doc_max_bytes = 32768
 [mcp_servers]
 [mcp_servers.mailwoman-dev]
 command = "node"
-args = ["packages/dev-mcp/lib/cli/index.ts"]
+args = ["packages/dev-mcp/lib/cli.ts"]
 cwd = ".."

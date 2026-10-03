@@ -1,20 +1,27 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { currentBranch } from "@mailwoman/core/git"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { resolvePath } from "path-ts"
 import { z } from "zod"
 
 import {
 	assertValeClean,
-	currentBranch,
+	assertValeCleanDiff,
 	fetchGitHubIssue,
 	fetchGitHubPullRequest,
 	linkIssue,
 	replaceTaskBlock,
+	resolveCheckout,
 	runGitHub,
 	taskBlockIsComplete,
+	TODO_SYNC_BEGIN,
+	TODO_SYNC_END,
 	type RunGitHub,
-} from "#github/index"
+} from "#github"
+import { assertCIComplete } from "#hooks/ci-completion"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 const REPO = "sister-software/mailwoman"
@@ -45,6 +52,17 @@ const TASK_SCHEMA = z.object({
 })
 
 type Task = z.infer<typeof TASK_SCHEMA>
+
+const CHECKOUT_FIELD = z
+	.string()
+	.min(1)
+	.optional()
+	.describe(
+		"Absolute path of the caller's working tree when it differs from the server's checkout, such as a " +
+			"`.claude/worktrees/<name>` worktree. The branch, the issue link and `gh` run from this tree."
+	)
+
+const CHECKOUT_SCHEMA = z.object({ checkout: CHECKOUT_FIELD })
 
 function renderTasks(tasks: Task[]): string {
 	return tasks.map((task) => `- [${task.completed ? "x" : " "}] ${task.text}`).join("\n")
@@ -128,6 +146,7 @@ const ISSUE_SCHEMA = z.discriminatedUnion("action", [
 
 const ISSUE_INPUT_SCHEMA = z.object({
 	action: z.enum(["create", "view", "edit", "update_tasks", "append_comment"]),
+	checkout: CHECKOUT_FIELD,
 	issue_number: z.number().int().positive().optional(),
 	title: z.string().min(1).optional(),
 	area: z.enum(AREAS).optional(),
@@ -140,6 +159,11 @@ const ISSUE_INPUT_SCHEMA = z.object({
 })
 
 const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
+	z.object({
+		action: z.literal("complete"),
+		issue_number: z.number().int().positive(),
+		pull_request_number: z.number().int().positive(),
+	}),
 	z.object({
 		action: z.literal("create"),
 		issue_number: z.number().int().positive(),
@@ -170,8 +194,9 @@ const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
 ])
 
 const PULL_REQUEST_INPUT_SCHEMA = z.object({
-	action: z.enum(["create", "view", "edit", "append_comment"]),
+	action: z.enum(["create", "view", "edit", "append_comment", "complete"]),
 	issue_number: z.number().int().positive().describe("The issue this pull request closes."),
+	checkout: CHECKOUT_FIELD,
 	pull_request_number: z.number().int().positive().optional(),
 	title: z.string().min(1).optional(),
 	summary: z.string().min(1).optional(),
@@ -184,12 +209,17 @@ const PULL_REQUEST_INPUT_SCHEMA = z.object({
 export interface GitHubToolOverrides {
 	run?: RunGitHub
 	lint?: typeof assertValeClean
-	branch?: (cwd: string) => string
+	/**
+	 * Checks only the lines a replacement introduces, for the two actions that rewrite an existing body.
+	 */
+	lintDiff?: typeof assertValeCleanDiff
+	branch?: (cwd: string) => Promise<string>
 }
 
 export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = {}): [DevTool, DevTool] {
 	const run = overrides.run ?? runGitHub
 	const lint = overrides.lint ?? assertValeClean
+	const lintDiff = overrides.lintDiff ?? assertValeCleanDiff
 	const branch = overrides.branch ?? currentBranch
 
 	const issueTool: DevTool = {
@@ -200,7 +230,7 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 			"Edits and comments are also Vale-checked. `update_tasks` changes only the marker-owned block.",
 		inputSchema: ISSUE_INPUT_SCHEMA,
 		handler: async (raw) => {
-			const cwd = deps.registry.repoRoot
+			const cwd = await resolveCheckout(deps.registry.repoRoot, CHECKOUT_SCHEMA.parse(raw).checkout)
 			const request = ISSUE_SCHEMA.parse(raw)
 
 			if (request.action === "create") {
@@ -245,7 +275,7 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
 				const body = replaceTaskBlock(issue.body, renderTasks(request.tasks))
 
-				await lint(body)
+				await lintDiff(issue.body, body)
 				await run(["issue", "edit", String(request.issue_number), "--repo", REPO, "--body", body], { cwd })
 
 				return { action: request.action, issue: await fetchGitHubIssue(REPO, request.issue_number, run) }
@@ -264,7 +294,12 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 			if (!request.title && !request.body) throw new Error("An issue edit requires `title` or `body`.")
 
 			if (request.body) {
-				await lint(request.body)
+				// Only the lines this edit introduces are checked.
+				// A rule that lands after the issue was written would otherwise refuse every edit
+				// until the author's earlier prose is rewritten.
+				const current = await fetchGitHubIssue(REPO, request.issue_number, run)
+
+				await lintDiff(current.body, request.body)
 			}
 
 			await run(
@@ -288,12 +323,31 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 		name: "mwdev_pull_request",
 		description:
 			"Create and maintain the pull request that closes an implementation issue. Creation requires a completed " +
-			"marker-owned issue task list, Vale-checks the PR body, creates the PR from the current branch, and starts a " +
-			"tracked `gh pr checks --watch --fail-fast` job. Poll the returned job through `mwdev_job`.",
+			"marker-owned issue task list, Vale-checks the PR body, creates the PR from the current branch of `checkout` " +
+			"(default: the server's checkout), and starts a " +
+			"tracked `gh pr checks --watch --fail-fast` job. Poll the returned job through `mwdev_job`. " +
+			"Creation leaves CI review incomplete. After reviewing CI, call `complete`; it verifies the current head before handoff.",
 		inputSchema: PULL_REQUEST_INPUT_SCHEMA,
 		handler: async (raw) => {
-			const cwd = deps.registry.repoRoot
+			const cwd = await resolveCheckout(deps.registry.repoRoot, CHECKOUT_SCHEMA.parse(raw).checkout)
 			const request = PULL_REQUEST_SCHEMA.parse(raw)
+
+			if (request.action === "complete") {
+				await assertCIComplete(REPO, request.pull_request_number, async (args) => ({
+					stdout: await run(args, { cwd }),
+					stderr: "",
+				}))
+				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
+				const task = `Review successful CI for PR #${request.pull_request_number} on its current head.`
+				if (!issue.body.includes(task)) {
+					throw new Error(`Issue #${request.issue_number} has no CI review task for this PR.`)
+				}
+				const body = issue.body.replace(`- [ ] ${task}`, `- [x] ${task}`)
+				if (!taskBlockIsComplete(body)) throw new Error(`Issue #${request.issue_number} still has incomplete tasks.`)
+				await run(["issue", "edit", String(request.issue_number), "--repo", REPO, "--body", body], { cwd })
+				await removePathIfPresent(resolvePath(cwd, ".claude", "state", "linked-issue"))
+				return { action: request.action, pull_request_number: request.pull_request_number, handoff_ready: true }
+			}
 
 			if (request.action === "create") {
 				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
@@ -304,9 +358,9 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 					throw new Error(`Issue #${request.issue_number} has an absent, empty, or incomplete todo-sync task list.`)
 				}
 
-				const head = branch(cwd)
+				const head = await branch(cwd)
 
-				if (!head || head === request.base) {
+				if (!head || head === "HEAD" || head === request.base) {
 					throw new Error(`Create the pull request from a branch other than ${request.base}.`)
 				}
 
@@ -345,6 +399,32 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 					throw new TypeError(`GitHub returned an unrecognized pull-request URL: ${url}`)
 				}
 
+				await writeLocalJSONFile(
+					{ repo: REPO, pullRequestNumber },
+					resolvePath(cwd, ".claude", "state", "tracked-ci.json")
+				)
+				if (cwd !== deps.registry.repoRoot) {
+					await writeLocalJSONFile(
+						{ repo: REPO, pullRequestNumber },
+						resolvePath(deps.registry.repoRoot, ".claude", "state", "tracked-ci.json")
+					)
+				}
+				const task = `Review successful CI for PR #${pullRequestNumber} on its current head.`
+				await lint(task)
+				const tasks = issue.body.split(TODO_SYNC_BEGIN)[1]!.split(TODO_SYNC_END)[0]!.trim()
+				await run(
+					[
+						"issue",
+						"edit",
+						String(request.issue_number),
+						"--repo",
+						REPO,
+						"--body",
+						replaceTaskBlock(issue.body, `${tasks}\n- [ ] ${task}`),
+					],
+					{ cwd }
+				)
+
 				const monitor = deps.jobs.start(
 					`CI for pull request #${pullRequestNumber}`,
 					process.execPath,
@@ -362,6 +442,7 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 					action: request.action,
 					pull_request: await fetchGitHubPullRequest(REPO, pullRequestNumber, run),
 					ci_monitor: deps.jobs.summarize(monitor),
+					handoff_ready: false,
 				}
 			}
 

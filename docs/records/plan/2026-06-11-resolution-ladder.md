@@ -123,7 +123,7 @@ baseline to beat is Method 2 itself, which is already nearest-neighbor regressio
 data. A learned model must beat it per density stratum on the same held-out gold, with the deterministic
 tier as the abstain fallback. There is no ship commitment until it does.
 
-## Sequencing
+## Sequence
 
 ```
 Now    Phase 1  density characterization → Method 2 → re-check
@@ -134,7 +134,7 @@ Later  Phase 5  calibrated confidence  ·  Phase 6 learned placement (parallel r
 
 ## Decisions (ruled 2026-06-11 unless marked open)
 
-| Decision                 | Ruling                                                              |
+| Decision                 | Result                                                              |
 | ------------------------ | ------------------------------------------------------------------- |
 | Search/spatial stack     | sqlite + FTS5 + FST + R\*Tree/PIP, without ES or PostGIS (standing) |
 | Primary check corrective | Method 2 promoted to Phase 1; TIGER demotes to fallback             |

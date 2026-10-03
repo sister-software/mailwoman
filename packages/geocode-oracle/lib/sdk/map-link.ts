@@ -4,29 +4,29 @@
 /**
  * @file Resolve a Google Maps share link to the place PIN it names, for gauntlet-case authoring.
  *
- *   The sibling clients in this package ask a geocoder where an address string is. This one reads a coordinate a
- *   human already picked, out of a link they already have — which is a different and often better oracle, because
- *   somebody chose that place deliberately rather than a matcher guessing at a string.
+ *   Other clients in this package ask a geocoder to locate an address string. This client reads a coordinate
+ *   that a person selected from an existing link. That coordinate records a deliberate choice rather than a
+ *   matcher guess about a string.
  *
- *   Same posture as the rest of the package: not truth rather than a check. A share link points at whatever pin its author
- *   clicked, which may be a car park, a mall's centroid, or the wrong branch.
+ *   A share link provides a check against another result. It records the pin its author clicked.
+ *   That pin may identify a car park, a mall's centroid, or the wrong branch.
  *
  *   ## `!3d`/`!4d` is the pin. `@lat,lng` is not.
  *
- *   A resolved link carries two coordinate pairs and they are different quantities:
+ *   A resolved link contains two coordinate pairs. Each pair represents a different quantity:
  *
  *       .../place/Donkey's+Place/@39.9942189,-74.792132,1062m/data=...!3d39.9933298!4d-74.7902421
- *                                ^^^^^^^^^^^^^^^^^^^^^^^ map viewport centre     ^^^^^^^^^^^^^^^^ the place PIN
+ *                                ^^^^^^^^^^^^^^^^^^^^^^^ map viewport center     ^^^^^^^^^^^^^^^^ the place PIN
  *
- *   The `@` pair is where the camera sits — offset from the pin by however the view was framed, and carrying a zoom
- *   suffix. Reading it instead of `!3d`/`!4d` is a silent accuracy loss of tens to hundreds of metres, which is the
- *   whole tolerance budget of a rooftop case. So the viewport is used only as a labelled fallback, and a row that
- *   fell back says so in `source` rather than blending in.
+ *   The `@` pair marks the camera location. It can be offset from the pin by the view framing and includes a zoom
+ *   suffix. This parameter instead of `!3d`/`!4d` can lose tens to hundreds of meters of accuracy.
+ *   That distance can consume a rooftop case's full tolerance budget. The resolver uses the viewport only as a
+ *   labeled fallback. A fallback row records that source explicitly.
  *
  *   ## A link that does not resolve is reported
  *
  *   `resolved: false` with a reason, never a coordinate of `0,0` and never a silent drop. A batch that quietly loses
- *   rows produces a case file whose denominator nobody can reconstruct.
+ *   rows produces a case file whose denominator cannot be reconstructed.
  */
 
 import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@mailwoman/core/api"
@@ -35,8 +35,10 @@ import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@m
  *
  * This reads a public redirect on somebody else's service for the sake of authoring OUR
  * test data, so the interval is deliberately unhurried rather than tuned.
- * `requestsPerMinute` alone does not hold a rate — its cooldown subtracts the elapsed gap,
- * so N alone dispatches N requests every 60/N seconds — which is why the interval is set directly.
+ * `requestsPerMinute` does not determine the dispatch rate because its cooldown subtracts the elapsed gap.
+ *
+ * Without that adjustment, N requests dispatched every 60/N seconds would exceed the configured rate.
+ * The interval therefore sets the actual spacing directly.
  */
 export const MAP_LINK_MIN_INTERVAL_MS = 1200
 
@@ -69,15 +71,15 @@ export interface MapLinkResolution {
 	/**
 	 * `place-pin` is the coordinate to pin.
 	 *
-	 * `viewport-centre` means the link carried no `!3d`/`!4d` pair and this is the camera
-	 * position — usable for a coarse case, never for a rooftop tolerance.
+	 * `viewport-centre` means the URL has no `!3d`/`!4d` pair and this is the camera position —
+	 * usable for a coarse case, never for a rooftop tolerance.
 	 */
 	source?: MapLinkCoordinateSource
 	/**
-	 * The place name Google put in the URL path, when it carried one.
+	 * The place name Google put in the URL path, when one is present.
 	 *
 	 * Useful for catching a link that resolves to a different place than the caller
-	 * believed — the failure a coordinate alone cannot show.
+	 * believed — the failure a coordinate cannot reveal.
 	 */
 	name?: string
 	/**
@@ -103,8 +105,8 @@ const NAME_PATTERN = /\/place\/([^/@]+)/
 /**
  * Parse an expanded Google Maps URL.
  *
- * Exported separately from the fetch so the parsing rules are testable without a network,
- * which is the half that actually carries the defects.
+ * Exported separately from the fetch so tests can exercise parsing without a network.
+ * The parser accounts for the defects in this module.
  */
 export function parseMapURL(url: string, expandedURL: string): MapLinkResolution {
 	const name = NAME_PATTERN.exec(expandedURL)?.[1]
@@ -169,7 +171,7 @@ export interface CreateMapLinkResolverOptions {
  * A paced resolver for Google Maps share links.
  *
  * Built on {@linkcode APIClient} for the same reasons its siblings are — pacing downstream
- * of the cache, bounded retry honouring `Retry-After`, and `ResourceError` mapping
+ * of the cache, bounded retry honoring `Retry-After`, and `ResourceError` mapping
  * so a caller branches on `error.status` rather than on message prose.
  */
 export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}) {
@@ -189,12 +191,12 @@ export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}
 		 *
 		 * Never throws for an unresolvable link.
 		 * That is a reported row, because a batch that drops rows silently produces a
-		 * case file whose denominator nobody can reconstruct.
+		 * case file whose denominator cannot be reconstructed.
 		 */
 		async resolve(url: string): Promise<MapLinkResolution> {
 			try {
 				// `maxRedirects: 0` — the location header is the answer.
-				// Following the redirect fetches a page we do not want and would have to parse instead.
+				// A redirect fetches a page we do not want and would have to parse instead.
 				const response = await client.fetch({
 					url,
 					method: "GET",

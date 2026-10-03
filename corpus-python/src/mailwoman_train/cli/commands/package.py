@@ -86,6 +86,7 @@ def run(args: argparse.Namespace) -> int:
             training_duration_seconds=args.training_duration_seconds,
             base_path=ck_dir,
             package_version=args.package_version,
+            address_system_count=model.num_address_systems,
         )
         write_package(
             pkg_dir,

@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Type surface of the committed `sentencepiece.mjs` artifact — google/sentencepiece **v0.2.2**
- *   compiled to wasm with the native-offsets embind wrapper (`binding.cpp`, task #26). Rebuilt only
- *   by `build.sh`; bump the tag there and note it here.
+ *   Type surface of the committed `sentencepiece.mjs` artifact, google/sentencepiece **v0.2.2**
+ *   compiled to wasm with the native-offsets embind wrapper (`binding.cpp`). Rebuilt only by
+ *   `build.sh`. Bump the tag there and note it here.
  */
 
 /**
  * One encode result.
  *
- * `begins`/`ends` are UTF-8 byte offsets into the encoded input with the upstream invariant
- * `utf8(text).slice(begins[i], ends[i])` = the piece's surface, and contiguity between consecutive pieces.
+ * `begins` and `ends` are UTF-8 byte offsets into the encoded input.
+ * The upstream invariant is `utf8(text).slice(begins[i], ends[i])` equals the piece's surface.
+ *
+ * Consecutive pieces also occupy contiguous byte ranges.
  * The TS tokenizer layer owns byte→UTF-16 conversion.
  */
 export interface EncodeWithOffsetsResult {
@@ -35,9 +37,8 @@ export declare class SentencePieceProcessor {
 	/**
 	 * Load a `tokenizer.model` from its serialized-proto bytes.
 	 *
-	 * Takes a `Uint8Array`.
-	 * The binding deliberately does not accept a string
-	 * (embind marshals JS strings to `std::string` as UTF-8, which corrupts arbitrary binary).
+	 * Takes serialized model bytes as a `Uint8Array`.
+	 * Embind marshals JS strings to `std::string` as UTF-8, corrupting arbitrary binary bytes.
 	 *
 	 * Returns `""` on success, the sentencepiece status message on failure.
 	 */
@@ -45,15 +46,19 @@ export declare class SentencePieceProcessor {
 	encodeWithOffsets(text: string): EncodeWithOffsetsResult
 	decodeIDs(ids: IntVector): string
 	/**
-	 * Embind object lifetime: the processor owns wasm-heap memory — call
-	 * when done (long-lived singletons in practice never do).
+	 * Embind object lifetime.
+	 *
+	 * The processor owns wasm-heap memory, so call `delete()` when done.
+	 * Long-lived singletons in practice never do.
 	 */
 	delete(): void
 }
 
 /**
- * Embind-registered `std::vector<int>` — build with `module.IntVector`,
- * `push_back` ids, and `delete()` after use.
+ * Embind-registered `std::vector<int>`.
+ *
+ * Build with `module.IntVector` and add ids with `push_back`.
+ * Call `delete()` after use.
  */
 export declare class IntVector {
 	constructor()
@@ -69,7 +74,8 @@ export interface SentencePieceModule {
 }
 
 /**
- * The emscripten modularize factory — resolves once the embedded wasm is instantiated.
+ * The emscripten modularize factory.
+ * It resolves once the embedded wasm is instantiated.
  */
 declare function createSentencePiece(): Promise<SentencePieceModule>
 

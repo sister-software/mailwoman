@@ -6,7 +6,7 @@
  * neighborhood, because the model can memorize a street it saw in train. Rows inside a held-out place
  * go to val or test 50/50 by a hash of `source_id`; every other row goes to train.
  *
- * A holdout change takes effect at the next corpus rebuild, and each versioned corpus keeps the
+ * A holdout change takes effect at the next corpus rebuild. Each versioned corpus keeps the
  * `SPLIT_MANIFEST.json` it was built with, because adding a holdout to a built corpus would leak rows
  * the model already trained on.
  */
@@ -30,7 +30,7 @@ export type SplitName = "train" | "val" | "test"
 /**
  * The component values that identify the places one country holds out.
  *
- * Sources carry a place in different components: `usgov-nad` and `tiger` emit `region`,
+ * Sources represent a place in different components: `usgov-nad` and `tiger` emit `region`,
  * but BAN emits none, so a French holdout must also match on postcode.
  * A row is held out when any declared matcher fires.
  * A policy with no matchers holds out no entry.
@@ -46,8 +46,9 @@ export interface HoldoutPolicy {
 }
 
 /**
- * One country's holdout, as a bare region list or as a {@link HoldoutPolicy}; the bare array means
- * a list of region values, which is the form older committed `SPLIT_MANIFEST.json` files use.
+ * One country's holdout as a bare region list or a {@link HoldoutPolicy}.
+ *
+ * Older committed `SPLIT_MANIFEST.json` files use a bare array of region values.
  */
 export type CountryHoldout = readonly string[] | HoldoutPolicy
 
@@ -85,27 +86,115 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 		US: ["Vermont", "VT", "Wyoming", "WY", "North Dakota", "ND"],
 		FR: {
 			regions: ["Corse", "Lozère", "Lozere", "Creuse"],
-			// BAN street rows carry no region, so these postcode departments hold out the
+			// BAN street rows have no region, so these postcode departments hold out the
 			// same three places: Corse 20, Creuse 23 and Lozère 48.
 			postcodePrefixes: ["20", "23", "48"],
 		},
 		DE: {
-			// Only `wof-admin` carries a DE region, so these Länder hold out admin rows alone.
+			// Only `wof-admin` has a DE region, so these Länder hold out admin rows only.
 			regions: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
 			// DE street rows come from two OpenAddresses members, Berlin and Sachsen,
 			// so the regions above match no street row.
-			// Postcode area `02` (Upper Lusatia in eastern Sachsen) is the street-level holdout,
-			// and a five-digit German postcode means it cannot collide.
+			// Postcode area `02` (Upper Lusatia in eastern Sachsen) is the street-level holdout.
+			// German postcodes have five digits, so this holdout cannot collide.
 			postcodePrefixes: ["02"],
 		},
 		GB: {
-			// GB street rows carry no region, so the holdout matches postcode areas —
+			// GB street rows have no region, so the holdout matches postcode areas —
 			// Truro, Llandudno and Halifax.
 			// Each prefix has two letters and none is a prefix of another
 			// (`L` for Liverpool would also match `LL`).
 			postcodePrefixes: ["TR", "LL", "HX"],
 			// Cornwall matches the admin rows for the same place `TR` covers.
 			regions: ["Cornwall"],
+		},
+		// The eight countries below enter training through OpenStreetMap rows, most of which carry no
+		// region and many no postcode, so each holdout matches its place three ways: the region an admin
+		// row carries, the postcode prefix, and the city as the OSM rows spell it. The spellings are the
+		// ones the 2026-10-02 extracts write.
+		CN: {
+			// Gansu by its province and capital, and Qinghai `81` and Tibet `85` by postcode.
+			regions: ["甘肃省", "甘肃", "Gansu"],
+			postcodePrefixes: ["81", "85"],
+			localities: ["兰州市", "兰州", "Lanzhou"],
+		},
+		IN: {
+			// Kerala, whose PIN codes run 67 to 69.
+			regions: ["Kerala"],
+			postcodePrefixes: ["67", "68", "69"],
+			localities: ["Kochi", "Kollam", "Thiruvananthapuram", "Kozhikode"],
+		},
+		ID: {
+			// Bali, whose postcodes begin `80`.
+			regions: ["Bali"],
+			postcodePrefixes: ["80"],
+			localities: ["Denpasar", "Bali"],
+		},
+		NG: {
+			// Enugu State.
+			// OSM Nigeria rows carry almost no postcode or region, so the cities carry it.
+			regions: ["Enugu"],
+			localities: ["Enugu", "Nsukka"],
+		},
+		PK: {
+			// Islamabad Capital Territory, in both scripts the extract writes.
+			regions: ["Islamabad Capital Territory"],
+			postcodePrefixes: ["44"],
+			localities: ["Islamabad", "islamabad", "اسلام آباد"],
+		},
+		BD: {
+			// Chattogram, Khulna and Sylhet, whose postcodes begin 4, 9 and 3 respectively.
+			postcodePrefixes: ["40", "41", "42", "43", "90", "91", "92", "31"],
+			localities: ["Chittagong", "Chattogram", "Khulna", "Sylhet"],
+		},
+		VN: {
+			regions: ["Thành phố Cần Thơ", "Cần Thơ", "Thừa Thiên Huế"],
+			localities: ["Cần Thơ", "Thành phố Cần Thơ", "Huế", "Thành phố Huế"],
+		},
+		RU: {
+			// Primorsky Krai, whose postcodes run 690 to 692.
+			regions: ["Приморский край"],
+			postcodePrefixes: ["690", "691", "692"],
+			localities: ["Владивосток", "Уссурийск", "Находка"],
+		},
+		// Each French overseas jurisdiction is one INSEE department with one postcode range,
+		// so the BAN rows hold out by commune, spelled as BAN's `nom_commune` writes it.
+		// Saint-Barthélemy and Saint-Martin are each one commune under one postcode,
+		// so neither has a place to hold out.
+		GP: { localities: ["Le Moule"] },
+		MQ: { localities: ["Le Robert", "Ducos"] },
+		GF: { localities: ["Kourou"] },
+		RE: { localities: ["Saint-Louis", "Saint-Leu"] },
+		PM: { localities: ["Miquelon-Langlade"] },
+		YT: { localities: ["Dzaoudzi", "Pamandzi"] },
+		// Tumaraa holds 1,522 of PF's 6,755 rows with a street, more than a tenth,
+		// because Pirae's 958 rows carry no street name and Papeete holds the remaining 5,233.
+		PF: { localities: ["Tumaraa"] },
+		NC: { localities: ["Koné", "Pouembout", "Kaala-Gomen"] },
+		LV: {
+			// Latgale's south-east: the Krāslava, Ludza, Balvi, Preiļi and Līvāni
+			// municipalities, whose postcodes begin LV-56, LV-57, LV-45 and LV-53,
+			// and the state city Rēzekne, which lies in no municipality.
+			// The address register writes `nov.`; other sources spell the municipality out.
+			regions: [
+				"Krāslavas nov.",
+				"Ludzas nov.",
+				"Balvu nov.",
+				"Preiļu nov.",
+				"Līvānu nov.",
+				"Krāslavas novads",
+				"Ludzas novads",
+				"Balvu novads",
+				"Preiļu novads",
+				"Līvānu novads",
+			],
+			postcodePrefixes: ["LV-45", "LV-53", "LV-56", "LV-57"],
+			localities: ["Rēzekne"],
+		},
+		RO: {
+			// Alba 51, Hunedoara 33, Mureș 54 and Sibiu 55: a Romanian postcode's first two digits name its county.
+			regions: ["Alba", "Hunedoara", "Mureș", "Sibiu"],
+			postcodePrefixes: ["51", "33", "54", "55"],
 		},
 	}
 }
@@ -224,10 +313,11 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: Pa
 export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**
- * Writes the same files as `writeSplitManifests` by streaming one labeled JSONL file
- * per split; `buildCorpus` calls this after its align loop has partitioned rows
- * with `splitForRow`, the caller passes the counts so the files are not rescanned,
- * and `sort(1)` spills to disk so memory stays constant.
+ * Writes the same files as `writeSplitManifests` by streaming one labeled JSONL file per split.
+ *
+ * `buildCorpus` calls this after its align loop partitions rows with `splitForRow`.
+ * The caller passes the counts to avoid rescanning the files.
+ * `sort(1)` spills to disk, so memory stays constant.
  */
 export async function writeSplitManifestsFromLabeledFiles(opts: {
 	labeledPaths: Record<SplitName, PathBuilderLike>

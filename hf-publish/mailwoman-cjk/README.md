@@ -63,7 +63,7 @@ batch × sequence); the output is `logits` (batch × sequence × 49).
 The label set is the Latin `stage3` set plus the Japanese tiers (`prefecture`, `municipality`, `district`, `block`,
 `sub_block`, `building_number`, `building_name`) and the Chinese organizational ladder (`locality_unit`).
 
-## Training and evaluation
+## Train and evaluate
 
 Trained from scratch (`v8-cjk-regs`, seed 42, 8,000 steps, batch 256, bf16, cosine) on 2,000,000 Japanese rows
 rendered from Overture Maps addresses in five registers (the postal form, Arabic chōme, the compact folded number,

@@ -226,7 +226,7 @@ under the MIT license, and Mailwoman bundles third-party data under its own term
 
 ---
 
-## Developing Mailwoman
+## Mailwoman development
 
 > [!NOTE]
 > **This section is for working _on_ Mailwoman in this repository.** If you only want to
@@ -256,7 +256,7 @@ from the tree (`@mailwoman/classifiers` and the `@mailwoman/core/{solver,classif
 implementation). The last standalone release is the frozen `@mailwoman/classifiers@6.x`.
 Consumers of the published package use only the neural pipeline.
 
-### Contributing
+### Contributions
 
 Fork and open a pull request against `main` on a feature branch. Please include unit tests.
 The model-work runbook (which evals a change must pass, how to add a training-data subset) is

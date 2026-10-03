@@ -3,7 +3,7 @@
  * the canvas is transparent everywhere outside it — so the field around the body, and the stars in it, belong to the
  * page behind the canvas. The body's own surface tone is the style's `planetary/space` layer.
  *
- * Colour and type come from `@mailwoman/react/tokens.css`, which `styles.css` pulls in; the two space colours are
+ * Color and type come from `@mailwoman/react/tokens.css`, which `styles.css` pulls in; the two space colors are
  * the exception, because they are a property of the body rather than of the interface.
  */
 
@@ -138,7 +138,7 @@ main[data-route] .maplibregl-canvas {
 	margin: 1rem 0;
 }
 
-/* A colour, not an opacity: a faded term also fades the glass behind it toward the map, which is where contrast goes. */
+/* A color, not an opacity: a faded term also fades the glass behind it toward the map, which is where contrast goes. */
 .feature-panel dt {
 	color: var(--color-text-secondary);
 }

@@ -5,12 +5,12 @@
  * @file Deterministic canonical-row emission shared by WOF GeoJSON adapters.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
-import { isLargestFirstSystem, lineJoinForCountry } from "@mailwoman/codex/address-layouts"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { isLargestFirstSystem, lineJoinForCountry } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
 
 import type { AdapterOptions, CanonicalRow } from "#types"
-import { normalizeNameKey, type WOFRecord } from "#utils"
+import { normalizeNameKey, type AncestorNames, type WOFRecord } from "#utils"
 
 /**
  * The order an admin hierarchy is written in, smallest unit first.
@@ -27,10 +27,12 @@ const HIERARCHY_ORDER: readonly ComponentTag[] = [
 ]
 
 /**
- * Render an admin-hierarchy variant: the components it carries, in hierarchy order,
+ * Render an admin-hierarchy variant: the components it contains, in hierarchy order,
  * joined the way the country joins a line.
  *
- * This is a gazetteer query rather than a postal address, which is why it does not go through a layout.
+ * This adapter emits a gazetteer query.
+ * It follows the gazetteer path without a postal layout.
+ *
  * A country whose postal layout drops the region would collapse `Paris, Île-de-France` back into `Paris`.
  */
 function renderHierarchy(
@@ -62,12 +64,12 @@ function renderHierarchy(
  * country names en route to its output (e.g. `"United States"` → `"United States of America"`).
  * If `components.country` and the formatted `raw` disagree, alignment will fail downstream.
  *
- * Keying off the canonical form keeps the two in lockstep.
+ * The canonical form keeps the two in lockstep.
  *
  * Phase 1 US + FR only.
  * Extend as new locales come online.
  *
- * Missing countries fall back to the country row's `wof:name`, accepting the
+ * A missing country uses the country row's `wof:name`; this preserves the
  * alignment risk for non-canonicalized names.
  */
 export const COUNTRY_DISPLAY_NAME: Record<string, string> = {
@@ -93,7 +95,7 @@ export interface WOFVariantSpec {
 	 *
 	 * A hierarchy variant is a query — `Paris`, then `Paris, Île-de-France`, then
 	 * `Paris, Île-de-France, France` — and several of its steps are not addresses at all.
-	 * France's postal layout carries no region, so rendering `{ locality, region }` through
+	 * France's postal layout has no region, so rendering `{ locality, region }` through
 	 * it prints `Paris` and the whole variant collapses into the one below it.
 	 *
 	 * So the hierarchy is joined in its own order: smallest unit first, or largest first
@@ -133,14 +135,28 @@ export function nameSlotsFor(rec: WOFRecord, options: NameSlotOptions = {}): Arr
 
 interface EmitWOFJSONRowsOptions {
 	records: ReadonlyMap<number, WOFRecord>
-	ancestry: ReadonlyMap<number, WOFRecord[]>
+	/**
+	 * The ancestor names each record's variants read, rather than its ancestor records.
+	 *
+	 * A record absent from the map resolves to an empty set of ancestor names.
+	 * Records with no resolvable ancestor produce the same value.
+	 */
+	ancestry: ReadonlyMap<number, AncestorNames>
 	adapterOptions: AdapterOptions
 	adapterID: string
 	localeByCountry: Readonly<Record<string, string>>
 	shouldEmit?: (record: WOFRecord) => boolean
 	nameSlotsFor: (record: WOFRecord) => Array<{ key: string; value: string }>
-	variantsFor: (record: WOFRecord, ancestry: WOFRecord[], selfName: string) => WOFVariantSpec[]
+	variantsFor: (record: WOFRecord, ancestry: AncestorNames, selfName: string) => WOFVariantSpec[]
 }
+
+/**
+ * The value a record uses in place of ancestor names when its ancestors do not resolve.
+ *
+ * Frozen and shared, because the emitter reaches it once per such record
+ * and constructing a fresh object per row would allocate one per name slot.
+ */
+const NO_ANCESTORS: AncestorNames = Object.freeze({})
 
 /**
  * Emit aligned rows in WOF-id order, enforcing the adapter limit across all name and hierarchy variants.
@@ -166,7 +182,7 @@ export function* emitWOFJSONRows(options: EmitWOFJSONRowsOptions): Generator<Can
 		if (!shouldEmit(record)) continue
 
 		for (const slot of slotsForRecord(record)) {
-			for (const variant of variantsFor(record, ancestry.get(id) ?? [], slot.value)) {
+			for (const variant of variantsFor(record, ancestry.get(id) ?? NO_ANCESTORS, slot.value)) {
 				if (adapterOptions.limit !== undefined && emitted >= adapterOptions.limit) return
 
 				const rendered = variant.hierarchy

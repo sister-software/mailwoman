@@ -2,26 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Node reader for `uprn.db` — the OS Open uprn layer (`uprn-schema.ts`). Two probes:
- *
- *   - **`coordinateOf(uprn)`**: rowid B-tree hit on the `uprn` integer PK.
- *   - **`nearestUPRN(lat, lon, radiusM)`**: bounded nearest-point search over the res-9 `h3_cell`
- *     index — ring-by-ring `gridDisk` expansion with chunked `IN` probes and haversine ranking.
- *     Rings stop as soon as geometry proves no unprobed cell could beat the best hit — a distance
- *     bound rather than POILookup's row-count accumulation, so the early exit can never strand a nearer
- *     point in an unprobed ring.
- *
- *   ## `null` is a claim, scoped by coverage
- *
- *   OS designates Open uprn complete for GB (every uprn in AddressBase Premium with geometry), and
- *   the builder writes `layer_coverage` with basis `designated` for every cell the product touches.
- *   So a `null` from either probe inside a covered cell is evidence of absence — "no such published
- *   GB uprn" / "no uprn within the radius". Outside coverage (Northern Ireland, the Isle of Man, the
- *   Channel Islands, open water) it is unknown, per the meaning-of-zero rule — callers building
- *   negative evidence must consult `readLayerCoverage`, not this reader alone.
- *
- *   `latLngToCell`/`gridDisk` come from `h3-js`; the 48-bit short-cell packing is
- *   `@mailwoman/spatial`'s `shortCellToInt` via `uprnFullCell` — never reimplemented here.
+ * Node reader for `uprn.db`, where a `null` is evidence of absence only inside published coverage, so callers building negative evidence must consult `readLayerCoverage`.
  */
 
 import { allRows } from "@mailwoman/core/utils"
@@ -33,31 +14,20 @@ import type { PathBuilderLike } from "path-ts"
 import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
 /**
- * Conservative floor on how much centre distance one unit of res-9 grid distance buys, metres.
- *
- * Adjacent centres sit √3 × edge apart (avg edge 174.4 m → ≈302 m); the worst direction
- * across a ring costs a further ×0.866, and H3's projection distortion shrinks edges by
- * well under the slack this leaves (the true worst is ≈217 m per grid step).
- * Dividing a radius by this over-counts rings and can never miss a cell.
- *
- * Multiplying a grid distance by it under-states reach and can never end the ring walk early.
+ * Conservative floor, in meters, on the center distance one unit of res-9 grid distance buys,
+ * so multiplying a grid distance under-states reach and can never end the ring walk early.
  */
 const RES9_CENTER_SPACING_FLOOR_M = 150
 
 /**
- * Conservative ceiling on a res-9 cell's centre-to-vertex distance, metres
- * (avg edge 174.4 m. distortion stays well under this).
- *
- * A point within `radiusM` of the query sits in a cell whose centre is within `radiusM` + this.
+ * Conservative ceiling, in meters, on a res-9 cell's center-to-vertex distance, so a point
+ * within `radiusM` of the query sits in a cell whose center is within `radiusM` plus this.
  */
 const RES9_CELL_RADIUS_CEILING_M = 300
 
 /**
- * Hard ceiling on `radiusM`.
- *
- * Keeps the probe bounded (10 km → ~72 rings ≈ 15.8k cells ≈ 18 `IN` chunks);
- * a caller who wants a wider search than "which property is this coordinate" has
- * outgrown this reader and should say so loudly.
+ * Hard ceiling on `radiusM` that keeps the probe bounded, since a caller wanting a wider
+ * search than "which property is this coordinate" has outgrown this reader.
  */
 export const UPRN_MAX_NEAREST_RADIUS_M = 10_000
 
@@ -71,22 +41,18 @@ export interface UPRNNearestHit {
 	latitude: number
 	longitude: number
 	/**
-	 * Haversine distance from the query point, metres.
+	 * Haversine distance from the query point, meters.
 	 */
 	distanceM: number
 }
 
 export interface UPRNLookupOpts {
 	/**
-	 * Path to a `uprn.db` built by `mailwoman`'s gazetteer pipeline.
-	 *
-	 * Opened read-only.
+	 * Path to a `uprn.db` built by `mailwoman`'s gazetteer pipeline, opened read-only.
 	 */
 	databasePath?: PathBuilderLike
 	/**
-	 * Pre-opened handle (tests / shared connections).
-	 *
-	 * Mutually exclusive with `databasePath`.
+	 * Pre-opened handle (tests / shared connections), mutually exclusive with `databasePath`.
 	 */
 	database?: DatabaseClient<UPRNDatabase>
 }
@@ -98,41 +64,35 @@ interface UPRNRow {
 }
 
 /**
- * Node reader over `uprn.db`.
- *
- * `implements Disposable` so callers can `using lookup = new UPRNLookup(...)` —
- * the same precedent as {@link POILookup}.
+ * Node reader over `uprn.db`, disposable so callers can take it with `using`.
  */
 export class UPRNLookup implements Disposable {
 	#db: DatabaseClient<UPRNDatabase>
 	/**
-	 * Resources this instance opened.
-	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
+	 * Ownership is membership: a connection handed in by a caller is not in here,
+	 * so disposal cannot reach it.
 	 */
-	readonly #resources = new DisposableStack()
+	readonly #resources: DisposableStack
 
-	/**
-	 * `uprn` → its point (rowid-alias PK hit).
-	 */
 	readonly #coordinateProbe: ReturnType<DatabaseClient["prepare"]>
 
 	constructor(opts: UPRNLookupOpts) {
+		using resources = new DisposableStack()
+
 		if (opts.database) {
 			this.#db = opts.database
 		} else if (opts.databasePath) {
-			this.#db = this.#resources.use(new DatabaseClient<UPRNDatabase>(opts.databasePath, { readOnly: true }))
+			this.#db = resources.use(new DatabaseClient<UPRNDatabase>(opts.databasePath, { readOnly: true }))
 		} else {
 			throw new Error("UPRNLookup needs `databasePath` or `database`")
 		}
 
 		this.#coordinateProbe = this.#db.prepare("SELECT lat, lon FROM uprn WHERE uprn = ?")
+		this.#resources = resources.move()
 	}
 
 	/**
-	 * The WGS84 point OS publishes for `uprn`, or `null` when the layer holds no such
-	 * uprn (see the module docstring for what that `null` claims).
+	 * The WGS84 point OS publishes for `uprn`, or `null` when the layer holds no such uprn.
 	 */
 	coordinateOf(uprn: number): GeoCoordinate | null {
 		const row = this.#coordinateProbe.get(uprn) as { lat: number; lon: number } | undefined
@@ -141,22 +101,8 @@ export class UPRNLookup implements Disposable {
 	}
 
 	/**
-	 * The single nearest uprn within `radiusM` metres of the query point, or `null`
+	 * The single nearest uprn within `radiusM` meters of the query point, or `null`
 	 * when no uprn lies inside the radius.
-	 *
-	 * Bounded two ways: `radiusM` is capped at {@link UPRN_MAX_NEAREST_RADIUS_M},
-	 * and rings expand outward only until no unprobed cell could beat the best hit found
-	 * so far (or the radius, when no hit has been found).
-	 * The stop rule is geometric.
-	 *
-	 * A cell at grid distance `g` holds no point nearer than `g` × spacing floor
-	 * − cell radius, using the same conservative constants the reach math uses —
-	 * so unlike POILookup's row-count accumulation there is no early-exit ambiguity:
-	 * a break can never strand a nearer point in an unprobed ring.
-	 *
-	 * This is what keeps a capped-radius call over dense ground at milliseconds instead of
-	 * a full-disk fetch (measured 6.4 s → 13 ms for a 10 km radius over central London,
-	 * 41.6M-row layer. An empty-sea miss at the cap runs the full expansion, 74 ms).
 	 *
 	 * @throws {RangeError} When `radiusM` is not a positive finite number, or exceeds the cap.
 	 */
@@ -173,18 +119,14 @@ export class UPRNLookup implements Disposable {
 		const seenCells = new Set<string>()
 		let best: UPRNNearestHit | null = null
 
-		// `ring` is H3 grid distance.
-		// The loop terminates because the break bound is at most radiusM, which the RangeError above caps.
+		// The loop terminates because the break bound is at most `radiusM`.
+		// The RangeError above caps that value.
 		for (let ring = 0; ; ring++) {
-			// A cell at grid distance `ring` holds no point nearer than this.
-			// Once it exceeds what could still win — the best hit so far, or the radius itself —
-			// further rings cannot improve the answer.
+			// Once this bound exceeds the best hit so far, or the radius, further rings cannot improve the answer.
 			const closestPossibleM = ring * RES9_CENTER_SPACING_FLOOR_M - RES9_CELL_RADIUS_CEILING_M
 
 			if (closestPossibleM > Math.min(radiusM, best?.distanceM ?? radiusM)) break
 
-			// gridDisk(origin, ring) returns the whole disk out to `ring`; diffing against what's
-			// already been probed derives just this ring's new cells (the POILookup pattern).
 			const diskCells = gridDisk(origin, ring) as string[]
 			const newCells: number[] = []
 
@@ -199,7 +141,6 @@ export class UPRNLookup implements Disposable {
 				const chunk = newCells.slice(i, i + CELL_PROBE_CHUNK)
 				const placeholders = chunk.map(() => "?").join(", ")
 
-				// Prepared fresh per chunk arity — a cold, per-call path, same posture as POILookup's batched hydration.
 				const rows = allRows<UPRNRow>(
 					this.#db.prepare(`SELECT uprn, lat, lon FROM uprn WHERE h3_cell IN (${placeholders})`),
 					...chunk

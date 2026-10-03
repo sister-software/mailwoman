@@ -1,8 +1,8 @@
-"""Which channels a model carries, whether that combination is exportable, and what its graph looks like.
+"""Inspect a model's channels and graph. Decide whether its channel combination is exportable.
 
-A channel the model was trained with and the graph does not carry runs off at inference, silently:
-the runtime feeds by name, so an absent input is an absent clue, and the model reports confident
-answers computed without it. That is why the unsupported combinations below raise instead of
+If the graph lacks a channel used in training, inference silently omits it:
+the runtime feeds by name, so an absent input is an absent clue. The model then reports confident
+answers computed without that clue. Unsupported combinations below raise instead of
 exporting a reduced graph.
 
 Every feature input requests a dynamic dim 0 and dim 1 (batch, sequence) and a fixed dim 2 — the
@@ -23,6 +23,7 @@ from .wrappers import (
     LogitsOnlyAnchorGaz,
     LogitsOnlyAnchorGazCountry,
     LogitsOnlyBundle,
+    LogitsOnlyBundleHinted,
     LogitsOnlyChar,
     LogitsOnlyGaz,
     PlainOutputs,
@@ -39,7 +40,7 @@ PER_TOKEN = {0: "batch", 1: "sequence"}
 
 @dataclass(frozen=True)
 class Channels:
-    """What the checkpoint carries, read off the model rather than off the config that built it."""
+    """Values stored in the checkpoint, read from the model rather than from the config that built it."""
 
     anchor: bool = False
     anchor_dim: int = 0
@@ -54,6 +55,9 @@ class Channels:
     char: bool = False
     locale: bool = False
     spans: bool = False
+    address_system: bool = False
+    locale_hint: bool = False
+    num_address_systems: int = 0
 
     @property
     def bundle(self) -> bool:
@@ -75,8 +79,8 @@ class ExportGraph:
 def detect_channels(model: nn.Module) -> Channels:
     """Read the channel flags off the model.
 
-    Off the MODEL rather than off a config: a checkpoint is resumed and re-exported long after the config
-    that built it has moved on, and the graph has to match the weights.
+    Read the model rather than a config. A checkpoint may be resumed and re-exported after its config
+    has changed. The graph must match the weights.
     """
     return Channels(
         anchor=bool(getattr(model, "use_postcode_anchor", False)),
@@ -90,22 +94,33 @@ def detect_channels(model: nn.Module) -> Channels:
         locality_surface=bool(getattr(model, "use_locality_surface_anchor", False)),
         locality_surface_dim=int(getattr(model, "locality_surface_feature_dim", 0)),
         char=bool(getattr(model, "use_char_embed", False)),
-        # When the model carries the locale self-conditioning head, export its pooled posterior as a
+        # When the model has the locale self-conditioning head, export its pooled posterior as a
         # second output ("locale_logits", shape [batch, num_locales], labels.LOCALE_COUNTRIES order).
         # Consumers fetch outputs by name, so appending is backward-compatible. Without it the
         # model's address-system detection is trained but unreadable at inference.
         locale=getattr(model, "locale_head", None) is not None,
-        # Export the span scorer's (B, S, L, T) scores as a named output. Appending is
+        # Export the span scorer's (B, S, L, T) scores as a separate output. This addition is
         # backward-compatible — a runtime that never asks for `span_scores` pays no cost (ORT prunes
         # the unfetched branch). The JS decoder and the semi-crf-transitions.json sidecar
         # (package_weights.export_semi_crf_transitions) consume it.
         spans=bool(getattr(model, "use_span_scorer", False)),
+        # `address_system_logits`, shape [batch, num_address_systems], in address_systems.json id order.
+        address_system=getattr(model, "address_system_head", None) is not None,
+        locale_hint=getattr(model, "locale_hint_embedding", None) is not None,
+        num_address_systems=int(getattr(model, "num_address_systems", 0)),
     )
 
 
 def check_exportable(channels: Channels) -> None:
     """Refuse a combination whose graph would drop a trained channel."""
-    # The country channel ships on top of anchor+gaz (the production ship-config). Exporting it in any
+    # The hint input has one wrapper, on the production bundle. Any other combination would export a
+    # graph without the input, and the runtime could not pass a hint the model was trained to read.
+    if channels.locale_hint and not (channels.bundle and not channels.char):
+        raise NotImplementedError(
+            "use_locale_hint is only exportable on the full evidence bundle "
+            "(anchor + gazetteer + country + street_type + locality_surface)."
+        )
+    # The country channel ships on top of anchor+gaz (the production ship-config). An export in any
     # other combination is unsupported — a country-trained model whose ONNX lacked the country inputs
     # would silently run country-off — so fail loud instead.
     if channels.country and not (channels.anchor and channels.gazetteer):
@@ -175,11 +190,15 @@ def build_export_graph(
     elif channels.bundle:
         street_type = _channel_args(batch, max_length, channels.street_type_dim)
         locality_surface = _channel_args(batch, max_length, channels.locality_surface_dim)
-        module = LogitsOnlyBundle(model).eval()
+        module = LogitsOnlyBundleHinted(model).eval() if channels.locale_hint else LogitsOnlyBundle(model).eval()
         args = (dummy_ids, dummy_mask, *anchor, *gaz, *country, *street_type, *locality_surface)
         input_names = ["input_ids", "attention_mask", *_named("anchor", "gazetteer", "country")]
         input_names += _named("street_type", "locality_surface")
         dynamic_shapes = {**BASE_DYNAMIC, **{name: dict(PER_TOKEN) for name in input_names[2:]}}
+        if channels.locale_hint:
+            args = (*args, torch.full((batch,), channels.num_address_systems, dtype=torch.long))
+            input_names.append("locale_hint")
+            dynamic_shapes["locale_hint"] = {0: "batch"}
     elif channels.anchor and channels.gazetteer and channels.country:
         module = LogitsOnlyAnchorGazCountry(model).eval()
         args = (dummy_ids, dummy_mask, *anchor, *gaz, *country)
@@ -208,9 +227,12 @@ def build_export_graph(
 
     module.with_locale = channels.locale
     module.with_spans = channels.spans
+    module.with_address_system = channels.address_system
     output_names = ["logits"]
     if channels.locale:
         output_names.append("locale_logits")
     if channels.spans:
         output_names.append("span_scores")
+    if channels.address_system:
+        output_names.append("address_system_logits")
     return ExportGraph(module, args, input_names, dynamic_shapes, output_names)

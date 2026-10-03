@@ -28,7 +28,7 @@ string: `--ifm-font-color-base`, `--ifm-color-emphasis-400`, `--ifm-color-succes
 value, so `.mw-subject__badge` paints `#92400e` on a translucent amber and `.mw-subject__badge--brand`
 paints `#14657d` on translucent cyan, both inside a dark app.
 
-### The control panel is light because a Docusaurus selector travelled with it
+### The control panel is light because a Docusaurus selector traveled with it
 
 `packages/earth/lib/panels/geocoder.module.css:22` sets `background: rgba(255, 255, 255, 0.85)`. The dark
 rule beneath it is scoped `:global([data-theme="dark"])`. Neither `packages/earth/lib/` nor
@@ -45,18 +45,17 @@ navbar that does not exist outside Docusaurus.
 ### Two shipped styles request a glyph stack the bucket does not serve
 
 `packages/cartographer/lib/planetary/layers.ts:93` and `packages/cartographer/lib/base/buildings.ts:117`
-both set `"text-font": ["Fira Sans Regular"]`. Probing `https://public.mailwoman.ai/protomaps/fonts/<stack>/0-255.pbf`:
+both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mailwoman.ai/protomaps/fonts/<stack>/0-255.pbf` returned:
 
-| Stack                                                                 | Result            |
-| --------------------------------------------------------------------- | ----------------- |
-| `Noto Sans Regular`                                                   | 200, 76,044 bytes |
-| `Noto Sans Medium`                                                    | 200, 77,628 bytes |
-| `Noto Sans Italic`                                                    | 200, 79,344 bytes |
-| `Fira Code Regular`                                                   | 200, 75,442 bytes |
-| `Fira Code Medium`                                                    | 200, 78,848 bytes |
-| `Fira Sans Regular`, `Fira Sans Medium`, `Fira Sans Italic`           | 404               |
-| `Open Sans Regular` (MapLibre's default stack)                        | 404               |
-| `Noto Sans Bold`, `Iosevka Custom Regular`, `Arial Unicode MS Regular` | 404               |
+| Stack                                                       | Result            |
+| ----------------------------------------------------------- | ----------------- |
+| `Bliss Pro Regular`                                         | 200, 68,296 bytes |
+| `Bliss Pro Medium`                                          | 200, 69,731 bytes |
+| `Bliss Pro Italic`                                          | 200, 72,314 bytes |
+| `Fira Code Regular`                                         | 200, 75,442 bytes |
+| `Fira Code Medium`                                          | 200, 78,848 bytes |
+| `Fira Sans Regular`, `Fira Sans Medium`, `Fira Sans Italic` | 404               |
+| `Open Sans Regular` (MapLibre's default stack)              | 404               |
 
 MapLibre renders no text at all when a glyph range fails, so requesting an absent stack is a defect in
 itself, and `#styles/fonts` now holds the served names. It does not explain the missing planetary labels,
@@ -78,7 +77,7 @@ The source resolves, and then no layer requests tiles from it. Everything downst
 worker answers `mars.json` and every tile with 200 and an `access-control-allow-origin` that echoes the
 app origin. The tiles carry features at every zoom: 314 in `z0/0/0`, 111 in `z2/1/1`, 53 in `z3/2/3`.
 
-Testing the style directly ruled it out. The exact object `createPlanetaryStyle` composes was loaded into
+A direct style test ruled it out. The exact object `createPlanetaryStyle` composes was loaded into
 a bare `maplibre-gl` 6.7.0 page (the version the repo pins) under globe projection, at the app's own
 opening camera. It rendered **131 labels** from 591 source features, with all four layers present, 6 tile
 requests, 2 glyph requests and no error events. The spaced-capital region treatment rendered as intended.
@@ -127,10 +126,10 @@ MapLibre's default grey ramp.
 | chrome   | `--mw-navy: #00093a`      | absent                                        |
 | accents  | `--mw-amber`, `--mw-teal` | absent                                        |
 | hairline | `--mw-line: #b9d8ec`      | absent                                        |
-| type     | Iosevka Custom Web / Mono  | `system-ui`, and the UA default on `<button>` |
+| type     | Bliss Pro / Fira Code     | `system-ui`, and the UA default on `<button>` |
 
-The typeface is already served from `public.mailwoman.ai` as two `@font-face` files totalling 20 KB in
-`docs/src/css/fonts/`, on an origin both apps already preconnect to.
+Both typefaces are served from `public.mailwoman.ai` and declared in `docs/src/css/fonts/BlissPro.css` and
+`docs/src/css/fonts/FiraCode.css`, on an origin both apps already preconnect to.
 
 ### Three font families without a type system
 
@@ -164,11 +163,11 @@ above the address field. The right-hand panel lists internal style-layer counts 
    holds as `--mw-magenta`.
 7. **The typeface is bound per role, and the binding is expected to change.** A rule never refers to a
    font family directly. It refers to a scale role, and each scale role maps to one of five face roles.
-   Iosevka Custom is currently bound to all five and is not assumed permanent. A swap edits
+   Bliss Pro is bound to `display` and `text`, and Fira Code to `number`, `code` and `glyph`. A swap edits
    `font.family.*` and no other token. Map labels carry a separate binding, `font.family.map`, because
    MapLibre draws them from a signed-distance-field range rather than a `@font-face`. Its value must be a
-   stack the bucket serves, which today means `Noto Sans Regular`, `Noto Sans Medium` or
-   `Noto Sans Italic`.
+   stack the bucket serves, which today means `Bliss Pro Regular`, `Bliss Pro Medium` or
+   `Bliss Pro Italic`.
 8. **Base UI is deferred until a specific need arises.** None of the 74 workspaces uses a UI library
    today. The whole inventory across `@mailwoman/react`, `packages/earth` and `packages/planetary` is six
    element types: 13 `<button>`, 10 `<label>`, 10 `<input>`, 6 `<summary>`, 6 `<select>`, 6 `<details>`.
@@ -191,7 +190,7 @@ packages/react/lib/tokens/
   material.tokens.json      DTCG composites for the glass materials
 packages/react/styleframe.config.ts
 packages/react/tokens.css   generated, exported as @mailwoman/react/tokens.css
-packages/react/fonts.css    the two Iosevka @font-face blocks, re-homed from docs
+packages/react/fonts.css    the Bliss Pro and Fira Code @font-face blocks
 ```
 
 ### Primitive layer
@@ -260,7 +259,7 @@ it.
 ## Typography
 
 Type is organized on two axes so the face can be swapped. A rule never refers to a font family. It refers
-to a scale role, and each scale role maps to a face role. Changing the typeface edits five tokens.
+to a scale role, and each scale role maps to a face role. A typeface change edits five tokens.
 
 ### Face roles
 
@@ -272,9 +271,9 @@ to a scale role, and each scale role maps to a face role. Changing the typeface 
 | `font.family.code`    | Identifiers, JSON, file paths                               | Monospaced, with `0`/`O` and `1`/`l` distinguishable                                  |
 | `font.family.glyph`   | Control glyphs — close, chevron, compass letter, microphone | Monochrome, inherits color and size, sits on the text baseline                        |
 
-Iosevka Custom satisfies all five today, with its mono variant covering number, code and glyph. That is
-why using a single face has caused no problems yet, and also why no record currently states which role a
-rule wanted. Binding the roles now makes a future swap an edit to `font.family.*` and no other token.
+Bliss Pro covers `display` and `text`. Its default figures are proportional and it has no `tnum` feature,
+so `number` binds to Fira Code with `code` and `glyph`. The role bindings make a future swap an edit to
+`font.family.*` and no other token.
 
 ### Scale roles
 
@@ -334,11 +333,11 @@ component. Both apps ship as installable PWAs through `vite-plugin-pwa` and neit
 
 ### Labels
 
-- `"text-font"` becomes `["Noto Sans Regular"]` in `planetary/layers.ts` and `base/buildings.ts`. This
+- `"text-font"` becomes `["Bliss Pro Regular"]` in `planetary/layers.ts` and `base/buildings.ts`. This
   alone restores every planetary nomenclature label and Earth's building labels.
 - A tiered treatment matching the reference: region-scale features (`ME`, `PL`, `OC`, `TA`) uppercase and
-  letterspaced, which `layers.ts` already does; water-analogue and basin names in `Noto Sans Italic`;
-  point features in `Noto Sans Regular`. Size continues to interpolate on `diameterKm`.
+  letterspaced, which `layers.ts` already does; water-analogue and basin names in `Bliss Pro Italic`;
+  point features in `Bliss Pro Regular`. Size continues to interpolate on `diameterKm`.
 - A `repo-health` check refuses a `text-font` value that is not in the bucket's served set, so the class
   of defect above cannot ship again.
 
@@ -352,7 +351,7 @@ takes the cool ramp, Mars the warm oxide ramp. The two bodies stop being the sam
 A star field sits behind the globe, matching the reference: small light points at varied opacity on the
 body's space color. It renders behind a transparent map canvas so it does not rotate with the body.
 
-### Framing
+### Frame design
 
 `framingZoom` is capped at the hillshade's own maximum zoom, so a selected feature is sharp
 rather than the upsampled blur at zoom 7. The selected feature draws a label and a marker, so the panel
@@ -398,8 +397,5 @@ Each phase is deployable on its own.
 
 ## Open items
 
-- Which face replaces Iosevka Custom, and against which of the five role requirements it is judged. The
-  role table is the acceptance list: tabular lining figures for `number`, a distinguishable `0`/`O` and
-  `1`/`l` for `code`, baseline-aligned monochrome marks for `glyph`.
 - Whether Earth's basemap gains category color and icon markers for POI labels, in the Google register.
   That is a basemap style change in `@mailwoman/cartographer` and a larger piece than the chrome work.

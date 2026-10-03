@@ -4,10 +4,10 @@ Every country reads a different source with a different schema — France a BAN 
 States one situs database per state, Great Britain a CSV derived from the Price Paid Data — and
 each renders its own surface conventions. Those live in `countries/<code>/tuples.py`. This module
 knows only the budget per country and the output file, so adding a country adds a module and a row
-in `SOURCES` and touches nobody else's sampler.
+in `SOURCES` without changing the existing sampler.
 
-The output feeds the house-venue recipe's synthesizer, which owns the rendering into addresses.
-these are the raw component tuples.
+The output feeds the house-venue recipe's synthesizer. That module renders addresses from these raw
+component tuples.
 
 Usage:
     python -m mailwoman_train.corpora.house_venue_tuples [--fr 60000] [--us 60000] [--gb 60000]
@@ -29,7 +29,7 @@ from ..paths import data_root_path
 
 OUT_PARTS = ("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
 
-#: Street surfaces held out for the FR eval fixture. Sampling them into the training tuples would
+#: Street surfaces held out for the FR eval fixture. The training tuples must exclude them or the
 #: put the board's own surfaces in the corpus.
 FR_RESERVED_SURFACES = Path("mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
 

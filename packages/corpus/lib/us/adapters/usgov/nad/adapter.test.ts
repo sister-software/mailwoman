@@ -2,13 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { workspacePath } from "@mailwoman/core/paths"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import {
-	createUsgovNADAdapter,
-	USGOV_NAD_ADAPTER_ID,
-	USGOV_NAD_DEFAULT_LICENSE,
-} from "@mailwoman/corpus/us/adapters/usgov/nad/adapter"
 import { describe, expect, it } from "vitest"
+
+import type { CanonicalRow } from "#types"
+import { createUsgovNADAdapter, USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE } from "#us/adapters/usgov/nad/adapter"
 
 const FIXTURE_DIR = workspacePath("corpus", "lib", "us", "adapters", "usgov", "nad", "fixtures")
 

@@ -27,7 +27,7 @@ services:
   # Nominatim-compatible drop-in: GET /search /reverse /lookup /status. OpenCage-style annotations.
   nominatim:
     image: ghcr.io/sister-software/mailwoman:latest
-    command: ["node", "node_modules/@mailwoman/nominatim/out/cli.js", "serve"]
+    command: ["node", "node_modules/@mailwoman/nominatim/out/cli/main.js", "serve"]
     ports:
       - "8080:8080"
     volumes:
@@ -45,7 +45,7 @@ services:
   # Photon-compatible autocomplete drop-in: GET /api /reverse. GeoJSON FeatureCollections.
   photon:
     image: ghcr.io/sister-software/mailwoman:latest
-    command: ["node", "node_modules/@mailwoman/photon/out/cli.js", "serve"]
+    command: ["node", "node_modules/@mailwoman/photon/out/cli/main.js", "serve"]
     ports:
       - "2322:2322"
     volumes:
@@ -62,7 +62,7 @@ services:
   # libpostal-compatible drop-in: post/GET /parse, /expand. Weights-only — no data volume needed.
   libpostal:
     image: ghcr.io/sister-software/mailwoman:latest
-    command: ["node", "node_modules/@mailwoman/libpostal/out/cli.js", "serve"]
+    command: ["node", "node_modules/@mailwoman/libpostal/out/cli/main.js", "serve"]
     ports:
       - "8081:8081"
     healthcheck:

@@ -77,7 +77,7 @@ export function suggest(query) {
 }
 ```
 
-`deserializeFST` returns the matcher directly. Wrapping its result in `new FSTMatcher(...)` produces an
+`deserializeFST` returns the matcher directly. If you wrap its result in `new FSTMatcher(...)`, you produce an
 object that answers every query with zero suggestions and raises no error, which is hard to debug.
 
 A dropdown needs `dedupeByName: true`, which is off by default. It collapses places with the
@@ -104,7 +104,7 @@ and a county.
 
 ## 3. Measure the keystroke cost
 
-Loading happens once and is cheap. Query cost varies, and the most expensive keystroke costs about
+The matcher loads once at low cost. Query cost varies, and the most expensive keystroke costs about
 three orders of magnitude more than the cheapest. Measure it before you decide whether to debounce:
 
 ```bash
@@ -202,7 +202,7 @@ the dropdown on this index instead of on repeated geocodes.
   search box that serves several markets loads several files and merges the result lists itself.
 - **Resident memory is a few hundred megabytes after load** (241 MB to 293 MB across the runs above).
   The file is read fully into memory instead of being memory-mapped. Plan for that cost once per locale per process.
-- **Ranking uses importance and ignores proximity.** There is no `near` parameter. A user in Boston typing
+- **The ranker uses importance and ignores proximity.** The API has no `near` parameter. A user in Boston typing
   `brookl` gets Brooklyn first because Brooklyn has higher importance, even though Brookline is
   closer. Re-rank on your side with the coordinates that the `wofID` resolves to.
 - **The CLI's default FST path is a build output under the data root.** Set `$MAILWOMAN_FST_BIN` in any environment

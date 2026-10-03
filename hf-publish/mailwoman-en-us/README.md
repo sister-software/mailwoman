@@ -68,7 +68,7 @@ The model emits BIO-encoded labels for 10 address components:
 
 Stage 3 (street decomposition + unit + po_box + intersection) is planned for v0.6.0.
 
-## Training
+## Train
 
 | Field             | Value                                               |
 | ----------------- | --------------------------------------------------- |
@@ -78,7 +78,7 @@ Stage 3 (street decomposition + unit + po_box + intersection) is planned for v0.
 | Hardware          | NVIDIA A100-SXM4-40GB                               |
 | Recipe            | v0.5.1 (constant LR, smoothing off, wof-admin: 2.0) |
 
-Training data sources:
+The model's training data comes from these sources:
 
 - **OpenAddresses** (CC-BY / public domain subsets) — global street-level addresses
 - **Who's On First** (CC-BY-4.0 + ODbL-1.0) — admin hierarchy for US, FR, JP, CN, KR, DE, GB

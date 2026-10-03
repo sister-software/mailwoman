@@ -1,4 +1,4 @@
-"""The shuffle buffer, the train-only policy, and the augmentation step.
+"""Apply buffered shuffling. Enforce train-only rules and apply augmentation.
 
 The single choke point every caller flows through — the train loop, the eval scripts and the
 audits — which is why the held-out neutralization lives here rather than at each caller.
@@ -24,11 +24,11 @@ logger = logging.getLogger(__name__)
 class TrainOnlyPolicy:
     """Source weighting, augmentation and the online relabel — the decisions that shape a MIXTURE.
 
-    Applied to a held-out split they made the headline metric score an augmented, training-filtered
-    set: deterministic under the fixed seed, but not clean held-out performance. A deliberately
-    augmented robustness suite has to be an explicitly named second eval, never the default val
-    stream. `neutralized_for` is where that is enforced, at the one choke point every caller flows
-    through — the train loop, the eval scripts and the audits all reach the corpus through here.
+        Applied to a held-out split they made the headline metric score an augmented, training-filtered
+        set: deterministic under the fixed seed, but not clean held-out performance. A deliberately
+    augmented robustness suite has to be a separately configured second eval, never the default val
+        stream. `neutralized_for` is where that is enforced, at the one choke point every caller flows
+        through — the train loop, the eval scripts and the audits all reach the corpus through here.
     """
 
     source_weights: dict[str, float] | None = None
@@ -98,7 +98,7 @@ def iter_rows(
 ) -> Iterator[dict[str, Any]]:
     """Yield rows from parquet files, filtered + shuffled.
 
-    Shuffling is done at three levels:
+    The loader shuffles at three levels:
 
     1. File order (per-epoch): parquet files visited in random order.
     2. Row-group order within a file: row-groups visited in random order.
@@ -109,7 +109,7 @@ def iter_rows(
     shuffle pattern: hold ``N`` rows, pop a random one, replace from the upstream stream
     (when exhausted, drain the buffer in random order).
 
-    Skipping shuffle (``shuffle_buffer<=0``) is intentionally not supported — the previous
+    The loader requires shuffle (``shuffle_buffer<=0``) because the previous
     sequential layout caused val_loss to diverge at step ~1500. Always shuffle.
 
     Per Phase 2 §2 (stratified sampling): ``country_weights`` is applied during the raw
@@ -157,11 +157,11 @@ def iter_rows(
             buf.append(next(upstream))
     except StopIteration:
         pass
-    # An exclusion naming a source the corpus does not hold leaves every row of the corpus augmented,
-    # and the run still reports a clean pass: a `frozenset` answers a membership test the same way
+    # An exclusion naming a source absent from the corpus leaves every corpus row augmented.
+    # The run still reports a clean pass because a `frozenset` answers membership the same way
     # whether its members exist or not. `_apply_source_weights` has already refused any source in the
     # corpus that `source_weights` does not name, so a name absent from those keys is a name no row
-    # carries.
+    # includes.
     if policy.source_weights is not None:
         unmatched = sorted(set(augment_exclude_sources) - set(policy.source_weights))
         if unmatched:

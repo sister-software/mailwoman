@@ -20,6 +20,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { recipeSourceID, requireRegister, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { DEFAULT_US_BASES } from "#synthesizers/intersection"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { SurfaceOrigin } from "#types"
@@ -28,8 +29,8 @@ import { alignRow } from "#utils"
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behavior it exercises.
+ * See `description` below for the generated surface form.
  */
 export const streetBareRecipe: CorpusRecipe = {
 	name: "street-bare",
@@ -44,7 +45,7 @@ export const streetBareRecipe: CorpusRecipe = {
 		const count = opts.count ?? 3000
 		const bareProb = opts.bareProb ?? 0.6
 		const hnProb = opts.hnProb ?? 0.85
-		const source = opts.sourceName ?? "synth-street-bare"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-street-bare")
 
 		let emitted = 0
 		let skipped = 0

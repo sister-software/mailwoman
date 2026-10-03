@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 export * from "#anchor-inference"
-export * from "#classifier/index"
+export * from "#classifier"
 export * from "#gazetteer-inference"
 export * from "#labels"
 export * from "#onnx-runner"

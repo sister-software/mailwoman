@@ -32,7 +32,7 @@ The most important column is **change / root cause**: it's what turns a number i
 | dotted abbreviations (`St.`, `123 1/2`) | v0 82% vs neural 74%                                  | neural | open   | neural absorbs the trailing token; v0 rules reduce precisely                                         | 2026-06-14-punctuation-stress          |
 
 The all-caps row is the week's clean win, but note its scope: it's fixed on the **resolveTree** path
-(default-OFF opt). Wiring it into the record-matcher's geocoder is **deferred** pending an aggregate
+(default-OFF opt). The record-matcher's geocoder integration is **deferred** pending an aggregate
 artifact (#694) — see §4.
 
 ## 2. Locale / script failures

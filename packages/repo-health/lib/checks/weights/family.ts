@@ -2,26 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Every shipping weights package belongs to exactly one declared family, and every family's graph package ships
- *   the artifacts its encoder needs.
+ * @file Every shipping weights package belongs to exactly one declared family.
+ *   Each family's graph package ships the artifacts its encoder needs.
  *
- *   `@mailwoman/neural`'s `FAMILIES` declares which model graphs exist and which locales each one serves. The
- *   `neural-weights-*` workspaces are the artifacts that claim must describe. The two can disagree in four ways, and
- *   each disagreement is silent at compile time because a package manifest is data:
+ *   `@mailwoman/neural`'s `FAMILIES` declares the model graphs and the locales each graph serves.
+ *   The `neural-weights-*` workspaces are the artifacts that claim must describe.
+ *   The two sources can disagree in four ways. A locale package can be assigned to no family or
+ *   assigned to two families. A family graph package can omit `model.onnx` or ship the wrong
+ *   vocabulary artifact. Package manifests are data, so the compiler does not catch these cases.
  *
- *   A locale package named by no family resolves through whichever base its `mailwoman.baseWeights` happens to name,
- *   and no file states which graph its rows are decoded by. A locale named by two families makes the router's
- *   declaration order decide the answer. A family whose graph package ships no `model.onnx` resolves to a base that
- *   does not exist. A family whose graph package ships the wrong vocabulary artifact — `tokenizer.model` for a `char`
- *   encoder — fails inside the ONNX session rather than here.
- *
- *   The check reads manifests rather than the filesystem, because `model.onnx` and `tokenizer.model` are not in git: a
- *   dev checkout's package directory is legitimately empty, and the `files` array is where a package states what it
- *   publishes.
+ *   The check reads manifests because `model.onnx` and `tokenizer.model` are not in git.
+ *   A package's `files` array states what it publishes.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { FAMILIES, FAMILY_VOCABULARY_ARTIFACT } from "@mailwoman/neural/weights-families"
+import { FAMILIES, FAMILY_VOCABULARY_ARTIFACT } from "@mailwoman/neural/weights/families"
 import { relative, resolvePath } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
@@ -37,30 +32,26 @@ interface WeightsManifest {
 }
 
 /**
- * The locale a `neural-weights-*` directory name carries: `neural-weights-en-gb`
- * is `en-gb`, `neural-weights-cjk` is `cjk`.
+ * The locale encoded in a `neural-weights-*` directory name, such as `en-gb` in `neural-weights-en-gb`.
  *
- * It is the same string `resolveWeights` takes as its locale, which is why the family registry keys on it.
+ * `resolveWeights` takes the same string as its locale.
+ * The family registry uses this string as its key.
  */
 function localeForDirectory(directory: string): string {
 	return directory.replace(/^neural-weights-/u, "")
 }
 
 /**
- * A package is a family's graph when its `files` array declares `model.onnx`.
- *
- * An overlay declares neither that nor a vocabulary artifact and names its
- * base through `mailwoman.baseWeights`.
+ * A package is a family's graph when its `files` array declares `model.onnx`;
+ * an overlay declares no graph and names its base through `mailwoman.baseWeights`.
  */
 function declaresGraph(manifest: WeightsManifest): boolean {
 	return (manifest.files ?? []).includes("model.onnx")
 }
 
 /**
- * Reads `@mailwoman/neural`'s `FAMILIES` against the tracked `neural-weights-*` manifests,
+ * Reads `@mailwoman/neural`'s `FAMILIES` against the tracked `neural-weights-*` manifests
  * and reports every place the declared topology and the published artifacts disagree.
- *
- * Registered in `#registry`, so `mwops health weights-family` runs it.
  */
 export const weightsFamilyCheck: RepoCheck = {
 	id: "weights-family",
@@ -83,9 +74,8 @@ export const weightsFamilyCheck: RepoCheck = {
 			)
 		}
 
-		// A locale claimed twice makes the router's family order decide the answer,
-		// so report the pair rather than the second one alone.
-		// Either declaration could be the wrong one and the reader picks.
+		// A locale claimed twice makes the router's family order decide the answer, so report the
+		// pair rather than the second one by itself, since either declaration could be wrong.
 		const claimedBy = new Map<string, string[]>()
 
 		for (const family of FAMILIES) {
@@ -106,9 +96,8 @@ export const weightsFamilyCheck: RepoCheck = {
 			}
 		}
 
-		// A language claimed twice makes `familyForLocale`'s language fallback answer
-		// whichever family `FAMILIES` lists first, for every locale in that language.
-		// It is the same defect as a locale claimed twice, one level up.
+		// A language claimed twice makes `familyForLocale`'s language fallback answer whichever
+		// family `FAMILIES` lists first, the same defect as a locale claimed twice one level up.
 		const languageOwners = new Map<string, string[]>()
 
 		for (const family of FAMILIES) {
@@ -129,9 +118,8 @@ export const weightsFamilyCheck: RepoCheck = {
 			}
 		}
 
-		// A language that also names another family's packaged locale would make the
-		// two paths through `familyForLocale` disagree: the packaged lookup wins,
-		// and the language list silently covers no locale.
+		// A language that also names another family's packaged locale makes the two paths through
+		// `familyForLocale` disagree, since the packaged lookup wins and the language list covers no locale.
 		for (const [language, [owner]] of languageOwners) {
 			const packagedElsewhere = FAMILIES.filter(
 				(entry) => entry.family !== owner && entry.locales.some((locale) => locale.split("-")[0] === language)
@@ -219,8 +207,6 @@ export const weightsFamilyCheck: RepoCheck = {
 
 		for (const [locale, manifest] of manifests) {
 			// A private package is a parked artifact rather than a shipping locale.
-			// `neural-weights-base-latn` is the live case: it exists for the consumer-facing
-			// package dedup (#1177) and serves no request.
 			if (manifest.private) continue
 
 			if (!claimedBy.has(locale)) {
@@ -238,15 +224,12 @@ export const weightsFamilyCheck: RepoCheck = {
 			const family = FAMILIES.find((entry) => entry.locales.includes(locale))
 			const base = manifest.mailwoman?.baseWeights
 
-			// A family's own graph package declares no `baseWeights`, because it is the
-			// base every overlay in the family points at.
-			// Reading it as an overlay would report a second diagnostic for a graph package whose
-			// `model.onnx` is already reported missing above, naming one manifest twice for one defect.
+			// A family's own graph package declares no `baseWeights`, and reading it as an overlay would
+			// report a second diagnostic for a graph package whose `model.onnx` is already reported missing.
 			if (family?.family === locale) continue
 
-			// An overlay's `baseWeights` and its family must name the same graph.
-			// They are written in different files and no other check compares them,
-			// so a package could inherit one graph while the registry says another.
+			// An overlay's `baseWeights` and its family must name the same graph,
+			// since they are written in different files and no other check compares them.
 			if (!declaresGraph(manifest) && family && base !== family.graphPackage) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,

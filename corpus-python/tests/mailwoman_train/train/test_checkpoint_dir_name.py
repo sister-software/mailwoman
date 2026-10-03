@@ -1,7 +1,7 @@
-"""The checkpoint directory name, which the writer and every reader now take from one function.
+"""The function that supplies checkpoint directory names to the writer and every reader.
 
 `save_checkpoint` zero-padded to six digits while `export_onnx` interpolated the step verbatim, so the invocation
-`export_onnx`'s own docstring documented — `--step=60000` — raised FileNotFoundError against a directory named
+`export_onnx`'s own docstring documented — `--step=60000` — raised FileNotFoundError against a directory called
 `step-060000`. `--step=060000` worked.
 
 A step reaches a Modal entry point as a string, so the name has to accept either spelling and produce the one the
@@ -29,7 +29,7 @@ def test_every_spelling_of_a_step_resolves_the_same_directory(step: str | int) -
 
 
 def test_a_step_wider_than_the_pad_is_not_truncated() -> None:
-    # Padding is a minimum width, never a format the value has to fit.
+    # The width is a minimum. The value can exceed it.
     assert checkpoint_dir_name(1_234_567) == "step-1234567"
 
 

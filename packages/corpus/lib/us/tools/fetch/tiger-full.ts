@@ -4,7 +4,7 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 /**
  * Fetch the full TIGER 2024 addrfeat dataset for all US counties from
- * `https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/`, where files are named
+ * `https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/`, where files use the pattern
  * `tl_2024_<statefips><countyfips>_addrfeat.zip`.
  *
  * Each state's ZIPs land in `<outRoot>/tiger/addrfeat/state-<statefips>/` with a per-state
@@ -21,8 +21,8 @@ import { isoSeconds } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import type { PathBuilder } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { readManifest, streamDownload, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { readManifest, streamDownload, writeManifest } from "#tools/fetch/download"
 
 const HTTP_OK = 200
 const HTTP_REDIRECT = 300

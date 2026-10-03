@@ -55,8 +55,8 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPairPEM> {
 	const pair = await crypto.subtle.generateKey(ALGORITHM, true, ["sign", "verify"])
 
 	// The overload answers a single key for symmetric algorithms.
-	// Ed25519 always answers a pair, and narrowing by shape keeps this module free
-	// of a global type name the Node typings do not declare.
+	// Ed25519 always answers a pair.
+	// A shape check keeps this module free of a global type name that the Node typings do not declare.
 	if (!("privateKey" in pair)) throw new TypeError("Ed25519 key generation answered a single key, not a pair")
 
 	return {
@@ -74,7 +74,7 @@ const SPKI_ED25519_HEADER = new Uint8Array([0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 
 /**
  * The public half of a PKCS8 private key, as spki PEM.
  *
- * A private key's JWK carries its public point as `x`, so an issuer holding only
+ * A private key's JWK includes its public point as `x`, so an issuer holding only
  * the private key can still say which key id it signs for.
  */
 export async function publicKeyFromPrivateKey(privateKeyPEM: string): Promise<string> {

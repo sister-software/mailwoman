@@ -17,8 +17,8 @@
 - Filesystem work through `@mailwoman/core/fs`; paths through `path-ts` and `dataRootPath("astrogeology", …)`; processes through `runFile` from `@mailwoman/core/process`. No `node:*` import, no `process.env`, no `zx`.
 - Coordinates in every emitted artifact: east-positive longitude in [−180, 180], latitude in [−90, 90]; the source convention is recorded in the manifest, never inferred in a consumer.
 - No pin drifts silently: a cached source whose size or SHA-256 differs from the lock file fails the build naming both values.
-- A test imports the package through its public exports; every module a test names gets an `exports` entry.
-- The fixture build runs under `test/integration/` (the `unit-slow` leg runs on the lab's self-hosted runners, which carry GDAL, tippecanoe and pmtiles; a missing tool fails the test with the tool's name).
+- A test sits beside the module it covers and imports its own package through the `#` imports map.
+- The fixture build runs as `lib/fixture-build.integration.test.ts` (the `unit-slow` leg runs on the lab's self-hosted runners, which carry GDAL, tippecanoe and pmtiles; a missing tool fails the test with the tool's name).
 - Comments state invariants; the measurements below go in the source table rather than in prose.
 - Branch: `git fetch origin main && git checkout -b feat/astrogeology origin/main`.
 
@@ -76,7 +76,7 @@ packages/mailwoman/lib/tiles/publish.ts  publishTiles moves here from the comman
 
 - Create: `packages/astrogeology/package.json`, `tsconfig.json`, `tsconfig.test.json`, `README.md`
 - Modify: root `package.json`, root `tsconfig.json`, `packages/release-kit/lib/release/stage.ts`
-- Modify: `packages/spatial/lib/distance.ts`; test `packages/spatial/test/unit/distance.test.ts` (or the file that tests `haversine` today: `grep -rln "haversine" packages/spatial/test`)
+- Modify: `packages/spatial/lib/distance.ts`; test `packages/spatial/lib/distance.test.ts` (or the file that tests `haversine` today: `grep -rln "haversine" packages/spatial/test`)
 
 **Interfaces:**
 
@@ -107,7 +107,7 @@ In `packages/spatial/lib/distance.ts`, beside `RADII`:
 export type PlanetaryBodyID = "earth" | "moon" | "mars"
 
 /**
- * Mean radii in kilometres. Earth's is the value `RADII` scales to its units; the Moon's and Mars's are the IAU mean
+ * Mean radii in kilometers. Earth's is the value `RADII` scales to its units; the Moon's and Mars's are the IAU mean
  * radii the USGS planetary products reference (the Moon as a sphere; Mars's mean radius, its DEM being on the
  * areoid). A distance on a body other than Earth is meaningless without one of these.
  */
@@ -224,7 +224,7 @@ export function greatCircleDistance(
 ```bash
 yarn install
 node -e "const w=require('./package.json').workspaces,r=require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces;console.log(w.filter(x=>!r.includes(x)).length)"
-yarn vitest --run --config vitest.slow.config.ts packages/release-kit/test/integration/release-stage.test.ts
+yarn vitest --run --config vitest.slow.config.ts packages/release-kit/lib/release-stage.integration.test.ts
 git add package.json yarn.lock tsconfig.json packages/astrogeology packages/spatial packages/release-kit
 git commit -m "feat(astrogeology): the workspace and its registers; spatial takes a body radius"
 ```
@@ -238,7 +238,7 @@ Expected: the absence count is one more than before this branch; `publishCount` 
 **Files:**
 
 - Create: `lib/bodies.ts`, `lib/schema/nomenclature.ts`, `lib/normalize.ts`
-- Test: `test/unit/bodies.test.ts`, `test/unit/schema.test.ts`, `test/unit/normalize.test.ts`
+- Test: `lib/bodies.test.ts`, `lib/schema/schema.test.ts`, `lib/normalize.test.ts`
 
 **Interfaces:**
 
@@ -246,7 +246,7 @@ Expected: the absence count is one more than before this branch; `publishCount` 
 
 - [ ] **Step 1: Tests**
 
-`test/unit/normalize.test.ts`:
+`lib/normalize.test.ts`:
 
 ```ts
 import {
@@ -345,7 +345,7 @@ test("featureFromSourceRow projects Tycho", () => {
 })
 ```
 
-Drop the `min_lat_unused` key when writing the test; it is here only so the row literal is copied whole from `ogrinfo` output and then trimmed. `test/unit/schema.test.ts` accepts the Tycho feature and an Olympus Mons feature (`body: "mars"`), refuses `body: "venus"`, a latitude of 91, a longitude of 181, and a missing `id`. `test/unit/bodies.test.ts` asserts `BODIES.moon.metresPerDegree` is within 1 of 30,323 and `BODIES.mars.metresPerDegree` within 1 of 59,159, and that both `coordinates.longitudeRange` read `"0..360"`.
+Drop the `min_lat_unused` key when writing the test; it is here only so the row literal is copied whole from `ogrinfo` output and then trimmed. `lib/schema/schema.test.ts` accepts the Tycho feature and an Olympus Mons feature (`body: "mars"`), refuses `body: "venus"`, a latitude of 91, a longitude of 181, and a missing `id`. `lib/bodies.test.ts` asserts `BODIES.moon.metresPerDegree` is within 1 of 30,323 and `BODIES.mars.metresPerDegree` within 1 of 59,159, and that both `coordinates.longitudeRange` read `"0..360"`.
 
 - [ ] **Step 2: Run to see them fail, then write the modules**
 
@@ -380,7 +380,7 @@ export interface PlanetaryBody {
 	meanRadiusKm: number
 	shape: "sphere" | "ellipsoid"
 	/**
-	 * Metres per degree of arc on the mean sphere: 2πR / 360. The hillshade's vertical scale, and the only place a
+	 * Meters per degree of arc on the mean sphere: 2πR / 360. The hillshade's vertical scale, and the only place a
 	 * degree becomes a length in this package.
 	 */
 	metresPerDegree: number
@@ -579,7 +579,7 @@ The Marco Polo P test expects `minLon` −0.8023 from 359.1977 and `maxLon` 0.16
 
 ```bash
 yarn compile
-yarn vitest --run --config vitest.fast.config.ts packages/astrogeology/test/unit
+yarn vitest --run --config vitest.fast.config.ts packages/astrogeology/lib
 yarn oxlint packages/astrogeology
 git add packages/astrogeology
 git commit -m "feat(astrogeology): bodies, the nomenclature feature schema, and normalization with the three measured rows as tests"
@@ -592,7 +592,7 @@ git commit -m "feat(astrogeology): bodies, the nomenclature feature schema, and 
 **Files:**
 
 - Create: `lib/sdk/sources.ts`, `lib/sdk/fetch.ts`, `lib/schema/manifest.ts`, `sources.lock.json`
-- Test: `test/unit/schema.test.ts` (the lock and manifest schemas)
+- Test: `lib/schema/schema.test.ts` (the lock and manifest schemas)
 
 **Interfaces:**
 
@@ -719,7 +719,7 @@ git commit -m "feat(astrogeology): pinned sources, the lock, and the streaming f
 **Files:**
 
 - Create: `lib/build/nomenclature.ts`, `lib/build/metadata.ts`, `lib/schema/pmtiles-metadata.ts`
-- Test: `test/integration/fixture-build.test.ts` (the nomenclature half), `test/unit/schema.test.ts` (metadata block)
+- Test: `lib/fixture-build.integration.test.ts` (the nomenclature half), `lib/schema/schema.test.ts` (metadata block)
 
 **Interfaces:**
 
@@ -750,7 +750,7 @@ The declutter rule the spec asks for, as tippecanoe per-feature `minzoom`: a fea
 
 ```ts
 /**
- * The zoom at which a feature first appears, from its diameter in kilometres: ≥300 km at 0, ≥100 at 2, ≥30 at 4,
+ * The zoom at which a feature first appears, from its diameter in kilometers: ≥300 km at 0, ≥100 at 2, ≥30 at 4,
  * ≥10 at 6, everything else at 8. Cartographic decluttering rather than ranking; a feature with no diameter (a region, a
  * landing site) appears at 2.
  */
@@ -790,7 +790,7 @@ const args = [
 ]
 ```
 
-`-r1` turns off tippecanoe's point dropping, which would otherwise thin the layer by density; the per-feature `minzoom` is the only declutter. `packages/mailwoman/lib/coverage/core.ts` runs tippecanoe through `zx`; this package runs it through `runFile`, and the argument list is its own (a different layer, different flags), so there is no shared shape to extract.
+`-r1` turns off tippecanoe's point dropping, which would otherwise thin the layer by density; the per-feature `minzoom` is the only declutter. `packages/mailwoman/lib/coverage/core.ts` runs tippecanoe through `zx`. This package runs it through `runFile`. Its argument list serves a different layer with different flags, so there is no shared shape to extract.
 
 - [ ] **Step 3: Metadata**
 
@@ -815,7 +815,7 @@ export const PMTilesMetadataSchema = z.object({
 
 - [ ] **Step 4: The fixture and the integration test**
 
-`test/fixtures/moon-nomenclature.ndjson` holds five source rows in the `NomenclatureSourceRow` shape: Marco Polo P (the 360 wrap), Tycho, a polar feature (any row with `center_lat` below −89 from the archive: `ogrinfo -q -where "center_lat < -89" /vsizip/moon.zip | head`), one with `center_lon` between 179 and 181, and one with an empty `diameter`. `test/fixtures/mars-nomenclature.ndjson` holds Olympus Mons and two more. `test/integration/fixture-build.test.ts`:
+`test/fixtures/moon-nomenclature.ndjson` holds five source rows in the `NomenclatureSourceRow` shape: Marco Polo P (the 360 wrap), Tycho, a polar feature (any row with `center_lat` below −89 from the archive: `ogrinfo -q -where "center_lat < -89" /vsizip/moon.zip | head`), one with `center_lon` between 179 and 181, and one with an empty `diameter`. `test/fixtures/mars-nomenclature.ndjson` holds Olympus Mons and two more. `lib/fixture-build.integration.test.ts`:
 
 ```ts
 test("the Moon fixture builds a nomenclature archive whose tiles carry the five features", async () => {
@@ -850,7 +850,7 @@ Compute the z4 tile for Tycho with the standard XYZ formula before pinning `7, 9
 
 ```bash
 yarn compile
-yarn vitest --run --config vitest.slow.config.ts packages/astrogeology/test/integration
+yarn vitest --run --config vitest.slow.config.ts packages/astrogeology/lib
 git add packages/astrogeology
 git commit -m "feat(astrogeology): nomenclature build — rows through ogr2ogr, declutter by diameter, tippecanoe, the metadata block"
 ```
@@ -862,7 +862,7 @@ git commit -m "feat(astrogeology): nomenclature build — rows through ogr2ogr, 
 **Files:**
 
 - Create: `lib/build/hillshade.ts`
-- Test: `test/integration/fixture-build.test.ts` (the hillshade half); `test/fixtures/dem-64.tif`
+- Test: `lib/fixture-build.integration.test.ts` (the hillshade half); `test/fixtures/dem-64.tif`
 
 **Interfaces:**
 
@@ -883,7 +883,7 @@ export async function buildHillshadePMTiles(options: {
 	const forTiling = resolvePath(scratch.path, "hillshade-4326.tif")
 	const mbtiles = resolvePath(scratch.path, "hillshade.mbtiles")
 
-	// 1. Shade in the source grid, where a degree is the body's arc length; `-s` is metres per degree on this body.
+	// 1. Shade in the source grid, where a degree is the body's arc length; `-s` is meters per degree on this body.
 	const shade = [
 		"hillshade",
 		options.demPath,
@@ -903,7 +903,7 @@ export async function buildHillshadePMTiles(options: {
 	await runFile("gdaldem", shade)
 
 	// 2. The XYZ tile scheme is angular: the same lon/lat grid on any sphere. Declaring the shaded image as EPSG:4326
-	//    makes GDAL tile it on that grid; the metres are Earth's, which is why shading happened before this step.
+	//    makes GDAL tile it on that grid; the meters are Earth's, which is why shading happened before this step.
 	const declare = ["-a_srs", "EPSG:4326", String(shaded), String(forTiling)]
 	await runFile("gdal_translate", declare)
 
@@ -961,9 +961,9 @@ The test builds `dem-64.tif` to `hillshade.pmtiles` with `maxZoom: 2`, asserts t
 
 ```bash
 yarn compile
-yarn vitest --run --config vitest.slow.config.ts packages/astrogeology/test/integration
+yarn vitest --run --config vitest.slow.config.ts packages/astrogeology/lib
 git add packages/astrogeology
-git commit -m "feat(astrogeology): hillshade build — gdaldem in the body's metres, XYZ tiling by the angular grid, PMTiles"
+git commit -m "feat(astrogeology): hillshade build — gdaldem in the body's meters, XYZ tiling by the angular grid, PMTiles"
 ```
 
 ---
@@ -973,7 +973,7 @@ git commit -m "feat(astrogeology): hillshade build — gdaldem in the body's met
 **Files:**
 
 - Create: `lib/build/search-index.ts`, `lib/build/manifest.ts`
-- Test: `test/integration/fixture-build.test.ts` (both)
+- Test: `lib/fixture-build.integration.test.ts` (both)
 
 **Interfaces:**
 
@@ -1087,7 +1087,7 @@ git push -u origin feat/astrogeology
 gh pr create --title "Astrogeology: the Moon and Mars nomenclature and hillshade pipeline" --body-file - <<'EOF'
 Implements docs/superpowers/specs/2026-09-06-astrogeology-pipeline-design.md by docs/superpowers/plans/2026-09-07-astrogeology-pipeline.md.
 
-- packages/astrogeology (private): pinned USGS sources (nightly gazetteer by snapshot, DEMs by product), normalization measured against the real rows (0..360 → −180..180, the 360 wrap, ids from the link column), tippecanoe nomenclature archives decluttered by diameter, gdaldem hillshade in the body's metres and XYZ tiling by the angular grid, an ancestrie search artifact, a manifest with checksums, the mailwoman:* metadata block validated on write and read
+- packages/astrogeology (private): pinned USGS sources (nightly gazetteer by snapshot, DEMs by product), normalization measured against the real rows (0..360 → −180..180, the 360 wrap, ids from the link column), tippecanoe nomenclature archives decluttered by diameter, gdaldem hillshade in the body's meters and XYZ tiling by the angular grid, an ancestrie search artifact, a manifest with checksums, the mailwoman:* metadata block validated on write and read
 - @mailwoman/spatial: greatCircleDistance with a body radius; haversine unchanged
 - mailwoman/tiles/publish: publishTiles as a function the command and this pipeline both call
 

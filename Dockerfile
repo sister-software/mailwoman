@@ -68,8 +68,8 @@ LABEL org.opencontainers.image.title="mailwoman" \
 	org.opencontainers.image.vendor="Sister Software"
 
 # Default: the native /v1 API. Drop-in servers are also installed — override CMD to run one instead:
-#   node node_modules/@mailwoman/nominatim/out/cli.js   (Nominatim-compatible /search /reverse, port 8080)
-#   node node_modules/@mailwoman/photon/out/cli.js       (Photon-compatible /api /reverse, port 2322)
-#   node node_modules/@mailwoman/libpostal/out/cli.js    (libpostal-compatible /parse /expand, port 8081)
+#   node node_modules/@mailwoman/nominatim/out/cli/main.js   (Nominatim-compatible /search /reverse, port 8080)
+#   node node_modules/@mailwoman/photon/out/cli/main.js       (Photon-compatible /api /reverse, port 2322)
+#   node node_modules/@mailwoman/libpostal/out/cli/main.js    (libpostal-compatible /parse /expand, port 8081)
 # See docker/README.md + docker/docker-compose.yml.
 CMD ["node", "server.mjs"]

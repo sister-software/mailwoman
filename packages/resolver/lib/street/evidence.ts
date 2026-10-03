@@ -9,11 +9,11 @@ import type { Exclusion } from "@mailwoman/evidence"
  */
 export interface StreetLocalityEvidence {
 	/**
-	 * Returns whether the raw street surface exists as a street name, within `scope` when given.
+	 * Returns whether the raw street surface exists as a street name within `scope`, when provided.
 	 *
 	 * The implementation folds the surface itself.
-	 * It must return `false` on a missing index or a read error, because a `false`
-	 * answer only withholds promotion.
+	 * It returns `false` when an index is missing or a read fails.
+	 * A `false` answer only withholds promotion.
 	 */
 	hasStreetName(streetSurface: string, scope?: StreetEvidenceScope): boolean
 
@@ -32,10 +32,13 @@ export interface StreetEvidenceScope {
 }
 
 /**
- * Folds a street surface for both index build and lookup.
+ * Folds a street surface the same way for index build and lookup.
  *
- * It strips diacritics, lowercases, turns hyphens, dashes and apostrophes into spaces,
- * and collapses whitespace.
+ * It strips diacritics and lowercases.
+ * It turns hyphens and dashes into spaces.
+ *
+ * It maps apostrophes to spaces too.
+ * It also collapses whitespace.
  */
 export function foldStreetSurface(surface: string): string {
 	return surface
@@ -96,15 +99,15 @@ export function isPureTypeVocabulary(foldedSurface: string): boolean {
 }
 
 /**
- * One candidate parse for {@link pickByStreetEvidence}.
- *
- * Scores are comparable only among candidates for the same input.
+ * One candidate parse for {@link pickByStreetEvidence}; scores are comparable
+ * only among candidates for the same input.
  */
 export interface StreetCandidate<T = unknown> {
 	/**
 	 * The candidate's raw street surface.
 	 *
-	 * An empty string means the parse found no street, and evidence then skips the candidate.
+	 * An empty string means the parse found no street.
+	 * Evidence skips that candidate.
 	 */
 	streetSurface: string
 
@@ -130,17 +133,15 @@ export interface PickByStreetEvidenceOpts {
 
 	/**
 	 * The largest score gap below rank 1 at which evidence may still promote a candidate.
-	 * It defaults to 2.5.
-	 *
-	 * Raw score margins differ between models, so the value needs refitting when the span head is retrained.
+	 * it defaults to 2.5 and needs refitting when the span head is retrained.
 	 */
 	marginCap?: number
 
 	/**
 	 * One entry per candidate, in the same order.
 	 *
-	 * A non-null entry moves that candidate behind every non-excluded one without removing it.
-	 * If every candidate is excluded, the fallback pick is rank 1.
+	 * A non-null entry moves that candidate behind every candidate without an exclusion.
+	 * If every candidate has an exclusion, the fallback pick is rank 1.
 	 */
 	exclusions?: ReadonlyArray<Exclusion | null>
 }
@@ -172,11 +173,16 @@ export interface StreetEvidencePick<T = unknown> {
 }
 
 /**
- * Picks the first candidate, in score order, whose street name exists in the evidence index,
- * holds more than street type words, and scores within `marginCap` of rank 1.
+ * Checks candidates in score order.
+ *
+ * Selects the first candidate that meets all three checks.
+ * Its street name exists in the evidence index.
+ *
+ * The name contains more than street-type words.
+ * Its score falls within `marginCap` of rank 1.
  *
  * Excluded candidates are checked after all others.
- * When no candidate qualifies, the first non-excluded candidate wins.
+ * The first candidate without an exclusion wins when no candidate passes the evidence checks.
  *
  * @param candidates Parse candidates sorted by score, rank 1 first.
  * @throws When `candidates` is empty.

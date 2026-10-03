@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Grading two arms against a truth coordinate, the only axis a cross-engine comparison has: `grade.ts`'s
+ *   The function grades two arms against a truth coordinate, the only axis a cross-engine comparison has: `grade.ts`'s
  *   component, place-id and tier expectations do not survive an arm answering from a foreign vocabulary, so this module
  *   owns one metric — haversine distance from the top-1 result to the truth point, thresholded at 1 / 5 / 25 km, with a
  *   no-result a miss at every threshold.
@@ -75,8 +75,9 @@ export function thresholdKey(thresholdKm: number): string {
 
 /**
  * Deliberately a HIT/miss comparison rather than "whichever arm is closer":
- * an arm that moves a result from 40 km to 30 km has not found the address, and a metric
- * that rewards it would report progress on rows where no usable result changed.
+ * an arm that moves a result from 40 km to 30 km still has not found the address.
+ *
+ * A metric that rewards this change would report progress on rows where no usable result changed.
  */
 export function gradeAtThreshold(distanceA: number | null, distanceB: number | null, thresholdKm: number): RowGrade {
 	const a = hitAt(distanceA, thresholdKm)
@@ -98,7 +99,7 @@ export interface ThresholdReading {
 }
 
 /**
- * Hit counts for both arms at every threshold, over the rows that carry a truth coordinate.
+ * Hit counts for both arms at every threshold, over the rows that include a truth coordinate.
  */
 export function thresholdTable(
 	rows: Array<{ distanceKmA: number | null; distanceKmB: number | null }>,
@@ -132,8 +133,9 @@ export interface EquivalenceReading {
 	p_lower: number | null
 	p_upper: number | null
 	/**
-	 * `false` covers both a real difference and too few rows to tell, which is why the
-	 * sentence says which rather than leaving `false` to read as "different".
+	 * `false` covers both a real difference and too few rows to tell.
+	 *
+	 * The sentence identifies the case instead of leaving `false` to read as "different".
 	 */
 	equivalent: boolean
 	sentence: string
@@ -150,7 +152,7 @@ function wilsonHalfWidth(successes: number, n: number): number {
 }
 
 /**
- * Failing an equivalence test does not mean the arms differ: an estimate already outside the bound
+ * An equivalence-test failure does not mean the arms differ: an estimate already outside the bound
  * is a difference, while a small difference with too wide an interval is an underpowered run.
  */
 function equivalence(
@@ -178,8 +180,10 @@ function equivalence(
 
 /**
  * The independent-samples standard error is used even though the rows are paired:
- * paired arms are positively correlated, so the true paired variance is smaller,
- * which makes this interval wider and equivalence harder to declare.
+ * paired arms are positively correlated.
+ *
+ * The true paired variance is smaller.
+ * This makes the interval wider and equivalence harder to declare.
  */
 export function tostEquivalence(
 	successesA: number,

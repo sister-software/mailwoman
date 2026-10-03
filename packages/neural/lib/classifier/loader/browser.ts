@@ -15,7 +15,7 @@ import type {
 
 function refuse(name: string): never {
 	throw new Error(
-		`${name} reads weights from the filesystem and has no browser implementation; load through @mailwoman/neural/web-loader`
+		`${name} reads weights from the filesystem and has no browser implementation; load through @mailwoman/neural/web/loader`
 	)
 }
 

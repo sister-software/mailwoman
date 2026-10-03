@@ -2,15 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_lookup` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the interface, and the description is the
- *   required half of it.
+ *   The `mwdev_lookup` tool definition provides the agent-facing description and input schema.
+ *   Its handler calls the lookup in the package root.
  */
 
 import { z } from "zod"
 
 import type { EngineConfig } from "#engine/registry"
-import { LookupSource } from "#lookup/index"
+import { LookupSource } from "#lookup"
 import { runLookup } from "#lookup/tool"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { ENGINE_CONFIG_SCHEMA } from "#tool-kit"

@@ -1,21 +1,15 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- * The reference-geocoder credential the oracle's Google client sends.
- */
-
 import { $private as corePrivate, liveEnv } from "@mailwoman/core/env"
 import { z } from "zod"
 
 /**
  * Google Maps Platform key for the reference-geocoder oracle (`geocode-oracle/lib/sdk/google-client.ts`).
  *
- * Verification tooling only.
- * No code on the parse path reads this, and `@mailwoman/geocode-oracle` is a private
- * workspace precisely so it cannot become a runtime dependency of a published package.
+ * The client is billed per request.
+ * It caches for 30 days and paces at 60/minute by default.
  *
- * Billed PER request: the client caches for 30 days and paces at 60/minute by default for that reason.
  * Never log its value.
  */
 export const PrivateOracleEnvSchema = z.object({
@@ -26,7 +20,7 @@ export const PrivateOracleEnvSchema = z.object({
 })
 
 /**
- * Live oracle credentials over core's.
+ * Live oracle credentials layered over core's.
  *
  * Never log their values.
  */

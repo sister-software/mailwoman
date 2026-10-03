@@ -5,9 +5,9 @@ Pins the three interface properties the design memo names:
 1. **Byte-identical trajectory** — capture only reads ``p.grad``; a run with the accumulator
    attached ends with exactly the weights of a run without it (the rng/byte-stability rule).
 2. **The accumulator computes what it claims** — the mean of squared gradients, keyed like the
-   state dict, saved as npz + provenance sidecar, and loud on a zero-count finalize.
+   state dict and saves it as npz with a provenance sidecar. Finalization with zero samples raises loudly.
 3. **The EWC brake behaves at its limits** — zero penalty at θ = θ*, λ=0 leaves the loss
-   untouched, a huge λ pins the model to the reference, and fresh-head params (absent from the
+   untouched. A huge λ pins the model to the reference. Fresh-head params (absent from the
    Fisher artifact) train freely.
 """
 
@@ -127,7 +127,7 @@ def test_ewc_penalty_grows_with_distance_and_scales_with_lambda(tmp_path: Path) 
 
 
 def _fisher_weighted_drift(fisher_path: Path, base: torch.nn.Module, tuned: torch.nn.Module) -> float:
-    """Σ F_i·(θ_i − θ*_i)² — drift measured where the Fisher says the base had curvature.
+    """Σ F_i·(θ_i − θ*_i)² — drift measured where the Fisher information records base curvature.
 
     EWC only promises protection ALONG high-Fisher directions. low-curvature directions drift
     freely by design (that freedom is what lets the fine-tune learn). An unweighted drift metric
@@ -196,7 +196,7 @@ def test_fresh_head_params_are_unpenalized(tmp_path: Path) -> None:
     tuned = _tiny(seed=1)
     tuned.load_state_dict(base.state_dict())
     baseline = float(ewc.penalty(tuned))
-    tuned.fresh = torch.nn.Linear(3, 5)  # registers a new named parameter pair
+    tuned.fresh = torch.nn.Linear(3, 5)  # registers a new parameter pair
     with torch.no_grad():
         tuned.fresh.weight += 10.0
     assert float(ewc.penalty(tuned)) == pytest.approx(baseline)

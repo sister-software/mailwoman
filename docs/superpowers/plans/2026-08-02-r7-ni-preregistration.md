@@ -8,7 +8,7 @@ then because "the pair parent needs post towns. An outcode→post-town table is 
 The post-town framing came from the GB source: PPD's parent column is the post town, so an NI
 extension seemed to require the same field for NI, which Royal Mail licenses rather than publishes.
 But R5 established that the parent side does not have to come from a postal register at all. The US
-instance takes WOF localities as parents and passes every bar. Applying that here: WOF's NI
+instance takes WOF localities as parents and passes every bar. The same rule applied here: WOF's NI
 neighborhoods hang off **Belfast, Newtownabbey, Londonderry, Lisburn** — localities that are the
 post towns for those addresses. No licensed table needed; the deferral was reasoning from GB's
 source shape rather than from what the pair requires.
@@ -63,7 +63,7 @@ rung that can be executed off the shelf like this one.
 - **D-R7.4.** All **87/87** pairs survive the fold as distinct entries — the index total moved
   exactly 20,039 → 20,126, so no entry collapsed silently.
 
-**The freshness guard fixed in R5 earned itself on its first real exercise.** Adding
+**The freshness guard fixed in R5 earned itself on its first real exercise.** Its addition
 `ni-pairs-v1.jsonl` as a fourth source made the guard report `header source md5s [3 entries] !=
 current [4 entries] — rebuilding`. Under the old `sourceMD5s[0]`-only check this increment would
 have shipped against a stale artifact, exactly as the London pairs silently did.

@@ -15,8 +15,10 @@ export interface PlaceImportanceTable {
 	/**
 	 * The population-anchored referential likelihood in [0, 1], from {@link referentialFromPopulation}.
 	 *
-	 * It is never NULL: a place without a population row scores 0, which means no
-	 * population evidence and earns no boost rather than a penalty.
+	 * It is never NULL.
+	 * A place without a population row scores `0`.
+	 *
+	 * That score represents no population evidence, so it earns no boost or penalty.
 	 */
 	referential: number
 
@@ -80,7 +82,7 @@ export const ENCYCLOPEDIC_BOOST_CAP = 0.25
 
 /**
  * Blends the two channels into the legacy `importance` column: the referential score
- * when there is no article, the encyclopedic score alone when population is unknown
+ * when there is no article, only the encyclopedic score when population is unknown
  * (`referential` 0), and otherwise the encyclopedic score clamped between the
  * referential score and {@link ENCYCLOPEDIC_BOOST_CAP} above it.
  */
@@ -93,7 +95,8 @@ export function blendImportance(referential: number, encyclopedic: number | null
 }
 
 /**
- * Names where {@link loadImportanceSplit} got its scores, which the FST stamp records as provenance.
+ * Source names used by {@link loadImportanceSplit}.
+ * The FST stamp records these values as provenance.
  */
 export const IMPORTANCE_SPLIT_SOURCES = {
 	splitColumns: "split-columns",
@@ -112,8 +115,8 @@ export const IMPORTANCE_SPLIT_SOURCES = {
 export type ImportanceSplitSource = (typeof IMPORTANCE_SPLIT_SOURCES)[keyof typeof IMPORTANCE_SPLIT_SOURCES]
 
 /**
- * Returns the `select` term and `left join` that carry `encyclopedic` onto name-lookup
- * results for `schemaName`, degrading to `NULL` and no join when the column is absent.
+ * Returns the `select` term and `left join` that add `encyclopedic` to name-lookup results
+ * for `schemaName`, degrading to `NULL` and no join when the column is absent.
  *
  * It probes for the column rather than the table, because a pre-split table's
  * `importance` mixes Wikipedia and population scores.
@@ -149,8 +152,8 @@ export const LEGACY_FALLBACK_EPSILON = 8 * Number.EPSILON
  * treating it as a population fallback when it matches {@link referentialFromPopulation}
  * within {@link LEGACY_FALLBACK_EPSILON}.
  *
- * The match is tolerant because `log2` differs by an ULP across runtimes,
- * and bit equality would invent encyclopedic scores.
+ * The match allows a small tolerance because `log2` differs by an ULP across runtimes.
+ * Bit equality would invent encyclopedic scores.
  */
 export function splitLegacyImportance(
 	legacy: number | undefined,

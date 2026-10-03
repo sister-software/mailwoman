@@ -11,6 +11,7 @@ import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import type { PathBuilderLike } from "path-ts"
 
 import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
@@ -19,7 +20,7 @@ import { SurfaceOrigin } from "#types"
  *
  * The rows get their own sampler bucket so an eval can measure them apart from other postcode placements.
  */
-export const REVIEWED_POSTCODE_TAIL_SOURCE = "synth-reviewed-postcode-tail"
+export const REVIEWED_POSTCODE_TAIL_SOURCE = defaultRecipeSource("synth-reviewed-postcode-tail")
 
 const REVIEWED_TUPLE_COUNT = 4
 
@@ -195,8 +196,8 @@ export const reviewedPostcodeTailRecipe: CorpusRecipe = {
 
 				if (
 					alignAndWrite(write, canonical, "reviewed-postcode-tail", {
-						// A person read these facts from their publishers, and the data file
-						// records the publisher of each tuple.
+						// A person read these facts from their publishers.
+						// The data file records the publisher of each tuple.
 						// No upstream bulk file exists.
 						register: SourceRegister.ReviewedByHand,
 						surface: SurfaceOrigin.Composed,

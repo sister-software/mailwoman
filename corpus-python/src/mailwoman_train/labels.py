@@ -89,12 +89,12 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 #   "Eingang 2"   -> entrance="Eingang 2" ; "Stiege 4" -> staircase="Stiege 4"
 #
 # The existing STAGE3 ``unit`` tag stays the bare unit-id role rather than being renamed to
-# ``unit_id``, because a rename would rewrite every ``unit``-labeled corpus row. That rename, and
+# ``unit_id``, because a rename would rewrite every ``unit``-labeled corpus row. A tag rename and
 # reconciling the JP ``building_number``/``building_name`` declarations against
 # ``building_designator``/``building_id``, is a version-conditional batch for the activation bump
 # rather than piecemeal here.
 #
-# Bumping ACTIVE_* to STAGE4 widens the model head 33 → 47 labels, so activation requires a retrain
+# An ACTIVE_* bump to STAGE4 widens the model head from 33 to 47 labels, so activation requires a retrain
 # (from-scratch or an output-head expansion) and a same-commit extension of the JS ``COMPONENT_TAGS``
 # union in ``core/types/component.ts`` (the decoder maps model indices → labels through it, so they
 # must move together). Until then active stays STAGE3 and these tags collapse to ``O`` at load, so
@@ -147,12 +147,12 @@ STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
 
 # region CN fine tags (the organizational ladder)
 
-# One tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
-# carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team, the xpcc
+# One tag, ``locality_unit``, for the whole ordinal chain below the settlement ``三分场八队``
+# (No. 3 sub-farm, No. 8 production team, the xpcc
 # ``一四三团十二连``, and the villager group ``民权三组``). Which rung each generic names is a deterministic
 # reading of the suffix (``分场``/``大队``/``队``/``连``/``团``/``组``), done after decode by
 # ``@mailwoman/core``'s CN unit reader, so the label set does not grow with every ladder found.
-# The named head unit (``孟定农场``) is ``dependent_locality``. Mirrors ``core/types/component.ts``
+# The head unit ``孟定农场`` is ``dependent_locality``. Mirrors ``core/types/component.ts``
 # and schema.mdx. Like ``stage3-jp``, the Latin model never trains on it.
 CN_FINE_TAGS: Final[tuple[str, ...]] = ("locality_unit",)
 
@@ -202,7 +202,7 @@ ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items
 # a non-default set, never silently collapse: a label-space mismatch that zero-fills is invisible
 # until fingerprinted.
 class LabelSet:
-    """One model's label vocabulary: tags, BIO labels, and the derived id maps."""
+    """One model's label vocabulary: tags/BIO labels and the derived id maps."""
 
     def __init__(self, name: str, tags: tuple[str, ...], bio_labels: tuple[str, ...]) -> None:
         self.name = name
@@ -214,12 +214,8 @@ class LabelSet:
 
     def collapse_label(self, bio_label: str) -> str:
         """Collapse against this set's tag vocabulary, with the module function's shape rules."""
-        if bio_label == "O" or "-" not in bio_label:
-            return "O"
-        prefix, tag = bio_label.split("-", 1)
-        if tag not in self._tag_set or prefix not in ("B", "I"):
-            return "O"
-        return bio_label
+        parts = split_bio(bio_label)
+        return bio_label if parts is not None and parts[1] in self._tag_set else "O"
 
 
 _LABEL_SETS: Final[dict[str, tuple[tuple[str, ...], tuple[str, ...]]]] = {
@@ -246,14 +242,14 @@ IGNORE_INDEX: Final[int] = -100
 # region Locale conditioning (self-conditioning)
 
 # Country (ISO 3166-1 alpha-2) → locale class id for the auxiliary self-conditioning head.
-# The head predicts which country an address belongs to from the pooled sequence, and it is the
-# LocalePosterior the resolver consumes. The posterior does not feed the FiLM path: model.py sends
+# The head predicts which country an address belongs to from the pooled sequence.
+# The resolver consumes its LocalePosterior. The posterior does not feed the FiLM path: model.py sends
 # the same pooled vector through a sibling projection, so the aux loss shapes what both read rather
 # than one selecting the other.
 #
 # Stable order: never reorder, only append, so a checkpoint's locale-head ids stay reproducible. A
 # row whose ``country`` is absent from this map maps to IGNORE_INDEX and contributes no gradient to
-# the aux loss. The head still carries a slot for every entry here.
+# the aux loss. The head still has a slot for every entry here.
 LOCALE_COUNTRIES: Final[tuple[str, ...]] = (
     "US",
     "FR",
@@ -277,16 +273,18 @@ def locale_id(country: str | None) -> int:
     return LOCALE_TO_ID.get(country.strip().upper(), IGNORE_INDEX)
 
 
+def split_bio(bio_label: str) -> tuple[str, str] | None:
+    """The ``(prefix, tag)`` of a ``B-`` or ``I-`` label, or None for ``O`` and any other shape."""
+    if bio_label == "O" or "-" not in bio_label:
+        return None
+    prefix, tag = bio_label.split("-", 1)
+    return (prefix, tag) if prefix in ("B", "I") else None
+
+
 def collapse_label(bio_label: str) -> str:
     """Rewrite a BIO label to its active-set equivalent, or ``O``."""
-    if bio_label == "O":
-        return "O"
-    if "-" not in bio_label:
-        return "O"
-    prefix, tag = bio_label.split("-", 1)
-    if tag not in ACTIVE_TAGS or prefix not in ("B", "I"):
-        return "O"
-    return bio_label
+    parts = split_bio(bio_label)
+    return bio_label if parts is not None and parts[1] in ACTIVE_TAGS else "O"
 
 
 def active_components_present(components_keys: list[str]) -> bool:

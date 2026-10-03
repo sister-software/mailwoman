@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Exercise `useReleaseRuntime` with a fake loader: interactive selection, delayed loading,
- *   and asset-failure states, without network or runtime dependencies.
+ *   Exercise `useReleaseRuntime` with a fake loader for interactive selection, delayed loading and asset-failure states. The story needs no network or runtime dependencies.
  */
 
 import { sleep } from "@mailwoman/core/utils/sleep"

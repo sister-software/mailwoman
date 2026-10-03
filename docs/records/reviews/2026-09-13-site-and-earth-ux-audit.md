@@ -67,7 +67,7 @@ Reported symptom: Safari force-reloads the Earth tab with a memory warning. Caus
 appeared nowhere in the repository.
 
 An ONNX `InferenceSession` keeps its weights and arenas in the WASM heap, or on the GPU — memory the
-JavaScript collector does not own. Dropping the last reference to a loaded bundle freed the wrapper and
+JavaScript collector does not own. The runtime freed the wrapper when the last reference to a loaded bundle disappeared and
 left the model resident. `useReleaseRuntime` rebuilds the bundle whenever the version or the backend
 force changes (`useReleaseRuntime.ts:289`, deps `[selectedVersion, forceWASM]`), so every model-version
 pick, every Force WASM toggle and every compare-mode entry added a model's worth of native memory that
@@ -130,7 +130,7 @@ is the second confident wrong answer about this one symptom, and this record not
 arithmetic, and an interpolated hit flies to z15, inside the Protomaps source's `maxzoom: 15`.
 
 **Fact, observed.** The viewport is black for roughly twenty seconds, then paints
-with no interaction. Scrolling appeared to fix it because any interaction forces a repaint of tiles
+with no interaction. A scroll appeared to fix it because any interaction forces a repaint of tiles
 that had by then arrived.
 
 **The withdrawn claim** was that MapLibre never requested a tile at all, evidenced by
@@ -142,7 +142,7 @@ whole page life. That measurement cannot state the claim:
   and several dozen terrarium elevation tiles. The buffer is long gone before a vector tile is asked
   for, so "three entries" measures the buffer rather than the network.
 - And the tiles come from the host that was counted:
-  `packages/tile-worker/lib/protomaps/index.ts:72` builds the template as
+  `packages/tile-worker/lib/protomaps.ts:72` builds the template as
   `https://tiles.mailwoman.ai/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles demonstrably rendered, so
   requests to that host were made and went unrecorded. The two observations cannot both be true,
   and the measurement is the one that is wrong.
@@ -168,7 +168,7 @@ observed**. It has never been reproduced in a browser tab a human was looking at
 That does not prove the app is fine. A visible tab might still stall for its own reasons, and the
 original report deserves a look. It does mean there is currently no evidence of a bug here. The next
 step is a five-minute check in a visible tab rather than a fix:
-`yarn workspace @mailwoman/earth preview`, open `http://localhost:7770`, run a query, watch.
+`yarn workspace @mailwoman/earth preview`, open `http://localhost:7771`, run a query, watch.
 
 **How to measure it properly**, for whoever picks this up: a Performance-panel recording across the
 resolve, which shows long tasks and main-thread occupancy directly — or
@@ -189,8 +189,8 @@ with no result on screen:
 
 | Failure                           | Where                                                                                   | What the user sees                                                                                                                                 |
 | --------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. Pressing it again performs no work, forever.                                                                                  |
-| IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centred on the US.                                                                                                                        |
+| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. A second press performs no work, forever.                                                                                     |
+| IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centered on the US.                                                                                                                       |
 | Autocomplete throws               | `packages/earth/lib/runtime/use/geocoder-runtime.ts:467` — `} catch { return [] }`      | Indistinguishable from "no matches"; `packages/react/lib/map/PlaceAutocomplete.tsx:63` returns `null` on empty, so there is no empty state at all. |
 | Street tier (rooftop) unavailable | `geocoder-runtime.ts:314` — `console.warn(...)`                                         | Console only. User gets a city centroid with no precision downgrade notice.                                                                        |
 | Crisp polygon unavailable         | `geocoder-runtime.ts:509` — `console.error(...)`                                        | Console only.                                                                                                                                      |
@@ -216,7 +216,7 @@ and an empty chart reading "No data points". The config already admits the place
 
 Either hold it behind the Resources door until it has real data, or drop the footer link.
 
-### 4. Pricing and licensing do not connect
+### 4. Prices and licenses remain separate
 
 The two halves of the money path never reference each other:
 
@@ -244,7 +244,7 @@ column. Then decide whether `PricingTiers` gets mounted on `/docs/pricing` or de
 
 `/license`, `/license/terms/commercial-2026-10` and `/license/issued` are `src/pages` routes, so they get
 no sub-header band, breadcrumb, or sidebar. `DocsSubHeader` only mounts for pages whose sidebar is one
-of `DOCS_SECTIONS` (`docs/src/components/DocsSubHeader/index.tsx:27`). Moving from `/docs/pricing` to
+of `DOCS_SECTIONS` (`docs/src/components/DocsSubHeader/index.tsx:27`). A move from `/docs/pricing` to
 `/license` drops the band and **shifts the whole page up by its height**. That jump is a large part of
 what reads as disjointed.
 
@@ -282,27 +282,23 @@ where the rest of this genre already lives.
 Measured on a cold load of `mailwoman.ai`: the six WOFF2 files all start at **~1570 ms**, and the document
 has **zero `<link rel="preload">` for fonts** (only `mailwoman-seal-magenta.svg`). The chain is
 HTML → `styles.*.css` → parse → discover `@font-face` → cross-origin fetch to `public.mailwoman.ai`. With
-`font-display: swap` on all 48 faces (`docs/src/css/fonts/IosevkaCustom.css`,
-`IosevkaCustomMono.css`), every visitor gets a guaranteed flash plus a reflow.
+`font-display: swap` on every face (`docs/src/css/fonts/BlissPro.css`, `FiraCode.css`), every visitor
+gets a flash plus a reflow.
 
-The reflow is the worse half: the fallback stack is
-`"Iosevka Custom Web", "Iosevka", system-ui, …` (`docs/src/css/theme-light.css:57`). `system-ui` is
-substantially wider than Iosevka Custom, so the swap re-wraps every line on the page. No rule declares
+The reflow is the worse half: the fallback stack is `"Bliss Pro Web", system-ui, …`
+(`docs/src/css/theme-light.css`). `system-ui` has different metrics from Bliss Pro, so the swap re-wraps
+every line on the page. No rule declares
 `size-adjust` / `ascent-override` / `descent-override` for a metric-matched fallback.
 
 Four fixes, in order of payoff:
 
-1. `preload` the four faces that paint above the fold (Regular 400, Book 450, Bold 700, Mono Regular
-   400). Everything else can stay lazy. The `preconnect` to `public.mailwoman.ai`
+1. `preload` the four faces that paint above the fold (Bliss Pro Regular 400, Medium 500, Bold 700, and
+   the Fira Code variable face). Everything else can stay lazy. The `preconnect` to `public.mailwoman.ai`
    (`docusaurus.config.ts:71`) saves the handshake but not the CSS-parse discovery delay.
 2. Add a metric-matched `@font-face` fallback (`local("system-ui")` + `size-adjust`) so the swap does not
    move text.
 3. Consider self-hosting the four critical faces on the docs origin and leaving the rest on
    `public.mailwoman.ai` — removes a connection from the critical path entirely.
-4. 48 faces are declared, 6 load. Worth trimming the declaration set or splitting the rarely-used
-   stretches into a second sheet.
-
-Minor, same file: the proportional font's bucket path is misspelled — `/fonts/IoveskaCustom/…` (Iovesk**a** rather than Iosevka) while the mono path is spelled correctly. It 200s today, so it is a rename-hazard rather than a bug.
 
 ---
 
@@ -312,7 +308,7 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
 
 - `packages/earth/lib/App.tsx:78` — `defaultAddress={query ?? DEFAULT_ADDRESS}` pre-fills the field with
   the full White House address. There is **no `autoFocus`, no `onFocus`, no `.select()`** anywhere in
-  `packages/earth/lib` or `packages/react/lib`. Clicking the field drops a caret mid-string: typing an
+  `packages/earth/lib` or `packages/react/lib`. The caret starts mid-string when a user clicks the field: typing an
   address produces `1600 Pennsylvania Ave NW, W<your text>ashington, DC 20500`, which is exactly what
   happened on the first run of this audit. Select-on-focus, or ship the field empty with the address as
   placeholder only.
@@ -397,11 +393,11 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
   breakpoint: `.mw-map-chrome--top` reserves the rail's width at every viewport. Above ~620px
   `max-width` decides the box and the inset is never reached, so it costs no extra work and cannot drift out
   of tune when a control changes size.
-- `packages/earth/lib/panels/VersionCompare/styles.module.css` — 9 hardcoded state colours (`#d8504a`,
+- `packages/earth/lib/panels/VersionCompare/styles.module.css` — 9 hardcoded state colors (`#d8504a`,
   `#1aa84d` and their rgba washes at `:129-169`) where `--color-state-danger` / `-success` / `-warning`
   already exist, none of which respond to the theme switch.
 - `packages/earth/vite.config.ts:26` — `themeColor: "#0b1020"` matches no token (`--brand-navy` is
-  `#00093a`). A fourth, undocumented brand colour in the PWA manifest.
+  `#00093a`). A fourth, undocumented brand color in the PWA manifest.
 - ~30 raw `px` spacing values across 7 earth CSS files; 7 inline styles hardcoding type sizes
   (`0.8rem` / `0.85rem` / `0.9rem`) that correspond to no step in the scale.
 
@@ -410,7 +406,7 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
 ## P2 — docs polish
 
 - **`--ifm-color-content-secondary: rebeccapurple;`** — `docs/src/css/theme-light.css:45`. A CSS named
-  colour, shipped. It drives `--ifm-font-color-secondary` (`:53`) and `--ifm-toc-link-color` (`:218`), so
+  color, shipped. It drives `--ifm-font-color-secondary` (`:53`) and `--ifm-toc-link-color` (`:218`), so
   in light mode the right-hand TOC and every piece of secondary copy on the homepage render `#663399`.
   The dark theme's counterpart carries a `/* FIX: was pure white (too bright) */` marker at
   `theme-dark.css:35` — this one never got the same pass.
@@ -421,7 +417,7 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
   `TrainingChart.tsx`. `PricingTiers` stays: its docblock records a decision to keep it for the Product
   door. That door has since landed, so keeping it is now a choice rather than a wait. Verified by `docusaurus
 build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
-- `docs/src/pages/index.module.css` — 25 colour literals, 2 media queries, **zero `[data-theme]`
+- `docs/src/pages/index.module.css` — 25 color literals, 2 media queries, **zero `[data-theme]`
   overrides**; `:119-153` adds eight `rgba(255,255,255,…)` values that assume a dark hero.
   `GuidedTour/styles.module.css:172-186` is half-tokenised: the correct
   `var(--ifm-color-info-contrast-background, …)` pattern sits ten lines above four rules that skip it.
@@ -447,7 +443,7 @@ seen from different widths: two surfaces over one map, neither of which owned th
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Weird gap at the top                          | FIXED. The grip bar took a 2.5rem minimum whether or not it held anything; on a desktop with no result it held no content. Its height is now its contents. |
 | Overlap with the pills                        | FIXED. The search and the control rail no longer share a row at any width — the panel is a left column, the rail stays at the right.                       |
-| Magnifying glass too small                    | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                           |
+| Search icon too small                         | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                           |
 | Mobile layout gets stuck with the box open    | FIXED. The drawer detents: drag the grabber down and the result goes, leaving the search field and the examples.                                           |
 | Search box shares its width with the controls | FIXED. The search is inside the panel, so it spans the panel.                                                                                              |
 
@@ -466,7 +462,7 @@ the About, Layers and Developer panels close differently from the result.
 
 ---
 
-## Duplicate-behaviour sweep over the map chrome
+## Duplicate-behavior sweep over the map chrome
 
 Run after the restructure, because a rearrangement is when copies of one idea get left behind. Every item
 fixed here was two implementations of one thing, and four of them had already disagreed.
@@ -505,17 +501,17 @@ browser suites need Playwright browsers that VM has no egress to fetch.
 
 ## Magic numbers in the stylesheets
 
-| Was                                                                 | Count                                      | Now                                                                         |
-| ------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
-| Confidence tier colours as raw hex, in **two disagreeing palettes** | 5 rule groups + 9 more in `VersionCompare` | `--color-confidence-{high,mid,low}` and their tints, over the state palette |
-| Padding / margin / gap values picked by eye                         | 19 distinct, 171 declarations              | `--space-0` … `--space-6`, seven steps on a 2px grid                        |
-| Raw pixel `border-radius`                                           | 6 values (2/3/4/6/8/10) + `999px` ×4       | `--radius-tick`, `--radius-tight`, and the three steps that existed         |
-| Pixel lengths that should scale with type                           | 7 (`720px`, `320px`, `480px`, …)           | rem                                                                         |
-| Stage hues on the timing bar, raw hex                               | 3                                          | `--color-stage-{shape,classify,resolve}`                                    |
+| Was                                                                | Count                                      | Now                                                                         |
+| ------------------------------------------------------------------ | ------------------------------------------ | --------------------------------------------------------------------------- |
+| Confidence tier colors as raw hex, in **two disagreeing palettes** | 5 rule groups + 9 more in `VersionCompare` | `--color-confidence-{high,mid,low}` and their tints, over the state palette |
+| Values picked by eye                                               | 19 distinct, 171 declarations              | `--space-0` … `--space-6`, seven steps on a 2px grid                        |
+| Raw pixel `border-radius`                                          | 6 values (2/3/4/6/8/10) + `999px` ×4       | `--radius-tick`, `--radius-tight`, and the three steps that existed         |
+| Pixel lengths that should scale with type                          | 7 (`720px`, `320px`, `480px`, …)           | rem                                                                         |
+| Stage hues on the timing bar, raw hex                              | 3                                          | `--color-stage-{shape,classify,resolve}`                                    |
 
 **The one that was a defect rather than untidiness.** The bars and the About legend painted `#22c55e / #f59e0b /
 #ef4444`; the span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a`. So the legend that
-explains the confidence colours used colours the results table does not, and the comment above the span
+explains the confidence colors used colors the results table does not, and the comment above the span
 rules said _"The tier tints match `.mw-conf__bar--high/--mid/--low`."_ Raw hex also meant the tiers did not
 follow the theme, on surfaces that flip from white to near-black.
 
@@ -544,7 +540,7 @@ real hardware. Four were mine, and one of them was a rule I had argued myself ou
 **The ref written during render.** The permalink race — `?q=` answering "Classifier not ready" on a page
 whose classifier had loaded — came from mirroring `rt.assets` into a ref in an EFFECT: React runs effects
 child-first, so the descendant that reacts to `ready` flipping true read the mirror before the parent wrote
-it. Moving the write into render closed that window and broke a different rule, and `react(refs)` was right
+it. A render-time write closed that window and broke a different rule, and `react(refs)` was right
 to say so: a value written during render is one React is entitled to discard.
 
 The fix is neither mirror. The callbacks that parse with a bundle now DEPEND on the bundle — `rt.assets`,
@@ -555,8 +551,8 @@ existed to hold identity fixed across exactly that change, which is the one time
 
 **The rest.** A test reaching into `#map/graticule`, the package's private imports map, instead of a public
 export (`./map/graticule` added, and the test now imports it the way the geometry test does); two missing
-hook dependencies; two unnamed thresholds in the drawer gestures (`3` for a press that has travelled far
-enough to be a drag, `8` for a pull at the top of the scroll that has travelled far enough to be one, and the
+hook dependencies; two unnamed thresholds in the drawer gestures (`3` for a press that has traveled far
+enough to be a drag, `8` for a pull at the top of the scroll that has traveled far enough to be one, and the
 second is larger on purpose, because that gesture starts on content that could still turn out to be
 scrolling); `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LATITUDE` already there; and
 `beforeId`, which title-cases an acronym the house style capitalizes whole.

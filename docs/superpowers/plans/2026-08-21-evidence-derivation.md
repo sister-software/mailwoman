@@ -4,7 +4,7 @@
 
 **Goal:** Give the repository one vocabulary for typed evidence and epistemic status, wire the coverage-basis exclusion check that already exists and has never been called, and project a derivation into the geocode result.
 
-**Architecture:** A new zero-dependency leaf workspace `@mailwoman/evidence` owns the evidence union, the epistemic-status axis, `CoverageBasis` + `supportsExclusion` (moved out of `@mailwoman/core/layers`, which re-exports them), and the derivation projection. Four consumers adopt it, ordered by what can be built today: `plausibilityCheck` re-expressed without a behaviour change, a GB spatial-existence probe over `uprn.db`, the resolver's demote-only negative mode, and a US `surveyed` coverage basis from Census H1. Exclusions demote candidates and never remove them.
+**Architecture:** A new zero-dependency leaf workspace `@mailwoman/evidence` owns the evidence union, the epistemic-status axis, `CoverageBasis` + `supportsExclusion` (moved out of `@mailwoman/core/layers`, which re-exports them), and the derivation projection. Four consumers adopt it, ordered by what can be built today: `plausibilityCheck` re-expressed without a behavior change, a GB spatial-existence probe over `uprn.db`, the resolver's demote-only negative mode, and a US `surveyed` coverage basis from Census H1. Exclusions demote candidates and never remove them.
 
 **Tech Stack:** TypeScript running directly under Node (type stripping, `.ts` specifiers, `erasableSyntaxOnly`), vitest, Kysely over `node:sqlite`, H3.
 
@@ -14,7 +14,7 @@
 
 - **`erasableSyntaxOnly: true`.** Do not use `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), constructor parameter properties, or runtime namespaces.
 - **Relative imports use explicit `.ts` extensions.** Each workspace tsconfig sets `rewriteRelativeImportExtensions: true`.
-- **`@mailwoman/evidence` has zero runtime dependencies.** It depends on neither `@mailwoman/core` nor `@mailwoman/spatial`. Adding a dependency defeats the reason the workspace exists.
+- **`@mailwoman/evidence` has zero runtime dependencies.** It depends on neither `@mailwoman/core` nor `@mailwoman/spatial`. A dependency would defeat the reason the workspace exists.
 - **Acronym casing:** acronyms are whole camelCase components: `parseJSON`, `readID`, `POILookup`. Write `ID`, never `Id`. `sister-software/no-title-case-acronym` in `yarn lint:oxlint` enforces this.
 - **Do not read `process.env` / `process.argv` directly.** CI enforces this. Use `core/env/schema.ts` + `env-paths`.
 - **Data-root paths go through `@mailwoman/core/utils`** (`dataRootPath`, `dataRootPath`). Never hard-code `$MAILWOMAN_DATA_ROOT`.
@@ -65,7 +65,7 @@ jq -r '[.misses[] | select((.elsewhere|length)==0 and .band=="locality")][] | "\
 
 - [ ] **Step 4: Classify every row into exactly one of four classes**
 
-Classify by hand, because the measurement cannot make this judgement. The classes, with the observed exemplars:
+Classify by hand, because the measurement cannot make this judgment. The classes, with the observed exemplars:
 
 | Class           | Test                                                                 | Exemplars                                                                             |
 | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -491,7 +491,7 @@ rule into the type system for callers who build a link outside a database."
 **Also in this task:** move `res9ShortCellToRes6Parent` from `packages/bdc/lib/sdk/filing-landscape.ts` to
 `@mailwoman/spatial/h3/cell`, generalized over its two resolutions. It currently closes over
 `BDC_H3_RESOLUTION` / `BDC_COVERAGE_H3_RESOLUTION`, and Task 5 needs the identical derivation inside
-`resolver-wof-sqlite`. Importing it from `@mailwoman/bdc` would reverse the dependency direction. The
+`resolver-wof-sqlite`. An import from `@mailwoman/bdc` would reverse the dependency direction. The
 same share-the-function rule that moves `CoverageBasis` applies. See Steps 10-12.
 
 - [ ] **Step 1: Write the failing test**
@@ -791,7 +791,7 @@ export const FOLD_PROBE_CORPUS: readonly string[] = [
 ]
 
 /**
- * Identify a fold by its BEHAVIOUR over {@link FOLD_PROBE_CORPUS} — a name cannot do this job.
+ * Identify a fold by its BEHAVIOR over {@link FOLD_PROBE_CORPUS} — a name cannot do this job.
  *
  * Two folds that compute the same answers are interchangeable and share an identity, which is the property
  * the exclusion check needs: it is asking "was this key built by a fold equivalent to mine" rather than "were these
@@ -859,7 +859,7 @@ Add to `packages/spatial/lib/h3/cell.ts`, generalized over both resolutions:
 /**
  * Reconstruct a short-cell int's ancestor at a coarser resolution WITHOUT going through a centroid.
  *
- * The centroid is the wrong input: re-deriving a parent from a stored cell's centre can land in a different
+ * The centroid is the wrong input: re-deriving a parent from a stored cell's center can land in a different
  * parent than the original cell belonged to, so a coverage read and the build that wrote it disagree on a
  * fraction of cells. Reconstructing from the stored cell itself is exact.
  *
@@ -910,7 +910,7 @@ and Sao Paulo - SP both read as coverage misses on the board and both are real."
 
 ---
 
-## Task 4: Re-express `plausibilityCheck` — no behaviour change
+## Task 4: Re-express `plausibilityCheck` — no behavior change
 
 **Files:**
 
@@ -981,7 +981,7 @@ yarn compile
 yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
 
-Expected: pass with the same test count as Step 1, and **zero edits to the test file**. If a test needed changing, the re-expression changed behaviour and must be redone.
+Expected: pass with the same test count as Step 1, and **zero edits to the test file**. If a test needed changing, the re-expression changed behavior and must be redone.
 
 - [ ] **Step 6: Commit**
 
@@ -1161,7 +1161,7 @@ export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 ```
 
 `UPRN_EXISTENCE_FOLD` uses the identity fold on purpose. This probe keys on a coordinate rather than a name, so
-no string folding can disagree. Passing the same identity as both `probeFold` and `layerFold` records that the
+no string folding can disagree. The same identity in both `probeFold` and `layerFold` records that the
 fold axis does not apply here, rather than silently omitting the check. Say so in the comment, or a future
 reader will take it for a stub.
 

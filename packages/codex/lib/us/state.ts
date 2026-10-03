@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   US two-letter postal abbreviations for the 50 states, DC, and the five primary territories.
+ *   US two-letter postal abbreviations for the 50 states, DC and the five primary territories.
  *
  *   This is the minimal state primitive `zipcode.ts` needs (a closed abbreviation set + predicate)
  *   without pulling in `@mailwoman/tiger`'s FIPS enums and their `shapefile-parser` dependency —
@@ -12,13 +12,13 @@
  *
  *   Like a Canadian province code, a US state's two-letter abbreviation is a posted surface rather than only a
  *   resolver key — `ca/province.ts` states the contrast with Germany and France in its own header — so this module
- *   carries the name→abbreviation direction too.
+ *   includes the name→abbreviation direction too.
  */
 
 import { foldName } from "#normalize"
 
 /**
- * USPS two-letter abbreviations: the 50 states, the District of Columbia, and the five primary
+ * USPS two-letter abbreviations: the 50 states, the District of Columbia and the five primary
  * territories (Puerto Rico, Guam, US Virgin Islands, Northern Mariana Islands, American Samoa).
  */
 export const US_STATE_ABBREVIATIONS = [
@@ -106,7 +106,7 @@ export function formatAsUSStateAbbreviation(value: string): USStateAbbreviation 
 }
 
 /**
- * Full names for the 50 states, DC, and the five primary territories, keyed by USPS abbreviation.
+ * Full names for the 50 states, DC and the five primary territories, keyed by USPS abbreviation.
  *
  * The names half of the closed region vocabulary.
  * Where the country/state homographs live ("Georgia", "Washington"), which the

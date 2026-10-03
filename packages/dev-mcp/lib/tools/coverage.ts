@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   MCP interface for per-country parse, geocoding, and training coverage reports.
+ *   MCP interface for per-country parse, geocoding and training coverage reports.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -17,7 +17,7 @@ import {
 	ParseReading,
 	parseReading,
 	resolveTrainingConfig,
-} from "mailwoman/coverage"
+} from "mailwoman/tools/coverage"
 import { z } from "zod"
 
 import type { DevTool, DevToolDeps } from "#tool-kit"
@@ -107,7 +107,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const report = await censusCoverage({
 			configPath,
 			manifestPath,
-			casesRoot: repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"),
+			casesRoot: repoRootPath("packages", "mailwoman", "tools", "eval-harness", "gauntlet", "cases"),
 			refresh: args["refresh"] === true,
 		})
 
@@ -145,9 +145,14 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		rows: shown,
 		rendered: shown.map(line),
 		...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
+		// Reported beside `rows` rather than inside it.
+		// These rows exist in the corpus and belong to no jurisdiction.
+		// A caller that reads only `rows` would not know they were counted.
+		...(report.countryLess.length ? { country_less_rows: report.countryLess } : {}),
 		mismatches: report.mismatches,
 		summary:
-			// A mismatch leads. A caller reads the first sentence, and every count after it is about a corpus the run does not read.
+			// A mismatch leads. A caller reads the first sentence.
+			// Every following count is about a corpus the run does not read.
 			(report.corpusMismatch ? `CORPUS MISMATCH — ${report.corpusMismatch} ` : "") +
 			`${trained.length} countries train (${withStreet.length} with street-level rows); ` +
 			`${report.countries.filter((c) => c.gazetteerPlaces > 0).length} are geocodable to a locality, ` +
@@ -157,6 +162,10 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 				: "") +
 			(report.mismatches.packageWithoutTraining.length
 				? `Ships a locale package but was never trained: ${report.mismatches.packageWithoutTraining.join(", ")}. `
+				: "") +
+			(report.countryLess.length
+				? `COUNTRY-LESS: ${report.countryLess.map((entry) => `${entry.code} ${entry.rows} rows`).join(", ")}, ` +
+					`counted in the total and excluded from the per-country rows. `
 				: "") +
 			(report.corpusCensusTakenAt
 				? `Corpus counts are CACHED from ${report.corpusCensusTakenAt} — pass refresh after building a new corpus.`

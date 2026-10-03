@@ -1,0 +1,61 @@
+{
+	// The command-line root: the bin, the command tree, the CLI kit and its views. It compiles to `../out/cli` beside
+	// the library's `../out`. The command line imports the library and the tooling, and neither imports it.
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": ".",
+		"outDir": "../out/cli",
+		// The Ink commands are TSX.
+		"jsx": "react-jsx",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"include": ["./**/*"],
+	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [
+		{ "path": ".." },
+		{ "path": "../tools" },
+		// ---
+		{ "path": "../../api" },
+		{ "path": "../../api-kit" },
+		{ "path": "../../ban" },
+		{ "path": "../../ban/sdk" },
+		{ "path": "../../bdc" },
+		{ "path": "../../bdc/sdk" },
+		{ "path": "../../coastal" },
+		{ "path": "../../coastal/sdk" },
+		{ "path": "../../core" },
+		{ "path": "../../core/tools" },
+		{ "path": "../../corpus" },
+		{ "path": "../../evidence" },
+		{ "path": "../../filer" },
+		{ "path": "../../filer/sdk" },
+		{ "path": "../../filer/tools" },
+		{ "path": "../../flood" },
+		{ "path": "../../flood/sdk" },
+		{ "path": "../../geographic-model" },
+		{ "path": "../../kind-classifier" },
+		{ "path": "../../locale-hint" },
+		{ "path": "../../map-tui" },
+		{ "path": "../../match" },
+		{ "path": "../../neural" },
+		{ "path": "../../normalize" },
+		{ "path": "../../osm" },
+		{ "path": "../../osm/sdk" },
+		{ "path": "../../phrase-grouper" },
+		{ "path": "../../poi-taxonomy" },
+		{ "path": "../../query-shape" },
+		{ "path": "../../registry" },
+		{ "path": "../../registry/tools" },
+		{ "path": "../../resolver" },
+		{ "path": "../../resolver-wof-sqlite" },
+		{ "path": "../../resolver-wof-wasm" },
+		{ "path": "../../soil" },
+		{ "path": "../../soil/sdk" },
+		{ "path": "../../spatial" },
+		{ "path": "../../sqlite" },
+		{ "path": "../../zoning" },
+		{ "path": "../../zoning/sdk" }
+	]
+}

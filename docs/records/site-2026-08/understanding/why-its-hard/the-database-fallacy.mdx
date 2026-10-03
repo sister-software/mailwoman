@@ -41,7 +41,7 @@ OSM is a collaborative map of the physical world rather than an address database
 
 ### The union of all sources
 
-If you combine USPS AMS + OSM + BAN + NAD + WOF + OpenAddresses + TIGER + every state-level parcel dataset, you get a superset that still has gaps. Rural routes, informal settlements, new construction, addresses in administrative transition — these are systematically underrepresented in every source because they are hard to collect. The union is larger than any single source but the missingness is correlated across sources rather than independent. Combining them doesn't fill the gaps — it makes the known-unknowns more visible.
+The union of USPS AMS + OSM + BAN + NAD + WOF + OpenAddresses + TIGER + every state-level parcel dataset still has gaps. Rural routes, informal settlements, new construction, addresses in administrative transition — these are systematically underrepresented in every source because they are hard to collect. The union is larger than any single source but the missingness is correlated across sources rather than independent. Their union leaves the gaps and makes the known-unknowns more visible.
 
 ## Fallacy 2 — Addresses are not coordinates
 
@@ -52,7 +52,7 @@ An address is a **social protocol for directing a human courier** rather than a 
 | USPS mailing            | 350 5th Ave, New York, NY 10118         |
 | 911 emergency           | 350 5th Ave, Manhattan, NY 10001        |
 | Utility billing (ConEd) | 350 5th Ave, New York, NY 10001-0001    |
-| Building management     | Empire State Building, 350 Fifth Avenue |
+| Property oversight      | Empire State Building, 350 Fifth Avenue |
 | What a tourist types    | Empire State Building, NYC              |
 
 All five refer to the same physical building. A database that stores only the USPS form will not match a tourist query. A database that stores only the mailing address will misroute a 911 call. A database that tries to store all five forms needs a data model that treats them as equivalent — and that equivalence is a human judgment rather than a database join.
@@ -86,16 +86,16 @@ Municipalities annex, de-annex, incorporate, dissolve, and rename themselves. Po
 | What changes            | How frequently     | Example                                                        |
 | ----------------------- | ------------------ | -------------------------------------------------------------- |
 | Municipality annexation | Annual             | Austin, TX annexed ~50 sq mi between 2010-2020                 |
-| Street renaming         | Ongoing            | "Malcolm X Boulevard" replaces "Reid Avenue" in Brooklyn       |
+| Street name change      | Ongoing            | "Malcolm X Boulevard" replaces "Reid Avenue" in Brooklyn       |
 | Postcode split          | As needed          | 90210 split into 90210 and 90211 when volume exceeded capacity |
 | New construction        | Continuous         | ~1.4M new US housing units per year                            |
-| Building renumbering    | Rare but impactful | Entire blocks renumbered when addressing standards change      |
+| Property number change  | Rare but impactful | Entire blocks renumbered when addressing standards change      |
 
 A database snapshot taken in 2024 is wrong in 2026 for some fraction of its entries. The error is not random. It concentrates in the places that are changing the most: growing cities, developing economies, regions with active administrative reform. These are exactly the places where geocoding accuracy matters most.
 
 ### The maintenance cost
 
-Keeping a national address database current requires continuous field data collection, integration from municipal building-permit systems, USPS change-of-address feeds, and manual correction of user-reported errors. The USPS spends about $1 billion per year on address management. The UK's Ordnance Survey spends about £150 million. France's BAN is maintained by a consortium of government agencies and La Poste.
+A national address database requires continuous field data collection, integration from municipal building-permit systems, USPS change-of-address feeds, and manual correction of user-reported errors. The USPS spends about $1 billion per year on address management. The UK's Ordnance Survey spends about £150 million. France's BAN is maintained by a consortium of government agencies and La Poste.
 
 For a geocoder that consumes these databases, the maintenance burden is lower — you pull updates from upstream sources. But you are still dependent on those upstream sources staying current, staying funded, and staying in a format you can consume. When the UK's AddressBase licensing terms changed in 2020, several open-source geocoders had to drop UK coverage entirely.
 

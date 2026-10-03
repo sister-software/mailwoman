@@ -4,7 +4,7 @@
 /**
  * @file `fetchGeonamesPostal` — and specifically what it does with a country GeoNames does not publish.
  *
- *   That is the behaviour worth a test. GeoNames covers ~80 countries rather than all of them, so a caller planning a postcode
+ *   That is the behavior worth a test. GeoNames covers ~80 countries rather than all of them, so a caller planning a postcode
  *   recipe output needs "this country does not exist upstream" kept apart from "the transfer failed". The first is an
  *   acquisition question and the second is a retry. Venezuela is the live instance: it 404s and the country the
  *   gauntlet evidence for the `«locality» «postcode»` defect comes from.
@@ -15,9 +15,10 @@ import type { AddressInfo } from "node:net"
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { fetchGeonamesPostal } from "@mailwoman/corpus/tools"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+import { fetchGeonamesPostal } from "#tools"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -78,8 +79,8 @@ afterAll(() => server[Symbol.asyncDispose]())
 /**
  * The retry count is what these cases pin.
  *
- * The pause between attempts is not, and paying the shipped 5 s twice per failing
- * transfer cost this file 20.1 s of the fast leg.
+ * The pause between attempts is absent.
+ * The shipped 5 s timeout runs twice per failing transfer and cost this file 20.1 s of the fast leg.
  */
 const RETRY_DELAY_MS = 1
 

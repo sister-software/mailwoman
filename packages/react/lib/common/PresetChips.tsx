@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `PresetChips` — the "Try:" row of example buttons shared by both explorers. Presentational: it
- *   renders a labelled list and calls `onPick` with the chosen preset's value.
+ *   `PresetChips` is the "Try:" row of example buttons shared by both explorers. Presentational: it
+ *   renders a labeled list and calls `onPick` with the chosen preset's value.
  */
 
 import type { ReactNode } from "react"
@@ -12,12 +12,10 @@ export interface Preset {
 	label: string
 	value: string
 	/**
-	 * ISO country code for the placetype-pair country pin (#1278 phase 2's `{country}` override).
+	 * ISO country code for the placetype-pair country pin.
 	 *
-	 * Optional: a host that wires the pair prior hands this to `selectPairIndexForText`
-	 * when the input still equals this preset's text, so a locale structural routing can't
-	 * detect (NZ's 4-digit postcode isn't distinctive) still fires the dependent_locality prior.
-	 * Purely descriptive to `PresetChips` itself (which only emits `value`).
+	 * A host that wires the pair prior hands this to `selectPairIndexForText`
+	 * when the input still equals this preset's text.
 	 */
 	country?: string
 }
@@ -27,12 +25,12 @@ export interface PresetChipsProps {
 	onPick: (value: string) => void
 	disabled?: boolean
 	/**
-	 * Leading label. @default "Try:"
+	 * The label shown before the choices. @default "Try:"
 	 */
 	caption?: string
 	/**
 	 * Optional trailing content rendered inside the chip row after the presets
-	 * (e.g. An inline permalink button).
+	 * (e.g. an inline permalink button).
 	 */
 	trailing?: ReactNode
 }

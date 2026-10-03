@@ -109,7 +109,7 @@ import 102 ms | load 789 ms | first parse 193 ms | total 1085 ms | rss 407 MB
 import  99 ms | load 844 ms | first parse 195 ms | total 1138 ms | rss 376 MB
 ```
 
-Adding the gazetteer and geocoding an address instead of parsing it:
+To add the gazetteer and geocode an address instead of parsing it:
 
 ```
 import 191 ms | model 791 ms | open db 1 ms | first geocode 223 ms | total 1207 ms | rss 425 MB
@@ -121,11 +121,11 @@ import 192 ms | model 690 ms | open db 1 ms | first geocode 226 ms | total 1109 
 
 Three things to take from that.
 
-**Opening the gazetteer costs 1 ms.** A 2.88 GB SQLite file is memory-mapped rather than read, so the file's
-size does not appear in the cold start at all. Geocoding adds about 100 ms of cold start over parsing,
+**The gazetteer opens in 1 ms.** The operating system memory-maps the 2.88 GB SQLite file instead of reading it, so the file's
+size does not appear in the cold start at all. A geocoding call adds about 100 ms of cold start over parsing,
 and all of it is the extra module graph rather than the database.
 
-**Loading the model is 70% of the cold start and cannot be moved.** It is one ONNX session build over a
+**Model loading takes 70% of the cold start.** One ONNX session build processes a
 39 MB graph. Warm requests do not pay it, so the change is instance lifetime rather than code.
 
 **Resident set lands near 375 MB parse-only and 425 MB with a resolver.** Size the instance above that
@@ -182,10 +182,9 @@ MAILWOMAN_CANDIDATE_DB=/mnt/gazetteer/candidate-2026-08-25b.db
 
 Both are read on each call rather than cached at import, so setting them after the module graph loads
 still works. That is why the snippet in step 4 calls `await resolveCandidateDBPath()` rather than reading
-either variable itself: the helper applies the full flag-then-variable-then-convention search, it is
-what the CLI and the drop-in servers use, and it returns no path when the file is
-absent — so a cold instance with a broken mount fails at the resolver you can see instead of inside
-SQLite.
+either variable itself: the helper applies the full flag-then-variable-then-convention search. The CLI
+and drop-in servers use this helper. It returns no path when the file is absent, so a cold instance
+with a broken mount fails at the resolver you can see instead of inside SQLite.
 
 Two mount details that bite. If `wof/candidate.db` is a symlink on the host, point
 `$MAILWOMAN_CANDIDATE_DB` at the real file — an absolute-path symlink dangles inside a container.
@@ -237,7 +236,7 @@ The `onnxruntime` check is the one that catches a trim that went too far.
   serves one geocode at a time no matter how deep the request queue gets. Scale with instances.
   [Geocode a large file at volume](./batch-geocode-at-volume.mdx) measures this.
 - **There is no GPU path in Node.** WebGPU exists only in the browser runtime
-  (`@mailwoman/neural/web-onnx-runner`); removing the CUDA provider above has no cost because no code path
+  (`@mailwoman/neural/web/onnx-runner`); removing the CUDA provider above has no cost because no code path
   loads it.
 - **Cold start is about 1.1 s and the model load is 70% of it.** If your platform charges for
   initialization time, budget for it rather than trying to shrink it.

@@ -2,7 +2,7 @@
 
 `optim.load_state_dict()` overwrites every param group's `lr` and `initial_lr` with the checkpoint's saved values and `scheduler.load_state_dict()` does it again to the scheduler's base rates, so the live rates must be captured before either load and re-stamped after both.
 
-The config carries two rates — `train.learning_rate` and the `classifier_learning_rate` carve-out — so the check is per group."""
+The config defines two rates — `train.learning_rate` and the `classifier_learning_rate` carve-out — so the check is per group."""
 
 from __future__ import annotations
 
@@ -28,8 +28,8 @@ from tests import paths
 
 PROBE_2K = paths.CONFIGS / "v8-cjk-full-2k.yaml"
 
-#: The rate the checkpoint was written at, and the one a resume is configured with. Different by
-#: construction: if they matched, the test would pass whichever one survived.
+#: The checkpoint's saved rate and the rate configured for resume differ by construction.
+#: If they matched, the test could not distinguish which value survived.
 CHECKPOINT_LR = 5e-4
 LIVE_LR = 2e-5
 
@@ -78,7 +78,10 @@ def _fresh_optimization(cfg: Config) -> Optimization:
 
 
 def _initial_lrs(optimization: Optimization) -> list[float]:
-    """Read straight off the param groups — not from `live_group_lrs`, which is what is under test."""
+    """Read the values from the param groups.
+
+    `live_group_lrs` is under test, so this helper reads the source values directly.
+    """
     return [float(group["initial_lr"]) for group in optimization.optimizer.param_groups]
 
 

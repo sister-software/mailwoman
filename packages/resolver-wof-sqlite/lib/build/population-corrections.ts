@@ -4,20 +4,18 @@
 /**
  * @file Populations the gazetteer records at a fraction of their size, corrected against the record's own concordance.
  *
- *   A review queue rather than a campaign. `same-name-parent-population.run.ts` reports 964 localities whose population is a
- *   fraction of their same-name parent's, and #2269 refuses to rewrite them from that signal: the detector cannot tell
- *   a district's mis-recorded namesake city from a small village sharing the district name, and both ends are real —
- *   three separate `Sultanpur` rows at 226, 235 and 255 people inside Sultanpur district are plausibly three villages.
- *   A build step that rewrote 964 populations on a ratio would invent numbers.
+ *   This file records corrections for review. The build must not rewrite populations from a
+ *   same-name-parent ratio. The detector cannot distinguish a district's mis-recorded namesake
+ *   city from a small village with the district name. Both places are real.
  *
- *   An entry here is therefore one row someone followed to a second source and read. The bar is the row's own
- *   `gn:id` concordance, the coordinates agreeing, and the GeoNames record naming the same place — not the ratio that
- *   surfaced it.
+ *   Each entry identifies one row that a reviewer checked against a second source.
+ *   The row's own `gn:id` must agree with the coordinates. The GeoNames record must identify the same place.
  *
- *   this corrects the candidate artifact rather than the admin gazetteer. `place_population` in
- *   `admin-global-priority.db` still carries the WOF figure, so a reader going there sees what WOF says and a reader
- *   going to `candidate.db` sees the corroborated number. That split is deliberate: the admin database is a
- *   transcription of its source and correcting it there would make the transcription disagree with what it transcribes.
+ *   The correction applies to the candidate artifact rather than the admin gazetteer.
+ *   `place_population` in `admin-global-priority.db` still stores the WOF figure, so a reader going
+ *   there sees WOF's value and a reader going to `candidate.db` sees the corroborated number. The
+ *   admin database is a transcription of its source, so correcting it there would make the
+ *   transcription disagree with what it transcribes.
  */
 
 /**
@@ -28,13 +26,9 @@ export interface PopulationCorrection {
 	 * The GeoNames id from the WOF record's own `concordances` row makes this a
 	 * correction rather than a substitution.
 	 *
-	 * The two sources describe the same place because WOF says so.
-	 * Therefore, the correction preserves the source identity.
+	 * The two sources describe the same place according to WOF.
 	 */
 	geonamesID: string
-	/**
-	 * The population the second source states.
-	 */
 	population: number
 	/**
 	 * What the gazetteer recorded, kept so a reader can see the size of the
@@ -42,7 +36,7 @@ export interface PopulationCorrection {
 	 */
 	recorded: number
 	/**
-	 * The place, and the reading a reviewer made.
+	 * The place and the reviewer's reading.
 	 */
 	note: string
 }
@@ -51,8 +45,10 @@ export interface PopulationCorrection {
  * WOF id → the corrected population.
  *
  * One entry, because one row has been followed.
- * Adding a second is the same work again: read the row's `gn:id`, confirm the
- * coordinates agree, and state what the second source says.
+ * A second correction requires the same review.
+ *
+ * Read the row's `gn:id` and confirm the coordinates agree.
+ * Then record the second source's value.
  */
 export const POPULATION_CORRECTIONS: Readonly<Record<number, PopulationCorrection>> = {
 	102_030_887: {

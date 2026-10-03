@@ -1,9 +1,9 @@
 """Build JP training rows from Overture and KEN_ALL.
 
-The corpus emits stage3-jp admin tags, both compact and designator number registers, and native and
-Arabic chōme forms. Spans are recorded while each surface is rendered and revalidated by the training
-consumer. Variant folding, name-field hyphen folding, feature channels, and unsourced building names
-remain outside this builder.
+The corpus emits stage3-jp admin tags. It uses compact and designator number registers, plus native
+and Arabic chōme forms. Spans are recorded while each surface is rendered and revalidated by the
+training consumer. Other code handles variant folding and name-field hyphen folding. It also handles
+feature channels and unsourced building names.
 """
 
 from __future__ import annotations

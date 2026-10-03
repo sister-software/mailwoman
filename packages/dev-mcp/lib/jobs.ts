@@ -5,7 +5,7 @@ import { type ChildProcess, spawnProcess } from "@mailwoman/core/process"
 
 /**
  *   Long-running child processes, polled rather than awaited: a gauntlet outlives what a synchronous tool call should
- *   hold open, and an MCP client that times out mid-run leaves the work orphaned and reports no result.
+ *   hold open. An MCP client that times out mid-run leaves the work orphaned and reports no result.
  *
  *   Output is captured rather than inherited because this process speaks JSON-RPC over stdout, so a child writing there
  *   would corrupt the transport — which is also why the gauntlet is spawned rather than imported.
@@ -90,8 +90,8 @@ export class JobRegistry {
 			job.endedAt = Date.now()
 			job.exitCode = code
 			job.child = null
-			// A signalled exit is a cancellation.
-			// Grading it as a failure verdict would let a killed run read as a graded `fail`.
+			// A signaled exit is a cancellation.
+			// A failure verdict would let a killed run read as a graded `fail`.
 			job.state = job.state === "cancelled" || signal ? "cancelled" : code === 0 ? "succeeded" : "failed"
 		})
 

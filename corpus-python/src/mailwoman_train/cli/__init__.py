@@ -1,7 +1,6 @@
 """The `python -m mailwoman_train` command line.
 
-`commands/` holds one module per subcommand, `parser.py` assembles them, and this module is what a
-caller imports.
+`commands/` holds one module per subcommand. `parser.py` assembles them. Callers import this module.
 """
 
 from __future__ import annotations

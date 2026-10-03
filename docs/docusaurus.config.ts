@@ -18,7 +18,7 @@ const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
 const gitHash = (() => {
 	try {
-		// oxlint-disable-next-line mailwoman/prefer-home -- the Docusaurus config loader is synchronous, and `@mailwoman/core/git` answers a promise
+		// oxlint-disable-next-line mailwoman/prefer-home -- the Docusaurus config loader is synchronous. `@mailwoman/core/git` answers a promise.
 		return runShellSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
 	} catch {
 		return "unknown"
@@ -69,10 +69,10 @@ const config: Config = {
 		// Any other face still loads lazily.
 		...(
 			[
-				"IoveskaCustom/WOFF2/IosevkaCustom-Regular.woff2",
-				"IoveskaCustom/WOFF2/IosevkaCustom-Book.woff2",
-				"IoveskaCustom/WOFF2/IosevkaCustom-Bold.woff2",
-				"IosevkaCustomMono/WOFF2/IosevkaCustomMono-Regular.woff2",
+				"BlissPro/WOFF2/BlissPro-Latin.woff2",
+				"BlissPro/WOFF2/BlissPro-Medium-Latin.woff2",
+				"BlissPro/WOFF2/BlissPro-Bold-Latin.woff2",
+				"FiraCode/WOFF2/FiraCode-VF.woff2",
 			] as const
 		).map((file) => ({
 			tagName: "link",
@@ -137,12 +137,13 @@ const config: Config = {
 					{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" },
 					// The navbar labels this door "Pricing", so `/pricing` is the URL a visitor guesses.
 					{ from: "/pricing", to: "/docs/pricing" },
-					// Same for the license page, which is the only route that can take money.
+					// The license page is the only route that can take money.
 					{ from: ["/licensing", "/licenses"], to: "/license" },
 				],
 			},
 		],
 		"./plugins/runtime-assets/plugin.ts",
+		"./plugins/search-index/plugin.ts",
 		[
 			// Wraps docusaurus-plugin-glossary with the same validation, tooltips and remark.
 			// Adds a custom page with tag filters and a category TOC.
@@ -228,8 +229,8 @@ const config: Config = {
 				},
 				theme: {
 					customCss: [
-						"./src/css/fonts/IosevkaCustom.css",
-						"./src/css/fonts/IosevkaCustomMono.css",
+						"./src/css/fonts/BlissPro.css",
+						"./src/css/fonts/FiraCode.css",
 						"./src/css/theme-light.css",
 						"./src/css/theme-dark.css",
 						"./src/css/markdown.css",
@@ -254,15 +255,10 @@ const config: Config = {
 		mermaid: {
 			theme: { light: "base", dark: "base" },
 			options: {
-				fontFamily: '"Iosevka Custom Mono Web", "Iosevka", monospace',
+				fontFamily: '"Fira Code Web", monospace',
 				flowchart: { htmlLabels: false, curve: "basis", padding: 18 },
 				themeVariables: { primaryColor: "#ffffff", lineColor: "#21201c" },
 			},
-		},
-		algolia: {
-			appId: "1AEXFQAAAJ",
-			indexName: "Mailwoman Site",
-			apiKey: "637194a77c844e7df987b51d59505272",
 		},
 		navbar: {
 			title: "Mailwoman",

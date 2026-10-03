@@ -23,7 +23,7 @@ left the door open:
 
 So the question is sharp and worth a real measurement: **run the pipeline with `jointReconcile: true`
 and see whether it beats-or-matches argmax (`jointReconcile: false`, the #566 default) — on FR without
-regressing US — grading the assembled pipeline, never raw neural.** Grading raw neural is the mistake
+regressing US — using the assembled pipeline, never raw neural.** A raw-neural score is the mistake
 that hid the original regression for months; we do not repeat it.
 
 ## What we measured

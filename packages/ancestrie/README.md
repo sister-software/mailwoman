@@ -29,7 +29,7 @@ builder.add({ tokens: ["nyc"], id: 11, parentIDs: [10], rank: 0.9, payload: { ki
 const bytes = builder.seal({ metadata: { builtAt: new Date().toISOString() } })
 ```
 
-`parentIDs[0]` is the **primary parent**. Interval containment answers over the primary-parent forest only, which is the DAG-canonicalization rule. The full parent list is preserved and returned verbatim. At seal time each entry receives **pre/post interval labels** over that forest. The labels give O(1) containment checks in both directions and turn descendant enumeration into a contiguous range scan. Sealing is canonical, so the same entries produce identical bytes in any add order.
+`parentIDs[0]` is the **primary parent**. Interval containment answers over the primary-parent forest only, which is the DAG-canonicalization rule. The full parent list is preserved and returned verbatim. At seal time each entry receives **pre/post interval labels** over that forest. The labels give O(1) containment checks in both directions and turn descendant enumeration into a contiguous range scan. `seal()` produces identical bytes for the same entries in any add order.
 
 The read side is browser-safe, and `fetch(...).arrayBuffer()` works as-is:
 

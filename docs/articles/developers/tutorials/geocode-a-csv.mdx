@@ -126,8 +126,8 @@ console.log(
 Five decisions in there are worth naming.
 
 **The classifier, the lookup, the resolver and the `USStateDatabaseProvider` are built once, outside the loop.**
-Loading the model is the expensive part of a geocode, and hoisting it out is why the row count barely
-moves the clock: the same script over one row runs in 1.35 s and over twenty in 1.53 s.
+The model load dominates geocoding cost. The script loads the model once, so row count barely affects
+the runtime: the same script over one row runs in 1.35 s and over twenty in 1.53 s.
 
 **`databases: extracts.for` is what lets this script get more precise later.** `USStateDatabaseProvider` resolves the
 per-state rooftop and interpolation databases by filename under `$MAILWOMAN_DATA_ROOT`, opens each one

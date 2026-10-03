@@ -13,8 +13,8 @@ import { sha256File } from "@mailwoman/core/hash"
 import { prettyJSON } from "@mailwoman/core/json"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { writeManifest } from "#tools/fetch/download"
 
 const SLUG = "wikidata-subvenue"
 
@@ -84,7 +84,8 @@ export function buildDesignatorLabelQuery(concepts: readonly SubVenueConcept[] =
 /**
  * Builds a query for the labels of instances of the class and its subclasses.
  *
- * The subclass walk returns some unrelated items, which consumers must filter.
+ * The subclass walk returns some unrelated items.
+ * Consumers must filter them.
  */
 export function buildTerminalInstanceQuery(classQID: string = TERMINAL_CLASS_QID): string {
 	return `SELECT ?item ?lang ?label WHERE {
@@ -119,7 +120,8 @@ export interface CreateWikidataClientOptions {
 	 */
 	cacheDir: PathBuilderLike
 	/**
-	 * The clock for pacing and retries, which tests can replace.
+	 * The clock for pacing and retries.
+	 * Tests can replace it.
 	 */
 	clock?: ClockLike
 	/**
@@ -225,7 +227,8 @@ async function writePayload(
 }
 
 /**
- * Runs the label and terminal queries, saves their raw JSON, and writes a manifest.
+ * Runs the label and terminal queries.
+ * It saves their raw JSON and writes a manifest.
  */
 export async function fetchWikidataSubVenue(
 	options: FetchWikidataSubVenueOptions,

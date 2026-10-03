@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Country recognition for the `country` parity change. The ISO 3166-1 base (names + alpha-2/alpha-3)
- *   is drawn from the earlier draft `spatial/countries` ({@link ./names.ts}, {@link ./codes.ts}); this
- *   adds the layer ISO doesn't carry — the **surface forms** addresses actually use (endonyms +
- *   common abbreviations: "USA"/"United States"/"U.S."; "Deutschland"/"Germany"; "España"/"Spain")
- *   — plus a {@link matchCountry} resolver the corpus country-extract + parsing reuse. Same shape as
- *   the other codex matchers (street-suffix, directional, po-box).
+ * Country matching utilities for address parsing.
+ *
+ * Uses ISO 3166-1 names/codes from {@link ./names.ts} and {@link ./codes.ts},
+ * then adds common address spellings (endonyms and abbreviations).
+ *
+ * Includes {@link matchCountry}, in the same style as other codex matchers.
  */
 
 import { Alpha3ToCountryRecord, CountryISO2 } from "#country/codes"
@@ -17,13 +17,13 @@ import { foldName } from "#normalize"
 export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "#country/codes"
 
 /**
- * Common real-address surface forms per ISO 3166-1 alpha-2, **canonical English
- * name first** then endonym + abbreviations.
+ * Common address spellings by ISO alpha-2.
  *
- * Curated for the corpus locales + frequent countries (not a full 249-entry variant table —
- * the ISO base below catches the canonical name/code for everything else).
- * Forms are matched case-insensitively.
- * The first entry is the preferred render form.
+ * First item is the preferred display form.
+ * The matcher ignores case.
+ *
+ * This is a curated subset.
+ * ISO names and codes still cover all countries.
  */
 export const COUNTRY_SURFACE_FORMS = {
 	US: ["United States", "USA", "US", "U.S.A.", "U.S.", "United States of America", "America"],
@@ -43,27 +43,29 @@ export const COUNTRY_SURFACE_FORMS = {
 	MX: ["Mexico", "México", "MX", "MEX"],
 	BR: ["Brazil", "Brasil", "BR", "BRA"],
 	JP: ["Japan", "日本", "Nippon", "JP", "JPN"],
+	// `ROM` was Romania's alpha-3 until ISO replaced it with `ROU` in 2002.
+	// The ISO table carries `ROU`, and the retired code stays resolvable here
+	// because address data outlives a standard's revisions.
+	RO: ["Romania", "RO", "ROU", "ROM"],
 } as const satisfies Partial<Record<CountryISO2, readonly string[]>>
 
 export type CountrySurfaceISO2 = keyof typeof COUNTRY_SURFACE_FORMS
 
 /**
- * Alpha-2 → canonical English name (inverted from the salvaged CountryISO2 enum).
+ * Alpha-2 -> canonical English country name.
  */
 export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
 	Object.entries(CountryISO2).map(([name, code]) => [code as string, name as CountryName])
 )
 
 /**
- * Any recognized country surface form / canonical name / alpha-2 / alpha-3 → alpha-2 code.
+ * Maps known country text (name/form/alpha-2/alpha-3) to alpha-2.
  *
  * Built once at module load.
- * Each surface contributes its lowercased key and its {@link foldName}-folded key
- * when the fold leaves anything — a non-Latin surface like `日本` survives only as its
- * lowercased self — so accented and punctuated variants resolve.
+ * Stores lowercase keys and {@link foldName}-folded keys, so accents/punctuation still match.
  *
- * Canonical names + codes from the ISO base, plus the curated surface forms
- * (surface forms win on collision — they're the address-facing spellings).
+ * Includes ISO names/codes plus curated surface forms.
+ * On collisions, curated surface forms win.
  */
 export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	const out = new Map<string, string>()
@@ -91,16 +93,16 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 		put(code, code as string)
 	}
 
-	// "US" -> US
+	// Alpha-3 to alpha-2, e.g. "USA" -> "US".
 	for (const [alpha3, name] of Object.entries(Alpha3ToCountryRecord)) {
 		const iso2 = CountryISO2[name as keyof typeof CountryISO2]
 
 		if (iso2) {
 			put(alpha3, iso2)
-		} // "USA" -> US, "DEU" -> DE
+		}
 	}
 
-	// Curated surface forms (override — address spellings beat the ISO base on collision).
+	// Curated surface forms override ISO entries on collision.
 	for (const [iso2, forms] of Object.entries(COUNTRY_SURFACE_FORMS)) {
 		for (const f of forms) {
 			out.set(f.trim().toLowerCase(), iso2)
@@ -117,8 +119,7 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 })()
 
 /**
- * Probe the lookup the way it is keyed: the lowercased surface first,
- * then the {@link foldName} fold when it is non-empty.
+ * Check lookup by lowercase token first, then by folded token.
  */
 function probeCountry(token: string): string | undefined {
 	const direct = COUNTRY_LOOKUP.get(token.trim().toLowerCase())
@@ -131,7 +132,10 @@ function probeCountry(token: string): string | undefined {
 }
 
 /**
- * Result of a country match: the alpha-2 code, the canonical English name, and the matched surface.
+ * Result of a country match.
+ *
+ * Contains the alpha-2 code and canonical name.
+ * It also records the matched input.
  */
 export interface CountryMatch {
 	iso2: string
@@ -140,14 +144,12 @@ export interface CountryMatch {
 }
 
 /**
- * Resolve a token (surface form, canonical name, alpha-2, or alpha-3) to a country.
+ * Resolve a token (surface form, name, alpha-2, or alpha-3) to a country.
  *
  * Case-, accent-, and punctuation-insensitive.
  * Returns null if unrecognized.
  *
- * Multi-word names ("United States", "Great Britain") must be passed as the
- * whole phrase — the caller decides the span.
- * This matches it.
+ * Multi-word names must be passed as full phrases.
  */
 export function matchCountry(token: string | null | undefined): CountryMatch | null {
 	if (!token || typeof token !== "string") return null
@@ -159,19 +161,14 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
 }
 
 /**
- * The ISO 3166-1 alpha-2 code to key a layout or a per-country table by, from whatever
- * surface a declared country field carries — `ES`, `ESP` or `Spain`.
+ * Get a table key (ISO alpha-2) from a country field value.
  *
- * Two resolvers, in this order, because they answer different questions.
- * A two-letter value is taken as the code: {@link matchCountry} deliberately refuses `AR` and `VE`
- * because in address text they are Arkansas and a Spanish preposition far more often than Argentina
- * and Venezuela, and that caution is wrong for a field whose whole job is to name the country.
+ * If value is 2 letters, treat it as a code directly.
+ * This differs from {@link matchCountry}, which is stricter for free-form address text.
  *
- * Anything longer goes through {@link matchCountry}, which resolves an alpha-3 and a name alike.
+ * Longer values are resolved through {@link matchCountry}.
  *
- * Answers undefined for a surface neither resolves, so a caller reports a row it cannot write
- * rather than one it writes in some other country's order.
- * An unknown two-letter code passes through here and is refused by the table it is handed to.
+ * Returns undefined if unresolved.
  */
 export function countryCodeForTable(country: string | null | undefined): string | undefined {
 	const trimmed = country?.trim()
@@ -186,8 +183,8 @@ export function countryCodeForTable(country: string | null | undefined): string 
 /**
  * Normalize and validate an ISO 3166-1 alpha-2 code.
  *
- * This is for a field or flag that explicitly asks for a country code.
- * Address-text recognition belongs to {@link matchCountry} instead.
+ * Use this when input is expected to be a real country code.
+ * For free-form country text, use {@link matchCountry}.
  */
 export function formatAsCountryISO2(value: string): CountryISO2 {
 	const code = value.trim().toUpperCase()
@@ -200,30 +197,29 @@ export function formatAsCountryISO2(value: string): CountryISO2 {
 }
 
 /**
- * Whether a value has the two-upper-case-letter shape a country code is keyed by.
+ * Check whether value has the two-uppercase-letter country-code shape.
  *
- * This admits a code {@link CountryISO2} does not list, which is why it exists
- * beside {@link formatAsCountryISO2}: `XK` is Kosovo, carried by the source register
- * and by the `operational-non-iso-codes` postal regime, and `ZZ` is the user-assigned
- * code the corpus fragment recipes put on a row whose country is undetermined.
- * Both are legitimate keys and neither is in the 249 ISO members, so a filter or a row validator
- * checks the shape and a field that means a real country calls {@link formatAsCountryISO2}.
+ * This allows non-ISO values that still use that shape.
+ *
+ * Examples: `XK` (Kosovo in some systems), `ZZ` (unknown country placeholder).
+ *
+ * Use {@link formatAsCountryISO2} when ISO membership is required.
  */
 export function isAlpha2CodeShape(value: unknown): value is string {
 	return typeof value === "string" && /^[A-Z]{2}$/u.test(value)
 }
 
 /**
- * Case-insensitive check: is the token any recognized country form?
+ * Case-insensitive check for any recognized country form.
  */
 export function isCountryToken(token: unknown): boolean {
 	return typeof token === "string" && probeCountry(token) !== undefined
 }
 
 /**
- * The preferred render forms for an alpha-2 (canonical first), for synth extracts.
+ * Preferred display forms for an alpha-2 code (canonical first).
  *
- * Empty if none curated.
+ * Returns empty array if none are curated.
  */
 export function countrySurfaceForms(iso2: string): readonly string[] {
 	return (COUNTRY_SURFACE_FORMS as Record<string, readonly string[]>)[iso2.toUpperCase()] ?? []

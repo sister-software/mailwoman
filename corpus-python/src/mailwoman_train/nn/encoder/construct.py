@@ -1,10 +1,10 @@
-"""Building the input layer, the soft-feed channels and the transformer body.
+"""Build the input layer, soft-feed channels and transformer body.
 
-Construction order is an interface: `_init_weights` walks `self.parameters()`, which yields them in
-registration order and draws from the global RNG for each, so the three builders must be called from
-`__init__` in the order they appear below and no line inside one may be reordered. A loaded
-checkpoint is unaffected — `load_state_dict` overwrites — but a from-scratch run started after a
-reorder no longer reproduces one started before it.
+Construction order affects initialization. `_init_weights` walks `self.parameters()` in registration
+order and draws from the global RNG once for each parameter. Call the three builders from `__init__` in
+the order shown below. Preserve the order of operations inside each builder. A loaded checkpoint is
+unaffected because `load_state_dict` overwrites the initialized values. A from-scratch run after a
+reorder does not reproduce a run started before it.
 """
 
 from __future__ import annotations
@@ -22,10 +22,10 @@ from .state import CoarseEncoderState
 def resolve_label_map(id_to_label: dict[int, str] | None, num_labels: int) -> dict[int, str]:
     """This model's index → BIO label map.
 
-    `None` takes the module-global STAGE3 map truncated to `num_labels`, which is what every
-    checkpoint before the 47-label head carries. A head WIDER than the global map has no defensible
-    default and must pass its own. `serialization` writes the resolved map into the saved config and
-    reads it back, so a checkpoint always knows its own labels.
+        `None` takes the module-global STAGE3 map truncated to `num_labels`, which is what every
+    checkpoint before the 47-label head can use it. A head WIDER than the global map has no defensible
+        default and must pass its own. `serialization` writes the resolved map into the saved config and
+        reads it back, so a checkpoint always knows its own labels.
     """
     if id_to_label is not None:
         resolved = dict(id_to_label)
@@ -51,20 +51,20 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         crf_fp32: bool,
         class_weights: torch.Tensor | None,
     ) -> None:
-        """The CRF decoder settings, label smoothing, and the per-class CE weight buffer.
+        """Configure CRF decoding and label smoothing. Register per-class CE weights as a buffer.
 
-        CRF NLL is per-sequence and unbounded — at random init it runs ~seq_len*log(num_tags),
-        so ~380 against CE's ~3 per token, and equal-weight summing lets CRF gradients drown out
-        CE. `crf_loss_weight` 0.1 keeps the CRF a structural regularizer on the emissions.
+        CRF NLL is per-sequence and unbounded. At random init it runs ~seq_len*log(num_tags),
+        or ~380 against CE's ~3 per token. Equal weighting lets CRF gradients drown out CE.
+        `crf_loss_weight` 0.1 keeps the CRF a structural regularizer on the emissions.
         weight 1.0 regressed val_macro_f1 from 0.26 to 0.17 by step 750. `crf_normalization`
         "per_token" divides by the real-token count for a magnitude comparable to per-token CE,
-        which removes the hand-tuning that weight search needed. `crf_fp32` forces the CRF forward
+        This removes the hand-tuning required by weight search. `crf_fp32` forces the CRF forward
         to fp32 inside a bf16 autocast region, to
         isolate the 33x33 transition matrix with its masked `-inf` entries as a NaN suspect.
 
         `class_weights` registers as a buffer so it follows the model to GPU and serializes with
-        the state dict; `None` leaves uniform weights. This runs before any parameter is
-        registered, which is where the buffer's state-dict position comes from.
+        the state dict; `None` leaves uniform weights. The buffer is registered before any
+        parameters, so registration order determines its state-dict position.
         """
         self.use_crf = use_crf
         self.label_smoothing = label_smoothing
@@ -100,13 +100,13 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         With `use_char_embed` on, a per-token embedding is COMPOSED from the token's characters
         (see `CharCNNEmbedding`) instead of read from a SentencePiece piece-ID table, so a whole
         word ("Čistá") is one token and diacritics never fragment the span. The SentencePiece
-        table stays built and unused in that mode, which keeps the pretrain, MLM and save paths
-        working unchanged.
+        table stays built and unused in that mode. This keeps pretraining and MLM behavior unchanged.
+        It also preserves the checkpoint save path.
 
         `phrase_input_projection` maps `(hidden + phrase_feature_dim) → hidden` so the body's
         stack keeps its declared `hidden_size`. It is None when phrase priors are off and the
-        forward path then skips the projection entirely, which is what keeps the earlier numerics
-        reproducible for a back-compat ablation.
+        forward path then skips the projection entirely. This keeps earlier numerics reproducible
+        for a back-compat ablation.
         """
         self.pad_token_id = pad_token_id
         self.max_position_embeddings = max_position_embeddings

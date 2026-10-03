@@ -70,8 +70,8 @@ wrote 20 features → entities.geojson
 ```
 
 So the recipe is: **have `candidate.db` where the resolver looks, and pass anything to `--resolve-db` to
-get past the boot check.** Passing the gazetteer's own path is the tidiest thing to pass, which is why this
-page and the tutorial both do it — but it is satisfying a check rather than selecting a backend.
+get past the boot check.** Pass the gazetteer's own path to satisfy the check; this page and the tutorial
+both use it, but the path does not select a backend.
 
 There is one shape where the flag is believed, and it got narrower in `8.7.0`. If no candidate gazetteer
 is reachable at all — no file at `<data root>/db/wof/candidate.db` and no path in `$MAILWOMAN_CANDIDATE_DB` —
@@ -242,13 +242,13 @@ the number of distinct places means it is too loose.
 
 - **The CLI cannot reach the configuration in step 4.** In single-file mode `mailwoman registry run`
   always leaves the learned scorer on and passes `--threshold` straight through, so the flag is in
-  learned-scorer units. Sweeping it on this file goes from 20 entities to 5 with no value in between,
+  learned-scorer units. A sweep on this file goes from 20 entities to 5 with no value in between,
   because the negative thresholds that clear the learned scorer's whole range merge every metro area.
   Use the library for a small file.
 - **The defaults are conservative, and that is the safer direction.** A missed link leaves two entities
   where one belonged; a false link fuses two real organizations and is much harder to notice downstream.
   Take the twenty-out-of-twenty as a prompt to measure rather than as a bug.
-- **Blocking is the silent failure.** Records more than one 0.05° cell apart with no shared address key,
+- **The blocking stage can fail silently.** The system never compares records more than one 0.05° cell apart without a shared address key,
   phone or email are never compared. Check `candidatePairs` against the number of comparisons you
   expected before concluding the scorer is wrong.
 - **Every record lands in exactly one entity.** An unlinked record is its own entity of size one, so the

@@ -76,7 +76,7 @@ Properties:
 5. **The 673M-row base corpus**: needs a one-time conversion (token labels → char spans is
    LOSSLESS upward — every existing label maps to the chars its token occupies). A converter +
    spot-audit rather than a re-alignment.
-6. **Training invariance check**: a converted corpus must produce a BIT-IDENTICAL piece-label
+6. **Corpus-conversion invariance check**: corpus conversion must produce a BIT-IDENTICAL piece-label
    stream for rows with no intra-span punctuation (the overwhelming majority) — that is the
    regression check for the migration itself.
 7. **Unicode discipline** (consult keeper): char offsets over raw carrying é/ß/accented text are

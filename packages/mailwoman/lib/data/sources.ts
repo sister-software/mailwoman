@@ -3,20 +3,10 @@
 
 /**
  *   Census a downloaded bundle's own publisher stamps, so the terms recorded in `data/bundles.ts` can be checked
- *   against the bytes an operator holds.
+ *   against the bytes an operator holds rather than against prose written once and left to drift.
  *
- *   The `us` bundle's record named the Census Bureau and OpenAddresses, and a census of its 52 shipped databases found
- *   68.2% of 125,276,536 rows stamped `overture:NAD`, the National Address Database, which the record named nowhere.
- *   Its open question asked which OpenAddresses source supplied each state's rows and said a per-state answer needed a
- *   list the bundle did not carry. Every row carried it.
- *
- *   That is the failure this reader exists for. Prose about publishers is written once and the artifacts are rebuilt,
- *   so the two drift with no check to notice. Running this against a downloaded copy reports what the rows say rather
- *   than what the record says about them, and the difference is the finding.
- *
- *   A bundle whose artifacts carry no publisher column reports `none-recorded-in-the-artifacts` rather than an empty
- *   census. An artifact that is not on disk is reported as absent rather than contributing zero rows, because a
- *   partial download that counted as zero would read as a publisher with no rows.
+ *   A bundle whose artifacts have no publisher column reports `none-recorded-in-the-artifacts` rather than an
+ *   empty census. An artifact that is not on disk is reported as absent rather than contributing zero rows.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -27,16 +17,12 @@ import { bundleArtifactPath, type BundleSourceCensus, type DataBundle, resolveBu
 import { readReleaseManifest } from "#data/release"
 
 /**
- * The two shapes a bundle's artifacts carry a publisher stamp in, as one schema.
+ * The two shapes in which a bundle's artifacts store a publisher stamp, as one schema.
  *
- * It names both tables `BundleSourceCensus.table` can hold rather than describing
- * one artifact, so the table a record names is a member of `keyof CensusSchema`
- * and Kysely checks the query without a cast.
- * Only the stamp column is declared on each: this reader selects that column and a count,
- * and a column it never reads would be a claim about a schema nobody checks.
- *
- * An artifact shape added to the union in `BundleSourceCensus` is a compile error here
- * until it is added here too, which is the point of the union.
+ * The two table names that `BundleSourceCensus.table` can hold make the table a member of
+ * `keyof CensusSchema`, so Kysely checks the query without a cast and adding an artifact
+ * shape to `BundleSourceCensus` is a compile error here until it is added too.
+ * Only the stamp column is declared on each.
  */
 interface CensusSchema {
 	address_point: { source: string }
@@ -44,7 +30,7 @@ interface CensusSchema {
 }
 
 /**
- * One publisher stamp and how many rows carry it.
+ * One publisher stamp and how many rows have it.
  */
 interface SourceTally {
 	source: string
@@ -57,31 +43,27 @@ interface SourceTally {
 export interface BundleSourceCensusResult {
 	bundle: string
 	/**
-	 * Absent when the bundle declares no {@link BundleSourceCensus}, which says its
-	 * artifacts carry no publisher column rather than that a census found no column.
+	 * Absent when the bundle declares no {@link BundleSourceCensus}: its artifacts have
+	 * no publisher column rather than a census finding no column.
 	 */
 	status: "censused" | "none-recorded-in-the-artifacts" | "nothing-on-disk"
 	/**
-	 * Artifacts read, and artifacts the data root does not hold.
+	 * Artifacts read and artifacts the data root does not hold.
 	 *
 	 * A census over part of a bundle is reported as partial rather than presented as the bundle's composition.
 	 */
 	artifactsRead: number
 	artifactsAbsent: number
 	/**
-	 * Artifacts the census's declared family excludes.
-	 *
-	 * They are outside what this census covers rather than missing from it,
-	 * so they neither reduce the share denominator nor read as a failure.
+	 * Artifacts the census's declared family excludes, so they neither reduce the
+	 * share denominator nor read as a failure.
 	 */
 	artifactsOutOfScope: number
 	tallies: SourceTally[]
 	totalRows: number
 	/**
-	 * What could not be read, one message per artifact.
-	 *
-	 * An artifact present but unreadable is named here rather than being counted as absent,
-	 * since the two mean different things to somebody checking a download.
+	 * What could not be read, one message per artifact: an artifact present
+	 * but unreadable rows receive their own status here.
 	 */
 	problems: string[]
 }
@@ -89,8 +71,8 @@ export interface BundleSourceCensusResult {
 /**
  * The stamps in one artifact, or a message saying why it could not be read.
  *
- * A `layer_manifest` carries one row, so its `count(*)` is 1 and the tally reports one manifest row
- * rather than a row count. {@link BundleSourceCensus.shape} is what tells a caller which it is holding.
+ * A `layer_manifest` has one row, so its `count(*)` is 1 and the tally reports one manifest row
+ * rather than a row count; {@link BundleSourceCensus.shape} tells a caller which it is holding.
  */
 async function tallyArtifact(
 	path: string,
@@ -116,9 +98,8 @@ async function tallyArtifact(
 /**
  * Census one bundle against the copy in `dataRoot`.
  *
- * The artifact paths come from {@link resolveBundleArtifacts} with the release manifest
- * applied, so a versioned per-state database is read where `resolveDatabasePath`
- * would find it rather than at its unversioned fallback.
+ * Artifact paths come from {@link resolveBundleArtifacts} with the release manifest applied,
+ * so a versioned per-state database is read rather than its unversioned fallback.
  */
 export async function censusBundleSources(
 	bundle: DataBundle,
@@ -195,9 +176,8 @@ export async function censusBundleSources(
 /**
  * One census as lines for a terminal.
  *
- * A share is printed only beside a census that read every artifact of its bundle.
- * A percentage over part of a bundle describes the part rather than the bundle,
- * and the two are easy to confuse once the number is on the page.
+ * A share is printed only beside a census that read every artifact of its bundle,
+ * because a percentage over part of a bundle describes the part rather than the bundle.
  */
 export function renderSourceCensus(result: BundleSourceCensusResult, recordedPublishers: readonly string[]): string[] {
 	const lines: string[] = [`${result.bundle}:`]

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Environment variables the `mailwoman` CLI and runtime pipeline read, and the overrides its evaluation tooling
+ * Environment variables the `mailwoman` CLI and runtime pipeline read, plus the overrides its evaluation tooling
  * accepts. The resolver's database paths are inherited from `@mailwoman/resolver-wof-sqlite/env`.
  */
 
@@ -28,8 +28,9 @@ const RuntimeEnvSchema = z.object({
 	//
 	// `MAILWOMAN_BATCH_CONCURRENCY` was removed.
 	// It was inert.
-	// In-process concurrency cannot overlap a geocode: `onnxruntime-node`'s `session.run()` blocks the
-	// JS thread instead of releasing to the libuv pool, and `node:sqlite` reads are synchronous.
+	// In-process concurrency cannot overlap a geocode: `onnxruntime-node`'s `session.run()`
+	// blocks the JS thread instead of releasing to the libuv pool.
+	// `node:sqlite` reads are synchronous.
 	// Measured 1.00x flat from 1→16 workers on both parse and full geocode.
 	// Don't reintroduce it without re-measuring.
 	// Worker threads (see `mailwoman/geocode-stream.ts`) are the only change that moves this in Node.
@@ -63,8 +64,8 @@ const RuntimeEnvSchema = z.object({
 		description: "Python executable override used by the export-verification developer tools.",
 	}),
 	// The customer's standing refusal of an obligation class.
-	// `mailwoman data pull --refuse` reads it as its default, and `mailwoman doctor` reports
-	// whether the layers on disk satisfy it.
+	// `mailwoman data pull --refuse` reads it as its default.
+	// `mailwoman doctor` reports whether the layers on disk satisfy it.
 	MAILWOMAN_REFUSE_OBLIGATIONS: z
 		.string()
 		.optional()
@@ -72,7 +73,7 @@ const RuntimeEnvSchema = z.object({
 			title: "Refused obligation classes",
 			description:
 				"Comma-separated classes of license obligation this installation declines: `share-alike`, `unresolved`. " +
-				"`mailwoman data pull` refuses a bundle whose recorded expression carries one, and `mailwoman doctor` " +
+				"`mailwoman data pull` refuses a bundle whose recorded expression carries one. `mailwoman doctor` " +
 				"reports whether the layers on disk satisfy the preference.",
 			examples: ["share-alike", "share-alike,unresolved"],
 		}),
@@ -152,8 +153,8 @@ export const PrivateMailwomanEnvSchema = z.object({
 	 * Per-run secret salting the published case identifiers of a controlled premise-linkage
 	 * evaluation (`mailwoman eval premise-linkage`).
 	 *
-	 * A secret rather than config: two reports salted alike can be joined row for row into a
-	 * longer record of the same premises, which is the linkage the identifier exists to prevent.
+	 * Two reports salted alike can be joined row for row into a longer record of the same premises.
+	 * The per-run secret prevents that linkage.
 	 */
 	MAILWOMAN_PREMISE_LINKAGE_SALT: z.string().optional().meta({
 		title: "Premise-linkage salt",

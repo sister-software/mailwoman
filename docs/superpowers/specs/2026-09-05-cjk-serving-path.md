@@ -38,7 +38,7 @@ on supply: 126 labeled rows. Korean joins the same package when its corpus is bu
    `model.onnx`, `char-vocab.json` and `model-card.json`, and no tokenizer. The card needs an `encoder` field
    (`"sentencepiece"` today, `"char"` here) with the vocabulary sibling and its window constants, and the resolver
    must require the tokenizer only for the SentencePiece encoder.
-5. **Routing.** Production routes by locale hint; a CJK query with no hint must reach the CJK package. The rule from
+5. **Route selection.** Production routes by locale hint; a CJK query with no hint must reach the CJK package. The rule from
    #1177 Phase B: a Unicode-block histogram in `@mailwoman/query-shape` (the `cjk` character class already exists)
    selects the CJK package when the input is mostly Han, kana or Hangul. The Latin model is untouched.
 6. **Evaluation through the served path.** The board scorer in `corpus-python/scripts/score_jp_probe_board.py`
@@ -80,7 +80,7 @@ Two items this section first listed have since landed: the CJK FST builders (#14
    come from the Python encoder over 50 board rows.
 3. Card + resolution: the `encoder` field, the vocabulary sibling, the tokenizer requirement scoped to SentencePiece.
 4. Runner: char-mode session in `onnx-runner.ts`, then `web-onnx-runner.ts`; the decoder receives character units.
-5. Routing: the query-shape rule and the locale-hint route to the CJK package.
+5. Route selection: the query-shape rule and the locale-hint route to the CJK package.
 6. The served read: the JP board through `mailwoman geocode`, compared against the PyTorch record.
 7. Package: `mwops release scaffold-weights-overlay` for the base and the first overlay; release-list arithmetic.
 

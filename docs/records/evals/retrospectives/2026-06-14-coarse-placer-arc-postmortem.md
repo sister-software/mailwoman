@@ -1,12 +1,6 @@
 # Postmortem — the coarse-placer arc, M1 → default-on → v4.9.0 (2026-06-14 day shift)
 
-_The collaborative day-shift continuation of [night 15](../night-shifts/2026-06-14-night-15-postmortem.md). Night 15
-shipped the coarse-placer as an int8 **model** (#581) — a 0.79 MB linear country router that nothing
-consumed yet. This shift wired it into the geocoder as a **soft country prior**, proved it safe at every
-step, flipped it **on by default**, and shipped the whole thing to npm as **v4.9.0**. Five PRs in a clean
-stack (#606, #608, #609, #610, #611), each conditional and merged on green; one DeepSeek consult; the broken-then-
-fixed v4.8.0/4.8.1 release saga as the lead-in. The operator was at the keyboard throughout. Every merge and
-the default-on flip were authorized rather than self-granted._
+_The day-shift session completed the coarse-placer rollout. It integrated the int8 **model** from #581 — a 0.79 MB linear country router — as a **soft country prior**, proved it safe at every step, enabled it by default, and shipped it to npm as **v4.9.0**. Five PRs in a clean stack (#606, #608, #609, #610, #611), each conditional and merged on green; one DeepSeek consult; the broken-then-fixed v4.8.0/4.8.1 release saga as the lead-in. The operator was at the keyboard throughout. Every merge and the default-on flip were authorized._
 
 ## What shipped
 
@@ -36,7 +30,7 @@ the default-on flip were authorized rather than self-granted._
 - **M2 — the open-set rule (#608).** The headline finding of the shift, and it wasn't what anyone predicted:
   the ~88/88 off-map ceiling a linear char-ngram model hits was **a decision rule rather than the model.** The
   OA-broadened `OTHER` head already included the open-set signal; the old rule (softmax max-prob) just
-  conflated "which country?" with "is it in-map at all?". Reading total in-map **mass** `1 − P(OTHER)` and
+  conflated "which country?" with "is it in-map at all?". The total in-map **mass** `1 − P(OTHER)` and
   routing on the in-map argmax **clears 90/90 post-hoc, no retrain** (direct dev→test 91.3, vs the 89.1
   ceiling; the _pre-registered_ Mahalanobis and reject-head came in last and unnecessary). On the assembled
   check it lifts in-map right-country **85.3 → 91.2 %** (9 wins, 0 regressions).
@@ -64,7 +58,7 @@ the default-on flip were authorized rather than self-granted._
   agreed, but the discipline is what makes that meaningful.
 - **The open-set result is the good kind of surprise**. The fix was simpler than the plan. We expected to
   retrain (Mahalanobis-on-the-manifold or a binary reject-head); instead a one-line decision-rule change
-  cleared the bar. Pausing to write up _why_ (the mass-vs-argmax decomposition) before wiring it kept us from
+  cleared the bar. A write-up of _why_ (the mass-vs-argmax decomposition) before wiring it kept us from
   cargo-culting the pre-registered method.
 - **The DeepSeek consult earned its latency.** It had pre-registered the methods that _lost_, so an
   independent check on the contradiction mattered — and it returned the sharpest insight of the shift: 90/90
@@ -91,7 +85,7 @@ the default-on flip were authorized rather than self-granted._
 - **A cross-PR doc dependency bit the merge order.** The M1 code comments reference the soft-signal spec, which
   lived on its own branch (#605) . Therefore, #605 had to merge before #606 or the path wouldn't resolve. Worked, but a
   self-contained PR would've avoided the ordering constraint.
-- **Recurring small friction:** the `prettier-plugin-jsdoc` reflows one-line `/** … */` comments onto two lines
+- **Small recurring friction:** the `prettier-plugin-jsdoc` reflows one-line `/** … */` comments onto two lines
   and then `eslint`'s `jsdoc/multiline-blocks` flags them — hit it three times, fixed each by switching to a
   `//` line comment. And I committed the M2 Phase-1 eval to `main` directly once (no real harm — moved it to a
   branch before pushing), a reminder to branch _first_.

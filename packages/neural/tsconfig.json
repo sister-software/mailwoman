@@ -13,6 +13,7 @@
 		{ "path": "../core" },
 		{ "path": "../codex" },
 		{ "path": "../locale-hint" },
+		{ "path": "../normalize" },
 		{ "path": "../query-shape" }
 	]
 }

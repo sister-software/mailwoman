@@ -2,18 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Per-package vitest config that resolves @mailwoman/core subpath imports to source. The
- *   package.json `exports` field points at `./out/.../index.js` — those files don't exist until tsc
- *   has run. With these aliases vitest can run from a clean checkout.
+ *   Per-package Vitest config that resolves `@mailwoman/core` subpath imports to source.
+ *   The package `exports` field points at `./out/.../index.js` files produced by tsc.
+ *   A clean checkout has no output files until tsc runs.
+ *   These aliases let Vitest run from a clean checkout.
  *
- *   A few subpaths are single files rather than directories with an `index.ts` — `fs` is the node build
- *   (`fs/node.ts`), `objects` is a bare file (`objects.ts`), `coarse-placer`/`kysley/*` are single
- *   files. Those get explicit entries before the generic `<subpath> → <subpath>/index.ts` rule,
- *   which would otherwise resolve them to a non-existent `index.ts` (mirrors the root config).
+ *   Several subpaths are single files instead of directories with an `index.ts`.
+ *   `fs` uses the Node build at `fs/node.ts`. `objects` is the bare file `objects.ts`.
+ *   `coarse-placer` and `kysley/*` also resolve to single files.
+ *   Explicit entries come before the generic `<subpath> → <subpath>/index.ts` rule.
+ *   That prevents resolution to a missing `index.ts` and mirrors the root config.
  */
 
 import { resolvePath } from "path-ts"
-// `defineConfig` from "vitest/config" (not "vite"): vitest's overload carries the `test` field.
+// `defineConfig` from "vitest/config" (not "vite"): vitest's overload includes the `test` field.
 // Vite 8 (pulled in by docs/ Storybook) no longer applies the `vitest/config` type augmentation
 // to vite's own `defineConfig`, so importing from "vite" makes `test` a type error under vite 8.
 import { defineConfig } from "vitest/config"
@@ -34,7 +36,7 @@ export default defineConfig({
 			// Every other @mailwoman/core/<subpath> resolves to the index.ts of the matching subdir.
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolvePath(here, "$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolvePath(here, "index.ts") },
-			// Sibling workspaces.
+			// Aliases for other workspaces.
 			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolvePath(here, "../corpus/src/$1.ts") },
 			{ find: /^@mailwoman\/corpus$/, replacement: resolvePath(here, "../corpus/src/index.ts") },
 			// The root `mailwoman` package — test-kit imports it (transitively re-exports core + classifiers).

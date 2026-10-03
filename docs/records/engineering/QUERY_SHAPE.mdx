@@ -74,7 +74,7 @@ interface KnownFormatHit {
 }
 ```
 
-Computing a `QueryShape` takes microseconds and uses no ML. It runs on every input before the encoder.
+The `QueryShape` calculation takes microseconds and uses no ML. It runs on every input before the encoder.
 
 ## Four primitives
 
@@ -96,7 +96,7 @@ These signals feed **Stage 2 (`locale-hint`)** and **Stage 2.5 (kind classifier)
 
 ### 2. Phrasification (segmentation)
 
-This primitive splits the input into chunks bounded by punctuation. Currently the encoder re-learns segment structure from punctuation tokens. Making the structure explicit gives downstream stages a structural prior at almost no cost.
+This primitive splits the input into chunks bounded by punctuation. Currently the encoder re-learns segment structure from punctuation tokens. An explicit structure gives downstream stages a structural prior at almost no cost.
 
 Segments have three possible uses, in order of complexity:
 
@@ -167,7 +167,7 @@ flowchart LR
 
 QueryShape is computed once, at the boundary between Stage 1 and Stage 2, and passed to the rest of the pipeline as additional context. It is a shared data structure rather than a separate stage, and Stages 2, 2.5, 3 (optional), and 6 all consume it.
 
-## Packaging decision
+## Package decision
 
 The sub-system ships as a single workspace package:
 
@@ -208,7 +208,7 @@ These decisions need to be made when implementation starts. They are recorded he
 1. **Where is `QueryShape` computed?** It could be computed eagerly at parse entry, which always pays the microsecond cost, or lazily for the first downstream consumer, because some inputs may not need it. The recommendation is eager computation, because computing it costs less than threading lazy evaluation through the pipeline.
 2. **Should the known-format regex set be extensible?** The options are hardcoded or registerable. The recommendation is hardcoded for v1, because the postcode set rarely changes. Re-evaluate if community adapters want to register country-specific formats.
 3. **What confidence threshold should fast-path routing use?** Choose a conservative value (~0.95) and tune it from real-world data. A threshold that is too low returns wrong answers instead of running the full pipeline, which is severe. A threshold that is too high only slows inference.
-4. **Should the segment id be an additive or a concatenated encoder feature?** Concatenating it to the input embeddings is simplest and avoids an architecture change. Decide when the encoder is retrained.
+4. **Should the segment id be an additive or a concatenated encoder feature?** A concatenated feature on the input embeddings is simplest and avoids an architecture change. Decide when the encoder is retrained.
 5. **How does `QueryShape` interact with `LocaleDetector`?** The detector will probably use `QueryShape.characterClass` and `QueryShape.tokenClasses` as input features, which means `LocaleDetector` runs _after_ `QueryShape.compute()`. Document this dependency.
 
 ## What this is not

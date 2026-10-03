@@ -1,6 +1,6 @@
 """What a staged Japanese corpus must contain before a run can read it.
 
-The launcher stages files. this says whether what landed is usable. Japan's base corpus is shared:
+The launcher stages files. This check reports whether the resulting files are usable. Japan's base corpus is shared:
 the kana build is the base the CJK overlay's MANIFEST points back at, so a run that stages only the
 overlay still needs these parts already on the volume.
 """
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 
-#: The kana-surface build, and the base the CJK overlay's MANIFEST re-roots onto.
+#: The kana-surface build. The CJK overlay's MANIFEST re-roots onto this base.
 KANA_CORPUS = "v8-jp-kana-2026-09-06"
 #: The noisy register corpus: corporate numbers, a separate build with its own single part.
 REGISTER_CORPUS = "v8-jp-registry-2026-09-08"

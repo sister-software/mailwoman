@@ -8,8 +8,8 @@ Per Phase 2 §7:
 - Output: ``/data/models/onnx/model-v0.1.0-en-us.onnx`` (and per spec, the same weights are
   exported per-locale. Phase 3 may split them if size or load behavior demands).
 
-`graph.py` decides what gets exported — which channels the model carries, whether that combination
-is exportable, and the wrapper and example inputs it needs. This module runs the export and checks
+`graph.py` decides what gets exported: the model's channels, whether their combination is exportable,
+plus the wrapper and example inputs it needs. This module runs the export and checks
 the result against PyTorch.
 """
 
@@ -37,23 +37,24 @@ def export_to_onnx(
 ) -> Path:
     """Export the token-classification model to ONNX. Returns the output path.
 
-    A char-path model (``use_char_embed``) exports behind ``char_ids (batch, sequence, char_window)`` +
-    ``attention_mask (batch, sequence)`` and no ``input_ids``: its forward never reads token ids, and a
-    graph that took them would bind the runtime to a SentencePiece vocabulary the model does not have.
-    ``char_window`` is the training config's ``max_unit_width`` (the unit plus its context characters), a
-    data-side constant the model does not carry, so the caller must pass it; ``max_length`` is
-    ``max_units``. The char path is channel-free by interface (D5), so none of the anchor, gazetteer or
-    lexicon inputs are exported for it.
+        A char-path model (``use_char_embed``) exports behind ``char_ids (batch, sequence, char_window)`` +
+        ``attention_mask (batch, sequence)``. The forward pass never reads token ids, so leave out
+        ``input_ids``. Adding that input would bind the runtime to a SentencePiece vocabulary the model
+        does not have.
+        ``char_window`` is the training config's ``max_unit_width`` (the unit plus its context characters), a
+    data-side constant the model does not store, so the caller must pass it; ``max_length`` is
+        ``max_units``. The char path is channel-free by interface (D5), so none of the anchor, gazetteer or
+        lexicon inputs are exported for it.
 
-    Always exports from CPU. torch.onnx.export on a ROCm/HIP device on gfx1103 has been
-    observed to hang during graph tracing (HW Exception, GPU node-1 hang) — exporting from
-    CPU is fast (the model is small) and avoids the issue.
+        Always exports from CPU. torch.onnx.export on a ROCm/HIP device on gfx1103 has been
+        observed to hang during graph tracing (HW Exception, GPU node-1 hang) — exporting from
+        CPU is fast (the model is small) and avoids the issue.
 
-    ``dummy_batch`` is the batch size of the example inputs the exporter traces. It stays 1 (the
-    shipped graph) unless a caller is probing batched inference: every input already REQUESTS a
-    dynamic dim-0 via ``dynamic_shapes``, but the shipped graph still refuses batch > 1 at runtime,
-    so the request is not being honored. Tracing with batch > 1 is the probe for whether the
-    example's batch size is what pins the graph.
+        ``dummy_batch`` is the batch size of the example inputs the exporter traces. It stays 1 (the
+        shipped graph) unless a caller is probing batched inference: every input already REQUESTS a
+        dynamic dim-0 via ``dynamic_shapes``, but the shipped graph still refuses batch > 1 at runtime,
+        so the request is not being honored. Tracing with batch > 1 is the probe for whether the
+        example's batch size is what pins the graph.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     model.eval()

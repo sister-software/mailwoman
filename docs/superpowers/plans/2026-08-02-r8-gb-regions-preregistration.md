@@ -20,7 +20,7 @@ have problems:
 2. **1,489 Welsh parents are civil parishes rather than post towns**, such as
    `Pontypridd Community`, `Llanelli Rural` and `Llanddeiniolen Community`. R2 flagged this as the
    "Cardiff 33" oddity and deferred it. The register writes the parish name this way, but addresses
-   never do. Dropping these rows would discard half of Wales, so the build **strips** the administrative
+   never do. The build **strips** the administrative rows instead of dropping them, which would discard half of Wales.
    suffix to recover a real post town (`Pontypridd Community` → `Pontypridd`). R7's
    `Londonderry / Derry` alias handling solved the same kind of problem, where the register's naming
    convention differs from how people write addresses.

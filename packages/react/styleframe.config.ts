@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The design tokens for `@mailwoman/react`. This file is the source of record, and `tokens.css` is generated
- *   from it. `styleframe dtcg export` publishes the same values as W3C DTCG JSON.
+ *   Defines the design tokens for `@mailwoman/react`. `tokens.css` is generated from this file.
+ *   `styleframe dtcg export` publishes the values as W3C DTCG JSON.
  *
- *   The tokens have three layers. Primitives are raw values. Semantic tokens describe what a value is used for, and
- *   component rules may read only this layer. Component tokens exist where a component needs a name of its own.
+ *   The tokens have three layers. Primitives hold raw values. Semantic tokens describe how values are used.
+ *   Component rules may read semantic tokens only. Component tokens exist when a component needs its own name.
  *
- *   The light theme serves the docs site. The dark theme serves the map apps, which set `data-theme="dark"` on
- *   `<html>`. Every semantic token has a value in both themes.
+ *   The light theme serves the docs site. The dark theme serves map apps. They set `data-theme="dark"` on `<html>`.
+ *   Every semantic token has a value in both themes.
  */
 
 import { styleframe } from "styleframe"
@@ -30,7 +30,7 @@ const { variable, theme, ref } = s
  */
 
 /**
- * The brand colours from the design system.
+ * The brand colors from the design system.
  * `#ff00b0` is the primary.
  */
 const brandMagenta = variable("brand-magenta", "#ff00b0")
@@ -42,8 +42,8 @@ const brandTeal = variable("brand-teal", "hsl(97.78deg 100% 50%)")
 /**
  * The neutral ramp.
  *
- * It uses oklch so the lightness steps are perceptually even, and one hue
- * so the ramp keeps a constant temperature.
+ * It uses oklch to make lightness steps perceptually even.
+ * A single hue keeps the ramp's temperature constant.
  */
 const neutral0 = variable("neutral-0", "oklch(100% 0 264)")
 const neutral50 = variable("neutral-50", "oklch(97% 0.004 264)")
@@ -74,8 +74,10 @@ const infoBase = variable("info-base", "oklch(65% 0.13 230)")
 // #region Type
 
 /*
- * A rule refers to a scale role, a scale role refers to a face role,
- * and only a face role refers to a font family.
+ * Rules refer to scale roles.
+ *
+ * Scale roles refer to face roles.
+ * Face roles refer to font families.
  */
 
 /**
@@ -87,16 +89,17 @@ const infoBase = variable("info-base", "oklch(65% 0.13 230)")
  *
  * The `glyph` face needs monochrome marks that sit on the text baseline.
  */
-const fontFamilyDisplay = variable("font-family-display", `"Iosevka Custom Web", "Iosevka", system-ui, sans-serif`)
-const fontFamilyText = variable("font-family-text", `"Iosevka Custom Web", "Iosevka", system-ui, sans-serif`)
-const fontFamilyNumber = variable("font-family-number", `"Iosevka Custom Web", "Iosevka", system-ui, sans-serif`)
-
-const fontFamilyCode = variable(
-	"font-family-code",
-	`"Iosevka Custom Mono Web", "Iosevka", ui-monospace, "SF Mono", monospace`
+const fontFamilyDisplay = variable(
+	"font-family-display",
+	`"Bliss Pro Web", "Bliss Pro Fallback", system-ui, sans-serif`
 )
 
-const fontFamilyGlyph = variable("font-family-glyph", `"Iosevka Custom Mono Web", "Iosevka", ui-monospace, monospace`)
+const fontFamilyText = variable("font-family-text", `"Bliss Pro Web", "Bliss Pro Fallback", system-ui, sans-serif`)
+
+// Bliss Pro ships proportional default figures and no `tnum` feature, so numbers take the mono face.
+const fontFamilyNumber = variable("font-family-number", `"Fira Code Web", ui-monospace, "SF Mono", monospace`)
+const fontFamilyCode = variable("font-family-code", `"Fira Code Web", ui-monospace, "SF Mono", monospace`)
+const fontFamilyGlyph = variable("font-family-glyph", `"Fira Code Web", ui-monospace, monospace`)
 
 /**
  * The SDF font stack for map labels.
@@ -106,7 +109,7 @@ const fontFamilyGlyph = variable("font-family-glyph", `"Iosevka Custom Mono Web"
  *
  * The value must be a stack that the glyph host serves.
  */
-const fontFamilyMap = variable("font-family-map", `"Noto Sans Regular"`)
+const fontFamilyMap = variable("font-family-map", `"Bliss Pro Regular"`)
 
 const fontSizeDisplay = variable("font-size-display", "2.125rem")
 const fontSizeTitle = variable("font-size-title", "1.375rem")
@@ -130,7 +133,7 @@ const fontWeightSemibold = variable("font-weight-semibold", "600")
 
 /**
  * The spacing scale, in seven steps on a 2px grid.
- * Padding, margins and gaps should use these steps.
+ * Use these steps for padding, margins and gaps.
  */
 const space0 = variable("space-0", "0.125rem")
 const space1 = variable("space-1", "0.25rem")
@@ -206,8 +209,8 @@ const controlForeground = variable("control-foreground", ref(neutral900))
 const controlBorder = variable("control-border", ref(neutral300))
 
 /**
- * The state colours.
- * Each colour has a paired background tint.
+ * The state colors.
+ * Each color has a paired background tint.
  */
 const stateSuccess = variable("color-state-success", ref(successBase))
 const stateSuccessBackground = variable("color-state-success-background", "oklch(62% 0.15 150 / 0.14)")
@@ -236,7 +239,7 @@ const confidenceLowTint = variable("color-confidence-low-tint", ref(stateDangerB
 /**
  * The pipeline stage hues for the timing bar.
  *
- * They avoid the confidence colours so that green keeps a single meaning.
+ * They avoid the confidence colors so that green keeps a single meaning.
  */
 const stageShape = variable("color-stage-shape", "#3578e5")
 const stageClassify = variable("color-stage-classify", "#8b5cf6")

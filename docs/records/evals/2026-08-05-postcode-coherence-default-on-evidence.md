@@ -151,7 +151,7 @@ VERDICT: FAIL — do not ship
 of a freshly-rebuilt corpus on today's `main`, and it is stated first so the rest is readable:
 
 - `si-sentinel-apace` was already failing before any of this work (it failed in the first pinned/unpinned pair too,
-  against the stale artifact). Standing watch item.
+  against the stale artifact). This remains a watch item.
 - `de-r9-nippes-koeln` and `us-subvenue-googleplex-building` are cases that had **never been graded**: they live in the
   seed but not in the built artifact, and rebuilding surfaced them. Both are one-token street-span mismatches
   (`Neusser Str` vs `Neusser Str.`, `Amphitheatre Parkway` vs `Amphitheatre`) rather than resolution failures.
@@ -284,8 +284,8 @@ Two consequences must be explicit:
 
 ## 4. Two defects found on the way
 
-**The committed regression corpus could not be built and run.** Rebuilding `regression.db` from its own seed and
-running the check throws:
+**The committed regression corpus could not be built and run.** An attempt to rebuild `regression.db` from its own seed and
+run the check throws:
 
 ```
 Error: expect_components key "unit" has no GauntletResult mapping — extend componentOf
@@ -343,7 +343,7 @@ which the landing record already flagged for its own ticket.
 
 ---
 
-## 6. Reproducing this
+## 6. Reproduce this test
 
 ```bash
 # Gap (a) — the check, both ways. Rebuild the corpus first: the committed seed carries

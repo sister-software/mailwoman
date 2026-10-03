@@ -26,7 +26,7 @@ This command generates static content into the `build` directory and can be serv
 
 ## Deployment
 
-Using SSH:
+Deploy with SSH:
 
 ```bash
 USE_SSH=true yarn deploy

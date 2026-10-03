@@ -51,8 +51,9 @@ export interface FSTPlaceEntryLike {
 }
 
 /**
- * The structural FST interface the prior walks, which keeps this package
- * independent of any FST implementation.
+ * The structural FST interface that the prior walks.
+ *
+ * It keeps this package independent of any FST implementation.
  */
 export interface FSTMatcherLike {
 	walk(tokens: string[]): FSTMatchLike | null
@@ -83,7 +84,7 @@ const MAPPED_TIER_PLACETYPES: ReadonlySet<string> = new Set(["localadmin", "neig
  * optionally followed by one directional.
  *
  * The generics are `street`, `road`, `avenue`, `boulevard` and `square`.
- * Weaker generics such as `hill` are excluded so that neighbourhoods such as
+ * Weaker generics such as `hill` are excluded so that neighborhoods such as
  * "Biggin Hill" keep their locality bias.
  */
 export function isStreetShapedSurface(tokens: readonly string[]): boolean {
@@ -110,7 +111,7 @@ export interface FSTEntryLike {
 
 	/**
 	 * The entry's referential score.
-	 * Callers map it from differently named source fields.
+	 * Callers map it from source fields with different names.
 	 */
 	importance: number
 }
@@ -232,13 +233,15 @@ const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house
  * Selects which biases a short FST match scales down.
  *
  * `both` scales the positive place bias and the street suppression.
- * `suppression` scales only the suppression, and `off` scales neither.
+ * `suppression` scales only the suppression.
+ * `off` scales neither.
  */
 export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
 
 /**
- * Configures the street-context check, which scales the positive FST bias
- * when a match is next to a street-type word or follows a house number.
+ * Configures the street-context check.
+ *
+ * It scales the positive FST bias when a match is next to a street-type word or follows a house number.
  *
  * The street-morphology FST's `street_affix` entries also cover prefix locales,
  * as in French "Rue de Rivoli".
@@ -250,7 +253,8 @@ export interface StreetContextRequirementOpts {
 	fst: FSTMatcherLike
 
 	/**
-	 * The multiplier on the positive bias when the check fires, which defaults to 0.25.
+	 * The multiplier on the positive bias when the check fires.
+	 * The default is 0.25.
 	 */
 	positiveScale?: number
 }
@@ -262,7 +266,8 @@ export interface FSTPriorOpts {
 	biasScale?: number
 
 	/**
-	 * The maximum bias magnitude in logits, which defaults to 3.
+	 * The maximum bias magnitude in logits.
+	 * The default is 3.
 	 *
 	 * The cap keeps a high-population place from overriding the model.
 	 */
@@ -270,12 +275,14 @@ export interface FSTPriorOpts {
 	suppressionScale?: number
 
 	/**
-	 * How match length scales the bias, which defaults to `suppression`.
+	 * How match length scales the bias.
+	 * The default is `suppression`.
 	 */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
 
 	/**
-	 * The street-context check, which runs only when this is set.
+	 * The street-context check.
+	 * The scorer runs it only when this is set.
 	 */
 	streetContext?: StreetContextRequirementOpts
 }

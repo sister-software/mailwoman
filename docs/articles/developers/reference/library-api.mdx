@@ -37,7 +37,7 @@ running script.
 | `mailwoman/geocode`                | `geocodeAddress`, `parseForGeocode`, `USStateDatabaseProvider`, `geocodeStream`, the result types |
 | `mailwoman/resolver-backend`       | `createResolverBackend` and `resolveCandidateDBPath`                                              |
 | `@mailwoman/core/data-root`        | `dataRootPath` and the other data-root path helpers                                               |
-| `mailwoman/cli-kit`                | Ink helpers for building an interactive command                                                   |
+| `mailwoman/cli/kit`                | Ink helpers for building an interactive command                                                   |
 | `mailwoman/test-kit`               | The parser test helpers                                                                           |
 | `mailwoman/poi`                    | The POI intent stage and executor                                                                 |
 | `@mailwoman/poi-taxonomy/overpass` | `emitOverpassQL`, the OverpassQL export for a matched POI intent                                  |
@@ -78,7 +78,7 @@ Two stages take an injected implementation. The rest carry production defaults.
 | `classifyKind`        | function                           | `@mailwoman/kind-classifier` | Stage 2.5. An explicit override wins over the POI-aware default               |
 | `groupPhrases`        | function                           | `@mailwoman/phrase-grouper`  | Stage 2.7                                                                     |
 
-Passing `false` to `fst`, `streetMorphology`, `streetEvidence`, `placeCountry` or `poiQueryKind`
+Pass `false` to `fst`, `streetMorphology`, `streetEvidence`, `placeCountry` or `poiQueryKind`
 suppresses both the auto-load and any explicit value, which is how a caller gets output identical to a
 build without that mechanism.
 
@@ -173,7 +173,7 @@ them. A package that resolves but ships no binaries fails loudly rather than fal
 cache — that is the metadata-only checkout trap, and silence there would look like a working install.
 
 The method is Node-only: it imports `onnxruntime-node` and `node:fs` dynamically. In a browser, use
-`loadNeuralClassifierFromURLs` from `@mailwoman/neural/web-loader`. Both runtimes are optional peer
+`loadNeuralClassifierFromURLs` from `@mailwoman/neural/web/loader`. Both runtimes are optional peer
 dependencies, so whichever side you are on, install it yourself: `onnxruntime-node` on a server,
 `onnxruntime-web` in a browser build.
 
@@ -206,19 +206,19 @@ siblings, four of which the source marks internal), the `queryShapeBiasScale` ma
 morphology-prior override, the pre-v4.4.0 `bridgePunctuationGaps` switch, and `trailingLocality`,
 which is deprecated and scheduled for deletion at the next major.
 
-| Field                      | Type                                | Default                          | Effect                                                     |
-| -------------------------- | ----------------------------------- | -------------------------------- | ---------------------------------------------------------- |
-| `fst`                      | `FSTMatcherLike`                    | none                             | Gazetteer matches become additive emission biases          |
-| `inputMode`                | `"fragmented"` or `"formatted"`     | `"fragmented"`                   | Which register the evidence channels run in                |
-| `queryShape`               | `QueryShapeLike`                    | none                             | Known-format hits become additive emission biases          |
-| `normalizeCase`            | `boolean`                           | on                               | Title-cases detected all-caps ASCII input                  |
-| `calibrate`                | `Calibrator`                        | off                              | Maps raw span confidence through a calibration table       |
-| `enforceWordConsistency`   | `boolean` or `WordConsistencyOpts`  | on                               | Per-word BIO vote, skipping byte-fallback words            |
-| `postcodeRepair`           | `boolean`                           | off                              | Deterministic postcode repair pass                         |
-| `unitRepair`               | `boolean`                           | off                              | Deterministic unit repair pass                             |
-| `spanProposer`             | `boolean`                           | on                               | Span-proposal priors                                       |
-| `addressSystemConventions` | `"auto"` or a system code           | from the model card              | Which address-system conventions apply                     |
-| `placetypePair`            | `PlacetypePairPriorOpts` or `false` | the weights package's pair index | Omitting it inherits the package. Only `false` disables it |
+| Field                      | Type                                | Default                          | Effect                                                                                    |
+| -------------------------- | ----------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------- |
+| `fst`                      | `FSTMatcherLike`                    | none                             | Gazetteer matches become additive emission biases                                         |
+| `inputMode`                | `"fragmented"` or `"formatted"`     | `"fragmented"`                   | Which register the evidence channels run in                                               |
+| `queryShape`               | `QueryShapeLike`                    | none                             | Known-format hits become additive emission biases                                         |
+| `normalizeCase`            | `boolean`                           | on                               | Title-cases detected all-caps ASCII input                                                 |
+| `calibrate`                | `Calibrator`                        | off                              | Maps raw span confidence through a calibration table                                      |
+| `enforceWordConsistency`   | `boolean` or `WordConsistencyOpts`  | on                               | Per-word BIO vote, skipping byte-fallback words                                           |
+| `postcodeRepair`           | `boolean`                           | off                              | Deterministic postcode repair pass                                                        |
+| `unitRepair`               | `boolean`                           | off                              | Deterministic unit repair pass                                                            |
+| `spanProposer`             | `boolean`                           | on                               | Span-proposal priors                                                                      |
+| `addressSystemConventions` | `"auto"` or a system code           | from the model card              | Which address-system conventions apply                                                    |
+| `placetypePair`            | `PlacetypePairPriorOpts` or `false` | the weights package's pair index | The call inherits the package value when this option is omitted. Only `false` disables it |
 
 The table above is the classifier's own defaults, and `createRuntimePipeline` pins two of them on
 every call it makes: `postcodeRepair: true`, and the shipped word-consistency settings.
@@ -226,7 +226,7 @@ every call it makes: `postcodeRepair: true`, and the shipped word-consistency se
 mid-pipeline. `postcodeRepair` is the one that differs: off on a bare classifier call, on
 through the pipeline.
 
-### Wiring the gazetteer index on a bare call
+### Pass the gazetteer index to a bare call
 
 `fst` is the option a bare classifier call has to pass, and the one whose absence is hardest to
 notice. The gazetteer index turns a gazetteer match into an additive emission bias, and it is what
@@ -279,7 +279,7 @@ This is the main reason to prefer the pipeline for a single parse: it wires the 
 street-morphology matcher and the street-evidence rerank, and a bare classifier call gets none of the
 three.
 
-## Geocoding
+## Resolve coordinates
 
 `mailwoman/geocode` turns a string into a coordinate with a resolution tier and an uncertainty
 radius.
@@ -377,7 +377,7 @@ namespace in practice. `for` is a property rather than a method so it can be pas
 This file resolves against a downloaded `candidate.db` with no street databases wired, so it answers on
 the admin tier. It also runs without the gazetteer emission priors: `geocodeAddress` never wires the
 index, and `GeocodeDeps` has no field for it — see [Wiring the gazetteer index on a bare
-call](#wiring-the-gazetteer-index-on-a-bare-call).
+call](#pass-the-gazetteer-index-to-a-bare-call).
 
 ```ts
 import { NeuralAddressClassifier } from "@mailwoman/neural"

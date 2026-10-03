@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Types for decoded address trees and the labelled tokens they are built from.
+ *   Types for decoded address trees and the labeled tokens they are built from.
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
@@ -81,7 +81,9 @@ export interface AddressNode {
 	interpretations?: ReadonlyArray<Interpretation>
 	/**
 	 * The ISO 15924 script of the span.
-	 * `Zyyy` means no specific script, and absence means unknown.
+	 *
+	 * `Zyyy` means no specific script.
+	 * An absent value means the script is unknown.
 	 */
 	script?: string
 }

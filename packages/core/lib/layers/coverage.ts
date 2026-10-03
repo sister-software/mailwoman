@@ -11,14 +11,14 @@ import { stringifyJSON } from "#json"
 import type { CoverageCell } from "#layers/manifest"
 
 /**
- * The coverage rows for a layer whose coverage is `source_present`: one per cell
- * the authority's own polygons reach, and none anywhere else.
+ * A `source_present` layer has one coverage row for each cell reached by the authority's polygons.
+ * It has no rows elsewhere.
  *
  * `observedRows` counts the polygons reaching the cell.
  * There is no zero-row cell here and there cannot be one, because a `source_present` layer
  * publishes no evidence that would let an empty cell be distinguished from unmapped ground.
  *
- * A layer whose absence carries meaning (flood's Zone 1) emits its rows from the designated extent instead.
+ * A layer whose absence has meaning (flood's Zone 1) emits its rows from the designated extent instead.
  */
 export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>): CoverageCell[] {
 	const cells: CoverageCell[] = []
@@ -39,9 +39,10 @@ export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>
  * The coverage rows for a layer whose footprint an authority designates: one per cell of
  * the realized footprint, every one at completeness 1 on the `designated` basis.
  *
- * An `observed_rows` of zero is included, because a designated cell no polygon
- * reaches is the storable form of a designated absence, and the row a reader must
- * not confuse with the absent row an out-of-footprint cell has.
+ * The function includes `observed_rows` of zero.
+ * A designated cell reached by no polygon stores a designated absence.
+ *
+ * Readers can distinguish that row from an absent row outside the footprint.
  *
  * @param options.include Narrows the footprint where a product excludes some cells.
  * Which cells and what their exclusion means is the product's own rule and stays at its call site.
@@ -91,7 +92,8 @@ export function assertNoNegativeClaim(scope: string, cells: ReadonlyArray<Covera
 /**
  * Refuse a layer holding no coverage rows at all.
  *
- * Every location would read as unknown, and a reader cannot tell that artifact from ground nobody mapped.
+ * Every location would read as unknown.
+ * A reader could not distinguish that artifact from unmapped ground.
  *
  * @param indistinguishableFrom The product's own words for what the empty answer would be mistaken for.
  */
@@ -108,7 +110,7 @@ export function assertCoverageNotEmpty(rowCount: number, context: string, indist
  *
  * Such a cell has no ancestor chain from a probe's own cell, so `cellToParent`
  * would throw mid-query on some coordinates and not others.
- * Refusing at open time treats the disagreement as the build defect it is.
+ * The open operation rejects the mismatch as a build defect before a query begins.
  */
 export function assertNoCellsFinerThanIndex(
 	cellResolutions: readonly number[],
@@ -127,8 +129,8 @@ export function assertNoCellsFinerThanIndex(
 /**
  * The measurement knobs every layer's resolution instrument shares.
  *
- * The driver loops stay per product: what a stream yields, how scenarios partition it,
- * and what each report carries genuinely differ.
+ * Each product keeps its own driver loop because products differ in stream output and scenario partitions.
+ * Their reports also include different fields.
  */
 export interface ResolutionMeasurementOptions {
 	/**
@@ -165,7 +167,7 @@ export interface AreaAgreement {
 }
 
 /**
- * The two totals a streaming ingest accumulates, in square metres of the encoded rings.
+ * The two totals a streaming ingest accumulates, in square meters of the encoded rings.
  */
 export interface StreamedAreaTotals {
 	nestedM2: number
@@ -178,8 +180,9 @@ const M2_PER_KM2 = 1_000_000
  * An {@link AreaAgreement} whose witness is stated: either the source published a figure
  * and the gap is against it, or it published none and there is no figure TO agree with.
  *
- * The no-witness case is a type rather than a zero, because a `relativeGap` of 0 is
- * indistinguishable from a pass, and a check that never ran must not read as one.
+ * The no-witness case has its own type rather than a zero.
+ * A `relativeGap` of 0 is indistinguishable from a pass.
+ * A check that never ran must not read as a pass.
  */
 export type AreaAgreementReading =
 	| (AreaAgreement & { witness: "source" })
@@ -216,7 +219,7 @@ export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number
  * A reading with no witness has no figure to disagree with and passes through.
  * Its type is what keeps that from reading as a pass.
  *
- * The message carries the hole-blind total beside the nested one, because the gap between them
+ * The message includes the hole-blind total beside the nested one, because the gap between them
  * is the diagnosis: a hole read as an exterior ring answers "inside" for every point in it.
  *
  * @param scope Names the builder in the error, e.g. `coastal build`.

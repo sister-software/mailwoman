@@ -299,7 +299,7 @@ installed spliterator v3.1.0 (live probes rather than docs). Everything above ma
 4. **`AsyncDataResource` omits `AsyncChunkIterator`** in the published type although its own
    docstring lists it and the runtime dispatches on `Symbol.asyncIterator`. Stream call sites
    (child stdout, gunzip/unzip pipes) use `as unknown as AsyncDataResource` with a comment.
-5. **String streams silently break the byte scanner**: `createReadStream(path, { encoding: "utf8" })`
+5. **Streams of strings silently break the byte scanner**: `createReadStream(path, { encoding: "utf8" })`
    yields string chunks the splitter can't scan (probed: all offsets -1). `locale.ts` had exactly
    this; the encoding option was removed so the stream yields Buffers.
 6. **Tolerance parity ruled most JSONL sites.** `JSONSpliterator` throws on the first malformed
@@ -316,7 +316,7 @@ installed spliterator v3.1.0 (live probes rather than docs). Everything above ma
 
 ### The doc's stated risks, resolved
 
-- **Trailing child-process data (risk 2): refuted.** A synthetic harness wrote 100k JSONL lines, flushed,
+- **Child-process data at the end (risk 2): refuted.** A synthetic harness wrote 100k JSONL lines, flushed,
   slept 150 ms, and wrote 3 more lines. Spliterator-over-stdout read 100,003/100,003, identical to the
   readline baseline, and the exit code was observed. An early break after 1k lines released the handle without fd
   warnings, and the child stayed killable/awaitable as before.

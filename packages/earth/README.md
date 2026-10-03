@@ -3,20 +3,21 @@
 Earth is the mailwoman geocoder map, served at `https://earth.mailwoman.ai` as an installable PWA on Cloudflare
 Workers Static Assets. The app is static: `wrangler.toml` declares `assets` and no Worker script, so a navigation or
 an asset request never invokes compute. Model and gazetteer artifacts come from `public.mailwoman.ai` at run time
-and tiles from `tiles.mailwoman.ai`; the sql.js-httpvfs runtime files are staged under `public/sqljs/` by the build.
+and tiles from `tiles.mailwoman.ai`; the range worker and sqlite-wasm runtime files are staged under `public/sqlite/` by the build.
 
 ## Commands
 
 | Command                                          | Does                                                                        |
 | ------------------------------------------------ | --------------------------------------------------------------------------- |
 | `yarn workspace @mailwoman/earth dev`            | Vite dev server                                                             |
-| `yarn workspace @mailwoman/earth build`          | `dist/`, with `build.json`, the manifest, the service worker and `sqljs/`   |
-| `yarn workspace @mailwoman/earth preview`        | serves `dist/` on port 7770 with SPA fallback                               |
+| `yarn workspace @mailwoman/earth build`          | `dist/`, with `build.json`, the manifest, the service worker and `sqlite/`  |
+| `yarn workspace @mailwoman/earth preview`        | serves `dist/` on port 7771 with SPA fallback                               |
 | `yarn workspace @mailwoman/earth test:browser`   | the Playwright suite over the preview server, or over `MAILWOMAN_EARTH_URL` |
 | `yarn workspace @mailwoman/earth deploy:dry-run` | validates `wrangler.toml` and the asset manifest                            |
 
-The preview serves on port 7770 because that is the local origin the public data bucket's CORS rule admits; on any
-other port the browser refuses every model, gazetteer and sprite fetch and the geocoder never becomes ready.
+The preview serves on port 7771, and the public data bucket's CORS rule must admit `http://localhost:7771`. On a port
+the rule does not admit, the browser refuses every model, gazetteer and sprite fetch and the geocoder never becomes
+ready. The docs dev server holds port 7770.
 
 ## Routes
 

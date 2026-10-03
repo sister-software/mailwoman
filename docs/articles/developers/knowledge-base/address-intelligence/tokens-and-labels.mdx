@@ -93,7 +93,7 @@ adjacent towns would read `B-locality`, `B-locality`, and the second `B-` is the
 The scheme has one structural weakness, and it is the reason the decoder exists: `I-locality` with no
 `B-locality` before it is not a reading of anything. A per-piece argmax will produce that sequence
 whenever the model is unsure about the first word and confident about the second, and the standard
-symptom is a town losing its first word. [Decoding and the best path](./decoding-and-viterbi.mdx) is
+symptom is a town losing its first word. [How the decoder chooses a path](./decoding-and-viterbi.mdx) is
 where that gets ruled out.
 
 ## Three counts, and why they differ
@@ -134,7 +134,7 @@ it.
 ## Related
 
 - [How a model reads an address](./how-a-model-reads-an-address.mdx) — the whole chain, on one input.
-- [Decoding and the best path](./decoding-and-viterbi.mdx) — the constraint that rules out an orphan
+- [How the decoder chooses a path](./decoding-and-viterbi.mdx) — the constraint that rules out an orphan
   continuation.
 - [Component tags](../../reference/component-tags.mdx) — the 26 tags, and which the shipped model emits.
 - [Library API](../../reference/library-api.mdx) — where spans, offsets and options live in code.

@@ -1,6 +1,6 @@
 # The trailing-region arc: three extract shapes, three failures, one measured cause
 
-**2026-08-23.** Closing out #1748 / #1821. Nothing from this arc shipped, and the reason is worth more
+**2026-08-23.** This postmortem closes #1748 / #1821. Nothing from this arc shipped, and the reason is worth more
 than the model would have been.
 
 ## What we were trying to fix
@@ -15,7 +15,7 @@ Heladería Frappé Manía, Avenida Country Club, Barcelona 6001, Anzoátegui, Ve
 `Barcelona 6001` reads as `«street» «house_number»`, so the true locality is swallowed by the street
 and the STATE is promoted to locality.
 
-The cause is position, and it is reproducible outside VE. Moving the same digits one slot flips the tag:
+The cause is position, and it is reproducible outside VE. The tag flips when the same digits move one slot:
 
 | Input                                     | postcode tag     | locality          |
 | ----------------------------------------- | ---------------- | ----------------- |
@@ -88,7 +88,7 @@ got worse is the finding. Venue regressions went **12 → 15**, and a new class 
 bare_street_boundary ×7   Calle de Alcalá · Corso Vittorio Emanuele II · Madison Square West
 ```
 
-Adding a dependent locality moved the "first named segment" binding from `locality` to
+A dependent locality moved the "first named segment" binding from `locality` to
 `dependent_locality`. Bare street names started reading as dependent localities, and venues did not
 recover.
 
@@ -137,7 +137,7 @@ same classes. So the cause is not the extract's internal composition, and it is 
 | **v4.11.0** | **no**      | **no**     | **yes**               | **−13** |     **9** |
 
 What every run shares is the DATA: non-US/FR admin tails entering a model whose tail expectations were
-set by US and FR. Adding them shifts those expectations for the countries it already knows, and FR/GB/
+set by US and FR. They shift those expectations for countries the model already knows, and FR/GB/
 IE venue rows are where that shows. Composition and share modulate the size of the shift; neither
 removes it.
 
@@ -255,8 +255,8 @@ learned rather than grafted. That is a different order of commitment and should 
 
 ## The cause, stated once
 
-**PROVISIONAL, pending the null-run control described above.** Adding non-US/FR admin tails to this
-model regresses FR/GB/IE venue parsing, and neither composition, share, nor the EWC brake removes it. Five runs: three admin-only extracts at three shares, one share reduce on
+**PROVISIONAL, pending the null-run control described above.** Non-US/FR admin tails in this model
+regress FR/GB/IE venue parsing, and neither composition, share, nor the EWC brake removes the regression. Five runs: three admin-only extracts at three shares, one share reduce on
 a byte-identical extract, and one that carried venue+street+house_number in every row inside an
 already-shipping bucket. All five net-negative, all five losing the same classes in the same
 countries. Composition and share modulate the size of the shift; the shift itself tracks the data.
@@ -270,7 +270,7 @@ larger commitment than a fine-tune and should be scoped as one.
 ## What this does and does not license
 
 - **The share is not the action, and that is now measured rather than argued.** v4.10.0 held the extract
-  byte-identical and reduce exposure 3×; net went −20 → −13 and stopped there. Extrapolating the observed
+  byte-identical and reduce exposure 3×; net went −20 → −13 and stopped there. The observed
   sub-linear fall, the share that stops hurting is below the share that teaches.
 - **It does license the corpus-authoring task**: this extract needs rows where a venue or a street
   precedes the locality before it can carry a meaningful share. That is authoring rather than tuning.

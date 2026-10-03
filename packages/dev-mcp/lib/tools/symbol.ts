@@ -2,23 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_symbol` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The search itself lives in `../symbol-index.ts`; this file is the interface.
+ *   The `mwdev_symbol` tool definition provides the agent-facing description and input schema.
+ *   Its handler calls the search in `../symbol-index.ts`.
  *
  *   The pull half of the duplicate-avoidance pair. `../hooks/symbol-precheck.ts` pushes the same answer at write time
  *   without being asked. this is for deciding before writing, when the question is "does this already exist" and the
  *   answer changes what gets written.
  *
- *   two ways TO ASK, because a name search only helps someone who guessed the name. `query` matches an identifier
- *   fragment; `describes` matches what each declaration's docstring says it does, which is the half that answers when
- *   the intended name shares no substring with the existing one.
+ *   The tool offers two search modes. `query` matches an identifier fragment.
+ *   `describes` matches each declaration's docstring and can find symbols whose names share no substring with the query.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { z } from "zod"
 
-import { searchDeclarations } from "#symbol/index"
+import { searchDeclarations } from "#symbol"
 import { loadPurposeIndex, searchPurpose } from "#symbol/purpose"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 

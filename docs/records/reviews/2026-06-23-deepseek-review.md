@@ -185,7 +185,7 @@ Five copies across core and scripts. Consolidate to `core/spatial/haversine.ts` 
 
 ### 6. The failure-dump classifier conflates two distinct "postcode-available" cases
 
-`classify()` returns `WRONG_locality_postcode-AVAILABLE` when a postcode resolved and the best coordinate came from a non-postcode placetype. But this bucket includes both "Change A would fix this" (wrong locality instance, postcode anchor present) and "coordinate is from a street/address but wrong" (postcode is present but the error is elsewhere). Splitting this into `WRONG_locality_postcode-AVAILABLE` (locality-placed, far from postcode) and `WRONG_non-locality_postcode-AVAILABLE` (street/address-placed, postcode present but not the error) would make the change targeting even sharper. Low priority; the current classifier is already good enough to drive change decisions.
+`classify()` returns `WRONG_locality_postcode-AVAILABLE` when a postcode resolved and the best coordinate came from a non-postcode placetype. But this bucket includes both "Change A would fix this" (wrong locality instance, postcode anchor present) and "coordinate is from a street/address but wrong" (postcode is present but the error is elsewhere). Two narrower buckets would make change targeting even sharper: `WRONG_locality_postcode-AVAILABLE` (locality-placed, far from postcode) and `WRONG_non-locality_postcode-AVAILABLE` (street/address-placed, postcode present but not the error). Low priority; the current classifier is already good enough to drive change decisions.
 
 ### 7. The GeoNames extract builder has no test but follows the repo convention
 

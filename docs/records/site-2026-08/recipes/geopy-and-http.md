@@ -14,7 +14,7 @@ You don't have to rewrite the client to fix any of that. Mailwoman ships a [Nomi
 
 ## Start the server
 
-The container installs the published `@mailwoman/*` packages and bakes the model weights in, so a first run parses with no data at all. Geocoding needs a gazetteer, which stays out of the image and mounts at `/data`. Run the Nominatim drop-in and point it at a mailwoman data root:
+The container installs the published `@mailwoman/*` packages and bakes the model weights in, so a first run parses with no data at all. The geocoder needs a gazetteer, which stays out of the image and mounts at `/data`. Run the Nominatim drop-in and point it at a mailwoman data root:
 
 ```bash
 docker run --rm -p 8080:8080 \
@@ -134,6 +134,6 @@ For type-ahead and autocomplete — the partial-query, as-you-type case — reac
 
 ## Where to go next
 
-- [Switching from Nominatim](../concepts/switching-from-nominatim.mdx) is the full endpoint map, the response differences, and the fields Mailwoman fills that upstream leaves empty (and the few it leaves out).
+- [The Nominatim migration guide](../concepts/switching-from-nominatim.mdx) maps the full endpoint, response differences, and the fields Mailwoman fills that upstream leaves empty (and the few it leaves out).
 - [The free first pass](./multi-service-geocoding.md) is the recipe for the paid-API case: geocode everything locally, then spend money only on the residual the local pass couldn't pin well enough. Every result tells you, per row, how good its answer is.
 - [Batch geocoding](./batch-geocoding.md) uses the native `/v1/batch` endpoint (same image, default command) when you control the client and want per-row error isolation over a whole table in one request.

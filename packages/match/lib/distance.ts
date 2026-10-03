@@ -6,7 +6,7 @@ import { haversineKm as greatCircleKm, type GeoCoordinate } from "@mailwoman/spa
 import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
 
 /**
- * Computes the great-circle distance in kilometres between two `GeoCoordinate` records.
+ * Computes the great-circle distance in kilometers between two `GeoCoordinate` records.
  * It delegates to the scalar helper in `@mailwoman/spatial`.
  */
 export const haversineKm = (a: GeoCoordinate, b: GeoCoordinate): number =>
@@ -47,8 +47,8 @@ export function distanceComparison<R>(config: {
 }
 
 /**
- * Provides default distance levels at building, block and area scale, whose `m`
- * and `u` values are seeds for EM re-estimation.
+ * Provides default distance levels at building, block and area scales.
+ * Their `m` and `u` values seed EM re-estimation.
  */
 export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
 	{ label: "same-building", maxKm: 0.05, m: 0.7, u: 0.001 },
@@ -61,8 +61,8 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
  * Creates a single spatial comparison whose level 0 is an exact canonical-key match
  * and whose remaining levels bucket great-circle distance for pairs with different keys.
  *
- * It replaces separate key and distance comparisons, which count a co-located pair's
- * evidence twice and over-merge distinct entities at a shared address.
+ * Separate key and distance comparisons count a co-located pair's evidence twice.
+ * They also over-merge distinct entities at a shared address.
  */
 export function spatialComparison<R>(config: {
 	name: string

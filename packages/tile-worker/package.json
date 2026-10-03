@@ -19,7 +19,12 @@
 		}
 	},
 	"exports": {
-		"./package.json": "./package.json"
+		"./package.json": "./package.json",
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
 	},
 	"publishConfig": {
 		"access": "public"

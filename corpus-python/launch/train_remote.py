@@ -11,8 +11,15 @@ from .audits import (
     census_region_code_token,
 )
 from .bucket import bucket_census
-from .census import country_census_raw, diagnose_corpus, digit_prior, locale_supply_census, piece_prior
-from .grade import diagnose_suffix_plasticity, eval_de, grade_evidence_bundle, grade_street_type_contrast
+from .census import country_census_raw, diagnose_corpus, digit_prior, label_support, locale_supply_census, piece_prior
+from .grade import (
+    diagnose_suffix_plasticity,
+    eval_de,
+    grade_evidence_bundle,
+    grade_exposure,
+    grade_street_type_contrast,
+    measure_exposure,
+)
 from .mean_init import mean_init
 from .stage import stage_v8cjk_regs
 from .syncs import sync, sync_assets
@@ -37,10 +44,13 @@ __all__ = [
     "eval_de",
     "export_onnx",
     "grade_evidence_bundle",
+    "grade_exposure",
     "grade_street_type_contrast",
+    "label_support",
     "locale_supply_census",
     "main",
     "mean_init",
+    "measure_exposure",
     "piece_prior",
     "preflight_corpus_receipts",
     "push_artifact_r2",

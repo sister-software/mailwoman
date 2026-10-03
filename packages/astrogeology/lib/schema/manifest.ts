@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Schemas for the source lock and the build manifest, which trace a published archive to its inputs.
+ *   Defines schemas for the source lock and build manifest.
+ *   These schemas trace a published archive to its inputs.
  */
 
 import { z } from "zod"

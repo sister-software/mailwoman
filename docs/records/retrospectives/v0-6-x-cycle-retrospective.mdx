@@ -126,7 +126,7 @@ hides three failure modes:
   invalid but counted as correct.
 - Swap errors. `"Springfield, 123 Main St"` with locality and street
   swapped scores 67% per-tag and 0% at address level.
-- Missing components. "3 out of 4 tags present" still produces a parse
+- Absent components. "3 out of 4 tags present" still produces a parse
   the resolver cannot use.
 
 DeepSeek turn 11 reversed turn 7's position on this point. The v0.6.2b
@@ -146,7 +146,7 @@ two implications:
   recently. The cycle of fixing one regression and causing another
   follows directly.
 - **It blocks CRF re-enablement for now.** The fp32-CRF fix is verified.
-  Enabling CRF on top of an overconfident model would make
+  CRF activation on top of an overconfident model would make
   overconfidence worse. The CRF tightly constrains the transition path,
   so a confident wrong emission locks the whole sequence into a wrong
   path. Calibrate first, then add CRF.
@@ -161,7 +161,7 @@ SentencePiece fragments multi-token alphanumeric postcodes into pieces
 the model cannot span, and the model labels only some of the pieces as
 postcode.
 
-This is a tokenizer concern rather than a schema concern. Adding more JP / KR /
+This is a tokenizer concern rather than a schema concern. More JP / KR /
 BR coverage (system-multiplicity) does not fix it. v0.7 needs to address
 postcodes at the character or FST level.
 

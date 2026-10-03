@@ -6,8 +6,8 @@
  * `@mailwoman/react/map`'s geocoder consumes, injecting the browser runtime's loaders into
  * `@mailwoman/react`'s `useReleaseRuntime` orchestration and wrapping the loaded assets with the map surface.
  *
- * This is application code on purpose: `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and
- * maplibre graph, and this assembly imports all three.
+ * This is application code on purpose. `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and
+ * maplibre graph. This assembly imports all three.
  */
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
@@ -72,7 +72,7 @@ const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix
 
 /**
  * Per-state street lookups loaded together, lazily by region.
- * National (country) extracts carry no interp.
+ * National (country) extracts have no interpolation.
  */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
@@ -122,7 +122,7 @@ function disposeAssets(assets: ReleaseAssets): Promise<void> {
  * loaders into `useReleaseRuntime`.
  */
 export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
-	const { sqljsBaseURL } = config
+	const { sqliteRuntimeBaseURL } = config
 
 	const loadManifest = useCallback(
 		async (): Promise<ReleaseManifest<ReleaseInfo> | null> => fetchReleasesManifest(),
@@ -131,8 +131,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 	const loadAssets = useCallback(
 		(release: ReleaseInfo, ctx: AssetsLoadContext): Promise<ReleaseAssets> =>
-			loadReleaseAssets(release, ctx, { gazetteer: { sqljsBaseURL } }),
-		[sqljsBaseURL]
+			loadReleaseAssets(release, ctx, { gazetteer: { sqliteRuntimeBaseURL } }),
+		[sqliteRuntimeBaseURL]
 	)
 
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
@@ -152,9 +152,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	)
 
 	/*
-	 * These callbacks read `rt.assets` and name it as a dependency: a callback that parses
-	 * with a bundle is not the same callback once the bundle changes, and a ref mirror lost
-	 * a child-first effect race (a ref written during render is a value React may discard).
+	 * These callbacks read `rt.assets` and name it as a dependency.
+	 *
+	 * A callback that parses with a bundle changes when the bundle changes.
+	 * A ref mirror lost a child-first effect race (a ref written during render is a value React may discard).
 	 */
 
 	const geoBias = useGeoBias()
@@ -184,23 +185,23 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			if (!p) {
 				p = (async () => {
-					const { loadHTTPVFSDatabase } = await import("@mailwoman/resolver-wof-wasm/httpvfs/resolver")
+					const { openRangeDatabase } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
 
 					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } =
 						await import("@mailwoman/resolver-wof-wasm/httpvfs/street")
 
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
-						const situsW = await loadHTTPVFSDatabase(streetExtractURL(slug, "situs"), sqljsBaseURL)
+						const situsDB = await openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL)
 
-						return { situs: new HTTPVFSAddressPointLookup(situsW, { streetLocale: slug as "fr" }), interp: undefined }
+						return { situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: slug as "fr" }), interp: undefined }
 					}
 
-					const [situsW, interpW] = await Promise.all([
-						loadHTTPVFSDatabase(streetExtractURL(slug, "situs"), sqljsBaseURL),
-						loadHTTPVFSDatabase(streetExtractURL(slug, "interp"), sqljsBaseURL),
+					const [situsDB, interpDB] = await Promise.all([
+						openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL),
+						openRangeDatabase(streetExtractURL(slug, "interp"), sqliteRuntimeBaseURL),
 					])
 
-					return { situs: new HTTPVFSAddressPointLookup(situsW), interp: new HTTPVFSInterpolator(interpW) }
+					return { situs: new HTTPVFSAddressPointLookup(situsDB), interp: new HTTPVFSInterpolator(interpDB) }
 				})()
 
 				p.catch(() => streetLookupsRef.current.delete(slug))
@@ -209,7 +210,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			return p
 		},
-		[sqljsBaseURL]
+		[sqliteRuntimeBaseURL]
 	)
 
 	const runParseWithBias = useCallback(
@@ -310,7 +311,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			const version = rt.selectedVersion
 
 			if (release?.hasPolygons && version && !polygonDBRef.current) {
-				const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqljsBaseURL)
+				const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqliteRuntimeBaseURL)
 				polygonDBRef.current = loading
 
 				loading.catch(() => {
@@ -382,7 +383,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			}
 
 			// Whether the resolved place doubles as another admin tier.
-			// This is best-effort, and the helper skips a synthesized street/anchor pin (`id === 0`).
+			// This is best-effort.
+			// The helper skips a synthesized street/anchor pin (`id === 0`).
 			const dualRoles = await resolveDualRoles(wofLookup, candidates[0])
 
 			return {
@@ -398,7 +400,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				dualRoles: dualRoles as ParseResult["dualRoles"],
 			}
 		},
-		[ensureStreetLookups, geoBias.locationRef, sqljsBaseURL, rt.assets, rt.selectedRelease, rt.selectedVersion]
+		[ensureStreetLookups, geoBias.locationRef, sqliteRuntimeBaseURL, rt.assets, rt.selectedRelease, rt.selectedVersion]
 	)
 
 	const runParse = useCallback(
@@ -456,7 +458,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 					void (async () => {
 						try {
 							if (!polygonDBRef.current) {
-								polygonDBRef.current = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqljsBaseURL)
+								polygonDBRef.current = loadPolygonDB(
+									assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"),
+									sqliteRuntimeBaseURL
+								)
 							}
 
 							const geom = await (await polygonDBRef.current).get(placeID)
@@ -475,7 +480,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			return place
 		},
-		[sqljsBaseURL, polygonCache, rt.selectedRelease, rt.selectedVersion]
+		[sqliteRuntimeBaseURL, polygonCache, rt.selectedRelease, rt.selectedVersion]
 	)
 
 	const traceParse = useCallback(

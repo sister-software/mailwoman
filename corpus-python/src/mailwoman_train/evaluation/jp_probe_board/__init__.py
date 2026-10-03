@@ -1,7 +1,7 @@
 """Score a JP char checkpoint on the municipality-held-out board.
 
-The evaluator argmax-decodes character BIO labels, reconstructs spans, resolves the selected admin
-pair against municipality centroids, and grades coordinate acceptability. It reports per-register
+The evaluator argmax-decodes character BIO labels and reconstructs spans. It resolves the selected
+admin pair against municipality centroids and grades coordinate acceptability. It reports per-register
 diagnostics when the board provides a ``register`` column; ``--label-set`` selects matching labels
 and resolve tags.
 """

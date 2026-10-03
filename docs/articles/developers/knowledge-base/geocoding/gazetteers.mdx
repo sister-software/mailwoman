@@ -58,7 +58,7 @@ a coordinate and not a shape.
 Both look identical in a result. Both give you a latitude/longitude. Only one of them can answer the
 question "is this address inside this town?"
 
-Counting places whose stored bounding box has zero extent gives the split. In the build above, at
+The split comes from counting places whose stored bounding box has zero extent. In the build above, at
 locality rank:
 
 - **4,363,934 places, of which 2,148,316 are stored as points** — 49.2%, near enough to half.
@@ -116,13 +116,13 @@ was involved in getting from one to the other. That constraint is also what keep
 enough to run from disk — see [The two architectures](./the-two-architectures.mdx).
 
 This is also why a gazetteer's hierarchy is more valuable than its coordinate precision for most
-questions. Getting the town's center wrong by two kilometers costs you two kilometers. Getting the
-town's parent wrong costs you the state.
+questions. A town-center error of two kilometers costs you two kilometers. A town-parent error costs
+you the state.
 
 ## What it costs
 
-Depending on an open gazetteer means inheriting its shape. Coverage that is thin for a country stays
-thin until upstream fixes it, and the fix is not something a better model reaches. The framing worth keeping
+An open gazetteer determines the shape of its coverage. Coverage that is thin for a country stays
+thin until upstream fixes it, and a better model cannot fix that gap. Keep this distinction in mind:
 is that the model bounds how well the input is understood and the gazetteer bounds how well the world
 is known, and improving one leaves the other unchanged. That is why coverage claims here are made per
 locale and measured rather than asserted for the world.

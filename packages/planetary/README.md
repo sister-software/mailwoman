@@ -20,13 +20,13 @@ its body. When a project serves the wrong build, the app renders an error instea
 | ---------------------------------------------------------------------- | --------------------------------------------------------------- |
 | `PLANETARY_BODY=moon yarn workspace @mailwoman/planetary dev`          | Vite dev server on port 7791                                    |
 | `PLANETARY_BODY=moon yarn workspace @mailwoman/planetary build`        | `dist/`, with `build.json`, the manifest and the service worker |
-| `yarn workspace @mailwoman/planetary preview`                          | serves `dist/` on port 7770 with SPA fallback                   |
+| `yarn workspace @mailwoman/planetary preview`                          | serves `dist/` on port 7771 with SPA fallback                   |
 | `PLANETARY_BODY=mars yarn workspace @mailwoman/planetary test:browser` | the Playwright smoke over a fresh build and the preview server  |
 | `yarn workspace @mailwoman/planetary deploy:dry-run`                   | validates `wrangler.toml` and the asset manifest                |
 
-The preview serves on port 7770. It is the only local origin that the public data bucket's CORS rule admits, and the
-Earth preview uses the same port. On any other port the browser refuses the glyph and search-artifact fetches, so
-labels never draw and search never loads. The smoke test fetches the published archives, so it needs the network.
+The preview serves on port 7771, the same port as the Earth preview, and the public data bucket's CORS rule must admit
+`http://localhost:7771`. The docs dev server holds port 7770. On a port the rule does not admit, the browser refuses the
+glyph and search-artifact fetches, so labels never draw and search never loads. The smoke test fetches the published archives, so it needs the network.
 `MAILWOMAN_PLANETARY_URL` points it at a deployment instead of the preview server.
 
 ## Routes

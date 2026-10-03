@@ -13,24 +13,15 @@ import type { VersionOption } from "#map/types"
  * Props for {@link VersionPicker}.
  */
 export interface VersionPickerProps {
-	/**
-	 * The selectable model versions.
-	 */
 	versions: ReadonlyArray<VersionOption>
-	/**
-	 * The selected version tag.
-	 */
 	selected: string | null
-	/**
-	 * Called with the chosen version tag.
-	 */
 	onSelect: (version: string) => void
 	/**
 	 * Disables the control, for example while a parse runs.
 	 */
 	disabled?: boolean
 	/**
-	 * The field label. @default "Model version"
+	 * @default "Model version"
 	 */
 	label?: string
 }
@@ -58,7 +49,8 @@ export function VersionPicker({
 				value={selected ?? ""}
 				onChange={(e) => onSelect(e.target.value)}
 				disabled={disabled}
-				// The title shows the full label, which the field may clip.
+				// The title shows the full label.
+				// The field may clip it.
 				title={versions.find((v) => v.version === selected)?.label ?? selected ?? undefined}
 			>
 				{versions.map((v) => (

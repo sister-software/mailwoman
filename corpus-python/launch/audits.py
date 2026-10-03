@@ -1,4 +1,4 @@
-"""Running the training package's own audits on the volume's corpus, and committing the receipt.
+"""This module runs the training package's audits on the volume's corpus and commits each receipt.
 
     modal run -m launch.train_remote::audit_epoch_mixture --config-name <recipe>.yaml
     modal run -m launch.train_remote::census_opening_token --config-name <recipe>.yaml
@@ -6,9 +6,9 @@
     modal run -m launch.train_remote::census_comma_segment_number --config-name <recipe>.yaml
     modal run -m launch.train_remote::audit_suffix_feed --config-name <recipe>.yaml
 
-Each is a thin wrapper: the audit itself lives in `mailwoman_train.audits`, where it is unit-tested
-and can run anywhere, and this supplies the volume, the CPU and the committed JSON path. They are
-CPU-only by design. An audit that needed the GPU would be an audit nobody runs before a launch.
+Each function wraps an audit from `mailwoman_train.audits`. That code is unit-tested and can run
+anywhere. This module supplies the volume, CPU and output path. These audits use the CPU by design.
+An audit that needed the GPU could not run during pre-launch review.
 
 Pull a receipt with `modal volume get mailwoman-training /audits/<name>.json <local>`.
 """
@@ -22,7 +22,7 @@ from .app import VOL_MOUNT, app, training_image, vol
 if TYPE_CHECKING:
     from pathlib import Path
 
-#: Where a committed receipt lands. Named once: a caller quoting a different directory writes a
+#: Where a committed receipt lands. Declared once: a caller quoting a different directory writes a
 #: receipt the next `modal volume get` cannot find.
 AUDITS = f"{VOL_MOUNT}/audits"
 
@@ -48,7 +48,7 @@ def audit_epoch_mixture(config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml
 
     Runs the loader over one row-limited epoch exactly as the trainer would sample it (seed =
     train.seed + 1). A recipe's configured ``required_corpus_receipts`` fail this function before a
-    GPU run is launched, which is the point: the mixture is checkable without the spend.
+    GPU run is launched. This makes the mixture checkable before that spend.
     """
     import sys
     from pathlib import Path
@@ -84,7 +84,7 @@ def census_opening_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", dra
     its definition and its sampling level is not evidence, so this counts six nested definitions at
     both levels and lets the comparison be made on stated terms.
 
-    Unlike `audit_epoch_mixture`, the emitted pass honours `augment_exclude_sources`, because the
+    Unlike `audit_epoch_mixture`, the emitted pass honors `augment_exclude_sources`, because the
     trainer does.
     """
     import sys
@@ -115,10 +115,10 @@ def census_region_code_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml",
     Settles which reading of a contested code the mixture attests more — `NL` is a Canadian province
     and the Netherlands, `PE` a Canadian province and Peru — so an exposure meant to outweigh the country
     attestations has a count to be set against. No code list is typed: every two-letter uppercase
-    token is counted, and the contested set falls out of the data.
+    token is counted. The data determines which values are contested.
 
     The emitted pass matters more than usual here, because `augment_region_prob` writes region
-    surfaces onto rows that did not carry one.
+    surfaces onto rows that lacked one.
     """
     import sys
     from pathlib import Path
@@ -143,11 +143,11 @@ def census_region_code_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml",
     memory=16384,
 )
 def census_comma_segment_number(config_name: str = "v5.6.0-bare-postcode-60k.yaml", draws: int = 0) -> None:
-    """Count what a bare number standing alone between commas teaches.
+    """Count what a bare number by itself between commas teaches.
 
-    `301 College Ave, 101, Athens, GA 30601` is the surface #2298 proposes to teach as a unit, and it
-    carries no token that decides the reading. The same surface is already attested as a house
-    number and as a postcode. Leading and later positions are counted apart, because only the later
+    `301 College Ave, 101, Athens, GA 30601` is the surface #2298 proposes to teach as a unit.
+    It has no token that decides the reading. The same surface is already attested as a house
+    number and as a postcode. The audit counts leading and later positions separately, because only the later
     one is in competition with the proposed unit.
     """
     import sys
@@ -218,21 +218,25 @@ def audit_validation_coverage(
     config_name: str = "v5.9.0-locality-shape-60k.yaml",
     countries: str = "US,FR,DE,GB",
 ) -> None:
-    """Which countries the validation and test splits hold rows for, and how many carry a street.
+    """Counts rows by country in the validation and test splits, including how many rows have a street.
 
     The two splits are five parquet files holding roughly 1.9 million rows each, so this reads the
     whole population rather than sampling it the way the rest of this module has to. The nearest
-    measured figure is 12 s and 9 s for a scan of those same files filtered to one country, which
-    is a different operation: that one skipped row groups by their `country` statistics and this one
-    reads every row. Treat that as a lower bound until this function reports its own duration.
+    measured figures are 12 s and 9 s for scans of those same files filtered to one country.
+    Those scans perform a different operation. They skip row groups by their `country` statistics,
+    while this function reads every row. Treat those durations as lower bounds until this function
+    reports its own duration.
 
-    The reading it exists to surface: GB held 0 rows in both splits of `v0.32.0-locality-shape`
-    while US held 1,839,635 in each, and no number a run prints today says so (#2353).
+    This function surfaces the reading recorded in issue #2353. GB held 0 rows in both splits of
+    `v0.32.0-locality-shape`. US held 1,839,635 rows in each split. Current run output does not report
+    those counts.
 
-    A recipe declaring `data.required_validation_coverage` fails this function before a GPU is
-    allocated, the way `required_corpus_receipts` fails `audit_epoch_mixture`. The report is written
-    and committed to the volume first, so a failed floor leaves the numbers behind rather than only
-    the fact that it failed.
+    `train()` runs this same audit in its preflight when a recipe declares
+    `data.required_validation_coverage`, the way it runs `audit_epoch_mixture` for
+    `required_corpus_receipts`, so a declared floor that a split misses raises before the GPU is
+    allocated. This function is the standalone entry point for auditing a corpus without launching a
+    run. The report is written and committed to the volume first either way, so a failed floor leaves
+    the numbers behind rather than only the fact that it failed.
     """
     import sys
     from pathlib import Path

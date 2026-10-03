@@ -117,7 +117,7 @@ The global FST's root state has 488K edges — overflowed the u16 `edgeCount` fi
 
 ## v0.5.4 training
 
-Running on Modal A100 with:
+The run used a Modal A100 with:
 
 - v0.6.0-a0 tokenizer (multi-script, 0% CJK byte-fallback)
 - v0.5.1 recipe (wof-admin: 2.0, constant LR, no label smoothing, 100K steps)
@@ -143,7 +143,7 @@ Running on Modal A100 with:
 
 ### v0.5.4 shipped
 
-- Training completed (100K steps, A100, ~2.5h)
+- The run completed training (100K steps, A100, ~2.5h)
 - Export → fp32 117 MB → int8 28.1 MB
 - Demo presets: 6/6 correct on int8
 - Error analysis: 17.0% exact match on 4535 golden entries (cross-tokenizer comparison invalid per eval protocol — schema mismatch dominates; Stage 3 will close most boundary errors)

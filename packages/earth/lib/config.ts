@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The origins the app talks to. They are typed URLs rather than strings so a composed URL cannot lose its trailing
- *   slash, and a single object so a staging deployment can swap all three at once.
+ *   The origins the app talks to are typed URLs. A composed URL cannot lose its trailing slash.
+ *   One object lets a staging deployment swap all three at once.
  */
 
 export interface EarthConfig {
@@ -20,23 +20,23 @@ export interface EarthConfig {
 	 */
 	basemapTileJSONURL: URL
 	/**
-	 * Same-origin base for the staged sql.js-httpvfs runtime files (the UMD, the worker and the wasm).
+	 * Same-origin base for the staged range worker and sqlite-wasm runtime files.
 	 *
-	 * A worker script has to come from the page's own origin, which is why this is a path
-	 * and not a URL on the data origin.
+	 * A worker script has to come from the page's own origin.
+	 * This is a path on that origin, rather than a URL on the data origin.
 	 */
-	sqljsBaseURL: string
+	sqliteRuntimeBaseURL: string
 }
 
 /**
- * The production origins: the public R2 bucket every artifact resolves against,
- * and the tile worker at its custom domain.
+ * The production origins: the public R2 bucket that serves every artifact
+ * and the tile worker's custom domain.
  *
- * The sql.js files are staged under `public/` by the build.
+ * The SQLite runtime files are staged under `public/` by the build.
  */
 export const PRODUCTION_CONFIG: EarthConfig = {
 	dataOriginURL: new URL("https://public.mailwoman.ai/"),
 	tileWorkerURL: new URL("https://tiles.mailwoman.ai/"),
 	basemapTileJSONURL: new URL("https://tiles.mailwoman.ai/basemap-v4.json"),
-	sqljsBaseURL: "/sqljs",
+	sqliteRuntimeBaseURL: "/sqlite",
 }

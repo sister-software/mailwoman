@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The default base for http clients in this repo. Raw `fetch` duplicates throttling, caching, and
- *   error mapping that live here. New clients extend or instantiate this instead (see `agents.md`).
+ * @file The default base for HTTP clients in this repository. It centralizes throttling, caching and error mapping.
+ *   New clients extend or instantiate this class. See `agents.md`.
  */
 
 import { isAsyncDisposable } from "async-init"
@@ -25,9 +25,9 @@ import {
 	retryDelayMs,
 	type RetryOptions,
 } from "#api/retry"
-import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
+import { ConsoleLogger, type IRuntimeLogger } from "#logging"
 
-export { type IRuntimeLogger } from "#logging/index"
+export { type IRuntimeLogger } from "#logging"
 
 const MS_PER_MINUTE = 60_000
 
@@ -43,13 +43,23 @@ export interface APIClientConfig {
 	 */
 	logger?: IRuntimeLogger
 
+	/**
+	 * Cache storage belongs to its caller unless `disposeCacheStorage` is true.
+	 */
 	caching?: CacheOptions
+
+	/**
+	 * This option transfers cache storage ownership to the client.
+	 * The default is false.
+	 */
+	disposeCacheStorage?: boolean
 
 	/**
 	 * How many requests to make per minute before enforcing a cooldown: a budget model —
 	 * spend `requestsPerMinute` dispatches, then stall until the cooldown lapses.
 	 *
-	 * This cannot express a flat per-second rate, which is what most fair-access policies publish.
+	 * This cannot express a flat per-second rate.
+	 * Many fair-access policies publish that limit.
 	 * Use {@linkcode minRequestIntervalMs} for that.
 	 *
 	 * The two compose (both limits must clear) but you almost certainly want one.
@@ -80,10 +90,10 @@ export interface APIClientConfig {
 	retry?: RetryOptions | boolean
 
 	/**
-	 * Time source powering the pacer, the cooldown timer, and the retry backoff.
+	 * Time source for the pacer, cooldown timer and retry backoff.
 	 *
-	 * Defaults to {@linkcode systemClock}, and tests inject a fake clock
-	 * so timing is deterministic and instant.
+	 * Defaults to {@linkcode systemClock}.
+	 * Tests inject a fake clock to make timing deterministic and instant.
 	 */
 	clock?: ClockLike
 
@@ -91,8 +101,9 @@ export interface APIClientConfig {
 }
 
 /**
- * A base class for API clients used in Mailwoman, providing request pacing,
- * response caching, bounded retry, mapped errors, and integrated logging.
+ * A base class for Mailwoman API clients.
+ *
+ * It provides request pacing, response caching, bounded retries, mapped errors and integrated logging.
  */
 export class APIClient<C extends APIClientConfig = APIClientConfig> extends EventTarget implements AsyncDisposable {
 	public readonly config: C
@@ -102,13 +113,18 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	/**
 	 * When the current budget window opened — the instant of its first dispatch rather than of the last one.
 	 *
-	 * The cooldown is measured from here, which is what makes `requestsPerMinute` mean requests per minute.
+	 * The cooldown is measured from this time.
+	 * That makes `requestsPerMinute` mean requests per minute.
 	 */
 	#windowStartedAt = 0
 
 	readonly #clock: ClockLike
 	readonly #pacer: RequestPacer | null
 	readonly #retryPolicy: ResolvedRetryPolicy
+	readonly #shutdown = new AbortController()
+	readonly #requestsInFlight = new Set<Promise<void>>()
+	readonly #disposeStorage: (() => void | PromiseLike<void>) | undefined
+	#disposePromise: Promise<void> | null = null
 
 	public get $cooldown(): Promise<void> {
 		return this.#cooldownWithResolvers?.promise || Promise.resolve()
@@ -129,8 +145,8 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		// The pacing limit lives IN the adapter rather than in `fetch()`: `axios-cache-interceptor`
 		// short-circuits a cache HIT by replacing `config.adapter` with its own `cachedAdapter`,
 		// so anything installed here is reached only when the request is actually going to the network.
-		// Restricting in `fetch()` instead put the cache interceptor downstream of the check
-		// and made every cache hit burn a full pacer sleep.
+		// A check in `fetch()` would run after the cache interceptor and make every
+		// cache hit burn a full pacer sleep.
 		//
 		// Retries are unaffected: each attempt re-enters `this.axios(...)`,
 		// so each re-enters this adapter and takes its own grant.
@@ -140,6 +156,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			...config.axios,
 			adapter: async (requestConfig) => {
 				await this.acquireDispatchSlot()
+				this.#shutdown.signal.throwIfAborted()
 
 				return delegateAdapter(requestConfig)
 			},
@@ -158,6 +175,26 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			this.axios = axiosInstance
 		}
 
+		const storedCache = config.caching?.storage
+
+		if (config.disposeCacheStorage === true) {
+			if (isAsyncDisposable(storedCache)) {
+				this.#disposeStorage = () => storedCache[Symbol.asyncDispose]()
+			} else if (storedCache && Symbol.dispose in storedCache) {
+				const dispose = storedCache[Symbol.dispose]
+
+				if (typeof dispose === "function") {
+					this.#disposeStorage = () => dispose.call(storedCache)
+				}
+			}
+		}
+
+		this.axios.interceptors.request.use((requestConfig) => {
+			this.#shutdown.signal.throwIfAborted()
+
+			return requestConfig
+		})
+
 		this.axios.interceptors.response.use((response: CacheAxiosResponse | AxiosResponse) => {
 			const cachedLabel = (response as CacheAxiosResponse).cached ? " (cached)" : "(uncached)"
 
@@ -172,30 +209,51 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	/**
-	 * Perform a fetch operation using the API's Axios instance: served from cache when possible,
-	 * paced and cooldown-conditional when not, retried within the configured ceiling,
-	 * and — on the final failure — mapped to a {@linkcode ResourceError} carrying a
-	 * numeric `status` and a `(source, kind, reason)` URN.
+	 * Performs a fetch through the API's Axios instance.
+	 *
+	 * Cache hits return from cache.
+	 * Other requests are paced and subject to cooldown.
+	 *
+	 * Failed requests retry within the configured ceiling.
+	 * A final failure becomes a {@linkcode ResourceError} with a numeric `status`
+	 * and a `(source, kind, reason)` URN.
 	 *
 	 * Error mapping happens here rather than in a response interceptor so the retry loop
 	 * can see the raw `AxiosError` (status and `Retry-After`) before it is summarized.
-	 * The pacing/cooldown limit deliberately sits in the adapter (see the constructor),
-	 * downstream of the cache, so a hit incurs no cost and every retry attempt
-	 * re-enters it — a retry burst cannot outrun the pacer.
+	 * The constructor installs pacing and cooldown in the adapter downstream of the cache.
+	 *
+	 * A cache hit incurs no cost.
+	 * Each retry re-enters the adapter, so a retry burst cannot outrun the pacer.
 	 */
 	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+		this.#shutdown.signal.throwIfAborted()
+
+		const completed = Promise.withResolvers<void>()
+
+		this.#requestsInFlight.add(completed.promise)
+
+		try {
+			return await this.#fetch<T>(options)
+		} finally {
+			this.#requestsInFlight.delete(completed.promise)
+			completed.resolve()
+		}
+	}
+
+	async #fetch<T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> {
 		const method = options.method?.toUpperCase() || "GET"
 
-		// A per-request `adapter` would win over the instance default in `mergeConfig`,
-		// and the pacing/cooldown limit lives in that instance adapter, so passing
-		// one here would dispatch with no grant at all.
-		// The cache interceptor swaps the adapter too, and that one is intended: it is how a cache
-		// hit skips the check without spending a grant, and it swaps on the merged config from
-		// inside the interceptor chain, after this method has already handed the request over.
-		// Stripping it here closes the caller-supplied door without touching the interceptor's.
+		// `mergeConfig` prefers a per-request `adapter` over the instance default.
+		// The instance adapter enforces pacing and cooldown, so a caller-supplied
+		// adapter would dispatch without a grant.
+		// The cache interceptor also swaps the adapter.
+		// Its adapter lets a cache hit skip the grant check.
+		// It receives merged config inside the interceptor chain, after this method hands over the request.
+		// The request options omit the caller's adapter, so the interceptor keeps its adapter.
 		const { adapter: _callerAdapter, ...safeOptions } = options
 
 		for (let attempt = 1; ; attempt++) {
+			this.#shutdown.signal.throwIfAborted()
 			this.logger.debug(`${method}: ${options.url}`)
 
 			try {
@@ -203,7 +261,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			} catch (error) {
 				const directive = classifyAxiosFailure(error)
 
-				if (!directive.retryable || attempt >= this.#retryPolicy.maxAttempts) {
+				if (this.#shutdown.signal.aborted || !directive.retryable || attempt >= this.#retryPolicy.maxAttempts) {
 					// Always throws — `Promise<never>` is assignable to this method's return type.
 					return await delegateAxiosError(error)
 				}
@@ -214,7 +272,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 					`Retrying ${method} ${options.url} in ${waitMs}ms (attempt ${attempt}/${this.#retryPolicy.maxAttempts}).`
 				)
 
-				await this.#clock.sleep(waitMs)
+				await this.#clock.sleep(waitMs, this.#shutdown.signal)
 			}
 		}
 	}
@@ -222,17 +280,24 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	/**
 	 * Acquire permission to dispatch one request, clearing both limits.
 	 *
-	 * Each reserves synchronously with respect to its own state, so concurrency cannot defeat either of them.
+	 * Each limit reserves synchronously against its own state.
+	 * Concurrent requests cannot bypass either limit.
 	 *
-	 * The pacer is re-acquired on every pass of the loop rather than taken once up front:
-	 * a grant is a claim on a specific instant, so blocking on a cooldown after taking one leaves
-	 * it stale, and every caller holding a stale grant spends it the moment the cooldown lifts.
-	 * Re-acquiring discards the stale grant — the pacer under-issues by one per cooldown wait,
-	 * which is the safe direction — and takes a fresh one for the instant we actually dispatch.
+	 * The loop reacquires the pacer on every pass.
+	 * A grant applies to a specific instant.
+	 *
+	 * A grant becomes stale if its caller waits through a cooldown after obtaining it.
+	 * Callers with stale grants would all spend them when the cooldown lifts.
+	 *
+	 * Each caller discards its stale grant and obtains a fresh one before dispatch.
+	 * The pacer under-issues by one request per cooldown wait.
+	 * This keeps the limit on the safe side.
 	 */
 	protected acquireDispatchSlot = async (): Promise<void> => {
 		for (;;) {
-			await this.#pacer?.acquire()
+			this.#shutdown.signal.throwIfAborted()
+			await this.#pacer?.acquire(this.#shutdown.signal)
+			this.#shutdown.signal.throwIfAborted()
 
 			const pending = this.#cooldownWithResolvers
 
@@ -284,35 +349,62 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	protected setCooldown = (nextCooldown: number): void => {
+		this.#shutdown.signal.throwIfAborted()
+
 		const nextCooldownWithResolvers = Promise.withResolvers<void>()
 
 		this.#cooldownWithResolvers = nextCooldownWithResolvers
 		this.dispatchEvent(new Event("cooldown_start"))
 
-		void this.#clock.sleep(Math.max(nextCooldown, 0)).then(() => {
-			this.#requestCountWithinCooldown = 0
+		void this.#clock
+			.sleep(Math.max(nextCooldown, 0), this.#shutdown.signal)
+			.then(() => {
+				if (this.#shutdown.signal.aborted) return
 
-			if (this.#cooldownWithResolvers === nextCooldownWithResolvers) {
-				this.#cooldownWithResolvers = null
-			}
+				this.#requestCountWithinCooldown = 0
 
-			nextCooldownWithResolvers.resolve()
+				if (this.#cooldownWithResolvers === nextCooldownWithResolvers) {
+					this.#cooldownWithResolvers = null
+				}
 
-			this.dispatchEvent(new Event("cooldown_end"))
-		})
+				nextCooldownWithResolvers.resolve()
+
+				this.dispatchEvent(new Event("cooldown_end"))
+			})
+			.catch((error: unknown) => {
+				if (!this.#shutdown.signal.aborted) {
+					this.logger.error(error)
+				}
+			})
 	}
 
-	public async [Symbol.asyncDispose](): Promise<void> {
+	/**
+	 * Disposal stops queued requests and waits for active fetches to complete.
+	 *
+	 * It then releases owned cache storage.
+	 * Repeated calls return the same cleanup promise.
+	 */
+	public [Symbol.asyncDispose](): Promise<void> {
+		if (this.#disposePromise) return this.#disposePromise
+
+		const completed = Promise.withResolvers<void>()
+
+		this.#disposePromise = completed.promise
+		this.#shutdown.abort(new Error(`${this.config.displayName}: API client is disposed`))
+
 		const pending = this.#cooldownWithResolvers
 
 		this.#cooldownWithResolvers = null
 		pending?.resolve()
 
-		const storedCache = this.config.caching?.storage
+		void this.#disposeResources().then(completed.resolve, completed.reject)
 
-		if (isAsyncDisposable(storedCache)) {
-			await storedCache[Symbol.asyncDispose]()
-		}
+		return completed.promise
+	}
+
+	async #disposeResources(): Promise<void> {
+		await Promise.all(this.#requestsInFlight)
+		await this.#disposeStorage?.()
 	}
 
 	public override toString() {

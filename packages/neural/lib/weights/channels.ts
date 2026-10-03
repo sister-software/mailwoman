@@ -9,13 +9,14 @@ import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } fro
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
+import { type AddressSystemTable, parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard } from "#char-encoder"
 import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
 
 /**
- * Re-exports the inference of required channels from ONNX input names,
- * which lives in the browser-safe feed module.
+ * Re-exports inference of required channels from ONNX input names.
+ * The implementation lives in the browser-safe feed module.
  */
 export { inferRequiredChannelsFromInputs } from "#ort-feeds"
 
@@ -83,7 +84,7 @@ export interface RequiredChannels {
 export const ANCHOR_ARTIFACT_CARD_KEYS = ["postcode_anchor", "anchor_lookup"] as const
 
 /**
- * A file that a package's own model card lists, and whether the file exists.
+ * A file listed by a package's own model card, plus whether that file exists.
  */
 export interface DeclaredArtifact {
 	/**
@@ -105,7 +106,8 @@ export interface DeclaredArtifact {
  * Returns the first of `keys` that a weights package's own `model-card.json` lists under `files`.
  *
  * The `files` block states what this package should contain.
- * The `requires` block describes the trained encoder, which overlays share with their base model.
+ * The `requires` block describes the trained encoder.
+ * Overlays share that encoder with their base model.
  *
  * An overlay may therefore require a channel and still deliberately ship no artifact for it.
  *
@@ -366,8 +368,9 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
 /**
  * Reads the `capabilities` block from a `model-card.json`.
  *
- * It returns `undefined` when the card is absent, unreadable or has no `capabilities`
- * field, and the delta check is then skipped.
+ * It returns `undefined` when the card is absent, unreadable or has no `capabilities` field.
+ * The delta check is then skipped.
+ *
  * Malformed cells inside the block are ignored by `lookupTagCapability`.
  *
  * @throws When the field is present but is not an object.
@@ -463,8 +466,8 @@ export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): 
 /**
  * Reads the `labels` array from a `model-card.json` file.
  *
- * It returns `undefined` when the file is missing, unreadable or has no `labels` field,
- * and callers then use their built-in default labels.
+ * It returns `undefined` when the file is missing, unreadable or has no `labels` field.
+ * Callers then use their built-in default labels.
  *
  * @throws When `labels` is present but is not a non-empty array of strings.
  */
@@ -486,6 +489,22 @@ export async function readLabelsFromModelCard(
 	}
 
 	return Object.freeze(labels.slice()) as readonly string[]
+}
+
+/**
+ * Reads the `address_systems` table from a `model-card.json` file.
+ *
+ * It returns `undefined` when the file is missing or the card has no such field,
+ * which is every model trained without the address-system head or the locale hint.
+ *
+ * @throws When the field is present but malformed.
+ */
+export async function readAddressSystemsFromModelCard(
+	modelCardPath: PathBuilderLike | undefined
+): Promise<AddressSystemTable | undefined> {
+	const card = await readModelCardObject(modelCardPath)
+
+	return card ? parseAddressSystemTable(card.address_systems, String(modelCardPath)) : undefined
 }
 
 /**
@@ -528,7 +547,7 @@ async function assertNoOrphanedCharVocab(dir: PathBuilderLike, cardPath: PathBui
 /**
  * Returns the path of the character vocabulary file.
  *
- * It prefers the package's own copy, then the base package's copy, which an overlay shares.
+ * It prefers the package's own copy, followed by the base package's copy shared by an overlay.
  * When neither exists, it returns the package path so the missing-file error shows where it looked.
  */
 export async function resolveCharVocab(

@@ -5,15 +5,16 @@
  * @file `split-slice` — the holdout policy applied to an overlay parquet after it was written.
  *
  *   The cases here are the two ways an overlay defeats a holdout. A row whose postcode the policy
- *   names must leave the train split, and a row whose components cannot be read must stop the run
+ *   names must leave the train split. A row whose components cannot be read must stop the run
  *   rather than default to train, because defaulting to train is what the policy exists to prevent.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
-import { writeParquetFile } from "@mailwoman/corpus/parquet/writers"
-import { holdoutComponents, splitOverlaySlice } from "@mailwoman/corpus/tools"
 import { afterAll, describe, expect, it } from "vitest"
+
+import type { ParquetRow } from "#parquet/schema"
+import { writeParquetFile } from "#parquet/writers"
+import { holdoutComponents, splitOverlaySlice } from "#tools"
 
 const root = await temporaryDirectory("mw-split-slice-")
 

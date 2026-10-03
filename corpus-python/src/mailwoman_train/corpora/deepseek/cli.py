@@ -1,4 +1,4 @@
-"""The one entry point, which picks a mode and hands it the files that mode writes."""
+"""Choose a mode and pass it the files to write."""
 
 from __future__ import annotations
 

@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { afterEach, describe, expect, it, vi } from "vitest"
+
+import { resolveWOFHotDB } from "#tools/eval-harness/wof-hot-db"
+
+afterEach(() => {
+	vi.unstubAllEnvs()
+})
+
+describe("resolveWOFHotDB", () => {
+	it("uses the caller's stage directory when the environment variable is absent", () => {
+		vi.stubEnv("MAILWOMAN_WOF_HOT_DB", undefined)
+
+		expect(resolveWOFHotDB("/tmp/demo-stage")).toBe("/tmp/demo-stage/wof-hot.db")
+	})
+
+	it("treats an empty environment variable as unset", () => {
+		vi.stubEnv("MAILWOMAN_WOF_HOT_DB", "")
+
+		expect(resolveWOFHotDB("/tmp/demo-stage")).toBe("/tmp/demo-stage/wof-hot.db")
+	})
+
+	it("uses a non-empty environment override", () => {
+		vi.stubEnv("MAILWOMAN_WOF_HOT_DB", "/var/lib/mailwoman/hot.db")
+
+		expect(resolveWOFHotDB("/tmp/demo-stage")).toBe("/var/lib/mailwoman/hot.db")
+	})
+})

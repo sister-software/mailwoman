@@ -5,14 +5,15 @@ import type { ResolveNodeTrace, ResolveOpts } from "@mailwoman/core/resolver"
 import { type DerivationNode, type DerivationProjection, observation, projectDerivation } from "@mailwoman/evidence"
 
 /**
- * The source name on observations built from a resolve trace, whose vintage is `null`
- * because the trace does not record the gazetteer extract's version.
+ * The source name on observations built from a resolve trace.
+ *
+ * Its vintage is `null` because the trace does not record the gazetteer extract's version.
  */
 export const TRACE_SOURCE = "gazetteer"
 
 /**
- * Converts one resolve-trace record into a derivation node that says
- * which place was picked, or why no place was.
+ * Convert one resolve-trace record into a derivation node stating which place
+ * was picked, or why no place was.
  */
 export function traceToDerivationNode(record: ResolveNodeTrace): DerivationNode {
 	const label = `${record.tag}=${record.value}`
@@ -44,13 +45,15 @@ export function traceToDerivationNode(record: ResolveNodeTrace): DerivationNode 
 }
 
 /**
- * A trace sink to pass to the resolver, paired with `attach`, which adds the
- * derivation built from its records to a result.
+ * A trace sink to pass to the resolver, paired with `attach`.
+ *
+ * That function adds the derivation built from its records to a result.
  */
 export interface TraceCollector {
 	/**
-	 * The sink to pass to the resolver, which forwards each record to the caller's sink
-	 * and keeps it for the derivation.
+	 * The sink to pass to the resolver.
+	 *
+	 * It forwards each record to the caller's sink and keeps it for the derivation.
 	 */
 	traceSink: ResolveOpts["traceSink"]
 

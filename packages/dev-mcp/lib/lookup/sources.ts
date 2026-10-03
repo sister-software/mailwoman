@@ -16,7 +16,7 @@ import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/pla
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { LookupRow } from "#lookup/index"
+import type { LookupRow } from "#lookup"
 import { type PlaceIDProvenance, placeIDProvenance } from "#place-id-provenance"
 
 /**
@@ -77,7 +77,7 @@ interface CandidateEntry extends PlaceIDProvenance {
 	importance_split?: { referential: number; encyclopedic: number | null } | null
 	/**
 	 * The source place ID.
-	 * The `wof_id` field says whether it is a WOF ID.
+	 * The `wof_id` field indicates whether it is a WOF ID.
 	 */
 	spr_id: number
 }
@@ -177,8 +177,8 @@ export function lookupCandidate<DB>(
 				hit: false,
 				entries: null,
 				note:
-					`This artifact carries no rows for country ${wantCountry} at all — its dictionary holds ` +
-					`${carriedCountries} countries and that is not one of them. A COVERAGE gap, not an absence of the name.`,
+					`This artifact carries no rows for country ${wantCountry}. Its dictionary contains ${carriedCountries} countries, ` +
+					`so this is a coverage gap rather than a missing name.`,
 			}
 		}
 
@@ -186,8 +186,8 @@ export function lookupCandidate<DB>(
 
 		if (exactKey !== query) {
 			notes.push(
-				`Probed as name_key ${stringifyJSON(exactKey)}, not the string you typed — the fold is applied at build ` +
-					"AND at query time, and probing `name` instead is the miss that reads as absence."
+				`Probed as name_key ${stringifyJSON(exactKey)}. The build and query apply this fold. Probing \`name\` instead ` +
+					"produces the miss that looks like absence."
 			)
 		}
 
@@ -195,9 +195,10 @@ export function lookupCandidate<DB>(
 		let key = exactKey
 		let found = probe(exactKey)
 
-		// `findPlace` tries the whitespace fold before the qualifier strip,
-		// and the order matters: stripping first would turn "1012 LG" into `1012`
-		// and match a coarser postcode stem, while the exact row is keyed `1012lg`.
+		// `findPlace` tries the whitespace fold before the qualifier strip.
+		// The order matters.
+		// An initial strip would turn "1012 LG" into `1012` and match a coarser postcode stem.
+		// The exact row is keyed `1012lg`.
 		if (!found.total) {
 			const fusedKey = normalizeLocalityForKey(query.replaceAll(/\s+/g, ""))
 
@@ -414,8 +415,11 @@ export interface WOFExtract<DB> {
 }
 
 /**
- * `fts` is the FTS5 index the resolver reads, built without deprecated or non-current records;
- * `names-exact` is a byte-exact probe on the `names` table, which still holds those records.
+ * `fts` is the FTS5 index the resolver reads.
+ *
+ * Its build excludes deprecated and non-current records.
+ * `names-exact` probes the `names` table byte for byte.
+ * That table still holds those records.
  */
 const WOFRoute = {
 	Fts: "fts",
@@ -441,7 +445,8 @@ interface WOFEntry extends PlaceIDProvenance {
 	/**
 	 * `null` means `place_population` has no row and the source recorded no value,
 	 * while `0` is a recorded zero.
-	 * Ranking uses it to compute `neg_rank` and `referential`.
+	 *
+	 * The ranking step uses it to compute `neg_rank` and `referential`.
 	 */
 	population: number | null
 }
@@ -468,7 +473,7 @@ const WOF_FTS_FROM = `FROM place_search JOIN spr ON spr.id = place_search.wof_id
 const WOF_NAMES_FROM = `FROM names n JOIN spr ON spr.id = n.id ${SPR_JOINS} WHERE n.name = ?`
 
 /**
- * Both statements carry the country filter, so a scoped count covers only that country.
+ * Both statements apply the country filter, so a scoped count covers only that country.
  * The count includes only current, non-deprecated records.
  */
 function wofStatements(from: string, order: string, scoped: boolean): { rows: string; count: string } {
@@ -628,7 +633,8 @@ const POI_SELECT =
 /**
  * Probes `poi.db` on the {@link normalizeLocalityForKey} fold the POI build writes.
  *
- * The count is exact and unbounded, and a first call against a cold page cache can take seconds.
+ * The count is exact and unbounded.
+ * A first call against a cold page cache can take seconds.
  */
 export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options: POILookupOptions = {}): LookupRow[] {
 	const limit = options.limit ?? DEFAULT_ENTRY_LIMIT
@@ -704,8 +710,11 @@ interface CodexEntry {
 /**
  * Checks each string against every codex reference table.
  *
- * The probe reads no artifact, so it is always available, and the postcode check tests shape only —
- * `68161` fits the US, German and French shapes, while `candidate`/`postcode` answer membership.
+ * The probe reads no artifact, so it is always available.
+ * Its postcode check tests shape only.
+ *
+ * `68161` fits the US, German and French shapes.
+ * `candidate` and `postcode` answer membership.
  */
 export function lookupCodex(queries: string[]): LookupRow[] {
 	return queries.map((query) => {
@@ -789,12 +798,14 @@ export interface PostcodeLookupOptions {
 }
 
 /**
- * Probes the `postcode-<cc>.bin` anchor artifact in the resolved weights package: the key
- * is the query whitespace- stripped and upper-cased to match the training normalization,
- * and a record at (0, 0) is a member without a centroid that still feeds the country posterior.
+ * Probes the `postcode-<cc>.bin` anchor artifact in the resolved weights package.
  *
- * Under `alnum-run`, a code containing a space is present in the artifact
- * but never reaches the model, and the note says so.
+ * The key is the query with whitespace removed and letters upper-cased to match training normalization.
+ * A record at (0, 0) counts as a member without a centroid.
+ * It still feeds the country posterior.
+ *
+ * Under `alnum-run`, a code containing a space can exist in the artifact and fail to reach the model.
+ * The result note reports that case.
  */
 export function lookupPostcodeAnchor(
 	resolver: PostcodeAnchorResolver,

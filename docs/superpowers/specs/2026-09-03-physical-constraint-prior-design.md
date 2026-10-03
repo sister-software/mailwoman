@@ -108,7 +108,7 @@ counts of unit postcodes and UPRNs in `PO`, with the arithmetic stated.
 | ------------------------- | -------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------ |
 | Unit postcode centroids   | `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-gb-codepoint.db` (Code-Point Open) | 1,746,976 (`spr`)                           | OGL-UK-3.0                                                   |
 | Addressable-object points | `$MAILWOMAN_DATA_ROOT/db/uprn/uprn.db` (OS Open UPRN, release 2026-08)     | 41,629,393; coverage `designated` 1.0       | OGL-UK-3.0 (manifest)                                        |
-| Building footprints       | none on disk                                                               | —                                           | OS Open Map – Local `Building` layer, OGL-UK-3.0, to acquire |
+| Building-footprint data   | none on disk                                                               | —                                           | OS Open Map – Local `Building` layer, OGL-UK-3.0, to acquire |
 | Truth for grading         | none on disk; ~487 MB CSV collection to acquire                            | one row per GB UPRN, `PCDS` = unit postcode | ONS NSUL, OGL-UK-3.0 (F1 answered)                           |
 
 OSM buildings (ODbL) are excluded from the GB prototype on purpose, so the GB artifact's posture is
@@ -181,7 +181,7 @@ GeoPlace data © Local Government Information House Limited copyright and databa
 - **F4.** Only after F2 and F3, build the runtime decoration step as an opt-in pin first, and grade it
   on the full board and every conformance suite with the D-rule.
 
-## 10. Sequencing
+## 10. Implementation sequence
 
 1. This record (done).
 2. F1: read NSUL's license page and one quarterly file's header, and record the result on #1975.

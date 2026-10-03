@@ -1,0 +1,8 @@
+/* Fira Code ships one variable face spanning weights 300 to 700, and no italic. */
+@font-face {
+	font-family: "Fira Code Web";
+	font-display: swap;
+	font-weight: 300 700;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/FiraCode/WOFF2/FiraCode-VF.woff2") format("woff2");
+}

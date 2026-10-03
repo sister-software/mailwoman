@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import io
 import json
+import re
 import sys
 import tokenize
 from pathlib import Path
@@ -56,4 +57,57 @@ def comments(path: Path) -> list[dict[str, object]]:
     return nodes
 
 
-print(json.dumps({path: comments(Path(path)) for path in sys.argv[1:]}))
+def docstrings(path: Path) -> list[dict[str, object]]:
+    text = path.read_text(encoding="utf-8")
+    tree = ast.parse(text, filename=str(path))
+    nodes: list[dict[str, object]] = []
+    owners = (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+
+    for owner in ast.walk(tree):
+        if not isinstance(owner, owners) or not owner.body:
+            continue
+
+        expression = owner.body[0]
+        if not (
+            isinstance(expression, ast.Expr)
+            and isinstance(expression.value, ast.Constant)
+            and isinstance(expression.value.value, str)
+        ):
+            continue
+
+        source = ast.get_source_segment(text, expression) or ""
+        opening = re.match(r"^[\t ]*(?:[rRuUbBfF]*)('''|\"\"\")", source)
+        if opening is None:
+            continue
+
+        delimiter = opening.group(1)
+        closing = source.rfind(delimiter)
+        if closing < opening.end():
+            continue
+
+        body = source[opening.end() : closing]
+        body_lines = body.splitlines()
+        line_offset = source[: opening.end()].count("\n")
+        first_content = next((index for index, line in enumerate(body_lines) if line.strip()), 0)
+        last_content = next(
+            (index for index in range(len(body_lines) - 1, -1, -1) if body_lines[index].strip()),
+            -1,
+        )
+        content_lines = [line.strip() for line in body_lines[first_content : last_content + 1]]
+
+        nodes.append(
+            {
+                "startLine": expression.lineno,
+                "endLine": expression.end_lineno,
+                "contentStartLine": expression.lineno + line_offset + first_content,
+                "content": "\n".join(content_lines),
+            }
+        )
+
+    return sorted(nodes, key=lambda node: int(node["startLine"]))
+
+
+if len(sys.argv) > 1 and sys.argv[1] == "--docstrings":
+    print(json.dumps({path: docstrings(Path(path)) for path in sys.argv[2:]}))
+else:
+    print(json.dumps({path: comments(Path(path)) for path in sys.argv[1:]}))

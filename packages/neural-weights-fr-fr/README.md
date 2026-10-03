@@ -65,7 +65,7 @@ Knowledge informs; it never overrides.
 
 ## Intended use
 
-Parsing free-text French postal addresses into structured components
+The model parses free-text French postal addresses into structured components
 (country, region, locality, dependent_locality, postcode, subregion, cedex,
 venue, street, house_number) for **geocoding** — resolving a parsed address to
 coordinates via a gazetteer/resolver. The model is the parsing front-end of that
@@ -74,7 +74,7 @@ pipeline rather than a standalone geocoder.
 ## Ship-config requirement (read before using)
 
 The Mailwoman model expects the soft anchor + gazetteer channels fed at
-inference. Running it with those channels off is out-of-distribution and silently
+inference. A run with those channels off is out-of-distribution and silently
 collapses the admin tags (country/region/locality/postcode) — an anchor-off
 metric on an anchor-trained model is systematically misleading. Construct the
 scorer through `@mailwoman/neural`'s `createScorer` (the canonical
@@ -115,7 +115,7 @@ Mailwoman confidences are isotonic-calibrated (PAVA) against held-out data and
 applied **opt-in** via `@mailwoman/core`'s `createCalibrator`; default parse
 output is byte-stable when calibration is omitted.
 
-## Training
+## Train
 
 From-scratch (no pretrained base) on an NVIDIA A100 (Modal cloud), CE loss only
 (the dual CRF loss diverged and was retired; CRF is inference-only Viterbi). The

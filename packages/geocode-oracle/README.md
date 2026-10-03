@@ -29,7 +29,7 @@ const [match] = await census.lookupAddress("4600 Silver Hill Rd, Washington, DC 
 ```
 
 Both are `@mailwoman/core/api` `APIClient`s, so both carry request pacing, an on-disk response cache,
-bounded retry honouring `Retry-After`, and `ResourceError` mapping. Every failure is a `ResourceError`
+bounded retry honoring `Retry-After`, and `ResourceError` mapping. Every failure is a `ResourceError`
 — branch on `error.status` and `isTransientResourceError(error)`, never on message prose. Each client's
 file header carries its full outcome table.
 

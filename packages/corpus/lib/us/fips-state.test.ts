@@ -1,13 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import {
-	lookupFipsState,
-	lookupStateAbbreviation,
-	US_FIPS_STATE,
-	US_STATE_BY_ABBREVIATION,
-} from "@mailwoman/corpus/us/fips-state"
 import { expect, test } from "vitest"
+
+import { lookupFipsState, lookupStateAbbreviation, US_FIPS_STATE, US_STATE_BY_ABBREVIATION } from "#us/fips-state"
 
 // #region US_FIPS_STATE table
 

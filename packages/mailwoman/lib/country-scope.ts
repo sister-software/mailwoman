@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Framework-free country-scope policy shared by parse, geocode, and registry commands.
+ * Framework-free country-scope policy shared by parse, geocode and registry commands.
  */
 
 /**

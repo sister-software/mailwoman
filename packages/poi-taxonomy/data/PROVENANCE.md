@@ -43,7 +43,7 @@ leaf). To edit the curated layer, change `curated-overlay.json` and regenerate.
 ## `brands.json` — the chain-brand table aggregated from `poi.db`
 
 Produced by `mailwoman gazetteer build poi-brands`, whose aggregation lives in
-`packages/mailwoman/lib/gazetteer-pipeline/poi/build/brands.ts`. **Do not hand-edit.** It reads a built
+`packages/mailwoman/tools/gazetteer-pipeline/poi/build/brands.ts`. **Do not hand-edit.** It reads a built
 `poi.db` read-only and groups its `(brand_wikidata, name)` pairs into one record per Wikidata QID,
 carrying the most frequently observed name plus the alias spellings that clear a noise floor.
 
@@ -55,7 +55,7 @@ rather than SQL row order or `Map` iteration order: brands by row count descendi
 the modal name by count descending then name ascending, aliases alphabetical.
 
 ```bash
-node packages/mailwoman/out/cli/index.js gazetteer build poi-brands
+node packages/mailwoman/out/cli/main.js gazetteer build poi-brands
 ```
 
 ## `venue-word-hints.json` — the mined single-token venue-class hint table

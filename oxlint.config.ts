@@ -16,13 +16,14 @@ const config = createOxlintConfig({
 	headers: false,
 	restrictProcessGlobals: true,
 	// A number used as a comparison threshold needs a name.
-	// `no-magic-numbers` stays off so that data tables are left alone.
+	// `no-magic-numbers` stays off so that data tables remain unchanged.
 	unnamedThresholds: true,
 	// Only exported constants need a JSDoc block.
-	// A local constant's name usually says enough.
+	// A local constant's name provides enough context.
 	constantDocs: {
 		scope: "exported",
-		// Command modules export these as framework metadata, and `description` is the `--help` text.
+		// Command modules export these as framework metadata.
+		// `description` supplies the `--help` text.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
 	},
 	// An acronym is capitalized as a whole camelCase component, as in `parseJSON` and `POILookup`.
@@ -58,8 +59,8 @@ const config = createOxlintConfig({
 		],
 	},
 	ignorePatterns: [
-		// The default `**/coverage` pattern would also ignore source directories named
-		// `coverage`, so only the root coverage directory is ignored.
+		// The default `**/coverage` pattern would also ignore source directories whose
+		// basename is `coverage`, so only the root coverage directory is ignored.
 		...DefaultIgnorePatterns.filter((pattern) => pattern !== "**/coverage"),
 		"/coverage/",
 		".pi",
@@ -73,6 +74,12 @@ const config = createOxlintConfig({
 		"**/*.egg-info/**",
 		// sentencepiece-wasm/build.sh generates this file with Emscripten.
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
+		// `@mailwoman/site-kit`'s Vite plugin stages the SQLite WebAssembly runtime here,
+		// so these are a dependency's published bytes rather than this repository's source.
+		// The sql.js worker alone reports 2,302 errors, which leaves `yarn lint`
+		// unusable wherever a build has run.
+		"docs/static/mailwoman/sqljs/**",
+		"docs/static/mailwoman/sqlite-runtime/**",
 	],
 })
 
@@ -96,9 +103,9 @@ const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
 const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/index.ts",
 	"packages/neural/lib/env.ts",
-	"packages/neural/lib/onnx/runner/index.ts",
+	"packages/neural/lib/onnx/runner.ts",
 	"packages/neural/lib/scorer.ts",
-	"packages/neural/lib/weights/index.ts",
+	"packages/neural/lib/weights.ts",
 	"packages/neural/lib/*.test.ts",
 	"packages/neural/vitest.config.ts",
 ]
@@ -114,7 +121,8 @@ const NODE_ONLY_NEURAL_MODULES = [
 	"./weights.ts",
 	"./scorer.ts",
 	"onnxruntime-node",
-	// `@mailwoman/core/env` imports Node builtins, which the `node:*` pattern cannot see.
+	// `@mailwoman/core/env` imports Node builtins.
+	// The `node:*` pattern cannot detect that import.
 	// `./env.ts` and `#env` extend it.
 	"@mailwoman/core/env",
 	"./env.ts",
@@ -191,8 +199,8 @@ export default {
 		},
 		{
 			// These files cannot depend on `@mailwoman/core`.
-			// The `docs/static` scripts run without a monorepo install, and the leaf
-			// packages avoid pulling in core's shipped data.
+			// The `docs/static` scripts run without a monorepo install.
+			// The leaf packages also avoid pulling in core's shipped data.
 			// Only `JSON.stringify` is allowed here.
 			// Each `JSON.parse` site keeps its own disable comment.
 			files: [
@@ -214,7 +222,8 @@ export default {
 			},
 		},
 		{
-			// `prefer-home` points at these files, and the plugin and its test spell out the same shapes.
+			// `prefer-home` points at these files.
+			// The plugin and its test spell out the same shapes.
 			files: [
 				"packages/core/lib/utils/time.ts",
 				"packages/core/lib/random.ts",
@@ -225,21 +234,6 @@ export default {
 			],
 			rules: {
 				"mailwoman/prefer-home": "off",
-			},
-		},
-		{
-			// Tests import the package through its public exports.
-			// The `#` import map is private to `lib/`.
-			files: [
-				"packages/*/test/**/*.ts",
-				"packages/*/test/**/*.tsx",
-				"packages/corpus/lib/**/*.test.ts",
-				"packages/corpus/lib/**/*.test.tsx",
-				"docs/test/**/*.ts",
-				"docs/test/**/*.tsx",
-			],
-			rules: {
-				"mailwoman/no-private-import-in-test": "error",
 			},
 		},
 		{
@@ -282,21 +276,21 @@ export default {
 			// These files use builtins that core does not wrap yet, such as readline,
 			// worker_threads, cluster, http and https.
 			files: [
-				"packages/filer/lib/sdk/form499/index.ts",
-				"packages/filer/lib/sdk/provider-list.ts",
-				"packages/mailwoman/lib/cli/native/commands/geocode.ts",
-				"packages/mailwoman/lib/commands/gazetteer/importance.tsx",
-				"packages/mailwoman/lib/commands/serve.tsx",
+				"packages/filer/sdk/form499.ts",
+				"packages/filer/sdk/provider-list.ts",
+				"packages/mailwoman/cli/native/commands/geocode.ts",
+				"packages/mailwoman/cli/commands/gazetteer/importance.tsx",
+				"packages/mailwoman/cli/commands/serve.tsx",
 				"packages/api-kit/test/fixtures/cluster-serve.ts",
-				"packages/mailwoman/lib/commands/situs/interpolation/index.tsx",
+				"packages/mailwoman/cli/commands/situs/interpolation/index.tsx",
 				"packages/mailwoman/lib/geocode/worker.ts",
 				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"docs/static/examples/mailwoman-server.mjs",
 				"docs/plugins/runtime-assets/workspace/resolution.ts",
-				"packages/map-tui/test/unit/tile-source.test.ts",
-				"packages/neural/test/integration/browser-slo.test.ts",
-				"packages/resolver-wof-sqlite/test/integration/lookup-readonly-open.test.ts",
-				"packages/tiger/lib/tools/serve-range.ts",
+				"packages/map-tui/lib/tile-source.test.ts",
+				"packages/neural/lib/web/browser-slo.integration.test.ts",
+				"packages/resolver-wof-sqlite/lib/lookup-readonly-open.integration.test.ts",
+				"packages/tiger/tools/serve-range.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",
@@ -310,9 +304,9 @@ export default {
 		// `tabWidth` matches oxfmt's two-column tab.
 		"mailwoman/comment-reflow": ["warn", { printWidth: 120, targetWidth: 90, tabWidth: 2, paragraphSentences: 2 }],
 		"guard-for-in": "error",
-		// The shared base only warns, and the shared tsconfig disables `noUnusedLocals`,
-		// so this rule is promoted to an error.
-		// Setting a severity alone would drop the base's options, so they are repeated here.
+		// The shared base only warns.
+		// The shared tsconfig disables `noUnusedLocals`, so this rule is an error here.
+		// The local override repeats the base options because a severity-only entry would drop them.
 		// Prefix a deliberately unused binding with `_`.
 		"no-unused-vars": [
 			"error",
@@ -375,11 +369,11 @@ export default {
 		// The wrapper returns the fallback for non-string input, so convert a buffer with `.toString()` first.
 		//
 		// An override lifts one entry by calling `restrictedPropertiesExcept` with that entry.
-		// Setting the rule to `"off"` would lift every entry.
+		// An `"off"` value would lift every entry.
 		"no-restricted-properties": restrictedPropertiesExcept(),
 		"typescript/no-explicit-any": "error",
 		"unicorn/no-new-array": "off",
-		// Some suites assert through helpers named `expect*` or `assert*` that throw on failure.
+		// Some suites assert through helpers whose names start with `expect` or `assert` and throw on failure.
 		"vitest/expect-expect": ["error", { assertFunctionNames: ["expect", "expect*", "assert*"] }],
 	},
 }

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The bundle of street-tier lookups one region supplies, and the provider that opens and caches them.
+ * @file The bundle of street-tier lookups for one region. The provider opens and caches them.
  */
 
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "#resolver/lookup-types"

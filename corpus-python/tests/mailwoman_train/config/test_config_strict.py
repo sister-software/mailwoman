@@ -22,7 +22,7 @@ def test_unknown_nested_key_raises_with_dotted_path_and_file(tmp_path):
     with pytest.raises(KeyError) as excinfo:
         load_config(path)
     message = str(excinfo.value)
-    # The message carries the full dotted key and the config file name.
+    # The message includes the full dotted key and the config file name.
     assert "train.reinit_label_rowz" in message
     assert "probe.yaml" in message
 
@@ -155,7 +155,7 @@ def test_validation_coverage_defaults_to_the_val_split_and_no_street_floor(tmp_p
 
 
 def test_validation_coverage_rejects_a_split_that_is_not_held_out(tmp_path):
-    # A coverage floor must measure held-out rows, and the run trains on the `train` split.
+    # A coverage floor must measure held-out rows. The run trains on the `train` split.
     path = _write(tmp_path, "data:\n  required_validation_coverage:\n    - {country: GB, split: train, min_rows: 1}\n")
 
     with pytest.raises(ValueError, match="only 'val' and 'test' are held out"):

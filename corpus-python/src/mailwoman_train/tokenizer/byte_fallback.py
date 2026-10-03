@@ -13,7 +13,7 @@ from typing import Any
 import sentencepiece as spm
 
 # A SentencePiece byte-fallback piece is surface-form ``<0xNN>`` (one token per byte); matching
-# that form is more reliable than piece-id ranges, which depend on where SP placed the byte block.
+# that form is more reliable than piece-id ranges. Those ranges depend on where SP placed the byte block.
 _BYTE_FALLBACK_RE = re.compile(r"^<0x[0-9A-Fa-f]{2}>$")
 
 

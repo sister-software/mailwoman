@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The one mutation this package performs, and it is not a check: rewriting `baseline.json` after a reviewed
- *   reduction. The registry never lists it; `mwops health baseline debt` calls it by name, and no other caller does.
+ *   The one mutation this package performs is not a check: rewriting `baseline.json` after a reviewed reduction, called only by `mwops health baseline debt`.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

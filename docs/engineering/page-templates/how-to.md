@@ -29,7 +29,7 @@ verified-with: mailwoman v8.7.0
 6. **Limits.** What this does not cover, each with the next action.
 7. **Related.** Links out.
 
-## Opening move
+## Start here
 
 State the outcome in one sentence before any prerequisite, so a reader on the wrong page can leave after the
 first line instead of at the fourth step.

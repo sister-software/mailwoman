@@ -81,7 +81,7 @@ Per the reconcile-retirement lesson (grade the pipeline against truth, never a c
 
 ## Prerequisite — the model must ship
 
-The coarse-placer int8 model (0.79 MB) currently lives only on `$MAILWOMAN_DATA_ROOT`; no package ships it. Wiring it
+The coarse-placer int8 model (0.79 MB) currently lives only on `$MAILWOMAN_DATA_ROOT`; no package ships it. A code path that wires it
 for installed consumers needs it packaged. **Recommended:** commit the int8 artifact under `core/data/` and
 add it to `@mailwoman/core`'s `files` (it already ships ~9 MB of dictionaries; +0.79 MB is negligible), with
 `CoarsePlacer.fromArtifactDir` resolving the bundled path by default + an env/opt override. (Alternative: a
@@ -109,7 +109,7 @@ clean-install smoke test** — the new artifact must resolve from a fresh `npm i
   or a "not-any-of-11" head) that moves the whole frontier out — at which point the threshold relaxes and a
   default-on (even check) integration becomes defensible.
 
-## Phasing
+## Phases
 
 1. **M1 (this spec):** ship the int8 model in `@mailwoman/core`; add the opt-in `placeCountry` stage feeding
    `anchorPosterior` (precedence-aware), threshold 0.9; the assembled-pipeline country-disambiguation eval;

@@ -61,7 +61,7 @@ SOURCE_ROWS: list[tuple[str, str, str, str]] = [
 
 #: KEN_ALL_ROME columns: postcode, prefecture-kanji, city-kanji, town-kanji, then romaji. The town
 #: rows cover an exact match, an ōaza-prefixed one that matches only once stripped, a parenthetical
-#: annotation the reader strips, and the municipality catch-all every city needs.
+#: annotation the reader strips. The last row is the municipality catch-all every city needs.
 KENALL_ROWS: list[tuple[str, str, str, str]] = [
     ("1920000", "東京都", "八王子市", "以下に掲載がない場合"),
     ("1920062", "東京都", "八王子市", "八島町"),
@@ -127,7 +127,7 @@ def reference_args(parquet: Path, kenall: Path, out_dir: Path) -> argparse.Names
         spaced_fraction=0.4,
         variant_hyphen_fraction=0.25,
         max_field_chars=64,
-        max_row_groups=1,  # also skips the 47-prefecture check, which a fixture cannot satisfy
+        max_row_groups=1,  # also skips the 47-prefecture check. A fixture cannot satisfy it.
         upweight_pattern="市$:2",
         seed=42,
         force=True,
@@ -182,7 +182,7 @@ def test_rendered_rows_match_the_committed_reference(built: dict[str, Any], spli
 
 
 def test_the_report_matches_the_committed_reference(built: dict[str, Any]) -> None:
-    """The report carries the counts a reader trusts — the join tiers, the quota, the vocab size."""
+    """The report includes the counts a reader trusts — the join tiers, the quota and the vocab size."""
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
     expected = json.loads(REFERENCE.read_text(encoding="utf-8"))["report"]
@@ -190,7 +190,7 @@ def test_the_report_matches_the_committed_reference(built: dict[str, Any]) -> No
 
 
 def test_every_span_covers_the_text_it_claims(built: dict[str, Any]) -> None:
-    """The spans are emitted by construction, so this holds for any input — and says so when it stops."""
+    """The spans are emitted by construction, so every input has this property. The test fails if it stops."""
     for split in ("train", "val", "board"):
         for row in built[split]:
             raw = row["raw"]

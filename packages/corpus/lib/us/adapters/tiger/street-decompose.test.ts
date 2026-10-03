@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { decomposeStreet } from "@mailwoman/corpus/us/adapters/tiger/street-decompose"
 import { describe, expect, it } from "vitest"
+
+import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 
 describe("decomposeStreet", () => {
 	it("leading directional + street type", () => {

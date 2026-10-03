@@ -1,0 +1,117 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Convert the TX hhsc nursing-facilities source into the OaRow jsonl the resolver eval consumes.
+ *   The source ships an authoritative `Geo Location` = `lat,lon` per facility, so the geocoder is
+ *   graded against the provided coordinates on real facility addresses. `oa-resolver-eval
+ *   --address-points` reports a great-circle delta and a tier breakdown.
+ *
+ *   Neutral scope: this measures geocoder accuracy on real public addresses and makes no claim about
+ *   the facilities themselves.
+ *
+ *   Run: `mailwoman registry convert tx-hhsc [--src <tsv>] [--out /tmp/txhhsc-oarow.jsonl]`
+ */
+
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
+import { TSVSpliterator } from "spliterator"
+
+import { inTXBBOX } from "#tools/shared"
+
+/**
+ * Options for {@linkcode convertTXHHSC}.
+ */
+export interface TXHHSCConvertOptions {
+	/**
+	 * The TX hhsc nursing-facilities TSV.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`.
+	 */
+	src?: PathBuilderLike
+	/**
+	 * Output OaRow jsonl path.
+	 *
+	 * Default `/tmp/txhhsc-oarow.jsonl`.
+	 */
+	out?: string
+}
+
+const GEO = /^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/
+
+/**
+ * Convert the TX hhsc nursing-facilities TSV into OaRow jsonl for `oa-resolver-eval`.
+ */
+export async function convertTXHHSC(
+	options: TXHHSCConvertOptions = {},
+	report?: (line: string) => void
+): Promise<{ written: number; skipped: number; out: string }> {
+	const src = options.src ?? dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv")
+	const out = options.out || tempRootPath("txhhsc-oarow.jsonl")
+
+	const records: string[] = []
+	let skipped = 0
+
+	// Column indices come from the first non-blank row.
+	// `header: false` keeps that row in the stream, so the blank-row guard below applies to it.
+	let cAddr = -1
+	let cCity = -1
+	let cZip = -1
+	let cGeo = -1
+	let sawHeader = false
+
+	for (const f of TSVSpliterator.from(await readLocalTextFile(src), { header: false })) {
+		if (f.every((value) => !value)) continue
+
+		if (!sawHeader) {
+			sawHeader = true
+			const col = (name: string) => f.indexOf(name)
+			cAddr = col("Physical Address")
+			cCity = col("Physical Address CITY")
+			cZip = col("Physical Address Zipcode")
+			cGeo = col("Geo Location")
+
+			continue
+		}
+
+		const addr = f[cAddr] ?? ""
+		const city = f[cCity] ?? ""
+		const zip = f[cZip] ?? ""
+		const m = GEO.exec(f[cGeo] ?? "")
+
+		if (!addr || !city || !m) {
+			skipped++
+
+			continue
+		}
+
+		const lat = Number(m[1])
+		const lon = Number(m[2])
+
+		// Sanity: TX bounding box (rejects swapped/garbage coords).
+		if (!inTXBBOX(lat, lon)) {
+			skipped++
+
+			continue
+		}
+
+		records.push(
+			stringifyJSON({
+				input: `${addr}, ${city}, TX ${zip}`,
+				lat,
+				lon,
+				expected: { locality: city, region: "TX", postcode: zip },
+				state: "TX",
+				source: "txhhsc:nursing-facilities",
+			})
+		)
+	}
+
+	await writeLocalTextFile(records, out)
+	report?.(`wrote ${records.length} rows (skipped ${skipped}) → ${out}`)
+
+	return { written: records.length, skipped, out }
+}

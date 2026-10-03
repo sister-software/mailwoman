@@ -18,7 +18,7 @@ import type { NominatimAddressDetails, NominatimResult } from "#engine"
 const BBOX_2D_LENGTH = 4
 
 /**
- * A GeoJSON `FeatureCollection` — the `format=geojson` envelope.
+ * A GeoJSON `FeatureCollection`, the `format=geojson` envelope.
  */
 export interface NominatimFeatureCollection {
 	type: "FeatureCollection"
@@ -45,7 +45,7 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 	for (const r of results) {
 		// `toNominatimResult` writes "" for a missing coordinate, never null,
 		// so emptiness is the condition that matters.
-		// A `== null` check alone lets a coordinate-less row through as Point [0, 0] —
+		// A `== null` check by itself lets a coordinate-less row through as Point [0, 0],
 		// a real place in the Gulf of Guinea rather than an absence.
 		if (!r.lat || !r.lon) continue
 		const { lat, lon, boundingbox, geojson, ...properties } = r
@@ -57,7 +57,7 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 		}
 
 		if (boundingbox?.length === BBOX_2D_LENGTH) {
-			// boundingbox is [south, north, west, east]; GeoJSON bbox is [west, south, east, north].
+			// boundingbox is [south, north, west, east] and GeoJSON bbox is [west, south, east, north].
 			feature.bbox = [Number(boundingbox[2]), Number(boundingbox[0]), Number(boundingbox[3]), Number(boundingbox[1])]
 		}
 
@@ -70,11 +70,10 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 /**
  * A resolved address in a neutral shape, the input to {@link toNominatimResult}.
  *
- * The engine maps its native geocode/reverse result into this.
+ * The engine maps its native geocode or reverse result into this.
  * The formatter renders it as a Nominatim result.
  *
- * This is the #804 mapping boundary, kept dependency-free (no `@mailwoman/*` import)
- * so it stays unit-testable.
+ * It is the mapping boundary and stays dependency-free so it is unit-testable.
  */
 export interface ResolvedAddress {
 	lat: number | null
@@ -91,7 +90,7 @@ export interface ResolvedAddress {
 	placeRank?: number
 	boundingbox?: [string, string, string, string]
 	/**
-	 * A stable id from the resolver (WOF/gers); a deterministic hash is used when absent.
+	 * A stable id from the resolver (WOF or gers), with a deterministic hash when absent.
 	 */
 	placeID?: string | number
 }
@@ -115,7 +114,7 @@ function stableID(seed: string): number {
  * Render a {@link ResolvedAddress} as a Nominatim result.
  *
  * `addressdetails` selects the `address` block, matching Nominatim.
- * The `annotations` block is attached by the caller (empty until the annotations layer lands).
+ * The caller attaches the `annotations` block.
  */
 export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: boolean } = {}): NominatimResult {
 	const displayName =
@@ -163,13 +162,13 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 }
 
 /**
- * Project a Nominatim result into a schema.org `Place` JSON-LD object
- * (`format=jsonld`, #1052) — the output-format projection.
+ * Project a Nominatim result into a schema.org `Place` JSON-LD object for `format=jsonld`.
  *
- * Reads the result's `address` breakdown (populated because the router forces `addressdetails` for `jsonld`)
- * plus the coordinate, re-serializing the same resolved place.
- * `streetAddress` is the plain house-number-first join (house_number + road);
- * `addressCountry` is ISO-3166 alpha-2 (uppercased).
+ * It reads the result's `address` breakdown.
+ * The router populates this by forcing `addressdetails` for jsonld.
+ *
+ * The formatter then re-serializes the same resolved place.
+ * `streetAddress` is the house-number-first join and `addressCountry` is ISO-3166 alpha-2 uppercased.
  */
 export function nominatimResultToSchemaOrg(r: NominatimResult): SchemaOrgPlace {
 	const a = r.address ?? {}

@@ -7,8 +7,8 @@ verified-with: mailwoman 8.7.0
 
 # Your first ten minutes
 
-Mailwoman has two halves, and they become available at different times. Parsing works as soon as
-`npm install` finishes, because the model ships inside a package. Geocoding needs reference data that
+Mailwoman has two halves, and they become available at different times. The parser works as soon as
+`npm install` finishes, because the model ships inside a package. The geocoder needs reference data that
 is too large to ship on npm, so it requires a separate download. By the end of this page you will
 have run both checks, pulled that reference data, and geocoded a US address and a French one. The
 steps take about ten minutes, plus the time for the one-time gazetteer download.
@@ -68,7 +68,7 @@ The paths in your own output use your `$MAILWOMAN_DATA_ROOT`.
 
 ## 3. Parse something
 
-Parsing is ready now. Follow [Install and first parse](./install-and-first-parse.mdx) for a
+You can parse an address now. Follow [Install and first parse](./install-and-first-parse.mdx) for a
 ten-line script that turns `apt 4b 350 5th ave new york ny 10118` into a labeled tree, or check it
 from the shell:
 
@@ -92,13 +92,13 @@ gazetteer.
 
 ## 4. Know which half you have
 
-**Parsing works out of the box.** It takes free text and returns tagged components: house number,
+**The parser works out of the box.** It takes free text and returns tagged components: house number,
 street, unit, locality, region, postcode, and the rest. The model file ships inside
 `@mailwoman/neural-weights-en-us`, so there is no package to fetch or setting to configure. French support
 needs one more package (`@mailwoman/neural-weights-fr-fr`) and no other change.
 
-**Geocoding needs the resolver database.** Turning `New York` into a latitude and longitude requires a
-lookup in the gazetteer, which is a file you download once and keep. The transcript below shows the
+**The geocoder needs the resolver database.** Mailwoman needs a gazetteer lookup to turn `New York`
+into a latitude and longitude. The gazetteer is a file you download once and keep. The transcript below shows the
 `2026-07-07a` build; at the current `2026-08-25b` build, the candidate gazetteer `candidate.db` is 2.88 GB,
 so your download will be larger. Your `doctor` output prints the exact one-line command
 that fetches it. The CLI generates that command from the build it knows about, so prefer it over a
@@ -132,7 +132,7 @@ problem.
 
 Ignore the `export` line. The file is saved at `<data-root>/db/wof/candidate.db`, which is the
 default path every entry point checks, so the download completes the setup. The CLI still prints the
-line from a time when the variable was required. Setting it changes no behavior here.
+line from the release when the variable was required. This variable has no effect in this setup.
 [Runtime flags](../reference/runtime-flags.mdx#environment-variables) describes what the variable is
 still used for: pointing at a copy stored elsewhere, or `none` to pin the older backend.
 
@@ -267,7 +267,7 @@ machine:
 
 The older backend returns Paris, Texas. The ranking does not cause this. The **country filter**
 does. `--locale` defaults to `en-US`, `en-US` implies `--default-country US`, and the older backend
-applies that filter while the candidate backend does not. Testing each backend with and without the
+applies that filter while the candidate backend omits it. Test each backend with and without the
 filter separates the two effects (measured 2026-08-04, with this gazetteer and this model):
 
 | backend             | country filter US                      | no country filter |
@@ -276,8 +276,8 @@ filter separates the two effects (measured 2026-08-04, with this gazetteer and t
 | full admin (`none`) | `Paris`, TX (33.669, −95.544)          | **Paris, France** |
 
 Both backends return Paris, France without the US filter, and both return a Texas result with it.
-This page therefore makes a narrow claim. `candidate.db` is the default, and the default does not
-apply a country filter, so the French address geocoded correctly without any configuration. To
+This page therefore makes a narrow claim. The default `candidate.db` applies no country filter, so
+the French address geocoded correctly without any configuration. To
 compare the two backends yourself, use `--country-scope locale|none` (on `parse` and `geocode`) to
 set the filter the same way for both.
 

@@ -57,7 +57,7 @@ Two consequences worth not rediscovering:
 - **Line-based pre-filters run BEFORE the parser and can reduce a record in half.** `po-box-cedex`'s
   `awk 'NR%211==3'` stride and the `head -n` caps elsewhere count PHYSICAL lines. The parse cannot
   repair what the pre-filter already reduce; a halved record fails the field checks and drops. This is a
-  sampling artefact rather than a correctness bug, and it is documented at the call site. FR gets away with
+  sampling artifact rather than a correctness bug, and it is documented at the call site. FR gets away with
   it by luck — neither physical line of its one multi-line record is `≡ 3 (mod 211)`.
 
 ## `spliterator` ≥ 5.0.0 is a hard floor

@@ -23,7 +23,7 @@ The key differences from Google:
 | ------------ | ----------------------------- | ------------------------------------- |
 | Parser       | Proprietary, neural (assumed) | Pelias, rule-based (open-source)      |
 | Data sources | Proprietary, global           | WOF, OSM, OpenAddresses — all open    |
-| Pricing      | $5/1K requests                | ~$0.50/1K requests                    |
+| Cost         | $5/1K requests                | ~$0.50/1K requests                    |
 | Terms        | No caching beyond 30 days     | Cacheable, self-hostable              |
 | Audit trail  | No                            | Yes — open data sources are traceable |
 | Self-hosting | No                            | Yes — Pelias is open-source           |
@@ -55,7 +55,7 @@ If the parser is open-source, why not run your own Pelias instance and avoid the
 
 - Elasticsearch cluster (the gazetteer index — hundreds of GB).
 - Multiple data import pipelines (WOF, OSM, OpenAddresses — each requires downloading, transforming, and indexing).
-- Ongoing data updates (WOF is updated weekly, OSM continuously).
+- Data updates arrive on different schedules (WOF weekly, OSM continuously).
 - Infrastructure management (Elasticsearch tuning, monitoring, failover).
 
 The team at Geocode Earth estimates that running a production Pelias instance costs **$500-2,000 per month** in infrastructure alone, plus engineering time for maintenance and updates. For a company with one or two full-time geospatial engineers, this is viable. For a team without dedicated infrastructure staff, it is not.

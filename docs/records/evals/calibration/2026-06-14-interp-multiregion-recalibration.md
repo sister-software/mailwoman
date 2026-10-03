@@ -88,7 +88,7 @@ shipped. The artifact is the regional mean masquerading as a constant.
    unmeasured states. More work; the better long-term answer. Recommended as the follow-up to the seed
    table.
 
-**Flagged rather than auto-wired.** Loading a per-region factor changes the shipped `uncertainty_m` on every
+**Flagged rather than auto-wired.** A per-region factor changes the shipped `uncertainty_m` on every
 interpolated geocode — a behavior change. Per the merge-wall discipline this is PR-and-flag: the seed
 table + this evidence land; the operator decides whether to wire per-region now (table) or hold for the
 per-segment-length version. The single 1.70 stays the default until then — with this report on record

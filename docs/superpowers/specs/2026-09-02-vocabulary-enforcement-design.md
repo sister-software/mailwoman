@@ -32,7 +32,7 @@ gap is a missing config section rather than a missing tool.
 
 ## Decisions taken
 
-**Landing strategy: one sweep, then hard enforcement.** The plan uses neither a ratchet counter nor a
+**The strategy applies one sweep, then enables hard enforcement.** The plan uses neither a ratchet counter nor a
 per-file baseline. Every violation is fixed, and then every rule is switched on everywhere outside the
 dated-records exemption. The operator chose this over a ratchet after the risk of unreviewable diffs was
 stated.
@@ -54,11 +54,11 @@ A per-site rewrite without a census can strip a docstring of its meaning. This r
 invariants and measured numbers that a careless reword destroys. The census is therefore the first
 deliverable.
 
-Grouping hits by the word that modifies `check` finds 519 distinct constructions, most appearing once.
+When grouped by the word modifying `check`, the results contain 519 distinct constructions; most appear once.
 `scripts/vocab-census.ts` classifies every hit by the action it needs, and the three actions differ in
 cost by an order of magnitude. Measured at `9996e8f60` over 2,638 tracked `.ts`/`.tsx`/`.py` files:
 
-| Action         | Count | What it means                                                                                                                                                                                                                                                   | Judgement                            |
+| Action         | Count | What it means                                                                                                                                                                                                                                                   | Judgment                             |
 | -------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `backtick`     | 163   | The site refers to an interface-tied identifier: `@mailwoman/locale-hint`, `promotion-eval.ts`, `mailwoman eval promote`, `mwdev_promotion_eval`. Vale skips inline code, so backticks are both the fix and correct markdown.                                   | none                                 |
 | `rename-check` | 956   | The modifier carries the check's real name: `street-context check` → `the street-context check`. Top modifiers: `street-context` 32, `delta` 20, `test` 19, `country` 27, `acceptance` 11, `postcode` 9, `§7-3b` 9, `existence` 8, `interval` 7, `detection` 6. | verify the modifier is the real name |

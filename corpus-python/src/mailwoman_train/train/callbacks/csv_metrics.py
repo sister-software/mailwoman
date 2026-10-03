@@ -1,8 +1,8 @@
 """The run's metrics, as a CSV one column per tag wide.
 
 Two row kinds share the file. A step row fills the loss and LR columns and leaves the val columns
-empty. an eval row fills the val columns. A reader tells them apart by whether `val_loss` is blank,
-which is why a step row writes empty strings rather than zeros.
+empty. An eval row fills the val columns. A reader distinguishes them by whether `val_loss` is blank.
+Step rows write empty strings rather than zeros.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ class CSVMetricsCallback:
         self._log_every = max(1, cfg.train.log_every_steps)
         self._tags = resolve_label_set(cfg.data.label_set).tags
         # A resumed run appends to the run's existing CSV. a fresh one starts the file and writes
-        # the header. Appending to a file that is not there would lose the header entirely.
+        # the header. A missing file would lack the header if the writer only appended.
         self._append = resume_step > 0 and self._path.is_file()
         self._handle: IO[str] | None = None
         self._writer: Any = None

@@ -2,15 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_compare` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the interface, and the description is the
- *   required half of it.
+ *   The `mwdev_compare` tool definition provides the agent-facing description and input schema.
+ *   Its handler calls the comparison in the package root.
  */
 
 import { z } from "zod"
 
 import { ARM_SPEC_SCHEMA } from "#arms"
-import { runCompare } from "#compare/index"
+import { runCompare } from "#compare"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { INPUT_SET_SCHEMA } from "#tool-kit"
 

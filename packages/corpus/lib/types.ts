@@ -27,7 +27,17 @@ export const AddressRole = {
 	 */
 	RegisteredOffice: "registered-office",
 	/**
-	 * The place where post is delivered, which is often a post-office box.
+	 * The address a third party records for a transacting party on its own transaction record,
+	 * such as the supplier on a government contract notice.
+	 *
+	 * The party supplied the address to the recording body rather than to a registrar.
+	 * No registrar filed it as a seat, and no address register confirmed it as a premise.
+	 * A sole trader's entry can hold a home address.
+	 */
+	Counterparty: "counterparty",
+	/**
+	 * The place where post is delivered.
+	 * This can be a post-office box.
 	 */
 	Mailing: "mailing",
 	/**
@@ -82,17 +92,37 @@ export function addressRoleOf(row: Pick<CanonicalRow, "addressRole">): AddressRo
  * The values are wire values.
  *
  * This is separate from {@link CanonicalRow.register}, which records where the underlying record came from.
- * A template rendering of a real register record is `Composed`, and it is still a real address.
+ * A rendering of a real register record is `Rendered` or `Composed`, and it is still a real address.
  */
 export const SurfaceOrigin = {
 	/**
-	 * The publisher's own string, carried through unchanged.
+	 * The publisher's own string, preserved unchanged.
+	 *
+	 * No adapter in the tree emits this today: each one builds its line from the source's fields.
+	 * The value is reserved for a source that publishes the written line itself,
+	 * such as a register storing `address1` as a person typed it.
 	 */
 	Attested: "attested",
 	/**
-	 * A template assembled the text from the published fields of one real record.
+	 * An adapter assembled the line from one record's fields, in that locale's canonical order.
+	 *
+	 * The order comes from the codex layout or the adapter's own template rather than from the
+	 * publisher, so the components are the source's and the written form is this repository's.
+	 * Distinct from {@link SurfaceOrigin.Composed} because an adapter renders one canonical
+	 * form per record while a recipe varies the form deliberately.
+	 *
+	 * A source id beginning `rendered-` does not take this value.
+	 * `SourceOperation.Rendered` in `#recipes/sources` names a recipe operation with the same word,
+	 * and those recipes record {@link SurfaceOrigin.Composed} because they vary the form.
+	 *
+	 * Read the row's `surface` rather than its source name to learn which of the two produced it.
+	 */
+	Rendered: "rendered",
+	/**
+	 * A recipe assembled the text from the published fields of one real record.
 	 *
 	 * The recipe chooses the order, punctuation and casing.
+	 * It varies them to teach a surface.
 	 */
 	Composed: "composed",
 	/**
@@ -127,7 +157,19 @@ export function requireSurface(raw: Record<string, unknown>, producer: string): 
 }
 
 /**
- * Provenance fields that every corpus row carries.
+ * Provenance fields present on every corpus row.
+ *
+ * Two related facts are recorded per source rather than per row.
+ * `createIneligibilityReader` in `build/eligibility.ts` joins `source` against the
+ * address-source register and refuses the row at build time, so a release-profile corpus
+ * holds eligible rows by construction and `TRAINING_SOURCES.json` records each refusal.
+ *
+ * A per-row eligibility field would copy a per-source decision onto every row
+ * and would disagree with the register after a review changed a license's state.
+ * Whether a row reached a checkpoint is a property of a run rather than of the corpus.
+ *
+ * And the sampler draws a different sample per epoch, so `deriveEffectiveTrainingManifest`
+ * records it per source from a config and an `audit_epoch_mixture` output.
  */
 export interface SourceProvenance {
 	/**
@@ -139,12 +181,13 @@ export interface SourceProvenance {
 	 * An id that is unique within the source and stable across reruns,
 	 * so that deduplication and holdouts reproduce.
 	 *
-	 * SQLite-backed adapters use the primary key, and file-backed adapters usually hash the components.
+	 * SQLite-backed adapters use the primary key.
+	 * File-backed adapters hash the components.
 	 */
 	source_id: string
 
 	/**
-	 * The corpus version, which the runner stamps.
+	 * The corpus version stamped by the runner.
 	 */
 	corpus_version: string
 
@@ -194,7 +237,8 @@ export interface CanonicalRow extends SourceProvenance {
 	country: string
 
 	/**
-	 * The BCP-47 locale, which the runner derives from the country when absent.
+	 * The BCP-47 locale.
+	 * The runner derives it from the country when absent.
 	 */
 	locale?: string
 
@@ -202,7 +246,7 @@ export interface CanonicalRow extends SourceProvenance {
 	 * The role of this address.
 	 *
 	 * The runner stamps the adapter's `addressRole` on rows that omit it.
-	 * An adapter sets it per row only when one source carries several roles.
+	 * An adapter sets it per row only when one source has several roles.
 	 * Read it with {@link addressRoleOf}.
 	 */
 	addressRole?: AddressRole
@@ -232,7 +276,8 @@ export interface CanonicalRow extends SourceProvenance {
 /**
  * A row after alignment, with tokens, BIO labels and character spans.
  *
- * The span arrays are the source of truth, and token labels can be derived from them.
+ * The span arrays are the source of truth.
+ * Consumers can derive token labels from them.
  */
 export interface LabeledRow extends CanonicalRow {
 	/**
@@ -251,7 +296,8 @@ export interface LabeledRow extends CanonicalRow {
 	 * The three span arrays are parallel.
 	 * Spans are sorted by start and never overlap.
 	 *
-	 * `raw` must be NFC-normalized, and `alignRow` enforces both rules.
+	 * `raw` must be NFC-normalized.
+	 * `alignRow` enforces both rules.
 	 * Older corpora and some synthesis paths omit the spans.
 	 */
 	span_starts?: readonly number[]
@@ -280,7 +326,8 @@ export interface QuarantinedRow {
  */
 export interface AdapterOptions {
 	/**
-	 * The adapter's input, which each adapter interprets as a file, a directory or a URL.
+	 * The adapter's input.
+	 * Each adapter interprets it as a file, directory or URL.
 	 */
 	inputPath: PathBuilderLike
 
@@ -292,7 +339,8 @@ export interface AdapterOptions {
 	/**
 	 * An ISO 3166-1 alpha-2 country filter.
 	 *
-	 * Multi-country adapters must apply it, and single-country adapters should reject a mismatch.
+	 * Multi-country adapters must apply it.
+	 * Single-country adapters should reject a mismatch.
 	 */
 	country?: string
 
@@ -302,17 +350,19 @@ export interface AdapterOptions {
 	limit?: number
 
 	/**
-	 * The fraction of rows that carry an explicit `country` component.
+	 * The fraction of rows that include an explicit `country` component.
 	 *
-	 * A source without country tokens teaches the model that country tokens are rare,
-	 * which lowers `country` recall.
+	 * A source without country tokens teaches the model that country tokens are rare.
+	 * That lowers `country` recall.
+	 *
 	 * A value of `0` or no value adds no country and consumes no random draw,
 	 * so existing outputs stay identical.
 	 */
 	countryFraction?: number
 
 	/**
-	 * The seed for the {@linkcode AdapterOptions.countryFraction} draw, which has a fixed default.
+	 * The seed for the {@linkcode AdapterOptions.countryFraction} draw.
+	 * The draw has a fixed default.
 	 */
 	seed?: number
 
@@ -320,6 +370,28 @@ export interface AdapterOptions {
 	 * A cancellation signal that adapters should check at each iteration.
 	 */
 	signal?: AbortSignal
+
+	/**
+	 * Counts of input records the adapter refused or trimmed, keyed by reason.
+	 *
+	 * An adapter that drops a record increments a `row:<reason>` key, and one that keeps the row
+	 * but discards a component increments a `component:<tag>:<reason>` key.
+	 * A `kept:<condition>` key counts records kept under a condition the reader should see,
+	 * such as a country the record does not state.
+	 *
+	 * The runner writes the map into `MANIFEST.json` as `dropped`, so the gap between a
+	 * source's record count and the rows written has a counted reason.
+	 * An adapter that does not count leaves the map empty, which the manifest records
+	 * as an empty object rather than as zero drops of any named kind.
+	 */
+	dropped?: Map<string, number>
+}
+
+/**
+ * Adds one to `reason` in an adapter's {@link AdapterOptions.dropped} map, when the caller supplied one.
+ */
+export function countDropped(opts: Pick<AdapterOptions, "dropped">, reason: string): void {
+	opts.dropped?.set(reason, (opts.dropped.get(reason) ?? 0) + 1)
 }
 
 /**

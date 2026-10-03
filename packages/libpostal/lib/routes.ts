@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Route definitions + handlers for the libpostal-compatible surface. The OpenAPI document is
- *   emitted from these definitions. There is no handwritten spec. Wire shapes (bodies, error
- *   envelopes, status codes) are the vendor interface. see schema.ts.
+ *   Route definitions and handlers for the libpostal-compatible surface. The OpenAPI document is
+ *   emitted from these definitions instead of a handwritten spec. The wire shapes are the
+ *   vendor interface. See `schema.ts`.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -22,12 +22,10 @@ import {
 } from "#schema"
 
 /**
- * A friendly html landing page for `GET /` (#1022).
+ * A friendly html landing page for `GET /`.
  *
- * Libpostal's own rest server has no root page, so there's no wire interface to match —
- * pure courtesy for browser visitors.
- *
- * Relative example URLs so they resolve against whatever host/port serves this.
+ * Libpostal's own rest server has no root page, so there is no wire interface to match.
+ * The example URLs are relative so they resolve against whatever host and port serve this.
  */
 const ROOT_HTML = `<!doctype html>
 <html lang="en">
@@ -62,7 +60,7 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 `
 
 /**
- * Query-side request schema, shared by the GET routes (documented. Presence enforced in-handler).
+ * Query-side request schema shared by the GET routes, with presence enforced in the handler.
  */
 const parseQueryParams = z.object({
 	query: z.string().optional().openapi({ description: "The address to parse. `address` is accepted as an alias." }),
@@ -149,10 +147,12 @@ const expandPostRoute = createRoute({
 
 /**
  * Read the JSON body if present and parseable.
- * A missing/malformed body is `{}` (legacy tolerance).
+ * A missing or malformed body is `{}` (legacy tolerance).
  *
  * The try/catch here re-guards what `canonicalizeJSONBody` already guarantees
- * (well-formed JSON, string-only interface fields) — deliberate defense in depth.
+ * (well-formed JSON, string-only interface fields).
+ * That is deliberate defense in depth.
+ *
  * Don't drop this side's tolerance just because the middleware upstream makes it look redundant.
  * The two are meant to fail safe independently.
  */
@@ -173,8 +173,8 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
  * lower-priority param (legacy wire parity: the old handler trimmed after coalescing).
  *
  * The `typeof value === "string"` check re-guards what `canonicalizeJSONBody` already
- * guarantees (only string-typed interface fields survive) — deliberate defense in depth
- * rather than a redundancy to simplify away.
+ * guarantees (only string-typed interface fields survive).
+ * That is deliberate defense in depth rather than a redundancy to simplify away.
  */
 const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined)
 
@@ -226,8 +226,8 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
  * The zod-openapi auto query validator rejects array-valued repeated params
  * (`?query=a&query=b`) with its own error shape before the handlers run.
  *
- * Keep only the first value of each interface param — the value `c.req.query()`
- * reads anyway — so query validation can never fail either.
+ * Keep only the first value of each interface parameter.
+ * `c.req.query()` reads that value, so query validation cannot fail on repeated values.
  */
 const canonicalizeQueryParams: MiddlewareHandler = async (c, next) => {
 	if (c.req.method === "GET") {

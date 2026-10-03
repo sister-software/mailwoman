@@ -6,7 +6,7 @@
  * country and category provenance.
  *
  * `poi.db` covers four countries — US, CA, FR and MX — so a zero count here is absence in four countries rather
- * than evidence of absence in the world, and every non-Latin designator comes from the OSM leg.
+ * than evidence of absence in the world. Every non-Latin designator comes from the OSM leg.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -88,7 +88,7 @@ export interface OvertureSubVenueRow extends SubVenueHarvestRow {
 }
 
 /**
- * Read named POI rows in selected sub-venue categories, optionally filtered by country.
+ * Read POI rows with names in selected sub-venue categories, optionally filtered by country.
  */
 export async function readOvertureSubVenues(options: ReadOvertureSubVenuesOptions): Promise<OvertureSubVenueRow[]> {
 	const categories = options.categories ?? OVERTURE_SUBVENUE_CATEGORIES

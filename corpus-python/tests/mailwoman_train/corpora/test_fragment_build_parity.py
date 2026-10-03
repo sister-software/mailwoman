@@ -56,7 +56,7 @@ OA_LOCALES = {
 }
 
 #: (country, raw, [(surface, tag)]) — the offsets are derived from the text, so the fixture cannot
-#: carry a span that disagrees with its own row.
+#: store a span that disagrees with its own row.
 CORPUS_SPECS: list[tuple[str, str, list[tuple[str, str]]]] = [
     (
         "US",

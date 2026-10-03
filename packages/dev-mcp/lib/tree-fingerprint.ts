@@ -3,7 +3,7 @@
 
 /**
  * The staleness guard for a long-lived process holding an imported module graph: the fingerprint covers the newest
- * mtime across the workspaces an engine imports, plus `head` and the dirty set, and a change makes the engine
+ * mtime across the workspaces an engine imports, plus `head` and the dirty set. A change makes the engine
  * unreachable rather than wrong.
  */
 
@@ -35,8 +35,8 @@ export const FINGERPRINTED_WORKSPACES = [
 ] as const
 
 /**
- * Directory names that never affect behaviour but change constantly; `out/` is excluded on
- * purpose because the daemon imports source, so a recompile must not read as a source edit.
+ * Directory names that never affect behavior but change constantly; `out/` is excluded on purpose
+ * because the daemon imports source, so a recompile must not read as a source edit.
  */
 const SKIP_DIRECTORIES = new Set(["node_modules", "out", ".git", "test", "__pycache__"])
 
@@ -53,7 +53,7 @@ export interface TreeFingerprint {
 	digest: string
 	gitHead: string
 	/**
-	 * Paths with uncommitted changes, as `git status --porcelain` reports them, carried
+	 * Paths with uncommitted changes, as `git status --porcelain` reports them, listed
 	 * so a result can say which files were uncommitted when it was produced rather than to refuse.
 	 */
 	dirtyFiles: string[]

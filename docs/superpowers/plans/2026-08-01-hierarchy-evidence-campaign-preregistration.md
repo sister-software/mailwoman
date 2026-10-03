@@ -117,7 +117,7 @@ children at all and never enter the artifact.
 - **B-C2′ (amended, pre-registered before computing it).** Of GB locality-class places in the
   source, the fraction carrying ≥1 dependent-locality child is **≤ 50%**. A census hit must rule
   out at least half the parent population to be evidence — AND the median dependent-locality child
-  count on covered nodes is **≥ 2**. Failing either closes the discrimination question NEGATIVE.
+  count on covered nodes is **≥ 2**. A failure of either condition closes the discrimination question NEGATIVE.
 - **D-C2″ (disclosure).** Report the covered fraction among LARGE parents separately. The expected
   shape is that big cities are all covered, so the census discriminates in the small/middle tail
   and makes no statement about major-city queries. State it either way.

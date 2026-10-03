@@ -1,5 +1,6 @@
-"""Projecting the postcode-anchor channel onto SentencePiece pieces, whose three paint paths
-share one lookup normalization and one char-to-piece projection.
+"""Project the postcode-anchor channel onto SentencePiece pieces.
+
+The three paint paths share one lookup normalization and one character-to-piece projection.
 """
 
 from __future__ import annotations

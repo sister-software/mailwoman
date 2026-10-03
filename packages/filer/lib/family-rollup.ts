@@ -12,9 +12,9 @@
  * names exactly one family), and possibly more for a `nodeID`, because a node can legitimately belong to more than one
  * family at once.
  *
- * Manifest-first like `filerLookup`: `readFilerManifest` runs before any `filer_family` query, {@linkcode
- * assertFamilySchemaVersion} refuses a pre-`filer_family` artifact with a rebuild-pointing error, and `asOf` defaults
- * to today via `filer-lookup.ts`'s {@linkcode todayISODate} rather than a second definition of it.
+ * Like `filerLookup`, this function reads the manifest before querying `filer_family`.
+ * {@linkcode assertFamilySchemaVersion} refuses older artifacts with a rebuild-pointing error.
+ * `asOf` defaults to today through {@linkcode todayISODate} in `filer-lookup.ts`.
  *
  * The half-open temporal predicate is copied verbatim from `filer-lookup.ts` — `valid_from <= asOf and (valid_to is
  * NULL or valid_to > asOf)` — because every reimplementation is another place for the readers to diverge.
@@ -50,7 +50,7 @@ export interface FamilyRollupMember {
 	/**
 	 * How strongly this member's membership is evidenced.
 	 *
-	 * Carried even though `source` is present because `edgar-exhibit-21` writes an authoritative edge
+	 * Retained even though `source` is present because `edgar-exhibit-21` writes an authoritative edge
 	 * and an inferred corroboration in the same build, so one source name spans both grades.
 	 */
 	assertion: string
@@ -63,7 +63,7 @@ export interface FamilyRollupMember {
 
 /**
  * {@linkcode familyRollup}'s per-family result shape, the inverse of `filer-lookup.ts`'s
- * `FilerLookupFamily`: it carries no `cluster_id`-shaped key and keeps `relationship`
+ * `FilerLookupFamily`: it has no `cluster_id`-shaped key and keeps `relationship`
  * per-member because it answers who belongs to this family.
  *
  * `distinct_member_count` is `members` deduped by `node_id`, while `members` itself
@@ -71,9 +71,9 @@ export interface FamilyRollupMember {
  * more than one row corroborates the same member.
  * It counts distinct nodes rather than rows, so widening `filer_family`'s primary key cannot inflate it.
  *
- * `display_names` is {@linkcode readFamilyDisplayNames}'s output over this family's current
- * members, and a multi-spelling family (two raw names canonicalizing to the same `family_id`)
- * surfaces every spelling, sorted, rather than picking one.
+ * `display_names` comes from {@linkcode readFamilyDisplayNames} applied to this family's current members.
+ * A multi-spelling family has two raw names that canonicalize to one `family_id`.
+ * The rollup returns every spelling in sorted order.
  */
 export interface FamilyRollup {
 	family_id: string

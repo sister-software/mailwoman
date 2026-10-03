@@ -1,4 +1,6 @@
 import { makeLcg } from "@mailwoman/core/random"
+import { describe, expect, it } from "vitest"
+
 import {
 	composePoBoxPhrase,
 	poBoxTemplateLocale,
@@ -6,10 +8,9 @@ import {
 	supportedLocales,
 	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
-} from "@mailwoman/corpus/synthesizers/po-box"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
-import { describe, expect, it } from "vitest"
+} from "#synthesizers/po-box"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 describe("synthesizePoBoxRow", () => {
 	it("US: replaces street with PO Box leader + number", () => {
@@ -151,7 +152,7 @@ describe("synthesizePoBoxRow", () => {
 })
 
 describe("SynthesizeMilitaryPoBoxRow", () => {
-	it("generates a unit-line po_box + APO/FPO/DPO locality + AA/AE/AP region + theatre ZIP", () => {
+	it("generates a unit-line po_box + APO/FPO/DPO locality + AA/AE/AP region + theater ZIP", () => {
 		const row = synthesizeMilitaryPoBoxRow({ random: makeLcg(7) })
 		expect(row.template).toBe("military-po-box")
 		expect(row.locale).toBe("en-US")

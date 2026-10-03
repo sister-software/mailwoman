@@ -1,20 +1,21 @@
 """One corpus row to one `EncodedExample`, through SentencePiece or the char path.
 
-Everything a channel needs is loaded once here, before the row loop, and passed to every
-`encode_row` call. The two paths are exclusive: the char path skips SentencePiece entirely,
-requires span-schema parquet files, and refuses a configured channel, because the channels project per
-SentencePiece piece and have no per-unit alignment yet.
+Load everything a channel needs before the row loop. Pass it to every `encode_row` call.
+The two paths are exclusive. The char path skips SentencePiece and requires span-schema parquet
+files. It refuses configured channels because they project per SentencePiece piece without per-unit
+alignment.
 """
 
 from __future__ import annotations
 
 import logging
 import random
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from ...address_systems import address_system_id
 from ...config import DataConfig
 from ...labels import locale_id, resolve_label_set
 from ...tokenizer import Tokenizer, char_label_array_from_spans, encode_row, whitespace_spans
@@ -26,8 +27,8 @@ from .stream import iter_rows
 
 logger = logging.getLogger(__name__)
 
-#: The channel paths `char_mode` refuses. Each projects per SentencePiece piece, and the char path
-#: has no per-unit alignment for them yet, so a config naming one alongside `char_mode` is asking
+#: The channel paths `char_mode` refuses. Each projects per SentencePiece piece.
+#: The char path has no per-unit alignment for them yet, so a config naming one alongside `char_mode` is asking
 #: for a clue the encoder cannot place.
 CHANNEL_PATHS = (
     "anchor_lookup_path",
@@ -53,7 +54,7 @@ class CharMode:
 class Lexicons:
     """Every channel input, loaded once before the row loop and passed to each `encode_row`.
 
-    Loading one per row would re-read a 1.3 GB anchor table for every address.
+    One table load per row would reread a 1.3 GB anchor table for every address.
     """
 
     anchor: dict[str, tuple[dict[str, float], float, float]] | None = None
@@ -124,9 +125,9 @@ def load_lexicons(cfg_data: DataConfig) -> Lexicons:
 def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> EncodedExample:
     """One row on the CharCNN path: per-unit char windows, labels straight from the span triple.
 
-    Span-schema is required here. The per-char label array comes from the span triple with no
-    whitespace-token quantization, and a token-only frozen parquet file has no honest char-level labels to
-    offer. Loud failure, never a silent fallback (#519).
+    Span-schema is required here. The per-char label array comes from the span triple without
+    whitespace-token quantization. A token-only frozen parquet file has no honest char-level labels
+    to offer. Fail loudly under #519 rather than falling back silently.
     """
     starts, ends, tags = row.get("span_starts"), row.get("span_ends"), row.get("span_tags")
     if starts is None or ends is None or tags is None:
@@ -137,7 +138,7 @@ def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> Enco
     raw = row["raw"]
     char_labels = char_label_array_from_spans(raw, starts, ends, tags)
     if char.mode == "char":
-        # One unit per character (D3): unit index == char offset, whitespace units carry O.
+        # One unit per character (D3): unit index == char offset, whitespace units receive O.
         unit_spans = [(i, i + 1) for i in range(len(raw))]
     else:
         unit_spans = whitespace_spans(raw, row["tokens"])
@@ -159,6 +160,7 @@ def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> Enco
         attention_mask=enc["attention_mask"],
         labels=enc["labels"],
         locale_id=locale_id(row.get("country")),
+        address_system_id=address_system_id(row.get("country"), raw),
         char_ids=enc["char_ids"],
     )
 
@@ -170,6 +172,7 @@ def iter_encoded(
     split: str = "train",
     rng: random.Random | None = None,
     row_limit: int | None = None,
+    observer: Callable[[dict[str, Any]], None] | None = None,
 ) -> Iterator[EncodedExample]:
     """Yield encoded examples, dropping rows whose SP token count exceeds ``max_length``.
 
@@ -211,7 +214,7 @@ def iter_encoded(
         # units, but this consumer (char_label_array_from_spans + SentencePiece pieces) is code-point-
         # native. For astral-plane rows (~0.06% — exotic-script country-name variants like Gothic), a
         # UTF-16 span end can exceed the code-point len(raw) and encode_row would raise
-        # span-out-of-bounds. Skip + count rather than crash a multi-hour training run. Lasting fix:
+        # span-out-of-bounds. The loader counts and skips the row rather than crashing a multi-hour training run. Durable fix:
         # emit code-point offsets in the TS build and re-align (corpus-v0.5.1). 2026-06-12.
         _se = row.get("span_ends")
         if _se and max(_se) > len(row["raw"]):
@@ -223,6 +226,9 @@ def iter_encoded(
                     row["raw"][:40],
                 )
             continue
+        # One row yields one example from here on, so the observer sees exactly the rows encoded.
+        if observer is not None:
+            observer(row)
         if char is not None:
             yield encode_char_row(row, char, label_set)
             continue
@@ -251,7 +257,7 @@ def iter_encoded(
         # Drop rows whose non-padding length exceeds max_length (length filter §2).
         non_pad = sum(enc["attention_mask"])
         if non_pad >= cfg_data.max_length:
-            # Even at exactly max_length we keep — the spec says drop tokens > 128. equality is fine.
+            # Even at exactly max_length we keep — the spec drops tokens > 128. Equality is valid.
             # But hand-curated coarse rows almost never hit this. Track via downstream metrics.
             pass
         yield EncodedExample(
@@ -259,6 +265,7 @@ def iter_encoded(
             attention_mask=enc["attention_mask"],
             labels=enc["labels"],
             locale_id=locale_id(row.get("country")),
+            address_system_id=address_system_id(row.get("country"), row["raw"]),
             anchor_features=enc.get("anchor_features"),
             anchor_confidence=enc.get("anchor_confidence"),
             gazetteer_features=enc.get("gazetteer_features"),

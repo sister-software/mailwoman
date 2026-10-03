@@ -5,9 +5,9 @@ sequences (modulo id renumbering, checked via the id map) on (a) every eval-surf
 (b) a fresh 1M-row random sample of the training feed. Zero diffs or the bar fails.
 
 B2 — logit bit-parity: original vs pruned int8 ONNX on eval inputs. The graphs differ only in the
-embedding gather table, and kept rows are byte-identical — so with ids remapped, outputs must be
+embedding gather table. Kept rows are byte-identical, so outputs must remain
 BITWISE equal. Channel inputs are fed zeros: parity must hold for any channel values if the
-surgery is sound, and the full-battery bar (B3) covers realistic feeds end-to-end.
+surgery is sound. The full-battery bar (B3) covers realistic feeds end to end.
 
 Usage:
     python -m mailwoman_train.tokenizer.vocab.prune_verify \

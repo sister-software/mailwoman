@@ -1,4 +1,4 @@
-"""Token-level scores read during a run, and the CSV row they are logged as.
+"""Read token-level scores during a run. Write them into a CSV row.
 
 Both metrics here take the same position on absent evidence: a tag the validation sample does not
 contain has an UNDEFINED score rather than a zero. `token_f1` excludes it from the macro average and
@@ -27,10 +27,9 @@ def token_f1(
     (``f1_tag.locality`` = (B + I) / 2) and per-tag support. The per-tag columns are what the CSV
     log and dashboard read. the per-BIO ones are for debugging.
 
-    ``macro_f1`` averages only component labels with support above zero, and excludes ``O``. A
-    zero-support tag would otherwise pin F1 at 0 and drag the macro down, which measures validation
-    coverage rather than the model; ``O``'s huge support and near-1.0 F1 would inflate it the other
-    way.
+    ``macro_f1`` averages only component labels with support above zero. It excludes ``O``.
+    A zero-support tag would pin F1 at 0 and drag down the macro, making it measure validation
+    coverage instead of model performance. ``O``'s huge support and near-1.0 F1 would inflate it.
     """
     mask = labels != IGNORE_INDEX
     p = preds[mask]
@@ -50,6 +49,8 @@ def token_f1(
     f1 = 2 * precision * recall / (precision + recall + 1e-9)
     per_label = {bio_labels[c]: float(f1[c]) for c in range(num_labels)}
     per_label_support = {bio_labels[c]: int(support[c]) for c in range(num_labels)}
+    per_label_pred = {bio_labels[c]: int(tp[c] + fp[c]) for c in range(num_labels)}
+    per_label_fp = {bio_labels[c]: int(fp[c]) for c in range(num_labels)}
 
     supported = [c for c in range(num_labels) if bio_labels[c] != "O" and support[c] > 0]
     macro = sum(float(f1[c]) for c in supported) / len(supported) if supported else 0.0
@@ -61,6 +62,10 @@ def token_f1(
         i_f1 = per_label.get(f"I-{tag}", 0.0)
         result[f"f1_tag.{tag}"] = (b_f1 + i_f1) / 2.0
         result[f"support_tag.{tag}"] = per_label_support.get(f"B-{tag}", 0) + per_label_support.get(f"I-{tag}", 0)
+        # `pred` and `fp` state what a support of zero cannot: a tag the sample never attests
+        # and the model predicts anyway reads `support 0, pred > 0` rather than as an absent key.
+        result[f"pred_tag.{tag}"] = per_label_pred.get(f"B-{tag}", 0) + per_label_pred.get(f"I-{tag}", 0)
+        result[f"fp_tag.{tag}"] = per_label_fp.get(f"B-{tag}", 0) + per_label_fp.get(f"I-{tag}", 0)
     return result
 
 
@@ -76,7 +81,7 @@ def cross_pollution(
     pre-registered PR3 bar is under 1% per locale by 20k steps.
 
     Answers an empty dict when the validation sample contains no city or region start tokens at all.
-    No rate is defined over an empty denominator, and 0.0 would read as a clean result.
+    No rate is defined over an empty denominator. A return value of 0.0 would read as a clean result.
     """
     start = torch.zeros_like(labels, dtype=torch.bool)
     for name in ("B-locality", "B-region"):
@@ -104,12 +109,62 @@ def cross_pollution(
     return out
 
 
+def per_locale_tag_f1(
+    preds: torch.Tensor,
+    labels: torch.Tensor,
+    row_locale_ids: torch.Tensor | None,
+    num_labels: int,
+    bio_labels: tuple[str, ...] = ACTIVE_BIO_LABELS,
+    tags: Sequence[str] = ("street", "house_number"),
+) -> dict[str, float]:
+    """Per-locale token F1 for the tags a promotion bar reads, with each locale's row count beside it.
+
+    ``token_f1`` concatenates every locale into one score, so a locale holding a fraction of a
+    percent of the sample cannot move ``macro_f1``. A change confined to one locale is invisible
+    there. The regression board then reports it first.
+
+    ``support``, ``pred`` and ``fp`` are emitted for every locale and tag. The F1 ratio is emitted only
+    where support exceeds zero, because a ratio over an empty denominator would read as a measured
+    failure. A tag the sample never attests and the model predicts anyway reads ``support 0, pred > 0``
+    and stays visible. A version that omitted the whole pair would hide that prediction from every
+    reported diagnostic.
+
+    ``rows.<locale>`` states the row count each locale's scores were taken over, so a score on eight
+    rows cannot be mistaken for a score on eight thousand.
+    """
+    if row_locale_ids is None:
+        return {}
+
+    out: dict[str, float] = {}
+
+    for lid in torch.unique(row_locale_ids).tolist():
+        if lid not in ID_TO_LOCALE:  # IGNORE_INDEX / unmapped country
+            continue
+
+        selected = row_locale_ids == lid
+        locale = ID_TO_LOCALE[lid]
+        out[f"rows.{locale}"] = float(int(selected.sum()))
+        scored = token_f1(preds[selected], labels[selected], num_labels=num_labels, bio_labels=bio_labels)
+
+        for tag in tags:
+            tag_support = float(scored.get(f"support_tag.{tag}", 0))
+
+            out[f"support_tag.{tag}.{locale}"] = tag_support
+            out[f"pred_tag.{tag}.{locale}"] = float(scored.get(f"pred_tag.{tag}", 0))
+            out[f"fp_tag.{tag}.{locale}"] = float(scored.get(f"fp_tag.{tag}", 0))
+
+            if tag_support > 0:
+                out[f"f1_tag.{tag}.{locale}"] = scored[f"f1_tag.{tag}"]
+
+    return out
+
+
 def eval_csv_row(step: int, elapsed: float, val: Mapping[str, float], tags: Sequence[str]) -> list[str | int]:
     """The train_log.csv eval row, one `f1.<tag>` cell per tag of the run's label set.
 
     The header is written from the run's label set, so the row must be too. A row built from the
     default 16-tag list against a 35-tag ``stage3-cjk`` header left every JP fine tag and
-    ``locality_unit`` unreadable, and shifted the cells that were present under the wrong names.
+    ``locality_unit`` unreadable. It also shifted the present cells under the wrong names.
     """
     cells: list[str | int] = [
         step,

@@ -7,6 +7,12 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
+import { afterAll, describe, expect, it } from "vitest"
+
 import {
 	applyCountryBudget,
 	applyLocalityQuota,
@@ -17,12 +23,7 @@ import {
 	readTriplesFromGeonames,
 	readTriplesFromParentJoin,
 	regionWrittenForms,
-} from "@mailwoman/corpus/tools/postcode-triples"
-import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilder } from "path-ts"
-import { afterAll, describe, expect, it } from "vitest"
+} from "#tools/postcode-triples"
 
 const TAB = String.fromCharCode(9)
 const root = await temporaryDirectory("mw-postcode-triples-")
@@ -57,7 +58,8 @@ const acceptAll = { isKnownLocality: () => true }
 
 describe("readTriplesFromGeonames", () => {
 	it("keeps ONE row for a code published both hyphenated and bare", async () => {
-		// The PT and PL exports list every code in both forms, which would double those countries' weight.
+		// The PT and PL exports list every code in both forms.
+		// A count of both would double those countries' weight.
 		const path = await writeExport("pt.txt", [
 			["PT", "3750-000", "Borralha", "Aveiro", "Águeda"],
 			["PT", "3750000", "Borralha", "Aveiro", "Águeda"],
@@ -85,7 +87,8 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("drops a place the gazetteer does not know as a locality", async () => {
-		// The gazetteer check applies to the admin2 locality, and the colonia goes to `dependentLocality`.
+		// The gazetteer check applies to the admin2 locality.
+		// The colonia goes to `dependentLocality`.
 		const path = await writeExport("mx.txt", [
 			["MX", "20000", "Zona Centro", "Aguascalientes", "Unknownville"],
 			["MX", "20010", "Colonia Norte", "Aguascalientes", "Aguascalientes"],
@@ -225,7 +228,7 @@ describe("applyCountryBudget", () => {
 	})
 
 	it("spends the budget ACROSS regions, because source order is postcode order and a postcode sorts geographically", () => {
-		// Taking rows in source order would fill the budget from the first few regions.
+		// Source-order rows would fill the budget from the first few regions.
 		const row = (region: string, n: number) => ({ ...make("US", `city-${region}-${n}`, String(n)), region })
 
 		const triples = [
@@ -260,7 +263,7 @@ describe("regionWrittenForms", () => {
 		expect(surfaces).toEqual(["Islas Baleares", "Illes Balears", "Balearic Islands"])
 		expect(regionWrittenForms("Zamora", { official: ["Zamora"], coOfficial: [] })).toEqual(["Zamora"])
 
-		// The Catalan preferred name carries a "Província de" generic that envelopes omit.
+		// The Catalan preferred name includes a "Província de" generic that envelopes omit.
 		// Without it, the name matches the Castilian form and deduplicates.
 		const barcelona = { official: ["Barcelona"], coOfficial: ["Província de Barcelona"] }
 		const corunna = { official: ["La Coruña"], coOfficial: ["Província d'A Coruña", "A Coruña"] }
@@ -296,9 +299,14 @@ describe("localityWrittenForm", () => {
 /**
  * Writes an admin and a postcode gazetteer on the unified schema.
  *
- * Two postcodes resolve to a region, one resolves to a locality without a region, and one has no parent.
- * The names follow the WOF pattern: `spr.name` holds the English or unaccented name,
- * and the Catalan preferred name of a Castilian province is the name of its whole community.
+ * Two postcodes resolve to a region.
+ * One resolves to a locality without a region.
+ *
+ * One has no parent.
+ * The names follow the WOF pattern.
+ *
+ * `spr.name` holds the English or unaccented name.
+ * For a Castilian province, the Catalan preferred name identifies its whole community.
  */
 async function writeFixtureGazetteers(): Promise<{ adminDB: PathBuilder; postcodeDB: PathBuilder }> {
 	const adminDB = root.path("admin.db")
@@ -422,7 +430,8 @@ describe("readPairsFromAdmin", () => {
 
 describe("POSTCODE_CONVENTIONS", () => {
 	it("keeps the two trailing conventions APART", () => {
-		// VE writes the code after the locality, and IN writes it after the region.
+		// VE writes the code after the locality.
+		// IN writes it after the region.
 		expect(POSTCODE_CONVENTIONS.get("VE")?.placement).toBe("after_locality")
 		expect(POSTCODE_CONVENTIONS.get("IN")?.placement).toBe("after_region")
 	})

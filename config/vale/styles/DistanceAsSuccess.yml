@@ -1,7 +1,7 @@
 ## Mailwoman chat style: distance presented as the success measure.
 ##
 ## Vale existence rule. Parsing and geocoding are about identifying the right
-## place, not about kilometres: correctness is conformance, span coherence to
+## place, not about kilometers: correctness is conformance, span coherence to
 ## a gazetteer ancestry, currency, and provenance. "5,274 km recovered" grades
 ## a fix by how far the wrong answer moved, which says nothing about whether
 ## the new answer is the right place with the right lineage.

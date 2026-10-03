@@ -7,16 +7,13 @@
  *   layout `resolveWeights`' cache rung finds and the posture `score-anchor-v2-boards.run.ts` and
  *   `overlay-channel-smoke.ts` both take.
  *
- *   Why this exists rather than "just point --model at the checkpoint". A model is not its `.onnx`. The
- *   card declares which channels it needs, and the siblings (anchor binary, four lexicons, FST, pair
- *   index) are what feed them. grading a candidate by swapping the model file alone silently scores it
- *   with the shipped bundle's channels — the #566/#685 trap one level up. Staging the whole set into a
- *   throwaway directory is what makes "this is the bundle, graded as a bundle" checkable.
+ *   A model includes more than its `.onnx` file. The card declares required channels. Other bundle artifacts provide them.
+ *   A model-file-only replacement would score it with the shipped bundle's channels.
  *
- *   Symlinks by default (no file is copied and no file in the data root is touched). `--from` seeds the
- *   layout from an existing workspace package; `--file`, `--omit` and `--card` then diverge it. That
- *   `seed + diverge` shape is what an A/B needs: the two arms differ in exactly the files named on the
- *   command line, and the diff is the command line.
+ *   By default, the command links each artifact. It writes no bytes and leaves the data root untouched.
+ *   `--dereference` copies the artifacts. A board-routed `mwdev_compare` arm requires that copy
+ *   because it refuses an artifact resolving outside the cache it was given.
+ *   `--from` seeds the layout. `--file`, `--omit`, and `--card` then change it for an A/B comparison.
  *
  *   Usage:
  *     yarn mwops release stage-weights-cache --out <dir> --locale en-gb \
@@ -27,19 +24,22 @@
  */
 
 import { isFile, pathExists } from "@mailwoman/core/fs/readers"
-import { createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { copyFileTo, createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { basename, type PathBuilder, resolvePath, resolvePathBuilder } from "path-ts"
+import { basename, type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 export interface StageWeightsCacheOptions {
-	repoRoot: string
-	out: string
+	repoRoot: PathBuilderLike
+	/**
+	 * The cache directory, resolved against {@linkcode StageWeightsCacheOptions.repoRoot}.
+	 */
+	out: PathBuilderLike
 	locale: string
 	/**
 	 * A workspace package directory to seed the layout from.
 	 */
-	from?: string
+	from?: PathBuilderLike
 	/**
 	 * `<name-in-package>=<source path>` entries.
 	 *
@@ -55,13 +55,38 @@ export interface StageWeightsCacheOptions {
 	 */
 	card?: string
 	clean: boolean
+	/**
+	 * Copy each artifact's bytes instead of linking to them.
+	 *
+	 * A board-routed `mwdev_compare` arm refuses an artifact that resolves outside its `weights_cache`,
+	 * because a link back to the workspace would grade the installed model under the candidate's name.
+	 * A cache assembled for grading therefore needs the bytes.
+	 */
+	dereference: boolean
 	log: (line: string) => void
 }
 
 export interface StageWeightsCacheReport {
-	cacheRoot: string
-	packageDir: string
+	/**
+	 * The cache directory, as a builder a caller derives further paths from.
+	 *
+	 * A caller that needs a string takes one at its own boundary.
+	 * `release.stage-weights-cache` does exactly that, because its `outputSchema`
+	 * serializes the report to JSON.
+	 */
+	cacheRoot: PathBuilder
+	/**
+	 * The staged package directory.
+	 *
+	 * `packageDir(name)` is the path of one staged artifact.
+	 * A caller checking the layout reads that rather than re-deriving it.
+	 */
+	packageDir: PathBuilder
 	linked: number
+	/**
+	 * The artifact filenames staged.
+	 * Each entry is a name inside the package rather than a path.
+	 */
 	staged: string[]
 	omitted: string[]
 }
@@ -71,10 +96,9 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	if (!options.out) throw new Error("--out <dir> is required")
 
-	const cacheRoot = resolvePath(repoRoot, options.out)
-	// The layout comes from the resolver's own `weightsCachePackageDir` rather than a re-typed literal.
-	// This operation's whole interface is "lay out the directory `resolveWeights`'
-	// cache rung finds", so the two must not be able to drift.
+	const cacheRoot = resolvePathBuilder(repoRoot, options.out)
+	// The layout comes from the resolver's own `weightsCachePackageDir`
+	// rather than a re-typed literal, so the two cannot drift.
 	const packageDir = weightsCachePackageDir(cacheRoot, options.locale)
 
 	if (options.clean && (await pathExists(cacheRoot))) {
@@ -85,10 +109,10 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	const omit = new Set(options.omit)
 	/**
-	 * Staged name → source path.
+	 * Staged name → source path, seeded from `from` then overridden.
 	 *
-	 * Seeded from `from`, then overridden.
-	 * Last writer wins, which is what makes `file` a divergence rather than a conflict.
+	 * The last writer wins.
+	 * This makes `file` a divergence rather than a conflict.
 	 */
 	const staged = new Map<string, PathBuilder>()
 
@@ -98,8 +122,9 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 		for await (const entry of Globerator.from("*", { cwd: fromDir, absolute: false })) {
 			const source = fromDir(entry)
 
-			// Files only: `scripts/` and any other directory in a workspace package is not part of the
-			// artifact set a loader reads, and symlinking a directory into the layout invites a stale walk.
+			// Stage files only.
+			// A loader does not read package directories as artifacts.
+			// A symlinked directory in the layout could make its walk stale.
 			if (await isFile(source)) {
 				staged.set(entry, source)
 			}
@@ -124,14 +149,14 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 			continue
 		}
 
-		await createSymbolicLink(source, packageDir(name))
+		await (options.dereference ? copyFileTo(source, packageDir(name)) : createSymbolicLink(source, packageDir(name)))
 
 		linked++
 	}
 
 	const stagedNames = [...staged.keys()].toSorted().filter((key) => !omit.has(key))
 
-	log(`staged ${linked} artifact(s) → ${packageDir}`)
+	log(`staged ${linked} artifact(s) ${options.dereference ? "as copies" : "as links"} → ${packageDir}`)
 	log(`  cacheRoot: ${cacheRoot}`)
 
 	for (const entry of stagedNames) {
@@ -144,7 +169,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	return {
 		cacheRoot,
-		packageDir: packageDir.toString(),
+		packageDir,
 		linked,
 		staged: stagedNames,
 		omitted: [...omit],

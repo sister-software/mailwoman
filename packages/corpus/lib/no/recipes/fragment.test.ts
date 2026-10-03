@@ -2,20 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the `no-fragment` recipe (Track B — the Norwegian house-number-licence change).
+ *   Tests for the `no-fragment` recipe (Track B — the Norwegian house-number-license change).
  *
  *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *
  *   1. the split with a diacritic surface. The board keeps diacritics. a diacritic-stripping norm
  *      would leak `Tømmerlien` silently. Pinned in both directions.
- *   2. the counter-distribution. Teaching bare `{street} {number}` alone lets the model flip its
+ *   2. the counter-distribution. A model that sees only bare `{street} {number}` can flip its
  *      default from "bare -> locality" to "bare -> street", and stop emitting postcode to win the
- *      digit. The bare-locality and bare-postcode counter rows must both exist and carry no street.
+ *      digit. The bare-locality and bare-postcode counter rows must both exist and have no street.
  */
 
-import { noFragmentRecipe } from "@mailwoman/corpus/no/recipes/fragment"
-import { scratch, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
+
+import { noFragmentRecipe } from "#no/recipes/fragment"
+import { scratch, recipeRunner } from "#test-kit/corpus-recipe"
 
 const run = recipeRunner("no-fragment", noFragmentRecipe, 901)
 
@@ -50,8 +51,8 @@ describe("no-fragment", () => {
 
 	it("emits the SIGNAL — a street with NO postcode/locality partner", async () => {
 		// counterProb 0 so every non-reserved row is a street fragment. bareStreetProb 0
-		// so it carries its number.
-		// The point of the recipe: the street stands alone.
+		// so it includes its number.
+		// The point of the recipe: the street appears without another field.
 		const { rows } = await run(TUPLES, ["nonexistent-surface"], { counterProb: 0, bareProb: 0 })
 		const signal = rows.filter((r) => r.components!.street)
 
@@ -61,7 +62,7 @@ describe("no-fragment", () => {
 			const c = r.components!
 
 			// A signal row has a street and may have a house_number, but never a postcode or locality.
-			// That is the whole licence: read the street without its partners.
+			// That is the whole license: read the street without its partners.
 			expect(c.postcode).toBeUndefined()
 			expect(c.locality).toBeUndefined()
 			expect(c.street).toBeTruthy()
@@ -83,7 +84,8 @@ describe("no-fragment", () => {
 		expect(kinds.has("loc")).toBe(true)
 		expect(kinds.has("pc")).toBe(true)
 
-		// A counter row never carries a street — else it is not a counter.
+		// A counter row has no street.
+		// A street would make it a different row type.
 		for (const r of rows) {
 			expect(r.components!.street).toBeUndefined()
 		}

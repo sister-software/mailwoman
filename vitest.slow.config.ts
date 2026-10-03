@@ -1,5 +1,6 @@
 /**
- * Integration tests: process, filesystem, database, model, and large-data boundaries.
+ * Integration tests cover process, filesystem, database and model boundaries.
+ * They also exercise large-data paths.
  */
 import { defineConfig, mergeConfig } from "vitest/config"
 
@@ -9,7 +10,7 @@ export default mergeConfig(
 	baseConfig,
 	defineConfig({
 		test: {
-			include: ["packages/*/test/integration/**/*.{test,spec}.{ts,tsx}"],
+			include: ["packages/*/**/*.integration.test.{ts,tsx}"],
 		},
 	})
 )

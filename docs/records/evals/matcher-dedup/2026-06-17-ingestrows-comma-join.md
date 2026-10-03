@@ -30,7 +30,7 @@ wired into the geocoder.
 **2. Comma-join eliminates the crater (B, C).** With `addressSeparator: ", "`, the parser gets delimited
 input and the geocode rate holds at 100% with **or without** #690. The crater is gone.
 
-**3. Comma-join + #690 is the best config (C) — +15% rooftop over the current baseline.** Delimiting
+**3. Comma-join + #690 is the best config (C) — +15% rooftop over the current baseline.** The delimiter
 alone lifts rooftop 579 → 610 (the parser segments better with commas); adding #690 lifts it again to
 **667 (+15% over A)**, and cross-source links 23 → **25** (fcc-rhc ↔ nppes 1 → 3). the result is
 concentrated exactly where it should be — the all-caps sources, where #690 fixes the OOD parse:

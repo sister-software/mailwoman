@@ -8,11 +8,11 @@ DeepSeek signed off on it across the Pilot-A postmortem consult (`.agents/skills
 
 [PR3 Pilot A](../evals/experiments/2026-06-04-pr3-pilot-a-eval.mdx) (self-conditioning, from scratch US/FR/DE) came back negative. DE locality resolver-match was 25.6% vs v0.7.2's 77.4%, and the v0.8.0 span collapse reproduced through a new mechanism on correct data and _converged_ (flat 10k→20k). The decoder follow-up, the [postcode-trim](https://github.com/sister-software/mailwoman/pull/272), hands a swallowed city-start back to the city. It fixed the parse (`auen Vogtl` → `Plauen Vogtl`, +36pp DE exact-locality) and moved the resolver score by **zero**.
 
-That zero explains the problem. The parse matched the string exactly and the resolver still missed, because **our resolver matches the parsed locality string against WOF names, and OA's gold carries a region suffix WOF doesn't store** (`Plauen Vogtl` vs WOF's `Plauen`). Even v0.7.2, which parses German directly, only resolves 54.7% of Saxony for this reason. We were optimising a name-equality the gazetteer's canonical names can't satisfy.
+That zero explains the problem. The parse matched the string exactly and the resolver still missed, because **our resolver matches the parsed locality string against WOF names, and OA's gold carries a region suffix WOF doesn't store** (`Plauen Vogtl` vs WOF's `Plauen`). Even v0.7.2, which parses German directly, only resolves 54.7% of Saxony for this reason. We were optimizing a name-equality the gazetteer's canonical names can't satisfy.
 
 ## The reframe: the German "wall" is largely a metric artifact
 
-Our `oa-resolver-eval` locality-match is name-centric — it compares the resolved WOF _name_ to OA's gold _name string_. It penalises a geographically-correct resolve that returns `Plauen` against gold `Plauen Vogtl`. Meanwhile the resolver already places these German addresses at coord **p50 1.3 km** via the postcode anchor. A large share of the "25.6% / 77.4% German locality" number was therefore never a geocoding failure. The metric could not recognize a name variant.
+Our `oa-resolver-eval` locality-match is name-centric — it compares the resolved WOF _name_ to OA's gold _name string_. It penalizes a geographically-correct resolve that returns `Plauen` against gold `Plauen Vogtl`. Meanwhile the resolver already places these German addresses at coord **p50 1.3 km** via the postcode anchor. A large share of the "25.6% / 77.4% German locality" number was therefore never a geocoding failure. The metric could not recognize a name variant.
 
 The fix starts with the metric. **The non-gameable metric:** a locality is correctly resolved iff the real OA per-address point lies _inside the polygon_ of the resolver-assigned WOF locality (point-in-polygon containment rather than centroid distance, because distance is gameable in a dense metro). The circularity rule has no exceptions: score against the real OA point, **never** the postcode centroid the resolver itself consumed.
 
@@ -42,7 +42,7 @@ Score each candidate `c`:
 Score(c) = 0.6·S_pc + 0.3·S_name + 0.1·S_pop
   S_pc   = exp(−dist/2km), or 1.0 if the postcode point is inside c's polygon
   S_name = fuzzy match of the parsed locality vs c's canonical name + alt-names
-  S_pop  = log-normalised population, a tiebreak when evidence is weak
+  S_pop  = log-normalized population, a tiebreak when evidence is weak
 ```
 
 Pick the top candidate. **Confidence = logistic(margin between the top two.)** A BM25 geocoder cannot offer the next step: **raise a `postcode_city_mismatch` flag when `|S_pc − S_name| > 0.5`**, which means the postcode and the name point to different places. Return the best candidate, but with lowered confidence and the flag attached. Never silently overwrite a strong name match with a postcode-only guess.
@@ -59,11 +59,11 @@ Output the canonical WOF name (that's what geocodes), and echo the parsed string
 
 - **Transposed/alias city names:** _skip the dedicated table._ WOF ships `alt_name`/`name:*`; edit-distance + double-metaphone over a 5-item candidate set catches the rest on the fly (see #189 for splitting alt-names into their own FTS table).
 - **Misappropriated postcode → target:** _do not build a table of user mistakes_, because no source records intent. Instead, fold the _sourceable_ half (WOF/`postal-cities` postcode→multiple-postal-city aliases) into the candidate table. That covers "the postal city differs from the admin city"; the actual mistakes are caught by the conflict flag.
-- **Abutting/adjacent postcodes:** _use a radius rather than a table._ Candidate generation within ~10 km already captures the neighbour. Add an optional build-time `is_adjacent` boolean only if the data requires it. The containment metric handles this case without extra work: if the gold point is in the next town, the next town is the right answer.
+- **Abutting/adjacent postcodes:** _use a radius rather than a table._ Candidate generation within ~10 km already captures the neighbor. Add an optional build-time `is_adjacent` boolean only if the data requires it. The containment metric handles this case without extra work: if the gold point is in the next town, the next town is the right answer.
 
 ## Falsehoods: the part Pelias and Airmail skip
 
-`data/eval/falsehoods/postcodes.jsonl` currently tests alphanumeric postcode _parsing_ and makes no statement about postcode/city _conflicts_. We extend it with the cases that affect travellers and border-town residents: digit transposition (`75008`→`57008`), wrong-city-for-postcode (`10115 München`), and adjacent-town borrowing. The metric is whether the resolver **catches** the conflict (raises the flag) rather than confidently mislocating. Clean-OA containment measures accuracy; conflict-falsehoods measures the robustness that justifies a parse-then-resolve pipeline over a BM25 box.
+`data/eval/falsehoods/postcodes.jsonl` currently tests alphanumeric postcode _parsing_ and makes no statement about postcode/city _conflicts_. We extend it with the cases that affect travelers and border-town residents: digit transposition (`75008`→`57008`), wrong-city-for-postcode (`10115 München`), and adjacent-town borrowing. The metric is whether the resolver **catches** the conflict (raises the flag) rather than confidently mislocating. Clean-OA containment measures accuracy; conflict-falsehoods measures the robustness that justifies a parse-then-resolve pipeline over a BM25 box.
 
 ## Staged plan (cheapest and most decisive first)
 

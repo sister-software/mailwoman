@@ -4,13 +4,15 @@
 /**
  *   The recipe line writer's delimiter interface.
  *
- *   A missing delimiter is silent at the point of the fault: two rows land on one line, and the error surfaces in
- *   whatever parses the output rather than in the recipe that wrote it. One line per call, and the delimiter as its
- *   own write, are what make that impossible.
+ *   When the writer omits a delimiter, two rows land on one line.
+ *   A later parser reports the error instead of the recipe writer.
+ *   The writer emits one line per call and writes the delimiter separately.
+ *   This interface prevents the missing-delimiter failure.
  */
 
-import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
 import { describe, expect, it } from "vitest"
+
+import { createRecipeLineWriter } from "#recipes/scaffold"
 
 /**
  * Records every chunk separately, so the test can tell one write of `"a\n"`

@@ -13,7 +13,6 @@ const AllowedOrigins: ReadonlySet<string> = new Set([
 	"https://dev.mailwoman.ai:8888",
 	"http://dev.mailwoman.ai:7777",
 	"http://dev.mailwoman.ai:8888",
-	"http://localhost:7770",
 	"https://maplibre.org",
 ])
 
@@ -47,7 +46,7 @@ export function applyAccessControlAllowOrigin(request: Request, response: Respon
 			LOCALHOST_PATTERN.test(requestOrigin) || // Local development?
 			requestOrigin.startsWith(VSCODE_WEBVIEW_PROTOCOL)
 
-		// Coming from a VSCode webview?
+		// The origin may belong to a VSCode webview.
 
 		if (!permittedOrigin) return
 

@@ -2,23 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `si-bare-village` — the Slovenian no-street counter-recipe (#901 run-2). Slovenia's rural
- *   addressing has no street line: the village name is the street-level token and repeats as the
- *   locality ("Zabiče 8, 6250 Zabiče"). The v1.9.8 check falsified the fr-bare-street recipe alone on
- *   exactly this class (SI resolve −3.4pp; "Apače 108" split into street "Apače 10" + house "8") —
- *   the bare-street boundary finding applies across settings onto a form where the leading name must keep its
- *   number whole and the trailing mention must stay locality-bound. This recipe is the paired
- *   counter-distribution: same lesson ("name before number, comma, then admin"), opposite polarity
- *   on the trailing mention.
+ *   `si-bare-village`, the Slovenian no-street counter-recipe. Slovenia's rural addressing has no
+ *   street line, so the village name is the street-level token and repeats as the locality
+ *   ("Zabiče 8, 6250 Zabiče"). The leading name must keep its number whole. The trailing mention
+ *   must stay locality-bound. This recipe is the paired counter-distribution, with the same lesson
+ *   ("name before number, comma, then admin") and the opposite polarity on the trailing mention.
  *
  *   Three real-order templates cycle per tuple (mirrors the coord-golden orders so the eval and the
  *   training distribution agree):
  *
  *   1. canonical  "«V» «n», «pc» «V»"
- *   2. bare       "«V» «n», «V»"        (no postcode — the anchor-free form, the fr-bare lesson)
+ *   2. bare       "«V» «n», «V»"        (no postcode, the anchor-free form)
  *   3. pc-first   "«pc» «V», «V» «n»"
  *
- *   Gold spans: leading «V» = street (matches OA ground truth — the village is the address line),
+ *   Gold spans: leading «V» = street (matches OA ground truth, the village is the address line),
  *   «n» = house_number (never split mid-digits), «pc» = postcode (never swallowing the neighbor),
  *   trailing «V» = locality (the binding the resolver needs).
  */
@@ -26,13 +23,14 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behavior this recipe exercises
+ * and `description` below for its surface form.
  */
 export const siBareVillageRecipe: CorpusRecipe = {
 	name: "si-bare-village",
@@ -80,21 +78,32 @@ export const siBareVillageRecipe: CorpusRecipe = {
 				raw = `${postcode} ${village}, ${village} ${number}`
 			}
 
-			const source_id = recipeSourceID("synth-si-bare-village", { ...components, o: String(order), v: String(read) })
+			// One resolution for both, because `source_id` includes the source as its prefix
+			// and a pair that disagreed would name a source no row of this output declares.
+			const source = defaultRecipeSource("synth-si-bare-village")
+			const source_id = recipeSourceID(source, { ...components, o: String(order), v: String(read) })
 
 			const canonical = {
 				raw,
 				components,
 				country: "SI",
 				locale: "sl-SI",
-				source: "synth-si-bare-village",
+				source,
 				source_id,
 				corpus_version: "0.9.9",
 				license:
 					"Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "si-bare-village", SI_BARE_VILLAGE_PROVENANCE)) {
+			// Per row rather than on the shared literal, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed has no id.
+			// `null` records that case.
+			if (
+				alignAndWrite(write, canonical, "si-bare-village", {
+					...SI_BARE_VILLAGE_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

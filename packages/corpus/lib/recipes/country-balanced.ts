@@ -15,15 +15,17 @@ import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
 // Country names are drawn without regard to the address's own country.
 const COUNTRY_FORM_POOL = (() => {
-	// `surface` holds curated endonyms and abbreviations, and `names` holds canonical English names.
+	// `surface` holds curated endonyms and abbreviations.
+	// `names` holds canonical English names.
 	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat()
 	const names = [...CountryNames]
 
@@ -157,8 +159,9 @@ function pickCountry(random: () => number): string | null {
 	return sample(pool, random)
 }
 
-// A draw below FULL_CUTOFF gives a comma before the country, a draw below FULL_NEWLINE_CUTOFF
-// gives a newline, and any higher draw gives the bare form without region or postcode.
+// A draw below `FULL_CUTOFF` selects the comma form.
+// A draw below `FULL_NEWLINE_CUTOFF` selects the newline form.
+// A higher draw selects the bare form without region or postcode.
 const FULL_CUTOFF = 0.8
 const FULL_NEWLINE_CUTOFF = 0.92
 
@@ -386,9 +389,9 @@ export const countryBalancedRecipe: CorpusRecipe = {
 		if (opts.count == null) throw new Error("country-balanced recipe requires --count <N>")
 		const count = opts.count
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-country"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-country")
 		const sources = opts.golden ? EVAL_SOURCES : SOURCES
-		// Reading three times the target leaves room for skipped rows.
+		// A threefold read of the target leaves room for skipped rows.
 		const perSource = Math.ceil((count * 3) / sources.length)
 
 		const pool: CountryTuple[] = []

@@ -1,14 +1,15 @@
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
+import { describe, expect, it } from "vitest"
+
 import {
 	WOF_ADMIN_ADAPTER_ID,
 	createWOFAdminAdapter,
 	nameSlotsFor,
 	variantsFor,
-} from "@mailwoman/corpus/adapters/wof/admin/json/adapter"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { describe, expect, it } from "vitest"
+} from "#adapters/wof/admin/json/adapter"
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("wof-admin-json")
 
@@ -28,14 +29,7 @@ describe("variantsFor (pure)", () => {
 	})
 
 	it("locality yields 3 variants when region + country are in ancestry", () => {
-		const v = variantsFor(
-			rec({ name: "Portland" }),
-			[
-				rec({ id: 10, name: "Oregon", placetype: "region" }),
-				rec({ id: 100, name: "United States", placetype: "country" }),
-			],
-			"Portland"
-		)
+		const v = variantsFor(rec({ name: "Portland" }), { region: "Oregon", country: "United States" }, "Portland")
 
 		expect(v.map((x) => x.suffix)).toEqual(["self", "with-region", "with-region-country"])
 
@@ -47,7 +41,7 @@ describe("variantsFor (pure)", () => {
 	})
 
 	it("country uses the OpenCage-canonical name for the default slot value", () => {
-		const v = variantsFor(rec({ name: "United States", placetype: "country" }), [], "United States of America")
+		const v = variantsFor(rec({ name: "United States", placetype: "country" }), {}, "United States of America")
 		expect(v).toHaveLength(1)
 		expect(v[0]!.components).toEqual({ country: "United States of America" })
 	})
@@ -55,10 +49,7 @@ describe("variantsFor (pure)", () => {
 	it("respects a substituted selfName for the locality component", () => {
 		const v = variantsFor(
 			rec({ name: "Saint Petersburg" }),
-			[
-				rec({ id: 10, name: "Florida", placetype: "region" }),
-				rec({ id: 100, name: "United States", placetype: "country" }),
-			],
+			{ region: "Florida", country: "United States" },
 			"St. Petersburg"
 		)
 
@@ -70,7 +61,7 @@ describe("variantsFor (pure)", () => {
 	it("subregion (county) yields self only", () => {
 		const v = variantsFor(
 			rec({ name: "Multnomah County", placetype: "county" }),
-			[rec({ id: 10, name: "Oregon", placetype: "region" })],
+			{ region: "Oregon" },
 			"Multnomah County"
 		)
 

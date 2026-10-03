@@ -8,7 +8,7 @@
  *   starts. A compile either returns the whole artifact or throws.
  *
  *   Only `isA` defines inheritance. The compiler materializes the transitive `isA` closure for each
- *   concept, and it copies each ancestor's assertions onto descendants as {@link DerivedFactRecord}
+ *   concept. It copies each ancestor's assertions onto descendants as {@link DerivedFactRecord}
  *   entries. The compiler does not close over relations marked `transitive` or `inverse`.
  *
  *   The validator rejects `isA` cycles, but the ancestor walk also tracks visited concepts, so it
@@ -39,7 +39,8 @@ export const DERIVATION_ISA_INHERITANCE = "isa-assertion-inheritance"
 /**
  * Reasons that compilation rejects a document that passed validation.
  *
- * Both problems concern the derived records, which the validator never sees.
+ * Both problems concern the derived records.
+ * The validator never sees those records.
  */
 export const CompileIssueCode = {
 	/**
@@ -126,7 +127,8 @@ function ancestorsOfConcept(
 	const visited = new Set<string>()
 	const frontier: ConceptID[] = [...(parents.get(conceptID) ?? [])]
 
-	// The array iterator also visits entries pushed during the loop, which makes the walk breadth-first.
+	// The array iterator also visits entries pushed during the loop.
+	// This makes the walk breadth-first.
 	for (const next of frontier) {
 		if (next === conceptID || visited.has(next)) continue
 

@@ -14,7 +14,9 @@ const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HP
 
 const BASEMAP_SOURCE_ID = "basemap-v4"
 const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
-const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
+// The glyph mirror and its Bliss Pro stacks, as `@mailwoman/cartographer/styles/fonts` documents them.
+const GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf"
+const MAP_FONTS = { regular: "Bliss Pro Regular", bold: "Bliss Pro Medium", italic: "Bliss Pro Italic" }
 const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light"
 
 /**
@@ -25,7 +27,7 @@ export type MapFlavor = "light" | "dark" | "white" | "grayscale" | "black"
 /**
  * Options for {@link toMapHTML}.
  *
- * With `colorBy: "auto"`, markers are colored by `bucket` when any feature carries one
+ * With `colorBy: "auto"`, markers are colored by `bucket` when any feature has one
  * and otherwise by whether two or more sources agree.
  */
 export interface MapHTMLOptions {
@@ -40,8 +42,9 @@ export interface MapHTMLOptions {
 	flavor?: MapFlavor
 
 	/**
-	 * Chooses marker colors: `bucket` uses the `bucket` property, `sources` shows whether two
-	 * or more sources are linked, and the default `auto` picks `bucket` when any feature carries one.
+	 * Chooses marker colors: `bucket` uses the `bucket` property, `sources` shows
+	 * whether two or more sources are linked.
+	 * The default `auto` picks `bucket` when any feature has one.
 	 */
 	colorBy?: "auto" | "sources" | "bucket"
 }
@@ -137,7 +140,7 @@ export function toMapHTML(
 			entities: { type: "geojson", data: { type: "FeatureCollection", features } },
 		},
 		layers: [
-			...(layers(BASEMAP_SOURCE_ID, namedFlavor(flavorName), { lang: "en" }) as unknown[]),
+			...(layers(BASEMAP_SOURCE_ID, { ...namedFlavor(flavorName), ...MAP_FONTS }, { lang: "en" }) as unknown[]),
 			{
 				id: "mw-entities",
 				type: "circle",

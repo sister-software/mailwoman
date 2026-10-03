@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Covers {@link readCSVRecords}' value handling — specifically the line-break collapse, which exists
- *   because a quote-aware parse can return something the hand-rolled splitter it replaced never could.
- *   The fixtures are real rows from `us/ia/statewide.csv`, which carries 12 of these.
+ *   Tests value handling in {@link readCSVRecords}, including line-break collapse.
+ *   Quote-aware parsing can return line breaks that the previous hand-rolled splitter could not.
+ *   The fixtures use real rows from `us/ia/statewide.csv`. That file contains 12 such cases.
  *
  *   Fixtures arrive one byte per chunk, so a value's opening and closing quote never land in the same
  *   read. That is the shape a real source has — the recipes read members of multi-gigabyte archives —
@@ -13,8 +13,9 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { type CSVRecord, readCSVRecords, readTuples } from "@mailwoman/corpus/recipes/scaffold"
 import { describe, expect, it } from "vitest"
+
+import { type CSVRecord, readCSVRecords, readTuples } from "#recipes/scaffold"
 
 async function* byteAtATime(csv: string): AsyncGenerator<Uint8Array> {
 	for (const byte of new TextEncoder().encode(csv)) {
@@ -46,8 +47,9 @@ describe("readCSVRecords", () => {
 
 	it("leaves runs of spaces and tabs exactly as the source wrote them", async () => {
 		// The collapse is scoped to \r\n on purpose.
-		// Spaces and tabs could always appear, and every recipe output built to date contains
-		// them — widening to \s+ would rewrite values on rows with no line break.
+		// Spaces and tabs can appear inside fields.
+		// Every recipe output built so far contains them.
+		// A `\s+` pattern would rewrite values on rows without line breaks.
 		const [row] = await read(`${HEADER}-94.8,42.0,120,NORTH   MAIN\tSTREET,,CARROLL,51401\n`)
 
 		expect(row!.street).toBe("NORTH   MAIN\tSTREET")

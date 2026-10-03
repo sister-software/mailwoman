@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared scaffolding for the synthetic-corpus recipes: the seeded LCG prng, the tuple reader, and
+ *   Shared scaffolding for corpus recipes: the seeded LCG PRNG, the tuple reader and
  *   the canonical → `alignRow` → `LabeledRow` jsonl emit step. A recipe ({@link CorpusRecipe})
- *   supplies only its synthesis and filter. The `mailwoman corpus slice <recipe>` command supplies the I/O.
+ *   supplies only its row construction and filter. The `mailwoman corpus slice <recipe>` command
+ *   supplies the I/O.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -14,7 +15,7 @@ import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator, TextSpliterator } from "spliterator"
 
-import { stableSourceIDFromParts } from "#adapters/utils"
+import { stableSourceIDFromParts } from "#adapters/source-id"
 import type { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
@@ -33,8 +34,9 @@ export function recipeSourceID(adapterID: string, parts: Record<string, string |
  * one placement teaches one family of countries.
  * Each value is attested by a gauntlet board row:
  *
- * - `leading` — `«postcode» «locality», «region»`; the default, and what every
- *   tuple written before this field existed means.
+ * - `leading` — `«postcode» «locality», «region»`.
+ *   This is the default placement.
+ *   It also describes every tuple written before this field existed.
  * - `after_locality` — `«locality» «postcode», «region»`.
  * - `after_region` — `«locality», «region» «postcode»`.
  */
@@ -46,18 +48,30 @@ export type PostcodePlacement = "leading" | "after_locality" | "after_region"
 export interface RecipeTuple {
 	locality?: string
 	/**
-	 * The segment before the locality, when the source has one, which keeps a recipe output from
-	 * beginning every row with the locality and teaching that the first named segment is the locality.
+	 * The source's segment before the locality.
+	 *
+	 * Its inclusion prevents every recipe row from beginning with the locality
+	 * and teaching that the first segment is the locality.
 	 */
 	dependentLocality?: string
 	region?: string
 	postcode?: string
 	country?: string
 	/**
-	 * Defaults to `leading` when absent, which is what every tuples file written
-	 * before this field existed means.
+	 * Defaults to `leading` when absent.
+	 *
+	 * That matches every tuples file written before this field existed.
 	 */
 	postcodePlacement?: PostcodePlacement
+	/**
+	 * `source_id` of the record this tuple was extracted from, when the extraction included it.
+	 *
+	 * A recipe forwards it as `baseSourceID`, which is the only way a `composed`
+	 * row can name the record behind it.
+	 * Every tuples file written before this field existed omits it, so a recipe reading one passes `null`
+	 * and its rows are unlinkable to their source records by anything but the `raw` string (#2359).
+	 */
+	sourceID?: string
 	[k: string]: unknown
 }
 
@@ -69,7 +83,8 @@ export interface RecipeTuple {
 export type CSVRecord = Record<string, string | undefined>
 
 /**
- * Line breaks inside a value become single spaces, and every value is trimmed.
+ * Line breaks inside a value become single spaces.
+ * The function trims every value.
  *
  * The pattern matches exactly `\r` and `\n`: widening to `\s+` would silently rewrite values on
  * rows with no line break at all (OA's IA extract writes `north`, three spaces, `main street`),
@@ -90,7 +105,7 @@ export function withoutLineBreaks(record: CSVRecord): CSVRecord {
  *
  * Returns the spliterator's own {@linkcode AsyncSequence} so a caller composes
  * `take`/`drop`/`filter` onto it.
- * Wrapping this in an `async function*` would cost an async frame per row and take those ops away.
+ * An `async function*` wrapper would cost an async frame per row and remove those ops.
  */
 export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): AsyncSequence<CSVRecord> {
 	return CSVSpliterator.fromAsync<CSVRecord>(source).map(withoutLineBreaks)
@@ -142,7 +157,7 @@ export interface OATupleSource {
 
 /**
  * The four base fields every OA tuple reader extracts; `postcode` is `""` when the row
- * carries none and {@link ReadOATuplesOptions.requirePostcode} is unset.
+ * contains no postcode and {@link ReadOATuplesOptions.requirePostcode} is unset.
  */
 export interface OATupleFields {
 	house_number: string
@@ -155,7 +170,8 @@ export interface ReadOATuplesOptions<T> {
 	/**
 	 * Stop after this many distinct tuples.
 	 *
-	 * The `break` closes the reader and releases the archive, which the GB-scale countrywide extracts need.
+	 * The `break` closes the reader and releases the archive.
+	 * GB-scale countrywide extracts need this behavior.
 	 */
 	limit?: number
 	/**
@@ -170,7 +186,7 @@ export interface ReadOATuplesOptions<T> {
 	 */
 	dedupIncludesPostcode?: boolean
 	/**
-	 * Shape the recipe's tuple from the base fields, the raw record, and the (lower-cased) dedup key.
+	 * Shape the recipe's tuple from the base fields, raw record and lower-cased dedup key.
 	 */
 	extra: (fields: OATupleFields, row: CSVRecord, key: string) => T
 }
@@ -216,8 +232,9 @@ export async function readOATuples<T>(source: OATupleSource, options: ReadOATupl
  * Stream-parse a tuples jsonl file, yielding each parsed object (blank/invalid lines skipped).
  */
 export function readTuples(input: PathBuilderLike): AsyncSequence<RecipeTuple> {
-	// TextSpliterator keeps the reader tolerant of malformed lines, where JSONSpliterator
-	// would throw, and these operators fuse into the source's pull loop.
+	// TextSpliterator keeps the reader tolerant of malformed lines.
+	// JSONSpliterator would throw.
+	// These operators fuse into the source's pull loop.
 	return TextSpliterator.fromAsync(input)
 		.map((line) => tryParsingJSON<RecipeTuple>(line))
 		.filter((tuple) => tuple !== null)
@@ -241,12 +258,13 @@ export interface CanonicalRecipeRow {
 /**
  * Emit one line of a recipe's output.
  *
- * The delimiter is supplied separately, so pass the content alone, never `content + "\n"`.
+ * The delimiter is supplied separately, so pass only the content, without appending `"\n"`.
  */
 export type WriteRecipeLine = (line: string) => void
 
 /**
- * A sink the recipe writer emits into; `WriteStream` satisfies it, and so does a test's array push.
+ * A sink the recipe writer sends each output line to.
+ * A `WriteStream` or a test's array push can satisfy it.
  */
 export interface RecipeLineSink {
 	write(chunk: string): unknown
@@ -255,7 +273,7 @@ export interface RecipeLineSink {
 /**
  * Bind {@linkcode WriteRecipeLine} to a sink, supplying the delimiter.
  *
- * Concatenating the two would stringify a non-string chunk through `toString()` and corrupt its bytes.
+ * A concatenation would stringify a non-string chunk through `toString()` and corrupt its bytes.
  */
 export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
 	return (line) => {
@@ -265,8 +283,10 @@ export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
 }
 
 /**
- * What a recipe records about the rows it writes; `register` and `surface` are separate
- * answers, and collapsing them would report a real record as fabricated.
+ * What a recipe records about the rows it writes.
+ *
+ * `register` and `surface` answer separate questions.
+ * A collapsed result would report a real record as fabricated.
  */
 export interface RecipeProvenance {
 	/**
@@ -280,9 +300,23 @@ export interface RecipeProvenance {
 	surface: SurfaceOrigin
 
 	/**
-	 * `source_id` of the row this was derived from, when the recipe read one.
+	 * `source_id` of the row this was derived from.
+	 *
+	 * This field is required.
+	 * `null` is a statement rather than an omission.
+	 *
+	 * A `composed` row reorders fields from a real record, so it has an underlying record by definition.
+	 * `null` means the recipe did not preserve that record's id.
+	 *
+	 * The cost of `null` is measurable.
+	 * Over `v0.6.0-register-surface` it is `null` for 4,176,539 of the 4,206,561 `composed` rows,
+	 * 99.3%, and every leak measurement over a composed source is therefore a lower bound: two rows
+	 * composed from one underlying address under different `source_id`s look like unrelated rows.
+	 *
+	 * `holdout-overlap.run.ts` then compares their `raw` strings.
+	 * That misses any pair the recipe rendered differently (#2359).
 	 */
-	baseSourceID?: string | null
+	baseSourceID: string | null
 }
 
 /**
@@ -364,8 +398,10 @@ export interface RecipeOptions {
 	 */
 	commaFreeFraction?: number
 	/**
-	 * `german`: fraction of rows that carry a WOF Ortsteil of the tuple's locality as
-	 * `dependent_locality`; default 0.3, and 0 when no admin database is readable.
+	 * `german`: fraction of rows whose `dependent_locality` is a WOF Ortsteil of the tuple's locality.
+	 *
+	 * The default is 0.3.
+	 * It is 0 when no admin database is readable.
 	 */
 	ortsteilFraction?: number
 	/**
@@ -381,9 +417,10 @@ export interface RecipeOptions {
 	 */
 	countryFraction?: number
 	/**
-	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping;
-	 * `undefined` leaves each `COUNTRY_SOURCES` part's own value untouched,
-	 * and `true`/`false` forces that value on every part read this run.
+	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping.
+	 *
+	 * `undefined` leaves each `COUNTRY_SOURCES` part's own value untouched.
+	 * `true` or `false` forces that value on every part read this run.
 	 */
 	districtAsLocality?: boolean
 	bareProb?: number
@@ -479,7 +516,7 @@ export interface RecipeOption {
 }
 
 /**
- * A corpus recipe: its identity, input mode, and its synthesis `run`.
+ * A corpus recipe: its identity, input mode and synthesis `run`.
  */
 export interface CorpusRecipe {
 	/**
@@ -499,7 +536,8 @@ export interface CorpusRecipe {
 	 */
 	options?: RecipeOption[]
 	/**
-	 * Do the build: create the recipe's prng from `opts.seed`, synthesize, and emit each row via `write`.
+	 * Build by creating the recipe's PRNG from `opts.seed`.
+	 * Synthesize rows and emit each one through `write`.
 	 */
 	run(opts: RecipeOptions, write: WriteRecipeLine): Promise<RecipeStats>
 }

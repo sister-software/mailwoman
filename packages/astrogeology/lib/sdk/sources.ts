@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The source products, typed. A nomenclature archive is regenerated nightly by usgs and is pinned by snapshot: the
- *   fetch records the day's bytes and SHA-256 in the lock, and the build reads only the locked snapshot. A DEM is a
- *   stable product pinned by URL and byte count. the first fetch writes its SHA-256 and every later fetch refuses a
- *   change. Every row is public domain (usgs `<useconst>`).
+ *   Typed records describe the source products. USGS regenerates the nomenclature archive nightly.
+ *   A snapshot lock records the downloaded bytes and SHA-256. Builds read only the locked snapshot.
+ *   Each DEM is pinned by URL and byte count. The first fetch records its SHA-256. Later fetches
+ *   verify that checksum. Every row is public domain (USGS `<useconst>`).
  */
 
 import type { BuildableBodyID } from "#bodies"
@@ -18,8 +18,9 @@ export interface PlanetarySource {
 	kind: PlanetarySourceKind
 	url: string
 	/**
-	 * The product's byte count where the product is stable; `null` for a nightly archive,
-	 * whose size moves by a few kilobytes between snapshots.
+	 * The byte count for a stable product.
+	 *
+	 * Nightly archives use `null` because their sizes vary by a few kilobytes between snapshots.
 	 */
 	expectedBytes: number | null
 	pinned: "snapshot" | "product"
@@ -28,7 +29,7 @@ export interface PlanetarySource {
 
 /**
  * The four products the pipeline reads, as measured on 2026-09-07: the nomenclature
- * centre-point shapefiles (9,086 Moon points, 2,052 Mars points, longitude 0..360)
+ * center-point shapefiles (9,086 Moon points, 2,052 Mars points, longitude 0..360)
  * and the lola 118 m and mola 463 m global DEMs.
  */
 const SOURCES = {

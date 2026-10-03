@@ -1,0 +1,117 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Input case-normalization, detection and transform.
+ *   Mixed-case and non-ASCII input pass through unchanged. The transform preserves length,
+ *   so token offsets survive.
+ */
+
+import {
+	isAllCapsInput,
+	isAllLowerInput,
+	normalizeInputCase,
+	restoreLowerInput,
+	titleCaseInput,
+} from "@mailwoman/normalize/case"
+import { describe, expect, it } from "vitest"
+
+describe("isAllCapsInput", () => {
+	it("detects a pure-ASCII all-caps address", () => {
+		expect(isAllCapsInput("214 JONES RD, ELKHART, TX 75839")).toBe(true)
+		expect(isAllCapsInput("ABC")).toBe(true)
+	})
+
+	it("leaves mixed-case alone (one lowercase ⇒ false)", () => {
+		expect(isAllCapsInput("109 Seminary Dr, Mill Valley, CA 94941")).toBe(false)
+		expect(isAllCapsInput("ABc")).toBe(false)
+	})
+
+	it("ignores tiny / letterless inputs (3-letter floor)", () => {
+		expect(isAllCapsInput("TX")).toBe(false)
+		expect(isAllCapsInput("123 456, 90210")).toBe(false)
+	})
+
+	it("admits accented Latin and refuses any non-Latin letter (the length guard lives in titleCaseInput)", () => {
+		expect(isAllCapsInput("CAFÉ DE PARÍS")).toBe(true)
+		expect(isAllCapsInput("STRASSE GROSSER ZOLLERN ÜBER")).toBe(true)
+		expect(isAllCapsInput("МОСКВА УЛИЦА")).toBe(false)
+		expect(isAllCapsInput("東京都")).toBe(false)
+	})
+})
+
+describe("titleCaseInput", () => {
+	it("title-cases ASCII runs ≥3 letters, preserves ≤2-letter all-caps runs (#252), preserves length", () => {
+		expect(titleCaseInput("PALESTINE")).toBe("Palestine")
+		// A ≤2-letter all-caps run is a state code or suffix abbreviation.
+		// Title-casing it corrupts the region signal.
+		expect(titleCaseInput("214 JONES RD")).toBe("214 Jones RD")
+		expect(titleCaseInput("ELKHART TX")).toBe("Elkhart TX")
+		const caps = "214 JONES RD, ELKHART, TX 75839"
+		expect(titleCaseInput(caps)).toHaveLength(caps.length)
+	})
+})
+
+describe("isAllLowerInput (#829 — the mirror of isAllCapsInput)", () => {
+	it("detects a pure-ASCII all-lowercase address", () => {
+		expect(isAllLowerInput("1600 pennsylvania ave nw, washington dc")).toBe(true)
+		expect(isAllLowerInput("abc")).toBe(true)
+	})
+
+	it("leaves mixed-case alone (one uppercase ⇒ false)", () => {
+		expect(isAllLowerInput("109 Seminary Dr, Mill Valley, CA 94941")).toBe(false)
+		expect(isAllLowerInput("abC")).toBe(false)
+	})
+
+	it("ignores tiny / letterless inputs (3-letter floor)", () => {
+		expect(isAllLowerInput("tx")).toBe(false)
+		expect(isAllLowerInput("123 456, 90210")).toBe(false)
+	})
+
+	it("BAILS on any non-ASCII letter (same length/locale concern as the all-caps detector)", () => {
+		expect(isAllLowerInput("café de parís")).toBe(false)
+		expect(isAllLowerInput("straße über")).toBe(false)
+		expect(isAllLowerInput("москва улица")).toBe(false)
+	})
+})
+
+describe("restoreLowerInput (#829)", () => {
+	it("title-cases ≥3-letter runs and UPPERCASES ≤2-letter runs (dc→DC, lg→LG), preserving length", () => {
+		expect(restoreLowerInput("pennsylvania")).toBe("Pennsylvania")
+		// ≤2-letter runs are abbreviations the model reads best uppercase (state/directional/suffix, NL suffix).
+		expect(restoreLowerInput("washington dc")).toBe("Washington DC")
+		expect(restoreLowerInput("1012 lg amsterdam")).toBe("1012 LG Amsterdam")
+		const lower = "1600 pennsylvania ave nw, washington dc"
+		expect(restoreLowerInput(lower)).toHaveLength(lower.length)
+	})
+})
+
+describe("normalizeInputCase — the parser hook", () => {
+	it("title-cases all-caps input, preserving the 2-letter state code (#252)", () => {
+		expect(normalizeInputCase("PALESTINE TX")).toBe("Palestine TX")
+	})
+
+	it("canonicalizes all-lowercase input to the trained mixed-case form (#829)", () => {
+		expect(normalizeInputCase("1600 pennsylvania ave nw, washington dc")).toBe(
+			"1600 Pennsylvania Ave NW, Washington DC"
+		)
+
+		expect(normalizeInputCase("damrak 1, 1012 lg amsterdam")).toBe("Damrak 1, 1012 LG Amsterdam")
+	})
+
+	it("all-caps and all-lowercase converge on the SAME canonical form", () => {
+		const canon = "1600 Pennsylvania Ave NW, Washington DC"
+		expect(normalizeInputCase("1600 PENNSYLVANIA AVE NW, WASHINGTON DC")).toBe(canon)
+		expect(normalizeInputCase("1600 pennsylvania ave nw, washington dc")).toBe(canon)
+	})
+
+	it("returns mixed-case and lowercase accented input UNCHANGED; accented shouting title-cases like ASCII", () => {
+		const mixed = "109 Seminary Dr, Mill Valley, CA 94941"
+		expect(normalizeInputCase(mixed)).toBe(mixed)
+		// The accented shouting form reaches the model as words rather than single-character pieces.
+		// `DE` keeps the ≤2-letter rule.
+		expect(normalizeInputCase("CAFÉ DE PARÍS")).toBe("Café DE París")
+		const lowerAccented = "café de parís"
+		expect(normalizeInputCase(lowerAccented)).toBe(lowerAccented)
+	})
+})

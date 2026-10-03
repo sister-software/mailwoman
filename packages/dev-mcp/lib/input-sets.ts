@@ -12,21 +12,21 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { mulberry32 } from "@mailwoman/core/random"
-import { ladderRungs } from "mailwoman/eval-harness/autocomplete-ladder"
-import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
-import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
-import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
-import { routeCountry } from "mailwoman/eval-harness/gauntlet/routing"
+import { ladderRungs } from "mailwoman/tools/eval-harness/autocomplete-ladder"
+import { loadRegressionCases, regressionCorpusHash } from "mailwoman/tools/eval-harness/gauntlet/cases/load"
+import type { SeedCase } from "mailwoman/tools/eval-harness/gauntlet/cases/seed-case"
+import { drawHoldoutSample, holdoutSources } from "mailwoman/tools/eval-harness/gauntlet/holdout"
+import { routeCountry } from "mailwoman/tools/eval-harness/gauntlet/routing"
 import type { PathBuilderLike } from "path-ts"
 
 import type { Selection } from "#power"
 
-const PARITY_FIXTURES_RELATIVE_PATH = "packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
+const PARITY_FIXTURES_RELATIVE_PATH = "packages/mailwoman/tools/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
 /**
  * A reference to one input set, discriminated by `kind`.
  *
- * A `literal` set must carry `why`, the rationale for the hand-picked inputs.
+ * A `literal` set must include `why`, the rationale for the hand-picked inputs.
  */
 export type InputSetRef =
 	| { kind: "board"; country?: string; address_kind?: string; status?: string }
@@ -60,7 +60,8 @@ type PanelVersion = (typeof PANEL_VERSIONS)[number]
 /**
  * The golden splits.
  *
- * `dev` is the tuning split, and `full` includes the held-back rows.
+ * `dev` is the tuning split.
+ * `full` includes the held-back rows.
  */
 const GOLDEN_SPLITS = ["dev", "full"] as const
 
@@ -116,7 +117,7 @@ export interface ResolvedInput {
 	 */
 	truthType?: string
 	/**
-	 * The row's distance tolerance in metres.
+	 * The row's distance tolerance in meters.
 	 */
 	toleranceM?: number
 	/**
@@ -401,7 +402,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 				? "Hand-picked inputs carry no expectations, so this set can be observed but not graded."
 				: graded === rows.length
 					? `All ${graded} rows carry a truth COORDINATE, so this set grades on distance. It carries no component or ` +
-						"tier truth — a row can be right to the metre and still have parsed the wrong thing."
+						"tier truth — a row can be right to the meter and still have parsed the wrong thing."
 					: `${graded} of ${rows.length} rows carry a truth coordinate; the rest are observed only. Read the graded ` +
 						"fraction against its own denominator, never against n.",
 			"Results from this set report their confidence bound in the summary sentence — see power.ts.",
@@ -655,7 +656,8 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
 }
 
 /**
- * Resolves the parse-parity fixtures, which carry component expectations only.
+ * Resolves the parse-parity fixtures.
+ * They contain component expectations only.
  */
 async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Promise<ResolvedInputSet> {
 	const path = repoRootPath(PARITY_FIXTURES_RELATIVE_PATH)

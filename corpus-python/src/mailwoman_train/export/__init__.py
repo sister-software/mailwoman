@@ -1,1 +1,1 @@
-"""Turning a checkpoint into the artifact that ships: ONNX graph, int8 quantization, weights bundle."""
+"""This module exports a checkpoint as an ONNX graph with int8 quantization and a weights bundle."""

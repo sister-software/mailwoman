@@ -131,7 +131,7 @@ single-file overlays would leave seven dead directories and an eight-deep base c
 and zero is falsy. It doubled a recipe output built to emit only its self-contained rows: the po-box military
 output came out at 10,558 rows against the 5,279 asked for. The count now goes through `countOption`, which also
 refuses a blank value, since `Number("")` is zero and would switch a recipe off from the other direction. The
-`po-box` and `trailing-region` recipes honour `--source-name`, so one output can take its own reps per row apart
+`po-box` and `trailing-region` recipes honor `--source-name`, so one output can take its own reps per row apart
 from the rows that share its label
 rather than drawing whatever they draw.
 
@@ -151,7 +151,7 @@ proprietary build drops them from the mixture; the config header says so.
 
 `Camden, London`, `Barcelona 6001, Venezuela`, `St Mary's, Oxford` and `GPO Box 1234, Sydney NSW 2001` each named a
 failure class on an issue and had no board row to hold it. Sixty-seven rows now do, under `gauntlet/cases/<cc>/family-*.jsonl`,
-written by `packages/mailwoman/lib/dev-tools/family/board.run.ts` over a curated list: every point is a gazetteer
+written by `packages/mailwoman/tools/dev-tools/family/board.run.ts` over a curated list: every point is a gazetteer
 record the builder resolves by name and refuses when absent or tied, and every status is what the shipped pipeline did
 when the file was written. The read moves two of the four issues. District plus city (#1914) parses on 20 of 21 rows,
 with the district as `dependent_locality`, and fails on the coordinate alone, 2.7–8.7 km off at the parent city's
@@ -208,7 +208,7 @@ none quarantined, `Blk` and `S(` `)` untagged. The Overture corpus adapter no lo
 unless it carries a digit or is one word: `NIL` (47,407 rows) and `SERANGOON GARDEN ESTATE` were being taught as
 secondary-unit designators. `gauntlet/cases/sg/register.jsonl` is a 240-row board, 60 per form, drawn from the same
 register with the rooftop as the truth, graded through the gauntlet's grader by
-`packages/mailwoman/lib/dev-tools/sg-register-board.run.ts` before it was written: block 0/60, bracket_postcode 0/60,
+`packages/mailwoman/tools/dev-tools/sg-register-board.run.ts` before it was written: block 0/60, bracket_postcode 0/60,
 building_led 12/60, official 38/60 on the shipped model; the 50 passes are pinned. The regression-database builder and
 the board builder share one seed-to-row mapping, `seedCaseToTableRow`.
 
@@ -400,11 +400,11 @@ changes the branch; the doctor names which one it saw.
 ### Added — `@mailwoman/license-worker` (private)
 
 A Cloudflare Worker that turns a paid Stripe invoice into a signed license token: webhook verification on SubtleCrypto,
-fulfilment that re-reads the invoice, subscription and Checkout Session from Stripe by id, a D1 ledger written under
+fulfillment that re-reads the invoice, subscription and Checkout Session from Stripe by id, a D1 ledger written under
 unique constraints so replayed and reordered events mint one token per invoice, an email per token under the invoice
 id, and the claim, refresh and status routes the site and `mailwoman license refresh` call. A six-hourly reconciliation
 mints what the webhook missed, re-sends what failed, and corrects a license's state against Stripe, including a dispute
-ruled in the customer's favour. Sandbox and production are separate Wrangler environments; issuance is off until
+ruled in the customer's favor. Sandbox and production are separate Wrangler environments; issuance is off until
 `ISSUANCE_ENABLED` is flipped, and refuses whenever the signing key is not an active entry of the shipped register.
 Deploys by manual dispatch only (`.github/workflows/license-worker.yml`), which refuses a bundle that imports a Node
 builtin. `GET /health` carries `email: ok | failing`, the latter when a token's email has stayed `failed` for over an

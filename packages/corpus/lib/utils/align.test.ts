@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
-import { whitespaceTokenizer } from "@mailwoman/corpus/utils/tokenize"
 import { describe, expect, it } from "vitest"
+
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
+import { whitespaceTokenizer } from "#utils/tokenize"
 
 const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 	raw: "",
@@ -113,8 +114,6 @@ describe("alignRow — verbatim matches", () => {
 	})
 
 	it("does not double-claim overlapping component spans", () => {
-		// Both "Paris" (locality) and "Paris" inside "Paris, Texas" could match a region
-		// "Paris" if the corpus mis-labeled — guard via claimed-spans bookkeeping.
 		const result = alignRow(
 			baseRow({
 				raw: "Paris Paris, France",
@@ -126,7 +125,6 @@ describe("alignRow — verbatim matches", () => {
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
-		// First "Paris" → locality, second "Paris" → unclaimed O
 		expect(result.row.tokens).toEqual(["Paris", "Paris", "France"])
 		expect(result.row.labels).toEqual(["B-locality", "O", "B-country"])
 	})
@@ -152,7 +150,7 @@ describe("alignRow — fuzzy fallback", () => {
 			baseRow({
 				raw: "75008 Paris, France",
 				country: "FR",
-				components: { locality: "Pâris", postcode: "75008" }, // typo / accent variant
+				components: { locality: "Pâris", postcode: "75008" },
 			}),
 			{ maxEditDistance: 2 }
 		)
@@ -181,7 +179,7 @@ describe("alignRow — fuzzy fallback", () => {
 		const result = alignRow(
 			baseRow({
 				raw: "75008 Paris",
-				components: { locality: "Pâris", postcode: "75008" }, // accent-containing version
+				components: { locality: "Pâris", postcode: "75008" },
 			}),
 			{ maxEditDistance: 0 }
 		)
@@ -252,7 +250,7 @@ describe("alignRow — edge cases", () => {
 		expect(result.row.source).toBe("wof-admin")
 		expect(result.row.source_id).toBe("wof-admin-2011-self")
 		expect(result.row.license).toBe("CC0-1.0")
-		expect(result.row.country).toBe("US") // baseRow default
+		expect(result.row.country).toBe("US")
 		expect(result.row.span_tags).toEqual(["locality"])
 		expect(result.row.span_starts).toEqual([0])
 		expect(result.row.span_ends).toEqual([5])
@@ -277,9 +275,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
-		// Token path untouched.
 		expect(result.row.tokens).toHaveLength(result.row.labels.length)
-		// Span triple: parallel, sorted by start, each substring round-trips to the component surface.
 		expect(result.row.span_tags).toEqual(["house_number", "street", "locality", "region", "postcode"])
 		expect(result.row.span_starts).toEqual([0, 5, 26, 38, 41])
 		expect(result.row.span_ends).toEqual([4, 24, 36, 40, 46])
@@ -304,14 +300,12 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 		if (result.kind !== "labeled") return
 		expect(result.row.span_starts).toEqual([0, 13])
 		expect(result.row.span_ends).toEqual([11, 15])
-		// The comma at offset 11 belongs to no span.
 	})
 
 	it("accented NFC raw (é = one code unit) offsets address the composed form", () => {
 		const raw = "10 Rue de la République, 75008 Paris"
 		expect(raw.normalize("NFC")).toBe(raw)
 
-		// fixture sanity: source literal is NFC
 		const result = alignRow(
 			baseRow({
 				raw,
@@ -353,7 +347,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 			expect(span_starts!).toHaveLength(span_tags!.length)
 
 			for (let i = 1; i < span_starts!.length; i++) {
-				expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!) // sorted and non-overlapping
+				expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!)
 			}
 		}
 	})
@@ -369,8 +363,6 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 	})
 
 	it("normalizes a non-NFC raw to NFC instead of throwing (keeps the row; spans over the NFC raw)", () => {
-		// NFD: "é" as base letter + combining acute.
-		// Two code units where NFC has one.
 		const nfdRaw = "10 Rue de la Re\u0301publique, 75008 Paris"
 		expect(nfdRaw.normalize("NFC")).not.toBe(nfdRaw)
 
@@ -386,11 +378,9 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
-		// Stored raw is the NFC form (single normalization form — #519 principle preserved).
 		const nfcRaw = nfdRaw.normalize("NFC")
 		expect(result.row.raw).toBe(nfcRaw)
 
-		// Spans located over the NFC raw → slicing by each span yields the component text.
 		const located = result.row.span_tags!.map(
 			(tag, i) => `${tag}:${nfcRaw.slice(result.row.span_starts![i]!, result.row.span_ends![i]!)}`
 		)
@@ -407,8 +397,6 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 
 describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Umak/AK bug)", () => {
 	it("a short region value does not claim the inside of an earlier word", () => {
-		// Pre-fix, leftmost-substring let region "AK" (case-insensitive) match inside "Umak",
-		// scrambling every later span — 0.088% of the pilot corpus, 46 natural rows.
 		const result = alignRow(
 			baseRow({
 				raw: "Umak Cir, AK 99546",
@@ -422,14 +410,11 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 		const { raw, span_starts, span_ends, span_tags } = result.row
 		const byTag = Object.fromEntries(span_tags!.map((t, i) => [t, raw.slice(span_starts![i]!, span_ends![i]!)]))
 		expect(byTag).toEqual({ street: "Umak", street_suffix: "Cir", region: "AK", postcode: "99546" })
-		// And specifically: the region span sits at the standalone "AK", not inside "Umak".
 		const regionIdx = span_tags!.indexOf("region")
 		expect(span_starts![regionIdx]).toBe(10)
 	})
 
 	it("intra-word matches survive as the fallback — affix supervision inside compounds", () => {
-		// street_suffix "straße" has no boundary-aligned occurrence in "Hauptstraße"; the sub-word
-		// span is the point of the char-offset format and must not be quarantined by the fix.
 		const result = alignRow(
 			baseRow({
 				raw: "Hauptstraße 5, 10827 Berlin",
@@ -450,11 +435,10 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 		const { raw, span_starts, span_ends, span_tags } = result.row
 		const suffixIdx = span_tags!.indexOf("street_suffix")
 		expect(raw.slice(span_starts![suffixIdx]!, span_ends![suffixIdx]!)).toBe("straße")
-		expect(span_starts![suffixIdx]).toBe(5) // inside the compound, directly after "Haupt"
+		expect(span_starts![suffixIdx]).toBe(5)
 	})
 
 	it("longest value locates first — a region homonym cannot steal the street's word (pilot2 residual)", () => {
-		// "Alaska" is both the region and the street's first word. Locating region first claimed [0,6) and quarantined the street. Longest-first gives the street its full surface, and the region then finds its own boundary-aligned occurrence.
 		const result = alignRow(
 			baseRow({
 				raw: "Alaska Regional Dr, Alaska 99508",
@@ -486,7 +470,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 
 		for (let i = 0; i < span_tags!.length; i++) {
 			const surface = raw.slice(span_starts![i]!, span_ends![i]!)
-			expect(surface.trim()).toBe(surface) // no span carries edge whitespace
+			expect(surface.trim()).toBe(surface)
 		}
 
 		const regionIdx = span_tags!.indexOf("region")
@@ -497,13 +481,6 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 
 describe("alignRow — combining-mark / non-Latin name variants (#555)", () => {
 	it("aligns a Bengali country variant instead of quarantining (NFC over-run guard)", () => {
-		// দক্ষিণ কোরিয়া (South Korea, name:ben variant — the row that crashed the v0.5.0 build).
-		// The precomposed য় (U+09DF) is a Bengali nukta combination excluded from
-		// NFC composition, so NFC *decomposes* it.
-		// The source's 13-code-unit form becomes 14. alignRow NFC-normalizes `raw`
-		// before locating spans (#519) and stores the NFC raw, so the country span stays
-		// in-bounds vs the stored raw and the row aligns rather than quarantining as
-		// `span-out-of-bounds` (the build's tens-of-thousands non-Latin coverage nick).
 		const precomposed = "দক্ষিণ কোরিয়া"
 
 		for (const input of [precomposed, precomposed.normalize("NFC")]) {
@@ -512,10 +489,9 @@ describe("alignRow — combining-mark / non-Latin name variants (#555)", () => {
 
 			if (result.kind !== "labeled") return
 			const { raw, span_starts, span_ends, span_tags } = result.row
-			expect(raw).toBe(input.normalize("NFC")) // stored raw is the single NFC form
+			expect(raw).toBe(input.normalize("NFC"))
 			const ci = span_tags!.indexOf("country")
 			expect(ci).toBeGreaterThanOrEqual(0)
-			// the whole string is the country — span covers [0, raw.length), in-bounds (no over-run)
 			expect(span_starts![ci]).toBe(0)
 			expect(span_ends![ci]).toBe(raw.length)
 			expect(raw.slice(span_starts![ci]!, span_ends![ci]!)).toBe(raw)

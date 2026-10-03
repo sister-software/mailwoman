@@ -14,7 +14,7 @@
  *
  *   ## Per-system containment (anti-lock-in)
  *
- *   Addressing _systems_ disagree on hierarchy: a US street address nests `house_number → street →
+ *   Address systems disagree on hierarchy: a US street address nests `house_number → street →
  *   locality`, while a Japanese block address nests `building_number → sub_block → block →
  *   district` — there is no `street` parent at all. Today a single global map suffices only because
  *   the tag sets don't collide, but the moment the resolver or tree builder hardcodes the Western
@@ -50,11 +50,11 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	street_prefix: ["street"],
 	street_prefix_particle: ["street_prefix", "street"],
 	street_suffix: ["street"],
-	// A CN production team can carry a house number with no street at all (`古北口村南关生产队6号`).
+	// A CN production team can include a house number with no street at all (`古北口村南关生产队6号`).
 	house_number: ["street", "locality_unit"],
 	// `venue` is here for the SUB-venue case — `Terminal 5` of `Heathrow Airport`,
 	// `Gate 12` of `Manchester Airport`.
-	// The table modelled `attention: ["venue"]` but not a unit of a venue, so `validateTree`
+	// The table modeled `attention: ["venue"]` but not a unit of a venue, so `validateTree`
 	// reported a correct, passing parse (gb-subvenue-heathrow-terminal) as a stranded dependent:
 	// the interface was narrower than the capability the board already tests.
 	unit: ["street", "house_number", "venue"],
@@ -68,7 +68,7 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	po_box: ["locality", "subregion", "region"],
 
 	// JP — declared for forward-compat.
-	// Mapping is provisional and will be revisited in Phase 6, when a dedicated `japanese`
+	// This mapping is provisional and may be replaced in Phase 6 by a dedicated `japanese`
 	// system map likely supersedes these entries with a no-street hierarchy.
 	prefecture: ["country"],
 	municipality: ["prefecture"],
@@ -77,7 +77,7 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	sub_block: ["block"],
 	building_number: ["sub_block", "block"],
 	building_name: ["building_number", "sub_block", "block"],
-	// CN — the ordinal chain nests under the named unit it belongs to (`孟定农场` → `三分场二队`), else the settlement.
+	// CN — the ordinal chain nests under its parent unit (`孟定农场` → `三分场二队`), else the settlement.
 	locality_unit: ["dependent_locality", "locality", "subregion", "region"],
 }
 

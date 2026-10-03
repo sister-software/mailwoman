@@ -135,7 +135,7 @@ all. The same value means opposite things on either side of the panel:
 | withheld gold |                     28 | 0 by construction |
 
 A lone candidate is typically the right one when the gold is in the pool, and necessarily the wrong one
-when it is not. Abstaining on absent gold needs a signal about the winner's **fit to the query** —
+when it is not. The system needs a signal about the winner's **fit to the query** before it can abstain on absent gold —
 how much of the input it explains, whether its hierarchy is consistent with the rest — not its lead
 over rivals it never had.
 

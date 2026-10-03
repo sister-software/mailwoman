@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads a per-country GeoNames postal dump and emits postcode-first locality rows. Each dump row carries its place and
+ *   Reads a per-country GeoNames postal dump and emits postcode-first locality rows. Each dump row includes its place and
  *   region names inline.
  */
 
-import { componentsPresentIn } from "@mailwoman/codex/address-format"
+import { componentsPresentIn } from "@mailwoman/codex/address/format"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -25,7 +25,8 @@ export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
 /**
  * Zero-based column indices in a GeoNames postal dump.
  *
- * The coordinates locate the postcode, which may differ from the locality's position.
+ * The coordinates locate the postcode.
+ * That position may differ from the locality's position.
  */
 export const GEONAMES_POSTAL_COLUMNS = {
 	country: 0,
@@ -46,7 +47,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 		defaultLicense: GEONAMES_POSTAL_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.GeoNamesPostal,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"GeoNames postcodes (CC-BY-4.0) — multi-locale postcode→locality→region, names inline; international postcode-first order.",
 

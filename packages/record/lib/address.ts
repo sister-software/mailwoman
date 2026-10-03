@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
-import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address-format"
-import { canonicalKey } from "@mailwoman/codex/address-key"
+import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address/format"
+import { canonicalKey } from "@mailwoman/codex/address/key"
 import type { GeoCoordinate } from "@mailwoman/spatial"
 
 /**
@@ -23,8 +23,9 @@ export interface AddressGeocode {
 	tier: ResolutionTier
 
 	/**
-	 * Gives the uncertainty radius in meters, which is `null` on the admin tier
-	 * and whenever the tier reports none.
+	 * Gives the uncertainty radius in meters.
+	 *
+	 * It is `null` on the admin tier and whenever the tier reports none.
 	 */
 	uncertaintyMeters: number | null
 
@@ -47,8 +48,9 @@ export interface AddressGeocode {
 }
 
 /**
- * Describes the canonical address record: parsed components, the match key,
- * and optionally the formatted text, raw input and resolved geocode.
+ * Describes the canonical address record with parsed components plus a match key.
+ *
+ * It may also include formatted text, raw input or a resolved geocode.
  */
 export interface PostalAddress {
 	/**
@@ -58,7 +60,7 @@ export interface PostalAddress {
 
 	/**
 	 * Holds the normalized, deterministic match key used for blocking, built by
-	 * `canonicalKey` from `@mailwoman/codex/address-key`.
+	 * `canonicalKey` from `@mailwoman/codex/address/key`.
 	 */
 	canonicalKey: string
 
@@ -80,8 +82,8 @@ export interface PostalAddress {
  */
 export interface ToPostalAddressOptions {
 	/**
-	 * Names the country, as an ISO-2 code or a name, used for formatting,
-	 * and defaults to the `country` component.
+	 * Supplies the country for formatting as an ISO-2 code or a name.
+	 * It defaults to the `country` component.
 	 */
 	country?: string
 
@@ -91,7 +93,8 @@ export interface ToPostalAddressOptions {
 	raw?: string
 
 	/**
-	 * Says whether to compute the `formatted` string, and defaults to `true`.
+	 * Indicates whether to compute the `formatted` string.
+	 * It defaults to `true`.
 	 */
 	format?: boolean
 

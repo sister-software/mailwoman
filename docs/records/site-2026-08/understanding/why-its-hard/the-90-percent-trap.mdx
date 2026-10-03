@@ -45,7 +45,7 @@ The distribution matters because the populations with the worst geocoder accurac
 
 This is the inverse of the Pareto principle: the **last 10% of coverage costs more than the first 90%**, and the populations in that 10% are the least able to absorb the cost.
 
-## Renting vs. owning
+## Rent vs. ownership
 
 ### Google's Geocoding API
 
@@ -70,7 +70,7 @@ At $5/1K requests, geocoding 1 million addresses per month costs $5,000. That is
 | Customization | You can run your own instance               |
 | Parser        | The same rule-based engine Mailwoman forked |
 
-geocode.earth is a better deal: the core is open-source, the licensing is more permissive, and you can run your own instance if the hosted service doesn't meet your needs. But the parser is the same Pelias rule engine that Mailwoman v1 was built on. It has the same tokenization-tautology ceiling. Running your own instance means you own the infrastructure but not the parser's failure modes.
+geocode.earth is a better deal: the core is open-source, the licensing is more permissive, and you can run your own instance if the hosted service doesn't meet your needs. But the parser is the same Pelias rule engine that Mailwoman v1 was built on. It has the same tokenization-tautology ceiling. A self-hosted instance puts the infrastructure in your hands while retaining the parser's failure modes.
 
 ### What owning gets you
 
@@ -89,7 +89,7 @@ This is the most common architecture: call Google/geocode.earth for the 90% that
 
 Manual address correction costs between $0.50 and $5.00 per address depending on the complexity (a call center agent, a field visit, a returned package). If the geocoder fails on 10% of 1 million addresses, that is 100,000 manual corrections at $0.50-$5.00 each — $50,000 to $500,000 per month. The API cost for the 90% is $4,500 per month (at Google's rate). The fallback cost is 10-100× the API cost.
 
-Reducing the failure rate from 10% to 5% halves the manual-correction cost. Reducing it from 10% to 2% reduces it by 80%. The payoff is measured in manual reviews avoided. Every percentage point of parser accuracy past 90% shrinks the pile of addresses a human has to touch — which is where the thousands of dollars per month come from.
+A failure-rate drop from 10% to 5% halves the manual-correction cost. For 1 million addresses, a 2% failure rate means 20,000 manual corrections, 80,000 fewer than the 100,000 corrections at 10%; the correction cost falls by 80%. The payoff is measured in manual reviews avoided. Every percentage point of parser accuracy past 90% shrinks the pile of addresses a human has to touch — which is where the thousands of dollars per month come from.
 
 ## What Mailwoman's approach means for this problem
 

@@ -1,9 +1,9 @@
-# Calibrating the interpolation radius — direct confidence for the street-level tier
+# Interpolation-radius calibration — direct confidence for the street-level tier
 
 _2026-06-14. The forward geocoder's interpolation tier stamps an `uncertainty_m` radius = half the
 matched TIGER segment's length. That's an honest geometric prior, but is it a calibrated confidence
 bound? A split-conformal calibration on the Travis-County E-911 holdout says no — the raw radius is too
-tight, covering only ~72% of true errors. Multiplying by Q̂ ≈ 1.70 makes it a real 90% bound. This
+tight, covering only ~72% of true errors. The Q̂ ≈ 1.70 multiplier makes it a 90% bound. This
 records the measurement and the opt-in wiring that ships it._
 
 ## Why this is the confidence half of the DoD
@@ -36,7 +36,7 @@ per-tier (interpolated, n=1562):
   median calibrated radius 148.0 m (× 1.70)
 ```
 
-The half-segment heuristic **underestimates** the true spread by 1.70×. Reporting the raw radius would
+The half-segment heuristic **underestimates** the true spread by 1.70×. A raw-radius report would
 tell a user "±87 m" when the direct 90% bound is ±148 m. (The situs tier is the opposite. Its fixed 10 m
 floor is conservative vs the ~1 m doorstep error we measure, which is safe; under-reporting confidence,
 as interpolation did, is the dangerous direction.)

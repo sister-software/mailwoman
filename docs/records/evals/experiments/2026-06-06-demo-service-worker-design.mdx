@@ -79,7 +79,7 @@ const CACHE = `mailwoman-assets-${locale}-${version}`   // e.g. mailwoman-assets
 ```
 
 On version switch, the page posts the new version to the SW (`navigator.serviceWorker.controller.postMessage`),
-and the SW deletes every `mailwoman-assets-*` cache that isn't the current one. Doing eviction on an explicit
+and the SW deletes every `mailwoman-assets-*` cache that isn't the current one. An explicit eviction
 message (not only in `activate`) matters because the SW doesn't reactivate on an in-page version switch.
 
 ## plugin-pwa vs hand-rolled

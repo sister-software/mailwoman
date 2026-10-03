@@ -4,10 +4,11 @@
 /**
  *   Postal regimes whose addressing does not follow their ISO 3166-1 country code.
  *
- *   Most code keys addressing behavior by country. The regimes here are exceptions: one code with several postal
- *   systems, routing codes shaped like geography, postcodes that cross borders, and addresses written as
- *   landmark directions. Each record states how much of the regime this repository models, which keeps known
- *   gaps visible. The table records regimes only and defines no layouts. The seven families come from section 7
+ *   Most code keys addressing behavior by country. This table records exceptions to that model.
+ *   Examples include one code shared across postal systems, routing codes shaped like geography,
+ *   postcodes that cross borders and landmark-direction addresses.
+ *   Each record states how much of the regime this repository models. The record keeps known gaps visible.
+ *   The table describes regimes and defines no layouts. Its seven families come from section 7
  *   of the global address corpus specification.
  */
 
@@ -44,7 +45,7 @@ export const RegimeKind = {
 	 */
 	SplitJurisdiction: "split-jurisdiction",
 	/**
-	 * Routing codes shaped like geography, such as a military pseudo-state or a forces number.
+	 * Geographic-looking codes include a military pseudo-state and a forces number.
 	 */
 	Routing: "routing",
 	/**
@@ -57,7 +58,7 @@ export const RegimeKind = {
 	Narrative: "narrative",
 	/**
 	 * A code that appears in real data outside ISO 3166-1.
-	 * Accepting it makes no claim about sovereignty.
+	 * This accepted code makes no claim about sovereignty.
 	 */
 	Operational: "operational",
 } as const
@@ -156,7 +157,7 @@ export const POSTAL_REGIMES: readonly PostalRegime[] = [
 		iso2: ["VA", "SM", "MC", "LI", "IT", "CH"],
 		coverage: RegimeCoverage.Unmodeled,
 		shape:
-			"A postcode system administered by a neighbour crosses the political border. Vatican City and San Marino " +
+			"A postcode system administered by a neighbor crosses the political border. Vatican City and San Marino " +
 			"take Italian codes (`00120`, `4789x`), Monaco French ones (`980xx`), Liechtenstein Swiss ones (`948x`).",
 		note:
 			"A postcode-to-country check reading the code alone answers the administering country, so a Vatican " +
@@ -185,7 +186,11 @@ export const POSTAL_REGIMES: readonly PostalRegime[] = [
 			"A code that appears in real data and is not ISO 3166-1. `XK` for Kosovo is the one this repository carries.",
 		note:
 			"The source register enumerates `XK` as its 250th jurisdiction, so it is counted. No layout, postcode shape " +
-			"or lexicon names it. Accepting the code states nothing about sovereignty.",
+			"or lexicon names it. Accepting the code states nothing about sovereignty. `ZZ` is a different case: it is " +
+			"the ISO 3166-1 user-assigned range, the register enumerates no jurisdiction for it, and the coverage " +
+			"census reports its rows under `countryLess` rather than as a jurisdiction. `v0.6.0-register-surface` " +
+			"carries 4,765 such rows, of which the candidate gazetteer resolves 3,115 to exactly one country and " +
+			"1,650 to none or to several (#2358).",
 	},
 ]
 

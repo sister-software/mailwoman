@@ -2,13 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `anchor-absorption` recipe (#220/#723, Probe A1) — self-generates `--count` rows from
+ *   `anchor-absorption` recipe, a self-generated `--count`-row source built from
  *   {@link synthesizeAnchorAbsorptionRow}'s six-template mix (case-H / case-P-us-rural / case-P-de /
- *   anchor-fp / locale-ambig / standard), aligns each to BIO, and emits a labeled jsonl. The
+ *   anchor-fp / locale-ambig / standard), aligned to BIO and emitted as a labeled jsonl. The
  *   leading 5-digit on case-H/anchor-fp/locale-ambig is sampled from the real US ZIPs in the
- *   postcode-anchor lookup, so the shaped-painted anchor fires on it exactly as inference does —
- *   teaching the model to override a present anchor from context. Ported from the root build
- *   script it replaced.
+ *   postcode-anchor lookup, so the shaped-painted anchor fires on it exactly as inference does.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -18,6 +16,7 @@ import { makeLcg } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
 import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
@@ -48,17 +47,16 @@ async function loadRealUsZips(path: PathBuilderLike): Promise<string[]> {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behavior it exercises.
+ * See `description` below for the generated surface form.
  */
 export const anchorAbsorptionRecipe: CorpusRecipe = {
 	name: "anchor-absorption",
 	description: "Anchor-absorption counter-augmentation (#220/#723): six-template mix → synthesizeAnchorAbsorptionRow",
 	mode: "generate",
 	async run(opts, write) {
-		// Emit prng: the root build script this recipe replaced seeded an LCG (lcg(opts.seed)).
 		const random = makeLcg(opts.seed)
-		const source = opts.sourceName ?? "synth-anchor-absorption"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-anchor-absorption")
 		const count = opts.count ?? 50_000
 		const realZips = await loadRealUsZips(ANCHOR_LOOKUP)
 
@@ -72,7 +70,6 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 			const synth = synthesizeAnchorAbsorptionRow({ random, realZips })
 			const country = synth.locale.split("-")[1]
 
-			// "en-US" -> "US", "de-DE" -> "DE"
 			const canonical = {
 				raw: synth.raw,
 				components: synth.components,

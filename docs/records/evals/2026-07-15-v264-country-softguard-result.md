@@ -34,7 +34,7 @@ the homograph probe until that was caught.)
 | **held-out FR coordinate** (300 BAN, ≤5km)  | 281           | 264 (z +0.25) | ✓ PASS                               |
 | **aggregate golden label-fails**            | 1101          | 1098          | ✓ −3 (net better)                    |
 
-Softening the guard recovered country recall on **both** distributions at once: the homograph test (its
+A softer guard recovered country recall on **both** distributions at once: the homograph test (its
 target) and the WOF-admin hierarchy (a bonus). The v263 hard guard was
 over-suppressing country broadly rather than only on true homographs; the `country_ambiguous` bit fires on any
 flagged surface and v263 trusted it too little everywhere. At scale 0.5 the model trusts it more, recovers

@@ -187,7 +187,7 @@ and it says how much moves: "approximately 10 to 20 percent of soil survey areas
 measured changes". The 2025 refresh added 41,974,803 acres of new soil data, 116,727 new polygons and
 2,227 new map units.
 
-The measurement agrees with the statement. Grouping `sacatalog` by `YEAR(saverest)` returns
+The measurement agrees with the statement. The `sacatalog` grouping by `YEAR(saverest)` returns
 **2016: 1, 2025: 3,323, 2026: 56**, so 98.3 % of areas carry a version-established date from one
 refresh rather than drifting per area. **The current vintage is the
 October 1, 2025 refresh.** NRCS uses no fiscal-year label for it; five primary sources were checked for
@@ -247,7 +247,7 @@ host: **`HEAD` returns HTTP 405 (`allow: GET`) and `Range` is ignored.** A reque
 `Range: bytes=0-0` returned HTTP 200 and transferred the whole 27,598,377 bytes in 7.23 s at 3.8 MB/s. A
 builder therefore cannot check freshness by content length. It does not need to, because
 `sacatalog.saverest` answers the freshness question directly through the tabular service. The `Range`
-behavior is **path-specific** rather than host-wide. The `/DataAvailability/` path does honour it
+behavior is **path-specific** rather than host-wide. The `/DataAvailability/` path does honor it
 (HTTP 206), so a client must probe each path separately. The server is `Microsoft-IIS/10.0` behind an AWS load balancer.
 
 **The arability attributes, with their measured shape.** Each column name was verified by querying it
@@ -391,7 +391,7 @@ license.**
 
 **Extent, formats and sizes, measured.** The release index lists **18 CONUS-wide years, 2008 through
 2025**, as `datasets/<year>_30m_cdls.zip`, plus nine regional `CDL10_<region>.zip` files. Sizes taken
-by ranged GET (this host **does** honour `Range` — HTTP 206 with `content-range`, unlike the soil
+by ranged GET (this host **does** honor `Range` — HTTP 206 with `content-range`, unlike the soil
 host):
 
 | year | bytes             |
@@ -513,7 +513,7 @@ per-dataset "Notification" blocks that differ from one another. Most datasets re
 <!-- vale off -->
 
 **The permissive route to LUCAS does not carry the soil measurements.** Eurostat publishes LUCAS survey
-microdata for 2006–2022 with anonymous per-country CSV downloads under terms that authorise reuse
+microdata for 2006–2022 with anonymous per-country CSV downloads under terms that authorize reuse
 "provided the source is acknowledged", with "no special procedure or requirement for a written licence".
 Eurostat, however, states: "Soil data — The datasets for the LUCAS topsoil module are available
 from the European soil data centre (ESDAC)." The files confirm it. The 2022 (306 columns) and 2018 (97
@@ -525,7 +525,7 @@ columns) country CSVs carry soil _sampling metadata only_, without pH, organic c
 One contradiction remains open and is reported rather than resolved. data.europa.eu labels "LUCAS 2018
 TOPSOIL data" **CC BY 4.0**, while the record's only distribution link points back at the ESDAC page
 carrying the restrictive terms above. The European Commission's legal notice resolves the hierarchy in
-ESDAC's favour: "**Unless otherwise indicated** (e.g. in individual copyright notices), content owned by
+ESDAC's favor: "**Unless otherwise indicated** (e.g. in individual copyright notices), content owned by
 the EU … is licensed under … CC BY 4.0". A per-dataset Notification is such an individual notice. This
 is our interpretation (§8), and no authority states it for this dataset. Do not rely on the portal
 label.
@@ -548,7 +548,7 @@ inconsistency is noted and not reconciled: GAEZ v5 is derived from HWSD v2, yet 
 
 **The consequence for this program.** A published European arability layer has two options. It can be
 derived from CLMS land-cover and cropland products plus open global soil models, with the Regulation's
-attribution conditions carried in the manifest. That yields cover and modelled properties rather than a
+attribution conditions carried in the manifest. That yields cover and modeled properties rather than a
 survey's capability rating. Alternatively, it can be built on ESDAC data and **never redistributed**,
 because the third-party clauses forbid shipping it. Neither is the same product as the US pilot, and
 neither should be presented as one. Europe offers no shortcut, the same conclusion the flood survey
@@ -581,7 +581,7 @@ reached by a different route.
 | cadence                 | one coordinated annual refresh; metadata says `As needed`                                | annual, published the following calendar year                    | CLC roughly six-yearly; ESDAC ad hoc                                                      |
 | format                  | shapefile + pipe-delimited tabular, **WGS84**; `IA153` = 25.5 MB / 27.6 MB               | 30 m raster zip; 2025 = 1.89 GB (measured)                       | CLC raster/vector EPSG:3035; ESDAC per-request archives                                   |
 | acquisition             | WSS download service (date from SDA) **+ live SQL and spatial SDA**                      | direct file URL on `www.nass.usda.gov`                           | CLMS **EU Login + request-and-poll**; ESDAC **request form**                              |
-| `HEAD` / `Range`        | `HEAD` 405, **`Range` ignored** — full transfer                                          | **`Range` honoured** (HTTP 206)                                  | not applicable — both require an account                                                  |
+| `HEAD` / `Range`        | `HEAD` 405, **`Range` ignored** — full transfer                                          | **`Range` honored** (HTTP 206)                                   | not applicable — both require an account                                                  |
 | reachable from this lab | **yes** — every distribution host answered; SDA measured at 0.374 s                      | **bulk yes**; CropScape API answers on `:8080` and **fails 500** | yes, but anonymous download refused **HTTP 401** by design (Art. 18(1))                   |
 | in-repo ingest path     | vector — `ogr2ogr` already used here                                                     | **raster — no raster tooling exists in this repository**         | mixed                                                                                     |
 | usable for this layer   | **yes — the pilot**                                                                      | yes later, as a different observation with a different meaning   | **no** — the open half has no soil, the soil half may not be redistributed                |
@@ -725,8 +725,8 @@ the condition would invent a determination nobody made. NCCPI is stored as its o
 its own rule name and is never blended with the capability class.
 
 The builder holds the authority's declared domain as a closed set and **throws** on a value outside it.
-An unknown code means the source schema changed, which a reader most needs to know. Coercing it to a
-nearest neighbour or to NULL would turn "the source changed" into "there is no observation here".
+An unknown code means the source schema changed, which a reader most needs to know. Conversion to a
+nearest neighbor or to NULL would turn "the source changed" into "there is no observation here".
 
 This matters more for Consumer B than it first appears. #1683's vector needs a numeric axis, so storing
 one is tempting. Instead, **the consumer owns the projection to a number, and the layer stores none**. The layer
@@ -791,7 +791,7 @@ The maximum is 26. By `mukind`, there are 210,339 Consociation, 94,803 Complex, 
 complex is NRCS's statement that two or more soils are intermingled and _cannot be separated at the
 mapping scale_. The mixture is the survey's own finding rather than a loss we introduced.
 
-**Second, in one map unit in six the largest component covers a minority of it.** Bucketing each map unit by its maximum
+**Second, in one map unit in six the largest component covers a minority of it.** We bucket each map unit by its maximum
 `comppct_r`:
 
 | dominant component covers | map units | share  |
@@ -852,7 +852,7 @@ supports it. The layer reproduces that pattern at cell grain rather than inventi
    weighting produced each share**, because "60 % of this cell's area lies in map units whose dominant
    component is class 2" and "the components in this cell sum to 60 % class 2" are different claims.
 3. **Minority classes survive as shares but lose their identity below a floor.** A class occupying 0.4 %
-   of a cell is real but is noise for most consumers. Truncating a long tail is legitimate, but only if
+   of a cell is real but is noise for most consumers. A truncated long tail is legitimate only if
    the truncation is recorded. The layer stores every class share above a declared floor and **one
    explicit `other` share** carrying the truncated remainder. The shares therefore always sum to 1, and
    a reader can see how much was folded away rather than inferring it from a gap.
@@ -967,7 +967,7 @@ truth table must therefore keep unsimplified rings, because simplifying them wou
 without any error, and both consumers read the reduction.
 
 `soil_survey_area` is a separate table for the same reason the flood survey gives `flood_map_extent`
-one. Deriving the mapped footprint from the rated polygons would make exactly the error §3.2 describes,
+one. A mapped footprint derived from the rated polygons would make exactly the error §3.2 describes,
 because `NOTCOM` and access-denied map units are inside the footprint and carry no rating. The table
 also carries the two dates that §3.2 requires be kept apart.
 
@@ -1130,7 +1130,7 @@ shape `poiSemanticLookup` settled on, because a boolean makes the factory constr
 and opens a layer on the default construction path. The flag and its row in the
 [runtime-flag register](../../engineering/reference/runtime-flags.mdx) land in the same change.
 
-**Ranking is unchanged, and byte-stability is the evidence.** The same query, with and without the layer
+**The layer leaves rank order unchanged, and byte-stability is the evidence.** The same query, with and without the layer
 attached, returns an identical result plus one advisory. That follows from how the carrier is built: it
 reads neither candidates, coordinates, nor ordering, and a test pins that.
 
@@ -1171,7 +1171,7 @@ verdict. Land the survey rated as precluding cultivation is reported as that rat
 confused with land the survey did not rate. The observation states what the map assigns at a location
 and never whether the land can be farmed, because the authority itself declines that second statement
 and says so in the metadata it ships. #1683's affordance vector reads the same per-cell artifact,
-unchanged and not duplicated, as its arability axis. Ranking, abstention and every existing result field
+unchanged and not duplicated, as its arability axis. Rank order, abstention and every existing result field
 are unchanged. The observation is additive, attributed, and off by default.
 
 ## 7. The builder-issue outline

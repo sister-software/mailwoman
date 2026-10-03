@@ -4,12 +4,12 @@
 /**
  *   The one sanctioned route from an untrusted string to an html sink: DOMPurify behind Trusted
  *   Types policies. Under a CSP with `require-trusted-types-for 'script'`, a sink refuses a plain
- *   string. every injection site must go through a named policy, and these three are the named
+ *   string. Every injection site must go through an explicit policy. These three policies are available.
  *   policies.
  *
  *   The sanitizer is `isomorphic-dompurify`, so the same engine answers in a browser (plain
- *   DOMPurify over the page's window) and in Node (DOMPurify over a jsdom window) — server code,
- *   Docusaurus prerendering, and SDK tooling all sanitize for real instead of degrading to a
+ *   DOMPurify over the page's window) and in Node (DOMPurify over a jsdom window). Server code,
+ *   Docusaurus prerendering and SDK tooling all sanitize for real instead of degrading to a
  *   passthrough. The plain {@link sanitizeHTML} and {@link stripHTML} functions are that engine
  *   without the Trusted Types wrapper, for callers that need the transform rather than a sink token.
  *
@@ -115,8 +115,7 @@ export function sanitizeTrustPolicy(): ReturnType<typeof trustedTypes.createPoli
 /**
  * `mw-strip-html` — {@link stripHTML} as a policy.
  *
- * The grade for values whose markup carries no meaning we want: license fields
- * compared or displayed as text.
+ * The grade for values whose markup has no meaning we want: license fields compared or displayed as text.
  */
 export function stripHTMLTrustPolicy(): ReturnType<typeof trustedTypes.createPolicy> {
 	return policy("mw-strip-html", (untrustedHTML) => stripHTML(untrustedHTML))

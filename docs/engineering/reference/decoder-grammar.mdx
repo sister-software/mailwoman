@@ -93,8 +93,8 @@ the `AddressTree` under `PARENT_OF`. `REL=address` equals the resolver's contain
 `number → street` is an existing `PARENT_OF` edge. The containment interface currently lacks one
 production: a POI under a POI (`Cafe at St Mary's` located at `Church of St Mary the Virgin`).
 `containment.ts:61` gives `venue` only the parents `["street", "locality"]`. The Heathrow sub-venue
-case was handled by widening `unit`'s parents instead of adding a venue→venue edge. Adding that
-production is schema work, and this page tracks it as open.
+case was handled by widening `unit`'s parents instead of adding a venue→venue edge. That addition
+is schema work, and this page tracks it as open.
 
 ## 3. Toponym-internal grammar, and the vocabulary for it
 
@@ -142,8 +142,8 @@ its direction.
 **Proposition (span factorization removes the defect by construction).** When evidence attaches to
 span terms, a gazetteer entry for `Spain` contributes only to parses that contain exactly the span
 `(Spain, country)`. The entry for `Port of Spain` contributes only to parses that contain that
-whole span. The split parse never gains the evidence of the longest matching entry. Preferring the
-longest registry match then needs no separate enforcement, because it follows from where evidence
+whole span. The split parse never gains the evidence of the longest matching entry. The longest
+registry match therefore needs no separate enforcement, because its preference follows from where evidence
 may attach.
 
 Under span factorization, the greediness dial reduces to **one interpretable parameter**: the
@@ -194,15 +194,15 @@ violates, and the taxonomy would come from evaluation instead of from arguments 
    0.4–0.6 shipped confidence (`Rua Augusta` 0.61, `Port of Spain` 0.47, `Andorra la Vella` 0.42).
    40 of 649 board rows flip between v5.0.0 and v5.1.0, two 60,000-step trainings whose admitted
    rows differ by 2.23%, and those rows are concentrated in this class.
-2. **Training on instances of C4 fixed only the surface family it was trained on.** Raising the
-   `synth-suffix-boundary` sampler weight from 2.5 to 10.0 for 1,000 steps fixed exactly
+2. **C4 training instances fixed only the surface family in those instances.** A 1,000-step increase
+   of the `synth-suffix-boundary` sampler weight from 2.5 to 10.0 fixed exactly
    `Passeig de Gràcia`, `Passeig de Sant Joan`, and the swallowed `Unit 1` in
    `Somewhere In Bangkok Thai Restaurant, 1103 Queen St Unit 1, Southington, CT 06489`. These 3 rows
    were attributed against a placebo run with the same base, seed, and steps. `Unter den Linden`,
    the city splits, and the GB venue cluster did not change, although they violate the same
    abstract constraint in other surface families. The emissions memorize instances of a
-   constraint. Training transfers only to inputs with similar representations, which is a narrower
-   set than the rule's scope.
+   constraint. Models transfer constraints only across inputs with similar representations, so transfer
+   reaches a narrower set than the rule's scope.
 3. **The data route also over-generalizes along the wrong axis.** The trailing-region corpus rows
    taught the model that _text in the trailing position is administrative_. v4.8.0 applied that
    lesson by position and broke venues (`Ye Three Lords, 27 Minories, London EC3N 1DE` →
@@ -242,8 +242,8 @@ evidence can then raise the scores of parses it should rule out.
    including nested matches". A covering `Port of Spain` locality entry therefore cannot outrank the
    nested `Spain` country hit at the FST layer. Both become per-token bias, and the
    token-factorized decoder resolves them token by token. The code confirms the leak described in
-   §4. The §9.2 ablation therefore cannot be expressed as an FST-side switch. Suppressing covered
-   sub-span clues would require new behavior, because the code has no existing preference to
+   §4. The §9.2 ablation therefore cannot be expressed as an FST-side switch. New behavior would be
+   required to suppress covered sub-span clues, because the code has no existing preference to
    remove.
 4. **Schema decision**: admit or reject the venue→venue containment edge for the POI-under-POI
    production, with a board row as its acceptance test.

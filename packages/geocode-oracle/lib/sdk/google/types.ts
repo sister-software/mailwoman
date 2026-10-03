@@ -4,12 +4,12 @@
 /**
  * @file The subset of the Google Geocoding API's JSON response this package consumes. Hand-written because `@googlemaps/google-maps-services-js` is an optional `spatial` dependency a supported install can lack.
  *
- * Field names are Google's wire keys (`snake_case`), which the house acronym-casing rule leaves alone.
+ * Field names are Google's wire keys (`snake_case`), which the house acronym-casing rule preserves.
  */
 
 /**
  * Google's in-band error channel: every value arrives under HTTP 200, so branching on HTTP
- * status alone records `REQUEST_DENIED` as a successful geocode with zero results.
+ * status by itself records `REQUEST_DENIED` as a successful geocode with zero results.
  *
  * @see https://developers.google.com/maps/documentation/geocoding/requests-geocoding#StatusCodes
  */
@@ -21,20 +21,21 @@ export const GoogleGeocoderStatus = {
 	ZeroResults: "ZERO_RESULTS",
 	OverDailyLimit: "OVER_DAILY_LIMIT",
 	/**
-	 * Transient, and the one status here worth retrying.
+	 * Transient status.
+	 * This is the only status here worth retrying.
 	 */
 	OverQueryLimit: "OVER_QUERY_LIMIT",
 	RequestDenied: "REQUEST_DENIED",
 	InvalidRequest: "INVALID_REQUEST",
 	/**
 	 * A server-side error.
-	 * Google's documentation says to retry.
+	 * Google's documentation recommends retrying.
 	 */
 	UnknownError: "UNKNOWN_ERROR",
 } as const
 
 /**
- * The `status` field every Geocoding API response carries.
+ * The `status` field included in every Geocoding API response.
  */
 export type GoogleGeocoderStatus = (typeof GoogleGeocoderStatus)[keyof typeof GoogleGeocoderStatus]
 
@@ -89,7 +90,9 @@ export interface GoogleBounds {
 export interface GoogleGeometry {
 	location: GoogleLatLngLiteral
 	/**
-	 * Absent on some responses, which the tier mapping treats as unknown rather than defaulting.
+	 * Absent on some responses.
+	 *
+	 * The tier mapping treats absence as unknown rather than defaulting.
 	 */
 	location_type?: GoogleLocationType | string
 	viewport?: GoogleBounds
@@ -105,7 +108,7 @@ export interface GoogleGeometry {
 export interface GooglePlusCode {
 	global_code: string
 	/**
-	 * The shortened form relative to a named locality, present only when one exists.
+	 * The shortened form relative to a locality with a name, present only when one exists.
 	 */
 	compound_code?: string
 }
@@ -129,7 +132,8 @@ export interface GoogleGeocodeResult {
 	/**
 	 * Set only when Google could not match the query as given and fell back to something looser.
 	 *
-	 * Absent means exact, which `OracleGeocodeResult.partialMatch` coerces rather than passes through.
+	 * Absence means an exact match.
+	 * `OracleGeocodeResult.partialMatch` coerces that value rather than passing it through.
 	 */
 	partial_match?: boolean
 	/**

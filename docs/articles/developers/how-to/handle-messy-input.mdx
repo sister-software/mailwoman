@@ -175,7 +175,7 @@ or a match key, run the stage first.
 - **Case normalization applies to pure-ASCII input only.** Accented and non-Latin input is left
   alone, because changing its case can change its length (`ß` becomes `SS`) and break the offset
   guarantee described above. An all-caps French address does not get the all-caps fix.
-- **Abbreviation expansion uses a small safe set at `locale: "und"`.** Passing a real locale widens
+- **Abbreviation expansion uses a small safe set at `locale: "und"`.** A real locale widens
   the set. It is not a general address-standardization pass, and it does not implement USPS
   Publication 28.
 

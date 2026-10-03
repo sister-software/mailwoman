@@ -6,7 +6,7 @@
  *
  *   The database stores each authority polygon once, unsimplified, with its bounding box. An H3 cell table
  *   marks each cell as `whole` or `partial` for each zone. A `whole` cell answers a lookup from its primary
- *   key alone. A `partial` cell needs a point-in-polygon test against the polygons that
+ *   key by itself. A `partial` cell needs a point-in-polygon test against the polygons that
  *   {@link FloodZoneCellAreaTable} lists for it.
  *
  *   The cell tables use `without rowid` because their small rows are read by exact primary key. The polygon
@@ -67,7 +67,7 @@ export interface FloodZoneAreaTable {
 	 */
 	zone_source: string | null
 	/**
-	 * The EA's `origin`, which says how the extent was derived, such as `modelled` or `recorded`.
+	 * The EA's `origin`, which records how the extent was derived, such as `modelled` or `recorded`.
 	 */
 	origin: string | null
 	/**
@@ -140,7 +140,7 @@ export interface FloodZoneCellAreaTable {
  * would report Zone 1 as unmapped.
  *
  * `layer_coverage` holds the resulting cells.
- * This table records the statement and the boundary used to turn a named area such as "England" into cells.
+ * This table records the statement and the boundary used to turn an area such as "England" into cells.
  */
 export interface FloodMapExtentTable {
 	extent_id: string
@@ -160,7 +160,7 @@ export interface FloodMapExtentTable {
 	statement: string
 	statement_url: string
 	/**
-	 * The publisher of the boundary used to turn the named area into cells.
+	 * The publisher of the boundary used to turn the area into cells.
 	 *
 	 * The EA covers "all of England" but publishes no outline of England,
 	 * so the boundary comes from elsewhere.
@@ -207,7 +207,7 @@ export interface FloodDatabase extends layerschemadatabase {
  * The part of a Kysely handle that the table functions use.
  *
  * Kysely is invariant in its schema parameter.
- * Picking only `schema` lets a caller pass a handle with a wider schema.
+ * A check of only `schema` lets a caller pass a handle with a wider schema.
  */
 export type FloodSchemaHandle = Pick<Kysely<FloodDatabase>, "schema">
 

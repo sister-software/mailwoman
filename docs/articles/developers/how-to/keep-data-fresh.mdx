@@ -11,8 +11,8 @@ verified-with: mailwoman 8.7.0
 and switch a long-running process to a new version without restarting it.
 
 One thing to know before the steps: `mailwoman data pull` checks whether a file is _there_ rather than whether
-it is _current_. `mailwoman data status` is the freshness check. Running `data pull` on a stale file
-reports it as already present and performs no download.
+it is _current_. `mailwoman data status` is the freshness check. When you run `data pull` on a stale file,
+the command reports it as already present and performs no download.
 
 ## Prerequisites
 

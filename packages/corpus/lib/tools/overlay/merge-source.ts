@@ -6,7 +6,7 @@
  *
  *   The training sampler can read a whole per-source draw from one row group,
  *   so a source split into per-country files would reach only one country per draw.
- *   Shuffling across the inputs mixes the source's countries within each row group.
+ *   A shuffle across the inputs mixes each source's countries within each row group.
  */
 
 import { mulberry32 } from "@mailwoman/core/utils"
@@ -26,24 +26,27 @@ export interface MergeSourceOptions {
 	 */
 	inputs: readonly PathBuilderLike[]
 	/**
-	 * The output path, whose stem receives a five-digit index for each file written.
+	 * The output path.
+	 * Each written file receives a five-digit index in its stem.
 	 */
 	output: PathBuilderLike
 	/**
-	 * The number of rows held in memory while shuffling, which defaults to the corpus writer's window.
+	 * The number of rows held in memory while shuffling.
+	 * It defaults to the corpus writer's window.
 	 */
 	windowSize?: number
 	/**
 	 * The shuffle seed.
 	 *
-	 * The default is the corpus writer's seed, which makes rebuilds reproducible.
+	 * The default matches the corpus writer's seed.
+	 * This makes rebuilds reproducible.
 	 */
 	seed?: number
 	/**
 	 * The maximum rows per output file.
 	 *
-	 * `writeParquetFile` builds one Arrow table per file, and Arrow's list builder
-	 * overflows on very large tables.
+	 * `writeParquetFile` builds one Arrow table per file.
+	 * Arrow's list builder overflows on very large tables.
 	 */
 	rowsPerFile?: number
 }
@@ -63,7 +66,8 @@ export interface MergeSourceResult {
 	 */
 	byCountry: Record<string, number>
 	/**
-	 * Row counts per `source` value, which has one entry after a successful merge.
+	 * Row counts per `source` value.
+	 * A successful merge has one entry.
 	 */
 	bySource: Record<string, number>
 }
@@ -77,7 +81,7 @@ async function* readAll(inputs: readonly PathBuilderLike[]): AsyncGenerator<Parq
 /**
  * Merges the inputs through a windowed shuffle into one or more parquet files and reports their contents.
  *
- * @throws When the inputs carry more than one `source`, because a manifest
+ * @throws When the inputs contain more than one `source`, because a manifest
  * entry records one source per file.
  * The check runs after the stream ends, so files flushed before it remain on disk.
  */

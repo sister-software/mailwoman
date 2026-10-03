@@ -1,1 +1,1 @@
-"""The model: the encoder, its blocks and heads, and the structured-decoding layers."""
+"""The model package contains encoder blocks, output heads plus structured-decoding layers."""

@@ -14,7 +14,8 @@ export { type PipelineFault, type PipelineResult } from "#pipeline/result"
 export { type MachinePreferences } from "#pipeline/preferences"
 
 /**
- * The user's location, which the resolver may use for scoring.
+ * The user's location.
+ * The resolver may use it for scoring.
  */
 export type UserLocation = { lat: number; lon: number } | { country: string } | { region: string; country: string }
 
@@ -51,7 +52,7 @@ export interface PipelineOpts {
 	normalizeCase?: boolean
 	/**
 	 * A per-parse placetype-pair prior for the classifier.
-	 * Leaving it unset disables the prior.
+	 * An unset value disables the prior.
 	 */
 	placetypePair?: PlacetypePairPassthrough
 	/**
@@ -163,7 +164,7 @@ export type QueryKind =
  */
 export const QueryIntentCode = {
 	/**
-	 * Resolution found no decisive candidate for a named place.
+	 * Resolution found no decisive candidate for a place with a recognized name.
 	 */
 	DeclaredAmbiguity: "declared_ambiguity",
 	/**
@@ -219,7 +220,7 @@ export interface QueryIntentMarker {
 	 */
 	message: string
 	/**
-	 * Supporting measurements, when available.
+	 * Measurements from supporting sources, when available.
 	 */
 	evidence?: Record<string, unknown>
 }
@@ -269,7 +270,7 @@ export interface POIIntent {
 				kind: "category"
 				/**
 				 * Category IDs to search together.
-				 * The order carries no rank.
+				 * The order does not rank these values.
 				 */
 				categoryIDs: string[]
 				matched: string
@@ -449,7 +450,7 @@ export interface RuntimePipelineStages {
 	 * A placed country becomes a resolver prior.
 	 * A `null` or `"OTHER"` country adds no prior.
 	 *
-	 * The optional posterior carries the full country distribution.
+	 * The optional posterior contains the full country distribution.
 	 */
 	placeCountry?: (normalizedText: string) => {
 		country: string | null

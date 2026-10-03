@@ -52,7 +52,7 @@ Hence Ship of Theseus: migrate component-by-component, conditioned on metrics, n
 
 Mailwoman's users are in the Node ecosystem. A Python or Rust dependency is a deployment regression for them. ONNX Runtime has a stable Node binding (`onnxruntime-node`) with CPU + CUDA execution providers. SentencePiece has WASM builds. The full inference path runs in a Node process without spawning subprocesses or shelling out.
 
-Training stays in Python because the ecosystem (HuggingFace Transformers, PyTorch, the `datasets` library, ONNX export tooling) is unmatched. The training code is internal to the project and never published to npm.
+The training code stays in Python because the ecosystem (HuggingFace Transformers, PyTorch, the `datasets` library, ONNX export tooling) is unmatched. The code is internal to the project and never published to npm.
 
 ## Why US + France first
 

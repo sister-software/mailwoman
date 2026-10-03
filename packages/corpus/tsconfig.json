@@ -10,6 +10,7 @@
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./fixtures/**/*"],
 	"references": [
+		{ "path": "../ban/sdk" },
 		{ "path": "../bdc" },
 		{ "path": "../sqlite" },
 		{ "path": "../core" },

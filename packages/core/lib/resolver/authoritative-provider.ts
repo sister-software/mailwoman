@@ -2,21 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The authoritative-provider interface: a typed boundary for handing a structured query to an external
- *   reference service and carrying the provider's identity, licensing, and provenance back through the result
- *   without the provider's assertions and Mailwoman's inferences ever blurring.
+ *   The authoritative-provider interface defines a typed boundary for structured queries to external reference services.
+ *   Results include the provider's identity, licensing and provenance.
+ *   This keeps provider assertions separate from Mailwoman's inferences.
  *
- *   Absence stays absent (a provider that does not expose a field leaves it `undefined`, never `false`, `0`
- *   or `""`). Refusal and ambiguity are first-class outcomes rather than degenerate matches. Provider
- *   assertions never overwrite Mailwoman's own answer, which is carried beside the response for the consumer
- *   to choose from. No provider product names appear here, because product-specific mapping lives in an
- *   adapter package.
+ *   An absent provider field remains `undefined`; the interface uses no substitute value such as `false`, `0`, or `""`.
+ *   Refusal and ambiguity are explicit outcomes.
+ *   Provider assertions do not overwrite Mailwoman's answer. The response contains both for the consumer to compare.
+ *   Provider product names stay out of this interface. Product-specific mapping belongs in an adapter package.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 
 /**
- * One parsed component as the provider receives it: the tag, the surface text, and the span it came from.
+ * One parsed component has a tag, surface text and source span.
  */
 export interface AuthoritativeQueryComponent {
 	tag: ComponentTag
@@ -62,7 +61,7 @@ export const AuthoritativeMatchStatus = {
 export type AuthoritativeMatchStatus = (typeof AuthoritativeMatchStatus)[keyof typeof AuthoritativeMatchStatus]
 
 /**
- * One place the provider asserted, with every field carried verbatim as the
+ * One place the provider asserted, with every field copied verbatim as the
  * provider's claim rather than a Mailwoman inference.
  */
 export interface AuthoritativeMatch {
@@ -102,7 +101,7 @@ export interface AuthoritativeMatch {
  */
 export const AuthoritativeResponseStatus = {
 	/**
-	 * The provider committed to `matches[0]`, alone.
+	 * The provider committed only to `matches[0]`.
 	 */
 	Matched: "matched",
 	/**
@@ -110,7 +109,9 @@ export const AuthoritativeResponseStatus = {
 	 */
 	Ambiguous: "ambiguous",
 	/**
-	 * The provider declined to answer, which is neither an error nor a miss: the provider spoke and said no.
+	 * The provider explicitly declined to answer.
+	 *
+	 * The response records a refusal rather than an error or a miss.
 	 */
 	Refused: "refused",
 } as const
@@ -128,8 +129,8 @@ export interface AuthoritativeResponse {
 	 */
 	attribution?: string
 	/**
-	 * License or terms identifier for downstream display, carried so a consumer can keep
-	 * provider-derived records under the provider's terms from the result alone.
+	 * License or terms identifier for downstream display, retained so a consumer can keep
+	 * provider-derived records under the provider's terms using this result.
 	 */
 	license?: string
 	/**
@@ -145,8 +146,8 @@ export interface AuthoritativeResponse {
 /**
  * A configured authoritative provider with one asynchronous, backend-neutral method.
  *
- * A thrown error is a transport failure, which is not a refusal, the same way the
- * resolver keeps a backend error apart from a miss.
+ * A thrown error records a transport failure rather than a refusal.
+ * The resolver also keeps backend errors separate from misses.
  */
 export interface AuthoritativeProvider {
 	/**

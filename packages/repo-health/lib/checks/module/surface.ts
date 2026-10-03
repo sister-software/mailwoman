@@ -5,11 +5,11 @@
  * @file Reports implementation modules whose top-level declaration surface hides multiple responsibilities.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { parseContextSource, readContextSources } from "#context"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
@@ -40,8 +40,8 @@ const TEST_FILE = /\.(?:test|spec)\.(?:ts|tsx)$/u
  * A closed section-divider comment in either rule character, ascii
  * or box-drawing has a label between its two rules.
  *
- * Both runs are two characters or longer, and a comment whose text continues on the
- * next line carries no trailing run and is not a divider.
+ * Both runs are at least two characters long.
+ * A comment whose text continues on the next line has no trailing run and does not form a divider.
  */
 const SECTION_DIVIDER = /^\s*\/\/\s*[-─]{2,}\s+[^\n]+[-─]{2,}\s*$/gmu
 
@@ -55,7 +55,7 @@ const METRIC_LABEL: Record<keyof ModuleSurface, string> = {
 /**
  * Count declarations directly owned by a source file.
  *
- * Nested callbacks, local constants, and declarations inside a namespace do not
+ * Nested callbacks, local constants and declarations inside a namespace do not
  * add to the module's public reading surface.
  */
 export function moduleSurface(sourceFile: ts.SourceFile): ModuleSurface {
@@ -142,12 +142,19 @@ export const moduleSurfaceCheck: RepoCheck = {
 	async run(context: RepoContext): Promise<Diagnostic[]> {
 		const diagnostics: Diagnostic[] = []
 
-		for (const filePath of await trackedSourcePaths(context, { prefix: "packages/", existingOnly: true })) {
+		const filePaths = (await trackedSourcePaths(context, { prefix: "packages/", existingOnly: true })).filter(
+			(filePath) => {
+				const file = relative(context.repoRoot, filePath)
+
+				return file.includes("/lib/") && !TEST_FILE.test(file)
+			}
+		)
+
+		await readContextSources(context, filePaths)
+
+		for (const filePath of filePaths) {
 			const file = relative(context.repoRoot, filePath)
-
-			if (!file.includes("/lib/") || TEST_FILE.test(file)) continue
-
-			const sourceFile = ts.createSourceFile(filePath, await readLocalTextFile(filePath), ts.ScriptTarget.Latest, true)
+			const sourceFile = await parseContextSource(context, filePath, { setParentNodes: true })
 			const surface = moduleSurface(sourceFile)
 
 			for (const hit of surfaceHits(sourceFile, surface)) {

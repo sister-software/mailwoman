@@ -182,7 +182,7 @@ It would not provide:
 
 - Better encoder representations. The encoder is the upstream learner;
   a CRF layer is downstream of it rather than a substitute for it.
-- Handling of novel patterns. If a sequence isn't represented well in
+- Novel patterns. If a sequence isn't represented well in
   training, a transition matrix has no opinion either.
 - Inference speed. Viterbi over a learned matrix is marginally slower
   than the structural-mask-only version (one more score lookup per

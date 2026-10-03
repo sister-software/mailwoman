@@ -23,12 +23,12 @@ def test_a_target_of_five_lands_at_five_reps_per_row():
     assert merged is not None
     assert _reps(merged, "synth-bare-country-v23") == pytest.approx(5.0)
     assert derived[0].weight == pytest.approx(0.0302, abs=0.0005)
-    # The fixed weights stay unchanged, and the targeted source's draws come out of their share.
+    # The fixed weights stay unchanged. The targeted source's draws come out of its share.
     assert {k: merged[k] for k in FIXED} == FIXED
 
 
 def test_two_targets_hold_together():
-    # `tiger` carries a fixed weight, so it cannot also take a reps target.
+    # `tiger` has a fixed weight, so it cannot also take a reps target.
     with pytest.raises(ValueError, match="both a weight and a reps target"):
         derive_source_weights(FIXED, {"tiger": 3.0}, ROWS, SAMPLES)
 

@@ -4,14 +4,11 @@
 /**
  * @file The half of a move that is not a module specifier: the `exports`/`imports` targets naming the file.
  *
- *   A subpath key is an interface and stays exactly as written — `@mailwoman/geocode-oracle/sdk/census-client` keeps
- *   its name whatever the file underneath is called. The target does not: it is a path, and a path that has moved
- *   names no file. Rewriting the target and leaving the key is what lets a file move without a consumer noticing.
+ * A subpath key is an interface and stays exactly as written, while the target is a path that must be rewritten so a
+ * file can move without a consumer noticing.
  *
- *   Each target is generated from the move rather than searched for, so a string is replaced only where it is exactly
- *   the path this file computes. A workspace narrows `rootDir` to `lib/` and emits to `out/`, so one source file is
- *   named by up to three targets — `./lib/a/b.ts`, `./out/a/b.js`, `./out/a/b.d.ts` — and every one of them has to
- *   move together or `manifest-targets` reports the survivors.
+ * One source file maps to up to three targets because a workspace narrows `rootDir` to `lib/` and emits to
+ * `out/`, and every one has to move together. A root beside `lib/` emits to `out/<root>/`.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -21,19 +18,24 @@ import { resolvePath } from "path-ts"
 import type { ManifestRewrite } from "#move/types"
 
 const SOURCE_ROOTS = new Set(["lib", "src"])
+/**
+ * Roots beside `lib/` that compile as their own project and emit under `out/<root>/`.
+ */
+const EXTRA_SOURCE_ROOTS = new Set(["sdk", "tools", "cli"])
 const SOURCE_EXTENSION = /\.tsx?$/u
 
-/**
- * Every manifest target that can name `packageRelative`, in the order a manifest lists them.
- */
 function targetsFor(packageRelative: string): string[] {
 	const targets = [`./${packageRelative}`]
 	const [root, ...rest] = packageRelative.split("/")
 
-	if (root && SOURCE_ROOTS.has(root) && rest.length) {
-		const emitted = rest.join("/").replace(SOURCE_EXTENSION, "")
+	if (!root || !rest.length) return targets
 
+	const emitted = rest.join("/").replace(SOURCE_EXTENSION, "")
+
+	if (SOURCE_ROOTS.has(root)) {
 		targets.push(`./out/${emitted}.js`, `./out/${emitted}.d.ts`)
+	} else if (EXTRA_SOURCE_ROOTS.has(root)) {
+		targets.push(`./out/${root}/${emitted}.js`, `./out/${root}/${emitted}.d.ts`)
 	}
 
 	return targets
@@ -52,11 +54,8 @@ export interface ManifestMove {
 }
 
 /**
- * Rewrites for one package's manifest, given every move landing inside that package.
- *
- * The manifest is edited as text rather than reserialized: a `package.json` carries key order
- * and formatting the repository's own tooling compares, and a round-trip through
- * `JSON.parse` rewrites the whole file to change one string.
+ * Rewrites for one package's manifest, edited as text rather than reserialized
+ * so key order and formatting survive.
  */
 export function manifestRewritesIn(file: string, text: string, moves: readonly ManifestMove[]): ManifestRewrite[] {
 	const rewrites: ManifestRewrite[] = []
@@ -88,10 +87,8 @@ export function manifestRewritesIn(file: string, text: string, moves: readonly M
 }
 
 /**
- * Every manifest target the moves invalidate, across each package that owns one of them.
- *
- * `packageDirectories` is the set a caller already knows — every tracked `package.json`'s
- * directory — so this reads only the manifests a move actually lands in.
+ * Every manifest target the moves invalidate, reading only the manifests a move lands in
+ * because `packageDirectories` is already known to the caller.
  */
 export async function planManifestRewrites(
 	repoRoot: string,

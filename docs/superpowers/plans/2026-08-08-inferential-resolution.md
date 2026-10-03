@@ -37,7 +37,7 @@ not have crossed an ocean. The constraint that was already in hand went unused.
    establishes that a magnitude never carries its own absence, which is exactly the distinction
    this depends on.
 
-3. **Structural affinity.** Naming schemes are real and mineable. A neighborhood whose streets are
+3. **Structural affinity.** Address-name patterns are real and mineable. A neighborhood whose streets are
    all US presidents admits an unknown `Garfield Ave` on family membership rather than string similarity.
    The same shape generalizes: an unknown hydronym against known hydrology, an unknown toponym
    against a region's morphology (the `-ton`/`-by`/`-thorpe` families in GB, `-ville` in FR).
@@ -98,7 +98,7 @@ and the response geometry should be derived from the graph so they cannot disagr
 
 Evidence sources that observe the same latent factor are not independent. Population, road
 density, broadband availability, POI density and built-up area are all partial observations of
-urbanisation; multiplying them as five independent likelihoods would manufacture confidence. A
+urbanization; multiplying them as five independent likelihoods would manufacture confidence. A
 model must represent those correlations (directly or through latent factors), and calibration must
 use geographically held-out regions rather than random near rows. An 80% candidate region should
 contain the withheld truth approximately 80% of the time in in fact novel geographies.
@@ -110,7 +110,7 @@ weak. The operator's extension: use settlement theory to get a prior over **exis
 for things we hold no record of.
 
 Christaller's central place theory gives _threshold_ (minimum population sustaining a good) and
-_range_ (maximum distance travelled for it). The prediction: a settlement of a given size supports
+_range_ (maximum distance traveled for it). The prediction: a settlement of a given size supports
 approximately N of a facility class, spatially distributed across its service area. So a query for
 a grocery store in a suburb where we hold no POI row is not unanswerable — density and settlement
 size give a rough count of them and roughly where they concentrate (arterial roads, commercial
@@ -135,7 +135,7 @@ supplies the fit; the fit's error on held-out regions is the confidence attached
 ## Precompute
 
 The relationships should be mined ahead of time rather than derived per query. The resolver ladder is
-synchronous and per-keystroke. Naming families, per-locality street-set completeness, terrain
+synchronous and per-keystroke. Name families, per-locality street-set completeness, terrain
 exclusion masks and fitted CPT parameters are all build-time artifacts keyed to the existing H3/WOF
 spine. This is the same pattern as the candidate table and the postcode bins, and it belongs to
 the targeted-precompute change already filed as
@@ -235,7 +235,7 @@ interface is:
 acquire snapshot/replication sequence
   → bounded pilot and resource projection
   → independent resumable extracts
-  → structural + geographic + licence validation
+  → structural + geographic + license validation
   → seal manifest and coverage assertions
   → immutable publish
   → verified atomic runtime activation

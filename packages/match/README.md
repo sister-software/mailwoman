@@ -36,7 +36,7 @@ candidate pairs via cheap, high-recall keys:
 
 The `scorePair` function computes a match probability using:
 
-- **String comparators** — Jaro-Winkler similarity over names and addresses
+- **Text comparators** — Jaro-Winkler similarity over names and addresses
 - **Distance comparison** — great-circle distance bucketed into same-building /
   same-block / same-area / far
 - **Fellegi-Sunter weight model** — agreement-level log-likelihood ratios

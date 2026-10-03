@@ -94,7 +94,7 @@ counter-distribution, without touching the architecture at all.
 
 ## What this means for the architecture
 
-**Vindicating:**
+**What the results support:**
 
 - The per-piece unit provides answers a word unit cannot represent, demonstrated (`Unit 12/345 Main St`).
 - Our ≥4-digit boundary is _learned_ rather than structural: on the 351/376 parity rows we get right, the
@@ -104,7 +104,7 @@ counter-distribution, without touching the architecture at all.
 - The incoherence is a **tail** (25/376) rather than the general behaviour of digit runs. "Every multi-piece
   digit run gets dragged to postcode by its continuations" is refuted at 0.0270.
 
-**Villainizing, and must be explicit:**
+**The remaining risk:**
 
 - Their failure mode is bounded; ours is not. A word-unit tagger's worst case is a wrong tag. Ours is
   a _self-contradictory_ one, and Viterbi resolves it by discarding a first piece that was correct

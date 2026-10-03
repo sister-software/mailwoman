@@ -96,8 +96,8 @@ export async function resumableDownload(options: {
 		}
 
 		if (res.status === HTTP_RANGE_NOT_SATISFIABLE && have > 0) {
-			// No bytes past `have`: the file on disk is already the whole body,
-			// and `Content-Range: bytes */<total>` says how long it is.
+			// The file on disk is already the whole body when no bytes follow `have`.
+			// `Content-Range: bytes */<total>` gives its length.
 			const whole = /\*\/(\d+)/.exec(res.headers.get("content-range") ?? "")?.[1]
 			total = whole ? Number(whole) : have
 			await res.body?.cancel()
@@ -124,7 +124,8 @@ export async function resumableDownload(options: {
 			)
 		} catch {
 			// The connection dropped mid-body.
-			// The bytes that landed are on disk, and the next range starts after them.
+			// The received bytes remain on disk.
+			// The next range starts after them.
 		}
 
 		have = await bytesOnDisk(tmp)
@@ -147,7 +148,7 @@ export async function resumableDownload(options: {
 
 /**
  * The `Set-Cookie` values of a response folded into one `Cookie` header,
- * so a second request carries the session the first opened.
+ * so a second request reuses the session the first opened.
  */
 export function cookieHeader(res: Response): string {
 	return res.headers
@@ -158,7 +159,7 @@ export function cookieHeader(res: Response): string {
 
 /**
  * The file name a `Content-Disposition: attachment` header names, RFC 5987 form (`filename*=utf-8''…`)
- * first, plain `filename="…"` second, or `fallback` when the header carries neither.
+ * first, plain `filename="…"` second, or `fallback` when the header includes neither.
  */
 export function attachmentFilename(res: Response, fallback: string): string {
 	const disposition = res.headers.get("content-disposition") ?? ""

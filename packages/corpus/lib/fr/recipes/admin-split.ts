@@ -3,8 +3,8 @@
 
 /**
  *   Generate French training rows that distinguish a département (`region`) from a commune
- *   (`locality`) in bare, comma-separated, and space-separated forms. Derive the département from
- *   each real BAN postcode. Input rows are tab-separated commune, postcode, longitude, and latitude.
+ *   (`locality`). Forms include bare, comma-separated and space-separated names.
+ *   Derive the département from each real BAN postcode. Input rows are tab-separated commune, postcode, longitude and latitude.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -14,8 +14,9 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import type { CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
@@ -132,7 +133,7 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 		// Preserve the legacy generator and seed behavior.
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 60_000
-		const source = opts.sourceName ?? "synth-fr-admin-split"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-fr-admin-split")
 		const communesPath = opts.communes ?? DEFAULT_COMMUNES
 
 		const pool = await readCommunes(communesPath)

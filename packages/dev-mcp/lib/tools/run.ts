@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The `mwdev_run` tool definition — the description an agent reads, the input schema, and the handler wiring over the
- * measurement in the package root.
+ * The `mwdev_run` tool definition provides the agent-facing description and input schema.
+ * Its handler runs the measurement in the package root.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -26,7 +26,7 @@ const RUN_ROW_FIELDS = [
 	"components",
 	"lat",
 	"lon",
-	// Haversine kilometres from the row's truth point where the set carries one.
+	// Haversine kilometers from the row's truth point where the set provides one.
 	// `null` on a row with no truth and on a row that resolved no coordinate.
 	// Those are different facts, so read it beside `lat`.
 	"km",
@@ -118,13 +118,14 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					tier: run.result.resolution_tier,
 					admin_coherence: run.result.admin_coherence ?? null,
 					// The resolved winner identities (name + placeID per rung), which coordinate
-					// diffs alone cannot see a wrong-instance win without.
+					// diffs by themselves cannot reveal a wrong-instance win without.
 					hierarchy: run.result.hierarchy ?? null,
 					timing_ms: run.timing,
 				}
 
-				// Projection filters only what is emitted, and the handler reasons over every row,
-				// so tallies count over `fullRows` and a census cannot change with a display option.
+				// Projection filters the emitted rows.
+				// The handler reasons over every row in `fullRows`.
+				// Display options therefore cannot change the census tallies.
 				fullRows.push(row)
 
 				rows.push(keep ? Object.fromEntries(RUN_ROW_FIELDS.filter((f) => keep.has(f)).map((f) => [f, row[f]])) : row)

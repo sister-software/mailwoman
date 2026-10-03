@@ -3,16 +3,11 @@
 
 /**
  *   Render a `ComponentTag`-keyed dict into a country-localized string — the inverse of the parser. The order
- *   lives in `@mailwoman/codex/address-layouts`, as data. This module is the public surface over
+ *   lives in `@mailwoman/codex/address/layouts`, as data. This module is the public surface over
  *   {@linkcode renderAddress}.
  */
 
-import {
-	defaultScriptForCountry,
-	layoutForCountry,
-	lineJoinForCountry,
-	type AddressScript,
-} from "#address/layouts/index"
+import { defaultScriptForCountry, layoutForCountry, lineJoinForCountry, type AddressScript } from "#address/layouts"
 import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
 import { COMPONENT_TAGS, type ComponentTag } from "#component"
 
@@ -32,17 +27,20 @@ export interface FormatAddressOptions {
 	/**
 	 * Join the lines the way the country does, for the single-line form a query or a corpus row takes.
 	 *
-	 * A caller's literal comma is wrong outside the anglophone systems,
-	 * and `separator` wins when both are given.
+	 * The layout chooses a country-specific join character.
+	 * A literal comma fails in some systems.
+	 *
+	 * When both options are present, `separator` takes precedence.
 	 */
 	singleLine?: boolean
 
 	/**
 	 * Which of the country's two orders to render in, or unset to read it off the components themselves.
 	 *
-	 * Eight countries write an address two ways, and which one a dict wants is a
-	 * property of the values rather than of the country.
-	 * A caller holding a parse tree has the better answer and should pass it.
+	 * Eight countries have two address orders.
+	 * Component values show which order a dictionary needs.
+	 *
+	 * A caller with the parse tree should pass the order explicitly.
 	 */
 	script?: AddressScript
 }
@@ -56,14 +54,15 @@ function separatorFor(country: string, script: AddressScript, opts: FormatAddres
 /**
  * What replaces a break the layout marked soft.
  *
- * Down the page a soft break is an ordinary break: Great Britain prints the post town
- * and the postcode on their own lines and must keep doing so.
- * On one line it is a space, which is the whole reason the mark exists —
- * `London EC3N 1DE` rather than `London, EC3N 1DE`.
+ * In multi-line output, a soft break becomes an ordinary line break.
+ * Great Britain prints the post town and postcode on separate lines.
+ *
+ * Single-line output uses a space at a soft break.
+ * For example, it produces `London EC3N 1DE` instead of `London, EC3N 1DE`.
  *
  * An explicit `separator` overrides both.
- * A caller naming its own separator is asking for one string between every pair of lines,
- * and answering with two would ignore what it asked for.
+ * A caller-supplied separator applies between every pair of lines.
+ * Two separators would ignore the requested value.
  */
 function softSeparatorFor(opts: FormatAddressOptions): string {
 	if (opts.separator !== undefined) return opts.separator
@@ -78,7 +77,7 @@ function softSeparatorFor(opts: FormatAddressOptions): string {
 const SCRIPT_WITNESSES: readonly ComponentTag[] = ["street", "locality", "dependent_locality", "region", "venue"]
 
 /**
- * Whether a string carries a letter written in something other than the Latin alphabet.
+ * Whether a string contains a letter written in something other than the Latin alphabet.
  *
  * Every record carrying two orders pairs a Latin register with a non-Latin one,
  * so this binary answer is the whole question a layout choice asks.
@@ -88,16 +87,27 @@ function carriesNonLatinLetter(value: string): boolean {
 }
 
 /**
- * The script `components` are written in, read off the first witness that carries a letter.
+ * Whether `value` is written in Latin script: it holds a letter, and every letter it holds is Latin.
  *
- * No letters is not evidence of Latin, so all-digit or absent witnesses answer `undefined`
- * and leave the country's default in force.
+ * The trainer's `address_systems.is_latin_text` applies the same rule, so a row
+ * and a parse pick the same script's address system.
+ */
+export function isLatinScriptText(value: string): boolean {
+	return /\p{Letter}/u.test(value) && !carriesNonLatinLetter(value)
+}
+
+/**
+ * The script `components` are written in, read from the first witness that contains a letter.
+ *
+ * A witness without letters does not identify a script.
+ * All-digit or absent witnesses return `undefined`.
+ * The country default then determines the address order.
  */
 // repo-health-ignore export-name-affix -- core's `scriptOf` takes a codepoint
 // and answers its ISO 15924 script.
 // This takes a dict and answers which of a country's two orders it is written for.
-// Importing it is also impossible: this package carries no runtime dependency,
-// and core is 11 MB of shipped data.
+// This package cannot import it because it has no runtime dependencies.
+// The core package adds 11 MB of shipped data.
 export function scriptOfComponents(components: ComponentDict): AddressScript | undefined {
 	for (const tag of SCRIPT_WITNESSES) {
 		const value = components[tag]?.trim()
@@ -151,8 +161,8 @@ function scriptIsFreeToDerive(country: string): boolean {
 /**
  * Render a component dict into an idiomatic per-country address string.
  *
- * @returns An empty string when the dict is empty, when no layout names `country`
- * (55 of the 252 shipped records carry no usable skeleton), or when the layout prints no field.
+ * @returns An empty string when the dict is empty, when no layout defines `country`
+ * (55 of the 252 shipped records have no usable skeleton), or when the layout prints no field.
  * A partial dict degrades to the parts the layout can print.
  */
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
@@ -171,7 +181,7 @@ export interface AddressRow {
 	 */
 	readonly components: ComponentDict
 	/**
-	 * Tags the dict carried a value for that the layout has no slot for, named rather than silently dropped.
+	 * Tags with values absent from the layout's slots, reported rather than silently dropped.
 	 *
 	 * France absorbing a region into its postcode line is the common case.
 	 */
@@ -181,9 +191,11 @@ export interface AddressRow {
 	 *
 	 * The caller's `script`, else the one read off the components, else the country's own default.
 	 *
-	 * Reported rather than inferred, because on a country with two orders the rendering alone
-	 * does not say: a dict with no street and one admin tier prints the same string either way,
-	 * and a corpus row that cannot name its register cannot be graded against one.
+	 * Reported so callers can identify the chosen order.
+	 * In a country with two orders, the rendered text by itself may not reveal it.
+	 *
+	 * A dictionary with no street and one administrative tier prints the same string either way.
+	 * A corpus row needs its register to be graded against that order.
 	 */
 	readonly script: AddressScript
 }
@@ -202,8 +214,9 @@ export function formatAddressRow(
 	country: string,
 	opts: FormatAddressOptions = {}
 ): AddressRow | null {
-	// An explicit `script` overrides both tests: a dict with no letters attests no register,
-	// and a country whose Latin order would drop a component is not worth the order.
+	// An explicit `script` overrides both derived checks.
+	// A dictionary with no letters identifies no register.
+	// The function also avoids an order that would drop a component in this country.
 	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components) : undefined
 	const script = opts.script ?? derived ?? defaultScriptForCountry(country)
 	const layout = layoutForCountry(country, script)

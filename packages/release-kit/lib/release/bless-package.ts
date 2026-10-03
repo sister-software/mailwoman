@@ -123,7 +123,8 @@ async function runNPMWrite(proc: ProcessPromise, log: (line: string) => void): P
  * The registry accepts a trust config for any workflow file name without checking that the file exists.
  * A wrong name then fails every CI publish with a bare `E404 Not Found - PUT`.
  *
- * Repairing a stored config takes a read and a revoke, and each step needs an interactive 2FA approval.
+ * A stored config must be read and revoked for repair. npm requires an interactive
+ * 2FA approval for each operation.
  */
 async function assertWorkflowExists(options: BlessPackageOptions): Promise<void> {
 	if (options.provider !== "github") return
@@ -169,8 +170,8 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 	const pkg = await readPkg(dir)
 
 	if (options.version) {
-		// By default, npm follows the bump with an install of the workspace root,
-		// and that install cannot parse the Yarn `workspace:*` protocol.
+		// By default, npm follows the bump with a workspace-root install.
+		// That install cannot parse the Yarn `workspace:*` protocol.
 		// The `--no-workspaces-update` flag skips the install.
 		await $({
 			cwd: dir,
@@ -187,12 +188,13 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 
 	const tgz = `/tmp/${pkg.name.replaceAll(/[@/]/g, "-")}.tgz`
 
-	// The release packer dereferences symlinked `files` entries, which the registry rejects,
-	// and rewrites the development `exports` map for consumers.
+	// The release packer dereferences symlinked `files` entries.
+	// The registry rejects those entries.
+	// The packer also rewrites the development `exports` map for consumers.
 	await packWorkspaceForPublish(dir, tgz)
 
-	// A local workspace may lack derived binaries that were never built,
-	// and npm accepts an incomplete tarball.
+	// A local workspace may lack derived binaries when the build has not produced
+	// them. npm accepts the resulting incomplete tarball.
 	// Published versions are immutable, so the audit runs before the publish.
 	const audit = verifyTarball(tgz)
 
@@ -241,8 +243,8 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	log(`• ${pkg.name}: configuring trusted publisher…`)
 	log(`    npm ${args.join(" ")}`)
 
-	// Checking for an existing config with `npm trust list` would need its own
-	// second factor, so the write runs unconditionally.
+	// An existing-config check with `npm trust list` would need its own second factor,
+	// so the write runs unconditionally.
 	// A failure does not block the remaining publishes.
 	// Npm has already printed the reason, so the log adds only the retry command.
 	try {

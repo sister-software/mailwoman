@@ -1,9 +1,8 @@
 """The 주소DB and the permit registry in the shapes the readers expect, at a size a test can build.
 
 The portal delivers pipe-delimited CP949 text inside a ZIP whose member names are CP949 bytes
-without the UTF-8 flag, and CP949 CSVs for the permits. Every one of those is a place a reader can
-be wrong in a way a UTF-8 fixture would never show, so the fixture meets the real encoding rather
-than a convenient one.
+without the UTF-8 flag. It also provides CP949 CSVs for the permits. Every one of those is a place a reader can
+be wrong in a way a UTF-8 fixture would never show. The fixture therefore uses the real encoding.
 """
 
 from __future__ import annotations
@@ -46,7 +45,7 @@ class JusoRegion:
     road: str
     road_code: str
     serial: str
-    #: 도로명코드's 읍면동구분: "0" is an 읍/면 the road address itself carries, "1" a 동.
+    #: 도로명코드's 읍면동구분: "0" is an 읍/면 contained in the road address, "1" a 동.
     kind: str
     lot_code: str
     addresses: list[JusoAddress] = field(default_factory=list)
@@ -71,7 +70,7 @@ def _members(region: JusoRegion) -> tuple[str, str, str]:
 
 
 def write_juso_zip(path: Path, regions: list[JusoRegion]) -> None:
-    """An edition of the 주소DB in the portal's shape: CP949 members named without the UTF-8 flag.
+    """An edition of the 주소DB in the portal's shape: CP949 members lack the UTF-8 flag.
 
     The portal ships one file per 시도, so entries sharing a 시도 name — several 시군구 of one
     province — are concatenated into that province's member rather than overwriting it.
@@ -108,7 +107,7 @@ SEOUL = JusoRegion(
     addresses=[JusoAddress(address_id="11110000000001", main="00094", dong="청운동", building="청운빌딩")],
 )
 
-#: An 읍/면 area: the road address carries the 면 and the parenthetical is the 리.
+#: An 읍/면 area: the road address contains the 면 and the parenthetical is the 리.
 GANGWON = JusoRegion(
     region="강원특별자치도",
     sigungu="원주시",

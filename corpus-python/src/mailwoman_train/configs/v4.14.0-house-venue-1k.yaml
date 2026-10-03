@@ -18,7 +18,7 @@
 # 8,000 steps.
 #
 # The check is unchanged and it is against the shipped model, because that is what publishing costs a
-# user. The null run is the right baseline for attributing a regression. it is not a licence to ship
+# user. The null run is the right baseline for attributing a regression. it is not a license to ship
 # one.
 #   1. net improved-minus-regressed >= 0 on the 649-row board;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
@@ -26,7 +26,7 @@
 #      gb-op2-four-seasons-cjk — must hold, since those are the data's doing and not the tax.
 #
 # If this is also net-negative, steps is not the change either and the fine-tune route is closed on
-# measurement rather than on judgement: the tax exceeds what an additive source can recover at every
+# measurement rather than on judgment: the tax exceeds what an additive source can recover at every
 # distance tried.
 
 data:

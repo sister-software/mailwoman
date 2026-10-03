@@ -207,7 +207,7 @@ export class Placetype implements Disposable {
 	public parents: Set<Placetype>
 
 	/**
-	 * Sibling Placetypes of this Placetype, i.e. those with the same parent.
+	 * The sibling Placetypes share this Placetype's parent.
 	 *
 	 * Note that this is **all** siblings across **all** parents.
 	 */
@@ -405,7 +405,7 @@ export class Placetype implements Disposable {
 				Placetype.#childNamesOfParentName.set(parentName, childNames)
 			}
 
-			// Adding the name to the parent's child names...
+			// The constructor adds this name to the parent's child names.
 			childNames.add(definition.name)
 
 			// It's possible that this parent has already been registered...

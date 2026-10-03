@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `ConfidenceCell` — a compact confidence bar + value for the component table. The fill colour follows the shared
+ *   `ConfidenceCell` — a compact confidence bar + value for the component table. The fill color follows the shared
  *   confidence tiers. Presentational.
  */
 

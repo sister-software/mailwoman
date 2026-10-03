@@ -46,10 +46,10 @@ def test_realign_labels_preserves_bio_continuity():
     pieces = t.encode_with_spans(raw)
     aligned = realign_labels_to_pieces(raw, tokens, labels, pieces)
 
-    # Every piece that lands inside the "Burlington" span should be locality-tagged,
-    # and only the first should be B-, rest I-.
+    # Every piece inside the "Burlington" span should be locality-tagged.
+    # Only the first piece should be B-. The remaining pieces should be I-.
     assert aligned[0].startswith("B-") or aligned[0] == "O"
-    # The piece(s) that fall on "VT" should be region. first one is B-region.
+    # Pieces inside "VT" should be region-tagged. The first one is B-region.
     region_indices = [i for i, lab in enumerate(aligned) if lab.endswith("-region")]
     if region_indices:
         first = region_indices[0]

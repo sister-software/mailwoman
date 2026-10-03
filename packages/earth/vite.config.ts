@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Earth build: React, the PWA manifest and service worker, and `build.json`. There is no server side. every
+ *   The Earth build: React, the PWA manifest and service worker, plus `build.json`. There is no server side. Every
  *   output is a static asset Cloudflare serves without invoking a Worker.
  */
 
 import { buildInfoPlugin } from "@mailwoman/site-kit/vite/build-info"
 import { installablePWA } from "@mailwoman/site-kit/vite/pwa"
-import { stageSQLJSPlugin } from "@mailwoman/site-kit/vite/stage-sqljs"
+import { stageSQLiteRuntimePlugin } from "@mailwoman/site-kit/vite/stage-sqlite-runtime"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
@@ -16,7 +16,7 @@ import { VitePWA } from "vite-plugin-pwa"
 export default defineConfig({
 	plugins: [
 		react(),
-		stageSQLJSPlugin("public/sqljs"),
+		stageSQLiteRuntimePlugin("public/sqlite"),
 		VitePWA(
 			installablePWA({
 				origin: "https://earth.mailwoman.ai/",

@@ -7,9 +7,10 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { frFragmentRecipe } from "@mailwoman/corpus/fr/recipes/fragment"
-import { scratch, recipeRunner, type RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
+
+import { frFragmentRecipe } from "#fr/recipes/fragment"
+import { scratch, recipeRunner, type RecipeRow } from "#test-kit/corpus-recipe"
 
 const run = recipeRunner("fr-fragment", frFragmentRecipe, 727)
 
@@ -76,7 +77,7 @@ describe("fr-fragment: the forms", () => {
 		expect(String(montmartre.labels!.join(" "))).not.toContain("locality")
 	})
 
-	it("still mints numbered rows so the licence is not UNLEARNED", async () => {
+	it("still mints numbered rows so the license is not UNLEARNED", async () => {
 		const { rows } = await run(TUPLES, ["nothing"], { hnProb: 1 })
 		const numbered = rows.filter((r) => r.components!.house_number)
 

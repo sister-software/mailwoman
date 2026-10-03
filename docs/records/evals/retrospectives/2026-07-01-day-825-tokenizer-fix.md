@@ -15,7 +15,7 @@ because the model had never seen them with house-number/street context — a tra
 
 **We built the ship candidate carefully — and caught a trap doing it.** The obvious move was to grade the
 running probe (`v1.9.3-slavic-diacritic`). But that recipe was copied from `v1.9.2-multilocale-au` (v4.14.0),
-which predates the #723 anchor-absorption fix. Grading it against v4.15.0 would have confounded the Slavic
+which predates the #723 anchor-absorption fix. A grade against v4.15.0 would have confounded the Slavic
 extract with a reverted #723 — and #723 is coordinate-invisible, so the coord check would never have caught it.
 So we forked a clean candidate, **v196-slavic-anchor** = v4.15.0's recipe verbatim + the one new extract, off
 the v4.15.0 corpus so it keeps #723. One variable. (Lesson banked: an extract recipe copied from vN-1 silently
@@ -82,7 +82,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 
 ## What worked
 
-- **Grading the coordinate rather than label-F1.** This is the whole story. The retrain's content-gap win (100→17)
+- **Coordinate grading rather than label-F1.** This is the whole story. The retrain's content-gap win (100→17)
   was real and would have shipped a coordinate regression. The wrong-city decomposition (tight / coarse /
   wrong-city buckets) is the direct metric for these locales and should be a standard part of the non-US check.
 - **Diagnostic before fix.** The $0 splice-and-verify (English byte-identical, fertility drop, `Vysoká`
@@ -111,7 +111,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
    span boundaries — the tokenizer decides the boundaries. Fix the tokenizer.
 2. **The cheapest falsifier goes first.** The tokenizer fertility probe was $0 and decisive; it should have
    preceded the GPU spend rather than followed it.
-3. **Disjoint-codepoint vocab splicing is a real tool.** Appending only non-ASCII pieces to a unigram vocab
+3. **Disjoint-codepoint vocab splicing is a real tool.** Append only non-ASCII pieces to a unigram vocab
    keeps the source language byte-identical _by construction_ — a guarantee rather than a hope. Worth remembering for
    any future non-Latin extension (with the caveat that it does not scale to CJK, where char-level is the
    natural unit).

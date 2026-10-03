@@ -31,7 +31,7 @@ list (an expression statement, a bare `import "x"` or a top-level await runs; a 
 16 that cannot claim it are almost all entries — `lib/cli.ts`, `scripts/*.ts` — not library modules.
 
 The rationale here said it would let a barrel tree-shake, demoting the browser-safe-leaf discipline to
-defence in depth. **It does not.** Measured after landing it: repointing one demo import from
+defense in depth. **It does not.** Measured after landing it: repointing one demo import from
 `street/normalize` back to the `street` barrel still produces 27
 `'x' is not exported from 'node:fs/promises'` errors. The leaf rule is still required, and
 `webpack-policy.test.ts` now refuses a barrel import by name in ~30 ms — because the only other thing that
@@ -47,7 +47,7 @@ This looked right and is the opposite of right. **The alias list's job is to DIF
 exports map.** `@mailwoman/resolver-wof-sqlite` now advertises both `./fst` and `./fst/deserialize-web`;
 Node callers should take the barrel and the browser must take the leaf, because the barrel re-exports
 `fst/freshness`, which reaches `@mailwoman/core/fs`. A derivation reads both entries and has no way to
-express the preference — it is an editorial judgement about the BROWSER, and the exports map is not written
+express the preference — it is an editorial judgment about the BROWSER, and the exports map is not written
 from the browser's point of view.
 
 What the hand-list needed was not derivation but a refusal: `requireAlias` now throws on an entry that
@@ -118,7 +118,7 @@ are side-effect-free **and** every Node-only dependency sits behind its own entr
 
 That is how a deliberate leaf gets tidied away: a future agent collapsing the surface reads three modules,
 finds one reason, and folds the other two into a barrel — reintroducing exactly the bundle break the split was
-made to prevent. **Writing the reason into each docstring is a prerequisite of the collapse rather than a follow-up.**
+made to prevent. **Each docstring must explain the reason before the exports can collapse.**
 
 ### 2.2 The hand-copied mirror is already stale
 
@@ -135,14 +135,14 @@ It has not been noticed because it fails softly: `resolvePackageFile` returns `n
 
 `mailwoman`'s 55 collapse toward the count of its top-level directories; `core`'s 80 toward `./fs`, `./utils`,
 `./strings`, `./layers`, `./api`, `./decoder` and the rest. The exact figure is not predictable before the
-folds are drawn. The directory structure is the new export list. Drawing it twice would repeat the work.
+folds are drawn. The directory structure is the new export list. A second drawing would repeat the work.
 
 `dev-mcp` is the single largest cheap win — **51 subpaths, private**, so a `./*` wildcard there breaks no
 consumer because no consumer outside this monorepo installs it. `docs` (12, already 4 wildcards),
 `geocode-oracle` (9) and `neural-weights-base-latn` (1) are the rest of the private set; `tile-worker` is
 private but exports no subpath at all, so it is not in scope.
 
-## 4. Sequencing
+## 4. Implementation sequence
 
 1. **Fold the collapse into the hierarchy arc's second half** rather than before it.
 2. **Take the subpath removals in the same breaking release as the `sdk/` rename** — one CHANGELOG entry per
@@ -170,7 +170,7 @@ Confirmed exactly: **727** total; `core` 80, `resolver-wof-sqlite` 61, `mailwoma
 The `lib/` move (#2051) was deliberately subpath-neutral — it changed only the dev-only `node` condition — so
 neither of today's PRs is a source of growth. The growth is real; itbelongs to the dedup arc.
 
-## 6. Reproducing every number here
+## 6. How to reproduce each number
 
 ```bash
 cd /home/lab/Projects/mailwoman

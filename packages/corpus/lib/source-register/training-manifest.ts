@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The frozen record of which sources contributed rows to one corpus build, and under which terms.
+ *   The frozen record of sources that contributed rows to one corpus build.
+ *   It also records the applicable terms.
  *
  *   Its digest is over the manifest with `contentDigest` emptied, so two builds over identical inputs
- *   produce the same digest and any change to a source, its elected grant, its row count or the recipe
- *   changes it.
+ *   produce the same digest. A change to a source, its elected grant, row count or recipe changes the digest.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -15,8 +15,9 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { LicenseReviewState, type LicenseDecision, type SourceOperation } from "#source-register/types"
 
 /**
- * What one source contributed to one build, and what had been established
- * about its terms when the build ran.
+ * What one source contributed to a build.
+ *
+ * Also records what the build had established about its terms.
  */
 export interface TrainingSourceRecord {
 	/**
@@ -31,7 +32,7 @@ export interface TrainingSourceRecord {
 	license: string
 	/**
 	 * The register's decision for that license when the build ran, or `null`
-	 * when the register named no decision for it.
+	 * when the register contains no decision for it.
 	 */
 	decision: {
 		licenseID: string
@@ -66,6 +67,9 @@ export interface TrainingManifest {
 	/**
 	 * Sources the build refused, with the reasons, so the record shows what was
 	 * left out as well as what went in.
+	 *
+	 * Each key is `<adapter id>:<ISO 3166-1 alpha-2>`, the pair that addresses one register source,
+	 * because one adapter can emit several jurisdictions and each carries its own license decision.
 	 */
 	refused: Record<string, readonly string[]>
 	totalRows: number
@@ -76,7 +80,7 @@ export interface TrainingManifest {
 }
 
 /**
- * The digest a manifest should carry, computed over the manifest with its digest field emptied.
+ * The digest a manifest should include, computed over the manifest with its digest field emptied.
  */
 export function trainingManifestDigest(manifest: TrainingManifest): string {
 	return sha256Hex(stringifyJSON({ ...manifest, contentDigest: "" }))
@@ -85,7 +89,7 @@ export function trainingManifestDigest(manifest: TrainingManifest): string {
 /**
  * Freeze one build's source observations into a manifest.
  *
- * A license the decision table does not carry records `decision: null` rather than being omitted,
+ * A license absent from the decision table records `decision: null` rather than being omitted,
  * so a build that read an unregistered adapter stays distinguishable from one that read no source.
  */
 export function freezeTrainingManifest(input: {

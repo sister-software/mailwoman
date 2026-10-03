@@ -2,28 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file An exported `interface` or `type` alias whose body is identical to one another workspace exports. Two
- *   packages that each declare the same shape have two homes for one declaration, and the two drift the first time
- *   either is edited. A declaration several packages need has one home and is imported with `import type`, which
+ * @file Finds an exported `interface` or `type` alias whose body matches one from another workspace. Two
+ *   packages that declare the same shape have two homes for one declaration. They can drift when either is edited.
+ *   A declaration several packages need has one home and is imported with `import type`, which
  *   adds zero modules to the importing package's runtime graph.
  *
- *   The check reads each exported interface, type literal alias, and union alias under `packages/*\/lib`, keyed by
- *   its body after comments are dropped, whitespace is collapsed, and members are sorted. Two declarations with
+ *   The check reads exported interfaces, type literal aliases and union aliases under `packages/*\/lib`.
+ *   It keys each one by its body after dropping comments, collapsing whitespace and sorting members.
+ *   Two declarations with
  *   the same key in different workspaces form a group. Names are ignored: `GeoCoordinate` and `LatLng` with the
  *   same two fields are one shape. A declaration with the same key inside one workspace is the
  *   `mailwoman/prefer-home` lint rule's concern and is left out here.
  *
- *   A single-member interface, a union of one member, and an alias of a bare reference such as `type Id = string`
+ *   A single-member interface, a one-member union or an alias of a bare reference such as `type Id = string`
  *   are skipped: they agree by coincidence far more often than by copy. Member order is normalized one level
  *   deep. A nested type literal keeps its written order.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { relative } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
-import { trackedSourcePaths } from "#tracked-sources"
+import { parseContextSource, readContextSources } from "#context"
+import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#tracked-sources"
 
 /**
  * One exported shape declaration and the key its body reduces to.
@@ -77,7 +78,7 @@ function memberKey(members: ts.NodeArray<ts.TypeElement>, source: ts.SourceFile)
 }
 
 /**
- * The type parameters and heritage clauses a declaration carries, so `Foo<T>` and `Foo` stay apart.
+ * The type parameters and heritage clauses on a declaration, so `Foo<T>` and `Foo` stay apart.
  */
 function headerKey(node: ts.InterfaceDeclaration | ts.TypeAliasDeclaration, source: ts.SourceFile): string {
 	const parameters = node.typeParameters?.map((parameter) => normalized(parameter, source)).join(", ") ?? ""
@@ -137,6 +138,13 @@ export function shapeSites(file: string, text: string): ShapeSite[] {
 		file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
 	)
 
+	return declaredShapeSites(file, source)
+}
+
+/**
+ * {@linkcode shapeSites} over a tree already parsed, with `file` the repo-relative path the sites report.
+ */
+function declaredShapeSites(file: string, source: ts.SourceFile): ShapeSite[] {
 	const workspace = file.split("/")[1] ?? ""
 	const sites: ShapeSite[] = []
 
@@ -162,20 +170,26 @@ export function shapeSites(file: string, text: string): ShapeSite[] {
  */
 export async function findDuplicateShapes(context: RepoContext): Promise<DuplicateShape[]> {
 	const paths = await trackedSourcePaths(context, {
-		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` alone skips a file
+		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` by itself skips a file
 		// directly under `lib/` (`lib/index.ts`), the same quirk `tracked-sources.ts` documents.
-		globs: ["packages/*/lib/*.ts", "packages/*/lib/*.tsx", "packages/*/lib/**/*.ts", "packages/*/lib/**/*.tsx"],
+		globs: PACKAGE_SOURCE_GLOBS,
 		existingOnly: true,
 	})
 
 	const byKey = new Map<string, ShapeSite[]>()
 
-	for (const path of paths) {
+	const read = paths.filter((path) => {
 		const file = relative(context.repoRoot, path)
 
-		if (file.includes("/test/") || file.endsWith(".test.ts") || file.endsWith(".test.tsx")) continue
+		return !file.includes("/test/") && !file.endsWith(".test.ts") && !file.endsWith(".test.tsx")
+	})
 
-		for (const site of shapeSites(file, await readLocalTextFile(path))) {
+	await readContextSources(context, read)
+
+	for (const path of read) {
+		const file = relative(context.repoRoot, path)
+
+		for (const site of declaredShapeSites(file, await parseContextSource(context, path))) {
 			byKey.set(site.key, [...(byKey.get(site.key) ?? []), site])
 		}
 	}

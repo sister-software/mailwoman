@@ -1,0 +1,22 @@
+{
+	"$schema-note": "Adapter inputs for one base corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch, because the data root moved from /mnt/playpen/mailwoman-data to /mnt/mw on 2026-09-23 and the previous record's absolute paths stopped resolving.",
+	"corpusVersion": "v0.7.0-de-holdout",
+	"builtAt": "2026-09-26T04:30:58.419Z",
+	"adapters": {
+		"wof-admin": { "inputPath": "src/wof-repos" },
+		"wof-postalcode": { "inputPath": "src/wof-repos" },
+		"ban": { "inputPath": "corpus/staging/ban-france.csv" },
+		"tiger": { "inputPath": "corpus/sources/tiger/tiger.db" },
+		"usgov-hrsa-fqhc": {
+			"inputPath": "corpus/sources/usgov-hrsa-fqhc/Health_Center_Service_Delivery_and_LookAlike_Sites.csv"
+		},
+		"usgov-nppes": { "inputPath": "corpus/sources/usgov-nppes/npidata_pfile_20050523-20260510.csv" },
+		"usgov-nad": { "inputPath": "corpus/sources/usgov-nad/featureserver" },
+		"usgov-imls-pls": { "inputPath": "corpus/sources/usgov-imls-pls/pls_fy23_outlet_pud23i.csv" },
+		"state-ia-contractors": {
+			"inputPath": "corpus/sources/state-ia-contractors/IA_Active_Construction_Contractor_Registrations.csv"
+		},
+		"state-tx-notaries": { "inputPath": "corpus/sources/state-tx-notaries/TX_Notary_Public_Commissions.csv" },
+		"state-ny-notaries": { "inputPath": "corpus/sources/state-ny-notaries/NY_Commissioned_Notaries.csv" }
+	}
+}

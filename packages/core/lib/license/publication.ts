@@ -10,7 +10,7 @@ import { APIClient, type APIClientConfig } from "#api/APIClient"
 import { ResourceError } from "#errors/schema"
 import { docsSiteURL } from "#license/docs-site"
 import type { PublishedLicenseKeys } from "#license/register"
-import { silentLogger } from "#logging/index"
+import { silentLogger } from "#logging"
 
 /**
  * Path of the well-known register that lists published signing keys.
@@ -24,8 +24,9 @@ export function licenseKeysWellKnownURL(): string {
 /**
  * Whether mailwoman.ai still lists a key id as active.
  *
- * `unreachable` is a network answer while `unpublished` means the site answered without
- * a register to give, and offline verification stands under both.
+ * `unreachable` means the network request received no answer.
+ * `unpublished` means the site answered without a register.
+ * Offline verification remains available in both states.
  */
 export type LicenseKeyPublication = "listed" | "retired" | "unlisted" | "unpublished" | "unreachable"
 

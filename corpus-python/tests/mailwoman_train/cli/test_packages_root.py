@@ -1,8 +1,8 @@
 """The weights-bundle destination is the checkout's own `packages/`, or a raised error.
 
 The previous implementation counted five parent hops from `cli.py` to the repo root and fell back
-to a relative `Path("packages")` when that missed. It missed: the file sits four hops down, so the
-search landed above the checkout, and `package` wrote its bundles under the working directory
+to a relative `Path("packages")` when that missed. It missed because the file sits four hops down.
+The search landed above the checkout. `package` then wrote its bundles under the working directory
 instead — the wrong place, reported as success.
 """
 

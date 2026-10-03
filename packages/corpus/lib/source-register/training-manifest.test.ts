@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The frozen source record, and the two things that make it worth having.
+ * @file Tests the frozen source record's reproducibility and sensitivity to source changes.
  *
- *   It has to be reproducible, so two builds over identical inputs agree and a reader can compare them. And it has to
- *   be sensitive, so a source, a grant, a row count or a recipe moving changes the digest rather than passing as the
- *   same record. A manifest that satisfied one and not the other would be either unusable or a rubber stamp.
+ *   Two builds over identical inputs must produce the same manifest so readers can compare them.
+ *   A source, grant, row count or recipe change must change the digest.
+ *   The tests verify both properties.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { describe, expect, it } from "vitest"
+
 import {
 	auditTrainingManifest,
 	freezeTrainingManifest,
@@ -20,8 +22,7 @@ import {
 	sourcesNotPermitting,
 	trainingManifestDigest,
 	type LicenseDecision,
-} from "@mailwoman/corpus/source-register"
-import { describe, expect, it } from "vitest"
+} from "#source-register"
 
 const elected: LicenseDecision = {
 	licenseID: "testland-open-data",
@@ -89,7 +90,8 @@ describe("freezeTrainingManifest", () => {
 
 	it("records a null decision for a license the register never carried", () => {
 		// An adapter stamping its own label — `CC0-1.0`, `Public Domain` — matches no register decision.
-		// A null says that, where omitting the source would make the build look as though it never read one.
+		// A null records that case, where omitting the source would make the build look as
+		// though it never read one.
 		const manifest = freeze({
 			rowsBySource: new Map([["wof-admin", { rows: 10, license: "CC0-1.0" }]]),
 		})
@@ -129,8 +131,8 @@ describe("auditTrainingManifest", () => {
 
 	it("refuses a manifest edited after its build", () => {
 		// The digest is what makes this record frozen rather than merely written.
-		// A hand edit to a generated artifact is the failure the source register's own
-		// digest exists to catch (#2352), and it applies here for the same reason.
+		// The source register's digest detects hand edits to generated artifacts.
+		// This test checks that protection on the manifest too.
 		const edited = freeze()
 
 		edited.sources[0]!.rows = 1

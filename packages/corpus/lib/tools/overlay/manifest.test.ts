@@ -3,15 +3,11 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import { useScratchDir } from "@mailwoman/corpus/test-kit"
-import {
-	assembleOverlayManifest,
-	baseManifestFiles,
-	rerootBaseFilePath,
-	splitFromFilename,
-} from "@mailwoman/corpus/tools"
 import { describe, expect, it } from "vitest"
+
+import { openDuckDB } from "#parquet/duckdb"
+import { useScratchDir } from "#test-kit"
+import { assembleOverlayManifest, baseManifestFiles, rerootBaseFilePath, splitFromFilename } from "#tools"
 
 const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
 
@@ -51,7 +47,8 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 	const scratch = useScratchDir("overlay-manifest")
 
 	/**
-	 * A base manifest on disk with one file, which is all the guard runs after.
+	 * A base manifest on disk with one file.
+	 * The guard runs after this state.
 	 */
 	async function writeBase(): Promise<string> {
 		// A string, because the overlay's `base` option is re-rooted as text.
@@ -129,8 +126,7 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		const parquet = await writeOverlayParquet("part-mismatch.train.parquet", "rendered-de")
 
 		// The loader groups rows by the column.
-		// Recording the caller's label instead would write a manifest that disagrees
-		// with the rows the run trains on.
+		// The caller's label would make the manifest disagree with the rows the run trains on.
 		await expect(
 			assembleOverlayManifest({
 				...overlay(parquet, "train"),
@@ -181,8 +177,8 @@ describe("rerootBaseFilePath", () => {
 
 describe("baseManifestFiles", () => {
 	it("reads a manifest written before the 2026-09-01 rename", () => {
-		// Every corpus built before the rename lists its parquets under the old key,
-		// and a built corpus is an immutable artifact.
+		// Every corpus built before the rename lists its Parquet files under the old key.
+		// A built corpus is an immutable artifact.
 		expect(baseManifestFiles(manifestWith(PRE_RENAME_FILES_KEY, ["a.parquet", "b.parquet"]))).toEqual([
 			{ path: "a.parquet" },
 			{ path: "b.parquet" },
@@ -199,15 +195,16 @@ describe("baseManifestFiles", () => {
 	})
 
 	it("REFUSES a manifest that names no file list under either key", () => {
-		// Neither key holds an array, so the manifest makes no statement about how many
-		// files there are, and answering an empty list reports a false absence.
+		// Neither key holds an array.
+		// The manifest makes no statement about the file count.
+		// An empty list would report a false absence.
 		const neither = { corpus_version: "v0.0.0" } as Parameters<typeof baseManifestFiles>[0]
 
 		expect(() => baseManifestFiles(neither)).toThrow(/names no file list/u)
 	})
 
 	it("answers an empty list for a manifest that declares one, because that is a measurement", () => {
-		// `slices: []` says the corpus holds no file.
+		// `slices: []` means the corpus holds no file.
 		// The overlay assembler's requirement for a non-empty base lives in its own caller.
 		expect(baseManifestFiles(manifestWith("slices", []))).toEqual([])
 	})

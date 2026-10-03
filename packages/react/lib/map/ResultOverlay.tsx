@@ -1,17 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `<ResultOverlay>` — the resolved-place outline (crisp admin polygon, or an approximate/exact-radius
- *   circle) as a declarative `<Source>` + fill/line `<Layer>`s. This replaces the demo's imperative
- *   `setPlaceOutline` / `drawApproxCircle` / `drawPlaceGeometry` / `clearBbox` helpers and their
- *   `whenStyleReady` guard: react-map-gl owns the "add source/layer once the style is loaded, remove on
- *   unmount" lifecycle, so the hand-rolled `isStyleLoaded()` / `styledata` races disappear.
- *
- *   Pass the `outline` straight from a {@link MapPlaceRenderSpec}; a `null` outline renders no geometry (the
- *   bare-point case). node-import safety: imports `react-map-gl/maplibre` — `@mailwoman/react/map` only.
- */
-
 import type { ReactNode } from "react"
 import { Layer, Source } from "react-map-gl/maplibre"
 
@@ -47,9 +36,6 @@ export interface ResultOverlayProps {
 
 /**
  * Render the resolved-place outline.
- *
- * One geojson `<Source>` feeds a translucent fill `<Layer>` and a solid line `<Layer>` —
- * the same two layers the imperative `setPlaceOutline` created, now declarative and self-cleaning.
  */
 export function ResultOverlay({
 	outline,

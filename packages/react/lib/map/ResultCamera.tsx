@@ -1,11 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Moves the map camera to a resolved place with MapLibre's imperative camera methods. A
- *   controlled map can use `cameraToViewState` for center targets instead.
- */
-
 import type { FitBoundsOptions } from "maplibre-gl"
 import { type ReactNode, useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
@@ -15,7 +10,7 @@ import type { MapCameraTarget } from "#map/place-render"
 /**
  * Builds `fitBounds` options without an undefined `duration` key.
  *
- * MapLibre checks whether the key exists, so `duration: undefined` can produce a NaN camera move.
+ * MapLibre checks for existence and can turn into a NaN camera move.
  */
 export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBoundsOptions {
 	return animate ? { padding } : { padding, duration: 0 }
@@ -26,24 +21,17 @@ export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBound
  */
 export interface ResultCameraProps {
 	/**
-	 * The camera target.
-	 * `null` leaves the camera where it is.
+	 * The camera target; `null` leaves the camera where it is.
 	 */
 	target: MapCameraTarget | null
 	/**
 	 * Whether to animate the move. @default true
-	 *
-	 * Without animation, a `center` target uses `jumpTo`.
-	 * A `bounds` target still uses `fitBounds` with `duration: 0` because MapLibre has no instant fit method.
 	 */
 	animate?: boolean
 }
 
 /**
- * Moves the map to `target`.
- *
- * Mount it as a child of `<Map>`.
- * It renders no visual output.
+ * Moves the map to `target`; mount it as a child of `<Map>`.
  */
 export function ResultCamera({ target, animate = true }: ResultCameraProps): ReactNode {
 	const map = useMap()

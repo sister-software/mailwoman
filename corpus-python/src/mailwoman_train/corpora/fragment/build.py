@@ -15,7 +15,7 @@ ASSAY TOOLING: if the assay confirms the data change, the production recipe grad
 holdout is written as JSONL (fragment-dev) for the read-out — NEVER into the trained rows.
 
 `push` stamps every row with the same provenance block and a running `source_id`, so the ORDER
-these blocks run in is baked into the ids and into the 10% holdout the final shuffle separates. Adding
+    these blocks run in is baked into the ids and into the 10% holdout the final shuffle separates. The builder adds
 a block in the middle renumbers everything after it.
 """
 
@@ -45,13 +45,14 @@ from .sources import (
     OA_LOCALES,
     PER_LOCALE_CAP,
     SEED,
+    SOURCE,
     admin_pairs_from_corpus,
     collect_oa_pairs,
     span_rows_from_corpus,
 )
 
-#: How a block adds one row: the rendered fields, the row's country, its locale, its licence note.
-#: Every block takes this rather than a list, because the id `push` stamps carries the row's INDEX —
+#: How a block adds one row: the rendered fields, the row's country, its locale, its license note.
+#: Every block takes this rather than a list, because the id `push` stamps stores the row's INDEX —
 #: a block that appended to its own list and merged later would renumber everything after it.
 Push = Callable[[dict[str, Any], str, str, str], None]
 
@@ -107,7 +108,7 @@ def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
             push(render_unit(unit, number, street), country, locale, license_note)
 
         # Fragment recipe v4: comma-free context rows (the census headline class — 71/143 street misses were
-        # unpunctuated street<->admin boundaries). Alternate rows carry the English country name.
+        # unpunctuated street<->admin boundaries). Alternate rows include the English country name.
         for index, (street, number, city) in enumerate(triples):
             push(
                 render_context(street, number, city, country, trailing, with_country=index % 2 == 0),
@@ -116,8 +117,8 @@ def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
                 license_note,
             )
 
-        # Fragment recipe v6 (#1104): country counterweight — the recipe-v5 mass is country-sparse, which eroded
-        # country recall 88.6%→82.0% on the fragment lineage. Emit a full address ending in the country
+        # Fragment recipe v6 (#1104): country counterweight — recipe-v5 mass was country-sparse.
+        # Country recall fell from 88.6% to 82.0% on the fragment lineage. Emit a full address ending in the country
         # token per triple, both comma'd and comma-free (golden has both), rotating the codex surface
         # forms, so the fine-tune keeps the country class alive without touching the fragment gains.
         surfaces = COUNTRY_SURFACES.get(country, [])
@@ -245,8 +246,8 @@ def push_country_counterweight_rows(
     Both draw from `country_rng`. It is seeded separately from the recipe's own shuffle. Therefore, this
     block's numbers do not move when a block before it changes size.
     """
-    # Fragment recipe v6 (#1104): country counterweight. The golden country classes are US + FR heavy, and neither
-    # is an OA_LOCALES locale, so those tails had zero signal — the country-sparse fine-tune eroded
+    # Fragment recipe v6 (#1104): country counterweight. The golden country classes are US + FR heavy.
+    # Neither is an OA_LOCALES locale, so those tails had zero signal. The country-sparse fine-tune eroded
     # recall 88.6%→82.0%. The corpus rarely co-locates street+locality in one row (WOF-admin-heavy), so
     # synthesize by zipping separate street + locality pools (both do exist in the corpus) with a codex
     # country surface tail (COUNTRY_SURFACES, sourced from @mailwoman/codex), comma'd and comma-free.
@@ -267,7 +268,7 @@ def push_country_counterweight_rows(
     country_rows = 0
 
     # US localities: the NAD admin pairs (English city names), not corpus_localities — the wof-admin
-    # locality harvest carries alternate-language surfaces ("Сельма"/"п'єдмонт"), which would teach a
+    # locality harvest includes alternate-language surfaces ("Сельма"/"п'єдмонт"), which would teach a
     # nonsense "English-street cyrillic-city USA" tail. ascii-filter as a safety net for any locale.
     country_localities: dict[str, list[str]] = {"US": [loc for loc, _ in admin_pairs]}
 
@@ -313,7 +314,7 @@ def push_country_counterweight_rows(
     # v2.9.2 (#1104): weight the leading surfaces to the multi-word forms ("United States of America",
     # "United States"). The v291 probe pinned the residual exactly there: short leading forms ("USA, AZ,
     # …" → country=USA) already parse. only the long form fails ("United States of America, …" → the
-    # 4-token phrase reads as a street). Rotating all 6 surfaces gave the long form only ~1/6 of leading
+    # 4-token phrase reads as a street). The builder rotates all 6 surfaces, giving the long form only ~1/6 of leading
     # rows. Bias to the multi-word forms so the model gets enough signal to stop reading them as street.
     leading_surfaces = [s for s in us_surfaces if len(s.split()) >= 2] or us_surfaces
     leading_rows = 0
@@ -331,7 +332,7 @@ def push_country_counterweight_rows(
 
 
 def write_output(args: argparse.Namespace, rows: list[dict[str, Any]], rng: random.Random) -> None:
-    """Shuffle once, separate the first tenth as the dev holdout, and write both.
+    """Shuffle once. Use the first tenth as the dev holdout, then write both outputs.
 
     The holdout is read, never trained, so the shuffle is what decides which rows a read-out can
     measure. It is the only place this function's `rng` is consumed.
@@ -370,8 +371,8 @@ def main() -> None:
                 **base,
                 "country": country,
                 "locale": locale,
-                "source": "synth-fragment",
-                "source_id": f"synth-fragment-{country}-{len(rows)}",
+                "source": SOURCE,
+                "source_id": f"{SOURCE}-{country}-{len(rows)}",
                 "corpus_version": "0.10.2",
                 "license": license_note,
                 "recipe": "fragment-assay",
@@ -385,7 +386,7 @@ def main() -> None:
     # surface rather than one value standing for all of them.
     #
     # The locale rows are OpenAddresses streets and localities written short. The harvest rows are
-    # localities read back out of the built corpus, whose register varies per row and is unknown at
+    # localities read back out of the built corpus. Their register varies per row and is unknown at
     # this point. The counterweight rows are country names from this repository's codex table.
     push_oa_locale_rows(
         args,

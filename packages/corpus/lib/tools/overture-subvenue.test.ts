@@ -7,15 +7,12 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import {
-	OVERTURE_SUBVENUE_CATEGORIES,
-	readOvertureLayerVintage,
-	readOvertureSubVenues,
-} from "@mailwoman/corpus/tools/overture-subvenue"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
+
+import { OVERTURE_SUBVENUE_CATEGORIES, readOvertureLayerVintage, readOvertureSubVenues } from "#tools/overture-subvenue"
 
 interface FixtureRow {
 	category: string
@@ -74,7 +71,7 @@ const ROWS: FixtureRow[] = [
 	{ category: "pier", name: "Pier 39", country: "US" },
 	{ category: "airport_lounge", name: "Delta Sky Club Concourse A", country: "US" },
 	{ category: "gas_station", name: "Holiday Station", country: "US" },
-	// Unnamed rows exist in the layer and carry no name a lexicon can learn from.
+	// Unnamed rows exist in the layer and have no name a lexicon can learn from.
 	{ category: "airport_terminal", name: null, country: "US" },
 ]
 
@@ -173,7 +170,7 @@ test("readOvertureSubVenues stamps the CONTEXT designator from the category, not
 	const rows = await readOvertureSubVenues({ databasePath })
 	const byName = new Map(rows.map((row) => [row.name, row]))
 
-	// A campus building named "Cuddy Hall" is context `campus` — the row's category — even though
+	// A campus building called "Cuddy Hall" is context `campus` — the row's category — even though
 	// the phrase inside the name names `hall`; attribution by phrase is the lexicon builder's job.
 	expect(byName.get("Cuddy Hall")?.designatorID).toBe("campus")
 	expect(byName.get("North Terminal")?.designatorID).toBe("terminal")
@@ -195,8 +192,8 @@ test("readOvertureSubVenues filters by country when asked", async () => {
 })
 
 test("a row from the reader satisfies SubVenueHarvestRow with no adaptation", async () => {
-	// The harvest row shape is source-neutral: `designatorID` and `name` are all the
-	// builder needs, and `ref` and `localizedNames` are optional.
+	// The harvest row shape is source-neutral: `designatorID` and `name` are all the builder needs.
+	// `ref` and `localizedNames` are optional.
 	const [row] = await readOvertureSubVenues({ databasePath, countries: ["CA"] })
 
 	expect(row).toBeDefined()

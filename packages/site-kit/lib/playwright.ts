@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Playwright configuration a static site's smoke runs under: `vite preview` over a fresh build, which serves
- *   `dist/` with the same SPA fallback Cloudflare applies, or a deployment when the named variable carries its URL.
+ *   The Playwright configuration a static site's smoke runs under: `vite preview` serves a fresh build
+ *   `dist/` with the same SPA fallback Cloudflare applies, or a deployment when the environment variable contains its URL.
  */
 
 import { defineConfig, devices, type PlaywrightTestConfig } from "@playwright/test"

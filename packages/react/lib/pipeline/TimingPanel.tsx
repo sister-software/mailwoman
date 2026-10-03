@@ -3,7 +3,7 @@
 
 /**
  *   `TimingPanel` — the per-stage timing breakdown: a stacked bar sized by each stage's wall-clock, plus a legend.
- *   Stage colours are distinct hues, never the confidence red/amber/green, because they encode the pipeline stage and
+ *   Stage colors are distinct hues, never the confidence red/amber/green, because they encode the pipeline stage and
  *   not quality.
  */
 

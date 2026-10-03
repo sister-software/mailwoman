@@ -24,9 +24,9 @@ A `layer_coverage` row describes the layer it lives in — `observed_rows` is de
 layer holds in the cell". Coverage about one layer's rows cannot directly be written into a
 different layer's table. That settles the artifact shape on its own:
 
-- Writing exclusion cells into `poi.db` would mean rebuilding the shipped artifact, which the pilot
+- Exclusion cells in `poi.db` would mean rebuilding the shipped artifact, which the pilot
   scope excludes and the sealed-artifact rule forbids patching.
-- Writing coverage cells that describe `poi.db`'s Overture rows into a new database would make
+- Coverage cells that describe `poi.db`'s Overture rows in a new database would make
   `observed_rows` a claim about somebody else's rows.
 
 So the pilot builds a complete layer of its own — manifest, domain rows, coverage — and its coverage
@@ -56,7 +56,7 @@ The region is **the union of res-6 H3 cells lying wholly inside the Île-de-Fran
 inventories are clipped to exactly that cell set. A cell is interior when its whole `gridDisk(cell, 1)`
 is in the region's own polyfill and all six of its boundary vertices are inside the outline. The
 polyfill keeps a cell whose center is inside, so its edge ring is half outside the region; the vertex
-test catches a boundary that re-enters between two neighbours. Measured: 371 polyfilled cells, 290
+test catches a boundary that re-enters between two neighbors. Measured: 371 polyfilled cells, 290
 interior.
 
 A bounding rectangle would have been simpler and wrong — it claims survey over every corner the
@@ -82,7 +82,7 @@ n1 = 1,460 · n2 = 3,248
 | primary  | 1,173 | 4,042.3 | 3,960.4 – 4,124.1 | 0.8035       | 0.7876      |
 | loose    | 1,250 | 3,793.4 | 3,730.9 – 3,855.9 | 0.8562       | 0.8423      |
 
-The recorded value is **0.6665** — the weakest lower bound the grid supports. Taking the minimum
+The recorded value is **0.6665** — the weakest lower bound the grid supports. The minimum
 rather than a chosen protocol's value keeps the threshold choice out of the claim: each protocol is a
 defensible reading of "the same pharmacy", so the claim is only as strong as the weakest of them.
 
@@ -100,7 +100,7 @@ so one row cannot answer for three.
 | loose    | ≤ 100 m, s ≥ 0.55 | ≤ 250 m, s ≥ 0.85 | ≤ 50 m  |
 
 The grid was fixed before any completeness value was read off it. The bands come from the
-nearest-neighbour distance distribution, which is strongly bimodal: over OSM rows with any Overture
+nearest-neighbor distance distribution, which is strongly bimodal: over OSM rows with any Overture
 row near, p25 = 8 m and p50 = 133 m. True co-locations sit under ~25 m; past ~150 m the near row is
 a different pharmacy.
 
@@ -110,9 +110,9 @@ One estimate covers all 290 cells. Per-cell capture-recapture is not available a
 290 cells over 3,248 subject rows is ~11 rows a cell — so a per-cell number would be noise dressed as
 precision.
 
-Applying a regional number uniformly is only direct if the region is not a mixture, so that was
-measured rather than assumed, stratifying on an external variable neither inventory can influence:
-the eight départements. Summing the per-stratum Chapman estimates against the pooled one:
+Uniform application of a regional number is direct only if the region is not a mixture. We measured
+rather than assumed that condition, stratifying on an external variable neither inventory can influence:
+the eight départements. We compare the per-stratum Chapman estimates against the pooled one:
 
 | protocol | pooled N̂ | Σ per-département N̂ | difference |
 | -------- | -------- | ------------------- | ---------- |
@@ -142,7 +142,7 @@ sources**: if a pharmacy is more likely to be in both inventories than chance wo
 branch on a high street against a single officine on a village lane — then `m` runs high, `N̂` runs
 low, and completeness runs **high**. That is the direction that turns a data gap into confident
 negative evidence, which is the worst failure this system has. The conservative reading (a lower
-confidence bound, minimised across the grid) controls the sampling half and addresses no part of this
+confidence bound, minimized across the grid) controls the sampling half and addresses no part of this
 half.
 
 Two smaller limits, both measured rather than argued:

@@ -76,13 +76,13 @@ prior **zeroed**, because unconditional it measured **US-golden −48**. That nu
 **street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`) rather than the gazetteer FST, and it is unaffected
 here: `geocode-core.ts` already calls `streetContextRequirementFor` — the same helper `runPipeline` calls, on
 purpose, so the two paths cannot drift (#1669) — so both ship `fstStreetContextPositiveScale = 0`
-identically. Turning the gazetteer prior on does not re-open the morphology question.
+identically. The gazetteer prior does not re-open the morphology question.
 
 ## Bounds
 
 The change is now visible to the gauntlet and to the parity corpus. It remains invisible to
 `eval error-analysis`, the coordinate panels and the golden per-tag evals, so "no known regression" is
-bounded by those two batteries. Closing that is the remainder of #1497.
+bounded by those two batteries. Issue #1497 tracks the remaining work.
 
 Five shipped overlays still carry no FST at all (`es-es` and `it-it` were built 2026-08-16 but are
 staged rather than promoted; `en-au`, `en-in`, `en-nz` have none), so the prior is inert for them and the

@@ -1,8 +1,19 @@
-id;id_fantoir;numero;rep;nom_voie;code_postal;code_insee;nom_commune;code_insee_ancienne_commune;nom_ancienne_commune;x;y;lon;lat;type_position;alias;nom_ld;libelle_acheminement;nom_afnor;source;certification_commune
-75108_0001_00001;7510800001;1;;Rue de Rivoli;75001;75101;Paris;;;651650.0;6862500.0;2.3408;48.8595;entrance;;;PARIS;RUE DE RIVOLI;BAN;1
-75108_0001_00010;7510800001;10;;Rue de Rivoli;75001;75101;Paris;;;651720.0;6862480.0;2.3416;48.8593;entrance;;;PARIS;RUE DE RIVOLI;BAN;1
-75108_0008_00001;7510800008;1;bis;Avenue des Champs-Élysées;75008;75108;Paris;;;651900.0;6863100.0;2.3036;48.8698;entrance;;;PARIS;AVENUE DES CHAMPS-ELYSEES;BAN;1
-69002_0010_00045;6900200010;45;;Cours Lafayette;69003;69383;Lyon;;;842500.0;6520500.0;4.8463;45.7595;entrance;;;LYON;COURS LAFAYETTE;BAN;1
-69002_0010_00046;6900200010;46;;Cours Lafayette;69003;69383;Lyon;;;842520.0;6520490.0;4.8464;45.7594;entrance;;;LYON;COURS LAFAYETTE;BAN;1
-13201_0050_00100;1320100050;100;;Rue de la République;13001;13201;Marseille;;;893000.0;6248000.0;5.3760;43.2964;entrance;;;MARSEILLE;RUE DE LA REPUBLIQUE;BAN;1
-06088_0020_00007;0608800020;7;;Promenade des Anglais;06000;06088;Nice;;;1043000.0;6298000.0;7.2620;43.6961;entrance;;;NICE;PROMENADE DES ANGLAIS;BAN;1
+id;id_fantoir;numero;rep;nom_voie;code_postal;code_insee;nom_commune;code_insee_ancienne_commune;nom_ancienne_commune;x;y;lon;lat;type_position;alias;nom_ld;libelle_acheminement;nom_afnor;source_position;source_nom_voie;certification_commune;cad_parcelles
+75108_0001_00001;7510800001;1;;Rue de Rivoli;75001;75101;Paris;;;651650.0;6862500.0;2.3408;48.8595;entrance;;;PARIS;RUE DE RIVOLI;bal;bal;1;
+75108_0001_00010;7510800001;10;;Rue de Rivoli;75001;75101;Paris;;;651720.0;6862480.0;2.3416;48.8593;entrance;;;PARIS;RUE DE RIVOLI;bal;bal;1;
+75108_0008_00001;7510800008;1;bis;Avenue des Champs-Élysées;75008;75108;Paris;;;651900.0;6863100.0;2.3036;48.8698;entrance;;;PARIS;AVENUE DES CHAMPS-ELYSEES;bal;bal;1;
+69002_0010_00045;6900200010;45;;Cours Lafayette;69003;69383;Lyon;;;842500.0;6520500.0;4.8463;45.7595;entrance;;;LYON;COURS LAFAYETTE;bal;bal;1;
+69002_0010_00046;6900200010;46;;Cours Lafayette;69003;69383;Lyon;;;842520.0;6520490.0;4.8464;45.7594;entrance;;;LYON;COURS LAFAYETTE;bal;bal;1;
+13201_0050_00100;1320100050;100;;Rue de la République;13001;13201;Marseille;;;893000.0;6248000.0;5.3760;43.2964;entrance;;;MARSEILLE;RUE DE LA REPUBLIQUE;bal;bal;1;
+06088_0020_00007;0608800020;7;;Promenade des Anglais;06000;06088;Nice;;;1043000.0;6298000.0;7.2620;43.6961;entrance;;;NICE;PROMENADE DES ANGLAIS;bal;bal;1;
+97123_0030_00202;;202;;Chemin de Bois Rimbault;97123;97123;Baillif;;;644000.0;1780000.0;-61.7472;16.0211;entrance;;;BAILLIF;CHEMIN DE BOIS RIMBAULT;commune;commune;1;
+97216_0040_00070;;70;;Allée des Moubins;97216;97216;L'Ajoupa-Bouillon;;;710000.0;1630000.0;-61.1333;14.8500;entrance;;;L AJOUPA BOUILLON;ALLEE DES MOUBINS;commune;commune;1;
+97390_0005_00005;;5;;Rue Gaston Monnerville;97390;97390;Régina;;;270000.0;450000.0;-52.1333;4.3167;entrance;;;REGINA;RUE GASTON MONNERVILLE;commune;commune;1;
+97412_0012_00087;;87;bis;Chemin Bras Petard;97412;97412;Bras-Panon;;;350000.0;7670000.0;55.6500;-21.0000;entrance;;;BRAS PANON;CHEMIN BRAS PETARD;commune;commune;1;
+97500_0003_00016;;16;;Rue du Baron de l'Esperance;97500;97501;Miquelon-Langlade;;;560000.0;5180000.0;-56.3800;47.0950;entrance;;;MIQUELON LANGLADE;RUE DU BARON DE L ESPERANCE;commune;commune;1;
+97630_0021_00079;;79;;Escalier Hamada Assani;97630;97630;Acoua;;;510000.0;8590000.0;45.0583;-12.7222;entrance;;;ACOUA;ESCALIER HAMADA ASSANI;commune;commune;1;
+97133_0008_00502;;502;;Chemin Marguerite;97133;97701;Saint-Barthélemy;;;520000.0;1970000.0;-62.8333;17.9000;entrance;;Anse des Cayes;SAINT BARTHELEMY;CHEMIN MARGUERITE;commune;commune;1;
+97150_0002_00002;;2;;Allée Rey;97150;97801;Saint-Martin;;;510000.0;2010000.0;-63.0500;18.0667;entrance;;Marigot;SAINT MARTIN;ALLEE REY;commune;commune;1;
+98735_0007_00007;;7;;Arati'a Farevai 1;98735;98735;Tumaraa;;;600000.0;8120000.0;-151.4500;-16.7500;entrance;;;TUMARAA;ARATI A FAREVAI 1;commune;commune;1;
+98736_sawq06_00003;;3;;;;98736;Pirae;;;229755.43;8057185.29;-149.5458;-17.5554;entrance;;;PIRAE;;commune;commune;0;
+98825_0011_00010;;10;;Rue des Sapins;98825;98825;Pouembout;;;320000.0;7620000.0;164.8833;-21.1333;entrance;;;POUEMBOUT;RUE DES SAPINS;commune;commune;1;

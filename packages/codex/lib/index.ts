@@ -2,22 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/codex` — per-address-system postal reference data and branded types.
+ *   Per-address-system postal reference data and branded types.
  *
  *   Each address system (the USPS for the United States, La Poste for France, Deutsche Post for
- *   Germany, …) has its own conventions for what a postcode, a street suffix, or a unit designator
- *   looks like. This package is the shared, dependency-free home for that reference knowledge, kept
- *   apart from the locale-agnostic tokenizer/solver in `@mailwoman/core` and from the training
- *   pipeline in `@mailwoman/corpus`. The parser, the resolver, and the synthesis layer all reach
- *   for the same tables instead of each carrying their own copy.
- *
- *   Systems are exposed as namespaces (`import { us } from "@mailwoman/codex"`) and as subpaths
- *   (`import { lookupStreetSuffix } from "@mailwoman/codex/us"`). The cross-system
- *   `candidateSystemsForPostcode` (the inverse of the per-system postcode patterns) is a top-level
- *   export. `levels` is the per-locale level/floor ordinal-semantics table (#1100) — like
- *   `candidateSystemsForPostcode`, it's inherently multi-locale, so it lives at the codex root
- *   (`./level-semantics.ts`) and is namespaced rather than given its own `@mailwoman/codex/<x>`
- *   subpath.
+ *   Germany and others) has its own conventions for a postcode, a street suffix or a unit
+ *   designator. This package is the shared, dependency-free home for that reference knowledge,
+ *   kept apart from the tokenizer and solver in `@mailwoman/core`.
  */
 
 export {
@@ -26,17 +16,18 @@ export {
 	type AddressSystemConventions,
 } from "#address/system-conventions"
 
+export * from "#abbreviations"
 export * from "#component"
 export * from "#normalize"
 export * from "#placetype-map"
-export * as au from "#au/index"
-export * as ca from "#ca/index"
-export * as de from "#de/index"
-export * as fr from "#fr/index"
-export * as gb from "#gb/index"
-export * as jp from "#jp/index"
+export * as au from "#au"
+export * as ca from "#ca"
+export * as de from "#de"
+export * as fr from "#fr"
+export * as gb from "#gb"
+export * as jp from "#jp"
 export * as levels from "#level-semantics"
-export * as nz from "#nz/index"
+export * as nz from "#nz"
 
 export {
 	AREA_POSTCODE_FINER_THAN_LOCALITY,
@@ -48,4 +39,4 @@ export {
 	UNIT_GRADE_POSTCODE,
 } from "#postcode/systems"
 
-export * as us from "#us/index"
+export * as us from "#us"

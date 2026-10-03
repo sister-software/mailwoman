@@ -27,7 +27,7 @@ validates the recipe, ES and IT are the obvious next two, and the only new input
 keys and a bounding box.
 
 NL is mostly the same story with a twist: the Dutch postcode carries two letters (`1012 LM`), and the
-model glues that letter-part onto the city. Rendering real Dutch tuples teaches both the order and
+model glues that letter-part onto the city. Real Dutch tuples show both the order and
 the postcode shape at once, so the same tooling covers it, but the postcode format is worth watching
 in the eval.
 
@@ -63,7 +63,7 @@ the same diagnosis as German: coverage rather than tokenizer. The synth-from-rea
 past the Latin scripts, and the expensive option of swapping in a multilingual encoder is less
 necessary than it looked, since the vocabulary is already multilingual enough to learn from.
 
-## Sequencing
+## Order the work
 
 Hold all of this behind the German result. If the German train lifts street and house_number without
 costing US or French accuracy, the recipe is proven and ES, IT, and NL follow on the same rails. If

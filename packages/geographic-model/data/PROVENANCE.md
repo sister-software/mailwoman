@@ -53,7 +53,7 @@ The category is authored in `curated-overlay.json` and emitted into `taxonomy.js
 `overtureCategories`, so `resolveOvertureCategories("pharmacy")` is the identity `["pharmacy"]`. The mapping states
 that the external identifier names this concept and nothing more: the containment hierarchy, the Overture-leaf
 translation, the phrase lexicon and the brand table stay owned by `@mailwoman/poi-taxonomy`.
-`test/unit/pharmacy-slice.test.ts` resolves the identifier through `getPOICategory` on every run, so a mapping onto a
+`lib/pharmacy-slice.test.ts` resolves the identifier through `getPOICategory` on every run, so a mapping onto a
 category the taxonomy no longer carries fails there rather than translating into nothing.
 
 The wave-1 sibling `poi-taxonomy-drugstore` reads the same way, onto `{ "id": "drugstore", "hierarchy": ["retail",
@@ -68,14 +68,14 @@ with, and the POI branch searches the union rather than choosing between them.
 Produced by `scripts/build-artifact.ts` from `model/`. **Do not hand-edit.** Regenerate with:
 
 ```bash
-node packages/geographic-model/lib/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
+node packages/geographic-model/tools/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
 ```
 
 The `oxfmt` pass is required because committed JSON must be `oxfmt`-clean (short arrays inline), which raw
 `JSON.stringify` cannot reproduce. Both the compiler and `oxfmt` are deterministic, so the committed artifact is
 reproducible from the records beside it.
 
-`test/unit/pharmacy-slice.test.ts` holds it fresh, and compares PARSED values rather than bytes for exactly the reason
+`lib/pharmacy-slice.test.ts` holds it fresh, and compares PARSED values rather than bytes for exactly the reason
 above — a byte comparison against `serializeCompiledModel` would fail on formatting the repository itself applies. Its
 failure message names the command in the block above. Byte determinism is asserted where it is meaningful: between two
 compiles of the same records, and between the committed artifact and a fresh compile once both have been run back

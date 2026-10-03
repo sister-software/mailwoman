@@ -52,8 +52,8 @@ Three findings, all the same direction:
    disambiguation the split restores.
 2. **The merge failure is catastrophic rather than cosmetic.** `locality = "Villeneuve Creuse"` resolves to
    **nothing** (0% across both strata). The AU-style locality+admin fuse doesn't mis-resolve — it
-   fails to resolve at all. Fixing it is pure upside.
-3. **Even unique communes benefit.** Adding the département lifts resolve-rate 65 → 87%: a bare
+   fails to resolve at all. The change should improve those cases without adding ambiguity.
+3. **Even unique communes benefit.** The département lifts resolve-rate 65 → 87%: a bare
    `{commune}` doesn't always resolve, and the admin context helps the resolver find it.
 
 **Verdict: the change is real. The resolver demonstrably uses the région tag, so a model that emits

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The application's data shapes — the messy record that goes in, and the canonical entity that
+ *   The application's data shapes — the messy record that goes in and the canonical entity that
  *   comes out. Plain interfaces over the `@mailwoman/record` types.
  */
 
@@ -102,7 +102,7 @@ export interface EntityGeoData {
  * The renderer assigns a color per distinct bucket value in first-seen order and builds
  * its legend from that set, so a bucket is any categorical label rather than only a
  * {@link ReconciliationBucket}; and a collection assembled from something other than resolved
- * entities (raw address points, links read back from a file) carries no entity id or display name.
+ * entities (raw address points, links read back from a file) have no entity id or display name.
  */
 export type MapFeatureData = Partial<Omit<EntityGeoData, "bucket">> & { bucket?: string }
 

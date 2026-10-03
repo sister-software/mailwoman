@@ -3,6 +3,7 @@
 
 import { type Flavor, namedFlavor } from "@protomaps/basemaps"
 
+import { MAP_FONT_ITALIC, MAP_FONT_MEDIUM, MAP_FONT_REGULAR } from "#styles/fonts"
 import { TileSetSourceID } from "#styles/sources"
 
 /**
@@ -24,6 +25,10 @@ const darkFlavor = namedFlavor("dark")
  */
 export const MailwomanBaseFlavor: Flavor = {
 	...darkFlavor,
+
+	regular: MAP_FONT_REGULAR,
+	bold: MAP_FONT_MEDIUM,
+	italic: MAP_FONT_ITALIC,
 
 	// #region Base
 	background: "hsl(0deg 10% 5%)",

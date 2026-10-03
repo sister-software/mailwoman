@@ -37,6 +37,21 @@ OA_LOCALES: dict[str, tuple[str, str, bool]] = {
 PER_LOCALE_CAP = 4000
 SEED = 42
 
+#: Every row of this recipe output stores this wire identifier. Each `source_id` begins with it.
+#:
+#: `RECIPE_SOURCES` in `packages/corpus/lib/recipes/sources.ts` defines both spellings of this source.
+#: It records `fragment-assay` as the current spelling. Python cannot import that table, so maintain
+#: both values in sync. This constant matches the table's `current` field.
+#: `WRITE_CURRENT_SOURCE_NAMES` in that file tells the TypeScript recipes which spelling to use.
+#:
+#: `v0.6.0-register-surface` and the `.pre-rename` copy of the staging directory store the retired spelling
+#: `synth-fragment`, and the configs that target either corpus key on it. A run of this generator writes rows
+#: for a corpus assembled after the rewrite, so it writes the current spelling.
+#:
+#: Composed into `source_id` rather than written twice, because `push` stamps the id from this and a rename
+#: that changed one and not the other would make the id name a source absent from every row.
+SOURCE = "fragment-assay"
+
 
 def collect_oa_pairs(
     oa_root: Path,
@@ -131,7 +146,7 @@ def span_rows_from_corpus(
         if done:
             break
 
-        # `iter_batches().to_pylist()` is row-aligned by construction. Zipping multiple ChunkedArrays
+        # `iter_batches().to_pylist()` is row-aligned by construction. The code zips multiple ChunkedArrays
         # silently misaligns columns at chunk boundaries.
         for batch in pq.ParquetFile(path).iter_batches(
             columns=["raw", "span_starts", "span_ends", "span_tags", "country"], batch_size=8192

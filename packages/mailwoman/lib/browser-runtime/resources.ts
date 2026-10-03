@@ -91,24 +91,38 @@ export function releasesManifestURL(locale: string): string {
 }
 
 /**
- * Returns the same-origin path of the sql.js-httpvfs runtime assets.
+ * Returns the same-origin path of the staged range worker and sqlite-wasm runtime.
  */
-export function sqljsBaseURL(siteBaseURL: string): string {
-	return `${siteBaseURL}mailwoman/sqljs`
+export function sqliteRuntimeBaseURL(siteBaseURL: string): string {
+	return `${siteBaseURL}mailwoman/sqlite`
 }
 
 /**
  * Returns a street-extract URL.
  *
- * National extracts use a dated path, and US state extracts use an undated path.
+ * National extracts and US state interpolation extracts use a dated path.
+ * US state situs extracts use an undated path.
  */
 export function streetExtractURL(slug: string, kind: "situs" | "interp"): string {
 	if (NATIONAL_STREET_SLUGS.has(slug)) {
 		return `${ASSET_BASE_URL}street/${slug}/${NATIONAL_STREET_EXTRACT_VERSION}/${kind}.db`
 	}
 
+	if (kind === "interp") {
+		return `${ASSET_BASE_URL}street/us/${slug}/${US_INTERPOLATION_EXTRACT_VERSION}/interp.db`
+	}
+
 	return `${ASSET_BASE_URL}street/us/${slug}/${kind}.db`
 }
+
+/**
+ * Version of the published US state interpolation extracts.
+ *
+ * The browser caches range chunks by URL and offset, so a rebuilt extract is published
+ * under a new version and never over an existing URL.
+ * Update it after uploading rebuilt extracts.
+ */
+export const US_INTERPOLATION_EXTRACT_VERSION = "2026-10-02"
 
 /**
  * Slugs of the national street extracts.
@@ -126,20 +140,25 @@ export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
 export const NATIONAL_STREET_FALLBACK_SLUG = "fr"
 
 /**
- * Version of the admin gazetteer, which every model release shares.
+ * Version of the admin gazetteer.
+ *
+ * Every model release shares it.
  * Update it after uploading a rebuilt gazetteer.
  */
 export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
 
 /**
- * Returns the URL of the global candidate gazetteer, which the runtime reads with byte ranges.
+ * Returns the URL of the global candidate gazetteer.
+ * The runtime reads it with byte ranges.
  */
 export function adminGazetteerURL(): string {
 	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
 }
 
 /**
- * Version of the POI layer, which every model release shares.
+ * Version of the POI layer.
+ *
+ * Every model release shares it.
  * Update it after uploading a rebuilt layer.
  */
 export const POI_LAYER_VERSION = "2026-07-20a"

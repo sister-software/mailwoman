@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Stamp each parsed span with the ISO 15924 script it is written in (#2282).
+ *   Stamp each parsed span with the ISO 15924 script it is written in.
  *
  *   This lives in `mailwoman` rather than in either package it draws on, because neither may reach the other:
- *   `@mailwoman/query-shape` owns `scriptForRange` and carries no `@mailwoman/*` dependency at all, and
+ *   `@mailwoman/query-shape` owns `scriptForRange` and has no `@mailwoman/*` dependency at all.
  *   `@mailwoman/core` owns `AddressTree` and may not depend on query-shape. The entry package depends on both, so the
  *   join happens once, here, rather than as a re-typed fold on either side.
  */
@@ -17,9 +17,9 @@ import { classifyTokens, scriptForRange } from "@mailwoman/query-shape"
  * Write `script` onto every node of `tree`, in place.
  *
  * `text` must be the string the node offsets index into.
- * The normalized input rather than the raw one, since that is what the classifier labelled.
+ * The normalized input rather than the raw one, since that is what the classifier labeled.
  *
- * Passing the raw string would silently mis-range every span on any input normalization touched.
+ * The raw string would silently mis-range every span on any input normalization touched.
  *
  * The tokens are classified here rather than read off the pipeline's `QueryShapeLite`,
  * whose per-token `script` is optional and typed as a plain string: narrowing that back

@@ -21,7 +21,7 @@ own coordinates. In the canonical order, 96 of 100 land within a kilometer. With
 the front, 97 of 100 do. Four rows lose part of the street name in the parse, and two land on a
 same-named street in a neighboring commune.
 
-The page states next to the score that the test is circular. Grading a BAN-backed tier against BAN
+The page states next to the score that the test is circular. A BAN-backed tier graded against BAN
 measures parsing and routing. It does not measure coordinate accuracy.
 
 [France — 100 addresses from the BAN](./france-ban.mdx)
@@ -44,9 +44,9 @@ successes. An evaluation set can be drawn from the reference data it is graded a
 can be quoted as if it represented a population. A timing figure can change on a different host. The
 page illustrates each case with one of our own numbers.
 
-[Reading our numbers](./reading-our-numbers.mdx)
+[How to read our numbers](./reading-our-numbers.mdx)
 
-## Running them yourself
+## Run the benchmarks yourself
 
 [`run-all.sh`](/benchmarks/run-all.sh) pulls the two data bundles the panels need, the 2.88 GB global
 gazetteer and the 6.95 GB French rooftop database. It then runs both panels in one pass:
@@ -83,7 +83,7 @@ package publishes the file as `model.onnx`, so your own re-run will record that 
 
 ## What is not here
 
-These pages do not compare Mailwoman against another geocoder's output. Benchmarking someone else's
+These pages do not compare Mailwoman against another geocoder's output. To benchmark someone else's
 service means running it under terms we did not write, on a query mix we chose, and publishing an
 accuracy number for a system we do not maintain. [Compare](../compare/index.mdx) sets out what each of the alternatives is built
 for and when to choose it, without claiming an accuracy figure on its behalf.

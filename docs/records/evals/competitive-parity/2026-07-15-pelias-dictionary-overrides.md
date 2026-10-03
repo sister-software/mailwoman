@@ -54,7 +54,7 @@ two meanings collide, one must **die — globally and permanently**. There is no
 smells like Spain."
 
 **This is pragmatism, and the EV is correct.** Art, Texas has eighteen residents; the word "art" appears
-in millions of queries. Deleting `art` is the right call _given a dictionary_. Nobody was careless.
+in millions of queries. The dictionary should remove `art`. Nobody was careless.
 
 **It becomes scar tissue in one specific sense: it is irreversible and context-free.** The deletion has
 no locale check, no confidence, no conditions to revisit. It is a global `if false`, and the reason it

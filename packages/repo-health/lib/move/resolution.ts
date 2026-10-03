@@ -69,8 +69,8 @@ export function createMoveResolver(
 	/**
 	 * Converts a path through a `node_modules` symlink to its real path, so it matches the overlay keys.
 	 *
-	 * The path may not exist yet, so the walk trims trailing segments until it reaches
-	 * an existing path, resolves that, and appends the trimmed segments again.
+	 * The path may not exist yet, so the walk trims trailing segments until it reaches an
+	 * existing path, resolves that path and appends the trimmed segments again.
 	 */
 	const canonical = (path: string): string => {
 		if (!path.includes("/node_modules/")) return path

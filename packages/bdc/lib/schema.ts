@@ -24,7 +24,7 @@ import type { Kysely } from "kysely"
  * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)
  * tuple in the default build mode.
  *
- * A triple whose BSLs carry differing speed tiers keeps multiple rows here.
+ * A triple whose BSLs have differing speed tiers keeps multiple rows here.
  */
 export interface BDCAvailabilityTable {
 	/**
@@ -58,20 +58,19 @@ export interface BDCAvailabilityTable {
  * No FK against `bdc_availability.provider_id`, since SQLite does not enforce FKs
  * without `pragma foreign_keys` and the join happens at read time.
  *
- * An explicitly lossy denormalization rather than the source of truth: the FCC's
- * provider list lets one `provider_id` carry multiple `frn` values and conflicting
- * `holding_company` strings, which a one-row-per-provider table cannot express.
+ * An explicitly lossy denormalization rather than the source of truth: the FCC's The provider list
+ * lets one `provider_id` map to multiple `frn` values and conflicting `holding_company` strings.
+ * A one-row-per-provider table cannot express those values.
  * `filer.db` (`@mailwoman/filer`) retains every edge.
  *
  * - `frn` holds only the primary FRN — the one carrying the most recent Form
  *   499 filing date, per `@mailwoman/filer/sdk`'s `readFRNFilingCandidates` +
  *   `pickPrimaryFRN` (imported, never reimplemented).
  *   Every other FRN is recoverable from `filer.db`.
- * - `holding_company` is populated directly when its rows carry exactly one distinct
- *   non-null value, and stays NULL on a conflict because `holding_company` has
- *   no most-recent-filing rule the way `frn` does.
+ * - `holding_company` is populated directly when its rows contain exactly one distinct non-null value.
+ *   It stays NULL on a conflict because `holding_company` has no most-recent-filing rule the way `frn` does.
  *   Every discarded value remains recoverable from `filer.db`.
- * - `brand_name` stays NULL unconditionally: the provider list carries no brand-name column.
+ * - `brand_name` stays NULL unconditionally: the provider list has no brand-name column.
  */
 export interface BDCProviderTable {
 	provider_id: number
@@ -122,8 +121,8 @@ export async function createBDCAvailabilityTable(db: Kysely<BDCDatabase>): Promi
 /**
  * Create `bdc_provider`.
  *
- * A single-column integer primary key is already the SQLite rowid alias,
- * and `without rowid` only pays off for a composite or non-integer key.
+ * A single-column integer primary key is already the SQLite rowid alias.
+ * `without rowid` only pays off for a composite or non-integer key.
  */
 export async function createBDCProviderTable(db: Kysely<BDCDatabase>): Promise<void> {
 	await db.schema

@@ -11,7 +11,7 @@
  *
  *   1. **Reversed ordering** — region → county → locality → block → house_number "東京都世田谷区南町1-2-3" not
  *        "1-2-3 Minamicho, Setagaya, Tokyo"
- *   2. **No street names** — most JP addresses use a block/sub-block grid system. The "neighbourhood"
+ *   2. **No street names** — most JP addresses use a block/sub-block grid system. The "neighborhood"
  *        placetype (丁目) is the closest analog to a street but is actually a grid cell.
  *   3. **Postcode-first convention** — addresses are often prefixed with `〒NNN-nnnn`.
  *
@@ -20,7 +20,7 @@
  *   | JP concept | WOF placetype | ComponentTag (Phase 6) |
  *   |-----------------|--------------------|-----------------------| | 都道府県 (prefecture) | region |
  *   region (or prefecture) | | 市区町村 (city/ward) | county/locality | locality (or municipality) | |
- *   丁目 (chome) | neighbourhood | block (Phase 6 tag) | | 番地 (banchi) | (synth) | sub_block | | 号
+ *   丁目 (chome) | neighborhood | block (Phase 6 tag) | | 番地 (banchi) | (synth) | sub_block | | 号
  *   (gō) | (synth) | house_number | | 〒 (postcode prefix) | — | postcode |
  *
  *   This adapter currently emits only the admin chain (region → locality → block). House numbers and
@@ -61,8 +61,11 @@ interface PlaceRow {
  *
  * `resolve` is the override for a parent outside the preloaded set (a chain that leaves the country);
  * it is a point query, so keeping the common case out of it is the whole point.
- * The GeoJSON adapters' in-memory analogue is `buildAncestryIndex` (`#utils`); the two stay separate
- * because this one's rows come from SQLite and a chain can leave the preloaded country set.
+ * The GeoJSON adapters' in-memory analogue is `buildAncestorNameIndex` (`#utils`), and the two stay
+ * separate because this one's rows come from SQLite and a chain can leave the preloaded country set.
+ *
+ * That analogue stores the nearest ancestor's name for each tag.
+ * This function receives one `PlaceRow` per level and reads the chain directly.
  */
 function chainOf(
 	byID: Map<number, PlaceRow>,
@@ -133,8 +136,8 @@ export function synthesizeJpAddress(
 /**
  * Build the JP adapter.
  *
- * Reads from the unified global WOF SQLite, walks admin chains starting from
- * neighbourhoods, and yields canonical rows.
+ * Reads from the unified global WOF SQLite and walks admin chains from neighborhoods.
+ * Yields canonical rows.
  */
 export function createWOFAdminJpAdapter(): CorpusAdapter {
 	return {
@@ -142,7 +145,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 		defaultLicense: "CC-BY-4.0",
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.WhosOnFirst,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description: "Japanese admin hierarchy from WOF (synthesized addresses without house numbers).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -162,7 +165,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 			}
 
 			// One read of the JP place table instead of a fresh `prepare` + up to six point queries per seed.
-			// There are tens of thousands of neighbourhood seeds.
+			// There are tens of thousands of neighborhood seeds.
 			const byID = new Map<number, PlaceRow>()
 
 			for (const row of allRows<PlaceRow>(

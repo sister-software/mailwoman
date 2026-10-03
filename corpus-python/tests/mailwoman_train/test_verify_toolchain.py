@@ -1,6 +1,8 @@
 """Tests for scripts/verify_toolchain.py.
 
-Guards that the export/quant pins stay consistent across pyproject, the Modal image and the export opset, and that the ruff pin matches every `uvx ruff@` call site, so a one-sided bump goes red here rather than at the next export or as a local linter that disagrees with CI.
+The checks keep the pinned export and quantization versions consistent. They check pyproject, the Modal image, plus the export opset. Each `uvx ruff@` call site must also match the pinned Ruff version.
+
+A one-sided version bump fails here before the next export. This check catches disagreement between the local linter and CI.
 """
 
 from __future__ import annotations

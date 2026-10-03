@@ -54,7 +54,7 @@ Every path in this section was read at the commit this record was written agains
 | External snapshot                   | `packages/poi-taxonomy/data/overture-categories.csv` — Overture schema `v1.17.0`, CDLA-Permissive-2.0                                        |
 | Generated, committed merge          | `packages/poi-taxonomy/data/taxonomy.json` — 2,113 categories, 55 synonyms; **do not hand-edit**                                             |
 | Provenance + regeneration procedure | `packages/poi-taxonomy/data/PROVENANCE.md`                                                                                                   |
-| Matching core                       | `packages/poi-taxonomy/lib/lookup-core.ts` (`createLookupCore`, `lookupPOICategory`, `requiresBuildLocalLayer`, `resolveOvertureCategories`) |
+| Core matcher                        | `packages/poi-taxonomy/lib/lookup-core.ts` (`createLookupCore`, `lookupPOICategory`, `requiresBuildLocalLayer`, `resolveOvertureCategories`) |
 
 Three structures exist over categories, and none of them is a relation in the sense this program
 needs:
@@ -117,7 +117,7 @@ capability.
 | Lexicon adapter + stage build | `packages/mailwoman/lib/poi-intent.ts` (`poiTaxonomyLookup`, `createPOIIntentStage`)                                         |
 | Intent execution              | `packages/mailwoman/lib/poi-executor.ts` (`createPOIExecutor`)                                                               |
 | Backend probe                 | `packages/resolver-wof-sqlite/lib/poi-lookup.ts` (`POILookup.search`, `#searchKRing`)                                        |
-| Wiring                        | `packages/mailwoman/lib/runtime-pipeline.ts` (`poiQueryKind`, default-on)                                                    |
+| Runtime connection            | `packages/mailwoman/lib/runtime-pipeline.ts` (`poiQueryKind`, default-on)                                                    |
 | Interface types               | `packages/core/lib/pipeline/types.ts` (`POIIntent`, `POIResult`, `POIIntentOutcome`)                                         |
 | Layer build                   | `packages/mailwoman/lib/gazetteer-pipeline/poi/build-poi.ts`                                                                 |
 | Committed board + fixtures    | `packages/mailwoman/lib/eval-harness/poi-board.ts`, `packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl` (51 rows) |
@@ -200,14 +200,14 @@ mechanism-account vocabulary. An address-path shape has no meaning for a POI que
 
 ## 3. The package boundary
 
-| Owner                                                             | Owns                                                                                                                                                                                                                                                                     | Must not own                                                                                                         |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `@mailwoman/poi-taxonomy`                                         | External and curated POI category vocabulary; category hierarchy; the Overture-leaf translation; query phrase → category lexicon; brands                                                                                                                                 | Relations other than containment; activities; affordances; per-assertion provenance                                  |
-| `@mailwoman/geographic-model` (`packages/geographic-model/`)      | Stable concepts beyond the POI vocabulary; relation definitions; activities and affordances; rule modality; source observations; derived facts; derivation provenance; deterministic compilation and validation; mappings from external vocabularies into world concepts | Ranking weights, boosts, penalties, or any candidate-ordering API; a second POI taxonomy; a second coverage register |
-| `@mailwoman/core/layers`                                          | Dataset identity (`layer_manifest`); coverage epistemics (`layer_coverage`, `CoverageBasis`, `supportsExclusion`)                                                                                                                                                        | World semantics of any kind                                                                                          |
-| Mailwoman runtime / resolver                                      | Candidate lookup, anchor resolution, POI execution, and the join of candidates with layer evidence and (later) world facts; candidate ordering                                                                                                                           | Authored world knowledge                                                                                             |
-| Learned decoding (`@mailwoman/neural`, `@mailwoman/core/decoder`) | Interpretation of observations; the decode objective                                                                                                                                                                                                                     | Authored imperatives that bypass interpretation                                                                      |
-| #1683                                                             | Empirical, spatial activity-affordance statistics fitted from data                                                                                                                                                                                                       | The stable activity/affordance identifiers themselves — those come from the geographic model                         |
+| Owner                                                             | Owns                                                                                                                                                                                                                                                                     | Must not own                                                                                                 |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `@mailwoman/poi-taxonomy`                                         | External and curated POI category vocabulary; category hierarchy; the Overture-leaf translation; query phrase → category lexicon; brands                                                                                                                                 | Relations other than containment; activities; affordances; per-assertion provenance                          |
+| `@mailwoman/geographic-model` (`packages/geographic-model/`)      | Stable concepts beyond the POI vocabulary; relation definitions; activities and affordances; rule modality; source observations; derived facts; derivation provenance; deterministic compilation and validation; mappings from external vocabularies into world concepts | Weights, boosts, penalties, or any candidate-ordering API; a second POI taxonomy; a second coverage register |
+| `@mailwoman/core/layers`                                          | Dataset identity (`layer_manifest`); coverage epistemics (`layer_coverage`, `CoverageBasis`, `supportsExclusion`)                                                                                                                                                        | World semantics of any kind                                                                                  |
+| Mailwoman runtime / resolver                                      | Candidate lookup, anchor resolution, POI execution, and the join of candidates with layer evidence and (later) world facts; candidate ordering                                                                                                                           | Authored world knowledge                                                                                     |
+| Learned decoding (`@mailwoman/neural`, `@mailwoman/core/decoder`) | Interpretation of observations; the decode objective                                                                                                                                                                                                                     | Authored imperatives that bypass interpretation                                                              |
+| #1683                                                             | Empirical, spatial activity-affordance statistics fitted from data                                                                                                                                                                                                       | The stable activity/affordance identifiers themselves — those come from the geographic model                 |
 
 The following dependency rules are required:
 
@@ -306,7 +306,7 @@ preference between `pharmacy` and `drugstore`, because the schema has no field f
 `drugstore` is a kind of `establishment` **directly** rather than of `healthcare_facility`, for three
 reasons. The external hierarchy puts it under `retail`, disjoint from `health_and_medical`.
 `healthcare_facility` is defined as premises that exist to provide healthcare, and a retail premises
-with a dispensing counter falls outside that definition. Placing it there would also give every later healthcare
+with a dispensing counter falls outside that definition. That placement would also give every later healthcare
 class a retail ancestor.
 
 #### The one vocabulary correction: `affords` becomes defeasible
@@ -317,7 +317,7 @@ row count is a census of dispensing. The evidence supports `strongly_expected`.
 
 Under the `affords` relation as §4 froze it, that modality has no defined reading.
 `RelationSemantics.Hard` means an exception is a defect in the record set, a claim that only
-`necessary` and `prohibited` make. Admitting W1-2 therefore requires the relation record in
+`necessary` and `prohibited` make. Wave 1-2 therefore requires the relation record in
 `packages/geographic-model/data/model/relations.json` to read `semantics: "defeasible"`, and this
 amendment admits that change. The change has three consequences:
 
@@ -356,7 +356,7 @@ amendment admits that change. The change has three consequences:
 | A second activity, any                                               | No committed input set holds an activity-phrased query for any activity but `obtain_medication`; the four rows that exist (`sem-act-us-01`, `sem-act-us-02`, `sem-act-fr-01`, `sem-act-mx-01`) all register that one. §5.5's first bound therefore still stands for every other activity: no committed input exists to measure against. |
 | Concept `hospital`, from board row `syn-01` (`er near Denver CO`)    | The row **passes** today. A passing row is a control rather than a target — stop condition 4 wants a mechanism the observation can address, and no observation measures a missing `obtain_medication` affordance for a hospital.                                                                                                        |
 | Concept `chemist` for en-GB / en-AU / en-NZ                          | Not a class. `curated-overlay.json` carries `{ "phrase": "chemist", "categoryID": "pharmacy", "locales": ["en-GB", "en-AU", "en-NZ"] }`, and §5.2 measured `chemist near London` under `en-GB` reaching `cat=pharmacy` at confidence 1. The existing `pharmacy` concept and W1-3's sibling mapping already carry it.                    |
-| `chemist` with no locale supplied — §5.2 measured `NO SUBJECT MATCH` | A real measured gap and not a semantic one. The phrase index is locale-scoped and the miss is in recognition; the phrase surface belongs to `@mailwoman/poi-taxonomy` and to #1962. Minting a concept would not change that result.                                                                                                     |
+| `chemist` with no locale supplied — §5.2 measured `NO SUBJECT MATCH` | A real measured gap and not a semantic one. The phrase index is locale-scoped and the miss is in recognition; the phrase surface belongs to `@mailwoman/poi-taxonomy` and to #1962. A new concept would not change that result.                                                                                                         |
 | Concepts `supermarket` / `convenience_store` as further afforders    | Plausible and unattested. Both ids exist in the table; neither has a committed row, a measurement, or a filed defect saying a dispensing counter is unreachable. Plausibility is the thing stop condition 4 exists to refuse.                                                                                                           |
 | W1-2's claim extended to `CA`, `GB` or `MX`                          | §5.3's counts there (CA 369, GB 117, MX 3) bound a population and assert no fact about what those premises afford — the record says so in place. No committed curator statement scopes the class to those countries the way the en-US entry does.                                                                                       |
 | W1-2's claim extended to `FR`                                        | Additionally refuted by the data: §5.3's FR `drugstore` count is a **measured zero**, from a group-by that scanned every row. There is no row for the mapping to reach.                                                                                                                                                                 |
@@ -369,7 +369,7 @@ amendment admits that change. The change has three consequences:
 
 #### What this amendment does not change
 
-- **Ranking behavior**, exactly as §4 froze it. No wave-1 record emits an ordering, a score term, a boost
+- **Rank ordering**, exactly as §4 froze it. No wave-1 record emits an ordering, a score term, a boost
   or a penalty, and the schema has no numeric field that could carry one.
 - **Retrieval.** #1933 owns the related retrieval defect: the en-US `drugstore` synonym can never be
   reached, because the category's own id-as-phrase is inserted into the index first and both score
@@ -400,8 +400,8 @@ cell for cell: `pharmacy` 82,168 (US 44,945 · GB 7,694 · FR 11,984 · CA 9,617
 7,168 (US 6,679 · GB 117 · **FR 0** · CA 369 · MX 3), over 14,664,001 rows in five countries. **The FR
 exclusion stays closed.** Both the full group-by scan and a direct count confirm the zero, and
 **W1-2's US target is unchanged** at 6,679 of 7,168. One correction applies to how the figure is taken.
-Joining `poi.category_id` through `poi_category_codes` drops 773,210 rows carrying the sentinel
-`category_id = 0` without reporting them, so the layer total must be read unjoined. Neither
+The join from `poi.category_id` through `poi_category_codes` drops 773,210 rows with the sentinel
+`category_id = 0` without reporting them, so the layer total must come from the unjoined table. Neither
 pharmacy-adjacent leaf is affected.
 
 **What landed:** W1-1 (the `drugstore` concept), W1-2 (its US-scoped `strongly_expected` assertion),
@@ -467,7 +467,7 @@ replaced by an activity phrase, so anchor resolution is held constant and only t
 
 ### 5.2 What the baseline does — measured rather than reasoned
 
-Running the shipped `matchPOISubject` against the shipped `poiTaxonomyLookup`:
+The shipped `matchPOISubject` returns this result against the shipped `poiTaxonomyLookup`:
 
 ```text
 "pharmacy near Denver CO"                            en-US  subject="pharmacy"  cat=pharmacy   conf=1
@@ -546,7 +546,7 @@ a relation type, country scope, or per-assertion provenance.
   cannot meet it with the current corpora. #1928 must either commit the rows to the POI board first
   (graded on outcomes only, per the anti-Pelias commitment in
   `docs/superpowers/specs/2026-08-17-mechanism-accounts.md` §2), or pre-register on the §5.3 recall
-  gap, whose control rows are already committed. Manufacturing a passing fixture triggers a stop
+  gap, whose control rows are already committed. An artificial passing fixture triggers a stop
   condition and is not an acceptable workaround.
 - **The board's grader cannot see the §5.3 gap.** `gradeCase` checks `results[0].categoryID` and the
   nearest distance, and it never measures recall. `cat-us-05` passes today and would still pass with
@@ -575,7 +575,7 @@ a relation type, country scope, or per-assertion provenance.
   and a future proposal to weaken it must amend both records.
 - Source observations stay separate from derived facts, and every mapping and derivation preserves
   provenance.
-- Missing data becomes negative evidence only through exclusion-grade coverage supplied by
+- Absent data becomes negative evidence only through exclusion-grade coverage supplied by
   `@mailwoman/core/layers`.
 - Law tests extend the existing gauntlet, board, trace, and dev-MCP implementation instead of a
   separate test system.
@@ -617,7 +617,7 @@ statistics, water/land compatibility, coverage inference, spatial statistics, ma
 - Whether the `poi.db` coverage register gets an earned basis, and by what measurement. §2.3 records
   only that it has none today, which is what makes the increment's coverage rule a check rather than a
   capability.
-- The `drugstore`/`pharmacy` retrieval split in §5.3. It is recorded as evidence. Ranking and retrieval
+- The `drugstore`/`pharmacy` retrieval split in §5.3. This record preserves the evidence. Rank order and retrieval
   behavior are unchanged by this record, and any repair is separate work with its own D-rule
   obligations. That repair is now filed as **#1933** and stays outside this program. §4.1 admits only
   the semantic half of the same problem.

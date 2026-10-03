@@ -1,0 +1,92 @@
+{
+	"$schema-note": "Adapter inputs for one base corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch, because the data root moved from /mnt/playpen/mailwoman-data to /mnt/mw on 2026-09-23 and the previous record's absolute paths stopped resolving.",
+	"$registers-note": "This record carries every address register read for #2323. All eighteen write their input through `mailwoman corpus fetch <id>`: a fetcher writes under `$MAILWOMAN_DATA_ROOT/corpus/sources/<adapter id>/`, and an adapter that wants one file or one subdirectory inside that directory states it through its own `…InputPath` helper, which is where each `inputPath` below comes from.",
+	"$policy-note": "Gipuzkoa's register entry elects CC-BY-SA-4.0 and is absent here for want of a fetcher rather than for its licence. When it gains one, a build behind a published model runs `--license-policy share-alike-free`, which refuses its rows and records the refusal in `refused_rows_by_source`. `internal/strategy/mailwoman-cc-by-sa-training-model-rights-2026-10-03.md` states why that exclusion is a release decision rather than a finding that share-alike reaches trained weights.",
+	"corpusVersion": "v0.8.0-registers",
+	"adapters": {
+		"wof-admin": {
+			"inputPath": "src/wof-repos"
+		},
+		"wof-postalcode": {
+			"inputPath": "src/wof-repos"
+		},
+		"ban": {
+			"inputPath": "corpus/staging/ban-france.csv"
+		},
+		"tiger": {
+			"inputPath": "corpus/sources/tiger/tiger.db"
+		},
+		"usgov-hrsa-fqhc": {
+			"inputPath": "corpus/sources/usgov-hrsa-fqhc/Health_Center_Service_Delivery_and_LookAlike_Sites.csv"
+		},
+		"usgov-nppes": {
+			"inputPath": "corpus/sources/usgov-nppes/npidata_pfile_20050523-20260510.csv"
+		},
+		"usgov-nad": {
+			"inputPath": "corpus/sources/usgov-nad/featureserver"
+		},
+		"usgov-imls-pls": {
+			"inputPath": "corpus/sources/usgov-imls-pls/pls_fy23_outlet_pud23i.csv"
+		},
+		"state-ia-contractors": {
+			"inputPath": "corpus/sources/state-ia-contractors/IA_Active_Construction_Contractor_Registrations.csv"
+		},
+		"state-tx-notaries": {
+			"inputPath": "corpus/sources/state-tx-notaries/TX_Notary_Public_Commissions.csv"
+		},
+		"state-ny-notaries": {
+			"inputPath": "corpus/sources/state-ny-notaries/NY_Commissioned_Notaries.csv"
+		},
+		"cz-cuzk": {
+			"inputPath": "corpus/sources/cz-cuzk"
+		},
+		"ryhti": {
+			"inputPath": "corpus/sources/ryhti/open_address.csv"
+		},
+		"ads": {
+			"inputPath": "corpus/sources/ads/address.jsonl"
+		},
+		"emuia": {
+			"inputPath": "corpus/sources/emuia/address.gml"
+		},
+		"dk-inspire": {
+			"inputPath": "corpus/sources/dk-inspire/ad_inspire.gpkg"
+		},
+		"bd-adresses": {
+			"inputPath": "corpus/sources/bd-adresses/addresses.csv"
+		},
+		"it-anac": {
+			"inputPath": "corpus/sources/it-anac"
+		},
+		"brussels": {
+			"inputPath": "corpus/sources/brussels/URBIS_ADM_Adresses.zip"
+		},
+		"wallonie": {
+			"inputPath": "corpus/sources/wallonie/AD.Addresses.gml.zip"
+		},
+		"vlaanderen": {
+			"inputPath": "corpus/sources/vlaanderen"
+		},
+		"es-catastro": {
+			"inputPath": "corpus/sources/es-catastro"
+		},
+		"es-bizkaia": {
+			"inputPath": "corpus/sources/es-bizkaia"
+		},
+		"es-gipuzkoa": {
+			"inputPath": "corpus/sources/es-gipuzkoa/ES.GFA.AD.zip"
+		},
+		"es-navarra": {
+			"inputPath": "corpus/sources/es-navarra"
+		},
+		"nl-kadaster": {
+			"inputPath": "corpus/sources/nl-kadaster/addresses.gml.gz"
+		},
+		"matrikkelen": {
+			"inputPath": "corpus/sources/matrikkelen/0000/matrikkelenAdresse.csv"
+		},
+		"sk-inspire": {
+			"inputPath": "corpus/sources/sk-inspire"
+		}
+	}
+}

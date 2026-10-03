@@ -7,8 +7,8 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
  * Describes a resolved place whose coordinate may be absent, such as a
  * postcode-prefix hit with ancestry only.
  *
- * A missing coordinate must stay `undefined` rather than become an invented centroid,
- * which would place the postcode somewhere it is not.
+ * A missing coordinate stays `undefined`.
+ * An invented centroid would place the postcode at a point the data does not support.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
@@ -20,7 +20,7 @@ const MIN_US_SECTION_CODE_LENGTH = 3
  * Derives the key a postcode prefix index uses for `code`: the GB outward code
  * or the US three-digit prefix.
  *
- * @returns `null` for a country with no rule or a code too short to carry a prefix.
+ * @returns `null` for a country with no rule or a code too short to contain a prefix.
  */
 export function derivePostcodePrefix(code: string, country?: string): string | null {
 	if (!code || !country) return null
@@ -48,7 +48,9 @@ export interface PostcodePrefixProbeResult {
 	prefix: string
 
 	/**
-	 * The matched index node, whose ancestors and optional centroid and radius supply the prior.
+	 * The matched index node.
+	 *
+	 * Its ancestors and optional centroid and radius supply the prior.
 	 */
 	node: PostcodePrefixNode
 }
@@ -77,7 +79,7 @@ export function probePostcodePrefix(
 
 /**
  * Builds the synthetic `postalcode` place for a prefix hit, with `id: 0` because it is not a gazetteer row.
- * It carries a coordinate only when the prefix node has one.
+ * It includes a coordinate only when the prefix node has one.
  */
 export function postcodePrefixResolvedPlace(
 	prefix: string,

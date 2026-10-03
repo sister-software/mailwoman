@@ -88,7 +88,7 @@ New workspace `map-tui/`, source at the workspace root per convention, published
 Dependencies: `@sister.software/asciify` (`./tui` entry), `pmtiles`, `@mapbox/vector-tile`,
 `pbf`, `@mailwoman/spatial`. No Ink anywhere in the core.
 
-Rendering note: solid fills pass through asciify's Bayer ordered dither, so a fill color's
+Render note: solid fills pass through asciify's Bayer ordered dither, so a fill color's
 luminance sets its stipple density. Water renders as a dim texture and roads as solid bright
 dots. The style table can tune this, so it is not a design risk.
 
@@ -160,13 +160,13 @@ pattern as the existing format-shorthand conflict in `resolveFormat`.
   published tarball.
 - The first `@mailwoman/map-tui` publish cannot use Trusted Publishing OIDC because the package
   does not exist yet. The manual bless path applies once.
-- In phase 2, `npx @mailwoman/map-tui` works from the scoped bin without extra setup. Reserving
+- In phase 2, `npx @mailwoman/map-tui` works from the scoped bin without extra setup. The scoped bin reserves
   the unscoped `map-tui` npm name is a phase-2 product decision and is deferred.
 - New workspace follows every standing convention: dev `exports` map only (publish map derived
   at pack time), `.ts` relative imports with `rewriteRelativeImportExtensions`,
   `erasableSyntaxOnly`, acronym casing, oxlint/oxfmt.
 
-## 6. Testing
+## 6. Test the interface
 
 - **map-tui:** golden-frame tests render a committed fixture `.pmtiles` to text snapshots. The
   fixture is a `pmtiles extract` of one metro, size-checked before committing, with a target well

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Training metrics page — full-page layout with the TrainingCharts dashboard. Mirrors the demo page
- *   pattern: Layout header, BrowserOnly boundary, and build-commit footer.
+ *   The training metrics page uses a full-page layout with the TrainingCharts dashboard. It mirrors the demo page
+ *   pattern: a Layout header and a BrowserOnly boundary. It also has a build-commit footer.
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"

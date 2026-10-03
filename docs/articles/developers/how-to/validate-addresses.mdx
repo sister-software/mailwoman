@@ -221,9 +221,9 @@ rows return `admin` and the check below cannot distinguish them. The precision d
 test meaningful.
 
 `address_point` means a rooftop record for that house number matched. `admin` means no level finer than
-the city matched, and the returned coordinate is the city centroid. Adding
-`result.resolution_tier === "address_point"` to your check changes its meaning from "well-formed" to
-"we hold a record for it". That is the closest this system comes to checking existence.
+the city matched, and the returned coordinate is the city centroid. Require
+`result.resolution_tier === "address_point"` in your check to test whether a rooftop record matched,
+rather than whether the address is merely well-formed. That is the closest this system comes to checking existence.
 
 A matching record still does not establish deliverability. A rooftop record says a structure was
 surveyed at that address. It does not say that mail is accepted there, that the unit number is right,

@@ -4,10 +4,9 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 
 /**
- * Value tallies over a run's full results, aggregated beside the measurement so denominator discipline travels with it.
+ * This module tallies values across every result in a run. Each aggregate stays beside its measurement so the denominator remains visible.
  *
- * Absence discipline: a path missing on a row tallies under {@link ABSENT_KEY} rather than being silently skipped, and
- * `null` tallies as the string "null" because a field explicitly set to null said something a missing field did not.
+ * A missing path tallies under {@link ABSENT_KEY}, so it remains in the denominator. An explicit `null` tallies as the string "null".
  */
 
 /**
@@ -65,8 +64,8 @@ export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<st
 /**
  * Tally several paths at once.
  *
- * Every tally's counts sum to `rows.length` by construction, which is why
- * absence is a bucket instead of a skip.
+ * Each tally's counts sum to `rows.length`.
+ * A missing-path bucket keeps those rows in the denominator.
  */
 export function tallyPaths(
 	rows: ReadonlyArray<unknown>,

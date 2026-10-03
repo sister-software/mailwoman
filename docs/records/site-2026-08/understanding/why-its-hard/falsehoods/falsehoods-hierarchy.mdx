@@ -56,7 +56,7 @@ The Falkland Islands share the postcode `FIQQ 1ZZ`. The British Virgin Islands h
 
 Counties are created, dissolved, and renamed. Cities annex neighboring areas. Postcodes are split and merged. The county of Gwent, UK no longer exists. Lenin Street became something else in post-Soviet countries. A Douglas Perreault condo in Florida changed from Lutz to Tampa after a post office change — same physical location, different city.
 
-Geocoders that maintain their own administrative boundary snapshots go stale. The resolver must be updatable independently of the parser. Mailwoman's architecture supports this — the resolver is a separate stage that consumes a WOF SQLite distribution. Updating the resolver is a data operation rather than a code change.
+Geocoders that maintain their own administrative boundary snapshots go stale. The resolver must be updatable independently of the parser. Mailwoman's architecture supports this — the resolver is a separate stage that consumes a WOF SQLite distribution. A resolver update changes data rather than code.
 
 ## How traditional geocoders handled these
 

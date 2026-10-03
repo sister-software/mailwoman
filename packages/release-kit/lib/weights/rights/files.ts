@@ -2,22 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Render a weights package's two rights files from its {@link WeightsRightsRecord}: `LICENSE.md`, the terms this
- *   repository grants, and `PROVENANCE.json`, where the artifacts came from and what the repository does not know
- *   about them.
+ *   Render a weights package's two rights files from its {@link WeightsRightsRecord}.
+ *   `LICENSE.md` states the terms this repository grants. `PROVENANCE.json` records artifact sources and unresolved facts.
  *
- *   They are two files because they answer to different parties. `LICENSE.md` is our own grant, and its text is the
- *   same for every package because the expression is. `PROVENANCE.json` is a record about other people's data, it
- *   differs per package, and a consumer's build should be able to read it without parsing prose. Folding the second
- *   into the first produced the state the inventory found: one `data_attribution` list, in one package, covering
- *   artifacts that ship in others.
- *
- *   Neither file asserts clearance. `PROVENANCE.json` records what the model card records and marks the rest
- *   unresolved, and `LICENSE.md` says in as many words that the commercial grant does not reach third-party inputs.
+ *   Neither file asserts clearance. `PROVENANCE.json` records the model card's statements and marks other facts
+ *   unresolved. `LICENSE.md` states that the commercial grant excludes third-party inputs.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 
+import { describeModelGraph } from "#weights/rights/model-graph"
 import type { AttributionRecord, WeightsRightsRecord } from "#weights/rights/record"
 
 /**
@@ -60,6 +54,21 @@ export interface ProvenanceDocument {
 		unresolved: string | null
 	} | null
 	artifacts: Array<{ path: string; role: string; md5: string | null; digest: string }>
+	/**
+	 * What this package's own model graph emits, read from the `.onnx` file at generation time.
+	 *
+	 * `null` for a package shipping no graph of its own, such as an overlay that decodes through its base.
+	 * `text_emitting_output` answers what running the model returns.
+	 *
+	 * It settles no question about a white-box extraction attack over the weights.
+	 */
+	model_graph: {
+		format: string
+		outputs: Array<{ name: string; type: string; shape: Array<number | string> }>
+		text_emitting_output: boolean
+		summary: string
+		unreadable?: string
+	} | null
 	training_attribution: {
 		status: "recorded" | "none-recorded-in-this-package"
 		entries: Array<{ text: string; license_named: string | null; uses: string[] }>
@@ -72,6 +81,53 @@ export interface ProvenanceDocument {
 	}
 	attribution_recorded_in_another_package: Array<{ artifact: string; recorded_in: string; text: string }>
 	corpus_version: string | null
+	/**
+	 * Which of the corpus's sources one config's audited epoch drew from, read from the
+	 * effective training manifest committed under `packages/corpus/data/training-manifests/`.
+	 *
+	 * `corpus_version` identifies the corpus.
+	 * The corpus manifest states what it holds.
+	 *
+	 * Neither states what reached the trainer.
+	 * The two differ by the country filter and source weights, a zero weight, the sampler
+	 * and every overlay merged after the corpus manifest was written.
+	 * This block describes the difference.
+	 *
+	 * `null` means the repository holds no effective manifest for the corpus recorded by this card.
+	 * This describes the checkout rather than the model.
+	 */
+	effective_training_sources: {
+		config: string
+		seed: number
+		draws_realized: number
+		/**
+		 * Sources the audited epoch drew rows from, with the rows it emitted for each after augmentation.
+		 */
+		drew: Array<{ source: string; license: string; corpus_rows: number; emitted_rows: number }>
+		/**
+		 * Sources the corpus holds that the epoch drew no row from, with why.
+		 */
+		excluded: Array<{ source: string; because: string }>
+		/**
+		 * Sources the epoch emitted that the corpus manifest does not name, each at its three stages.
+		 *
+		 * `corpus_rows` counts rows of the source in the corpus.
+		 * `drawn_rows` counts rows sampled by the epoch.
+		 *
+		 * `emitted_rows` counts rows that reached the trainer after augmentation.
+		 * A non-empty list means this block covers part of the training data, because the
+		 * corpus manifest records the terms of none of these sources.
+		 *
+		 * `corpus_rows` reads `-1` when the audit reported no count for the source.
+		 */
+		emitted_but_unrecorded: Array<{
+			source: string
+			corpus_rows: number
+			drawn_rows: number
+			emitted_rows: number
+		}>
+		total_emitted_rows: number
+	} | null
 	tokenizer_version: string | null
 	unresolved: string[]
 }
@@ -89,8 +145,8 @@ const SERIES_MEANING: Readonly<Record<string, string>> = {
 /**
  * The questions this record leaves open, each phrased as the question rather than as a finding.
  *
- * A reader has to be able to tell a package with no recorded training inputs from a package trained on
- * no inputs, and an artifact with no recorded digest from an artifact whose digest was checked.
+ * A reader must distinguish a package with no recorded training inputs from one trained on no inputs.
+ * The reader must also distinguish an artifact with no recorded digest from one whose digest was checked.
  */
 function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 	const questions: string[] = []
@@ -122,9 +178,8 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 		questions.push(`One attribution entry names no license: ${entry.text}`)
 	}
 
-	// A list that runs training, tokenizer and evaluation contributions together reads as
-	// though every source in it trained the model.
-	// Naming the split lets a reader see which entries describe rows the model never learned from.
+	// The attribution list combines training, tokenizer and evaluation contributions.
+	// The split shows which entries describe rows the model never learned from.
 	const evaluationOnly = record.attribution.filter(
 		(entry) => entry.uses.includes("evaluation") && !entry.uses.includes("training")
 	)
@@ -149,8 +204,26 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 		)
 	}
 
+	if (!record.effectiveTraining) {
+		questions.push(
+			"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, `effective-manifest.run.ts` derives from it and an `audit_epoch_mixture` output what one config's epoch drew, and no released model was built from a corpus carrying either. The corpus named above is the recipe's corpus rather than a record of what reached the model."
+		)
+
+		return questions
+	}
+
+	const unrecorded = Object.entries(record.effectiveTraining.emittedButUnrecorded)
+
+	if (unrecorded.length) {
+		const rows = unrecorded.reduce((sum, [, count]) => sum + count, 0)
+
+		questions.push(
+			`effective_training_sources covers part of what trained this model. The audited epoch emitted ${unrecorded.length} source(s) the corpus's frozen manifest does not name, ${rows.toLocaleString()} of ${record.effectiveTraining.totalEmittedRows.toLocaleString()} rows. Those sources reached the corpus through overlays merged after that manifest was written, so their terms are recorded nowhere this document reads.`
+		)
+	}
+
 	questions.push(
-		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
+		`effective_training_sources reads one epoch of ${record.effectiveTraining.config} at seed ${record.effectiveTraining.seed}. A training run draws a different sample per epoch, so the source set it names is what one audited epoch drew rather than the union over every epoch the model saw.`
 	)
 
 	return questions
@@ -159,9 +232,8 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 /**
  * How many attribution entries state each use, in a fixed key order so the document is reproducible.
  *
- * A use that no entry states is omitted rather than written as zero.
- * Zero would read as a measurement — "no source was used for evaluation" — where the truth is that no
- * entry said so, and these entries are prose a reader wrote rather than a field a build filled.
+ * A use that no entry states is omitted rather than written as zero, because zero would read as
+ * the measurement "no source was used for evaluation" where the truth is that no entry said so.
  */
 function countUses(attribution: readonly AttributionRecord[]): Record<string, number> {
 	const counts = new Map<string, number>()
@@ -208,6 +280,15 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 			md5: artifact.md5,
 			digest: artifact.digest,
 		})),
+		model_graph: record.modelGraph
+			? {
+					format: record.modelGraph.format,
+					outputs: record.modelGraph.outputs,
+					text_emitting_output: record.modelGraph.textEmittingOutput,
+					summary: describeModelGraph(record.modelGraph),
+					...(record.modelGraph.unreadable === undefined ? {} : { unreadable: record.modelGraph.unreadable }),
+				}
+			: null,
 		training_attribution: {
 			status: record.attribution.length ? "recorded" : "none-recorded-in-this-package",
 			entries: record.attribution.map((entry) => ({
@@ -223,16 +304,42 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 			text: foreign.text,
 		})),
 		corpus_version: record.corpusVersion,
+		effective_training_sources: record.effectiveTraining
+			? {
+					config: record.effectiveTraining.config,
+					seed: record.effectiveTraining.seed,
+					draws_realized: record.effectiveTraining.drawsRealized,
+					drew: record.effectiveTraining.sources
+						.filter((source) => source.excludedBecause === null)
+						.map((source) => ({
+							source: source.source,
+							license: source.license,
+							corpus_rows: source.corpusRows,
+							emitted_rows: source.emittedRows,
+						})),
+					excluded: Object.entries(record.effectiveTraining.excludedSources).map(([source, because]) => ({
+						source,
+						because,
+					})),
+					emitted_but_unrecorded: Object.entries(record.effectiveTraining.unrecordedSourceStages).map(
+						([source, stages]) => ({
+							source,
+							corpus_rows: stages.corpusRows,
+							drawn_rows: stages.drawnRows,
+							emitted_rows: stages.emittedRows,
+						})
+					),
+					total_emitted_rows: record.effectiveTraining.totalEmittedRows,
+				}
+			: null,
 		tokenizer_version: record.tokenizerVersion,
 		unresolved: unresolvedQuestions(record),
 	}
 }
 
 /**
- * Whether a committed provenance document equals the one this record renders.
- *
- * Parsed JSON is compared rather than text, so the repository formatter may lay the file out
- * as it likes — the same reason `license-register` compares the well-known key file that way.
+ * Whether a committed provenance document equals the one this record renders, compared as
+ * parsed JSON rather than text so the repository formatter may lay the file out as it likes.
  */
 export function provenanceMatches(committed: unknown, record: WeightsRightsRecord): boolean {
 	return stringifyJSON(committed) === stringifyJSON(renderProvenance(record))
@@ -241,10 +348,8 @@ export function provenanceMatches(committed: unknown, record: WeightsRightsRecor
 /**
  * The obligations file for one package.
  *
- * Every published mailwoman package carries the same expression, so this text does not
- * vary with the package beyond its name and the pointer to its own provenance record.
- * It exists per package because npm ships per package: a consumer who installs one weights overlay
- * and reads its tarball finds the terms there rather than in a repository they were never sent to.
+ * It exists per package because npm ships per package, so a consumer who installs
+ * one weights overlay finds the terms in its tarball.
  */
 export function renderLicenseFile(record: WeightsRightsRecord): string {
 	return `# License — ${record.packageName}

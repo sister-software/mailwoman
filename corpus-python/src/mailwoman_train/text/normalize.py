@@ -12,13 +12,13 @@ _ASCII_TO_FULLWIDTH = str.maketrans("0123456789", "０１２３４５６７８�
 
 
 def normalize_text(text: str) -> str:
-    """NFC with every whitespace removed, interior included — no CJK address component carries an
+    """NFC with every whitespace removed, interior included — no CJK address component contains an
     interior space."""
     return "".join(unicodedata.normalize("NFC", text).split())
 
 
 def ascii_digits(text: str) -> str:
-    """Fold full-width numerals to ASCII, leaving every other character alone."""
+    """Fold full-width numerals to ASCII and preserve all other characters."""
     return text.translate(_FULLWIDTH_DIGITS)
 
 

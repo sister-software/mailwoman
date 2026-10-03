@@ -13,9 +13,8 @@ import type { BoundsTuple, PlaceGeometry } from "#map/geometry"
 export type LngLat = [number, number]
 
 /**
- * How a street-level result was located.
- *
- * `address_point` is an exact building point, and `interpolated` is an estimate from a TIGER address range.
+ * How a street-level result was located: `address_point` is an exact building point
+ * and `interpolated` an estimate from a TIGER address range.
  */
 export type PlaceTier = "address_point" | "interpolated"
 
@@ -30,30 +29,25 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 	bbox?: LatLonBounds
 
 	/**
-	 * The street-level tier.
-	 *
-	 * It is set only for results from address points or interpolation.
+	 * The street-level tier, set only for results from address points or interpolation.
 	 */
 	tier?: PlaceTier
 
 	/**
-	 * The uncertainty radius in meters of a street-level result.
-	 * The map draws it as a circle when `tier` is set.
+	 * The uncertainty radius in meters of a street-level result, drawn as a circle when `tier` is set.
 	 */
 	uncertaintyM?: number
 
 	/**
 	 * The admin polygon, if the host has already fetched it.
-	 * When present, the outline and camera follow the polygon.
+	 * When present the outline and camera follow it.
 	 */
 	geometry?: PlaceGeometry
 }
 
 /**
- * Where the map camera should go: a `center` point at a zoom, or `bounds` to fit with pixel padding.
- *
- * Only a `center` target can be applied declaratively through {@link cameraToViewState}.
- * Fitting bounds needs the map's pixel size, so `<ResultCamera>` applies it imperatively.
+ * Only a `center` target can be applied declaratively through {@link cameraToViewState};
+ * fitting bounds needs the map's pixel size, so `<ResultCamera>` applies it imperatively.
  */
 export type MapCameraTarget =
 	| { kind: "center"; center: LngLat; zoom: number }
@@ -65,8 +59,7 @@ export type MapCameraTarget =
  */
 export interface MapPlaceRenderSpec {
 	/**
-	 * The marker positions as `[lon, lat]`.
-	 * There is always exactly one marker.
+	 * The marker positions as `[lon, lat]`; there is always exactly one marker.
 	 */
 	markers: LngLat[]
 
@@ -75,9 +68,6 @@ export interface MapPlaceRenderSpec {
 	 */
 	outline: PlaceGeometry | null
 
-	/**
-	 * The point to center on or the bounds to fit.
-	 */
 	camera: MapCameraTarget
 }
 
@@ -93,9 +83,8 @@ const FIT_PADDING = 40
 const MIN_EXTENT_DEG = 0.001
 
 /**
- * Computes the markers, outline and camera target for a resolved place.
- *
- * The function loads no data, so the caller must put any fetched polygon in `place.geometry` first.
+ * Computes the markers, outline and camera target for a resolved place without loading data,
+ * so the caller must put any fetched polygon in `place.geometry` first.
  */
 export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRenderSpec {
 	const markers: LngLat[] = [[place.lon, place.lat]]
@@ -146,9 +135,8 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 }
 
 /**
- * Converts a `center` camera target into a `viewState` patch for a controlled `<MapCanvas>`.
- *
- * It returns `null` for a `bounds` target, which `<ResultCamera>` must fit imperatively.
+ * Converts a `center` camera target into a `viewState` patch for a controlled `<MapCanvas>`,
+ * returning `null` for a `bounds` target that `<ResultCamera>` must fit imperatively.
  */
 export function cameraToViewState(
 	camera: MapCameraTarget

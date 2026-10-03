@@ -8,10 +8,11 @@
 import { toRad } from "#coordinate/formats"
 import type { PolygonLiteral, SolidPolygonPath } from "#geometries/polygon"
 import { clampLatitude, wrapLongitude } from "#position"
-import { CoordinateProjection } from "#projection/index"
+import { CoordinateProjection } from "#projection"
 
 /**
- * Kilometres per degree of latitude, which is very nearly constant on a sphere.
+ * Kilometers per degree of latitude.
+ * The value is nearly constant on a sphere.
  */
 const KM_PER_DEGREE_LATITUDE = 111
 
@@ -76,8 +77,8 @@ export type BBox2DLiteral = [
 ]
 
 /**
- * A 3-dimensional rectangular area that can be determined by two longitudes,
- * two latitudes, and two altitudes.
+ * A 3-dimensional rectangular area bounded by two longitudes and two latitudes.
+ * Two altitudes set its vertical bounds.
  *
  * @category GeoJSON
  * @category Bounding Box
@@ -485,15 +486,16 @@ export interface LatLonBounds {
  * 1° longitude ≈ 111 km × cos(lat).
  * It is a filter rather than an answer.
  *
- * It over-selects near the poles and along a long east-west span, and a caller is
- * expected to re-check survivors with an exact haversine distance.
+ * It over-selects near the poles and along a long east-west span.
+ * Callers must re-check survivors with an exact haversine distance.
  *
- * That is what makes the approximation safe: it may admit a point it should not,
- * and never excludes one it should keep.
+ * The approximation may admit points outside the radius.
+ * It includes every point within the radius.
  */
 export function bboxAround(lat: number, lon: number, radiusKM: number): LatLonBounds {
 	const latDelta = radiusKM / KM_PER_DEGREE_LATITUDE
-	// cos(±90°) is 0, which would divide the longitude delta to Infinity and select the whole globe.
+	// cos(±90°) is 0.
+	// A zero denominator would make the longitude delta infinite and select the whole globe.
 	// Clamp so a polar query stays a wide band rather than becoming unbounded.
 	const cosLat = Math.max(Math.cos(toRad(lat)), MIN_COS_LATITUDE)
 	const lonDelta = radiusKM / (KM_PER_DEGREE_LATITUDE * cosLat)

@@ -77,7 +77,7 @@ def test_ie_eircode_is_detected_as_one_span():
 
 
 def test_br_cep_claims_the_sector_suffix():
-    # Without it, NUM5 takes the five-digit head alone.
+    # Without it, NUM5 takes only the five-digit head.
     (match,) = collect_matches("Rua Ramiro Barcelos, Porto Alegre 95090-020")
     assert "Rua Ramiro Barcelos, Porto Alegre 95090-020"[match.start : match.end] == "95090-020"
 

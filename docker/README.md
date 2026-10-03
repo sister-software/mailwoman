@@ -20,9 +20,9 @@ curl -s -X POST localhost:3000/v1/parse \
   -d '{"address":"350 5th Ave, New York, NY 10118"}'
 ```
 
-The parser needs only the included weights, so it answers immediately. Geocoding needs a gazetteer.
+The parser needs only the included weights, so it answers immediately. A gazetteer is required for geocoding.
 Until one is mounted, `/v1/geocode` and `/v1/batch` return a `503` (`{"error":"geocoder not
-available", ...}`) instead of crashing. Parsing always works, and mounting data enables geocoding.
+available", ...}`) instead of crashing. Address parsing always works, and mounting data enables geocoding.
 
 ## Full geocoding — mount the gazetteer read-only
 
@@ -96,18 +96,18 @@ service.
 docker run --rm -p 8080:8080 -v /path/to/data:/data:ro \
   -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
   ghcr.io/sister-software/mailwoman:latest \
-  node node_modules/@mailwoman/nominatim/out/cli.js serve
+  node node_modules/@mailwoman/nominatim/out/cli/main.js serve
 
 # Photon-compatible autocomplete — GET /api /reverse  (port 2322)
 docker run --rm -p 2322:2322 -v /path/to/data:/data:ro \
   -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
   ghcr.io/sister-software/mailwoman:latest \
-  node node_modules/@mailwoman/photon/out/cli.js serve
+  node node_modules/@mailwoman/photon/out/cli/main.js serve
 
 # libpostal-compatible — /parse /expand  (port 8081, no data needed)
 docker run --rm -p 8081:8081 \
   ghcr.io/sister-software/mailwoman:latest \
-  node node_modules/@mailwoman/libpostal/out/cli.js serve
+  node node_modules/@mailwoman/libpostal/out/cli/main.js serve
 ```
 
 Or bring the whole set up with compose:

@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Wrapper around `docusaurus-plugin-glossary` that keeps the package's validation, tooltip theme
- *   component (`@theme/GlossaryTerm`), client modules, and remark auto-linking — but replaces the
+ *   Wrapper around `docusaurus-plugin-glossary`. It keeps the package's validation, tooltip theme
+ *   component (`@theme/GlossaryTerm`) and client modules. It also provides remark auto-linking. It replaces the
  *   `/glossary` route with our own page component. The upstream plugin hard-codes its route
  *   component to a path inside the package (not a `@theme/*` component), so swizzling can't reach
  *   it. overriding the lifecycle hooks is the supported extension-free alternative to vendoring.
  *
  *   On top of the upstream data model this wrapper:
  *
- *   - Requires every term to carry a non-empty `tags` array whose keys are registered in
+ *   - Requires every term to include a non-empty `tags` array whose keys are registered in
  *     `docs/tags.yml` (build error otherwise — same spirit as the docs `onInlineTags: "throw"`).
  *   - Emits `tagMeta`: the tags.yml entries actually used by glossary terms, in declaration order,
  *     with per-tag term counts. The page renders these as filter toggles + category sections.

@@ -21,7 +21,7 @@ that was error-prone in the v0.5.2/v0.5.3 sessions (forgot importance step, stal
 Only needed when GeoJSON repos have been updated. Skip if the existing unified DB is current.
 
 ```bash
-node packages/mailwoman/out/cli/index.js wof prepare $MAILWOMAN_DATA_ROOT/src/wof-repos/ \
+node packages/mailwoman/out/cli/main.js wof prepare $MAILWOMAN_DATA_ROOT/src/wof-repos/ \
   --unified-db $MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-unified.db
 ```
 
@@ -30,7 +30,7 @@ node packages/mailwoman/out/cli/index.js wof prepare $MAILWOMAN_DATA_ROOT/src/wo
 Downloads wikimedia-importance.csv.gz, joins WOF concordances, writes `place_importance` table.
 
 ```bash
-node packages/mailwoman/out/cli/index.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
+node packages/mailwoman/out/cli/main.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 ```
 
 **This step must precede step 3. Check whether it has ever run against the live admin DB:** while
@@ -47,12 +47,12 @@ surface-ambiguity scan once across all locales, and stamps the source DB's md5 i
 provenance trailer (see step 5).
 
 ```bash
-node packages/mailwoman/out/cli/index.js gazetteer build fst \
+node packages/mailwoman/out/cli/main.js gazetteer build fst \
   --output $MAILWOMAN_DATA_ROOT/db/wof/fst-staging-$(date -u +%F)
 ```
 
 Builds `fst-{en-us,fr-fr,en-gb,de-de}.bin` — the `FST_LOCALES` set. Output goes to a STAGING dir and
-the swap into `fst-per-locale/` is operator-approved: an FST changes decoder behaviour, so it moves
+the swap into `fst-per-locale/` is operator-approved: an FST changes decoder behavior, so it moves
 after the battery rather than as a side effect of a build.
 
 **Every per-locale FST has a builder; `fst-global-priority.bin` is retired.** The CJK three
@@ -77,7 +77,7 @@ database" — the question that, while unanswerable, once left every FST pointin
 that no longer existed after an admin swap:
 
 ```bash
-node packages/mailwoman/out/cli/index.js gazetteer verify --no-reverse-panel
+node packages/mailwoman/out/cli/main.js gazetteer verify --no-reverse-panel
 ```
 
 It compares each artifact's stamped `sourceDBMD5` against the DB on disk. The section is ADVISORY —

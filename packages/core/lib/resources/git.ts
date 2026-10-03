@@ -5,7 +5,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { tryStat } from "#fs/readers"
 import { makeDirectories } from "#fs/writers"
-import { runFile } from "#process"
+import { git } from "#git"
 
 /**
  * Metadata for a repository source.
@@ -51,12 +51,12 @@ export async function synchronizeRepo(
 	const { ownerDirectory, repoDirectory, exists } = await prepareRepositoryDirectories(source, localRepoDirectory)
 
 	if (exists) {
-		await runFile("git", ["pull"], { cwd: repoDirectory.toString() })
+		await git("pull", repoDirectory)
 
 		return "pulled"
 	}
 
-	await runFile("git", ["clone", "--depth=1", source.url], { cwd: ownerDirectory.toString() })
+	await git(["clone", "--depth=1", source.url], ownerDirectory)
 
 	return "cloned"
 }

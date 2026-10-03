@@ -13,7 +13,7 @@ tags:
 
 # Resolver and Who's On First
 
-**Parsing** answers "what kind of thing is each part of this string?". **Resolving** answers "where is the resulting place?". They are different jobs and Mailwoman keeps them apart on purpose.
+**The parser** answers "what kind of thing is each part of this string?". **The resolver** answers "where is the resulting place?". They are different jobs and Mailwoman keeps them apart on purpose.
 
 This article explains what the resolver does, why we use [Who's On First](https://whosonfirst.org/) as the gazetteer, and the design of the SQLite distribution that powers both the server-side and browser-side resolvers.
 
@@ -29,7 +29,7 @@ flowchart LR
     R --> O["Place:<br>name=New York<br>WOF id=85977539<br>coords=40.7128, -74.0060<br>bbox=[..., ..., ..., ...]"]
 ```
 
-Splitting the responsibility:
+The responsibilities split as follows:
 
 - **The parser** is locale-aware and structure-aware. It does not need to know that "New York" is a place. It needs to know that "New York" is being used as a locality.
 - **The resolver** is data-driven. It does not need to understand grammar. It needs a fast index that maps "New York" + "NY" + "10118" to a single canonical place.
@@ -93,7 +93,7 @@ Mailwoman's resolver drops any candidate whose coordinates are `(0, 0)` from res
 
 - **Rooftop precision outside the covered registers.** Where an address-point extract exists, the resolver returns the exact address point rather than a locality centroid, at 1 m reported uncertainty: the US situs layer (~125M points, built from NAD and OpenAddresses) and the French BAN register (26M points) are the two live extracts today. Outside that coverage, the ladder falls back to interpolation, then a street or admin centroid. [How Mailwoman resolves a place](./how-mailwoman-resolves-a-place.mdx) walks the full precision ladder and what each rung promises.
 - **Reverse geocoding.** "What place is at coordinates (40.7128, -74.0060)?" is a separate query shape. The R\*Tree index supports it but the public Mailwoman API does not expose a reverse-geocode endpoint today.
-- **Routing.** "How do I get from A to B?" is a graph problem on the road network rather than a gazetteer query.
+- **A route query.** "How do I get from A to B?" is a graph problem on the road network rather than a gazetteer query.
 
 ## Where this lives in the code
 

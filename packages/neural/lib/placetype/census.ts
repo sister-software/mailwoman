@@ -60,8 +60,8 @@ export interface PlacetypeCensusHeader {
 	buildDate: string
 
 	/**
-	 * The share of each tag across every counted child in the country,
-	 * which {@link PlacetypeCensusLike.lift} divides by.
+	 * The share of each tag across every counted child in the country.
+	 * {@link PlacetypeCensusLike.lift} divides by this value.
 	 *
 	 * The node table holds only parents that passed the inclusion rule,
 	 * so summing the nodes gives a different number.
@@ -71,7 +71,8 @@ export interface PlacetypeCensusHeader {
 	/**
 	 * The emission bias a census hit would add at decode time.
 	 *
-	 * It stays absent until calibration measures a value, and the decoder applies no census bias.
+	 * It stays absent until calibration measures a value.
+	 * The decoder applies no census bias then.
 	 */
 	delta?: number
 }
@@ -250,7 +251,7 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Returns the share of `parent`'s counted children that carry `tag`.
+	 * Returns the share of `parent`'s counted children that have `tag`.
 	 *
 	 * It returns `0` when the parent is unknown or has no children with the tag.
 	 * A `0` means only that this artifact offers no support.

@@ -22,7 +22,7 @@ This design fits a command line. You type a whole word, press tab, and get compl
 
 A search box receives partial words such as `New Yor` or `Chic`. It gets the first part of a word and has to infer the rest.
 
-Walking a token trie requires whole tokens, and `Yor` is the beginning of a token. The walk steps through `New`, looks for an edge labeled `Yor`, finds none, and fails. A trie cannot match a fragment, so that failure is expected. The problem was the fallback, a fuzzy forward geocode over the gazetteer that returned the nearest fuzzy match. For `New Yor`, that was Denver. We do not know why it chose Denver. The fuzzy distance metric may have weighted string length unexpectedly, the token boundaries may have skewed the scoring, or the cause may be something else. We did not investigate, because the correct fix was to remove the need for the fallback.
+A token trie requires whole tokens, and `Yor` begins a token. The trie steps through `New`, looks for an edge labeled `Yor`, finds none, and fails. A trie cannot match a fragment, so that failure is expected. The problem was the fallback, a fuzzy forward geocode over the gazetteer that returned the nearest fuzzy match. For `New Yor`, that was Denver. We do not know why it chose Denver. The fuzzy distance metric may have weighted string length unexpectedly, the token boundaries may have skewed the scoring, or the cause may be something else. We did not investigate, because the correct fix was to remove the need for the fallback.
 
 ## It was worse than Denver
 
@@ -34,7 +34,7 @@ Two problems combined. The first was missing deduplication. New London the city,
 
 When the walk fails on a partial last token, the new code skips fuzzy search. It walks the _complete_ prefix (`New`) and then filters that node's outgoing edges by the fragment, keeping every edge whose token starts with `yor`. `york` matches and `london` does not. The existing trie completes the word without fuzzy search.
 
-The code also caps how many places any single branch can contribute, so a dense `New London` branch cannot crowd out `New York` before the search reaches it, and it collapses same-name places to the most prominent one. With three changes (character-level completion via edge filtering, a per-branch cap, and name deduplication), `New Yor` becomes New York, `Chic` becomes Chicago, and `San Fr` becomes San Francisco.
+The code also caps the number of places each branch can contribute. A dense `New London` branch therefore cannot crowd out `New York` before the search reaches it. The code also collapses same-name places to the most prominent one. With three changes (character-level completion via edge filtering, a per-branch cap, and name deduplication), `New Yor` becomes New York, `Chic` becomes Chicago, and `San Fr` becomes San Francisco.
 
 ## Two problems wearing one name
 

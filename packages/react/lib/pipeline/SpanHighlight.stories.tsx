@@ -47,7 +47,7 @@ export const LowConfidence: Story = {
 }
 
 /**
- * No spans carry offsets, so no span is highlighted — the empty/degenerate case.
+ * No spans have offsets, so no span is highlighted.
  */
 export const NoSpans: Story = {
 	args: { input: "90210", nodes: [{ tag: "postcode", value: "90210", confidence: 0.99 }] },

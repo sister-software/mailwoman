@@ -1,0 +1,804 @@
+{
+	"$comment": "Source fields a review resolved by reading a publisher's data, applied by `buildSourceRegister` over the rows it derives from the research CSV. An input to the build rather than an edit of its output, for the same reason as `license-decisions.json`: the build rewrites the register whole, so a field recorded in the output is erased by the next run with no error and a normal-looking count.",
+	"$whyNotTheCSV": "The research CSV records `address_role`, `coverage` and `upstream` as the placeholders `varies`, `country-specific` and the empty string on all 389 of its non-rail rows, and has no column for a personal-data review. That CSV is the record of what one research pass found on 2026-09-18, so a later review records its own findings here rather than by rewriting the pass's record.",
+	"$shape": "Each key is a `sourceID` the register declares. Each value carries any of `addressRoles`, `coverage`, `upstreamLineage`, `personalDataReview` and `adapterID`, which replace the derived row's values. See `@mailwoman/corpus/source-register`'s `AddressSourceRecord`.\n\n`adapterID` names the corpus adapter that emits this source's rows, and a release-eligible build admits a row only through it. `readSourceEligibility` keys each source by `<adapterID>:<ISO2>` and `createIneligibilityReader` looks a row up by its own `source` and `country`, because the register scopes a source to one publisher in one jurisdiction while one adapter can serve several: `ban` emits eleven jurisdictions from one schema. A source that declares no adapter stays out of that map, which is correct rather than restrictive, since no adapter emits it and no row can arrive under it.",
+	"$addressRoles": "Keyed by the address column's path in the published record, because a publication can carry two roles on one record. `ingestEligibilityProblems` requires at least one column to have a role.",
+	"$upstreamLineage": "The endpoint or dataset this source's copy was taken from, so two register rows fed by one upstream submission count as one observation rather than two. A URL when the upstream is not itself a register row.",
+	"$banRepetition": "Ten rows below are one database, IGN's Base Adresse Nationale, split by the INSEE department code each file is published under. `coverage` differs per territory because each is a measurement of that territory's file, and `addressRoles`, `upstreamLineage` and `personalDataReview` repeat because the column layout and the publisher's non-nominative characterisation are the BAN's and identical throughout. France's own row, `fr-property-building-1`, is the eleventh file of the same database and carries its own measurement of the whole-country extract. The license decisions point at the shared reading `ign-ban-lov2-territories`.",
+	"$sireneRepetition": "Nine rows below are one source, INSEE's SIRENE establishment register, split by overseas territory. The fields repeat because the register carries one row per jurisdiction and each row's coverage statement is about that territory, while the column layout and the diffusion mechanism are SIRENE's and identical throughout.",
+	"$sireneSecondAddress": "SIRENE's establishment file carries a second address family, the `2`-suffixed columns, which INSEE labels only `adresse secondaire` — `complementAdresse2Etablissement` reads `Complément d'adresse secondaire`. What role that address plays is unstated, so it takes no entry in `addressRoles` rather than a guessed one, and the coverage text names it so a reader knows the column exists.",
+	"$ocdsPartyRoles": "An OCDS release keys its addresses by party role, so `addressRoles` names roles rather than columns for those sources. A role is assigned only where OCDS's own codelist defines it, retrieved from `https://standard.open-contracting.org/1.1/en/codelists/partyRole.csv`: `buyer`, `procuringEntity`, `payer`, `funder` and `reviewBody` are bodies acting in the process, so their address is an office they operate and reads `facility`; `supplier` and `tenderer` are the transacting party, so theirs reads `counterparty`. Germany's release also uses eight roles from an extension whose codelist neither the 1.1 nor the latest list defines — `processContactPoint`, `reviewContactPoint`, `submissionReceiptBody`, `mediationBody`, `evaluationBody`, `procurementServiceProvider`, `leadTenderer`, `subcontractor` — and those take no role here rather than a guessed one.",
+	"resolutions": {
+		"es-mixed-regulatory-1": {
+			"adapterID": "es-catastro",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Dirección General del Catastro, reached through the ATOM download service at `https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml`, 681,783 bytes, sha256 `4342d37b6d5527eb7b8bebadc97966c90f1a041068ae9398b90183f2176898b9`, carrying `<updated>2026-08-21T00:00:00Z</updated>`. The feed lists 55 entries, and this row covers 52 of them. The other three belong to the Provincial Councils of Bizkaia, Gipuzkoa and Navarra, which publish their own cadastres through the same feed and state their own terms, `CC BY 3.0 ES`, `CC-BY-SA` and `CC BY 4.0`. Adding them needs a row each, because a decision scoped to one publisher cannot reach another. Each of the 52 entries links a province feed listing one zipped GML per municipality. The measured instance is Ceuta, `A.ES.SDGC.AD.55101.zip`, 354,647 bytes, whose one member `A.ES.SDGC.AD.55101.gml` is 11,861,975 bytes and holds 8,126 `AD:Address` features. A feature is a point at a building entrance carrying a house-number designator, and it references a thoroughfare name, a postal descriptor and an administrative unit by `xlink:href`. The row count for the other 51 offices was not measured.",
+			"upstreamLineage": [
+				"https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml",
+				"http://www.catastro.hacienda.gob.es/INSPIRE/Addresses/55/ES.SDGC.AD.atom_55.xml",
+				"https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/55/55101-CEUTA/A.ES.SDGC.AD.55101.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `A.ES.SDGC.AD.55101.gml` was counted over all 11,861,975 bytes, so this covers the file rather than its first features. It holds 48 distinct element names and none of them names a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name of any kind. The only names are 505 `AD:ThoroughfareName`, 5 `AD:PostalDescriptor` and 1 `AD:AdminUnitName`. The file declares the INSPIRE Addresses 3.0 schema at `urn:x-inspire:specification:gmlas:Addresses:3.0`, which has no party element for another municipality to populate, so the reading rests on the schema as well as on the one municipality read. This is what separates the row from the other 25 `verified-corpus` sources: each of those is a business register or a procurement portal where the address belongs to a party, and some of those parties are natural persons trading on their own account. The cadastre's AD theme records the place. The ownership data that Spanish cadastral records also hold travels through a separate protected channel and appears nowhere in this dataset."
+			}
+		},
+		"dk-property-building-1": {
+			"adapterID": "dk-inspire",
+			"addressRoles": {
+				"address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Klimadatastyrelsen, reached through the ATOM download service at `https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml`, 3,130 bytes, sha256 `5a32be44b186586dbef5efa24bd200b3d2d85afebb74172250f5dd977d3ddbea`. Denmark serves this theme as a GeoPackage rather than as GML, which is why `addressRoles` is keyed by a table name instead of an element name. The feed holds one entry covering the whole country. Its dataset is `DK_INSPIRE_Addresses.zip`, 101,406,038 bytes, sha256 `0b4e13e27307659ac64065e8f67301b4eb649faa35e6e29f8f443f51c91c5141`, whose member `ad_inspire.gpkg` is 391,258,112 bytes. The database declares five tables in `gpkg_contents`: `address` with 599,999 rows, `thoroughfarename` with 112,488, `addressareaname` with 7,840, `postaldescriptor` with 1,089 and `adminunitname` with 105. **Treat 599,999 as a possible export cap rather than as Denmark's address count**: it is one short of a round 600,000, and the national address register holds several times that. Establishing the true extent means asking the publisher or finding a second distribution. Two reader notes. The feed writes its one entry as `<entry xml:lang=\"da\">`, so a reader matching a bare `<entry>` finds none. And the Atom entry's href returns the weblink's listing page; the file needs `&realfilename=DK_INSPIRE_Addresses.zip` appended.",
+			"upstreamLineage": [
+				"https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml",
+				"https://ftp.sdfe.dk/main.html?download&weblink=39593534f26800b910ef341fa8ec6aec&realfilename=DK_INSPIRE_Addresses.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every column of every table the GeoPackage declares was listed, so this covers the database's whole schema rather than a sample of its rows. The five tables carry 39, 16, 15, 15 and 15 columns, and none of the 100 identifies a party: there is no owner, holder, occupant or contact column, and no personal name. Every column of the `address` table is INSPIRE address structure, being an identifier, a lifespan date, a position, a locator designator, or a reference to a thoroughfare name, postal descriptor, administrative unit, parcel or building. One value invites a misreading: `position_method` reads `byotherparty`, which is an INSPIRE codelist term for how the position was determined rather than a reference to a party. The schema is the INSPIRE Addresses model, which has no party element."
+			}
+		},
+		"pl-property-building-1": {
+			"adapterID": "emuia",
+			"addressRoles": {
+				"ms:AD.Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Główny Urząd Geodezji i Kartografii, reached as a WFS 2.0 download service at `https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses`. **Measured 8,625,921 `ms:AD.Address` features on 2026-10-01, and the service states none of that itself.** It answers a bare `resultType=hits` with `numberMatched=\"1000\"`, which is MapServer's default feature cap, the same request at `startIndex=1` with `1`, and a feature page with `numberMatched=\"unknown\"`. The count comes from `countWFSFeaturesByPaging` in `@mailwoman/core/api`, which takes the largest `startIndex` that still returns a feature by doubling and then bisecting: 51 requests, with a page of 5 at index 8,625,919 returning exactly the 2 the count implies. **The payload is the Polish register's own schema rather than the harmonised INSPIRE Addresses model.** A feature is a MapServer row whose element names are the register's columns, so a build needs no join across feature types and no component resolution: `adres` carries the whole address as one string, as in `Piotrków Trybunalski 1 Maja 10`, beside `miejscowosc`, `ulica`, `numer` and `kod` separately, with `teryt`, `simc` and `ulic` as the national register codes. The service publishes this one feature type, and no `ad:ThoroughfareName`, `ad:PostalDescriptor` or `ad:AdminUnitName` type exists to join to. The theme derives from the Państwowy Rejestr Granic, and the feature ids name their upstream register, as in `PL.ZIPIN.3742.EMUiA_9945001100000172050`, which is the municipal address register EMUiA. It serves four GML flavours and no JSON, so a build reads GML. One caution: the service's `inspire_dls:SpatialDataSetIdentifier` states the literal `mycode`, an unreplaced placeholder, so the per-feature-type `MetadataURL` is what ties this service to its dataset record.",
+			"upstreamLineage": [
+				"https://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses",
+				"http://mapy.geoportal.gov.pl/wss/service/CSWINSP/guest/CSWStartup?request=GetRecordById&service=CSW&version=2.0.2&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&Id=a3990e57-5f0f-4bd6-94c9-47d46b692087",
+				"http://iip.gugik.gov.pl/id/dataset/PL.PZGiK.200/PRG.AD"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "This service publishes the Polish register's schema rather than the INSPIRE model, so the review asks what its columns are rather than whether `AD:LocatorName` is populated. Over 1,000 features read across 40 windows spread through the 8,625,921, reaching 116 distinct localities, the features carry 19 element names and never a twentieth. All 19 are address or register structure: `id`, `gml_id` and `lokalnyid` are identifiers, `jednostkaadmnistracyjna` is the administrative-unit path, `miejscowosc`, `miejscowosc_lower` and `czescmiejscowosci` are locality spellings, `ulica`, `ulica_pol` and `ulica_skr` are street spellings, `numer` is the house number, `kod` is the postcode, `teryt`, `simc` and `ulic` are national register codes, `status` and the dates `data_od` and `wazny_od` are lifecycle fields, and `adres` is the concatenation of the others. None of the 19 names an owner, occupant, holder or contact, and the register this derives from records addressable units rather than their residents. Two columns are present on every feature and populated on none of the 1,000: `status` and `czescmiejscowosci`. The street columns are populated on 741 of 1,000, which is the share of sampled addresses sitting on a named street rather than on a locality alone. A name-shape test flags 119 `ulica` values and 113 `miejscowosc` values as carrying two capitalised words, and reading them settles what that is: Polish streets are commonly named for people, as in `kard. Stefana Wyszyńskiego`, `Krzysztofa Kamila Baczyńskiego` and `księdza Biskupa Władysława Bandurskiego`, and multi-word place names account for the rest, as in `Piotrków Trybunalski` and `Nakło nad Notecią`. A commemorative street name is the name of a street, and both columns are place elements by definition, so neither identifies a party to the address."
+			}
+		},
+		"sk-property-building-1": {
+			"adapterID": "sk-inspire",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Ministerstvo vnútra Slovenskej republiky, reached as a WFS 2.0 download service at `https://rageo.minv.sk/geoserver/ad/wfs`. The service publishes all five AD feature types and advertises `ImplementsResultPaging`, so a build pages each type rather than downloading a file. Measured 2026-10-01, `resultType=hits` past index 0 reports 1,704,196 `ad:Address` features, 29,315 `ad:ThoroughfareName`, 3,015 `ad:AdminUnitName`, 1,769 `ad:AddressAreaName` and 1,415 `ad:PostalDescriptor`, and a page of each type agreed with its count. The register record states a national spatial scope and a `footprint_geo` of `Slovenská Republika` at a 100% match. Two reader notes. This service answered one `resultType=hits` request of nine with no `numberMatched` attribute and the other eight with `1704196`, so a caller reads that response as unusable and retries rather than recording a count. And an address references its components through a stored-query URL whose `id` parameter carries the target's feature id, of which 15 of 23 on a page of five addresses joined against the first 1,000 features of each component type, the remaining 8 addressing features past those pages.",
+			"upstreamLineage": [
+				"https://rageo.minv.sk/geoserver/ad/wfs",
+				"https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all five feature types was listed, over 40 features each: 10 on `ad:Address`, 10 on `ad:AdminUnitName`, 8 on `ad:AddressAreaName`, 8 on `ad:PostalDescriptor` and 8 on `ad:ThoroughfareName`. None of the 44 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan or validity date, a status, a position, a locator, a name, a postcode or a component reference. `AD:LocatorName` is the element that needs its own statement, because it is free text of type `GeographicalName` and the one way a family name or a business name reaches an INSPIRE address. This service omits it structurally: its `locator` object carries `designator` and `level` and no `name` key at all, and the designator values are address numbers typed `LocatorDesignatorTypeValue/addressNumber`. The sampled measurement agrees, at 0 of 800 addresses over 40 windows spread across the 1,704,196. The traversal was checked against Estonia, which populates the element on every address, to establish that a reader finding nothing here is reading a service that writes nothing rather than failing to look: Estonia flattens the path to `locator_addresslocator_name_locatorname_name_spelling_text` while Slovakia nests it, so each service needs its own traversal and a single reader run against both would have reported one of them wrongly."
+			}
+		},
+		"ch-property-building-1": {
+			"addressRoles": {
+				"STN_LABEL": "premise"
+			},
+			"coverage": "The official directory of building addresses, published by swisstopo from the Federal Statistical Office's Buildings and Dwellings Register supplemented with cadastral survey data. `amtliches-gebaeudeadressverzeichnis_ch_2056.csv.zip` is 143,235,177 bytes and its single member is 468,306,734 bytes. **Measured 3,303,210 data rows on 2026-10-01**, 17 columns, every row holding exactly 17 fields. The address is assembled from `STN_LABEL`, `ADR_NUMBER`, `ZIP_LABEL`, `COM_NAME` and `COM_CANTON`, with street labels in German, French and Italian as the canton dictates, so one file carries `Grellingerstrasse`, `Route du Clos` and `Via Cantonale`. `ADR_STATUS` reads `real` on 3,251,832 rows and `planned` on 51,378, so 1.56% of the file describes an address that does not yet exist. `BDG_CATEGORY` splits the file usefully: `residential` 1,605,916, `non_residential` 1,258,886, `other_residential` 221,041, `special` 129,630, `partly_residential` 84,901 and `temporary` 2,836. **The publisher states a coverage caveat**: in fewer than ten municipalities the directory is not yet available or not fully available, pending harmonisation of the cadastral survey and register data. It is updated daily and also published as Interlis 2 and an ESRI file geodatabase, in LV95.",
+			"upstreamLineage": [
+				"https://data.geo.admin.ch/api/stac/v1/collections/ch.swisstopo.amtliches-gebaeudeadressverzeichnis",
+				"https://data.geo.admin.ch/ch.swisstopo.amtliches-gebaeudeadressverzeichnis/amtliches-gebaeudeadressverzeichnis_ch/amtliches-gebaeudeadressverzeichnis_ch_2056.csv.zip",
+				"https://www.swisstopo.admin.ch/en/official-directory-of-building-addresses"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "**This is the first address publication in the register whose free-text name column carries natural persons' names, and it is why that column is opened rather than assumed empty.** Sixteen of the 17 columns are structure: identifiers (`ADR_EGAID`, `STR_ESID`, `BDG_EGID`, `ADR_EDID`), a street label, a house number, a building category, a postcode and place, a municipality number, name and canton, a status, an official flag, a modification date and a position. The seventeenth is `BDG_NAME`, a free-text building name, populated on 20,989 of the 3,303,210 rows, which is 0.64%. Every populated value was read rather than sampled: 1,158 match a two-capitalised-word shape, of which 684 carry a structure word in German, French or Italian and describe a building, as `Garage Romiglios`, `Einstellgarage Beltrametti`, `Alphütte Pürt` and `Résidence La Pran` do. The remaining 474 were read individually, and most are Italian-language building and facility names concentrated in Ticino, as `Monti Incella`, `Capanna Basodino`, `Officine SBB CFF FFS` and `Azienda Agricola` are. **At least twelve are a surname and a given name on a row whose `BDG_CATEGORY` reads `residential`**: `Chaignat Aimée` in Jura, `Rutz Nelly`, `Maggiorini Tullio`, `Maggiorini Jole`, `Frigerio Cesare Vittorio`, `Stern Flavia`, `Pozzi Castelli Tamara`, `MTI DELLA COSTA-GUIDOTTI RENZO`, `TRAVERSE-MEILI PFEIFFER`, `TRAVERSE-LANDOLT ARMIN` and `RONCO BALINO-KUHN` in Ticino, and `NB EFH Lauber Jörg` in Valais. A surname and a given name beside a residential address identifies a natural person at their home, which is the class `ingestEligibilityProblems` refuses and which this repository decided on 2026-09-30 it would not carry. A further set pairs a surname with a structure word, as `Autounterstand Scherrer`, `Holzbaracke Tscherrig`, `Carport Stuck` and `Dépôt Fournier Georges` do, and whether those name an owner or a business is not settled here. **Whether a build that never reads `BDG_NAME` changes this reading is a question for the operator and counsel rather than for this record**: the 16 remaining columns carry no party, and the register records the source as published."
+			}
+		},
+		"ax-property-building-1": {
+			"adapterID": "ryhti",
+			"addressRoles": {
+				"address_fin": "premise",
+				"address_swe": "premise"
+			},
+			"coverage": "The Åland municipalities inside the Ryhti built-environment address file SYKE publishes for Finland, at `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz`. Åland is part of Finland and its sixteen municipalities carry Finnish municipality numbers, so this is a slice of one national file rather than a separate publication. **Measured 32,518 rows on 2026-10-01** by parsing the whole 351,288,399-byte file, sha256 `a72150c10c025bd37279038f42f68ac50b985f82aabd299f2d8a4a6779203a46`, and counting `municipality_number`. **All sixteen municipalities are present**: Mariehamn 478 with 4,660 rows, Jomala 170 with 4,211, Finström 060 with 3,054, Lemland 417 with 2,993, Saltvik 736 with 2,581, Eckerö 043 with 2,318, Hammarland 076 with 2,261, Sund 771 with 1,887, Geta 065 with 1,612, Föglö 062 with 1,596, Vårdö 941 with 1,459, Brändö 035 with 1,032, Lumparland 438 with 989, Kumlinge 295 with 864, Kökar 318 with 669 and Sottunga 766 with 332. Åland is Swedish-speaking, so `address_swe` is the populated address column here where mainland rows lean on `address_fin`, and `addressRoles` keys both because each carries a whole address. **The file double-quotes every field**, which is a property of the file rather than of some rows: 3,862,609 of 3,862,609 lines contain a quote character. A reader that splits a line on `,` misaligns every column, and under that misreading this measurement first returned 0 Åland municipalities and 460 distinct `municipality_number` values against the 308 a quote-aware parse finds.",
+			"upstreamLineage": [
+				"https://paikkatietohakemisto.fi/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=%7BDBD610F4-3392-44CD-B601-BAE8FA547A57%7D"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "This is the same file as `fi-property-building-1`, whose 24 columns were read in full and hold no owner, occupant, holder or contact. The Åland rows carry the same 24 columns, since the header is the file's: `X`, `Y`, `Z`, `address_key`, `building_key`, `address_fin`, `address_swe`, `postal_office_fin`, `postal_office_swe`, `address_number`, `address_name_fin`, `address_name_swe`, `number_part_of_address_number`, `number_part_of_address_number2`, `municipality_number`, `subdivision_letter_of_address_number`, `subdivision_letter_of_address_number2`, `postal_code`, `location_srid` and the remaining geometry and key columns. `address_key` and `building_key` identify an address and a building rather than a person, and the two `postal_office` columns hold a postal place name in each language. No column is a free-text name of the kind that made Switzerland's `BDG_NAME` refusable."
+			}
+		},
+		"sj-property-building-1": {
+			"adapterID": "matrikkelen",
+			"addressRoles": { "adresseTekst": "premise" },
+			"coverage": "Matrikkelen - Adresse for area 2100 Svalbard, the same dataset Kartverket publishes for the mainland, taken from the dataset's own area list rather than from a separate product. `Basisdata_2100_Svalbard_4258_MatrikkelenAdresse_CSV.zip` is 58,079 bytes, sha256 `71f348ba6f0aeb7b3fb111b17616e1cd33ccf28d08129a70d538db317180727d`, and its member `matrikkelenAdresse.csv` is 321,491 bytes dated 2026-09-08. **Measured 1,096 data rows on 2026-10-01** over the mainland file's same 46 columns, with every row holding exactly 46 fields. `adressetype` reads `vegadresse` on all 1,096, so this extract carries no `matrikkeladresse` cadastral reference, where the mainland file carries 34,522 of them. `kommunenummer` reads `2100 SVALBARD` on every row and `postnummer` reads `9170 LONGYEARBYEN` on every row, so the publication is one settlement rather than the archipelago: Barentsburg, Ny-Ålesund and Sveagruva have no rows here. Longyearbyen's streets are numbered rather than named, so `adresseTekst` reads `Vei 223 8`, `Vei 500 1` and `Vei 608 7`, which is a street-name vocabulary worth knowing before a parser is scored on it. **This row covers Svalbard and not Jan Mayen**, although ISO 3166-1 assigns `SJ` to both: Geonorge's 375-area codelist for this dataset carries no Jan Mayen entry.",
+			"upstreamLineage": [
+				"https://nedlasting.geonorge.no/api/codelists/area/f7df7a18-b30f-4745-bd64-d0863812350c",
+				"https://kartkatalog.geonorge.no/api/getdata/f7df7a18-b30f-4745-bd64-d0863812350c"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The mainland extract's 46 columns were read in full for `no-property-building-1` and none is an owner, occupant, holder or contact. This file declares the same 46, read from the file rather than assumed, so that finding transfers. The two columns that needed their own measurement there were measured again here. **`adressetilleggsnavn`, the free-text name an address may carry, is populated on 0 of the 1,096 rows**, and `adressetilleggsnavnKilde` likewise, so the column that carries Switzerland's class of risk is empty throughout this publication rather than merely low. `organisasjonsnummer` is populated on all 1,096 rows with the single municipality 2100's own value, which identifies a legal entity and is the class this repository carries. The remaining populated name columns are place names: `kommunenavn` `SVALBARD`, `adressenavn` the numbered street, `grunnkretsnavn`, `soknenavn` and `valgkretsnavn` the statistical, parish and electoral units. `tettstednavn` is populated on 0 rows."
+			}
+		},
+		"bl-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 977, Saint Barthélemy, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-977.csv.gz`, 240,822 gzipped bytes. **Measured 5,553 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. One commune and the single postcode 97133. `nom_ld`, the lieu-dit, is populated on 99.8% of rows, the highest share of the ten territories, so an address here is usually a named locality beside a street. Samples: `502 Chemin Marguerite, 97133 Saint-Barthélemy` and `363 Route de Anse des Cayes, 97133 Saint-Barthélemy`.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"gf-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 973, French Guiana, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-973.csv.gz`, 2,416,354 gzipped bytes. **Measured 60,904 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 21 communes and 21 postcodes. `nom_ld` is populated on 11.4% of rows. Samples: `5 Rue Gaston Monnerville, 97390 Régina` and `54 Piste Inery, 97390 Régina`, where `Piste` is a local street type the metropolitan file carries rarely.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"gp-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 971, Guadeloupe, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-971.csv.gz`, 6,324,477 gzipped bytes. **Measured 163,423 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 32 communes and 32 postcodes running from 97100 to 97190. `nom_ld` is populated on 16.3% of rows. Samples: `202 Chemin de Bois Rimbault, 97123 Baillif` and `75 Ruelle des Anthuriums, 97123 Baillif`.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"mf-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 978, Saint Martin, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-978.csv.gz`, 342,205 gzipped bytes. **Measured 7,363 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. One commune and the single postcode 97150. `nom_ld` is populated on 97.4% of rows. The register carries the French side of the island; Sint Maarten is the separate jurisdiction `SX`. Samples: `2 Allée Rey, 97150 Saint-Martin` and `368 Rue de l'Escale, 97150 Saint-Martin`.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"mq-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 972, Martinique, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-972.csv.gz`, 5,833,282 gzipped bytes. **Measured 138,460 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 34 communes and 30 postcodes, so two communes share a postcode with another. `nom_ld` is populated on 47.3% of rows. Samples: `70 Allée des Moubins, 97216 L'Ajoupa-Bouillon` and `927 Avenue des Fromagers, 97216 L'Ajoupa-Bouillon`.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"nc-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 988, New Caledonia, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-988.csv.gz`, 1,446,155 gzipped bytes. **Measured 51,702 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 7 communes and 7 postcodes: 98800, 98809, 98817, 98825, 98835, 98859 and 98889. New Caledonia has 33 communes, so this publication covers 7 of them and is partial in a way the row count alone does not show. `https://api-adresse.data.gouv.fr/search/` returns `Rue Jacques Iekawe 98800 Nouméa` as `type` `street` with `context` `988, Nouvelle-Calédonie`. Samples: `10 Rue des Sapins, 98825 Pouembout` and `149 Rue des Sapins, 98825 Pouembout`.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"pf-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 987, French Polynesia, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-987.csv.gz`, 256,688 gzipped bytes. **Measured 7,713 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. **This is the one territory whose `nom_voie` is below 100%: it is empty on 958 rows, which is 12.4%.** Those 958 rows were read in full and each carries `numero`, `code_insee`, `nom_commune`, a position and `source_nom_voie` `commune`, with no `code_postal`, so the commune supplied a house number and a point without a street name; every one is in `98736` Pirae. The file names 3 communes and 2 postcodes, 98714 and 98735, against French Polynesia's 48 communes, so this publication is a small part of the territory rather than a national register. `https://api-adresse.data.gouv.fr/search/` returns `Avenue de Tipaerui 98714 Papeete` as `type` `street` with `context` `987, Polynésie française`. Samples: `7 Arati’a Farevai 1, 98735 Tumaraa` and `249 Aroa Tehurui (rt 130), 98735 Tumaraa`.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"pm-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 975, Saint Pierre and Miquelon, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-975.csv.gz`, 93,161 gzipped bytes, the smallest populated file of the ten. **Measured 3,049 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 2 communes, which is the whole territory, and the single postcode 97500. `nom_ld` is populated on 3.7% of rows. Samples: `16 Rue du Baron de l’Esperance, 97500 Miquelon-Langlade` and `46 Rue du Baron de l’Esperance, 97500 Miquelon-Langlade`, which carry a typographic apostrophe rather than an ASCII one.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"re-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 974, Réunion, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-974.csv.gz`, 13,559,672 gzipped bytes, the largest of the ten. **Measured 340,941 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 24 communes, which is the whole territory, and 37 postcodes. `nom_ld` is populated on 2.8% of rows, the lowest of the ten, so a Réunion address is usually a street and number without a lieu-dit. Samples: `28 Chemin Bras Petard, 97412 Bras-Panon` and `87 bis Chemin Bras Petard, 97412 Bras-Panon`, the second showing `rep` carrying `bis`.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"yt-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": { "nom_voie": "premise" },
+			"coverage": "Base Adresse Nationale department 976, Mayotte, at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-976.csv.gz`, 2,078,251 gzipped bytes. **Measured 52,588 rows on 2026-10-01** over the same 23 columns as the national extract, every row holding exactly 23 fields. 17 communes, which is the whole territory, and 10 postcodes. `nom_ld` is populated on 39.8% of rows. Samples: `521 Rue Madi Mwamba, 97630 Acoua` and `79 Escalier Hamada Assani, 97630 Acoua`, the second showing `Escalier` as a street type, which suits the terrain and is rare in the metropolitan file.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`. This file's header was read from the file rather than assumed from the national extract, and it declares the same 23 columns: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every row holds exactly 23 fields, so no row introduces a column the header omits, and none of the 23 is an owner, occupant, holder or contact. The six columns whose names begin `nom` were each checked, because a name column is where a party would appear: `nom_voie`, `nom_commune`, `nom_ancienne_commune`, `nom_ld` and `nom_afnor` hold a street, commune or locality name, and `source_nom_voie` names the body that supplied the street name. **A street name commemorating a person is a toponym the commune assigned rather than a record about a resident**, which is why `Rue Gaston Monnerville` in French Guiana and `Rue Madi Mwamba` in Mayotte do not make this reading `present`; the test this register applies is whether a row identifies who is at the address. `cad_parcelles` references a cadastral parcel rather than whoever holds it."
+			}
+		},
+		"fo-property-building-1": {
+			"addressRoles": {
+				"address": "premise",
+				"address_complete": "premise"
+			},
+			"coverage": "Adressuskrá, published by Umhvørvisstovan as an ArcGIS MapServer whose service document reads `serviceDescription` `Adressutænasta við litum`, `copyrightText` `©Umhvørvisstovan`, `capabilities` `Map,Query,Data` and `maxRecordCount` 3000. Three layers were each read whole on 2026-10-01 by paging at that record count, and each count was taken from the service's own `returnCountOnly`. Layer 0 `Húsanr` is a point layer of **26,471 address points** over 33 columns, carrying `address`, `house_no`, `house_digit`, `house_letter`, `zip`, `city`, `address_city`, `street_id`, `street_name`, `municipality_no`, `municipality`, the three cadastral columns, `building_id`, `building_name`, `units_count`, `neighbourhood`, `parish`, `parish_church`, coordinates in the Faroese `fotm` grid, UTM and WGS84, and a collection date and year. Layer 2 `Adressueindir` holds **30,451 address units** with no geometry, keyed to `address_id` and carrying `floor`, `door`, `dwelling_no`, `ltal`, `address_complete` and `purpose`; `active` reads 1 on all 30,451. Layer 1 `Vegmiðjur` holds **2,180 street centerlines** with `street_id`, `street_name`, `zip` and `city`. The register covers the whole country: sampled rows span postcodes 100 Tórshavn, 160 Argir, 188 Hoyvík, 600 Saltangará, 650 Toftir, 700 Klaksvík, 765 Svínoy, 780 Kunoy, 785 Haraldssund and 826 Trongisvágur. `address` carries the street name and number together, as `Heimi í Húsi 1` and `Gulasteinsvegur 18` do, so `addressRoles` keys it and the unit layer's `address_complete` beside it.",
+			"upstreamLineage": [
+				"https://www.us.fo/kort/adressuskra/",
+				"https://data.us.fo/adrfinder/js/config.js",
+				"https://gis.us.fo/arcgis/rest/services/adressur/us_adr_husanr_litir/MapServer?f=json"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The free-text name column was measured over every row rather than sampled, because Switzerland's `BDG_NAME` carries natural persons' names in the same position. `building_name` is populated on all 26,471 rows of layer 0, and **25,437 of them hold the literal string `unknown`**, which leaves 1,034 rows with a value and 710 distinct values in total. Those values are businesses, institutions and Faroese place phrases: `Landssjúkrahúsið` the national hospital on 19 rows, `Rúsdrekkasøla Landsins` the state alcohol retailer on 10, `Fróðskaparsetur Føroya` the university on 6, `Listasavn Føroya` the national art gallery, `Føroya Bjór` the brewery, `Norðoya Sparikassi` and `Føroya Banki` the banks, `Skúlin` and `Skúlin á Fløtum` the schools, and the generic building types `Sethús`, `Íbúðarbygningur` and `Mattalág Bústaðir`. The 159 two-word values carrying no Faroese structure word were read individually: they are company names, as `Vest Invest`, `Berg Motors`, `Reyn Import`, `Park Styling`, `Sp/f FaroeWater`, `P/F Farcod`, `A.H. Jensen` and `Reinhaldið TK` are, and locative phrases, as `Á Gili`, `Á Fløtti`, `Í Køkinum`, `Hjá Klett`, `Har Suðuri`, `Har Innari`, `Har Uppi` and `Har Uttari` are. None is a surname beside a given name. The unit layer's only free-text candidate is `purpose`, which holds six distinct values over 30,451 rows: null on 28,953 and the integer codes 4, 1, 3, 100 and 5 on the rest, so it is a coded classification rather than a name. No column in either layer identifies an owner, occupant, holder or contact."
+			}
+		},
+		"is-property-building-1": {
+			"coverage": "Staðfangaskrá is the Icelandic address register, held by Húsnæðis- og byggingarstofnun, the housing and construction authority that absorbed the property registry. **Its rows were not reached on 2026-10-01 and this coverage value records what each host answered rather than a measurement.** Eleven hosts were asked over three passes. `fasteignaskra.is` presents a certificate whose only subject alternative name is `DNS:*.fasteignaskra.is`, which excludes the apex, so every HTTPS request fails `ERR_TLS_CERT_ALTNAME_INVALID`; a raw socket connects on port 443 and on port 80, and port 80 answers HTTP 301 to the same failing HTTPS origin. `hms.is` and `www.fasteignaskra.is` answer HTTP 429 with a 33,938-byte body to three user agents including a browser one. `api.fasteignaskra.is` completes a TLS 1.3 handshake against a valid `*.fasteignaskra.is` certificate and answers a constant 39-byte `{\"status\":400,\"message\":\"Bad request\"}` at `/`, `/v1`, `/v1/stadfong`, `/swagger/index.html`, `/swagger/v1/swagger.json` and `/upplysingar`. `gataskra.skra.is` and `gogn.hms.is` have no A record. `opingogn.is` resolves to three addresses and serves Stafrænt Ísland, a service page of 933 characters of text, answering HTTP 404 at `/dataset`, `/search` and both CKAN API paths; `island.is/opin-gogn` answers HTTP 404 and `gagnatorg.is` serves an application shell of 11 characters. The national land survey's WFS at `gis.lmi.is/geoserver` declares 477 type names across 42 workspaces and **0 of them match `staðfang`, `heimilisfang` or `gata`**, so the survey publishes no address type. `skra.is`, the national population register, answers HTTP 200 and holds population and citizenship data rather than the address register."
+		},
+		"no-property-building-1": {
+			"adapterID": "matrikkelen",
+			"addressRoles": {
+				"adresseTekst": "premise"
+			},
+			"coverage": "Matrikkelen - Adresse, published by Kartverket as a whole-country bulk file. `Basisdata_0000_Norge_4258_MatrikkelenAdresse_CSV.zip` is 151,705,546 bytes and its member `matrikkelenAdresse.csv` is 812,548,530 bytes; the same extract in EPSG:25833 is 156,927,276 bytes and the GML 351,576,939. **Measured 2,603,354 data rows on 2026-10-01**, 46 columns, every row holding exactly 46 fields. `adresseTekst` carries the whole address, so `addressRoles` keys that column; the parts are also separate, as `adressenavn`, `nummer`, `bokstav`, `postnummer` and `poststed`. `adressetype` splits the file as the publisher's abstract describes: `vegadresse` on 2,568,832 rows and `matrikkeladresse` on 34,522, which is 1.33%, the latter reading as a cadastral reference such as `Øvrabø, 124/1` rather than a street address. Three access points are carried per address, `atkomst`, `sommeratkomst` and `vinteratkomst`, each with its own identifier and coordinates, which is a Norwegian feature rather than a duplicate. Geonorge's download API takes an order with area, format and projection selection, and the whole country is also published at a conventional path as area code `0000`, `Hele landet`, in CSV and GML.",
+			"upstreamLineage": [
+				"https://kartkatalog.geonorge.no/api/getdata/f7df7a18-b30f-4745-bd64-d0863812350c",
+				"https://nedlasting.geonorge.no/geonorge/Basisdata/MatrikkelenAdresse/CSV/Basisdata_0000_Norge_4258_MatrikkelenAdresse_CSV.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The Matrikkel holds owner data under the restriction its own act imposes, so the question for this distribution is whether any of it travels with the addresses. All 46 columns were read: identifiers, municipality number and name, address type, address code, street name, number and letter, the four cadastral numbers, two address-text forms, a projection code and coordinates, postcode and postal place, and the names and numbers of the statistical unit, parish, urban settlement and electoral district, which are place names. None is an owner, occupant, holder or contact column. Two columns needed their own measurement. `adressetilleggsnavn` is the free-text name an address may carry, the same class as Estonia's `AD:LocatorName` and Switzerland's `BDG_NAME`: it is populated on 23,972 of the 2,603,354 rows, which is 0.92%, and its `adressetilleggsnavnKilde` records where each value came from, reading `matrikkeladressenavn` 9,207 times, `tildeltAvKommunen` 7,975, `krevdAvEier` 5,871 and `anmodetAvHjemmelshaver` 919. Forty values of two capitalised words were read and every one is a place or facility name, as `Søndre Vælsvann`, `Ytre Sandstøl`, `Øvre Maudal`, `Telavåg Idrettspark` and `Nettstasjon Lyse` are, with no personal name among them. `organisasjonsnummer` is populated on all 2,603,354 rows, which rules out a per-address occupant outright, and it holds 1,147 distinct values across 358 municipalities of which 1,146 appear in exactly one municipality, so it identifies a small set of legal entities per municipality rather than anything per address. An organisation number identifies a legal entity in any case, which is the class this repository carries."
+			}
+		},
+		"lu-property-building-1": {
+			"adapterID": "bd-adresses",
+			"addressRoles": {
+				"rue": "premise"
+			},
+			"coverage": "BD-Adresses, published by the Administration du cadastre et de la topographie through `data.public.lu` as three bulk files, of which `addresses.csv` is 28,186,970 bytes as retrieved on 2026-10-02, matching the 28,186,970 the portal records and the md5 `c2df2f3c18b846144bb5d5dc57fc14ca` it states; sha256 `604da1f7cb0017134ccc8deae6f77942634a95a920d224579aafc42e43178ad7`. The three bytes by which the 2026-10-01 retrieval read short are the UTF-8 byte-order mark the file opens with, `EF BB BF`, which the portal's own count includes. **Measured 179,622 data rows** by reading the whole file with `CSVSpliterator`, which is every line of its 179,624 less the header and the trailing newline. It is semicolon-delimited with 13 columns and every row holds exactly 13 fields, so no value contains a semicolon. **22 rows nonetheless need a quote-aware reader**: they RFC 4180-quote `rue` and double its interior quotes, as `\"Cité \"\"Pënscherbierg\"\"\"` and `\"Cité \"\"bei der Kapell\"\"\"`, so a naive split on `;` still yields 13 fields and passes a field-count check while carrying the publisher's quoting into the value. The same file holds 0 fields with an embedded newline and 0 carriage returns. `id_geoportail` is distinct on all 179,622 rows and ends in `_<id_caclr_rue>_<numero>` on 179,607 of the 179,607 rows that state a number, which is the only publisher-side restatement of a composed value here: the file publishes no preformatted address line. `numero` is empty on 15 rows, bare digits on 162,273, letter-suffixed on 17,087, a hyphenated range on 239 and `BIS` or `bis` on eight. `rue` is the file's one street-name column and carries no language tag, with 133,449 values opening on a French generic and the rest including plainly Luxembourgish forms such as `Am Stengber` and `Um Reebou`, so a row's written language is not recorded by the publisher. **The publisher states that this is a subset**: `La BD-Adresses est un sous-ensemble des adresses figurant dans le registre national des localités et des rues`, enriched with coordinates and georeferenced on the cadastral parcel and the digitised cadastral plan, so 179,622 is the published subset rather than Luxembourg's address count. Positions come twice, as `lat_wgs84` and `lon_wgs84` and as `coord_est_luref` and `coord_nord_luref` in the national grid. It is updated weekly, `last_modified` `2026-09-28T02:31:48.330000+00:00`, and the portal also offers forward and reverse geocoding APIs over the same data at `apiv3.geoportail.lu`.",
+			"upstreamLineage": [
+				"https://data.public.lu/api/1/datasets/adresses-georeferencees-bd-adresses/",
+				"https://download.data.public.lu/resources/adresses-georeferencees-bd-adresses/"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The file declares its columns in a header and every one of the 179,622 rows carries exactly those 13 fields, so all 13 were read rather than sampled for a fourteenth: `rue`, `numero`, `localite`, `code_postal`, `id_caclr_rue`, `id_caclr_bat`, `lat_wgs84`, `lon_wgs84`, `coord_est_luref`, `coord_nord_luref`, `id_geoportail`, `commune` and `lau2`. None identifies a party: there is no owner, occupant, holder or contact column and no personal name. `id_caclr_rue` and `id_caclr_bat` are the national register's street and building identifiers, and a building identifier names a building rather than whoever occupies it. `lau2` is the European local administrative unit code. The addresses read as `Kaesfurterstrooss;20;Hupperdange;9755`, a street, a number, a locality and a postcode."
+			}
+		},
+		"fr-property-building-1": {
+			"adapterID": "ban",
+			"addressRoles": {
+				"nom_voie": "premise"
+			},
+			"coverage": "The Base Adresse Nationale, published by IGN as one gzipped CSV for the whole country at `https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-france.csv.gz`. **Measured 26,117,350 address rows on 2026-10-01** by streaming and parsing the whole file, which makes this the largest publication in the register. The publisher's own conditions of use state `plus de 25 millions d'adresses sur le territoire français`, so the measurement agrees with the figure IGN states. The file is semicolon-delimited, declares 23 column names in its header, and every one of the 26,117,350 rows holds exactly 23 fields with no ragged row. **It is updated daily**, and the size moved between two requests minutes apart: 941,372,511 bytes on a HEAD and 941,775,136 bytes on the GET that was parsed, so a size recorded for this file is a size on a date. `addressRoles` is keyed by `nom_voie` because the address is assembled from separate columns rather than carried whole in one: `numero`, `rep`, `nom_voie`, `code_postal` and `nom_commune`, with `nom_afnor` holding the street name in the postal normalisation and `libelle_acheminement` the postal routing label. Positions come twice, projected in `x` and `y` and as `lon` and `lat`, and `type_position` states what the position denotes, with `entrée`, `parcelle` and `segment` among its values.",
+			"upstreamLineage": [
+				"https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-france.csv.gz",
+				"https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/",
+				"https://adresse.data.gouv.fr/cgu"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The publisher characterises its own content in article 1 of its conditions of use: the BAN holds `la correspondance entre adresse non nominative (numéro, nom de voie, lieu-dit et commune) et position géographique`, a non-nominative address beside a position. The file bears that out. All 23 declared columns were read rather than sampled for a twenty-fourth: `id`, `id_fantoir`, `numero`, `rep`, `nom_voie`, `code_postal`, `code_insee`, `nom_commune`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`, `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`, `source_nom_voie`, `certification_commune` and `cad_parcelles`. Every one of the 26,117,350 rows carries exactly these 23 fields, so no row introduces a column the header omits. None of the 23 identifies a party: there is no owner, occupant, holder or contact column and no personal name. `cad_parcelles` is a cadastral parcel reference, which identifies a parcel rather than whoever holds it, and `source_position` and `source_nom_voie` name the body that supplied a value, reading `commune` on the sampled rows. Street names honour people in France as they do in Poland, as `Rue Bernard Capelle` and `Rue Thomas Edison` among the sampled rows show, and `nom_voie` is a street-name column by definition. Eight rows sampled at two-million-row intervals span the country, from Ain to Finistère to Morbihan."
+			}
+		},
+		"fi-property-building-1": {
+			"adapterID": "ryhti",
+			"addressRoles": {
+				"address_fin": "premise",
+				"address_swe": "premise"
+			},
+			"coverage": "The national building address data of the Ryhti built-environment information system, published by Suomen ympäristökeskus as two bulk files rather than through a service: `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz`, 351,500,842 bytes, and `open_address.json.gz`, 427,348,698 bytes. **Measured 3,862,373 address rows on 2026-10-01**, by streaming the gzipped CSV whole and parsing it, so this is a count of the file rather than an estimate from a sample. Its header declares 24 column names and every one of the 3,862,373 rows holds exactly 24 fields, with no ragged row. **This file is republished in place and both figures moved within the same day.** A second read on 2026-10-01, taken while measuring Åland, found it 351,288,399 bytes, sha256 `a72150c10c025bd37279038f42f68ac50b985f82aabd299f2d8a4a6779203a46`, holding 3,862,609 rows, which is 212,443 bytes smaller and 236 rows longer. Both counts are correct for the edition they read, and a size or row count quoted for this source needs the date and digest beside it. **Every field in the file is double-quoted**, on all 3,862,609 lines of that edition, so a reader must respect RFC 4180 quoting; splitting a line on `,` misaligns every column and makes the field count look ragged. The addresses are bilingual: `address_fin` and `address_swe` carry the whole address per language, as `Rannikontie 4a` and `Rannikkovägen 4a` for one Espoo row whose `postal_office_fin` reads `ESPOO` and `postal_office_swe` reads `ESBO`, and the Swedish columns are populated where a municipality is Swedish-speaking. `addressRoles` is keyed by both, because each is a complete address rather than a part. The server states a `content-length` for both files and answers a `Range` request with HTTP 200 and the whole body, so a partial read is unavailable and a reader streams and stops instead.",
+			"upstreamLineage": [
+				"https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz",
+				"https://paikkatietohakemisto.fi/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=http://www.isotc211.org/2005/gmd&id=%7BDBD610F4-3392-44CD-B601-BAE8FA547A57%7D"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The file declares its columns in a header, so the review reads all 24 of them rather than sampling for a twenty-fifth: `X`, `Y`, `Z`, `address_key`, `building_key`, `address_fin`, `address_swe`, `postal_office_fin`, `postal_office_swe`, `address_number`, `address_name_fin`, `address_name_swe`, `number_part_of_address_number`, `number_part_of_address_number2`, `municipality_number`, `subdivision_letter_of_address_number`, `subdivision_letter_of_address_number2`, `postal_code`, `location_srid`, `modified_timestamp_utc`, `structure_key`, `area_key`, `deviation_object_key` and `location_permit_object_key`. Every one of the 3,862,373 rows carries exactly these 24 fields, so no row introduces a column the header omits. None of the 24 identifies a party: there is no owner, occupant, holder or contact column and no personal name. The six `_key` columns are UUIDs referencing objects of the information system, being an address, a building, a structure, an area, a deviation and a location permit, and a permit object is a permit rather than its holder. Ten rows sampled at 200,000-row intervals span the country, from Espoo to Ii to Vesanto, and each carries a street name and a house number where this publication's addresses sit."
+			}
+		},
+		"be-property-building-3": {
+			"adapterID": "brussels",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Paradigm, reached as a bare HTTPS download at `https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip`, 11,521,182 bytes, whose single member `UrbAdm_Adresses.gml` is 474,245,978 bytes. **Coverage is the Brussels-Capital Region rather than Belgium**: Flanders publishes its own service and Wallonia publishes separately, so this row is the third of three a Belgian build needs and it sits beside `be-property-building-1` and `be-property-building-2` for that reason. Brussels publishes no INSPIRE ATOM feed for this theme, so there is no `<updated>` element to poll and the download is a bare URL; the archive's `last-modified` is `Thu, 01 Dec 2022 07:57:50 GMT`, which makes it the oldest of the three Belgian regional publications. **Measured 225,660 `ad:Address` features over the whole member rather than a sample**, by `inspire-element-census.run.ts`, which counted all 48 distinct element names the file uses. It carries its components in the same file: 6,238 `ad:ThoroughfareName`, 26 `ad:PostalDescriptor` and 23 `ad:AdminUnitName`, and it publishes no `ad:AddressAreaName`, so a build needs no second request to resolve a component. The counts reconcile, which is the check that the census read the file rather than its own chunk boundaries: 225,660 addresses plus 6,287 component features equals the 231,947 `gml:featureMember` elements, and 231,947 is also the count of `gml:identifier`, `ad:inspireId`, `base:localId`, `ad:beginLifespanVersion` and `ad:validFrom`, one per member. The region is bilingual and the file records it: 12,476 `ad:ThoroughfareNameValue` over 6,238 thoroughfare-name features is exactly two spellings per street, and `gn:language` appears 12,574 times.",
+			"upstreamLineage": ["https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name the file ever uses was counted over all 474,245,978 decoded bytes of the member, so this is a denominator of the whole publication rather than a sample of its features. The file uses 48 distinct element names and **`ad:locatorName` is not among them: it appears 0 times, as does `ad:LocatorName`**. That element is the free-text `GeographicalName` through which a family name or a business name reaches an INSPIRE address, and this publisher never writes it. The 24,998 `ad:name` elements and 52 `ad:postName` elements sum to 25,050, which equals the 12,574 `gn:GeographicalName` plus 12,476 `ad:ThoroughfareNameValue` the file carries, and those sit on the component features rather than on an address: 6,238 thoroughfare names, 26 postal descriptors and 23 administrative-unit names, all of them place names. The census ran through `inspireGMLChunks`, the same reader the adapter uses, carrying the text after each chunk's final `<` into the next chunk and decoding with a stateful decoder, so neither a split tag nor a split multi-byte character could hide an occurrence."
+			}
+		},
+		"be-property-building-2": {
+			"adapterID": "wallonie",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Service public de Wallonie, reached as a predefined-dataset ATOM download service at `https://geoservices.wallonie.be/inspire/atom/AD_Service.xml`. **Coverage is the Walloon Region rather than Belgium**: Flanders publishes its own service and Brussels publishes separately, so this row is one of three a Belgian build needs, and it sits beside `be-property-building-1` for the same reason. The dataset feed offers one archive for the whole region, `AD.Addresses.gml.zip`, 106,665,832 bytes, sha256 `8eebae71d793632c22c9902e8420bc50e0e572c97de15b7d10051b29b59e208a`, whose single member `AD.Addresses.gml` is 5,163,917,131 bytes in ETRS89 / LAEA Europe (EPSG:3035). **Measured 1,772,312 `ad:Address` features over the whole file rather than a sample.** The same file carries its components: 55,766 `ad:ThoroughfareName`, 1,963 `ad:AddressAreaName`, 598 `ad:PostalDescriptor` and 264 `ad:AdminUnitName`, so a build needs no second request to resolve a component. Five counts reconcile exactly, which is the check that the census read the file rather than its own buffer boundaries: `ad:Address`, `ad:AddressLocator`, `ad:GeographicPosition`, `ad:locator` and `ad:position` each appear 1,772,312 times, and 1,772,312 addresses plus the four component counts equal the 1,830,903 `gml:featureMember` elements the file holds. Each address carries exactly 6 `ad:component` references, 10,633,872 over the file.",
+			"upstreamLineage": [
+				"https://geoservices.wallonie.be/inspire/atom/AD_Service.xml",
+				"https://geoservices.wallonie.be/inspire/atom/AD_Dataset_b62f8405-2ce3-449f-8a61-5fc2f38d8b73.xml",
+				"https://geoservices.wallonie.be/geotraitement/spwdatadownload/results/b62f8405-2ce3-449f-8a61-5fc2f38d8b73/AD.Addresses.gml.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name the file ever uses was counted over all 5,163,917,131 bytes, so this is a denominator of the whole publication rather than a sample of its features. The file uses 56 distinct element names and **`ad:locatorName` is not among them: it appears 0 times, as does `ad:LocatorName`**. That element is the free-text `GeographicalName` through which a family name or a business name reaches an INSPIRE address, and this publisher never writes it. The 113,763 `ad:name` elements all sit inside the three name component types rather than on an address, which their own counts settle: 57,997 `gn:GeographicalName` plus 55,766 `ad:ThoroughfareNameValue` equals 113,763 exactly, and the component features carrying them are 55,766 thoroughfare names, 1,963 address-area names and 264 administrative-unit names, all of them place names. No element of the INSPIRE Addresses model identifies a party, and none of the 56 here is an owner, occupant, holder or contact."
+			}
+		},
+		"be-property-building-1": {
+			"adapterID": "vlaanderen",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of agentschap Digitaal Vlaanderen, reached as a WFS 2.0 download service at `https://geo.api.vlaanderen.be/ad/wfs`. **Coverage is the Flemish Region rather than Belgium**: Brussels and Wallonia publish the theme through their own services, so this row is one of three a Belgian build needs. Measured 2026-09-30, `resultType=hits` past index 0 reports 4,563,062 `ad:Address` features, and a page of the type agreed with that count. A bare hits request without a `startIndex` reports 10000 instead, which is a per-request cap rather than a count, so this service must be asked past index 0. It publishes four of the five AD feature types, omitting `ad:AddressAreaName`, and the component types report their own counts separately. An address references its components by the identifier URI its component features publish in `identifier`, such as `https://data.vlaanderen.be/id/straatnaam/6301`, which joins locally. On a page of five addresses, 5 of the 20 references instead address `http://vocab.belgif.be/auth/refnis1995/1000#id`, a term in the Belgian NIS vocabulary, so those administrative-unit components live outside this service and an address carrying one is complete at its source rather than incomplete here.",
+			"upstreamLineage": [
+				"https://geo.api.vlaanderen.be/ad/wfs",
+				"https://metadata.vlaanderen.be/srv/dut/csw?request=GetRecordById&service=CSW&version=2.0.2&ElementSetName=full&id=5c52b299-8f05-4d35-9839-a42934f1e619&OUTPUTSCHEMA=http://www.isotc211.org/2005/gmd"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all four feature types was listed, over 40 features each: 9 on `ad:Address`, 8 on `ad:AdminUnitName`, 8 on `ad:PostalDescriptor` and 7 on `ad:ThoroughfareName`. None of the 32 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a validity date, a position, a locator, a name, a postcode or a component reference. `AD:LocatorName` is the element that needs its own statement, because it is free text of type `GeographicalName` and the one way a family name or a business name reaches an INSPIRE address. This service leaves it empty: 0 of 800 addresses sampled over 40 windows spread across the 4,563,062 populate it, and the `locator` carries only a `designator` and a `level`. The designator values are house numbers typed `LocatorDesignatorTypeValue/addressIdentifierGeneral`. Article 4 of the elected licence requires that a re-use not breach data-protection law, and this reading is the measurement behind that undertaking for this source."
+			}
+		},
+		"ee-property-building-1": {
+			"adapterID": "ads",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Maa- ja Ruumiamet, reached as a WFS 2.0 download service at `https://inspire.geoportaal.ee/geoserver/AD_Address/wfs`. The service publishes all five AD feature types and advertises `ImplementsResultPaging`, so a build pages each type rather than downloading a file. Measured 2026-09-30, `resultType=hits` past index 0 reports 729,973 `AD.Address` features, and a page of the type agreed with that count. The component types report 19,676 `AD.Address_ThoroughfareName`, 4,800 `AD.Address_AdminUnitName`, 638 `AD.Address_AddressAreaName` and 1,374,116 `AD.Address_PostalDescriptor`, the last of which exceeds the address count and therefore carries more than one descriptor per address. Two reader notes. This service names its types under its own prefix, `AD_Address:AD.Address` and `AD_Address:AD.Address_ThoroughfareName`, so a reader comparing the part after the colon against `Address` finds no address type here. And it advertises `application/geo+json` and answers a `GetFeature` for it with `InvalidParameterValue: Failed to find response for output format`, while the same request under `application/json` returns the features.",
+			"upstreamLineage": [
+				"https://inspire.geoportaal.ee/geoserver/AD_Address/wfs",
+				"https://metadata.geoportaal.ee/geonetwork/srv/est/csw?service=CSW&request=GetRecordById&version=2.0.2&outputSchema=http://www.isotc211.org/2005/gmd&elementSetName=full&id=b0bd266e-b4c6-45db-b7ea-f47486b6258b"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every property of all five feature types was listed, over 40 features each: 37 on `AD.Address`, 20 on `AD.Address_AdminUnitName`, 15 on `AD.Address_ThoroughfareName`, 15 on `AD.Address_AddressAreaName` and 14 on `AD.Address_PostalDescriptor`. None of the 101 identifies a party, and each is INSPIRE address structure, being an identifier, a lifespan date, a status, a position, a locator, a name or a component reference. `AD:LocatorName` needs its own statement because it is free text of type `GeographicalName`, which is how a family name or a business name reaches an INSPIRE address, and this publisher populates it where the Dutch, Czech and Danish themes leave it empty: 1,200 of 1,200 addresses sampled over 60 windows spread across the 729,973, reaching 664 distinct locality paths, carry a value. Every one of those 1,200 states its `LocatorNameTypeValue` as `siteName` (829) or `buildingName` (371), which are place designations in the INSPIRE codelist, and no value takes the given-name-and-family-name shape: 0 of 1,200 carry two capitalized words, while 105 carry a hyphen. The values are Estonian farm and site names, which is how a rural Estonian address designates its addressable unit, as in `Saare maakond, Muhu vald, Raugi küla, Jüri`. Some are the genitive of a personal given name, `Jüri`, `Jaani`, `Mardi` and `Hansi` among them, which is the traditional pattern of naming a farm after a historical householder rather than a reference to the present occupant, and the compounds confirm it: `Vana-Käspri` and `Uue-Tooma` read as the old and the new holding of a named farm. No element asserts a party, states a surname, or carries a person identifier."
+			}
+		},
+		"nl-property-building-1": {
+			"adapterID": "nl-kadaster",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of Kadaster, reached through the ATOM download service at `https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml`, 2,247 bytes, sha256 `36c587f04c6c4e57c71fd03ff253d85df3c8d796b9c12c26159dda1e0262effe`. The feed holds one entry covering the whole country rather than one per municipality, so this row's coverage is national and measured rather than inferred from a sample. That entry is `https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz`, 819,465,603 bytes, sha256 `7ea1e45ee200327468eab8c8089a46ad99c334606cae19df7ba334cfae34cd5f`, which expands to 29,677,448,685 bytes of GML holding **10,066,060 address features**. That is the largest measured address count of any source in this register.",
+			"upstreamLineage": [
+				"https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml",
+				"https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in the decompressed GML was counted over all 29,677,448,685 bytes, read as a stream, so this covers the whole country rather than a sample of it. The file holds 49 distinct element names across 10,066,060 address features, and none of them identifies a party: there is no owner, holder, occupant or contact element, and no personal name. The four names outside the address, geographical-name and geometry vocabulary are `identifier`, `nameParts`, `PartOfName` and `part`, and the last three are the INSPIRE structure that splits a thoroughfare name into its components. The file follows the INSPIRE Addresses schema, which has no party element."
+			}
+		},
+		"cz-property-building-1": {
+			"adapterID": "cz-cuzk",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Czech Office for Surveying, Mapping and Cadastre, reached through the ATOM download service at `https://atom.cuzk.gov.cz/AD/AD.xml`, 8,373,817 bytes, sha256 `9b1d51a721ab601fa74307cce5ce20f74d12dd29512f87be29cd1072f0a2d83b`. The feed lists 6,258 entries, one dataset feed per municipality, and each dataset feed offers the same data in two projections, EPSG:5514 and EPSG:4258. The measured instance is the first entry, municipality 584061, whose EPSG:5514 archive is 25,248 bytes and whose one member `584061.xml` is 1,164,835 bytes holding 304 address features. The other 6,257 municipalities were not measured, and 304 features in one municipality is too small a sample to estimate the country's total from. The archive's central directory records the member size as `0xFFFFFFFF`, which is the ZIP64 sentinel rather than the real length.",
+			"upstreamLineage": [
+				"https://atom.cuzk.gov.cz/AD/AD.xml",
+				"https://atom.cuzk.cz/AD/datasetFeeds/CZ-00025712-CUZK_AD_584061.xml",
+				"https://services.cuzk.gov.cz/gml/inspire/ad/epsg-5514/584061.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `584061.xml` was counted over all 1,164,835 bytes, so this covers the file rather than its first features. It holds 53 distinct element names across 304 address features, and none of them identifies a party: there is no owner, holder, occupant or contact element, and no personal name. The four names outside the address, geographical-name and geometry vocabulary are `member`, `SpatialDataSet`, `identifier` and `metadata`, each of which describes the document rather than a person. The scope is one municipality of 6,258; the reading extends to the rest through the INSPIRE Addresses schema, which has no party element for another municipality to populate."
+			}
+		},
+		"es-mixed-regulatory-3": {
+			"adapterID": "es-bizkaia",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Diputación Foral de Bizkaia, reached through the ATOM download service at `https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml`, 119,029 bytes, sha256 `a832721d87e987dd8aef9fe425cf1c6d3bd20afc441bbb69af10a3dbd777efc4`. The feed lists 112 municipality entries, one zipped GML each, and this row covers all 112. The measured instance is the first, `ES.BFA.AD.001.zip` for 48001 Abadiño, 108,613 bytes, whose one member `ES.BFA.AD.gml` is 5,902,666 bytes and holds 1,357 address features. The feature count for the other 111 municipalities was not measured. Bizkaia publishes this theme itself; Catastro's national feed links it rather than serving it, which is why it is a row of its own.",
+			"upstreamLineage": [
+				"https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml",
+				"https://apli.bizkaia.eus/apps/Danok/INSPIRE/ES.BFA.AD.001.zip",
+				"https://apli.bizkaia.eus/apps/Danok/INSPIRE/inspireBizkaiaAtomMetadata.xml"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `ES.BFA.AD.gml` was counted over all 5,902,666 bytes, so this covers the file rather than its first features. It holds 49 distinct element names across 1,357 address features, and none of them is a party element: there is no owner, holder, `titular`, occupant or contact element. **`AD:LocatorName` needs its values read rather than its name counted.** The INSPIRE Addresses guideline types it as a free-text `GeographicalName` and states that it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Bizkaia populates it on 1,357 of 1,357 features, and every value read is an internal cadastral reference rather than a name: they take the form `48 001 CL\\TRAÑAETXOSTE(00066) 004`, which concatenates the municipality code 48001, a street-type abbreviation, the street name, its cadastral code and the house number. All 1,357 are distinct and each restates the address's own components. No value names a person."
+			}
+		},
+		"es-mixed-regulatory-4": {
+			"adapterID": "es-gipuzkoa",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Diputación Foral de Gipuzkoa, reached through the ATOM download service at `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml`, 4,469 bytes, sha256 `27769a3cc85aacbc1bb5f9b1febc786f5433db8e6c6ad3892ba772adc58e9106`. The feed holds one entry covering the whole province rather than one per municipality, and it links its dataset through `rel=\"alternate\"` rather than `rel=\"enclosure\"`, so a reader that looks only for an enclosure finds no dataset here. That dataset, `https://b5m.gipuzkoa.eus/inspire/download/GML/ES.GFA.AD.zip`, is 7,959,103 bytes, and its one member `ES.GFA.AD.gml` is 313,162,472 bytes holding 68,744 address features. The feed states the refresh cadence as weekly and the reference system as EPSG:3042. This is the whole published extent rather than a sample of it.",
+			"upstreamLineage": [
+				"https://b5m.gipuzkoa.eus/inspire/download/addresses.xml",
+				"https://b5m.gipuzkoa.eus/inspire/download/GML/ES.GFA.AD.zip",
+				"https://b5m.gipuzkoa.eus/metadata_inspire/ES.GFA.AD.MD.xml"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `ES.GFA.AD.gml` was counted over all 313,162,472 bytes, so this covers the whole province rather than a sample of it. It holds 49 distinct element names across 68,744 address features, and none is a party element: there is no owner, holder, `titular`, occupant or contact element. **This source needs the `AD:LocatorName` values read, and they are the case the standard warns about.** The INSPIRE Addresses guideline types that element as a free-text `GeographicalName` and states it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Gipuzkoa populates it on 46,365 of 68,744 features, giving 30,452 distinct values, and every value read is a building name published as a Basque and Spanish pair: `Gasolinera` with `Gasolindegia`, `Ayuntamiento` with `Udaletxea`, `Pabellón` with `Pabilioia`. Many are farmhouses, `Agirre, baserria` with `Agirre, caserío` and `Etxeberri, baserria` with `Etxeberri, caserío`, and a Basque baserri name is commonly also a surname. **The reading stays `absent` because these name the building rather than its occupant.** They are carried inside `GN:GeographicalName`, with the nativeness, name-status and language structure a toponym takes, and the guideline states that a locator name is not the addressee. A corpus built from this source therefore holds a place name whose etymology may be a family name, rather than a record about an identifiable person. Reading this field was the check the element census missed: that census treated `LocatorName` as place vocabulary without opening it."
+			}
+		},
+		"es-mixed-regulatory-5": {
+			"adapterID": "es-navarra",
+			"addressRoles": {
+				"AD:Address": "premise"
+			},
+			"coverage": "The INSPIRE Addresses (AD) theme of the Gobierno de Navarra, reached through the ATOM download service at `https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml`, 671,131 bytes, sha256 `6971dd61d87e2fc047e953e956b09c6cc88aaa92e16ffb3bbc4750a1edb1ab60`. The feed splits the province across 272 entries, each a zipped GML partition titled `Address Navarra` rather than named for a municipality, so a partition cannot be selected by place from the feed alone. This row covers all 272. The measured instance is partition 1, `AD_Navarra_1.gml.zip`, 7,476 bytes, whose one member `AD_Navarra_1.gml` is 307,117 bytes and holds 115 address features. The feature count for the other 271 partitions was not measured, and 115 features in the first partition is too small a sample to estimate the province's total from.",
+			"upstreamLineage": [
+				"https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml",
+				"https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/files/AD_Navarra_1.gml.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every element name in `AD_Navarra_1.gml` was counted over all 307,117 bytes, so this covers that partition rather than its first features. It holds 29 distinct element names across 115 address features, and every one of the 29 belongs to the INSPIRE address, geographical-name or geometry vocabulary. No element identifies a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name. The scope is one partition of 272; the reading extends to the rest through the INSPIRE Addresses schema, which has no party element for another partition to populate."
+			}
+		},
+		"va-finance-1": {
+			"coverage": "ASIF's list of supervised entities for the Holy See, read from `https://www.asif.va/en/list-of-supervised-entities`, which is the row's `sourceURL` since the 2026-09-30 rights review corrected it. The 2026-09-18 pass recorded `https://www.asif.va/ENG/EntiVigilati.aspx`; on 2026-09-30 that path redirected to `https://www.asif.va/en/enti-vigilati` and answered HTTP 404 with an empty body, while the corrected path answered HTTP 200. The whole page is 3,254 bytes and the list has one member, `Institute for the Works of Religion (IOR)`, named without an address. The only address on the page is ASIF's own footer, `Palazzo San Carlo, 00120 Città del Vaticano`, which belongs to the regulator rather than to a supervised entity. So the register row's note that the list `exposes the regulated entity and Vatican postal address` is not borne out, and this publication is not an address source. `addressRoles` stays unresolved because there is no address column to assign a role to.",
+			"upstreamLineage": ["https://www.asif.va/en/list-of-supervised-entities"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The list has one member and it is an institution, the Institute for the Works of Religion. The page gives no address for it and names no natural person, so a corpus built from this publication would hold no record about an identifiable person. The reading follows from the page being read in full at 3,254 bytes rather than from a sample."
+			}
+		},
+		"sj-business-legal-1": {
+			"addressRoles": {
+				"forretningsadresse": "registered-office",
+				"postadresse": "mailing",
+				"beliggenhetsadresse": "facility"
+			},
+			"coverage": "Svalbard records in Brønnøysund's Enhetsregisteret, the Central Coordinating Register for Legal Entities, reached through its open-data API. Read from Brønnøysund's own API documentation rather than from a data sample: the record carries three named address families, `forretningsadresse` the business address, `postadresse` the postal address and `beliggenhetsadresse` the location address, each with `adresse`, `postnummer`, `poststed`, `kommune`, `land` and `landkode`. Three families with three roles on one record is the richest shape of the sources measured so far. The Svalbard subset's row count is unmeasured: the API serves the national register and no count was taken over its Svalbard rows.",
+			"upstreamLineage": ["https://data.brreg.no/enhetsregisteret/api/dokumentasjon/index.html"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Enhetsregisteret registers `enkeltpersonforetak`, sole proprietorships, so a record can name a natural person and give three addresses for them. No measurement was taken over the Svalbard subset, so this reading rests on the register's composition rather than on a count, and the count is the work that would narrow it. The shape matches SIRENE's: a national business register whose sole traders are natural persons.",
+				"record": "internal/strategy/rights-receipts/seven-web-sources-2026-09-30/README.md"
+			}
+		},
+		"ch-business-legal-2": {
+			"adapterID": "gleif-lei",
+			"addressRoles": {
+				"Entity.LegalAddress": "registered-office",
+				"Entity.HeadquartersAddress": "registered-office"
+			},
+			"coverage": "The 2026-10-03 08:00 Level 1 golden copy, `20261003-0800-gleif-goldencopy-lei2-golden-copy.csv.zip`, 507,006,221 bytes, sha256 `8b56eca84ea750dd343a69ffd837f1ba6738bb063167e24d00192f0127d47d03`, 3,451,350 records. The headquarters address repeats the legal address on 2,755,787 records and is read once. The adapter emits 1,356,108 distinct addresses across 178 countries; the largest are DE 178,755, IT 153,146, NL 147,226, US 137,213 and FR 102,618. The largest address refusals are a street number it cannot place 873,601, a care-of first line 645,366 and a first line with no digit 301,531. AE, HK and BS rows are refused as unreviewed, because their sampled rows mislabel office numbers, floors and suite markers.",
+			"upstreamLineage": ["https://www.gleif.org/en/lei-data/gleif-golden-copy"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "LEI holders are legal entities, but GLEIF registers sole proprietors too. The adapter refuses 131,148 records as natural persons: `EntityCategory` `SOLE_PROPRIETOR` 129,552, an ELF code naming a sole-proprietorship form 382, and a free-text legal form naming a sole trader 1,214. `MailRouting`, which holds care-of lines naming people, is never read, and a first line written as care of a person is refused. A sole trader registered under a non-sole-proprietor category and a business name passes, which is the residual exposure.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/gleif-terms.json"
+			}
+		},
+		"fr-health-1": {
+			"adapterID": "fr-finess-overseas",
+			"addressRoles": {
+				"numvoie typvoie voie compvoie": "facility",
+				"lieuditbp": "facility",
+				"ligneacheminement": "facility"
+			},
+			"coverage": "The establishment extract `etalab-cs1100502-stock-20260512-0339.csv`, 35,786,629 bytes, read on 2026-10-03 for the overseas departments only. Of 103,023 lines, 2,665 are overseas establishments; the adapter emits 2,395: RE 835, GP 563, MQ 526, GF 255, YT 146, MF 41, PM 15, BL 12, WF 2. Refusals among the overseas rows: no street, lieu-dit or box 84, a digit in the lieu-dit 82, a digit in the street name 67, a family placement 24, an ambiguous repetition index `C` 5, a street type with no name 4, a number with no street 3. The publisher states this extract stops at data dated 2026-05-04.",
+			"upstreamLineage": ["https://www.data.gouv.fr/datasets/finess-extraction-du-fichier-des-etablissements/"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "FINESS registers establishments, and every overseas row read is a hospital, pharmacy, laboratory, care service, social establishment or similar. A family placement (`accueil familial`) is a household receiving a person, so its address is a private home: the adapter refuses the 24 overseas rows in those categories and, by name, Saint-Pierre-et-Miquelon's `CENTRE D'ACCUEIL FAMILIAL SPECIALISE` filed under category 377.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/fr-finess-annuaire-licences.json"
+			}
+		},
+		"fr-education-1": {
+			"adapterID": "fr-annuaire-education-overseas",
+			"addressRoles": {
+				"adresse_1 adresse_2 adresse_3": "facility",
+				"code_postal": "facility",
+				"nom_commune": "facility"
+			},
+			"coverage": "The Annuaire de l'éducation export filtered to department codes 971–978, 986, 987 and 988, read on 2026-10-03: 3,145 records, of which the adapter emits 2,825: RE 820, GP 426, MQ 391, NC 334, GF 310, YT 287, PF 181, MF 35, WF 19, PM 14, BL 8. Refusals: a digit it cannot place 204, two different place lines 55, no street, place or box 41, a street type with no name 18, care of a person (`Chez …`) 1.",
+			"upstreamLineage": ["https://data.education.gouv.fr/explore/dataset/fr-en-annuaire-education/"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The directory lists schools and education offices. One record addressed in care of a named person (`Chez …`) is refused, because that address belongs to the person rather than to the school.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/fr-finess-annuaire-licences.json"
+			}
+		},
+		"lv-property-building-1": {
+			"adapterID": "lv-varis",
+			"addressRoles": {
+				"aw_eka.csv STD": "premise"
+			},
+			"coverage": "The 2026-09-30 edition of `varis-atvertie-dati` on data.gov.lv. `aw_eka.csv`, building and land-unit addresses, sha256 `e99669fe0a102d833129559cbeb688ad3c1582d0a52346cb9accb523c41caada`, holds 610,876 rows: 550,652 active (`EKS`), 32,448 removed (`DEL`) and 27,776 erroneous (`ERR`). The adapter emits 550,637, refusing 15 house names written where a street address's number goes. By shape: rural named house in a parish 116,225, street address in a municipality town 113,905, street address in a state city 111,217, named house in a village 108,164, street address in a village 98,179, named house in a city 2,947. Every emitted row's `raw` is the register's `STD` string, which the adapter's join of the parent tables reproduces on all 550,637. `aw_dziv.csv` (868,669 active premises in 57,285 buildings) is not read.",
+			"upstreamLineage": ["https://data.gov.lv/dati/dataset/varis-atvertie-dati"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The address register records addresses and the codes of their parent places, and names no owner, resident or occupant. A rural house name such as `Riņņi` is the premise's registered name rather than a person's. No field ties an address to a natural person.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/lv-varis-ckan-package.json"
+			}
+		},
+		"ro-education-1": {
+			"adapterID": "ro-retea-scolara",
+			"addressRoles": {
+				"Strada": "facility",
+				"Numar": "facility",
+				"Cod postal": "facility",
+				"Localitate unitate": "facility"
+			},
+			"coverage": "The 2025-2026 workbook on data.gov.ro, 3,022,486 bytes, sha256 `35cb33c83752a6ac6334f1bd43a8bd53e9573684f949047aa05bd72056971a32`, one sheet `Export` whose header is the fourth row. Measured on 2026-10-03: 18,022 education units. 17,533 carry a street or a house number and become rows; 489 state neither and are refused. 16,393 of the 17,533 carry a house number, and 17,484 of the 18,022 carry a six-digit postcode. `Numar` writes `FN` (`fără număr`) for a premise without a number on about 600 units, which the adapter reads as absent.",
+			"upstreamLineage": ["https://data.gov.ro/dataset/69392a50-5750-4a54-90c1-d461de44da6d"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every row is an education unit of the Romanian state system: schools, kindergartens, children's clubs, school inspectorates and teacher centres, 17,433 of 18,022 typed `Unitate de învățământ`. The address is the unit's own premises. The workbook names no natural person in any address-bearing row; the `Email` and `Telefon` columns hold the unit's contact and are not read.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/ro-retea-scolara-ckan-package.json"
+			}
+		},
+		"lu-procurement-grants-1": {
+			"adapterID": "cordis",
+			"addressRoles": {
+				"organization.csv street": "registered-office",
+				"organization.csv postCode": "registered-office",
+				"organization.csv city": "registered-office"
+			},
+			"coverage": "The `organization.csv` members of the CORDIS FP7 (32,953,397 bytes, sha256 `886ee479…`), Horizon 2020 (55,219,250 bytes, `d4a8e364…`) and Horizon Europe (36,908,998 bytes, `1496a16e…`) archives, fetched 2026-10-03. 420,811 participation rows reduce to 78,842 distinct published records (name, street, postcode, city, country) and 57,930 emitted addresses across 158 countries. Refusals: a digit the street split could not place 14,438 and 4,646, no locality 564, a non-ISO country 359, a country without a codex layout 353, too few components 349, a name written as a person's 202. Largest countries: DE 7,967, IT 6,365, ES 4,242, FR 4,055, NL 3,800, GB 3,658.",
+			"upstreamLineage": [
+				"https://data.europa.eu/data/datasets/cordisfp7projects",
+				"https://data.europa.eu/data/datasets/cordish2020projects",
+				"https://data.europa.eu/data/datasets/cordisHEprojects"
+			],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The participant register enrols legal entities, and `activityType` takes only HES, PRC, REC, OTH, PUB or empty, so no field marks a natural person. A sole trader can register, so the adapter refuses a participant whose name takes a person's form (surname-first uppercase name, a German `e.Kfr.` suffix): 202 of 78,842 distinct records, among them `FISK ADRIAN` and `Melina Bucher e.Kfr.`. A sole trader trading under a business name passes that test, which is the residual exposure this reading records.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/cordis-legal-notice.json"
+			}
+		},
+		"it-procurement-grants-1": {
+			"adapterID": "it-anac",
+			"addressRoles": {
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=payer].address": "facility"
+			},
+			"coverage": "ANAC's OCDS release, Jan 2020 through Sep 2025 per the OCP Data Registry, 1,474,656 parties and 0 documents. Measured over the whole 2025 file, 3,963,957 bytes: 9,405 contracting processes and 29,823 party objects in three roles — supplier 11,075, buyer 9,381, payer 9,367. A buyer carries locality, postalCode, countryName and streetAddress on 9,381 of 9,381 rows. A payer carries a postcode on 9,355, a locality on 9,292 and a street line on 2,555. **The supplier role carries no address field at all**, so every address in this release belongs to a public body rather than to a contracting counterparty. Postcodes include the literal placeholder `N.A.`, which a reader has to treat as absent rather than as a code.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/117"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The publication names identifiable natural persons and records an address for none of them, which is what this reading turns on. Two of 11,075 supplier party names take the `Surname, Firstname` form, so `absent` would be wrong. **The supplier role carries no `address` object at all**: 0 of 11,075 supplier parties hold one, re-measured on 2026-09-30 over the whole 2025 file, 9,405 contracting processes and 29,823 party objects. Every address in the release sits on `buyer`, 9,381 of 9,381, or on `payer`, 9,359 of 9,367, and both roles are held by Italian public entities. This source's `addressRoles` names those two fields alone, so an adapter built from the register reads no supplier field. A false-positive check on the reading: 35 party objects carry both an address and an inverted `Surname, Firstname` name, and reading all 35 finds public bodies whose name holds a comma, such as `SETTORE PATRIMONIO, AMBIENTE E LAVORI PUBBLICI` and `PARCO NAZIONALE DEL CILENTO, VALLO DI DIANO E ALBURNI`. The policy this reading applies is that a corpus carries no address of an identifiable natural person and does carry the addresses of organizations.",
+				"record": "internal/strategy/personal-data-policy-2026-09-30.md, with the underlying measurement in internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"zm-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=tenderer].address": "counterparty",
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=procuringEntity].address": "facility"
+			},
+			"coverage": "ZPPA's OCDS release, Aug 2016 through May 2026 per the OCP Data Registry, 483,215 parties and 115,495 documents. Measured over the whole 2026 file, 13,244,085 bytes: 26,157 contracting processes and 62,736 party objects in four roles — tenderer 36,146, buyer 26,590, procuringEntity 26,590, supplier 5,014. A tenderer carries region, locality, countryName and streetAddress on 36,146 of 36,146 rows and a postcode on 29,982. Buyer and procuringEntity carry the same four on 26,590 of 26,590, and a sample shows one party holding both roles. A supplier carries region, locality and countryName on 5,014. The street field sometimes holds a post-office box — the Civil Aviation Authority reads `P.O.Box 50137` in `streetAddress` — so the field's grammar is mixed and a premise parser trained on it would see mailing forms.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/3"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Two measures were run and neither establishes `absent`. No supplier or tenderer name among 36,146 counterparty party objects takes the `Surname, Firstname` form. Every one of those 36,146 carries an organization identifier under scheme `ZM-PCR`, and that settles nothing about the party's kind: PACRA registers sole-proprietor business names alongside companies, so both kinds of party carry the number. Of 9,500 distinct counterparty names, 853 carry no legal-form marker, and a sole trader trading under a shop name reads as a business by every shape test — `KAVULAMUNGU BARGAIN CENTRE` and `NDANJI SHOPPING CENTRE` among them. Every counterparty role here carries a street address on 100% of rows, so the exposure is whatever share of those 9,500 are individuals, which no measure available here bounds.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"uy-procurement-grants-1": {
+			"coverage": "ARCE's OCDS release, Nov 2017 through Sep 2026 per the OCP Data Registry, 1,451,895 parties and 786,024 documents. Measured over the whole 2026 file, 17,636,512 bytes: 57,650 contracting processes and 127,885 party objects in two roles, supplier 70,235 and procuringEntity 57,650. **No party carries a non-empty address field of any kind.** So this publication is not an address source, and its `addressRoles` stays unresolved because there is no address column to assign a role to. The register row reads `verified-corpus`, which records that a bulk corpus is reachable rather than that it carries addresses.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/43"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The release carries no address field on any party, and no supplier or procuring-entity name among 70,235 counterparty party objects takes the `Surname, Firstname` form. With no address to carry, a corpus built from this release would hold no record about an identifiable natural person. The reading follows from the address measurement rather than from a separate analysis."
+			}
+		},
+		"de-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=procuringEntity].address": "facility",
+				"parties[roles=payer].address": "facility",
+				"parties[roles=funder].address": "facility",
+				"parties[roles=reviewBody].address": "facility",
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=tenderer].address": "counterparty"
+			},
+			"coverage": "The federal Procurement Office's OCDS release, Oct 2020 through Sep 2026 per the OCP Data Registry, 1,491,413 parties and 824,807 documents. Measured over the whole 2026 file, 102,848,828 bytes: 154,378 contracting processes and 315,007 party objects in **fifteen** roles — buyer 157,642, reviewBody 73,557, processContactPoint 57,216, tenderer 53,382, supplier 52,766, reviewContactPoint 34,573, submissionReceiptBody 18,797, mediationBody 8,610, procurementServiceProvider 7,445, evaluationBody 4,188, procuringEntity 3,755, funder 1,043, payer 1,013, leadTenderer 566, subcontractor 563. A reviewBody carries a locality on 73,556, a postcode on 73,539 and a street line on 65,366. A processContactPoint carries a locality and countryName on 57,216 and a street line on 55,310. A tenderer carries a locality and countryName on 52,980. Region codes are NUTS rather than names — `DED2D`, `DE91C` — and countryName is the alpha-3 `DEU`. Eight of the fifteen roles take no entry in `addressRoles`, because the extension defining them is not in the codelist this pass retrieved.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/136"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Ten of 53,940 counterparty party names take the `Surname, Firstname` form and nine carry a street line. Three are unambiguous natural persons with a residential-looking address: `Tausendfreund, Bettina` at `Neuer Markt 54, 53340 Meckenheim`, `Supervision-Roy, Jan Roy` at `Pastor-Sander-Bogen 11, 37083 Göttingen`, and `Fröschlein-Dienste, Jörg Schneider` at `Mühlstrasse 17, 01844 NEUSTADT`. The inverted-name form is a lower bound, so the true count is higher.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"cl-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=tenderer].address": "counterparty",
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=buyer].address": "facility",
+				"parties[roles=procuringEntity].address": "facility"
+			},
+			"coverage": "ChileCompra's OCDS release, Jan 2022 through May 2026 per the OCP Data Registry, 11,619,010 parties and 4,864,820 documents — the largest of the ten procurement publications. Measured over the whole 2026 file, 185,742,438 bytes: 170,410 contracting processes and 544,754 party objects in four roles — tenderer 266,559, supplier 209,702, procuringEntity 170,402, buyer 170,402. A tenderer carries a street line on 265,699 and a region on 264,579; a supplier a street line on 208,380; buyer and procuringEntity a region on 170,120 each and a street line on 164,705. **No party carries a postcode or a locality**, so the admin tail is a region name alone. Region values carry a trailing space (`Región del Biobío `) and party names are doubled around a pipe (`X | X`), both of which a reader has to normalize. The registry also serves a `2029.jsonl.gz` of 0 bytes, so a contracting process is dated four years ahead.",
+			"upstreamLineage": ["https://data.open-contracting.org/en/publication/144"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "Two measures were run and neither establishes `absent`. Two of 374,352 counterparty party names take the `Surname, Firstname` form and both are organizations whose name holds a comma, `CEPAL, Naciones Unidas` and `Xpertis, SpA`. Every one of the 374,352 carries an identifier, 374,151 under `CL-RUT` and 201 under `CL-MP`, and the Rol Único Tributario is issued to natural persons as well as to companies, so it settles nothing about the party's kind. Of 38,271 distinct names, 17,994 carry no legal-form marker, and most of that count is the measure's own artifact: `SKY AIRLINE S A` and `GASCO GLP S A` spell `sociedad anónima` as `S A` with a space. Tenderer and supplier carry a street line on 265,699 and 208,380 rows, so the exposure is whatever share of those 38,271 are individuals, which no measure available here bounds.",
+				"record": "internal/strategy/rights-receipts/ocp-eight-2026-09-30/README.md"
+			}
+		},
+		"bl-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Barthélemy, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Barthélemy is inside the register's geographic perimeter. The per-territory row count is unmeasured, because the file is national and no count was taken over its Saint-Barthélemy subset. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE records an objection per row and places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A row whose `statutDiffusionEtablissement` reads `P` is diffused partially after an objection, and for a natural person `l'identité de l'entrepreneur (nom, prénoms…), l'adresse dans la commune et la géolocalisation seront masquées`. That status changes after a corpus is built, so a frozen corpus and a model trained on it keep an address INSEE has since stopped diffusing. Filtering on the status is mechanical; discharging a continuing obligation from a published artifact is the open question.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"gf-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in French Guiana, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Guyane is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"gp-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Guadeloupe, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Guadeloupe is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"mf-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Martin, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Martin is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"mq-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Martinique, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Martinique is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"pm-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Saint-Pierre-et-Miquelon, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Saint-Pierre-et-Miquelon is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"re-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Réunion, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states La Réunion is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"wf-public-administration-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE public-sector establishments in Wallis and Futuna, from INSEE's StockEtablissement file, refreshed monthly. This row's coverage is narrower than the other eight SIRENE rows: the register's own note records the scope as public administrative bodies rather than a general private-business corpus, so it is not a business register for the territory. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built. The public-sector scope narrows the exposure and does not remove it, because the measurement that would show no natural person appears in this territory's subset was not taken.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"yt-business-legal-1": {
+			"addressRoles": {
+				"adresseEtablissement where etablissementSiege is true": "registered-office",
+				"adresseEtablissement where etablissementSiege is false": "facility"
+			},
+			"coverage": "SIRENE establishments in Mayotte, from INSEE's StockEtablissement file, refreshed monthly; the 2026-09-01 edition is 2,867,039,808 bytes zipped for all territories together. INSEE's scope note states Mayotte is inside the register's geographic perimeter. The per-territory row count is unmeasured. The establishment's own address is the primary column family; a second `adresse secondaire` family exists whose role INSEE does not state.",
+			"upstreamLineage": [
+				"https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret"
+			],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "SIRENE registers `entrepreneurs individuels`, so a row can name a natural person and give an address for them. INSEE places the obligation on the reuser: `il est ainsi de votre responsabilité de tenir compte du statut de diffusion le plus récent de chaque personne physique`. A `statutDiffusionEtablissement` of `P` marks partial diffusion after an objection, and the status changes after a corpus is built.",
+				"record": "internal/strategy/rights-receipts/fr-sirene-2026-09-30/README.md"
+			}
+		},
+		"gb-business-register-1": {
+			"addressRoles": {
+				"RegAddress": "registered-office"
+			},
+			"coverage": "Live companies on the Companies House register, published as the Free Company Data Product: one 469 MB archive or seven parts, refreshed within five working days of each month end. Measured on the 2026-09-01 part 1 of 7, 73,152,561 bytes: 55 columns, of which nine are one address — CareOf, POBox, AddressLine1, AddressLine2, PostTown, County, Country and PostCode under the `RegAddress.` prefix. Every address column belongs to that one family, so each row carries one address. The row count is unmeasured, because a distinct count cannot be read off one of seven parts.",
+			"upstreamLineage": ["https://download.companieshouse.gov.uk/en_output.html"]
+		},
+		"au-procurement-grants-1": {
+			"addressRoles": {
+				"parties[roles=supplier].address": "counterparty",
+				"parties[roles=procuringEntity].address": "facility"
+			},
+			"coverage": "OCDS releases for Apr 2007 through Sep 2026, retrieved monthly by the OCP Data Registry, last on 2026-09-13. Measured on the 2022 release: 51,829 contracting processes, each carrying one supplier party and one procuring-entity party. A supplier address gives locality, region and countryName on 51,829 of 51,829 rows, a postcode on 51,395 (99.16%), and a non-empty street line on 15,118 (29.17%). A procuring-entity address gives a region on 5,371 (10.36%) and a street line on 4,261 (8.22%). The release is federal procurement reporting rather than a national premise register, so it covers the parties that contracted with the Commonwealth and no other premises.",
+			"upstreamLineage": ["https://app.swaggerhub.com/apis/austender/ocds-api/1.1"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "The publication names natural persons and carries addresses for them. Measured on the 2022 release: 149 of 17,373 distinct supplier names take the `Surname, Firstname` form over 179 rows, 43 of those rows carrying a street line, and `Upton, David Gregory` is published at `3 Sloan Rd, Hawthorndene SA 5051`. A sole trader's reported address can be their home, and the record does not distinguish the two. The analysis that would move this to `assessed` is a decision rather than a measurement, and the measurement it would rest on is in the retained receipt.",
+				"record": "internal/strategy/rights-receipts/au-2026-09-30/README.md"
+			}
+		}
+	}
+}

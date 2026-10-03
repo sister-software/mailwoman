@@ -1,0 +1,5 @@
+engine: tree-sitter
+scopes:
+  - name: source
+    expr: |
+      (comment) @prose

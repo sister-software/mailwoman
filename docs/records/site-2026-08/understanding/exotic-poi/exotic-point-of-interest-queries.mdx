@@ -57,10 +57,10 @@ Until you've built that layer, a query for one of these categories abstains with
 ## What's still ahead
 
 - **Brand and franchise detection.** The taxonomy lexicon matches categories rather than chains. Mailwoman has no brand lexicon yet and no Wikidata QID table joining "Walmart" or "McDonalds" to Overture's `brand.wikidata` field. See [Franchise queries](./franchise-queries.mdx).
-- **Proximity-search products.** The CLI and MCP tool answer "nearest X" today. Turning that into a packaged product (routing, open-now filtering, review scores) is out of scope for now.
+- **Proximity-search products.** The CLI and MCP tool answer "nearest X" today. A packaged proximity product with routing, open-now filtering, and review scores is out of scope for now.
 - **Read-time ancestry.** Results don't yet carry WOF ancestry or a `gers_id` for cross-referencing against other Overture-keyed data. This gap is recorded as debt against the current spec.
 - **Landmarks and transit codes.** The taxonomy lexicon does not cover named-landmark disambiguation or airport and station code resolution. See [Landmark queries](./landmark-queries.mdx) and [Transit queries](./transit-queries.mdx).
-- **More locales.** `poi.db` covers the same four countries the parser trains against today. Expanding one expands the other.
+- **More locales.** `poi.db` covers the same four countries the parser trains against today. A new locale extends both.
 
 ## See also
 

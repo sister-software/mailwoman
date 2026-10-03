@@ -4,21 +4,23 @@
 /**
  * @file The fix registry: the checks that can plan their own repair, listed the way `registry.ts` lists the checks.
  *
- *   Membership is deliberately narrow. A check warrants a fix when the repair is a mechanical consequence of the
- *   diagnostic — a file belongs at another path, and every specifier that named it follows. A check whose repair is a
- *   judgment call has no entry here, and adding one to save an argument is how a health check starts deciding what
- *   the code should say.
+ * A check warrants a fix only when the repair is a mechanical consequence of the diagnostic.
  */
 
+import { nestedIndexFix } from "#checks/nested-index"
 import { prefixDirectoriesFix } from "#checks/prefix-directories"
+import { workspaceExportsFix, workspaceFilesFix } from "#checks/workspace-manifest"
 import type { RepoFix } from "#fix"
 
 /**
  * Every check that can plan its own repair.
- *
- * `mwops health fix <check>` looks a fix up here by the check's id.
  */
-export const fixes: ReadonlyArray<RepoFix> = [prefixDirectoriesFix]
+export const fixes: ReadonlyArray<RepoFix> = [
+	prefixDirectoriesFix,
+	nestedIndexFix,
+	workspaceExportsFix,
+	workspaceFilesFix,
+]
 
 /**
  * The fix for a check id, or no fix when that check has no mechanical repair.

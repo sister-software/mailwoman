@@ -9,7 +9,7 @@
 /**
  * Exact one-sided Clopper–Pearson upper bound for zero observed events: `1 − α^(1/n)`.
  *
- * Exact rather than the rule-of-three approximation, which diverges most at the small n where this is read.
+ * This exact bound differs most from the rule-of-three approximation at small `n`.
  */
 export function zeroEventUpperBound(n: number, alpha = 0.05): number {
 	if (n <= 0) return 1
@@ -18,7 +18,7 @@ export function zeroEventUpperBound(n: number, alpha = 0.05): number {
 }
 
 /**
- * Wilson score interval — the non-zero counterpart, and the same interval the
+ * Wilson score interval — the non-zero counterpart and the same interval the
  * eval specs derive their floors from.
  */
 export function wilsonInterval(successes: number, n: number, z = 1.96): { low: number; high: number } {
@@ -39,7 +39,7 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): { low: n
 /**
  * How tight the upper bound must be before a zero may be read as a real absence.
  *
- * A judgement rather than a measurement: 1% is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
+ * A judgment rather than a measurement: 1% is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
  * where a zero rests on a set larger than any panel assembled by hand here.
  */
 const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
@@ -95,7 +95,8 @@ export interface PowerReading {
 	/**
 	 * True when the sample cannot support a claim of absence.
 	 *
-	 * The sentence does the work, and this only lets a wrapper branch on it.
+	 * The sentence states the case.
+	 * This value lets a wrapper branch on it.
 	 */
 	supportsAbsenceClaim: boolean
 }

@@ -17,7 +17,7 @@ One distinction organizes everything below. "Supported" is two separate claims, 
 1. **The parser can read it.** The model was trained on the locale's address grammar, so [the spans come out labeled correctly](./how-mailwoman-parses-an-address.mdx): street, house number, postcode, town.
 2. **The gazetteer can pin it.** The reference data behind [the resolver](./how-mailwoman-resolves-a-place.mdx) has a coordinate at the grain you need — a rooftop, a street segment, or only a town centroid.
 
-Reading is a property of the trained model; pinning is a property of data artifacts on disk. They are built separately and they fail separately, which is why the two addresses below parse equally well while one lands on a doorstep and the other on a town.
+The trained model determines whether it can read a locale; data artifacts on disk determine whether it can pin an address. The model and data are built separately and can fail separately, which is why the two addresses below parse equally well while one lands on a doorstep and the other on a town.
 
 ## Two runs, one distinction
 
@@ -125,7 +125,7 @@ The visual evidence for all of this is on [the demo map](https://mailwoman.ai/de
 
 The model's side of "supported" is the training corpus: open, field-structured address records — national registers, state GIS address points, federal facility directories — aligned to BIO labels by per-source adapters and frozen into named corpus versions. The counts change with every rebuild, so they live with the pipeline docs rather than here: [corpus construction](./corpus-construction.mdx) covers the sources and alignment, [the training pipeline](./training-pipeline.mdx) the path from rows to shipped weights. One rule from that pipeline shows up on this page's map: a license filter excludes share-alike sources from training extracts, and the usable open data for Britain and Ireland is share-alike. That is why GB sits in the blocked row — a licensing check with a check-back owner rather than a modeling failure.
 
-## Checking your own area
+## Check your own area
 
 Three instruments, in the order you'd reach for them:
 

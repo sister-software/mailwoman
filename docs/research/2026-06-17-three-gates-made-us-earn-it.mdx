@@ -24,7 +24,7 @@ street like `Neuve-des-Capucines 5`, the house number is absorbed into the name.
 For a while we filed several of these cases under "within-token punctuation" and blamed the
 apostrophes and hyphens. When we measured that class, the punctuation was almost never the
 cause. `O'Connell` parses fine, and so does `Coeur d'Alene`. What breaks is the boundary next to
-the punctuation. The same boundary error appears in many different forms.
+the punctuation. The same boundary error appears in several forms.
 
 ## The plan
 
@@ -78,5 +78,4 @@ run it.
 The three checks were the main work of the night. The taxonomy identified the weakness. The
 checks blocked the fix three times, once for the data and twice for the corpus. Each block cost
 a few minutes and prevented a retrain whose headline numbers would have looked fine while its
-labels were wrong. **Letting the checks block a fix until it passes them is the fastest way we
-know to fix a serious weakness correctly.**
+labels were wrong. **The checks give us the fastest way we know to fix a serious weakness correctly: they block a fix until it passes.**

@@ -4,13 +4,14 @@
 /**
  *   Build a street-morphology FST from libpostal's street_types dictionaries. The morphology FST maps
  *   street-typing affixes (Street/Avenue/rue/Calle/Straße/...) to a single synthetic placetype
- *   `"street_affix"` — distinct from the admin FST in source data, intent, and binary artifact.
+ *   `"street_affix"`. Its source data and purpose differ from the admin FST.
+ *   It also produces a separate binary artifact.
  *
  *   The morphology FST closes the inference-time vacuum identified by the v0.6.1 postmortem: street
  *   tokens have no admin-FST anchor, so synth-street training pushed the model toward over-emitting
  *   `dependent_locality` on subcomponents. With the morphology FST, the neural decoder gets
  *   positive evidence for street-typing affixes and the adjacent name tokens, plus negative
- *   evidence away from `dependent_locality` on the same neighbours.
+ *   evidence away from `dependent_locality` on the same neighbors.
  *
  *   Design rationale + the four-layer street-supplement architecture lives in
  *   `docs/articles/concepts/street-supplement-architecture.md`.
@@ -35,7 +36,7 @@ import type { FSTProvenance, PlaceEntry } from "#fst/types"
  * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned,
  * well above any realistic WOF allocation.
  *
- * Reusing the same base across rebuilds keeps IDs stable for any consumer that caches them.
+ * The same base across rebuilds keeps IDs stable for consumers that cache them.
  * See [[project-schema-storage-decision]] for the reserved range policy.
  */
 const STREET_AFFIX_WOFID_BASE = 1_900_000_000
@@ -58,10 +59,11 @@ export interface BuildStreetMorphologyFSTOpts {
 	 *
 	 * Defaults to 3.
 	 *
-	 * Rationale: libpostal's street_types dictionaries contain 1-2 character
-	 * abbreviations (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix
-	 * tokens at parse time — notably US state abbreviations (`or`, `CA`, `ND`, `NY`),
-	 * single-letter unit designators, and arbitrary short tokens.
+	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations
+	 * (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time,
+	 * including US state abbreviations (`or`, `CA`, `ND`, `NY`).
+	 * Single-letter unit designators and other short tokens also collide.
+	 *
 	 * Empirically these collisions push the morphology prior to mis-tag state
 	 * abbreviations as `street_suffix`.
 	 *

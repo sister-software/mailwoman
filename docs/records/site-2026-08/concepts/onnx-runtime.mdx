@@ -13,7 +13,7 @@ tags:
 
 ## Why ONNX and not PyTorch directly
 
-PyTorch is great for training. It is heavy for inference. A PyTorch install is ~700 MB of Python wheels and depends on a specific Python version, CUDA toolkit, and C++ runtime. Shipping that to a browser is not feasible. Shipping it to a serverless function is painful.
+PyTorch is great for training and heavy for inference. A PyTorch install is ~700 MB of Python wheels and depends on a specific Python version, CUDA toolkit, and C++ runtime. A browser cannot use that install, and a serverless function is costly to configure for it.
 
 ONNX is the lingua franca that decouples training framework from inference runtime. Mailwoman trains in PyTorch (because that is the easy path for the team), exports to ONNX (because that is the portable format), and ships ONNX files. Consumers pick the runtime that fits their environment:
 
@@ -51,7 +51,7 @@ The CRF is **not** part of the ONNX graph in v3.0.0. The Viterbi decode runs in 
 
 ## Inference in Node.js
 
-Loading and running the model on the server is straightforward:
+The server loads and runs the model with this code:
 
 ```ts
 import { InferenceSession } from "onnxruntime-node"
@@ -75,7 +75,7 @@ The whole inference path — tokenize, run model, decode labels — takes ~5 ms 
 
 ## Inference in the browser
 
-The browser path uses `onnxruntime-web`, which is the same engine compiled to WebAssembly. Loading is a bit more involved because the WASM blob is several MB:
+The browser path uses `onnxruntime-web`, the same engine compiled to WebAssembly. The browser must load a WASM blob several MB in size:
 
 ```ts
 import * as ort from "onnxruntime-web"
@@ -126,5 +126,5 @@ A few subtle issues come up during ONNX export:
 ## See also
 
 - [How the model reasons](./how-the-model-reasons.mdx) — the encoder computation the ONNX graph exports
-- [Training pipeline](./training-pipeline.mdx) — where the ONNX file comes from
+- [Workflow for training](./training-pipeline.mdx) — where the ONNX file comes from
 - [CRF decoder](./crf-decoder.mdx) — the part that is _not_ in the ONNX graph (yet)

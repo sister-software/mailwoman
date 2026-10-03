@@ -49,6 +49,21 @@ export interface LayerManifest {
 	freshnessPolicy: LayerFreshnessPolicy
 	spineKeys: SpineKeys
 	createdAt: string
+	/**
+	 * How many records each input publisher supplied to this build, keyed by the publisher's own name.
+	 *
+	 * The count is of the input rather than the rows the artifact kept.
+	 * It is recorded here because it cannot be recovered afterwards.
+	 *
+	 * Overture removes a release from its bucket once a newer one lands.
+	 * A build that filtered its input leaves no way to count what the input held.
+	 *
+	 * Absent means the build did not record it.
+	 * Every artifact built before this field has that state.
+	 *
+	 * A reader distinguishes that from a recorded zero and never reports the two the same way.
+	 */
+	sourceRecords?: Readonly<Record<string, number>>
 }
 
 export interface CoverageCell {
@@ -316,6 +331,7 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 			freshness_policy: manifest.freshnessPolicy,
 			spine_keys: stringifyJSON(manifest.spineKeys),
 			created_at: manifest.createdAt,
+			source_records: manifest.sourceRecords === undefined ? null : stringifyJSON(manifest.sourceRecords),
 		})
 		.execute()
 }
@@ -346,6 +362,12 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 		freshnessPolicy: row.freshness_policy as LayerFreshnessPolicy,
 		spineKeys: parseJSONStrict<SpineKeys>(row.spine_keys),
 		createdAt: row.created_at,
+		// NULL and a missing column both mean the build recorded no count.
+		// The key stays absent for either.
+		// An empty object would make the build appear to have counted its publishers and found none.
+		...(row.source_records === null || row.source_records === undefined
+			? {}
+			: { sourceRecords: parseJSONStrict<Record<string, number>>(row.source_records) }),
 	}
 
 	assertManifestInvariants(manifest)

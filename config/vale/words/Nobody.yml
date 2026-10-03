@@ -1,0 +1,7 @@
+## Flag `nobody` in comments and docstrings for review.
+extends: existence
+message: "'%s' can hide the actor; name the person, group, or system responsible for the action."
+level: warning
+ignorecase: true
+tokens:
+  - '\bnobody\b'

@@ -15,7 +15,7 @@ This measures it.
 
 ## The setup
 
-For each EU coord-golden row (the same 7-locale panel #370 ran on), take the gold locality and exact-match it against the candidate gazetteer, country-constrained. For a miss, strip the qualifier and re-match — but grade the recovery by **coordinate** rather than string (the #566 discipline): the recovered place must land ≤25 km from the row's truth point. A near hit is a real recovery; a far hit is a same-name collision where the strip ate too much and matched a different place. Grading the string alone would score both as wins, which is exactly the failure mode "measure first" is guarding against.
+For each EU coord-golden row (the same 7-locale panel #370 ran on), take the gold locality and exact-match it against the candidate gazetteer, country-constrained. For a miss, strip the qualifier and re-match — but grade the recovery by **coordinate** rather than string (the #566 discipline): the recovered place must land ≤25 km from the row's truth point. A near hit is a real recovery; a far hit is a same-name collision where the strip ate too much and matched a different place. A string-only score would count both as wins, which is exactly the failure mode "measure first" guards against.
 
 Two normalization tiers, measured separately because their risk is not the same:
 

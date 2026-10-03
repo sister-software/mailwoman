@@ -5,17 +5,11 @@
  * @file Every published weights package ships its generated `LICENSE.md` and `PROVENANCE.json`, and both hold what the
  *   package's manifest and model card currently say.
  *
- *   The two files carry a rights statement to a consumer who has only the tarball. `LICENSE.md` states the terms this
- *   repository grants and what the commercial branch does not reach. `PROVENANCE.json` records, per artifact, what the
- *   model card holds about its inputs and which questions it leaves open.
+ * Both files are derived, so this check holds the committed bytes equal to `mwops release write-rights-files`'s output
+ * so a model card edit regenerates them or fails here.
  *
- *   Both are derived, so both go stale in a way no check reports. A model card edit that adds an attribution entry
- *   or a digest changes what the package owes and what it can show, and the compiler never reads either file. Holding
- *   the committed bytes equal to `mwops release write-rights-files`'s output makes that edit either regenerate them or
- *   fail here.
- *
- *   The `files` array is checked alongside, because a generated file the manifest does not declare is a file the
- *   tarball does not contain: the statement lands in the repository and never reaches npm.
+ * A generated file the manifest's `files` array does not declare never reaches the tarball, so that array is checked
+ * alongside.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"

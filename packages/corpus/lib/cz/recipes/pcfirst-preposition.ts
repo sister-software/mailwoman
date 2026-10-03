@@ -2,34 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `cz-pcfirst-preposition` — the Czech pc-first prepositional-locality recipe, fourth orthography
- *   of the #901 leading-name-boundary family. The #897 close-out read all 8 residual CZ rows as one
- *   class: a leading postcode mis-assigned as house_number while the multi-word "nad/pod/u X"
- *   locality shatters ("51244 Rokytnice nad Jizerou, Dolní Rokytnice 111" → street
- *   'RokytnicenadJizerou' + house_number '51244'). That leading-5-digit confusion is the
- *   anchor-pollution class whose decode-time override was correctly killed in #723. This recipe is
- *   the model-first fix as data: real prepositional localities in the order that breaks, so the
- *   model learns that a leading postcode before a multi-word name is a postcode. pc-first leads the
- *   cycle (the lesson); canonical and city-first keep the polarity balanced (the v1.9.9 lesson).
+ * `cz-pcfirst-preposition`: the Czech pc-first prepositional-locality recipe.
+ *
+ * A leading postcode is mis-assigned as a house number while a multi-word "nad/pod/u X" locality
+ * shatters. This recipe supplies real prepositional localities in the order that breaks, so the
+ * model learns that a leading postcode before a multi-word name is a postcode. pc-first leads the
+ * cycle and the canonical and city-first orders keep the polarity balanced.
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 /**
  * The order-cycle slot for the street-less form (`«city» «pc», Česko`).
  *
- * The exact surface of the `cz-full-praha-100-00` board row, whose absence from the
- * street-containing orders was the v4.5.0 no-promote's measured gap.
+ * This is the surface of the `cz-full-praha-100-00` board row.
+ * The street-containing orders do not cover it.
  */
 const STREETLESS_ORDER = 3
 
 /**
  * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
  */
 export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 	name: "cz-pcfirst-preposition",
@@ -61,11 +56,10 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 			}
 
 			const order = read % 4
-			// The official Czech rendering spaces the PSČ as `NNN NN` ('512 44'); OpenAddresses
-			// stores it unspaced ('51244'), and a model trained only on the source form reads
-			// the spaced surface as house_number + garbage (the 'Praha 100 00' mangle).
+			// The official Czech rendering spaces the PSČ as `NNN NN` ('512 44')
+			// while OpenAddresses stores it unspaced ('51244').
 			// Alternate the two renderings so both orthographies are attested.
-			// The label is the postcode either way.
+			// Label the postcode in either form.
 			const spaced = read % 2 === 0 && /^\d{5}$/.test(postcode)
 			const postcodeSurface = spaced ? `${postcode.slice(0, 3)} ${postcode.slice(3)}` : postcode
 			let raw: string
@@ -82,11 +76,16 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 			} else if (order === 2) {
 				raw = `${city}, ${postcodeSurface}, ${street} ${number}`
 			} else {
-				// order === STREETLESS_ORDER: the street-less form — `«city» «pc», Česko` — the exact surface of the cz-full-praha-100-00 board row. The v4.5.0 no-promote receipt measured the gap: every prior order was street-containing, so the model never saw a spaced PSČ beside a bare locality and mangled 'Praha 100 00, Czechia' into house_number spans. Street/number stay OUT of the components for this form (they are not in the surface).
+				// The street-less form `«city» «pc», Česko` omits street and number from the
+				// components because the surface does not include them.
 				raw = `${city} ${postcodeSurface}, Česko`
 			}
 
-			const source_id = recipeSourceID("synth-cz-pcfirst-preposition", {
+			// One resolution for both, because `source_id` includes the source as its prefix
+			// and a pair that disagreed would name a source no row of this output declares.
+			const source = defaultRecipeSource("synth-cz-pcfirst-preposition")
+
+			const source_id = recipeSourceID(source, {
 				...components,
 				o: String(order),
 				s: spaced ? "1" : "0",
@@ -98,14 +97,22 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 				components,
 				country: "CZ",
 				locale: "cs-CZ",
-				source: "synth-cz-pcfirst-preposition",
+				source,
 				source_id,
 				corpus_version: "0.10.0",
 				license:
 					"Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "cz-pcfirst-preposition", CZ_PCFIRST_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed has none.
+			// `null` means the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "cz-pcfirst-preposition", {
+					...CZ_PCFIRST_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

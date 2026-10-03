@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Korean permit registry (지방행정인허가데이터) as an `observation` source: reading the delivered CSVs, and
- *   turning an aligned string into a corpus row (#2204 §5).
+ * The Korean permit registry (지방행정인허가데이터) as an `observation` source. It reads the delivered
+ * CSVs and turns an aligned string into a corpus row.
  *
- *   The publisher delivers CP949, one file per business category, with both address systems typed by a clerk plus a
- *   planar coordinate in epsg:5174 and both postcodes. Reading is separated from aligning so the alignment rate per
- *   file can be measured before any row enters a corpus.
+ * The publisher delivers CP949, one file per business category, with both address systems typed by
+ * a clerk plus a planar coordinate in epsg:5174 and both postcodes. The adapter separates reading from
+ * aligning so the alignment rate per file can be measured before any row enters a corpus.
  */
 
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
@@ -18,8 +18,8 @@ import { Globerator } from "spliterator/node/fs"
 import type { Aligned } from "#kr/adapters/localdata/align"
 
 /**
- * The source label every row of this adapter carries, and the name a config's
- * `source_weights` addresses it by.
+ * The source label stored on every row from this adapter.
+ * Configs use this label as the `source_weights` key.
  */
 export const SOURCE = "localdata-kr"
 
@@ -62,7 +62,7 @@ export interface PermitRow {
 }
 
 /**
- * The first of these column spellings the row carries, trimmed, or the empty string.
+ * The first of these column spellings present in the row, trimmed, or the empty string.
  *
  * The publisher's older and newer exports name the same field differently — `도로명주소`
  * against `도로명전체주소`, `좌표정보(X)` against `좌표정보(x)` — and a directory holds both vintages,
@@ -148,10 +148,10 @@ export async function* readPermitDirectory(
 /**
  * One aligned string as a row in the CJK corpus schema.
  *
- * The token labels are derived from the spans rather than carried beside them:
+ * The token labels are derived from the spans rather than stored beside them:
  * a token is `B-<tag>` when its first character falls inside a span, `O` otherwise.
- * A span covering several tokens therefore labels only the token it starts in,
- * which is what the char-path trainer reads the spans for.
+ * A span covering several tokens labels only the token where it starts.
+ * The char-path trainer reads this label from each span.
  */
 export function alignedToCJKRow(aligned: Aligned): Record<string, unknown> {
 	const raw = aligned.raw

@@ -22,7 +22,7 @@ changed 1,907 of 2,956 US rows, and 140 rows carry a review flag. **FR rows are 
 v0.1.2.** This relabel did not address French street typology.
 
 A scorer that folds `street_prefix`/`street`/`street_suffix` back together does not grade against
-this answer key. `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` reads the declaration in
+this answer key. `packages/mailwoman/tools/dev-tools/per-locale-f1.run.ts` reads the declaration in
 `MANIFEST.json` and scores split-convention rows without folding them.
 
 Numbers here are not comparable with v0.1.2 numbers. The evaluation spec that grades

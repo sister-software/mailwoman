@@ -4,7 +4,7 @@
 /**
  *   Stream one large file to disk through a `.part` rename, so an interrupted transfer can never present as a complete file.
  *
- *   Raw `fetch` is deliberate: `APIClient` serves small, repeated requests, and a multi-hundred-megabyte stream is none of those.
+ *   Raw `fetch` is deliberate. `APIClient` serves small, repeated requests. A multi-hundred-megabyte stream does not fit that use.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -25,6 +25,18 @@ export interface StreamToDiskOptions {
 	 */
 	headers?: Record<string, string>
 	onProgress?: (message: string) => void
+	/**
+	 * Receives every chunk in order as it is written.
+	 *
+	 * A caller hashes the bytes in the same pass rather than reading a multi-gigabyte file back.
+	 */
+	onChunk?: (chunk: Uint8Array) => void
+	/**
+	 * Receives the OK response before its body is read.
+	 *
+	 * A caller records a header such as `Last-Modified`, which dates the bytes.
+	 */
+	onResponse?: (response: Response) => void
 	progressStrideBytes?: number
 	/**
 	 * What this host's non-OK status means, appended to the refusal: the soil download service answers 400
@@ -36,10 +48,10 @@ export interface StreamToDiskOptions {
 /**
  * Download one file to `destination`, returning the bytes received.
  *
- * Follows redirects: a job endpoint that answers with a generated result URL routinely redirects
- * again, and stopping at the redirect would write a redirect page to disk and report success.
+ * Follows redirects: a job endpoint that answers with a generated result URL routinely redirects again.
+ * The downloader would write a redirect page to disk and report success if it stopped at the redirect.
  *
- * @throws {Error} When the response is not OK or carries no body.
+ * @throws {Error} When the response is not OK or contains no body.
  * A partial file is removed on any failure.
  */
 export async function streamToDisk(options: StreamToDiskOptions): Promise<number> {
@@ -60,6 +72,8 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 		)
 	}
 
+	options.onResponse?.(response)
+
 	const strideBytes = options.progressStrideBytes ?? DEFAULT_PROGRESS_STRIDE_BYTES
 
 	let received = 0
@@ -69,6 +83,7 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 
 	source.on("data", (chunk: Buffer) => {
 		received += chunk.byteLength
+		options.onChunk?.(chunk)
 
 		if (received - reported >= strideBytes) {
 			reported = received

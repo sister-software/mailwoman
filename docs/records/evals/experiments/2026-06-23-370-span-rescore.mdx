@@ -43,7 +43,7 @@ p50 1.8 km. The swap is real coordinate-recall rather than a same-name mirage. B
 
 The rescore enumerates contiguous raw-token spans (diacritics intact, unlike the model's subwords), skips any span overlapping a confident street / house-number / postcode constituent, and exact-matches each against the same-country gazetteer. The open question the falsifier _couldn't_ answer: with no gold to point at, can enumeration find the right span on its own?
 
-First reduce, shortest-span-wins (the textbook over-merge guard — prefer "Santa Maria" over "Santa Maria da Feira"): 68% of the tail recovered, but only **49%** of recoveries were the right locality, and p90 blew out to 359 km. Dumping the wrong ones showed the heuristic was backwards for this data:
+First reduce, shortest-span-wins (the textbook over-merge guard — prefer "Santa Maria" over "Santa Maria da Feira"): 68% of the tail recovered, but only **49%** of recoveries were the right locality, and p90 blew out to 359 km. The wrong recoveries showed that the heuristic was backwards for this data:
 
 ```
 gold "Tomaszów Mazowiecki"   → recovered "Tomaszów"  (135 km away — a different Tomaszów)

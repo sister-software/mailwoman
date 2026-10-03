@@ -25,12 +25,13 @@ const LOT_NUMBER = /^산?\d+(?:-\d+)?(?:번지)?$/u
 const UNIT_TOKEN = /^(?:지하\s?)?(?:B?\d+(?:~\d+)?(?:층|호)|\d+층|B\d+|지하\d*층?|\d+동|[가-힣]?\d*호)(?:,)?$/u
 
 /**
- * The shortest either form can be — 시도, 시군구, and the road or the 법정동; anything shorter cannot carry the key.
+ * The shortest either form can be — 시도, 시군구 and the road or the 법정동.
+ * No shorter value can contain the key.
  */
 const MINIMUM_TOKENS = 3
 
 /**
- * One aligned string: the spans that matched, and the key they matched under.
+ * One aligned string: the spans that matched and the key they matched under.
  */
 export interface Aligned {
 	raw: string
@@ -133,14 +134,15 @@ export function alignRoadAddress(text: string, index: KeyIndex): Aligned | null 
 	let roadAt = 1 + width
 	let eupmyeonAt: number | null = null
 
-	// In an 읍/면 area the road form carries the 읍/면 between the 시군구 and the road
+	// In an 읍/면 area the road form includes the 읍/면 between the 시군구 and the road
 	// (`기장군 기장읍 기장해안로 205`); the register lists those names beside the 동 of the same unit.
 	if (roadAt + 2 < tokens.length && dongs.has(tokens[roadAt]!) && roads.has(tokens[roadAt + 1]!)) {
 		eupmyeonAt = roadAt
 		roadAt += 1
 	}
 
-	// A road name is one token, and a numbered branch (`대학로8길`) is part of that token in the register.
+	// A road name is one token.
+	// A numbered branch (`대학로8길`) is part of that token in the register.
 	if (roadAt + 1 >= tokens.length || !roads.has(tokens[roadAt]!)) return null
 
 	let numberAtToken = roadAt + 1

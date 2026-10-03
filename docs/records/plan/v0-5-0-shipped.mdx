@@ -17,7 +17,7 @@ The [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-c
 2. The classifier did boundary discovery and type classification at the same time via BIO labels. This caused the bio_slip class on `", 22220"` for `22220`.
 3. Stage 5 reconcile only sorted spans. It could not catch joint-incoherent parses like `NY-NY Steakhouse, Houston, TX`.
 
-Patching each ceiling individually would have taken three medium iterations. v0.5.0 bundles them into one **fresh-slate** release, which pays the retraining cost once and addresses all three.
+An individual patch for each ceiling would have taken three medium iterations. v0.5.0 bundles them into one **fresh-slate** release, which pays the retraining cost once and addresses all three.
 
 The operator's [sharpen-the-axe note](../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx#what-v040-taught-us-about-the-missing-rungs) describes the fresh-slate approach. It fits when several improvements share a common cost, such as a retrain or an interface change, and bundling avoids paying that cost three times.
 

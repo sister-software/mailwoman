@@ -6,11 +6,11 @@
 
 :::
 
-## Working norms
+## Work norms
 
 You are an autonomous agent. Optimize for **legibility to a human checking in once a day** rather than for clever one-shot completions.
 
-### Pacing
+### Pace the work
 
 - Work in small, complete units. A "unit" is anything that ends with a green test suite or a working command.
 - Commit at every unit boundary. Better more commits than too few.
@@ -49,7 +49,7 @@ Solver code untouched.
 Refs: reference/INTERFACES.md, phases/PHASE_0_foundation.md §3
 ```
 
-### Branching
+### Create branches
 
 - Work on a branch named `neural/phase-N-<slug>` per phase.
 - Squash-merge to `main` at phase completion.
@@ -125,7 +125,7 @@ Always continue with adjacent work while a blocker is open. Do not idle.
 - No `any`. Use `unknown` and narrow.
 - Public API exports must have explicit type annotations.
 
-### Linting and formatting
+### Run lint and formatting
 
 - ESLint (already in Mailwoman). Run on every commit.
 - Prettier (already in Mailwoman). Run on every commit.
@@ -145,7 +145,7 @@ If a change blows a budget, profile before optimizing. Add a microbenchmark to `
 
 ## Dependencies
 
-Adding a dependency requires:
+A new dependency requires:
 
 1. Justification in the commit message (why this, why not X, why not a few lines of code).
 2. License check — must be MIT, Apache-2.0, BSD, or ISC. AGPL-compatible licenses fine for the package itself (Mailwoman is AGPL) but verify each package.
@@ -161,7 +161,7 @@ Approved dependencies for this project:
 - `better-sqlite3` — for WOF SQLite reads
 - `fast-csv` — CSV parsing for government data
 - `fastest-levenshtein` — alignment fuzzy matching
-- Existing Mailwoman deps — all retained
+- Mailwoman dependencies — all retained
 
 ## Data handling
 
@@ -188,19 +188,19 @@ Approved dependencies for this project:
     splits/            # train/val/test split manifests
 ```
 
-### Versioning
+### Manage versions
 
 - Corpus versions: `corpus-v<major>.<minor>.<patch>`. Major = schema change. Minor = source added. Patch = synthesis tweak.
 - Model versions: `model-v<major>.<minor>.<patch>-<locale>`. Same scheme.
 - Both versions appear in `ModelCard.trainedOn` and `LabeledRow.corpus_version` so any prediction is traceable to its training data.
 - **Package / release versions** (the published `mailwoman` npm package + the live demo) are a SEPARATE, independent line — the user-facing product version (currently `4.4.0`). It does not share a counter with the corpus or model versions: the package marched 4.0 → 4.4 through the parity campaign while the corpus stayed on its own `corpus-v0.x` line. A release pins which `corpus-v<…>` and `model-v<…>` it trained on (via `ModelCard.trainedOn`), but its own number belongs to the product rather than the data.
-- **Don't read across the lines.** Seeing `corpus-v0.5.0` next to package `4.4.0` and inferring a regression is the common mistake — they track different things (the data the model learns from vs. the product you install), like a database schema version vs. an app version. The build that produces `corpus-v0.5.0` ships, after training, as the _next package release_ (`4.5.0` / `5.0.0`), continuing the v4 line.
+- **Don't read across the lines.** The pair `corpus-v0.5.0` and package `4.4.0` does not imply a regression — they track different things (the data the model learns from vs. the product you install), like a database schema version vs. an app version. The build that produces `corpus-v0.5.0` ships, after training, as the _next package release_ (`4.5.0` / `5.0.0`), continuing the v4 line.
 
 ### What never goes in git
 
 - Raw source data (too large, redistribution risk for some sources)
 - Trained model checkpoints over 100MB (use Git LFS or external storage)
-- Anything containing PII
+- Data containing PII
 
 What goes in git:
 

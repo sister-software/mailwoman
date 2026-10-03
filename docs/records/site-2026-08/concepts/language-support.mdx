@@ -36,7 +36,7 @@ suites that run in the browser against production.
 
 French is the more instructive story. The tokenizer originally fragmented accented
 street names ("Allée" split at the "é" and dropped the word), which cost
-resolution on exactly the addresses a French user types first. Fixing it took a
+resolution on exactly the addresses a French user types first. The fix required a
 vocabulary splice plus a fine-tune so the merged pieces got gradient steps — the
 training-free shortcut measurably made things worse before the retrain fixed it.
 The finding applies across settings: diacritics are a tokenizer problem before they are a model

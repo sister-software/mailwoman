@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Renders a component dict through an address layout into tagged pieces; `formatAddress` joins the pieces into
- *   a string, and the connector rules are described in `layout.ts`.
+ *   Renders a component dictionary through an address layout into tagged pieces.
+ *   `formatAddress` joins the pieces into a string. `layout.ts` describes connector rules.
  */
 
 import { isAlternation, isConnector, isLayout, isSlot, type AddressAtom, type AddressLayout } from "#address/layout"
@@ -107,7 +107,7 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 			const left = results.slice(0, index)
 			const right = results.slice(index + 1)
 
-			// An edge connector needs its one neighbour.
+			// An edge connector needs its one neighbor.
 			// An interior connector needs a rendered atom on each side.
 			const survives = !left.length
 				? rendered(results[index + 1] ?? null)

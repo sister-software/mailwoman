@@ -12,7 +12,7 @@ inputs.
 ## The measurement
 
 Full geocode cascade — WOF admin + per-state situs/interpolation + **BAN national register** +
-**BAN street-centroids (#1042)** + OSM rooftop. Wiring copied verbatim from
+**BAN street-centroids (#1042)** + OSM rooftop. The implementation copies its wiring verbatim from
 `mailwoman/eval-harness/gauntlet/harness.ts` (the cascade production runs).
 
 | triaged parity (n=267) |                               | Paris fixture (n=63) |                                   |

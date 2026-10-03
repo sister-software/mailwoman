@@ -21,7 +21,7 @@ one localization problem from the search box, but they ask the system to do thre
 Mailwoman does the first two where its model and atlas have coverage. It does not currently translate
 arbitrary address text.
 
-## Parsing keeps the original text
+## Keep the original text when parsing
 
 The parser labels spans. It might decide that `Tokyo` is a locality and `1-1 Marunouchi` contains a
 house number and street-like material, but it does not rewrite either span as `東京` or `丸の内`.
@@ -31,7 +31,7 @@ This matters because a decoder is answering a structural question: which part of
 which postal role? Translation would be a second prediction with its own uncertainty, and replacing
 the original surface would hide that uncertainty from the caller.
 
-Training contributes to this structural competence. The corpus contains locale-specific component
+The corpus teaches some of this structural competence. It contains locale-specific component
 orders, Unicode scripts, mixed-script examples, and transliteration-shaped examples where we have
 defensible labels. The tokenizer can represent arbitrary Unicode through byte fallback. Representation
 alone is not comprehension, though: a script absent from training can still produce a well-formed but
@@ -119,5 +119,5 @@ invented mapping.
 
 - [Locales and tiers](../../reference/locales-and-tiers.mdx) — measured parser and resolver coverage.
 - [Gazetteers](../geocoding/gazetteers.mdx) — where multilingual place names live.
-- [Training and the corpus](../address-intelligence/training-and-the-corpus.mdx) — what the model learns from data.
+- [How the corpus trains the model](../address-intelligence/training-and-the-corpus.mdx) — what the model learns from data.
 - [What the model cannot do](../address-intelligence/what-the-model-cannot-do.mdx) — script and tokenizer limits.

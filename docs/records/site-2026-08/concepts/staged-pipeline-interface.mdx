@@ -56,11 +56,11 @@ card's notes name the required settings per release):
   the corpus label format cannot express punctuation inside spans, so the bridge is decode-side
   containment. Separator punctuation (commas) never bridges; space-only gaps never bridge.
 
-Running a v4.4.0+ model without these settings reproduces measured check failures (po_box 60.4 vs
+When a v4.4.0+ model omits these settings, the measured checks fail (po_box 60.4 vs
 89.1 with the bridge; the FR digit-split class without conventions) — they are not optional
 enhancements for those weights, they are the decode interface.
 
-## Replacing a stage
+## Replace a stage
 
 ```ts
 import { createRuntimePipeline } from "mailwoman"
@@ -115,9 +115,9 @@ try {
 
 If you abort while a stage is mid-execution, that stage runs to completion before the abort takes effect. The longest cancellation latency is one stage's runtime — typically the neural classifier (~10-70ms p99 for the en-US weights). Fine-grained mid-stage cancellation is a future enhancement that requires plumbing `signal` into each stage's interface.
 
-Aborting before any stage runs throws immediately. Aborting between stages skips the rest of the pipeline.
+An abort before any stage runs throws immediately. An abort between stages skips the rest of the pipeline.
 
-## Timing budget
+## Pipeline timing
 
 `PipelineResult.timing` records per-stage wall time in milliseconds. The keys present depend on the path the coordinator took:
 

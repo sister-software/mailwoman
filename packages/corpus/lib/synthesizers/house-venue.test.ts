@@ -2,12 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { makeLcg } from "@mailwoman/core/random"
-import {
-	type HouseVenueBaseTuple,
-	hasHouseNumberAndVenue,
-	synthesizeHouseVenueRow,
-} from "@mailwoman/corpus/synthesizers/house-venue"
 import { describe, expect, it } from "vitest"
+
+import { type HouseVenueBaseTuple, hasHouseNumberAndVenue, synthesizeHouseVenueRow } from "#synthesizers/house-venue"
 
 const TUPLE: HouseVenueBaseTuple = {
 	locality: "Boston",
@@ -77,7 +74,6 @@ describe("synthesizeHouseVenueRow", () => {
 		})
 
 		expect(row).not.toBeNull()
-		// The exact gauntlet failure family: "venue, 20 Rue de la Huchette, 75005 Paris".
 		expect(row!.raw).toMatch(/^.+, 20 Rue de la Huchette, 75005 Paris$/)
 		expect(row!.components.region).toBeUndefined()
 		expect(row!.components.postcode).toBe("75005")
@@ -100,7 +96,6 @@ describe("synthesizeHouseVenueRow", () => {
 		})
 
 		expect(row).not.toBeNull()
-		// The #1366 gauntlet failure family: "venue, 27 Minories, London EC3N 1DE".
 		expect(row!.raw).toMatch(/^.+, 27 Minories, London EC3N 1DE$/)
 		expect(row!.components.region).toBeUndefined()
 		expect(row!.components.postcode).toBe("EC3N 1DE")
@@ -110,11 +105,9 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("VE renders locality-then-postcode and KEEPS the region after it (#1821)", () => {
-		// `…, Barcelona 6001, Anzoátegui, Venezuela`.
-		// The four `ve_city_postcode_trailing_state` board rows, which the shipped model
-		// reads as `«street» «house_number»` and lands 573 km from.
-		// Neither GB's tail (which drops the region) nor the default
-		// (which puts the region before the code) is this shape.
+		// VE places the region after the postcode, as in `…, Barcelona 6001, Anzoátegui,
+		// Venezuela`. This tail differs from GB's (which drops the region) and from the
+		// default (which puts the region before the code).
 		const veTuple: HouseVenueBaseTuple = {
 			locality: "Barcelona",
 			region: "Anzoátegui",
@@ -131,19 +124,17 @@ describe("synthesizeHouseVenueRow", () => {
 
 		expect(row).not.toBeNull()
 		expect(row!.raw).toMatch(/^.+, 15 Avenida Country Club, Barcelona 6001, Anzoátegui/)
-		// The region survives — that is what separates this tail from GB's.
 		expect(row!.components.region).toBe("Anzoátegui")
 		expect(row!.components.postcode).toBe("6001")
 		expect(row!.components.locality).toBe("Barcelona")
-		// And the classes the standalone admin-only recipe output destroyed are all present in the same row.
 		expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
 		expect(row!.components.street).toBe("Avenida Country Club")
 	})
 
 	it("leaves every non-VE country's tail exactly as it was", () => {
-		// The branch is country-restricted, and the shipped `house-venue` recipe output is
-		// FR + US only (116,244 rows, zero VE), so this addition cannot move an existing row.
-		// Pinned rather than asserted.
+		// The branch is country-restricted.
+		// The `house-venue` recipe output contains FR and US rows only,
+		// so this addition cannot move an existing row.
 		for (const [country, pattern] of [
 			["US", /Boston, MA 02101/],
 			["FR", /75005 Paris/],
@@ -187,7 +178,6 @@ describe("synthesizeHouseVenueRow", () => {
 			if (/^\d+-\d+$/.test(row!.components.house_number!)) {
 				ranges++
 
-				// The raw must open with (venue-before) or contain the full range span.
 				expect(row!.raw).toContain(row!.components.house_number!)
 			}
 		}
@@ -210,7 +200,6 @@ describe("synthesizeHouseVenueRow", () => {
 
 			if (row!.components.country) {
 				appended++
-				// The raw ends with the tagged surface, comma-joined after the tail.
 				expect(row!.raw.endsWith(`, ${row!.components.country}`)).toBe(true)
 			}
 		}
@@ -291,7 +280,6 @@ describe("synthesizeHouseVenueRow", () => {
 			const row = synthesizeHouseVenueRow(TUPLE, { random: rng })
 			expect(row).not.toBeNull()
 			expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
-			// Also require street + locality + region + postcode
 			expect(row!.components.street).toBeDefined()
 			expect(row!.components.locality).toBe("Boston")
 			expect(row!.components.region).toBe("MA")
@@ -309,7 +297,6 @@ describe("synthesizeHouseVenueRow", () => {
 			counts[row!.template]++
 		}
 
-		// 50/50 split with reasonable tolerance
 		expect(counts["venue-after-street"]).toBeGreaterThan(400)
 		expect(counts["venue-after-street"]).toBeLessThan(600)
 		expect(counts["venue-before-street"]).toBeGreaterThan(400)

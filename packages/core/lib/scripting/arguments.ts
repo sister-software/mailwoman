@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Dependency-free process argument accessors, kept separate from script cleanup and logging so latency-sensitive CLI
- * dispatchers can read argv without loading the ResourceError, ConsoleLogger, and async-init graphs.
+ * Dependency-free accessors for process arguments.
+ * They stay separate from script cleanup and logging so latency-sensitive CLI dispatchers can read argv without loading other graphs.
+ * ResourceError and ConsoleLogger belong to those graphs.
+ * Async initialization also belongs there.
  */
 
 import { parseArgs, type ParseArgsConfig } from "node:util"
@@ -20,8 +22,8 @@ export type UnsafeCLIArguments = ReadonlyArray<UnsafeCLIArgument>
  * The one blessed accessor for user CLI arguments.
  */
 export function cliArguments(): UnsafeCLIArguments {
-	// Element-wise because `string[] as ReadonlyArray<Branded>` is not a legal assertion while `string as Branded` is,
-	// which is why this accessor exists rather than minting the brand at each call site.
+	// TypeScript rejects `string[] as ReadonlyArray<Branded>` but accepts `string as Branded`.
+	// This accessor applies the brand once instead of repeating that assertion at each call site.
 	// oxlint-disable-next-line sister-software/no-process-globals -- this function is the blessed argv accessor
 	return process.argv.slice(2).map((value) => value as UnsafeCLIArgument)
 }
@@ -72,7 +74,7 @@ export function requiredArgument(scope: string, name: string, value: string | un
  * Kebab segments whose property spelling capitalizes the whole acronym, because a
  * segment missing here derives a property the command's own `Options` does not declare:
  * the flag still parses but reaches the component under a name no code reads,
- * so add the segment here when a flag carries an acronym.
+ * so add the segment here when a flag contains an acronym.
  */
 export const OPTION_INITIALISMS = {
 	csv: "CSV",
@@ -137,7 +139,9 @@ export function optionPropertyName(value: string): string {
  * as `config.args` and it is used as given.
  */
 export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {
-	// The builtin types its result from the whole config object, so supplying `args` moves the type even
-	// though the parsed shape depends on `options`/`allowPositionals` alone, which `T` carries.
+	// The builtin types its result from the whole config object.
+	// An `args` value changes the type even though the parsed shape depends only
+	// on `options` and `allowPositionals`.
+	// `T` includes both settings.
 	return parseArgs({ args: [...cliArguments()], ...config }) as ReturnType<typeof parseArgs<T>>
 }

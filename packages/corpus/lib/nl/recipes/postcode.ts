@@ -2,31 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `nl-postcode` — the Dutch full-form postcode recipe (#924). The model reads the digits-first NL
- *   postcode "1012 LG" as a house number + a 2-letter street ("1012 LG Amsterdam" → house_number
- *   1012 / street "LG" / locality Amsterdam), and that spurious street context then pulls the
- *   locality into the US situs tier (Amsterdam → Amsterdam, NY). Letters-first postcodes (UK
- *   "SW1A 1AA") parse natively. the `\d{4} [A-Z]{2}` shape does not, and the soft query-shape prior
- *   (0.9 log-odds) can't overcome the strong house-number reading of a leading 4-digit token.
+ * `nl-postcode`: the Dutch full-form postcode recipe.
  *
- *   This is the model-first fix as data (the #723/#901 discipline — teach the boundary, don't
- *   override the decoder): real NL (street, number, postcode, city) tuples in the orders Dutch
- *   addresses actually use, with the full postcode tagged as one postcode span. Both the spaced
- *   ("1012 LG", the failing form — a 2-token span) and unspaced ("1012LG", 1 token) forms are
- *   emitted so the model learns the digits-first postcode regardless of spacing. the three orders
- *   keep polarity balanced (the v1.9.9 lesson).
+ * The model reads the digits-first NL postcode "1012 LG" as a house number plus a two-letter
+ * street, so "1012 LG Amsterdam" becomes house_number 1012, street "LG", locality Amsterdam. That
+ * spurious street context then pulls the locality into the US situs tier. The `\d{4} [A-Z]{2}`
+ * shape does not parse natively. The soft query-shape prior cannot overcome the strong
+ * house-number reading of a leading four-digit token.
+ *
+ * This recipe is the model-first fix as data. It supplies real NL (street, number, postcode, city)
+ * tuples in the orders Dutch addresses use, with the full postcode tagged as one postcode span. Both
+ * the spaced and unspaced forms are emitted so the model learns the digits-first postcode regardless
+ * of spacing. The three orders keep polarity balanced.
  */
 
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 
 /**
  * "1012LG" → "1012 LG".
  *
- * The tuples carry the unspaced OA form.
+ * The tuples contain the unspaced OA form.
  * The spaced form is the failing case.
  */
 function spacePostcode(pc: string): string {
@@ -35,9 +35,6 @@ function spacePostcode(pc: string): string {
 
 /**
  * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
  */
 export const nlPostcodeRecipe: CorpusRecipe = {
 	name: "nl-postcode",
@@ -72,7 +69,7 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Spacing rotates so the model sees both the failing spaced form and the unspaced form.
+			// The recipe rotates spacing so the model sees both the failing spaced form and the unspaced form.
 			// The components.postcode value must match the raw form so alignment tags the right span.
 			const spaced = read % 2 === 0
 			const postcode = spaced ? spacePostcode(rawPostcode) : rawPostcode
@@ -98,7 +95,11 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				locality: city,
 			}
 
-			const source_id = recipeSourceID("synth-nl-postcode", {
+			// One resolution for both, because `source_id` includes the source as its prefix
+			// and a pair that disagreed would name a source no row of this output declares.
+			const source = defaultRecipeSource("synth-nl-postcode")
+
+			const source_id = recipeSourceID(source, {
 				...components,
 				o: String(order),
 				s: spaced ? "1" : "0",
@@ -110,14 +111,22 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				components,
 				country: "NL",
 				locale: "nl-NL",
-				source: "synth-nl-postcode",
+				source,
 				source_id,
 				corpus_version: "0.10.0",
 				license:
 					"Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "nl-postcode", NL_POSTCODE_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed has none.
+			// `null` means the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "nl-postcode", {
+					...NL_POSTCODE_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

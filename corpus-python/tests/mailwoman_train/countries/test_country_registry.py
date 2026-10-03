@@ -22,7 +22,7 @@ def test_the_three_built_countries_are_registered() -> None:
 
 
 def test_every_country_directory_is_declared_as_one_kind_or_the_other() -> None:
-    """A directory in neither group is a country nobody can find and no test checks, because the registry and the filesystem would otherwise drift apart silently."""
+    """A directory in neither group has no registry entry or test, so the registry and filesystem would drift apart silently."""
     on_disk = {path.name for path in COUNTRIES_ROOT.iterdir() if path.is_dir() and not path.name.startswith("__")}
     declared = set(COUNTRY_MODULES) | SOURCE_ONLY | REGIONS
     assert on_disk == declared, f"undeclared: {sorted(on_disk - declared)}; missing: {sorted(declared - on_disk)}"
@@ -77,5 +77,5 @@ def test_an_unknown_code_names_the_known_ones() -> None:
 
 
 def test_the_lookup_is_case_insensitive() -> None:
-    """Callers hold an alpha-2 code from a config or a filename, and those are not all lower case."""
+    """Callers get alpha-2 codes from configs or filenames. Those values are not always lowercase."""
     assert country_module("JP") is country_module("jp")

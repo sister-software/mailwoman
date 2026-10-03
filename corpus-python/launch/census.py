@@ -1,16 +1,15 @@
-"""Counting what the corpus on the volume actually teaches, to settle an open question.
+"""This module counts what the corpus on the volume teaches to settle an open question.
 
     modal run -m launch.train_remote::diagnose_corpus --corpus-dir=…
     modal run -m launch.train_remote::country_census_raw --corpus-dir=…
     modal run -m launch.train_remote::digit_prior --config-name=<recipe>.yaml
     modal run -m launch.train_remote::piece_prior --config-name=<recipe>.yaml
 
-These differ from `launch/audits.py`: an audit produces a receipt a launch requires, and a census
-answers a question nobody has a receipt for yet. Each counts by pulling rows through the LOADER the
-trainer uses rather than reading parquet and reimplementing the sampler — except
-`country_census_raw`, which reads raw parquet because the loader is the thing under suspicion. And
-each prints the census before the conditional table, so a country with no rows reads as "no data"
-rather than "a probability of zero".
+These differ from `launch/audits.py`. An audit produces a receipt that a launch requires. A census
+answers a question that has no receipt yet. Each census pulls rows through the LOADER the trainer
+uses rather than reading parquet and reimplementing the sampler. `country_census_raw` reads raw
+parquet because the loader is under investigation. Each function prints the census before the
+conditional table. A country with no rows then reads as "no data" rather than "a probability of zero".
 """
 
 from __future__ import annotations
@@ -73,8 +72,8 @@ def diagnose_corpus(
     paths = _parquet_paths(corpus_root, "train")
     print(f"\n_parquet_paths returned {len(paths)} train parquet files")
 
-    # A file counts under every source it carries, which is what the loader's index does. Counting each file
-    # once under its first row's source hides the sources that never open a file.
+    # A file counts under every source it contains. That matches the loader's index.
+    # A single count under each file's first-row source omits sources that never open a file.
     by_source: Counter[str] = Counter()
     rows_by_source: Counter[str] = Counter()
     multi = 0
@@ -138,10 +137,10 @@ def country_census_raw(
 
     Reads the country column out of the raw parquet rather than going through `iter_rows`, because
     the loader is the thing under suspicion whenever this is asked. The question it settles has a
-    shape worth recognising: a country whose rows the filter drops and a country the corpus never
-    had are indistinguishable downstream, and only one of them is a bug.
+    shape worth recognizing: downstream, the loader cannot distinguish a country whose rows the
+    filter drops from a country the corpus never had. Only dropped rows indicate a filter bug.
 
-    The shape that produced it: `country_weights` in 44 configs carried an unquoted `NO: 1.0`. YAML
+    The shape that produced it: `country_weights` in 44 configs held an unquoted `NO: 1.0`. YAML
     1.1 parses the bare token `NO` as the BOOLEAN false, so the dict key is `False`, and the loader's
     `country_weights.get("NO")` answers None — every Norwegian row silently dropped.
     """
@@ -230,10 +229,9 @@ def digit_prior(
 
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
     reflects it. The prior the model actually sees is the weighted multinomial over ~700 parquet
-    files, after the country filter, the coarse filter, and the augmentations — and `augment_glue_prob`
-    alone rewrites token boundaries, which is the thing under investigation. So this pulls rows through
-    `iter_rows`, the same entry point the trainer uses, with the config's own weights, rather than
-    reimplementing the sampler.
+    files, after the country filter, the coarse filter and the augmentations. `augment_glue_prob`
+    The only augmentation here that rewrites token boundaries is `augment_glue_prob`. This census pulls rows through `iter_rows`, the same entry point
+    the trainer uses, with the config's own weights. It does not reimplement the sampler.
 
     Reports P(tag | token) for two families:
       - Bare digit-ish tokens matching `\\d+[A-Za-z]?` (39A, 121, 44B).
@@ -260,7 +258,7 @@ def digit_prior(
     data_cfg = cfg["data"]
 
     # The sampler's own knobs, verbatim from the config that trained the shipped model. If these
-    # drift from the config, the count describes a corpus nobody trained on.
+    # drift from the config, the count describes a corpus no training run used.
     source_weights = data_cfg.get("source_weights")
     country_weights = data_cfg.get("country_weights") or {}
     coarse_filter = data_cfg.get("coarse_filter", True)
@@ -363,8 +361,8 @@ def digit_prior(
         table(by_source[src], f"source {src}")
 
     # The control: the countries whose rows actually fail in production, at the shapes that fail.
-    # Absence is not a low probability. A country with no rows has no prior at all, and its
-    # failures are OOD rather than mis-taught. The census prints before the conditional table so a missing
+    # A country with no rows has no prior. Its failures are OOD rather than mis-taught.
+    # The census prints before the conditional table so a missing
     # row reads as "no data" rather than "zero probability".
     print("\n--- COUNTRY CENSUS: rows drawn per country (absence != a prior of zero) ---")
     cc_rows: Counter[str] = Counter()
@@ -404,7 +402,7 @@ def piece_prior(
 ) -> None:
     """The digit prior at the unit the MODEL actually sees — the SentencePiece piece.
 
-    The model sees pieces rather than tokens, and emits one label per piece. Digits tokenize
+    The model sees pieces rather than tokens. It emits one label per piece. Digits tokenize
     roughly one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints four `I-postcode`
     labels while a 2-digit house number `[1|4]` mints one `I-house_number`. Longer runs are postcodes
     and mint proportionally more continuation labels, so the continuation label distribution can
@@ -440,7 +438,7 @@ def piece_prior(
     cfg_path = Path(CONFIGS) / config_name
     cfg = yaml.safe_load(cfg_path.read_text())
     data_cfg = DataConfig(**cfg["data"])
-    # `tokenizer_dir` names the directory, and the SentencePiece model is the file inside it.
+    # `tokenizer_dir` gives the directory path. The SentencePiece model is the file inside it.
     tok = Tokenizer(Path(data_cfg.tokenizer_dir) / "tokenizer.model")
 
     print(f"config     : {cfg_path.name}")
@@ -556,8 +554,8 @@ def locale_supply_census(
 
     A row count answers neither question a locale-isolated graph turns on. The sampler restarts an
     exhausted source with a fresh shuffled pass, so a small source is presented many times and its
-    row count reads as supply it does not have. And a corpus can carry one street rendered a hundred
-    ways, which is one street.
+    row count reads as supply it does not have. A corpus can contain one street rendered a hundred
+    ways. Those rows represent one street.
 
     So this counts four things a row count cannot give, over a full scan rather than a sample, since
     a distinct count is the one statistic a sample cannot extrapolate:
@@ -566,23 +564,23 @@ def locale_supply_census(
     - **distinct raw surfaces**, the strings the tokenizer actually sees. Rows over surfaces is how
       much of the corpus is the same text written again.
     - **distinct `source_id`s**, the underlying records. `SourceProvenance.source_id` is documented
-      stable across reruns precisely so dedup and holdout manifests are reproducible, which makes it
-      the independent-record count. Surfaces over source ids is how many ways one record is rendered.
-    - **distinct component sequences**, the tuple of `span_tags` a row carries. This is the shape
-      vocabulary the country teaches: a corpus of 800,000 rows carrying four sequences teaches four
+    stable across reruns so dedup and holdout manifests are reproducible. The stable ID supplies the
+    independent-record count. Surfaces over source IDs show how many ways one record is rendered.
+    - **distinct component sequences**, the tuple of `span_tags` a row lists. This is the shape
+      vocabulary the country teaches: a corpus of 800,000 rows with four sequences teaches four
       forms.
 
     Digests rather than strings in the two large sets: a full GB scan holds roughly 15.6 million raw
-    surfaces, and 8-byte digests keep the sets inside this function's memory where the strings would
-    not, at a collision rate far below the precision any decision here needs.
+    surfaces. Eight-byte digests keep the sets inside this function's memory. Their collision rate is
+    far below the precision any decision here needs.
 
-    Rows are counted by `surface`, the field that says how the text was produced: `attested` is the
-    publisher's own string, `composed` is a template over one real record's fields, and `invented`
-    names no published record. `register` names the publication each row's record came from, so
-    supply is countable per register rather than per adapter.
+    Rows are counted by `surface`, the field that records how the text was produced. `attested` is the
+    publisher's own string. `composed` is a template over one real record's fields. `invented` has no
+    published record behind it. `register` identifies the publication each row's record came from.
+    Supply is countable per register rather than per adapter.
 
-    Reads raw parquet rather than the loader, because the question is what the corpus contains. What
-    a run draws from it is `audit_epoch_mixture`: that one measures the sampler, this one the supply.
+    Reads raw parquet rather than the loader because this question concerns corpus contents.
+    `audit_epoch_mixture` measures what a run draws from the corpus. This function measures the supply.
     """
     import json
     import sys
@@ -602,10 +600,11 @@ def locale_supply_census(
     want = country.strip().upper()
     columns = ["country", "source", "source_id", "raw", "span_tags", "surface", "register"]
 
-    # Predicate pushdown rather than reading every row and discarding most. A full scan of this corpus is
-    # 681,901,687 rows across 718 files, and one country is a small part of it. `pyarrow.dataset` skips a row
-    # group whose `country` statistics exclude the wanted value, which is most of them where a file holds one
-    # source. A row group with no usable statistics is read and filtered, so the count is the same either way.
+    # Predicate pushdown avoids reading rows that the country filter will discard. The corpus has
+    # 681,901,687 rows across 718 files. One country is a small part of that total.
+    # `pyarrow.dataset` skips a row group when its `country` statistics exclude the wanted value.
+    # Most row groups contain one source. A group without usable statistics is read and filtered.
+    # Both paths produce the same count.
 
     def digest(value: str) -> int:
         return int.from_bytes(blake2b(value.encode("utf-8"), digest_size=8).digest(), "big")
@@ -682,8 +681,9 @@ def locale_supply_census(
             "distinct_surfaces": len(surfaces),
             "distinct_source_ids": len(record_ids),
             "distinct_component_sequences": len(sequences),
-            # Every sequence the split carries: the receipt is asked which shapes a country never teaches, which
-            # a truncated list cannot answer. The cap bounds the receipt for a country whose vocabulary is large.
+            # Record every sequence in the split. The receipt asks which shapes a country
+            # never teaches. A truncated list cannot answer that question. The cap bounds the receipt
+            # for a country with a large vocabulary.
             "component_sequences": dict(sequences.most_common(SEQUENCE_RECEIPT_CAP)),
             "component_sequences_recorded": min(len(sequences), SEQUENCE_RECEIPT_CAP),
             "by_source": dict(by_source.most_common()),
@@ -720,3 +720,75 @@ def locale_supply_census(
     vol.commit()
 
     print(f"\nwrote {out}")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=7200,
+    memory=32768,
+)
+def label_support(config_name: str, train_rows: int = 200000, top: int = 8) -> None:
+    """Count the rows that carry each head label in a config's validation set and in a train draw.
+
+    The validation set is the one the trainer scores: the same split, row limit and seed, read
+    through `iter_encoded` with the generator `iter_batches` builds. Macro F1 weights each label equally, so a label carried by a few
+    validation rows moves the macro score by more than its row share. For each label this prints
+    the rows that carry it in both splits, then the sources and countries that supply its train rows,
+    each as rows carrying the label over that supplier's rows in the draw.
+    """
+    import random
+    import sys
+    from collections import Counter, defaultdict
+    from pathlib import Path
+    from typing import Any
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    from mailwoman_train.config import load_config
+    from mailwoman_train.data.loader import IGNORE_INDEX, iter_encoded
+    from mailwoman_train.data.source_reps import resolve_config_reps
+    from mailwoman_train.labels import resolve_label_set
+    from mailwoman_train.tokenizer import Tokenizer
+
+    cfg = load_config(Path(CONFIGS) / config_name)
+    # The trainer derives each reps-targeted source's weight before reading a row, so the census does too.
+    resolve_config_reps(cfg)
+    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
+    bio = resolve_label_set(getattr(cfg.data, "label_set", "stage3")).bio_labels
+    source_rows: Counter[str] = Counter()
+
+    def count(split: str, limit: int | None, seed: int) -> tuple[int, Counter[str], dict[str, Counter[str]]]:
+        rows_with: Counter[str] = Counter()
+        suppliers: dict[str, Counter[str]] = defaultdict(Counter)
+        source_rows.clear()
+        total = 0
+        # `iter_encoded` calls the observer once per row, immediately before yielding that row's example.
+        seen: list[dict[str, Any]] = []
+        stream = iter_encoded(
+            cfg.data, tokenizer, split=split, rng=random.Random(seed), row_limit=limit, observer=seen.append
+        )
+        for example in stream:
+            row = seen.pop()
+            total += 1
+            present = {bio[i][2:] for i in example.labels if i != IGNORE_INDEX and bio[i].startswith("B-")}
+            rows_with.update(present)
+            supplier = f"{row.get('source', '?')}/{str(row.get('country') or '?').upper()}"
+            source_rows[supplier] += 1
+            for tag in present:
+                suppliers[tag][supplier] += 1
+        return total, rows_with, suppliers
+
+    val_total, val_rows, _ = count("val", cfg.data.val_rows, cfg.train.seed + 1)
+    train_total, train_with, suppliers = count("train", train_rows, cfg.train.seed)
+    print(f"config {config_name}: {val_total} val rows, {train_total} train rows\n")
+    print(f"{'label':20} {'val rows':>9} {'val share':>10} {'train rows':>11} {'train share':>12}")
+    for tag in sorted(set(val_rows) | set(train_with), key=lambda t: train_with[t]):
+        print(
+            f"{tag:20} {val_rows[tag]:>9} {val_rows[tag] / val_total:>10.3%} "
+            f"{train_with[tag]:>11} {train_with[tag] / train_total:>12.3%}"
+        )
+    for tag in sorted(train_with, key=lambda t: train_with[t]):
+        named = ", ".join(f"{name} {n}/{source_rows[name]}" for name, n in suppliers[tag].most_common(top))
+        print(f"\n{tag} train suppliers ({len(suppliers[tag])} source/country pairs): {named}")

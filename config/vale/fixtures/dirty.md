@@ -9,6 +9,10 @@ import ObviouslyBrokenComponent from "@site/src/components/ObviouslyBrokenCompon
 
 The loader reads each row, which validates the fields and records the result, so the report can compare runs.
 
+The loader validates each row, and it records the result, so the report can compare runs.
+The loader validates each row, and the adapter records the result, so the report can compare runs.
+The loader validates each row, and then it records the result.
+
 This file exists to trip every Mailwoman Vale rule on purpose. It also carries an
 import line, a JSX tag, a code fence, and a `<details>` block that each contain
 banned words — none of those four should be flagged, because they are ignored by
@@ -109,3 +113,5 @@ This is a test, not a production system.
 `CommaNo.yml` and `NamesVerb.yml` must each fire on the rest of this line: the build runs in one process, no server, and the flag names the output file.
 
 The resolver returns nothing when the query names no candidate.
+
+# Parsing the response before validation hides malformed fields.

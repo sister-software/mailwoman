@@ -1,0 +1,78 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { HillsLayerID } from "#base/layers"
+import type { LayerSpecificationListInput } from "#styles/layers"
+import { TileSetSourceID } from "#styles/sources"
+
+/**
+ * Tile set id for US Census tract polygons.
+ */
+export const TIGERTractsTileSetID = TileSetSourceID("tiger-tracts")
+/**
+ * Tile set ID for US Census block polygons.
+ * Blocks are finer than tracts and require more data.
+ */
+export const TIGERBlocksTileSetID = TileSetSourceID("tiger-blocks")
+
+/**
+ * Layer definitions drawing the tiger tract and block tile sets.
+ */
+export const TIGERLayers: LayerSpecificationListInput[] = [
+	{
+		afterID: HillsLayerID,
+		metadata: {
+			queryable: false,
+		},
+
+		id: "boundary-tracts",
+		"source-layer": "tracts",
+		source: TIGERTractsTileSetID,
+		type: "line",
+		filter: [">=", ["get", "ALAND"], 0],
+		maxzoom: 9,
+		paint: {
+			"line-color": "white",
+			"line-width": 1,
+
+			"line-opacity": [
+				// We fade out the outline at higher zoom levels
+				"interpolate",
+				["linear"],
+				["zoom"],
+				5,
+				0.01,
+				10,
+				0.25,
+			],
+		},
+	},
+
+	{
+		beforeID: "water",
+		metadata: {
+			queryable: false,
+		},
+		id: "boundary-blocks",
+		"source-layer": "blocks",
+		source: TIGERBlocksTileSetID,
+		type: "line",
+		filter: [">=", ["get", "ALAND"], 0],
+		minzoom: 9,
+		paint: {
+			"line-color": "orange",
+			"line-width": 1,
+
+			"line-opacity": [
+				// We fade out the outline at higher zoom levels
+				"interpolate",
+				["linear"],
+				["zoom"],
+				9,
+				0.01,
+				16,
+				0.5,
+			],
+		},
+	},
+]

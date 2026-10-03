@@ -3,7 +3,7 @@
 
 /**
  *   Fetch the US DOT National Address Database (NAD) — ~97 million structured US address-point
- *   records aggregated from state and local authorities. Source for the `usgov-nad` adapter (#30).
+ *   records aggregated from state and local authorities. Source for the `usgov-nad` adapter.
  *   US Public Domain (17 U.S.C. § 105).
  *
  *   - Bounded per-chunk page concurrency (4× speedup at safe pressure)
@@ -42,8 +42,8 @@ import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "usgov-nad"
 
@@ -108,8 +108,8 @@ interface ChunkManifest {
 /**
  * ArcGIS paged reads.
  *
- * Retry is on: the loop walks objectid ranges to completion, so one throttled page
- * previously ended a multi-hour national download.
+ * Retry is on: the loop walks objectid ranges to completion, since one throttled
+ * page can otherwise end a multi-hour national download.
  * No rate budget — pages are requested one at a time and each assembles thousands of records server-side.
  */
 const nadClient = new APIClient({
@@ -175,7 +175,6 @@ async function fetchChunk(
 		pageRanges.push([cursor, Math.min(cursor + pageSize - 1, chunkEnd)])
 	}
 
-	// Run bounded-concurrency page fetches.
 	// Results indexed by page slot for in-order write.
 	const pageResults: Array<{ rows: unknown[]; error: Error | null }> = pageRanges.map(() => ({
 		rows: [],
@@ -252,8 +251,8 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 		const chunkPath = chunkDir(`${chunkName}.ndjson`)
 		const manifestPath = chunkDir(`${chunkName}.manifest.json`)
 
-		// Idempotency: skip a chunk only if it's marked complete (the bash version's bug was
-		// marking complete on partial-failure runs. We now only set complete after a clean fetch).
+		// Idempotency: skip a chunk only when its manifest is marked complete.
+		// Complete is set only after a clean fetch.
 		if (await pathExists(chunkPath)) {
 			const recorded = await readManifest<ChunkManifest>(manifestPath)
 
@@ -306,7 +305,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 	report?.(`page errors:   ${totalErrors}`)
 	report?.(`output:        ${chunkDir}`)
 
-	// `failed` counts page errors (the old exit-1 condition), `failedCodes` names the dirty chunks.
+	// `failed` counts page errors and `failedCodes` records the dirty chunks.
 	return { fetched, skipped, failed: totalErrors, failedCodes }
 }
 

@@ -61,8 +61,10 @@ export interface ProcessOutput {
 }
 
 /**
- * The rejection {@linkcode runFile} answers for a command that started but did not exit 0:
- * the builtin's error, which carries the streams and the exit code (or the signal that ended it).
+ * The rejection {@linkcode runFile} answers for a command that started
+ * but did not exit 0: the builtin's error.
+ *
+ * That error includes the streams and the exit code or signal that ended it.
  */
 export interface ProcessError extends Error, ProcessOutput {
 	code?: number | string
@@ -113,8 +115,9 @@ export interface RunFileSyncOptions extends Omit<ExecFileSyncOptions, "cwd"> {
 }
 
 /**
- * {@linkcode runFile} for a synchronous slot: answers stdout, throws the builtin's error on
- * a non-zero exit, and answers the empty string when `stdio` inherits the parent's streams.
+ * {@linkcode runFile} for a synchronous slot: answers stdout, throws the builtin's error on a non-zero exit.
+ *
+ * It answers the empty string when `stdio` inherits the parent's streams.
  */
 export function runFileSync(
 	file: PathBuilderLike,
@@ -153,7 +156,7 @@ export type SpawnProcessOptions = Omit<SpawnOptions, "cwd"> & { cwd?: PathBuilde
  * Start a command and hand its {@linkcode ChildProcess} to the caller,
  * who owns the streams, the exit event and the kill.
  *
- * Without a `stdio` option every stream is a pipe and the return type says so.
+ * Without a `stdio` option every stream is a pipe, as the return type specifies.
  */
 export function spawnProcess(
 	file: PathBuilderLike,

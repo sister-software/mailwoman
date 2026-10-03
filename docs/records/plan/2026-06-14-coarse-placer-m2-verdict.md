@@ -8,7 +8,7 @@ default-on integration defensible._
 ## TL;DR
 
 The fix was **a decision rule rather than a new model or a retrain.** The OA-broadened model already carries the
-open-set signal in its `OTHER` head; the ceiling was _how we read it_. Reading total **in-map mass**
+open-set signal in its `OTHER` head; the ceiling was _how we read it_. Total **in-map mass**
 `1 − P(OTHER)` as the reject score (and routing on the in-map argmax) **decouples "is it in-map?" from
 "which country?"** and clears 90/90 post-hoc. Wired as an opt-in `openSet` rule on `CoarsePlacer`;
 the `mailwoman geocode --place-country` flag uses it.
@@ -69,7 +69,7 @@ only when confident). The rule — not the threshold — is the M2 change (+5.9p
 
 - **Shipped in M2 (this branch):** the `openSet` rule on `CoarsePlacer` (opt-in, default-off → byte-stable);
   `--place-country` uses it. The whole prior remains **default-off** overall.
-- **Misrouting check — PASSED (the pre-default-on check).** The 54-row homograph set under-tests in-map
+- **Cross-country check — PASSED (the pre-default-on check).** The 54-row homograph set has too few examples of in-map
   _misrouting_ (the prior injecting a _wrong in-map country_). The across-11 check
   (`scripts/eval/coarse-placer-inmap-misroute.ts`, report
   `docs/articles/evals/2026-06-14-coarse-placer-inmap-misroute.md`) resolves 2 000 in-map addresses

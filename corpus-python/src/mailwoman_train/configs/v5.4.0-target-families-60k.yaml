@@ -73,7 +73,7 @@
 # (synth-suffix-boundary 2.5) — do not raise it chasing F1. that was measured not to move.
 #
 # PRE-registered watch (#1677's discipline, #513's adjacency rule). Grade these before reading any
-# target metric, because relabeling one boundary loosens its neighbours: the bare-toponym rows
+# target metric, because relabeling one boundary loosens its neighbors: the bare-toponym rows
 # `bz-cs-belize-city`, `kh-cs-phnom-penh`, `tt-cs-port-of-spain`, `bn-cs-bandar-seri-begawan`,
 # `il-cs-tel-aviv-yafo`, `my-cs-petaling-jaya`, and the `*-street-name-*` family. The SG and PK
 # register sources both teach a leading untagged token (`Blk`, `House`), which is the shape most

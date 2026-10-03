@@ -42,7 +42,7 @@ export interface GeocodeResult {
 	/**
 	 * Every parsed component, projected from the resolved tree.
 	 *
-	 * It includes locale-specific tags, such as `prefecture` and `block`, that the named fields omit.
+	 * It includes locale-specific tags, such as `prefecture` and `block`, that the fixed fields omit.
 	 */
 	components: Partial<Record<ComponentTag, string>>
 
@@ -128,7 +128,7 @@ export interface GeocodeResult {
 	unit: string | null
 
 	/**
-	 * The uppercase ISO 3166-1 alpha-2 code from the first node that carries a resolver country.
+	 * The uppercase ISO 3166-1 alpha-2 code from the first node that includes a resolver country.
 	 */
 	countryCode: string | null
 
@@ -137,7 +137,8 @@ export interface GeocodeResult {
 	 *
 	 * Each entry is resolved independently.
 	 * `in_winner_lineage` is `true` when the entry lies on the winner's ancestor chain,
-	 * `false` when it lies outside, and absent when the chain is unknown.
+	 * `false` when it lies outside.
+	 * The field is absent when the chain is unknown.
 	 */
 	hierarchy: HierarchyEntry[]
 
@@ -188,7 +189,7 @@ export interface GeocodeResult {
 	 * the parsed `region` and `country`.
 	 *
 	 * It is present whenever a winner resolved.
-	 * Ranking never reads it.
+	 * Downstream ranking does not read it.
 	 */
 	admin_coherence?: AdminCoherenceReport
 

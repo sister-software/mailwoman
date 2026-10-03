@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { mulberry32 } from "@mailwoman/core/utils"
+import { describe, expect, it } from "vitest"
+
 import {
 	bdRegisterRecipe,
 	drawIslamabadSector,
 	pkRegisterRecipe,
 	renderSouthAsiaRegister,
-} from "@mailwoman/corpus/south-asia/recipes/register"
-import { type RecipeRow, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
-import { describe, expect, it } from "vitest"
+} from "#south-asia/recipes/register"
+import { type RecipeRow, recipeRunner } from "#test-kit/corpus-recipe"
 
 const runPK = recipeRunner("pk-register", pkRegisterRecipe, 5)
 const runBD = recipeRunner("bd-register", bdRegisterRecipe, 5)

@@ -7,12 +7,9 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import {
-	countParquetRows,
-	parquetColumnNames,
-	readParquetRows,
-	tryReadParquetRows,
-} from "@mailwoman/corpus/parquet/readers"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
+import { countParquetRows, parquetColumnNames, readParquetRows, tryReadParquetRows } from "#parquet/readers"
 import {
 	LABELED_ROW_SCHEMA,
 	PARQUET_COLUMNS,
@@ -20,12 +17,11 @@ import {
 	type ParquetRow,
 	ROW_GROUP_SIZE,
 	rowToParquet,
-} from "@mailwoman/corpus/parquet/schema"
-import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
-import { writeParquetSplits } from "@mailwoman/corpus/parquet/writers"
-import { SurfaceOrigin } from "@mailwoman/corpus/types"
-import type { LabeledRow } from "@mailwoman/corpus/types"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+} from "#parquet/schema"
+import { openParquetRowStream } from "#parquet/streams"
+import { writeParquetSplits } from "#parquet/writers"
+import { SurfaceOrigin } from "#types"
+import type { LabeledRow } from "#types"
 
 const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	raw: "Paris",
@@ -63,7 +59,7 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-	scratch[Symbol.asyncDispose]()
+	await scratch[Symbol.asyncDispose]()
 })
 
 describe("rowToParquet", () => {
@@ -137,8 +133,8 @@ describe("LABELED_ROW_SCHEMA", () => {
 		expect(LABELED_ROW_SCHEMA.register!.optional).toBe(true)
 		expect(LABELED_ROW_SCHEMA.recipe!.optional).toBe(true)
 		expect(LABELED_ROW_SCHEMA.base_source_id!.optional).toBe(true)
-		// A null register states that the row names no published record, which is an answer.
-		// A null surface would mean nobody said how the text was produced, so every row carries one.
+		// A null register means the row has no published-record identity.
+		// A non-null surface records text provenance for every row.
 		expect(LABELED_ROW_SCHEMA.surface!.optional).toBeUndefined()
 	})
 
@@ -173,7 +169,7 @@ describe("readers", () => {
 		return manifest.slices[0]!.path
 	}
 
-	it("readParquetRows returns every row, and honours a projection", async () => {
+	it("readParquetRows returns every row, and honors a projection", async () => {
 		const path = await written([labeled({ source_id: "r-1" }), labeled({ source_id: "r-2" })])
 
 		expect(await readParquetRows<ParquetRow>(path)).toHaveLength(2)
@@ -201,9 +197,9 @@ describe("readers", () => {
 	})
 
 	it("countParquetRows counts without reading, and raises rather than answering zero for an absent file", async () => {
-		// `0` from a file nobody wrote and `0` from a file holding no rows are different
-		// statements, and a count is a measurement.
-		// So absence raises here rather than returning the number that reads like data.
+		// A missing file and a file with no rows represent different states.
+		// A count is a measurement.
+		// The reader raises on missing input instead of returning a data-looking zero.
 		expect(await countParquetRows(await written([labeled({ source_id: "r-4" }), labeled({ source_id: "r-5" })]))).toBe(
 			2
 		)
@@ -321,7 +317,7 @@ describe("writeParquetSplits", () => {
 				span_ends: [4, 24, 36, 40, 46],
 				span_tags: ["house_number", "street", "locality", "region", "postcode"],
 			}),
-			// Intra-span punctuation — the offsets the token columns structurally cannot carry.
+			// Intra-span punctuation — information the token columns structurally cannot represent.
 			labeled({
 				source_id: "t-pobox",
 				raw: "P.O. Box 19",
@@ -358,7 +354,7 @@ describe("writeParquetSplits", () => {
 		expect(pobox.span_ends).toEqual([11])
 		expect(pobox.span_tags).toEqual(["po_box"])
 
-		// Normalize an empty repeated field to [] and assert the row carries no spurious spans.
+		// Normalize an empty repeated field to [] and assert the row has no spurious spans.
 		const allO = back.find((r) => r.source_id === "t-all-o")!
 		expect(allO.span_starts ?? []).toEqual([])
 		expect(allO.span_ends ?? []).toEqual([])

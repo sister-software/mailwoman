@@ -12,7 +12,7 @@ import type { Suggestion } from "#map/types"
 export interface UsePlaceAutocompleteOptions {
 	/**
 	 * The controlled input text.
-	 * The text after the last comma is the query.
+	 * The segment after the last comma is the query.
 	 */
 	text: string
 
@@ -24,17 +24,17 @@ export interface UsePlaceAutocompleteOptions {
 
 	/**
 	 * Fetches suggestions for a query.
-	 * Without it, the hook never suggests anything.
+	 * Without it the hook never suggests anything.
 	 */
 	autocomplete?: (query: string) => Promise<Suggestion[]>
 
 	/**
-	 * The minimum query length for suggestions. @default 2
+	 * @default 2
 	 */
 	minChars?: number
 
 	/**
-	 * The debounce delay in milliseconds before a fetch. @default 150
+	 * @default 150
 	 */
 	debounceMs?: number
 }
@@ -56,9 +56,7 @@ export interface AutocompleteInputProps {
  */
 export interface UsePlaceAutocomplete {
 	/**
-	 * The current suggestions.
-	 *
-	 * The list is empty when no suggestion matches or the visitor dismissed it.
+	 * The current suggestions, empty when none match or the visitor dismissed the list.
 	 */
 	suggestions: Suggestion[]
 
@@ -73,10 +71,7 @@ export interface UsePlaceAutocomplete {
 	setActiveIndex: (index: number) => void
 
 	/**
-	 * Handles input keys.
-	 *
-	 * The arrow keys move the highlight, Enter picks the highlighted suggestion
-	 * instead of submitting the form, and Escape dismisses the list.
+	 * Handles input keys: arrows move the highlight, Enter picks instead of submitting and Escape dismisses.
 	 */
 	onInputKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
 
@@ -86,8 +81,7 @@ export interface UsePlaceAutocomplete {
 	pick: (value: string) => void
 
 	/**
-	 * Closes the list without picking.
-	 * The list stays closed until the query changes.
+	 * Closes the list without picking until the query changes.
 	 */
 	dismiss: () => void
 
@@ -97,13 +91,11 @@ export interface UsePlaceAutocomplete {
 	inputProps: AutocompleteInputProps
 
 	/**
-	 * The listbox element ID, which matches `inputProps["aria-controls"]`.
+	 * The listbox element ID.
+	 * It matches `inputProps["aria-controls"]`.
 	 */
 	listboxID: string
 
-	/**
-	 * Returns the option element ID for the suggestion at `index`.
-	 */
 	optionID: (index: number) => string
 }
 
@@ -122,10 +114,9 @@ function replaceSegment(current: string, name: string): string {
 
 /**
  * Fetches debounced place suggestions for the text after the input's last comma.
- * A pick replaces only that segment.
  *
- * A segment that starts with a digit gets no suggestions, so house numbers
- * and postcodes never reach `autocomplete`.
+ * A pick replaces only that segment.
+ * A digit-leading segment never reaches `autocomplete`.
  */
 export function usePlaceAutocomplete({
 	text,

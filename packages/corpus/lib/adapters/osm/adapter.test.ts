@@ -1,4 +1,7 @@
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilder } from "path-ts"
+import { describe, expect, it } from "vitest"
+
 import {
 	componentsForOSMRow,
 	createOSMAdapter,
@@ -8,12 +11,10 @@ import {
 	OSM_LICENSE,
 	sameName,
 	splitCityValue,
-} from "@mailwoman/corpus/adapters/osm/adapter"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "@mailwoman/corpus/utils/license"
-import type { PathBuilder } from "path-ts"
-import { describe, expect, it } from "vitest"
+} from "#adapters/osm/adapter"
+import { runAdapter } from "#runner"
+import { readCanonicalRows, useScratchDir } from "#test-kit"
+import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "#utils/license"
 
 const scratch = useScratchDir("osm")
 
@@ -176,6 +177,36 @@ describe("componentsForOSMRow", () => {
 		expect(componentsForOSMRow(floorOnly)).toBeNull()
 		expect(componentsForOSMRow(lineAsStreet)).toBeNull()
 	})
+
+	it("admits a streetless premise numbered within a named place, and counts every refusal by reason", () => {
+		const dropped = new Map<string, number>()
+
+		expect(componentsForOSMRow({ number: "12", place: "Ивановка", city: "Тула" }, { dropped })).toEqual({
+			house_number: "12",
+			locality: "Тула",
+			dependent_locality: "Ивановка",
+		})
+
+		// A suburb maps to `dependent_locality`, so it carries the identity as `addr:place` does.
+		expect(componentsForOSMRow({ number: "21", suburb: "Rajajinagar" }, { dropped })).toEqual({
+			house_number: "21",
+			dependent_locality: "Rajajinagar",
+		})
+
+		expect(componentsForOSMRow({ number: "Plot 4", place: "Rampur" }, { dropped })).toBeNull()
+		expect(componentsForOSMRow({ number: "7", postcode: "226001" }, { dropped })).toBeNull()
+		expect(componentsForOSMRow({ street: "UN Compound, Diplomatic Enclave-II", number: "5" }, { dropped })).toBeNull()
+		expect(componentsForOSMRow({ street: "Road 6", number: "House 34", postcode: "12" }, { dropped })).toBeNull()
+
+		expect(Object.fromEntries(dropped)).toEqual({
+			"row:streetless-house-number-not-designator": 1,
+			"row:streetless-no-locality": 1,
+			"row:street-not-a-name": 1,
+			"component:house_number:not-designator": 1,
+			"component:postcode:not-4-to-6-digits": 1,
+			"row:street-only": 1,
+		})
+	})
 })
 
 describe("osm adapter", () => {
@@ -194,6 +225,11 @@ describe("osm adapter", () => {
 		})
 
 		expect(manifest.yielded).toBe(3)
+
+		expect(manifest.dropped).toEqual({
+			"component:house_number:not-designator": 1,
+			"kept:country-untagged": 3,
+		})
 
 		const rows = await loadRows()
 
@@ -220,6 +256,23 @@ describe("osm adapter", () => {
 			locality: "Dhaka",
 			dependent_locality: "Mirpur 10",
 		})
+	})
+
+	it("refuses a record whose addr:country names another country", async () => {
+		const input = await writeFixture("osm-cn.corpus.jsonl", [
+			{ street: "人民路", number: "12", city: "上海市", country: "CN" },
+			{ street: "улица Ленина", number: "3", city: "Забайкальск", country: "RU" },
+		])
+
+		const manifest = await runAdapter({
+			adapter: createOSMAdapter(),
+			adapterOptions: { inputPath: input, country: "CN" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		expect(manifest.written).toBe(1)
+		expect(manifest.dropped).toEqual({ "row:country-tag-mismatch": 1 })
 	})
 
 	it("rejects an invocation without --country", async () => {

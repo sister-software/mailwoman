@@ -18,7 +18,7 @@ The docs tell a coherent lineage:
 - **Pelias Parser / Mailwoman v1** took the opposite approach: TypeScript rules, phrase graph, Cartesian solver, dictionary and regex classifiers. Debuggable and deployable, but long-tail ambiguity grew without bound. The operator's "Paris, Texas" talk at SotM framed the rule-ceiling problem succinctly: "A geocoder is a contextual parser + constraint solver. Not a tokenizer. Not a dumb database lookup."
 - **Mailwoman v2** keeps Pelias's operational shape while replacing the brittle center: rules remain for high-precision bounded problems (postcodes, state abbreviations, WOF dictionaries), while a small neural sequence model handles contextual ambiguity. Rule classifiers coexist with neural via a per-component policy registry — the Ship-of-Theseus migration.
 
-This is the correct historical synthesis. Geocoding has never been only NLP and never been only database lookup. Mailwoman is now building both halves in the same package family. No one has shipped a neural address parser as a library — libpostal is C-only, Deepparse is Python-only and academic, Pelias is rule-only. A TypeScript-first, browser-deployable neural parser would fill a real gap.
+This is the correct historical synthesis. A geocoder combines NLP and database lookup. Mailwoman is now building both halves in the same package family. No one has shipped a neural address parser as a library — libpostal is C-only, Deepparse is Python-only and academic, Pelias is rule-only. A TypeScript-first, browser-deployable neural parser would fill a real gap.
 
 ## What is directionally strong
 
@@ -41,7 +41,7 @@ This decomposition is consistent with the bitter lesson. The bitter lesson says 
 
 ### 2. Parse/resolve split stays intact
 
-Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The `alternatives` field and `--candidates` CLI direction are aligned with graceful failure. This is where Mailwoman can be meaningfully better than old geocoders: it can be more direct about ambiguity as well as "more correct top-1."
+A separate parser and resolver form the most important architectural decision. This design avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The `alternatives` field and `--candidates` CLI direction are aligned with graceful failure. This is where Mailwoman can be meaningfully better than old geocoders: it can be more direct about ambiguity as well as "more correct top-1."
 
 ### 3. Small, TypeScript-first neural runtime
 
@@ -53,7 +53,7 @@ The policy registry and component-by-component migration are conservative in the
 
 ### 5. The corpus pipeline is a moat
 
-11 TypeScript adapters (WOF admin/postcode, BAN, TIGER, NAD, NPPES, HRSA, IMLS, three state sources), ~677M aligned rows at a 0.03% quarantine rate, locality-aware splits, Parquet extracts with license tags, SNAPPY compression. The `CanonicalRow` → alignment → BIO labeling → Parquet extract routing pipeline is industrial-scale data engineering. Reproducing it from scratch takes months.
+The pipeline has 11 TypeScript adapters (WOF admin/postcode, BAN, TIGER, NAD, NPPES, HRSA, IMLS, three state sources), ~677M aligned rows at a 0.03% quarantine rate, locality-aware splits, Parquet extracts with license tags, and SNAPPY compression. The `CanonicalRow` → alignment → BIO labeling → Parquet extract routing pipeline is industrial-scale data engineering. A fresh implementation would take months.
 
 ### 6. Diagnostics improved materially
 
@@ -71,13 +71,13 @@ The docs describe a nearly complete v0.5.0 pipeline, but the runtime still does 
 
 This is the largest product risk. Before expensive validation, wire the real path behind a feature flag and run it against the kryptonite catalogue. If joint decode does not beat fallback on kryptonite without hurting the normal subsets, fix scoring before retraining.
 
-### 2. Training instability is the central technical blocker
+### 2. Instability in training is the central technical blocker
 
 v0.4.0 and v0.5.0 both show the same fingerprint across **nine training runs**: loss descends through warmup, reaches a useful basin (train_loss 0.31–0.69), then climbs back to its starting magnitude (1.85–3.29) over 100–300 steps under sustained peak LR. Validation macro-F1 mirrors it — peaks when loss bottoms, collapses to random-baseline.
 
 The bisect has ruled out:
 
-- Learning rate (factor-2.3 change shifts collapse by factor-1.3 — controls when rather than whether)
+- LR magnitude (a factor-2.3 change shifts collapse by factor-1.3 — controls when collapse occurs)
 - CRF per-token normalization (§1)
 - Class-weighted cross-entropy (§3)
 - Hidden size (384 vs 256 — same fingerprint)
@@ -133,7 +133,7 @@ The [Codex review](./2026-05-24-codex-project-direction-review.mdx) (same date) 
 ### Points of full agreement
 
 - Architecture is sound. Knowledge Ladder is the correct decomposition.
-- Training divergence is the central blocker. Nine runs, same fingerprint.
+- The central blocker is training divergence. Nine runs produced the same fingerprint.
 - Joint reconcile isn't wired by default. This is the largest integration gap.
 - Status docs are stale. Specific conflicts exist in five files.
 - Next spend should be validation rather than release. Preflight checklist before H100 hours.
@@ -294,7 +294,7 @@ That direction is coherent. The current architectural work supports it. The next
 
 Continue the project. Do not expand scope yet.
 
-The architecture is correct, and the corpus pipeline is a durable advantage. Training stability is the current blocker. The divergence pattern across 9 runs is now the central technical question, and it has two unexamined hypotheses (from-scratch initialization, model capacity) that the current bisect ladder does not test. Run those control experiments before the next full train.
+The architecture is correct, and the corpus pipeline is a durable advantage. The current blocker is training stability. The nine runs showed the same divergence pattern. Two unexamined hypotheses (from-scratch initialization, model capacity) remain outside the current bisect ladder. Run those control experiments before the next full train.
 
 The next investment should be a validation sprint:
 

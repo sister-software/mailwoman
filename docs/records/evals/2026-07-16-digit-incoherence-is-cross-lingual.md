@@ -3,7 +3,7 @@
 2026-07-16. The measurement that unifies H3, B0, and the one PL failure B1's coverage story could
 not explain — and that explains why B4's probe barely moved.
 
-**Finding: the intra-word digit incoherence B0 measured on Norwegian is the same defect on
+**Result: the intra-word digit incoherence B0 measured on Norwegian is the same defect on
 correctly-parsed Polish streets that are in-corpus and admitted by the filter. It is not coverage, it
 is not the street→locality leak, and it is length-conditioned — the model reproduces a real corpus
 prior on long digit-run continuations. A targeted fragment extract fights that prior uphill, which is

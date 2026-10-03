@@ -3,7 +3,7 @@
 
 /**
  *   Japan's analog of a "street-type" module — except the lesson here is the absence. Where
- *   `us/street-suffix.ts` and `de/street-type.ts` exist to recognize the named-street part of an
+ *   `us/street-suffix.ts` and `de/street-type.ts` exist to recognize the street-name part of an
  *   address, Japan has **no street names** to recognize. A Japanese address is built from nested
  *   administrative units and numbered blocks/lots, written largest-to-smallest:
  *
@@ -54,9 +54,9 @@ export type JapaneseAdminSuffix = (typeof JP_ADMIN_SUFFIXES)[number]
 /**
  * The markers that close the numbered tail of an address.
  *
- * Japan's stand-in for a house number, since there is no named street to hang one on:
+ * Japan's stand-in for a house number, since there is no street name to hang one on:
  *
- * - 丁目 (chōme) — a district block within a neighbourhood.
+ * - 丁目 (chōme) — a district block within a neighborhood.
  * - 番地 (banchi) — a lot number.
  * - 番 (ban) — block number (the `番` in the modern `chōme-ban-gō` triple).
  * - 号 (gō) — building number (the final element of the triple).

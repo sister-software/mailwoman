@@ -115,7 +115,7 @@ structural story was the attractive one.)
 
 ### 4.1 What n=54 can and cannot support
 
-The intervals above **overlap**. Treating the two rates as independent samples, 0.222 vs 0.352 is not a
+The intervals above **overlap**. If we treat the two rates as independent samples, 0.222 vs 0.352 is not a
 distinguishable difference at this n. The right test is paired — same 54 rows, two decodes — so McNemar
 on the discordants:
 
@@ -152,7 +152,7 @@ the observed class, the digit-eating, and the hallucination are not three findin
 - Where the street boundary abuts a digit run → **it over-extends** (+8 of the 17 regressions).
 - Where no street exists at all → **it invents one** (+11 hallucinations).
 
-Net on the rows the metric scores: **+0**. Net on the rows the metric drops: **−7**. Counting both, the
+Net on the rows the metric scores: **+0**. Net on the rows the metric drops: **−7**. When both are counted, the
 flag is **net negative** — and the arc has never once measured it that way.
 
 ## 6. Consequences

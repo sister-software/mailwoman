@@ -2,25 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file One derivation of a result's epistemic status from its tier, shared by the extractor and the two places that
- *   rewrite a tier afterwards (the fork→entity answer and the plus-code override), so the two fields cannot disagree.
+ * @file One derivation of a result's epistemic status from its tier, shared by the extractor and the
+ *   two places that rewrite a tier afterwards (the fork→entity answer and the plus-code override),
+ *   so the two fields cannot disagree.
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { CoverageBasis, EpistemicStatus } from "@mailwoman/evidence"
 
 /**
- * What may be claimed about a coordinate, from how it was produced and, when the
- * answering register carries one, the coverage basis of the row that answered.
+ * What may be claimed about a coordinate, from how it was produced and, when the answering
+ * register includes one, the coverage basis of the row that answered.
  *
  * - No coordinate → `unresolved`
  * - A register row whose coverage basis is `designated` → `designated` (an authority assigned it)
  * - `interpolated`, `street` and `plus_code` → `derived` (a stated rule computed the point)
- * - Everything else → `observed` (a named source recorded it. No authority is claimed)
+ * - Everything else → `observed` (an identified source recorded it without claiming authority)
  *
- * `inferred` is not producible here: no code path emits a value that is the
- * intersection of constraints rather than a retrieved row.
- * It stays defined and unused rather than repurposed.
+ * `inferred` is not producible here and stays defined and unused rather than repurposed.
  */
 export function epistemicStatusFor(
 	tier: ResolutionTier,

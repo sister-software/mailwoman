@@ -62,7 +62,7 @@ arrives at inference as a retrieval rather than a weight.
 
 ## Intended use
 
-Parsing free-text UK postal addresses into structured components (country,
+The model parses free-text UK postal addresses into structured components (country,
 region, locality, dependent_locality, postcode, street, house_number, …) for
 **geocoding** — resolving a parsed address to coordinates via a
 gazetteer/resolver. The model is the parsing front-end of that pipeline rather than a
@@ -70,7 +70,7 @@ standalone geocoder.
 
 ## Ship-config requirement (read before using)
 
-The Mailwoman model expects its soft channels fed at inference. Running them
+The Mailwoman model expects its soft channels fed at inference. The model run with those channels
 off is out-of-distribution and silently collapses the admin tags
 (country/region/locality/postcode). Construct the scorer through
 `@mailwoman/neural`'s `createScorer` (the canonical `ProductionScorer`), which

@@ -2,26 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `german` recipe — German coverage rows from real OpenAddresses tuples (Berlin + Saxony,
- *   cached zips). Each sampled tuple is rendered via {@link renderGermanRow} in both orders —
- *   `--intl-fraction` (default 0.4) in international order (house-first / postcode-after-city), the
- *   rest in idiomatic German order — then aligned to BIO. Generate-mode: it builds a tuple pool
- *   from the cached zips, then draws `--count` rows from it with the passed `random` (so the emit
- *   stream matches the legacy reservoir-sample loop). Ported from the root build script it replaced.
+ * `german` recipe: German coverage rows from real OpenAddresses tuples (Berlin and Saxony, cached
+ * zips). Each sampled tuple renders through {@link renderGermanRow} in both orders, with
+ * `--intl-fraction` (default 0.4) in international order and the rest in idiomatic German order.
+ * Generate mode builds a tuple pool from the cached zips, then draws `--count` rows with the passed
+ * `random`.
  *
- *   order robustness (2026-06-06): mixing the two renderings stops a native-only recipe output from teaching
- *   German order so well it reads the US/feed-order eval as a "collapse". See
- *   docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md (the order-artifact correction).
+ * The combined renderings keep native-only recipe output from over-teaching German order.
+ * Over-teaching German order appears as a collapse on the US/feed-order eval.
  *
- *   two registers the OA tuples do not carry (#1946). A comma-free single line — `Neusser Str. 12 Nippes
- *   50733 Köln`, the dictation / one-field-form register — segments as one unit at stage 2, and with one
- *   segment the placetype-pair prior never fires, so the model reads `Nippes` as a second street and the
- *   one-value-per-tag projection deletes it. `--comma-free-fraction` renders that many native-order rows
- *   with `" "` as the line separator. And OA rows have no district at all, so `--ortsteil-fraction` rows
- *   borrow a WOF Ortsteil of the tuple's own locality as `dependent_locality` — 67,532 DE neighbourhoods
- *   carry a locality ancestor in the admin database, `Köln-Nippes` among them. The German spelling is
- *   recovered from the `names` table ({@link ortsteilSurface}): WOF's `spr.name` for DE neighbourhoods is
- *   the ascii-folded label (`Bocklemuend`), which no German ever types.
+ * Two registers are absent from the OA tuples. A comma-free single line (`Neusser Str. 12 Nippes 50733
+ * Köln`) segments as one unit at stage 2. With one segment, the placetype-pair prior never fires.
+ * The model then reads `Nippes` as a second street. The one-value-per-tag projection deletes it.
+ * `--comma-free-fraction` renders that many native-order rows with `" "` as the line separator. OA
+ * rows also lack a district, so `--ortsteil-fraction` rows borrow a WOF Ortsteil of the tuple's
+ * own locality as `dependent_locality`. The German spelling is recovered from the `names` table
+ * ({@link ortsteilSurface}) because WOF's `spr.name` for DE neighborhoods is the ascii-folded label.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -33,8 +29,9 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { renderGermanRow, type LocaleBaseTuple } from "#surfaces/locale"
 import { alignRow } from "#utils"
 
@@ -48,12 +45,13 @@ interface GermanSource {
 }
 
 /**
- * `region` is the Bundesland the source covers.
+ * Each source's `region` is the Bundesland the file covers.
  *
- * OA's region column is empty for DE, but the region is implied by the per-state file.
- * The international order needs it for the "City, Region Postcode" tail (v0.9.3 / #327).
+ * OA's region column is empty for DE, so the region comes from the per-state file.
+ * The international order needs it for the "City, Region Postcode" tail.
  *
- * Berlin.csv → Berlin (a city-state, region==locality); sn/statewide → Sachsen.
+ * The Berlin file is a city-state whose region equals its locality.
+ * The Saxony file is Sachsen.
  */
 const SOURCES: GermanSource[] = [
 	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
@@ -100,15 +98,15 @@ function sameGermanLabel(left: string, right: string): boolean {
 /**
  * The surface an Ortsteil is written with in an address, from WOF's rows for it.
  *
- * `spr.name` for a DE neighbourhood is the ascii-folded label.
- * The `names` rows in `deu` carry the German spelling beside unrelated labels for co-located
+ * `spr.name` for a DE neighborhood is the ascii-folded label.
+ * The `names` rows in `deu` contain the German spelling beside unrelated labels for co-located
  * features (`Bocklemuend` → `Bocklemünd`, `Jüdischer Friedhof Bocklemünd`, `Menara-Garten`).
  *
  * The German name is the one that spells the same label as `spr.name` under either of
  * WOF's ascii folds ({@link foldGerman}); with none, `spr.name` stands.
  *
- * WOF also prefixes some Ortsteile with their city (`Köln-Nippes`), a form no envelope carries once
- * the city is its own line, so a leading `<locality>-` is dropped when something is left after it.
+ * WOF also prefixes some Ortsteile with their city (`Köln-Nippes`), a form absent from the envelope
+ * once the city is its own line, so a leading `<locality>-` is dropped when something is left after it.
  */
 export function ortsteilSurface(sprName: string, deuNames: readonly string[], locality: string): string {
 	const german = deuNames.find((name) => sameGermanLabel(name, sprName)) ?? sprName
@@ -120,11 +118,12 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
 }
 
 /**
- * Every current DE neighbourhood with a locality ancestor, keyed by the folded
+ * Every current DE neighborhood with a locality ancestor, keyed by the folded
  * locality name → Ortsteil surfaces.
  *
  * Empty when the admin database is not readable.
- * The recipe then emits no Ortsteil rows and says so, rather than failing a build over an optional register.
+ * The recipe then emits no Ortsteil rows and reports that result, rather than
+ * failing a build over an optional register.
  */
 async function readOrtsteilPool(adminDB: PathBuilderLike): Promise<Map<string, string[]>> {
 	const pool = new Map<string, string[]>()
@@ -205,9 +204,6 @@ async function readGermanTuples(source: GermanSource): Promise<LocaleBaseTuple[]
 
 /**
  * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
  */
 export const germanRecipe: CorpusRecipe = {
 	name: "german",
@@ -231,9 +227,8 @@ export const germanRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		// Emit prng: the legacy build script seeded mulberry32(opts.seed).
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-german"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-german")
 		const intlFraction = opts.intlFraction ?? 0.4
 		const commaFreeFraction = opts.commaFreeFraction ?? 0.3
 		const ortsteilFraction = opts.ortsteilFraction ?? 0.3
@@ -261,7 +256,6 @@ export const germanRecipe: CorpusRecipe = {
 
 		const count = opts.count ?? 4000
 
-		// Pool real tuples from every German source, then sample `count` rows from it.
 		const pool: LocaleBaseTuple[] = []
 
 		for (const s of SOURCES) {
@@ -291,9 +285,9 @@ export const germanRecipe: CorpusRecipe = {
 			// (the US/feed layout), the rest in idiomatic German order.
 			// Same components either way.
 			const order = random() < intlFraction ? "international" : "native"
-			// The two registers OA never wrote (#1946), each drawn independently of the order
-			// so every combination occurs: an Ortsteil borrowed from the tuple's own locality,
-			// and a native line with no commas.
+			// OA does not provide these two registers.
+			// Draw each independently of the order so every combination occurs: an Ortsteil
+			// borrowed from the tuple's own locality or a native line with no commas.
 			const localOrtsteile = ortsteile.get(drawn.locality.toLowerCase())
 
 			const ortsteil =
@@ -312,7 +306,7 @@ export const germanRecipe: CorpusRecipe = {
 			}
 
 			// --golden: emit per-locale-f1 eval rows ({raw, components}) instead of aligned BIO.
-			// `order` rides along so the eval can stratify native vs international.
+			// `order` accompanies each row so the eval can stratify native vs international.
 			if (opts.golden) {
 				write(stringifyJSON({ raw: synth.raw, components: synth.components, country: "DE", order }))
 

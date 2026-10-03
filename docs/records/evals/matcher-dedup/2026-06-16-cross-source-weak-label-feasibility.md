@@ -19,7 +19,7 @@ the labels.
 
 ## What the sources share
 
-Inspecting the raw headers of every source in the matcher's catalog:
+The raw headers of every source in the matcher's catalog show:
 
 | source                               | rows' identity key        | shares a clean strong ID?             |
 | ------------------------------------ | ------------------------- | ------------------------------------- |

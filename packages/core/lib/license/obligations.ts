@@ -7,14 +7,14 @@
  */
 
 import { stringifyJSON } from "#json"
-import type { LicenseKeyVerification } from "#license/key/index"
+import type { LicenseKeyVerification } from "#license/key"
 import type { LicenseKeyPublication } from "#license/publication"
 
 /**
  * The obligation classes the summary reports.
  *
  * - `attribution` requires crediting the source where derived results are shown or redistributed.
- * - `share_alike` requires a derived work or database to carry the same license, as in ODbL and AGPL.
+ * - `share_alike` requires a derived work or database to use the same license, as in ODbL and AGPL.
  * - `source_offer` requires offering the source, including modifications,
  *   to network users (AGPL-3.0 section 13).
  */
@@ -45,9 +45,9 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// Section 4 of commercial-LICENSE.md requires attribution.
 	["LicenseRef-Commercial", [LicenseObligation.Attribution]],
 	["ODbL-1.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
-	// Open Data Commons publishes an attribution-only license beside ODbL,
-	// and the two are confused because both are ODC.
-	// This one carries no share-alike term.
+	// Open Data Commons publishes an attribution-only license beside ODbL.
+	// Readers confuse them because both are ODC.
+	// This one has no share-alike term.
 	["ODC-By-1.0", [LicenseObligation.Attribution]],
 	// Every identifier `readLicenseRecord` can resolve a share-alike mention to belongs here,
 	// so a stated CC-BY-SA grant reads as carrying share-alike rather than as an unrecognized identifier.
@@ -68,10 +68,10 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// The grant is void without the attribution statement, so the per-agency
 	// attribution list ships with the data.
 	["OGDL-Taiwan-1.0", [LicenseObligation.Attribution]],
-	// Mexico's national statistics institute publishes under its own "Términos de Libre Uso de
-	// la Información del INEGI", which names no Creative Commons license and carries no version.
-	// The terms permit copying, publishing, adapting, extracting and commercial use,
-	// and require the credit `Fuente: INEGI, <product name>`.
+	// Mexico's national statistics institute publishes under its own "Términos de Libre Uso de la
+	// Información del INEGI", which names no Creative Commons license and includes no version.
+	// The terms permit copying, publishing, adapting, extracting and commercial use.
+	// They require the credit `Fuente: INEGI, <product name>`.
 	// They state no share-alike term.
 	// Retrieved 2026-09-27 and retained at internal/strategy/rights-receipts/mx-gb-2026-09-27/mx-inegi-terminos.html.
 	["LicenseRef-INEGI-Terms", [LicenseObligation.Attribution]],

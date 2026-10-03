@@ -38,7 +38,7 @@ and outside the bar as written; the bar governs.
 
 ## Mechanism
 
-Turning the choreography off makes the model read the gazetteer clue next to a postcode instead of
+With the choreography off, the model reads the gazetteer clue next to a postcode instead of
 deciding structurally. Decode margins, crossed by region and name shape on the stratified US panel:
 
 | group          | rows | decoded as locality, v5.7.0 | v5.8.0 | what won instead in v5.8.0        |
@@ -112,10 +112,10 @@ trusts for every input, which is what cost the venues and the Vermont names here
 - Candidate cache `$MAILWOMAN_DATA_ROOT/candidates/v580-cache`; control `v570-cache-fr`
 - Final training validation: val_loss 0.715332, val_macro_f1 0.895982 (v5.7.0: 0.727783 / 0.898163)
 
-## Staging trap
+## The staging trap
 
 A staged candidate cache symlinks `model-card.json` into one shared file under
-`$MAILWOMAN_DATA_ROOT/weights/<locale>/`, so two arms share the inode. Editing a candidate's card in
+`$MAILWOMAN_DATA_ROOT/weights/<locale>/`, so two arms share the inode. A change to a candidate's card in
 place changes the control's card as well, with no error, and both arms then grade under the same
 `requires` block. Replace the symlink with a real file and read the value back off disk for both arms
 before grading. The control cache also had to be re-staged: the default locale set omits `fr-fr`, and

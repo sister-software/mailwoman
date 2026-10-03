@@ -12,12 +12,12 @@
  *   (`us/state.ts`) and Canadian provinces (`ca/province.ts`). Both directions are covered: the ISO
  *   code (`QC` → Quebec) and the full name (`Quebec` / `Québec` → the `QC` record), so a resolver
  *   can expand the abbreviation the gazetteer FTS index lacks ("QC" is not an alt-name of Québec)
- *   into the full name it does carry. This is a soft prior rather than a routing decision. The gazetteer
+ *   into the full name it does contain. This is a soft prior rather than a routing decision. The gazetteer
  *   still does the geographic confirmation (per the registry-backed-soft-prior doctrine).
  *
- *   The US and Canadian code sets are disjoint (no two-letter code, and no full name, collides
- *   between the two), so the combined lookup below is unambiguous. `CA` resolves to California the
- *   US state (Canada's provinces carry no `CA` subdivision code), never to Canada the country —
+ *   The US and Canadian code sets are disjoint. No two-letter code or full name collides between them, so the
+ *   combined lookup below is unambiguous. `CA` resolves to California the
+ *   US state (Canada's provinces have no `CA` subdivision code), never to Canada the country —
  *   country recognition stays with `matchCountry`.
  *
  *   Source: the underlying `US_STATE_BY_ABBREVIATION` (USPS Publication 28, Appendix B) and
@@ -31,8 +31,8 @@ import { foldName } from "#normalize"
 import { US_STATE_BY_ABBREVIATION } from "#us/state"
 
 /**
- * A resolved subdivision: its ISO 3166-2 code (sans country prefix),
- * canonical English name, and ISO 3166-1 country.
+ * A resolved subdivision contains its ISO 3166-2 code (sans country prefix) and canonical English name.
+ * It also contains the ISO 3166-1 country.
  */
 export interface SubdivisionMatch {
 	/**
@@ -101,9 +101,11 @@ export function matchSubdivision(token: string | null | undefined): SubdivisionM
 /**
  * Per-country subdivision lookups for callers that already know the country.
  *
- * Kept separate from {@link SUBDIVISION_LOOKUP} on purpose: the combined map is only unambiguous
- * because the US and CA sets are disjoint, and Australia breaks that property twice —
- * `WA` collides with Washington and `NT` with the Northwest Territories.
+ * This lookup stays separate from {@link SUBDIVISION_LOOKUP}.
+ * The combined map is unambiguous only because the US and CA sets are disjoint.
+ *
+ * Australia breaks that property twice: `WA` collides with Washington
+ * and `NT` with the Northwest Territories.
  * A country-scoped caller (the admin-coherence check reads the winner's resolver-stamped country)
  * dissolves the collision instead of arbitrating it.
  */
@@ -149,8 +151,11 @@ const SCOPED_SUBDIVISION_LOOKUP: ReadonlyMap<string, ReadonlyMap<string, Subdivi
 /**
  * Resolve a subdivision surface form within one country.
  *
- * Same folding and return shape as {@link matchSubdivision}, but scoped: `WA` under `AU`
- * is Western Australia, under `US` Washington, and under any other country null.
+ * Uses the same folding and return shape as {@link matchSubdivision}, with a country scope.
+ * `WA` under `AU` is Western Australia.
+ *
+ * Under `US` it is Washington.
+ * Other countries return null.
  * Use this whenever the country is already established.
  *
  * The unscoped lookup exists for the address-line case where the subdivision itself is the country evidence.

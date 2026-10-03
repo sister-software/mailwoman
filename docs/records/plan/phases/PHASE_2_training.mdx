@@ -70,7 +70,7 @@
 
   v0.4.1 implications: source-weight tweak alone partially addresses the 11% num_confused class. The 65% empty_pred class requires a different intervention (likely source-weight + synthesis pass over component-order permutations, or an aggressive `wof-postalcode` bump). Full v0.4.1 scope draft staged at `control/drafts/v0_4_1-scope.md` on the i116 container.
 
-- **v0.5.0 thread C-s — scaffold only** (shipped 2026-05-23, see [Phase 8 fresh-slate plan § Thread C](./PHASE_8_v0_5_0_fresh_slate.mdx)) — v0.4.1 was [explicitly skipped](./PHASE_8_v0_5_0_fresh_slate.mdx) in favor of a fresh-slate iteration. Thread C-s lands the **model code path** for the v0.5.0 architecture changes, _without a training run_. Training starts after Threads A (tokenizer retrain) and B (corpus-v0.4.0 with adversarial expansion) complete.
+- **v0.5.0 thread C-s — scaffold only** (shipped 2026-05-23, see [Phase 8 fresh-slate plan § Thread C](./PHASE_8_v0_5_0_fresh_slate.mdx)) — v0.4.1 was [explicitly skipped](./PHASE_8_v0_5_0_fresh_slate.mdx) in favor of a fresh-slate iteration. Thread C-s lands the **model code path** for the v0.5.0 architecture changes, _without a training run_. The training run starts after Threads A (tokenizer retrain) and B (corpus-v0.4.0 with adversarial expansion) complete.
 
   Architectural changes shipped in the scaffold:
   - **Top-k inference (`predict_top_k`):** the encoder now emits the K most-probable tag sequences with calibrated log-probability scores (`crf.top_k_decode`, list-Viterbi over the structural mask). Default k=5. This is what Stage 5 reconcile (Thread D) consumes — the classifier becomes a candidate generator rather than a single-answer predictor. Argmax path (`predict`) unchanged for back-compat.
@@ -116,7 +116,7 @@
 - [ ] Use HuggingFace `transformers` library: `BertConfig` + `BertForTokenClassification` with custom small config. Or `RoBERTa`. Pick one and stick with it.
 - [ ] From-scratch initialization (not pretrained). Address vocabulary is too small to benefit from English-internet pretraining.
 
-### 4. Training loop
+### 4. Model training loop
 
 - [ ] `train.py`
 - [ ] Optimizer: AdamW, lr 5e-4, weight decay 0.01
@@ -158,7 +158,7 @@ Tiers 2 (street) and 3 (venue) are explicitly future iterations. Do not attempt 
 - [ ] Verify ONNX inference matches PyTorch inference within 1e-4 on a sample of 1000 inputs
 - [ ] Output: `/data/models/onnx/model-v0.1.0-en-us.onnx`, same for fr-fr
 
-⚠ If you trained a single multilingual model (recommended for Tier 1 — coarse is cheap to share), export it twice with the same weights, named per locale. Splitting into per-locale models is a Phase 3 decision based on size and load behavior.
+⚠ If you trained a single multilingual model (recommended for Tier 1 — coarse is cheap to share), export it twice with the same weights, named per locale. A per-locale model split is a Phase 3 decision based on size and load behavior.
 
 ### 8. Quantization
 
@@ -203,7 +203,7 @@ If after the first training run, golden F1 is:
 - 90–95% → analyze failure modes. Likely fixable with corpus tweaks (more synthesis, deduplication, a missing source). One additional iteration is fine.
 - < 90% → stop and re-examine. Could be: tokenizer mismatch, label misalignment, schema bug, severely imbalanced training data. Do not "train longer" without diagnosing first.
 
-⚠ Do not add street-level components in this phase. Tier 1 ships coarse components, and Tier 2 is its own iteration. Mixing them blurs the metrics and slows iteration.
+⚠ Do not add street-level components in this phase. Tier 1 ships coarse components, and Tier 2 is its own iteration. Their combination blurs the metrics and slows iteration.
 
 ### Revised (2026-05-18)
 

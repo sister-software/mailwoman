@@ -1,0 +1,355 @@
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://mapy.geoportal.gov.pl/wss/service/INSPIRE/Addresses?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=ms:AD.Address&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="2026-10-02T05:13:15" numberMatched="unknown" numberReturned="10">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+      		<gml:lowerCorner>391126.480000 546819.260000</gml:lowerCorner>
+      		<gml:upperCorner>508914.450000 678699.960000</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.97426176">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>394384.170000 547502.590000</gml:lowerCorner>
+        		<gml:upperCorner>394384.170000 547502.590000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.97426176.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>394384.170000 547502.590000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>97426176</ms:id>
+        <ms:gml_id>PL.ZIPIN.3742.EMUiA_9945001100000172050</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,łódzkie,&quot;Piotrków Trybunalski&quot;,&quot;Piotrków Trybunalski&quot;}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Piotrków Trybunalski</ms:miejscowosc>
+        <ms:ulica>1 Maja</ms:ulica>
+        <ms:numer>10</ms:numer>
+        <ms:teryt>106201</ms:teryt>
+        <ms:simc>0967430</ms:simc>
+        <ms:ulic>11926</ms:ulic>
+        <ms:ulica_pol>1 maja</ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2016-03-09</ms:data_od>
+        <ms:kod>97-300</ms:kod>
+        <ms:ulica_skr>1 maja</ms:ulica_skr>
+        <ms:miejscowosc_lower>piotrków trybunalski</ms:miejscowosc_lower>
+        <ms:lokalnyid>94a4c0aa-eb6b-4faa-be00-810f492298eb</ms:lokalnyid>
+        <ms:adres>Piotrków Trybunalski 1 Maja 10</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od></ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.97426177">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>394464.460000 547535.170000</gml:lowerCorner>
+        		<gml:upperCorner>394464.460000 547535.170000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.97426177.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>394464.460000 547535.170000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>97426177</ms:id>
+        <ms:gml_id>PL.ZIPIN.3742.EMUiA_9945001100000172051</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,łódzkie,&quot;Piotrków Trybunalski&quot;,&quot;Piotrków Trybunalski&quot;}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Piotrków Trybunalski</ms:miejscowosc>
+        <ms:ulica>1 Maja</ms:ulica>
+        <ms:numer>11</ms:numer>
+        <ms:teryt>106201</ms:teryt>
+        <ms:simc>0967430</ms:simc>
+        <ms:ulic>11926</ms:ulic>
+        <ms:ulica_pol>1 maja</ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2016-03-09</ms:data_od>
+        <ms:kod>97-300</ms:kod>
+        <ms:ulica_skr>1 maja</ms:ulica_skr>
+        <ms:miejscowosc_lower>piotrków trybunalski</ms:miejscowosc_lower>
+        <ms:lokalnyid>580d6f78-10a6-4d6b-ba5b-faf98e390b67</ms:lokalnyid>
+        <ms:adres>Piotrków Trybunalski 1 Maja 11</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od></ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.97426178">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>394484.640000 547565.140000</gml:lowerCorner>
+        		<gml:upperCorner>394484.640000 547565.140000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.97426178.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>394484.640000 547565.140000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>97426178</ms:id>
+        <ms:gml_id>PL.ZIPIN.3742.EMUiA_9945001100000172053</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,łódzkie,&quot;Piotrków Trybunalski&quot;,&quot;Piotrków Trybunalski&quot;}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Piotrków Trybunalski</ms:miejscowosc>
+        <ms:ulica>1 Maja</ms:ulica>
+        <ms:numer>13</ms:numer>
+        <ms:teryt>106201</ms:teryt>
+        <ms:simc>0967430</ms:simc>
+        <ms:ulic>11926</ms:ulic>
+        <ms:ulica_pol>1 maja</ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2016-03-09</ms:data_od>
+        <ms:kod>97-300</ms:kod>
+        <ms:ulica_skr>1 maja</ms:ulica_skr>
+        <ms:miejscowosc_lower>piotrków trybunalski</ms:miejscowosc_lower>
+        <ms:lokalnyid>169db183-3bc9-4035-9d3c-f7b8b49764f8</ms:lokalnyid>
+        <ms:adres>Piotrków Trybunalski 1 Maja 13</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od></ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.97426270">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>394444.700000 547515.120000</gml:lowerCorner>
+        		<gml:upperCorner>394444.700000 547515.120000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.97426270.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>394444.700000 547515.120000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>97426270</ms:id>
+        <ms:gml_id>PL.ZIPIN.3742.EMUiA_9945001100000172056</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,łódzkie,&quot;Piotrków Trybunalski&quot;,&quot;Piotrków Trybunalski&quot;}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Piotrków Trybunalski</ms:miejscowosc>
+        <ms:ulica>1 Maja</ms:ulica>
+        <ms:numer>16/18</ms:numer>
+        <ms:teryt>106201</ms:teryt>
+        <ms:simc>0967430</ms:simc>
+        <ms:ulic>11926</ms:ulic>
+        <ms:ulica_pol>1 maja</ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2016-03-09</ms:data_od>
+        <ms:kod>97-300</ms:kod>
+        <ms:ulica_skr>1 maja</ms:ulica_skr>
+        <ms:miejscowosc_lower>piotrków trybunalski</ms:miejscowosc_lower>
+        <ms:lokalnyid>440ba807-8c20-4fa1-b313-ef88a52418fb</ms:lokalnyid>
+        <ms:adres>Piotrków Trybunalski 1 Maja 16/18</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od></ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.97426271">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>394535.760000 547611.830000</gml:lowerCorner>
+        		<gml:upperCorner>394535.760000 547611.830000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.97426271.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>394535.760000 547611.830000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>97426271</ms:id>
+        <ms:gml_id>PL.ZIPIN.3742.EMUiA_9945001100000172058</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,łódzkie,&quot;Piotrków Trybunalski&quot;,&quot;Piotrków Trybunalski&quot;}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Piotrków Trybunalski</ms:miejscowosc>
+        <ms:ulica>1 Maja</ms:ulica>
+        <ms:numer>17a</ms:numer>
+        <ms:teryt>106201</ms:teryt>
+        <ms:simc>0967430</ms:simc>
+        <ms:ulic>11926</ms:ulic>
+        <ms:ulica_pol>1 maja</ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2016-03-09</ms:data_od>
+        <ms:kod>97-300</ms:kod>
+        <ms:ulica_skr>1 maja</ms:ulica_skr>
+        <ms:miejscowosc_lower>piotrków trybunalski</ms:miejscowosc_lower>
+        <ms:lokalnyid>2b46fb00-b0f1-4e0e-a12e-d2183389576e</ms:lokalnyid>
+        <ms:adres>Piotrków Trybunalski 1 Maja 17a</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od></ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.130420865">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>508914.450000 678699.960000</gml:lowerCorner>
+        		<gml:upperCorner>508914.450000 678699.960000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.130420865.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>508914.450000 678699.960000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>130420865</ms:id>
+        <ms:gml_id>PL.ZIPIN.3871.EMUiA_01605ccb-7344-4e1b-abef-e2ecad494a65</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,mazowieckie,wołomiński,Strachówka}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Księżyki</ms:miejscowosc>
+        <ms:ulica></ms:ulica>
+        <ms:numer>5</ms:numer>
+        <ms:teryt>143410</ms:teryt>
+        <ms:simc>0692009</ms:simc>
+        <ms:ulic></ms:ulic>
+        <ms:ulica_pol></ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2017-03-09</ms:data_od>
+        <ms:kod>05-282</ms:kod>
+        <ms:ulica_skr></ms:ulica_skr>
+        <ms:miejscowosc_lower>księżyki</ms:miejscowosc_lower>
+        <ms:lokalnyid>cb63b0a1-baa3-4057-bc69-878d43672dfc</ms:lokalnyid>
+        <ms:adres>Księżyki 5</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od>2011-10-27</ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.149908469">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>389466.910000 573685.190000</gml:lowerCorner>
+        		<gml:upperCorner>389466.910000 573685.190000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.149908469.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>389466.910000 573685.190000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>149908469</ms:id>
+        <ms:gml_id>PL.ZIPIN.3788.EMUiA_d355ad20-ed84-49ee-87a0-e309188c85d7</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,łódzkie,opoczyński,Mniszków}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Jawor</ms:miejscowosc>
+        <ms:ulica></ms:ulica>
+        <ms:numer>19</ms:numer>
+        <ms:teryt>100703</ms:teryt>
+        <ms:simc>0545969</ms:simc>
+        <ms:ulic></ms:ulic>
+        <ms:ulica_pol></ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2023-03-03</ms:data_od>
+        <ms:kod>26-341</ms:kod>
+        <ms:ulica_skr></ms:ulica_skr>
+        <ms:miejscowosc_lower>jawor</ms:miejscowosc_lower>
+        <ms:lokalnyid>bdd55e84-1d7f-4f8a-80f2-f3433bf6e907</ms:lokalnyid>
+        <ms:adres>Jawor 19</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od></ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.149908471">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>388882.360000 565205.950000</gml:lowerCorner>
+        		<gml:upperCorner>388882.360000 565205.950000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.149908471.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>388882.360000 565205.950000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>149908471</ms:id>
+        <ms:gml_id>PL.ZIPIN.3788.EMUiA_c6f4b4b6-b445-4ed7-88a1-f87fb1edc010</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,łódzkie,opoczyński,Mniszków}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Strzelce</ms:miejscowosc>
+        <ms:ulica></ms:ulica>
+        <ms:numer>51A</ms:numer>
+        <ms:teryt>100703</ms:teryt>
+        <ms:simc>0546265</ms:simc>
+        <ms:ulic></ms:ulic>
+        <ms:ulica_pol></ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2023-03-03</ms:data_od>
+        <ms:kod>26-341</ms:kod>
+        <ms:ulica_skr></ms:ulica_skr>
+        <ms:miejscowosc_lower>strzelce</ms:miejscowosc_lower>
+        <ms:lokalnyid>729627fc-b32c-45cb-bacb-2ba1b13c8637</ms:lokalnyid>
+        <ms:adres>Strzelce 51A</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od>2018-02-21</ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.149908472">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>387324.910000 570243.120000</gml:lowerCorner>
+        		<gml:upperCorner>387324.910000 570243.120000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.149908472.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>387324.910000 570243.120000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>149908472</ms:id>
+        <ms:gml_id>PL.ZIPIN.3788.EMUiA_9adb554d-8a41-47fe-a46d-46879e69a6e4</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,łódzkie,opoczyński,Mniszków}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Olimpiów</ms:miejscowosc>
+        <ms:ulica></ms:ulica>
+        <ms:numer>16A</ms:numer>
+        <ms:teryt>100703</ms:teryt>
+        <ms:simc>0546130</ms:simc>
+        <ms:ulic></ms:ulic>
+        <ms:ulica_pol></ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2023-03-03</ms:data_od>
+        <ms:kod>26-341</ms:kod>
+        <ms:ulica_skr></ms:ulica_skr>
+        <ms:miejscowosc_lower>olimpiów</ms:miejscowosc_lower>
+        <ms:lokalnyid>321b2a43-74df-4de9-be02-dddd349711e6</ms:lokalnyid>
+        <ms:adres>Olimpiów 16A</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od></ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+    <wfs:member>
+      <ms:AD.Address gml:id="AD.Address.149908473">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::2180">
+        		<gml:lowerCorner>387554.190000 573745.890000</gml:lowerCorner>
+        		<gml:upperCorner>387554.190000 573745.890000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="AD.Address.149908473.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>387554.190000 573745.890000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>149908473</ms:id>
+        <ms:gml_id>PL.ZIPIN.3788.EMUiA_42cd8a9b-2d4f-4266-b4ef-2ae67681f8d9</ms:gml_id>
+        <ms:jednostkaadmnistracyjna>{Polska,łódzkie,opoczyński,Mniszków}</ms:jednostkaadmnistracyjna>
+        <ms:miejscowosc>Mikułowice</ms:miejscowosc>
+        <ms:ulica></ms:ulica>
+        <ms:numer>25</ms:numer>
+        <ms:teryt>100703</ms:teryt>
+        <ms:simc>0546087</ms:simc>
+        <ms:ulic></ms:ulic>
+        <ms:ulica_pol></ms:ulica_pol>
+        <ms:status></ms:status>
+        <ms:data_od>2023-03-03</ms:data_od>
+        <ms:kod>26-341</ms:kod>
+        <ms:ulica_skr></ms:ulica_skr>
+        <ms:miejscowosc_lower>mikułowice</ms:miejscowosc_lower>
+        <ms:lokalnyid>e6ba2e87-aed6-4ff1-ba29-86193a333403</ms:lokalnyid>
+        <ms:adres>Mikułowice 25</ms:adres>
+        <ms:czescmiejscowosci></ms:czescmiejscowosci>
+        <ms:wazny_od></ms:wazny_od>
+      </ms:AD.Address>
+    </wfs:member>
+</wfs:FeatureCollection>

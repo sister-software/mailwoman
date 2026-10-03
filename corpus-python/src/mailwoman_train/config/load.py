@@ -21,7 +21,7 @@ def merge_into(
     """Merge ``src`` into ``dst``, key by key.
 
     With ``strict=True``, an unknown key raises a ``KeyError`` that gives its dotted path and the
-    config source. Training entrypoints must stay strict, because a skipped key silently leaves a
+    config source. Every training entrypoint must stay strict, because a skipped key silently leaves a
     setting at its default. This happens when the volume holds older code than the YAML expects.
 
     With ``strict=False``, unknown keys are skipped. Only tooling that reads part of a config

@@ -19,7 +19,7 @@ Night-3 re-diagnosis: the regression was **two defects in the heal** rather than
    had always claimed "a word whose pieces already agree is left byte-identical" — the code only
    honored that when the vote happened to agree. Now enforced structurally: the vote runs only on
    words whose pieces disagree in type.
-2. **Grouping bug.** Punctuation continuation pieces joined the preceding word's vote group
+2. **The grouping bug.** Punctuation continuation pieces joined the preceding word's vote group
    (`Ave` + `,` — the comma piece carries no `▁` sentinel), and their `O` mass manufactured a fake
    intra-word disagreement that killed the real span. This is the whole ordinal-street golden class
    (`1st Ave, ND`: the street dies at the comma rather than at the ordinal). Fixed by

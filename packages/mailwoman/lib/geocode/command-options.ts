@@ -23,24 +23,26 @@ export interface GeocodeCommandOptions {
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
-	 * Admin-containment re-rank (#1717 stage 2).
+	 * Admin-containment re-rank.
+	 * On by default.
 	 *
-	 * On by default since 2026-08-18 (promotion evidence in docs/records/evals/) —
 	 * `--no-admin-containment-rerank` opts out.
 	 */
 	adminContainmentRerank: boolean
 	/**
-	 * Capital-status ranking axis (#1880).
+	 * Capital-status ranking axis.
 	 *
-	 * Deliberately TRI-state with no entry in {@link createGeocodeCommandOptions}: unstated
-	 * flows through as absent so the session default (on, with the missing-reference degrade)
-	 * applies — `--capital-tier` demands the reference loudly, `--no-capital-tier` opts out.
+	 * Deliberately tri-state with no entry in {@link createGeocodeCommandOptions}:
+	 * unstated flows through as absent so the session default applies.
+	 * `--capital-tier` requires the reference and reports a clear error when it is missing.
+	 * `--no-capital-tier` opts out.
 	 */
 	capitalTier?: boolean
 	/**
-	 * Own-name variant-alias exemption (#1882).
+	 * Own-name variant-alias exemption.
 	 *
-	 * Tri-state for the same reason; `--no-variant-alias-exemption` opts out.
+	 * Tri-state for the same reason.
+	 * `--no-variant-alias-exemption` opts out.
 	 */
 	variantAliasExemption?: boolean
 	placeCountryThreshold: number

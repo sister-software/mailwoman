@@ -3,19 +3,16 @@
 
 /**
  *   Reverse lookup over the `postcode-locality-*.db` artifacts: the containing postcode of a
- *   resolved locality, keyed by its WOF id — no name matching. Serves the drop-ins' answer
- *   enrichment: a village answer carries the postcode the gazetteer attests for it.
+ *   resolved locality, keyed by its WOF id.
  *
- *   The exactly-one rule is the abstention: a locality contained by several postcodes (any real
- *   city) gets no postcode — emitting one of many would state a precision the evidence doesn't hold.
- *   Tolerate-and-degrade like every optional artifact: a machine without the DBs answers undefined
- *   everywhere and the consumer simply doesn't decorate.
+ *   The exactly-one rule is the abstention: a locality contained by several postcodes (any real city) gets
+ *   no postcode. A machine without the DBs degrades to no enrichment.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PostcodeLocalityDatabase } from "mailwoman/gazetteer-pipeline/postcode/locality/schema"
+import type { PostcodeLocalityDatabase } from "mailwoman/locality-postcode-schema"
 
 /**
  * The per-country artifacts, probed in caller-country order with `intl` as the shared fallback.
@@ -35,9 +32,8 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 		try {
 			const db = new DatabaseClient<PostcodeLocalityDatabase>(path, { readOnly: true })
 
-			// No `is_containing` filter: villages routinely carry 0 (the builder's containment test is
-			// distance-classified, and a village near its postcode centroid still has exactly one code).
-			// The exactly-one distinct rule below is the entire ambiguity guard.
+			// No `is_containing` filter: villages routinely have 0, so the exactly-one
+			// distinct rule below is the entire ambiguity guard.
 			statements.set(
 				suffix,
 				db.prepare(`SELECT DISTINCT postcode FROM postcode_locality WHERE locality_id = ? LIMIT 2`)

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Environment variables the neural classifier reads at load time, and the model overrides its test suites accept.
+ * Environment variables the neural classifier reads at load time and model overrides accepted by its test suites.
  *   Node-only: the loader reaches this module through a `webpackIgnore` dynamic import so the browser chunk graph
  *   never follows it.
  */
@@ -16,23 +16,25 @@ import { z } from "zod"
  */
 export const PublicNeuralEnvSchema = z.object({
 	// ONNX intra-op thread cap.
-	// Deployment-shaped rather than code-shaped: the right value depends on how many
-	// mailwoman processes share the host, which the library cannot know.
+	// Deployment-shaped rather than code-shaped: the right value depends on how many The
+	// library cannot know how many Mailwoman processes share the host.
 	// See DEFAULT_INTRA_OP_THREADS.
 	MAILWOMAN_INTRA_OP_THREADS: blankAsAbsent(z.coerce.number().int().positive().optional()).meta({
 		title: "ONNX intra-op threads",
 		description: "Maximum ONNX Runtime intra-op worker threads for each Mailwoman process.",
 	}),
 	/**
-	 * PIX1 whole-edge parent bias (#46) — the δ applied to the parent window of a
-	 * placetype-pair hit, over the child tag's allowed parents in `containmentFor(system)`.
+	 * PIX1 whole-edge parent bias, the δ applied to the parent window of a placetype-pair
+	 * hit over the child tag's allowed parents in `containmentFor(system)`.
 	 *
-	 * Unset (the default) = child-only, byte-identical to every pre-#46 build.
+	 * Unset (the default) gives child-only output, byte-identical to every earlier build.
 	 *
-	 * A bar-conditional toggle rather than a shipped knob: the mechanism stays off until the
-	 * four bars in `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md`
-	 * clear, and this is how the on leg of B-1's on-vs-off comparison is driven through
-	 * `mailwoman eval gauntlet` without a code edit between the two runs.
+	 * A bar-conditional toggle rather than a shipped knob.
+	 * The mechanism stays off until the four bars in
+	 * `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md` clear.
+	 *
+	 * This drives the on leg of B-1's on-vs-off comparison through `mailwoman eval gauntlet`
+	 * without a code edit between the two runs.
 	 */
 	MAILWOMAN_PAIR_PARENT_DELTA: blankAsAbsent(z.coerce.number().optional()).meta({
 		title: "Pair-parent delta",

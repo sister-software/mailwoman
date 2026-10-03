@@ -78,7 +78,7 @@ failure modes rather than one:
 1. **Mislabel-as-locality** — bare designator-led units (`Flat 2  14 Smith St`,
    `APT 2 …`) → the model labels the whole `Designator N` run as `locality`. The
    original ADD-over-`O`-only guard correctly refused to fire (the tokens weren't
-   `O`). Allowing ADD over `locality`/`dependent_locality` (an explicit designator
+   `O`). ADD over `locality`/`dependent_locality` would accept an explicit designator
    is a high-confidence unit shape) fixes these: **postal unit-tag recall 0/8 →
    2/8, 0 locality regressions** (`Flat 2`, `APT 2` reclaimed; `F 2` skipped —
    bare `F` is deliberately excluded as too greedy).
@@ -111,7 +111,7 @@ failure — _last-line-only_ addresses (`NEW YORK NY 10025`, `CANBERRA ACT 2614`
 present. That's neither unit nor country; it's a coverage gap (the model rarely
 sees street-less addresses). Folds into the same coverage extract as B5.
 
-## Sequencing
+## Order the work
 
 1. ✅ B1 unit-repair — built + measured (+2/8 postal unit-tag, 0 regressions,
    locality-mislabel half). Street-absorption half is coverage (see B3'). Opt-in.

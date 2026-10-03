@@ -5,10 +5,10 @@
 /**
  * @file The dash sweep: comment sentences that join two clauses with a dash, rewritten as two sentences.
  *
- *   Only that use moves: a paired dash around an aside stays, and so does a dash introducing a noun phrase.
+ *   Only that use moves. A paired dash around an aside stays. A dash introducing a noun phrase stays too.
  *
  *   Paragraphs are joined before rewriting and emitted as one line each. `mailwoman/comment-reflow` re-breaks them
- *   afterwards, so line layout is deliberately not this script's business: run `yarn fix:oxlint` after a sweep.
+ *   afterwards, so line layout is deliberately not this script's business: run `yarn fix:oxc` after a sweep.
  */
 
 /// <reference types="node" />
@@ -37,8 +37,11 @@ const IMPERATIVES = /^(?:see|read|revisit|compare|note|use|prefer|check|run|trea
 /**
  * A clause that cannot open a sentence, but reads correctly once the dash is a comma.
  *
- * `not` is deliberately absent: the `Negation` rule refuses `, not` at error level,
- * and `CommentDashJoint` leaves a dash in front of a noun phrase alone, so the dash stays.
+ * `not` is deliberately absent.
+ * The `Negation` rule rejects that comma pattern at error level.
+ *
+ * `CommentDashJoint` leaves a dash before a noun phrase unchanged.
+ * The dash therefore stays.
  */
 const COMMA_OPENERS =
 	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|never|with|for|leaving|making|giving|taking)\b/i
@@ -46,14 +49,16 @@ const COMMA_OPENERS =
 /**
  * Characters of left half a joint needs before its dash becomes a full stop.
  *
- * Below this the left half is a label rather than a clause, and a full stop behind it stands a fragment up.
+ * Below this the left half is a label rather than a clause.
+ * A full stop behind it stands a fragment up.
  */
 const LEFT_HALF_FLOOR = 24
 
 /**
  * Words a comma-opening right half needs before the comma is worth taking.
  *
- * Two words behind `which` or `and` is an aside, and the dash is the right mark for one.
+ * Two words behind `which` or `and` form an aside.
+ * The dash is the right mark for one.
  */
 const COMMA_CLAUSE_FLOOR = 3
 
@@ -63,12 +68,12 @@ const COMMA_CLAUSE_FLOOR = 3
 const SENTENCE_CLAUSE_FLOOR = 5
 
 /**
- * Lines a starred block needs before it holds prose: the opener, one line of it, and the closer.
+ * Lines a starred block needs before it holds prose: the opener, one line of it and the closer.
  */
 const STARRED_BLOCK_LINES = 3
 
 /**
- * A line that carries its own layout, in `mailwoman/comment-reflow`'s own terms.
+ * A line that defines its own layout, in `mailwoman/comment-reflow`'s own terms.
  *
  * The rule's test is copied here rather than approximated.
  * A line it treats as structural is one it will never re-wrap, so a paragraph this script joins
@@ -98,7 +103,7 @@ const LEAD_TAG = /^(Returns|Throws)\b\s+/
 const IDENTIFIER = /[._/]|[a-z][A-Z]/
 
 /**
- * Capitalise a clause that is becoming a sentence, unless its first word names something.
+ * Capitalize a clause that will become a sentence, unless its first word names something.
  */
 function openClause(clause: string): string {
 	const [first = ""] = clause.split(/\s+/)
@@ -106,7 +111,7 @@ function openClause(clause: string): string {
 	if (!/^[a-z]/.test(first)) return clause
 
 	// `foo`, foo.bar, fooBar and foo_bar are names.
-	// Capitalising one would name something that does not exist.
+	// Capitalized text would refer to a name that does not exist.
 	if (/^[`[(]/.test(first) || IDENTIFIER.test(first)) return clause
 
 	return first.charAt(0).toUpperCase() + clause.slice(1)
@@ -147,17 +152,18 @@ export function sweepSentence(sentence: string): string {
 	const words = after.replace(/[.!?]+$/, "").split(/\s+/)
 
 	// A coordination, a relative clause or an antithesis takes the comma the
-	// sentence wanted, and keeps its own case.
-	// None of them needs a verb of its own, which is why this runs ahead of the clause tests below.
+	// sentence wanted and keeps its own case.
+	// None of them needs a verb of its own.
+	// That is why this runs ahead of the clause tests below.
 	if (COMMA_OPENERS.test(after)) return words.length < COMMA_CLAUSE_FLOOR ? sentence : `${before}, ${after}`
 
 	if (words.length < SENTENCE_CLAUSE_FLOOR) return sentence
 
 	if (!FINITE.test(after) && !IMPERATIVES.test(after)) return sentence
 
-	// A right half ending on its own verb is a gloss rather than a statement:
-	// "the form an override uses" names the thing before the dash instead of saying
-	// something new about it, and a full stop would stand a fragment up.
+	// A right half ending on its own verb is a gloss rather than a statement: "the form an
+	// override uses" names the thing before the dash instead of saying something new about it.
+	// A full stop would stand a fragment up.
 	if (FINITE.test(words.at(-1)!)) return sentence
 
 	if (!OPENERS.test(after) && !IMPERATIVES.test(after) && !/^[`A-Z]/.test(after)) return sentence
@@ -168,7 +174,9 @@ export function sweepSentence(sentence: string): string {
 }
 
 /**
- * Capitalise a sentence that opens in lower case, which `mailwoman/comment-reflow` needs to see a sentence.
+ * Capitalize a sentence that opens in lower case.
+ *
+ * `mailwoman/comment-reflow` needs a sentence to recognize it.
  */
 function openSentences(text: string): string {
 	return text.replaceAll(/([.!?])(\s+)([a-z][a-z'’-]*)(?=\s|[.,;:)]|$)/g, (whole, stop, gap, word, offset: number) => {
@@ -192,7 +200,7 @@ function sweepParagraph(text: string): string {
  *
  * A list item owns the indented lines beneath it, so its continuation is folded
  * into the item rather than read as a paragraph of its own.
- * Everything structural passes through untouched.
+ * The function passes every structural block through unchanged.
  */
 function sweepBody(lines: readonly string[]): string[] {
 	const output: string[] = []
@@ -255,7 +263,7 @@ function sweepBody(lines: readonly string[]): string[] {
 }
 
 /**
- * Lift a trailing `Returns …` or `Throws …` sentence into the tag that already carries that meaning.
+ * Move a trailing `Returns …` or `Throws …` sentence into the tag that already expresses that meaning.
  *
  * A block that already has the tag keeps its prose, since lifting it would say the same thing twice.
  * A block whose whole description is that one sentence keeps it too,
@@ -285,8 +293,9 @@ function liftTagSentence(body: readonly string[], tags: readonly string[]) {
 /**
  * The character ranges a rewrite must not touch: every string, template and regular expression in the file.
  *
- * A generator that emits `// TODO(…)` inside a template literal has comment-shaped text
- * that is not a comment, and rewriting it changes what the program prints.
+ * A generator that emits `// TODO(…)` inside a template literal has comment-shaped
+ * text that is not a comment.
+ * A rewrite changes what the program prints.
  * Only a parse tells the two apart.
  */
 function literalSpans(source: string, fileName: string): Array<[number, number]> {
@@ -353,8 +362,8 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 		return [lines[0]!, ...marked, `${indent} */`].join("\n")
 	})
 
-	// The second pass reads the first pass's output, whose rewrites shift offsets,
-	// so the spans are taken again from the text this pass actually sees.
+	// The second pass reads the first pass's output.
+	// Its rewrites shift offsets, so the spans are taken again from the text this pass actually sees.
 	const shifted = literalSpans(blocks, fileName)
 
 	return blocks.replaceAll(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {

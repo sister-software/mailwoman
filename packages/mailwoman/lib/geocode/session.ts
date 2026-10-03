@@ -49,23 +49,19 @@ import {
 } from "#resolver-backend"
 
 /**
- * The parsed geocode command options that a session reads.
- *
- * The interface is structural so that this module does not import the CLI specification.
+ * The parsed geocode command options that a session reads, structural
+ * so this module does not import the CLI specification.
  */
 export interface GeocodeSessionOptions {
 	/**
-	 * Whether to feed the gazetteer FST prior to the parse.
-	 * Only `false` disables it.
+	 * Whether to feed the gazetteer FST prior to the parse, where only `false` disables it.
 	 */
 	gazetteerPrior?: boolean
 	locale: string
 
 	/**
-	 * An npm `--prefix` cache root to load weights from instead of the installed package.
-	 *
-	 * Session creation fails when this root lacks the locale's package,
-	 * because it never falls back to installed packages.
+	 * An npm `--prefix` cache root to load weights from instead of the installed package. session
+	 * creation fails when this root lacks the locale's package because it never falls back.
 	 */
 	weightsCacheRoot?: string
 	bias?: string
@@ -83,33 +79,28 @@ export interface GeocodeSessionOptions {
 	forkEntity: boolean
 
 	/**
-	 * Whether to enable the venue tier for `poi.db` entity upgrades.
-	 * Only `true` enables it.
+	 * Whether to enable the venue tier for `poi.db` entity upgrades, where only `true` enables it.
 	 */
 	poiVenueTier?: boolean
 
 	/**
-	 * Whether to promote a national capital among same-name candidates for a bare place name.
-	 * Only `false` disables it.
-	 *
-	 * When the option is unset, a missing capitals reference disables promotion.
+	 * Whether to promote a national capital among same-name candidates for a bare place name,
+	 * where only `false` disables it, an unset option disables promotion on a missing capitals reference.
 	 * An explicit `true` throws instead.
 	 */
 	capitalTier?: boolean
 
 	/**
-	 * Whether own-name `variant` aliases skip the cross-country primary-name penalty.
-	 * Only `false` disables it.
-	 *
-	 * It affects only the candidate backend and needs the `name_role` column.
+	 * Whether own-name `variant` aliases skip the cross-country primary-name penalty,
+	 * affecting only the candidate backend and requiring the `name_role` column.
 	 */
 	variantAliasExemption?: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 
 	/**
-	 * Whether a parsed region re-ranks locality candidates by admin containment.
-	 * Only `false` disables it.
+	 * Whether a parsed region re-ranks locality candidates by admin containment,
+	 * where only `false` disables it.
 	 */
 	adminContainmentRerank?: boolean
 
@@ -122,15 +113,13 @@ export interface GeocodeSessionOptions {
 
 	/**
 	 * Whether to record a {@link GeocodeTrace} per input.
-	 * Tracing costs one extra decode per input.
+	 * This setting costs one extra decode per input.
 	 */
 	trace?: boolean
 
 	/**
-	 * Whether a lookup that resolves no candidate re-probes the value in the other admin bands.
-	 *
-	 * The probe leaves the result unchanged and costs one backend call per band per miss.
-	 * It requires {@link trace}.
+	 * Whether a lookup that resolves no candidate re-probes the value in the other admin bands,
+	 * leaving the result unchanged and requiring {@link trace}.
 	 */
 	diagnoseUnreachable?: boolean
 
@@ -141,9 +130,8 @@ export interface GeocodeSessionOptions {
 }
 
 /**
- * The per-stage evidence behind one geocode, rendered by the `--debug` view.
- *
- * A session builds it only when {@link GeocodeSessionOptions.trace} is set.
+ * The per-stage evidence behind one geocode, rendered by the `--debug` view
+ * and built only when {@link GeocodeSessionOptions.trace} is set.
  */
 export interface GeocodeTrace {
 	/**
@@ -157,8 +145,7 @@ export interface GeocodeTrace {
 	queryShape: QueryShape
 
 	/**
-	 * The kind verdict behind {@link inputMode}.
-	 * It is absent when the caller set the input mode.
+	 * The kind verdict behind {@link inputMode}, absent when the caller set the input mode.
 	 */
 	kind?: QueryKindResult
 	inputMode: InputMode
@@ -177,31 +164,27 @@ export interface GeocodeTrace {
 /**
  * One address's geocode result and the {@link AddressTree} it was resolved from.
  *
- * The tree's nodes carry character offsets for span rendering.
+ * The tree's nodes store character offsets for span rendering.
  */
 export interface GeocodeRun {
 	result: GeocodeResult
 	tree: AddressTree
 
 	/**
-	 * Wall-clock milliseconds for `parse`, `resolve` and `total`, plus `trace` when the session traces.
-	 *
-	 * The `trace` phase is recorded even when tracing threw, so the phases sum to `total`.
+	 * Wall-clock milliseconds for `parse`, `resolve` and `total`, plus `trace` when the session traces,
+	 * with the `trace` phase recorded even when tracing threw so the phases sum to `total`.
 	 */
 	timing: PipelineTiming
 
 	/**
-	 * The debug evidence.
-	 *
-	 * It is present only when the session traces and `traceParse` succeeded.
+	 * The debug evidence, present only when the session traces and `traceParse` succeeded.
 	 */
 	trace?: GeocodeTrace
 }
 
 /**
- * A geocoder with its models and databases loaded for one set of options.
- *
- * Dispose it to close its database and layer handles.
+ * A geocoder with its models and databases loaded for one set of options,
+ * disposable to close its database and layer handles.
  */
 export interface GeocodeSession extends Disposable {
 	/**
@@ -210,9 +193,8 @@ export interface GeocodeSession extends Disposable {
 	initTiming: PipelineTiming
 
 	/**
-	 * The artifact paths that this session opened.
-	 *
-	 * Missing artifacts are skipped without an error, so these paths can differ from the options.
+	 * The artifact paths that this session opened, where missing artifacts are skipped
+	 * without an error so these paths can differ from the options.
 	 */
 	artifacts: {
 		fstPath?: PathBuilderLike
@@ -259,17 +241,15 @@ export interface ForkEntityProbe {
 	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 
 	/**
-	 * The `poi.db` handle behind `deps.poiLookup`.
-	 *
-	 * It is kept separately because `POIExecutorLookup` declares no disposal.
+	 * The `poi.db` handle behind `deps.poiLookup`, kept separately because
+	 * `POIExecutorLookup` declares no disposal.
 	 */
 	handle?: Disposable
 }
 
 /**
- * Opens the authority-designation route from the sealed flood layer in the data root.
- *
- * It returns `undefined` when the layer is missing or fails to open.
+ * Opens the authority-designation route from the sealed flood layer in the data root,
+ * returning `undefined` when the layer is missing or fails to open.
  */
 export async function loadAuthorityDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
@@ -288,9 +268,8 @@ export async function loadAuthorityDesignationRoute(
 }
 
 /**
- * Opens the soil-capability route from the sealed soil layer in the data root.
- *
- * It returns `undefined` when the layer is missing or fails to open.
+ * Opens the soil-capability route from the sealed soil layer in the data root,
+ * returning `undefined` when the layer is missing or fails to open.
  */
 export async function loadSoilCapabilityRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
@@ -309,9 +288,8 @@ export async function loadSoilCapabilityRoute(
 }
 
 /**
- * Opens the coastal-erosion route from the sealed England coastal layer in the data root.
- *
- * It returns `undefined` when the layer is missing or fails to open.
+ * Opens the coastal-erosion route from the sealed England coastal layer in the data root,
+ * returning `undefined` when the layer is missing or fails to open.
  */
 export async function loadCoastalErosionRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
@@ -330,9 +308,8 @@ export async function loadCoastalErosionRoute(
 }
 
 /**
- * Opens the zoning route from the sealed Irish zoning layer in the data root.
- *
- * It returns `undefined` when the layer is missing or fails to open.
+ * Opens the zoning route from the sealed Irish zoning layer in the data root,
+ * returning `undefined` when the layer is missing or fails to open.
  */
 export async function loadZoningDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
@@ -351,11 +328,9 @@ export async function loadZoningDesignationRoute(
 }
 
 /**
- * Loads the fork-to-entity probe's POI lookup and street-generic test.
- *
- * It loads neither when `poi.db` is absent or the probe is disabled.
- * The two load together because the probe needs the street-generic test to keep
- * street queries from matching venues.
+ * Loads the fork-to-entity probe's POI lookup and street-generic test, neither
+ * when `poi.db` is absent or the probe is disabled, because the probe needs the
+ * street-generic test to keep street queries from matching venues.
  */
 export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
@@ -382,8 +357,9 @@ export async function loadForkEntityDeps(
 }
 
 /**
- * Loads the gazetteer, neural model and optional layers, and returns a
- * {@linkcode GeocodeSession} that reuses them across inputs.
+ * Loads the gazetteer, neural model and optional layers.
+ *
+ * Returns a {@linkcode GeocodeSession} that reuses them across inputs.
  */
 export async function createGeocodeSession(options: GeocodeSessionOptions): Promise<GeocodeSession> {
 	const initStartedAt = performance.now()
@@ -516,7 +492,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let nationalDatabases: ((country: string) => RegionDatabases) | undefined
 
 	try {
-		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))).for
 	} catch {
 		nationalDatabases = undefined
@@ -534,7 +510,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let osmProvider: RegionDatabaseProvider | undefined
 
 	try {
-		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
+		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/region-database-provider")
 		osmProvider = await OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))
 	} catch {
 		osmProvider = undefined

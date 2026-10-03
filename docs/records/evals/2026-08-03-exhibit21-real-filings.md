@@ -44,13 +44,13 @@ else; neither was written against the other's output.
 
 The one remaining zero is correct. AlTi Global's exhibit separates entries with nothing but a
 double space, so no name/jurisdiction boundary exists to be found without inventing one.
-Abstaining is the required answer there, and the regression suite asserts it.
+The parser must abstain there, and the regression suite asserts that behavior.
 
 ## Six ways the fixtures were not representative
 
 **The SGML envelope.** EDGAR's archive serves an exhibit inside its submission wrapper:
 `<TYPE>EX-21.1`, `<SEQUENCE>3`, `<FILENAME>…`, then the real `<TEXT>` payload, whose HTML
-`<head>` carries `<title>Document</title>`. Stripping tags turns each of those into a bare
+`<head>` carries `<title>Document</title>`. The tag-stripping step turns each of those into a bare
 line. Bandwidth Inc.'s exhibit reported 18 subsidiaries, of which four were `EX-21.1`, `3`,
 `q42025exh211listofsubsidia.htm` and `Document`, and the other twelve had the bullet
 character `•` as the name and the actual company name as the jurisdiction. Every one of the
@@ -76,11 +76,11 @@ were emitted as subsidiaries.
 
 **A real third column.** AT&T adds "Conducts Business Under", ATN International adds "Other
 name(s) under which entity does business", EchoStar adds both "% of Ownership" and "Name
-Doing Business As". A three-value row abstained. It now reads the columns the document's own
+The parser now reads the columns following "Doing Business As". A three-value row abstained. It now reads the columns the document's own
 header row names — which is not a guess about which of N columns means what, because the
 document says.
 
-**Footnote tables.** Reading every table means reading the footnote tables that follow the
+**Footnote tables.** The parser must inspect footnote tables that follow the
 list. WidePoint's is `["(1)", "In January 2019, WidePoint Solutions Corp. was merged into…"]`;
 EchoStar has four. A row whose first value is a bare footnote marker is counted and dropped.
 
@@ -98,10 +98,10 @@ vocabulary: a jurisdiction column repeats (Charter, 9 distinct values over 135 r
 5). The test is now a table-level one requiring both a designation majority and high
 distinctness.
 
-Abstaining when a labeled name column is blank looks safe until you meet an indented
+The parser may seem safe when it abstains on a blank labeled name column, but indented
 corporate tree. Telephone and Data Systems indents each subsidiary one column to the right of
-its parent, and 132 of its 183 subsidiaries sit on such rows. Taking the first non-blank
-column between the labeled name column and the labeled jurisdiction column recovers them.
+its parent, and 132 of its 183 subsidiaries sit on such rows. The parser recovers them from the first non-blank
+column between the labeled name column and the labeled jurisdiction column.
 The nesting depth is discarded, which costs nothing here — an Exhibit 21 row becomes a
 registrant→subsidiary edge either way.
 
@@ -152,12 +152,12 @@ is not part of this change.
 
 A related defect was measured and is worth stating separately: `company_tickers.json` carries
 one row per _ticker_, so a registrant with several share classes appears several times under
-one CIK. Resolving "Liberty Broadband Corporation" returned the same CIK four times, each at
+one CIK. The lookup for "Liberty Broadband Corporation" returned the same CIK four times, each at
 1.0, and the tie rule — which exists to stop a caller narrowing an actual collision between
 two different companies — reported a four-way tie. The same phantom tie appeared for Comcast,
 AT&T, T-Mobile and Telephone and Data Systems.
 
-## Reproducing
+## Reproduce the filing test
 
 The vendored corpus needs no network:
 
@@ -171,7 +171,7 @@ Re-deriving `expected.json` uses the repository's TypeScript toolchain:
 node packages/filer/lib/tools/reference-oracle.run.ts packages/filer/test-fixtures/edgar/*.htm
 ```
 
-Refetching a document needs `SEC_EDGAR_USER_AGENT` set to a descriptive
+To refetch a document, set `SEC_EDGAR_USER_AGENT` to a descriptive
 `Company Name AdminContact@domain.com` string; every source URL is in
 `filer/test-fixtures/edgar/manifest.json`.
 

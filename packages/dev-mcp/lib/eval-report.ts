@@ -4,13 +4,13 @@
 /**
  * Read a promotion-eval run's own artifacts.
  *
- * Unlike the gauntlet, the eval writes structured output: `verdict.json` carries every floor with its
+ * Unlike the gauntlet, the eval writes structured output: `verdict.json` records every floor with its
  * reading and `provenance.txt` records each graded artifact's md5 and dynamic-quant fingerprint, so this
- * module parses no prose for a number — the log is read only for the lore-guard refusal and the
- * pre-filled ledger command, which exist nowhere else.
+ * module parses no prose for a number. It reads the log only for the lore-guard refusal and the pre-filled ledger
+ * command. No other module handles these log entries.
  *
- * This module adds no metric and moves no floor: the eval is the release authority, and a floor relaxed
- * here would be the silent eval drift the eval discipline exists to catch.
+ * This module adds no metric and moves no floor. The eval remains the release authority. A relaxed floor here would
+ * cause the silent eval drift that the eval discipline catches.
  */
 
 import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -26,8 +26,10 @@ export interface FloorReading {
 	/**
 	 * The measured value, or `null` when the battery produced none.
 	 *
-	 * `null` is not zero and not a failure to clear the bar: it is a metric that was never measured,
-	 * and the eval marks it failing precisely so an unmeasured floor cannot pass by default.
+	 * `null` means the metric was never measured.
+	 * It does not mean zero or a failure to clear the bar.
+	 *
+	 * The eval marks it failing so an unmeasured floor cannot pass by default.
 	 * Reported separately from `pass` so a reader can tell "missed the bar" from "never ran".
 	 */
 	observed: number | null
@@ -97,8 +99,8 @@ const LORE_GUARD_MARKER = "recompile"
 /**
  * Why the ledger command is reported rather than run.
  *
- * It is carried on every check result so the boundary travels with the command, since a
- * reader who sees a filled-in command and no note has every reason to assume it already ran.
+ * It appears on every check result so the boundary travels with the command, since a reader
+ * who sees a filled-in command and no note has every reason to assume it already ran.
  */
 export const LEDGER_NOTE =
 	"This command is REPORTED, never run. Appending to evals/scores-by-version.json is a repo write and a claim about " +
@@ -217,7 +219,7 @@ export function summarizeEvalReport(report: EvalReport): string {
 		: ` All ${report.floors.length} floors met.`
 
 	return (
-		`Check ${report.label ?? "(unlabelled)"} graded the ${report.graded_artifact ?? "UNRECORDED"} artifact: ` +
+		`Check ${report.label ?? "(unlabeled)"} graded the ${report.graded_artifact ?? "UNRECORDED"} artifact: ` +
 		`${report.verdict}.${detail}`
 	)
 }
@@ -244,15 +246,17 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
 }
 
 /**
- * Check that a `--weights-cache` root has the layout the eval expects,
- * and say what is missing when it does not.
+ * Checks that a `--weights-cache` root has the layout the eval expects.
+ * It reports missing items.
  *
- * The eval's own failure here is deliberate and stays in place: `promotion-eval.ts` names the
- * package directory rather than calling `resolveWeights({cacheRoot})` precisely so a mis-staged
- * candidate dies on an enoent instead of falling through to the installed workspace package,
- * which in this repo always resolves, and would grade the shipped model under the candidate's label.
- * This check runs before the spawn only so the reader learns the expected shape from a sentence
- * rather than from a stack trace, and never substitutes for that guard.
+ * The eval's own failure here is deliberate and stays in place: `promotion-eval.ts` names
+ * the package directory rather than calling `resolveWeights({cacheRoot})`.
+ * A mis-staged candidate then fails with ENOENT instead of resolving to the installed workspace package.
+ *
+ * That package always resolves in this repository and would grade the shipped
+ * model under the candidate's label.
+ * This check runs before spawning the process so the reader sees the expected layout in an error message.
+ * It supplements the downstream guard.
  *
  * The layout comes from `weightsCachePackageDir`, the resolver's own function,
  * rather than a re-typed `node_modules/@mailwoman/…` literal.
@@ -277,12 +281,13 @@ export async function missingWeightsCacheArtifacts(
 		}
 	}
 
-	// Without a card there is no reference to check the rest against, and the caller already has a fatal answer.
+	// Without a card, the caller already has a fatal answer and no reference for checking the remaining fields.
 	if (missingRequired.length) return { kind: "wrong-shape", paths: missingRequired }
 
 	// A cache that has the three required files but is missing what its own card
-	// declares fails with no signal of its own: the channel resolves off and the run
-	// scores several cases lower, which reads like a model regression.
+	// declares fails without its own signal.
+	// The channel resolves off and the run scores several cases lower.
+	// The lower score looks like a model regression.
 	const undeclared: string[] = []
 
 	for (const artifact of await declaredArtifacts(packageDir)) {

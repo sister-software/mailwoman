@@ -50,7 +50,7 @@ export interface BaseFetchOptions {
 	 * A test that exercises the failure path pays this delay once per retry in real time.
 	 * Measured at 20.1 s for the two failing-transfer cases in `geonames-postal.test.ts`,
 	 * which is the whole cost of that file.
-	 * The retry count is the behaviour under test there.
+	 * The retry count is the behavior under test there.
 	 *
 	 * The pause between attempts is not, so it is a caller's to shorten.
 	 */
@@ -84,15 +84,15 @@ export interface SourceManifest {
  * A status worth retrying: rate limiting or a server-side failure.
  */
 /**
- * An http failure that carries its status, so callers branch on `error.status`
+ * An HTTP failure that includes its status, so callers branch on `error.status`
  * rather than on message prose.
  *
  * The prose route shipped a real flake: a caller classified "not published upstream"
  * with `message.includes("404")`, and the message contains the URL.
  * An ephemeral test-server port such as `:40453` satisfies it while the actual status is 500.
  *
- * Roughly 1–2% of ephemeral ports contain the substring, which is exactly the kind
- * of sometimes-failure that burns a CI run and vanishes locally.
+ * Roughly 1–2% of ephemeral ports contain the substring.
+ * That collision can fail a CI run and vanish locally.
  */
 export class HTTPStatusError extends Error {
 	readonly status: number
@@ -162,9 +162,9 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 
 		try {
 			// Raw `fetch`, deliberately: this is the shared file downloader and the body is piped to disk below.
-			// `APIClient` is the repo default for API requests — small bodies,
-			// repeated calls — and buffers a non-stream response in memory, which is the
-			// one thing a multi-gigabyte transfer must not do.
+			// `APIClient` is the repo default for API requests with small bodies and repeated calls.
+			// It buffers non-stream responses in memory.
+			// A multi-gigabyte transfer cannot use that path.
 			res = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) })
 		} catch (error) {
 			// AbortSignal timeouts and network-level failures are retryable.
@@ -208,9 +208,9 @@ export interface StreamDownloadOptions {
  *
  * Follows redirects (the Census and OpenAddresses endpoints both 302 to their real hosts).
  *
- * Kept separate from {@link downloadToFile} on purpose: this one streams a multi-GB body to
- * disk (the buffered helper reads via `arrayBuffer()`) and returns the http status instead
- * of throwing, which the per-file result collectors and two-URL fallback ladders consume.
+ * Kept separate from {@link downloadToFile} on purpose: this one streams a multi-GB body to disk
+ * (the buffered helper reads via `arrayBuffer()`) and returns the HTTP status instead of throwing.
+ * Per-file result collectors and two-URL fallback ladders consume that result.
  */
 export async function streamDownload(url: string, dest: PathBuilderLike, opts: StreamDownloadOptions): Promise<number> {
 	for (let attempt = 0; attempt <= opts.retries; attempt++) {

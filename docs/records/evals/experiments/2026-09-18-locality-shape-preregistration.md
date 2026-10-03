@@ -85,7 +85,7 @@ Everything below is a reading of the coded-plus-postcode frame — `«locality»
 which is the surface this arm's corpus teaches and the one a user types.
 
 The twelve-address table above cannot separate name from region: every failure in it is a name in a
-low-scoring state and every pass is a name in a high-scoring one. Holding the name and the postcode
+low-scoring state and every pass is a name in a high-scoring one. The experiment keeps the name and postcode
 fixed and swapping only the region code shows the code modulating the label inside the frame, on all
 six names:
 
@@ -269,7 +269,7 @@ carrying enough rows to read.
 The complete fixed and regressed lists, with each row's expected locality and what each arm answered,
 are in `paired-us-shape-stratified-v570-vs-v590.json`.
 
-### Reproducing it
+### Reproduce the result
 
 ```sh
 node packages/mailwoman/lib/dev-tools/us/locality-region-postcode-arms.run.ts \

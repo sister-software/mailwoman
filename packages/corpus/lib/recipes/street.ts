@@ -8,27 +8,36 @@
 
 import { makeLcg } from "@mailwoman/core/utils"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceID } from "#adapters/source-id"
 import { alignAndWrite, readTuples, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { SurfaceOrigin } from "#types"
 
 /**
- * The street name is drawn from a pool and joined to a tuple's locality, region and postcode.
+ * The recipe draws a street name from a pool and joins it to a tuple's locality, region and postcode.
  *
- * No register asserts that this street runs through this locality, which is what makes
- * the row invented rather than a rendering of a published record.
+ * No register asserts that the street runs through that locality.
+ * The row is invented rather than a rendering of a published record.
  */
+/**
+ * Resolved once, because `source_id` includes the source as its prefix and a pair
+ * that disagreed would name a source no row of this output declares.
+ */
+const STREET_SOURCE = defaultRecipeSource("synth-street")
+
 const STREET_PROVENANCE = {
 	register: null,
 	surface: SurfaceOrigin.Invented,
+	// An invented row has no underlying record to name.
+	baseSourceID: null,
 }
 
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * The file header describes the parse behavior this recipe exercises.
+ * `description` below shows the generated surface form.
  */
 export const streetRecipe: CorpusRecipe = {
 	name: "street",
@@ -70,8 +79,8 @@ export const streetRecipe: CorpusRecipe = {
 						components: synth.components,
 						country: tuple.country,
 						locale: synth.locale,
-						source: "synth-street",
-						source_id: stableSourceID("synth-street", {
+						source: STREET_SOURCE,
+						source_id: stableSourceID(STREET_SOURCE, {
 							locality: `${tuple.locality}#${v}`,
 							region: tuple.region,
 							postcode: tuple.postcode,

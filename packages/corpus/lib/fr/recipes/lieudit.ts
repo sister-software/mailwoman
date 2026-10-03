@@ -2,29 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `fr-lieudit` recipe — FR lieu-dit (hamlet/place) `dependent_locality` coverage
- *   (`.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22). Streams every BAN
- *   `adresses-<dept>.csv` dump under `--ban-dir` through `@mailwoman/ban/sdk`'s
- *   `extractBANAddrPoints`, which now surfaces a cleaned `lieuDit` per record (junk/dup filtering
- *   lives in `ban/sdk/extract.ts`'s `cleanLieuDit`, not duplicated here). Only rows carrying a clean
- *   lieu-dit survive into the pool. the existing `ban`/`synth-fr` sources and their emitted rows are
- *   untouched. This recipe reads the same raw CSVs but emits under its own source name.
+ * `fr-lieudit` recipe: FR lieu-dit (hamlet/place) `dependent_locality` coverage.
  *
- *   Mapping: lieu-dit → `dependent_locality`, commune → `locality`. Rendered to match the formatter's
- *   FR `place`-slot convention (`fix(formatter): render dependent_locality for neither-slot templates`,
- *   b1edc1b7, verified via a `formatAddress` smoke call): house+street on line 1, the lieu-dit alone on
- *   line 2, postcode+commune on line 3 — French postal convention (La Poste's line 5).
+ * Streams every BAN `adresses-<dept>.csv` dump under `--ban-dir` through `@mailwoman/ban/sdk`'s
+ * `extractBANAddrPoints`, which surfaces a cleaned `lieuDit` per record. Only rows carrying a clean
+ * lieu-dit survive into the pool.
  *
- *   ~1.69M clean rows survive the filter nationally (26M total BAN rows, 1.81M raw `nom_ld` fills, ~6.6%
- *   junk/dup). The pool is read in full (small string tuples only — no coordinates needed) and
- *   Fisher-Yates shuffled with the seeded prng before slicing to `--count`, rather than sampled with
- *   replacement — at a `--count` a sizeable fraction of the pool, with-replacement draws would produce a
- *   large duplicate rate (birthday-paradox math: ~190k expected collisions at count=800k over a 1.69M
- *   pool).
+ * The recipe maps lieu-dit to `dependent_locality` and commune to `locality`. It renders to match the
+ * formatter's FR `place`-slot convention. House and street go on line 1.
+ * The lieu-dit appears by itself on line 2. Postcode and commune go on line 3.
+ * This follows French postal convention (La Poste's line 5).
+ *
+ * The pool is read in full and Fisher-Yates shuffled with the seeded prng before slicing to
+ * `--count`. With-replacement draws at a large `--count` would produce a large duplicate rate.
+ *
+ * A row's jurisdiction comes from its INSEE commune code, as it does in the `ban` adapter reading
+ * the same files. The BAN fetcher downloads departments 971, 972, 973, 974 and 976 beside the
+ * metropolitan ones, so this recipe emits Guadeloupe, Martinique, French Guiana, Réunion and
+ * Mayotte rows, and labeling them `FR` would mislabel their country and their locale.
  */
 
-import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
-import { formatAddress } from "@mailwoman/codex/address-format"
+import { extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
+import { formatAddress } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -34,9 +33,12 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { stableSourceID } from "#adapters/utils"
-import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
+import { stableSourceID } from "#adapters/source-id"
+import { composeHouseNumber } from "#adapters/street-line"
+import { countryOfInseeCode } from "#fr/insee-country"
+import { decomposeFrStreet } from "#fr/street-decompose"
 import type { CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -56,16 +58,23 @@ interface LieuDitTuple {
 	postcode: string | null
 	locality: string
 	dependentLocality: string
+	/**
+	 * The row's INSEE commune code, which decides its jurisdiction.
+	 *
+	 * BAN's overseas department files carry the same columns as the metropolitan ones,
+	 * so a recipe that reads the fetched BAN directory receives Guadeloupe, Martinique,
+	 * French Guiana, Réunion and Mayotte rows beside the metropolitan ones.
+	 */
+	codeInsee: string | null
 }
 
 /**
  * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, one path per département.
  *
- * Excludes the `merged`/`france` aggregates (they duplicate the per-département rows)
- * and, when both a `.csv` and a `.csv.gz` exist for the same dept
- * (observed on disk for 13/2A/48/69/75 — a stale re-fetch artifact), prefers the
- * uncompressed `.csv` — mirrors `packages/ban/lib/scripts/build/address-point-database.ts`'s
- * `departementFiles`, which hit and fixed this exact double-count trap first.
+ * Excludes the `merged` and `france` aggregates.
+ * They duplicate the per-département rows.
+ *
+ * When both a `.csv` and a `.csv.gz` exist for the same department, the uncompressed `.csv` wins.
  */
 async function departementFiles(banDir: PathBuilderLike): Promise<PathBuilder[]> {
 	const directory = PathBuilder.from(banDir)
@@ -121,6 +130,7 @@ async function readLieuDitPool(banDir: PathBuilderLike): Promise<LieuDitTuple[]>
 				postcode: rec.postcode,
 				locality: rec.city,
 				dependentLocality: rec.lieuDit,
+				codeInsee: rec.codeInsee,
 			})
 
 			deptCount++
@@ -137,17 +147,7 @@ async function readLieuDitPool(banDir: PathBuilderLike): Promise<LieuDitTuple[]>
 }
 
 /**
- * `house_number` = `numero` + folded `rep` ("10 bis"), matching the `ban` adapter's own composition.
- */
-function composeHouseNumber(numero: string, rep: string | null): string {
-	return rep ? `${numero} ${rep}` : numero
-}
-
-/**
  * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
  */
 export const frLieuditRecipe: CorpusRecipe = {
 	name: "fr-lieudit",
@@ -165,7 +165,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 	],
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-fr-lieudit"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-fr-lieudit")
 		const count = opts.count ?? 800_000
 		const banDir = opts.banDir ?? dataRootPath("corpus", "sources", "ban")
 		const countryFraction = opts.countryFraction ?? 0
@@ -180,9 +180,8 @@ export const frLieuditRecipe: CorpusRecipe = {
 			throw new Error(`No clean lieu-dit rows found under ${banDir} — see ban/sdk/extract.ts's cleanLieuDit filter.`)
 		}
 
-		// `random` is threaded in rather than constructed here: the recipe shares one
-		// mulberry32 stream between this shuffle and the country-fraction draw below,
-		// so a fresh generator would move every later draw and the committed rows with it.
+		// The recipe shares one mulberry32 stream between this shuffle and the country-fraction
+		// draw below, so a fresh generator here would move every later draw and the committed rows.
 		shuffleWith(pool, random)
 
 		const selected = pool.slice(0, Math.min(count, pool.length))
@@ -190,9 +189,17 @@ export const frLieuditRecipe: CorpusRecipe = {
 		let emitted = 0
 		let skipped = 0
 		let countryAppended = 0
+		/**
+		 * Rows that drew a country append where codex states no surface form for the jurisdiction.
+		 *
+		 * Counted so the run reports the gap rather than passing over it.
+		 */
+		let countrySurfaceFormAbsent = 0
+		const byCountry = new Map<string, number>()
 
 		for (const t of selected) {
-			const house = composeHouseNumber(t.numero, t.rep)
+			const house = composeHouseNumber(t.numero, t.rep ?? "", " ")
+			const country = countryOfInseeCode(t.codeInsee ?? "")
 			const decomposed = decomposeFrStreet(t.street)
 
 			const components: Partial<Record<ComponentTag, string>> = {
@@ -213,9 +220,10 @@ export const frLieuditRecipe: CorpusRecipe = {
 				components.postcode = t.postcode
 			}
 
-			// The envelope form: house+street line, the lieu-dit alone on its own line, postcode+commune line.
-			// That is La Poste's line 5, and it is what `FR`'s layout prints — this recipe used to restate it.
-			let raw = formatAddress(components, "FR")
+			// The envelope form is the house and street line, the lieu-dit by itself on
+			// its own line, then the postcode and commune line.
+			// That is La Poste's line 5.
+			let raw = formatAddress(components, country)
 
 			if (!raw) {
 				skipped++
@@ -223,20 +231,29 @@ export const frLieuditRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Country-append (the fr-admin-split #728 pattern, generalized):
-			// ~`countryFraction` of the time append an explicit "France" surface form onto
-			// the trailing (postcode+commune) line + a `country` component.
-			// The model relearns to emit country when present without over-firing it
-			// on the (still-majority) country-less rows.
+			// Country-append: ~`countryFraction` of the time, append an explicit country surface
+			// form onto the trailing (postcode+commune) line plus a `country` component.
+			// The model relearns to emit country when present without over-firing it on the country-less rows.
 			// `countryFraction <= 0` (the default) never draws from `random`,
 			// so the byte-stream is unaffected when the flag is unset.
+			//
+			// Codex states surface forms for `FR` alone among the jurisdictions BAN covers, so an overseas
+			// row draws from `random` and then leaves `raw` and `components.country` as they were.
+			// The draw happens either way, which keeps the byte-stream a function of `countryFraction`
+			// rather than of the mixture of jurisdictions in the input files.
 			if (countryFraction > 0 && random() < countryFraction) {
-				const forms = COUNTRY_SURFACE_FORMS.FR
-				const form = sample(forms, random)
-				raw = `${raw}, ${form}`
-				components.country = form
+				const forms: readonly string[] | undefined =
+					COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
 
-				countryAppended++
+				if (forms) {
+					const form = sample(forms, random)
+					raw = `${raw}, ${form}`
+					components.country = form
+
+					countryAppended++
+				} else {
+					countrySurfaceFormAbsent++
+				}
 			}
 
 			const sourceID = stableSourceID(source, {
@@ -250,8 +267,10 @@ export const frLieuditRecipe: CorpusRecipe = {
 			const canonical: CanonicalRow = {
 				raw,
 				components,
-				country: "FR",
-				locale: "fr-FR",
+				country,
+				// Every jurisdiction BAN publishes writes its addresses in French,
+				// so the language is constant and the region carries the jurisdiction.
+				locale: `fr-${country}`,
 				source,
 				source_id: sourceID,
 				corpus_version: "",
@@ -268,10 +287,22 @@ export const frLieuditRecipe: CorpusRecipe = {
 
 			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_base_id: null }))
 
+			byCountry.set(country, (byCountry.get(country) ?? 0) + 1)
+
 			emitted++
 		}
 
 		console.error(`  emitted=${emitted} skipped=${skipped} country-appended=${countryAppended} pool=${pool.length}`)
+
+		const jurisdictions = [...byCountry].toSorted((a, b) => b[1] - a[1])
+
+		console.error(`  jurisdictions: ${jurisdictions.map(([code, n]) => `${code}=${n}`).join(" ")}`)
+
+		if (countrySurfaceFormAbsent > 0) {
+			console.error(
+				`  ${countrySurfaceFormAbsent} rows drew a country append and codex states no surface form for their jurisdiction`
+			)
+		}
 
 		return { emitted, skipped }
 	},

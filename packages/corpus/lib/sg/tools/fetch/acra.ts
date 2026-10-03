@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetches the ACRA corporate-entity CSVs for Singapore from data.gov.sg, which publishes them with fielded addresses.
+ *   Fetches Singapore ACRA corporate-entity CSVs from data.gov.sg.
+ *   The publisher includes fielded addresses in these files.
  */
 
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
@@ -11,13 +12,8 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
 
-import type {
-	BaseFetchOptions,
-	FetchSummary,
-	SourceCollectionManifest,
-	SourceManifest,
-} from "#tools/fetch/download/index"
-import { loadCollectionFiles, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
+import { loadCollectionFiles, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "acra-sg"
 const COLLECTION_URL = "https://api-production.data.gov.sg/v2/public/api/collections/2/metadata"
@@ -25,7 +21,8 @@ const DATASET_API = "https://api-production.data.gov.sg/v2/public/api/datasets"
 const DOWNLOAD_API = "https://api-open.data.gov.sg/v1/public/api/datasets"
 const LICENSE = "Singapore Open Data Licence version 1.0 — https://data.gov.sg/open-data-licence"
 
-// The licence prescribes this attribution sentence, and the manifest records it.
+// The license prescribes this attribution sentence.
+// The manifest records it.
 const ATTRIBUTION =
 	"Contains information from ACRA Information on Corporate Entities accessed on <date> from data.gov.sg which is made available under the terms of the Singapore Open Data Licence version 1.0 https://data.gov.sg/open-data-licence"
 

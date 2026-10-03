@@ -2,37 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file What a module move is, and what planning one produces.
+ * @file Defines a module move and the plan that describes it.
  *
- *   Every path here is repo-relative in `git ls-files` form, so a plan reads the same in a terminal, in a JSON
- *   payload, and in a test fixture that has no checkout behind it.
+ * Every path here is repo-relative in `git ls-files` form.
+ * A plan reads the same in a terminal or JSON payload. It also reads the same in a test fixture without a checkout.
  */
 
 export interface ModuleMove {
-	/**
-	 * The module's current path.
-	 */
 	from: string
-	/**
-	 * Where it goes.
-	 */
 	to: string
 }
 
 export interface SpecifierRewrite {
 	/**
-	 * The file holding the specifier.
-	 *
 	 * The move's `to` path when the specifier sits in a module that itself moves.
 	 */
 	file: string
 	specifier: string
 	replacement: string
 	/**
-	 * The file both spellings name.
+	 * The file identified by both spellings.
 	 *
-	 * The one the replacement was proven against, and the one a verification pass
-	 * re-resolves it to once the move is on disk.
+	 * The replacement was proven against this file.
+	 * A verification pass resolves it again after the move is on disk.
 	 */
 	target: string
 	/**
@@ -44,9 +36,6 @@ export interface SpecifierRewrite {
 }
 
 export interface ManifestRewrite {
-	/**
-	 * The manifest holding the target, repo-relative.
-	 */
 	file: string
 	target: string
 	replacement: string
@@ -57,9 +46,23 @@ export interface ManifestRewrite {
 	end: number
 }
 
+/**
+ * A workspace manifest written whole rather than spliced.
+ *
+ * A replacement can change subpath keys, and a splice never does.
+ * Every specifier that resolved through the old keys is planned against the new text.
+ */
+export interface ManifestReplacement {
+	/**
+	 * The repo-relative `package.json` path.
+	 */
+	file: string
+	text: string
+}
+
 export interface PathLiteralRewrite {
 	/**
-	 * The file holding the path, repo-relative and at its post-move location.
+	 * The file holding the path, at its post-move location.
 	 */
 	file: string
 	path: string
@@ -77,8 +80,7 @@ export interface UnresolvedSpecifier {
 	/**
 	 * What was tried and why no specifier was accepted.
 	 *
-	 * A plan carrying one of these is refused rather than applied: a specifier nobody
-	 * can prove is a specifier nobody should write.
+	 * A plan carrying one of these is refused rather than applied.
 	 */
 	reason: string
 }
@@ -88,24 +90,23 @@ export interface ModuleMovePlan {
 	rewrites: SpecifierRewrite[]
 	/**
 	 * `exports`/`imports` targets the moves invalidate.
-	 *
-	 * A subpath KEY never changes: it is the package's interface, and a file moving
-	 * underneath it is not a consumer's business.
+	 * A subpath KEY never changes.
 	 */
 	manifestRewrites: ManifestRewrite[]
 	/**
-	 * Repo-relative paths written as text — a hook command, a lint glob, a `Usage:`
-	 * line — that the moves invalidate.
+	 * Manifests the plan writes whole.
 	 *
-	 * No check reads these, which is why the operation that breaks them is the one that reports them.
+	 * A manifest listed here receives no `manifestRewrites` entry.
+	 */
+	manifestReplacements: ManifestReplacement[]
+	/**
+	 * Repo-relative paths written as text — a hook command, a lint glob, a `Usage:`
+	 * line — that the moves invalidate and no check reads.
 	 */
 	pathLiterals: PathLiteralRewrite[]
 	unresolved: UnresolvedSpecifier[]
 	/**
 	 * Files read to find the rewrites, against the tracked-source total they were drawn from.
-	 *
-	 * The pre-filter in `plan.ts` is what separates the two numbers.
-	 * A reader comparing them can see whether it did any work.
 	 */
 	scanned: { read: number; tracked: number }
 }

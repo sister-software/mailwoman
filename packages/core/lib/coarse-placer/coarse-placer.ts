@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A linear country classifier over hashed character n-gram and script features. Confidence is
- *   temperature-calibrated, and a prediction below the threshold abstains. The module runs in Node and browsers.
+ *   A linear country classifier over hashed character n-gram and script features.
+ *   Confidence is temperature-calibrated. Predictions below the threshold abstain.
+ *   The module runs in Node and browsers.
  */
 
 import type { PathBuilderLike } from "path-ts"
 
 import { featurize } from "#coarse-placer/featurize"
-import { $public } from "#env/index"
+import { $public } from "#env"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 
 export { COARSE_CLASSES, FEATURE_DIM, featurize } from "#coarse-placer/featurize"
@@ -219,7 +220,7 @@ export class CoarsePlacer {
 			logits[c] = s / this.#temp
 		}
 
-		// Subtracting the largest logit keeps `Math.exp` from overflowing.
+		// The code subtracts the largest logit to keep `Math.exp` from overflowing.
 		let maxLogit = -Infinity
 
 		for (let c = 0; c < C; c++)

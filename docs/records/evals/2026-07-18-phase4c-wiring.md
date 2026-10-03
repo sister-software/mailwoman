@@ -8,9 +8,9 @@ did not do — check what the rerank costs the REST of the parse.
 
 ## The board measured street in isolation; the wiring measured the whole tree
 
-The night's board scored the street tag alone. Wiring it into a real parse (segmentation → tree)
+The night's board scored the street tag alone. The real parse route (segmentation → tree)
 surfaced a hazard the board could not see: **the span head is a street-boundary specialist, and its
-full segmentation decode is far worse than the BIO argmax head on every other tag.** Replacing the
+full segmentation decode is far worse than the BIO argmax head on every other tag.** The segmentation
 argmax tree with the segmentation decode:
 
 | golden | argmax exact | seg-decode exact    | fr locality       | fr postcode   |

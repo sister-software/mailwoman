@@ -31,7 +31,7 @@ One département read end to end (Ain, `01`, 9,040,886 bytes gzipped):
 | Communes with none certified                                     |                              102 |
 | `source_position`: `commune` / `inconnue` / `arcep` / `cadastre` | 212,873 / 43,764 / 3,270 / 2,161 |
 
-## Reading
+## How to read the results
 
 - Observation: BAN publishes a per-address certification flag, and its distribution is per commune: in Ain, 178
   communes are wholly certified, 102 wholly uncertified, 111 mixed.

@@ -15,17 +15,20 @@
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { attributionEntries, licenseNamedIn } from "@mailwoman/core/license/record"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import type { EffectiveTrainingManifest } from "@mailwoman/corpus/source-register"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { literalFilesEntries } from "#pack/verify-tarball"
+import { MODEL_GRAPH_FILE, type ModelGraphRecord, readModelGraph } from "#weights/rights/model-graph"
 
 /**
  * The meaning of the `version` field in a package's `model-card.json`.
  *
- * A graph package's card version identifies the trained model, and
- * `mwops release verify-metadata` keys its checks on it.
+ * A graph package's card version identifies the trained model.
+ * `mwops release verify-metadata` keys its checks on that version.
+ *
  * An overlay's card version identifies the overlay's own artifacts.
- * Neither is the npm version, which every workspace shares.
+ * The npm version is a separate field shared by every workspace.
  */
 export const VersionSeries = {
 	Model: "model",
@@ -38,14 +41,15 @@ export const VersionSeries = {
 export type VersionSeries = (typeof VersionSeries)[keyof typeof VersionSeries]
 
 /**
- * The kind of an artifact, which determines which sources it derives from.
+ * The artifact kind determines which sources it derives from.
  *
- * The files in one package have unrelated provenance.
- * `model.onnx` derives from the training corpus, `tokenizer.model` from the tokenizer text,
- * and a pair index or postcode binary from one named register.
+ * The files in one package have unrelated provenance: `model.onnx` derives from
+ * `model.onnx` derives from the training corpus.
+ * `tokenizer.model` derives from tokenizer text.
  *
- * {@link roleForArtifact} derives the role from the file name.
- * An unrecognized name maps to `other`.
+ * A pair index or postcode binary derives from one selected register.
+ * {@link roleForArtifact} derives the role from the file path.
+ * An unrecognized file maps to `other`.
  */
 export const ArtifactRole = {
 	ModelGraph: "model-graph",
@@ -100,7 +104,8 @@ export interface ArtifactRecord {
 	role: ArtifactRole
 	md5: string | null
 	/**
-	 * `recorded` when the card's `files_md5` lists this artifact, and `unrecorded` otherwise.
+	 * `recorded` when the card's `files_md5` lists this artifact.
+	 * The value is `unrecorded` when that list omits it.
 	 */
 	digest: "recorded" | "unrecorded"
 }
@@ -127,11 +132,9 @@ export const SourceUse = {
 export type SourceUse = (typeof SourceUse)[keyof typeof SourceUse]
 
 /**
- * Returns the uses that one attribution entry states in its prose.
+ * Returns the uses that one attribution entry states in its prose, or `unstated` when no pattern matches.
  *
- * It returns `unstated` when no pattern matches.
- * It never defaults to `training`, because that default would claim the model
- * learned from every unrecognized source.
+ * It never defaults to `training`, which would claim the model learned from every unrecognized source.
  */
 export function usesStatedIn(entry: string): SourceUse[] {
 	const uses: SourceUse[] = []
@@ -158,27 +161,23 @@ export function usesStatedIn(entry: string): SourceUse[] {
 export interface AttributionRecord {
 	/**
 	 * The verbatim entry.
-	 *
-	 * The record keeps the exact wording because a paraphrased rights statement is a different statement.
+	 * A paraphrased rights statement is a different statement.
 	 */
 	text: string
 	/**
-	 * The license that the entry states in a parenthetical.
-	 * It is `null` when the reader finds none.
+	 * The license that the entry states in a parenthetical, or `null` when the reader finds none.
 	 */
 	licenseNamed: string | null
 	/**
-	 * The uses that the entry states.
-	 * It is `["unstated"]` when the entry states none.
+	 * The uses that the entry states, or `["unstated"]` when it states none.
 	 */
 	uses: SourceUse[]
 }
 
 /**
- * The attribution that an overlay inherits from the package that owns its model graph.
- *
- * The record repeats the base's attribution so a consumer of the overlay alone can read it.
- * The record labels it as the base's because the overlay's own artifacts did not contribute to that model.
+ * The attribution that an overlay inherits from the package that owns its model graph,
+ * repeated so a consumer of the overlay by itself can read it and labeled as the base's
+ * because the overlay's own artifacts did not contribute to that model.
  */
 export interface InheritedLineage {
 	package: string
@@ -244,7 +243,26 @@ export interface WeightsRightsRecord {
 	 * It does not prove which records reached the model, because no frozen per-release corpus manifest exists.
 	 */
 	corpusVersion: string | null
+	/**
+	 * The effective training manifest committed for {@linkcode corpusVersion},
+	 * or `null` when the repository holds none for it.
+	 *
+	 * The corpus manifest states what a corpus holds and this states what one config's audited
+	 * epoch drew from it, so the rights files report the second rather than the first.
+	 * `null` is a statement about the checkout: no such record was committed,
+	 * rather than that the epoch drew from no source.
+	 */
+	effectiveTraining: EffectiveTrainingManifest | null
 	tokenizerVersion: string | null
+	/**
+	 * What the package's own model graph can emit, read from the `.onnx` file.
+	 *
+	 * `null` for a package that ships no graph of its own, such as an overlay that reuses its base's.
+	 * The record describes outputs from running the model.
+	 *
+	 * A white-box extraction attack over the weights requires a separate assessment.
+	 */
+	modelGraph: ModelGraphRecord | null
 }
 
 interface ModelCard {
@@ -267,7 +285,7 @@ interface ModelCard {
 /**
  * The documentation files that a weights package declares.
  *
- * The record excludes them from the artifact list because they carry no data with provenance.
+ * The record excludes them from the artifact list because they contain no data with provenance.
  */
 const DOCUMENTATION_FILES: ReadonlySet<string> = new Set([
 	"README.md",
@@ -279,6 +297,33 @@ const DOCUMENTATION_FILES: ReadonlySet<string> = new Set([
 
 function stringOrNull(value: unknown): string | null {
 	return typeof value === "string" && value.length ? value : null
+}
+
+/**
+ * Where a committed effective training manifest lives, relative to the repository root.
+ *
+ * It sits beside the frozen manifest for the same corpus, under the corpus version plus `.effective.json`.
+ */
+export const EFFECTIVE_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
+
+/**
+ * The effective training manifest for the corpus a card names, or `null` when the repository holds none.
+ *
+ * A card naming no corpus and a corpus with no committed manifest both answer `null`.
+ * The caller records that as a statement about the checkout rather than as
+ * an epoch that drew from no source.
+ */
+async function readEffectiveTrainingManifest(
+	repoRoot: PathBuilderLike,
+	corpusVersion: string | null
+): Promise<EffectiveTrainingManifest | null> {
+	if (!corpusVersion) return null
+
+	const path = resolvePath(repoRoot, EFFECTIVE_MANIFESTS_DIRECTORY, `${corpusVersion}.effective.json`)
+
+	if (!(await pathExists(path))) return null
+
+	return await readLocalJSONFile<EffectiveTrainingManifest>(path)
 }
 
 /**
@@ -334,7 +379,15 @@ export async function readWeightsRightsRecord(
 		// `readWeightsRightsRecords` fills `foreignAttribution` and `inherited` because both depend on the whole set.
 		inherited: null,
 		corpusVersion: stringOrNull(card?.training?.corpus_version),
+		effectiveTraining: await readEffectiveTrainingManifest(repoRoot, stringOrNull(card?.training?.corpus_version)),
 		tokenizerVersion: stringOrNull(card?.training?.tokenizer_version),
+		// Read from the file rather than from the card's `num_labels`, because the
+		// card is a claim about the graph.
+		// The `cjk` graph has 49 labels while `en-us` has 33, so a value copied from
+		// one card would misdescribe the other.
+		modelGraph: artifacts.some((artifact) => artifact.path === MODEL_GRAPH_FILE)
+			? await readModelGraph(resolvePath(repoRoot, workspace, MODEL_GRAPH_FILE))
+			: null,
 	}
 }
 
@@ -386,8 +439,8 @@ export async function readWeightsRightsRecords(
  * model graph and returns that package's attribution.
  *
  * The walk follows every hop because a base may declare its own base.
- * A cycle or a base outside the set stops the walk and sets `unresolved`,
- * which keeps an unresolved lineage distinct from an empty one.
+ * A cycle or a base outside the set stops it and sets `unresolved`, keeping an
+ * unresolved lineage distinct from an empty one.
  */
 function resolveInherited(
 	record: WeightsRightsRecord,

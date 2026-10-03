@@ -2,24 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Structural-validity checker for the decoded `AddressTree` — v0.7 task #37.
+ *   Structural-validity checker for the decoded `AddressTree`.
  *
- *   The postcode-only harness scores an address as "pass" on exact component match, but a parse can
- *   match a component and still be structurally incoherent — e.g. a `house_number` or
- *   `street_suffix` floating with no `street` anywhere, an `attention` with no `venue`. These
- *   orphan fragments are the signature of the overconfident hallucinations the v0.6.x cycle fought.
- *   This checker lifts the harness from "address-level pass" to "address-level pass and
- *   structurally valid."
+ *   The postcode-only harness scores an address as a pass when its components match exactly.
+ *   A parse can match a component while remaining structurally incoherent.
+ *   Examples include `house_number` or `street_suffix` without any `street`.
+ *   Another example is `attention` without `venue`.
+ *   This checker adds structural validity to the harness's address-level pass.
  *
  *   Two checks:
  *
- *   1. **illegal-edge** — invariant: a non-root node's parent tag must appear in its `PARENT_OF` list.
- *        (The tree builder enforces this by construction. the check guards against regressions in
- *        build-tree.ts.)
- *   2. **stranded-dependent** — a strict dependent tag (one that is meaningless without a structural
- *        anchor) whose anchor type is entirely absent from the tree. Geographic containers
- *        (postcode / locality / region / street / venue / po_box) are deliberately not checked: a
- *        postcode-only or city-only input is a degenerate-but-valid parse rather than a violation.
+ *   1. illegal-edge. A non-root node's parent tag must appear in its `PARENT_OF` list.
+ *      The tree builder enforces this by construction. The check guards against regressions in
+ *      build-tree.ts.
+ *   2. stranded-dependent. A strict dependent tag needs a structural anchor.
+ *      The checker reports it when no anchor type appears anywhere in the tree.
+ *      It skips the geographic containers.
+ *      A postcode-only or city-only input is a valid degenerate parse.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -28,14 +27,13 @@ import { containmentFor } from "#decoder/containment"
 import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
- * Tags that cannot stand alone: each is a sub-component of a specific structural
- * anchor (street / locality / venue / postcode).
+ * Tags that require another tag.
  *
- * If none of a tag's allowed parents appear anywhere in the tree, the node is an orphan fragment.
+ * Each is a sub-component of a structural anchor such as street, locality, venue, or postcode.
  *
- * This set is also the denominator of the stranded-dependent check. the classes that can fire —
- * so a caller counting which ones do reads it here rather than re-listing the tags,
- * which would drift the moment one is added.
+ * A node is an orphan fragment when none of its allowed parents appear anywhere in the tree.
+ * This set is the denominator of the stranded-dependent check, so a caller counting
+ * which classes fire reads it here rather than re-listing the tags.
  */
 export const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
 	"street_prefix",
@@ -49,20 +47,11 @@ export const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag
 ])
 
 /*
- * `intersection_a` / `intersection_b` are deliberately not strict dependents,
- * for the same reason the geographic containers above are exempt: `Main St and 5th Ave`
- * is a bare intersection query — a degenerate-but-valid parse with no street
- * or locality to anchor to, and the correct answer for that input.
+ * `intersection_a` and `intersection_b` are deliberately absent from `STRICT_DEPENDENTS`,
+ * for the same reason the geographic containers are exempt.
  *
- * Treating the pair as stranded flagged it identically to `Elephant and Castle Road`.
- * It is a genuine defect (one street read as a junction).
- *
- * Therefore, the rule had no power to separate a right answer from a wrong one.
- * A check that fires on both is not evidence about either.
- *
- * The `Elephant and Castle Road` defect stays tracked — by the board's own expectation
- * for that row (#1750), which is where a claim needing truth belongs.
- * This file only makes claims a tree can settle about itself.
+ * `Main St and 5th Ave` is a bare intersection query, a valid degenerate parse
+ * with no street or locality to anchor to.
  */
 
 export interface TreeViolation {
@@ -99,7 +88,6 @@ export function validateTree(tree: AddressTree): TreeValidity {
 	const walk = (node: AddressNode, parent: AddressNode | null): void => {
 		const allowed = parentOf[node.tag]
 
-		// 1. Edge invariant.
 		if (parent && (!allowed || !allowed.includes(parent.tag))) {
 			violations.push({
 				type: "illegal-edge",
@@ -109,7 +97,6 @@ export function validateTree(tree: AddressTree): TreeValidity {
 			})
 		}
 
-		// 2. Stranded strict-dependent.
 		if (STRICT_DEPENDENTS.has(node.tag) && allowed && !allowed.some((t) => present.has(t))) {
 			violations.push({
 				type: "stranded-dependent",

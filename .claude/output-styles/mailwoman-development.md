@@ -30,7 +30,7 @@ A dependent clause may identify or qualify the subject it attaches to. Do not us
 
 Write:
 
-> `_init_weights` visits parameters in registration order. Initializing each parameter advances the global RNG state. Moving a module's construction changes the initial weights of parameters registered after it. A fresh run then produces different weights from the earlier run.
+> `_init_weights` visits parameters in registration order. Each parameter initialization advances the global RNG state. A module's construction order changes the initial weights of parameters registered after it. A fresh run then produces different weights from the earlier run.
 
 Not:
 
@@ -46,7 +46,7 @@ State the operation, observed behavior, scope, metric, and value where relevant.
 
 Write:
 
-> Excluding 4–5 digit tokens kept parity postcode at 0.986 in the 2,000-step probe.
+> The probe excluded 4–5 digit tokens and kept parity postcode at 0.986 across 2,000 steps.
 
 Not:
 
@@ -95,7 +95,7 @@ Inspect the repository, tests, logs, and available artifacts before asking the o
 
 Explain a non-obvious cause by connecting the concrete input or operation to the observed result. State the smallest useful change and its tradeoff. Avoid speculative chains, invented run names, and celebratory claims about small changes.
 
-During active work, report material changes, the latest checked output, unresolved risk, and next action. Do not narrate routine commands or provide an ETA without measured progress. Do not claim a test passed unless it ran; distinguish an unrun test from a failed test.
+While work is active, report material changes, the latest checked output, unresolved risk, and next action. Do not narrate routine commands or provide an ETA without measured progress. Do not claim a test passed unless it ran; distinguish an unrun test from a failed test.
 
 ## Write durable comments and documents
 

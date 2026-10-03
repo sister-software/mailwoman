@@ -39,7 +39,7 @@ export interface SoilCapabilityObservation {
 	 */
 	reading: SoilReadingKind
 	/**
-	 * The capability class with the largest share of the cell, and that share.
+	 * The capability class with the largest share of the cell and the size of that share.
 	 *
 	 * Both are absent on a `designated_no_rating` reading, where the survey
 	 * mapped the ground but rated no class.
@@ -83,7 +83,8 @@ export const SOIL_DESIGNATION_REFUSALS = [
 	/**
 	 * The layer has no coverage row for the location.
 	 *
-	 * The capability there is unknown, which must never be reported as low.
+	 * The capability there is unknown.
+	 * Never report it as low.
 	 */
 	"outside_surveyed_area",
 ] as const

@@ -19,7 +19,7 @@ ran the existing harness (`scripts/eval/postcode-anchor-accuracy.ts`) on the 3,0
 | GeoNames (shipped) |    11,331 |     **98.5%** |    1.0 |    6.3 |   27.9 |        95.2% |        98.6% |
 | Overture           |    10,850 |    **100.0%** |    1.0 |    6.3 |   27.9 |        95.2% |        98.7% |
 
-## Reading
+## How to read the results
 
 - **Coverage:** Overture places 100% of the eval postcodes vs GeoNames' 98.5% — it covers the 45 (1.5%)
   ES postcodes GeoNames missed. But GeoNames carries ~481 more postcodes overall (11,331 vs 10,850), so

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Whether the tokenizer can represent an input at all: SentencePiece marks what it cannot represent by falling back
- * to raw UTF-8 bytes, and the per-character report is required because a fallback share has no meaning without a
+ * Whether the tokenizer can represent an input at all. SentencePiece marks unrepresented text by falling back
+ * to raw UTF-8 bytes. The per-character report is required because a fallback share has no meaning without a
  * control arm.
  */
 
@@ -21,8 +21,8 @@ interface VocabularyLine {
 	/**
 	 * Pieces per character.
 	 *
-	 * Latin text against this tokenizer runs around 0.4, and a figure near or above 1.0
-	 * means the string is being spelled out rather than tokenized.
+	 * Latin text against this tokenizer runs around 0.4.
+	 * A figure near or above 1.0 means the string is being spelled out rather than tokenized.
 	 */
 	piecesPerCharacter: number
 	/**
@@ -48,7 +48,7 @@ export interface VocabularyReport {
 		 * Byte fallbacks as a share of pieces.
 		 *
 		 * The headline number is meaningless without a comparison arm, so pass `control`
-		 * so the reply carries one.
+		 * so the reply includes one.
 		 */
 		byteFallbackShare: number
 	}
@@ -98,7 +98,7 @@ function total(lines: readonly VocabularyLine[]): VocabularyReport["totals"] {
 /**
  * Which letters in `texts` the vocabulary can express on their own, judged one character at
  * a time: a character that falls back inside a word might merely be an unlucky segmentation,
- * while one that falls back alone is absent from the vocabulary.
+ * while one that falls back by itself is absent from the vocabulary.
  */
 function characterCoverage(
 	tokenizer: Tokenizer,
@@ -171,6 +171,8 @@ export async function runVocabulary(options: VocabularyOptions): Promise<Vocabul
 }
 
 /**
- * Internals reached by the unit tests, which drive a stub tokenizer rather than loading the real 9 MB model.
+ * Internals reached by unit tests.
+ *
+ * The tests drive a stub tokenizer instead of loading the real 9 MB model.
  */
 export const __testing = { characterCoverage, measureLine, total }

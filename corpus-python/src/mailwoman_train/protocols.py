@@ -1,4 +1,4 @@
-"""The structural interfaces a country module, a CLI command, and a training callback satisfy."""
+"""Define interfaces for country modules and CLI commands. Define the training callback interface."""
 
 from __future__ import annotations
 
@@ -26,9 +26,9 @@ class CountryModule(Protocol):
     def build_corpus(self, args: argparse.Namespace) -> dict[str, Any]:
         """Write this country's parquet parts and answer the build's own statistics.
 
-        The argument is a parsed `Namespace` because the builders read a dozen or more settings off
-        one — source paths, row budgets, the seed, the augmentation fractions. Answering a plain row
-        count would discard the per-register alignment rates the recipes are judged on.
+            The argument is a parsed `Namespace` because the builders read a dozen or more settings off
+        one — source paths, row budgets, the seed, the augmentation fractions. A plain row
+            count would discard the per-register alignment rates the recipes are judged on.
         """
         ...
 
@@ -51,9 +51,11 @@ class CLICommand(Protocol):
 
 @runtime_checkable
 class TrainCallback(Protocol):
-    """One concern observed during a training run. Hooks answer None and one that must stop a run
-    raises, and `state` is `Any` to keep the training loop out of every module that reads an
-    interface."""
+    """One concern observed during a training run. Hooks return `None` unless they must stop the run.
+
+    A stopping hook raises. `state` is `Any` so modules that read the interface need not import the
+    training loop.
+    """
 
     def on_train_begin(self, state: Any) -> None: ...
 

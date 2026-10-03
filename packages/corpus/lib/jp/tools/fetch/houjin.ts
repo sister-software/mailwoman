@@ -9,13 +9,12 @@
  *
  *   The agency issues the corporate number, so the identifier is an `identity` assertion. The head-office
  *   string beside it is an `observation` the corporation filed, on `registered-office` rows. The Overture
- *   rows the JP corpus is built from assert `address` on `premise` rows, which is the difference that
- *   matters when the two are mixed.
+ *   rows the JP corpus is built from assert `address` on `premise` rows. That distinction matters when the two are mixed.
  *
  *   The agency states the three published fields may be used freely by anyone ("どなたでも自由にご利用
  *   いただくことができます"), with no attribution condition on the download page.
  *
- *   The file sits behind a form: the page hands out a per-session token, and a post with that token,
+ *   The file sits behind a form. The page hands out a per-session token. A post with that token,
  *   `event=download` and the file number of the nationwide Unicode CSV answers the zip. The file
  *   number is read off the page rather than pinned, because the agency re-issues the files monthly.
  *
@@ -25,14 +24,8 @@
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 
-import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest } from "#tools/fetch/download/index"
-import {
-	attachmentFilename,
-	cookieHeader,
-	streamBodyToFile,
-	withRetries,
-	writeManifest,
-} from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest } from "#tools/fetch/download"
+import { attachmentFilename, cookieHeader, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "houjin-jp"
 const PAGE_URL = "https://www.houjin-bangou.nta.go.jp/download/zenken/"
@@ -45,7 +38,7 @@ const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) mailwoman-corpus-fetch"
 export type FetchHoujinJPOptions = BaseFetchOptions
 
 /**
- * The nationwide row of the "CSV形式・Unicode" table carries the file number in its `doDownload(N)` handler.
+ * The nationwide row of the "CSV形式・Unicode" table stores the file number in its `doDownload(N)` handler.
  */
 function nationwideUnicodeFileNumber(html: string): string | undefined {
 	const start = html.indexOf('id="csv-unicode"')
@@ -87,7 +80,9 @@ export async function fetchHoujinJP(
 	try {
 		bytes = await withRetries(
 			async () => {
-				// A fresh page per attempt: the token is bound to the session cookie, and both may have lapsed.
+				// A fresh page per attempt.
+				// The token is bound to the session cookie.
+				// Either may have lapsed.
 				const attemptPage = await fetch(PAGE_URL, { headers: { "user-agent": USER_AGENT, accept: "text/html" } })
 
 				const attemptToken = new RegExp(`${TOKEN_FIELD.replaceAll(".", "\\.")}" value="([^"]+)"`).exec(

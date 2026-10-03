@@ -5,7 +5,8 @@
  *   Reads the US DOT National Address Database from a directory of NDJSON files written by the NAD fetcher.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { US_STATE_ABBREVIATIONS } from "@mailwoman/codex/us/state"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { resolvePathBuilder } from "path-ts"
@@ -64,65 +65,15 @@ interface NADRecord {
 	Plus_4?: string | null
 }
 
-const US_STATES_SET = new Set([
-	"AL",
-	"AK",
-	"AZ",
-	"AR",
-	"CA",
-	"CO",
-	"CT",
-	"DE",
-	"DC",
-	"FL",
-	"GA",
-	"HI",
-	"ID",
-	"IL",
-	"IN",
-	"IA",
-	"KS",
-	"KY",
-	"LA",
-	"ME",
-	"MD",
-	"MA",
-	"MI",
-	"MN",
-	"MS",
-	"MO",
-	"MT",
-	"NE",
-	"NV",
-	"NH",
-	"NJ",
-	"NM",
-	"NY",
-	"NC",
-	"ND",
-	"OH",
-	"OK",
-	"OR",
-	"PA",
-	"RI",
-	"SC",
-	"SD",
-	"TN",
-	"TX",
-	"UT",
-	"VT",
-	"VA",
-	"WA",
-	"WV",
-	"WI",
-	"WY",
-	// NAD also covers these territories.
-	"PR",
-	"GU",
-	"VI",
-	"AS",
-	"MP",
-])
+/**
+ * The USPS abbreviations a NAD row's `State` must match, taken from codex rather than restated.
+ *
+ * `US_STATE_ABBREVIATIONS` holds the 50 states, the District of Columbia and the five primary territories.
+ * That is the set NAD publishes under, so this adapter keeps no list of its own.
+ *
+ * The two had identical membership when they were reconciled, at 56 entries each.
+ */
+const US_STATES_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIONS)
 
 function nonEmpty(...values: Array<string | null | undefined>): string | undefined {
 	for (const v of values) {
@@ -134,7 +85,15 @@ function nonEmpty(...values: Array<string | null | undefined>): string | undefin
 	return undefined
 }
 
-function composeHouseNumber(r: NADRecord): string | undefined {
+/**
+ * The house number a NAD record states, read from its own four columns.
+ *
+ * NAD publishes `AddNo_Full` already assembled and the parts beside it, so this prefers the
+ * assembled column and falls back to joining `AddNum_Pre`, `Add_Number` and `AddNum_Suf`.
+ * The shared `composeHouseNumber` in `#adapters/street-line` joins exactly two columns with
+ * one separator, so it fits a publisher that splits the number in two rather than in four.
+ */
+function nadHouseNumber(r: NADRecord): string | undefined {
 	const full = (r.AddNo_Full ?? "").toString().trim()
 
 	if (full) return full
@@ -154,7 +113,8 @@ interface DecomposedNADStreet {
 	full: string
 }
 
-// The structured street fields take precedence, and `StNam_Full` becomes the whole street when they are empty.
+// Structured street fields take precedence.
+// If they are empty, `StNam_Full` supplies the whole street.
 function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
 	const name = (r.St_Name ?? "").toString().trim()
 
@@ -195,8 +155,8 @@ function composePostcode(r: NADRecord): string | undefined {
 /**
  * Creates the NAD adapter.
  *
- * The adapter skips records without a US state code, a locality or a ZIP code,
- * and rows whose rendering keeps two or fewer components.
+ * The adapter skips records without a US state code, locality, or ZIP code.
+ * It also skips rows whose rendering keeps two or fewer components.
  */
 export function createUsgovNADAdapter(): CorpusAdapter {
 	return {
@@ -204,7 +164,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 		defaultLicense: USGOV_NAD_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		register: SourceRegister.NationalAddressDatabase,
-		surface: SurfaceOrigin.Attested,
+		surface: SurfaceOrigin.Rendered,
 		description:
 			"US DOT National Address Database — ~97M structured US address points (911-grade). Single largest US source.",
 
@@ -250,7 +210,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 					if (!postcode) continue
 
 					const decomposed = decomposeNADStreet(record)
-					const houseNumber = composeHouseNumber(record)
+					const houseNumber = nadHouseNumber(record)
 					const venue = nonEmpty(record.LandmkName)
 					const unit = nonEmpty(record.Unit, record.Building, record.Floor, record.Room)
 

@@ -21,7 +21,7 @@ silent: **the artifact built correctly, probed correctly, and produced no effect
 Nippes, 50733 Köln` produced no dependent locality with the index loaded, because the parent segment
 folded to `"50733 köln"` — a key no bare-Gemeinde entry matches.
 
-Adding `de` to `SEGMENT_PARENT_POSTCODE_SHAPES` (codex's `PLZ_PATTERN`, already in the repo) and to
+Add `de` to `SEGMENT_PARENT_POSTCODE_SHAPES` (codex's `PLZ_PATTERN`, already in the repo) and to
 `LEADING_POSTCODE_COUNTRIES` fixed all four probes at once. **A correct artifact that changes
 no output is a mechanism bug** — the R6 lesson, now applied rather than rediscovered.
 

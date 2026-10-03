@@ -12,7 +12,7 @@ export interface PlanetaryView {
 }
 
 /**
- * Everything one body's build needs that the other's differs in.
+ * The build config lists what each body needs that differs from the other body.
  *
  * The artifact URLs pin one pipeline publish, the way Earth's resource versions pin one gazetteer build.
  * A republish moves the pin by a commit here.
@@ -23,15 +23,17 @@ export interface PlanetaryMapConfig {
 	/**
 	 * The body's own name, for prose that already sits under the title — "Search Mars", "About Mars".
 	 *
-	 * Carried rather than derived: six call sites stripped the `"Mailwoman "` prefix off
-	 * {@link title} themselves, and every one of them answers the whole title the day that
-	 * prefix changes, which reads as a bug in the sentence rather than in the config.
+	 * Store this separately from {@link title}.
+	 * Six call sites stripped the `"Mailwoman "` prefix themselves.
+	 *
+	 * Each call site would display the full title if that prefix changed.
+	 * This configuration keeps that change local.
 	 */
 	displayName: string
 	hostname: string
 	initialView: PlanetaryView
 	/**
-	 * The latitude convention the archives carry, shown beside a coordinate
+	 * The latitude convention used by the archives, shown beside a coordinate
 	 * so a reader knows which one they read.
 	 */
 	latitudeType: "planetocentric" | "planetographic"
@@ -40,8 +42,8 @@ export interface PlanetaryMapConfig {
 	 */
 	terrainCredit: string
 	/**
-	 * Named features offered as chips under the search field, so a visitor who does
-	 * not know the nomenclature has somewhere to start.
+	 * Features offered as chips under the search field, so a visitor who does not
+	 * know the nomenclature has somewhere to start.
 	 *
 	 * Each string is searched exactly as typed, so it must match a feature name in the body's search artifact.
 	 */

@@ -1,9 +1,9 @@
 # v0.5.0 char-offset launch — shift postmortem (2026-06-12)
 
 Continuation of the night-12 build session. The build finished and validated; this shift's job was
-to get the first model TRAINING on the v0.5.0 char-offset corpus. It did — after closing a corpus gap
-that should have been caught earlier and routing around a Modal volume consistency failure. Training
-completed all 40k steps and the check ran: **the bridge-retirement test passes** (po_box 90 bridge-OFF
+to get the first model to TRAIN on the v0.5.0 char-offset corpus. It did — after closing a corpus gap
+that should have been caught earlier and routing around a Modal volume consistency failure.
+The run completed all 40k steps, and the check ran: **the bridge-retirement test passes** (po_box 90 bridge-OFF
 ≥ 89.1, intrinsic). 15/17 tags hold flat-or-better actual-vs-actual; the one real casualty is
 fr.house_number, **−8.1pp vs v4.4.0's actual 97.7** (the check floor of 91 understated it). Held
 experimental — hold promotion pending #560.
@@ -22,7 +22,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 - **One real miss — and bigger than the floor implies:** `fr.house_number` 89.6. The check FAILs the
   floor (91) by 1.4pp, but the floor is a conservative bar — **v4.4.0 measured 97.7**, so the
   true regression is **−8.1pp** (97.7 → 89.6). Bridge-INDEPENDENT (89.6 both ways), so an actual
-  char-offset-format regression isolated to FR house_number rather than a bridge-off cost. Anchoring to the
+  char-offset-format regression isolated to FR house_number rather than a bridge-off cost. The floor comparison
   floor first understated it — the actual-vs-actual read is what matters. Model held experimental rather than promoted; **hold promotion** until the FR house_number cause is understood (#560). The
   bridge-retirement win is real and independent of this.
 
@@ -74,7 +74,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
   fast format-control signal. Base-only can't ship and can't answer the bridge question (the run's
   scientific point); the overlay re-emit was bounded (~minutes, builders are span-native). Surfaced
   the gap to the operator; proceeded under "start training now" + extended trust once corrected.
-- **R2 reroute over volume recreation.** Recreating the volume would be faster but destroys the
+- **R2 reroute over volume recreation.** A new volume would be faster to create but would destroy the
   container-visible model history (every `output-*` checkpoint). The R2 path is non-destructive and
   reusable. Chose it without waiting on the operator since it risks only bandwidth rather than data.
 - **Bridge-retirement check: inherit v4.4.0 floors verbatim, flag the unpinned thresholds.** Rather

@@ -34,11 +34,11 @@ WOF GitHub repos                     Per-placetype SQLite DBs
 
 ## Layer by layer
 
-### `commands/wof/sync.tsx` — repo cloning
+### `commands/wof/sync.tsx` — clone or update repositories
 
 `sync` finds WOF data repos with `gh repo list whosonfirst-data --no-archived`, optionally filtered by `--repos` (a comma-separated allow-list). It clones or pulls each repo into a local directory. After all repos sync, it calls `Placetype.prepare()` to load the placetype hierarchy from `whosonfirst-placetypes`.
 
-The `--repos` filter exists because the corpus build needs only a few repos (admin-us, admin-fr, postalcode-us, postalcode-fr). Cloning all ~100 WOF repos would download 2.9 GB of git data that the build never uses.
+The corpus build uses the `--repos` filter to fetch only the few repositories it needs (admin-us, admin-fr, postalcode-us, postalcode-fr). A full fetch of ~100 WOF repos would download 2.9 GB of git data that the build never uses.
 
 ### `commands/wof/mermaid.tsx` — render the placetype hierarchy
 
@@ -72,7 +72,7 @@ node mailwoman/out/cli.js wof tree <localRepoDir> country --roles common
 node mailwoman/out/cli.js wof tree <localRepoDir> locality --compact --output locality-tree.json
 ```
 
-The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetypes/tree.ts`, a recursive `findChildren(roles)` walk. **Note:** WOF placetypes form a DAG in which many descendants are shared. For example, `installation` is a leaf reachable from several parents. A tree projection duplicates every shared subtree under every parent path. For shallow or sparse roots like `country` or `locality` the tree is small, and for `planet` it grows to ~174 MB. Use [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for large roots.
+The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetypes/tree.ts`, a recursive `findChildren(roles)` walk. **Note:** WOF placetypes form a DAG with shared descendants. For example, `installation` is a leaf reachable from several parents. A tree projection duplicates every shared subtree under every parent path. For shallow or sparse roots like `country` or `locality` the tree is small, and for `planet` it grows to ~174 MB. Use [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for large roots.
 
 ### `commands/wof/graph.tsx` — emit a node-link JSON graph
 
@@ -208,7 +208,7 @@ The WOF spot-check (2026-05-24) found the raw `spr` table's parent_id chains rel
 1. **Name aliasing**: a bare `name` lookup does not find "Saint Petersburg", because WOF stores it as "St. Petersburg". This is [a known WOF failure mode](./whosonfirst-gotchas.mdx). The `variant`/`short` columns in `PlacetypeDataSource` are designed for this case, and they still need to be populated.
 2. **Disambiguation**: a bare-name lookup without `parent_id` filtering picks the wrong record. A Nebraska village named "New York" outranks NYC because of alphabetical ID ordering. The `find` query needs a `parent_id` filter or population-weighted ranking.
 
-Completing the prepare pipeline populates the variant columns and fixes the first problem. Calling `PlacetypeDataSource.find` with criteria that filter by parent_id or placetype fixes the second.
+The prepare pipeline populates the variant columns and fixes the first problem. A `PlacetypeDataSource.find` call with criteria that filter by parent_id or placetype fixes the second.
 
 ## What needs to happen next
 

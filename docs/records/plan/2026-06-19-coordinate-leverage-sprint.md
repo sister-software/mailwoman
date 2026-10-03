@@ -45,7 +45,7 @@ measurement decides the route.**
 The diagnostic is one artifact that needs no GPU and runs on a laptop. For a held-out eval set, decompose **every error** into the
 gap that caused it, because each gap routes to a different (and mutually exclusive) fix:
 
-For each query, join truth → WOF id (nearest-neighbour + name match), then classify the error:
+For each query, join truth → WOF id (nearest-neighbor + name match), then classify the error:
 
 1. **coverage-gap:** the true WOF id is **not in the gazetteer at all**. Only data ingest helps, and a
    reranker or better retrieval has no effect.
@@ -75,7 +75,7 @@ rate**: the share of rows where the parser emits a locality token and an adjacen
 both. This separates the case where the parser blocks progress (fix: an admin-split extract, like FR) from the case where the gazetteer
 blocks it (fix: WOF ingest), without doing the ingest first.
 
-### Routing thresholds
+### Route thresholds
 
 | condition                                                 | route                                         |
 | --------------------------------------------------------- | --------------------------------------------- |
@@ -130,7 +130,7 @@ coverage gap is ~2% on this sample (it bet 12–15%).
 `Dakota Dunes`, `Pennco` (SD CDPs); `Yankton County`. OpenAddresses' "city" field is frequently a civil
 township / village / CDP that WOF does not model as a `locality`. **So the first, lowest-cost US
 coverage change is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution) rather than a
-WOF re-ingest**, because the places mostly exist but are modelled at a different granularity.
+WOF re-ingest**, because the places mostly exist but are modeled at a different granularity.
 
 **Caveats:**
 
@@ -183,7 +183,7 @@ variant names. ES is further lowered by bilingual slash-truth (`Sant Vicent del 
 Vicente del Raspeig`); DE by the city-state drop. The relative ordering (FR ≫ IT/NL > DE > ES) is the
 trustworthy signal rather than the absolute floors. OA samples are clean-ish; real traffic may differ.
 
-**Routing implication:** the EU multi-locale work is larger and more parser-dependent than ingesting WOF.
+**Implication for routing:** the EU multi-locale work is larger and more parser-dependent than WOF ingestion.
 Per-locale parser readiness limits the coordinate before coverage can pay off. The cheapest
 EU coordinate improvement is a **DE admin-split extract** (resolver already covers DE; clear, measured parse
 gap), directly reusing the FR-admin-split template.

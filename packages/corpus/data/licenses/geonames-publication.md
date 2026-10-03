@@ -21,12 +21,11 @@ publisher's own pages state them and only one gives a version.
 > The GeoNames geographical database is available for download free of charge under a creative
 > commons attribution license.
 
-The about page names no version. The readme beside the files themselves names 4.0, and it is the
-document that travels with the data, so the bundle's record states 4.0 and names this file.
+The about page names no version. The readme beside the files themselves names 4.0. That readme travels
+with the data, so the bundle's record states 4.0 and names this file.
 
-Recording both matters because the two pages are not interchangeable. A reading taken from the about
-page alone would leave the version unfixed, and the conditions of Creative Commons Attribution differ
-across its versions.
+Both sources matter because the two pages give different information. The about page alone leaves the
+version unknown. Creative Commons Attribution's conditions differ across versions.
 
 ## What this text does not settle
 

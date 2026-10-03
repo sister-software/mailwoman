@@ -24,7 +24,7 @@ import {
 } from "#position"
 
 /**
- * A JSON-serializeable single point geometry, such as a specific location,
+ * A JSON-serializable single point geometry, such as a specific location,
  * address, or longitude, latitude pair.
  *
  * ```js
@@ -298,17 +298,17 @@ export class GeoPoint implements PointLiteral {
 	 *    `inferGeoJSONCoordOrder`, whose only signal is the [-90, 90] latitude range,
 	 *    so it transposed a pair exactly when |the second magnitude| > 90.
 	 *    A caller handing it `[latitude, longitude]` therefore got the pair repaired in Dallas
-	 *    and left corrupted in Berlin — behaviour selected by the data, from one code path.
+	 *    and left corrupted in Berlin — behavior selected by the data, from one code path.
 	 *    This change is a no-op for every well-formed input: a valid `[longitude, latitude]` pair
 	 *    can never have an out-of-range second element, so the heuristic never fired on one.
 	 * 2. **An out-of-range magnitude is rejected rather than repaired.** `[999, 999]`
 	 *    used to produce a GeoPoint reporting latitude 999.
 	 *    It now returns `null` here and throws a `RangeError` from the constructor.
-	 *    Note the deliberate asymmetry with the scalar `longitude` / `latitude` setters,
+	 *    Note the deliberate asymmetry with the scalar `longitude` / `latitude` setters.
 	 *    which still wrap and clamp: mutating a point is a pan gesture, where 190°.
 	 *    This means -170° is right.
-	 *    Parsing one is a claim about the world, where an impossible magnitude means
-	 *    the input was malformed and any repair invents a location.
+	 *    A parse result is a claim about the world.
+	 *    An impossible magnitude means the input was malformed and any repair invents a location.
 	 *
 	 * A 0/0 result is treated as the "missing coordinate" sentinel (Null Island) and also returns `null`.
 	 */

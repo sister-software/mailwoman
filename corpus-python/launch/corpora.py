@@ -1,12 +1,12 @@
 """What each corpus version stages onto the volume, as data.
 
 One row per version. A new version is a row here rather than a new Modal function. The variation
-between versions is which directories move and which files must land afterwards, and that is a
-manifest rather than code. `launch/plan.py` turns a row into commands; `launch/sync.py` runs them.
+The manifest records which directories move between versions and which files must land afterwards.
+`launch/plan.py` turns each row into commands. `launch/sync.py` runs them.
 
 A version name is written once per transfer: `corpus("v0.12.0-nz")` derives both the bucket path and
 the volume path, because the name otherwise appears four times in one pair and a corpus version ends
-up existing only as a substring of two strings nobody can enumerate. `corpus_versions()` reads them
+up existing only as a substring of two strings with no enumeration API. `corpus_versions()` reads them
 back off the table for exactly that reason.
 
 Each row names which layout it uses:

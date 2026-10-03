@@ -5,7 +5,7 @@
  *   Generates localized PO-box and private-mailbox rows in which the designator and number form one `po_box` span.
  */
 
-import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address-format"
+import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address/format"
 import { countryCodeForTable } from "@mailwoman/codex/country"
 import { sample } from "@mailwoman/core/random"
 
@@ -17,10 +17,10 @@ const MIN_DIGITS_FOR_COMMA_GROUPING = 4
 const MIN_DIGITS_FOR_HYPHEN_GROUPING = 3
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
+   cutoffs rather than thresholds. `const r = random()` followed by `r < 0.4` branches defines the
+   output distribution. The branches show each weight from top to bottom. A separate constant for each cutoff
+   would hide the distribution behind identifiers. Genuine thresholds in these files are
+   constants defined above. */
 
 /**
  * The address tail for one PO-box row.
@@ -39,7 +39,8 @@ export interface LocaleTemplate {
 	locale: string
 	leaders: ReadonlyArray<string>
 	/**
-	 * Private-mailbox designators, which render beside the street instead of replacing it.
+	 * Private-mailbox designators.
+	 * They render beside the street instead of replacing it.
 	 */
 	pmb?: ReadonlyArray<string>
 }
@@ -137,11 +138,14 @@ export interface SynthesizedPoBoxRow {
  */
 export interface PoBoxSynthesisOpts {
 	/**
-	 * The random source, which defaults to `Math.random`.
+	 * The random source.
+	 * It defaults to `Math.random`.
 	 */
 	random?: () => number
 	/**
-	 * The box-number generator, which defaults to a range from 1 to 99,999 weighted toward short numbers.
+	 * The box-number generator.
+	 *
+	 * By default, it chooses a number from 1 to 99,999 and weights short numbers more heavily.
 	 */
 	pickNumber?: (random: () => number) => string
 	/**
@@ -247,7 +251,9 @@ const MIL_REGION_ZIP: ReadonlyArray<{ region: string; zip: (r: () => number) => 
 /**
  * Generates a US military or diplomatic address without a base tuple.
  *
- * The unit line is the `po_box`, APO, FPO or DPO is the locality, and the armed-forces code is the region.
+ * The unit line is the `po_box`.
+ * APO, FPO, or DPO is the locality.
+ * The armed-forces code is the region.
  */
 export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): SynthesizedPoBoxRow {
 	const random = opts.random ?? Math.random

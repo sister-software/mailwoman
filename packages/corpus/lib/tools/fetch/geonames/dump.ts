@@ -2,18 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetch GeoNames per-country gazetteer dumps — the 19-column `<CC>.txt` files under
- *   `https://download.geonames.org/export/dump/` (not the postal exports. those are `export/zip/` and
- *   `geonames-postal.ts`'s job). The dumps carry feature classes and codes (column 8: `pplc` national capital,
- *   `ppla` first-order administrative seat), which is what the capitals reference build consumes (#1880).
+ *   Fetch GeoNames per-country gazetteer dumps. These are the 19-column `<CC>.txt` files under
+ *   `https://download.geonames.org/export/dump/`, the export directory rather than the postal export
+ *   at `export/zip/` that `geonames-postal.ts` handles. The dumps contain feature classes and codes
+ *   (column 8: `pplc` national capital, `ppla` first-order administrative seat), which is what the
+ *   capitals reference build consumes.
  *
- *   The catalog question is answered by the source rather than by an ISO list: `countryInfo.txt` in the same directory
- *   enumerates every country GeoNames publishes, one row per ISO alpha-2 code, and also names each country's
- *   capital — the cross-check the capitals build grades its `pplc` extraction against. Fetch that first. derive
- *   the country set from it. then a dump absent from disk is a measured gap against the source's own catalog
- *   rather than a silent hole. The dump directory may hold files this tool did not fetch: present files are never
- *   overwritten, and a present `<CC>.txt` that is not a 19-column gazetteer dump (GeoNames' postal exports share
- *   the basename) is reported as `wrong_format_present`, never counted as coverage.
+ *   `countryInfo.txt` supplies the country catalog. It lists each country GeoNames publishes with one
+ *   row per ISO alpha-2 code. Each row also lists the capital. The capitals build checks it against
+ *   its `pplc` extraction. The tool fetches this file first and derives the country set from it. A dump
+ *   absent from disk then counts as a gap in the source's own catalog.
+ *   The dump directory may contain files this tool never fetched. The tool keeps present files unchanged.
+ *   It checks each present `<CC>.txt` for the 19-column gazetteer format. GeoNames postal exports share
+ *   the basename, so a postal export receives `wrong_format_present` and does not count as coverage.
  */
 
 import { pathExists, readFileHead, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -22,8 +23,8 @@ import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
 import { TSVSpliterator } from "spliterator"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
-import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download/index"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download"
 
 /**
  * The one status that means "the source does not publish this country" rather than "the transfer failed".
@@ -49,7 +50,7 @@ export interface FetchGeonamesDumpOptions extends BaseFetchOptions {
 	 * Dump directory to read from.
 	 *
 	 * Defaults to GeoNames' own.
-	 * Exists so the 404 and coverage behaviour can be exercised against a local server.
+	 * Exists so the 404 and coverage behavior can be exercised against a local server.
 	 */
 	baseURL?: string
 	/**
@@ -76,7 +77,7 @@ export interface GeonamesDumpManifest {
 	downloaded_at: string
 	files: GeonamesDumpFileEntry[]
 	/**
-	 * `<CC>.txt` files already on disk and left alone — the hand-fetched population this tool extends.
+	 * `<CC>.txt` files already on disk and leaves unchanged — the hand-fetched population this tool extends.
 	 */
 	skipped_present: string[]
 	/**
@@ -86,31 +87,33 @@ export interface GeonamesDumpManifest {
 	 */
 	unavailable: string[]
 	/**
-	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps — GeoNames' postal
-	 * exports share the same basename, and seven tier-1 postal files sat at these paths
-	 * reading as "present" until the capitals build found them capital-less.
+	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps.
+	 * GeoNames' postal exports share the same basename.
 	 *
-	 * Left in place (this tool never overwrites data it did not fetch);
-	 * the fix is to move the file to its own home and rerun.
+	 * Left in place (this tool never overwrites data it did not fetch).
+	 * The fix is to move the file to its own home and rerun.
 	 */
 	wrong_format_present: string[]
 }
 
 /**
- * Column count of a gazetteer dump row — the discriminator against GeoNames' 12-column
- * postal exports, which share the `<CC>.txt` basename.
+ * Column count of a gazetteer dump row.
+ *
+ * GeoNames postal exports have 12 columns and share the `<CC>.txt` basename.
  */
 const GAZETTEER_DUMP_COLUMNS = 19
 
 /**
- * True when the first non-empty line carries the gazetteer dump's 19 tab-separated columns.
+ * True when the first non-empty line contains the gazetteer dump's 19 tab-separated columns.
  *
  * Accepts a partial head read.
  * The first line is the whole question, so callers need not hand it a resident 350 MB dump.
  *
- * Walk the string directly rather than constructing a spliterator: the capitals builder already
- * holds whole country dumps as strings, and a byte-oriented spliterator would UTF-8 encode
- * that input — allocating up to another 350 MB — merely to inspect its first non-empty line.
+ * Walk the string directly instead of constructing a spliterator.
+ * The capitals builder already holds each country dump as a string.
+ *
+ * A byte-oriented spliterator would UTF-8 encode that input and allocate up to
+ * another 350 MB just to inspect the first non-empty line.
  */
 export function looksLikeGazetteerDump(text: string): boolean {
 	let start = 0
@@ -164,9 +167,13 @@ export function parseCountryInfo(text: string): Array<{ country: string; capital
 const FORMAT_SNIFF_BYTES = 65_536
 
 /**
- * Download `countryInfo.txt` plus every missing `<CC>.zip`, extracting each to
- * `<outRoot>/<CC>.txt` beside the hand-fetched dumps, with a `manifest.json` naming fetched,
- * skipped-present, and source-unavailable countries.
+ * Download `countryInfo.txt` and each missing `<CC>.zip`.
+ *
+ * Extract each dump to `<outRoot>/<CC>.txt` beside the hand-fetched files.
+ * The `manifest.json` lists fetched countries.
+ *
+ * It also lists countries skipped because their files were already present
+ * and countries unavailable from the source.
  */
 export async function fetchGeonamesDumps(
 	options: FetchGeonamesDumpOptions,
@@ -234,8 +241,10 @@ export async function fetchGeonamesDumps(
 
 			const message = error instanceof Error ? error.message : String(error)
 
-			// Branch on the typed status (the geonames-postal lesson): message prose
-			// contains the URL, and a URL can contain any substring.
+			// Branch on the typed status.
+			// The error message contains a URL.
+			// URLs can contain any substring.
+			// Branch on the typed status instead of matching message text.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames publishes no gazetteer dump for this country`)
 				unavailable.push(country)

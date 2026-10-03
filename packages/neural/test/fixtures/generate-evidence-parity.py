@@ -7,7 +7,7 @@ tokenizer, and snapshots per-piece features + confidence. The TS test
 `buildGazetteerFeatures` and asserts byte equality — the train/inference painter-parity guard the
 productionization plan's Phase 2 mandates.
 
-The probe set deliberately carries: hyphenated + apostrophe surfaces (the fold class a Phase-1
+The probe set deliberately includes hyphenated + apostrophe surfaces (the fold class a Phase-1
 defect made unreachable), uppercase-conditional short codes, homograph bits, multi-token longest-first
 matches, the lowercase register (operator doctrine), and negative rows.
 

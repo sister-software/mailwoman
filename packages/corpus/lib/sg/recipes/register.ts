@@ -10,10 +10,11 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { titleCaseIfUpper } from "spliterator"
 
 import { alignAndWrite, type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
-const SOURCE = "synth-sg-register"
+const SOURCE = defaultRecipeSource("synth-sg-register")
 
 /**
  * Street generics and their typed abbreviations.
@@ -47,7 +48,7 @@ const P_BUILDING_LED = 0.15
 const P_ABBREVIATE = 0.35
 const P_UPPER = 0.1
 
-// The source rarely carries a floor-unit, so the recipe synthesizes one within these bounds.
+// The source rarely includes a floor-unit, so the recipe synthesizes one within these bounds.
 const FLOOR_MAX = 30
 const UNIT_MAX = 399
 
@@ -78,7 +79,7 @@ export function abbreviateSGStreet(street: string): string {
 /**
  * Reports whether the source `unit` value looks like a building name that can lead a line.
  *
- * The check rejects `NIL`, single words, values with a digit or parenthesis, and estate names.
+ * The check rejects `NIL`, single words, values with a digit or parenthesis, plus estate names.
  */
 export function isBuildingName(unit: string): boolean {
 	const value = unit.trim().toUpperCase()
@@ -233,8 +234,14 @@ export const sgRegisterRecipe: CorpusRecipe = {
 						"CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
 				},
 				`sg-register:${rendering.register}`,
-				// The values come from Overture, and only their arrangement is synthetic.
-				{ register: SourceRegister.Overture, surface: SurfaceOrigin.Composed }
+				// The values come from Overture and the recipe chose only their arrangement,
+				// so the Overture record behind each row is what `baseSourceID` names
+				// when the tuples file includes its id.
+				{
+					register: SourceRegister.Overture,
+					surface: SurfaceOrigin.Composed,
+					baseSourceID: tuple.sourceID ?? null,
+				}
 			)
 
 			if (ok) {

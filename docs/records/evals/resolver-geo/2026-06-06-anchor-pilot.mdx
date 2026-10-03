@@ -38,7 +38,7 @@ The clean, unconfounded number is the **same checkpoint with the anchor off vs o
 
 It is a **partial** fix. 45.8% is well short of ~77%, so the anchor helps real and measurably but doesn't fully reverse the collapse at this pilot scale.
 
-**The per-state split is the mechanism — and points at the next change.** Sachsen (postcodes `01xxx–09xxx`, little US collision) jumps `37.1% → 54.9%` (+17.8pp); Berlin (`10xxx`, colliding hard with US ZIPs) barely moves, `34.7% → 36.7%` (+2pp). The anchor's recovery is **blocked by postcode ambiguity**: where the code pins the country it works strongly; where the posterior is a DE/US collision the uniform distribution can't decide and the model stays collapsed. Disambiguating the colliding ranges is where a full fix lives.
+**The per-state split is the mechanism — and points at the next change.** Sachsen (postcodes `01xxx–09xxx`, little US collision) jumps `37.1% → 54.9%` (+17.8pp); Berlin (`10xxx`, colliding hard with US ZIPs) barely moves, `34.7% → 36.7%` (+2pp). The anchor's recovery is **blocked by postcode ambiguity**: where the code pins the country it works strongly; where the posterior is a DE/US collision the uniform distribution can't decide and the model stays collapsed. A full fix requires disambiguating the colliding ranges.
 
 ## Correction: most of the "collapse" was us measuring German in the wrong order
 
@@ -76,7 +76,7 @@ The "collapse" headline is a measurement bug, premodel, living in the eval. We r
 
 Order _robustness_ is a training problem. A production geocoder really does see German both ways: native from German sources, US-ish from international feeds like the OpenAddresses dump we eval on. The fix is data. Render the German training extract in both orders for the same components, so the model learns a German address can land either way. No new architecture, no anchor required for this part. The German synthesizer (`synthesizeLocaleRow`) now takes an `order: "native" | "international"` switch and the extract builder mixes the two.
 
-Cheapest first: fix the eval (done, that's the table above), then ship the both-order extract and retrain. Measuring first is what kept us from scaling an anchor to chase a number that was partly a rendering artifact of our own making.
+Cheapest first: fix the eval (done, that's the table above), then ship the both-order extract and retrain. The initial measurement kept us from scaling an anchor to chase a number that was partly a rendering artifact of our own making.
 
 ### What it means for multi-locale
 

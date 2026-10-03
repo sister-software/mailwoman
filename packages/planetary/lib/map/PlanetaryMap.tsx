@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The globe: the body's style over `MapCanvas`, a click on a label selecting the feature beneath it, the selection
- *   ring bound to the selected id, and the camera framing a selection by its diameter. The style is composed once
- *   per config. the selection changes a layer filter, never the style.
+ *   Renders the body's style over `MapCanvas`.
+ *   A label click selects the feature beneath it. A ring marks the selected ID.
+ *   The camera frames a selection by its diameter.
+ *   The map composes its style once per config. A selection changes only a layer filter.
  */
 
 import {
@@ -29,10 +30,11 @@ export interface PlanetaryMapProps {
 	selected: SelectedFeature | null
 	onSelect: (feature: SelectedFeature) => void
 	/**
-	 * The live map, once react-map-gl has instantiated it, and `null` again on unmount.
+	 * The live map after react-map-gl instantiates it.
 	 *
-	 * The chrome sits outside this component and cannot reach the handle through `useMap()`;
-	 * the compass reads its direction from here.
+	 * The value is `null` on unmount.
+	 * Chrome outside this component cannot reach the handle through `useMap()`.
+	 * The compass reads the map direction from this value.
 	 */
 	onMapReady?: (map: ReturnType<MapRef["getMap"]> | null) => void
 }
@@ -40,9 +42,8 @@ export interface PlanetaryMapProps {
 export function PlanetaryMap({ config, selected, onSelect, onMapReady }: PlanetaryMapProps) {
 	const mapRef = useRef<MapRef>(null)
 
-	// The map announces itself through `onLoad`; no code polls for it.
-	// The chrome sits outside this component, so a ref assignment would not re-render it.
-	// The handle goes up to the parent as state instead.
+	// The chrome outside this component cannot re-render from a ref,
+	// so the handle goes up to the parent as state.
 	const publishMap = useCallback(
 		(event: { target: ReturnType<MapRef["getMap"]> }) => onMapReady?.(event.target),
 		[onMapReady]
@@ -63,10 +64,8 @@ export function PlanetaryMap({ config, selected, onSelect, onMapReady }: Planeta
 	// Read once: a viewport in the URL wins over the body's opening view for the first render only.
 	const initial = useMemo(() => viewportFromSearch(location.search) ?? config.initialView, [config])
 
-	// The deepest zoom the body's terrain archive carries, read from the live
-	// source once it resolves its TileJSON.
-	// The two bodies do not publish the same depth, so a framing clamp that used a
-	// constant would over-zoom one of them the first time either was rebuilt.
+	// The deepest zoom in the body's terrain archive, read from the live source once it resolves its TileJSON.
+	// The two bodies differ, so a constant clamp would over-zoom one of them.
 	const [maxTerrainZoom, setMaxTerrainZoom] = useState<number | undefined>(undefined)
 
 	useEffect(() => {

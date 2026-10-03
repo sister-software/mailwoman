@@ -1,5 +1,6 @@
-import { extractPPDTuples, type PPDExtractStats } from "@mailwoman/corpus/tools/fetch/ppd"
 import { describe, expect, it } from "vitest"
+
+import { extractPPDTuples, type PPDExtractStats } from "#tools/fetch/ppd"
 
 // PPD columns: id,price,date,postcode,type,new,tenure,paon,saon,street,locality,town,district,county,cat,status
 const row = (

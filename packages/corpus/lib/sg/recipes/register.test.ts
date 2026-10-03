@@ -2,14 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { mulberry32 } from "@mailwoman/core/utils"
-import {
-	abbreviateSGStreet,
-	isBuildingName,
-	renderSGRegister,
-	sgRegisterRecipe,
-} from "@mailwoman/corpus/sg/recipes/register"
-import { type RecipeRow, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
+
+import { defaultRecipeSource } from "#recipes/sources"
+import { abbreviateSGStreet, isBuildingName, renderSGRegister, sgRegisterRecipe } from "#sg/recipes/register"
+import { type RecipeRow, recipeRunner } from "#test-kit/corpus-recipe"
 
 const run = recipeRunner("sg-register", sgRegisterRecipe, 7)
 
@@ -136,7 +133,7 @@ describe("sg-register recipe", () => {
 		for (const row of rows as Array<RecipeRow & { country?: string; locale?: string }>) {
 			expect(row.country).toBe("SG")
 			expect(row.locale).toBe("en-SG")
-			expect(row.source).toBe("synth-sg-register")
+			expect(row.source).toBe(defaultRecipeSource("synth-sg-register"))
 			expect(row.recipe).toMatch(/^sg-register:(official|block|bracket_postcode|building_led)$/u)
 			expect(row.tokens?.length).toBe(row.labels?.length)
 			expect(row.labels?.filter((label) => label.endsWith("house_number"))).toHaveLength(1)

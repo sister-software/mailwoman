@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for poi.db — spatial layer #1 (spec §3.4). One clustered `without rowid` B-tree
- *   keyed `(h3_cell, category_id, neg_rank, rowid_key)` so "everything near this res-9 cell" is a
- *   contiguous key range (the byte-range/httpvfs access pattern, same discipline as the candidate
- *   gazetteer). Rows carry denormalized name/brand/coords. category ids are small ints via the
- *   `poi_category_codes` dictionary (poi-taxonomy category ids are the string side). The DB also
- *   embeds the layer-interface tables from `@mailwoman/core/layers` — the builder writes the
- *   manifest (tier `shipped`, spine `h3` res 9) and per-res-6-cell coverage.
+ *   Typed schema for poi.db, the first spatial layer (spec §3.4). One clustered `without rowid`
+ *   B-tree uses `(h3_cell, category_id, neg_rank, rowid_key)` as its key. All rows near a res-9 cell
+ *   occupy a contiguous key range. This matches byte-range and httpvfs access and follows the
+ *   candidate gazetteer's layout. Rows include denormalized name, brand and coordinates.
+ *   The `poi_category_codes` dictionary stores category ids as small integers. POI-taxonomy category
+ *   ids remain strings. The database embeds the layer-interface tables from `@mailwoman/core/layers`.
+ *   The builder writes a manifest with tier `shipped` and spine `h3` res 9. It also writes per-res-6-cell coverage.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -43,9 +43,10 @@ export interface POITable {
 	/**
 	 * Probe key for exact name lookups, minted by {@link normalizeLocalityForKey} at build and at query.
 	 *
-	 * Branded because a `toLowerCase()` approximation of the fold is still a `string`:
-	 * it binds to the parameter, returns fewer rows, and the shortfall reads as a
-	 * coverage gap in the data rather than a defect in the probe.
+	 * Branded because a `toLowerCase()` approximation of the fold is still a `string`.
+	 * That approximation binds to the parameter and returns fewer rows.
+	 *
+	 * The shortfall looks like a data coverage gap instead of a probe defect.
 	 */
 	name_key: NameKey | null
 	brand_wikidata: string | null
@@ -60,14 +61,18 @@ export interface POITable {
 	 */
 	confidence: number
 	/**
-	 * Gers id — nullable metadata only, never a key (the #470 rule).
+	 * Gers id.
+	 * Nullable metadata, never a key.
 	 */
 	gers_id: string | null
 }
 
 /**
- * Staging mirror — every column nullable except the coords
- * (the loader fills positionally. The materialize select enforces completeness).
+ * The staging mirror.
+ * Every column is nullable except the coords.
+ *
+ * The loader fills this table positionally.
+ * The materialize select enforces completeness.
  */
 export interface POIStageTable {
 	h3_cell: number | null
@@ -171,16 +176,13 @@ export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<vo
 }
 
 /**
- * Secondary index for the brand path — a brand-wide fetch by `brand_wikidata` (no `h3_cell` prefix).
+ * Secondary index for the brand path, a brand-wide fetch by `brand_wikidata` with no `h3_cell` prefix.
  *
- * Brand rows are globally sparse (~0.31% of poi.db, median nearest tagged instance ~110 km),
- * so the k-ring walk can never reach them.
- * The reader instead fetches all of a brand's rows and distance-sorts.
+ * Brand rows are globally sparse, so the k-ring walk can never reach them and the reader
+ * instead fetches all of a brand's rows and distance-sorts.
+ * Without this index that fetch is a full-table scan, while with it the fetch is a range-scan.
  *
- * Without this index that is a full-table scan (~600 ms); with it, a range-scan (<1 ms p50).
- * Partial (`where brand_wikidata is not NULL`) so the ~99.7% of rows that
- * carry no QID never enter the B-tree.
- * The index holds only the ~43k branded rows.
+ * The partial index (`where brand_wikidata is not NULL`) keeps the mostly unbranded rows out of the B-tree.
  *
  * Builders call this after the bulk materialize (index-after-load),
  * same phase as {@link createPOINameKeyIndex}.

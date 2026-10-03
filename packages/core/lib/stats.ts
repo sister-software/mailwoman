@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Statistical helpers for percentiles, averages, and percentages.
+ *   Statistical helpers for percentiles, averages and percentages.
  */
 
 /**

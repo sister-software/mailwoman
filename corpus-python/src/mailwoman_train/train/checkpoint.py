@@ -1,4 +1,4 @@
-"""Writing a resumable checkpoint, and finding the last complete one.
+"""Write resumable checkpoints and find the last complete one.
 
 The write is atomic: an interrupted save leaves either the previous complete checkpoint or no
 directory `--resume auto` would load. Model, optimizer, scheduler, step and RNG resume. The data
@@ -67,7 +67,7 @@ def save_checkpoint(
 
 
 def find_latest_checkpoint(output_dir: Path) -> Path | None:
-    """The highest-step COMPLETE ``step-XXXXXX`` directory under ``output_dir``, complete meaning it carries ``training_state.json``."""
+    """The highest-step COMPLETE ``step-XXXXXX`` directory under ``output_dir``, complete when it contains ``training_state.json``."""
     if not output_dir.is_dir():
         return None
     candidates = sorted(p for p in output_dir.glob("step-*") if (p / "training_state.json").is_file())

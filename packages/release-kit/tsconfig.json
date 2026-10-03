@@ -13,6 +13,7 @@
 		{ "path": "../core" },
 		{ "path": "../neural" },
 		{ "path": "../resolver-wof-sqlite" },
-		{ "path": "../mailwoman" }
+		{ "path": "../mailwoman" },
+		{ "path": "../mailwoman/tools" }
 	]
 }

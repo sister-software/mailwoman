@@ -127,6 +127,20 @@ class ModelConfig:
 
     locale_loss_weight: float = 0.0
 
+    # Auxiliary head over ``address_systems.json``'s ids: which component order the row's text follows.
+    use_address_system_head: bool = False
+
+    address_system_loss_weight: float = 0.0
+
+    # An optional address-system id given at inference. Training drops it at ``locale_hint_drop_prob``
+    # and swaps in a wrong system at ``locale_hint_noise_prob``, so the model parses without one and can
+    # overrule a wrong one.
+    use_locale_hint: bool = False
+
+    locale_hint_drop_prob: float = 0.5
+
+    locale_hint_noise_prob: float = 0.05
+
     use_postcode_anchor: bool = False
 
     inject_first_token: bool = False

@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Rewrites dash joints reported by `CommentDashJoint` directly in the prose that carries them.
+ * @file Rewrites dash joints reported by `CommentDashJoint` directly in the affected prose.
  *
  *   This command edits only the local dash join and keeps existing line layout.
  *   It changes the dash into a period or comma based on the right-hand clause.
  *
- *   It reads the same surfaces `config/vale/lint-prose.ts` lints, and each one carries prose in a
- *   different place.
- *   A `.ts` or `.tsx` file carries it in a block comment or a `//` run.
- *   A `.py` file carries it in a `#` run or a docstring, and a `.yaml` or `.yml` file in a `#` run.
+ *   It reads the same surfaces as `config/vale/lint-prose.ts`. Each file type puts prose
+ *   in a different place.
+ *   A `.ts` or `.tsx` file has prose in a block comment or a `//` run.
+ *   A `.py` file has prose in a `#` run or a docstring. A `.yaml` or `.yml` file has prose in a `#` run.
  *   A `.md` or `.mdx` document is prose throughout, below its frontmatter.
  *
  *   Usage: `yarn comments:joints <file> [file …]`.
@@ -402,9 +402,10 @@ function rewrite(raw: string, lines: readonly string[]): string {
 /**
  * Strips the indentation every non-empty line shares.
  *
- * `scanLines` reads a four-space indent as a structural line, which is right for a
- * markdown code block and wrong for the body of an indented docstring.
- * Removing the common prefix first lets an indented paragraph group as a paragraph.
+ * `scanLines` reads a four-space indent as a structural line.
+ * That is right for a markdown code block and wrong for the body of an indented docstring.
+ *
+ * The function removes the common prefix first, so an indented paragraph groups as a paragraph.
  */
 function dedent(lines: readonly string[]): string[] {
 	let common = Infinity
@@ -421,13 +422,16 @@ function dedent(lines: readonly string[]): string[] {
 }
 
 /**
- * Rewrites the joints of a markdown or MDX document, whose whole body is prose.
+ * Rewrites the joints of a markdown or MDX document.
+ * Its whole body is prose.
  *
- * Leading YAML frontmatter is held out.
- * Vale strips it before linting, so a dash inside it was never reported,
- * and a key there is data rather than a sentence.
+ * The parser holds leading YAML frontmatter out.
+ * Vale strips it before linting.
  *
- * `scanLines` handles the fenced blocks, list items and indented code the body still carries.
+ * A dash inside it was never reported.
+ * A key there is data rather than a sentence.
+ *
+ * `scanLines` handles the fenced blocks, list items and indented code that remain in the body.
  */
 function sweepMarkdown(source: string): string {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- One document, already resident.
@@ -450,21 +454,23 @@ function sweepMarkdown(source: string): string {
 }
 
 /**
- * A triple-quoted Python string, with any prefix letters the literal carries.
+ * A triple-quoted Python string, with any prefix letters before the literal.
  */
 const DOCSTRING = /(?:[A-Za-z]*)("""|''')[\s\S]*?\1/g
 
 /**
  * A run of whole-line `#` comments.
  *
- * The run must begin the line, so a `#` inside a YAML scalar (`key: "a # b"`) is left alone.
+ * The run must begin the line, so a `#` inside a YAML scalar (`key: "a # b"`) remains part of the value.
  */
 const HASH_RUN = /(?:^[\t ]*#[^\n]*\n?)+/gm
 
 /**
  * Rewrites the joints of a file whose comments open with `#`, which is Python and YAML here.
  *
- * Python carries prose in two places, and both are linted: a `#` run and a docstring.
+ * Python has prose in two places.
+ * Vale lints both: a `#` run and a docstring.
+ *
  * A docstring is swept first, because sweeping the `#` runs afterwards must not
  * read the lines of a triple-quoted block as comments.
  */
@@ -519,8 +525,9 @@ function sweepHashLanguages(source: string, fileName: string): string {
 /**
  * Rewrites all detected joints in the prose of one file.
  *
- * The dispatch follows the surfaces `config/vale/lint-prose.ts` lints: `.ts` and `.tsx` under the code
- * surface, `.py`, `.yaml` and `.yml` beside them, and `.md` and `.mdx` under the docs surface.
+ * The dispatch follows the surfaces `config/vale/lint-prose.ts` lints: `.ts`
+ * and `.tsx` under the code surface, `.py`, `.yaml` and `.yml` beside them.
+ * `.md` and `.mdx` belong to the docs surface.
  */
 export function sweepSource(source: string, fileName: string): string {
 	if (/[.]mdx?$/.test(fileName)) return sweepMarkdown(source)

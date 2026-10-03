@@ -1,0 +1,100 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman gazetteer affix-relabel`: export the codex US street-affix vocab (directionals +
+ *   Pub-28 street suffixes) as a JSON lexicon for the Python training loader's affix-split relabel
+ *   pass. Same one-source-of-truth pattern as `gazetteer anchor-lexicon`: the TS codex
+ *   matchers stay canonical. Python consumes a dumb variant→canonical map so the relabel pass
+ *   agrees with the affix database builder (which calls the codex matchers directly) by construction.
+ *
+ *   Output: data/gazetteer/affix-relabel-lexicon-v2.json
+ */
+
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { Box, Text } from "ink"
+import { dirname } from "path-ts"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+
+/**
+ * Native command-line interface consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "affix-relabel",
+	description: "Export the street-affix relabel lexicon.",
+	options: {
+		out: { type: "string", description: "Output path", deprecatedName: "output" },
+	},
+} as const satisfies CommandSpec
+
+const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
+	const state = useCommandTask(async () => {
+		const { AbbreviationToDirectional, DirectionalToAbbreviationMap, NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } =
+			await import("@mailwoman/codex/us")
+
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
+
+		const output = options.out ?? repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json")
+
+		// Directionals: every single-token surface variant → canonical abbreviation.
+		// The codex maps are Maps keyed by the Pub-28 spaced names ("north west").
+		// Real US streets use the one-word form ("Northwest").
+		// It is what a whitespace-token relabel pass can match.
+		// Therefore, we emit the abbr ("nw") and the de-spaced name ("northwest"),
+		// same surfaces matchLeadingDirectional accepts.
+		const directionals: Record<string, string> = {}
+
+		for (const [name, abbr] of [
+			...DirectionalToAbbreviationMap,
+			...[...AbbreviationToDirectional].map(([fromAbbr, fromName]): [string, string] => [fromName, fromAbbr]),
+		]) {
+			directionals[abbr.toLowerCase()] = abbr
+			directionals[name.replaceAll(/\s+/g, "").toLowerCase()] = abbr
+		}
+
+		// Suffixes: the codex lookup already maps every Pub-28 variant (lowercase) → canonical suffix.
+		const suffixes: Record<string, string> = {}
+
+		for (const [variant, canonical] of US_STREET_SUFFIX_LOOKUP) {
+			suffixes[variant] = canonical
+		}
+
+		const lexicon = {
+			version: "affix-relabel-v2",
+			source: "@mailwoman/codex us/street-directional + us/street-suffix.json (USPS Pub 28 + name-prone curation)",
+			directionals,
+			suffixes,
+			// Licenses the positional split of a >=2-word name whose final word is name-prone-shaped when a true suffix follows ('Menlo Park | Road'). Loaders reading a v1 artifact (key absent) keep the old blanket rejection.
+			name_prone: [...NAME_PRONE_US_SUFFIXES].toSorted(),
+		}
+
+		await makeDirectories(dirname(output))
+		await writeLocalJSONFile(lexicon, output)
+
+		return [
+			`${output}`,
+			`${Object.keys(directionals).length} directional variants, ${Object.keys(suffixes).length} suffix variants, ` +
+				`${NAME_PRONE_US_SUFFIXES.size} name-prone canonicals`,
+		]
+	})
+
+	if (state.status !== "done") return <CommandTaskResult state={state} />
+
+	if (state.status === "done") {
+		return (
+			<Box flexDirection="column">
+				{state.result.map((line, i) => (
+					<Text key={i} color={i === 0 ? "green" : undefined}>
+						{i === 0 ? "✓ wrote " : "  "}
+						{line}
+					</Text>
+				))}
+			</Box>
+		)
+	}
+
+	return null
+}
+
+export default GazetteerAffixRelabel

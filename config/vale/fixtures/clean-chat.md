@@ -46,3 +46,25 @@ JSON object is the emitted artifact:
 The provenance grade of a zoning row is either `authoritative` or `inferred`.
 Each row has exactly one provenance grade. The grades never merge.
 Each artifact contains rows of one provenance grade only.
+
+# Anything after this point has a stable shape.
+
+# Everything here uses the same framing.
+
+# String values preserve their original spelling.
+
+# Sibling nodes share the parent identifier.
+
+# Meaning depends on the surrounding record.
+
+# During a retry, the client reuses its request id.
+
+# Versioning follows the package release.
+
+# Hugging Face hosts model artifacts.
+
+# Birling Gap appears in the source gazetteer.
+
+# Wyoming appears in a state-name field.
+
+# Nursing appears as a source category.

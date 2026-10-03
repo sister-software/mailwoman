@@ -1,0 +1,4 @@
+{
+	"note": "Exposure floors per phenomenon. Each entry is added only from an exposure-curve report and cites it as `evidence`. An empty map is the measured state: no curve has established a floor yet.",
+	"floors": {}
+}

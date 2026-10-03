@@ -30,7 +30,7 @@ CSV / SQLite -ingest-> normalize (name, org, address) -[GeocodeAddress boundary]
 
 The thesis, proven in a capstone test: two records reading `123 main st` and
 `123 main street apt 2` — **different strings** — resolve to one entity because they
-share a **location** and a name. Blocking is geographic rather than textual. That's why this
+share a **location** and a name. Geographic blocking rather than textual blocking explains why this
 version works where the string-first v0 imploded.
 
 ## The four new workspaces (and what's in each file)
@@ -159,7 +159,7 @@ solid baseline; org _matching_ needs a follow-up pass. Full detail in
    TF-IDF n-gram — needs a PART-B research pass).
 5. **formatter follow-ups** — suffix/directional expansion via `@mailwoman/codex`, own
    templates (drop `@fragaria`).
-6. **Clustering refinement** — centroid-linkage to damp connected-components over-merge
+6. **Cluster refinement** — centroid-linkage to damp connected-components over-merge
    (currently mitigated by geo-local blocking).
 
 ## The 14 commits

@@ -1,0 +1,8 @@
+engine: tree-sitter
+scopes:
+  - name: source
+    expr: |
+      (comment) @prose
+      (module . (expression_statement (string (string_content) @prose)))
+      (class_definition body: (block . (expression_statement (string (string_content) @prose))))
+      (function_definition body: (block . (expression_statement (string (string_content) @prose))))

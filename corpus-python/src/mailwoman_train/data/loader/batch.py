@@ -1,6 +1,6 @@
-"""Stacking encoded examples into the batch the trainer feeds the model.
+"""Stack encoded examples into the batch the trainer feeds the model.
 
-A channel is present in the batch only when the examples carry it, decided from the first example
+A channel is present in the batch only when the examples include it, decided from the first example
 because every example in a run comes from one config. An absent channel is omitted rather than
 zero-filled, so the trainer's tensor conversion skips it and the model runs without it.
 """
@@ -8,7 +8,7 @@ zero-filled, so the trainer's tensor conversion skips it and the model runs with
 from __future__ import annotations
 
 import random
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import Any
 
 from ...config import Config
@@ -24,8 +24,9 @@ def collate(batch: list[EncodedExample]) -> dict[str, Any]:
         "attention_mask": [ex.attention_mask for ex in batch],
         "labels": [ex.labels for ex in batch],
         "locale_ids": [ex.locale_id for ex in batch],
+        "address_system_ids": [ex.address_system_id for ex in batch],
     }
-    # Postcode-anchor channel (#239/#240): only present when every example carries anchor features
+    # Postcode-anchor channel (#239/#240): only present when every example includes anchor features
     # (i.e. an anchor lookup is configured). Absent → omitted, so the trainer's tensor-conversion
     # skips it and the model runs anchor-free (back-compat).
     if batch and batch[0].anchor_features is not None:
@@ -61,14 +62,31 @@ def iter_batches(
     batch_size: int,
     seed: int = 0,
     row_limit: int | None = None,
+    observer: Callable[[dict[str, Any]], None] | None = None,
 ) -> Iterator[dict[str, Any]]:
-    """Yield collated batches indefinitely until the underlying iterator exhausts."""
+    """Yield collated batches indefinitely until the underlying iterator exhausts.
+
+    ``observer`` receives each source row of a batch once the consumer asks for the batch after it,
+    so a batch fetched and then abandoned (the loop breaking at ``max_steps``) is never observed.
+    """
     rng = random.Random(seed)
     buf: list[EncodedExample] = []
-    for ex in iter_encoded(cfg.data, tokenizer, split=split, rng=rng, row_limit=row_limit):
+    rows: list[dict[str, Any]] = []
+    for ex in iter_encoded(
+        cfg.data, tokenizer, split=split, rng=rng, row_limit=row_limit, observer=rows.append if observer else None
+    ):
         buf.append(ex)
         if len(buf) == batch_size:
+            batch_rows = rows[:]
+            rows.clear()
             yield collate(buf)
             buf = []
+            if observer:
+                for row in batch_rows:
+                    observer(row)
     if buf:
+        batch_rows = rows
         yield collate(buf)
+        if observer:
+            for row in batch_rows:
+                observer(row)

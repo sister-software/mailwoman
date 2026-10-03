@@ -4,9 +4,8 @@
 /**
  * @file The injectable time source every timing-sensitive part of {@linkcode APIClient} reads through.
  *
- *   Lifted from `filer/sdk/sec-client.ts` when the SEC client's bespoke pacing/retry
- *   implementation moved down into `@mailwoman/core/api`. Keeping the injection point is the whole reason the pacing
- *   and backoff suites are deterministic and finish in milliseconds instead of sleeping on the wall
+ *   The pacing and backoff suites inject the clock so they stay deterministic and finish in
+ *   milliseconds instead of sleeping on the wall clock.
  *   clock — a rate-limit test that actually waits 100ms per grant costs 4s for a 40-call fan-out and
  *   is flaky under CI load. the same test against an injected clock is exact and instant.
  *
@@ -31,17 +30,31 @@ export interface ClockLike {
 	now(): number
 	/**
 	 * Resolve after at least `ms` milliseconds of this clock's time.
+	 *
+	 * Reject with the signal's reason and cancel the timer when the signal aborts.
 	 */
-	sleep(ms: number): Promise<void>
+	sleep(ms: number, signal?: AbortSignal): Promise<void>
 }
 
 /**
- * The real-time {@linkcode ClockLike}, used whenever a caller doesn't inject one.
+ * The system clock implements {@linkcode ClockLike} for callers that do not inject one.
  */
 export const systemClock: ClockLike = {
 	now: () => Date.now(),
-	sleep: (ms) =>
-		new Promise<void>((resolve) => {
-			setTimeout(resolve, ms)
+	sleep: (ms, signal) =>
+		new Promise<void>((resolve, reject) => {
+			signal?.throwIfAborted()
+
+			const timer = setTimeout(() => {
+				signal?.removeEventListener("abort", onAbort)
+				resolve()
+			}, ms)
+
+			const onAbort = () => {
+				clearTimeout(timer)
+				reject(signal?.reason)
+			}
+
+			signal?.addEventListener("abort", onAbort, { once: true })
 		}),
 }

@@ -2,9 +2,9 @@
 
 The corpus parquet stores ``raw`` plus a whitespace-tokenized ``tokens`` list and a parallel
 ``labels`` list (BIO over those whitespace tokens). As of the v0.5.0 char-offset migration
-(#519) rows additionally carry ``span_starts[]``/``span_ends[]``/``span_tags[]`` — char ranges
-over ``raw`` (sorted, non-overlapping) — which become the label source of truth. The neural model
-is trained over SentencePiece sub-tokens, which are *finer-grained* than the whitespace tokens.
+(#519) rows additionally store ``span_starts[]``/``span_ends[]``/``span_tags[]`` — char ranges
+over ``raw`` (sorted, non-overlapping). These ranges are the label source of truth. The neural model
+trains over SentencePiece sub-tokens. These are *finer-grained* than the whitespace tokens.
 
 The byte-offset hook is ``EncodeAsImmutableProto`` — the only SentencePiece API that exposes
 ``piece.begin`` / ``piece.end`` (in bytes). We convert those to char offsets via a precomputed
@@ -12,16 +12,16 @@ byte→char index map so multibyte UTF-8 (accents, CJK) round-trips correctly.
 
 Why not a HuggingFace fast tokenizer? Two reasons:
 
-- We don't have a ``tokenizer.json`` for this SP model — only ``tokenizer.model``. Converting
+   - We don't have a ``tokenizer.json`` for this SP model — only ``tokenizer.model``. A conversion
   is doable (PreTrainedTokenizerFast supports loading SP via slow→fast bridge) but adds a
-  fragile build step. Going direct is simpler and the offsets are exact.
+   fragile build step. A direct load is simpler and preserves exact offsets.
 - We need labels aligned at *training-data prep* time rather than inference time. The training loop
   consumes pre-aligned ``(input_ids, label_ids)`` tensors, so we don't need a HF tokenizer
   object at all once labels are baked.
 
-The rest of the package: `spans` projects a row's labels onto pieces, `anchors` projects the
-postcode-anchor channel, `encode` assembles a row's tensors, `char` is the character-path encoder
-that skips SentencePiece entirely, and `splice`/`train` build and surgically edit a model.
+`spans` projects row labels onto pieces. `anchors` projects the postcode-anchor channel.
+`encode` assembles row tensors. `char` implements the character path without SentencePiece.
+`splice` and `train` build and surgically edit a model.
 """
 
 from __future__ import annotations

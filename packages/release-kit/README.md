@@ -5,11 +5,11 @@ materialization, SBOM — each with an id, a declared effect (`read`, `local-wri
 output, and a `run`.
 
 No file here is executed directly. The private `mwops` CLI (`@mailwoman/ops-cli`) and the release MCP server are
-views over `lib/registry.ts`; CI calls `mwops release <operation>`. Publishing is plan → execute: `release.plan`
+views over `lib/registry.ts`; CI calls `mwops release <operation>`. The publish flow is plan → execute: `release.plan`
 returns a digest over HEAD, version, packages, artifacts and destinations, and `release.publish` recomputes it and
 refuses a dirty or moved HEAD or a changed plan.
 
 Admission rule: an operation participates in the construction, verification, staging, or publication of a release
-artifact. Anything else does not belong here.
+artifact. Other content does not belong here.
 
 Record: `docs/superpowers/specs/2026-09-04-scripts-directory-migration-proposal.md`.

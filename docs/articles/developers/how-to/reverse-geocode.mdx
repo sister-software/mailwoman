@@ -137,8 +137,8 @@ in a way you have to design for.
 36°N 45°W is open ocean, roughly 3,700 km from anything. It returned `country: France`. France's
 bounding box spans its overseas departments, so the mid-Atlantic point falls inside it; with a US-only
 polygon sidecar there was no boundary to reject the candidate, and the nearest-centroid fallback took
-it. Loading the DE/FR sidecar instead changes the answer to `United States` — the French polygon now
-rejects the point, and the next bounding-box candidate wins the same way.
+it. The DE/FR sidecar changes the answer to `United States`: the French polygon now rejects the point,
+and the next bounding-box candidate wins the same way.
 
 The guard is in the result:
 

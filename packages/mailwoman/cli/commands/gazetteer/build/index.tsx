@@ -1,0 +1,76 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman gazetteer build` — the whole data pipeline, turnkey: `build admin` (WOF + Overture +
+ *   GeoNames → verified, sealed admin gazetteer) then `build candidate` (the byte-range candidate
+ *   table) from that fresh admin artifact. The legacy standalone GeoNames fold is skipped here — the
+ *   admin build already folds the full 161-country set upstream (a superset of the old fold list).
+ *   Both artifacts land at staging/dated paths. swapping/promoting stays deliberate (releasing.md).
+ */
+
+import { formatFileSize } from "@mailwoman/core/fs/readers"
+
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	phaseReporter,
+	useCommandTask,
+} from "#cli-kit"
+
+/**
+ * Native command-line interface consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "build",
+	description: "Build the admin and candidate gazetteers.",
+	options: {
+		data: { type: "string", description: "WOF repos root. Default <data-root>/src/wof-repos" },
+		"skip-verify": { type: "boolean", default: false, description: "Skip the admin verify check (development only)" },
+	},
+} as const satisfies CommandSpec
+
+const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
+	const state = useCommandTask(async () => {
+		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases } =
+			await import("#gazetteer-pipeline")
+
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+
+		console.error("▸ build admin (staging)")
+
+		const admin = await buildAdmin({
+			dataDir: options.data,
+			skipVerify: options.skipVerify,
+			onPhase: phaseReporter(),
+		})
+
+		const candidateOut = wofDatabasePath(DEFAULT_CANDIDATE_OUT)
+
+		console.error(`▸ build candidate ← ${admin.out}`)
+
+		const databases = await resolvePostcodeDatabases()
+
+		const candidate = await buildCandidate({
+			adminDB: admin.out,
+			out: candidateOut,
+			postcodeDatabases: databases,
+			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
+		})
+
+		return [
+			`admin: ${admin.out} (${await formatFileSize(admin.out)}) — ${admin.verify ? "verify PASS" : "verify SKIPPED"}, sealed`,
+			`candidate: ${candidateOut} (${await formatFileSize(candidateOut)}) — ${candidate.rows.toLocaleString()} rows, sealed`,
+			"next: mailwoman gazetteer verify --db <admin>, then swap + promote per RELEASING.md",
+		]
+	})
+
+	// Progress streams to stderr until the summary lands, which `CommandTaskResult` renders.
+	if (state.status !== "done") return <CommandTaskResult state={state} />
+
+	return <CommandSummaryLines lines={state.result} />
+}
+
+export default GazetteerBuild

@@ -49,10 +49,10 @@ exact tagging conventions** — 75% of the time, on different tokenization of mu
 streets, different venue/locality boundaries, and the cases addressit happened to encode.
 It makes no statement about whether neural is _wrong_. The harness is a faithful
 _regression check_ (it catches when a retrain breaks a convention we previously matched),
-but not a parsing-quality verdict. Treating it as one is the
+but not a parsing-quality verdict. That interpretation is the
 [harness-lineage trap](../evals/resolver-geo/2026-05-30-harness-lineage-and-the-resolver-scoreboard.mdx).
 
-## Decomposing the 20% — three unbiased arenas
+## Sources of the 20% — three unbiased arenas
 
 To see where neural warrants its keep, we score both parsers on three arenas drawn
 from _outside_ the Pelias lineage (`scripts/eval/external-arenas.sh`, all `--symmetric-match`):
@@ -110,7 +110,7 @@ _geometry_ gap rather than a parsing gap — addressed in the roadmap below.)
 
 ## Where neural is worse at parsing — and why
 
-Stripping out the harness bias, the real neural deficits are:
+After removing the harness bias, the real neural deficits are:
 
 1. **Clean canonical forms** (libpostal 29 vs 16). Rules encode the exact pattern; neural
    has no inherent edge there, and its documented overconfidence (≈81% of _wrong_

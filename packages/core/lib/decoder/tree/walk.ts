@@ -2,22 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The one tree walk, in document order, and the slot order both result projections read. A leaf module on
- *   purpose: `serialize-json`, `serialize-tuples`, `unknown-spans` and `tree-shape` all read it, and a walk that lived
- *   beside `tree-shape`'s reporters closed a cycle through `serialize-tuples`.
+ * @file This module defines the tree walk and slot order used by result projections.
+ *   It stays a leaf module because `serialize-json`, `serialize-tuples`, `unknown-spans`, and `tree-shape` all read it.
+ *   The walk would create a cycle through `serialize-tuples` if it sat beside `tree-shape`'s reporters.
  */
+
+import { isAdminHierarchyTag } from "@mailwoman/codex/component"
 
 import type { AddressNode } from "#decoder/types"
 
 /**
  * Every node of a forest in document order: parent before children, siblings by their position in the input.
  *
- * Generic over any node shape carrying `children`, so the eval harness's flat nodes
- * and the admin-coherence tree walk the same way the decoder's do.
+ * The function accepts any node shape that has `children`.
+ * The eval harness's flat nodes and admin-coherence tree use it like decoder nodes do.
  *
- * The order is material rather than a convenience: `find` over this walk decides
- * which of two same-tag spans becomes a named result slot, and the flat component
- * map (`decodeAsJSON`) keeps the first span in text order.
+ * This is the input's own order. {@link slotNodes} re-orders it for the projections.
+ * Those projections choose among same-tag spans by grounding and confidence rather than by position.
  */
 export function* walkNodes<T extends { children?: readonly T[] }>(roots: readonly T[]): Generator<T> {
 	const stack = roots.toReversed()
@@ -51,10 +52,10 @@ export function collectNodes(roots: readonly AddressNode[], predicate: (node: Ad
 }
 
 /**
- * A node the resolver grounded: it carries a coordinate, a place identifier,
+ * A node the resolver grounded: it has a coordinate, a place identifier,
  * or a resolution-tier stamp from the street tiers.
  *
- * Grounding is what a result may claim about a span.
+ * A result may claim only the information grounded in a span.
  * An ungrounded span is text the parser labeled and no more.
  */
 export function isGroundedNode(node: AddressNode): boolean {
@@ -66,18 +67,50 @@ export function isGroundedNode(node: AddressNode): boolean {
 }
 
 /**
- * The order in which a projection reads spans when one tag occurs twice:
- * every grounded node first, then the rest, each group in document order.
+ * The order in which a projection reads spans when one tag occurs twice.
  *
- * Both the flat component map (`decodeAsJSON`) and the named result slots
- * read this order, so they name the same span: a component is what resolved,
- * and the query's wording only decides among the ungrounded spans.
- * Before resolution runs the order is the text's and no node is grounded.
+ * Four per-node keys decide it, in this order:
+ *
+ * 1. A grounded node precedes an ungrounded one, because a component is what resolved.
+ * 2. A node whose tag satisfies {@linkcode isAdminHierarchyTag} precedes one whose tag does not.
+ * 3. Among the nodes outside that set, the higher label confidence precedes the lower.
+ * 4. Document order breaks the remaining ties.
+ *    `toSorted` preserves it.
+ *
+ * Confidence decides outside the hierarchy set because a span's position states no
+ * evidence about which of two same-tag spans is the component.
+ * A line that opens with a venue name the model labeled `street` puts that span first
+ * in the text while the model scores it below the street that follows.
+ *
+ * Inside the hierarchy set the canonical line runs finest to coarsest,
+ * so position is the evidence and confidence is not: a coarser place name is more
+ * frequent in training and scores higher for that reason.
+ *
+ * A merged span takes the minimum of its token confidences (`span/bridge.ts`).
+ * A long span is therefore ordered by its weakest token rather than by its mean.
+ *
+ * Key 2 also moves hierarchy nodes ahead of other tags.
+ * Every consumer reads this list one tag at a time (`decodeAsJSON` keys the flat
+ * map by tag; `extractGeocodeResult` and `plus-code-override` search it by tag),
+ * so the order between two different tags is not part of the interface.
  */
 export function slotNodes(roots: readonly AddressNode[]): AddressNode[] {
 	const inDocumentOrder = [...walkNodes(roots)]
 
-	return inDocumentOrder.toSorted((a, b) => Number(isGroundedNode(b)) - Number(isGroundedNode(a)))
+	return inDocumentOrder.toSorted((a, b) => {
+		const grounding = Number(isGroundedNode(b)) - Number(isGroundedNode(a))
+
+		if (grounding !== 0) return grounding
+
+		const aHierarchy = isAdminHierarchyTag(a.tag)
+		const bHierarchy = isAdminHierarchyTag(b.tag)
+
+		if (aHierarchy !== bHierarchy) return Number(bHierarchy) - Number(aHierarchy)
+
+		if (aHierarchy) return 0
+
+		return b.confidence - a.confidence
+	})
 }
 
 /**

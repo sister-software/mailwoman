@@ -22,7 +22,7 @@ This applies to anyone building on open geodata: **your coverage is your sources
 
 ## The trick: audit against a yardstick you didn't build
 
-Inspecting your own data cannot reveal a gap in it, because what is present looks correct. You find the gap by comparing your data against an independent source and checking where the two disagree.
+Your own data cannot reveal gaps that are absent from it. Compare it against an independent source and check where the two disagree.
 
 We did the cheapest version of that comparison. GeoNames publishes `cities15000`, a flat file of every populated place on Earth with more than 15,000 people, which we already had on disk. For each country, we counted the localities in our gazetteer and the cities in GeoNames and printed the ratio. The audit took about a minute to write. Most countries had reasonable ratios, and a long column of countries had zero:
 
@@ -36,15 +36,15 @@ AL       0     25
 ...
 ```
 
-Hong Kong has a hundred and forty-one cities in the reference and zero in ours. Tuning cannot fix a gap of that size. We checked whether the candidate build was filtering out data that existed, and it was not: the source admin DB itself stops at 97 countries. The gap was real and came from upstream.
+Hong Kong has a hundred and forty-one cities in the reference and zero in ours. Model settings cannot fill a gap of that size. We checked whether the candidate build was filtering out data that existed, and it was not: the source admin DB itself stops at 97 countries. The gap was real and came from upstream.
 
 This external comparison was the most productive hour of the whole effort, and it was simple. It needed no model or new metric. It needed a comparison of our file against someone else's count. The main recommendation of this post is to compare your coverage against a reference you did not build, along whatever dimension matters to you. A gap you cannot see still limits your results.
 
-## Fixing it without retraining anything
+## A data update fills the gap without retraining
 
 A pure data gap needs only a data fix. It needs no GPU, model, or retrain, because GeoNames already has the places, with coordinates and per-language names, for every country we were missing. We extended our gap-fill builder to register country codes it had not seen before and ran it on the full `allCountries` dump, keeping only current populated places and dropping historical and abandoned ones.
 
-The result is **4.6 million town-level localities across 248 countries**, up from 97. Resolving a place and resolving it _correctly_ are different claims, so we also checked a handful of major cities in the previously empty countries to confirm the coordinates land where they should. Kabul resolves to Kabul within a few hundred meters. Hong Kong, Tirana, Tripoli, Sarajevo, and Yerevan also resolve correctly. All nine checked cities landed within thirty kilometers, and most were exact. A spot-check of small towns placed them inside the correct country's bounding box two hundred times out of two hundred.
+The result is **4.6 million town-level localities across 248 countries**, up from 97. We also checked a handful of major cities in the previously empty countries because each result must place the city correctly. Kabul resolves to Kabul within a few hundred meters. Hong Kong, Tirana, Tripoli, Sarajevo, and Yerevan also resolve correctly. All nine checked cities landed within thirty kilometers, and most were exact. A spot-check of small towns placed them inside the correct country's bounding box two hundred times out of two hundred.
 
 ## The cost, named
 

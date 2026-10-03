@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Price id a plan carries under the test environment, read from the catalog the worker reads.
+ *   The Price id a plan uses under the test environment, read from the catalog the worker reads.
  */
 
 import type { LicenseWorkerEnv } from "@mailwoman/license-worker/env"
