@@ -27,13 +27,6 @@
 		"!test/**"
 	],
 	"type": "module",
-	"imports": {
-		"#*": {
-			"types": "./out/*.d.ts",
-			"node": "./*.ts",
-			"default": "./out/*.js"
-		}
-	},
 	"exports": {
 		"./*": "./*"
 	},
