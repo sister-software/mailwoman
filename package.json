@@ -51,6 +51,7 @@
 		"health:manifests": "sherif -i @duckdb/node-api -i @types/node -i typescript",
 		"health:test-layout": "yarn mwops health test-layout",
 		"lint": "run-p --aggregate-output --print-label --continue-on-error lint:oxlint lint:oxfmt lint:python lint:prose lint:spelling health",
+		"lint:ci": "run-p --aggregate-output --print-label --continue-on-error lint:oxlint lint:oxfmt lint:prose lint:spelling health",
 		"lint:fix": "run-p --aggregate-output --print-label --continue-on-error fix:oxc fix:python",
 		"lint:fix:all": "run-p --aggregate-output --print-label --continue-on-error fix:oxc:all fix:python",
 		"lint:oxfmt": "oxfmt --check .",

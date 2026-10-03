@@ -11,47 +11,27 @@
 import { PathBuilder } from "path-ts"
 
 import { pathExists } from "#fs/readers"
-import { readPackageJSON, resolvePackageJSON, resolvePackageSpecifier } from "#module/resolve-from"
-
-export interface ValeCommand {
-	/**
-	 * The file to spawn: the native binary, or this Node when the package publishes a script launcher.
-	 */
-	file: string
-	/**
-	 * Arguments that precede the caller's.
-	 *
-	 * This contains the launcher's path when `file` is Node and no arguments otherwise.
-	 */
-	argv: string[]
-}
-
-interface ValeManifest {
-	bin: {
-		vale: string
-	}
-}
+import { resolvePackageCommand, type PackageCommand } from "#module/package-command"
+import { resolvePackageJSON } from "#module/resolve-from"
 
 /**
+ * A Vale command uses the package command's executable and leading arguments.
+ */
+export type ValeCommand = PackageCommand
+
+/**
+ * Resolves Vale from the caller's dependencies and checks the native binary when Vale uses a Node launcher.
+ *
  * @param base The caller's `import.meta.url`, so `@vvago/vale` resolves from the package that declares it.
  */
 export async function valeCommand(base: string): Promise<ValeCommand> {
-	const manifestPath = resolvePackageJSON(base, "@vvago/vale")
-	const manifest = await readPackageJSON<ValeManifest>(manifestPath)
+	const command = await resolvePackageCommand(base, "@vvago/vale", "vale")
 
-	const bin = typeof manifest.bin === "string" ? manifest.bin : manifest.bin.vale
-
-	if (!bin) {
-		throw new TypeError(`@vvago/vale's package.json has no bin.vale entry`)
+	if (command.file === process.execPath) {
+		await assertNativeBinaryPresent(resolvePackageJSON(base, "@vvago/vale"))
 	}
 
-	const binPath = resolvePackageSpecifier(base, "@vvago/vale", bin)
-
-	if (!/\.[cm]?js$/u.test(bin)) return { file: binPath, argv: [] }
-
-	await assertNativeBinaryPresent(manifestPath)
-
-	return { file: process.execPath, argv: [binPath] }
+	return command
 }
 
 /**

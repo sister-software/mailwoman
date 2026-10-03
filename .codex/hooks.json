@@ -5,6 +5,12 @@
 				"hooks": [
 					{
 						"type": "command",
+						"command": "node \"$(git rev-parse --show-toplevel)/packages/dev-mcp/lib/hooks/ci-completion.ts\"",
+						"timeout": 30,
+						"statusMessage": "CI completion check"
+					},
+					{
+						"type": "command",
 						"command": "node \"$(git rev-parse --show-toplevel)/packages/dev-mcp/lib/hooks/vale/response/check/codex.ts\"",
 						"timeout": 30,
 						"statusMessage": "Vale prose check"
