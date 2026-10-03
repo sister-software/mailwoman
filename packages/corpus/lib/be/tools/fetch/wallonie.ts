@@ -84,22 +84,36 @@ export interface DownloadWallonieOptions {
 }
 
 /**
- * Resolves the service document to its one archive and downloads it.
+ * Where the archive is, and what the publisher states about its freshness.
+ */
+export interface WallonieArchiveReference {
+	archiveURL: string
+	datasetFeedURL: string
+	/**
+	 * The archive entry's own `<updated>`, or `null` where the feed states none.
+	 *
+	 * `updated` sits on an Atom entry rather than on the feed, so this reads the
+	 * entry that carried the archive link.
+	 * Wallonia's feed reported `2025-12-11` when this reader was written.
+	 */
+	feedUpdated: string | null
+}
+
+/**
+ * Resolves the service document to the one archive it leads to, through the dataset feed it lists.
  *
  * Raises where the service document lists no dataset feed, or where that feed offers no archive.
  * The alternative would return `{fetched: 0, skipped: 0, failed: 0}`, which a caller
  * reads as a fetch that completed and found the publisher empty.
+ *
+ * Separate from {@linkcode downloadWallonie} because the resolution is the part a test can drive.
+ * The download runs on global `fetch`, which a unit test cannot intercept.
  */
-export async function downloadWallonie(
+export async function resolveWallonieArchive(
 	client: Pick<APIClient, "fetch">,
-	options: DownloadWallonieOptions
-): Promise<FetchSummary> {
+	options: { signal?: AbortSignal; report?: (line: string) => void } = {}
+): Promise<WallonieArchiveReference> {
 	const { report } = options
-	const destDir = PathBuilder.from(options.outputDir)
-	const archivePath = destDir(BE_WALLONIE_ARCHIVE_FILENAME)
-	const manifestPath = destDir("MANIFEST.json")
-
-	await makeDirectories(destDir)
 
 	report?.(`=== ${SLUG}: reading ${BE_WALLONIE_SERVICE_URL}`)
 
@@ -151,12 +165,34 @@ export async function downloadWallonie(
 		)
 	}
 
-	const archiveLink = offered.link
+	return {
+		archiveURL: offered.link.href,
+		datasetFeedURL: datasetLink.href,
+		feedUpdated: offered.entry.updated || null,
+	}
+}
 
-	// `updated` sits on the entry rather than on the feed, so the freshness signal
-	// is the archive entry's own value.
-	// Wallonia's feed reported 2025-12-11 when this reader was written.
-	const feedUpdated = offered.entry.updated || null
+/**
+ * Resolves the service document to its one archive and downloads it.
+ */
+export async function downloadWallonie(
+	client: Pick<APIClient, "fetch">,
+	options: DownloadWallonieOptions
+): Promise<FetchSummary> {
+	const { report } = options
+	const destDir = PathBuilder.from(options.outputDir)
+	const archivePath = destDir(BE_WALLONIE_ARCHIVE_FILENAME)
+	const manifestPath = destDir("MANIFEST.json")
+
+	// Resolved before the directory is made, so a publisher that answers with an
+	// exception report leaves no empty source directory behind.
+	const { archiveURL, datasetFeedURL, feedUpdated } = await resolveWallonieArchive(client, {
+		signal: options.signal,
+		report,
+	})
+
+	await makeDirectories(destDir)
+
 	const recorded = await readManifest<WallonieManifest>(manifestPath)
 	const stat = await tryStat(archivePath)
 
@@ -166,10 +202,10 @@ export async function downloadWallonie(
 		return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
 	}
 
-	report?.(`  archive: ${archiveLink.href}`)
+	report?.(`  archive: ${archiveURL}`)
 
 	const { bytes } = await downloadToFile({
-		url: archiveLink.href,
+		url: archiveURL,
 		dest: archivePath,
 		retries: options.retries,
 		retryDelayMs: options.retryDelayMs,
@@ -181,9 +217,9 @@ export async function downloadWallonie(
 	report?.(`  ✓ ${ByteFormatter.formatIEC(bytes)}  sha256=${sha256}`)
 
 	const manifest: WallonieManifest = {
-		source_url: archiveLink.href,
+		source_url: archiveURL,
 		service_url: BE_WALLONIE_SERVICE_URL,
-		dataset_feed_url: datasetLink.href,
+		dataset_feed_url: datasetFeedURL,
 		filename: BE_WALLONIE_ARCHIVE_FILENAME,
 		bytes,
 		sha256,

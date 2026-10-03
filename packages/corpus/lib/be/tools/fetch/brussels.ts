@@ -83,6 +83,61 @@ export interface DownloadBrusselsOptions {
 }
 
 /**
+ * What the publisher's HEAD response states about the archive it holds.
+ *
+ * Both fields read `null` where the header is absent, rather than an empty string or zero.
+ * An absent `last-modified` is the service declining to state a version, which is a
+ * different fact from a version that happens to match the one on disk.
+ */
+export interface BrusselsPublication {
+	lastModified: string | null
+	reportedBytes: number | null
+}
+
+/**
+ * Reads the publisher's HEAD response.
+ *
+ * Separate from {@linkcode downloadBrussels} because this one request carries the whole freshness
+ * decision, and the download itself runs on global `fetch`, which a unit test cannot intercept.
+ */
+export async function readBrusselsPublication(
+	client: Pick<APIClient, "fetch">,
+	options: { signal?: AbortSignal } = {}
+): Promise<BrusselsPublication> {
+	const head = await client.fetch<unknown>({
+		method: "HEAD",
+		url: BE_BRUSSELS_ARCHIVE_URL,
+		timeout: 120_000,
+		signal: options.signal,
+	})
+
+	const reported = Number(head.headers?.["content-length"] ?? Number.NaN)
+
+	return {
+		lastModified: String(head.headers?.["last-modified"] ?? "") || null,
+		reportedBytes: Number.isFinite(reported) ? reported : null,
+	}
+}
+
+/**
+ * Whether the archive on disk is the one the publisher currently serves.
+ *
+ * A skip requires the publisher to state a `last-modified` value.
+ * Where it states none, both sides read `null` and an equality test would hold,
+ * which would keep an archive of unknown age for as long as the service stayed silent.
+ * Downloading 11 MiB again is the cheaper error.
+ */
+export function brusselsPublicationIsRecorded(
+	recorded: BrusselsManifest,
+	bytesOnDisk: number,
+	publication: BrusselsPublication
+): boolean {
+	if (publication.lastModified === null) return false
+
+	return recorded.last_modified === publication.lastModified && recorded.bytes === bytesOnDisk
+}
+
+/**
  * Downloads the archive unless the manifest and the file on disk already agree with the publisher.
  */
 export async function downloadBrussels(
@@ -98,29 +153,23 @@ export async function downloadBrussels(
 
 	report?.(`=== ${SLUG} / ${BE_BRUSSELS_ARCHIVE_FILENAME}`)
 
-	const head = await client.fetch<unknown>({
-		method: "HEAD",
-		url: BE_BRUSSELS_ARCHIVE_URL,
-		timeout: 120_000,
-		signal: options.signal,
-	})
-
-	const lastModified = String(head.headers?.["last-modified"] ?? "") || null
-	const reportedLength = Number(head.headers?.["content-length"] ?? Number.NaN)
+	const publication = await readBrusselsPublication(client, { signal: options.signal })
 
 	report?.(
-		`  HEAD: ${Number.isFinite(reportedLength) ? ByteFormatter.formatIEC(reportedLength) : "no content-length"}` +
-			`, last-modified ${lastModified ?? "unstated"}`
+		`  HEAD: ${publication.reportedBytes === null ? "no content-length" : ByteFormatter.formatIEC(publication.reportedBytes)}` +
+			`, last-modified ${publication.lastModified ?? "unstated"}`
 	)
 
 	const recorded = await readManifest<BrusselsManifest>(manifestPath)
 	const stat = await tryStat(archivePath)
 
-	if (!options.force && recorded && stat && recorded.last_modified === lastModified && recorded.bytes === stat.size) {
+	if (!options.force && recorded && stat && brusselsPublicationIsRecorded(recorded, stat.size, publication)) {
 		report?.(`  present, and the publisher's last-modified is unchanged`)
 
 		return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
 	}
+
+	const lastModified = publication.lastModified
 
 	const { bytes } = await downloadToFile({
 		url: BE_BRUSSELS_ARCHIVE_URL,
