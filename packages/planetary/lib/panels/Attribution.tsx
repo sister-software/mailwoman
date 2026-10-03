@@ -49,7 +49,7 @@ function creditLines(manifest: PlanetaryBuildManifest, config: PlanetaryMapConfi
 export function Attribution({ config }: AttributionProps) {
 	const state = useBuildManifest(config.artifacts.manifestURL)
 
-	// The licences require the credits even before the manifest loads, so a fallback
+	// The licenses require the credits even before the manifest loads, so a fallback
 	// lists both sources without the snapshot date.
 	const lines =
 		state.status === "ready"

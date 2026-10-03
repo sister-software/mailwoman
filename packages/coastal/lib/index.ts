@@ -102,7 +102,7 @@ export interface CoastalDesignation {
 	areaID: string
 	frontageID: number
 	/**
-	 * Cumulative erosion distance in metres, as published under this scenario.
+	 * Cumulative erosion distance in meters, as published under this scenario.
 	 */
 	distanceM: number
 	shorelineManagementPlan?: { number: number; name: string; policyUnit: string }
@@ -121,7 +121,7 @@ export interface CoastalDesignation {
 	/**
 	 * Publication year as published.
 	 *
-	 * Some source rows contain 0 with blank policy and defence fields.
+	 * Some source rows contain 0 with blank policy and defense fields.
 	 * The source does not explain them.
 	 */
 	publishedYear?: number

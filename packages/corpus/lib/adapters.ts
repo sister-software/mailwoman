@@ -23,6 +23,10 @@
  *   Region alone, because Brussels and Wallonia publish the INSPIRE theme through their own
  *   services, so Belgium needs three adapters rather than one.
  *
+ *   Spain needs four, for the same reason. `es-catastro` reads the Dirección General del Catastro's
+ *   52 provinces, and `es-bizkaia`, `es-gipuzkoa` and `es-navarra` read the foral cadastres, which
+ *   state their own terms and which the national feed links rather than serves.
+ *
  *   An adapter reading a publisher that is not any one country's lives here, at `lib/adapters/<id>/`.
  *   That is the aggregators, `./openaddresses/`, `./osm/`, `./overture/`, `./geonames/` and `./wof/`,
  *   plus `./po-box/`.
@@ -50,6 +54,10 @@ import { wallonieAdapter } from "#be/adapters/wallonie/adapter"
 import { czCuzkAdapter } from "#cz/adapters/cuzk/adapter"
 import { dkInspireAdapter } from "#dk/adapters/inspire/adapter"
 import { adsAdapter } from "#ee/adapters/ads/adapter"
+import { esBizkaiaAdapter } from "#es/adapters/bizkaia/adapter"
+import { esCatastroAdapter } from "#es/adapters/catastro/adapter"
+import { esGipuzkoaAdapter } from "#es/adapters/gipuzkoa/adapter"
+import { esNavarraAdapter } from "#es/adapters/navarra/adapter"
 import { ryhtiAdapter } from "#fi/adapters/ryhti/adapter"
 import { banAdapter } from "#fr/adapters/ban/adapter"
 import { itANACAdapter } from "#it/adapters/anac/adapter"
@@ -102,6 +110,10 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	nlKadasterAdapter,
 	bdAdressesAdapter,
 	skInspireAdapter,
+	esCatastroAdapter,
+	esBizkaiaAdapter,
+	esGipuzkoaAdapter,
+	esNavarraAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
 	overtureAdapter,

@@ -94,7 +94,7 @@ def iter_source_rows(
       (``岡山町1154,1153,1155,…``). That row renders as one ``house_number`` span sixty parcels long;
     - the field total fits ``max_field_chars``. This is the structural guard behind the semantic one:
       the char path runs at S=96 units and ``encode_row_units`` truncates silently, so a row that
-      cannot fit is dropped here, counted, rather than half-labelled there.
+      cannot fit is dropped here, counted, rather than half-labeled there.
 
     Normalization happens here for the same reason the filter lives in the iterator.
     """

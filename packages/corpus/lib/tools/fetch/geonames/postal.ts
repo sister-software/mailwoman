@@ -48,7 +48,7 @@ export interface FetchGeonamesPostalOptions extends BaseFetchOptions {
 	/**
 	 * Export directory to read from.
 	 *
-	 * Defaults to GeoNames' own, so the 404-is-coverage behaviour can be exercised against a local server.
+	 * Defaults to GeoNames' own, so the 404-is-coverage behavior can be exercised against a local server.
 	 */
 	baseURL?: string
 }

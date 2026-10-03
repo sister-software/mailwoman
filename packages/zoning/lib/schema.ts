@@ -101,7 +101,7 @@ export interface ZoningAreaTable {
 	 */
 	ring_count: number
 	/**
-	 * The signed ring sum, in square metres, positive under this service's clockwise-exterior convention.
+	 * The signed ring sum, in square meters, positive under this service's clockwise-exterior convention.
 	 */
 	signed_area_m2: number
 	/**

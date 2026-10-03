@@ -52,7 +52,7 @@ node packages/mailwoman/out/cli/main.js gazetteer build fst \
 ```
 
 Builds `fst-{en-us,fr-fr,en-gb,de-de}.bin` — the `FST_LOCALES` set. Output goes to a STAGING dir and
-the swap into `fst-per-locale/` is operator-approved: an FST changes decoder behaviour, so it moves
+the swap into `fst-per-locale/` is operator-approved: an FST changes decoder behavior, so it moves
 after the battery rather than as a side effect of a build.
 
 **Every per-locale FST has a builder; `fst-global-priority.bin` is retired.** The CJK three

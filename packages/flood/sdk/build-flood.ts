@@ -145,7 +145,7 @@ export interface BuildFloodResult {
 	coverageCells: number
 	coverageCellsWithRows: number
 	/**
-	 * Reports area totals in square kilometres for the source and encoded rings.
+	 * Reports area totals in square kilometers for the source and encoded rings.
 	 * It reports the ring area with holes and without holes.
 	 */
 	area: AreaAgreementReading

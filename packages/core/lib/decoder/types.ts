@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for decoded address trees and the labelled tokens they are built from.
+ *   Types for decoded address trees and the labeled tokens they are built from.
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"

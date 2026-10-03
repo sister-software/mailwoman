@@ -12,8 +12,10 @@ import {
 	codelistValue,
 	componentHrefs,
 	componentJoinKey,
+	componentLinks,
 	designator,
 	designatorsByType,
+	inspireNameIs,
 	isVoid,
 	placeName,
 	postalDescriptorCode,
@@ -336,5 +338,127 @@ describe("isVoid and voidReason", () => {
 		expect(isVoid(childElement(address!, "ad:nowhere"))).toBe(false)
 		expect(voidReason(childElement(address!, "ad:nowhere"))).toBeUndefined()
 		expect(voidReason(childElement(address!, "ad:alternativeIdentifier"))).toBe("Unpopulated")
+	})
+})
+
+/**
+ * A Spanish address, trimmed from the Dirección General del Catastro's real file.
+ *
+ * The Cadastre binds the INSPIRE namespaces to `AD:` and `GN:`, states its designator type
+ * and its administrative level as element text rather than as a codelist URI, writes the
+ * street's type abbreviation inside the name, and references each component by a local fragment.
+ */
+const ES = `<gml:FeatureCollection xmlns:GN="urn:x-inspire:specification:gmlas:GeographicalNames:3.0" xmlns:base="urn:x-inspire:specification:gmlas:BaseTypes:3.2" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:AD="urn:x-inspire:specification:gmlas:Addresses:3.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<AD:Address gml:id="ES.SDGC.AD.55.101.1.13D.9745701TE8794S">
+		<AD:locator><AD:AddressLocator>
+			<AD:designator><AD:LocatorDesignator>
+				<AD:designator>13D</AD:designator>
+				<AD:type>1</AD:type>
+			</AD:LocatorDesignator></AD:designator>
+			<AD:level>siteLevel</AD:level>
+		</AD:AddressLocator></AD:locator>
+		<AD:component xlink:href="#ES.SDGC.PD.55.101.51002" />
+		<AD:component xlink:href="#ES.SDGC.TN.55.101.1" />
+	</AD:Address>
+	<AD:ThoroughfareName gml:id="ES.SDGC.TN.55.101.1">
+		<AD:name><AD:ThoroughfareNameValue><AD:name><GN:GeographicalName><GN:spelling><GN:SpellingOfName>
+			<GN:text> CL SANTIAGO APOSTOL</GN:text>
+		</GN:SpellingOfName></GN:spelling></GN:GeographicalName></AD:name></AD:ThoroughfareNameValue></AD:name>
+	</AD:ThoroughfareName>
+	<AD:PostalDescriptor gml:id="ES.SDGC.PD.55.101.51002"><AD:postCode>51002</AD:postCode></AD:PostalDescriptor>
+	<AD:AdminUnitName gml:id="ES.SDGC.AU.55.101">
+		<AD:name><GN:GeographicalName><GN:spelling><GN:SpellingOfName>
+			<GN:text>CEUTA</GN:text>
+		</GN:SpellingOfName></GN:spelling></GN:GeographicalName></AD:name>
+		<AD:level>4</AD:level>
+	</AD:AdminUnitName>
+</gml:FeatureCollection>`
+
+/**
+ * A Walloon thoroughfare feature, trimmed from the real file.
+ *
+ * The Service public de Wallonie writes three `gml:name` elements ahead of the `ad:name` that
+ * holds the street, which is why the readers compare the prefix rather than the local name alone.
+ */
+const BE_WALLONIE = `<gml:FeatureCollection ${NS}>
+	<ad:ThoroughfareName gml:id="BE.WL.ICAR.ThoroughfareName.7700328">
+		<gml:name>ICAR - Points d'adresses</gml:name>
+		<gml:name>Streetname</gml:name>
+		<gml:name>AD.ThoroughfareName</gml:name>
+		<ad:name><ad:ThoroughfareNameValue><ad:name><gn:GeographicalName><gn:spelling><gn:SpellingOfName>
+			<gn:text>Chaussée Reine Astrid</gn:text>
+		</gn:SpellingOfName></gn:spelling></gn:GeographicalName></ad:name></ad:ThoroughfareNameValue></ad:name>
+	</ad:ThoroughfareName>
+</gml:FeatureCollection>`
+
+describe("inspireNameIs", () => {
+	it("matches a name whatever case its prefix carries", () => {
+		expect(inspireNameIs("AD:Address", "ad:Address")).toBe(true)
+		expect(inspireNameIs("ad:Address", "ad:Address")).toBe(true)
+		expect(inspireNameIs("GN:text", "gn:text")).toBe(true)
+	})
+
+	it("separates two namespaces that bind the same local name", () => {
+		// The prefix carries the namespace and the namespace carries the meaning.
+		expect(inspireNameIs("gml:name", "ad:name")).toBe(false)
+		expect(inspireNameIs("name", "ad:name")).toBe(false)
+	})
+})
+
+describe("the readers against an upper-case prefix", () => {
+	it("reads a designator whose type is element text rather than a codelist URI", async () => {
+		const [address] = await features(ES, "AD:Address")
+
+		expect(designatorsByType(address!)).toEqual(new Map([["1", ["13D"]]]))
+		expect(designator(designatorsByType(address!), "1")).toBe("13D")
+	})
+
+	it("reads a street, a postcode and an administrative level the Cadastre spells its own way", async () => {
+		const [street] = await features(ES, "AD:ThoroughfareName")
+		const [postal] = await features(ES, "AD:PostalDescriptor")
+		const [unit] = await features(ES, "AD:AdminUnitName")
+
+		// The leading space is the publisher's and the reader trims it.
+		// The `CL` abbreviation is part of the name the Cadastre renders.
+		expect(thoroughfareName(street!)).toBe("CL SANTIAGO APOSTOL")
+		expect(postalDescriptorCode(postal!)).toBe("51002")
+		expect(placeName(unit!)).toBe("CEUTA")
+
+		// `4` is the element text where every other publisher writes `AdministrativeHierarchyLevel/4thOrder`.
+		expect(adminUnitLevel(unit!)).toBe("4")
+	})
+
+	it("reads the component references an upper-case prefix writes", async () => {
+		const [address] = await features(ES, "AD:Address")
+
+		expect(componentHrefs(address!)).toEqual(["#ES.SDGC.PD.55.101.51002", "#ES.SDGC.TN.55.101.1"])
+	})
+})
+
+describe("componentLinks", () => {
+	it("returns each reference with the title the publisher wrote beside it", async () => {
+		const [address] = await features(CZ, "ad:Address")
+
+		expect(componentLinks(address!)).toEqual([
+			{ href: "http://services.cuzk.cz/wfs/inspire-ad-wfs.asp?service=WFS&Id=TF.48674", title: "Komenského" },
+			{ href: "http://services.cuzk.cz/wfs/inspire-ad-wfs.asp?service=WFS&Id=PD.66701", title: "66701" },
+		])
+	})
+
+	it("returns a reference carrying no title without one", async () => {
+		const [address] = await features(ES, "AD:Address")
+
+		expect(componentLinks(address!)).toEqual([{ href: "#ES.SDGC.PD.55.101.51002" }, { href: "#ES.SDGC.TN.55.101.1" }])
+	})
+})
+
+describe("the readers against a prefix that repeats a local name", () => {
+	it("reads the street out of ad:name rather than out of the gml:name ahead of it", async () => {
+		const [street] = await features(BE_WALLONIE, "ad:ThoroughfareName")
+
+		// A reader that dropped the prefix read `ICAR - Points d'adresses` as the first
+		// `name` child, found no `ThoroughfareNameValue` under it, and answered undefined
+		// for all 58,591 of Wallonia's thoroughfare features.
+		expect(thoroughfareName(street!)).toBe("Chaussée Reine Astrid")
 	})
 })

@@ -13,7 +13,7 @@ import { TextSpliterator } from "spliterator"
  *   With `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` present, it placed the vertex at `1.698174628, 52.648157259`, a distance
  *   of 3.4 m. Both coordinates look like ordinary WGS84 values and pass a bounding-box check. The layer is offset.
  *   The check found eight disagreements among 59 points against the authority's OGC service. Each point fell into a
- *   neighbouring sliver.
+ *   neighboring sliver.
  *
  *   GDAL 3.8 does not pass `--config PROJ_NETWORK on` through to PROJ. Tests also showed that `PROJ_ONLY_BEST=on`
  *   does not refuse a ballpark shift. `projinfo` provides the usable check. Its output identifies the best candidate
@@ -25,7 +25,7 @@ import { TextSpliterator } from "spliterator"
  *
  *   Every vector ingest shares this check because the failure comes from PROJ rather than from a particular product.
  *   Output parsing is separate from process execution so tests can use captured output. The two output states came from the
- *   same command on the same machine before and after grid installation. One produced a metre-accurate layer. The
+ *   same command on the same machine before and after grid installation. One produced a meter-accurate layer. The
  *   other produced a 3 m offset.
  */
 
@@ -108,7 +108,7 @@ export async function assertDatumTransformationAvailable(
 
 	throw new Error(
 		`${options.context}: the best EPSG:${sourceEPSG} → EPSG:${targetEPSG} transformation is unusable — ${verdict.reason} ` +
-			`(${verdict.best ?? "projinfo named no candidate"}). PROJ falls back to a ballpark datum shift, which is metres ` +
+			`(${verdict.best ?? "projinfo named no candidate"}). PROJ falls back to a ballpark datum shift, which is meters ` +
 			`wrong and looks exactly like a correct answer. ${remedy}`
 	)
 }

@@ -61,7 +61,7 @@ describe("realizeFloodMapExtent", () => {
 	})
 
 	it("refuses an outline that yields no interior cell rather than building a silent no-op", () => {
-		// Resolution 2 cells are hundreds of thousands of square kilometres, so no cell lies wholly
+		// Resolution 2 cells are hundreds of thousands of square kilometers, so no cell lies wholly
 		// inside this rectangle and the build must refuse rather than report success with no coverage.
 		expect(() => realize(GEOMETRY, 2)).toThrow(/no interior cell/u)
 	})

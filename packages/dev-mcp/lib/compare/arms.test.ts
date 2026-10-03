@@ -142,7 +142,7 @@ describe("mwdev_compare — an oracle arm", () => {
 		expect((result["graded"] as Record<string, number>)["ungradeable"]).toBe(oracle.calls.length)
 	})
 
-	it('honours `grade: "truth"` by refusing rather than by grading', async () => {
+	it('honors `grade: "truth"` by refusing rather than by grading', async () => {
 		// `resolveGradeMode` throws for a request it cannot meet.
 		// The oracle refusal must not turn that into a silent downgrade either.
 		// The caller asked for a verdict and gets a stated reason there is none.

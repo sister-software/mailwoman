@@ -191,7 +191,7 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
 
 /**
  * Fails when the model card has no training attribution.
- * Warns about each source without a licence.
+ * Warns about each source without a license.
  *
  * Only a missing attribution list is fatal.
  */

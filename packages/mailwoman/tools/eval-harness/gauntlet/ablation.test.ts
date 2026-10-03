@@ -113,7 +113,7 @@ describe("ablationVariants — one variant per attributable component", () => {
 		expect(variants.find((v) => v.component === "house_number")!.input).toBe("Rue du Chevaleret, 75013 Paris")
 	})
 
-	it("honours a component filter", () => {
+	it("honors a component filter", () => {
 		const { variants } = ablationVariants(
 			"181 Rue du Chevaleret, 75013 Paris",
 			components,

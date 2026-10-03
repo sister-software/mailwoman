@@ -113,7 +113,7 @@ describe("diffGeocode", () => {
 		expect(renderGeocodeDiff(diff)).toContain("tier address_point → admin")
 	})
 
-	it("keeps a LOST coordinate distinct from a zero-kilometre move", () => {
+	it("keeps a LOST coordinate distinct from a zero-kilometer move", () => {
 		// Undefined distance and zero distance are different events.
 		// A collapsed value would confuse an unknown distance with a measured zero.
 		const node = tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 2])

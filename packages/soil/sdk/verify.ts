@@ -38,7 +38,7 @@ export interface SoilAgreementRow {
 	serviceMukey: string | null
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Metres from the point to the nearest edge of the delineation the artifact matched.
+	 * Meters from the point to the nearest edge of the delineation the artifact matched.
 	 *
 	 * Included on every row because it separates a real defect from two channels
 	 * rendering the same edge differently.
@@ -72,7 +72,7 @@ export interface VerifySoilResult {
 /**
  * Points outside the pilot region.
  *
- * Every neighbouring state is included because a footprint clipped to "the
+ * Every neighboring state is included because a footprint clipped to "the
  * Midwest" would pass a one-state check.
  */
 export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
@@ -87,7 +87,7 @@ export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: numb
 ]
 
 /**
- * One metre, far below the median delineation, so a disagreement within it is the two
+ * One meter, far below the median delineation, so a disagreement within it is the two
  * channels rendering the same edge differently rather than a conversion defect.
  */
 const BOUNDARY_TOLERANCE_METRES = 1
@@ -236,7 +236,7 @@ function localDelineationAt(
 }
 
 /**
- * Metres from a point to the nearest edge of an encoded ring set.
+ * Meters from a point to the nearest edge of an encoded ring set.
  *
  * This function decodes here because it runs once per verification rather than once per geocode.
  */

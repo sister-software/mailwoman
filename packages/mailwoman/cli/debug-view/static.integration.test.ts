@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Every frame is stripped of ANSI before it is matched, because chalk's dim/reset pair around an evidence label means `\s+` cannot span the gap in a coloured frame.
+ *   Every frame is stripped of ANSI before it is matched, because chalk's dim/reset pair around an evidence label means `\s+` cannot span the gap in a colored frame.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

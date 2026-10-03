@@ -42,7 +42,7 @@
 	--ifm-color-gray-900: oklch(13% 0.028 261.692);
 	--ifm-color-gray-1000: var(--ifm-color-black);
 
-	/* Secondary body copy and every TOC link. This was `rebeccapurple` — a CSS named colour left in from
+	/* Secondary body copy and every TOC link. This was `rebeccapurple` — a CSS named color left in from
 	   bring-up, which put #663399 on the right-hand TOC and on all of the homepage's secondary copy. The dark
 	   theme's counterpart got its pass (theme-dark.css:35); this one never did. Same neutral, tuned for light. */
 	--ifm-color-content-secondary: hsl(222deg 9% 38%);

@@ -98,9 +98,9 @@ def census(
 ) -> dict[str, Any]:
     """Count every opening over ``draws`` rows, at the draw level and again at the emitted level.
 
-    ``augment_exclude_sources`` is honoured because both passes run `emit.emit_row`, the same function
+    ``augment_exclude_sources`` is honored because both passes run `emit.emit_row`, the same function
     the trainer runs: a listed source bypasses augmentation entirely, so it emits exactly what it drew
-    while its neighbours expand.
+    while its neighbors expand.
     """
 
     def stream(rng: random.Random) -> Iterator[dict[str, Any]]:

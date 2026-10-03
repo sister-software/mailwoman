@@ -279,7 +279,7 @@ describe("resolveOptsFrom", () => {
 		})
 
 		// The library defaults this option off.
-		// An explicit `false` would pin the shipped behaviour.
+		// An explicit `false` would pin the shipped behavior.
 		// The unset option exercises the one-sided-forwarding case represented by the gauntlet's tri-states.
 		expect(resolveOptsFrom({ spanRescoreRequireContextRemainder: false }, "none")).toEqual({})
 	})

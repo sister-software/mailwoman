@@ -41,7 +41,7 @@ function NotFound({ pathname }: { pathname: string }) {
 }
 
 /**
- * The map renders at the default centre at once.
+ * The map renders at the default center at once.
  *
  * The geolocation answer only moves the bias when it arrives, so no request
  * waits on the network before the first paint.

@@ -96,7 +96,7 @@ export interface DemoCascadeSmokeOptions {
 /**
  * What {@linkcode demoCascadeSmoke} returns.
  *
- * `exitCode` records what the script signalled with `process.exit`: 0 = the run completed
+ * `exitCode` records what the script signaled with `process.exit`: 0 = the run completed
  * (row failures are in the table + sidecar. The check verdict enforces any floor),
  * 2 = missing artifacts or malformed rows.
  * The check reports a non-zero code and continues, exactly as it did with the child.

@@ -98,7 +98,7 @@ and the response geometry should be derived from the graph so they cannot disagr
 
 Evidence sources that observe the same latent factor are not independent. Population, road
 density, broadband availability, POI density and built-up area are all partial observations of
-urbanisation; multiplying them as five independent likelihoods would manufacture confidence. A
+urbanization; multiplying them as five independent likelihoods would manufacture confidence. A
 model must represent those correlations (directly or through latent factors), and calibration must
 use geographically held-out regions rather than random near rows. An 80% candidate region should
 contain the withheld truth approximately 80% of the time in in fact novel geographies.
@@ -110,7 +110,7 @@ weak. The operator's extension: use settlement theory to get a prior over **exis
 for things we hold no record of.
 
 Christaller's central place theory gives _threshold_ (minimum population sustaining a good) and
-_range_ (maximum distance travelled for it). The prediction: a settlement of a given size supports
+_range_ (maximum distance traveled for it). The prediction: a settlement of a given size supports
 approximately N of a facility class, spatially distributed across its service area. So a query for
 a grocery store in a suburb where we hold no POI row is not unanswerable — density and settlement
 size give a rough count of them and roughly where they concentrate (arterial roads, commercial
@@ -235,7 +235,7 @@ interface is:
 acquire snapshot/replication sequence
   → bounded pilot and resource projection
   → independent resumable extracts
-  → structural + geographic + licence validation
+  → structural + geographic + license validation
   → seal manifest and coverage assertions
   → immutable publish
   → verified atomic runtime activation

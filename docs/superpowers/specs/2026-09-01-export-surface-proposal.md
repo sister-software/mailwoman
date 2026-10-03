@@ -31,7 +31,7 @@ list (an expression statement, a bare `import "x"` or a top-level await runs; a 
 16 that cannot claim it are almost all entries — `lib/cli.ts`, `scripts/*.ts` — not library modules.
 
 The rationale here said it would let a barrel tree-shake, demoting the browser-safe-leaf discipline to
-defence in depth. **It does not.** Measured after landing it: repointing one demo import from
+defense in depth. **It does not.** Measured after landing it: repointing one demo import from
 `street/normalize` back to the `street` barrel still produces 27
 `'x' is not exported from 'node:fs/promises'` errors. The leaf rule is still required, and
 `webpack-policy.test.ts` now refuses a barrel import by name in ~30 ms — because the only other thing that
@@ -47,7 +47,7 @@ This looked right and is the opposite of right. **The alias list's job is to DIF
 exports map.** `@mailwoman/resolver-wof-sqlite` now advertises both `./fst` and `./fst/deserialize-web`;
 Node callers should take the barrel and the browser must take the leaf, because the barrel re-exports
 `fst/freshness`, which reaches `@mailwoman/core/fs`. A derivation reads both entries and has no way to
-express the preference — it is an editorial judgement about the BROWSER, and the exports map is not written
+express the preference — it is an editorial judgment about the BROWSER, and the exports map is not written
 from the browser's point of view.
 
 What the hand-list needed was not derivation but a refusal: `requireAlias` now throws on an entry that

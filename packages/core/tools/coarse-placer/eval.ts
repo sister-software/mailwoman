@@ -22,7 +22,7 @@ import { defaultDataDir, defaultModelDir } from "#tools/coarse-placer/paths"
 import { formatPercent } from "#utils"
 
 /**
- * Confusions below this count are individually uninteresting and are summarised instead.
+ * Confusions below this count are individually uninteresting and are summarized instead.
  */
 const MIN_CONFUSION_COUNT = 20
 

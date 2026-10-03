@@ -42,7 +42,7 @@ describe("describeResolverPins — the run banner", () => {
 		)
 	})
 
-	it("says so when nothing is pinned — an unlabelled log is not evidence about a pin", () => {
+	it("says so when nothing is pinned — an unlabeled log is not evidence about a pin", () => {
 		expect(describeResolverPins(undefined)).toBe("resolver pins: (none pinned — production defaults)")
 	})
 })
@@ -189,7 +189,7 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 describe("adminContainmentRerank pin (#1717 stage 2)", () => {
 	// The pin must flow through both paths.
 	// One-sided forwarding compiles and passes every other test.
-	// It also produces an off-labelled log that graded the default arm.
+	// It also produces an off-labeled log that graded the default arm.
 	it("maps the ON pin onto the geocode dep of the same name", () => {
 		expect(resolverPinDeps({ adminContainmentRerank: true })).toEqual({ adminContainmentRerank: true })
 	})

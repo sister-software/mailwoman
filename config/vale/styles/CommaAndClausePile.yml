@@ -12,7 +12,7 @@
 ##   KEEP:
 ##     "The loader reads letters, digits, and punctuation."
 ##     "The loader validates each row, and it records the result."
-##     "The distance, the policy, and the defence belong to each feature, so the answer is a polygon."
+##     "The distance, the policy, and the defense belong to each feature, so the answer is a polygon."
 extends: existence
 message: "A comma-and clause continues into another step or result — split the sequence and state the relation directly."
 level: warning

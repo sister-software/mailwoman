@@ -57,7 +57,7 @@ export type JapaneseAdminSuffix = (typeof JP_ADMIN_SUFFIXES)[number]
  *
  * Japan's stand-in for a house number, since there is no street name to hang one on:
  *
- * - 丁目 (chōme) — a district block within a neighbourhood.
+ * - 丁目 (chōme) — a district block within a neighborhood.
  * - 番地 (banchi) — a lot number.
  * - 番 (ban) — block number (the `番` in the modern `chōme-ban-gō` triple).
  * - 号 (gō) — building number (the final element of the triple).

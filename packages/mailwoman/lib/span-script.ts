@@ -18,7 +18,7 @@ import { classifyTokens, scriptForRange } from "@mailwoman/query-shape"
  * Write `script` onto every node of `tree`, in place.
  *
  * `text` must be the string the node offsets index into.
- * The normalized input rather than the raw one, since that is what the classifier labelled.
+ * The normalized input rather than the raw one, since that is what the classifier labeled.
  *
  * The raw string would silently mis-range every span on any input normalization touched.
  *

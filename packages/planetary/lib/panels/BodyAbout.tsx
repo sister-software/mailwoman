@@ -6,7 +6,7 @@
  *   What this globe is made of: the archives the build read, with their snapshot dates and sizes, plus the build's own
  *   version.
  *
- *   The footer strip includes one line of credit because that is a licence obligation and has to be visible without
+ *   The footer strip includes one line of credit because that is a license obligation and has to be visible without
  *   asking. This sheet is the rest of the same manifest. A reader who wants to know which DEM, from when, at what
  *   size, asks for it here instead of reading the pipeline's source.
  */

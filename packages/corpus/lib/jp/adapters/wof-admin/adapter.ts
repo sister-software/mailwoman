@@ -12,7 +12,7 @@
  *
  *   1. **Reversed ordering** — region → county → locality → block → house_number "東京都世田谷区南町1-2-3" not
  *        "1-2-3 Minamicho, Setagaya, Tokyo"
- *   2. **No street names** — most JP addresses use a block/sub-block grid system. The "neighbourhood"
+ *   2. **No street names** — most JP addresses use a block/sub-block grid system. The "neighborhood"
  *        placetype (丁目) is the closest analog to a street but is actually a grid cell.
  *   3. **Postcode-first convention** — addresses are often prefixed with `〒NNN-nnnn`.
  *
@@ -21,7 +21,7 @@
  *   | JP concept | WOF placetype | ComponentTag (Phase 6) |
  *   |-----------------|--------------------|-----------------------| | 都道府県 (prefecture) | region |
  *   region (or prefecture) | | 市区町村 (city/ward) | county/locality | locality (or municipality) | |
- *   丁目 (chome) | neighbourhood | block (Phase 6 tag) | | 番地 (banchi) | (synth) | sub_block | | 号
+ *   丁目 (chome) | neighborhood | block (Phase 6 tag) | | 番地 (banchi) | (synth) | sub_block | | 号
  *   (gō) | (synth) | house_number | | 〒 (postcode prefix) | — | postcode |
  *
  *   This adapter currently emits only the admin chain (region → locality → block). House numbers and
@@ -137,7 +137,7 @@ export function synthesizeJpAddress(
 /**
  * Build the JP adapter.
  *
- * Reads from the unified global WOF SQLite and walks admin chains from neighbourhoods.
+ * Reads from the unified global WOF SQLite and walks admin chains from neighborhoods.
  * Yields canonical rows.
  */
 export function createWOFAdminJpAdapter(): CorpusAdapter {
@@ -166,7 +166,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 			}
 
 			// One read of the JP place table instead of a fresh `prepare` + up to six point queries per seed.
-			// There are tens of thousands of neighbourhood seeds.
+			// There are tens of thousands of neighborhood seeds.
 			const byID = new Map<number, PlaceRow>()
 
 			for (const row of allRows<PlaceRow>(

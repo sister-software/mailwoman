@@ -42,7 +42,7 @@ export interface FanoutResolution {
 }
 
 /**
- * How close candidates must be to read as one place modelled several times
+ * How close candidates must be to read as one place modeled several times
  * rather than different places sharing a Wikidata id.
  *
  * Intra-group max spread across the 7,061 fanned-out groups: p50 2.61 km, p75 5.80,

@@ -130,7 +130,7 @@ async function fixture(
 	}
 }
 
-describe("fulfilment", () => {
+describe("fulfillment", () => {
 	it("mints one token for a paid invoice on an allowlisted Price, with expires = period end + 14 days, and emails it once", async () => {
 		const { env: worker, publicKeyPEM, kid, deps } = await fixture("1")
 

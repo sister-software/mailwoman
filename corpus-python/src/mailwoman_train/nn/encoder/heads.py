@@ -201,7 +201,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         # zero-initialized in _init_weights so the model starts as the exact identity of an
         # unconditioned encoder (gamma=0, beta=0 → h unchanged) and only learns to modulate as the
         # aux gradient flows — this is the de-risking move against the CRF-style from-scratch
-        # divergence (one new behaviour, introduced gently rather than a cold-start architecture shock).
+        # divergence (one new behavior, introduced gently rather than a cold-start architecture shock).
         self.locale_head: nn.Linear | None
         self.locale_film: nn.Linear | None
         if self.use_locale_conditioning:

@@ -71,7 +71,7 @@ export const SOIL_SCHEMA_VERSION = 1
 export const DEFAULT_CHUNK_SIZE = 100_000
 
 /**
- * Square metres per acre, the unit of `legend.areaacres`.
+ * Square meters per acre, the unit of `legend.areaacres`.
  */
 const M2_PER_ACRE = 4046.8564224
 
@@ -213,7 +213,7 @@ export interface BuildSoilResult {
 	 */
 	coverageCellsWithoutMapping: number
 	/**
-	 * The ring-area totals in square kilometres, compared with the published acreage.
+	 * The ring-area totals in square kilometers, compared with the published acreage.
 	 *
 	 * Its `known` count is the number of survey areas that publish an acreage.
 	 */
@@ -641,7 +641,7 @@ function buildCoverageCells(
 			continue
 		}
 
-		// The cell's centre decides its survey area, so each cell counts for one area only.
+		// The cell's center decides its survey area, so each cell counts for one area only.
 		// This per-area count is informational and does not affect the coverage rows.
 		const [latitude, longitude] = cellToLatLng(cell)
 		const owner = options.areas.find((input) => geometryContains(input.outline, longitude, latitude))

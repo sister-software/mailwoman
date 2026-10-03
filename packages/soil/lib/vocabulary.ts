@@ -29,7 +29,7 @@ export const SOIL_PILOT_REGION = "ia"
 export const SSURGO_ATTRIBUTION = "U.S. Department of Agriculture, Natural Resources Conservation Service"
 
 /**
- * The public-domain licence expression written to `layer_manifest.license`, granted by
+ * The public-domain license expression written to `layer_manifest.license`, granted by
  * {@link SSURGO_PUBLIC_INFORMATION_SENTENCE} in each archive's FGDC metadata.
  */
 export const SSURGO_LICENSE = "LicenseRef-USGov-Public-Domain"
@@ -38,7 +38,7 @@ export const SSURGO_LICENSE = "LicenseRef-USGov-Public-Domain"
  * The public-information grant quoted from each survey area's FGDC use constraints.
  *
  * The survey-area loader rejects an area whose metadata lacks it, since its
- * absence signals a licence change.
+ * absence signals a license change.
  */
 export const SSURGO_PUBLIC_INFORMATION_SENTENCE = "This is public information"
 

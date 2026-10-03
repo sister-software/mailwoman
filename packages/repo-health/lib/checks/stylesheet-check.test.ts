@@ -7,7 +7,7 @@
  *   Every case here is a defect that reached production on earth.mailwoman.ai: the candidate list that painted the
  *   user agent's near-black `buttontext` inside a dark sheet, the sheets that stood 34px past their own `max-height`
  *   because the cap measured the content box, the glass whose standard `backdrop-filter` the minifier dropped in
- *   favour of the `-webkit-` twin written after it. The reduced-transparency fallback covered four of the six
+ *   favor of the `-webkit-` twin written after it. The reduced-transparency fallback covered four of the six
  *   surfaces the material did.
  *
  *   The passing cases matter as much: each is a shape the rules must not report, because an unsatisfiable rule
@@ -113,7 +113,7 @@ describe("stylesheet-interface", () => {
 			expect(stylesheetDiagnostics(OTHER, css)).toEqual([])
 		})
 
-		it("ignores the fallback colour used as an ordinary background", () => {
+		it("ignores the fallback color used as an ordinary background", () => {
 			// The chip's hover state and a sticky sheet header both paint this token on purpose, outside any guard.
 			const css = `${material}
 				.c:hover { background: var(--material-glass-fallback-background); }`

@@ -220,7 +220,7 @@ export function summarizeEvalReport(report: EvalReport): string {
 		: ` All ${report.floors.length} floors met.`
 
 	return (
-		`Check ${report.label ?? "(unlabelled)"} graded the ${report.graded_artifact ?? "UNRECORDED"} artifact: ` +
+		`Check ${report.label ?? "(unlabeled)"} graded the ${report.graded_artifact ?? "UNRECORDED"} artifact: ` +
 		`${report.verdict}.${detail}`
 	)
 }

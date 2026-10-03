@@ -35,7 +35,7 @@
  * features the split is exact: 314 of 314 features with a thoroughfare carry a number-shaped locator
  * name, 4 of 4 with an address area do, and 685 of 685 with neither carry a name instead. The two
  * never co-occur. The adapter therefore reads `house_number` where a thoroughfare element exists and
- * `venue` where none does, so a farm name never arrives labelled as a number.
+ * `venue` where none does, so a farm name never arrives labeled as a number.
  *
  * Slots 4 and 5 carry a malformed `href`: it addresses the `AU_haldusyksused` workspace with an
  * `AD_Address` type and answers HTTP 400 `Unknown namespace [AD_Address]`. The adapter reads the slot's

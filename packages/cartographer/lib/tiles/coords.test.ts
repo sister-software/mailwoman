@@ -8,7 +8,7 @@ import { expect, test } from "vitest"
 
 import { parseTileCoordParams, pointToTile, pointToTileFraction } from "#tiles/coords"
 
-// Web Mercator slippy-map math: at zoom z there are z2 = 2^z tiles per axis. The X fraction is z2·(lon/360 + 0.5), wrapped into [0, z2). The Y fraction is z2·(0.5 − ln((1+sin)/(1−sin))/(4π)), which sends lat = 0 to the vertical centre and the ±85.0511° clip latitudes to 0 and z2.
+// Web Mercator slippy-map math: at zoom z there are z2 = 2^z tiles per axis. The X fraction is z2·(lon/360 + 0.5), wrapped into [0, z2). The Y fraction is z2·(0.5 − ln((1+sin)/(1−sin))/(4π)), which sends lat = 0 to the vertical center and the ±85.0511° clip latitudes to 0 and z2.
 const MERCATOR_CLIP_LAT = 85.05112877980659
 
 // #region pointToTileFraction — X axis
@@ -18,10 +18,10 @@ test("pointToTileFraction: lon −180 is the left edge (x = 0)", () => {
 	expect(pointToTileFraction(2, -180, 0)[1]).toBe(0)
 })
 
-test("pointToTileFraction: lon 0 sits at the horizontal centre (x = z2/2)", () => {
-	expect(pointToTileFraction(0, 0, 0)[1]).toBe(0.5) // z2 = 1 → centre 0.5
-	expect(pointToTileFraction(2, 0, 0)[1]).toBe(2) // z2 = 4 → centre 2
-	expect(pointToTileFraction(10, 0, 0)[1]).toBe(512) // z2 = 1024 → centre 512
+test("pointToTileFraction: lon 0 sits at the horizontal center (x = z2/2)", () => {
+	expect(pointToTileFraction(0, 0, 0)[1]).toBe(0.5) // z2 = 1 → center 0.5
+	expect(pointToTileFraction(2, 0, 0)[1]).toBe(2) // z2 = 4 → center 2
+	expect(pointToTileFraction(10, 0, 0)[1]).toBe(512) // z2 = 1024 → center 512
 })
 
 test("pointToTileFraction: lon +180 wraps back onto the left edge (x = 0)", () => {
@@ -48,7 +48,7 @@ test("pointToTileFraction: longitudes past +180 wrap into range rather than over
 
 // #region pointToTileFraction — Y axis
 
-test("pointToTileFraction: the equator sits at the vertical centre (y = z2/2)", () => {
+test("pointToTileFraction: the equator sits at the vertical center (y = z2/2)", () => {
 	expect(pointToTileFraction(0, 0, 0)[2]).toBe(0.5)
 	expect(pointToTileFraction(2, 0, 0)[2]).toBe(2)
 })
@@ -60,11 +60,11 @@ test("pointToTileFraction: the Mercator clip latitudes map to the top and bottom
 	expect(pointToTileFraction(0, 0, -MERCATOR_CLIP_LAT)[2]).toBeCloseTo(1, 12)
 })
 
-test("pointToTileFraction: northern latitudes sit above centre, southern below", () => {
+test("pointToTileFraction: northern latitudes sit above center, southern below", () => {
 	const north = pointToTileFraction(1, 0, 45)[2]
 	const south = pointToTileFraction(1, 0, -45)[2]
 
-	expect(north).toBeLessThan(1) // above the z2 = 2 centre
+	expect(north).toBeLessThan(1) // above the z2 = 2 center
 	expect(south).toBeGreaterThan(1) // below it
 	// Mercator is symmetric about the equator.
 	expect(north + south).toBeCloseTo(2, 12)
@@ -96,7 +96,7 @@ test("pointToTile: the top-left corner of the world is tile (0, 0)", () => {
 })
 
 test("pointToTile: the exact Mercator clip latitude floors to tile y = −1 (no clamping)", () => {
-	// At precisely +85.0511° the Y fraction is ~ −7.8e-16: a floating-point hair below 0. Because pointToTile floors without clamping y into [0, z2), the boundary lands on tile −1 rather than 0. Callers that feed the exact clip latitude must clamp themselves. We pin the behaviour so a future clamp shows up as a deliberate change here.
+	// At precisely +85.0511° the Y fraction is ~ −7.8e-16: a floating-point hair below 0. Because pointToTile floors without clamping y into [0, z2), the boundary lands on tile −1 rather than 0. Callers that feed the exact clip latitude must clamp themselves. We pin the behavior so a future clamp shows up as a deliberate change here.
 	expect(pointToTileFraction(0, 0, MERCATOR_CLIP_LAT)[2]).toBeLessThan(0)
 	expect(pointToTile(0, 0, MERCATOR_CLIP_LAT)).toEqual([0, 0, -1])
 })

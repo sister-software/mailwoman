@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fulfilment turns one paid invoice into one signed token. The worker re-reads the invoice and its subscription
+ *   Fulfillment turns one paid invoice into one signed token. The worker re-reads the invoice and its subscription
  *   from Stripe by id. When the license row does not exist, it also re-reads the Checkout Session. A webhook body
  *   never grants an entitlement. The ledger's unique keys make minting idempotent: a second mint for one invoice
  *   returns `already_minted`. Two events for one payment produce one token in either order. Two callers racing

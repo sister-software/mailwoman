@@ -17,7 +17,7 @@
  *
  * The official BAN is dual-licensed under Licence Ouverte 2.0 and ODbL.
  * This adapter elects Licence Ouverte 2.0. Its terms permit training with attribution.
- * It records that licence on every row. The model card must include BAN attribution.
+ * It records that license on every row. The model card must include BAN attribution.
  *
  * The adapter streams with `CSVSpliterator.fromAsync`, so a 25M-row file never sits in memory. It
  * honors `opts.limit` and `opts.signal`. `opts.country` is optional: when set it both rejects a

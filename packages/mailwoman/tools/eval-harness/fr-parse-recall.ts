@@ -15,6 +15,7 @@ import { allRows } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import type { OSMAddressPointDatabase } from "@mailwoman/osm/address-point-schema"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -39,7 +40,7 @@ const MAX_REPORTED_FAILURES = 12
  */
 async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<PathBuilderLike> {
 	const candidates = [
-		...(weightsCache ? [`${weightsCache}/node_modules/@mailwoman/neural-weights-en-us/${fileName}`] : []),
+		...(weightsCache ? [weightsCachePackageDir(weightsCache, "en-us")(fileName)] : []),
 		dataRootPath("weights", "en-us", fileName),
 		workspacePath("neural-weights-en-us", fileName),
 	]

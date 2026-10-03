@@ -49,7 +49,7 @@ const PQ_NO_COORDINATE = 90
 
 /**
  * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle
- * for the typo leg, where a mutant landing on a real neighbouring unit must resolve
+ * for the typo leg, where a mutant landing on a real neighboring unit must resolve
  * and only one absent from the register demands abstention.
  */
 async function allPostcodes(csvDir: PathBuilder): Promise<Set<string>> {
@@ -107,7 +107,7 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 		{ leg: "lower_unspaced", input: postcode.toLowerCase().replaceAll(" ", "") },
 		{ leg: "uk_suffixed", input: `${postcode}, UK` },
 		// A mutant absent from the register demands abstention.
-		// A real neighbouring unit must resolve like any postcode.
+		// A real neighboring unit must resolve like any postcode.
 		{ leg: "typo", input: mutateFinalLetter(postcode) },
 	]
 }

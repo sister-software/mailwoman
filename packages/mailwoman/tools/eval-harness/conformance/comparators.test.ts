@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   An identity law must report `diverges` for two different places 90 metres apart.
+ *   An identity law must report `diverges` for two different places 90 meters apart.
  *   A comparator with its axis absent on both sides must report `undecidable`, not `equivalent`.
  */
 
@@ -78,7 +78,7 @@ describe("resolution_identity", () => {
 		expect(reading.differences).toEqual([])
 	})
 
-	it("diverges on two different places 90 metres apart — a coordinate is never read", () => {
+	it("diverges on two different places 90 meters apart — a coordinate is never read", () => {
 		const near = [
 			{ tag: "locality", name: "London", placeID: "wof:404227469", lat: 51.5015, lon: -0.1246 },
 			{ tag: "country", name: "United Kingdom", placeID: "wof:85633159" },

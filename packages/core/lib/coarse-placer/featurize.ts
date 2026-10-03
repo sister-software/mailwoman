@@ -23,7 +23,7 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
  * Index order is the label id.
  *
  * The class acts as a soft prior.
- * A neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps resolution in-region, off the global-pop attractors.
+ * A neighbor confusion (DK↔NO, EE↔LT↔LV) still keeps resolution in-region, off the global-pop attractors.
  *
  * A new class requires a retrain and a fresh artifact.
  * The bundled meta.json stores its own `classes` for inference, so this constant drives training.

@@ -9,7 +9,7 @@
  * Główny Urząd Geodezji i Kartografii publishes the Państwowy Rejestr Granic through MapServer at
  * {@linkcode PL_EMUIA_WFS}. Its dataset record states one condition of use in `otherConstraints`,
  * `Brak warunków dostępu i użytkowania` — no conditions for access and use — which the
- * address-source register elected. No licence instrument is named, so the publisher's own words are
+ * address-source register elected. No license instrument is named, so the publisher's own words are
  * the label, and that statement grants the reproduction a paged harvest performs.
  *
  * `#tools/fetch/wfs-harvest` owns the page read, the appending, the manifest and the resumption.

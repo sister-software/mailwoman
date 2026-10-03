@@ -11,7 +11,7 @@
  *   would produce an elevation that matches neither sample. The overview pyramid uses `nearest` to decimate real samples.
  *
  *   The XYZ tile scheme is angular and uses the same lon/lat grid on any sphere. The EPSG:4326 label tells GDAL
- *   which grid to tile. The build assigns the whole-body extent beside it, so coordinates in the body's metres
+ *   which grid to tile. The build assigns the whole-body extent beside it, so coordinates in the body's meters
  *   do not read as degrees.
  */
 
@@ -102,9 +102,9 @@ export interface HillshadeBuildOptions {
 const TERRARIUM_DATUM_METRES = 32_768
 
 /**
- * `B` stores the fractional metre.
+ * `B` stores the fractional meter.
  *
- * The usgs mosaics are integer metres, so it is constant zero.
+ * The usgs mosaics are integer meters, so it is constant zero.
  */
 const TERRARIUM_FRACTIONAL_BAND = "0"
 
@@ -175,7 +175,7 @@ export async function buildHillshadePMTiles(
 	// The resampled raster is much smaller than the source.
 	await assertWithinTerrariumEnvelope(resampled)
 
-	// Encode terrarium: R is the high byte of the offset height, G the low byte, B the fractional metre.
+	// Encode terrarium: R is the high byte of the offset height, G the low byte, B the fractional meter.
 	// `gdal_calc.py` writes one band per run, so the three are computed separately and stacked.
 	const offset = `(A.astype(numpy.float64) + ${TERRARIUM_DATUM_METRES})`
 
@@ -257,8 +257,8 @@ export async function buildHillshadePMTiles(
 		throw new Error(`${mbtiles}: GDAL tiled at zoom ${zoom}, not the requested ${options.maxZoom}`)
 	}
 
-	// Overviews run from that zoom down to 0, resampled nearest: the bytes are a base-256 numeral by now,
-	// so averaging two neighbours' high bytes answers an elevation that is neither of them.
+	// Overviews run from that zoom down to 0, resampled nearest: the bytes are a base-256 numeral
+	// by now, so averaging two neighbors' high bytes answers an elevation that is neither of them.
 	const overviews = ["-r", "nearest", mbtiles, ...Array.from({ length: zoom }, (_, index) => String(2 ** (index + 1)))]
 
 	if (zoom > 0) {

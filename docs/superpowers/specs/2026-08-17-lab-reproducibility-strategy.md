@@ -14,7 +14,7 @@ The lab has two symptoms with one cause.
 **A fresh checkout cannot run.** A git worktree resolves the weights workspace and finds it empty, because
 `model.onnx` and `tokenizer.model` are not in git. `resolveWeights` then throws before it can reach any
 fallback. This was observed on 2026-08-17 while building the dev-MCP worktree arm. The setup step that fixes
-it is ten copy-pasted scripts totalling 2,001 lines, ranging from 24 to 586 lines each.
+it is ten copy-pasted scripts totaling 2,001 lines, ranging from 24 to 586 lines each.
 
 **A built artifact cannot say what built it.** A scan of every database over 1 MB in the data root found:
 
@@ -39,7 +39,7 @@ Two smaller facts also shape what "reproducible" can mean:
   `candidate-global-2026-08-15-icu.db`, one of about ten builds in that directory). The selection is real
   configuration, but it is stored only in the filesystem.
 
-## The organising idea
+## The organizing idea
 
 This strategy records provenance rather than adding configuration.
 
@@ -72,7 +72,7 @@ Later phases depend on these commits.
 
 Two things from that work carry into this plan. The **worktree arm** (`{kind:"worktree", ref}`, and
 `ref: "WORKTREE"` for uncommitted edits) measures any change in this strategy. The empty-worktree failure
-blocked it, which is why phase 0 exists. **Place-id provenance** is the pattern the manifests generalise:
+blocked it, which is why phase 0 exists. **Place-id provenance** is the pattern the manifests generalize:
 an id or an artifact states its own source, so a reader never has to infer one.
 
 ## Phase 0 — dev weights resolution — DONE
@@ -147,7 +147,7 @@ not-ours, and prints one number. Two runs on an unchanged root print the same nu
 
 ## Phase 2 — `country-plan` — DONE
 
-`add-a-country-runbook.md` Addendum B, generalised past WOF to OpenAddresses and Overture, in the
+`add-a-country-runbook.md` Addendum B, generalized past WOF to OpenAddresses and Overture, in the
 two-command shape that document recommends: `--plan` (read-only, prerequisites, current source, size,
 the exact patch) and `--apply` (clone, patch, build as a job). The irreversible swap stays its own command.
 

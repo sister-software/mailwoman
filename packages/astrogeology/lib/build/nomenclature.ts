@@ -62,7 +62,7 @@ export async function* readNomenclatureRows(
 }
 
 /**
- * The declutter table: the smallest diameter, in kilometres, that appears at each zoom, largest first.
+ * The declutter table: the smallest diameter, in kilometers, that appears at each zoom, largest first.
  *
  * A feature smaller than every row appears at {@link SMALLEST_FEATURE_ZOOM}.
  * Cartographic decluttering rather than ranking.
@@ -85,7 +85,7 @@ const SMALLEST_FEATURE_ZOOM = 8
 const UNSIZED_FEATURE_ZOOM = 2
 
 /**
- * The zoom at which a feature first appears, from its diameter in kilometres, by {@link DECLUTTER_STEPS}.
+ * The zoom at which a feature first appears, from its diameter in kilometers, by {@link DECLUTTER_STEPS}.
  */
 export function minZoomForDiameter(diameterKm: number | undefined): number {
 	if (diameterKm === undefined || diameterKm === 0) return UNSIZED_FEATURE_ZOOM

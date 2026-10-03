@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Department's product identity, declared vocabularies, stated limits and licence status for the zoning layer.
+ *   The Department's product identity, declared vocabularies, stated limits and license status for the zoning layer.
  */
 
 /**
@@ -17,7 +17,7 @@ export const GZT_LAYER_NAME = "zoning-ie-gzt"
 export const GZT_ITEM_ID = "5c2608ebedd84013aaeff8bf669e8596"
 
 /**
- * The publishing organisation's ArcGIS Online id.
+ * The publishing organization's ArcGIS Online id.
  */
 export const GZT_ORG_ID = "NzlPQPKn5QF9v2US"
 
@@ -47,13 +47,13 @@ export const GZT_ATTRIBUTION =
 	"© Copyright 2011 DHLGH. All rights reserved. © Tailte Éireann. All rights reserved. Licence No. 2023/OSi_NMA_073"
 
 /**
- * The licence expression written to `layer_manifest.license`; `assertTierMatchesLicense`
+ * The license expression written to `layer_manifest.license`; `assertTierMatchesLicense`
  * in `@mailwoman/core/layers` rejects a `shipped` build while this value is set.
  */
 export const GZT_LICENSE = "NOASSERTION"
 
 /**
- * The explanation of why the licence is unresolved, for build reports.
+ * The explanation of why the license is unresolved, for build reports.
  */
 export const GZT_LICENSE_CONTRADICTION =
 	"Three published statements disagree about the grant: data.gov.ie declares CC-BY-4.0; the ArcGIS item's licenseInfo " +
@@ -65,7 +65,7 @@ export const GZT_LICENSE_CONTRADICTION =
 
 /**
  * The projected CRS that the service and its bulk export declare — IRENET95 / Irish Transverse
- * Mercator, in metres — which the ingest reprojects from and rejects any other code for.
+ * Mercator, in meters — which the ingest reprojects from and rejects any other code for.
  */
 export const GZT_SOURCE_EPSG = 2157
 
@@ -73,7 +73,7 @@ export const GZT_SOURCE_EPSG = 2157
  * The extent that the Department declares for the item, as `[minLon, minLat, maxLon, maxLat]` in CRS84.
  *
  * The ingest checks every reprojected vertex against it to catch the source's
- * projected metres read as degrees.
+ * projected meters read as degrees.
  */
 export const GZT_DECLARED_BBOX: readonly [number, number, number, number] = [
 	-10.54553193079905, 51.452765583177616, -5.947766999109422, 54.47387941831219,

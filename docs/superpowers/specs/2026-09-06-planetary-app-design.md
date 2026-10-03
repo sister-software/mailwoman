@@ -113,7 +113,7 @@ The tile worker needs no new route and no Moon- or Mars-specific code.
 ### Map
 
 `MapCanvas` from `@mailwoman/react/map` with `projection: "globe"`, the injected style, and the body's
-initial view (Moon at 0°, 0°; Mars centred on Tharsis, both checked visually). Pan, zoom and rotate come
+initial view (Moon at 0°, 0°; Mars centered on Tharsis, both checked visually). Pan, zoom and rotate come
 from the shell. A click on a nomenclature feature selects it, opens the panel, and pushes
 `/feature/<id>` to history without a reload. Fly-to respects `prefers-reduced-motion`. MapLibre's globe
 is a rendering model rather than a geodesy engine. The app makes no distance or area claim in v1. When it

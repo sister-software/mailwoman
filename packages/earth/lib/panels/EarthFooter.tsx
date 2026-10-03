@@ -15,7 +15,7 @@ import type { ReactNode } from "react"
 /**
  * The basemap's credits belong to whoever renders the tiles.
  *
- * Each source is a licence obligation rather than a courtesy, so it links to the licence it discharges.
+ * Each source is a license obligation rather than a courtesy, so it links to the license it discharges.
  */
 const BASEMAP_ATTRIBUTION = [
 	<a key="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">

@@ -239,8 +239,8 @@ function subsidiariesFromTable(
 			let name = row[mapping.name]?.text ?? ""
 
 			if (!name && mapping.name < mapping.jurisdiction) {
-				// An indented child's name sits right of the labelled name column
-				// but left of the labelled jurisdiction column.
+				// An indented child's name sits right of the labeled name column
+				// but left of the labeled jurisdiction column.
 				// The parser discards the nesting depth.
 				for (let column = mapping.name + 1; column < Math.min(mapping.jurisdiction, row.length); column++) {
 					if (row[column]!.text) {

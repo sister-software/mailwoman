@@ -107,7 +107,7 @@ describe("the sealed artifact", () => {
 		expect((await statPath(databasePath)).mode & 0o777).toBe(0o444)
 	})
 
-	it("declares the layer, its index resolution and its licence in the manifest", () => {
+	it("declares the layer, its index resolution and its license in the manifest", () => {
 		expect(lookup.identity.manifest.name).toBe(NCERM_LAYER_NAME)
 		expect(lookup.identity.manifest.spineKeys.h3?.column).toBe("coastal_zone_cell.h3_cell")
 		expect(lookup.identity.indexResolution).toBe(INDEX_RESOLUTION)
@@ -141,7 +141,7 @@ describe("the sealed artifact", () => {
 			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id = ?")
 			.get(`${NFI}:4`) as { n: number }
 
-		// A polyfill keyed on cell centres returns no cells for a 5 m square.
+		// A polyfill keyed on cell centers returns no cells for a 5 m square.
 		// A feature indexed to no cell reads downstream as absent.
 		// The failure the per-part zero-cell guard exists to make impossible.
 		expect(sliver.n).toBeGreaterThan(0)
@@ -291,7 +291,7 @@ describe("the declared domains", () => {
 		)
 	})
 
-	it("throws on a defence type outside the domain, even after case folding", async () => {
+	it("throws on a defense type outside the domain, even after case folding", async () => {
 		const features = fixtureFeatures()
 
 		await expect(

@@ -19,7 +19,7 @@
  *
  *   the channels differ IN coordinate precision and that is why A boundary point is not A failure. The
  *   geodatabase publishes nine decimals through this package's ingest. the OGC service publishes six. Six
- *   decimals differ by about 10 cm. A point within roughly a metre of a zone boundary can land on opposite sides of
+ *   decimals differ by about 10 cm. A point within roughly a meter of a zone boundary can land on opposite sides of
  *   two renderings of the same edge. The check reports these cases as `boundary_tolerance` with their distance to the
  *   nearest edge. The receipt includes their count.
  *
@@ -27,7 +27,7 @@
  *   proj datum grid put the whole layer 3.4 m from where the authority puts it — coordinates that pass
  *   every structural check there is, because they are ordinary WGS84 numbers inside the declared extent.
  *   It showed up here and nowhere else, as eight disagreements out of 59, each a point that had fallen
- *   into a neighbouring sliver. With the grid installed the same sample reads 59/59. See
+ *   into a neighboring sliver. With the grid installed the same sample reads 59/59. See
  *   `assessDatumTransformation` in `ingest.ts` for the guard that now refuses the build instead.
  */
 
@@ -65,12 +65,12 @@ export interface AgreementRow {
 	service: string | null
 	outcome: "agree" | "disagree" | "boundary_tolerance" | "service_unlabelled"
 	/**
-	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
+	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
 	 *
 	 * Measures to the edge rather than the nearest vertex.
 	 * Polygon edges are long compared with this product's slivers.
 	 *
-	 * A point can sit a centimetre from an edge and metres from every vertex.
+	 * A point can sit a centimeter from an edge and meters from every vertex.
 	 * Vertex distance makes the boundary tolerance stricter than its stated value
 	 * and can report a rendering difference as a conversion defect.
 	 *
@@ -105,7 +105,7 @@ export interface VerifyFloodResult {
 	disagreed: number
 	boundaryTolerance: number
 	/**
-	 * Points the service's geometry contains without labelling.
+	 * Points the service's geometry contains without labeling.
 	 *
 	 * The service's answer is unreadable at these points.
 	 * The result records each row so the count remains visible instead of being

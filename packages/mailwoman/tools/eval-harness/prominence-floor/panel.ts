@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The panel builder for the prominence-floor benchmark. It executes the frozen selection rules and
- *   contains no judgement of its own: the bands, the eligibility rule, the fill order and the seed all come
+ *   contains no judgment of its own: the bands, the eligibility rule, the fill order and the seed all come
  *   from `benchmark-definition.json`, committed before any row was inspected.
  *
  *   The benchmark's addition is its band field. The same-data panel drew each gold above one population floor,

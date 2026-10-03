@@ -477,13 +477,13 @@ describe("resolvePOIAnchorCountry", () => {
 			: { raw: "Springfield", roots: [node] }
 	}
 
-	it("reads the country off the node the search is centred on, upper-cased", () => {
+	it("reads the country off the node the search is centered on, upper-cased", () => {
 		expect(resolvePOIAnchorCountry({ subject: { kind: "name", text: "x" }, anchor: { tree: stamped("us") } })).toBe(
 			"US"
 		)
 	})
 
-	it("falls back to a stamped root when the centred child carries none", () => {
+	it("falls back to a stamped root when the centered child carries none", () => {
 		const tree = stamped(undefined, true)
 		tree.roots[0]!.metadata = { resolver_country: "US" }
 

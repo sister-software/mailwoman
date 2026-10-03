@@ -108,7 +108,7 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 			const left = results.slice(0, index)
 			const right = results.slice(index + 1)
 
-			// An edge connector needs its one neighbour.
+			// An edge connector needs its one neighbor.
 			// An interior connector needs a rendered atom on each side.
 			const survives = !left.length
 				? rendered(results[index + 1] ?? null)

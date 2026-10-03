@@ -40,7 +40,7 @@ Four paths, because they behave differently and carry different risk:
 The raw classifier defaults `enforceWordConsistency` to off; every measurement here passes
 `WORD_CONSISTENCY_SHIP_DEFAULT` so it reflects what a consumer runs.
 
-**Measurement scepticism.** The first resolve run reported zero garbage-to-coordinates, which would
+**Measurement skepticism.** The first resolve run reported zero garbage-to-coordinates, which would
 have been a headline "clean" result. It was wrong: the walker looked for `node.resolved.latitude`,
 and resolved coordinates land on `node.lat` / `node.lon`. A positive control — a real
 address that must resolve — caught it. The control is now the first row of every resolve run, and
@@ -182,7 +182,7 @@ A comma-dense input with no whitespace (`"a,"` repeated) hits the same quadratic
 count alone: 3.8 ms → 103.4 ms across a 16× size increase.
 
 **Suggested fix.** Both arrays are position-sorted, so a two-pointer merge makes this O(S + T) with
-no behaviour change. A cheaper partial mitigation filters tokens by `REGION_ABBREV_RE` and class
+no behavior change. A cheaper partial mitigation filters tokens by `REGION_ABBREV_RE` and class
 _before_ the segment loop, but stays quadratic when the abbreviation repeats.
 
 ---
@@ -364,7 +364,7 @@ following threw, hung, or emitted anything:
   latitude/longitude pair `40.748817, -73.985428` correctly yields no coordinate.
 
 One untidy case worth a line: `\\x01\\x02\\x03\\x07\\x1b[31m` (control characters plus an ANSI
-colour escape) emits `{"postcode":"31m"}`. Cosmetic, low severity, but the control bytes should
+color escape) emits `{"postcode":"31m"}`. Cosmetic, low severity, but the control bytes should
 have been stripped in Stage 1.
 
 **A predicted problem that is not real.** The static pass flagged
@@ -382,7 +382,7 @@ nobody re-derives it.
 - **No concurrency or sustained-load testing.** Every measurement is a single call on an idle
   process. Event-loop blocking is inferred from wall time on a single-threaded runtime rather than
   observed under load.
-- **No memory-pressure measurement.** RSS and GC behaviour were not instrumented. The
+- **No memory-pressure measurement.** RSS and GC behavior were not instrumented. The
   `pieces.length × labels.length` allocations noted in Finding 1 are read from source rather than measured.
 - **No locale coverage beyond en-US.** The classifier is `loadFromWeights({ locale: "en-US" })`
   throughout. The two quadratics are locale-independent (both are in pre-model stages), but the
@@ -396,7 +396,7 @@ nobody re-derives it.
   stages after query-shape also degrade badly at 60,609 segments — worth its own measurement, but
   not one I have. The 1 MB row in Finding 2 is the stage-level number, which stands on its own.
 - **Not a security review.** SQL-injection- and FTS-syntax-shaped strings were probed for _parser_
-  behaviour. Neither reached a query engine in a way this investigation examined, and no claim is
+  behavior. Neither reached a query engine in a way this investigation examined, and no claim is
   made about injection safety.
 - **The `size` class in the committed fixture is truncated.** Rows above ~10 KB are generated rather than
   committed — a 1 MB JSONL line is a hostile artifact for a test suite. The generator lives in
@@ -415,7 +415,7 @@ nobody re-derives it.
 Classes: `degenerate` 18, `numeric` 16, `symbolic` 14, `script` 21, `size` 3, `structured` 15,
 `adversarial` 18. Bars: 35 `no-throw`, 35 `no-component`, 35 `no-resolve`.
 
-`expect` records the bar the row _should_ meet rather than today's behaviour — 19 rows currently violate
+`expect` records the bar the row _should_ meet rather than today's behavior — 19 rows currently violate
 it, and those are exactly Findings 4 and 5. Control characters, NUL and lone surrogates are
 JSON-escaped; the file was verified to round-trip line-by-line through `JSON.parse` with every
 `raw` byte-identical to its source.
@@ -430,7 +430,7 @@ JSON-escaped; the file was verified to round-trip line-by-line through `JSON.par
 2. **Add `.max()` to the API `address` field** (`api/schema.ts:38,68`). Closes both quadratics on
    the most exposed surface without touching the parser.
 3. **Two-pointer merge in `detectRegionAbbreviations`** (`query-shape/region-abbreviations.ts:28`).
-   O(S + T), no behaviour change.
+   O(S + T), no behavior change.
 4. **Token-count guard in `groupPhrasesSync`** (`phrase-grouper/group.ts:74`), and correct the
    `rules.ts:778-779` complexity comment.
 5. **Surface classifier faults on `PipelineResult`** instead of `safeClassify`'s bare `catch {}`.

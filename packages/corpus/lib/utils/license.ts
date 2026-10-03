@@ -20,7 +20,7 @@
  *
  *   Three refusal classes exist because they are different claims. A value that resolves to an
  *   expression carrying share-alike states the obligation. A value whose prose mentions a share-alike
- *   licence while resolving to no expression is share-alike-derived without stating its own grant. A
+ *   license while resolving to no expression is share-alike-derived without stating its own grant. A
  *   value that resolves to no expression has unknown obligations. Unknown obligations differ from an empty
  *   obligation set. Of these rows, 628,203,119 contain prose this repository writes about its own renderings. The
  *   third class is therefore reported rather than refused under {@linkcode LicensePolicy.ShareAlikeFree},
@@ -43,9 +43,9 @@ export const LicensePolicy = {
 	/**
 	 * Refuse a row whose license imposes a share-alike obligation.
 	 *
-	 * Also refuse a row whose license text mentions a share-alike licence while stating no grant of its own.
+	 * Also refuse a row whose license text mentions a share-alike license while stating no grant of its own.
 	 *
-	 * A row whose license resolves to no expression and mentions no share-alike licence is admitted
+	 * A row whose license resolves to no expression and mentions no share-alike license is admitted
 	 * and counted, because its obligations are unknown rather than known to include share-alike.
 	 */
 	ShareAlikeFree: "share-alike-free",
@@ -78,7 +78,7 @@ export const LicenseRefusalKind = {
 	 */
 	ShareAlikeCarried: "share-alike-carried",
 	/**
-	 * The value's text mentions a share-alike licence while resolving to no expression of its own.
+	 * The value's text mentions a share-alike license while resolving to no expression of its own.
 	 */
 	ShareAlikeMentioned: "share-alike-mentioned",
 	/**
@@ -107,7 +107,7 @@ export interface LicenseVerdict {
 	 */
 	resolved: boolean
 	/**
-	 * Whether the value's text mentions a share-alike licence, whether or not it was refused for it.
+	 * Whether the value's text mentions a share-alike license, whether or not it was refused for it.
 	 */
 	mentionsShareAlike: boolean
 }

@@ -175,7 +175,7 @@ describe("runAutocomplete — disk round-trip", () => {
 		expect(names.some((n) => n.includes("new"))).toBe(true)
 	})
 
-	it("honours the limit cap", async () => {
+	it("honors the limit cap", async () => {
 		const entries = await runAutocomplete("New", { fstPath: fixtureBinPath, limit: 1 })
 		expect(entries.length).toBeLessThanOrEqual(1)
 	})

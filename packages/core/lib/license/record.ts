@@ -74,9 +74,9 @@ export interface LicenseRecord {
 	 */
 	attribution: string | null
 	/**
-	 * Licence identifiers the raw text mentions, whether or not each is the grant on the row.
+	 * License identifiers the raw text mentions, whether or not each is the grant on the row.
 	 *
-	 * A row rendered from an attested record can mention the upstream register's licence
+	 * A row rendered from an attested record can mention the upstream register's license
 	 * in its provenance prose while the row records a different grant.
 	 * This field records those mentions separately so callers do not treat them as the grant.
 	 */
@@ -129,7 +129,7 @@ const EXPRESSION_ALIASES: ReadonlyMap<string, string> = new Map([
 ])
 
 /**
- * Licence identifiers worth recognizing inside prose, with the spelling each one appears under.
+ * License identifiers worth recognizing inside prose, with the spelling each one appears under.
  *
  * Ordered longest-first so `CC-BY-SA` is found before `CC-BY`.
  */
@@ -149,7 +149,7 @@ const MENTIONABLE: ReadonlyArray<readonly [pattern: RegExp, identifier: string]>
  *
  * A value that resolves to an expression whose obligations are recorded reads `resolved`.
  * Everything else reads `unresolved` with empty obligations, including a value
- * whose prose mentions a licence.
+ * whose prose mentions a license.
  *
  * A sentence mentioning ODbL does not establish that ODbL is the grant on the row.
  */
@@ -200,11 +200,11 @@ export function carriesShareAlike(record: LicenseRecord): boolean {
 }
 
 /**
- * Whether a record's text mentions a share-alike licence without establishing it as the grant.
+ * Whether a record's text mentions a share-alike license without establishing it as the grant.
  *
  * This is the case `/^ODbL/` over the raw column could never see: a row whose license reads
  * "Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) …"
- * mentions a share-alike licence in its provenance while its own expression is unresolved.
+ * mentions a share-alike license in its provenance while its own expression is unresolved.
  */
 export function mentionsShareAlike(record: LicenseRecord): boolean {
 	return (
@@ -242,9 +242,9 @@ export function attributionEntries(...candidates: readonly unknown[]): string[] 
  * Words whose presence in a parenthetical marks it as a license statement.
  *
  * Looser than {@link readLicenseRecord}'s own mention patterns on purpose.
- * Those answer which licence a string cites and resolve it to an identifier.
+ * Those answer which license a string cites and resolve it to an identifier.
  *
- * This answers whether a parenthetical is a licence statement at all, so it accepts a bare family word
+ * This answers whether a parenthetical is a license statement at all, so it accepts a bare family word
  * and a spelling of the word "license" in three languages, neither of which identifies a grant.
  */
 const LICENSE_FAMILY_WORDS =

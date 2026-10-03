@@ -22,7 +22,7 @@ const DATASET_API = "https://api-production.data.gov.sg/v2/public/api/datasets"
 const DOWNLOAD_API = "https://api-open.data.gov.sg/v1/public/api/datasets"
 const LICENSE = "Singapore Open Data Licence version 1.0 — https://data.gov.sg/open-data-licence"
 
-// The licence prescribes this attribution sentence.
+// The license prescribes this attribution sentence.
 // The manifest records it.
 const ATTRIBUTION =
 	"Contains information from ACRA Information on Corporate Entities accessed on <date> from data.gov.sg which is made available under the terms of the Singapore Open Data Licence version 1.0 https://data.gov.sg/open-data-licence"

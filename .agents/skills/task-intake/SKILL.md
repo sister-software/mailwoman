@@ -63,4 +63,11 @@ The hook's interface is:
   as forgotten rather than deferred.
 - Call `mwdev_pull_request` with `action: create` and the issue number. The tool verifies the issue's task
   list, creates a Vale-checked body that says `Closes #<n>`, and starts a tracked CI monitor.
-- Unlink: `rm -f .claude/state/linked-issue`.
+- PR creation starts verification; it does not complete the task. Poll the monitor through `mwdev_job`,
+  inspect failed check logs, fix failures, push, and follow checks for the new head.
+- PR creation appends an unchecked CI review task to the issue and returns `handoff_ready: false`.
+  After reviewing successful checks, call `mwdev_pull_request` with `action: complete`. The tool
+  independently checks CI before marking that task complete and unlinking the issue.
+- The tool persists `.claude/state/tracked-ci.json`. Both clients' Stop hooks check the current PR head
+  directly on GitHub and block handoff while checks are absent, pending, failing, or unreadable.
+- Keep the CI marker so a later push requires fresh verification.

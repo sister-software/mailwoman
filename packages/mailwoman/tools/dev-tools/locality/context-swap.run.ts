@@ -44,7 +44,7 @@ const { values } = parseArguments({
 		mode: { type: "string", default: "swap", choices: ["swap", "grid"] },
 		/**
 		 * Regions whose localities are the subjects.
-		 * The ones whose behaviour is in question.
+		 * The ones whose behavior is in question.
 		 */
 		home: { type: "string", default: "AR,TN,MO,TX" },
 		/**

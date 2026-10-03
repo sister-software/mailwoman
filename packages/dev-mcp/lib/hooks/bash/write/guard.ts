@@ -8,7 +8,7 @@
  *   through the Write and Edit tools and reaches the symbol precheck.
  *
  *   This file adapts the payload, repository root and refusal document. The rules module decides which commands it admits
- *   and why. A test can drive that judgement without spawning a process. A hook that reads stdin at load hangs every importer.
+ *   and why. A test can drive that judgment without spawning a process. A hook that reads stdin at load hangs every importer.
  *
  *   on failure this admits. An unreadable payload, missing dependency or throw lets the command through.
  *   The session then runs unguarded with one line on stderr. That is deliberate — a hook that halts the shell over its own

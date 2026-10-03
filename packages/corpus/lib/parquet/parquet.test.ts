@@ -172,7 +172,7 @@ describe("readers", () => {
 		return manifest.slices[0]!.path
 	}
 
-	it("readParquetRows returns every row, and honours a projection", async () => {
+	it("readParquetRows returns every row, and honors a projection", async () => {
 		const path = await written([labeled({ source_id: "r-1" }), labeled({ source_id: "r-2" })])
 
 		expect(await readParquetRows<ParquetRow>(path)).toHaveLength(2)

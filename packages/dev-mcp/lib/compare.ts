@@ -903,7 +903,7 @@ function precisionWarnings(rows: GeoRow[], errored: { a: number; b: number }): s
 }
 
 /**
- * Metres per kilometre.
+ * Meters per kilometer.
  */
 const METRES_PER_KM = 1000
 

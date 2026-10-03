@@ -13,7 +13,7 @@
  *   The output jsonl is the input to the `gnaf` corpus adapter (`mailwoman corpus build`), which
  *   renders each tuple in multiple word orders to teach the model AU's postcode-first layout.
  *   `--holdout` excludes the benchmark addresses by (street, locality, postcode) so the
- *   training database never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
+ *   training database never overlaps the eval. Open G-NAF license — attribute "Geoscape Australia".
  */
 
 import { Box, Text } from "ink"

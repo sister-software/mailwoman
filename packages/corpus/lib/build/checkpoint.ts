@@ -70,6 +70,11 @@ export interface AlignCheckpoint {
 	quarantined: number
 	license_counts: Record<string, number>
 	refused_by_kind: Record<string, number>
+	/**
+	 * Rows the license policy refused, counted per `source`, so a resumed build carries the tally
+	 * rather than restarting it at zero and understating the refusal in its manifest.
+	 */
+	refused_by_source: Record<string, number>
 	excluded_by_license: number
 	admitted_unresolved_license_rows: number
 	excluded_by_eligibility: number

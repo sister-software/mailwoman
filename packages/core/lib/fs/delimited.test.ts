@@ -58,7 +58,7 @@ describe("reading an unquoted delimited file", () => {
 	})
 
 	/**
-	 * The defect this module exists for, pinned as the behaviour it must not have.
+	 * The defect this module exists for, pinned as the behavior it must not have.
 	 *
 	 * A quote-aware reader over this input returns two rows.
 	 * Neither row is Türkmenabat.
@@ -101,7 +101,7 @@ describe("the checked read", () => {
 	})
 
 	/**
-	 * The shortfall branch is defence IN depth and no file content reaches it: With quote
+	 * The shortfall branch is defense IN depth and no file content reaches it: With quote
 	 * handling off, the TSV reader yields one record per non-empty line for every input.
 	 *
 	 * The cases above show that each input yields one row per non-empty line.

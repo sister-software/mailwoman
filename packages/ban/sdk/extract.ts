@@ -175,7 +175,7 @@ async function openCSV(csvPath: PathBuilderLike): Promise<AsyncIterable<Uint8Arr
  *
  * Rows with a non-finite coordinate or an empty `nom_voie`/`numero` are skipped
  * (yield-side filtering is the caller's job for anything finer).
- * The `rep` suffix is normalised to lower-case or null.
+ * The `rep` suffix is normalized to lower-case or null.
  */
 export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGenerator<BANAddrRecord> {
 	// CSVSpliterator handles quoted fields and embedded delimiters.

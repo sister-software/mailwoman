@@ -18,7 +18,7 @@ function cellWidth(cell: string): number {
 }
 
 /**
- * Render a GitHub-flavoured markdown table, padded the way `oxfmt` would pad it.
+ * Render a GitHub-flavored markdown table, padded the way `oxfmt` would pad it.
  *
  * A column is at least three characters wide.
  * GitHub accepts no narrower separator.

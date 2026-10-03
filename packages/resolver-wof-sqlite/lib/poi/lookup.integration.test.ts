@@ -308,7 +308,7 @@ describe("POILookup", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
 		const hits = lk.search({ name: "Cafe", center: SPRINGFIELD })
-		// Every row labelled "Cafe" matches (Alpha/Beta/Gamma near, Windy City/Loop Cafe far) — near ones first.
+		// Every row labeled "Cafe" matches (Alpha/Beta/Gamma near, Windy City/Loop Cafe far) — near ones first.
 		expect(hits[0]!.distanceM).toBeLessThanOrEqual(hits.at(-1)!.distanceM!)
 	})
 

@@ -35,9 +35,9 @@ const TINY_REAL_FEATURE = [
 ]
 
 describe("classifyFeatureCells", () => {
-	it("indexes a polygon smaller than a cell, which a centre-containment polyfill drops entirely", () => {
+	it("indexes a polygon smaller than a cell, which a center-containment polyfill drops entirely", () => {
 		for (const resolution of [7, 8, 9, 10]) {
-			// Centre-based polyfill misses this real feature at each tested resolution.
+			// Center-based polyfill misses this real feature at each tested resolution.
 			expect(polygonToCells(TINY_REAL_FEATURE[0] as number[][][], resolution, true)).toHaveLength(0)
 
 			const cells = classifyFeatureCells(TINY_REAL_FEATURE, resolution, "1")

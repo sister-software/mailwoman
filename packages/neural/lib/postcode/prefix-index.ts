@@ -99,14 +99,14 @@ export interface PostcodePrefixHeader {
 	 * The sub-national scope slug and filename suffix, such as `"gb-esw"` for
 	 * Code-Point Open or `"gb-ni"` for the BT districts.
 	 *
-	 * It separates files for one country that come from registers with different licences and coverage.
+	 * It separates files for one country that come from registers with different licenses and coverage.
 	 */
 	scope: string
 	schemaVersion: 1
 
 	/**
 	 * The prefix granularities in the node table, such as `["outward"]` for GB
-	 * or `["3"]` for US sectional centres.
+	 * or `["3"]` for US sectional centers.
 	 */
 	levels: readonly string[]
 
@@ -134,7 +134,7 @@ export interface PostcodePrefixHeader {
 	tier: PostcodePrefixTier
 
 	/**
-	 * The source licence attribution.
+	 * The source license attribution.
 	 * Keep it with every copy of the artifact.
 	 */
 	attribution: string

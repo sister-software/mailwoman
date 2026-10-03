@@ -41,7 +41,7 @@ describe("renderBarePostcode", () => {
 	})
 
 	it("keeps Greece's written form even though no source carries Greek postcodes", () => {
-		// The shape is known (`gr_postcode` is `NNN NN` like its neighbours) while the data
+		// The shape is known (`gr_postcode` is `NNN NN` like its neighbors) while the data
 		// is absent — the only Greek member declares a postcode column with no values over
 		// 10,877 rows — so the rendering answers and `sources` names no Greek file.
 		expect(renderBarePostcode("GR", "55131")).toEqual(["551 31", "55131"])

@@ -44,7 +44,7 @@ describe("parseMapURL", () => {
 
 		expect(row.source).toBe("viewport-centre")
 		expect(row.latitude).toBe(51.5074)
-		// A labelled fallback, never a silent one — the reason travels with the row.
+		// A labeled fallback, never a silent one — the reason travels with the row.
 		expect(row.reason).toMatch(/CAMERA/)
 	})
 

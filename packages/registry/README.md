@@ -70,7 +70,7 @@ before blocking can use them.
 
 `resolveEntities` ships with these defaults:
 
-- **The blocking keys:** geo-cell on the resolved coordinate (0.05°, neighbours expanded) + canonical
+- **The blocking keys:** geo-cell on the resolved coordinate (0.05°, neighbors expanded) + canonical
   address + phone + email
 - **The scoring model:** Fellegi-Sunter with label-free EM, term frequency adjustment
 - **Learned scorer:** the bundled `DEDUP_GBT_MODEL`, on by default for single-dataset dedup

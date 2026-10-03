@@ -27,12 +27,16 @@
  * the data, so neither is read here.
  */
 
-import type { APIClient } from "@mailwoman/core/api"
+import { open } from "node:fs/promises"
+
+import { APIClient } from "@mailwoman/core/api"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { rootAttribute } from "@mailwoman/core/html/document"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
-import type { VlaanderenHarvest } from "#be/adapters/vlaanderen/adapter"
+import { VLAANDEREN_ADAPTER_ID, type VlaanderenHarvest } from "#be/adapters/vlaanderen/adapter"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { readWFSMarkupPage, WFS_VERSION } from "#tools/fetch/wfs-harvest"
 
 /**
@@ -173,6 +177,76 @@ export interface HarvestVlaanderenOptions {
  *
  * @returns The manifest as written.
  */
+/**
+ * How much of a page is read to find its root attributes.
+ *
+ * `numberReturned` sits on the `wfs:FeatureCollection` element, which opens the document.
+ * A page of this service is about 20 MB, and reading all of one to find an attribute in
+ * its first kilobyte would cost 1.6 GB of reads across a whole-region harvest.
+ */
+const PAGE_ROOT_PREFIX_BYTES = 8192
+
+/**
+ * One page a previous run wrote, as the resume reads it back.
+ */
+interface PageOnDisk {
+	file: string
+	numberReturned: number
+}
+
+/**
+ * The pages a previous run left in the output directory, keyed by their `startIndex`.
+ *
+ * `stem` is the file-name prefix a page group writes under: `address` for the addresses,
+ * and each component type's own stem.
+ * A whole-region harvest writes 457 address pages and 17 thoroughfare-name pages,
+ * and re-requesting either group costs the same bytes again.
+ *
+ * The feature count is read from each file's own `numberReturned` rather than assumed
+ * from the page size, so a page the service answered short is recorded as short.
+ * A file whose opening bytes state no `numberReturned` is left out, which makes the
+ * harvest request that index again: a page of unknown extent is not a page this
+ * harvest can count, and a run killed mid-write leaves exactly that.
+ *
+ * A group small enough for one page is written under `<stem>.gml` with no index,
+ * so that name reads as `startIndex` 0.
+ */
+async function pagesOnDisk(root: PathBuilder, stem: string): Promise<Map<number, PageOnDisk>> {
+	const pages = new Map<number, PageOnDisk>()
+	const files = await Globerator.from(`${stem}*.gml`, { cwd: root.toString(), absolute: false }).toArray()
+	const indexed = new RegExp(`^${stem}(?:-(\\d+))?\\.gml$`, "u")
+
+	for (const file of files) {
+		const name = String(file)
+		const matched = indexed.exec(name)
+
+		if (!matched) continue
+
+		const startIndex = matched[1] === undefined ? 0 : Number(matched[1])
+
+		if (!Number.isInteger(startIndex)) continue
+
+		const handle = await open(root(name).toString(), "r")
+
+		try {
+			const buffer = Buffer.alloc(PAGE_ROOT_PREFIX_BYTES)
+			const { bytesRead } = await handle.read(buffer, 0, PAGE_ROOT_PREFIX_BYTES, 0)
+
+			const returned = rootAttribute(buffer.subarray(0, bytesRead).toString("utf8"), "numberReturned", {
+				xml: true,
+			})
+
+			if (returned === undefined || !/^\d+$/u.test(returned)) continue
+
+			pages.set(startIndex, { file: name, numberReturned: Number(returned) })
+		} finally {
+			await handle.close()
+		}
+	}
+
+	return pages
+}
+
 export async function harvestVlaanderenAD(
 	client: Pick<APIClient, "fetch">,
 	options: HarvestVlaanderenOptions
@@ -191,9 +265,19 @@ export async function harvestVlaanderenAD(
 
 	for (const [typeName, stem] of Object.entries(COMPONENT_STEMS) as [ComponentType, string][]) {
 		const count = await readVlaanderenFeatureCount(client, `ad:${typeName}`)
+		const existing = await pagesOnDisk(root, stem)
 		let read = 0
 
 		for (let startIndex = 0; startIndex < count; startIndex += componentPageSize) {
+			const held = existing.get(startIndex)
+
+			if (held !== undefined) {
+				componentFiles[typeName].push(held.file)
+				read += held.numberReturned
+
+				continue
+			}
+
 			const page = await readVlaanderenPage(client, {
 				typeNames: `ad:${typeName}`,
 				count: String(componentPageSize),
@@ -232,10 +316,26 @@ export async function harvestVlaanderenAD(
 	const addressPages: Array<{ startIndex: number; file: string; numberReturned: number }> = []
 	let retrievedAt = ""
 
+	// A page already on disk is not requested again.
+	// The service answered HTTP 400 on one page of a whole-region harvest after 105 pages
+	// and 1.8 GB, and that page answered 200 on a later attempt, so the refusal was transient.
+	// Without this the next run starts at index 0 and re-downloads every page it already holds.
+	// The page record is kept per page rather than written once at the end, because `harvest.json`
+	// is what states which pages exist and a throw before the end leaves no record of them.
+	const onDisk = await pagesOnDisk(root, "address")
+
 	for (let startIndex = 0; startIndex < addressCount; startIndex += pageSize) {
 		if (options.signal?.aborted) break
 
 		if (options.maxPages !== undefined && addressPages.length >= options.maxPages) break
+
+		const existing = onDisk.get(startIndex)
+
+		if (existing !== undefined) {
+			addressPages.push({ startIndex, file: existing.file, numberReturned: existing.numberReturned })
+
+			continue
+		}
 
 		const page = await readVlaanderenPage(client, {
 			typeNames: "ad:Address",
@@ -274,4 +374,62 @@ export async function harvestVlaanderenAD(
 	await writeLocalJSONFile(harvest, root("harvest.json"))
 
 	return harvest
+}
+
+/**
+ * The directory `#be/adapters/vlaanderen/adapter` reads, given the root a fetch wrote under.
+ *
+ * The adapter reads the directory rather than one file, because a harvest writes the addresses
+ * and each component type as separate documents beside `harvest.json`.
+ */
+export function vlaanderenInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuilderLike {
+	return outRoot(VLAANDEREN_ADAPTER_ID)
+}
+
+/**
+ * Per-invocation options for the registry entry.
+ */
+export interface FetchVlaanderenOptions extends BaseFetchOptions {
+	maxPages?: number
+	pageSize?: number
+	componentPageSize?: number
+	signal?: AbortSignal
+}
+
+/**
+ * The registry entry.
+ *
+ * `harvestVlaanderenAD` takes a client so a test can drive it against stubbed bodies.
+ * This supplies the client the registry's callers expect, and reports the harvest as a
+ * {@linkcode FetchSummary}: one harvest is one fetched unit whatever the page count,
+ * because the adapter reads the directory rather than any single page.
+ */
+export async function fetchVlaanderenAD(
+	options: FetchVlaanderenOptions,
+	report?: (line: string) => void
+): Promise<FetchSummary> {
+	await using client = new APIClient({ displayName: VLAANDEREN_ADAPTER_ID, retry: true })
+
+	const outputDir = options.outRoot(VLAANDEREN_ADAPTER_ID)
+
+	report?.(`=== ${VLAANDEREN_ADAPTER_ID}: harvesting ${VLAANDEREN_AD_WFS}`)
+
+	// Awaited rather than returned: `await using` disposes the client when this scope exits,
+	// and a disposed `APIClient` refuses every later request.
+	const harvest = await harvestVlaanderenAD(client, {
+		outputDir,
+		maxPages: options.maxPages,
+		pageSize: options.pageSize,
+		componentPageSize: options.componentPageSize,
+		signal: options.signal,
+	})
+
+	report?.(
+		`  ✓ ${harvest.addressCount} addresses over ${harvest.addressPages.length} pages, ` +
+			`components ${Object.entries(harvest.components)
+				.map(([type, files]) => `${type}=${files.length}`)
+				.join(" ")}`
+	)
+
+	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
 }

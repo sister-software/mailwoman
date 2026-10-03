@@ -67,7 +67,7 @@ export const NSUL_LICENSE = "OGL-UK-3.0"
 export const NSUL_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * ONS states the licence terms for its address products on this page.
+ * ONS states the license terms for its address products on this page.
  *
  * Northern Ireland (`BT`) postcode data falls outside those terms.
  */
@@ -146,7 +146,7 @@ export const NSUL_MINIMUM_PLAUSIBLE_ROWS = 35_000_000
  */
 export const NSUL_COVERAGE_NOTE =
 	"NSUL covers Great Britain only (England, Scotland, Wales — eleven regional files). Northern Ireland postcode data " +
-	"is excluded from ONS's open terms and requires a separate Land & Property Services licence; the Isle of Man and " +
+	"is excluded from ONS's open terms and requires a separate Land & Property Services license; the Isle of Man and " +
 	"the Channel Islands are outside AddressBase. A row is present only when the UPRN's postcode is in Code-Point Open " +
 	"AND OS Open UPRN publishes a coordinate for it; the two skipped counts are in nsul_meta.quality_drops."
 

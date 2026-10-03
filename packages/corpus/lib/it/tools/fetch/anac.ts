@@ -33,7 +33,7 @@
  * edition is re-fetched on a `HEAD` disagreement rather than treated as final.
  *
  * The registry publishes this release under CC BY 4.0, which the address-source register elected.
- * The manifest records the licence and the attribution, and the adapter records the licence on every
+ * The manifest records the license and the attribution, and the adapter records the license on every
  * row.
  */
 

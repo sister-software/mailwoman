@@ -139,14 +139,30 @@ changing anything structural. The short version:
 
 ## Build, test, and type-check commands
 
-| Command                                | What it does                                                       |
-| -------------------------------------- | ------------------------------------------------------------------ |
-| `yarn compile`                         | `tsc -b` over the workspaces (the build)                           |
-| `yarn test`                            | vitest, watch mode                                                 |
-| `yarn ci:test`                         | vitest, single run (what CI runs)                                  |
-| `yarn typecheck:scripts`               | type-checks the `scripts/` toolshed (it's outside the build graph) |
-| `yarn lint`                            | oxlint + oxfmt (Oxc toolchain)                                     |
-| `yarn workspace @mailwoman/docs start` | the docs site at http://localhost:7770                             |
+| Command                                | What it does                                                        |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| `yarn compile`                         | `tsc -b` over the workspaces (the build)                            |
+| `yarn test`                            | vitest, watch mode                                                  |
+| `yarn ci:test`                         | vitest, single run (what CI runs)                                   |
+| `yarn typecheck:scripts`               | type-checks the `scripts/` toolshed (it's outside the build graph)  |
+| `yarn lint`                            | repository lint, including spelling                                 |
+| `yarn lint:spelling`                   | checks repository spelling with the local Rust-based `typos` binary |
+| `yarn lint:spelling:fix`               | applies unambiguous spelling corrections                            |
+| `yarn workspace @mailwoman/docs start` | the docs site at http://localhost:7770                              |
+
+`yarn install` downloads the `typos` binary through `@ocular-d/typos-bin`; a Rust toolchain is not
+required. The wrapper supports Linux and macOS on x64 and arm64. CI runs spelling through `yarn lint`.
+
+`typos.toml` selects American English and checks authored source, comments, documentation, and
+filenames, including hidden configuration. Git-ignored files, imported datasets, generated artifacts,
+frozen evaluations, and fixture directories are excluded. Tests outside fixture directories remain
+checked, with specific exceptions for malformed inputs and multilingual source values.
+
+Review the diff after `yarn lint:spelling:fix`. Preserve geographic names, external names, wire
+identifiers, quotations, and expected fixture values. Prefer an exact identifier or literal exception;
+use accepted words only where the vocabulary is needed. File-type globs match basenames, and the most
+specific matching type applies. A type exception therefore also applies to another file with that
+basename. `typos` detects known spelling mistakes rather than rejecting every unknown word.
 
 A vitest config in `packages/core/` and `packages/neural/` aliases sibling `@mailwoman/*` imports
 to source, so `yarn test` runs without a precompile step.

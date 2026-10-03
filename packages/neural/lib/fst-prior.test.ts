@@ -491,7 +491,7 @@ describe("Street-shaped surface check on the C4 mapped tiers", () => {
 		expect(isStreetShapedSurface(tokens as string[])).toBe(expected)
 	})
 
-	it("a neighbourhood entry on a street-shaped surface draws no locality bias", () => {
+	it("a neighborhood entry on a street-shaped surface draws no locality bias", () => {
 		const fst = mockFST(
 			new Map([
 				["king", []],

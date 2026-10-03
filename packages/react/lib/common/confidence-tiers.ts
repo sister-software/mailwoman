@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Confidence banding shared by every component that colours a span by confidence.
+ * @file Confidence banding shared by every component that colors a span by confidence.
  *
  *   It is a presentation choice rather than a model one: the parser emits a continuous confidence and these
- *   bounds only decide which colour a span is drawn in, so they live here rather than anywhere the
+ *   bounds only decide which color a span is drawn in, so they live here rather than anywhere the
  *   pipeline can see them.
  */
 

@@ -111,7 +111,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	const anc = db.prepare("SELECT COUNT(*) AS n FROM ancestors").get() as { n: number }
 	expect(anc.n).toBe(3)
 
-	// Provenance travels in the artifact, the licence obligation the frozen database lacked.
+	// Provenance travels in the artifact, the license obligation the frozen database lacked.
 	const meta = new Map(
 		(db.prepare("SELECT key, value FROM meta").all() as Array<{ key: string; value: string }>).map((r) => [
 			r.key,

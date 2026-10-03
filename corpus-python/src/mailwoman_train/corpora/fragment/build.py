@@ -51,7 +51,7 @@ from .sources import (
     span_rows_from_corpus,
 )
 
-#: How a block adds one row: the rendered fields, the row's country, its locale, its licence note.
+#: How a block adds one row: the rendered fields, the row's country, its locale, its license note.
 #: Every block takes this rather than a list, because the id `push` stamps stores the row's INDEX —
 #: a block that appended to its own list and merged later would renumber everything after it.
 Push = Callable[[dict[str, Any], str, str, str], None]

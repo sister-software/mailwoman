@@ -15,14 +15,14 @@ import type { PathBuilderLike } from "path-ts"
 import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
 /**
- * Conservative floor, in metres, on the centre distance one unit of res-9 grid distance buys,
+ * Conservative floor, in meters, on the center distance one unit of res-9 grid distance buys,
  * so multiplying a grid distance under-states reach and can never end the ring walk early.
  */
 const RES9_CENTER_SPACING_FLOOR_M = 150
 
 /**
- * Conservative ceiling, in metres, on a res-9 cell's centre-to-vertex distance, so a point
- * within `radiusM` of the query sits in a cell whose centre is within `radiusM` plus this.
+ * Conservative ceiling, in meters, on a res-9 cell's center-to-vertex distance, so a point
+ * within `radiusM` of the query sits in a cell whose center is within `radiusM` plus this.
  */
 const RES9_CELL_RADIUS_CEILING_M = 300
 
@@ -42,7 +42,7 @@ export interface UPRNNearestHit {
 	latitude: number
 	longitude: number
 	/**
-	 * Haversine distance from the query point, metres.
+	 * Haversine distance from the query point, meters.
 	 */
 	distanceM: number
 }
@@ -102,7 +102,7 @@ export class UPRNLookup implements Disposable {
 	}
 
 	/**
-	 * The single nearest uprn within `radiusM` metres of the query point, or `null`
+	 * The single nearest uprn within `radiusM` meters of the query point, or `null`
 	 * when no uprn lies inside the radius.
 	 *
 	 * @throws {RangeError} When `radiusM` is not a positive finite number, or exceeds the cap.

@@ -517,7 +517,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 **Interfaces consumed:** Task 0's key-file functions from `@mailwoman/core/license`; Task 1's `refreshLicenseKey`, `checkLicenseStatus`, `licenseWorkerURL` from `@mailwoman/core/license/status`; `isSelfServicePayload` from `@mailwoman/core/license`.
 
-Behaviour:
+Behavior:
 
 - `license adopt <token> [--secret <s>]`: positional `token` (second positional after the action; add a second optional positional `argument` to the spec, described as "adopt: the token"). Verify offline. `valid` → write the key file; with `--secret`, the payload must carry `lid` (refuse otherwise: "this token was not issued by the self-service worker, so it has no refresh secret") and the credentials file is written 0600. `expired` → refuse with the expiry date; `unknown_key` → refuse: "this release does not trust key id <kid>; upgrade mailwoman to a release that lists it, then adopt again"; `invalid` → refuse with the reason. Print the paths written and `mailwoman license verify --online` as the next command. `--json` prints `{ keyPath, refreshPath?, payload }`.
 - `license refresh [--lid <lid> --secret <s>]`: credentials from the flags, else `readRefreshCredentials()`, else a usage error naming `adopt`. Call `refreshLicenseKey`. `active` → verify the token offline; `valid` → write the key file and print `status: active`, `expires`, the path; `unknown_key` → do not write, print the action, exit 1. `pending` → "the first payment has not been recorded yet; the email will carry the key" exit 1. `lapsed`/`revoked` → print the word, exit 1, key file untouched. `not_found` → "no license answers to this lid and secret" exit 1. `unreachable` → print it with the URL, exit 2. `--json` prints the answer plus `keyPath` when written.
@@ -991,8 +991,8 @@ mailwoman license refresh
 
 A full refund or a payment dispute marks the license `revoked` online at once. The key you hold keeps verifying offline
 until its date: it is a signed statement about a period that was paid for when it was signed, and revoking it early
-would break the installation of a customer whose dispute is later decided in their favour. A dispute decided in your
-favour returns the license to its subscription's state. Online checks are how a revocation reaches an installation
+would break the installation of a customer whose dispute is later decided in their favor. A dispute decided in your
+favor returns the license to its subscription's state. Online checks are how a revocation reaches an installation
 before the key's date.
 ````
 

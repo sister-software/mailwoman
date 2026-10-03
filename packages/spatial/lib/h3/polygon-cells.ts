@@ -33,12 +33,12 @@ export const CELL_ESTIMATE_BUDGET = 2_000_000
 
 /**
  * The coarsest resolution a feature may be pushed down to, below which a cell is tens
- * of thousands of square kilometres and the index stops summarizing anything.
+ * of thousands of square kilometers and the index stops summarizing anything.
  */
 export const MIN_INDEX_RESOLUTION = 4
 
 /**
- * A degree box's height and width in metres, longitude scaled at the box's
+ * A degree box's height and width in meters, longitude scaled at the box's
  * mid-latitude so the two are comparable.
  */
 function boxExtentMetres(box: LatLonBounds): { heightM: number; widthM: number } {
@@ -322,7 +322,7 @@ export function featureCellRows(cells: FeatureCells): Array<{
 
 /**
  * The coverage cell a row at `cell` belongs to, derived with `cellToParent` rather than a
- * fresh `latLngToCell` so a fringe row does not land in a neighbouring coverage cell.
+ * fresh `latLngToCell` so a fringe row does not land in a neighboring coverage cell.
  */
 export function coverageCellFor(cell: H3Cell, coverageResolution: number): H3Cell {
 	return cellToParent(cell, coverageResolution) as H3Cell

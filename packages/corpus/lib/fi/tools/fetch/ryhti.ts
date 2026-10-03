@@ -16,7 +16,7 @@
  *
  * SYKE's metadata record `{DBD610F4-3392-44CD-B601-BAE8FA547A57}` grants CC BY 4.0, which the
  * address-source register elects, and states the attribution as `Lähde: Syke Ryhti`. The manifest
- * records both, and `#fi/adapters/ryhti/adapter` records the licence on every row.
+ * records both, and `#fi/adapters/ryhti/adapter` records the license on every row.
  *
  * Four measured properties decide what this module does:
  *
@@ -79,7 +79,7 @@ export const FI_RYHTI_CSV_FILENAME = "open_address.csv"
 const COMPRESSED_FILENAME = "open_address.csv.gz"
 
 /**
- * The licence the register elects for this file.
+ * The license the register elects for this file.
  */
 export const FI_RYHTI_LICENSE = "CC-BY-4.0"
 

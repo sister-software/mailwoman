@@ -11,7 +11,8 @@
  *   A package move, scope rename, hoist, or `files` change can make it point nowhere.
  *   The caller may then report a missing artifact even though it looked in the wrong place.
  *
- *   The TypeScript AST finds literal `node_modules` path segments in `join` and `resolve` arguments.
+ *   The TypeScript AST finds install paths in path-building calls, filesystem and process calls,
+ *   literal variable initializers, and interpolated templates, including templates stored in arrays.
  *   A substring prefilter avoids parsing files that mention `node_modules` in Vitest exclude globs,
  *   `.gitignore`-shaped arrays, or prose.
  */
@@ -38,6 +39,38 @@ const MINIMUM_REASON_LENGTH = 20
  * the accepted hole that closing would require resolving imports.
  */
 const PATH_BUILDERS = new Set(["join", "path", "resolve", "resolvePath", "resolvePathBuilder"])
+
+/**
+ * Process and filesystem calls consume paths directly without a path-building call.
+ */
+const DIRECT_PATH_USERS = new Set([
+	"runFile",
+	"runFileSync",
+	"spawnProcess",
+	"spawnProcessSync",
+	"execFile",
+	"execFileSync",
+	"spawn",
+	"spawnSync",
+	"fork",
+	"readLocalTextFile",
+	"readLocalJSONFile",
+	"readLocalBuffer",
+	"readFileHead",
+	"readFileRange",
+	"pathExists",
+	"statPath",
+	"open",
+	"writeLocalTextFile",
+	"writeLocalJSONFile",
+	"createSymbolicLink",
+	"copyPath",
+	"readFile",
+	"writeFile",
+	"stat",
+	"lstat",
+	"access",
+])
 
 /**
  * Every site allowed to spell a `node_modules` path by hand, keyed by repo-relative
@@ -71,6 +104,12 @@ const ALLOWED: Record<string, string> = {
 	// Plants a fake `@vvago/vale` install under a scratch root so `valeCommand`'s resolution
 	// of the launcher and binary from an installed layout can be tested.
 	"packages/core/lib/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
+	"packages/core/lib/module/package-command.test.ts":
+		"builds nested fixture installs independently of package executable resolution",
+	"packages/repo-health/lib/checks/node-modules-reacharound.test.ts":
+		"records source snippets containing install paths as inputs to the checker",
+	"packages/dev-mcp/lib/routed-mailwoman-arm.test.ts":
+		"records candidate package paths in mocked weights results rather than resolving installed dependencies",
 	// Links the checkout's own node_modules into the staging tree for `yarn pack`'s
 	// project context, addressing no package-owned path by hand.
 	"packages/release-kit/lib/release/stage.ts":
@@ -95,7 +134,7 @@ async function listCandidateSources(context: RepoContext): Promise<string[]> {
 }
 
 /**
- * The `node_modules` string arguments of every path-building call in one source file, each with its line.
+ * Reports install paths used to build paths, read files, or launch processes, with each source line.
  *
  * Both a plain string and a template literal count, since the interpolated form is
  * what a "make it dynamic" refactor reaches for first.
@@ -103,6 +142,7 @@ async function listCandidateSources(context: RepoContext): Promise<string[]> {
 export function findReachArounds(source: string, fileName: string): Array<{ line: number; text: string }> {
 	const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true)
 	const hits: Array<{ line: number; text: string }> = []
+	const reported: Array<{ start: number; end: number }> = []
 
 	const argumentText = (node: ts.Node): string | undefined => {
 		// `isStringLiteralLike` already covers a no-substitution template.
@@ -117,6 +157,17 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 		}
 
 		return undefined
+	}
+	const isInstallPath = (text: string | undefined): boolean =>
+		text !== undefined && /(^|[/\\])node_modules([/\\]|$)/u.test(text) && !/^!?\*\*/u.test(text)
+	const report = (node: ts.Node): void => {
+		const start = node.getStart(sourceFile)
+
+		if (reported.some((range) => start >= range.start && node.getEnd() <= range.end)) return
+		reported.push({ start, end: node.getEnd() })
+		const { line } = sourceFile.getLineAndCharacterOfPosition(start)
+
+		hits.push({ line: line + 1, text: sourceFile.text.slice(start, node.getEnd()) })
 	}
 
 	const visit = (node: ts.Node): void => {
@@ -139,6 +190,7 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 				argumentText(firstArgument) === "node_modules"
 
 			const buildsPath = (callee !== undefined && PATH_BUILDERS.has(callee)) || descendsIntoNodeModules
+			const consumesPath = callee !== undefined && DIRECT_PATH_USERS.has(callee)
 
 			if (buildsPath) {
 				for (const argument of node.arguments) {
@@ -146,14 +198,20 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 
 					// A `node_modules` path segment rather than the bare word, so an exclude
 					// glob like `**/node_modules/**` inside a `join` does not fire.
-					if (text && /(^|[/\\])node_modules([/\\]|$)/.test(text) && !text.startsWith("**")) {
-						const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
-
-						hits.push({ line: line + 1, text: sourceFile.text.slice(node.getStart(sourceFile), node.getEnd()) })
-					}
+					if (isInstallPath(text)) report(node)
 				}
 			}
+			if (consumesPath && firstArgument && isInstallPath(argumentText(firstArgument))) report(node)
 		}
+		if (
+			ts.isVariableDeclaration(node) &&
+			node.initializer &&
+			ts.isStringLiteralLike(node.initializer) &&
+			isInstallPath(node.initializer.text)
+		) {
+			report(node.initializer)
+		}
+		if (ts.isTemplateExpression(node) && isInstallPath(argumentText(node))) report(node)
 
 		ts.forEachChild(node, visit)
 	}
@@ -171,7 +229,7 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
  */
 export const nodeModulesReacharoundCheck: RepoCheck = {
 	id: "node-modules-reacharound",
-	description: "No path-building call spells a node_modules layout by hand outside the reasoned allowlist.",
+	description: "No filesystem or executable lookup spells a node_modules layout outside the reasoned allowlist.",
 	async run(context) {
 		const diagnostics: Diagnostic[] = []
 		const sources = await listCandidateSources(context)

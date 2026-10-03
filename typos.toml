@@ -1,0 +1,426 @@
+[files]
+# Hidden authored configuration participates; Git metadata and bundled Yarn do not.
+ignore-hidden = false
+extend-exclude = [
+	"/.git/",
+	"/.yarn/",
+	"yarn.lock",
+	"corpus-python/uv.lock",
+	"docs/static/sbom/",
+	"docs/static/maps/",
+	"docs/static/mailwoman/",
+	"packages/sentencepiece-wasm/sentencepiece.mjs",
+	"packages/mailwoman/tools/eval-harness/gauntlet/cases/",
+	"packages/mailwoman/tools/eval-harness/conformance/*.jsonl",
+	"packages/mailwoman/tools/eval-harness/activity-lexicon/collision-census.json",
+	"packages/codex/lib/us/street-suffix.json",
+	"packages/poi-taxonomy/data/",
+	"THIRD_PARTY_NOTICES.md",
+	# Address datasets, frozen evaluations, and published provenance retain source spelling.
+	"data/",
+	"evals/",
+	"docs/records/evals/",
+	"**/*preregistration*.md",
+	"**/*preregistration*.mdx",
+	"docs/static/benchmarks/",
+	"packages/corpus/data/",
+	"packages/core/data/libpostal/",
+	"**/model-card.json",
+	"**/PROVENANCE.json",
+	"**/THIRD-PARTY-NOTICES*",
+	# Imported and deliberately malformed fixtures are data, including lint rule examples.
+	"**/fixtures/",
+	"**/test-fixtures/",
+	"config/vale/styles/Spelling.yml",
+	"config/vale/styles/ShellNoun.yml",
+	# Vale's vocabulary and regex rules contain accepted and rejected spellings as data.
+	"config/vale/vocabularies/",
+	"config/vale/styles/Grammar/SloganAssertions.yml",
+	"packages/mailwoman/tools/eval-harness/**/*receipt*.json",
+	"packages/mailwoman/tools/eval-harness/**/*definition*.json",
+	"docs/engineering/reference/jurisdiction-coverage.mdx",
+	"packages/mailwoman/tools/eval-harness/baselines.json",
+	"packages/mailwoman/tools/eval-harness/invariance/suite.jsonl",
+	# These modules are generated from models or language registries.
+	"packages/registry/lib/models/*-gbt-en-us.ts",
+	"packages/codex/lib/country/official-languages.ts",
+	"packages/core/lib/resources/languages/types.gen.ts",
+]
+
+[default]
+locale = "en-us"
+# These literal values belong to external interfaces or quoted source names.
+extend-ignore-re = [
+	'''["'`]neighbourhood["'`]''',
+	'''\bneighbourhood\s*:|\.neighbourhood\b''',
+	'''["'`]licence["'`]''',
+	'''["'`]metre["'`]''',
+	'''["'`]modelled["'`]''',
+	'''\blicence\s*:|\.licence\b''',
+	'''#fulfil\b|`fulfil`''',
+	'''viewport-centre''',
+	'''Licence Ouverte''',
+	'''Open (?:Government |Data )?Licence''',
+	'''Norwegian Licence for Open Government Data''',
+	'''Singapore Open Data Licence''',
+	'''\bINSERTs\b|\bUPDATEs\b|\bATTACHed\b''',
+	'''\b(?:\d+nd(?:Order)?|\d+PN|\d+BA)\b''',
+	'''\b[0-9a-f]{7,40}\b''',
+	'''St Mary Axe|st mary axe''',
+	'''Generalised Zoning(?: Types)?|generalised-zoning-types|Standardised Zoning Objective''',
+	'''District Centre|Neighbourhood Centre|Centre-Val de Loire''',
+	'''Church of the Holy Sepulchre''',
+	'''Viet Nam|Valles Marineris''',
+	'''Courrier d'Entreprise''',
+	'''© les contributeurs de la Base Adresse Nationale''',
+	'''\b(?:5th Avenue Theatre|Royal Theatre|Grand Theatre|Belfast Grand Opera Theatre)\b''',
+	'''\bBroadway Theatre(?: Company)?\b|5th\s+Avenue\s+Theatre''',
+	'''\bAvenue du Centre\b|\bPharmacie du Centre\b|100 Centre Street''',
+	'''\b(?:Northfields Community|New Cross Learning|New North Health|NATIONAL SHOOTING|DIABETES & METABOLISM) CENTRE\b''',
+	'''\b(?:Northfields Community|New Cross Learning|New North Health) Centre\b''',
+	'''OR(?:DNANCE SURVEY DATA LICENCE)|http://os.uk/opendata/licence''',
+	'''Licence No\. 2023/OSi_NMA_073''',
+	'''International Licence \(CC-BY\)''',
+	'''Myplan\.ie uses a generalised, homogenised version''',
+	'''presence and effect of flood defences''',
+	'''\bUnicode-Nd\b|\\p\{Nd\}''',
+	'''pre-empted|look-alikes''',
+	'''\blicence(?:\\)?\.txt\b''',
+	'''\|Licence\|License\|Lizenz''',
+	'''\b(?:LPS |Ireland )?End User Licence\b''',
+	'''Brussels Regional Informatics Centre''',
+	'''National Shooting Centre''',
+	'''Licence CC-BY 4\.0''',
+	'''\bVIA\s+CONSOLATO DEL MARE\b''',
+	'''\bHà Nam\b|\bTây Nam Linh Đàm\b''',
+	'''\b(?:band A|city|town) centre\b''',
+	'''\b(?:bad|folded)-defence\.db\b|declared defence domain''',
+	'''maintaining the existing defence during the period, so the mapped zone reflects the defence''',
+	'''\b(?:District, neighbourhood centre|City/Town/village Centre)\b''',
+	'''\bNooYork\b''',
+	'''\bgb-op2-east-west-fortess\b''',
+	'''\b17\. Juni\b''',
+	'''sharpen-the-axe''',
+	'''["'`]ue["'`]''',
+	'''`-feld`''',
+	'''\b(?:ban-licence-ouverte|no-such-licence)\b''',
+	'''autocomplete\(trie, \["new", "yor"\]''',
+	# Existing error text and the frozen filer scorecard retain their tested spelling.
+	'''licence condition|sectional centre''',
+	'''licence \$\{stringifyJSON\(licenseID\)\} reads''',
+	'''one registrant is a modelling choice''',
+	'''Extraction or Re-utilisation''',
+	'''Separately modelled postal jurisdictions''',
+	# Publisher quotations in source surveys retain the quoted spelling.
+	'''(?m)^> a link to this licence"$''',
+	'''further investigations and modelling may be required''',
+	'''Myplan\.ie uses a \*\*generalised, homogenised version\*\*''',
+	'''Territory characterised according to its''',
+]
+
+[default.extend-words]
+# These words occur throughout address examples and source descriptions.
+adresse = "adresse"
+adresses = "adresses"
+adres = "adres"
+departement = "departement"
+calle = "calle"
+carrer = "carrer"
+cours = "cours"
+clos = "clos"
+pont = "pont"
+sur = "sur"
+corse = "corse"
+linz = "linz"
+whos = "whos"
+unparseable = "unparseable"
+# The prefix appears in compounds such as mis-parsed.
+mis = "mis"
+comune = "comune"
+unter = "unter"
+vor = "vor"
+quater = "quater"
+# These names and morphological terms appear across prose and address examples.
+amphitheatre = "amphitheatre"
+louvre = "louvre"
+parises = "parises"
+groyne = "groyne"
+alikes = "alikes"
+contextful = "contextful"
+
+[default.extend-identifiers]
+# Standard codes, dependency names, and existing API identifiers retain their spelling.
+ND = "ND"
+PNGs = "PNGs"
+OTPs = "OTPs"
+BA = "BA"
+FO = "FO"
+PN = "PN"
+EIN = "EIN"
+HSA = "HSA"
+IIT = "IIT"
+ALS = "ALS"
+OT = "OT"
+ABL = "ABL"
+SER = "SER"
+OFR = "OFR"
+MUC = "MUC"
+GES = "GES"
+BRE = "BRE"
+GIR = "GIR"
+JOD = "JOD"
+CAF = "CAF"
+LSO = "LSO"
+NAM = "NAM"
+SOM = "SOM"
+SUR = "SUR"
+THA = "THA"
+TTO = "TTO"
+sherif = "sherif"
+nd = "nd"
+anc = "anc"
+pn = "pn"
+thr = "thr"
+ein = "ein"
+ontext = "ontext"
+arange = "arange"
+displaCy = "displaCy"
+unexcepted = "unexcepted"
+StNam_Full = "StNam_Full"
+addressNumber2ndExtension = "addressNumber2ndExtension"
+regionAnc = "regionAnc"
+insAnc = "insAnc"
+byAnc = "byAnc"
+FulfilDependencies = "FulfilDependencies"
+fulfilInvoice = "fulfilInvoice"
+MAILWOMAN_LICENCE = "MAILWOMAN_LICENCE"
+FulfilOutcome = "FulfilOutcome"
+neighbourhood_id = "neighbourhood_id"
+segmentDistanceMetres = "segmentDistanceMetres"
+nearestEdgeMetres = "nearestEdgeMetres"
+BOUNDARY_TOLERANCE_METRES = "BOUNDARY_TOLERANCE_METRES"
+metresPerDegree = "metresPerDegree"
+squareCentre = "squareCentre"
+neighbourhoodName = "neighbourhoodName"
+defence_type = "defence_type"
+KILOMETRE_POINT = "KILOMETRE_POINT"
+projectedMetres = "projectedMetres"
+TERRARIUM_DATUM_METRES = "TERRARIUM_DATUM_METRES"
+unnamedMetres = "unnamedMetres"
+metresBetween = "metresBetween"
+interiorCentre = "interiorCentre"
+centreLat = "centreLat"
+centreLon = "centreLon"
+METRES_PER_DEGREE = "METRES_PER_DEGREE"
+nearestRingEdgeMetres = "nearestRingEdgeMetres"
+maxNeighbourStreetBias = "maxNeighbourStreetBias"
+neighbourStreetBias = "neighbourStreetBias"
+findNeighbour = "findNeighbour"
+boxExtentMetres = "boxExtentMetres"
+METRES_PER_KM = "METRES_PER_KM"
+metresFromRooftop = "metresFromRooftop"
+defenceType = "defenceType"
+defenceTypeCounts = "defenceTypeCounts"
+EA_EXPECTED_CATALOGUE_LICENCE = "EA_EXPECTED_CATALOGUE_LICENCE"
+expectLicence = "expectLicence"
+NCERM_DEFENCE_TYPES_FOLDED = "NCERM_DEFENCE_TYPES_FOLDED"
+foldDefenceType = "foldDefenceType"
+holeCentre = "holeCentre"
+LabelledSpan = "LabelledSpan"
+service_unlabelled = "service_unlabelled"
+serviceUnlabelled = "serviceUnlabelled"
+insideUnlabelled = "insideUnlabelled"
+isLabelledSpan = "isLabelledSpan"
+unzonedCentre = "unzonedCentre"
+_Licence = "_Licence"
+HSA_OVERRIDE_GFX_VERSION = "HSA_OVERRIDE_GFX_VERSION"
+Nd = "Nd"
+ba = "ba"
+insertAnc = "insertAnc"
+ancRows = "ancRows"
+bestThr = "bestThr"
+has_desig = "has_desig"
+adresseTekst = "adresseTekst"
+LEVL_CODE = "LEVL_CODE"
+CroplandCROS = "CroplandCROS"
+MUC_QUALIFICACIONS = "MUC_QUALIFICACIONS"
+LaMoure = "LaMoure"
+alias_normalisation = "alias_normalisation"
+# Renaming these exported declarations would change the existing BDC API.
+BroadbandServicableLocationID = "BroadbandServicableLocationID"
+isBroadbandServicableLocationID = "isBroadbandServicableLocationID"
+BROADBAND_SERVICABLE_LOCATION_INPUT_PATTERN = "BROADBAND_SERVICABLE_LOCATION_INPUT_PATTERN"
+
+[type.corpus-vocabulary]
+extend-glob = [
+	"adapter*.ts",
+	"emuia*.ts",
+	"inspire.test.ts",
+	"codes.ts",
+	"data.ts",
+	"province.ts",
+	"departement.ts",
+	"level-designator.ts",
+	"cedex.ts",
+	"house-venue.ts",
+	"glossary.json",
+	"street-type.ts",
+	"register.test.ts",
+	"locale.test.ts",
+]
+extend-words = { numer = "numer", registre = "registre", individuels = "individuels", titre = "titre", modificacion = "modificacion", fre = "fre", ue = "ue", thi = "thi", Projektion = "Projektion", Territoires = "Territoires", Somme = "Somme", Gard = "Gard", som = "som", LEVL = "LEVL", CONSOLATO = "CONSOLATO", ASSOCIATO = "ASSOCIATO", MEDA = "MEDA", TRE = "TRE", CONSTITUCION = "CONSTITUCION", Mitre = "Mitre", limite = "limite", LIK = "LIK", IZ = "IZ", ine = "ine" }
+
+[type.german-board]
+extend-glob = ["fragment_board.py"]
+extend-words = { januar = "januar", februar = "februar", juni = "juni", juli = "juli", oktober = "oktober", dezember = "dezember" }
+
+[type.fcc-notes]
+extend-glob = ["notes.ts", "notes.test.ts"]
+# The upstream FCC text contains this typo and the parser matches it verbatim.
+extend-words = { accout = "accout" }
+
+[type.autocomplete-fixtures]
+extend-glob = [
+	"autocomplete.test.ts",
+	"autocomplete.integration.test.ts",
+	"ancestrie-parity.integration.test.ts",
+	"demo-autocomplete.spec.ts",
+	"2026-06-14-the-autocomplete-that-couldnt-finish-a-word.mdx",
+]
+extend-words = { yor = "yor", tham = "tham" }
+
+[type.intentional-typos]
+extend-glob = [
+	"intent.test.ts",
+	"input.pty.integration.test.ts",
+	"QueryInput.integration.test.ts",
+	"demo-cascade-rows.test.ts",
+	"test_config_strict.py",
+]
+extend-words = { resturant = "resturant", worl = "worl", expectd = "expectd", trian = "trian" }
+
+[type.unicode-fixtures]
+extend-glob = ["nfc.test.ts", "text.test.ts"]
+extend-words = { caf = "caf" }
+
+[type.coastal-fields]
+extend-glob = [
+	"build-coastal.ts",
+	"chunk.ts",
+	"ckan.ts",
+	"app.ts",
+	"street-morphology-prior.ts",
+	"triage.ts",
+	"cohesion.ts",
+]
+extend-identifiers = { defence = "defence", licences = "licences", fulfil = "fulfil", neighbour = "neighbour", neighbours = "neighbours" }
+
+[type.lexical-rules]
+extend-glob = ["ingest.ts"]
+# These rules recognize input spellings in multiple dialects.
+extend-words = { theatre = "theatre", centre = "centre", harbour = "harbour", organisation = "organisation" }
+
+[type.bdc-plausibility]
+extend-glob = ["plausibility.test.ts"]
+extend-words = { unsupport = "unsupport" }
+
+[type.issue-prefixes]
+extend-glob = ["issues.ts", "tables.ts"]
+extend-words = { priorit = "priorit", COUNTR = "COUNTR" }
+
+[type.malformed-address-examples]
+extend-glob = [
+	"how-humans-break-addresses.mdx",
+	"input-robustness.mdx",
+	"writing-system.md",
+	"input.pty.integration.test.ts",
+	"inferred-scope.test.ts",
+	"gauntlet-report.test.ts",
+	"attestation.run.ts",
+]
+extend-words = { Postdam = "Postdam", Fransisco = "Fransisco", souce = "souce", worl = "worl", fortess = "fortess", Sacremento = "Sacremento" }
+
+[type.fixture-names]
+extend-glob = ["node-ids.test.ts", "sanitize.integration.test.ts", "layouts.ts", "address-layouts.test.ts"]
+extend-words = { Fibre = "Fibre", Marineris = "Marineris", Gard = "Gard", Yau = "Yau" }
+
+[type.source-words]
+extend-glob = ["channel-arms.run.ts", "exposure.ts", "province.ts"]
+extend-words = { singel = "singel", tha = "tha", Territoires = "Territoires" }
+
+[type.capture-recapture]
+extend-glob = ["capture-recapture*.ts", "unit-ablation.run.ts"]
+extend-identifiers = { metres = "metres" }
+
+[type.wilson-interval]
+extend-glob = ["span-board.ts", "power.ts", "build.test.ts"]
+extend-identifiers = { centre = "centre" }
+
+# Type globs match basenames. These files quote placetypes in diagrams, output, or adapters.
+[type.wof-placetypes]
+extend-glob = [
+	"add-autocomplete.mdx",
+	"reverse-geocode.mdx",
+	"wof-osm-placetype-map.mdx",
+	"PHASE_1_corpus.mdx",
+	"2026-08-17-mcp-romp-of-to.md",
+	"wof-hierarchy-gap.mdx",
+	"2026-05-28-japanese-address-hierarchy.mdx",
+	"2026-08-02-r7-ni-preregistration.md",
+	"locale-board.test.ts",
+	"adapter.ts",
+	"vale-rule-digest.test.ts",
+	"report.ts",
+	"parse-compare.ts",
+	"locality-surface-lexicon.tsx",
+]
+extend-identifiers = { neighbourhood = "neighbourhood" }
+# The adapter type also reads multilingual publisher fields.
+extend-words = { numer = "numer", registre = "registre", individuels = "individuels", titre = "titre", modificacion = "modificacion", fre = "fre", ue = "ue", thi = "thi", Projektion = "Projektion", CONSOLATO = "CONSOLATO", CONSTITUCION = "CONSTITUCION", IZ = "IZ", ine = "ine" }
+
+[type.zoning-source-fields]
+extend-glob = ["vocabulary.ts"]
+extend-words = { COLOUR = "COLOUR", Descriptio = "Descriptio", neighbourhood = "neighbourhood", centre = "centre" }
+
+[type.prior-fixture]
+extend-glob = ["evidence.test.ts", "2026-08-21-evidence-derivation.md"]
+extend-words = { urbanisation = "urbanisation" }
+
+[type.brand-aliases]
+extend-glob = ["franchise-queries.mdx", "regional-variant-queries.mdx", "street-supplement-architecture.mdx"]
+extend-words = { Mek = "Mek" }
+
+[type.paper-authors]
+extend-glob = ["2026-08-16-decoder-interpretability.md"]
+extend-words = { Pinter = "Pinter" }
+
+[type.gdal-and-profession-codes]
+extend-glob = ["2026-09-07-astrogeology-pipeline.md", "organization.ts"]
+extend-identifiers = { ot = "ot" }
+
+[type.source-survey]
+extend-glob = [
+	"2026-08-27-arability-layer-survey.md",
+	"2026-08-27-erosion-layer-survey.md",
+	"2026-08-27-flood-layer-survey.md",
+	"2026-08-27-zoning-layer-survey.md",
+]
+# These surveys quote publisher terms and source fields, sometimes across lines.
+extend-ignore-re = ['''(?s)"[^"]*"''', '''(?m)^\s*>.*$''']
+extend-words = { COLOUR = "COLOUR", Descriptio = "Descriptio", Licence = "Licence", modelled = "modelled" }
+
+[type.recorded-prediction]
+extend-glob = ["2026-06-19-coordinate-leverage-sprint.md"]
+extend-words = { ALLE = "ALLE" }
+
+[type.venue-example]
+extend-glob = ["france-ban.mdx"]
+extend-words = { Centre = "Centre" }
+
+[type.input-vocabulary]
+extend-glob = ["rules.ts"]
+extend-words = { theatre = "theatre", centre = "centre", harbour = "harbour", organisation = "organisation", neighbourhood = "neighbourhood" }
+
+[type.fulfil]
+extend-glob = ["fulfil.ts", "fulfil.test.ts"]
+check-filename = false

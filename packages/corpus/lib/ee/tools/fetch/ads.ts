@@ -19,7 +19,7 @@
  * 1. The payload needs no component resolution. GeoServer flattens the application schema here, so
  *    each `component<n>_xlink_href` has a sibling `component<n>_xlink_title` carrying the referenced
  *    feature's value, and the adapter reads the titles. The harvest therefore takes one feature type
- *    rather than the five a harmonised INSPIRE service splits an address across.
+ *    rather than the five a harmonized INSPIRE service splits an address across.
  * 2. `resultType=hits` at `startIndex=1` reports `numberMatched="729973"` and a feature page reports
  *    the same number, so this service's count is real. It is read through
  *    `readCheckedWFSFeatureCount`, which proves the number against a page before a caller uses it,

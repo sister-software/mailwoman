@@ -57,14 +57,14 @@ export type CreateFloodClientOptions = CreatePacedCachedClientOptions
 
 /**
  * The product's data.gov.uk catalogue ID.
- * The entry holds the reference dates, licence and file URLs.
+ * The entry holds the reference dates, license and file URLs.
  */
 export const EA_CATALOGUE_PACKAGE_ID = "104434b0-5263-4c90-9b1e-e43b1d57c750"
 
 /**
- * The licence the catalogue entry must declare.
+ * The license the catalogue entry must declare.
  *
- * Any other value means the licence changed.
+ * Any other value means the license changed.
  * The build stops so someone can review the new terms.
  */
 export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
@@ -80,14 +80,14 @@ export type FloodCatalogueRecord = CKANPackageRecord
 export class EAFloodClient extends APIClient<APIClientConfig> {
 	/**
 	 * Reads the catalogue entry.
-	 * It contains the reference dates, licence and file URLs.
+	 * It contains the reference dates, license and file URLs.
 	 *
 	 * The download URL must come from the catalogue.
 	 * The EA file service keys files by an opaque `fileDataSetId`, so a hard-coded
 	 * URL can go stale after a republish.
 	 *
 	 * @throws {Error} When the entry is for a different dataset, has no `revision` date,
-	 * or declares a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
+	 * or declares a license other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<FloodCatalogueRecord> {
 		return readCKANPackageRecord(this, {
@@ -151,10 +151,10 @@ export const ONS_BOUNDARY_BASE_URL =
 	"https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Countries_December_2025_Boundaries_UK_BGC/FeatureServer/0"
 
 /**
- * The ONS boundary product, generalised to 20 m and clipped to the coastline.
+ * The ONS boundary product, generalized to 20 m and clipped to the coastline.
  *
  * The full-resolution product would give the same cells for a much larger download.
- * Coverage cells are kilometres across.
+ * Coverage cells are kilometers across.
  * The interior test drops cells near the border.
  */
 export const ONS_BOUNDARY_PRODUCT = "Countries (December 2025) Boundaries UK BGC"
@@ -167,7 +167,7 @@ export const ONS_BOUNDARY_ATTRIBUTION =
 	"Contains OS data © Crown copyright and database right 2025."
 
 /**
- * Licence of the ONS boundary data.
+ * License of the ONS boundary data.
  */
 export const ONS_BOUNDARY_LICENSE = "OGL-UK-3.0"
 

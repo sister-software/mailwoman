@@ -49,17 +49,17 @@ const OSGB36_TO_WGS84_HELMERT = {
 } as const
 
 /**
- * A position on the British National Grid, in metres.
+ * A position on the British National Grid, in meters.
  */
 export interface NationalGridPoint {
 	/**
-	 * Distance east in metres.
+	 * Distance east in meters.
 	 * Valid GB values run roughly from 0 to 700,000.
 	 */
 	easting: number
 
 	/**
-	 * Distance north in metres.
+	 * Distance north in meters.
 	 * Valid GB values run roughly from 0 to 1,300,000.
 	 */
 	northing: number

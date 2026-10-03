@@ -8,7 +8,7 @@
  *   Stubbed on purpose: loading the real 9 MB SentencePiece model to assert that a `<0x..>` piece is counted as a
  *   fallback would test SentencePiece rather than this. What is worth pinning is the arithmetic a reader will quote. The
  *   share's denominator is pieces and not characters. The per-character verdict is taken from the character by itself
- *   rather than from its behaviour inside a word.
+ *   rather than from its behavior inside a word.
  */
 
 import { describe, expect, it } from "vitest"

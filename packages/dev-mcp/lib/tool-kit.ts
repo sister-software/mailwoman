@@ -525,7 +525,7 @@ export function assertStratumKey(by: string): asserts by is StratumKey {
 	if (!STRATUM_KEYS.includes(by as StratumKey)) {
 		throw new Error(
 			`stratify_by ${stringifyJSON(by)} is not a stratum. Known: ${STRATUM_KEYS.join(", ")}. Bucketing an ` +
-				"unrecognised key would report one `unknown` bucket, which reads as a stratified result and is not one."
+				"unrecognized key would report one `unknown` bucket, which reads as a stratified result and is not one."
 		)
 	}
 }

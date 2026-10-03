@@ -28,13 +28,13 @@ export const BROADBAND_SERVICABLE_LOCATION_INPUT_PATTERN = /^\d{10}$/
  * Integer storage would lose leading zeros.
  *
  * @type string
- * @title Broadband Servicable Location ID
+ * @title Broadband Serviceable Location ID
  * @pattern ^\d{10}$
  */
 export type BroadbandServicableLocationID = Tagged<string, "BroadbandServicableLocationID">
 
 /**
- * Type-predicate for checking if a value appears to be a valid Broadband Servicable Location ID.
+ * Type-predicate for checking if a value appears to be a valid Broadband Serviceable Location ID.
  *
  * Accepts only a 10-digit string.
  * A `number` input is always rejected, even if its digits would otherwise match —

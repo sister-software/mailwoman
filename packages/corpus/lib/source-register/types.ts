@@ -337,6 +337,21 @@ export interface ElectedLicense {
 	 * `electedLicenseLabel` prefers this value to {@linkcode ElectedLicense.electedTerms}.
 	 */
 	spdx?: string
+	/**
+	 * Every grant the publisher states, where its surfaces state more than one.
+	 *
+	 * A publisher may state different terms in its dataset metadata, its download service
+	 * and its website, and it may be offering the same material under more than
+	 * one license, which Creative Commons permits.
+	 * Where that happens, {@linkcode ElectedLicense.spdx} records the one a build filters on
+	 * and this records what the publisher actually said, so a later reviewer reads
+	 * the conflict rather than one reading presented as settled.
+	 *
+	 * Electing the strictest grant is an engineering policy for deciding what a released corpus may carry.
+	 * It does not establish which grant governs, and `electedBecause` states
+	 * the substantive ground separately.
+	 */
+	candidateGrants?: readonly string[]
 	termsVersion?: string
 	/**
 	 * The location of the retrieved copy of the terms, so later reviewers read the same text.

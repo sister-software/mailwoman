@@ -118,7 +118,7 @@ export interface ResolvedInput {
 	 */
 	truthType?: string
 	/**
-	 * The row's distance tolerance in metres.
+	 * The row's distance tolerance in meters.
 	 */
 	toleranceM?: number
 	/**
@@ -403,7 +403,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 				? "Hand-picked inputs carry no expectations, so this set can be observed but not graded."
 				: graded === rows.length
 					? `All ${graded} rows carry a truth COORDINATE, so this set grades on distance. It carries no component or ` +
-						"tier truth — a row can be right to the metre and still have parsed the wrong thing."
+						"tier truth — a row can be right to the meter and still have parsed the wrong thing."
 					: `${graded} of ${rows.length} rows carry a truth coordinate; the rest are observed only. Read the graded ` +
 						"fraction against its own denominator, never against n.",
 			"Results from this set report their confidence bound in the summary sentence — see power.ts.",

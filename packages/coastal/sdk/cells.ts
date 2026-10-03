@@ -14,7 +14,7 @@
  *   what stays here is what is scenario-shaped. The flood layer accumulates per zone code, because a flood
  *   answer is a code from a two-value domain. the soil layer accumulates per delineation and weights by
  *   covered area. An erosion answer is a specific frontage polygon carrying its own distance, policy and
- *   defence, under one of twelve scenarios that must never be pooled — so this accumulates per (scenario,
+ *   defense, under one of twelve scenarios that must never be pooled — so this accumulates per (scenario,
  *   polygon) and reports per scenario.
  *
  *   the measurement is per scenario and never pooled. The twelve

@@ -1681,7 +1681,7 @@
 		},
 		{
 			"term": "R*Tree",
-			"definition": "SQLite's spatial index of bounding boxes, enabling fast geographic range and nearest-neighbour queries in the resolver.",
+			"definition": "SQLite's spatial index of bounding boxes, enabling fast geographic range and nearest-neighbor queries in the resolver.",
 			"tags": ["infrastructure", "geocoding"],
 			"aliases": ["spatial index"],
 			"relatedTerms": ["resolver", "FTS5", "H3"]

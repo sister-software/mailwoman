@@ -1,5 +1,5 @@
 /*
- * Earth's layout. Colour, type and radius come from `@mailwoman/react/tokens.css`, which `styles.css` pulls in;
+ * Earth's layout. Color, type and radius come from `@mailwoman/react/tokens.css`, which `styles.css` pulls in;
  * this file held 19 hand-copied Infima values, and the copy is what let the palette drift from the brand — a
  * primary of #e0367c against the design system's #ff00b0.
  *
@@ -56,7 +56,7 @@ main[data-route] .maplibregl-ctrl-group {
 }
 
 /*
- * MapLibre's own attribution control is hidden because the footer strip carries the same credits, and the licence
+ * MapLibre's own attribution control is hidden because the footer strip carries the same credits, and the license
  * obligation is discharged there. Two copies of "© OpenStreetMap" on one screen reads as a defect, not as diligence.
  */
 main[data-route] .maplibregl-ctrl-attrib {

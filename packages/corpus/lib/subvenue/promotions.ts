@@ -32,7 +32,7 @@ export interface SubVenuePromotion {
 	 * A shape restriction on a promotion.
 	 *
 	 * `identifier-required` promotes the phrase only as `<phrase> <identifier>`, such as `Halle 8`.
-	 * Consumers must honour it, because the bare German `Halle` is also a city.
+	 * Consumers must honor it, because the bare German `Halle` is also a city.
 	 * Without this field, the promotion holds in any shape.
 	 */
 	shape?: "identifier-required"

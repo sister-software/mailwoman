@@ -18,12 +18,12 @@
  *
  *   The channels use different coordinate precision, so a boundary-point disagreement can reflect rendering rather
  *   than a conversion defect. The geodatabase publishes nine decimals through this package's ingest. The OGC service
- *   publishes six decimals, or about 10 cm. A point within roughly a metre of a zone boundary can fall on opposite
+ *   publishes six decimals, or about 10 cm. A point within roughly a meter of a zone boundary can fall on opposite
  *   sides of the two rendered edges. The check reports these as `boundary_tolerance` with distance to the nearest
  *   edge. The receipt includes their count.
  *
- *   The distance measures to the edge rather than to the nearest vertex. A point a centimetre from a long edge can be
- *   metres from every vertex. In one flood-verify near-miss, vertex distance was 1.58 m and edge distance was 0.009 m.
+ *   The distance measures to the edge rather than to the nearest vertex. A point a centimeter from a long edge can be
+ *   meters from every vertex. In one flood-verify near-miss, vertex distance was 1.58 m and edge distance was 0.009 m.
  *   The vertex measurement overstated distance by 175 times. Vertex-only measurements would make the boundary tolerance
  *   stricter than its stated value and report a rendering difference as a conversion defect.
  */
@@ -62,7 +62,7 @@ export interface AgreementRow {
 	serviceInside: boolean
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
+	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
 	 *
 	 * Every row stores this distance.
 	 * It separates a real defect from a difference caused by the two channels

@@ -176,6 +176,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		license_policy: licensePolicy,
 		refused_by_license_kind: Object.fromEntries(align.refusedByKind),
 		refused_license_values: Object.fromEntries(refusedValues),
+		refused_rows_by_source: Object.fromEntries(align.refusedBySource),
 		admitted_unresolved_license_rows: align.admittedUnresolved,
 		profile,
 		excluded_by_eligibility: align.excludedByEligibility,

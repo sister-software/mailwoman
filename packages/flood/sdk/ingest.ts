@@ -26,7 +26,7 @@ export interface FloodSourceFeature {
 	zoneSource: string | null
 	origin: string | null
 	/**
-	 * GDAL's area of the source geometry, in square metres of the source projection.
+	 * GDAL's area of the source geometry, in square meters of the source projection.
 	 */
 	sourceAreaM2: number
 	polygons: MultiPolygonRings

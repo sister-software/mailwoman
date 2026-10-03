@@ -101,7 +101,7 @@ describe("localeHeadRow", () => {
 
 		expect(row.startsWith("US 0.9")).toBe(true)
 		expect(row).toContain("FR 0.0")
-		// The axis is read off the trace, so a re-ordered head must re-order the row rather than be re-labelled here.
+		// The axis is read off the trace, so a re-ordered head must re-order the row rather than be re-labeled here.
 		expect(localeHeadRow(traceOf({ localeLogits: [1, 4, 0], localeCountries: ["US", "FR", "DE"] }))).toMatch(/^FR /u)
 	})
 

@@ -33,7 +33,7 @@ describe("polyfillFindsNothing", () => {
 		expect(polyfillFindsNothing(SLIVER, 11)).toBe(true)
 	})
 
-	it("is FALSE for a polygon a cell centre falls inside", () => {
+	it("is FALSE for a polygon a cell center falls inside", () => {
 		expect(polyfillFindsNothing(BIG, 10)).toBe(false)
 	})
 })

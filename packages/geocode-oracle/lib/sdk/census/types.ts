@@ -194,11 +194,11 @@ export interface CensusAddressMatch {
  */
 export interface CensusBlockGeography {
 	/**
-	 * Land area, square metres.
+	 * Land area, square meters.
 	 */
 	AREALAND: number
 	/**
-	 * Water area, square metres.
+	 * Water area, square meters.
 	 */
 	AREAWATER: number
 	BASENAME: FIPSBlockCode | string

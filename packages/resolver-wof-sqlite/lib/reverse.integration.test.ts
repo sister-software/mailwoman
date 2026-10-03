@@ -193,13 +193,13 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 
 		afterAll(() => rg[Symbol.dispose]())
 
-		test("South Side Chicago → full chain down to the neighbourhood grain", async () => {
+		test("South Side Chicago → full chain down to the neighborhood grain", async () => {
 			const result = await rg.reverseGeocode(41.8004427, -87.6031768)
 			const names = result.hierarchy.map((p) => p.name)
 			expect(names).toContain("Chicago")
 			expect(names).toContain("Illinois")
 			expect(names).toContain("United States")
-			// The deepest node is a point-geometry neighbourhood (Hyde Park), so the result is
+			// The deepest node is a point-geometry neighborhood (Hyde Park), so the result is
 			// approximate by convention, even though the Chicago locality above it is polygon-confirmed.
 			expect(result.hierarchy[0]?.placetype).toBe("neighbourhood")
 			expect(result.containment).toBe("approximate")

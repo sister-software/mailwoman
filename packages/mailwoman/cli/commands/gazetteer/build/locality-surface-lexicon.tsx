@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build locality-surface-lexicon` — the Option-A bundle's locality-evidence
- *   artifact (three-law selectivity. v4 folds neighbourhood surfaces per the fragment-register
+ *   artifact (three-law selectivity. v4 folds neighborhood surfaces per the fragment-register
  *   doctrine). Large artifact → `$MAILWOMAN_DATA_ROOT/gazetteer/`, never git. ships as a
  *   weights-package sibling at the model promote that requires it.
  */

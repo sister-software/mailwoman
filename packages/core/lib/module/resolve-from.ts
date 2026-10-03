@@ -26,6 +26,12 @@ import { readLocalJSONFile } from "#fs/readers"
  * @throws When the package is not installed where `base` can see it.
  */
 export function resolvePackageJSON(base: string, packageName: string): string {
+	try {
+		return createRequire(base).resolve(`${packageName}/package.json`)
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "ERR_PACKAGE_PATH_NOT_EXPORTED") throw error
+	}
+
 	const manifestPath = findPackageJSON(packageName, base)
 
 	if (!manifestPath) {

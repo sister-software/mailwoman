@@ -19,7 +19,7 @@ Some inline SQL is raw on purpose. If you migrate one of these thinking it was m
 
 - **FTS5 virtual tables + `MATCH`** (`fts.ts`, `lookup.ts`, `extracts.ts`) — Kysely can't express `CREATE VIRTUAL TABLE … USING fts5` or the `MATCH` operator.
 - **ogr2ogr / GDAL-dialect SQL** (`packages/tiger/sdk/fetch.ts`) — runs inside ogr2ogr against shapefiles rather than the app DB.
-- **Hot bulk writes** — the positional prepared-statement INSERT loops, their `BEGIN`/`COMMIT`, and the candidate clustering `INSERT … SELECT … ORDER BY`. Plus `PRAGMA`, `VACUUM`, `ANALYZE`, `ATTACH` — none are Kysely-modelled, and the inserts are the throughput path.
+- **Hot bulk writes** — the positional prepared-statement INSERT loops, their `BEGIN`/`COMMIT`, and the candidate clustering `INSERT … SELECT … ORDER BY`. Plus `PRAGMA`, `VACUUM`, `ANALYZE`, `ATTACH` — none are Kysely-modeled, and the inserts are the throughput path.
 - **Runtime-dynamic schemas** (`packages/corpus/scripts/ingest-csv.ts`) — columns + types are inferred from the CSV at runtime; a builder loop wraps the same dynamic strings with ceremony and no added type safety.
 - **Introspect-and-replay** (`packages/resolver-wof-sqlite/lib/build/slim.ts`) — it execs the _source_ DB's own `CREATE TABLE` strings read from `sqlite_master`; a static builder can't express a copied schema.
 - **Async-into-sync walls** — `PlacetypeDataSource.ts` runs its DDL in a synchronous class constructor; `zcta-centroids.ts` and `coincident-roles.ts` are sync, heavily-tested helpers (the latter behind a sync CLI). Kysely's builder is async, so migrating cascades `async` through a sync call graph and rewrites the tests, all for one small table — not worth it.

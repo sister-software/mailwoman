@@ -68,7 +68,7 @@
  * `ad:alternativeIdentifier` is void on every address. The Locatieserver's `weergavenaam` is the
  * nearest equivalent, and `adapter.test.ts` pins the twelve fixture rows against it.
  *
- * Kadaster states one licence and states it as a URL. Both `rights` elements of the ATOM service
+ * Kadaster states one license and states it as a URL. Both `rights` elements of the ATOM service
  * document read `https://creativecommons.org/publicdomain/zero/1.0/deed.nl`, the Dutch deed page for
  * CC0 1.0 Universal, which the address-source register elected with `spdx` `CC0-1.0`. CC0 reserves no
  * act, so every row records that identifier and no attribution clause is owed, although crediting
@@ -128,7 +128,7 @@ export const NL_KADASTER_REGISTER = SourceRegister.KadasterInspireAddresses
 export const NL_KADASTER_COUNTRIES: readonly string[] = ["NL"]
 
 /**
- * The licence the address-source register elected for this publisher.
+ * The license the address-source register elected for this publisher.
  *
  * `unchecked-access-free-nl-kadaster` is elected with `electedTerms`
  * `Creative Commons CC0 1.0 Universal Public Domain Dedication` and `spdx` `CC0-1.0`,

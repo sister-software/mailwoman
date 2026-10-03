@@ -229,7 +229,7 @@ in `DEFAULT_WOF_PRIORITY_COUNTRIES`. Samples read correctly: `Mulund East / Mumb
 `Rajbagh / Srinagar`, `Fort / Tiruchchirappalli`, `Pedaganayada / Visakhapatnam`.
 
 **This is the answer to the "what maximizes parsability" half of the originating question**, and it
-was never a modelling problem or a sourcing problem. It was a recipe constant.
+was never a modeling problem or a sourcing problem. It was a recipe constant.
 
 Three direct caveats before anyone treats 186,469 as shippable:
 

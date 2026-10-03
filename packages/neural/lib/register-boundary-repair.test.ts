@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest"
 import { repairJPMunicipalityLabels, repairKRSubregionLabels } from "#register-boundary-repair"
 
 /**
- * One token per code point, labelled from a compact spec: `[[surface, tag], …]` in text order.
+ * One token per code point, labeled from a compact spec: `[[surface, tag], …]` in text order.
  */
 function charTokens(spans: readonly (readonly [string, string | null])[]): { text: string; tokens: DecoderToken[] } {
 	const tokens: DecoderToken[] = []

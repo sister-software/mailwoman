@@ -99,11 +99,11 @@ single layer would throw on the day another layer carries its ninth value:
 | --------------------------- | -------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mt_smp` / `lt_smp`         |    8 / 8 | **nine spellings for eight policies** — `mt_smp` writes `No Active Intervention / Managed Realignment` where `lt_smp` writes `No Active Intervention/Managed Realignment`, same 72 rows |
 | `mt_smp_int` / `lt_smp_int` |    4 / 4 | `Erosion restricted`, `Erosion unrestricted`, `Stop Maintaining`, blank                                                                                                                 |
-| `def_type`                  |       14 | twelve defences behind fourteen spellings: `Sheet piles` 1,344 beside `Sheet Piles` 270; `Vertical Wall - Concrete` 16,074 beside `Vertical Wall - concrete` 12                         |
+| `def_type`                  |       14 | twelve defenses behind fourteen spellings: `Sheet piles` 1,344 beside `Sheet Piles` 270; `Vertical Wall - Concrete` 16,074 beside `Vertical Wall - concrete` 12                         |
 | `published`                 |        2 | `2024` on 89,124 rows, `0` on 87                                                                                                                                                        |
 
 Membership for `def_type` is tested **case-folded**, and the value is stored **verbatim**. The case
-fold handles the source's own inconsistent capitalization and is not meant to accept a new defence
+fold handles the source's own inconsistent capitalization and is not meant to accept a new defense
 type.
 
 **A blank field holds a single space.** The value `" "` appears on the same 87 rows
@@ -139,7 +139,7 @@ The code encodes each of these behaviors directly:
 `coastal_zone_area` holds the authority's unsimplified rings with a precomputed bounding box, and every
 containment answer is decided against those rings. `coastal_zone_cell` is the H3 containment index above it. It classifies each
 cell as `whole` or `partial` **per polygon** instead of per class, because the distance, the policy,
-and the defence belong to each feature, so an erosion answer is a polygon. A `whole` cell answers
+and the defense belong to each feature, so an erosion answer is a polygon. A `whole` cell answers
 with primary-key probes alone. Only a `partial` cell falls through to the ray cast, and the ray cast
 runs only against the polygons that the cell lists for that scenario.
 
@@ -229,7 +229,7 @@ over the whole product):
 | coverage                | 577 cells at resolution 6, every one `source_present`                                        |
 | area agreement          | source 2,725.0 km² against 2,715.1 km² from the encoded rings — 0.362 % apart, tolerance 1 % |
 | area read without holes | 2,717.2 km², so the holes account for 2.1 km²                                                |
-| defence types seen      | 14 distinct, matching the census exactly                                                     |
+| defense types seen      | 14 distinct, matching the census exactly                                                     |
 | artifact                | 310.7 MB, sealed 0444                                                                        |
 | verify                  | **48/48 agree with the live OGC service**, 0 within boundary tolerance, 0 disagree           |
 | verify, negative half   | **8/8 read `unknown` with no designation**, none read a designation                          |
@@ -282,8 +282,8 @@ negative answer would need to report. The flood layer states the same rule for t
 
 The coverage row cannot express two further limits, both taken from the authority's own text. The
 product "considers the predominant risk at the coast" and generally excludes foreshore features, so an
-NCERM answer makes no statement about flooding. The 87 anomalous rows carry blank policy and defence fields
-with `published = 0`, and the Environment Agency documents no policy or defence fields for those rows.
+NCERM answer makes no statement about flooding. The 87 anomalous rows carry blank policy and defense fields
+with `published = 0`, and the Environment Agency documents no policy or defense fields for those rows.
 
 ## Build it
 

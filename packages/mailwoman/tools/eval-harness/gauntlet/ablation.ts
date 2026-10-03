@@ -159,7 +159,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
  *    This map measures component-level deletions.
  * 4. `nested` — the value is a proper substring of another asserted component's
  *    value (`York` inside `New York`).
- *    Its deletion damages the neighbour, so the row would measure a two-component
+ *    Its deletion damages the neighbor, so the row would measure a two-component
  *    deletion under one component's name.
  */
 export function ablationVariants(

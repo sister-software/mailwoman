@@ -152,7 +152,7 @@ describe("synthesizePoBoxRow", () => {
 })
 
 describe("SynthesizeMilitaryPoBoxRow", () => {
-	it("generates a unit-line po_box + APO/FPO/DPO locality + AA/AE/AP region + theatre ZIP", () => {
+	it("generates a unit-line po_box + APO/FPO/DPO locality + AA/AE/AP region + theater ZIP", () => {
 		const row = synthesizeMilitaryPoBoxRow({ random: makeLcg(7) })
 		expect(row.template).toBe("military-po-box")
 		expect(row.locale).toBe("en-US")

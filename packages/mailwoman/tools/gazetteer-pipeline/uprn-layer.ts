@@ -52,7 +52,7 @@ export const OPEN_UPRN_PRODUCT_ID = "OpenUPRN"
 export const OPEN_UPRN_LICENSE = "OGL-UK-3.0"
 
 /**
- * The URL of the OGL v3 licence text.
+ * The URL of the OGL v3 license text.
  */
 export const OPEN_UPRN_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
@@ -112,7 +112,7 @@ export interface OpenUPRNProduct {
 }
 
 /**
- * The labelled fields of the archive's `versions.txt`.
+ * The labeled fields of the archive's `versions.txt`.
  */
 export interface OpenUPRNVersions {
 	/**

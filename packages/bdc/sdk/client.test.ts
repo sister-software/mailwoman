@@ -536,7 +536,7 @@ describe("createBDCClient: the binary download path", () => {
 		expect([...new Uint8Array(result)]).toEqual([...bytes])
 	})
 
-	it("copies out of a POOLED buffer rather than handing over its neighbours' bytes", async () => {
+	it("copies out of a POOLED buffer rather than handing over its neighbors' bytes", async () => {
 		// Node pools small `Buffer.allocUnsafe` allocations.
 		// A short body arrives as a view at a non-zero `byteOffset` into a shared 8 KiB backing store.
 		// The caller would receive the whole pool if this code returned `.buffer` directly.

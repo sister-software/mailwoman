@@ -88,7 +88,7 @@ export interface ExclusionCoverageResult {
  * H3's hierarchy is not geometrically exact.
  *
  * The two derivations disagree for some points.
- * A row landing on a neighbouring cell here would move its observed count away
+ * A row landing on a neighboring cell here would move its observed count away
  * from the cell where it was observed.
  */
 function coverageCellOf(row: CaptureRow, resolution: number): number {

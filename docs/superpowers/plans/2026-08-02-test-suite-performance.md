@@ -1024,7 +1024,7 @@ function buildFixtureAdmin(path: string): void {
 		-- Law 2: below the one-token floor. This is the row that makes skippedProminence EXACTLY
 		-- countable, which is stronger than the full build's "> 0".
 		INSERT INTO spr VALUES (16, 'Smallville',  'locality', 'FR', 1);
-		-- Law-3 guard: a neighbourhood named after a person inside a prominent parent. Parent
+		-- Law-3 guard: a neighborhood named after a person inside a prominent parent. Parent
 		-- prominence must NOT launder it; the non-name sibling DOES inherit (the Montmartre case).
 		INSERT INTO spr VALUES (17, 'Joseph',      'neighbourhood', 'FR', 1);
 		INSERT INTO spr VALUES (18, 'Belleville',  'neighbourhood', 'FR', 1);
@@ -1073,7 +1073,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (45, 90000);
 		INSERT INTO place_population VALUES (46, 90000);
 
-		-- Both FR neighbourhoods hang off Paris, so parent prominence is available to both.
+		-- Both FR neighborhoods hang off Paris, so parent prominence is available to both.
 		INSERT INTO ancestors VALUES (17, 10, 'locality');
 		INSERT INTO ancestors VALUES (18, 10, 'locality');
 
@@ -1128,10 +1128,10 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(surfaces.rennes).toBeDefined()
 	})
 
-	it("law-3 guard: parent prominence never launders a person-name neighbourhood", () => {
+	it("law-3 guard: parent prominence never launders a person-name neighborhood", () => {
 		const { surfaces } = buildAgainstFixture(["FR"], ["locality", "localadmin", "neighbourhood"])
 
-		// Joseph-the-neighbourhood sits inside Paris and STILL does not clear.
+		// Joseph-the-neighborhood sits inside Paris and STILL does not clear.
 		expect(surfaces.joseph).toBeUndefined()
 		// Belleville is not a person name, so it DOES inherit Paris's prominence.
 		expect(surfaces.belleville).toBeDefined()
@@ -1150,7 +1150,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 
 		expect(surfaces.smallville).toBeUndefined()
 		// Stronger than the full build's `> 0`: the fixture seeds exactly one below-floor surface,
-		// so the count is exact and a change in the floor's behaviour cannot hide in a large number.
+		// so the count is exact and a change in the floor's behavior cannot hide in a large number.
 		expect(built.skippedProminence).toBe(1)
 	})
 
@@ -1662,7 +1662,7 @@ For the tests that call the bare `loadFromWeights({ locale: "en-gb" })` with no 
  * `transitionBeta`) rather than in how the session was constructed — so the ones that take the plain
  * `{ locale: "en-gb" }` path were each paying a 12–13s load for an identical object.
  *
- * Tests that are ABOUT load behaviour keep their own load: the auto-resolve cases, the tolerant
+ * Tests that are ABOUT load behavior keep their own load: the auto-resolve cases, the tolerant
  * loader paths, and the error cases all assert on the act of loading and must not share.
  */
 let sharedGB: Awaited<ReturnType<typeof NeuralAddressClassifier.loadFromWeights>> | undefined

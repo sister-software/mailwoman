@@ -54,7 +54,7 @@ describe("enumerateCountryDisplayNames", () => {
 		expect(georgia?.name).toBe("格鲁吉亚")
 	})
 
-	it("emits no row for a code ICU does not recognise", () => {
+	it("emits no row for a code ICU does not recognize", () => {
 		// `Intl.DisplayNames.of` echoes an unknown code.
 		// The echo signals a miss.
 		expect([...enumerateCountryDisplayNames()].some((r) => r.iso2 === "ZZ" && r.name === "ZZ")).toBe(false)

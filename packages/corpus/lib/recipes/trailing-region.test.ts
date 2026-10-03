@@ -156,7 +156,7 @@ describe("trailing-region Canadian province codes", () => {
 	})
 })
 
-describe("trailing-region source labelling", () => {
+describe("trailing-region source labeling", () => {
 	it("takes `--source-name`, so a rebuilt output can be weighted apart from the rows it must outweigh", async () => {
 		const tuples = repeat({ ...base, postcode: "07691", postcodePlacement: "leading" })
 		const { rows } = await run(tuples, [], { sourceName: "synth-trailing-region-es-v28" })

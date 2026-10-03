@@ -10,6 +10,7 @@
 	"$ocdsPartyRoles": "An OCDS release keys its addresses by party role, so `addressRoles` names roles rather than columns for those sources. A role is assigned only where OCDS's own codelist defines it, retrieved from `https://standard.open-contracting.org/1.1/en/codelists/partyRole.csv`: `buyer`, `procuringEntity`, `payer`, `funder` and `reviewBody` are bodies acting in the process, so their address is an office they operate and reads `facility`; `supplier` and `tenderer` are the transacting party, so theirs reads `counterparty`. Germany's release also uses eight roles from an extension whose codelist neither the 1.1 nor the latest list defines — `processContactPoint`, `reviewContactPoint`, `submissionReceiptBody`, `mediationBody`, `evaluationBody`, `procurementServiceProvider`, `leadTenderer`, `subcontractor` — and those take no role here rather than a guessed one.",
 	"resolutions": {
 		"es-mixed-regulatory-1": {
+			"adapterID": "es-catastro",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -414,6 +415,7 @@
 			}
 		},
 		"es-mixed-regulatory-3": {
+			"adapterID": "es-bizkaia",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -429,6 +431,7 @@
 			}
 		},
 		"es-mixed-regulatory-4": {
+			"adapterID": "es-gipuzkoa",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},
@@ -444,6 +447,7 @@
 			}
 		},
 		"es-mixed-regulatory-5": {
+			"adapterID": "es-navarra",
 			"addressRoles": {
 				"AD:Address": "premise"
 			},

@@ -183,7 +183,7 @@ async function readGeonamesPostal(
  * Rows contain the USPS delivery city.
  *
  * That value can differ from the geographic locality: 11201 is Brooklyn, inside New York.
- * For Queens, it is a neighbourhood name rather than the borough (Astoria, Flushing, Jamaica).
+ * For Queens, it is a neighborhood name rather than the borough (Astoria, Flushing, Jamaica).
  *
  * The output includes these rows and therefore needs the "GeoNames (CC-BY 4.0)"
  * attribution used by sibling modules.

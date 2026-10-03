@@ -126,7 +126,7 @@ treating all 107 rings as exteriors answers "inside `P5` rural zoning" for every
 **GDAL has no option that preserves this orientation**, so the ingest streams WKT instead of GeoJSON. GDAL's
 GeoJSON writer always enforces the RFC 7946 winding. `-lco RFC7946=NO` is not a GeoJSONSeq option, and
 `--config OGR_ORGANIZE_POLYGONS SKIP` has no effect. Through GeoJSONSeq the Meath feature therefore arrives as
-107 counter-clockwise exteriors totalling 2,371.9 km² against the Department's 2,232.1 km². The same
+107 counter-clockwise exteriors totaling 2,371.9 km² against the Department's 2,232.1 km². The same
 conversion written as CSV/WKT keeps the source's 5/102 split intact.
 
 ### The publisher's own area column is not in the archive
@@ -148,7 +148,7 @@ is therefore NULL on every row instead of holding a plausible guess.
   **302**. The transfer follows redirects. A client that took the first response as the file would write a
   redirect page to disk and report a successful download.
 - The bulk export is **EPSG:2157** (IRENET95 / Irish Transverse Mercator), declared in a top-level `crs` member
-  that RFC 7946 removed from the format. GDAL honours the legacy member. A strict reader ignores it and places
+  that RFC 7946 removed from the format. GDAL honors the legacy member. A strict reader ignores it and places
   Ireland's zoning at latitude 735,435. The ingest asserts the source's declared authority code before reading
   a feature, and asserts that every reprojected vertex lies inside the Department's own declared extent.
 

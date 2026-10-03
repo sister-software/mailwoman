@@ -151,7 +151,7 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 /**
  * Compact ancestry suffix, e.g. "· Springfield, IL, US" — locality/region/country entries,
  * coarsest-last (the hierarchy's own deepest-first order reversed), skipping other
- * placetypes (county, neighbourhood, …) to keep the table narrow.
+ * placetypes (county, neighborhood, …) to keep the table narrow.
  *
  * Empty string when `ancestry` is absent (no reverse geocoder wired) or contains no
  * entries of those three tiers (e.g. open-ocean/approximate misses).

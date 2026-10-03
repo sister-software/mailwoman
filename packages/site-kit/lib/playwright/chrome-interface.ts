@@ -193,7 +193,7 @@ export async function expectEverySheetControlCloses(page: Page): Promise<string[
 }
 
 /**
- * Asserts that a hit test at the element's centre reaches the element.
+ * Asserts that a hit test at the element's center reaches the element.
  *
  * Playwright's `toBeVisible` passes for an element that an ancestor's `overflow` clips away.
  * A hit test fails for that element because a clipped element receives no hits.
@@ -213,7 +213,7 @@ export async function expectReachable(page: Page, selector: string): Promise<voi
 		target: selector,
 	})
 
-	expect(reached, `${selector} is clipped or covered at its own centre`).toBe(true)
+	expect(reached, `${selector} is clipped or covered at its own center`).toBe(true)
 }
 
 /**

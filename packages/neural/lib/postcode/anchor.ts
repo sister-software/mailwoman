@@ -103,7 +103,7 @@ const FUZZY_PENALTY = 0.6
  * Returns the edit-distance-1 variants of a postcode.
  *
  * The variants are deletions, adjacent transpositions, substitutions and insertions
- * within the neighbouring character's class, either digit or letter.
+ * within the neighboring character's class, either digit or letter.
  * The class restriction keeps the candidate set small.
  */
 export function editDistance1Variants(s: string): string[] {

@@ -78,7 +78,7 @@ describe("fr-fragment: the forms", () => {
 		expect(String(montmartre.labels!.join(" "))).not.toContain("locality")
 	})
 
-	it("still mints numbered rows so the licence is not UNLEARNED", async () => {
+	it("still mints numbered rows so the license is not UNLEARNED", async () => {
 		const { rows } = await run(TUPLES, ["nothing"], { hnProb: 1 })
 		const numbered = rows.filter((r) => r.components!.house_number)
 

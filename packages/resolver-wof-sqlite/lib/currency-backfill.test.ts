@@ -26,7 +26,7 @@ function sourceDatabase(): DatabaseClient<WOFDatabase> {
 			latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
 			is_current INTEGER, is_deprecated INTEGER, is_superseded INTEGER
 		);
-		-- A dead locality whose surviving child is a neighbourhood 3 km away (the #1746 demotion shape).
+		-- A dead locality whose surviving child is a neighborhood 3 km away (the #1746 demotion shape).
 		INSERT INTO spr VALUES (1, 0, 'Gillingham', 'locality', 'GB', ${GILLINGHAM.lat}, ${GILLINGHAM.lon}, 51.3, 0.5, 51.4, 0.6, 0, 1, 0);
 		INSERT INTO spr VALUES (2, 1, 'Gillingham', 'neighbourhood', 'GB', 51.41, 0.56, 51.4, 0.5, 51.42, 0.6, 1, 0, 0);
 		-- A dead localadmin with no live namesake: judged only when the query admits localadmin.

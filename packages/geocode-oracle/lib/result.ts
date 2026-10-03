@@ -79,9 +79,9 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	 */
 	plusCode: string | null
 	/**
-	 * The override that keeps a component mapping's judgement calls from being lossy.
+	 * The override that keeps a component mapping's judgment calls from being lossy.
 	 *
-	 * Read this whenever the component mapping's judgement calls matter.
+	 * Read this whenever the component mapping's judgment calls matter.
 	 */
 	raw: Raw
 }

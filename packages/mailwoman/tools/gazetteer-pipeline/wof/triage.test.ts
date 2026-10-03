@@ -146,7 +146,7 @@ describe("triageWOFCurrency", () => {
 		expect(gilbert?.coveredBy?.distanceKm).toBeLessThan(1)
 	})
 
-	it("refuses both cover mirages the first live run exposed: a nameless neighbour and reverse containment", async () => {
+	it("refuses both cover mirages the first live run exposed: a nameless neighbor and reverse containment", async () => {
 		const adminDB = scratch.path("admin.db")
 
 		buildFixtureAdmin(adminDB)

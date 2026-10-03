@@ -16,7 +16,7 @@
  *
  *   The cell table names polygons instead of classes. The flood layer returns a zone code from a two-value domain.
  *   Its index accumulates cells by code. An erosion answer identifies a frontage polygon
- *   with its own distance, policy and defence. The index stores a key for each polygon and scenario. Overlap occurs
+ *   with its own distance, policy and defense. The index stores a key for each polygon and scenario. Overlap occurs
  *   in the source: 3,727 of 7,492 features on `NCERM_SMP_2105_95CC` have a non-zero `maxoverlap`. A cell can name
  *   several polygons in one scenario. A reading reports each polygon that contains the point.
  *
@@ -96,7 +96,7 @@ export interface CoastalZoneAreaTable {
 	 */
 	frontage_id: number
 	/**
-	 * Cumulative erosion distance in metres, from the scenario's own distance column.
+	 * Cumulative erosion distance in meters, from the scenario's own distance column.
 	 *
 	 * Measured range 0–386 m on NFI/2055/0CC and 0–1,053 m on SMP/2105/95CC, with no nulls in either.
 	 */
@@ -129,7 +129,7 @@ export interface CoastalZoneAreaTable {
 	 */
 	published_year: number | null
 	/**
-	 * The source's own `maxoverlap`, in metres.
+	 * The source's own `maxoverlap`, in meters.
 	 *
 	 * One measured layer has non-zero values on 3,727 of 7,492 rows.
 	 * A reading can therefore include several polygons.
@@ -152,7 +152,7 @@ export interface CoastalZoneAreaTable {
  * Per (cell, polygon): does the polygon cover the whole cell, or only part of it?
  *
  * Keyed on the polygon rather than on a class, because an erosion answer is the polygon.
- * Its distance, its policy and its defence are per feature.
+ * Its distance, its policy and its defense are per feature.
  *
  * `scenario_key` is a column so a scenario-scoped probe reads one cell's rows
  * and keeps the scenario it asked for, without ever seeing another scenario's answer.

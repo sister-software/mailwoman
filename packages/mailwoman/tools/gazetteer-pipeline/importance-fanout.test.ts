@@ -33,7 +33,7 @@ const Q18125 = [
 ]
 
 /**
- * Q1794 is Frankfurt am Main, attached to both the city and a neighbourhood 12 km out.
+ * Q1794 is Frankfurt am Main, attached to both the city and a neighborhood 12 km out.
  *
  * Beyond the coincidence radius, the more populous place wins.
  * This also keeps the two from carrying identical importance and blurring the placetype signal.
@@ -75,7 +75,7 @@ describe("resolveConcordanceFanout", () => {
 		expect(resolveConcordanceFanout(Q18125)).toEqual({ verdict: "population", keep: [101_750_525] })
 	})
 
-	it("prefers the city over its own neighbourhood just past the coincidence radius", () => {
+	it("prefers the city over its own neighborhood just past the coincidence radius", () => {
 		expect(resolveConcordanceFanout(Q1794)).toEqual({ verdict: "population", keep: [101_913_837] })
 	})
 

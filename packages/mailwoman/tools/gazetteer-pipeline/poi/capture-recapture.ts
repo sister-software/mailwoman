@@ -37,7 +37,7 @@ export interface MatchProtocol {
 	 */
 	far: readonly [number, number]
 	/**
-	 * The distance in metres within which two rows match by position when either row has no name.
+	 * The distance in meters within which two rows match by position when either row has no name.
 	 */
 	unnamedMetres: number
 }
@@ -60,7 +60,7 @@ function foldPOIName(name: string | null): string {
 }
 
 /**
- * Returns the distance between two rows in metres.
+ * Returns the distance between two rows in meters.
  */
 function metresBetween(a: CaptureRow, b: CaptureRow): number {
 	return haversineKm(a.latitude, a.longitude, b.latitude, b.longitude) * 1000

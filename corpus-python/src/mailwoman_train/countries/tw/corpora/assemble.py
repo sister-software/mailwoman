@@ -57,7 +57,7 @@ class SourceSurvey:
     """Pass 1's answer: the quotas pass 2 selects under, plus the sums the centroids come from.
 
     The centroid sums cover every eligible row rather than only selected rows. A board row is scored
-    against its district's centre. A centre computed from the few rows selection kept represents a
+    against its district's center. A center computed from the few rows selection kept represents a
     different place.
     """
 
@@ -86,7 +86,7 @@ class Selection:
 def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     """Pass 1: count eligible rows per 縣市, sum each district's coordinates, list the agencies. Draws no rows.
 
-    The agency list is not bookkeeping: the Taiwanese licence voids its grant on a missing attribution,
+    The agency list is not bookkeeping: the Taiwanese license voids its grant on a missing attribution,
     so the report lists the datasets the rows came from.
     """
     pool_counts: Counter[str] = Counter()

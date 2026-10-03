@@ -158,7 +158,7 @@ export const POSTAL_REGIMES: readonly PostalRegime[] = [
 		iso2: ["VA", "SM", "MC", "LI", "IT", "CH"],
 		coverage: RegimeCoverage.Unmodeled,
 		shape:
-			"A postcode system administered by a neighbour crosses the political border. Vatican City and San Marino " +
+			"A postcode system administered by a neighbor crosses the political border. Vatican City and San Marino " +
 			"take Italian codes (`00120`, `4789x`), Monaco French ones (`980xx`), Liechtenstein Swiss ones (`948x`).",
 		note:
 			"A postcode-to-country check reading the code alone answers the administering country, so a Vatican " +

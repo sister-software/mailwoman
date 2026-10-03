@@ -130,7 +130,7 @@ This is adjacent to #2266, whose failures are all cross-country: `WA Sammamish` 
 and `Fort Worth` answering Fořt in Czechia (8,666 km) are the shape a bbox guard exists to refuse. For a Japanese
 or Chinese answer there is no box to check against.
 
-Four additional boxes are a small data change and a real behaviour change. The guard would begin firing where it
+Four additional boxes are a small data change and a real behavior change. The guard would begin firing where it
 never has — so it needs the board rather than a commit.
 
 ## Where the country tables' center of gravity still is

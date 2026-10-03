@@ -12,7 +12,7 @@ import { clampLatitude, wrapLongitude } from "#position"
 import { CoordinateProjection } from "#projection"
 
 /**
- * Kilometres per degree of latitude.
+ * Kilometers per degree of latitude.
  * The value is nearly constant on a sphere.
  */
 const KM_PER_DEGREE_LATITUDE = 111

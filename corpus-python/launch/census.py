@@ -137,7 +137,7 @@ def country_census_raw(
 
     Reads the country column out of the raw parquet rather than going through `iter_rows`, because
     the loader is the thing under suspicion whenever this is asked. The question it settles has a
-    shape worth recognising: downstream, the loader cannot distinguish a country whose rows the
+    shape worth recognizing: downstream, the loader cannot distinguish a country whose rows the
     filter drops from a country the corpus never had. Only dropped rows indicate a filter bug.
 
     The shape that produced it: `country_weights` in 44 configs held an unquoted `NO: 1.0`. YAML

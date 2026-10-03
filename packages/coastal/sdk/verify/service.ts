@@ -22,7 +22,7 @@ const PROBE_HALF_WIDTH_DEGREES = 0.0001
 /**
  * Features per service request.
  *
- * The probe bbox is metres wide, so this is a ceiling rather than a page size.
+ * The probe bbox is meters wide, so this is a ceiling rather than a page size.
  */
 const SERVICE_FEATURE_LIMIT = 200
 
@@ -58,7 +58,7 @@ export type ServiceFeatureReader = (
  * The service answers a bbox rather than a point, so this returns what it published nearby
  * and the containment decision is made in {@link readServiceContainment} against
  * those rings — comparing the artifact's verdict against a bare "the service returned
- * something here" would pass on any polygon within eleven metres.
+ * something here" would pass on any polygon within eleven meters.
  */
 export function createEAServiceReader(client: Pick<EANCERMClient, "fetch">): ServiceFeatureReader {
 	return async (latitude, longitude, scenarioKey) => {

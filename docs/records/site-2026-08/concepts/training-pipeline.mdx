@@ -38,7 +38,7 @@ Each raw data source has a **TypeScript adapter** that reads the source and emit
 ```ts
 interface CanonicalRow {
 	raw: string // the address string
-	components: Partial<Record<ComponentTag, string>> // the labelled parts
+	components: Partial<Record<ComponentTag, string>> // the labeled parts
 	country: string
 	locale: string
 	source: string // 'usgov-nppes', 'ban', etc.

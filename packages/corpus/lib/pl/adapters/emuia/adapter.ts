@@ -6,13 +6,13 @@
  * `emuia`: Poland's INSPIRE Addresses (AD) theme, published by Główny Urząd Geodezji i Kartografii out
  * of the Państwowy Rejestr Granic.
  *
- * Input is GML, because the service serves four GML flavours and no JSON. Its capabilities document
+ * Input is GML, because the service serves four GML flavors and no JSON. Its capabilities document
  * advertises no `outputFormat` values at all and a `GetFeature` returns
  * `application/gml+xml; version=3.2`. A page is a `wfs:FeatureCollection` of `ms:AD.Address` members,
  * and the adapter reads it with `streamMarkupElements` from `@mailwoman/core/html/elements`, which
  * yields one member subtree at a time, so neither a page nor a whole extract sits in memory.
  *
- * The payload is the Polish register's own schema rather than the harmonised INSPIRE model: a member's
+ * The payload is the Polish register's own schema rather than the harmonized INSPIRE model: a member's
  * element names are the register's columns and every address value is inline, so there is no
  * `ad:ThoroughfareName` to join to and no `xlink:href` to resolve. Read with that same function over
  * 500 members across ten windows spread through the service, a member carries 21 children and never a
@@ -45,7 +45,7 @@
  *
  * GUGiK's dataset record states one condition of use, in `otherConstraints`: `Brak warunków dostępu i
  * użytkowania`, no conditions for access and use. The address-source register elected that and names
- * no licence instrument, so no SPDX identifier exists and the publisher's own words are the label the
+ * no license instrument, so no SPDX identifier exists and the publisher's own words are the label the
  * adapter stamps on every row. Crediting GUGiK stays good practice and the statement requires it
  * nowhere.
  *

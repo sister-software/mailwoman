@@ -45,7 +45,7 @@ measurement decides the route.**
 The diagnostic is one artifact that needs no GPU and runs on a laptop. For a held-out eval set, decompose **every error** into the
 gap that caused it, because each gap routes to a different (and mutually exclusive) fix:
 
-For each query, join truth → WOF id (nearest-neighbour + name match), then classify the error:
+For each query, join truth → WOF id (nearest-neighbor + name match), then classify the error:
 
 1. **coverage-gap:** the true WOF id is **not in the gazetteer at all**. Only data ingest helps, and a
    reranker or better retrieval has no effect.
@@ -130,7 +130,7 @@ coverage gap is ~2% on this sample (it bet 12–15%).
 `Dakota Dunes`, `Pennco` (SD CDPs); `Yankton County`. OpenAddresses' "city" field is frequently a civil
 township / village / CDP that WOF does not model as a `locality`. **So the first, lowest-cost US
 coverage change is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution) rather than a
-WOF re-ingest**, because the places mostly exist but are modelled at a different granularity.
+WOF re-ingest**, because the places mostly exist but are modeled at a different granularity.
 
 **Caveats:**
 

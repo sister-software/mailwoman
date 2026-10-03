@@ -136,7 +136,7 @@ describe("the committed address-source register", () => {
 
 	it("blocks AusTender on its personal-data reading alone, every other condition being met", () => {
 		// The worked example of #2323's step 6: one source taken through all five conditions.
-		// Its licence is elected and its address roles and coverage are resolved.
+		// Its license is elected and its address roles and coverage are resolved.
 		// The publication also gives street addresses for named natural persons.
 		// `present` records that reading, and ingest refuses it.
 		const austender = register.sources.find((source) => source.sourceID === "au-procurement-grants-1")!
@@ -177,7 +177,7 @@ describe("the committed address-source register", () => {
 		// One publisher holds SIRENE across mainland France and its overseas territories,
 		// and a decision is scoped to one publisher in one jurisdiction.
 		// So one reading produces nine decisions, and the property that matters is that
-		// each licence id has its own rather than one covering all nine.
+		// each license id has its own rather than one covering all nine.
 		const territories = ["bl", "gf", "gp", "mf", "mq", "pm", "re", "wf", "yt"]
 
 		const decisions = territories.map((code) =>
@@ -336,7 +336,7 @@ describe("auditAddressSourceRegister", () => {
 		)
 	})
 
-	it("refuses a source pointing at a licence decision nothing declares", () => {
+	it("refuses a source pointing at a license decision nothing declares", () => {
 		const problems = auditAddressSourceRegister({
 			...base,
 			sources: [{ ...base.sources[0]!, license: "no-such-decision" }],
@@ -345,7 +345,7 @@ describe("auditAddressSourceRegister", () => {
 		expect(problems).toContain('source "zz-health-1" points at an undeclared license decision')
 	})
 
-	it("refuses an elected licence with no retrieved copy", () => {
+	it("refuses an elected license with no retrieved copy", () => {
 		const problems = auditAddressSourceRegister({
 			...base,
 			licenses: [
@@ -394,7 +394,7 @@ describe("auditAddressSourceRegister", () => {
 })
 
 describe("electedLicenseLabel", () => {
-	it("answers nothing for an unchecked decision, so an unread source cannot pass a licence filter", () => {
+	it("answers nothing for an unchecked decision, so an unread source cannot pass a license filter", () => {
 		expect(
 			electedLicenseLabel({
 				licenseID: "unchecked-access-free",
@@ -479,7 +479,7 @@ describe("applyLicenseDecisions", () => {
 		expect(applyLicenseDecisions(generated, new Map())).toEqual(generated)
 	})
 
-	it("refuses a decision naming a licence the register does not carry", () => {
+	it("refuses a decision naming a license the register does not carry", () => {
 		// A silent application would leave the register asserting a grant no source points at,
 		// the shape a typo or a removed source takes.
 		expect(() =>

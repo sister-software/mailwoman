@@ -68,7 +68,7 @@ export interface SoilChunkResult {
 	 */
 	mappedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres computed from the encoded rings, with holes and with every ring treated as exterior.
+	 * Square meters computed from the encoded rings, with holes and with every ring treated as exterior.
 	 */
 	area: { nestedM2: number; allExteriorM2: number }
 }

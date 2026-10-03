@@ -110,7 +110,7 @@ checkpoint set composes with itself across runs.
 
 ### Kryptonite categories
 
-The generator's `KRYPTONITE_CATEGORIES` list defines 10 adversarial flavours, each with
+The generator's `KRYPTONITE_CATEGORIES` list defines 10 adversarial flavors, each with
 a category id, a description, 2-3 hand-written seed examples, and a weight that
 allocates the total budget proportionally:
 
@@ -256,7 +256,7 @@ responses produced ~8 rows per batch instead of 50.
 The validated production knob is **`max_tokens=60000`**: empirically reasoning peaks around
 ~15K and 50-row output uses ~5K, so 60K leaves comfortable headroom. The Thread B2 generator
 also marks `finish_reason=length` batches with a `!RETRY:` prefix so they don't checkpoint
-and get retried on subsequent runs — defence in depth for the rare batches that still
+and get retried on subsequent runs — defense in depth for the rare batches that still
 truncate at 60K.
 
 This budget reasoning is transliteration-specific; the kryptonite mode at `max_tokens=20000`

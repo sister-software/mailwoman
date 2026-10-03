@@ -211,12 +211,12 @@ export function decodeRings(blob: Uint8Array): DecodedRings {
 }
 
 /**
- * Mean Earth radius in metres, the sphere the ring areas are measured on.
+ * Mean Earth radius in meters, the sphere the ring areas are measured on.
  */
 const EARTH_RADIUS_M = 6_371_008.8
 
 /**
- * Signed spherical area of one linear ring, in square metres, with clockwise positive
+ * Signed spherical area of one linear ring, in square meters, with clockwise positive
  * and counter-clockwise negative.
  */
 export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number {
@@ -234,7 +234,7 @@ export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number
 }
 
 /**
- * Both readings of one feature's area, in square metres: `nested` respects ring
+ * Both readings of one feature's area, in square meters: `nested` respects ring
  * orientation (holes subtract) and `allExterior` does not (holes add).
  */
 export function ringAreaReadings(polygons: MultiPolygonRings): {
@@ -307,7 +307,7 @@ export interface EncodedArea {
 
 /**
  * A point inside one stored polygon for a verification sampler, returning `undefined` when neither
- * the bounding-box centre nor any of the `gridSteps − 1` interior grid lines lands inside.
+ * the bounding-box center nor any of the `gridSteps − 1` interior grid lines lands inside.
  */
 export function interiorPointOfEncodedRings(
 	area: EncodedArea,

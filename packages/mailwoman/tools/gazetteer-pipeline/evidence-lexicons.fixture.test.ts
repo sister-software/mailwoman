@@ -47,7 +47,7 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		INSERT INTO spr VALUES (15, '12',         'locality', 'FR', 1);
 		-- Law 2 — below the one-token floor.
 		INSERT INTO spr VALUES (16, 'Smallville', 'locality', 'FR', 1);
-		-- Law-3 guard — a person-named neighbourhood inside a prominent parent must NOT be laundered
+		-- Law-3 guard — a person-named neighborhood inside a prominent parent must NOT be laundered
 		-- by that parent, while its non-name sibling DOES inherit (the Montmartre case).
 		INSERT INTO spr VALUES (17, 'Joseph',     'neighbourhood', 'FR', 1);
 		INSERT INTO spr VALUES (18, 'Belleville', 'neighbourhood', 'FR', 1);
@@ -96,7 +96,7 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		INSERT INTO place_population VALUES (45, 90000);
 		INSERT INTO place_population VALUES (46, 90000);
 
-		-- Both FR neighbourhoods hang off Paris, so parent prominence is available to both and the
+		-- Both FR neighborhoods hang off Paris, so parent prominence is available to both and the
 		-- law-3 guard is the only thing separating their outcomes.
 		INSERT INTO ancestors VALUES (17, 10, 'locality');
 		INSERT INTO ancestors VALUES (18, 10, 'locality');
@@ -146,7 +146,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(surfaces.rennes).toBeDefined()
 	})
 
-	it("law-3 guard: parent prominence never launders a person-name neighbourhood", async () => {
+	it("law-3 guard: parent prominence never launders a person-name neighborhood", async () => {
 		const { surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin", "neighbourhood"])
 
 		expect(surfaces.joseph).toBeUndefined()

@@ -221,7 +221,7 @@ export function censusTrees(rows: readonly InterfaceRow[]): InterfaceCensus {
 			n: illegalEdgeCount,
 			note: illegalEdgeCount
 				? "NONZERO. build-tree.ts enforces the edge invariant at construction, so this is a builder regression " +
-					"rather than a model behaviour — the tags below name where."
+					"rather than a model behavior — the tags below name where."
 				: "Zero, which is the DESIGNED state: build-tree.ts enforces the edge invariant at construction. Unlike " +
 					"the stranding counts, this zero needs no row to justify it.",
 		},

@@ -379,7 +379,7 @@ export const BatchRequestSchema = z
 
 /**
  * The failure slot for one batch row.
- * A row that throws does not fail its neighbours.
+ * A row that throws does not fail its neighbors.
  */
 const BatchRowErrorSchema = z.object({ input: z.string(), error: z.string() })
 
