@@ -78,6 +78,11 @@
 			"node": "./lib/common/KindBadge.tsx",
 			"default": "./out/common/KindBadge.js"
 		},
+		"./search/types": {
+			"types": "./out/search/types.d.ts",
+			"node": "./lib/search/types.ts",
+			"default": "./out/search/types.js"
+		},
 		"./map/AppIdentity": {
 			"types": "./out/map/AppIdentity.d.ts",
 			"node": "./lib/map/AppIdentity.tsx",

@@ -143,6 +143,7 @@ const config: Config = {
 			},
 		],
 		"./plugins/runtime-assets/plugin.ts",
+		"./plugins/search-index/plugin.ts",
 		[
 			// Wraps docusaurus-plugin-glossary with the same validation, tooltips and remark.
 			// Adds a custom page with tag filters and a category TOC.
