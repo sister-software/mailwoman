@@ -134,6 +134,8 @@ test("shows the corrected query, and announces zero hits and a failure in the li
 
 	const status = container.querySelector('[aria-live="polite"]') as HTMLElement
 
+	expect(getComputedStyle(status).display).not.toBe("none")
+
 	await userEvent.type(input, "vitrebi")
 	await vi.waitFor(() => expect(container.textContent).toContain("Showing results for “viterbi”"))
 

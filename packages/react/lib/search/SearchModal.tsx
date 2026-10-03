@@ -23,6 +23,12 @@ export interface SearchModalProps {
 	 * Absent, the link navigates as an ordinary anchor.
 	 */
 	onNavigate?: (href: string) => void
+	/**
+	 * Runs the query.
+	 *
+	 * The function must keep a stable identity across renders (for example through `useCallback`),
+	 * because a new identity refires the request for the current query.
+	 */
 	search: (q: string, signal: AbortSignal) => Promise<SearchResponse>
 }
 
@@ -159,6 +165,9 @@ export function SearchModal({ open, onClose, onNavigate, search }: SearchModalPr
 	}
 
 	function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+		// A key that commits or edits an IME composition is not a command.
+		if (event.nativeEvent.isComposing) return
+
 		if (!ordered.length) return
 
 		const last = ordered.length - 1
@@ -248,7 +257,7 @@ export function SearchModal({ open, onClose, onNavigate, search }: SearchModalPr
 						aria-labelledby={`${baseID}-group-${groupIndex}`}
 						className="mw-search__group"
 					>
-						<div id={`${baseID}-group-${groupIndex}`} role="presentation" className="mw-search__category">
+						<div id={`${baseID}-group-${groupIndex}`} className="mw-search__category">
 							{group.category}
 						</div>
 						{group.entries.map(({ hit, order }) => (

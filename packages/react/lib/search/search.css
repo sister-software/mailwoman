@@ -5,7 +5,9 @@
  * the backdrop. The padding sits on the form, the results and the status line instead.
  *
  * The selected option is marked by an inset accent bar as well as a fill, so the selection holds 3:1 against the
- * panel without depending on the fill alone. Every value names a semantic token from tokens.css.
+ * panel without depending on the fill alone. Colors, radii, spacing, type and motion read semantic tokens from
+ * tokens.css. The layout literals are the panel width and height caps, the 44px input height, the 3px selection
+ * bar and the backdrop scrim, for which no token exists.
  * --------------------------------------------------------------------------- */
 
 .mw-search {
@@ -119,8 +121,16 @@
 	border-top: 1px solid var(--color-separator);
 }
 
+/* An empty live region stays rendered, because a region that appears with its text is often not announced. */
 .mw-search__status:empty {
-	display: none;
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	clip-path: inset(50%);
+	white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: no-preference) {
