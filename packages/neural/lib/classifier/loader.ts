@@ -73,6 +73,7 @@ export async function loadClassifierFromWeights(
 		{ resolveWeights, loadPlacetypeCensus },
 		{
 			readLabelsFromModelCard,
+			readAddressSystemsFromModelCard,
 			readCRFTransitions,
 			readRequiredChannels,
 			loadAnchorLookup,
@@ -236,11 +237,16 @@ export async function loadClassifierFromWeights(
 
 	const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
 
+	const addressSystems =
+		(await readAddressSystemsFromModelCard(resolved.modelCardPath)) ??
+		(await readAddressSystemsFromModelCard(resolved.baseModelCardPath))
+
 	return new NeuralAddressClassifier({
 		...(tokenizer ? { tokenizer } : {}),
 		...(charEncoder ? { charEncoder } : {}),
 		runner,
 		labels,
+		...(addressSystems ? { addressSystems } : {}),
 		transitions: crf?.transitions,
 		startTransitions: crf?.startTransitions,
 		endTransitions: crf?.endTransitions,

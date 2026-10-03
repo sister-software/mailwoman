@@ -16,19 +16,25 @@ import { fetchESCatastro } from "#es/tools/fetch/catastro"
 import { fetchESGipuzkoa } from "#es/tools/fetch/gipuzkoa"
 import { fetchESNavarra } from "#es/tools/fetch/navarra"
 import { fetchRyhti } from "#fi/tools/fetch/ryhti"
+import { fetchAnnuaireEducationOverseas } from "#fr/tools/fetch/annuaire-education"
 import { fetchBan } from "#fr/tools/fetch/ban"
+import { fetchFinessOverseas } from "#fr/tools/fetch/finess"
 import { fetchITANAC } from "#it/tools/fetch/anac"
 import { fetchHoujinJP } from "#jp/tools/fetch/houjin"
 import { fetchJusoKR } from "#kr/tools/fetch/juso"
 import { fetchLocaldataKR } from "#kr/tools/fetch/localdata"
 import { fetchBDAdresses } from "#lu/tools/fetch/bd-adresses"
+import { fetchVaris } from "#lv/tools/fetch/varis"
 import { fetchNLKadaster } from "#nl/tools/fetch/kadaster"
 import { fetchMatrikkelen } from "#no/tools/fetch/matrikkelen"
 import { fetchEMUiAPL } from "#pl/tools/fetch/emuia"
+import { fetchReteaScolara } from "#ro/tools/fetch/retea-scolara"
 import { fetchACRASG } from "#sg/tools/fetch/acra"
 import { fetchSKInspire } from "#sk/tools/fetch/inspire"
+import { fetchCORDIS } from "#tools/fetch/cordis"
 import { fetchGeonamesDumps } from "#tools/fetch/geonames/dump"
 import { fetchGeonamesPostal } from "#tools/fetch/geonames/postal"
+import { fetchGLEIF } from "#tools/fetch/gleif"
 import { fetchOpenAddresses } from "#tools/fetch/openaddresses"
 import { fetchOurAirports } from "#tools/fetch/ourairports"
 import { fetchVlaanderenAD } from "#tools/fetch/vlaanderen-ad"
@@ -48,8 +54,14 @@ export * from "#be/tools/fetch/brussels"
 export * from "#tools/fetch/vlaanderen-ad"
 export * from "#be/tools/fetch/wallonie"
 export * from "#it/tools/fetch/anac"
+export * from "#fr/tools/fetch/finess"
+export * from "#fr/tools/fetch/annuaire-education"
+export * from "#ro/tools/fetch/retea-scolara"
+export * from "#tools/fetch/cordis"
+export * from "#tools/fetch/gleif"
 export * from "#fr/tools/fetch/ban"
 export * from "#lu/tools/fetch/bd-adresses"
+export * from "#lv/tools/fetch/varis"
 export * from "#es/tools/fetch/bizkaia"
 export * from "#es/tools/fetch/catastro"
 export * from "#cz/tools/fetch/cuzk"
@@ -86,6 +98,7 @@ export const FETCH_SOURCES = {
 	"ads-ee": fetchADSEE,
 	ban: fetchBan,
 	brussels: fetchBrussels,
+	cordis: fetchCORDIS,
 	"bd-adresses": fetchBDAdresses,
 	"cz-cuzk": fetchCzCuzk,
 	"dk-inspire": fetchDKAddresses,
@@ -94,14 +107,19 @@ export const FETCH_SOURCES = {
 	"es-catastro": fetchESCatastro,
 	"es-gipuzkoa": fetchESGipuzkoa,
 	"es-navarra": fetchESNavarra,
+	"fr-annuaire-education-overseas": fetchAnnuaireEducationOverseas,
+	"fr-finess-overseas": fetchFinessOverseas,
 	"gcis-tw": fetchGCISTW,
+	gleif: fetchGLEIF,
 	"houjin-jp": fetchHoujinJP,
 	"it-anac": fetchITANAC,
 	"juso-kr": fetchJusoKR,
 	"localdata-kr": fetchLocaldataKR,
+	"lv-varis": fetchVaris,
 	matrikkelen: fetchMatrikkelen,
 	nad: fetchNAD,
 	"nl-kadaster": fetchNLKadaster,
+	"ro-retea-scolara": fetchReteaScolara,
 	ryhti: fetchRyhti,
 	"sk-inspire": fetchSKInspire,
 	"geonames-dump": fetchGeonamesDumps,

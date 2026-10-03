@@ -30,6 +30,9 @@ def to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, An
     # ignores it unless built with use_locale_conditioning.
     if "locale_ids" in batch:
         tb["locale_ids"] = torch.tensor(batch["locale_ids"], dtype=torch.long, device=device)
+    # The address-system head's target and, in training, the locale hint's source.
+    if "address_system_ids" in batch:
+        tb["address_system_ids"] = torch.tensor(batch["address_system_ids"], dtype=torch.long, device=device)
     if "anchor_features" in batch:
         tb["anchor_features"] = torch.tensor(batch["anchor_features"], dtype=torch.float32, device=device)
         tb["anchor_confidence"] = torch.tensor(batch["anchor_confidence"], dtype=torch.float32, device=device)

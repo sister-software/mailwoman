@@ -11,6 +11,7 @@ import type { PathBuilderLike } from "path-ts"
 import {
 	decodeInferOutput,
 	packCharFeed,
+	packLocaleHintFeed,
 	packSoftChannelFeeds,
 	packTokenFeed,
 	type InferCharsFunction,
@@ -213,6 +214,12 @@ export class ONNXRunner {
 			feeds[name] = new ort.Tensor("float32", feed.data, feed.dims)
 		}
 
+		const hint = packLocaleHintFeed(session.inputNames, evidence?.localeHint)
+
+		if (hint) {
+			feeds["locale_hint"] = new ort.Tensor("int64", hint.data, hint.dims)
+		}
+
 		const output = await session.run(feeds)
 
 		return decodeInferOutput(
@@ -220,6 +227,7 @@ export class ONNXRunner {
 				...(output.logits ? { logits: outputTensor(output.logits) } : {}),
 				...(output.locale_logits ? { localeLogits: outputTensor(output.locale_logits) } : {}),
 				...(output.span_scores ? { spanScores: outputTensor(output.span_scores) } : {}),
+				...(output.address_system_logits ? { addressSystemLogits: outputTensor(output.address_system_logits) } : {}),
 			},
 			seqLen
 		)

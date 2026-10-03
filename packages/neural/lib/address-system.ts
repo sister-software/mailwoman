@@ -8,9 +8,72 @@
  */
 
 import type { SystemCode } from "@mailwoman/codex"
+import { isLatinScriptText } from "@mailwoman/codex/address/format"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { LOCALE_COUNTRIES } from "#labels"
 import { softmax } from "#viterbi"
+
+/**
+ * A model's address-system ids, read from its card's `address_systems` field.
+ *
+ * `members` maps `"<ISO 3166-1 alpha-2>/<local|latin>"` to the id the model was trained against.
+ * `noHint` is the id that states no hint, which a graph with a `locale_hint` input receives by default.
+ */
+export interface AddressSystemTable {
+	noHint: number
+	members: Readonly<Record<string, number>>
+}
+
+/**
+ * Validates a model card's `address_systems` value.
+ * The Node and browser loaders both read it through here.
+ *
+ * It returns `undefined` when the card has no such field.
+ *
+ * @throws When the value is present but is not `{no_hint: number, members: {"CC/script": number}}`.
+ */
+export function parseAddressSystemTable(value: unknown, source: string): AddressSystemTable | undefined {
+	if (value === undefined) return undefined
+
+	const table = value as { no_hint?: unknown; members?: unknown }
+	const members = table.members as Record<string, unknown> | undefined
+
+	if (
+		typeof table.no_hint !== "number" ||
+		typeof members !== "object" ||
+		members === null ||
+		!Object.values(members).every((id) => typeof id === "number")
+	) {
+		throw new Error(
+			`model card ${source} has a malformed \`address_systems\` field — expected ` +
+				`{no_hint: number, members: {"CC/script": number}}, got ${stringifyJSON(value)}.`
+		)
+	}
+
+	return { noHint: table.no_hint, members: members as Record<string, number> }
+}
+
+/**
+ * Returns the `locale_hint` id for a caller's country and the text being parsed.
+ *
+ * Latin-script text reads the country's `latin` system when it has one,
+ * matching how the trainer assigned its rows.
+ * A country absent from the table, or no country, gives `noHint`.
+ */
+export function localeHintID(table: AddressSystemTable, country: string | undefined, text: string): number {
+	if (!country) return table.noHint
+
+	const code = country.trim().toUpperCase()
+
+	if (isLatinScriptText(text)) {
+		const latin = table.members[`${code}/latin`]
+
+		if (latin !== undefined) return latin
+	}
+
+	return table.members[`${code}/local`] ?? table.noHint
+}
 
 /**
  * The locale head's country order, re-exported from `#labels`.

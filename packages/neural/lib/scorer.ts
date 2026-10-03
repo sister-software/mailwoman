@@ -9,6 +9,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PathBuilderLike } from "path-ts"
 
+import type { AddressSystemTable } from "#address-system"
 import { shapedKeyerObligationViolation, type AnchorLookup, type AnchorSpanMode } from "#anchor-inference"
 import { NeuralAddressClassifier } from "#classifier"
 import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
@@ -20,6 +21,7 @@ import {
 	inferRequiredChannelsFromInputs,
 	loadAnchorLookup,
 	lookupTagCapability,
+	readAddressSystemsFromModelCard,
 	readCapabilityManifest,
 	readLabelsFromModelCard,
 	readRequiredChannels,
@@ -93,6 +95,12 @@ function streetTypeRepoCandidate(declared: RequiredChannels): string {
 
 function fstPathEntry(fstPath: PathBuilderLike | undefined): { fstPath?: PathBuilderLike } {
 	return fstPath ? { fstPath } : {}
+}
+
+async function addressSystemsEntry(modelCardPath: PathBuilderLike): Promise<{ addressSystems?: AddressSystemTable }> {
+	const addressSystems = await readAddressSystemsFromModelCard(modelCardPath)
+
+	return addressSystems ? { addressSystems } : {}
 }
 
 function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | undefined {
@@ -538,6 +546,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		runner,
 		...fstPathEntry(opts.fstPath),
 		...(labels ? { labels } : {}),
+		...(await addressSystemsEntry(opts.modelCardPath)),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(declaredSpanMode ? { postcodeAnchorSpanMode: declaredSpanMode } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),

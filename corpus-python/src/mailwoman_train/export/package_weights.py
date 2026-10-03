@@ -67,8 +67,14 @@ def build_model_card(
     base_path: Path,
     package_version: str = "0.1.0",
     label_set_name: str = "stage3",
+    address_system_count: int = 0,
 ) -> dict[str, Any]:
-    """Construct the ModelCard payload. Fields per Phase 2 §10."""
+    """Construct the ModelCard payload. Fields per Phase 2 §10.
+
+    ``address_system_count`` is the trained model's ``num_address_systems``. A nonzero count writes the
+    ``address_systems`` table a runtime needs to feed the ``locale_hint`` input and to read the
+    ``address_system_logits`` output.
+    """
     from ..semantic_tags import label_set_contract
 
     if tuple(resolve_label_set(label_set_name).bio_labels) != tuple(ACTIVE_BIO_LABELS):
@@ -121,7 +127,22 @@ def build_model_card(
             "crf_transitions": "crf-transitions.json",
         },
         "base_relpath": str(base_path) if base_path else "",
+        **({"address_systems": address_system_card(address_system_count)} if address_system_count else {}),
     }
+
+
+def address_system_card(count: int) -> dict[str, Any]:
+    """The card's ``address_systems`` table for a model trained with ``count`` address-system ids.
+
+    ``members`` holds only ids below ``count``: a system registered after the model trained has no output
+    in its head and no hint embedding, so the runtime gives its countries ``no_hint``.
+    """
+    from ..address_systems import address_system_table
+
+    members = {
+        member: entry["id"] for entry in address_system_table() if entry["id"] < count for member in entry["members"]
+    }
+    return {"count": count, "no_hint": count, "members": dict(sorted(members.items()))}
 
 
 def export_crf_transitions(model: torch.nn.Module, *, crf_loss_weight: float = 0.0) -> dict[str, Any] | None:

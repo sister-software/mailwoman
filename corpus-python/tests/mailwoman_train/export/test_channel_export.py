@@ -163,3 +163,75 @@ def test_half_the_evidence_bundle_refuses_to_export(tmp_path) -> None:
     )
     with pytest.raises(NotImplementedError, match="evidence bundle"):
         export_to_onnx(model, tmp_path / "half-bundle.onnx", max_length=SEQ)
+
+
+BUNDLE_FLAGS: dict[str, object] = {
+    "use_postcode_anchor": True,
+    "anchor_feature_dim": NUM_LOCALES + 2,
+    "use_gazetteer_anchor": True,
+    "gazetteer_feature_dim": GAZ_DIM,
+    "use_country_anchor": True,
+    "country_feature_dim": COUNTRY_DIM,
+    "use_street_type_anchor": True,
+    "street_type_feature_dim": STREET_TYPE_DIM,
+    "use_locality_surface_anchor": True,
+    "locality_surface_feature_dim": LOCALITY_SURFACE_DIM,
+}
+
+
+def test_the_bundle_with_a_locale_hint_takes_a_locale_hint_input(tmp_path) -> None:
+    """The runtime feeds a hint by name, so a trained hint absent from the graph could never be given."""
+    from mailwoman_train.export.onnx import export_to_onnx
+
+    model = _model(**BUNDLE_FLAGS, use_locale_hint=True, num_address_systems=7)
+    path = export_to_onnx(model, tmp_path / "hinted.onnx", max_length=SEQ)
+    assert _graph_input_names(path) == (
+        BASE_INPUTS + ANCHOR_INPUTS + GAZ_INPUTS + COUNTRY_INPUTS + BUNDLE_INPUTS + ["locale_hint"]
+    )
+
+
+def test_a_locale_hint_of_minus_one_reads_as_no_hint(tmp_path) -> None:
+    """The runtime feeds -1 when the caller has no hint. The graph must read it as the last, "no hint" row."""
+    ort = pytest.importorskip("onnxruntime")
+    import numpy as np
+
+    from mailwoman_train.export.onnx import export_to_onnx
+
+    model = _model(**BUNDLE_FLAGS, use_locale_hint=True, num_address_systems=7)
+    assert model.locale_hint_embedding is not None
+    # The trainer zero-initializes the hint rows, which would make every id agree.
+    torch.nn.init.normal_(model.locale_hint_embedding.weight)
+    path = export_to_onnx(model, tmp_path / "hinted.onnx", max_length=SEQ)
+    session = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
+
+    def logits(hint: int) -> np.ndarray:
+        feeds = {}
+        for graph_input in session.get_inputs():
+            shape = [1 if d == "batch" else SEQ if d == "sequence" else d for d in graph_input.shape]
+            if graph_input.name == "locale_hint":
+                feeds[graph_input.name] = np.array([hint], dtype=np.int64)
+            elif graph_input.type == "tensor(int64)":
+                feeds[graph_input.name] = np.ones(shape, dtype=np.int64)
+            else:
+                feeds[graph_input.name] = np.zeros(shape, dtype=np.float32)
+        return session.run(["logits"], feeds)[0]
+
+    no_hint = logits(model.num_address_systems)
+    np.testing.assert_array_equal(logits(-1), no_hint)
+    assert not np.array_equal(logits(0), no_hint)
+
+
+def test_the_address_system_head_adds_an_output(tmp_path) -> None:
+    from mailwoman_train.export.onnx import export_to_onnx
+
+    model = _model(use_locale_conditioning=True, use_address_system_head=True, num_address_systems=7)
+    path = export_to_onnx(model, tmp_path / "address-system.onnx", max_length=SEQ)
+    assert _graph_output_names(path) == ["logits", "locale_logits", "address_system_logits"]
+
+
+def test_a_locale_hint_off_the_bundle_refuses_to_export(tmp_path) -> None:
+    from mailwoman_train.export.onnx import export_to_onnx
+
+    model = _model(use_locale_hint=True, num_address_systems=7)
+    with pytest.raises(NotImplementedError, match="use_locale_hint"):
+        export_to_onnx(model, tmp_path / "hint-only.onnx", max_length=SEQ)

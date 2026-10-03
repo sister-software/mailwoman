@@ -88,6 +88,15 @@ class CoarseEncoderState(nn.Module):
     locale_head: nn.Linear | None
     locale_film: nn.Linear | None
 
+    use_address_system_head: bool
+    num_address_systems: int
+    address_system_loss_weight: float
+    address_system_head: nn.Linear | None
+    use_locale_hint: bool
+    locale_hint_drop_prob: float
+    locale_hint_noise_prob: float
+    locale_hint_embedding: nn.Embedding | None
+
     # Merge heads: their logits replace columns of the classifier's output.
     use_conventions_loss_mask: bool
     conventions_forbidden: torch.Tensor

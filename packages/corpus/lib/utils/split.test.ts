@@ -186,6 +186,27 @@ describe("defaultHoldouts", () => {
 		}
 	})
 
+	it("declares a holdout for every French overseas jurisdiction with more than one commune, and for Romania", () => {
+		for (const country of ["GP", "MQ", "GF", "RE", "PM", "YT", "PF", "NC", "RO"]) {
+			const policy = policyOf(defaultHoldouts()[country])
+
+			expect(
+				(policy.regions?.length ?? 0) + (policy.postcodePrefixes?.length ?? 0) + (policy.localities?.length ?? 0),
+				country
+			).toBeGreaterThan(0)
+		}
+	})
+
+	it("holds out a BAN overseas row by its commune and a Romanian row by its county's postcode prefix", () => {
+		const moule = { source_id: "ban-1", country: "GP", components: { street: "Rue Saint-Jean", locality: "Le Moule" } }
+		const ro = { source_id: "ro-1", country: "RO", components: { street: "REPUBLICII", postcode: "515400" } }
+
+		expect(splitForRow(moule)).not.toBe("train")
+		expect(splitForRow({ ...moule, components: { street: "Rue Frébault", locality: "Pointe-à-Pitre" } })).toBe("train")
+		expect(splitForRow(ro)).not.toBe("train")
+		expect(splitForRow({ ...ro, components: { street: "UNIRII", postcode: "200000" } })).toBe("train")
+	})
+
 	it("holds out an OSM street row by its city when it carries neither region nor postcode", () => {
 		const enugu = { source_id: "osm-1", country: "NG", components: { street: "Ogui Road", locality: "Enugu" } }
 

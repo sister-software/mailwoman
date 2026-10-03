@@ -177,6 +177,272 @@
 	},
 	"$firstRefusals": "Three decisions below read `refused`, the register's first. Each publisher reserves all rights in its own footer and publishes no data license: the Banque Centrale des Comores, the Institut de la statistique de la Polynésie française, and the Government of Tokelau. A footer notice is a site-wide assertion rather than a statement about the data, so a request to the publisher could still produce a grant. What `refused` records is that the terms were read and no grant was found, which is a different state from `unchecked`, where nobody looked.",
 	"decisions": {
+		"unchecked-national-terms-ch-global-legal-entity-identifier-foundation-gle": {
+			"state": "elected",
+			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
+			"spdx": "CC0-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "GLEIF's LEI data terms of use at `https://www.gleif.org/en/meta/lei-data-terms-of-use` state `The data available through the Access Service are provided under the CC0 licence, see CC0 1.0 Universal (CC0 1.0)`, retained as `gleif-terms.json`. The same terms ask a user not to create the impression that a derived product is provided, supported or authorized by GLEIF, and not to claim proprietary rights in the LEI data. Both are conduct conditions on how a product is presented, which a model card that names GLEIF as a source without implying endorsement satisfies; neither restricts copying, transforming or training. The scope is the Level 1 golden copy.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives every copyright and related right to the extent allowed by law, so copying the published file is unrestricted by the dedication."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed states `You can copy, modify, distribute and perform the work, even for commercial purposes`, and reading columns out of the file is copying and modifying."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed permits modification without condition."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act, so fitting a model on the rows is unrestricted by the dedication."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed permits distribution, commercially included, with no attribution or share-alike condition. GLEIF's terms add only that the redistribution must not imply GLEIF's endorsement."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives the rights that would make a derived work's release a licensed act. The non-endorsement condition governs how the release is described."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A dedication to the public domain leaves no right to sublicense, so a recipient needs no grant from this repository."
+				}
+			}
+		},
+		"unchecked-access-free-fr-fr-health-1": {
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 1.0",
+			"spdx": "LicenseRef-Etalab-Licence-Ouverte-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "data.gouv.fr's API for `finess-extraction-du-fichier-des-etablissements` states `license` `fr-lo` under the organization `Ministère des Solidarités et de la Santé`, retained in `fr-finess-annuaire-licences.json`. `fr-lo` is Licence Ouverte / Open Licence version 1.0 of October 2011, whose grant reads `Adapter, modifier, extraire et transformer à partir de « l'Information », notamment pour créer des « Informations dérivées »`, subject to naming the source and the date of its last update. Version 1.0 has no SPDX identifier, so the id here is a LicenseRef. The scope is this extract. The publisher states it stops at data dated 2026-05-04 and is replaced by the ANS dataset `finess-structures-1`, which this decision does not cover.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 1.0 grants freedom to `Reproduire, copier, publier et transmettre l'Information`, which is what copying the published extract performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants freedom to `Adapter, modifier, extraire et transformer à partir de « l'Information »`. Reading the address columns out of the extract is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants transforming the Information `notamment pour créer des « Informations dérivées »`. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates information derived directly from the Information, which the licence's grant to create `Informations dérivées` covers, subject only to the attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 1.0 grants freedom to `Diffuser, redistribuer` the Information and to `Exploiter à titre commercial`, subject to the attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether redistributing trained weights is redistributing the Information or an `Information dérivée` is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the licence text does not state it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward, and the text does not settle whether a commercial agreement needs one."
+				}
+			}
+		},
+		"unchecked-access-free-fr-fr-education-1": {
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "data.education.gouv.fr's catalog record for `fr-en-annuaire-education` states `Licence Ouverte v2.0 (Etalab)` with the licence text at `http://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf`, under the publisher `DNE - Ministère de l'Education Nationale`, retained in `fr-finess-annuaire-licences.json`. The grant reads `de l'adapter, la modifier, l'extraire et la transformer, pour créer des « Informations dérivées », des produits ou des services`, subject to naming the source and the date of its last update. The operations below follow the reading of the same licence in `insee-sirene-lov2`. The scope is this directory.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published export performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer`. Reading the address fields out of the export is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants transforming the Information to create `Informations dérivées`. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial`, subject to the attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether redistributing trained weights is one of the licence's granted acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward, and the text does not settle whether a commercial agreement needs one."
+				}
+			}
+		},
+		"unchecked-national-terms-lv-valsts-zemes-dienests": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0 International",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "data.gov.lv's CKAN record for dataset `varis-atvertie-dati` (id `6b06a7e8-dedf-4705-a47b-2a7c51177473`), `Valsts adrešu reģistra atvērtie dati`, states `license_id` `CC-BY-4.0` under the organization `Valsts zemes dienests`, retained as `lv-varis-ckan-package.json`. The CSVW column metadata the publisher posts beside `aw_dziv.csv` names `https://creativecommons.org/licenses/by/4.0/` as `dc:license`. The record reports `isopen` `false` and sets no `license_url`; CKAN derives `isopen` from the portal's own license table, which does not mark the string `CC-BY-4.0` open, so the flag records that table and states nothing about the grant. The EU address survey read the same publisher's CC BY 4.0 statement on 2026-09-30 (`eu-inspire-addresses-2026-09-30/README.md`) and left the source unreached only because `grafws.kadastrs.lv` failed at the network layer. This dataset serves the register's tables as plain CSV from data.gov.lv, which answers. The scope is this dataset's open-data tables.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the right to reproduce and share the material in any medium or format."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `remix, transform, and build upon the material` covers reading the address tables and joining them."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, so a token and tag corpus is permitted with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material for any purpose, commercial use included, and fitting a model performs both."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Share grant covers redistribution in any medium, conditioned on the attribution and on adding no restriction beyond the licence."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the deed does not state it. If they are, the attribution and the statement of changes attach to the release."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 grants no sublicensing right and instead gives every downstream recipient an offer from the licensor directly. Whether that arrangement satisfies a commercial agreement's needs is a drafting question this text does not answer."
+				}
+			}
+		},
+		"unchecked-national-terms-lu-publications-office-of-the-european-union": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International, under Commission Decision 2011/833/EU",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0 International",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "CORDIS's legal notice at `https://cordis.europa.eu/about/legal` states `The Commission's reuse policy is implemented by Commission Decision 2011/833/EU` and `Unless otherwise noted (e.g. in individual copyright notices), the reuse of the editorial content on this website owned by the EU is authorized under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence`, retained as `cordis-legal-notice.json`. data.europa.eu labels each CORDIS CSV distribution `COM_REUSE`, which is that decision. The same notice says rights may need clearing where content `depicts identifiable private individuals`, which is why the adapter refuses participant records written as a person's name (202 of 78,842 distinct records) rather than relying on the grant alone. The scope is the three CORDIS project datasets, `cordisfp7projects`, `cordish2020projects` and `cordisHEprojects`, and their `organization.csv` members.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the right to reproduce and share the material in any medium or format."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `remix, transform, and build upon the material` covers reading the address fields out of the organisation files."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, so a token and tag corpus is permitted with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material for any purpose, commercial use included, and fitting a model performs both."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Share grant covers redistribution in any medium, conditioned on the attribution and on adding no restriction beyond the licence."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the deed does not state it. If they are, the attribution and the statement of changes attach to the release."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 grants no sublicensing right and instead gives every downstream recipient an offer from the licensor directly. Whether that arrangement satisfies a commercial agreement's needs is a drafting question this text does not answer."
+				}
+			}
+		},
+		"unchecked-national-terms-ro-ministerul-educa-iei": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0 International",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-04",
+			"electedBecause": "data.gov.ro's CKAN record for dataset `69392a50-5750-4a54-90c1-d461de44da6d`, `Rețea scolară 2025-2026`, states `license_id` `CC-BY-4.0`, `license_title` `Creative Commons Attribution 4.0`, `license_url` `https://creativecommons.org/licenses/by/4.0/` and `isopen` `true`, under the organization `Ministerul Educației`. The record is retained as `ro-retea-scolara-ckan-package.json`, with the legalcode copy already held at `internal/strategy/rights-receipts/ocp-eight-2026-09-30/cc-by-4.0-legalcode.html`. The deed grants `Share — copy and redistribute the material in any medium or format` and `Adapt — remix, transform, and build upon the material for any purpose, even commercially`, under `Attribution` and `No additional restrictions`. The scope is this ministry's publications on data.gov.ro, which is what the register's scoping of this licence id to `Ministerul Educației` in RO states.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the right to reproduce and share the material in any medium or format."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `remix, transform, and build upon the material` covers reading the address fields out of the workbook."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, so a token and tag corpus is permitted with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material for any purpose, commercial use included, and fitting a model performs both."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Share grant covers redistribution in any medium, conditioned on the attribution and on adding no restriction beyond the licence."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the deed does not state it. If they are, the attribution and the statement of changes attach to the release."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 grants no sublicensing right and instead gives every downstream recipient an offer from the licensor directly. Whether that arrangement satisfies a commercial agreement's needs is a drafting question this text does not answer."
+				}
+			}
+		},
 		"unchecked-national-terms-gb-companies-house": {
 			"state": "elected",
 			"electedTerms": "Creative Commons Attribution",

@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "e141b726cc83bfebc8aee588afa73d5208a145bbd7bfbb208789a8182d145949",
+	"contentDigest": "180289293c6544e2c961e54605a417a30e432c8a47ff2befb784f5e9f51243d8",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -795,16 +795,94 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to fr-charity-nonprofit-1 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-fr-fr-education-1",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to fr-education-1 alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "data.education.gouv.fr's catalog record for `fr-en-annuaire-education` states `Licence Ouverte v2.0 (Etalab)` with the licence text at `http://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf`, under the publisher `DNE - Ministère de l'Education Nationale`, retained in `fr-finess-annuaire-licences.json`. The grant reads `de l'adapter, la modifier, l'extraire et la transformer, pour créer des « Informations dérivées », des produits ou des services`, subject to naming the source and the date of its last update. The operations below follow the reading of the same licence in `insee-sirene-lov2`. The scope is this directory.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what copying the published export performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer`. Reading the address fields out of the export is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants transforming the Information to create `Informations dérivées`. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates new information directly from the Information, which the licence's own definition of `Information dérivée` covers, and the grant for creating one is unconditional beyond attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial`, subject to the attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether redistributing trained weights is one of the licence's granted acts is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and this text does not state it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward, and the text does not settle whether a commercial agreement needs one."
+				}
+			},
+			"licenseID": "unchecked-access-free-fr-fr-education-1"
 		},
 		{
-			"licenseID": "unchecked-access-free-fr-fr-health-1",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to fr-health-1 alone."
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 1.0",
+			"spdx": "LicenseRef-Etalab-Licence-Ouverte-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "data.gouv.fr's API for `finess-extraction-du-fichier-des-etablissements` states `license` `fr-lo` under the organization `Ministère des Solidarités et de la Santé`, retained in `fr-finess-annuaire-licences.json`. `fr-lo` is Licence Ouverte / Open Licence version 1.0 of October 2011, whose grant reads `Adapter, modifier, extraire et transformer à partir de « l'Information », notamment pour créer des « Informations dérivées »`, subject to naming the source and the date of its last update. Version 1.0 has no SPDX identifier, so the id here is a LicenseRef. The scope is this extract. The publisher states it stops at data dated 2026-05-04 and is replaced by the ANS dataset `finess-structures-1`, which this decision does not cover.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 1.0 grants freedom to `Reproduire, copier, publier et transmettre l'Information`, which is what copying the published extract performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants freedom to `Adapter, modifier, extraire et transformer à partir de « l'Information »`. Reading the address columns out of the extract is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants transforming the Information `notamment pour créer des « Informations dérivées »`. A token and tag corpus is such a work."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model creates information derived directly from the Information, which the licence's grant to create `Informations dérivées` covers, subject only to the attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 1.0 grants freedom to `Diffuser, redistribuer` the Information and to `Exploiter à titre commercial`, subject to the attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether redistributing trained weights is redistributing the Information or an `Information dérivée` is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the licence text does not state it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants the reuser a non-exclusive right and states no term about granting that right onward, and the text does not settle whether a commercial agreement needs one."
+				}
+			},
+			"licenseID": "unchecked-access-free-fr-fr-health-1"
 		},
 		{
 			"licenseID": "unchecked-access-free-fr-fr-health-2",
@@ -2459,6 +2537,53 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Centre de formalités des entreprises in CG, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
+			"state": "elected",
+			"electedTerms": "Creative Commons CC0 1.0 Universal Public Domain Dedication",
+			"spdx": "CC0-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "GLEIF's LEI data terms of use at `https://www.gleif.org/en/meta/lei-data-terms-of-use` state `The data available through the Access Service are provided under the CC0 licence, see CC0 1.0 Universal (CC0 1.0)`, retained as `gleif-terms.json`. The same terms ask a user not to create the impression that a derived product is provided, supported or authorized by GLEIF, and not to claim proprietary rights in the LEI data. Both are conduct conditions on how a product is presented, which a model card that names GLEIF as a source without implying endorsement satisfies; neither restricts copying, transforming or training. The scope is the Level 1 golden copy.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives every copyright and related right to the extent allowed by law, so copying the published file is unrestricted by the dedication."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed states `You can copy, modify, distribute and perform the work, even for commercial purposes`, and reading columns out of the file is copying and modifying."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed permits modification without condition."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act, so fitting a model on the rows is unrestricted by the dedication."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The deed permits distribution, commercially included, with no attribution or share-alike condition. GLEIF's terms add only that the redistribution must not imply GLEIF's endorsement."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives the rights that would make a derived work's release a licensed act. The non-endorsement condition governs how the release is described."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A dedication to the public domain leaves no right to sublicense, so a recipient needs no grant from this repository."
+				}
+			},
+			"licenseID": "unchecked-national-terms-ch-global-legal-entity-identifier-foundation-gle"
+		},
+		{
 			"licenseID": "unchecked-national-terms-ci-commercial-court-business-registration-author",
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
@@ -3259,10 +3384,100 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Luxembourg Business Registers in LU, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International, under Commission Decision 2011/833/EU",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0 International",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "CORDIS's legal notice at `https://cordis.europa.eu/about/legal` states `The Commission's reuse policy is implemented by Commission Decision 2011/833/EU` and `Unless otherwise noted (e.g. in individual copyright notices), the reuse of the editorial content on this website owned by the EU is authorized under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence`, retained as `cordis-legal-notice.json`. data.europa.eu labels each CORDIS CSV distribution `COM_REUSE`, which is that decision. The same notice says rights may need clearing where content `depicts identifiable private individuals`, which is why the adapter refuses participant records written as a person's name (202 of 78,842 distinct records) rather than relying on the grant alone. The scope is the three CORDIS project datasets, `cordisfp7projects`, `cordish2020projects` and `cordisHEprojects`, and their `organization.csv` members.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the right to reproduce and share the material in any medium or format."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `remix, transform, and build upon the material` covers reading the address fields out of the organisation files."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, so a token and tag corpus is permitted with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material for any purpose, commercial use included, and fitting a model performs both."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Share grant covers redistribution in any medium, conditioned on the attribution and on adding no restriction beyond the licence."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the deed does not state it. If they are, the attribution and the statement of changes attach to the release."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 grants no sublicensing right and instead gives every downstream recipient an offer from the licensor directly. Whether that arrangement satisfies a commercial agreement's needs is a drafting question this text does not answer."
+				}
+			},
+			"licenseID": "unchecked-national-terms-lu-publications-office-of-the-european-union"
+		},
+		{
 			"licenseID": "unchecked-national-terms-lv-register-of-enterprises-of-the-republic-of-la",
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Register of Enterprises of the Republic of Latvia in LV, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0 International",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-03",
+			"electedBecause": "data.gov.lv's CKAN record for dataset `varis-atvertie-dati` (id `6b06a7e8-dedf-4705-a47b-2a7c51177473`), `Valsts adrešu reģistra atvērtie dati`, states `license_id` `CC-BY-4.0` under the organization `Valsts zemes dienests`, retained as `lv-varis-ckan-package.json`. The CSVW column metadata the publisher posts beside `aw_dziv.csv` names `https://creativecommons.org/licenses/by/4.0/` as `dc:license`. The record reports `isopen` `false` and sets no `license_url`; CKAN derives `isopen` from the portal's own license table, which does not mark the string `CC-BY-4.0` open, so the flag records that table and states nothing about the grant. The EU address survey read the same publisher's CC BY 4.0 statement on 2026-09-30 (`eu-inspire-addresses-2026-09-30/README.md`) and left the source unreached only because `grafws.kadastrs.lv` failed at the network layer. This dataset serves the register's tables as plain CSV from data.gov.lv, which answers. The scope is this dataset's open-data tables.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the right to reproduce and share the material in any medium or format."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `remix, transform, and build upon the material` covers reading the address tables and joining them."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, so a token and tag corpus is permitted with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material for any purpose, commercial use included, and fitting a model performs both."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Share grant covers redistribution in any medium, conditioned on the attribution and on adding no restriction beyond the licence."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the deed does not state it. If they are, the attribution and the statement of changes attach to the release."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 grants no sublicensing right and instead gives every downstream recipient an offer from the licensor directly. Whether that arrangement satisfies a commercial agreement's needs is a drafting question this text does not answer."
+				}
+			},
+			"licenseID": "unchecked-national-terms-lv-valsts-zemes-dienests"
 		},
 		{
 			"state": "refused",
@@ -3743,6 +3958,51 @@
 				}
 			},
 			"licenseID": "unchecked-national-terms-re-insee"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0 International",
+			"retrievedCopy": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/",
+			"retrievedAt": "2026-10-04",
+			"electedBecause": "data.gov.ro's CKAN record for dataset `69392a50-5750-4a54-90c1-d461de44da6d`, `Rețea scolară 2025-2026`, states `license_id` `CC-BY-4.0`, `license_title` `Creative Commons Attribution 4.0`, `license_url` `https://creativecommons.org/licenses/by/4.0/` and `isopen` `true`, under the organization `Ministerul Educației`. The record is retained as `ro-retea-scolara-ckan-package.json`, with the legalcode copy already held at `internal/strategy/rights-receipts/ocp-eight-2026-09-30/cc-by-4.0-legalcode.html`. The deed grants `Share — copy and redistribute the material in any medium or format` and `Adapt — remix, transform, and build upon the material for any purpose, even commercially`, under `Attribution` and `No additional restrictions`. The scope is this ministry's publications on data.gov.ro, which is what the register's scoping of this licence id to `Ministerul Educației` in RO states.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants the right to reproduce and share the material in any medium or format."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `remix, transform, and build upon the material` covers reading the address fields out of the workbook."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose, so a token and tag corpus is permitted with the change indicated."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material for any purpose, commercial use included, and fitting a model performs both."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Share grant covers redistribution in any medium, conditioned on the attribution and on adding no restriction beyond the licence."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material under CC BY 4.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the deed does not state it. If they are, the attribution and the statement of changes attach to the release."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 grants no sublicensing right and instead gives every downstream recipient an offer from the licensor directly. Whether that arrangement satisfies a commercial agreement's needs is a drafting question this text does not answer."
+				}
+			},
+			"licenseID": "unchecked-national-terms-ro-ministerul-educa-iei"
 		},
 		{
 			"licenseID": "unchecked-national-terms-ro-national-trade-register-office",
@@ -7351,14 +7611,28 @@
 			"iso2": "FR",
 			"sector": "health",
 			"name": "FINESS",
-			"status": "retained-original",
+			"status": "verified-corpus",
 			"asserts": ["identity", "observation"],
 			"authorityBasis": "Regulatory/operational corpus retained from original Functionally Authoritative Address Corpora memo",
 			"geometry": "partial",
 			"license": "unchecked-access-free-fr-fr-health-1",
 			"researchPass": "original-memo",
 			"access": "CSV",
-			"note": "mess=Med"
+			"sourceURL": "https://www.data.gouv.fr/datasets/finess-extraction-du-fichier-des-etablissements/",
+			"note": "mess=Med",
+			"adapterID": "fr-finess-overseas",
+			"addressRoles": {
+				"numvoie typvoie voie compvoie": "facility",
+				"lieuditbp": "facility",
+				"ligneacheminement": "facility"
+			},
+			"coverage": "The establishment extract `etalab-cs1100502-stock-20260512-0339.csv`, 35,786,629 bytes, read on 2026-10-03 for the overseas departments only. Of 103,023 lines, 2,665 are overseas establishments; the adapter emits 2,395: RE 835, GP 563, MQ 526, GF 255, YT 146, MF 41, PM 15, BL 12, WF 2. Refusals among the overseas rows: no street, lieu-dit or box 84, a digit in the lieu-dit 82, a digit in the street name 67, a family placement 24, an ambiguous repetition index `C` 5, a street type with no name 4, a number with no street 3. The publisher states this extract stops at data dated 2026-05-04.",
+			"upstreamLineage": ["https://www.data.gouv.fr/datasets/finess-extraction-du-fichier-des-etablissements/"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "FINESS registers establishments, and every overseas row read is a hospital, pharmacy, laboratory, care service, social establishment or similar. A family placement (`accueil familial`) is a household receiving a person, so its address is a private home: the adapter refuses the 24 overseas rows in those categories and, by name, Saint-Pierre-et-Miquelon's `CENTRE D'ACCUEIL FAMILIAL SPECIALISE` filed under category 377.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/fr-finess-annuaire-licences.json"
+			}
 		},
 		{
 			"sourceID": "fr-health-2",
@@ -7379,14 +7653,28 @@
 			"iso2": "FR",
 			"sector": "education",
 			"name": "Annuaire de l'éducation",
-			"status": "retained-original",
+			"status": "verified-corpus",
 			"asserts": ["identity", "observation"],
 			"authorityBasis": "Regulatory/operational corpus retained from original Functionally Authoritative Address Corpora memo",
 			"geometry": "present",
 			"license": "unchecked-access-free-fr-fr-education-1",
 			"researchPass": "original-memo",
 			"access": "CSV",
-			"note": "data.gouv | mess=Low"
+			"sourceURL": "https://data.education.gouv.fr/explore/dataset/fr-en-annuaire-education/",
+			"note": "data.gouv | mess=Low",
+			"adapterID": "fr-annuaire-education-overseas",
+			"addressRoles": {
+				"adresse_1 adresse_2 adresse_3": "facility",
+				"code_postal": "facility",
+				"nom_commune": "facility"
+			},
+			"coverage": "The Annuaire de l'éducation export filtered to department codes 971–978, 986, 987 and 988, read on 2026-10-03: 3,145 records, of which the adapter emits 2,825: RE 820, GP 426, MQ 391, NC 334, GF 310, YT 287, PF 181, MF 35, WF 19, PM 14, BL 8. Refusals: a digit it cannot place 204, two different place lines 55, no street, place or box 41, a street type with no name 18, care of a person (`Chez …`) 1.",
+			"upstreamLineage": ["https://data.education.gouv.fr/explore/dataset/fr-en-annuaire-education/"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The directory lists schools and education offices. One record addressed in care of a named person (`Chez …`) is refused, because that address belongs to the person rather than to the school.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/fr-finess-annuaire-licences.json"
+			}
 		},
 		{
 			"sourceID": "fr-charity-nonprofit-1",
@@ -13838,6 +14126,124 @@
 			"publisher": "Badan Pusat Statistik (BPS)",
 			"sourceURL": "https://sig.bps.go.id/",
 			"note": "Grounds Indonesia's administrative hierarchy. Street-level exposure comes from OpenStreetMap Indonesia rather than from this source."
+		},
+		{
+			"sourceID": "ro-education-1",
+			"iso2": "RO",
+			"sector": "education",
+			"name": "Rețea școlară (school network)",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "The ministry's list of every education unit for a school year, with street, number, postcode and locality",
+			"geometry": "absent",
+			"license": "unchecked-national-terms-ro-ministerul-educa-iei",
+			"researchPass": "2026-10-03-decoder-exposure",
+			"access": "bulk XLSX via data.gov.ro CKAN",
+			"publisher": "Ministerul Educației",
+			"sourceURL": "https://data.gov.ro/dataset/69392a50-5750-4a54-90c1-d461de44da6d",
+			"note": "The 2025-2026 workbook lists 18,022 units, of which 17,533 carry a street or a house number. Every unit is a public education body, so no row is a natural person's address.",
+			"addressRoles": {
+				"Strada": "facility",
+				"Numar": "facility",
+				"Cod postal": "facility",
+				"Localitate unitate": "facility"
+			},
+			"coverage": "The 2025-2026 workbook on data.gov.ro, 3,022,486 bytes, sha256 `35cb33c83752a6ac6334f1bd43a8bd53e9573684f949047aa05bd72056971a32`, one sheet `Export` whose header is the fourth row. Measured on 2026-10-03: 18,022 education units. 17,533 carry a street or a house number and become rows; 489 state neither and are refused. 16,393 of the 17,533 carry a house number, and 17,484 of the 18,022 carry a six-digit postcode. `Numar` writes `FN` (`fără număr`) for a premise without a number on about 600 units, which the adapter reads as absent.",
+			"adapterID": "ro-retea-scolara",
+			"upstreamLineage": ["https://data.gov.ro/dataset/69392a50-5750-4a54-90c1-d461de44da6d"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every row is an education unit of the Romanian state system: schools, kindergartens, children's clubs, school inspectorates and teacher centres, 17,433 of 18,022 typed `Unitate de învățământ`. The address is the unit's own premises. The workbook names no natural person in any address-bearing row; the `Email` and `Telefon` columns hold the unit's contact and are not read.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/ro-retea-scolara-ckan-package.json"
+			}
+		},
+		{
+			"sourceID": "lu-procurement-grants-1",
+			"iso2": "LU",
+			"sector": "procurement-grants",
+			"name": "CORDIS organisation files (FP7 / Horizon 2020 / Horizon Europe participants)",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "The participant register's address for every legal entity in an EU research framework project, across 158 countries",
+			"geometry": "absent",
+			"license": "unchecked-national-terms-lu-publications-office-of-the-european-union",
+			"researchPass": "2026-10-03-decoder-exposure",
+			"access": "bulk CSV zip per programme from cordis.europa.eu",
+			"publisher": "Publications Office of the European Union",
+			"sourceURL": "https://cordis.europa.eu/about/legal",
+			"note": "420,811 participation rows reduce to 78,842 distinct published records and 57,930 emitted addresses. The participant register holds legal entities; a name rule refuses the 202 records written as a person's name.",
+			"addressRoles": {
+				"organization.csv street": "registered-office",
+				"organization.csv postCode": "registered-office",
+				"organization.csv city": "registered-office"
+			},
+			"coverage": "The `organization.csv` members of the CORDIS FP7 (32,953,397 bytes, sha256 `886ee479…`), Horizon 2020 (55,219,250 bytes, `d4a8e364…`) and Horizon Europe (36,908,998 bytes, `1496a16e…`) archives, fetched 2026-10-03. 420,811 participation rows reduce to 78,842 distinct published records (name, street, postcode, city, country) and 57,930 emitted addresses across 158 countries. Refusals: a digit the street split could not place 14,438 and 4,646, no locality 564, a non-ISO country 359, a country without a codex layout 353, too few components 349, a name written as a person's 202. Largest countries: DE 7,967, IT 6,365, ES 4,242, FR 4,055, NL 3,800, GB 3,658.",
+			"adapterID": "cordis",
+			"upstreamLineage": [
+				"https://data.europa.eu/data/datasets/cordisfp7projects",
+				"https://data.europa.eu/data/datasets/cordish2020projects",
+				"https://data.europa.eu/data/datasets/cordisHEprojects"
+			],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The participant register enrols legal entities, and `activityType` takes only HES, PRC, REC, OTH, PUB or empty, so no field marks a natural person. A sole trader can register, so the adapter refuses a participant whose name takes a person's form (surname-first uppercase name, a German `e.Kfr.` suffix): 202 of 78,842 distinct records, among them `FISK ADRIAN` and `Melina Bucher e.Kfr.`. A sole trader trading under a business name passes that test, which is the residual exposure this reading records.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/cordis-legal-notice.json"
+			}
+		},
+		{
+			"sourceID": "lv-property-building-1",
+			"iso2": "LV",
+			"sector": "property-building",
+			"name": "Valsts adrešu reģistrs (State Address Register) open data",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "The national register of building and land-unit addresses, with each address's official written form",
+			"geometry": "present",
+			"license": "unchecked-national-terms-lv-valsts-zemes-dienests",
+			"researchPass": "2026-10-03-decoder-exposure",
+			"access": "bulk CSV via data.gov.lv CKAN",
+			"publisher": "Valsts zemes dienests",
+			"sourceURL": "https://data.gov.lv/dati/dataset/varis-atvertie-dati",
+			"note": "aw_eka.csv holds 610,876 rows, 550,652 active; the adapter emits 550,637 with the register's own STD string as the written form.",
+			"addressRoles": {
+				"aw_eka.csv STD": "premise"
+			},
+			"coverage": "The 2026-09-30 edition of `varis-atvertie-dati` on data.gov.lv. `aw_eka.csv`, building and land-unit addresses, sha256 `e99669fe0a102d833129559cbeb688ad3c1582d0a52346cb9accb523c41caada`, holds 610,876 rows: 550,652 active (`EKS`), 32,448 removed (`DEL`) and 27,776 erroneous (`ERR`). The adapter emits 550,637, refusing 15 house names written where a street address's number goes. By shape: rural named house in a parish 116,225, street address in a municipality town 113,905, street address in a state city 111,217, named house in a village 108,164, street address in a village 98,179, named house in a city 2,947. Every emitted row's `raw` is the register's `STD` string, which the adapter's join of the parent tables reproduces on all 550,637. `aw_dziv.csv` (868,669 active premises in 57,285 buildings) is not read.",
+			"adapterID": "lv-varis",
+			"upstreamLineage": ["https://data.gov.lv/dati/dataset/varis-atvertie-dati"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The address register records addresses and the codes of their parent places, and names no owner, resident or occupant. A rural house name such as `Riņņi` is the premise's registered name rather than a person's. No field ties an address to a natural person.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/lv-varis-ckan-package.json"
+			}
+		},
+		{
+			"sourceID": "ch-business-legal-2",
+			"iso2": "CH",
+			"sector": "business-legal",
+			"name": "GLEIF Level 1 LEI golden copy",
+			"status": "verified-corpus",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "The legal and headquarters addresses of every LEI holder, validated against local registration authorities",
+			"geometry": "absent",
+			"license": "unchecked-national-terms-ch-global-legal-entity-identifier-foundation-gle",
+			"researchPass": "2026-10-03-decoder-exposure",
+			"access": "daily bulk CSV zip from goldencopy.gleif.org",
+			"publisher": "Global Legal Entity Identifier Foundation (GLEIF)",
+			"sourceURL": "https://www.gleif.org/en/meta/lei-data-terms-of-use",
+			"note": "The 2026-10-03 08:00 publish holds 3,451,350 records; the adapter emits 1,356,108 distinct addresses across 178 countries after refusing sole proprietors and lines it cannot label.",
+			"addressRoles": {
+				"Entity.LegalAddress": "registered-office",
+				"Entity.HeadquartersAddress": "registered-office"
+			},
+			"coverage": "The 2026-10-03 08:00 Level 1 golden copy, `20261003-0800-gleif-goldencopy-lei2-golden-copy.csv.zip`, 507,006,221 bytes, sha256 `8b56eca84ea750dd343a69ffd837f1ba6738bb063167e24d00192f0127d47d03`, 3,451,350 records. The headquarters address repeats the legal address on 2,755,787 records and is read once. The adapter emits 1,356,108 distinct addresses across 178 countries; the largest are DE 178,755, IT 153,146, NL 147,226, US 137,213 and FR 102,618. The largest address refusals are a street number it cannot place 873,601, a care-of first line 645,366 and a first line with no digit 301,531. AE, HK and BS rows are refused as unreviewed, because their sampled rows mislabel office numbers, floors and suite markers.",
+			"adapterID": "gleif-lei",
+			"upstreamLineage": ["https://www.gleif.org/en/lei-data/gleif-golden-copy"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "LEI holders are legal entities, but GLEIF registers sole proprietors too. The adapter refuses 131,148 records as natural persons: `EntityCategory` `SOLE_PROPRIETOR` 129,552, an ELF code naming a sole-proprietorship form 382, and a free-text legal form naming a sole trader 1,214. `MailRouting`, which holds care-of lines naming people, is never read, and a first line written as care of a person is refused. A sole trader registered under a non-sole-proprietor category and a business name passes, which is the residual exposure.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/gleif-terms.json"
+			}
 		}
 	]
 }

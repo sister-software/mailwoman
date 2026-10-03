@@ -23,7 +23,7 @@ import { proposeSpans, type ProposedSpan, WORD_CONSISTENCY_SHIP_DEFAULT } from "
 import { normalizeInputCase } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"
 
-import { confidentLocaleCountry, LOCALE_COUNTRIES, resolveSystemVerdict } from "#address-system"
+import { confidentLocaleCountry, LOCALE_COUNTRIES, localeHintID, resolveSystemVerdict } from "#address-system"
 import { encodeCharUnits } from "#char-encoder"
 import type {
 	NeuralAddressClassifierConfig,
@@ -391,8 +391,14 @@ export class NeuralAddressClassifier {
 					soft.anchor,
 					soft.gazetteer,
 					soft.country,
-					soft.streetType || soft.localitySurface
-						? { streetType: soft.streetType, localitySurface: soft.localitySurface }
+					soft.streetType || soft.localitySurface || this.cfg.addressSystems
+						? {
+								...(soft.streetType ? { streetType: soft.streetType } : {}),
+								...(soft.localitySurface ? { localitySurface: soft.localitySurface } : {}),
+								...(this.cfg.addressSystems
+									? { localeHint: localeHintID(this.cfg.addressSystems, opts?.localeHint, text) }
+									: {}),
+							}
 						: undefined
 				)
 

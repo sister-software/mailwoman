@@ -28,6 +28,12 @@ export interface InferChannel {
 export interface InferEvidenceChannels {
 	streetType?: InferChannel
 	localitySurface?: InferChannel
+	/**
+	 * The address-system id for a graph with a `locale_hint` input.
+	 *
+	 * The model card's `address_systems.no_hint` id states that no hint is given.
+	 */
+	localeHint?: number
 }
 
 /**
@@ -60,6 +66,11 @@ export interface InferResult {
 	 * Consumers must treat undefined as no address-system detection available.
 	 */
 	localeLogits?: number[]
+	/**
+	 * The address-system head's logits (`address_system_logits` output), indexed by the
+	 * model card's `address_systems` ids, when the model exports it.
+	 */
+	addressSystemLogits?: number[]
 	/**
 	 * Per-span type scores from the semi-Markov span head, indexed
 	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` for a segment of `lengthIdx + 1`
@@ -230,11 +241,40 @@ export function packSoftChannelFeeds(
 }
 
 /**
+ * The `locale_hint` value a runner feeds when the caller gives no address-system id.
+ *
+ * The trainer sizes the hint embedding at one row per address system plus a last row for
+ * "no hint", so the card's `address_systems.no_hint` is always the last index.
+ * The exported graph reads the id with an ONNX `Gather`, which counts a negative index from the end,
+ * so `-1` selects that last row without the runner knowing how many systems the model has.
+ */
+export const NO_LOCALE_HINT = -1
+
+/**
+ * Pack the `locale_hint` input when the graph declares one, or return null when it does not.
+ *
+ * A caller without an id gets {@linkcode NO_LOCALE_HINT}, the trained "no hint" behavior.
+ */
+export function packLocaleHintFeed(
+	inputNames: readonly string[],
+	localeHint: number | undefined
+): PackedFeed<BigInt64Array> | null {
+	if (!inputNames.includes("locale_hint")) return null
+
+	return { data: BigInt64Array.of(BigInt(localeHint ?? NO_LOCALE_HINT)), dims: [1] }
+}
+
+/**
  * Decode a session's outputs into an {@link InferResult} trimmed to the real `seqLen`
  * (the pad tail is never real); absent tensors yield absent fields.
  */
 export function decodeInferOutput(
-	output: { logits?: OutputTensor; localeLogits?: OutputTensor; spanScores?: OutputTensor },
+	output: {
+		logits?: OutputTensor
+		localeLogits?: OutputTensor
+		spanScores?: OutputTensor
+		addressSystemLogits?: OutputTensor
+	},
 	seqLen: number
 ): InferResult {
 	const logitsTensor = output.logits
@@ -258,6 +298,7 @@ export function decodeInferOutput(
 	}
 
 	const localeLogits = output.localeLogits ? Array.from(output.localeLogits.data) : undefined
+	const addressSystemLogits = output.addressSystemLogits ? Array.from(output.addressSystemLogits.data) : undefined
 
 	const spanTensor = output.spanScores
 	let spanScores: number[][][] | undefined
@@ -293,6 +334,7 @@ export function decodeInferOutput(
 		logits,
 		numLabels,
 		...(localeLogits ? { localeLogits } : {}),
+		...(addressSystemLogits ? { addressSystemLogits } : {}),
 		...(spanScores ? { spanScores, maxSpan } : {}),
 	}
 }

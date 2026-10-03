@@ -11,10 +11,10 @@
  *   Each adapter has its own directory, and the publisher decides which parent it sits under. An
  *   adapter reading one country's publisher lives under that country, at `lib/<iso2>/adapters/<id>/`:
  *   G-NAF under `au`, Digitaal Vlaanderen under `be`, ČÚZK under `cz`, Klimadatastyrelsen under
- *   `dk`, Maa- ja Ruumiamet under `ee`, Ryhti under `fi`, BAN under `fr`, ANAC under `it`, the
+ *   `dk`, Maa- ja Ruumiamet under `ee`, Ryhti under `fi`, BAN, FINESS and the Annuaire de l'éducation under `fr`, ANAC under `it`, the
  *   Administration du
- *   cadastre et de la topographie under `lu`, Kartverket's Matrikkelen
- *   under `no`, EMUiA under `pl`, and the FCC and USGov readers under `us`. A national publisher
+ *   cadastre et de la topographie under `lu`, the State Address Register under `lv`, Kartverket's Matrikkelen
+ *   under `no`, EMUiA under `pl`, Romania's school network under `ro`, and the FCC and USGov readers under `us`. A national publisher
  *   stays there even when its own files cover that state's dependencies, because the publisher is
  *   what the adapter reads: BAN carries France and ten overseas jurisdictions, Matrikkelen carries
  *   Norway and Svalbard, and Ryhti's one national file carries Åland beside the Finnish mainland.
@@ -39,8 +39,10 @@
  *   `./wof/postalcode-json/` hold the implementations.
  */
 
+import { cordisAdapter } from "#adapters/cordis/adapter"
 import { geonamesAdapter } from "#adapters/geonames/adapter"
 import { geonamesPostalAdapter } from "#adapters/geonames/postal/adapter"
+import { gleifAdapter } from "#adapters/gleif/adapter"
 import { openaddressesAdapter } from "#adapters/openaddresses/adapter"
 import { osmAdapter } from "#adapters/osm/adapter"
 import { overtureAdapter } from "#adapters/overture/adapter"
@@ -59,12 +61,16 @@ import { esCatastroAdapter } from "#es/adapters/catastro/adapter"
 import { esGipuzkoaAdapter } from "#es/adapters/gipuzkoa/adapter"
 import { esNavarraAdapter } from "#es/adapters/navarra/adapter"
 import { ryhtiAdapter } from "#fi/adapters/ryhti/adapter"
+import { annuaireEducationAdapter } from "#fr/adapters/annuaire-education/adapter"
 import { banAdapter } from "#fr/adapters/ban/adapter"
+import { finessAdapter } from "#fr/adapters/finess/adapter"
 import { itANACAdapter } from "#it/adapters/anac/adapter"
 import { bdAdressesAdapter } from "#lu/adapters/bd-adresses/adapter"
+import { varisAdapter } from "#lv/adapters/varis/adapter"
 import { nlKadasterAdapter } from "#nl/adapters/kadaster/adapter"
 import { matrikkelenAdapter } from "#no/adapters/matrikkelen/adapter"
 import { emuiaAdapter } from "#pl/adapters/emuia/adapter"
+import { reteaScolaraAdapter } from "#ro/adapters/retea-scolara/adapter"
 import { skInspireAdapter } from "#sk/adapters/inspire/adapter"
 import type { CorpusAdapter } from "#types"
 import { fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
@@ -130,6 +136,12 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	stateNyNotariesAdapter,
 	stateHiSchoolsAdapter,
 	itANACAdapter,
+	reteaScolaraAdapter,
+	cordisAdapter,
+	varisAdapter,
+	finessAdapter,
+	annuaireEducationAdapter,
+	gleifAdapter,
 ]
 
 for (const adapter of BUILTIN_ADAPTERS) {

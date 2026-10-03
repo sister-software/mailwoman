@@ -3,8 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fetch the full French BAN (Base Adresse Nationale) — all metropolitan départements (01-95, 2A,
- *   2B) plus 5 overseas DOM/TOM (971-976 excl. 975).
+ *   Fetch the full French BAN (Base Adresse Nationale): every metropolitan département (01-95, 2A,
+ *   2B) and the ten overseas files the publisher serves, 971-978 plus 987 French Polynesia and 988 New
+ *   Caledonia. Each overseas file is its own ISO 3166-1 jurisdiction, which the adapter derives from
+ *   `code_insee`.
  *
  *   Source: https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/
  *   License: Licence Ouverte 2.0 (attribution required — Tier B).
@@ -142,7 +144,12 @@ const DEPT_CODES = [
 	"972",
 	"973",
 	"974",
+	"975",
 	"976",
+	"977",
+	"978",
+	"987",
+	"988",
 ]
 
 export interface BanManifestEntry {

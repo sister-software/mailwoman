@@ -30,33 +30,36 @@ async function weightsPresent(): Promise<boolean> {
  * An entry requires a written defect first, because a row added here silently
  * converts a defect into a permanent exemption.
  */
-const SG_GENERIC_FIRST_STREET =
-	"The Malay generic-first street (`Jalan Sukachita`, `Lengkong Empat`) reads as locality, so the house number has no street anchor. The shipped Latin model has no Singapore register; the `sg-register` corpus recipe (#1931) targets it, and the board row is `improvement_target`."
-
 const NEW_YORK_AS_REGION =
 	"`Brooklyn, New York`: `New York` reads as the state, so the borough is a dependent_locality with no locality anchor. The city and the state share the name; the #1914 family board row is `improvement_target`."
 
-const MILITARY_UNIT_LINE_SPLIT =
-	"`Unit 2050 Box 4190, DPO AP 96278`: the military unit line splits into a stranded `unit` and a `po_box` of `Box 4190` alone, where the gold convention tags the whole line `po_box` — the #517 defect the row was written for."
+const AUCKLAND_POSTCODE_AS_HOUSE_NUMBER =
+	"`Auckland 1010`: the postcode `1010` reads as a house number, which has no street anchor."
 
 const KNOWN_INVALID: Record<string, string> = {
-	"ie-op2-pairc-adhamhnain": "`Letterkenny` read as dependent_locality with no locality anchor. Undiagnosed.",
-	"sg-register-building-led-128799-14": SG_GENERIC_FIRST_STREET,
-	"sg-register-official-358886-10": SG_GENERIC_FIRST_STREET,
-	"sg-register-official-399429-9a": SG_GENERIC_FIRST_STREET,
-	"sg-register-official-417611-3": SG_GENERIC_FIRST_STREET,
-	"sg-register-official-468658-8": SG_GENERIC_FIRST_STREET,
-	"sg-register-official-578038-7": SG_GENERIC_FIRST_STREET,
-	"sg-register-official-762522-522b":
-		"`522B Yishun St 53`: the block `522B` reads as a postcode and `53`, the street's own number, as the house number, which then has no street anchor. Same register gap as the Jalan rows; the `sg-register` corpus recipe (#1931) targets it.",
-	"sg-register-official-769796-74": SG_GENERIC_FIRST_STREET,
 	"us-f3-brooklyn-new-york": NEW_YORK_AS_REGION,
 	"us-f3-brooklyn-new-york-lower": NEW_YORK_AS_REGION,
 	"us-f7-hell-s-kitchen-new-york": NEW_YORK_AS_REGION,
-	"us-f9-unit-2050-box-4190-dpo-ap-96278": MILITARY_UNIT_LINE_SPLIT,
-	"us-f9-unit-8400-box-0001-dpo-ae-09498": MILITARY_UNIT_LINE_SPLIT,
-	"ve-f5-valencia-2001-carabobo-venezuela":
-		"`Valencia 2001, Carabobo, Venezuela`: the postcode reads as a house number and `Valencia` as a unit, so the number has no street anchor — the #1821 defect the row was written for. The board row is `improvement_target`.",
+	"al-thin-system-07":
+		"`AUTOSTRADA TR-DR KM 8, KASHAR, TIRANE, Albania`: the road reads as a locality, so the house number `8` has no street anchor.",
+	"ec-thin-system-04":
+		"`OE11 N61-96, QUITO, Ecuador`: the Quito block code `OE11` reads as a house number with no street, and `QUITO` as a dependent_locality with no locality.",
+	"gb-street-name-elephant-and-castle-road":
+		"`Elephant and Castle Road`: the conjunction splits the name into intersection streets, and `Road` is left as a street_suffix with no street.",
+	"gh-ws-digital-address-ga-183-8164-accra":
+		"`GA-183-8164, Accra, Ghana`: the GhanaPost digital address splits into a house number `GA` with no street and a postcode `183-8164`.",
+	"im-op2-simpsons-field":
+		"`Simpson's Field, 5G8H+8F5, Douglas, Isle of Man IM2 4RE, Isle of Man`: the plus code reads as a house number with no street anchor.",
+	"mw-thin-system-02":
+		"`SUITE B21, GOLDEN PEACOCK SHOPPING COMPLEX, LILONGWE, Malawi`: the shopping complex reads as a second locality beside `LILONGWE`.",
+	"nz-f5-auckland-1010": AUCKLAND_POSTCODE_AS_HOUSE_NUMBER,
+	"nz-f5-auckland-1010-lower": AUCKLAND_POSTCODE_AS_HOUSE_NUMBER,
+	"qa-thin-system-11":
+		"Doha's numbered street `STREET 52` and `INDUSTRIAL AREA` each read as a locality beside `DOHA`, three localities in all.",
+	"qa-thin-system-14":
+		"Doha's numbered street `STREET 44` reads as a locality, so the numbered entrance after it is a unit with no street anchor.",
+	"ug-thin-system-14":
+		"`PLOT 14-16 KYAMBOGO ROAD NTINDA, KAMPALA, Uganda`: the road and suburb read as one locality, so the plot range `14-16` has no street anchor.",
 }
 
 interface Row {

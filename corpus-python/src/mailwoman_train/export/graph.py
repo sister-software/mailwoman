@@ -23,6 +23,7 @@ from .wrappers import (
     LogitsOnlyAnchorGaz,
     LogitsOnlyAnchorGazCountry,
     LogitsOnlyBundle,
+    LogitsOnlyBundleHinted,
     LogitsOnlyChar,
     LogitsOnlyGaz,
     PlainOutputs,
@@ -54,6 +55,9 @@ class Channels:
     char: bool = False
     locale: bool = False
     spans: bool = False
+    address_system: bool = False
+    locale_hint: bool = False
+    num_address_systems: int = 0
 
     @property
     def bundle(self) -> bool:
@@ -100,11 +104,22 @@ def detect_channels(model: nn.Module) -> Channels:
         # the unfetched branch). The JS decoder and the semi-crf-transitions.json sidecar
         # (package_weights.export_semi_crf_transitions) consume it.
         spans=bool(getattr(model, "use_span_scorer", False)),
+        # `address_system_logits`, shape [batch, num_address_systems], in address_systems.json id order.
+        address_system=getattr(model, "address_system_head", None) is not None,
+        locale_hint=getattr(model, "locale_hint_embedding", None) is not None,
+        num_address_systems=int(getattr(model, "num_address_systems", 0)),
     )
 
 
 def check_exportable(channels: Channels) -> None:
     """Refuse a combination whose graph would drop a trained channel."""
+    # The hint input has one wrapper, on the production bundle. Any other combination would export a
+    # graph without the input, and the runtime could not pass a hint the model was trained to read.
+    if channels.locale_hint and not (channels.bundle and not channels.char):
+        raise NotImplementedError(
+            "use_locale_hint is only exportable on the full evidence bundle "
+            "(anchor + gazetteer + country + street_type + locality_surface)."
+        )
     # The country channel ships on top of anchor+gaz (the production ship-config). An export in any
     # other combination is unsupported — a country-trained model whose ONNX lacked the country inputs
     # would silently run country-off — so fail loud instead.
@@ -175,11 +190,15 @@ def build_export_graph(
     elif channels.bundle:
         street_type = _channel_args(batch, max_length, channels.street_type_dim)
         locality_surface = _channel_args(batch, max_length, channels.locality_surface_dim)
-        module = LogitsOnlyBundle(model).eval()
+        module = LogitsOnlyBundleHinted(model).eval() if channels.locale_hint else LogitsOnlyBundle(model).eval()
         args = (dummy_ids, dummy_mask, *anchor, *gaz, *country, *street_type, *locality_surface)
         input_names = ["input_ids", "attention_mask", *_named("anchor", "gazetteer", "country")]
         input_names += _named("street_type", "locality_surface")
         dynamic_shapes = {**BASE_DYNAMIC, **{name: dict(PER_TOKEN) for name in input_names[2:]}}
+        if channels.locale_hint:
+            args = (*args, torch.full((batch,), channels.num_address_systems, dtype=torch.long))
+            input_names.append("locale_hint")
+            dynamic_shapes["locale_hint"] = {0: "batch"}
     elif channels.anchor and channels.gazetteer and channels.country:
         module = LogitsOnlyAnchorGazCountry(model).eval()
         args = (dummy_ids, dummy_mask, *anchor, *gaz, *country)
@@ -208,9 +227,12 @@ def build_export_graph(
 
     module.with_locale = channels.locale
     module.with_spans = channels.spans
+    module.with_address_system = channels.address_system
     output_names = ["logits"]
     if channels.locale:
         output_names.append("locale_logits")
     if channels.spans:
         output_names.append("span_scores")
+    if channels.address_system:
+        output_names.append("address_system_logits")
     return ExportGraph(module, args, input_names, dynamic_shapes, output_names)

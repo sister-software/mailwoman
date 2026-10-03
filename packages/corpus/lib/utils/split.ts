@@ -158,6 +158,45 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			postcodePrefixes: ["690", "691", "692"],
 			localities: ["Владивосток", "Уссурийск", "Находка"],
 		},
+		// Each French overseas jurisdiction is one INSEE department with one postcode range,
+		// so the BAN rows hold out by commune, spelled as BAN's `nom_commune` writes it.
+		// Saint-Barthélemy and Saint-Martin are each one commune under one postcode,
+		// so neither has a place to hold out.
+		GP: { localities: ["Le Moule"] },
+		MQ: { localities: ["Le Robert", "Ducos"] },
+		GF: { localities: ["Kourou"] },
+		RE: { localities: ["Saint-Louis", "Saint-Leu"] },
+		PM: { localities: ["Miquelon-Langlade"] },
+		YT: { localities: ["Dzaoudzi", "Pamandzi"] },
+		// Tumaraa holds 1,522 of PF's 6,755 rows with a street, more than a tenth,
+		// because Pirae's 958 rows carry no street name and Papeete holds the remaining 5,233.
+		PF: { localities: ["Tumaraa"] },
+		NC: { localities: ["Koné", "Pouembout", "Kaala-Gomen"] },
+		LV: {
+			// Latgale's south-east: the Krāslava, Ludza, Balvi, Preiļi and Līvāni
+			// municipalities, whose postcodes begin LV-56, LV-57, LV-45 and LV-53,
+			// and the state city Rēzekne, which lies in no municipality.
+			// The address register writes `nov.`; other sources spell the municipality out.
+			regions: [
+				"Krāslavas nov.",
+				"Ludzas nov.",
+				"Balvu nov.",
+				"Preiļu nov.",
+				"Līvānu nov.",
+				"Krāslavas novads",
+				"Ludzas novads",
+				"Balvu novads",
+				"Preiļu novads",
+				"Līvānu novads",
+			],
+			postcodePrefixes: ["LV-45", "LV-53", "LV-56", "LV-57"],
+			localities: ["Rēzekne"],
+		},
+		RO: {
+			// Alba 51, Hunedoara 33, Mureș 54 and Sibiu 55: a Romanian postcode's first two digits name its county.
+			regions: ["Alba", "Hunedoara", "Mureș", "Sibiu"],
+			postcodePrefixes: ["51", "33", "54", "55"],
+		},
 	}
 }
 

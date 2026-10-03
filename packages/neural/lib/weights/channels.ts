@@ -9,6 +9,7 @@ import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } fro
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
+import { type AddressSystemTable, parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard } from "#char-encoder"
 import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
@@ -488,6 +489,22 @@ export async function readLabelsFromModelCard(
 	}
 
 	return Object.freeze(labels.slice()) as readonly string[]
+}
+
+/**
+ * Reads the `address_systems` table from a `model-card.json` file.
+ *
+ * It returns `undefined` when the file is missing or the card has no such field,
+ * which is every model trained without the address-system head or the locale hint.
+ *
+ * @throws When the field is present but malformed.
+ */
+export async function readAddressSystemsFromModelCard(
+	modelCardPath: PathBuilderLike | undefined
+): Promise<AddressSystemTable | undefined> {
+	const card = await readModelCardObject(modelCardPath)
+
+	return card ? parseAddressSystemTable(card.address_systems, String(modelCardPath)) : undefined
 }
 
 /**

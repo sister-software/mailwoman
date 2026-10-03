@@ -10,6 +10,7 @@ from __future__ import annotations
 import torch
 from torch import nn
 
+from ...address_systems import num_address_systems
 from ...config import Config
 from ...features.phrase_priors import PHRASE_FEATURE_DIM
 from ...labels import NUM_LOCALES
@@ -50,6 +51,8 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
             [float(cw_dict.get(label, 1.0)) for label in label_set.bio_labels],
             dtype=torch.float32,
         )
+    address_head = bool(getattr(cfg.model, "use_address_system_head", False))
+    locale_hint = bool(getattr(cfg.model, "use_locale_hint", False))
     return MailwomanCoarseEncoder(
         vocab_size=vocab_size,
         hidden_size=cfg.model.hidden_size,
@@ -111,6 +114,14 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         char_vocab_size=char_vocab_size,
         char_embed_dim=getattr(cfg.model, "char_embed_dim", 64),
         char_kernel_sizes=tuple(getattr(cfg.model, "char_kernel_sizes", (3, 4, 5))),
+        # The head width is the registry's id count, read from the committed registry rather than the
+        # yaml, so the head and the loader's targets cannot disagree.
+        use_address_system_head=address_head,
+        num_address_systems=num_address_systems() if address_head or locale_hint else 0,
+        address_system_loss_weight=getattr(cfg.model, "address_system_loss_weight", 0.0),
+        use_locale_hint=locale_hint,
+        locale_hint_drop_prob=getattr(cfg.model, "locale_hint_drop_prob", 0.5),
+        locale_hint_noise_prob=getattr(cfg.model, "locale_hint_noise_prob", 0.05),
     )
 
 

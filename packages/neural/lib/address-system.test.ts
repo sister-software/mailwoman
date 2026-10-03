@@ -11,7 +11,8 @@
 import { conventionsForSystem } from "@mailwoman/codex"
 import { describe, expect, it } from "vitest"
 
-import { detectAddressSystem, LOCALE_COUNTRIES } from "#address-system"
+import { detectAddressSystem, LOCALE_COUNTRIES, localeHintID, parseAddressSystemTable } from "#address-system"
+import { packLocaleHintFeed } from "#ort-feeds"
 
 /**
  * Logits that put `prob` mass on `idx` (softmax of one-hot × scale).
@@ -64,5 +65,34 @@ describe("conventions table", () => {
 	it("absent rows mean no constraints, never defaults", () => {
 		expect(conventionsForSystem("us")).toBeNull()
 		expect(conventionsForSystem(null)).toBeNull()
+	})
+})
+
+describe("locale hint", () => {
+	const table = parseAddressSystemTable(
+		{ count: 3, no_hint: 3, members: { "RU/local": 0, "HK/local": 1, "HK/latin": 2 } },
+		"test card"
+	)!
+
+	it("reads the country's latin system for Latin-script text and its local system otherwise", () => {
+		expect(localeHintID(table, "hk", "1 Queen's Road Central")).toBe(2)
+		expect(localeHintID(table, "HK", "香港中環皇后大道中1號")).toBe(1)
+		expect(localeHintID(table, "RU", "Tverskaya 13, Moscow")).toBe(0)
+	})
+
+	it("gives no hint for an absent or unknown country", () => {
+		expect(localeHintID(table, undefined, "anything")).toBe(3)
+		expect(localeHintID(table, "GH", "Plot 12, Spintex Road")).toBe(3)
+	})
+
+	it("reads a card without the field as no table, and refuses a malformed one", () => {
+		expect(parseAddressSystemTable(undefined, "card")).toBeUndefined()
+		expect(() => parseAddressSystemTable({ no_hint: "3", members: {} }, "card")).toThrow(/address_systems/u)
+	})
+
+	it("feeds the hint only to a graph that declares it, and feeds -1 for a missing id", () => {
+		expect(packLocaleHintFeed(["input_ids"], undefined)).toBeNull()
+		expect(packLocaleHintFeed(["input_ids", "locale_hint"], 2)).toEqual({ data: BigInt64Array.of(2n), dims: [1] })
+		expect(packLocaleHintFeed(["locale_hint"], undefined)).toEqual({ data: BigInt64Array.of(-1n), dims: [1] })
 	})
 })

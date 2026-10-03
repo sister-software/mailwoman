@@ -90,7 +90,13 @@ where = ["src"]
 # that imports this package; `postcode-shapes.json` is the record `features/postcode_shapes.py`
 # reads, and a wheel without it raises at import rather than at first use.
 [tool.setuptools.package-data]
-mailwoman_train = ["py.typed", "features/postcode-shapes.json", "exposure/floors.json", "configs/*.yaml"]
+mailwoman_train = [
+	"py.typed",
+	"address_systems.json",
+	"features/postcode-shapes.json",
+	"exposure/floors.json",
+	"configs/*.yaml",
+]
 
 # Ruff — the Python analog of the repo's oxlint + oxfmt setup (lint + format in one fast tool).
 [tool.ruff]

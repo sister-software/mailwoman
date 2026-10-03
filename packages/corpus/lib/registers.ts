@@ -170,6 +170,35 @@ export const SourceRegister = {
 	 */
 	ANACContracts: "it-anac-ocds-contracts",
 	/**
+	 * Romania's school network, the Ministry of Education's list of every education unit and its address.
+	 */
+	ReteaScolara: "ro-edu-retea-scolara",
+	/**
+	 * FINESS, the health ministry's register of health and social establishments,
+	 * read from its establishment extract on data.gouv.fr.
+	 */
+	FINESS: "fr-finess",
+	/**
+	 * The education ministry's Annuaire de l'éducation, the directory of schools and education offices.
+	 */
+	AnnuaireEducation: "fr-annuaire-education",
+	/**
+	 * The CORDIS organization files for the participants in the EU's research framework programmes
+	 * (FP7, Horizon 2020, Horizon Europe), published by the Publications Office of the European Union.
+	 *
+	 * Each address is the one a participating legal entity registered with the participant register.
+	 */
+	CORDISParticipants: "eu-cordis-participants",
+	/**
+	 * Latvia's State Address Register (Valsts adrešu reģistrs), the open data Valsts zemes
+	 * dienests publishes as the data.gov.lv dataset `varis-atvertie-dati`.
+	 */
+	VARIS: "lv-varis",
+	/**
+	 * GLEIF's Level 1 LEI golden copy: the legal and headquarters addresses of every LEI holder.
+	 */
+	GLEIFGoldenCopy: "gleif-lei-golden-copy",
+	/**
 	 * HM Land Registry Price Paid Data, England and Wales.
 	 */
 	LandRegistryPricePaid: "gb-hm-land-registry-ppd",
