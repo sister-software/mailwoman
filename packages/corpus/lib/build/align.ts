@@ -75,6 +75,13 @@ export interface AlignPhaseResult {
 	counts: Record<SplitName, number>
 	licenseCounts: Map<string, number>
 	refusedByKind: Map<LicenseRefusalKind, number>
+	/**
+	 * Rows the license policy refused, counted per `source`.
+	 *
+	 * A source here contributed zero rows to the corpus whatever its adapter reported writing, which is
+	 * the distinction between a source present in corpus provenance and one present in model provenance.
+	 */
+	refusedBySource: Map<string, number>
 	excludedByLicense: number
 	admittedUnresolved: number
 	excludedByEligibility: number
@@ -129,6 +136,10 @@ function restoreTally(checkpoint: AlignCheckpoint, result: AlignPhaseResult): Al
 		result.refusedByKind.set(kind as LicenseRefusalKind, count)
 	}
 
+	for (const [source, count] of Object.entries(checkpoint.refused_by_source)) {
+		result.refusedBySource.set(source, count)
+	}
+
 	for (const [source, contributed] of Object.entries(checkpoint.rows_by_source)) {
 		result.rowsBySource.set(source, contributed)
 	}
@@ -158,6 +169,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		excludedByLicense: 0,
 		admittedUnresolved: 0,
 		excludedByEligibility: 0,
+		refusedBySource: new Map(),
 		rowsBySource: new Map(),
 		ineligibleSources: ineligibility.refused,
 		licenses,
@@ -241,6 +253,12 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 			if (verdict.refusal) {
 				tally.excludedByLicense++
 				result.refusedByKind.set(verdict.refusal, (result.refusedByKind.get(verdict.refusal) ?? 0) + 1)
+
+				// Counted per source as well as per refusal kind, because an adapter's own
+				// `written` count records what it emitted rather than what entered the corpus.
+				// A source refused here contributed no row, and model provenance generated from
+				// `adapters[].written` alone would credit it with rows it did not supply.
+				result.refusedBySource.set(row.source, (result.refusedBySource.get(row.source) ?? 0) + 1)
 
 				continue
 			}
@@ -327,6 +345,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 			quarantined: tally.quarantined,
 			license_counts: Object.fromEntries(result.licenseCounts),
 			refused_by_kind: Object.fromEntries(result.refusedByKind),
+			refused_by_source: Object.fromEntries(result.refusedBySource),
 			excluded_by_license: tally.excludedByLicense,
 			admitted_unresolved_license_rows: tally.admittedUnresolved,
 			excluded_by_eligibility: tally.excludedByEligibility,

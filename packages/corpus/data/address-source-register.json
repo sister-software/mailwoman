@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "f73b0f32cae59cdda3aefd15862daf49be6da457cc54bfeaeee9dd08a9a3a804",
+	"contentDigest": "b44f82693cb92da40e3d9206df4c1c2f71bcf6c31d909e9153923abdabc42979",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -80,7 +80,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "Article 3's `elk rechtmatig doeleinde` reserves no act of analysis, and article 5 states that the licensee holds the intellectual property in the works it creates on the basis of the product. Article 4 requires that the re-use not breach data-protection law, which this source's `personalDataReview` addresses."
+					"because": "Article 3 grants re-use for `elk rechtmatig doeleinde`, which covers reproducing the rows into a training process and adapting them. Article 5 states that the licensee holds the intellectual property in the works it creates on the basis of the product, which addresses the resulting weights directly. Article 4 requires that the re-use comply with data-protection law, which this source's `personalDataReview` addresses."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -170,7 +170,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material. Fitting a model performs both: it reproduces the material into the training process and produces an adaptation of it. CC BY 4.0 attaches no share-alike condition, so the grant does not reach the resulting weights."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -300,7 +300,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "Clause 2 reserves no act of analysis and grants commercial use, so fitting a model on the rows is granted. The source reference is owed on any resulting publication."
+					"because": "Clause 2 grants use, reproduction and commercial exploitation of the data, which is what fitting a model on the rows performs. The source reference is owed on any resulting publication."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -379,7 +379,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "The statement reserves no act of analysis, and fitting a model is a use of the data."
+					"because": "The statement places no condition on access or use, and fitting a model reproduces the rows into the training process and adapts them. What the statement grants beyond access and use rests on Czech law rather than on a copyright licence, which this source's own note records."
 				},
 				"redistribute-data": {
 					"permission": "unreviewed",
@@ -483,7 +483,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material. Fitting a model performs both: it reproduces the material into the training process and produces an adaptation of it. CC BY 4.0 attaches no share-alike condition, so the grant does not reach the resulting weights."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -573,7 +573,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "`No conditions to access and use` reserves no act of analysis, and the feed's own condition is attribution alone."
+					"because": "`No conditions to access and use` places no condition on reproducing or adapting the rows, which is what fitting a model performs, and the feed's own condition is attribution alone."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -595,10 +595,11 @@
 			"state": "elected",
 			"electedTerms": "Creative Commons Attribution-ShareAlike 4.0 International",
 			"spdx": "CC-BY-SA-4.0",
+			"candidateGrants": ["CC-BY-SA-4.0", "CC-BY-4.0"],
 			"termsVersion": "4.0",
 			"retrievedCopy": "internal/strategy/rights-receipts/es-foral-cadastres-2026-09-30/",
 			"retrievedAt": "2026-09-30",
-			"electedBecause": "Gipuzkoa states four things, and the one addressing this dataset is elected. Its ISO 19139 dataset metadata, `https://b5m.gipuzkoa.eus/metadata_inspire/ES.GFA.AD.MD.xml`, 35,329 bytes, sha256 `e7c228b9feb33e570b802210421a76cf3f583249afbd57ef5baffe7dd2786724`, carries `otherConstraints` reading `CC BY-SA 4.0 This information does not have an official map category; therefore, it should not be used for any type of certificate`. Its Atom entry reads `Open access - Creative Commons Citation: CC-BY-SA` with no version. Its feed-level `rights` and subtitle read `Access to this service is permitted in all cases, provided that the authorship and ownership of DFG are referred to as follows: «© Gipuzkoa Provincial Council»`, which states no share-alike term. Its legal page at `https://b5m.gipuzkoa.eus/web5000/es/informacion-legal`, 35,492 bytes, sha256 `9f550d0f2e081221d296d55bc01b4db4c33dcb94867acd87492d8f5cc4a85796`, reads `Los contenidos de este sitio web están bajo una licencia Creative Commons Internacional (CC BY 4.0)`. The dataset metadata is the only one of the four addressing this dataset rather than the service or the website, and it is the only one stating a version. Electing the stricter of the two readings also means the share-alike filter sees this source, which is the direction to err in: `electedLicenseLabel` feeds `SHARE_ALIKE_PATTERN`, and recording CC BY 4.0 here would hide a share-alike obligation the publisher may hold. Reading the difference with the publisher is the work that would settle it.",
+			"electedBecause": "Gipuzkoa states four things, and the one addressing this dataset is elected. Its ISO 19139 dataset metadata, `https://b5m.gipuzkoa.eus/metadata_inspire/ES.GFA.AD.MD.xml`, 35,329 bytes, sha256 `e7c228b9feb33e570b802210421a76cf3f583249afbd57ef5baffe7dd2786724`, carries `otherConstraints` reading `CC BY-SA 4.0 This information does not have an official map category; therefore, it should not be used for any type of certificate`. Its Atom entry reads `Open access - Creative Commons Citation: CC-BY-SA` with no version. Its feed-level `rights` and subtitle read `Access to this service is permitted in all cases, provided that the authorship and ownership of DFG are referred to as follows: «© Gipuzkoa Provincial Council»`, which states no share-alike term. Its legal page at `https://b5m.gipuzkoa.eus/web5000/es/informacion-legal`, 35,492 bytes, sha256 `9f550d0f2e081221d296d55bc01b4db4c33dcb94867acd87492d8f5cc4a85796`, reads `Los contenidos de este sitio web están bajo una licencia Creative Commons Internacional (CC BY 4.0)`. The dataset metadata is the only one of the four addressing this dataset rather than the service or the website, and it is the only one stating a version, which is the substantive ground for electing it. Electing it also means the share-alike filter sees this source, because `electedLicenseLabel` feeds `SHARE_ALIKE_PATTERN` and recording CC BY 4.0 would hide a share-alike obligation the publisher may hold. **That second reason is an engineering policy for gating a release rather than a finding about which grant governs.** Creative Commons permits a rightsholder to offer the same material under more than one licence, so the publisher may be doing exactly that, and a reuser could then ordinarily choose. The present evidence does not establish that each of the four statements covers this same downloadable archive, so `candidateGrants` keeps both readings and this decision stays a gating election rather than a settled answer. Reading the difference with the publisher is the work that would settle it. `internal/strategy/mailwoman-cc-by-sa-training-model-rights-2026-10-03.md` records the interpretation this follows.",
 			"operations": {
 				"fetch": {
 					"permission": "permitted",
@@ -618,7 +619,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY-SA 4.0 reserves no act of analysis and grants use for any purpose. The share-alike condition attaches to what is shared rather than to the fitting itself, which is why this permits ingest and the two release operations stay unreviewed."
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material, and fitting a model performs both: it reproduces the rows into the training process and produces an adaptation of them. §3(b) attaches the share-alike condition when Adapted Material is Shared, and the training corpus is a build artifact this repository does not publish. Whether the resulting weights are themselves Adapted Material is a separate classification, which is why `redistribute-model` and `commercial-sublicense` stay unreviewed. `internal/strategy/mailwoman-cc-by-sa-training-model-rights-2026-10-03.md` records that reading and refuses the shorter claim that training ancestry alone makes the weights Adapted Material."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -706,7 +707,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material. Fitting a model performs both: it reproduces the material into the training process and produces an adaptation of it. CC BY 4.0 attaches no share-alike condition, so the grant does not reach the resulting weights."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -757,7 +758,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. Fitting a model reproduces the material into the training process and produces an adaptation, both of which that clause grants."
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material. Fitting a model performs both: it reproduces the material into the training process and produces an adaptation of it. CC BY 4.0 attaches no share-alike condition, so the grant does not reach the resulting weights."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -844,7 +845,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "Licence Ouverte 2.0 reserves no act of analysis and grants reuse for any purpose, so fitting a model on the rows is granted."
+					"because": "Licence Ouverte 2.0 grants reproduction, adaptation and commercial reuse of the information, and fitting a model on the rows reproduces and adapts them."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -1354,7 +1355,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY 4.0 reserves no act of analysis, and §2(a)(1) grants use for any purpose. The record adds `Ingen begrensninger på bruk er oppgitt.`"
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material, and fitting a model performs both. The record adds `Ingen begrensninger på bruk er oppgitt.`"
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -2226,7 +2227,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY 3.0 AU §3A reserves no act of analysis, and §3C reserves only rights not expressly granted. Fitting a model reproduces the Work into the training process and produces a derivative, both of which §3A grants."
+					"because": "§3A grants reproduction of the Work and creation of Derivative Works, and fitting a model performs both: it reproduces the Work into the training process and produces a derivative of it. §3C reserves only rights not expressly granted."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -2756,7 +2757,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY reserves no act of analysis and grants building upon the material for any purpose, commercially included."
+					"because": "The grant covers reproduction and building upon the material for any purpose, commercial use included, and fitting a model performs both of those acts."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -3071,7 +3072,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY 4.0 reserves no act of analysis and grants building upon the material for any purpose, commercially included."
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material for any purpose, commercial use included, and fitting a model performs both."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -3824,7 +3825,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "Section 2 grants use in any medium and format known today or in future, and reserves no act of analysis."
+					"because": "Section 2 grants copying, distribution and adaptation in any medium and format known today or in future, and fitting a model copies the rows into the training process and adapts them."
 				},
 				"redistribute-data": {
 					"permission": "permitted",
@@ -4291,7 +4292,7 @@
 				"train": {
 					"permission": "permitted",
 					"basis": "publisher-grant",
-					"because": "CC BY 4.0 reserves no act of analysis and grants building upon the material for any purpose, commercially included."
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material for any purpose, commercial use included, and fitting a model performs both."
 				},
 				"redistribute-data": {
 					"permission": "permitted",

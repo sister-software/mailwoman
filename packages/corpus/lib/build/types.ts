@@ -193,6 +193,15 @@ export interface BuildCorpusManifest {
 	 */
 	refused_license_values: Record<string, LicenseRefusalKind>
 	/**
+	 * Rows the license policy refused, counted per `source`.
+	 *
+	 * A source listed here contributed no row to this corpus, whatever `adapters[].written` reports
+	 * for it: that field records what an adapter emitted, and the license filter runs after it.
+	 * Model provenance is generated from what survived every filter, so a source present in corpus
+	 * provenance may be absent from model provenance, and this field is where the difference reads.
+	 */
+	refused_rows_by_source: Record<string, number>
+	/**
 	 * Admitted rows whose license resolves to no SPDX expression.
 	 * Their obligations are unknown rather than empty.
 	 *
