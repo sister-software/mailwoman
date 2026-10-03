@@ -31,16 +31,25 @@ const ACCEPTANCE: [query: string, url: string][] = [
 	["vitrebi", "/docs/developers/knowledge-base/address-intelligence/decoding-and-viterbi"],
 ]
 
+// The acceptance suite needs a docs build.
+// CI has one in the docs-build job and refuses its absence.
+// A local checkout without a build skips and says so.
+const buildAbsent = !(await pathExists(BUILD_DIR))
+// oxlint-disable-next-line sister-software/no-process-globals -- the runner's `CI` flag is not a project setting
+const skipSuite = buildAbsent && !process.env.CI
+
 let db: SearchDatabase
 
 beforeAll(async () => {
-	if (!(await pathExists(BUILD_DIR)))
-		throw new Error(`${BUILD_DIR} is absent; run yarn workspace @mailwoman/docs build first`)
+	if (skipSuite) return
+
+	if (buildAbsent) throw new Error(`${BUILD_DIR} is absent; run yarn workspace @mailwoman/docs build first`)
 
 	const records = []
 	const entries = await readdir(BUILD_DIR.toString(), { recursive: true })
+	const htmlEntries = entries.filter((name) => name.endsWith(".html")).toSorted()
 
-	for (const entry of entries.filter((name) => name.endsWith(".html")).toSorted()) {
+	for (const entry of htmlEntries) {
 		const route = `/${entry}`.replace(/\/index\.html$/, "").replace(/\.html$/, "")
 
 		if (route === "/404") continue
@@ -48,12 +57,15 @@ beforeAll(async () => {
 		records.push(...extractRecords(await readLocalTextFile(resolvePath(BUILD_DIR, entry)), route === "" ? "/" : route))
 	}
 
-	if (records.length <= 1000) throw new Error(`${BUILD_DIR} yielded ${records.length} records; expected more than 1000`)
+	if (records.length <= 1000)
+		throw new Error(
+			`${BUILD_DIR} yielded ${records.length} records from ${htmlEntries.length} HTML files; expected more than 1000`
+		)
 
 	db = fixtureDatabase(records)
 }, 120_000)
 
-describe("the acceptance list", () => {
+describe.skipIf(skipSuite)("the acceptance list", () => {
 	test.each(ACCEPTANCE)(`returns the page for "%s" within the first ${WITHIN} hits`, async (query, url) => {
 		const response = await search(db, query, WITHIN)
 
