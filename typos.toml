@@ -25,6 +25,9 @@ extend-exclude = [
 	"docs/static/benchmarks/",
 	"packages/corpus/data/",
 	"packages/core/data/libpostal/",
+	# Verbatim FINESS and Annuaire de l'éducation records, in French.
+	"packages/corpus/lib/fr/adapters/finess/adapter.test.ts",
+	"packages/corpus/lib/fr/adapters/annuaire-education/adapter.test.ts",
 	"**/model-card.json",
 	"**/PROVENANCE.json",
 	"**/THIRD-PARTY-NOTICES*",
@@ -51,6 +54,19 @@ extend-exclude = [
 locale = "en-us"
 # These literal values belong to external interfaces or quoted source names.
 extend-ignore-re = [
+	# French publisher text quoted by the FINESS and Annuaire de l'éducation readers, and two quotations in
+	# the CORDIS reader: an address line and the EU legal notice.
+	'''«[^»]*»''',
+	'''[Cc]entres? d'accueil[^,.]*|CENTRE D'ACCUEIL FAMILIAL SPECIALISE''',
+	'''20 AOUT 7''',
+	'''PIA-Air Contro Adem Jashari''',
+	# GLEIF's terms quoted verbatim, French legal-form names, and the building words (`centre`, `CENTRE`)
+	# that published address lines spell in British English.
+	'''CC0 licence''',
+	'''[Ee]ntreprise(?:\\s\+|\s+)[Ii]ndividuelle''',
+	'''\bCENTRE\b''',
+	'''\|centre\|''',
+	'''\(CC BY 4\.0\) licence''',
 	'''["'`]neighbourhood["'`]''',
 	'''\bneighbourhood\s*:|\.neighbourhood\b''',
 	'''["'`]licence["'`]''',
@@ -119,6 +135,17 @@ extend-ignore-re = [
 ]
 
 [default.extend-words]
+# Publisher and register names, codes and place names in the decoder-exposure sources: France's FINESS
+# register and the ANS terminology `TRE-R35`, the education ministry's directorate `DNE`, Wallis and Futuna's
+# `Alo` and `Mata Utu`, Latvia's `DAT_BEIG` column, CORDIS's `SME` column, and the German sole-trader marker `Inh.`.
+finess = "finess"
+tre = "tre"
+dne = "dne"
+alo = "alo"
+mata = "mata"
+beig = "beig"
+sme = "sme"
+inh = "inh"
 # These words occur throughout address examples and source descriptions.
 adresse = "adresse"
 adresses = "adresses"
@@ -152,6 +179,10 @@ axe = "axe"
 
 [default.extend-identifiers]
 # Standard codes, dependency names, and existing API identifiers retain their spelling.
+# Publisher column names: `STATUSS` (status) in Latvia's address-register CSVs, and `organisationID` and `SME`
+# in the CORDIS organization files.
+STATUSS = "STATUSS"
+organisationID = "organisationID"
 ND = "ND"
 PNGs = "PNGs"
 OTPs = "OTPs"
@@ -271,6 +302,11 @@ extend-glob = [
 	"locale.test.ts",
 ]
 extend-words = { numer = "numer", registre = "registre", individuels = "individuels", titre = "titre", modificacion = "modificacion", fre = "fre", ue = "ue", thi = "thi", Projektion = "Projektion", Territoires = "Territoires", Somme = "Somme", Gard = "Gard", som = "som", LEVL = "LEVL", CONSOLATO = "CONSOLATO", ASSOCIATO = "ASSOCIATO", MEDA = "MEDA", TRE = "TRE", CONSTITUCION = "CONSTITUCION", Mitre = "Mitre", limite = "limite", LIK = "LIK", IZ = "IZ", ine = "ine" }
+
+[type.french-street-types]
+# FINESS's street-type and postal-line tables, which hold the French words a code stands for.
+extend-glob = ["voie-type.ts", "voie-type.test.ts", "postal-lines.ts", "postal-lines.test.ts"]
+extend-words = { centre = "centre", espace = "espace", objets = "objets", aout = "aout", decembre = "decembre" }
 
 [type.german-board]
 extend-glob = ["fragment_board.py"]
