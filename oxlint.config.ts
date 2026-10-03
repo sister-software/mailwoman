@@ -74,12 +74,6 @@ const config = createOxlintConfig({
 		"**/*.egg-info/**",
 		// sentencepiece-wasm/build.sh generates this file with Emscripten.
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
-		// `@mailwoman/site-kit`'s Vite plugin stages the SQLite WebAssembly runtime here,
-		// so these are a dependency's published bytes rather than this repository's source.
-		// The sql.js worker alone reports 2,302 errors, which leaves `yarn lint`
-		// unusable wherever a build has run.
-		"docs/static/mailwoman/sqljs/**",
-		"docs/static/mailwoman/sqlite-runtime/**",
 	],
 })
 
