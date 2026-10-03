@@ -483,6 +483,98 @@
 				"record": "internal/strategy/rights-receipts/seven-web-sources-2026-09-30/README.md"
 			}
 		},
+		"ch-business-legal-2": {
+			"adapterID": "gleif-lei",
+			"addressRoles": {
+				"Entity.LegalAddress": "registered-office",
+				"Entity.HeadquartersAddress": "registered-office"
+			},
+			"coverage": "The 2026-10-03 08:00 Level 1 golden copy, `20261003-0800-gleif-goldencopy-lei2-golden-copy.csv.zip`, 507,006,221 bytes, sha256 `8b56eca84ea750dd343a69ffd837f1ba6738bb063167e24d00192f0127d47d03`, 3,451,350 records. The headquarters address repeats the legal address on 2,755,787 records and is read once. The adapter emits 1,356,108 distinct addresses across 178 countries; the largest are DE 178,755, IT 153,146, NL 147,226, US 137,213 and FR 102,618. The largest address refusals are a street number it cannot place 873,601, a care-of first line 645,366 and a first line with no digit 301,531. AE, HK and BS rows are refused as unreviewed, because their sampled rows mislabel office numbers, floors and suite markers.",
+			"upstreamLineage": ["https://www.gleif.org/en/lei-data/gleif-golden-copy"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "LEI holders are legal entities, but GLEIF registers sole proprietors too. The adapter refuses 131,148 records as natural persons: `EntityCategory` `SOLE_PROPRIETOR` 129,552, an ELF code naming a sole-proprietorship form 382, and a free-text legal form naming a sole trader 1,214. `MailRouting`, which holds care-of lines naming people, is never read, and a first line written as care of a person is refused. A sole trader registered under a non-sole-proprietor category and a business name passes, which is the residual exposure.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/gleif-terms.json"
+			}
+		},
+		"fr-health-1": {
+			"adapterID": "fr-finess-overseas",
+			"addressRoles": {
+				"numvoie typvoie voie compvoie": "facility",
+				"lieuditbp": "facility",
+				"ligneacheminement": "facility"
+			},
+			"coverage": "The establishment extract `etalab-cs1100502-stock-20260512-0339.csv`, 35,786,629 bytes, read on 2026-10-03 for the overseas departments only. Of 103,023 lines, 2,665 are overseas establishments; the adapter emits 2,395: RE 835, GP 563, MQ 526, GF 255, YT 146, MF 41, PM 15, BL 12, WF 2. Refusals among the overseas rows: no street, lieu-dit or box 84, a digit in the lieu-dit 82, a digit in the street name 67, a family placement 24, an ambiguous repetition index `C` 5, a street type with no name 4, a number with no street 3. The publisher states this extract stops at data dated 2026-05-04.",
+			"upstreamLineage": ["https://www.data.gouv.fr/datasets/finess-extraction-du-fichier-des-etablissements/"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "FINESS registers establishments, and every overseas row read is a hospital, pharmacy, laboratory, care service, social establishment or similar. A family placement (`accueil familial`) is a household receiving a person, so its address is a private home: the adapter refuses the 24 overseas rows in those categories and, by name, Saint-Pierre-et-Miquelon's `CENTRE D'ACCUEIL FAMILIAL SPECIALISE` filed under category 377.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/fr-finess-annuaire-licences.json"
+			}
+		},
+		"fr-education-1": {
+			"adapterID": "fr-annuaire-education-overseas",
+			"addressRoles": {
+				"adresse_1 adresse_2 adresse_3": "facility",
+				"code_postal": "facility",
+				"nom_commune": "facility"
+			},
+			"coverage": "The Annuaire de l'éducation export filtered to department codes 971–978, 986, 987 and 988, read on 2026-10-03: 3,145 records, of which the adapter emits 2,825: RE 820, GP 426, MQ 391, NC 334, GF 310, YT 287, PF 181, MF 35, WF 19, PM 14, BL 8. Refusals: a digit it cannot place 204, two different place lines 55, no street, place or box 41, a street type with no name 18, care of a person (`Chez …`) 1.",
+			"upstreamLineage": ["https://data.education.gouv.fr/explore/dataset/fr-en-annuaire-education/"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The directory lists schools and education offices. One record addressed in care of a named person (`Chez …`) is refused, because that address belongs to the person rather than to the school.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/fr-finess-annuaire-licences.json"
+			}
+		},
+		"lv-property-building-1": {
+			"adapterID": "lv-varis",
+			"addressRoles": {
+				"aw_eka.csv STD": "premise"
+			},
+			"coverage": "The 2026-09-30 edition of `varis-atvertie-dati` on data.gov.lv. `aw_eka.csv`, building and land-unit addresses, sha256 `e99669fe0a102d833129559cbeb688ad3c1582d0a52346cb9accb523c41caada`, holds 610,876 rows: 550,652 active (`EKS`), 32,448 removed (`DEL`) and 27,776 erroneous (`ERR`). The adapter emits 550,637, refusing 15 house names written where a street address's number goes. By shape: rural named house in a parish 116,225, street address in a municipality town 113,905, street address in a state city 111,217, named house in a village 108,164, street address in a village 98,179, named house in a city 2,947. Every emitted row's `raw` is the register's `STD` string, which the adapter's join of the parent tables reproduces on all 550,637. `aw_dziv.csv` (868,669 active premises in 57,285 buildings) is not read.",
+			"upstreamLineage": ["https://data.gov.lv/dati/dataset/varis-atvertie-dati"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The address register records addresses and the codes of their parent places, and names no owner, resident or occupant. A rural house name such as `Riņņi` is the premise's registered name rather than a person's. No field ties an address to a natural person.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/lv-varis-ckan-package.json"
+			}
+		},
+		"ro-education-1": {
+			"adapterID": "ro-retea-scolara",
+			"addressRoles": {
+				"Strada": "facility",
+				"Numar": "facility",
+				"Cod postal": "facility",
+				"Localitate unitate": "facility"
+			},
+			"coverage": "The 2025-2026 workbook on data.gov.ro, 3,022,486 bytes, sha256 `35cb33c83752a6ac6334f1bd43a8bd53e9573684f949047aa05bd72056971a32`, one sheet `Export` whose header is the fourth row. Measured on 2026-10-03: 18,022 education units. 17,533 carry a street or a house number and become rows; 489 state neither and are refused. 16,393 of the 17,533 carry a house number, and 17,484 of the 18,022 carry a six-digit postcode. `Numar` writes `FN` (`fără număr`) for a premise without a number on about 600 units, which the adapter reads as absent.",
+			"upstreamLineage": ["https://data.gov.ro/dataset/69392a50-5750-4a54-90c1-d461de44da6d"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every row is an education unit of the Romanian state system: schools, kindergartens, children's clubs, school inspectorates and teacher centres, 17,433 of 18,022 typed `Unitate de învățământ`. The address is the unit's own premises. The workbook names no natural person in any address-bearing row; the `Email` and `Telefon` columns hold the unit's contact and are not read.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/ro-retea-scolara-ckan-package.json"
+			}
+		},
+		"lu-procurement-grants-1": {
+			"adapterID": "cordis",
+			"addressRoles": {
+				"organization.csv street": "registered-office",
+				"organization.csv postCode": "registered-office",
+				"organization.csv city": "registered-office"
+			},
+			"coverage": "The `organization.csv` members of the CORDIS FP7 (32,953,397 bytes, sha256 `886ee479…`), Horizon 2020 (55,219,250 bytes, `d4a8e364…`) and Horizon Europe (36,908,998 bytes, `1496a16e…`) archives, fetched 2026-10-03. 420,811 participation rows reduce to 78,842 distinct published records (name, street, postcode, city, country) and 57,930 emitted addresses across 158 countries. Refusals: a digit the street split could not place 14,438 and 4,646, no locality 564, a non-ISO country 359, a country without a codex layout 353, too few components 349, a name written as a person's 202. Largest countries: DE 7,967, IT 6,365, ES 4,242, FR 4,055, NL 3,800, GB 3,658.",
+			"upstreamLineage": [
+				"https://data.europa.eu/data/datasets/cordisfp7projects",
+				"https://data.europa.eu/data/datasets/cordish2020projects",
+				"https://data.europa.eu/data/datasets/cordisHEprojects"
+			],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The participant register enrols legal entities, and `activityType` takes only HES, PRC, REC, OTH, PUB or empty, so no field marks a natural person. A sole trader can register, so the adapter refuses a participant whose name takes a person's form (surname-first uppercase name, a German `e.Kfr.` suffix): 202 of 78,842 distinct records, among them `FISK ADRIAN` and `Melina Bucher e.Kfr.`. A sole trader trading under a business name passes that test, which is the residual exposure this reading records.",
+				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/cordis-legal-notice.json"
+			}
+		},
 		"it-procurement-grants-1": {
 			"adapterID": "it-anac",
 			"addressRoles": {

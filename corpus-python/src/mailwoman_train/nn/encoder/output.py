@@ -28,7 +28,7 @@ class CoarseEncoderOutput:
     to the bert-style call signature the trainer and exporter expect.
     """
 
-    __slots__ = ("loss", "logits", "locale_logits", "span_scores")
+    __slots__ = ("loss", "logits", "locale_logits", "span_scores", "address_system_logits")
 
     def __init__(
         self,
@@ -36,7 +36,11 @@ class CoarseEncoderOutput:
         loss: torch.Tensor | None,
         locale_logits: torch.Tensor | None = None,
         span_scores: torch.Tensor | None = None,
+        address_system_logits: torch.Tensor | None = None,
     ) -> None:
+        # ``(batch, num_address_systems)`` logits over ``address_systems.json`` ids, or None
+        # without ``use_address_system_head``.
+        self.address_system_logits = address_system_logits
         self.logits = logits
         self.loss = loss
         # #727 stage-2: (B, S, L, T) per-span type scores, or None without ``use_span_scorer``.

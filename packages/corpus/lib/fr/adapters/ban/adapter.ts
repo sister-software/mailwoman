@@ -33,7 +33,14 @@ import { composeHouseNumber } from "#adapters/street-line"
 import { countryOfInseeCode, INSEE_COUNTRIES } from "#fr/insee-country"
 import { decomposeFrStreet } from "#fr/street-decompose"
 import { SourceRegister } from "#registers"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
+import {
+	AddressRole,
+	type AdapterOptions,
+	type CanonicalRow,
+	type CorpusAdapter,
+	countDropped,
+	SurfaceOrigin,
+} from "#types"
 
 /**
  * Registry id for this adapter.
@@ -98,9 +105,26 @@ export function createBanAdapter(): CorpusAdapter {
 				const postcode = record.code_postal ?? ""
 				const locality = record.nom_commune ?? ""
 
-				if (!street || !locality) continue
+				// A row with a number and a commune but no street name is a premise BAN numbers
+				// within the commune, as all 958 of French Polynesia's Pirae rows are.
+				// It renders no street line, so it is refused and counted.
+				if (!street) {
+					countDropped(opts, "row:street-absent")
 
-				if (!house && !postcode) continue
+					continue
+				}
+
+				if (!locality) {
+					countDropped(opts, "row:locality-absent")
+
+					continue
+				}
+
+				if (!house && !postcode) {
+					countDropped(opts, "row:house-number-and-postcode-absent")
+
+					continue
+				}
 
 				const decomposed = decomposeFrStreet(street)
 
@@ -128,7 +152,11 @@ export function createBanAdapter(): CorpusAdapter {
 
 				const rendered = formatAddressRow(components, country, { singleLine: true })
 
-				if (!rendered) continue
+				if (!rendered) {
+					countDropped(opts, "row:render-failed")
+
+					continue
+				}
 
 				const { raw, components: aligned } = rendered
 

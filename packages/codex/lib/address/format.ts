@@ -88,6 +88,16 @@ function carriesNonLatinLetter(value: string): boolean {
 }
 
 /**
+ * Whether `value` is written in Latin script: it holds a letter, and every letter it holds is Latin.
+ *
+ * The trainer's `address_systems.is_latin_text` applies the same rule, so a row
+ * and a parse pick the same script's address system.
+ */
+export function isLatinScriptText(value: string): boolean {
+	return /\p{Letter}/u.test(value) && !carriesNonLatinLetter(value)
+}
+
+/**
  * The script `components` are written in, read from the first witness that contains a letter.
  *
  * A witness without letters does not identify a script.

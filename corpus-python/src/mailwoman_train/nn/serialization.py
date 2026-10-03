@@ -64,6 +64,12 @@ def to_config_dict(model: MailwomanCoarseEncoder) -> dict[str, Any]:
         "char_vocab_size": int(model.char_vocab_size),
         "char_embed_dim": int(model.char_embed_dim),
         "char_kernel_sizes": list(model.char_kernel_sizes),
+        "use_address_system_head": bool(model.use_address_system_head),
+        "num_address_systems": int(model.num_address_systems),
+        "address_system_loss_weight": float(model.address_system_loss_weight),
+        "use_locale_hint": bool(model.use_locale_hint),
+        "locale_hint_drop_prob": float(model.locale_hint_drop_prob),
+        "locale_hint_noise_prob": float(model.locale_hint_noise_prob),
         "id2label": dict(model.id_to_label),
         "label2id": {label: i for i, label in model.id_to_label.items()},
     }
@@ -135,6 +141,13 @@ def _constructor_kwargs(cfg: dict[str, Any]) -> dict[str, Any]:
         "char_embed_dim": cfg.get("char_embed_dim", 64),
         "char_kernel_sizes": tuple(cfg.get("char_kernel_sizes", (3, 4, 5))),
         "id_to_label": id_to_label,
+        # A checkpoint stores its own head width: the registry may have grown since it trained.
+        "use_address_system_head": cfg.get("use_address_system_head", False),
+        "num_address_systems": cfg.get("num_address_systems", 0),
+        "address_system_loss_weight": cfg.get("address_system_loss_weight", 0.0),
+        "use_locale_hint": cfg.get("use_locale_hint", False),
+        "locale_hint_drop_prob": cfg.get("locale_hint_drop_prob", 0.5),
+        "locale_hint_noise_prob": cfg.get("locale_hint_noise_prob", 0.05),
     }
 
 

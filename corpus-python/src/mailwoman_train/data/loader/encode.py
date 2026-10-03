@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from ...address_systems import address_system_id
 from ...config import DataConfig
 from ...labels import locale_id, resolve_label_set
 from ...tokenizer import Tokenizer, char_label_array_from_spans, encode_row, whitespace_spans
@@ -159,6 +160,7 @@ def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> Enco
         attention_mask=enc["attention_mask"],
         labels=enc["labels"],
         locale_id=locale_id(row.get("country")),
+        address_system_id=address_system_id(row.get("country"), raw),
         char_ids=enc["char_ids"],
     )
 
@@ -263,6 +265,7 @@ def iter_encoded(
             attention_mask=enc["attention_mask"],
             labels=enc["labels"],
             locale_id=locale_id(row.get("country")),
+            address_system_id=address_system_id(row.get("country"), row["raw"]),
             anchor_features=enc.get("anchor_features"),
             anchor_confidence=enc.get("anchor_confidence"),
             gazetteer_features=enc.get("gazetteer_features"),

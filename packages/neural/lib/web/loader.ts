@@ -6,6 +6,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 
+import { parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "#classifier"
@@ -377,10 +378,13 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 
 	const conventions = opts.addressSystemConventions === null ? undefined : (opts.addressSystemConventions ?? "auto")
 
+	const addressSystems = modelCard ? parseAddressSystemTable(modelCard.address_systems, opts.modelCardURL!) : undefined
+
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
 		runner,
 		...(labels ? { labels } : {}),
+		...(addressSystems ? { addressSystems } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),

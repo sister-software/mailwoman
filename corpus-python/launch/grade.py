@@ -500,11 +500,12 @@ def grade_evidence_bundle(
     timeout=7200,
     memory=32768,
 )
-def measure_exposure(config_name: str, countries: str = "", draws: int = 0) -> None:
+def measure_exposure(config_name: str, countries: str = "", draws: int = 0, replay_only: bool = False) -> None:
     """Measure a config's eligible and replayed-draw stages by phenomenon, on CPU, against the volume's corpus.
 
     Writes ``/data/audits/exposure-<config stem>.json``. ``countries`` limits both stages to a
-    comma-separated list, and ``draws`` overrides the epoch length the replay reads.
+    comma-separated list, and ``draws`` overrides the epoch length the replay reads. ``replay_only``
+    skips the eligible stage, which reads every admitted row of the corpus.
     """
     import sys
     from pathlib import Path
@@ -519,6 +520,8 @@ def measure_exposure(config_name: str, countries: str = "", draws: int = 0) -> N
         argv += ["--countries", countries]
     if draws:
         argv += ["--draws", str(draws)]
+    if replay_only:
+        argv.append("--replay-only")
     main(argv)
     vol.commit()
 

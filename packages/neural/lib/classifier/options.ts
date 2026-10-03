@@ -9,6 +9,7 @@ import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
 import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
 
+import type { AddressSystemTable } from "#address-system"
 import type { AnchorLookup, AnchorSpanMode } from "#anchor-inference"
 import type { CharEncoderInterface, CharVocabulary } from "#char-encoder"
 import type { NeuralRunner } from "#classifier"
@@ -151,6 +152,13 @@ export interface NeuralAddressClassifierConfig {
 	 * See `ParseOpts.addressSystemConventions`.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
+
+	/**
+	 * The model's address-system ids, from its card's `address_systems` field.
+	 *
+	 * A graph with a `locale_hint` input requires it, because the "no hint" id is a property of the model.
+	 */
+	addressSystems?: AddressSystemTable
 
 	/**
 	 * Whether to merge adjacent same-tag spans separated only by short punctuation.
@@ -322,6 +330,15 @@ export interface ParseOpts {
 	 * locale head at a probability of 0.8 or higher and a `SystemCode` pinning it.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
+
+	/**
+	 * The ISO 3166-1 alpha-2 country the caller expects the address to be in,
+	 * such as the country a user is searching from.
+	 *
+	 * A model trained with a locale hint reads it as evidence it can overrule.
+	 * Other models ignore it.
+	 */
+	localeHint?: string
 
 	/**
 	 * Per-parse override of the config's `placetypePair`.

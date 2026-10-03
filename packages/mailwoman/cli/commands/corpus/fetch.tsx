@@ -29,6 +29,7 @@ const sources = [
 	"ban",
 	"bd-adresses",
 	"brussels",
+	"cordis",
 	"cz-cuzk",
 	"dk-inspire",
 	"emuia-pl",
@@ -36,14 +37,19 @@ const sources = [
 	"es-catastro",
 	"es-gipuzkoa",
 	"es-navarra",
+	"fr-annuaire-education-overseas",
+	"fr-finess-overseas",
 	"gcis-tw",
+	"gleif",
 	"houjin-jp",
 	"it-anac",
 	"juso-kr",
 	"localdata-kr",
+	"lv-varis",
 	"matrikkelen",
 	"nad",
 	"nl-kadaster",
+	"ro-retea-scolara",
 	"ryhti",
 	"sk-inspire",
 	"geonames-dump",
@@ -123,6 +129,11 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchBan,
 		fetchBDAdresses,
 		fetchBrussels,
+		fetchCORDIS,
+		fetchAnnuaireEducationOverseas,
+		fetchFinessOverseas,
+		fetchGLEIF,
+		fetchVaris,
 		fetchVlaanderenAD,
 		fetchWallonie,
 		fetchCzCuzk,
@@ -147,6 +158,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchNPPES,
 		fetchOpenAddresses,
 		fetchOurAirports,
+		fetchReteaScolara,
 		fetchRyhti,
 		fetchSKInspire,
 		fetchStateHISchools,
@@ -166,6 +178,18 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchBDAdresses(base, reportToStderr)
 		case "brussels":
 			return fetchBrussels(base, reportToStderr)
+		case "cordis":
+			return fetchCORDIS(base, reportToStderr)
+		case "lv-varis":
+			return fetchVaris(base, reportToStderr)
+		case "fr-annuaire-education-overseas":
+			return fetchAnnuaireEducationOverseas(base, reportToStderr)
+		case "fr-finess-overseas":
+			return fetchFinessOverseas(base, reportToStderr)
+		case "gleif":
+			return fetchGLEIF(base, reportToStderr)
+		case "ro-retea-scolara":
+			return fetchReteaScolara(base, reportToStderr)
 		case "vlaanderen":
 			return fetchVlaanderenAD(base, reportToStderr)
 		case "wallonie":

@@ -24,6 +24,7 @@ def collate(batch: list[EncodedExample]) -> dict[str, Any]:
         "attention_mask": [ex.attention_mask for ex in batch],
         "labels": [ex.labels for ex in batch],
         "locale_ids": [ex.locale_id for ex in batch],
+        "address_system_ids": [ex.address_system_id for ex in batch],
     }
     # Postcode-anchor channel (#239/#240): only present when every example includes anchor features
     # (i.e. an anchor lookup is configured). Absent → omitted, so the trainer's tensor-conversion

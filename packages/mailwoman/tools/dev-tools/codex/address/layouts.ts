@@ -7,7 +7,7 @@
  *   `street-orders.ts`, which supplies the street order `%A` leaves opaque, so the table is derived rather than
  *   transcribed.
  *
- *   Usage: `node packages/mailwoman/tools/dev-tools/codex/address-layouts.ts`
+ *   Usage: `node packages/mailwoman/tools/dev-tools/codex/address/layouts.ts`
  */
 
 import { ADDRESS_LAYOUTS } from "@mailwoman/codex/address/layouts"
@@ -230,7 +230,7 @@ const emitted = `/**
  * @author Teffen Ellis, et al.
  * @generated
  *
- *   generated — run \`node packages/mailwoman/tools/dev-tools/codex/address-layouts.ts\` to refresh. Do not edit by hand.
+ *   generated — run \`node packages/mailwoman/tools/dev-tools/codex/address/layouts.ts\` to refresh. Do not edit by hand.
  *
  *   One layout per country, derived from libaddressinput's \`fmt\` skeleton (which fields print, in what order) and the
  *   street order read once from the OpenCage templates (which slot leads). The \`fmt\` each was derived from is quoted

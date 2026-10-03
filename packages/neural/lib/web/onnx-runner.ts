@@ -10,6 +10,7 @@ import type { NeuralRunner } from "#classifier"
 import {
 	decodeInferOutput,
 	packCharFeed,
+	packLocaleHintFeed,
 	packSoftChannelFeeds,
 	packTokenFeed,
 	type InferCharsFunction,
@@ -255,16 +256,24 @@ export class WebONNXRunner implements NeuralRunner {
 			feeds[name] = new ort.Tensor("float32", feed.data, feed.dims)
 		}
 
+		const hint = packLocaleHintFeed(session.inputNames, evidence?.localeHint)
+
+		if (hint) {
+			feeds["locale_hint"] = new ort.Tensor("int64", hint.data, hint.dims)
+		}
+
 		const output = await session.run(feeds)
 		const logits = output["logits"]
 		const localeLogits = output["locale_logits"]
 		const spanScores = output["span_scores"]
+		const addressSystemLogits = output["address_system_logits"]
 
 		return decodeInferOutput(
 			{
 				...(logits ? { logits: outputTensor(logits) } : {}),
 				...(localeLogits ? { localeLogits: outputTensor(localeLogits) } : {}),
 				...(spanScores ? { spanScores: outputTensor(spanScores) } : {}),
+				...(addressSystemLogits ? { addressSystemLogits: outputTensor(addressSystemLogits) } : {}),
 			},
 			seqLen
 		)

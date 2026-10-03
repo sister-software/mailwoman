@@ -31,6 +31,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final
 
+from ..address_systems import address_system_id, address_system_table
+from ..labels import IGNORE_INDEX
 from ..tokenizer.train import git_commit
 from .phenomena import (
     ARITY,
@@ -62,9 +64,12 @@ class StageCounter:
     totals: Counter[str] = field(default_factory=Counter)
     unreadable: Counter[str] = field(default_factory=Counter)
     forms: dict[str, dict[str, Counter[str]]] = field(default_factory=lambda: defaultdict(lambda: defaultdict(Counter)))
+    #: Rows per address-system id; ``IGNORE_INDEX`` counts rows whose country has no layout.
+    systems: Counter[int] = field(default_factory=Counter)
 
     def add(self, row: Row) -> None:
         self.totals[row.country] += 1
+        self.systems[address_system_id(row.country, row.raw)] += 1
         for phenomenon, form in row_phenomena(row).items():
             self.forms[row.country][phenomenon][form] += 1
 
@@ -186,5 +191,23 @@ def build_report(
         "inputs": dict(inputs or {}),
         "denominator": "rows per jurisdiction at each stage; each phenomenon form counts rows exercising it",
         "jurisdictions": body,
+        "address_systems": address_system_section(by_stage),
         "pairs": dict(pairs) if pairs is not None else None,
+    }
+
+
+def address_system_section(by_stage: Mapping[str, StageCounter]) -> dict[str, Any]:
+    """Rows per address system at each measured stage, beside the system's key and members.
+
+    A system no stage reached reads 0 at each measured stage, so the section lists every system the
+    registry holds rather than only the ones the corpus exercises.
+    """
+    systems = []
+    for entry in address_system_table():
+        rows = {stage: c.systems.get(entry["id"], 0) for stage, c in by_stage.items()}
+        systems.append({**entry, "rows": rows})
+    return {
+        "denominator": "readable rows at each stage, assigned by country and script",
+        "systems": systems,
+        "no_system": {stage: c.systems.get(IGNORE_INDEX, 0) for stage, c in by_stage.items()},
     }

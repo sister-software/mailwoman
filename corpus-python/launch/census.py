@@ -720,3 +720,75 @@ def locale_supply_census(
     vol.commit()
 
     print(f"\nwrote {out}")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=7200,
+    memory=32768,
+)
+def label_support(config_name: str, train_rows: int = 200000, top: int = 8) -> None:
+    """Count the rows that carry each head label in a config's validation set and in a train draw.
+
+    The validation set is the one the trainer scores: the same split, row limit and seed, read
+    through `iter_encoded` with the generator `iter_batches` builds. Macro F1 weights each label equally, so a label carried by a few
+    validation rows moves the macro score by more than its row share. For each label this prints
+    the rows that carry it in both splits, then the sources and countries that supply its train rows,
+    each as rows carrying the label over that supplier's rows in the draw.
+    """
+    import random
+    import sys
+    from collections import Counter, defaultdict
+    from pathlib import Path
+    from typing import Any
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    from mailwoman_train.config import load_config
+    from mailwoman_train.data.loader import IGNORE_INDEX, iter_encoded
+    from mailwoman_train.data.source_reps import resolve_config_reps
+    from mailwoman_train.labels import resolve_label_set
+    from mailwoman_train.tokenizer import Tokenizer
+
+    cfg = load_config(Path(CONFIGS) / config_name)
+    # The trainer derives each reps-targeted source's weight before reading a row, so the census does too.
+    resolve_config_reps(cfg)
+    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
+    bio = resolve_label_set(getattr(cfg.data, "label_set", "stage3")).bio_labels
+    source_rows: Counter[str] = Counter()
+
+    def count(split: str, limit: int | None, seed: int) -> tuple[int, Counter[str], dict[str, Counter[str]]]:
+        rows_with: Counter[str] = Counter()
+        suppliers: dict[str, Counter[str]] = defaultdict(Counter)
+        source_rows.clear()
+        total = 0
+        # `iter_encoded` calls the observer once per row, immediately before yielding that row's example.
+        seen: list[dict[str, Any]] = []
+        stream = iter_encoded(
+            cfg.data, tokenizer, split=split, rng=random.Random(seed), row_limit=limit, observer=seen.append
+        )
+        for example in stream:
+            row = seen.pop()
+            total += 1
+            present = {bio[i][2:] for i in example.labels if i != IGNORE_INDEX and bio[i].startswith("B-")}
+            rows_with.update(present)
+            supplier = f"{row.get('source', '?')}/{str(row.get('country') or '?').upper()}"
+            source_rows[supplier] += 1
+            for tag in present:
+                suppliers[tag][supplier] += 1
+        return total, rows_with, suppliers
+
+    val_total, val_rows, _ = count("val", cfg.data.val_rows, cfg.train.seed + 1)
+    train_total, train_with, suppliers = count("train", train_rows, cfg.train.seed)
+    print(f"config {config_name}: {val_total} val rows, {train_total} train rows\n")
+    print(f"{'label':20} {'val rows':>9} {'val share':>10} {'train rows':>11} {'train share':>12}")
+    for tag in sorted(set(val_rows) | set(train_with), key=lambda t: train_with[t]):
+        print(
+            f"{tag:20} {val_rows[tag]:>9} {val_rows[tag] / val_total:>10.3%} "
+            f"{train_with[tag]:>11} {train_with[tag] / train_total:>12.3%}"
+        )
+    for tag in sorted(train_with, key=lambda t: train_with[t]):
+        named = ", ".join(f"{name} {n}/{source_rows[name]}" for name, n in suppliers[tag].most_common(top))
+        print(f"\n{tag} train suppliers ({len(suppliers[tag])} source/country pairs): {named}")

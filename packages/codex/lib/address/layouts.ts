@@ -504,6 +504,82 @@ export function lineJoinForCountry(countryCode: string | null | undefined, scrip
 }
 
 /**
+ * Slots that a system key leaves out.
+ *
+ * A recipient line, an organization name and a trailing country name appear in every system,
+ * so they do not separate one address grammar from another.
+ */
+const SYSTEM_KEY_IGNORED_TAGS: ReadonlySet<ComponentTag> = new Set(["attention", "venue", "country"])
+
+function systemKeyTokens(atom: AddressAtom): string[] {
+	if (isSlot(atom)) return SYSTEM_KEY_IGNORED_TAGS.has(atom.tag) ? [] : [atom.tag]
+
+	if (isLayout(atom)) return atom.lines.flatMap((line) => line.flatMap(systemKeyTokens))
+
+	if (isAlternation(atom)) {
+		const alternatives = atom.alternatives
+			.map((inner) => systemKeyTokens(inner).join(" "))
+			.filter((alternative) => alternative.length > 0)
+
+		return alternatives.length ? [`(${alternatives.join("|")})`] : []
+	}
+
+	return []
+}
+
+/**
+ * Returns the order in which a layout prints its address components, as a space-separated key.
+ *
+ * Two layouts with the same key describe the same address grammar: the same components in the same order.
+ * Line breaks and separators are left out, because the decoder reads one line in which either may be absent.
+ * An alternation is written `(a b|c d)`.
+ */
+export function addressSystemKey(layout: AddressLayout): string {
+	return systemKeyTokens(layout).join(" ")
+}
+
+/**
+ * One country's address system in one script.
+ */
+export interface AddressSystemMember {
+	country: string
+	script: AddressScript
+	key: string
+}
+
+/**
+ * Returns the address system of every country that has a layout, once per script that has its own layout.
+ *
+ * A country's `local` entry is {@link layoutForCountry}'s answer with no script chosen.
+ * A country gets a `latin` entry only when libaddressinput states a separate Latin-script layout for it.
+ */
+export function addressSystemMembers(): AddressSystemMember[] {
+	const countries = new Set([
+		...Object.keys(ADDRESS_LAYOUTS),
+		...Object.keys(GENERATED_ADDRESS_LAYOUTS),
+		...Object.keys(S42_ADDRESS_LAYOUTS),
+	])
+
+	const members: AddressSystemMember[] = []
+
+	for (const code of [...countries].toSorted()) {
+		const local = layoutForCountry(code)
+
+		if (local) {
+			members.push({ country: code, script: "local", key: addressSystemKey(local) })
+		}
+
+		const latin = GENERATED_LATIN_ADDRESS_LAYOUTS[code]
+
+		if (latin) {
+			members.push({ country: code, script: "latin", key: addressSystemKey(latin) })
+		}
+	}
+
+	return members
+}
+
+/**
  * Returns the script used by {@link layoutForCountry} when the caller does not choose one.
  *
  * It returns `local` except for Hong Kong.

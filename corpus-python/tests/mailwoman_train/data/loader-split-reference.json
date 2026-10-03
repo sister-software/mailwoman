@@ -1838,5 +1838,5 @@
 		"alpha": 48,
 		"beta": 24
 	},
-	"collate_keys": ["attention_mask", "char_ids", "input_ids", "labels", "locale_ids"]
+	"collate_keys": ["address_system_ids", "attention_mask", "char_ids", "input_ids", "labels", "locale_ids"]
 }

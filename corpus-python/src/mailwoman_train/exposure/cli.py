@@ -97,6 +97,11 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
     parser.add_argument("--countries", default=None, help="comma-separated ISO codes limiting the corpus stages")
     parser.add_argument("--draws", type=int, default=None, help="epoch length; defaults to train_rows_per_epoch")
     parser.add_argument("--corpus-version", default=None)
+    parser.add_argument(
+        "--replay-only",
+        action="store_true",
+        help="measure only the replayed draws; the eligible stage reads every admitted row of the corpus",
+    )
     parser.add_argument("--json", type=Path, required=True)
     args = parser.parse_args(argv)
 
@@ -108,6 +113,7 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
             part = count_canonical_jsonl(path)
             canonical.totals.update(part.totals)
             canonical.unreadable.update(part.unreadable)
+            canonical.systems.update(part.systems)
             for country, phenomena in part.forms.items():
                 for phenomenon, forms in phenomena.items():
                     canonical.forms[country][phenomenon].update(forms)
@@ -125,10 +131,11 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
         countries = {c.strip().upper() for c in args.countries.split(",")} if args.countries else None
         label_set = label_set_contract(getattr(cfg.data, "label_set", "stage3"))
 
-        eligible = StageCounter("eligible_training_rows")
-        for record in _eligible_rows(cfg, countries):
-            eligible.add_span_row(record)
-        counters.append(eligible)
+        if not args.replay_only:
+            eligible = StageCounter("eligible_training_rows")
+            for record in _eligible_rows(cfg, countries):
+                eligible.add_span_row(record)
+            counters.append(eligible)
 
         draws = args.draws or getattr(cfg.data, "train_rows_per_epoch", None)
         if draws:

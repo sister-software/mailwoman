@@ -29,6 +29,7 @@ class PlainOutputs(nn.Module):
         self.inner = inner
         self.with_locale = False
         self.with_spans = False
+        self.with_address_system = False
 
     def _outputs(self, out: Any) -> Any:
         outs = [out.logits]
@@ -36,6 +37,8 @@ class PlainOutputs(nn.Module):
             outs.append(out.locale_logits)
         if self.with_spans:
             outs.append(out.span_scores)
+        if self.with_address_system:
+            outs.append(out.address_system_logits)
         return tuple(outs) if len(outs) > 1 else outs[0]
 
 
@@ -171,5 +174,46 @@ class LogitsOnlyBundle(PlainOutputs):
                 street_type_confidence=street_type_confidence,
                 locality_surface_features=locality_surface_features,
                 locality_surface_confidence=locality_surface_confidence,
+            )
+        )
+
+
+class LogitsOnlyBundleHinted(PlainOutputs):
+    """The evidence bundle plus `locale_hint`, one address-system id per row.
+
+    The id `num_address_systems` means "no hint", which is what a runtime without one feeds.
+    """
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        anchor_features: torch.Tensor,
+        anchor_confidence: torch.Tensor,
+        gazetteer_features: torch.Tensor,
+        gazetteer_confidence: torch.Tensor,
+        country_features: torch.Tensor,
+        country_confidence: torch.Tensor,
+        street_type_features: torch.Tensor,
+        street_type_confidence: torch.Tensor,
+        locality_surface_features: torch.Tensor,
+        locality_surface_confidence: torch.Tensor,
+        locale_hint: torch.Tensor,
+    ) -> Any:
+        return self._outputs(
+            self.inner(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                anchor_features=anchor_features,
+                anchor_confidence=anchor_confidence,
+                gazetteer_features=gazetteer_features,
+                gazetteer_confidence=gazetteer_confidence,
+                country_features=country_features,
+                country_confidence=country_confidence,
+                street_type_features=street_type_features,
+                street_type_confidence=street_type_confidence,
+                locality_surface_features=locality_surface_features,
+                locality_surface_confidence=locality_surface_confidence,
+                locale_hint_ids=locale_hint,
             )
         )
