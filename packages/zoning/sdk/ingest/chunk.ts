@@ -63,7 +63,7 @@ export interface ZoningChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square-metre area readings from the polygon rings.
+	 * Square-meter area readings from the polygon rings.
 	 *
 	 * `signed` is the raw ring sum as published.
 	 * `nested` accounts for holes in each polygon.

@@ -44,7 +44,7 @@ import {
  * The test records timing samples for each measurement.
  *
  * Best-of, for the reason `phrase-grouper/rules.scaling.test.ts` gives: contention only
- * ever adds time, so the minimum is the sample least polluted by the neighbours.
+ * ever adds time, so the minimum is the sample least polluted by the neighbors.
  */
 const TIMING_SAMPLES = 5
 
@@ -246,7 +246,7 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 	//
 	// 25 us is 1.9x the highest reading and ~7x the quiet-machine cost, so an intent rule that grew an
 	// order of magnitude — a lexicon load, a gazetteer probe, an unbounded scan — still trips it.
-	// For scale: the classifier's own neighbour on this path is a ~3 ms ONNX inference,
+	// For scale: the classifier's own neighbor on this path is a ~3 ms ONNX inference,
 	// so Stage 2.5 in full is ~0.4% of a parse even at the loaded reading.
 	//
 	// A bar that survives this runner cannot also police microseconds.

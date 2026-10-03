@@ -7,7 +7,7 @@ precision in countries the permissive gazetteer only covers at the admin level.
 
 It is **address-point-first**: we write the exact `addr:housenumber` coordinate (a node, or a building
 polygon's centroid). Interpolation is a separate tier conditioned on confidence, built only from OSM's explicit
-`addr:interpolation` ways — we never synthesise a house-number line from scattered points, because that
+`addr:interpolation` ways — we never synthesize a house-number line from scattered points, because that
 produces confident wrong answers worse than the admin centroid.
 
 ## The licensing boundary — read this first

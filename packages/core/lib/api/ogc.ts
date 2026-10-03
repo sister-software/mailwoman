@@ -193,7 +193,7 @@ export interface CreateOGCFeaturesBBoxReaderOptions {
 	 */
 	halfWidthDegrees: number
 	/**
-	 * Features per request — a ceiling rather than a page size when the probe bbox is metres wide.
+	 * Features per request — a ceiling rather than a page size when the probe bbox is meters wide.
 	 */
 	limit: number
 }

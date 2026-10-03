@@ -119,7 +119,7 @@ export const SK_INSPIRE_REGISTER = SourceRegister.SlovakiaInspireAddresses
 export const SK_INSPIRE_COUNTRIES: readonly string[] = ["SK"]
 
 /**
- * The licence the address-source register elected for this publisher.
+ * The license the address-source register elected for this publisher.
  *
  * `unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky` is elected with
  * `electedTerms` `Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)` and no `spdx`,
@@ -366,8 +366,11 @@ function documentChunks(documentPath: PathBuilderLike): AsyncIterable<Uint8Array
 /**
  * Every document under `inputPath`, which is one saved page or a directory holding them.
  *
- * A directory is the ordinary case, because the service pages and acquisition
- * writes a document per page per feature type.
+ * A directory is the ordinary case, because the service publishes five feature types
+ * and acquisition writes a document per type.
+ * The walk is recursive, because `#sk/tools/fetch/inspire` gives each type its own
+ * subdirectory so that each keeps its own harvest manifest.
+ *
  * A directory holding no document raises rather than yielding zero rows, so a wrong
  * path reports itself instead of reading as an empty publisher.
  */
@@ -377,7 +380,7 @@ async function documentPaths(inputPath: PathBuilderLike): Promise<readonly PathB
 
 	if (basename.endsWith(".gml") || basename.endsWith(".xml")) return [path]
 
-	const names = await Globerator.from("*.{gml,xml}", { cwd: path.toString(), absolute: false }).toSorted()
+	const names = await Globerator.from("**/*.{gml,xml}", { cwd: path.toString(), absolute: false }).toSorted()
 
 	if (!names.length) {
 		throw new Error(`${SK_INSPIRE_ADAPTER_ID} adapter: ${path.toString()} holds no GML document`)

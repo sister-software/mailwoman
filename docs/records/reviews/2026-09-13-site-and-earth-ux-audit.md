@@ -190,7 +190,7 @@ with no result on screen:
 | Failure                           | Where                                                                                   | What the user sees                                                                                                                                 |
 | --------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. A second press performs no work, forever.                                                                                     |
-| IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centred on the US.                                                                                                                        |
+| IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centered on the US.                                                                                                                       |
 | Autocomplete throws               | `packages/earth/lib/runtime/use/geocoder-runtime.ts:467` — `} catch { return [] }`      | Indistinguishable from "no matches"; `packages/react/lib/map/PlaceAutocomplete.tsx:63` returns `null` on empty, so there is no empty state at all. |
 | Street tier (rooftop) unavailable | `geocoder-runtime.ts:314` — `console.warn(...)`                                         | Console only. User gets a city centroid with no precision downgrade notice.                                                                        |
 | Crisp polygon unavailable         | `geocoder-runtime.ts:509` — `console.error(...)`                                        | Console only.                                                                                                                                      |
@@ -393,11 +393,11 @@ Four fixes, in order of payoff:
   breakpoint: `.mw-map-chrome--top` reserves the rail's width at every viewport. Above ~620px
   `max-width` decides the box and the inset is never reached, so it costs no extra work and cannot drift out
   of tune when a control changes size.
-- `packages/earth/lib/panels/VersionCompare/styles.module.css` — 9 hardcoded state colours (`#d8504a`,
+- `packages/earth/lib/panels/VersionCompare/styles.module.css` — 9 hardcoded state colors (`#d8504a`,
   `#1aa84d` and their rgba washes at `:129-169`) where `--color-state-danger` / `-success` / `-warning`
   already exist, none of which respond to the theme switch.
 - `packages/earth/vite.config.ts:26` — `themeColor: "#0b1020"` matches no token (`--brand-navy` is
-  `#00093a`). A fourth, undocumented brand colour in the PWA manifest.
+  `#00093a`). A fourth, undocumented brand color in the PWA manifest.
 - ~30 raw `px` spacing values across 7 earth CSS files; 7 inline styles hardcoding type sizes
   (`0.8rem` / `0.85rem` / `0.9rem`) that correspond to no step in the scale.
 
@@ -406,7 +406,7 @@ Four fixes, in order of payoff:
 ## P2 — docs polish
 
 - **`--ifm-color-content-secondary: rebeccapurple;`** — `docs/src/css/theme-light.css:45`. A CSS named
-  colour, shipped. It drives `--ifm-font-color-secondary` (`:53`) and `--ifm-toc-link-color` (`:218`), so
+  color, shipped. It drives `--ifm-font-color-secondary` (`:53`) and `--ifm-toc-link-color` (`:218`), so
   in light mode the right-hand TOC and every piece of secondary copy on the homepage render `#663399`.
   The dark theme's counterpart carries a `/* FIX: was pure white (too bright) */` marker at
   `theme-dark.css:35` — this one never got the same pass.
@@ -417,7 +417,7 @@ Four fixes, in order of payoff:
   `TrainingChart.tsx`. `PricingTiers` stays: its docblock records a decision to keep it for the Product
   door. That door has since landed, so keeping it is now a choice rather than a wait. Verified by `docusaurus
 build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
-- `docs/src/pages/index.module.css` — 25 colour literals, 2 media queries, **zero `[data-theme]`
+- `docs/src/pages/index.module.css` — 25 color literals, 2 media queries, **zero `[data-theme]`
   overrides**; `:119-153` adds eight `rgba(255,255,255,…)` values that assume a dark hero.
   `GuidedTour/styles.module.css:172-186` is half-tokenised: the correct
   `var(--ifm-color-info-contrast-background, …)` pattern sits ten lines above four rules that skip it.
@@ -462,7 +462,7 @@ the About, Layers and Developer panels close differently from the result.
 
 ---
 
-## Duplicate-behaviour sweep over the map chrome
+## Duplicate-behavior sweep over the map chrome
 
 Run after the restructure, because a rearrangement is when copies of one idea get left behind. Every item
 fixed here was two implementations of one thing, and four of them had already disagreed.
@@ -501,17 +501,17 @@ browser suites need Playwright browsers that VM has no egress to fetch.
 
 ## Magic numbers in the stylesheets
 
-| Was                                                                 | Count                                      | Now                                                                         |
-| ------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
-| Confidence tier colours as raw hex, in **two disagreeing palettes** | 5 rule groups + 9 more in `VersionCompare` | `--color-confidence-{high,mid,low}` and their tints, over the state palette |
-| Values picked by eye                                                | 19 distinct, 171 declarations              | `--space-0` … `--space-6`, seven steps on a 2px grid                        |
-| Raw pixel `border-radius`                                           | 6 values (2/3/4/6/8/10) + `999px` ×4       | `--radius-tick`, `--radius-tight`, and the three steps that existed         |
-| Pixel lengths that should scale with type                           | 7 (`720px`, `320px`, `480px`, …)           | rem                                                                         |
-| Stage hues on the timing bar, raw hex                               | 3                                          | `--color-stage-{shape,classify,resolve}`                                    |
+| Was                                                                | Count                                      | Now                                                                         |
+| ------------------------------------------------------------------ | ------------------------------------------ | --------------------------------------------------------------------------- |
+| Confidence tier colors as raw hex, in **two disagreeing palettes** | 5 rule groups + 9 more in `VersionCompare` | `--color-confidence-{high,mid,low}` and their tints, over the state palette |
+| Values picked by eye                                               | 19 distinct, 171 declarations              | `--space-0` … `--space-6`, seven steps on a 2px grid                        |
+| Raw pixel `border-radius`                                          | 6 values (2/3/4/6/8/10) + `999px` ×4       | `--radius-tick`, `--radius-tight`, and the three steps that existed         |
+| Pixel lengths that should scale with type                          | 7 (`720px`, `320px`, `480px`, …)           | rem                                                                         |
+| Stage hues on the timing bar, raw hex                              | 3                                          | `--color-stage-{shape,classify,resolve}`                                    |
 
 **The one that was a defect rather than untidiness.** The bars and the About legend painted `#22c55e / #f59e0b /
 #ef4444`; the span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a`. So the legend that
-explains the confidence colours used colours the results table does not, and the comment above the span
+explains the confidence colors used colors the results table does not, and the comment above the span
 rules said _"The tier tints match `.mw-conf__bar--high/--mid/--low`."_ Raw hex also meant the tiers did not
 follow the theme, on surfaces that flip from white to near-black.
 
@@ -551,8 +551,8 @@ existed to hold identity fixed across exactly that change, which is the one time
 
 **The rest.** A test reaching into `#map/graticule`, the package's private imports map, instead of a public
 export (`./map/graticule` added, and the test now imports it the way the geometry test does); two missing
-hook dependencies; two unnamed thresholds in the drawer gestures (`3` for a press that has travelled far
-enough to be a drag, `8` for a pull at the top of the scroll that has travelled far enough to be one, and the
+hook dependencies; two unnamed thresholds in the drawer gestures (`3` for a press that has traveled far
+enough to be a drag, `8` for a pull at the top of the scroll that has traveled far enough to be one, and the
 second is larger on purpose, because that gesture starts on content that could still turn out to be
 scrolling); `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LATITUDE` already there; and
 `beforeId`, which title-cases an acronym the house style capitalizes whole.

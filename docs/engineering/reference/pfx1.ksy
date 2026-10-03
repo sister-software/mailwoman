@@ -20,7 +20,7 @@
 #      scope          — sub-national scope slug, and the filename suffix. Two files may share a
 #                       `country`; this is what tells them apart. `gb-esw` is Code-Point Open (England,
 #                       Scotland, Wales — no Northern Ireland), `gb-ni` is the BT districts. The split
-#                       is a licence boundary, not a format one: folding an ODbL register into an OGL
+#                       is a license boundary, not a format one: folding an ODbL register into an OGL
 #                       artifact would put a share-alike obligation on it that nothing downstream
 #                       could see.
 #      schemaVersion  — must be exactly 1. Readers refuse both older and newer.
@@ -65,7 +65,7 @@
 # 6. `wof_id` is an f64, not a u4. WOF IDs are not bounded by 2^32 — the NI extract's synthetic postcode
 #    IDs start at 9.8e12. f64 is exact to 2^53 and the serializer asserts each ID against
 #    `Number.MAX_SAFE_INTEGER`, so an ID beyond the safe range fails the build rather than
-#    round-tripping to a neighbour. A reader in a language with native integers should read the 8
+#    round-tripping to a neighbor. A reader in a language with native integers should read the 8
 #    bytes as a double and convert, checking exactness.
 #
 # 7. `ancestors` may legitimately be empty, and that is a real answer rather than a build failure: a
@@ -88,7 +88,7 @@
 #
 # 10. Coordinate quantization is identical to PCB1's: `lat_q = round(lat / 90 × 32767)`,
 #     `lon_q = round(lon / 180 × 32767)` — about 300 m. A prefix prior whose own p95 radius is
-#     measured in kilometres has nothing to gain from a finer grid. Decode is the inverse:
+#     measured in kilometers has nothing to gain from a finer grid. Decode is the inverse:
 #     `lat = lat_q × 90 / 32767`.
 #
 # 11. `unit_count` is units observed under this prefix at build time — the denominator behind

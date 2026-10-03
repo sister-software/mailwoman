@@ -46,7 +46,7 @@ export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
  * The declared domain as a membership set.
  *
  * An unknown `flood_zone` value indicates a source-schema change.
- * Coercion to a nearest neighbour or null would report that the source has no data.
+ * Coercion to a nearest neighbor or null would report that the source has no data.
  */
 export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DEFINITIONS.map((zone) => zone.code))
 
@@ -86,12 +86,12 @@ export const EA_FLOOD_LAYER = "Flood_Zones_2_3_Rivers_and_Sea"
 export const EA_FLOOD_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
 
 /**
- * The licence expression written into `layer_manifest.license`.
+ * The license expression written into `layer_manifest.license`.
  */
 export const EA_FLOOD_LICENSE = "OGL-UK-3.0"
 
 /**
- * The licence text OGL v3.0 asks a re-user to link to.
+ * The license text OGL v3.0 asks a re-user to link to.
  */
 export const EA_FLOOD_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
@@ -133,7 +133,7 @@ export const EA_DECLARED_BBOX: readonly [number, number, number, number] = [
 /**
  * The projected CRS the published geodatabase declares.
  *
- * The file is OSGB36 / British National Grid in metres, so the ingest reprojects
+ * The file is OSGB36 / British National Grid in meters, so the ingest reprojects
  * and the builder refuses any other declaration.
  */
 export const EA_SOURCE_EPSG = 27_700

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file A forward geocode result as Nominatim's address block: the parse's component slots first, then the
- *   resolved ancestry labelled by tag, so a Japanese municipality is `city` and a prefecture `state`.
+ *   resolved ancestry labeled by tag, so a Japanese municipality is `city` and a prefecture `state`.
  */
 
 import type { GeocodeResult } from "mailwoman/geocode"

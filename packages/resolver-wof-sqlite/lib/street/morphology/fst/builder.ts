@@ -12,7 +12,7 @@
  *   tokens have no admin-FST anchor, so synth-street training pushed the model toward over-emitting
  *   `dependent_locality` on subcomponents. With the morphology FST, the neural decoder gets
  *   positive evidence for street-typing affixes and the adjacent name tokens, plus negative
- *   evidence away from `dependent_locality` on the same neighbours.
+ *   evidence away from `dependent_locality` on the same neighbors.
  *
  *   Design rationale + the four-layer street-supplement architecture lives in
  *   `docs/articles/concepts/street-supplement-architecture.md`.

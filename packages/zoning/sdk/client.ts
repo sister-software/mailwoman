@@ -17,7 +17,7 @@ import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "
 /**
  * The ArcGIS Online sharing API.
  *
- * The item's licence and attribution fields are available there.
+ * The item's license and attribution fields are available there.
  */
 export const ARCGIS_ITEM_API_BASE_URL = "https://www.arcgis.com/sharing/rest/content/items"
 
@@ -76,7 +76,7 @@ const BBOX_ORDINATES = 4
  */
 export class GZTClient extends APIClient<APIClientConfig> {
 	/**
-	 * The item record: its vintage, its credit line, its licence text and its declared extent.
+	 * The item record: its vintage, its credit line, its license text and its declared extent.
 	 *
 	 * @throws {Error} When the item is missing, or declares no extent.
 	 */
@@ -165,7 +165,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The sum of the Department's `Shape__Area` column in square metres.
+	 * The sum of the Department's `Shape__Area` column in square meters.
 	 *
 	 * The service must provide this value because the bulk export omits the column.
 	 */
@@ -276,7 +276,7 @@ export function assertAttributionUnchanged(record: Pick<ZoningItemRecord, "acces
 	if (!record.licenseInfo.includes("Tailte Éireann")) {
 		throw new Error(
 			"zoning client: the item's licenseInfo no longer names Tailte Éireann as a licensor. That clause is the reason " +
-				"this layer is built locally rather than shipped, so its disappearance is a licence change to read rather than absorb"
+				"this layer is built locally rather than shipped, so its disappearance is a license change to read rather than absorb"
 		)
 	}
 }

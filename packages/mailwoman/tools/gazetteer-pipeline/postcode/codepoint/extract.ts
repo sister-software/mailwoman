@@ -5,7 +5,7 @@
  *
  *   Unpack the Code-Point Open archive. `codepo_gb.zip` (14 MB) holds 120 per-postcode-area CSVs under
  *   `Data/CSV/` — `ab.csv`, `al.csv`, … `ze.csv`, one per outward-code area, 162 MB unpacked — plus a
- *   small `Doc/` tree carrying the licence text and column headers, plus metadata.
+ *   small `Doc/` tree carrying the license text and column headers, plus metadata.
  *   The metadata file provides the most useful check in the archive.
  *
  *   ## `Doc/metadata.txt` supplies a row-count manifest
@@ -45,7 +45,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 const CSV_ENTRY_PREFIX = "Data/CSV/"
 
 /**
- * Archive-internal prefix of the documentation tree (licence, column headers, metadata).
+ * Archive-internal prefix of the documentation tree (license, column headers, metadata).
  */
 const DOC_ENTRY_PREFIX = "Doc/"
 

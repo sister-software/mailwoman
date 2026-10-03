@@ -8,7 +8,7 @@
  *   The tools (`tippecanoe`, `pmtiles`, gdal) are the lab's. a missing one fails with its name in the error.
  *
  *   `fixtures/dem-fixture.tif` was written once with gdal's Python bindings: 1024×512 Int16 over the whole globe in
- *   epsg:4326, deflate-compressed, elevation `sin(row·π/8) · (row / 511) · 30000` metres. Its range sits inside
+ *   epsg:4326, deflate-compressed, elevation `sin(row·π/8) · (row / 511) · 30000` meters. Its range sits inside
  *   terrarium's ±32,768 m envelope, so the encode has valid values at both ends. 1024 pixels across lands the
  *   MBTiles step at zoom 2, where the pyramid has levels to build.
  */

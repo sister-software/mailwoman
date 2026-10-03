@@ -6,7 +6,7 @@
  *   Deterministic: the same research CSVs produce byte-identical output.
  *
  *   The build refuses to write a register that fails its own audit, so an unseeded jurisdiction or an undeclared
- *   licence decision fails here rather than in a consumer.
+ *   license decision fails here rather than in a consumer.
  */
 
 import { Text } from "ink"
@@ -26,7 +26,7 @@ export const spec = {
 		decisions: {
 			type: "string",
 			default: "packages/corpus/data/license-decisions.json",
-			description: "Licence decisions to apply over the research pass's unchecked defaults",
+			description: "License decisions to apply over the research pass's unchecked defaults",
 		},
 		resolutions: {
 			type: "string",

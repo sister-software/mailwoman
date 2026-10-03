@@ -87,7 +87,7 @@ model:
   attention_probs_dropout_prob: 0.1
   use_crf: true
   # CRF off via zero weight — head exists (parity) but contributes no loss. Avoids the
-  # CRF-under-bf16 NaN. keeps self-conditioning the only new behaviour in the loss.
+  # CRF-under-bf16 NaN. keeps self-conditioning the only new behavior in the loss.
   crf_loss_weight: 0.0
   crf_normalization: per_sequence
   label_smoothing: 0.1

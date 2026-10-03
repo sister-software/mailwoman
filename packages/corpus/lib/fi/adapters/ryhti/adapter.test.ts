@@ -201,7 +201,7 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		}
 
 		expect(Object.fromEntries(byLocale)).toEqual({ "fi-FI": 7, "sv-FI": 1, "sv-AX": 5 })
-		// Every Åland row is Swedish, and no mainland row is labelled Åland's locale.
+		// Every Åland row is Swedish, and no mainland row is labeled Åland's locale.
 		expect(rows.every((r) => (r.country === "AX" ? r.locale === "sv-AX" : r.locale !== "sv-AX"))).toBe(true)
 	})
 

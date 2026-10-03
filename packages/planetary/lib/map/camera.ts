@@ -9,7 +9,7 @@
  */
 
 /**
- * Diameter thresholds in kilometres and the zoom a selection of that size lands at, largest first.
+ * Diameter thresholds in kilometers and the zoom a selection of that size lands at, largest first.
  */
 const SELECTION_ZOOM_STEPS: ReadonlyArray<readonly [minDiameterKm: number, zoom: number]> = [
 	[300, 3],
@@ -32,7 +32,7 @@ const SMALL_FEATURE_ZOOM = 9
 const OVERZOOM_ALLOWANCE = 1
 
 /**
- * The zoom a selected feature is framed at, from its diameter in kilometres.
+ * The zoom a selected feature is framed at, from its diameter in kilometers.
  *
  * `maxTerrainZoom` is the deepest zoom the body's terrain archive includes.
  * Read it from the live source rather than pinning it here because the two bodies publish different depths.

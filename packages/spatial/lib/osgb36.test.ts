@@ -16,8 +16,8 @@ function dms(degrees: number, minutes: number, seconds: number): number {
 }
 
 /**
- * Rough metres-per-degree at GB latitudes, for turning an angular residual into
- * the metres the accuracy claim is stated in.
+ * Rough meters-per-degree at GB latitudes, for turning an angular residual into
+ * the meters the accuracy claim is stated in.
  */
 function offsetMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
 	const dNorth = (a.latitude - b.latitude) * 111_132
@@ -55,7 +55,7 @@ const OSTN15_POINTS = [
 	{ id: "TP38", easting: 421_300.525, northing: 1_072_147.239, latitude: 59.5347079449, longitude: -1.62516966058 },
 ]
 
-test("osgb36GridToAiryLatLon reproduces OS's Annexe C.2 worked example to sub-millimetre", () => {
+test("osgb36GridToAiryLatLon reproduces OS's Annexe C.2 worked example to sub-millimeter", () => {
 	const got = osgb36GridToAiryLatLon(ANNEXE_C_GRID)
 
 	// 1e-4 arc-seconds is ~3 mm of ground distance, matching the worked example's own published rounding.
@@ -63,7 +63,7 @@ test("osgb36GridToAiryLatLon reproduces OS's Annexe C.2 worked example to sub-mi
 	expect(Math.abs(got.longitude - ANNEXE_C_OSGB36.longitude) * 3600).toBeLessThan(1e-4)
 })
 
-test("the Helmert reproduces OS's Annexe D worked example to the centimetre", () => {
+test("the Helmert reproduces OS's Annexe D worked example to the centimeter", () => {
 	// The bar is 5 cm — loose enough to absorb the published DMS rounding and our discarded
 	// ellipsoidal height, tight enough that a wrong rotation sign cannot slip through.
 	const got = osgb36ToWGS84(ANNEXE_D_GRID)

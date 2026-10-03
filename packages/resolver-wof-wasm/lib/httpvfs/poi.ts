@@ -7,53 +7,29 @@
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "h3-js"
 
-import { loadHTTPVFSDatabase } from "#httpvfs/resolver"
-import { rowsFromExec } from "#httpvfs/rows"
-
-/**
- * Re-exports the gazetteer-only anchor resolver so a browser POI search can
- * place its center point from this entry point.
- */
-export { resolveAnchorCenter, type AnchorCenter } from "#httpvfs/poi/anchor"
+import { memoizeResettable, type RangeDatabase } from "#httpvfs/database"
 
 const POI_H3_RESOLUTION = 9
 
-/**
- * The worker handle that `loadHTTPVFSDatabase` resolves to, described here
- * because `resolver.ts` does not export its type.
- */
-export type POIHTTPVFSWorker = Awaited<ReturnType<typeof loadHTTPVFSDatabase>>
+const categoryCodesCache = new WeakMap<RangeDatabase, () => Promise<Map<string, number>>>()
 
 /**
- * Opens a new HTTP-VFS worker over the published POI database, separate from the admin-gazetteer worker.
+ * Loads the POI database's category-to-code dictionary, cached once per database.
  */
-export async function loadPOIWorker(poiDatabaseURL: string, sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
-	return loadHTTPVFSDatabase(poiDatabaseURL, sqljsBaseURL)
-}
-
-const categoryCodesCache = new WeakMap<POIHTTPVFSWorker, Promise<Map<string, number>>>()
-
-/**
- * Loads the POI database's category-to-code dictionary, cached once per worker.
- */
-export function loadPOICategoryCodes(worker: POIHTTPVFSWorker): Promise<Map<string, number>> {
-	let cached = categoryCodesCache.get(worker)
+export function loadPOICategoryCodes(database: RangeDatabase): Promise<Map<string, number>> {
+	let cached = categoryCodesCache.get(database)
 
 	if (!cached) {
-		cached = worker.db.exec("SELECT id, category FROM poi_category_codes").then((res) => {
-			const map = new Map<string, number>()
+		cached = memoizeResettable(async () => {
+			const rows = await database.query<{ id: number; category: string }>("SELECT id, category FROM poi_category_codes")
 
-			for (const row of rowsFromExec(res)) {
-				map.set(String(row.category), Number(row.id))
-			}
-
-			return map
+			return new Map(rows.map((row) => [row.category, row.id]))
 		})
 
-		categoryCodesCache.set(worker, cached)
+		categoryCodesCache.set(database, cached)
 	}
 
-	return cached
+	return cached()
 }
 
 /**
@@ -94,61 +70,69 @@ export interface POISearchHit {
 	confidence: number
 }
 
+interface POIRow {
+	name: string | null
+	latitude: number
+	longitude: number
+	country: string | null
+	confidence: number
+}
+
 const DEFAULT_MAX_RINGS = 6
 const DEFAULT_LIMIT = 10
 
+const placeholders = (count: number): string => Array.from({ length: count }, () => "?").join(", ")
+
 /**
- * Finds the POIs of a category nearest to `opts.center` by probing H3 cells ring by ring
+ * Builds the statement that reads one ring: the top `limit` rows by rank in each of `cellCount` cells.
+ *
+ * The primary key leads with `(h3_cell, category_id, neg_rank)`, so each cell
+ * and category pair is one B-tree seek and the whole ring is one statement.
+ */
+const ringSQL = (cellCount: number, categoryCount: number): string =>
+	`SELECT name, latitude, longitude, confidence, country FROM (` +
+	`SELECT name, latitude, longitude, confidence, country, ` +
+	`row_number() OVER (PARTITION BY h3_cell ORDER BY neg_rank ASC) AS cell_rank ` +
+	`FROM poi WHERE h3_cell IN (${placeholders(cellCount)}) AND category_id IN (${placeholders(categoryCount)})` +
+	`) WHERE cell_rank <= ?`
+
+/**
+ * Finds the POIs of a category nearest to `opts.center` by reading H3 cells ring by ring
  * until `limit` hits are found or `maxRings` is reached.
  *
+ * Each ring is one query.
  * A category absent from the database returns `[]` rather than throwing.
  */
-export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearchOpts): Promise<POISearchHit[]> {
+export async function searchPOICategory(database: RangeDatabase, opts: POISearchOpts): Promise<POISearchHit[]> {
 	const limit = Math.max(1, opts.limit ?? DEFAULT_LIMIT)
 	const maxRings = Math.max(1, opts.maxRings ?? DEFAULT_MAX_RINGS)
-	const codes = await loadPOICategoryCodes(worker)
+	const codes = await loadPOICategoryCodes(database)
 
 	const seedIDs = opts.categoryIDs?.length ? opts.categoryIDs : [opts.categoryID]
 	const categoryIDs = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
 	if (!categoryIDs.length) return []
-	const categoryIDList = categoryIDs.join(", ")
 
 	const origin = latLngToCell(opts.center.lat, opts.center.lon, POI_H3_RESOLUTION) as H3Cell
 	const seenCells = new Set<string>()
-	const rows: Array<{ name: string; latitude: number; longitude: number; country: string; confidence: number }> = []
+	const rows: POIRow[] = []
 
 	for (let ring = 0; ring < maxRings; ring++) {
-		const diskCells = gridDisk(origin, ring) as string[]
-		const newCells = diskCells.filter((cell) => !seenCells.has(cell))
+		const ringCells = (gridDisk(origin, ring) as H3Cell[]).filter((cell) => !seenCells.has(cell))
 
-		for (const cell of newCells) {
+		for (const cell of ringCells) {
 			seenCells.add(cell)
+		}
 
-			const shortCell = shortCellToInt(cell as H3Cell)
+		const hits = await database.query<POIRow>(ringSQL(ringCells.length, categoryIDs.length), [
+			...ringCells.map(shortCellToInt),
+			...categoryIDs,
+			limit,
+		])
 
-			const sql =
-				`SELECT name, latitude, longitude, confidence, country FROM poi ` +
-				`WHERE h3_cell = ${shortCell} AND category_id IN (${categoryIDList}) ORDER BY neg_rank ASC LIMIT ${limit}`
-
-			const hits = rowsFromExec<{
-				name: string | null
-				latitude: number
-				longitude: number
-				country: string | null
-				confidence: number
-			}>(await worker.db.exec(sql))
-
-			for (const hit of hits) {
-				if (hit.name) {
-					rows.push({
-						name: hit.name,
-						latitude: hit.latitude,
-						longitude: hit.longitude,
-						country: hit.country ?? "",
-						confidence: hit.confidence,
-					})
-				}
+		for (const hit of hits) {
+			if (hit.name) {
+				rows.push(hit)
 			}
 		}
 
@@ -157,10 +141,10 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 
 	return rows
 		.map((row) => ({
-			name: row.name,
+			name: row.name!,
 			lat: row.latitude,
 			lon: row.longitude,
-			country: row.country,
+			country: row.country ?? "",
 			confidence: row.confidence,
 			distanceM: haversineKm(opts.center.lat, opts.center.lon, row.latitude, row.longitude) * 1000,
 		}))

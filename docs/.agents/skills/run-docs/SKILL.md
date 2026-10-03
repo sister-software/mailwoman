@@ -99,7 +99,7 @@ driver above is the right tool.
 - **`@docusaurus/theme-mermaid` is listed but not always installed.** If `yarn start` errors with "Docusaurus was unable to resolve the `@docusaurus/theme-mermaid` theme," run `yarn install` from `docs/`. The lockfile knows about it; whatever cleared `node_modules/` (a `yarn clean`, a workspace migration) left it stale.
 - **The dev server uses port 7770 rather than the Docusaurus default 3000.** Hardcoded in `package.json` scripts. Don't `curl :3000`.
 - **`networkidle` is required rather than `domcontentloaded`.** Docusaurus is SPA-ish; `domcontentloaded` fires before the React hydration assets land and your screenshot will show "Loading..." The driver already uses `networkidle`; if you write your own Playwright snippet, do the same.
-- **`/demo/`, `/debug/` and `/trace/` are redirect pages.** They forward to https://earth.mailwoman.ai with the query intact; the geocoder's behaviour is tested in `packages/earth` rather than here.
+- **`/demo/`, `/debug/` and `/trace/` are redirect pages.** They forward to https://earth.mailwoman.ai with the query intact; the geocoder's behavior is tested in `packages/earth` rather than here.
 - **The driver does not launch or kill the dev server.** This is deliberate — Docusaurus's first build is slow and you'll typically run the driver 5–20 times against one server. Tear down explicitly with `pkill -f 'docusaurus start'` when done.
 
 ## Diagnose common failures

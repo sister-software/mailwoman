@@ -5,7 +5,7 @@
  *
  *   Address layouts written as tagged templates in print order: interpolations are slots and the literal text
  *   between them is a connector. A node that renders no value drops out together with its connector.
- *   An interior connector renders only when both neighbours rendered. An edge connector binds to the one slot it touches.
+ *   An interior connector renders only when both neighbors rendered. An edge connector binds to the one slot it touches.
  *
  *   The evaluator lives in `render.ts`, so modules that only need the layout table do not load it.
  */
@@ -20,7 +20,7 @@ export interface AddressSlot {
 }
 
 /**
- * Literal text that renders only between neighbours that rendered.
+ * Literal text that renders only between neighbors that rendered.
  *
  * The `addr` template creates connectors from the text between interpolations.
  */

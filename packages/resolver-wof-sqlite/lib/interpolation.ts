@@ -68,7 +68,7 @@ export interface InterpolationQuery {
 
 /**
  * Acceptance geometry for the `near` tie-break: the winning group must be within this
- * many kilometres and the runner-up at least {@link NEAR_DOMINANCE} times farther.
+ * many kilometers and the runner-up at least {@link NEAR_DOMINANCE} times farther.
  */
 const NEAR_MAX_KM = 25
 

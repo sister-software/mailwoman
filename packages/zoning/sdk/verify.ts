@@ -21,11 +21,11 @@
  *
  *   The channels use different coordinate precision. A boundary-point disagreement therefore does not establish a
  *   conversion defect. The archive publishes nine decimals through this package's ingest. The service rounds its JSON.
- *   A point within roughly a metre of a zone boundary can fall on opposite sides of the two rendered edges. The check
+ *   A point within roughly a meter of a zone boundary can fall on opposite sides of the two rendered edges. The check
  *   reports these cases as `boundary_tolerance` with the distance to the nearest edge. The receipt includes their count.
  *
- *   The distance measures to the edge rather than to the nearest vertex. A point a centimetre from a long edge can be
- *   metres from every vertex. In one sibling-layer near-miss, vertex distance measured 1.58 m and edge distance
+ *   The distance measures to the edge rather than to the nearest vertex. A point a centimeter from a long edge can be
+ *   meters from every vertex. In one sibling-layer near-miss, vertex distance measured 1.58 m and edge distance
  *   measured 0.009 m. The vertex measurement overstated distance by 175 times. It would make the stated boundary
  *   tolerance stricter and report a rendering difference as a conversion defect.
  */
@@ -73,7 +73,7 @@ export interface AgreementRow {
 	serviceLocalCode?: string
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
+	 * Meters from the point to the nearest edge of any polygon the service returned nearby.
 	 *
 	 * Every row includes this distance.
 	 * It separates a real defect from a difference caused by the two channels
@@ -150,11 +150,11 @@ const PROBE_HALF_WIDTH_DEGREES = 0.0001
  * How close to a service-polygon edge a disagreement is attributed to the channels'
  * differing coordinate precision rather than to the conversion.
  *
- * Half a metre.
+ * Half a meter.
  * The two channels render the same edge from the same source coordinates through different
  * rounding, so a point between the two renderings lands on opposite sides.
  *
- * Half a metre is far below any real zoning boundary and far above the rounding difference.
+ * Half a meter is far below any real zoning boundary and far above the rounding difference.
  */
 const BOUNDARY_TOLERANCE_METRES = 0.5
 
@@ -186,7 +186,7 @@ export type ServiceFeatureReader = (latitude: number, longitude: number) => Prom
  * The service answers a BOX rather than a point, so this returns what it published nearby
  * and the containment decision is made in {@link readServiceContainment} against
  * those rings — comparing the artifact's verdict against a bare "the service returned
- * something here" would pass on any polygon within eleven metres.
+ * something here" would pass on any polygon within eleven meters.
  */
 export function createServiceReader(client: Pick<GZTClient, "readFeaturesNear">): ServiceFeatureReader {
 	return async (latitude, longitude) => client.readFeaturesNear(latitude, longitude, PROBE_HALF_WIDTH_DEGREES)

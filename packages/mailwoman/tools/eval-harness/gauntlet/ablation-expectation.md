@@ -13,7 +13,7 @@ answer itself is wrong. Rows without asserted coordinates may use the undeleted 
 anchor source explicitly.
 
 Every rung has a radius. Degenerate WOF bounding boxes mean “extent unavailable,” not radius zero: this affects 59.1% of
-countries, 39.3% of regions, 49.2% of localities, and 86.2% of neighbourhoods in the measured artifact. Non-degenerate
+countries, 39.3% of regions, 49.2% of localities, and 86.2% of neighborhoods in the measured artifact. Non-degenerate
 boxes can also contain rounding noise, so `RUNG_RADIUS_FLOOR_KM` applies the measured placetype floor.
 
 ## Expected rung

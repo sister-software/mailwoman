@@ -155,7 +155,7 @@ export function lookupFST(
 			entries,
 			note: !collapsed.size
 				? `Accepted with ${raw.length} entr${plural}, but none carries a BIO-mapped placetype ` +
-					"(localadmin / county / borough / neighbourhood are walked and dropped), so the decoder receives NOTHING " +
+					"(localadmin / county / borough / neighborhood are walked and dropped), so the decoder receives NOTHING " +
 					"from this surface. That is different from a zero."
 				: firing.length
 					? `Accepted with ${raw.length} entr${plural}; the decoder sees the per-tag max above.`

@@ -11,15 +11,16 @@ Pair with [`@mailwoman/resolver-wof-sqlite`](https://www.npmjs.com/package/@mail
 ## Quick start
 
 ```ts
-import { loadSlimWofDatabase, WofWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm"
+import { loadSlimWOFDatabase, WOFWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm"
+import wasmURL from "@sqlite.org/sqlite-wasm/sqlite3.wasm?url"
 
 // Load the slim DB. Either fetch from a URL or pass raw Uint8Array bytes.
-const { db } = await loadSlimWofDatabase({
+const { db } = await loadSlimWOFDatabase({
 	source: "/static/wof-hot.db", // or a Uint8Array from bundler import
-	wasmUrl: new URL("../node_modules/@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm", import.meta.url).href,
+	wasmURL,
 })
 
-using lookup = new WofWasmPlaceLookup({ db })
+using lookup = new WOFWasmPlaceLookup({ db })
 
 const matches = await lookup.findPlace({
 	text: "Springfield",
@@ -35,23 +36,35 @@ for (const m of matches) {
 
 ## Load strategies
 
-`loadSlimWofDatabase` currently fetches the whole DB and opens it in memory via `sqlite3_deserialize`. For the ~35 MB default slim build that's a one-RTT transfer + a one-shot in-memory open — typically sub-second on broadband, and after that every query is in-process WASM.
+`loadSlimWOFDatabase` fetches the whole DB and opens it in memory via `sqlite3_deserialize`. For the ~35 MB default slim build that's a one-RTT transfer + a one-shot in-memory open — typically sub-second on broadband, and after that every query is in-process WASM.
 
-For larger DBs or low-bandwidth users, the future path is to swap the loader for an HTTP-VFS implementation (à la `sql.js-httpvfs`) so SQLite pages get fetched lazily via byte-range. The `WofWasmPlaceLookup` class is loader-agnostic — only the loader changes.
+A database too large to hold in memory is read by HTTP range requests. `openRangeDatabase` from `@mailwoman/resolver-wof-wasm/httpvfs/database` starts a worker that runs `@sqlite.org/sqlite-wasm` over a read-only VFS, and each read fetches one 64 KiB chunk of the remote file.
+
+```ts
+import { openRangeDatabase } from "@mailwoman/resolver-wof-wasm/httpvfs/database"
+import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/resolver"
+
+const database = await openRangeDatabase("https://example.com/candidate.db", "/sqlite")
+const lookup = new WOFCandidateTableLookup(database)
+```
+
+The second argument is a same-origin directory that holds the worker script and the sqlite-wasm runtime. `stageSQLiteRuntimeAssets` from `@mailwoman/resolver-wof-wasm/host-assets` copies those files into it at build time. The server must answer `Range` requests with `206` and a `Content-Range` header.
+
+The lookups in `httpvfs/` take the returned `RangeDatabase`: `WOFCandidateTableLookup` for place names, `HTTPVFSAddressPointLookup` and `HTTPVFSInterpolator` for street addresses, and `searchPOICategory` for points of interest.
 
 ## Bundle the package
 
 This package ships compiled TypeScript only. The `@sqlite.org/sqlite-wasm` runtime (`.wasm` + worker JS) is a peer asset your bundler needs to serve. For Vite:
 
 ```ts
-import wasmUrl from "@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm?url"
+import wasmURL from "@sqlite.org/sqlite-wasm/sqlite3.wasm?url"
 ```
 
-For webpack: use `asset/resource` rules on the `.wasm` extension and pass the resolved URL via the `wasmUrl` option.
+For webpack: use `asset/resource` rules on the `.wasm` extension and pass the resolved URL via the `wasmURL` option.
 
 ## Which pin the browser shows
 
-`browser-cascade.ts` ranks the resolved places and shows the top one. Most of that table is the demo's own judgement and deliberately **not** `PLACETYPE_SPECIFICITY` — `neighbourhood` sits below `locality` here because that is the pin a viewer wants, where the shared scale ranks it above because it covers less ground.
+`browser-cascade.ts` ranks the resolved places and shows the top one. Most of that table is the demo's own judgment and deliberately **not** `PLACETYPE_SPECIFICITY` — `neighbourhood` sits below `locality` here because that is the pin a viewer wants, where the shared scale ranks it above because it covers less ground.
 
 One rung is not the demo's to decide: where a **postcode** sits against the locality. That has a single answer, it comes from `@mailwoman/codex`, and both routes to it are read here exactly as the Node ladder reads them — an exact hit on a unit-grade code (`isUnitGradePostcodeHit`), or an address system whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`).
 

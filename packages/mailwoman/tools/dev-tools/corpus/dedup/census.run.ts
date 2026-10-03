@@ -23,7 +23,7 @@
  *   reader to assume away.
  *
  *   Usage:
- *   node --max-old-space-size=8192 packages/mailwoman/tools/dev-tools/corpus/dedup-census.run.ts \
+ *   node --max-old-space-size=8192 packages/mailwoman/tools/dev-tools/corpus/dedup/census.run.ts \
  *     --intermediate <corpus>/intermediate --adapters usgov-nad,ban,wof-admin [--cap 10000000]
  */
 

@@ -9,7 +9,7 @@ import { expect, test } from "vitest"
 import { BODIES } from "#bodies"
 
 // 2πR / 360 on the mean radius: 30,323.4 m for the Moon (R = 1,737.4 km), 59,157.9 m for Mars (R = 3,389.5 km).
-test("metres per degree follow the mean radius", () => {
+test("meters per degree follow the mean radius", () => {
 	expect(BODIES.moon.metresPerDegree).toBeCloseTo((2 * Math.PI * 1_737_400) / 360, 6)
 	expect(BODIES.mars.metresPerDegree).toBeCloseTo((2 * Math.PI * 3_389_500) / 360, 6)
 	expect(Math.round(BODIES.moon.metresPerDegree)).toBe(30_323)

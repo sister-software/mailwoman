@@ -38,7 +38,7 @@ Automated Circuit Discovery_ [M]) automate hypothesis testing and circuit search
 scale, a patching sweep is linear in components and "can be prohibitively expensive, involving
 millions to billions of forward passes," which is why DeepMind built AtP* — a gradient
 approximation running in O(1) passes (Kramár et al. 2024, _AtP\*: An efficient and scalable method
-for localizing LLM behaviour to components_ [S]; note also _When Attribution Patching Lies_ (2026)
+for localizing LLM behavior to components_ [S]; note also _When Attribution Patching Lies_ (2026)
 [S] on AtP's false negatives and a second-order correction). For a 6-layer encoder with ~8 heads +
 1 MLP per layer over ~32 SentencePiece pieces, an **exhaustive** sweep is ≈ 6 × 9 × 32 ≈ 1,700
 patch sites per input. That is a couple of GPU batches: well under a second per case, or seconds

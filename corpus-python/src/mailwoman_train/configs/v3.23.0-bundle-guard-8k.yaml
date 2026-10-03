@@ -1,5 +1,5 @@
 # This 8k run repeats v3.22.0 with digit-guard lexicons and a higher cedex weight.
-# The digit guard stops a lexicon match from painting when the span or its nearest neighbour holds a digit.
+# The digit guard stops a lexicon match from painting when the span or its nearest neighbor holds a digit.
 # Evidence painted beside a digit otherwise pulls the house number into the street or locality span.
 # Both the trainer and the runtime read the guard from the lexicon rules.
 #

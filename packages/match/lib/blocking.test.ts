@@ -39,7 +39,7 @@ describe("geoCellKey", () => {
 		expect(intersects(a, c)).toBe(false)
 	})
 
-	it("bridges a cell boundary only with neighbour expansion", () => {
+	it("bridges a cell boundary only with neighbor expansion", () => {
 		const p1 = { id: "p1", coord: { latitude: 45.51, longitude: -122.5 } }
 		const p2 = { id: "p2", coord: { latitude: 45.56, longitude: -122.5 } } // adjacent cell at 0.05°
 

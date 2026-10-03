@@ -14,7 +14,7 @@
  * opens `opts.inputPath` as newline-delimited JSON and `#pl/adapters/emuia/adapter` opens it as one
  * markup stream, so a directory of pages reaches neither. The manifest therefore records each page's
  * byte range inside that file: `offset`, `bytes` and the sha256 of exactly those bytes. A range is
- * what makes a page verifiable after it has been concatenated into its neighbours, and what lets an
+ * what makes a page verifiable after it has been concatenated into its neighbors, and what lets an
  * interrupted append be truncated back to a page boundary rather than discarding the harvest.
  *
  * Three properties of a WFS make this harder than reading pages until they run out, and each is

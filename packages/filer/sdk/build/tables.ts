@@ -5,7 +5,7 @@
  * @file The table set `buildFilerDatabase` writes into, created in one pass before any row is staged.
  *
  *   Table DDL goes through Kysely's schema builder while the row writes stay on raw prepared statements against the
- *   same `DatabaseSync` handle — the house split between modelled schema and the hot bulk-write path.
+ *   same `DatabaseSync` handle — the house split between modeled schema and the hot bulk-write path.
  *   `filer_cluster` and `filer_family` are created empty here for schema completeness: `cluster-filers.ts`
  *   populates the former in a later build pass, `build-filer.ts`'s own family-membership emission the latter.
  */

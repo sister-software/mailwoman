@@ -58,7 +58,7 @@ public:
 	/**
 	 * Encode with native offsets. Returns a JS object:
 	 * { pieces: string[], ids: number[], begins: number[], ends: number[] } — begins/ends are byte
-	 * offsets into the UTF-8 encoding of `text` (the exact bytes embind marshalled in).
+	 * offsets into the UTF-8 encoding of `text` (the exact bytes embind marshaled in).
 	 */
 	emscripten::val encodeWithOffsets(const std::string& text) const {
 		sentencepiece::SentencePieceText spt;

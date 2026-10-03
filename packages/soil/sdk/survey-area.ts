@@ -264,7 +264,7 @@ async function readNCCPI(
 }
 
 /**
- * What the shipped FGDC metadata records about this survey area's dates and its licence.
+ * What the shipped FGDC metadata records about this survey area's dates and its license.
  */
 export interface FGDCMetadata {
 	/**

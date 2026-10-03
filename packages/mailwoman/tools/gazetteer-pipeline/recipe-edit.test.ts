@@ -107,7 +107,7 @@ describe("against the real defaults.ts", () => {
 		expect(result.ok || result.comment?.join(" ")).toContain("189,026")
 	})
 
-	it("adds TR to the WOF list in sorted position, between JP and KR's neighbours", () => {
+	it("adds TR to the WOF list in sorted position, between JP and KR's neighbors", () => {
 		const result = addCountry(source, "DEFAULT_WOF_PRIORITY_COUNTRIES", "TR")
 
 		expect(result.ok && result.changed).toBe(true)

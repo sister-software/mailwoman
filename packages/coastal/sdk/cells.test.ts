@@ -61,8 +61,8 @@ describe("featureCellRows", () => {
 	it("indexes a polygon smaller than a cell rather than returning nothing", () => {
 		const rows = featureCellRows(classifyFeatureCells(sliver, 9, "sliver", "test"))
 
-		// Cell-touches-polygon rather than centre-in-polygon: a polyfill keyed on
-		// centres returns zero cells here.
+		// Cell-touches-polygon rather than center-in-polygon: a polyfill keyed on
+		// centers returns zero cells here.
 		// A feature indexed to no cell reads downstream as absent.
 		expect(rows.length).toBeGreaterThan(0)
 		expect(rows.every((row) => row.containment === "partial")).toBe(true)

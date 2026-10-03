@@ -62,11 +62,11 @@ The substring check enforces structural consistency but not semantic correctness
 
 Three things bridge the gap:
 
-1. **Prompt engineering** — the prompts for B and B2 included explicit examples showing full-token annotations. This moves the LLM toward the right behaviour at generation time.
+1. **Prompt engineering** — the prompts for B and B2 included explicit examples showing full-token annotations. This moves the LLM toward the right behavior at generation time.
 2. **`corpus-audit`** — runs over the assembled corpus and checks distributional invariants (component balance, surface length distribution, character-set coverage). It catches "annotations are technically consistent but pathological" classes of bug.
 3. **Held-out eval** — the golden eval set (`v0.1.2`) catches the model learning bad patterns from systematically-skewed synthetic data, even when each row is individually consistent.
 
-The validator is the first line of defence. Audit and eval are the second and third.
+The validator is the first line of defense. Audit and eval are the second and third.
 
 ## Pattern to carry forward
 

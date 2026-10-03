@@ -100,7 +100,7 @@ Three places, each with one job:
 | Place                                                                  | Job                                                                                                                                 |
 | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `docs/` (GitHub Pages, `mailwoman.ai`)                                 | the `/license` page with both Payment Links and the portal link; the `/license/issued` success page; the static well-known register |
-| `packages/license-worker/` (Cloudflare Worker, `license.mailwoman.ai`) | webhook verification, fulfilment, D1 ledger, signing, claim, refresh, status, email                                                 |
+| `packages/license-worker/` (Cloudflare Worker, `license.mailwoman.ai`) | webhook verification, fulfillment, D1 ledger, signing, claim, refresh, status, email                                                |
 | `@mailwoman/core/license/key`, `/register` (subpath exports)           | the key format: payload schema, `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`, on WebCrypto; the typed key register        |
 
 ## The key format on WebCrypto, worker-safe by subpath
@@ -390,7 +390,7 @@ are out of scope. Each continues to use the local issuer.
       `./license/register` subpath exports, the worker bundle test.
 - [ ] **C — Worker foundation**: workspace, the seven registers, Wrangler environments, D1 schema, deploy workflow,
       signing self-test, kill switch.
-- [ ] **D — Fulfilment**: webhook verification, the event handlers, the early-`invoice.paid` path, minting, email.
+- [ ] **D — Fulfillment**: webhook verification, the event handlers, the early-`invoice.paid` path, minting, email.
 - [ ] **E — Customer routes**: claim, refresh, status; rate limits; CORS.
 - [ ] **F — Site**: Payment Links and portal link on `/license`, the `/license/issued` page, the refresh paragraph.
 - [ ] **G — CLI**: `license adopt`, `license refresh`, the config-root key file, `--online` lid status in verify and the

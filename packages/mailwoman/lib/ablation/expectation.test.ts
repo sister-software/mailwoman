@@ -506,7 +506,7 @@ describe("buildCaseLadder", () => {
 	})
 
 	// The reverse walk starts from `place_bbox`, so a country with a degenerate bbox,
-	// such as Bermuda, is attributed to a neighbour.
+	// such as Bermuda, is attributed to a neighbor.
 	// The corpus country catches the mismatch.
 	it("refuses a ladder whose containment country contradicts the corpus", () => {
 		const built = buildCaseLadder({ lat: 32.3, lon: -64.87 }, 1, gz, { lat: 32.3, lon: -64.87 }, "BM")

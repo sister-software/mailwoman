@@ -167,7 +167,7 @@ export interface AreaAgreement {
 }
 
 /**
- * The two totals a streaming ingest accumulates, in square metres of the encoded rings.
+ * The two totals a streaming ingest accumulates, in square meters of the encoded rings.
  */
 export interface StreamedAreaTotals {
 	nestedM2: number

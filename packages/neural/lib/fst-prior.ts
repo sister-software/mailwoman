@@ -87,7 +87,7 @@ const MAPPED_TIER_PLACETYPES: ReadonlySet<string> = new Set(["localadmin", "neig
  * optionally followed by one directional.
  *
  * The generics are `street`, `road`, `avenue`, `boulevard` and `square`.
- * Weaker generics such as `hill` are excluded so that neighbourhoods such as
+ * Weaker generics such as `hill` are excluded so that neighborhoods such as
  * "Biggin Hill" keep their locality bias.
  */
 export function isStreetShapedSurface(tokens: readonly string[]): boolean {

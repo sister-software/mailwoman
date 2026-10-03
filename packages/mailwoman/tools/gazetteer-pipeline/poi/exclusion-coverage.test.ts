@@ -46,7 +46,7 @@ function square(minLon: number, minLat: number, size: number): ParsedGeometry {
 const REGION = square(2, 48.5, 1)
 
 /**
- * The centre of the nth interior cell — a coordinate guaranteed to land inside the region's cell set.
+ * The center of the nth interior cell — a coordinate guaranteed to land inside the region's cell set.
  */
 function interiorCentre(n: number): { latitude: number; longitude: number } {
 	const cells = interiorCoverageCells(REGION, RESOLUTION)

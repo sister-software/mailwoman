@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Renders labelled pieces into sub-venue rows in a sampled case register and a per-country address order.
+ * @file Renders labeled pieces into sub-venue rows in a sampled case register and a per-country address order.
  */
 
 import { layoutForCountry } from "@mailwoman/codex/address/layouts"
@@ -13,7 +13,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import type { LocaleBaseTuple } from "#surfaces/locale"
 
 /**
- * One labelled piece of a row.
+ * One labeled piece of a row.
  *
  * Pieces inside a group are joined with a space.
  * Groups are joined with the register's separator.

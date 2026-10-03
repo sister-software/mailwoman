@@ -119,7 +119,7 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("reports a containing polygon with no zone label as service_unlabelled, never as agreement", async () => {
-		// A `null` value for a containing, unlabelled polygon would let it agree with an
+		// A `null` value for a containing, unlabeled polygon would let it agree with an
 		// absence reading elsewhere — the manufactured Zone 1 the interface forbids.
 		const result = await verifyFloodDatabase({
 			databasePath,

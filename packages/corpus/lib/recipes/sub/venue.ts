@@ -183,7 +183,7 @@ const ATTESTED_FRACTION = 0.1
 /**
  * The share of synthesized English positives that use the `<modifier> <designator>` form.
  *
- * The share favours the modifier form because the model already handles
+ * The share favors the modifier form because the model already handles
  * designator-plus-identifier strings such as `Terminal 5`.
  */
 const ENGLISH_MODIFIER_FORM_FRACTION = 0.6

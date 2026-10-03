@@ -41,7 +41,7 @@
 # — the Norway bug's mechanism, still live for every other country. The new map is the union of the
 # shipped 25, IN, all 129 gauntlet-board countries, and KR/TW.
 #
-# KR and TW are the one judgement call here: neither is on the board, but both carry corpus rows
+# KR and TW are the one judgment call here: neither is on the board, but both carry corpus rows
 # (1,083,156 and 678,660) of the same wof-admin toponym class as CN and JP, which the board does carry.
 # #288 validates JP/KR/TW together. admitting two of the three would teach the model that Korean and
 # Taiwanese toponyms are not places.

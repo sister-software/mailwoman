@@ -14,7 +14,7 @@ export * from "#h3/interior-cells"
 export * from "#h3/polygon-cells"
 
 /**
- * Given a short cell address and the resolution it was captured at, return the centre of that cell.
+ * Given a short cell address and the resolution it was captured at, return the center of that cell.
  */
 export function shortCellToPoint(shortCell: H3CellShort, resolution = 15): GeoPoint {
 	const cell = expandH3Cell(shortCell, resolution)

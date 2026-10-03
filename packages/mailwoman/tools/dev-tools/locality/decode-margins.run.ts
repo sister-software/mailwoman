@@ -6,7 +6,7 @@
  *   `traceParse` returns two readings of a token. `logits` is the model's raw emission.
  *   `emissions` is what viterbi decoded after every prior wrote into it. A row whose raw
  *   emission already refuses the locality is a training result while one whose raw emission
- *   favours it and whose post-prior matrix does not favour it reveals the prior that took it.
+ *   favors it and whose post-prior matrix does not favor it reveals the prior that took it.
  */
 
 import { matchSubdivisionIn } from "@mailwoman/codex/country"

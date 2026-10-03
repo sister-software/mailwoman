@@ -321,7 +321,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		injectFrom(opts.nameKey, false)
 
-		// Also inject contained neighbourhood-band namesakes (primary-keyed only).
+		// Also inject contained neighborhood-band namesakes (primary-keyed only).
 		const bandIDs = ["neighbourhood", "macrohood", "microhood"]
 			.map((placetype) => this.#placetypeToID.get(placetype))
 			.filter((id): id is number => id !== undefined)

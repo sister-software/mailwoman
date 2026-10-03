@@ -19,7 +19,7 @@ export const PIPELINE_DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, D
 // `country` mirrors the docs `EXAMPLE_ADDRESSES` set and is kept in parity.
 // A host that wires the pair prior pins the country while the input equals the preset text.
 /**
- * Preset inputs offered in the explorer, each picked to show a different parse behaviour.
+ * Preset inputs offered in the explorer, each picked to show a different parse behavior.
  */
 export const PIPELINE_PRESETS: ReadonlyArray<Preset> = [
 	{ label: "White House", value: "1600 Pennsylvania Ave NW, Washington, DC 20500", country: "us" },

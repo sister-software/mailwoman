@@ -249,7 +249,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 	})
 })
 
-describe("bash-write-guard: the hook around the judgement", () => {
+describe("bash-write-guard: the hook around the judgment", () => {
 	it("answers a deny decision on stdout", () => {
 		const output = runHook(HOOK, {
 			hook_event_name: "PreToolUse",

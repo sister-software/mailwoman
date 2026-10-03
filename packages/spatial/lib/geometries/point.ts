@@ -27,7 +27,7 @@ import {
 } from "#position"
 
 /**
- * A JSON-serializeable single point geometry, such as a specific location,
+ * A JSON-serializable single point geometry, such as a specific location,
  * address, or longitude, latitude pair.
  *
  * ```js
@@ -301,7 +301,7 @@ export class GeoPoint implements PointLiteral {
 	 *    `inferGeoJSONCoordOrder`, whose only signal is the [-90, 90] latitude range,
 	 *    so it transposed a pair exactly when |the second magnitude| > 90.
 	 *    A caller handing it `[latitude, longitude]` therefore got the pair repaired in Dallas
-	 *    and left corrupted in Berlin — behaviour selected by the data, from one code path.
+	 *    and left corrupted in Berlin — behavior selected by the data, from one code path.
 	 *    This change is a no-op for every well-formed input: a valid `[longitude, latitude]` pair
 	 *    can never have an out-of-range second element, so the heuristic never fired on one.
 	 * 2. **An out-of-range magnitude is rejected rather than repaired.** `[999, 999]`

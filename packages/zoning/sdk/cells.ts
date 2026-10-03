@@ -16,7 +16,7 @@ import {
 import { polygonToCells } from "h3-js"
 
 /**
- * Whether a centre-in-polygon polyfill would return no cell for this feature,
+ * Whether a center-in-polygon polyfill would return no cell for this feature,
  * the measurement that forced the index to take cell-touches-polygon.
  */
 export function polyfillFindsNothing(polygons: MultiPolygonRings, resolution: number): boolean {
@@ -67,7 +67,7 @@ export interface CellIndexMeasurement {
 	multiCandidateCells: number
 	multiCandidateShare: number
 	/**
-	 * Features a centre-in-polygon polyfill would have returned no cell for —
+	 * Features a center-in-polygon polyfill would have returned no cell for —
 	 * see {@link polyfillFindsNothing} — and `undefined` where the measurement did not run it.
 	 */
 	polyfillZeroCellFeatures?: number

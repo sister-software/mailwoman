@@ -40,12 +40,12 @@ export const NI_POSTCODE_OVERPASS_QUERY = [
 ].join("\n")
 
 /**
- * The licence of the acquired OSM data.
+ * The license of the acquired OSM data.
  */
 export const OSM_LICENSE = "Open Database License (ODbL) 1.0"
 
 /**
- * The URL of the ODbL licence text.
+ * The URL of the ODbL license text.
  */
 export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
@@ -86,7 +86,7 @@ export interface OverpassElement {
 	lon?: number
 
 	/**
-	 * The geometry's centre on ways and relations.
+	 * The geometry's center on ways and relations.
 	 */
 	center?: { lat: number; lon: number }
 	tags?: Record<string, string>

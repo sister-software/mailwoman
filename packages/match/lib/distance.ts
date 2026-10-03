@@ -9,7 +9,7 @@ import { haversineKm as greatCircleKm, type GeoCoordinate } from "@mailwoman/spa
 import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
 
 /**
- * Computes the great-circle distance in kilometres between two `GeoCoordinate` records.
+ * Computes the great-circle distance in kilometers between two `GeoCoordinate` records.
  * It delegates to the scalar helper in `@mailwoman/spatial`.
  */
 export const haversineKm = (a: GeoCoordinate, b: GeoCoordinate): number =>

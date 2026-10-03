@@ -28,7 +28,7 @@ describe("buildStreetMorphologyFST", () => {
 		expect(result.insertCount).toBeGreaterThan(result.canonicalCount)
 	})
 
-	it("recognises the English canonical 'avenue' and its variants", async () => {
+	it("recognizes the English canonical 'avenue' and its variants", async () => {
 		const { matcher } = await buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR, locales: ["en"] })
 
 		const avenue = matcher.query("avenue")
@@ -49,7 +49,7 @@ describe("buildStreetMorphologyFST", () => {
 		expect(av.accepting).toHaveLength(0)
 	})
 
-	it("recognises French 'rue' and German 'straße' canonicals", async () => {
+	it("recognizes French 'rue' and German 'straße' canonicals", async () => {
 		const { matcher } = await buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR, locales: ["fr", "de"] })
 
 		const rue = matcher.query("rue")

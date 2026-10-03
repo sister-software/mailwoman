@@ -49,7 +49,7 @@ Birmingham, Michigan
 
 What breaks: the parser may correctly identify `"Paris"` as a locality, but a resolver that lacks the `"Texas"` qualifier or was trained without a "US bias" will return Paris, France.
 
-Mailwoman's defence: the parser does not resolve. It hands `locality=Paris, region=Texas` to the resolver, which scores candidates with `(locality match) × (region agreement) × (population prior)`. Paris, Texas wins because the region matches, even though Paris, France has a higher population. The risk comes when the region is missing. `"Paris"` alone resolves to France because population dominates.
+Mailwoman's defense: the parser does not resolve. It hands `locality=Paris, region=Texas` to the resolver, which scores candidates with `(locality match) × (region agreement) × (population prior)`. Paris, Texas wins because the region matches, even though Paris, France has a higher population. The risk comes when the region is missing. `"Paris"` alone resolves to France because population dominates.
 
 ## 2. Repeated admin names
 
@@ -70,7 +70,7 @@ Tunis, Tunis
 
 What breaks: a parser that deduplicates "this token is already labeled" may drop the second `"New York"` because it already saw the first. A resolver that joins `locality + region` for ranking may double-count.
 
-Mailwoman's defence: both rule and neural classifiers can emit multiple proposals on the same token sequence, because the solver expects spans rather than unique strings. The BIO sequence `B-locality I-locality , B-region I-region` handles this case.
+Mailwoman's defense: both rule and neural classifiers can emit multiple proposals on the same token sequence, because the solver expects spans rather than unique strings. The BIO sequence `B-locality I-locality , B-region I-region` handles this case.
 
 ## 3. Tokenization and whitespace traps
 
@@ -95,7 +95,7 @@ Behind gas station
 
 What breaks: regex-based house-number classifiers expect `\d+`. They miss `One`, `12½`, `12 1/2`, `4-6-8`. A zero prefix (`0007`) may match a postcode regex by accident. "No Fixed Address" and "Behind gas station" are legitimate inputs in some workflows, but they describe locations rather than state addresses.
 
-Mailwoman's defence: the subword tokenizer ([Tokenization](../../concepts/tokenization.mdx)) does not require numeric tokens, so the neural classifier can learn that `"One"` in `"One Infinite Loop"` is a `B-house_number`. The "Corner of 5th and Main" case maps to the `intersection_a` / `intersection_b` tags in the component vocabulary ([What is an address?](../the-problem/what-is-an-address.mdx#the-data-model)). The "Behind gas station" landmark case has no good answer, because it is a reverse-geocoding problem rather than a parsing problem.
+Mailwoman's defense: the subword tokenizer ([Tokenization](../../concepts/tokenization.mdx)) does not require numeric tokens, so the neural classifier can learn that `"One"` in `"One Infinite Loop"` is a `B-house_number`. The "Corner of 5th and Main" case maps to the `intersection_a` / `intersection_b` tags in the component vocabulary ([What is an address?](../the-problem/what-is-an-address.mdx#the-data-model)). The "Behind gas station" landmark case has no good answer, because it is a reverse-geocoding problem rather than a parsing problem.
 
 ## 4. Street/locality collisions
 
@@ -155,7 +155,7 @@ What breaks:
 - `65535 State Hwy 65535`: the same five-digit number appears twice, in two different roles.
 - `404 Not Found Ln`: this real street name happens to be a software meme, and tokenizers and downstream consumers should not treat it as an error code.
 
-Mailwoman's defence: rule classifiers emit proposals with confidence, and the solver picks self-consistent combinations. A `"12345 123rd St"` with the postcode classifier firing on `"12345"` AND `"123rd"` will lose to the solution where `"12345"` is the house number and `"123rd St"` is the street, because the latter is more internally consistent.
+Mailwoman's defense: rule classifiers emit proposals with confidence, and the solver picks self-consistent combinations. A `"12345 123rd St"` with the postcode classifier firing on `"12345"` AND `"123rd"` will lose to the solution where `"12345"` is the house number and `"123rd St"` is the street, because the latter is more internally consistent.
 
 ## 6. Unicode and transliteration traps
 
@@ -181,7 +181,7 @@ What breaks:
 - **Dual scripts.** `"Beograd / Белград"` is the same place written twice. WOF (and Mailwoman's resolver) carries multi-language names so both spellings resolve to the same WOF ID.
 - **Right-to-left scripts.** Arabic addresses written in RTL plus mixed Latin numerals create renderer and tokenizer headaches even when the underlying data is clean.
 
-Mailwoman's defence: the subword tokenizer falls back to byte-level encoding for unknown characters ([Tokenization](../../concepts/tokenization.mdx#byte-fallback)), so the pipeline does not crash. The model, however, was trained on en-US and fr-FR data. Non-Latin scripts pass through the tokenizer, but the model has no signal to label them. Per-locale weights packages are how this scales, and Japan and Korea each need their own training run.
+Mailwoman's defense: the subword tokenizer falls back to byte-level encoding for unknown characters ([Tokenization](../../concepts/tokenization.mdx#byte-fallback)), so the pipeline does not crash. The model, however, was trained on en-US and fr-FR data. Non-Latin scripts pass through the tokenizer, but the model has no signal to label them. Per-locale weights packages are how this scales, and Japan and Korea each need their own training run.
 
 ## 7. Language-switch hybrids
 
@@ -202,7 +202,7 @@ Callejón Dead End Rd
 
 What breaks: `"Calle Ocho Street"` has both `"Calle"` (street prefix in Spanish) and `"Street"` (street suffix in English). A street classifier that looks for either may emit two overlapping proposals, and one that requires exactly one may emit none. `"улица Pushkin 10"` mixes a Cyrillic prefix, a Latin street name, and a number.
 
-Mailwoman's defence: the neural classifier sees the whole string and can learn that the pattern `[street-prefix] [proper-noun] [street-suffix]` is a single `street` span regardless of language. In practice this requires training examples in the corpus. Today's en-US and fr-FR coverage handles English/French hybrids reasonably, but not Spanish/English or Arabic/English.
+Mailwoman's defense: the neural classifier sees the whole string and can learn that the pattern `[street-prefix] [proper-noun] [street-suffix]` is a single `street` span regardless of language. In practice this requires training examples in the corpus. Today's en-US and fr-FR coverage handles English/French hybrids reasonably, but not Spanish/English or Arabic/English.
 
 ## 8. Administrative nightmares
 

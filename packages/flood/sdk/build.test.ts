@@ -86,7 +86,7 @@ describe("buildFloodDatabase", () => {
 		expect((await statPath(databasePath)).mode & 0o777).toBe(0o444)
 	})
 
-	it("carries the authority's identity, licence and attribution in the manifest", () => {
+	it("carries the authority's identity, license and attribution in the manifest", () => {
 		expect(lookup.identity.manifest.name).toBe(EA_FLOOD_LAYER_NAME)
 		expect(lookup.identity.manifest.tier).toBe("shipped")
 		expect(lookup.identity.manifest.license).toBe("OGL-UK-3.0")

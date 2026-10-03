@@ -29,7 +29,7 @@ import { dirname, PathBuilder, type PathBuilderLike } from "path-ts"
  * One capital or admin-1 seat.
  *
  * `latitude`/`longitude` are rounded to 4 decimals (~11 m).
- * The consumer matches within a kilometre radius.
+ * The consumer matches within a kilometer radius.
  * The rounded coordinates keep the committed file small.
  */
 export interface CapitalReferenceEntry {
@@ -49,7 +49,7 @@ export interface CapitalReferenceEntry {
 	 * Folded name keys (name + romanization + alternate names).
 	 *
 	 * The consumer checks name membership as well as coordinates.
-	 * This prevents the coordinate radius from promoting a capital's same-name neighbours.
+	 * This prevents the coordinate radius from promoting a capital's same-name neighbors.
 	 *
 	 * Folded with the same `normalizeLocalityForKey` the candidate gazetteer keys with.
 	 */

@@ -22,7 +22,7 @@ import { SOIL_SHARE_WEIGHTING } from "#vocabulary"
  * The number of H3 levels below the index resolution at which the weighting lattice samples.
  *
  * Children at a finer resolution have equal area, so counting which delineation
- * covers each child centre estimates the covered area.
+ * covers each child center estimates the covered area.
  * A depth of 2 gives 49 children, or about 2% per child.
  *
  * NRCS publishes component shares no finer than 2%, and each extra level costs seven times as much.
@@ -177,7 +177,7 @@ export function reduceCell(
 		}
 
 		if (!covered) {
-			// No child centre fell inside a delineation.
+			// No child center fell inside a delineation.
 			// A sliver can clip only a corner.
 			// This row has a mapped share of zero.
 			// The caller drops it.

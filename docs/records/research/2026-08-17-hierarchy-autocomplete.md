@@ -435,7 +435,7 @@ Search-verified [S]:
 22. libpostal: per-language dictionaries with typed files (street_types, stopwords, ambiguous_expansions…) — repo + Mapzen "Inside Libpostal".
 23. normalize-japanese-addresses: pref/city/town levels, prefecture completion on ambiguity — Geolonia repo.
 24. ICU folding locale-blind; Turkic I/ı needs dedicated handling (foldTurkic separate) — Elastic/OpenSearch/ICU docs.
-25. Suffix automaton = minimal automaton of suffixes, appliable to tries; factor automata of automata (Mohri et al.), music-ID scale — TCS/Springer/NYU.
+25. Suffix automaton = minimal automaton of suffixes, applicable to tries; factor automata of automata (Mohri et al.), music-ID scale — TCS/Springer/NYU.
 26. ASR contextual biasing = bias-phrase FSTs, shallow fusion; active through 2025 (Nature Sci Rep 2025; arXiv 2505.23077) — patents + papers.
 27. ReverseStringFilter/ReversedWildcardFilterFactory = reversed-token leading-wildcard trick — Lucene javadoc, Solr posts.
 28. AnalyzingInfixSuggester: no FST, token-position index, any-token prefix — McCandless blog, javadoc.

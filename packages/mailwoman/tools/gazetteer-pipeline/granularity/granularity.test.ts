@@ -59,7 +59,7 @@ describe("SUB_LOCALITY_RUNGS", () => {
  * The same approach `placetype-census.test.ts` uses.
  *
  * Shape: GB has two locality parents (London, Quiet Town).
- * London has a borough and a neighbourhood child.
+ * London has a borough and a neighborhood child.
  *
  * The two must count as one covered parent for dependent_locality rather than two.
  *
@@ -113,7 +113,7 @@ describe("buildGranularityLadder", () => {
 		const rows = buildGranularityLadder(ladderFixtureDB())
 		const gb = rows.find((row) => row.country === "GB")
 
-		// London has a borough child and a neighbourhood child.
+		// London has a borough child and a neighborhood child.
 		// Both project onto dependent_locality.
 		expect(gb?.rungs.dependent_locality?.nodes).toBe(2)
 		expect(gb?.rungs.dependent_locality?.parentsCovered).toBe(1)
@@ -132,7 +132,7 @@ describe("buildGranularityLadder", () => {
 		const rows = buildGranularityLadder(ladderFixtureDB())
 		const gb = rows.find((row) => row.country === "GB")
 
-		// "Ghost Hood" is deprecated: 3 neighbourhood-family rows exist, 2 count.
+		// "Ghost Hood" is deprecated: 3 neighborhood-family rows exist, 2 count.
 		expect(gb?.rungs.dependent_locality?.nodes).toBe(2)
 	})
 

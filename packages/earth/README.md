@@ -3,14 +3,14 @@
 Earth is the mailwoman geocoder map, served at `https://earth.mailwoman.ai` as an installable PWA on Cloudflare
 Workers Static Assets. The app is static: `wrangler.toml` declares `assets` and no Worker script, so a navigation or
 an asset request never invokes compute. Model and gazetteer artifacts come from `public.mailwoman.ai` at run time
-and tiles from `tiles.mailwoman.ai`; the sql.js-httpvfs runtime files are staged under `public/sqljs/` by the build.
+and tiles from `tiles.mailwoman.ai`; the range worker and sqlite-wasm runtime files are staged under `public/sqlite/` by the build.
 
 ## Commands
 
 | Command                                          | Does                                                                        |
 | ------------------------------------------------ | --------------------------------------------------------------------------- |
 | `yarn workspace @mailwoman/earth dev`            | Vite dev server                                                             |
-| `yarn workspace @mailwoman/earth build`          | `dist/`, with `build.json`, the manifest, the service worker and `sqljs/`   |
+| `yarn workspace @mailwoman/earth build`          | `dist/`, with `build.json`, the manifest, the service worker and `sqlite/`  |
 | `yarn workspace @mailwoman/earth preview`        | serves `dist/` on port 7771 with SPA fallback                               |
 | `yarn workspace @mailwoman/earth test:browser`   | the Playwright suite over the preview server, or over `MAILWOMAN_EARTH_URL` |
 | `yarn workspace @mailwoman/earth deploy:dry-run` | validates `wrangler.toml` and the asset manifest                            |

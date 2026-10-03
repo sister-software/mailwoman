@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The acquisition tests cover the failure body returned by Soil Data Access and the metadata that determines an
- *   artifact's vintage and licence. They also cover the farmland scope that determines whether two rows are comparable.
+ *   artifact's vintage and license. They also cover the farmland scope that determines whether two rows are comparable.
  *
  *   The exception fixture is the live service's own response body. It was captured from a query with a bad column
  *   name. A query that exceeds the server timeout returns the same document shape with HTTP 200, so the test checks
@@ -123,7 +123,7 @@ describe("readFGDCMetadata", () => {
 		// This is what a truncated archive produces.
 		// A lazy-quantifier reader backtracks polynomially over it.
 		// Every element after the truncation is unreadable.
-		// The licence assertion is the first read and refuses the input.
+		// The license assertion is the first read and refuses the input.
 		// That refusal also serves as the timing check.
 		const truncated = `${FGDC.slice(0, FGDC.indexOf("<pubdate>") + "<pubdate>".length)}${"9".repeat(200_000)}`
 		const started = performance.now()

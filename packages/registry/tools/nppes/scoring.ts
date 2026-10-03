@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Pairwise cluster scoring for the NPPES benchmark — precision/recall/F1 and adjusted Rand of recovered clusters
- *   against a truth labelling, plus the over-merge / under-merge shape counts.
+ *   against a truth labeling, plus the over-merge / under-merge shape counts.
  */
 
 import type { ResolvedEntity, SourceRecord } from "#index"
@@ -14,7 +14,7 @@ import type { ResolvedEntity, SourceRecord } from "#index"
 export const choose2 = (n: number): number => (n * (n - 1)) / 2
 
 /**
- * One clustering scored against one truth labelling.
+ * One clustering scored against one truth labeling.
  */
 export interface Score {
 	precision: number
@@ -30,11 +30,11 @@ export interface Score {
 }
 
 /**
- * Score recovered clusters against a truth labelling.
+ * Score recovered clusters against a truth labeling.
  *
  * Pairwise rather than set-matching: a true pair is two records carrying the same `labelOf`,
  * a predicted pair is two records in the same entity.
- * `totalRecords` is the labelled population and only feeds the adjusted-Rand expectation,
+ * `totalRecords` is the labeled population and only feeds the adjusted-Rand expectation,
  * so it must be the whole record set rather than the clustered subset — a smaller value inflates ARI.
  */
 export function scoreEntities(

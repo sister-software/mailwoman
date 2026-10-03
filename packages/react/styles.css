@@ -1,7 +1,7 @@
 /* ---------------------------------------------------------------------------
  * @mailwoman/react — component styles.
  *
- * Plain, `mw-`-prefixed classes. Every colour, family and radius here names a
+ * Plain, `mw-`-prefixed classes. Every color, family and radius here names a
  * SEMANTIC token from `tokens.css`, which this file requires a host to load —
  * `@mailwoman/react/tokens.css`, and `fonts.css` beside it for the brand face.
  * There are no inline fallbacks, on purpose: a fallback is what let eight
@@ -1000,7 +1000,7 @@
 
 	/*
 	 * Each segment is a column sized to max(text, tag), so a long tag under a short span widens the segment — which is
-	 * why `350 5th Ave` renders spread out. What it did not have was any space BETWEEN neighbouring tags, so the row
+	 * why `350 5th Ave` renders spread out. What it did not have was any space BETWEEN neighboring tags, so the row
 	 * read as one run-on word: `house_numberstreetstreet_suffix locality regionpostcode`. The padding separates the
 	 * tags and, because the segment sizes to the tag, spreads the text above them to match.
 	 */
@@ -1056,7 +1056,7 @@
 
 	/* #endregion */
 
-	/* #region Stage timing (TimingPanel) — a stacked bar by wall-clock, stage hues, never the confidence colours */
+	/* #region Stage timing (TimingPanel) — a stacked bar by wall-clock, stage hues, never the confidence colors */
 
 	.mw-timing {
 		margin: var(--space-5) 0;
@@ -1554,12 +1554,12 @@
 	/*
 	 * The close sits at the right of the grip bar.
 	 *
-	 * IN FLOW on the desktop column, where the bar has no handle to centre and therefore no height of its own. Taken
+	 * IN FLOW on the desktop column, where the bar has no handle to center and therefore no height of its own. Taken
 	 * out of flow there it reserved nothing, and a 44px button hanging from a 0px bar came down across the right end
 	 * of the search field below it — the overlap this whole panel was meant to end. In flow it carries the bar, and
 	 * the field starts under it.
 	 *
-	 * The phone rule below puts it back to absolute, where the handle is the bar and has to stay centred on the sheet
+	 * The phone rule below puts it back to absolute, where the handle is the bar and has to stay centered on the sheet
 	 * rather than on the space the close leaves, and where the target grows to a full 44px because the drawer is the
 	 * whole panel and this is the only way out of it.
 	 */
@@ -1898,7 +1898,7 @@
 	}
 
 	/*
-	 * The native clear button of `input[type="search"]`. Its COLOUR is the user agent's, decided by the document's
+	 * The native clear button of `input[type="search"]`. Its COLOR is the user agent's, decided by the document's
 	 * `color-scheme` — nothing here repaints it. Only the two things the scheme does not say are stated: that it is a
 	 * pointer target, and that it sits back until the field is under the pointer or holding focus.
 	 */

@@ -42,7 +42,7 @@ describe("checkConfounds", () => {
 	})
 
 	it("warns rather than refusing, so the comparison still returns", () => {
-		// The decided behaviour (spec §6.3).
+		// The decided behavior (spec §6.3).
 		// A refusal an agent cannot override is a reason to bypass the tool.
 		expect(() => checkConfounds({ a: 1 }, { a: 2, b: 3 }, ["a"])).not.toThrow()
 	})

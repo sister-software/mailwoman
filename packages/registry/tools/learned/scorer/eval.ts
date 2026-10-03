@@ -330,7 +330,7 @@ export async function scorerPairwiseEval(
 		`**ΔAUC (LR − FS): ${sgn(meanDelta)}${f4(meanDelta)} ± ${f4(std(deltas))}, LR > FS in ${lrWins}/${SEEDS} seeds.**`,
 		"",
 		`Robustness: the ΔAUC is small but **consistent** — std ${f4(std(deltas))} across seeds, SE ±${f4(seMean)} → ` +
-			`≈${zScore.toFixed(1)}σ above zero, ${lrWins}/${SEEDS} seeds in LR's favour. At the operating point the gap is ` +
+			`≈${zScore.toFixed(1)}σ above zero, ${lrWins}/${SEEDS} seeds in LR's favor. At the operating point the gap is ` +
 			`larger: **ΔF1 ${sgn(f1Delta * 100)}${(f1Delta * 100).toFixed(1)}pp** (${pct(mean(fsF1s)!)}% → ${pct(mean(lrF1s)!)}%), ` +
 			`because the interaction features sharpen the hard co-located band near the decision boundary even where overall ` +
 			`ranking barely moves.`,

@@ -93,7 +93,7 @@ describe("aggregateChunks", () => {
 		expect(aggregateChunks([chunk()]).area.witness).toBe("absent")
 	})
 
-	it("pools the defence-type census and orders it by count", () => {
+	it("pools the defense-type census and orders it by count", () => {
 		const result = aggregateChunks([
 			chunk({ defenceTypeCounts: [["Sheet piles", 1344]] }),
 			chunk({

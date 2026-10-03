@@ -116,7 +116,7 @@ A CE-only smoke run should meet these checks before the repair is accepted:
 
 If the smoke run passes those checks, promote it to a full 50K-step CE-only training run. Quality refinements such as class weights, source weights, and longer schedules can then be added. Under dual-loss they were unsafe because they amplified whichever loss already dominated.
 
-## What this technique generalises to
+## What this technique generalizes to
 
 The same diagnostic applies to any training setup that sums two loss terms with a hand-tuned weight and trains well before diverging sharply:
 
@@ -159,7 +159,7 @@ Voice B pulled the model away from the basin Voice A was guiding it toward. Voic
 
 One configuration line makes the change: `crf_loss_weight = 0.0`. The hand-encoded mask provides the structural guarantees. Transition-matrix training added no strength to those guarantees and conflicted with Voice A.
 
-### Three lessons that generalise
+### Three lessons that generalize
 
 1. **Two weighted losses can fail badly.** Two loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A loss-value multiplier does not balance their contributions to the optimizer.
 2. **Run cheap diagnostics first.** The gradient-norm probe took 5 minutes and answered a question that more than a month of retraining experiments had not. Exhaust the diagnostics that need no GPU before a retrain.

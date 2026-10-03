@@ -20,7 +20,7 @@ import { ORG_TAU, type NPIPrimary } from "#tools/nppes/org-name"
 export const COLOCATION_KM = 0.05
 
 /**
- * A truth labelling: the entity class a record belongs to.
+ * A truth labeling: the entity class a record belongs to.
  */
 export type TruthLabel = (rec: SourceRecord) => string
 

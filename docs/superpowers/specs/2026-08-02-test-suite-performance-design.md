@@ -32,7 +32,7 @@ as such; everything else is measured.
 | smoke     | `mailwoman-data` |      18s |      35s |    weights restore 54s |      67s |      192s |
 | **Σ**     |                  | **271s** | **171s** |                   173s |     358s | **1049s** |
 
-Wall-clock is `unit-slow` plus queueing. Install + compile is 442s — 42% of all machine-time — and
+Wall-clock is `unit-slow` plus queuing. Install + compile is 442s — 42% of all machine-time — and
 it is the same build performed five times on the same commit.
 
 ### One test file is the entire critical path
@@ -276,7 +276,7 @@ meaning less, which is the thing `test.yml`'s header explicitly refuses.
 96.6s across 14 tests; five in the pair-prior block each pay a full
 `loadFromWeights({locale: "en-gb"})` at 12–13s while varying only decode-time configuration
 (`placetypePair`, `pairIndexPath`, `transitionBeta`) rather than the session. Hoist the session for those;
-keep independent loads for the tests that are _about_ load behaviour — `resolveWeights` auto-resolve,
+keep independent loads for the tests that are _about_ load behavior — `resolveWeights` auto-resolve,
 the tolerant-loader paths, the error cases.
 
 The file contains no `vi.mock`, so the `isolate: false` reset interface documented in the root config
@@ -336,7 +336,7 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
 
 - `test.yml` green wall-clock ≤ 3m00s on a no-op PR, measured over three consecutive runs (not one).
   Projection from the per-step numbers is ~2m00–2m15s **without** (e1); the criterion is set at 3m00s
-  because job queueing and runner startup are not in that projection.
+  because job queuing and runner startup are not in that projection.
 - Hosted-leg install ≤ 30s on all three legs across those same three runs — the point is that the
   coin-flip is gone rather than that one run was fast. (e1) later tightens this to ≤ 15s.
 - `active_caches_size_in_bytes` < 8 GB.

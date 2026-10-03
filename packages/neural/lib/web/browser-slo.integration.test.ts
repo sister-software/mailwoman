@@ -149,8 +149,8 @@ const CANDIDATE_PROBE_KEYS = ["washington", "newyork", "cupertino", "anchorage",
 const CANDIDATE_PROBE_LIMIT = 8
 
 /**
- * Bytes per http range request, matching the demo's sql.js-httpvfs configuration
- * (16 SQLite pages at the candidate DB's 8 KiB page size); changing it changes
+ * Bytes per http range request, matching the demo's range-reader default
+ * (8 SQLite pages at the candidate DB's 8 KiB page size); changing it changes
  * the request count by construction.
  */
 const HTTPVFS_CHUNK_SIZE = 65_536
@@ -219,10 +219,14 @@ const haveBrowser = (await tryChromiumExecutable()) !== null
  */
 const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
 
-const SQLJS_ENTRY_FILE = await tryResolveFile("sql.js-httpvfs/dist/index.js")
+/**
+ * A locator for the sqlite-wasm runtime directory: the range worker imports `index.mjs`
+ * from it, and that module fetches `sqlite3.wasm` from beside itself.
+ */
+const SQLITE_RUNTIME_LOCATOR = await tryResolveFile("@sqlite.org/sqlite-wasm/sqlite3.wasm")
 const CANDIDATE_DB_PATH = databaseRootPath(dataRootPath())("wof", "candidate.db")
 
-const haveGazetteer = SQLJS_ENTRY_FILE !== null && (await pathExists(CANDIDATE_DB_PATH))
+const haveGazetteer = SQLITE_RUNTIME_LOCATOR !== null && (await pathExists(CANDIDATE_DB_PATH))
 const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null
 
 /**
@@ -328,7 +332,7 @@ interface RangeSpec {
 /**
  * Parse a single-range `Range: bytes=a-b` header.
  *
- * Multi-range is deliberately unimplemented because sql.js-httpvfs never asks for one
+ * Multi-range is deliberately unimplemented because the range reader never asks for one
  * and half-answering a shape we do not serve would corrupt the measurement.
  */
 function parseRange(header: string | undefined, size: number): RangeSpec | null {
@@ -532,13 +536,10 @@ interface BrowserSLOAPI {
 }
 
 /**
- * One open sql.js-httpvfs database, as its UMD hands it back.
+ * The part of the range reader's database handle this probe calls.
  */
-interface HTTPVFSHandle {
-	db: {
-		exec(sql: string): Promise<unknown>
-		query(sql: string, params: unknown[]): Promise<unknown[]>
-	}
+interface RangeDatabaseHandle {
+	query(sql: string, parameters: unknown[]): Promise<unknown[]>
 }
 
 declare global {
@@ -553,17 +554,29 @@ declare global {
 	var mwSLO: BrowserSLOAPI
 
 	/**
-	 * The sql.js-httpvfs UMD's own entry point.
-	 *
-	 * The lowercase `b` in `Db` is that library's export name rather than ours.
+	 * The range reader's opener, which `/gazetteer.js` installs.
 	 */
 	// oxlint-disable-next-line no-var -- see above.
-	var createDbWorker: (
-		configs: ReadonlyArray<Record<string, unknown>>,
-		workerURL: string,
-		wasmURL: string
-	) => Promise<HTTPVFSHandle>
+	var openRangeDatabase: (
+		databaseURL: string,
+		runtimeBaseURL: string,
+		options: { chunkSize: number }
+	) => Promise<RangeDatabaseHandle>
 }
+
+/**
+ * The gazetteer page's script: the shipped opener, installed on the global for `page.evaluate`.
+ */
+const GAZETTEER_ENTRY_SOURCE = [
+	'import { openRangeDatabase } from "@mailwoman/resolver-wof-wasm/httpvfs/database"',
+	"",
+	"globalThis.openRangeDatabase = openRangeDatabase",
+].join("\n")
+
+/**
+ * The shipped worker script, bundled to the one file a host stages beside the sqlite-wasm runtime.
+ */
+const RANGE_WORKER_ENTRY_SOURCE = 'import "@mailwoman/resolver-wof-wasm/httpvfs/range-worker"'
 
 const BROWSER_ENTRY_SOURCE = [
 	'import * as ort from "onnxruntime-web/webgpu"',
@@ -675,9 +688,9 @@ const BROWSER_ENTRY_SOURCE = [
 	"}",
 ].join("\n")
 
-async function bundleBrowserEntry(resolveDir: string): Promise<Buffer> {
+async function bundleBrowserEntry(contents: string, sourcefile: string, resolveDir: string): Promise<Buffer> {
 	const result = await build({
-		stdin: { contents: BROWSER_ENTRY_SOURCE, resolveDir, sourcefile: "browser-slo-entry.ts", loader: "ts" },
+		stdin: { contents, resolveDir, sourcefile, loader: "ts" },
 		bundle: true,
 		format: "esm",
 		platform: "browser",
@@ -692,7 +705,7 @@ async function bundleBrowserEntry(resolveDir: string): Promise<Buffer> {
 
 	const output = result.outputFiles[0]
 
-	if (!output) throw new Error("esbuild produced no output for the browser SLO entry")
+	if (!output) throw new Error(`esbuild produced no output for ${sourcefile}`)
 
 	return Buffer.from(output.contents)
 }
@@ -743,7 +756,9 @@ const INDEX_HTML =
 	'<!doctype html><meta charset="utf-8"><title>mailwoman browser SLO</title><script type="module" src="/app.js"></script>'
 
 const GAZETTEER_HTML =
-	'<!doctype html><meta charset="utf-8"><title>mailwoman gazetteer probe</title><script src="/sqljs/index.js"></script>'
+	'<!doctype html><meta charset="utf-8"><title>mailwoman gazetteer probe</title><script type="module" src="/gazetteer.js"></script>'
+
+const SQLITE_RUNTIME_PREFIX = "/sqlite/"
 
 const MODEL_FILENAME = "model.onnx"
 const TOKENIZER_FILENAME = "tokenizer.model"
@@ -776,7 +791,7 @@ function classifyWeightsFile(fileName: string): AssetClass {
 
 async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promise<Measurement> {
 	const weightsDirectory = dirname(resolved.modelPath)
-	const appBundle = await bundleBrowserEntry(BUNDLE_RESOLVE_DIR)
+	const appBundle = await bundleBrowserEntry(BROWSER_ENTRY_SOURCE, "browser-slo-entry.ts", BUNDLE_RESOLVE_DIR)
 
 	const inlineRoutes = new Map<string, InlineRoute>([
 		["/", { body: Buffer.from(INDEX_HTML), contentType: "text/html; charset=utf-8", assetClass: "runtimeJS" }],
@@ -792,8 +807,28 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 		{ prefix: "/weights/", directory: weightsDirectory, classify: classifyWeightsFile },
 	]
 
-	if (SQLJS_ENTRY_FILE) {
-		mounts.push({ prefix: "/sqljs/", directory: dirname(SQLJS_ENTRY_FILE), classify: () => "sqliteRuntime" })
+	if (SQLITE_RUNTIME_LOCATOR) {
+		const javascript = "text/javascript; charset=utf-8"
+
+		inlineRoutes.set("/gazetteer.js", {
+			body: await bundleBrowserEntry(GAZETTEER_ENTRY_SOURCE, "gazetteer-entry.ts", BUNDLE_RESOLVE_DIR),
+			contentType: javascript,
+			assetClass: "sqliteRuntime",
+		})
+
+		// An inline route is matched before a mount, so the bundled worker is served from the same
+		// directory as the runtime files the mount below provides, which is the layout a host stages.
+		inlineRoutes.set(`${SQLITE_RUNTIME_PREFIX}range-worker.js`, {
+			body: await bundleBrowserEntry(RANGE_WORKER_ENTRY_SOURCE, "range-worker-entry.ts", BUNDLE_RESOLVE_DIR),
+			contentType: javascript,
+			assetClass: "sqliteRuntime",
+		})
+
+		mounts.push({
+			prefix: SQLITE_RUNTIME_PREFIX,
+			directory: dirname(SQLITE_RUNTIME_LOCATOR),
+			classify: () => "sqliteRuntime",
+		})
 	}
 
 	const rangeMount: RangeMount | null = haveGazetteer
@@ -846,8 +881,8 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 	const gazetteer = rangeMount ? await measureGazetteer(browser, server, rangeMount.path) : null
 
 	// The byte table is snapshotted here rather than after the explicit fetches:
-	// onnxruntime-web pulls its `.wasm` during session creation. sql.js-httpvfs pulls
-	// its worker and wasm when the gazetteer page opens.
+	// onnxruntime-web pulls its `.wasm` during session creation.
+	// The range reader pulls its worker and wasm when the gazetteer database opens.
 	// An earlier snapshot would report zero bytes for both classes and imply this session downloads no wasm.
 	// Everything after this line is deliberately excluded: a second session on the
 	// WebGPU arm re-fetches artifacts a cold user session pays for once.
@@ -918,33 +953,32 @@ async function measureGazetteer(browser: Browser, server: AssetServer, dbPath: s
 	await using page = await browser.newPage()
 
 	await page.goto(`${server.origin}/gazetteer.html`)
-	await page.waitForFunction(() => typeof globalThis.createDbWorker === "function")
+	await page.waitForFunction(() => typeof globalThis.openRangeDatabase === "function")
 	const before = server.snapshot().gazetteerRanges
 
 	const result = await page.evaluate(
 		async (args) => {
-			const config = { serverMode: "full", url: args.dbURL, requestChunkSize: args.chunkSize }
 			const startedAt = performance.now()
 
-			const opened = await globalThis.createDbWorker([{ from: "inline", config }], args.workerURL, args.wasmURL)
-
-			// Force SQLite to read the header and schema pages.
+			// The opener reads the header and schema pages before it resolves.
 			// The measured "open" cost then includes the worker startup, wasm load
 			// and first range fetches required to reach a queryable database.
-			await opened.db.exec("SELECT count(*) FROM sqlite_master")
+			const database = await globalThis.openRangeDatabase(args.dbURL, args.runtimeBaseURL, {
+				chunkSize: args.chunkSize,
+			})
+
 			const readyAt = performance.now()
 			const rows: number[] = []
 
 			for (const key of args.keys) {
-				rows.push((await opened.db.query(args.sql, [key])).length)
+				rows.push((await database.query(args.sql, [key])).length)
 			}
 
 			return { openMs: readyAt - startedAt, probeMs: performance.now() - readyAt, rows }
 		},
 		{
 			dbURL: `${server.origin}${dbPath}`,
-			workerURL: `${server.origin}/sqljs/sqlite.worker.js`,
-			wasmURL: `${server.origin}/sqljs/sql-wasm.wasm`,
+			runtimeBaseURL: `${server.origin}${SQLITE_RUNTIME_PREFIX}`,
 			chunkSize: HTTPVFS_CHUNK_SIZE,
 			keys: [...CANDIDATE_PROBE_KEYS],
 			sql: CANDIDATE_PROBE_SQL,
@@ -981,7 +1015,7 @@ function initRow(label: string, arm: ArmInit, budget: number): string {
 }
 
 function gazetteerRows(gazetteer: GazetteerMeasurement | null): string[] {
-	if (!gazetteer) return ["      NOT MEASURED — candidate.db or the sql.js-httpvfs runtime is absent"]
+	if (!gazetteer) return ["      NOT MEASURED — candidate.db or the sqlite-wasm runtime is absent"]
 	const mebibytes = (gazetteer.bytes / BYTES_PER_MEBIBYTE).toFixed(2)
 
 	return [
@@ -1031,7 +1065,7 @@ function formatReceipt(m: Measurement): string {
 		`  3 warm inference — wasm arm, 1 thread, ${m.wasmWarm.samples} parses over ${WARM_INPUTS.length} inputs (${WARM_LOWERCASE_INPUTS} lowercase)`,
 		`      p50 ${m.wasmWarm.p50.toFixed(1)} ms   p95 ${m.wasmWarm.p95.toFixed(1)} ms   budget p50 ${WARM_P50_WASM_MS_BUDGET} / p95 ${WARM_P95_WASM_MS_BUDGET}`,
 		"",
-		"  4 resolve — candidate.db over sql.js-httpvfs",
+		"  4 resolve — candidate.db over the sqlite-wasm range reader",
 		...gazetteerRows(m.gazetteer),
 		"",
 		`  5 peak JS heap    ${heapMiB} MiB   budget ${heapBudgetMiB} MiB${heapNote}`,
@@ -1090,9 +1124,9 @@ describe.skipIf(!canRun)("#378 browser SLO — decomposed cold path", () => {
 		expect(measurement.download.evidence.rawBytes).toBeLessThanOrEqual(EVIDENCE_RAW_BYTES_BUDGET)
 	})
 
-	test("1 · cold download — sql.js-httpvfs runtime bytes", (ctx) => {
+	test("1 · cold download — sqlite-wasm runtime bytes", (ctx) => {
 		if (!haveGazetteer) {
-			ctx.skip("the sql.js-httpvfs runtime is not installed")
+			ctx.skip("candidate.db or the sqlite-wasm runtime is absent")
 
 			return
 		}
@@ -1132,7 +1166,7 @@ describe.skipIf(!canRun)("#378 browser SLO — decomposed cold path", () => {
 
 	test("4 · resolve — candidate.db range-fetch count", (ctx) => {
 		if (!measurement.gazetteer) {
-			ctx.skip("candidate.db or the sql.js-httpvfs runtime is absent")
+			ctx.skip("candidate.db or the sqlite-wasm runtime is absent")
 
 			return
 		}

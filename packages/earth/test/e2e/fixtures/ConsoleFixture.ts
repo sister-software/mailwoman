@@ -59,9 +59,9 @@ export class ConsoleFixture {
 			wireBaseURL()
 			const url = req.url()
 
-			// Only capture failures we care about — first-party assets and the staged sql.js runtime.
+			// Only capture failures we care about — first-party assets and the staged SQLite runtime.
 			// Third-party CDN flakiness shouldn't fail the suite.
-			if (!url.includes(this.#baseHost) && !url.includes("/sqljs/")) return
+			if (!url.includes(this.#baseHost) && !url.includes("/sqlite/")) return
 			const err = req.failure()?.errorText ?? "unknown"
 
 			this.events.push({

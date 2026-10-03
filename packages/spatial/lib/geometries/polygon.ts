@@ -101,7 +101,7 @@ export function pointInRing(lon: number, lat: number, ring: ContainmentRing): bo
 
 /**
  * Even-odd containment over a polygon's ring list (`[outer, hole₁, …]`), independent of
- * ring winding order because the gazetteer sources do not honour it reliably.
+ * ring winding order because the gazetteer sources do not honor it reliably.
  */
 export function pointInPolygon(lon: number, lat: number, rings: PolygonRings): boolean {
 	let inside = false

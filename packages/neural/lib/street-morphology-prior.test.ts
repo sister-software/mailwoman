@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the street-morphology emission bias function. Asserts the two-pass behaviour:
+ *   Unit tests for the street-morphology emission bias function. Asserts the two-pass behavior:
  *   matched affix tokens get positive bias on street_prefix/street_suffix. adjacent name tokens get
  *   positive bias on street and negative bias on dependent_locality.
  */
@@ -96,7 +96,7 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 		expect(fifthRow[labelCol("B-dependent_locality")]!).toBeLessThan(0)
 	})
 
-	it("biases neighbours on BOTH sides of an affix span", () => {
+	it("biases neighbors on BOTH sides of an affix span", () => {
 		const fst = mockAffixFST(["rue"])
 		const pieces = makePieces("123 rue cassette") // matched: pieces[1], adjacent before+after
 		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS)

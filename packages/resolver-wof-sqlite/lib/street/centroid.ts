@@ -48,7 +48,7 @@ const AGG_SELECT =
 	"MAX(source) AS source, MAX(release) AS release"
 
 /**
- * Half the bounding-box diagonal in metres, used as a coarse uncertainty radius for a street centroid.
+ * Half the bounding-box diagonal in meters, used as a coarse uncertainty radius for a street centroid.
  */
 function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: number): number {
 	return Math.round(haversineKm(minLat, minLon, maxLat, maxLon) * 500)

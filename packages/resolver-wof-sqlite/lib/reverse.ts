@@ -106,7 +106,7 @@ export interface ReverseGeocodeOpts {
 	 * Default: every admin placetype in the gazetteer.
 	 * E.g.
 	 *
-	 * `["region", "county", "locality"]` to skip the neighbourhood grain.
+	 * `["region", "county", "locality"]` to skip the neighborhood grain.
 	 */
 	placetypes?: WOFPlacetype[]
 	/**
@@ -115,7 +115,7 @@ export interface ReverseGeocodeOpts {
 	 * The default is 128.
 	 * Current measurements show that this covers a dense metro.
 	 *
-	 * The most bbox-overlapping point we have measured is a few dozen neighbourhoods plus the admin chain.
+	 * The most bbox-overlapping point we have measured is a few dozen neighborhoods plus the admin chain.
 	 */
 	maxCandidates?: number
 	/**

@@ -4,18 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   Unit tests for the `WOFCandidateTableLookup` postal-city side-index probe in the browser
- *   candidate lookup, against a node:sqlite-backed stub worker that mimics sql.js-httpvfs's
- *   `db.exec` interface.
+ *   candidate lookup, against a node:sqlite-backed stub of the range-read database handle.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { createRequire, resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
 import { WOFCandidateTableLookup } from "#httpvfs/resolver"
-import { registerOpenDatabases, stubWorker, trackDatabase } from "#test/httpvfs-stub-worker"
+import { registerOpenDatabases, stubRangeDatabase, trackDatabase } from "#test/range-database-stub"
 
 registerOpenDatabases()
 
@@ -53,7 +50,7 @@ function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
 
 describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => {
 	test("WITH the side-index, a postal-city + postcode resolves to the geographic locality", async () => {
-		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(true)))
+		const lk = new WOFCandidateTableLookup(stubRangeDatabase(makeDB(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		expect(hits).toHaveLength(1)
 		expect(hits[0]!.name).toBe("Nashville")
@@ -62,40 +59,21 @@ describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => 
 	})
 
 	test("a BARE query (no postcode) is untouched — bare 'Antioch' resolves to the CA distractor", async () => {
-		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(true)))
+		const lk = new WOFCandidateTableLookup(stubRangeDatabase(makeDB(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
 		expect(hits[0]!.lat).toBeCloseTo(38, 1)
 	})
 
 	test("a postcode NOT in the side-index falls through to the normal probe", async () => {
-		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(true)))
+		const lk = new WOFCandidateTableLookup(stubRangeDatabase(makeDB(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "99999", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
 	})
 
 	test("a candidate.db WITHOUT the side-index is byte-stable (today's production demo)", async () => {
-		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(false)))
+		const lk = new WOFCandidateTableLookup(stubRangeDatabase(makeDB(false)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
-	})
-})
-
-describe("sql.js-httpvfs external-name interface (the batch-B casing incident)", () => {
-	// `createDbWorker` is an external library export, so the acronym convention does not apply.
-	test("the library actually exports `createDbWorker` (lowercase b)", async () => {
-		const require = createRequire(import.meta.url)
-		const umd = require("sql.js-httpvfs/dist/index.js") as Record<string, unknown>
-
-		expect(typeof umd.createDbWorker).toBe("function")
-	})
-
-	test("the loader references the library's own casing and never the house-cased variant", async () => {
-		const source = await readLocalTextFile(
-			resolvePackagePath("@mailwoman/resolver-wof-wasm", "lib", "httpvfs", "resolver.ts")
-		)
-
-		expect(source).toContain("createDbWorker")
-		expect(source).not.toContain("createDBWorker")
 	})
 })

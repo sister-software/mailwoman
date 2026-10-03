@@ -12,9 +12,9 @@ tags:
 A useful intuition guides Mailwoman's corpus-coverage work: as we add training
 signal for the address components we've been _missing_ (`unit`, the street
 affixes, and more), the model gets better at the components we already handle —
-as well as the new ones. The reason is that a sequence labeller learns a tag by its
+as well as the new ones. The reason is that a sequence labeler learns a tag by its
 **boundaries**, so teaching it what a token _isn't_ is how it learns what the
-neighbours _are_. (One caveat that the campaign earned the hard way: this logic
+neighbors _are_. (One caveat that the campaign earned the hard way: this logic
 applies to tags the model must learn from context rather than to every starved tag —
 see [Two kinds of starved tag](#two-kinds-of-starved-tag--and-why-the-model-handles-both)
 at the end.)
@@ -48,7 +48,7 @@ This is not hypothetical for us. The v0-parity assessment caught it directly:
 `street` is acting as a garbage collector for everything on the road line. The
 moment `unit` becomes a trained category, those tokens have a home: their
 probability mass moves off `street` and onto `unit`, and `street` gets sharper as
-a _side effect_ — we improved a tag by teaching its neighbours.
+a _side effect_ — we improved a tag by teaching its neighbors.
 
 ## The caveat
 
@@ -69,7 +69,7 @@ and whether anything regressed — rather than assuming it.
 
 ## Two kinds of starved tag — and why the model handles both
 
-Negative space tells you _which_ tags are taxing their neighbours; it doesn't tell
+Negative space tells you _which_ tags are taxing their neighbors; it doesn't tell
 you the only way to cover them is more rows of the same shape. The parity campaign
 surfaced two shapes of starved tag — but the conclusion is that **the model stays
 the authority for both**; the difference is only what kind of help it needs.

@@ -160,7 +160,7 @@ if (values.missing) {
 } else {
 	console.log(`# Completion per postal jurisdiction\n`)
 	console.log(
-		`${n} jurisdictions: ${Object.values(CountryISO2).length} ISO 3166-1 alpha-2 codes plus ${SUB_JURISDICTIONS.length} modelled separately.`
+		`${n} jurisdictions: ${Object.values(CountryISO2).length} ISO 3166-1 alpha-2 codes plus ${SUB_JURISDICTIONS.length} modeled separately.`
 	)
 	console.log(
 		`Corpus census taken ${report.corpusCensusTakenAt ?? "this run"}; config ${configPath} (${config.provenance}).\n`

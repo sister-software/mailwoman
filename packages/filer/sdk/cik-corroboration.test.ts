@@ -102,7 +102,7 @@ describe("corroborateCIK — abstention is not denial", () => {
 })
 
 describe("the allowlist itself", () => {
-	it("is enumerated, not a 48xx prefix test — 4899 is in, 4813 is in, 4899's neighbours are not", () => {
+	it("is enumerated, not a 48xx prefix test — 4899 is in, 4813 is in, 4899's neighbors are not", () => {
 		expect(TELECOM_SIC_CODES.has("4813")).toBe(true)
 		expect(TELECOM_SIC_CODES.has("4899")).toBe(true)
 		// A 48xx prefix rule would accept these codes.

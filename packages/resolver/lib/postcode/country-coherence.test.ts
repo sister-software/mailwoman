@@ -1093,7 +1093,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		expect(nodeByTag(out, "locality")?.metadata?.["resolver_country"]).toBe("US")
 	})
 
-	it("honours a custom check radius", async () => {
+	it("honors a custom check radius", async () => {
 		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {

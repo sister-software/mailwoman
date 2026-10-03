@@ -34,7 +34,7 @@ Petersburg     → I-locality
 FL             → B-region
 ```
 
-The span "Saint Petersburg" is signalled by one `B-locality` followed by one `I-locality`. The decoder reconstructs the span by walking the labels: when it sees `B-X`, it starts a new span; while it keeps seeing `I-X` with a matching tag, it extends the span; on `O` or a different tag, it closes the span.
+The span "Saint Petersburg" is signaled by one `B-locality` followed by one `I-locality`. The decoder reconstructs the span by walking the labels: when it sees `B-X`, it starts a new span; while it keeps seeing `I-X` with a matching tag, it extends the span; on `O` or a different tag, it closes the span.
 
 ## The full Mailwoman vocabulary
 

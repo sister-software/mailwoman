@@ -43,7 +43,7 @@ In v0.4.0's case, 92% of the country false-negatives were adversarial transliter
 サーモポリス, WY, United States of America              →  pred: ", WY, United State"
 ```
 
-The model was never trained to handle these cases. The v0.4.0 weights didn't change the behaviour on this subset — the regression was the golden set holding v0.4.0 accountable for v0.3.0's known failure modes. After excluding adversarial inputs, country false-negatives dropped from 194 to roughly 16.
+The model was never trained to handle these cases. The v0.4.0 weights didn't change the behavior on this subset — the regression was the golden set holding v0.4.0 accountable for v0.3.0's known failure modes. After excluding adversarial inputs, country false-negatives dropped from 194 to roughly 16.
 
 **The discipline:** report F1 both with and without the known-adversarial sets. The "with" number is the conservative ceiling; the "without" number is the signal for whether the recipe changed anything real.
 

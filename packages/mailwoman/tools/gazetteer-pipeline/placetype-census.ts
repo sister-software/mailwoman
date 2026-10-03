@@ -10,7 +10,7 @@
  *   projection.
  *
  *   The census counts what the source can actually answer. `admin-global-priority.db` contains nine
- *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
+ *   placetypes (locality, localadmin, neighborhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
  *   those. The projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
  *   artifact by build recipe rather than by WOF's contents. This is coverage rather than fact (the

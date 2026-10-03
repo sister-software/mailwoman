@@ -158,7 +158,7 @@ console.log(
 console.log(
 	`\nThe stages are not one pipeline. \`licensed\`, \`addressRole\` and \`coverage\` describe the source register's ` +
 		`researched sources; \`corpusRows\`, \`admitted\` and \`sampled\` describe the training corpus, which is fed by ` +
-		`adapters and carries its own per-row licence. The two populations overlap without matching, so a jurisdiction ` +
+		`adapters and carries its own per-row license. The two populations overlap without matching, so a jurisdiction ` +
 		`holds both readings at once rather than passing from one into the other.`
 )
 

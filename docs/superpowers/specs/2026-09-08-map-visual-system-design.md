@@ -28,7 +28,7 @@ string: `--ifm-font-color-base`, `--ifm-color-emphasis-400`, `--ifm-color-succes
 value, so `.mw-subject__badge` paints `#92400e` on a translucent amber and `.mw-subject__badge--brand`
 paints `#14657d` on translucent cyan, both inside a dark app.
 
-### The control panel is light because a Docusaurus selector travelled with it
+### The control panel is light because a Docusaurus selector traveled with it
 
 `packages/earth/lib/panels/geocoder.module.css:22` sets `background: rgba(255, 255, 255, 0.85)`. The dark
 rule beneath it is scoped `:global([data-theme="dark"])`. Neither `packages/earth/lib/` nor

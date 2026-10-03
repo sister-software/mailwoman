@@ -119,7 +119,7 @@ describe("scoreEntities", () => {
 		expect(s.splitNpis).toBe(1)
 	})
 
-	it("reads the labelled population from totalRecords, so a wrong count moves ARI", () => {
+	it("reads the labeled population from totalRecords, so a wrong count moves ARI", () => {
 		const entities = [entity("e1", [record("a-1"), record("a-2"), record("b-1")])]
 
 		expect(scoreEntities(entities, npiLabel, 3).ari).not.toBe(scoreEntities(entities, npiLabel, 30).ari)

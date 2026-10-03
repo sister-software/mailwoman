@@ -174,7 +174,7 @@ export function sweepSentence(sentence: string): string {
 }
 
 /**
- * Capitalise a sentence that opens in lower case.
+ * Capitalize a sentence that opens in lower case.
  *
  * `mailwoman/comment-reflow` needs a sentence to recognize it.
  */

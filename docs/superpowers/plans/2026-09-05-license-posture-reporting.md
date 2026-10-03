@@ -188,7 +188,7 @@ describe("buildEngineStamp", () => {
 		}
 	})
 
-	it("honours a configured docs URL", () => {
+	it("honors a configured docs URL", () => {
 		const stamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, docsURL: "http://localhost:3000/" })
 
 		expect(stamp.license_url).toBe("http://localhost:3000/license")

@@ -158,7 +158,7 @@ describe("a lookup returning several hits", () => {
 	})
 })
 
-describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearization)", () => {
+describe("ANCHOR_SEPARATOR split behavior (byte-identical across the linearization)", () => {
 	const SUBJECTS = new Set(["cafe", "gas station", "hotel", "atm", "trails", "x"])
 
 	const subjectLookup: POIPhraseLookup = (phrase) => {

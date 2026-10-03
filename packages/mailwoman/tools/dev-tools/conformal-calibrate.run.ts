@@ -143,7 +143,7 @@ interface StreetHit {
 	lat: number
 	lon: number
 	/**
-	 * Claimed uncertainty radius in metres (10 m floor for situs, uncertainty_m for interp).
+	 * Claimed uncertainty radius in meters (10 m floor for situs, uncertainty_m for interp).
 	 */
 	claimedRadiusM: number
 }

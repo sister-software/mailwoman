@@ -164,7 +164,7 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
 /**
  * Google's `location_type` → mailwoman's `ResolutionTier`.
  *
- * `GEOMETRIC_CENTER` is ambiguous — the centre of "a polyline (for example, a street)
+ * `GEOMETRIC_CENTER` is ambiguous — the center of "a polyline (for example, a street)
  * or polygon (region)" spans both `street` and `admin` — so a `route` in the result's
  * own `types` identifies a street and everything else reports `admin`.
  *

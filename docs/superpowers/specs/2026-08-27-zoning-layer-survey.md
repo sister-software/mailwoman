@@ -336,7 +336,7 @@ rural counties. All measured **2026-08-27**.
 | **City of Houston TX**  | **no — no zoning ordinance**            |                   — | —               | —                    | contradictory metadata                              |
 | Maricopa County AZ      | yes, unincorporated only                |              10,160 | `ZONE`          | **none**             | **commercial use prohibited**                       |
 | City of Phoenix AZ      | yes                                     |               9,651 | `ZONING`        | `GEN_ZONE` coarse    | redistribution granted                              |
-| King County WA          | yes, unincorporated only                |               5,312 | `CURRZONE`      | **none**             | **no redistribution without written authorisation** |
+| King County WA          | yes, unincorporated only                |               5,312 | `CURRZONE`      | **none**             | **no redistribution without written authorization** |
 | City of Seattle WA      | yes                                     |               3,627 | `ZONING`        | `ZONING_DESC`        | **PDDL — the only open license found**              |
 | Mecklenburg County NC   | yes                                     |                 977 | `zone_des`      | none                 | disclaimer only                                     |
 | City of Charlotte NC    | yes                                     |               5,689 | `ZoneDes`       | `ZoneClass`          | disclaimer only                                     |
@@ -390,7 +390,7 @@ its adopted subdivision regulations extract to 311,117 characters with **zero oc
    liability disclaimers that make no statement about copying, which leaves reuse governed by default copyright.
 2. **City and county terms contradict each other inside one metropolitan area.** Phoenix grants
    redistribution while Maricopa County forbids commercial use; Seattle dedicates to the public domain
-   while King County requires written authorisation. There is no metro-level answer.
+   while King County requires written authorization. There is no metro-level answer.
 3. **County layers are unincorporated-only and never nested.** Proven for Maricopa by a
    `returnDistinctValues` on `JURIS`, which returns exactly `['COUNTY']`. Countywide coverage means
    unioning every municipality separately.
@@ -398,7 +398,7 @@ its adopted subdivision regulations extract to 311,117 characters with **zero oc
    The zoning code appears as `ZONE`, `ZONING`, `ZONE_CLASS`, `ZoneID`, `CURRZONE`, `ZoneDes`, `zone_des`,
    `Zone1`, `Zone_Code`, `Code`, `ZONING_CODE`, `Zone_Type`, `orZCode`, `GENZONE`, `ludcode` and
    `source_zone`. **Chicago, Maricopa, King County, Fargo, Bannock, Screven and Sumter ship codes with
-   no table to expand them** — §4.2's verbatim-code rule is the only thing that can be honoured there.
+   no table to expand them** — §4.2's verbatim-code rule is the only thing that can be honored there.
 5. **Prose vintage disagrees with data vintage, and the prose is the stale half.** Los Angeles County's
    description says "last updated through 12/16/14" while its own `Date_Updated` column measures
    2024-11-08 to 2026-08-12. Oregon's description claims 229 jurisdictions against 245 measured.
@@ -499,7 +499,7 @@ found by sampling a catalogue that could not count (§2.6) rather than by lookin
 
 **The product.** _Generalised Zoning Types (GZT)_, published by the **Department of Housing, Local
 Government and Heritage** for the MyPlan.ie project. Two feature layers on the Department's own ArcGIS
-Online organisation (`orgId` `NzlPQPKn5QF9v2US`, owner `GZT_curator`):
+Online organization (`orgId` `NzlPQPKn5QF9v2US`, owner `GZT_curator`):
 
 - `GZT Current Plan` — item `5c2608ebedd84013aaeff8bf669e8596`, service
   [`.../GZT_Current_Plan/FeatureServer/0`](https://services.arcgis.com/NzlPQPKn5QF9v2US/arcgis/rest/services/GZT_Current_Plan/FeatureServer/0),
@@ -605,7 +605,7 @@ https://hub.arcgis.com/api/download/v1/items/5c2608ebedd84013aaeff8bf669e8596/ge
 downloaded file run x ≈ 701,873–730,724 and y ≈ 735,435–766,394 — Irish Transverse Mercator meters. The
 file carries a top-level `"crs": {"type":"name","properties":{"name":"EPSG:2157"}}`. RFC 7946 specifies
 WGS84 and **removed the `crs` member**, so a strict reader ignores it and places Ireland's zoning at
-latitude 735,435. A reader that honours the legacy member (GDAL does) is fine. Use `outSR=4326` on the
+latitude 735,435. A reader that honors the legacy member (GDAL does) is fine. Use `outSR=4326` on the
 query path, or reproject and check that every output coordinate falls inside the Department's declared bounding box.
 
 **(b) Holes are encoded by ring ORIENTATION rather than by nesting — and this one changes point-in-polygon
@@ -613,7 +613,7 @@ answers.** Measured on the largest feature, `OBJECTID` 17175, Meath's `RA - Rura
 
 - The export gives it as a `MultiPolygon` of **107 parts, each with exactly one ring and zero nested
   interior rings**.
-- Signed ring areas: **5 clockwise totalling −2,306.8 km², 102 counter-clockwise totalling +74.7 km²**.
+- Signed ring areas: **5 clockwise totaling −2,306.8 km², 102 counter-clockwise totaling +74.7 km²**.
 - The signed sum is **−2,232.1 km²**, matching the Department's own `Shape__Area` of **2,232.1 km²** to
   the tenth of a square kilometer. The absolute sum is 2,381.4 km².
 
@@ -746,12 +746,12 @@ Reg. 1089/2010 Annex IV §4.8(1):
 > Hierarchical INSPIRE Land Use Classification System (HILUCS) at the most appropriate and detailed level
 > of the hierarchy."
 
-**And it is a one-way generalisation rather than a crosswalk.** Three facts settle that, and each is from the
+**And it is a one-way generalization rather than a crosswalk.** Three facts settle that, and each is from the
 binding text or the specification:
 
 1. **The national category is voidable.** In the `ZoningElement` attribute table, `hilucsLandUse` is
    mandatory while **`specificLandUse` — "Land Use Category according to the nomenclature specific to
-   this data set" — is `voidable`**. A conforming dataset may carry the harmonised code and omit the
+   this data set" — is `voidable`**. A conforming dataset may carry the harmonized code and omit the
    local one.
 2. **The EU-side code list for national categories is empty by design.** `LandUseClassificationValue`,
    verbatim: "This CodeList is **empty in the INSPIRE context** and must be extended by each data
@@ -1791,6 +1791,6 @@ path:
    harvester checking status codes alone records healthy endpoints and ingests no data.**
 9. **A statewide layer can score 100 % on jurisdictions and hold no zoning at all.** New Jersey's
    "Municipal Zoning" has one row per municipality and the rows are hyperlinks to PDFs.
-10. **An owner name is not an organisation identifier.** A catalogue search for `owner:COHGIS`
+10. **An owner name is not an organization identifier.** A catalogue search for `owner:COHGIS`
     returns the City of Hyattsville, Maryland. A false lead that would produce a confident wrong answer
     about Houston.

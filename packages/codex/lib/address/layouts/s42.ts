@@ -57,7 +57,7 @@ export const S42_LAYOUT_RECORDS: Readonly<Record<string, S42LayoutRecord>> = {
 		sampleSize: 57,
 		postcode: "absent",
 		unexpressed: [
-			"district lev 2 pos 1, the ward, which has no tag distinct from the neighbourhood",
+			"district lev 2 pos 1, the ward, which has no tag distinct from the neighborhood",
 			"del serv qualifier, the post office name, printed on its own line above the town",
 			"prem id pos 1, the plot or portion number, printed on its own line above the street",
 		],

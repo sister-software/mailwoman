@@ -151,7 +151,7 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 			out.push(ring[i]!)
 		}
 
-	// A degenerate ring (<4 pts after simplify) can't render — drop it by signalling null.
+	// A degenerate ring (<4 pts after simplify) can't render — drop it by signaling null.
 	return out.length >= MIN_CLOSED_RING_VERTICES ? out : null
 }
 

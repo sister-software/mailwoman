@@ -65,7 +65,7 @@ const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 			`archive md5 ${result.archiveMD5}`,
 			result.mismatches.length ? `CHECK VIOLATIONS: ${result.mismatches.join(" · ")}` : "every check holds",
 			NSUL_COVERAGE_NOTE,
-			"licence + the four NSUL attribution statements in the layer manifest",
+			"license + the four NSUL attribution statements in the layer manifest",
 			result.sealed ? "sealed 0444" : "NOT SEALED",
 			`${(result.durationMs / 1000).toFixed(0)} s`,
 		]

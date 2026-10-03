@@ -48,7 +48,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("it-anac against data.open-contracting.org"
 	)
 
 	it(
-		"leaves a directory `createITANACAdapter` reads, under the licence the register elected",
+		"leaves a directory `createITANACAdapter` reads, under the license the register elected",
 		async () => {
 			await using scratch = await temporaryDirectory("mailwoman-it-anac-live-")
 			await using client = new APIClient({ displayName: "it-anac integration", retry: true })

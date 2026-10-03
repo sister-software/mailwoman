@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Assemble a sampled, component-labeled Australian address set from G-NAF (the Geocoded National
- * Address File, Geoscape Australia, Open G-NAF licence). Any derived artifact must attribute
+ * Address File, Geoscape Australia, Open G-NAF license). Any derived artifact must attribute
  * "Geoscape Australia". G-NAF is a relational PSV distribution whose street address reconstructs
  * by joining ADDRESS_DETAIL (number, postcode, the PIDs) to STREET_LOCALITY (street name and type)
  * and then to locality (suburb). State is the per-file prefix (ACT/NSW/…).

@@ -75,7 +75,7 @@ is what the classifier has not looked at yet.
 There are two ways out and neither removes the ambiguity. One is to reverse the order: propose the
 boundaries first, from structural cues rather than dictionaries, and only then ask what each proposed
 span is. The other is to decide both at once, over the whole string, so the label for one span can
-depend on its neighbours. Mailwoman does both — a grouping stage before the labeling stage, and a
+depend on its neighbors. Mailwoman does both — a grouping stage before the labeling stage, and a
 labeling stage that reads the entire input rather than one token at a time — which moves the decision
 to where the most evidence is. It does not make the input unambiguous. `Springfield` on its own is
 undecidable no matter what reads it, because the information required is not in the string.
@@ -96,7 +96,7 @@ millions of people, and the choice between them can carry political weight. A re
 usage; a silent rewrite makes a decision on the user's behalf that they did not ask for.
 
 And the same is true of the wrong-but-workable name: the neighborhood given as the city, the
-independent city given as its larger neighbour, the postal town that is not the municipality. In every
+independent city given as its larger neighbor, the postal town that is not the municipality. In every
 one of those cases the person supplied enough for a knowledgeable local to find the place. The parser
 failed because it was built for addresses rather than for people.
 

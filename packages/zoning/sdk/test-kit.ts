@@ -125,7 +125,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 	]
 
 	// Smaller than a res-11 cell, so `polygonToCells` returns no cell and the index must
-	// cover it by cell-touches-polygon rather than centre-in-polygon.
+	// cover it by cell-touches-polygon rather than center-in-polygon.
 	const sliver = exteriorRing(lon + 3 * FIXTURE_SIDE, lat, lon + 3 * FIXTURE_SIDE + 0.00005, lat + 0.00005)
 
 	const unzoned = exteriorRing(lon + 4 * FIXTURE_SIDE, lat, lon + 5 * FIXTURE_SIDE, lat + FIXTURE_SIDE)

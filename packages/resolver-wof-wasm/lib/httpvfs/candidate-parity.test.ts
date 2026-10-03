@@ -14,7 +14,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"
 
 import { WOFCandidateTableLookup as BrowserCandidateLookup } from "#httpvfs/resolver"
-import { stubWorker } from "#test/httpvfs-stub-worker"
+import { stubRangeDatabase } from "#test/range-database-stub"
 
 const CANDIDATE_DB = wofDatabasePath("candidate.db")
 const present = await pathExists(CANDIDATE_DB)
@@ -34,7 +34,7 @@ const PANEL = [
 describe.skipIf(!present)("Node↔browser candidate parity over the real artifact", () => {
 	const raw = present ? new DatabaseClient<CandidateDatabase>(CANDIDATE_DB, { readOnly: true }) : undefined
 	const node = present ? new NodeCandidateLookup({ databasePath: CANDIDATE_DB }) : undefined
-	const browser = raw ? new BrowserCandidateLookup(stubWorker(raw)) : undefined
+	const browser = raw ? new BrowserCandidateLookup(stubRangeDatabase(raw)) : undefined
 
 	afterAll(() => {
 		raw?.destroy()

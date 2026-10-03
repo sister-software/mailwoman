@@ -74,7 +74,7 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 			expect(ids.size).toBe(candidates.length)
 		})
 
-		test("placetype: 'neighbourhood' actually narrows to neighbourhoods", async () => {
+		test("placetype: 'neighbourhood' actually narrows to neighborhoods", async () => {
 			const candidates = await lookup.findPlace({ text: "Mission", placetype: "neighbourhood", limit: 10 })
 			expect(candidates.length).toBeGreaterThan(0)
 

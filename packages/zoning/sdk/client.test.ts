@@ -88,7 +88,7 @@ describe("the shipped constants", () => {
 		expect(GZT_ATTRIBUTION).toContain("2023/OSi_NMA_073")
 	})
 
-	it("asserts NO licence, because three published statements disagree about the grant", () => {
+	it("asserts NO license, because three published statements disagree about the grant", () => {
 		expect(GZT_LICENSE).toBe("NOASSERTION")
 		expect(GZT_LICENSE).not.toContain("CC-BY")
 	})

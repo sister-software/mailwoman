@@ -25,12 +25,12 @@ export const OS_DOWNLOADS_API_BASE = "https://api.os.uk/downloads/v1"
 export const CODEPOINT_PRODUCT_ID = "CodePointOpen"
 
 /**
- * The licence Code-Point Open is published under, spelled exactly as OS spells it.
+ * The license Code-Point Open is published under, spelled exactly as OS spells it.
  */
 export const CODEPOINT_LICENSE = "Open Government Licence v3.0"
 
 /**
- * The URL of the OGL v3 licence text.
+ * The URL of the OGL v3 license text.
  */
 export const CODEPOINT_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
@@ -119,8 +119,8 @@ export const NORTHERN_IRELAND_OPTIONS_NOTE =
 	"only (§2), and non-sublicensable (§9) — so redistribution in a published artifact is barred regardless of " +
 	"commercial intent, including via re-publishers such as doogal/FreeMapTools. NISRA's Central Postcode Directory is " +
 	"free but equally non-redistributable. LPS's OSNI Open Data catalogue (77 datasets, all OGL v3) contains NO postcode " +
-	"centroids or address points — verified against the catalogue. Options: (a) licence Pointer from LPS (~£9,224 excl. " +
-	"VAT full NI coverage; >£3,000 orders need a formal >=12-month licence) — the only route to complete NI centroids in " +
+	"centroids or address points — verified against the catalogue. Options: (a) license Pointer from LPS (~£9,224 excl. " +
+	"VAT full NI coverage; >£3,000 orders need a formal >=12-month license) — the only route to complete NI centroids in " +
 	"a permissively-licensed package; (b) ship NI as ODbL from OpenStreetMap addr:postcode — partial coverage plus " +
 	"share-alike contamination; (c) ship no NI centroids and use the OGL-clean OSNI Streetnames gazetteer for " +
 	"street-level NI resolution. (c) is what THIS database does and must keep doing — its BT hole is a licensing fact, and " +

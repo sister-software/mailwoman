@@ -5,7 +5,7 @@
  *
  *   Reads Environment Agency product entries from the data.gov.uk CKAN catalogue.
  *
- *   The catalogue provides ISO reference dates, the licence and direct file URLs. The EA landing pages render
+ *   The catalogue provides ISO reference dates, the license and direct file URLs. The EA landing pages render
  *   client-side and return no data to a fetch. Download URLs must come from the catalogue because the EA file
  *   service uses a `fileDataSetId` that is unrelated to the dataset ID and changes on republish.
  */
@@ -33,7 +33,7 @@ export interface CKANPackageRecord {
 	publicationDate: string | null
 	creationDate: string | null
 	/**
-	 * The licence listed by the catalogue.
+	 * The license listed by the catalogue.
 	 */
 	licence: string
 	/**
@@ -55,9 +55,9 @@ export interface ReadCKANPackageRecordOptions {
 	 */
 	expectDatasetID: string
 	/**
-	 * The licence that the entry must list.
+	 * The license that the entry must list.
 	 *
-	 * The read throws when the catalogue lists a different licence.
+	 * The read throws when the catalogue lists a different license.
 	 */
 	expectLicence: string
 	/**
@@ -72,10 +72,10 @@ export interface ReadCKANPackageRecordOptions {
 }
 
 /**
- * Reads one product's catalogue entry: reference dates, licence and direct file URLs.
+ * Reads one product's catalogue entry: reference dates, license and direct file URLs.
  *
  * @throws {Error} When the entry is missing, contains a different dataset,
- * has no `revision` reference date, or lists a different licence.
+ * has no `revision` reference date, or lists a different license.
  */
 export async function readCKANPackageRecord(
 	client: Pick<APIClient, "fetch">,
@@ -121,7 +121,7 @@ export async function readCKANPackageRecord(
 
 	if (!licences.includes(options.expectLicence)) {
 		throw new Error(
-			`${options.context}: the catalogue entry names licence ${stringifyJSON(licences)}, expected ${stringifyJSON(options.expectLicence)} — a licence change decides whether this layer may be redistributed at all`
+			`${options.context}: the catalogue entry names license ${stringifyJSON(licences)}, expected ${stringifyJSON(options.expectLicence)} — a license change decides whether this layer may be redistributed at all`
 		)
 	}
 

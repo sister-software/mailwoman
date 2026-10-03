@@ -86,7 +86,7 @@ test("computeQueryShape stays linear as segment count doubles", () => {
 	// 3.5 rather than 3: the 3x bar produced two false failures on loaded CI runners on
 	// 2026-08-05 (measured 3.13x, 15.3ms -> 48.0ms, best-of-three block design).
 	// Quadratic doubles to ~4x at these sizes — fixed overhead is <1ms against 15ms+ samples —
-	// so 3.5 still separates the real failure from a noisy neighbour.
+	// so 3.5 still separates the real failure from a noisy neighbor.
 	expect(
 		ratio,
 		`doubling the input multiplied the cost by ${ratio.toFixed(2)}x (${small.toFixed(1)}ms -> ${large.toFixed(1)}ms). ` +

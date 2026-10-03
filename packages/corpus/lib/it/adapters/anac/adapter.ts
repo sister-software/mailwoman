@@ -52,7 +52,7 @@
  * 3. **`senza numero`.** 182 lines end `SNC` or `SN`, which states that the premise has no civic
  *    number, so the tail is dropped and no `house_number` is composed from it.
  *
- * A kilometre point is not a house number. `S.S. 7 APPIA KM 671` names a point on a state highway,
+ * A kilometer point is not a house number. `S.S. 7 APPIA KM 671` names a point on a state highway,
  * so a number preceded by `KM` is left in the street line, which then refuses the row under the rule
  * below.
  *
@@ -99,7 +99,7 @@
  * the row for the same reason. Buyers write `ITALY` on all 9,381 rows and payers write no
  * `countryName` at all.
  *
- * ## Identity and licence
+ * ## Identity and license
  *
  * The row id is content-addressed over the aligned components. The publisher's party identifier
  * cannot serve: a buyer's `IT-CF` fiscal code carries more than one address on 17 of 3,119 distinct
@@ -107,8 +107,8 @@
  * organization rather than the address.
  *
  * The OCP Data Registry publishes this release under CC BY 4.0, which the address-source register
- * elected on 2026-09-30 with `spdx` `CC-BY-4.0`. CC BY requires credit, a link to the licence and a
- * statement that changes were made, so every row records the licence and
+ * elected on 2026-09-30 with `spdx` `CC-BY-4.0`. CC BY requires credit, a link to the license and a
+ * statement that changes were made, so every row records the license and
  * {@linkcode IT_ANAC_ATTRIBUTION} is the credit the model card carries.
  *
  * The adapter honors `opts.limit`, `opts.signal` and `opts.country`.
@@ -140,7 +140,7 @@ export const IT_ANAC_ADAPTER_ID = "it-anac"
 export const IT_ANAC_COUNTRIES: readonly string[] = ["IT"]
 
 /**
- * The licence the address-source register elected for this publication.
+ * The license the address-source register elected for this publication.
  *
  * The OCP Data Registry's publication page for id 117 states Creative Commons Attribution
  * 4.0 International, and the register records it under `spdx` as `CC-BY-4.0`.
@@ -148,7 +148,7 @@ export const IT_ANAC_COUNTRIES: readonly string[] = ["IT"]
 export const IT_ANAC_LICENSE = "CC-BY-4.0"
 
 /**
- * The credit CC BY 4.0 obliges, which the model card carries beside the licence
+ * The credit CC BY 4.0 obliges, which the model card carries beside the license
  * and a statement that the data was changed.
  */
 export const IT_ANAC_ATTRIBUTION = "Autorità Nazionale Anticorruzione (ANAC), via the OCP Data Registry"
@@ -293,7 +293,7 @@ const CIVIC_MARKER = /(?<=^|[\s,])(?:n|nr|num|civ|civico)\s*\.?\s*(?=\d)/giu
 const SENZA_NUMERO = /[\s,]+(?:snc|sn)\.?$/iu
 
 /**
- * A number introduced by a kilometre marker, which points at a place on a highway
+ * A number introduced by a kilometer marker, which points at a place on a highway
  * rather than at a premise on a street.
  */
 const KILOMETRE_POINT = /[\s,]+km\.?[\s,]*\d+(?:[.,]\d+)?$/iu
@@ -402,7 +402,7 @@ export function readANACParty(party: ANACParty): ANACPartyReading {
 
 	if (streetLine) {
 		const normalized = normalizeANACStreetLine(streetLine, locality)
-		// A kilometre point is read as part of the line, so the split below leaves its digits in the
+		// A kilometer point is read as part of the line, so the split below leaves its digits in the
 		// street and the row is refused rather than carrying a highway marker as a house number.
 		const split = KILOMETRE_POINT.test(normalized) ? { street: normalized } : splitTrailingStreetLine(normalized)
 

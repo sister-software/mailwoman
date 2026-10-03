@@ -135,7 +135,7 @@ export function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: num
  * characters in `inputText` that fall strictly before each group's first piece's start offset.
  *
  * Offset counts, rather than piece-text counts, are unaffected by how the tokenizer
- * attaches a piece to its neighbouring word group.
+ * attaches a piece to its neighboring word group.
  * Without `inputText`, every group falls in segment 0.
  */
 export function computeGroupSegments(

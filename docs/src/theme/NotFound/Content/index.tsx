@@ -61,7 +61,7 @@ export default function NotFoundContent({ className }: { className?: string }): 
 
 					<p className={styles.lede}>
 						Nothing is published at <code className={styles.path}>{pathname}</code>. The page may have moved when the
-						docs were reorganised, or the address may have a typo in it.
+						docs were reorganized, or the address may have a typo in it.
 					</p>
 
 					<p className={styles.lede}>

@@ -32,7 +32,7 @@ import { AdminLocator } from "#gazetteer/admin/locator"
  * Prefix granularity a build extracts.
  *
  * `"outward"` is the GB/NI outward code (area + district); the digit levels are for
- * the fixed-width numeric systems (US 3-digit sectional centre).
+ * the fixed-width numeric systems (US 3-digit sectional center).
  * Written to the header's `levels`.
  */
 export type PostcodePrefixLevel = "outward" | "3"
@@ -356,8 +356,8 @@ export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): B
  * Centroid of a prefix's clean unit coordinates, with the p95 great-circle distance
  * from it — the pair PFX1 requires together.
  *
- * Mean-of-points rather than a bounding-box centre, because a prefix is a set of delivery
- * points and a bbox centre is a corner artefact of the two extremes.
+ * Mean-of-points rather than a bounding-box center, because a prefix is a set of delivery
+ * points and a bbox center is a corner artifact of the two extremes.
  */
 function centroidWithRadius(members: ReadonlyArray<readonly [number, number]>): {
 	lat: number
@@ -397,7 +397,7 @@ interface USPrefixGroup {
 }
 
 /**
- * The US 3-digit (sectional centre) arm.
+ * The US 3-digit (sectional center) arm.
  *
  * See the module docstring for why its exclusions and ancestry rule differ from GB's.
  */
@@ -434,7 +434,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	}
 
 	// A coordinate carrying units from different prefixes is a placeholder,
-	// never a real one, since two sectional centres do not share a point. same-prefix
+	// never a real one, since two sectional centers do not share a point. same-prefix
 	// sharing is ordinary and deliberately not excluded.
 	const byCoordinate = new Map<string, Set<string>>()
 

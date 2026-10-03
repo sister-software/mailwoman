@@ -399,7 +399,7 @@ async function writeDatabaseMeta(db: DatabaseClient<WOFDatabase>, input: Databas
 			"coverage_gap_northern_ireland",
 			"ZERO Northern Ireland (BT) postcodes — measured, not assumed: the source's country codes are exactly " +
 				"E92000001/S92000003/W92000004 across all rows. NI postcode geography is administered by Land & Property " +
-				"Services (LPS) and is not published under OGL; filling this gap requires a separate licence, not a " +
+				"Services (LPS) and is not published under OGL; filling this gap requires a separate license, not a " +
 				"different build.",
 		],
 		["coverage_gap_northern_ireland_options", NORTHERN_IRELAND_OPTIONS_NOTE],

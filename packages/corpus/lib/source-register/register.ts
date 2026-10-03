@@ -79,7 +79,7 @@ export function applyLicenseDecisions(
 	for (const licenseID of recorded.keys()) {
 		if (!known.has(licenseID)) {
 			throw new Error(
-				`a recorded licence decision names ${stringifyJSON(licenseID)}, which the register does not carry. ` +
+				`a recorded license decision names ${stringifyJSON(licenseID)}, which the register does not carry. ` +
 					"A decision that licenses nothing is a typo or a source that has been removed."
 			)
 		}

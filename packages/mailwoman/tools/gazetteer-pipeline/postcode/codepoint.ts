@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Ordnance Survey Code-Point Open acquisition — fetch → extract → parse, the `ban/sdk` shape. See
- *   `./fetch.ts` for the licence obligation and for why this lives here rather than in its own
+ *   `./fetch.ts` for the license obligation and for why this lives here rather than in its own
  *   workspace.
  */
 

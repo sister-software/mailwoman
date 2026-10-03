@@ -398,7 +398,7 @@ export const OPPORTUNITY_INPUTS = [
 	{
 		input: "user need",
 		supplied: false,
-		from: "outside this repository — query volume or an operator judgement, recorded per decision",
+		from: "outside this repository — query volume or an operator judgment, recorded per decision",
 	},
 	{
 		input: "the new capability the work would add",

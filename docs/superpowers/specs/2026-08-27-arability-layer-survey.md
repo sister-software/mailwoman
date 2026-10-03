@@ -247,7 +247,7 @@ host: **`HEAD` returns HTTP 405 (`allow: GET`) and `Range` is ignored.** A reque
 `Range: bytes=0-0` returned HTTP 200 and transferred the whole 27,598,377 bytes in 7.23 s at 3.8 MB/s. A
 builder therefore cannot check freshness by content length. It does not need to, because
 `sacatalog.saverest` answers the freshness question directly through the tabular service. The `Range`
-behavior is **path-specific** rather than host-wide. The `/DataAvailability/` path does honour it
+behavior is **path-specific** rather than host-wide. The `/DataAvailability/` path does honor it
 (HTTP 206), so a client must probe each path separately. The server is `Microsoft-IIS/10.0` behind an AWS load balancer.
 
 **The arability attributes, with their measured shape.** Each column name was verified by querying it
@@ -391,7 +391,7 @@ license.**
 
 **Extent, formats and sizes, measured.** The release index lists **18 CONUS-wide years, 2008 through
 2025**, as `datasets/<year>_30m_cdls.zip`, plus nine regional `CDL10_<region>.zip` files. Sizes taken
-by ranged GET (this host **does** honour `Range` — HTTP 206 with `content-range`, unlike the soil
+by ranged GET (this host **does** honor `Range` — HTTP 206 with `content-range`, unlike the soil
 host):
 
 | year | bytes             |
@@ -513,7 +513,7 @@ per-dataset "Notification" blocks that differ from one another. Most datasets re
 <!-- vale off -->
 
 **The permissive route to LUCAS does not carry the soil measurements.** Eurostat publishes LUCAS survey
-microdata for 2006–2022 with anonymous per-country CSV downloads under terms that authorise reuse
+microdata for 2006–2022 with anonymous per-country CSV downloads under terms that authorize reuse
 "provided the source is acknowledged", with "no special procedure or requirement for a written licence".
 Eurostat, however, states: "Soil data — The datasets for the LUCAS topsoil module are available
 from the European soil data centre (ESDAC)." The files confirm it. The 2022 (306 columns) and 2018 (97
@@ -525,7 +525,7 @@ columns) country CSVs carry soil _sampling metadata only_, without pH, organic c
 One contradiction remains open and is reported rather than resolved. data.europa.eu labels "LUCAS 2018
 TOPSOIL data" **CC BY 4.0**, while the record's only distribution link points back at the ESDAC page
 carrying the restrictive terms above. The European Commission's legal notice resolves the hierarchy in
-ESDAC's favour: "**Unless otherwise indicated** (e.g. in individual copyright notices), content owned by
+ESDAC's favor: "**Unless otherwise indicated** (e.g. in individual copyright notices), content owned by
 the EU … is licensed under … CC BY 4.0". A per-dataset Notification is such an individual notice. This
 is our interpretation (§8), and no authority states it for this dataset. Do not rely on the portal
 label.
@@ -548,7 +548,7 @@ inconsistency is noted and not reconciled: GAEZ v5 is derived from HWSD v2, yet 
 
 **The consequence for this program.** A published European arability layer has two options. It can be
 derived from CLMS land-cover and cropland products plus open global soil models, with the Regulation's
-attribution conditions carried in the manifest. That yields cover and modelled properties rather than a
+attribution conditions carried in the manifest. That yields cover and modeled properties rather than a
 survey's capability rating. Alternatively, it can be built on ESDAC data and **never redistributed**,
 because the third-party clauses forbid shipping it. Neither is the same product as the US pilot, and
 neither should be presented as one. Europe offers no shortcut, the same conclusion the flood survey
@@ -581,7 +581,7 @@ reached by a different route.
 | cadence                 | one coordinated annual refresh; metadata says `As needed`                                | annual, published the following calendar year                    | CLC roughly six-yearly; ESDAC ad hoc                                                      |
 | format                  | shapefile + pipe-delimited tabular, **WGS84**; `IA153` = 25.5 MB / 27.6 MB               | 30 m raster zip; 2025 = 1.89 GB (measured)                       | CLC raster/vector EPSG:3035; ESDAC per-request archives                                   |
 | acquisition             | WSS download service (date from SDA) **+ live SQL and spatial SDA**                      | direct file URL on `www.nass.usda.gov`                           | CLMS **EU Login + request-and-poll**; ESDAC **request form**                              |
-| `HEAD` / `Range`        | `HEAD` 405, **`Range` ignored** — full transfer                                          | **`Range` honoured** (HTTP 206)                                  | not applicable — both require an account                                                  |
+| `HEAD` / `Range`        | `HEAD` 405, **`Range` ignored** — full transfer                                          | **`Range` honored** (HTTP 206)                                   | not applicable — both require an account                                                  |
 | reachable from this lab | **yes** — every distribution host answered; SDA measured at 0.374 s                      | **bulk yes**; CropScape API answers on `:8080` and **fails 500** | yes, but anonymous download refused **HTTP 401** by design (Art. 18(1))                   |
 | in-repo ingest path     | vector — `ogr2ogr` already used here                                                     | **raster — no raster tooling exists in this repository**         | mixed                                                                                     |
 | usable for this layer   | **yes — the pilot**                                                                      | yes later, as a different observation with a different meaning   | **no** — the open half has no soil, the soil half may not be redistributed                |
@@ -726,7 +726,7 @@ its own rule name and is never blended with the capability class.
 
 The builder holds the authority's declared domain as a closed set and **throws** on a value outside it.
 An unknown code means the source schema changed, which a reader most needs to know. Conversion to a
-nearest neighbour or to NULL would turn "the source changed" into "there is no observation here".
+nearest neighbor or to NULL would turn "the source changed" into "there is no observation here".
 
 This matters more for Consumer B than it first appears. #1683's vector needs a numeric axis, so storing
 one is tempting. Instead, **the consumer owns the projection to a number, and the layer stores none**. The layer

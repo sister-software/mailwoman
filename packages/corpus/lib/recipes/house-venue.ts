@@ -39,7 +39,7 @@ const HOUSE_VENUE_PROVENANCE = {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exercises.
+ * See the file header for the parse behavior it exercises.
  * See `description` below for the generated surface form.
  */
 export const houseVenueRecipe: CorpusRecipe = {

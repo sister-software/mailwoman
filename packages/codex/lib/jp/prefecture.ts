@@ -10,7 +10,7 @@
  *   Japan's top-level admin unit has four legally distinct forms.
  *   Addresses write the prefecture name directly instead of deriving it from the postcode.
  *
- *   "都道府県" is four kanji because the top-level admin unit comes in four legally distinct flavours,
+ *   "都道府県" is four kanji because the top-level admin unit comes in four legally distinct flavors,
  *   even though all 47 are peers in practice:
  *
  *   - 都 (to, "metropolis") — exactly **1**: Tokyo (東京都). The capital's special form.
@@ -50,7 +50,7 @@ export interface JapanesePrefectureInfo {
 	 */
 	romaji: string
 	/**
-	 * Which of the four flavours of top-level unit this is.
+	 * Which of the four flavors of top-level unit this is.
 	 */
 	type: JapanesePrefectureType
 }

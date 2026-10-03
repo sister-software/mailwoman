@@ -208,7 +208,7 @@ Unit, in `packages/core/lib/license/stamp.test.ts`:
   output, asserted by key enumeration rather than by spot check.
 - `licenseNotice` returns two lines for the AGPL branch, the expiry-dated variant for `expired`, and
   `undefined` for `valid`.
-- `license_url` honours `docsURL` and strips a trailing slash, the way `licenseKeysWellKnownURL` does.
+- `license_url` honors `docsURL` and strips a trailing slash, the way `licenseKeysWellKnownURL` does.
 
 CLI, in `packages/mailwoman/test/`:
 

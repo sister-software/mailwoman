@@ -38,7 +38,7 @@ The output is a static asset. Treat it like a search index: expensive to build, 
 
 ### Why Piscina?
 
-- Built-in `worker_threads` works, but Piscina handles pool lifecycle, queueing, and `destroy()` semantics.
+- Built-in `worker_threads` works, but Piscina handles pool lifecycle, queuing, and `destroy()` semantics.
 - Workers are useful for reading and parsing several tiny GeoJSON files.
 - SQLite still allows one writer at a time, even in WAL mode. Do not assume Piscina creates parallel writes. Keep write transactions short.
 

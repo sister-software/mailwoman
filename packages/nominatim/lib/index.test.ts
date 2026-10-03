@@ -49,7 +49,7 @@ test("toFeatureCollection: wraps results as a GeoJSON FeatureCollection (geometr
 	expect(f.properties["boundingbox"]).toBeUndefined()
 })
 
-test("toNominatimResult: renders lat/lon as strings + a joined display_name + licence", () => {
+test("toNominatimResult: renders lat/lon as strings + a joined display_name + license", () => {
 	const r = toNominatimResult(dc)
 	expect(r.lat).toBe("38.8977")
 	expect(r.lon).toBe("-77.0365")

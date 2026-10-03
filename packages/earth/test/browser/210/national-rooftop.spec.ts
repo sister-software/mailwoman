@@ -1,7 +1,7 @@
 // National US rooftop check.
 // With the 50-state situs/interp extracts hosted, an address in a newly-rolled
 // state must resolve to its building coordinate (the situs `address_point` coord)
-// rather than the WOF admin city centroid kilometres away.
+// rather than the WOF admin city centroid kilometers away.
 // Each case is a real row pulled from that state's situs extract, so the truth
 // coordinate is the extract's coordinate.
 // The tolerance is tight enough to distinguish a rooftop from a centroid fallback

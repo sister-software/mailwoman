@@ -148,7 +148,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const country = db.prepare("SELECT DISTINCT country FROM spr").all() as Array<{ country: string }>
 	expect(country).toEqual([{ country: "GB" }])
 
-	// The artifact records the licence obligation, tier and coverage as provenance.
+	// The artifact records the license obligation, tier and coverage as provenance.
 	const meta = new Map(
 		(db.prepare("SELECT key, value FROM meta").all() as Array<{ key: string; value: string }>).map((r) => [
 			r.key,

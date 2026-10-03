@@ -132,7 +132,7 @@ export interface POISubjectMatch {
  * Every remaining quantifier is trailing and runs only after the required literal matches.
  * Each start offset does O(1) work, so `matchAll` is O(n).
  *
- * Behaviour is byte-identical to the previous `\s*,\s*|\s+(?:…)\s+`, because `matchPOISubject`
+ * Behavior is byte-identical to the previous `\s*,\s*|\s+(?:…)\s+`, because `matchPOISubject`
  * trims both the subject and the remainder, so surrounding whitespace is redundant.
  * The leading quantifier only shifted the match start within a whitespace run, while the retained
  * trailing greedy quantifier keeps the match end and thus `matchAll`'s lastIndex identical.

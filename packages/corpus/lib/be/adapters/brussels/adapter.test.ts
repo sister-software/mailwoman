@@ -6,7 +6,7 @@
  *   The fixture at `fixtures/brussels/UrbAdm_Adresses.gml` is ten addresses and the eleven component
  *   features they reference, extracted from the publisher's own file.
  *
- *   Every byte is the Brussels Regional Informatics Centre's own. It was taken on 2026-10-02 from
+ *   Every byte is the Brussels Regional Informatics Center's own. It was taken on 2026-10-02 from
  *   `https://urbisdownload.datastore.brussels/INSPIRE/URBIS_ADM_Adresses.zip`, 11,521,182 bytes,
  *   whose member `UrbAdm_Adresses.gml` is 474,245,978 bytes. The fixture is that member with its own
  *   XML declaration, root element and `gml:boundedBy` kept, holding 21 of its 231,947
@@ -24,7 +24,7 @@
  *   that do, so it states no postcode.
  *
  *   The components are the five administrative units an address references (`1stOrder` through
- *   `5thOrder`), each spelling its name as a NIS code and a parenthesised name, two municipalities so
+ *   `5thOrder`), each spelling its name as a NIS code and a parenthesized name, two municipalities so
  *   that the empty-reference address sits in a different one, one postal descriptor, and four street
  *   names, each spelled in French and in Dutch.
  */
@@ -46,6 +46,7 @@ import {
 import { isVoid, voidReason } from "#inspire/address"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
+import { LicensePolicy, licenseVerdict } from "#utils/license"
 
 const scratch = useScratchDir("brussels")
 
@@ -61,7 +62,7 @@ function run(adapterOptions: Partial<Parameters<typeof runAdapter>[0]["adapterOp
 }
 
 describe("brussels adapter against the fixture member", () => {
-	it("emits a row per readable address under a label that reads as unreviewed", async () => {
+	it("emits a row per readable address under the register's elected CC BY 4.0", async () => {
 		const manifest = await run()
 
 		// Ten addresses, nine readable: the tenth writes its postal-zone reference empty.
@@ -72,9 +73,12 @@ describe("brussels adapter against the fixture member", () => {
 
 		expect(rows).toHaveLength(9)
 
-		// The address-source register holds no row for this publisher, so no licence has
-		// been elected and the label must not read as an SPDX grant.
-		expect(BRUSSELS_DEFAULT_LICENSE).toBe("unreviewed-be-brussels-urbis")
+		// The register elects CC-BY-4.0 for Paradigm, and the row carries the SPDX identifier
+		// so that `licenseVerdict` resolves it.
+		// A license title resolves to no expression, which a build reads as unknown
+		// obligations rather than as none.
+		expect(BRUSSELS_DEFAULT_LICENSE).toBe("CC-BY-4.0")
+		expect(licenseVerdict(BRUSSELS_DEFAULT_LICENSE, LicensePolicy.ShareAlikeFree, []).resolved).toBe(true)
 		expect(rows.every((row) => row.license === BRUSSELS_DEFAULT_LICENSE)).toBe(true)
 		expect(rows.every((row) => row.source === BRUSSELS_ADAPTER_ID)).toBe(true)
 		expect(rows.every((row) => row.register === BRUSSELS_SOURCE_REGISTER)).toBe(true)

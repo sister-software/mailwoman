@@ -107,7 +107,7 @@ In `packages/spatial/lib/distance.ts`, beside `RADII`:
 export type PlanetaryBodyID = "earth" | "moon" | "mars"
 
 /**
- * Mean radii in kilometres. Earth's is the value `RADII` scales to its units; the Moon's and Mars's are the IAU mean
+ * Mean radii in kilometers. Earth's is the value `RADII` scales to its units; the Moon's and Mars's are the IAU mean
  * radii the USGS planetary products reference (the Moon as a sphere; Mars's mean radius, its DEM being on the
  * areoid). A distance on a body other than Earth is meaningless without one of these.
  */
@@ -380,7 +380,7 @@ export interface PlanetaryBody {
 	meanRadiusKm: number
 	shape: "sphere" | "ellipsoid"
 	/**
-	 * Metres per degree of arc on the mean sphere: 2πR / 360. The hillshade's vertical scale, and the only place a
+	 * Meters per degree of arc on the mean sphere: 2πR / 360. The hillshade's vertical scale, and the only place a
 	 * degree becomes a length in this package.
 	 */
 	metresPerDegree: number
@@ -750,7 +750,7 @@ The declutter rule the spec asks for, as tippecanoe per-feature `minzoom`: a fea
 
 ```ts
 /**
- * The zoom at which a feature first appears, from its diameter in kilometres: ≥300 km at 0, ≥100 at 2, ≥30 at 4,
+ * The zoom at which a feature first appears, from its diameter in kilometers: ≥300 km at 0, ≥100 at 2, ≥30 at 4,
  * ≥10 at 6, everything else at 8. Cartographic decluttering rather than ranking; a feature with no diameter (a region, a
  * landing site) appears at 2.
  */
@@ -883,7 +883,7 @@ export async function buildHillshadePMTiles(options: {
 	const forTiling = resolvePath(scratch.path, "hillshade-4326.tif")
 	const mbtiles = resolvePath(scratch.path, "hillshade.mbtiles")
 
-	// 1. Shade in the source grid, where a degree is the body's arc length; `-s` is metres per degree on this body.
+	// 1. Shade in the source grid, where a degree is the body's arc length; `-s` is meters per degree on this body.
 	const shade = [
 		"hillshade",
 		options.demPath,
@@ -903,7 +903,7 @@ export async function buildHillshadePMTiles(options: {
 	await runFile("gdaldem", shade)
 
 	// 2. The XYZ tile scheme is angular: the same lon/lat grid on any sphere. Declaring the shaded image as EPSG:4326
-	//    makes GDAL tile it on that grid; the metres are Earth's, which is why shading happened before this step.
+	//    makes GDAL tile it on that grid; the meters are Earth's, which is why shading happened before this step.
 	const declare = ["-a_srs", "EPSG:4326", String(shaded), String(forTiling)]
 	await runFile("gdal_translate", declare)
 
@@ -963,7 +963,7 @@ The test builds `dem-64.tif` to `hillshade.pmtiles` with `maxZoom: 2`, asserts t
 yarn compile
 yarn vitest --run --config vitest.slow.config.ts packages/astrogeology/lib
 git add packages/astrogeology
-git commit -m "feat(astrogeology): hillshade build — gdaldem in the body's metres, XYZ tiling by the angular grid, PMTiles"
+git commit -m "feat(astrogeology): hillshade build — gdaldem in the body's meters, XYZ tiling by the angular grid, PMTiles"
 ```
 
 ---
@@ -1087,7 +1087,7 @@ git push -u origin feat/astrogeology
 gh pr create --title "Astrogeology: the Moon and Mars nomenclature and hillshade pipeline" --body-file - <<'EOF'
 Implements docs/superpowers/specs/2026-09-06-astrogeology-pipeline-design.md by docs/superpowers/plans/2026-09-07-astrogeology-pipeline.md.
 
-- packages/astrogeology (private): pinned USGS sources (nightly gazetteer by snapshot, DEMs by product), normalization measured against the real rows (0..360 → −180..180, the 360 wrap, ids from the link column), tippecanoe nomenclature archives decluttered by diameter, gdaldem hillshade in the body's metres and XYZ tiling by the angular grid, an ancestrie search artifact, a manifest with checksums, the mailwoman:* metadata block validated on write and read
+- packages/astrogeology (private): pinned USGS sources (nightly gazetteer by snapshot, DEMs by product), normalization measured against the real rows (0..360 → −180..180, the 360 wrap, ids from the link column), tippecanoe nomenclature archives decluttered by diameter, gdaldem hillshade in the body's meters and XYZ tiling by the angular grid, an ancestrie search artifact, a manifest with checksums, the mailwoman:* metadata block validated on write and read
 - @mailwoman/spatial: greatCircleDistance with a body radius; haversine unchanged
 - mailwoman/tiles/publish: publishTiles as a function the command and this pipeline both call
 

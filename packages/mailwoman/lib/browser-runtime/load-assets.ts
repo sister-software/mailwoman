@@ -6,7 +6,7 @@
  *   The per-release asset loader: the classifier, the calibration table, the FST gazetteer and street-morphology
  *   matchers, the pair indexes and the byte-range gazetteer lookup for one published release. It reports staged
  *   progress through {@link AssetLoadProgress}. The host owns the terminal ready/error state and reveals the returned
- *   bundle atomically. The onnxruntime-web and sql.js-httpvfs imports stay dynamic so a host that never loads a
+ *   bundle atomically. The onnxruntime-web and range-reader imports stay dynamic so a host that never loads a
  *   release never pays for them.
  */
 
@@ -82,12 +82,12 @@ export interface ReleaseAssets {
 
 export interface LoadReleaseAssetsOptions {
 	/**
-	 * Load the byte-range gazetteer lookup, given the same-origin base for the
-	 * sql.js-httpvfs worker and wasm (for example `/mailwoman/sqljs`).
+	 * Load the byte-range gazetteer lookup, given the same-origin base for the staged
+	 * range worker and sqlite-wasm runtime (for example `/mailwoman/sqlite`).
 	 *
 	 * Omit it and `lookup` is `null` without a gazetteer step.
 	 */
-	gazetteer?: { sqljsBaseURL: string }
+	gazetteer?: { sqliteRuntimeBaseURL: string }
 }
 
 /**
@@ -221,16 +221,18 @@ export async function loadReleaseAssets(
 
 	if (gazetteer) {
 		try {
-			const { loadHTTPVFSDatabase, WOFCandidateTableLookup } =
-				await import("@mailwoman/resolver-wof-wasm/httpvfs/resolver")
+			const [{ openRangeDatabase }, { WOFCandidateTableLookup }] = await Promise.all([
+				import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
+				import("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
+			])
 
-			const worker = await loadHTTPVFSDatabase(adminGazetteerURL(), gazetteer.sqljsBaseURL)
+			const database = await openRangeDatabase(adminGazetteerURL(), gazetteer.sqliteRuntimeBaseURL)
 
 			if (!progress.signal.aborted) {
-				const wofLookup = new WOFCandidateTableLookup(worker)
-				// Fire-and-forget: pull the schema/FTS/dual-role pages through the VFS now
-				// so the first interactive query starts warm.
-				// The worker serializes execs, so a user query issued mid-warm-up simply
+				const wofLookup = new WOFCandidateTableLookup(database)
+				// Fire-and-forget: pull the schema, code-table and upper B-tree pages through
+				// the VFS now so the first interactive query starts warm.
+				// The worker serializes queries, so a user query issued mid-warm-up simply
 				// queues behind pages it was going to need anyway.
 				void wofLookup.warmUp().catch(() => {})
 				lookup = wofLookup

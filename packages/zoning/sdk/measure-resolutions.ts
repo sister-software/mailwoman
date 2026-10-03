@@ -14,7 +14,7 @@ import { readZoningFeatures, readZoningSourceIdentity, type ZoningIngestOptions 
 
 export interface MeasureResolutionsOptions extends ZoningIngestOptions, ResolutionMeasurementOptions {
 	/**
-	 * Also runs a centre-in-polygon polyfill per feature per resolution at the
+	 * Also runs a center-in-polygon polyfill per feature per resolution at the
 	 * cost of one extra h3 call per feature.
 	 */
 	measurePolyfill?: boolean

@@ -28,9 +28,9 @@ per training step. Single backward pass through CRF head vs CE head with `retain
 
 **Interpretation:**
 
-| Ratio behaviour                                                                                                | Conclusion                                                                                                                                               |
+| Ratio behavior                                                                                                 | Conclusion                                                                                                                                               |
 | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Drops below ~0.01 at the inflection step (loss begins climbing, CRF gradient collapses while CE stays healthy) | Dual-loss instability. The model has decoupled the two objectives and is optimising only CE; CRF-NLL contributes dead gradient and exploding loss value. |
+| Drops below ~0.01 at the inflection step (loss begins climbing, CRF gradient collapses while CE stays healthy) | Dual-loss instability. The model has decoupled the two objectives and is optimizing only CE; CRF-NLL contributes dead gradient and exploding loss value. |
 | Both gradient norms spike together, OR CE diverges while CRF stays flat                                        | Capacity wall. The model is in a pathological region where every parameter update makes everything worse.                                                |
 
 **Repair if dual-loss confirmed:** drop the CRF-NLL loss term entirely. Keep the CRF as an inference-time structural decoder (frozen transition mask + Viterbi). The structural benefits (no orphan I-tags, no `Saint → Petersburg` clipping) come from the transition mask rather than from training the transition matrix via NLL. Production NER systems do this routinely. One-line config change: `loss = ce_loss` instead of `loss = ce_loss + crf_loss_weight * crf_nll`. **`crf_loss_weight=0` has literally never been tested in this codebase** — v0.4.0-shipped runs at 0.05, all v0.5.0 attempts ran at 1.0 (§1 ON) or 0.05 (§1 OFF).
@@ -47,7 +47,7 @@ For wiring `reconcileSpans` against v0.4.0 weights without porting a new beam de
 Why this is better than the alternatives:
 
 - **vs porting beam decoder to TS**: half the work (~100 lines vs 200-300), and sequence-level n-best decoding was the wrong abstraction for the reconciler anyway. The reconciler takes per-span confidence rather than BIO-sequence-level confidence.
-- **vs synthesised top-k**: real model confidences (no artificial perturbations of argmax), so the measurement reflects the actual classifier signal.
+- **vs synthesized top-k**: real model confidences (no artificial perturbations of argmax), so the measurement reflects the actual classifier signal.
 - **vs waiting for PR #128's top-k inference**: code path matches the eventual production runtime — when the top-k classifier eventually trains, the TS runtimeswaps "per-token softmax aggregation" for "classifier's top-k API," same downstream interface.
 
 ## Go/no-go decision matrix for joint-reconcile vs argmax
@@ -144,13 +144,13 @@ DeepSeek's predicted signature: ratio drops below ~0.01 → CRF gradient has col
 A second six-turn conversation reframed the diagnosis: not "dual-loss decoupling" but **"CRF as aggressor"**. The story that fits all the data:
 
 - **Cooperative regime, loss &gt; 0.41.** Model starts at high entropy; both CE and CRF point downhill toward the same broad basin ("become less random"). The loss descends directly.
-- **Conflict regime, loss &gt; 0.41.** Model exits the high-entropy basin and enters fine-grained per-token decisions. CE and CRF now point in opposing directions on this data. CRF's 8–20× gradient magnitude wins. The optimiser follows CRF; CE is dragged uphill.
+- **Conflict regime, loss &gt; 0.41.** Model exits the high-entropy basin and enters fine-grained per-token decisions. CE and CRF now point in opposing directions on this data. CRF's 8–20× gradient magnitude wins. The optimizer follows CRF; CE is dragged uphill.
 
 The 0.41 boundary isn't a magic number — it's where the cooperative-vs-conflict transition happens on this specific architecture + corpus. The structure of the failure is the key observation rather than the threshold.
 
 ### Why standard repairs don't fix this
 
-- **A lower `crf_loss_weight`** scales loss values rather than gradient magnitudes. At `crf_loss_weight=0.05` with the observed ratio, the effective optimiser mix is still roughly 1:0.8 CE:CRF.
+- **A lower `crf_loss_weight`** scales loss values rather than gradient magnitudes. At `crf_loss_weight=0.05` with the observed ratio, the effective optimizer mix is still roughly 1:0.8 CE:CRF.
 - **Per-token CRF normalization (§1)** made the _loss_ magnitudes comparable. The probe shows _gradient_ magnitudes are still wildly asymmetric.
 - **Global gradient clipping** preserves the relative dominance — CRF's 16× share survives clipping.
 
@@ -160,7 +160,7 @@ Knobs that scale loss values cannot fix asymmetric curvature.
 
 Drop the CRF NLL loss term entirely during training. Keep the CRF as an inference-time structural decoder (frozen transition mask + Viterbi). The structural benefits that guard against orphan I-tags + BIO-invalid spans come from the **mask**, which is hand-encoded — not from the trained transition matrix. The training-side NLL was layered on as a learned refinement and that refinement is what fights with CE.
 
-One-line model.py change, blocked on `crf_loss_weight > 0`. Backward-compatible: existing recipes ship CRF; the new behaviour activates only when a recipe explicitly sets `crf_loss_weight: 0.0`.
+One-line model.py change, blocked on `crf_loss_weight > 0`. Backward-compatible: existing recipes ship CRF; the new behavior activates only when a recipe explicitly sets `crf_loss_weight: 0.0`.
 
 This is the same destination DeepSeek's earlier review pointed at, with a sharper reason.
 

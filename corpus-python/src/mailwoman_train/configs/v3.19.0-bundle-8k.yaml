@@ -1,5 +1,5 @@
 # This run trains the evidence-bundle recipe from v3.18.0 for 8000 steps as a production candidate.
-# It also switches to locality-surface-lexicon-v4, which adds neighbourhood surfaces.
+# It also switches to locality-surface-lexicon-v4, which adds neighborhood surfaces.
 # Over-trust in the evidence channels can grow with training time, so grade every 2k checkpoint.
 #
 # Launch the run from corpus-python:

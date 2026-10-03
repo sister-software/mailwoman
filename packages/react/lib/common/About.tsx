@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `About` — the explainer for the browser geocoder: the neural model, the confidence colours, the gazetteer resolver, the byte-range database and the FST prior. It renders no live content.
+ * `About` — the explainer for the browser geocoder: the neural model, the confidence colors, the gazetteer resolver, the byte-range database and the FST prior. It renders no live content.
  */
 
 import type { ReactNode } from "react"
@@ -73,8 +73,8 @@ export function About({ collapsible = true }: AboutProps = {}): ReactNode {
 				<h3 className="mw-about__heading">Byte-range gazetteer</h3>
 				<p>
 					The gazetteer is a multi-gigabyte SQLite file served from a public bucket. It loads via{" "}
-					<strong>sql.js-httpvfs</strong>. It range-requests only the pages a lookup touches. Therefore, your browser
-					fetches a few hundred kilobytes per session instead of the whole file.
+					<strong>sqlite-wasm</strong> over a read-only HTTP file system. It range-requests only the pages a lookup
+					touches. Therefore, your browser fetches a few hundred kilobytes per session instead of the whole file.
 				</p>
 			</section>
 

@@ -30,7 +30,7 @@ const GEONAMES_SOURCE = "gn:id"
 const CITY_TIER = new Set(["locality", "localadmin"])
 
 /**
- * The maximum distance in kilometres between a concorded WOF row and the register's coordinate.
+ * The maximum distance in kilometers between a concorded WOF row and the register's coordinate.
  *
  * It equals the benchmark's registered wrong-area threshold.
  */

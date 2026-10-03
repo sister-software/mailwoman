@@ -10,10 +10,10 @@
  *   JavaScript and does not survive an unbounded number of polyfill calls. A build that completes only when
  *   fragmentation happens to stay low is not reproducible.
  *
- *   The domain checks run here and throw: an unknown policy, policy interpretation or defence type is a
- *   source-schema change. The ingest step must reject it instead of mapping it to a nearest neighbour or null,
+ *   The domain checks run here and throw: an unknown policy, policy interpretation or defense type is a
+ *   source-schema change. The ingest step must reject it instead of mapping it to a nearest neighbor or null,
  *   which would convert "the source changed" into
- *   "there is no data here". The defence check compares case-folded and stores the source's own string for the
+ *   "there is no data here". The defense check compares case-folded and stores the source's own string for the
  *   source's inconsistent capitalization.
  *
  *   The chunk owns no artifact. It appends rows to a database that the parent created and will seal.
@@ -78,12 +78,12 @@ export interface CoastalChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres for the source's own figure, encoded rings with their holes
+	 * Square meters for the source's own figure, encoded rings with their holes
 	 * and encoded rings without them.
 	 */
 	area: { sourceM2: number; nestedM2: number; allExteriorM2: number }
 	/**
-	 * The defence types this chunk saw, with counts — a census recorded on the receipt
+	 * The defense types this chunk saw, with counts — a census recorded on the receipt
 	 * rather than only checked, because the authority publishes no list for the domain
 	 * and the counts are how a reader sees it move.
 	 */

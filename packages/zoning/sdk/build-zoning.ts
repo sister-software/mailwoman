@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Build `zoning-ireland.db`, the sealed two-tier polygon layer. Its coverage basis and licence tier can each refuse publication.
+ * Build `zoning-ireland.db`, the sealed two-tier polygon layer. Its coverage basis and license tier can each refuse publication.
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers"
@@ -117,7 +117,7 @@ export type BuildZoningOptions = BuildZoningInput & {
 	 */
 	coverageResolution: number
 	/**
-	 * The publisher's own `Shape__Area` sum in square metres, read from the live service.
+	 * The publisher's own `Shape__Area` sum in square meters, read from the live service.
 	 *
 	 * When supplied, the build asserts that its encoded rings agree with this value.
 	 */
@@ -129,7 +129,7 @@ export type BuildZoningOptions = BuildZoningInput & {
 	 */
 	expectedFeatureCount?: number
 	/**
-	 * The tier to stamp, `build-local` unless the licence contradiction is resolved —
+	 * The tier to stamp, `build-local` unless the license contradiction is resolved —
 	 * see {@link assertTierMatchesLicense}.
 	 */
 	tier?: LayerTier
@@ -183,7 +183,7 @@ export interface BuildZoningResult {
 		exteriorByMagnitude: number
 	}
 	/**
-	 * The area totals in square kilometres with the witness stated, never defaulting
+	 * The area totals in square kilometers with the witness stated, never defaulting
 	 * the publisher's figure to this build's own reading.
 	 */
 	area: AreaAgreementReading & { signedKM2: number }
@@ -219,7 +219,7 @@ const WORST_PAIRS_REPORTED = 8
  * @throws {Error} On a feature that reaches no cell, a feature count that disagrees
  * with the source's own declaration, an area total that disagrees with the publisher's,
  * a coverage row that would license a negative claim, a crosswalk edge table written while
- * the mapping is not a function, or a `shipped` tier asked for under an unresolved licence.
+ * the mapping is not a function, or a `shipped` tier asked for under an unresolved license.
  */
 export async function buildZoningDatabase(options: BuildZoningOptions): Promise<BuildZoningResult> {
 	const tier = options.tier ?? LayerTier.BuildLocal
