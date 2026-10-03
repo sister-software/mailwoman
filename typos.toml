@@ -299,6 +299,11 @@ extend-glob = [
 ]
 extend-words = { resturant = "resturant", worl = "worl", expectd = "expectd", trian = "trian" }
 
+[type.search-correction-fixtures]
+extend-glob = ["correct.test.ts", "2026-10-02-docs-search.md", "2026-10-02-docs-search-design.md"]
+# The docs search correction tests take misspelled queries as input, and the design names the axe audit tool.
+extend-words = { decod = "decod", grammer = "grammer", axe = "axe" }
+
 [type.unicode-fixtures]
 extend-glob = ["nfc.test.ts", "text.test.ts"]
 extend-words = { caf = "caf" }
