@@ -342,7 +342,9 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 				}))
 				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
 				const task = `Review successful CI for PR #${request.pull_request_number} on its current head.`
-				if (!issue.body.includes(task)) throw new Error(`Issue #${request.issue_number} has no CI review task for this PR.`)
+				if (!issue.body.includes(task)) {
+					throw new Error(`Issue #${request.issue_number} has no CI review task for this PR.`)
+				}
 				const body = issue.body.replace(`- [ ] ${task}`, `- [x] ${task}`)
 				if (!taskBlockIsComplete(body)) throw new Error(`Issue #${request.issue_number} still has incomplete tasks.`)
 				await run(["issue", "edit", String(request.issue_number), "--repo", REPO, "--body", body], { cwd })
