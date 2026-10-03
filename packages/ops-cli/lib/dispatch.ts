@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwops`: the private operator CLI. Four verbs, each a view over a registry — `release`, `shop`, `storage`,
- *   and `health` — through one runner that differs only in the context it builds and the exit code an output
- *   earns. Kept free of `process` so it is unit-testable.
+ *   `mwops` routes release, shop, storage, and health operations through their registries.
+ *   The `ci-scope` command selects CI suites and writes GitHub Actions outputs.
+ *   Dispatch receives its output streams and checkout path from the entry point.
  *
  *   `health` also performs two mutations outside the check registry. Its type admits no writer:
  *   `health baseline debt` rewrites `packages/repo-health/baseline.json`, and `health fix <check>` applies a
@@ -34,6 +34,7 @@ import {
 	type RepoContext,
 	writeBaseline,
 } from "@mailwoman/repo-health"
+import { writeCIScope } from "@mailwoman/repo-health/ci-scope-output"
 import { planPathLiteralRewrites } from "@mailwoman/repo-health/move/literals"
 import { storageOperations, type StorageContext } from "@mailwoman/storage-kit"
 import { resolvePath } from "path-ts"
@@ -95,6 +96,7 @@ function usage(io: DispatchIO): number {
 			"  mwops release <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops shop <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
+			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
 			"  mwops health baseline debt        (rewrite packages/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
 			"  mwops health move <from> <to> [<from> <to> …] [--dry-run]   (or --moves <file.json> listing {from, to})",
@@ -543,6 +545,9 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 	const [verb, ...rest] = args
 
 	switch (verb) {
+		case "ci-scope":
+			io.stdout(prettyJSON(await writeCIScope(io.repoRoot)))
+			return 0
 		case "release":
 			return await runOperation(releaseView, rest, io)
 		case "shop":

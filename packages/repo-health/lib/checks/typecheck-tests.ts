@@ -13,7 +13,10 @@
  *   through their built `.d.ts`. This runs them all and reports one diagnostic per `tsc` error line.
  */
 
-import { runFile } from "@mailwoman/core/process"
+import { errorMessage } from "@mailwoman/core/errors/schema"
+import { pathToFileURL } from "@mailwoman/core/module/file-url"
+import { resolvePackageCommand, type PackageCommand } from "@mailwoman/core/module/package-command"
+import { isProcessError, runFile } from "@mailwoman/core/process"
 import { cpuCount } from "@mailwoman/core/utils/system"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -28,33 +31,47 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext }
 const CONCURRENCY = Math.max(2, Math.min(8, cpuCount() - 2))
 
 /**
- * A tracked `tsconfig.test.json` one directory below the root or below `packages/`,
- * which is where every workspace and the `scripts/` project sit.
+ * The pattern selects a tracked `tsconfig.test.json` immediately under a workspace root.
  */
 const TEST_PROJECT = /^(?:packages\/)?[^/]+\/tsconfig\.test\.json$/
 
 /**
- * Run `tsc` against one workspace's test project.
+ * Runs `tsc` against one workspace's test project.
  *
- * A non-zero exit includes the diagnostics on stdout, so a rejected promise is
- * the normal path for a workspace with errors.
+ * TypeScript errors may appear on stdout or stderr with a numeric nonzero exit.
+ * Launch failures, interruptions, and exits without TypeScript diagnostics produce a separate error diagnostic.
  */
-async function* typecheck(workspace: string, repoRoot: string): AsyncGenerator<Diagnostic, void, unknown> {
+async function* typecheck(
+	workspace: string,
+	repoRoot: string,
+	command: PackageCommand
+): AsyncGenerator<Diagnostic, void, unknown> {
 	const config = join(workspace, "tsconfig.test.json")
 
 	try {
-		await runFile("./node_modules/.bin/tsc", ["-p", config, "--noEmit", "--pretty", "false"], { cwd: repoRoot })
+		await runFile(command.file, [...command.argv, "-p", config, "--noEmit", "--pretty", "false"], { cwd: repoRoot })
 	} catch (error) {
-		const output = (error as { stdout?: string }).stdout ?? ""
+		const output = isProcessError(error) ? `${error.stdout}\n${error.stderr}` : ""
+		const lines = TextSpliterator.from(output)
+			.filter((line) => line.includes("error TS"))
+			.toArray()
 
-		for (const line of TextSpliterator.from(output).filter((l) => l.includes("error TS"))) {
+		for (const line of lines) {
 			yield { severity: DiagnosticSeverity.Error, message: line, file: workspace }
+		}
+		if (!lines.length || !isProcessError(error) || typeof error.code !== "number" || error.signal) {
+			yield {
+				severity: DiagnosticSeverity.Error,
+				message: `TypeScript did not complete for ${config}: ${errorMessage(error)}`,
+				file: config,
+				...(output.trim() ? { details: [output.trim()] } : {}),
+			}
 		}
 	}
 }
 
 /**
- * The workspaces whose tests get type-checked: every tracked test project, sorted.
+ * Returns the workspaces with tracked test projects, sorted by path.
  */
 export function testProjectWorkspaces(context: RepoContext): string[] {
 	return context.trackedFiles
@@ -64,7 +81,7 @@ export function testProjectWorkspaces(context: RepoContext): string[] {
 }
 
 /**
- * The `typecheck-tests` check: one error per `tsc` error line across every workspace's test project.
+ * The check reports TypeScript errors and failures to resolve, launch, or finish the compiler.
  */
 export const typecheckTestsCheck: RepoCheck = {
 	id: "typecheck-tests",
@@ -72,11 +89,28 @@ export const typecheckTestsCheck: RepoCheck = {
 	async run(context) {
 		const queue = testProjectWorkspaces(context)
 		const diagnostics: Diagnostic[] = []
+		let command: PackageCommand
+
+		if (!queue.length) return diagnostics
+
+		try {
+			const base = pathToFileURL(join(context.repoRoot, "package.json")).href
+
+			command = await resolvePackageCommand(base, "typescript", "tsc")
+		} catch (error) {
+			return [
+				{
+					severity: DiagnosticSeverity.Error,
+					message: `Could not resolve the TypeScript compiler for ${context.repoRoot}: ${errorMessage(error)}`,
+					file: "package.json",
+				},
+			]
+		}
 
 		await Promise.all(
 			Array.from({ length: CONCURRENCY }, async () => {
 				for (let next = queue.shift(); next; next = queue.shift()) {
-					for await (const diag of typecheck(next, context.repoRoot)) {
+					for await (const diag of typecheck(next, context.repoRoot, command)) {
 						diagnostics.push(diag)
 					}
 				}
