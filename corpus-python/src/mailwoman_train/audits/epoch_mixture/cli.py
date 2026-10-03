@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from ...data.source_reps import format_derivation, resolve_config_reps
-from .passes import audit_mixture
+from .passes import audit_mixture, config_augment, config_augment_exclude_sources
 from .receipts import CorpusReceiptError, corpus_receipt_binding
 
 #: A source whose per-row exposure exceeds this multiple of the median is almost certainly a mistake.
@@ -59,16 +59,8 @@ def run(
             country_weights=d.country_weights,
             source_weights=d.source_weights,
             coarse_filter=d.coarse_filter,
-            augment={
-                "directional": d.augment_directional_prob,
-                "region": d.augment_region_prob,
-                "glue": getattr(d, "augment_glue_prob", 0.0),
-                "case": getattr(d, "augment_case_prob", 0.0),
-                "punct_drop": getattr(d, "augment_punct_drop_prob", 0.0),
-                "upper_case": getattr(d, "augment_upper_case_prob", 0.0),
-                "ordinal": getattr(d, "augment_ordinal_prob", 0.0),
-            },
-            augment_exclude_sources=getattr(d, "augment_exclude_sources", ()) or (),
+            augment=config_augment(d),
+            augment_exclude_sources=config_augment_exclude_sources(d),
             required_receipts=d.required_corpus_receipts,
         )
     except CorpusReceiptError as exc:

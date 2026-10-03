@@ -182,12 +182,117 @@ export const ConventionClaimID = {
 	 * The largest administrative unit prints first, as in the CJK order.
 	 */
 	LargestUnitFirst: "largest-unit-first",
+	/**
+	 * One address system renders in two component orders depending on the script it is written in.
+	 *
+	 * A Chinese address written in Han script runs largest unit first.
+	 * The same address romanized can run the reverse.
+	 *
+	 * A reader that learned one order from a jurisdiction's rows has learned half of what
+	 * that jurisdiction publishes, and the two halves label the same tokens differently.
+	 */
+	OrderingReversesWithScript: "ordering-reverses-with-script",
+	/**
+	 * A premise is numbered without a street: a house number belongs to a locality or a named place.
+	 *
+	 * The predicate is a house number present, a street absent, and a locality or dependent locality present.
+	 * A row carrying only a locality describes a locality and falls outside the predicate.
+	 *
+	 * A premise identified by a named compound or building without any number is
+	 * a different shape and needs its own claim.
+	 * A reader trained where street plus number dominates has little evidence for this one.
+	 */
+	StreetlessPremiseIdentity: "streetless-premise-identity",
+	/**
+	 * An address includes at least one subdivision component: a unit, a floor, a building, an entrance.
+	 *
+	 * The claim is about presence.
+	 * A hierarchy needs two semantically distinct premise levels or source-proven nesting,
+	 * and a claim about that is a separate, stronger proposition.
+	 */
+	PremiseSubdivisionPresent: "premise-subdivision-present",
+	/**
+	 * The jurisdiction's postcode is a fixed-width run of digits.
+	 *
+	 * This measures exposure to the shape only.
+	 * Six digits is a postcode in India, in China and in Russia, so whether a reader labels
+	 * a six-digit token by its surrounding grammar rather than by its shape is a contrast
+	 * between contexts, which the contrast board tests and this claim does not.
+	 */
+	FixedWidthNumericPostcode: "fixed-width-numeric-postcode",
+	/**
+	 * A planning word such as block, sector or phase is part of a locality's name rather than a premise part.
+	 *
+	 * `Sector 12` can be a planning locality while `12 Sector Road` is a street name,
+	 * and `Block B` can be a premise subdivision, a named locality or a planning block.
+	 * The surface is the same and the component differs.
+	 */
+	PlanningWordNamesLocality: "planning-word-names-locality",
 } as const
 
 /**
  * One of the {@link ConventionClaimID} values.
  */
 export type ConventionClaimID = (typeof ConventionClaimID)[keyof typeof ConventionClaimID]
+
+/**
+ * Whether a claim is decided by one row or needs two renderings compared.
+ *
+ * A unary claim is counted over single rows.
+ * A relational claim needs paired or grouped examples and is measured by different machinery,
+ * so counting it per row would answer a different question.
+ */
+export const ClaimArity = {
+	Unary: "unary",
+	Relational: "relational",
+} as const
+
+/**
+ * One of the {@link ClaimArity} values.
+ */
+export type ClaimArity = (typeof ClaimArity)[keyof typeof ClaimArity]
+
+/**
+ * The arity of every claim.
+ */
+export const CLAIM_ARITY: Readonly<Record<ConventionClaimID, ClaimArity>> = {
+	[ConventionClaimID.PostcodePrecedesLocality]: ClaimArity.Unary,
+	[ConventionClaimID.HouseNumberPrecedesStreet]: ClaimArity.Unary,
+	[ConventionClaimID.LargestUnitFirst]: ClaimArity.Unary,
+	[ConventionClaimID.OrderingReversesWithScript]: ClaimArity.Relational,
+	[ConventionClaimID.StreetlessPremiseIdentity]: ClaimArity.Unary,
+	[ConventionClaimID.PremiseSubdivisionPresent]: ClaimArity.Unary,
+	[ConventionClaimID.FixedWidthNumericPostcode]: ClaimArity.Unary,
+	[ConventionClaimID.PlanningWordNamesLocality]: ClaimArity.Unary,
+}
+
+/**
+ * The pairs of components whose relative order differs between two renderings.
+ *
+ * Each rendering is a tag sequence in print order.
+ * Only tags both renderings print are compared, and each differing pair is returned
+ * as `[a, b]` where `a` precedes `b` in the first rendering.
+ *
+ * An ordering change is any differing pair, so a rendering that moves one component
+ * reports a change without the second rendering having to be the first reversed.
+ */
+export function reorderedPairs(first: readonly string[], second: readonly string[]): Array<[string, string]> {
+	const shared = first.filter((tag, at) => second.includes(tag) && first.indexOf(tag) === at)
+	const pairs: Array<[string, string]> = []
+
+	for (let i = 0; i < shared.length; i++) {
+		for (let j = i + 1; j < shared.length; j++) {
+			const a = shared[i]!
+			const b = shared[j]!
+
+			if (second.indexOf(a) > second.indexOf(b)) {
+				pairs.push([a, b])
+			}
+		}
+	}
+
+	return pairs
+}
 
 /**
  * A claim about one jurisdiction, with every source's statement about it.
@@ -257,9 +362,30 @@ export function stanceFromLayout(
 			return region < street ? ObservationStance.Supports : ObservationStance.Contradicts
 		}
 
+		case ConventionClaimID.StreetlessPremiseIdentity: {
+			// A layout that prints a house number and a locality with no street slot states the streetless shape.
+			// A layout with a street slot still renders a streetless address by leaving the
+			// slot empty, so it is no evidence against the claim and reads as silent.
+			const numbered = printedTags.includes("house_number")
+			const placed = printedTags.includes("locality") || printedTags.includes("dependent_locality")
+
+			return numbered && placed && !printedTags.includes("street")
+				? ObservationStance.Supports
+				: ObservationStance.Silent
+		}
+
 		default: {
-			// Every claim id is handled above.
-			// A new one reads as unexamined rather than as agreement.
+			// A layout is one rendering in one script, so it answers a claim about the order
+			// or the presence of components within itself.
+			// The remaining four claims each need evidence a layout does not carry, and they
+			// read as unexamined rather than as agreement until a source carrying it is read.
+			//
+			// `ordering-reverses-with-script` compares two layouts of one jurisdiction,
+			// which `conventionClaimForCountry` holds and this function does not.
+			// `fixed-width-numeric-postcode` asks about a postcode's shape rather than its
+			// place in a line, which `@mailwoman/codex/postcode/shapes` answers.
+			// `premise-subdivision-present` and `planning-word-names-locality` are propositions
+			// about what a row carries, and a rendering table states no row's content.
 			void layout
 
 			return ObservationStance.Silent

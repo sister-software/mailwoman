@@ -214,12 +214,8 @@ class LabelSet:
 
     def collapse_label(self, bio_label: str) -> str:
         """Collapse against this set's tag vocabulary, with the module function's shape rules."""
-        if bio_label == "O" or "-" not in bio_label:
-            return "O"
-        prefix, tag = bio_label.split("-", 1)
-        if tag not in self._tag_set or prefix not in ("B", "I"):
-            return "O"
-        return bio_label
+        parts = split_bio(bio_label)
+        return bio_label if parts is not None and parts[1] in self._tag_set else "O"
 
 
 _LABEL_SETS: Final[dict[str, tuple[tuple[str, ...], tuple[str, ...]]]] = {
@@ -277,16 +273,18 @@ def locale_id(country: str | None) -> int:
     return LOCALE_TO_ID.get(country.strip().upper(), IGNORE_INDEX)
 
 
+def split_bio(bio_label: str) -> tuple[str, str] | None:
+    """The ``(prefix, tag)`` of a ``B-`` or ``I-`` label, or None for ``O`` and any other shape."""
+    if bio_label == "O" or "-" not in bio_label:
+        return None
+    prefix, tag = bio_label.split("-", 1)
+    return (prefix, tag) if prefix in ("B", "I") else None
+
+
 def collapse_label(bio_label: str) -> str:
     """Rewrite a BIO label to its active-set equivalent, or ``O``."""
-    if bio_label == "O":
-        return "O"
-    if "-" not in bio_label:
-        return "O"
-    prefix, tag = bio_label.split("-", 1)
-    if tag not in ACTIVE_TAGS or prefix not in ("B", "I"):
-        return "O"
-    return bio_label
+    parts = split_bio(bio_label)
+    return bio_label if parts is not None and parts[1] in ACTIVE_TAGS else "O"
 
 
 def active_components_present(components_keys: list[str]) -> bool:

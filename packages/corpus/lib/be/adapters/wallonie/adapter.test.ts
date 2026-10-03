@@ -60,14 +60,14 @@ describe("wallonie adapter against the fixture member", () => {
 		const manifest = await run()
 
 		// Ten addresses, all readable.
-		// Two of them differ only by the `addressNumberExtension` the rendered line leaves out,
-		// so they render one line and the runner's own dedup writes nine.
+		// Two of them differ only by their box number.
+		// The box number renders as `unit`, and both survive dedup.
 		expect(manifest.yielded).toBe(10)
-		expect(manifest.written).toBe(9)
+		expect(manifest.written).toBe(10)
 
 		const rows = await readCanonicalRows(scratch.path, WALLONIE_ADAPTER_ID)
 
-		expect(rows).toHaveLength(9)
+		expect(rows).toHaveLength(10)
 		expect(rows.every((row) => row.license === WALLONIE_DEFAULT_LICENSE)).toBe(true)
 		expect(rows.every((row) => row.source === WALLONIE_ADAPTER_ID)).toBe(true)
 		expect(rows.every((row) => row.register === WALLONIE_SOURCE_REGISTER)).toBe(true)
@@ -85,6 +85,7 @@ describe("wallonie adapter against the fixture member", () => {
 		// and the number is selected by its type rather than by being the first designator present.
 		expect(rows.map((row) => row.components.house_number)).toEqual([
 			"93",
+			"93",
 			"103",
 			"17",
 			"52",
@@ -101,22 +102,30 @@ describe("wallonie adapter against the fixture member", () => {
 		)
 	})
 
-	it("leaves the letterbox extension out of the rendered line", async () => {
+	it("renders the box number as the unit, as the publisher writes it", async () => {
 		await run()
 
 		const rows = await readCanonicalRows(scratch.path, WALLONIE_ADAPTER_ID)
 
-		// `B001`, `0RCH` and `008B` are the extensions of three of these addresses.
-		// Over the whole archive the element is written on all 1,772,312 addresses and holds a
-		// value on 347,859, so appending it to the number would invent a surface for those rows.
-		expect(rows.some((row) => /B001|0RCH|008B|BP3/u.test(row.raw))).toBe(false)
-		expect(rows.every((row) => row.components.unit === undefined)).toBe(true)
+		// Every fixture address carries a box number, and each one reaches the row as `unit`.
+		expect(rows.map((row) => row.components.unit)).toEqual([
+			"B001",
+			"C003",
+			"D004",
+			"0001",
+			"0RCH",
+			"B002",
+			"0002",
+			"A002",
+			"008B",
+			"BP3",
+		])
 
-		// The two addresses differing only by extension kept distinct ids upstream of the runner's
-		// dedup, so the duplication is visible rather than silently collapsed inside the adapter.
-		expect(rows.find((row) => row.raw === "Chaussée Reine Astrid 93, 1420 Braine-l'Alleud")?.source_id).toBe(
-			"wallonie-BE.WL.ICAR.Address.1522363"
-		)
+		// The two letterboxes at Chaussée Reine Astrid 93 render two lines rather than one.
+		expect(rows.filter((row) => row.raw.startsWith("Chaussée Reine Astrid 93 ")).map((row) => row.raw)).toEqual([
+			"Chaussée Reine Astrid 93 B001, 1420 Braine-l'Alleud",
+			"Chaussée Reine Astrid 93 C003, 1420 Braine-l'Alleud",
+		])
 	})
 
 	it("joins street, postcode, locality and address area through the local fragments", async () => {
@@ -125,10 +134,11 @@ describe("wallonie adapter against the fixture member", () => {
 		const rows = await readCanonicalRows(scratch.path, WALLONIE_ADAPTER_ID)
 		const first = rows.find((row) => row.source_id === "wallonie-BE.WL.ICAR.Address.1522363")
 
-		expect(first?.raw).toBe("Chaussée Reine Astrid 93, 1420 Braine-l'Alleud")
+		expect(first?.raw).toBe("Chaussée Reine Astrid 93 B001, 1420 Braine-l'Alleud")
 
 		expect(first?.components).toEqual({
 			house_number: "93",
+			unit: "B001",
 			street: "Chaussée Reine Astrid",
 			postcode: "1420",
 			locality: "Braine-l'Alleud",
@@ -138,10 +148,11 @@ describe("wallonie adapter against the fixture member", () => {
 		// rather than from the first of each that the pass read.
 		const other = rows.find((row) => row.source_id === "wallonie-BE.WL.ICAR.Address.1521851")
 
-		expect(other?.raw).toBe("Rue Auguste Goemans 5A, Hamme-Mille, 1320 Beauvechain")
+		expect(other?.raw).toBe("Rue Auguste Goemans 5A BP3, Hamme-Mille, 1320 Beauvechain")
 
 		expect(other?.components).toEqual({
 			house_number: "5A",
+			unit: "BP3",
 			street: "Rue Auguste Goemans",
 			dependent_locality: "Hamme-Mille",
 			postcode: "1320",

@@ -6,10 +6,9 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { tryStat, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
-import { md5File } from "@mailwoman/core/hash"
+import { createHash, md5File } from "@mailwoman/core/hash"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import {
 	createLayerCoverageTable,
@@ -19,7 +18,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { isoDate } from "@mailwoman/core/utils"
+import { isoDate, streamToDisk } from "@mailwoman/core/utils"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
@@ -284,25 +283,17 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 
 	phase("download", `${download.fileName} (${download.size.toLocaleString()} bytes)`)
 
-	const response = await fetch(download.url)
+	const hash = createHash("md5")
 
-	if (!response.ok || !response.body) {
-		throw new Error(`downloadOpenUPRN: OS download failed (${response.status}) for ${download.url}`)
-	}
-
-	let bytes = 0
-
-	const counter = new TransformStream<Uint8Array, Uint8Array>({
-		transform(chunk, controller) {
-			bytes += chunk.byteLength
-			controller.enqueue(chunk)
-		},
+	const bytes = await streamToDisk({
+		url: download.url,
+		destination: archivePath,
+		context: "downloadOpenUPRN: OS download",
+		onChunk: (chunk) => hash.update(chunk),
 	})
 
-	await pipeline(Readable.fromWeb(response.body.pipeThrough(counter)), openWriteStream(archivePath))
-
 	phase("verify", `md5 vs OS-published ${download.md5}`)
-	const md5 = await md5File(archivePath)
+	const md5 = hash.digest("hex")
 
 	if (md5 !== download.md5) {
 		throw new Error(

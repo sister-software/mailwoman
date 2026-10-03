@@ -20,6 +20,7 @@ import {
 	stanceFromLayout,
 	type ConventionClaim,
 	type ConventionObservation,
+	reorderedPairs,
 } from "#address/convention-claims"
 import {
 	addr,
@@ -402,6 +403,37 @@ export function conventionClaimForCountry(
 				readFrom
 			)
 		)
+	}
+
+	// Whether a jurisdiction's order reverses with its script is a comparison between two layouts
+	// of the same jurisdiction, so it is answered here rather than in `stanceFromLayout`,
+	// which sees one. libaddressinput's `lfmt` is its statement of the Latin order and `fmt`
+	// of the native one, so a jurisdiction carrying both states the proposition itself.
+	// A jurisdiction with one layout contributes no observation, because one order
+	// is no evidence that a second order exists.
+	//
+	// The comparison is pairwise.
+	// The order changes when any two components both layouts print sit in opposite relative
+	// order, and the Latin layout may move one component while keeping the rest.
+	// Two layouts that share fewer than two components contribute no observation about relative order.
+	if (claim === ConventionClaimID.OrderingReversesWithScript) {
+		const native = local ?? generated
+
+		if (native && latin) {
+			const nativeTags = printedTags(native)
+			const latinTags = printedTags(latin)
+			const shared = nativeTags.filter((tag) => latinTags.includes(tag))
+
+			if (new Set(shared).size > 1) {
+				observations.push(
+					conventionObservation(
+						ConventionSource.LibAddressInput,
+						reorderedPairs(nativeTags, latinTags).length ? ObservationStance.Supports : ObservationStance.Contradicts,
+						READ_FROM.latin
+					)
+				)
+			}
+		}
 	}
 
 	// The street atom's order came from the OpenCage templates rather than from `fmt`,

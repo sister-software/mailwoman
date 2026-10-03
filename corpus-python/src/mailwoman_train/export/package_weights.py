@@ -34,6 +34,7 @@ from ..labels import (
     STAGE2_TAGS,
     STAGE3_FINE_TAGS,
     STAGE3_TAGS,
+    resolve_label_set,
 )
 
 
@@ -65,8 +66,15 @@ def build_model_card(
     training_duration_seconds: float,
     base_path: Path,
     package_version: str = "0.1.0",
+    label_set_name: str = "stage3",
 ) -> dict[str, Any]:
     """Construct the ModelCard payload. Fields per Phase 2 §10."""
+    from ..semantic_tags import label_set_contract
+
+    if tuple(resolve_label_set(label_set_name).bio_labels) != tuple(ACTIVE_BIO_LABELS):
+        raise ValueError(
+            f"build_model_card writes ACTIVE_BIO_LABELS as `labels`; label set {label_set_name!r} differs from it"
+        )
     return {
         "name": f"neural-weights-{locale}",
         "version": package_version,
@@ -89,6 +97,10 @@ def build_model_card(
         # compile-time default (STAGE2_BIO_LABELS), preserving back-compat with the
         # v3.0.0 published card which predates this field.
         "labels": list(ACTIVE_BIO_LABELS),
+        # The head's place in the shared semantic tag registry: which global concept each head tag
+        # is, under which registry version. A consumer comparing two families' outputs reads this
+        # rather than matching tag names across label sets.
+        "semantic_tags": label_set_contract(label_set_name),
         "eval": eval_report,
         "known_failure_modes": [
             "underperforms on Hawaiian addresses (sparse in training corpus)",

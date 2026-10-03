@@ -6,8 +6,10 @@
 
 import { describe, expect, it } from "vitest"
 
+import { OSM_ATTRIBUTION, OSM_LICENSE } from "#adapters/osm/adapter"
 import {
 	deriveEffectiveTrainingManifest,
+	DrawEvidence,
 	effectiveManifestDigest,
 	ExclusionReason,
 	provenanceDisagreement,
@@ -52,6 +54,29 @@ const derive = () =>
 	deriveEffectiveTrainingManifest({ corpusManifest, audit, config, configPath: "configs/arm-a.yaml" })
 
 describe("deriveEffectiveTrainingManifest", () => {
+	it("owes an attribution only for a source that reached the trainer, and names its evidence stage", () => {
+		const manifest = derive()
+
+		// `unweighted` is ODbL and drew zero rows, so the model owes OSM no attribution for it.
+		expect(manifest.requiredAttributions).toEqual([])
+		expect(manifest.drawEvidence).toBe(DrawEvidence.ReplayedEpochAudit)
+		expect(manifest.labelSet).toBeNull()
+
+		const withOSM = deriveEffectiveTrainingManifest({
+			corpusManifest,
+			audit: { ...audit, emitted_level: { totals: { drawn: 800, unweighted: 5 } } },
+			config: { ...config, sourceWeights: { ...config.sourceWeights, unweighted: 1 } },
+			configPath: "configs/arm-a.yaml",
+			labelSet: { labelSetID: "stage3", semanticTagRegistryVersion: 1, headMapping: [0, 1] },
+		})
+
+		expect(withOSM.requiredAttributions).toEqual([
+			{ license: OSM_LICENSE, sources: ["unweighted"], statement: OSM_ATTRIBUTION },
+		])
+
+		expect(withOSM.labelSet?.labelSetID).toBe("stage3")
+	})
+
 	it("separates a source the config never weighted from one weighted at zero and one that drew zero", () => {
 		const manifest = derive()
 		const bySource = new Map(manifest.sources.map((record) => [record.source, record]))

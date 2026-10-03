@@ -492,3 +492,90 @@ def grade_evidence_bundle(
     print(
         "\nP0 fixture refs for the ablation leg (v385): homonym 159/400, bare-street 241/400, particle 301/400, alnum-hn 373/400, street-hn 373/400, bare-locality 393/400, date-name 53/400."
     )
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=7200,
+    memory=32768,
+)
+def measure_exposure(config_name: str, countries: str = "", draws: int = 0) -> None:
+    """Measure a config's eligible and replayed-draw stages by phenomenon, on CPU, against the volume's corpus.
+
+    Writes ``/data/audits/exposure-<config stem>.json``. ``countries`` limits both stages to a
+    comma-separated list, and ``draws`` overrides the epoch length the replay reads.
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+    from mailwoman_train.exposure.cli import main
+
+    config = Path(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}")
+    argv = ["--config", str(config), "--json", f"{VOL_MOUNT}/audits/exposure-{config.stem}.json"]
+    if countries:
+        argv += ["--countries", countries]
+    if draws:
+        argv += ["--draws", str(draws)]
+    main(argv)
+    vol.commit()
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    gpu="A10G",
+    timeout=3600,
+    memory=32768,
+)
+def grade_exposure(
+    config_name: str,
+    checkpoint: str,
+    country: str = "RU",
+    split: str = "test",
+    max_rows: int = 20000,
+    label: str = "",
+) -> None:
+    """Score one checkpoint on a country's held-out rows by phenomenon, for an exposure curve.
+
+    ``checkpoint`` is a checkpoint directory on the volume, so the shipped base and every curve arm are
+    graded by the same call. The report is written to ``/data/audits/exposure-grade-<label>.json``.
+    """
+    import json
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+    import torch
+
+    from mailwoman_train.config import load_config
+    from mailwoman_train.data.source_reps import resolve_config_reps
+    from mailwoman_train.exposure.grade import grade_heldout
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
+    from mailwoman_train.tokenizer import Tokenizer
+    from mailwoman_train.train.batch import to_tensor_batch
+
+    cfg = load_config(Path(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}"))
+    resolve_config_reps(cfg, Path(cfg.data.corpus_dir))
+    device = torch.device("cuda")
+    model = MailwomanCoarseEncoder.from_pretrained(Path(checkpoint)).to(device).eval()
+    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
+
+    def forward(batch: dict[str, Any]) -> torch.Tensor:
+        with torch.no_grad():
+            logits: torch.Tensor = model(**to_tensor_batch(batch, device)).logits
+        return logits
+
+    report = grade_heldout(cfg, forward, tokenizer, country=country, split=split, max_rows=max_rows)
+    report.update({"config": config_name, "checkpoint": checkpoint})
+    name = label or Path(checkpoint).parent.parent.name
+    out = Path(f"{VOL_MOUNT}/audits/exposure-grade-{name}.json")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    vol.commit()
+    for key, group in report["groups"].items():
+        print(f"{key:<60} {group['correct']:>6}/{group['rows']:<6} {group['exact_match']}")
+    print(f"wrote {out}")

@@ -14,14 +14,19 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { dirname, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 
-import { extractAddrPoints, type OSMAddrRecord } from "#sdk/extract"
+import { extractAddrPoints, type OSMAddrRecord, type OSMExtractTally } from "#sdk/extract"
 
 /**
  * The corpus jsonl row: the extract's record with the house number under the
  * `number` key the Overture rows use.
  */
 export interface OSMCorpusRow {
-	street: string
+	/**
+	 * `addr:street`, absent on a streetless record.
+	 *
+	 * The `osm` corpus adapter decides whether a streetless record is an address.
+	 */
+	street?: string
 	number: string
 	postcode?: string
 	suburb?: string
@@ -31,6 +36,10 @@ export interface OSMCorpusRow {
 	subdistrict?: string
 	district?: string
 	province?: string
+	/**
+	 * `addr:country`, where the mapper tagged one.
+	 */
+	country?: string
 	lat: number
 	lon: number
 }
@@ -41,24 +50,42 @@ export interface OSMCorpusJSONLStats {
 	 */
 	read: number
 	/**
-	 * Rows written: features that also have an `addr:street`.
+	 * Rows written: every feature the extract yielded, less those outside the country outline.
 	 */
 	written: number
 	/**
-	 * Features skipped for carrying no `addr:street`, the association gap.
+	 * Features whose point lies outside the country outline, or `null` when no outline was given.
+	 */
+	outsideOutline: number | null
+	/**
+	 * Rows written without an `addr:street`.
+	 * They are a subset of `written`.
 	 */
 	noStreet: number
+	/**
+	 * Per-layer counts of the features the driver matched and the extract discarded before yielding.
+	 */
+	extract: OSMExtractTally
 }
 
 /**
  * Project an extract record onto the corpus row, dropping the absent tags.
  */
-export function toCorpusRow(record: OSMAddrRecord): OSMCorpusRow | null {
-	if (record.street === null) return null
+export function toCorpusRow(record: OSMAddrRecord): OSMCorpusRow {
+	const row: OSMCorpusRow = { number: record.housenumber, lat: record.lat, lon: record.lon }
 
-	const row: OSMCorpusRow = { street: record.street, number: record.housenumber, lat: record.lat, lon: record.lon }
-
-	for (const key of ["postcode", "suburb", "city", "unit", "place", "subdistrict", "district", "province"] as const) {
+	for (const key of [
+		"street",
+		"postcode",
+		"suburb",
+		"city",
+		"unit",
+		"place",
+		"subdistrict",
+		"district",
+		"province",
+		"country",
+	] as const) {
 		const value = record[key]
 
 		if (value !== null) {
@@ -72,24 +99,37 @@ export function toCorpusRow(record: OSMAddrRecord): OSMCorpusRow | null {
 /**
  * Write the corpus jsonl for one extract.
  */
-export async function writeOSMCorpusJSONL(pbfPath: string, outPath: PathBuilderLike): Promise<OSMCorpusJSONLStats> {
+export async function writeOSMCorpusJSONL(
+	pbfPath: string,
+	outPath: PathBuilderLike,
+	opts: { within?: (lon: number, lat: number) => boolean } = {}
+): Promise<OSMCorpusJSONLStats> {
 	await makeDirectories(dirname(outPath))
 
 	await using out = createNewlineWriter(outPath)
-	const stats: OSMCorpusJSONLStats = { read: 0, written: 0, noStreet: 0 }
 
-	for await (const record of extractAddrPoints(pbfPath)) {
+	const stats: OSMCorpusJSONLStats = {
+		read: 0,
+		written: 0,
+		noStreet: 0,
+		outsideOutline: opts.within ? 0 : null,
+		extract: {},
+	}
+
+	for await (const record of extractAddrPoints(pbfPath, stats.extract)) {
 		stats.read++
 
-		const row = toCorpusRow(record)
-
-		if (!row) {
-			stats.noStreet++
+		if (opts.within && !opts.within(record.lon, record.lat)) {
+			stats.outsideOutline!++
 
 			continue
 		}
 
-		await out.write(stringifyJSON(row))
+		if (record.street === null) {
+			stats.noStreet++
+		}
+
+		await out.write(stringifyJSON(toCorpusRow(record)))
 
 		stats.written++
 	}

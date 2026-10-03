@@ -6,6 +6,7 @@ whatever `grad_accum_steps` is.
 
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 from typing import Any
@@ -14,7 +15,9 @@ import torch
 
 from ..config import Config
 from ..data.loader import iter_batches
+from ..exposure.report import StageCounter, build_report
 from ..protocols import TrainCallback
+from ..semantic_tags import label_set_contract
 from .batch import to_tensor_batch
 from .callbacks.checkpointer import checkpoint_extras
 from .checkpoint import save_checkpoint
@@ -104,6 +107,10 @@ def run_training_loop(
     train_loss_running = 0.0
     log_every = max(1, cfg.train.log_every_steps)
     print(f"max_steps={cfg.train.max_steps} batch_size={cfg.train.batch_size}")
+    # Every train row a consumed batch carried, counted by jurisdiction and phenomenon: the realized
+    # exposure the release check reads. A resumed process counts only what it trains, and writes its
+    # own segment named by the step it resumed from, so a preempted run's segments sum.
+    realized = StageCounter("realized_draws")
 
     # The streaming iterator may exhaust before max_steps when row_limit is set, so restart per
     # epoch.
@@ -117,6 +124,7 @@ def run_training_loop(
             batch_size=cfg.train.batch_size,
             seed=cfg.train.seed + epoch,
             row_limit=cfg.data.train_rows_per_epoch,
+            observer=realized.add_span_row,
         ):
             if step >= cfg.train.max_steps:
                 break
@@ -174,3 +182,26 @@ def run_training_loop(
                     callback.on_eval_end(state, step, state.val)
 
     write_final_artifacts(state, step, output_dir, regularizers, cfg)
+    write_realized_exposure(realized, output_dir, cfg, resume_step=resume_step, final_step=step)
+
+
+def write_realized_exposure(
+    realized: StageCounter, output_dir: Path, cfg: Config, *, resume_step: int, final_step: int
+) -> Path:
+    """Write the realized-draws stage beside the checkpoint, as ``exposure-realized-from-<step>.json``."""
+    report = build_report(
+        [realized],
+        # `Config` carries no path to the YAML it was loaded from, so the run is identified by its
+        # output directory and `training_config` stays null rather than naming a guess.
+        label_set=label_set_contract(getattr(cfg.data, "label_set", "stage3")),
+        inputs={
+            "output_dir": str(output_dir),
+            "corpus_dir": str(cfg.data.corpus_dir),
+            "counted_from_step": str(resume_step),
+            "counted_to_step": str(final_step),
+        },
+    )
+    path = output_dir / f"exposure-realized-from-{resume_step}.json"
+    path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"[exposure] realized draws → {path}")
+    return path

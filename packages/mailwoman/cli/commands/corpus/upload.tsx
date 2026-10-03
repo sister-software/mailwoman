@@ -138,11 +138,20 @@ async function refuseShareAlike(
 	try {
 		manifest = await readLocalJSONFile<UploadedCorpusManifest>(manifestPath)
 	} catch (error) {
-		throw new Error(
+		const detail =
 			`corpus ${version}: ${manifestPath} could not be read (${(error as Error).message}), so its license ` +
-				`set is unknown. Build the version through \`mw corpus build\`, which writes it, or pass ` +
-				`--allow-share-alike to upload without the check.`
-		)
+			`set is unknown.`
+
+		if (!allow) {
+			throw new Error(
+				`${detail} Build the version through \`mw corpus build\`, which writes it, or pass ` +
+					`--allow-share-alike to upload without the check.`
+			)
+		}
+
+		process.stderr.write(`${detail}\nProceeding under --allow-share-alike.\n`)
+
+		return
 	}
 
 	if (!manifest.licenses) {

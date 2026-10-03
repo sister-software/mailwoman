@@ -178,6 +178,12 @@ export const ResearchPass = {
 	 * recorded wrongly, such as a row naming two publishers or a URL that now answers 404.
 	 */
 	RightsReview: "2026-09-30-rights-review",
+	/**
+	 * The decoder-exposure survey, which recorded the authoritative address source of
+	 * each jurisdiction the exposure arc admits through OpenStreetMap.
+	 * It located each authority and did not read its terms.
+	 */
+	DecoderExposureSurvey: "2026-10-03-decoder-exposure",
 } as const
 
 /**

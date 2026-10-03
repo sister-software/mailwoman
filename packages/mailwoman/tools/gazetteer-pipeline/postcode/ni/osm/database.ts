@@ -19,6 +19,7 @@ import { LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
+import { OSM_ATTRIBUTION, OSM_LICENSE_URL } from "@mailwoman/corpus/adapters/osm/adapter"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -46,9 +47,7 @@ import {
 	type NIOSMParseStats,
 	type NIPostcodeRecord,
 	niPostcodeQueryMD5,
-	OSM_ATTRIBUTION,
 	OSM_LICENSE,
-	OSM_LICENSE_URL,
 	type OverpassResponse,
 	parseNIPostcodes,
 } from "#gazetteer/postcode/ni/osm"

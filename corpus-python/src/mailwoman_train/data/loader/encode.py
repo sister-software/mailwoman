@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import random
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -170,6 +170,7 @@ def iter_encoded(
     split: str = "train",
     rng: random.Random | None = None,
     row_limit: int | None = None,
+    observer: Callable[[dict[str, Any]], None] | None = None,
 ) -> Iterator[EncodedExample]:
     """Yield encoded examples, dropping rows whose SP token count exceeds ``max_length``.
 
@@ -223,6 +224,9 @@ def iter_encoded(
                     row["raw"][:40],
                 )
             continue
+        # One row yields one example from here on, so the observer sees exactly the rows encoded.
+        if observer is not None:
+            observer(row)
         if char is not None:
             yield encode_char_row(row, char, label_set)
             continue

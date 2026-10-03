@@ -11,6 +11,7 @@ import { tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalBuffer, writeLocalJSONFile, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { md5Hex } from "@mailwoman/core/utils"
+import { OSM_ATTRIBUTION, OSM_LICENSE_URL } from "@mailwoman/corpus/adapters/osm/adapter"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
@@ -43,19 +44,6 @@ export const NI_POSTCODE_OVERPASS_QUERY = [
  * The license of the acquired OSM data.
  */
 export const OSM_LICENSE = "Open Database License (ODbL) 1.0"
-
-/**
- * The URL of the ODbL license text.
- */
-export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
-
-/**
- * The attribution OSM requires in redistributed data and derived works.
- * The database embeds it.
- */
-export const OSM_ATTRIBUTION =
-	"© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 " +
-	"(https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright."
 
 /**
  * A metadata note explaining why the NI OSM postcode database is built locally and never published.

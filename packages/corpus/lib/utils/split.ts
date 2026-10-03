@@ -109,6 +109,55 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			// Cornwall matches the admin rows for the same place `TR` covers.
 			regions: ["Cornwall"],
 		},
+		// The eight countries below enter training through OpenStreetMap rows, most of which carry no
+		// region and many no postcode, so each holdout matches its place three ways: the region an admin
+		// row carries, the postcode prefix, and the city as the OSM rows spell it. The spellings are the
+		// ones the 2026-10-02 extracts write.
+		CN: {
+			// Gansu by its province and capital, and Qinghai `81` and Tibet `85` by postcode.
+			regions: ["甘肃省", "甘肃", "Gansu"],
+			postcodePrefixes: ["81", "85"],
+			localities: ["兰州市", "兰州", "Lanzhou"],
+		},
+		IN: {
+			// Kerala, whose PIN codes run 67 to 69.
+			regions: ["Kerala"],
+			postcodePrefixes: ["67", "68", "69"],
+			localities: ["Kochi", "Kollam", "Thiruvananthapuram", "Kozhikode"],
+		},
+		ID: {
+			// Bali, whose postcodes begin `80`.
+			regions: ["Bali"],
+			postcodePrefixes: ["80"],
+			localities: ["Denpasar", "Bali"],
+		},
+		NG: {
+			// Enugu State.
+			// OSM Nigeria rows carry almost no postcode or region, so the cities carry it.
+			regions: ["Enugu"],
+			localities: ["Enugu", "Nsukka"],
+		},
+		PK: {
+			// Islamabad Capital Territory, in both scripts the extract writes.
+			regions: ["Islamabad Capital Territory"],
+			postcodePrefixes: ["44"],
+			localities: ["Islamabad", "islamabad", "اسلام آباد"],
+		},
+		BD: {
+			// Chattogram, Khulna and Sylhet, whose postcodes begin 4, 9 and 3 respectively.
+			postcodePrefixes: ["40", "41", "42", "43", "90", "91", "92", "31"],
+			localities: ["Chittagong", "Chattogram", "Khulna", "Sylhet"],
+		},
+		VN: {
+			regions: ["Thành phố Cần Thơ", "Cần Thơ", "Thừa Thiên Huế"],
+			localities: ["Cần Thơ", "Thành phố Cần Thơ", "Huế", "Thành phố Huế"],
+		},
+		RU: {
+			// Primorsky Krai, whose postcodes run 690 to 692.
+			regions: ["Приморский край"],
+			postcodePrefixes: ["690", "691", "692"],
+			localities: ["Владивосток", "Уссурийск", "Находка"],
+		},
 	}
 }
 

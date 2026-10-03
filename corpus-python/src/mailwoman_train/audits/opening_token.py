@@ -28,6 +28,7 @@ from ..config import load_config
 from ..data.emit import EmitPolicy, emit_row
 from ..data.loader import _raw_row_stream
 from ..data.source_reps import resolve_config_reps
+from .epoch_mixture.passes import config_augment, config_augment_exclude_sources
 
 
 def _digits(token: str) -> bool:
@@ -204,16 +205,8 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
         country_weights=cfg.data.country_weights,
         source_weights=cfg.data.source_weights,
         coarse_filter=cfg.data.coarse_filter,
-        augment={
-            "directional": cfg.data.augment_directional_prob,
-            "region": cfg.data.augment_region_prob,
-            "glue": cfg.data.augment_glue_prob,
-            "case": getattr(cfg.data, "augment_case_prob", 0.0),
-            "punct_drop": cfg.data.augment_punct_drop_prob,
-            "upper_case": getattr(cfg.data, "augment_upper_case_prob", 0.0),
-            "ordinal": cfg.data.augment_ordinal_prob,
-        },
-        augment_exclude_sources=tuple(getattr(cfg.data, "augment_exclude_sources", ()) or ()),
+        augment=config_augment(cfg.data),
+        augment_exclude_sources=config_augment_exclude_sources(cfg.data),
     )
 
     meta = report["meta"]

@@ -8,7 +8,7 @@ zero-filled, so the trainer's tensor conversion skips it and the model runs with
 from __future__ import annotations
 
 import random
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import Any
 
 from ...config import Config
@@ -61,14 +61,31 @@ def iter_batches(
     batch_size: int,
     seed: int = 0,
     row_limit: int | None = None,
+    observer: Callable[[dict[str, Any]], None] | None = None,
 ) -> Iterator[dict[str, Any]]:
-    """Yield collated batches indefinitely until the underlying iterator exhausts."""
+    """Yield collated batches indefinitely until the underlying iterator exhausts.
+
+    ``observer`` receives each source row of a batch once the consumer asks for the batch after it,
+    so a batch fetched and then abandoned (the loop breaking at ``max_steps``) is never observed.
+    """
     rng = random.Random(seed)
     buf: list[EncodedExample] = []
-    for ex in iter_encoded(cfg.data, tokenizer, split=split, rng=rng, row_limit=row_limit):
+    rows: list[dict[str, Any]] = []
+    for ex in iter_encoded(
+        cfg.data, tokenizer, split=split, rng=rng, row_limit=row_limit, observer=rows.append if observer else None
+    ):
         buf.append(ex)
         if len(buf) == batch_size:
+            batch_rows = rows[:]
+            rows.clear()
             yield collate(buf)
             buf = []
+            if observer:
+                for row in batch_rows:
+                    observer(row)
     if buf:
+        batch_rows = rows
         yield collate(buf)
+        if observer:
+            for row in batch_rows:
+                observer(row)

@@ -55,6 +55,13 @@ export interface OSMAddrRecord {
 	 * `addr:province` — the province, where the mapper tagged one beside or instead of a city.
 	 */
 	province: string | null
+	/**
+	 * `addr:country` — the ISO code the mapper tagged, where one was.
+	 *
+	 * A Geofabrik extract's polygon extends past the border, so this is the record's
+	 * own statement of which country it is in.
+	 */
+	country: string | null
 	lon: number
 	lat: number
 }
@@ -76,6 +83,7 @@ const ADDR_TAGS = [
 	"subdistrict",
 	"district",
 	"province",
+	"country",
 ] as const
 
 /**
@@ -125,6 +133,7 @@ function toRecord(feature: {
 		subdistrict: tagValue(p, "subdistrict"),
 		district: tagValue(p, "district"),
 		province: tagValue(p, "province"),
+		country: tagValue(p, "country"),
 		lon: pt[0],
 		lat: pt[1],
 	}
@@ -133,26 +142,59 @@ function toRecord(feature: {
 /**
  * Run ogr2ogr against one layer, yielding parsed records from its GeoJSONSeq stdout.
  */
-async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddrRecord> {
+async function* runLayer(pbfPath: string, layer: string, tally?: OSMExtractTally): AsyncGenerator<OSMAddrRecord> {
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", addrSQL(layer), pbfPath]
+	const counts = tally ? (tally[layer] ??= { matched: 0, emptyHouseNumber: 0, noGeometry: 0 }) : null
 
 	for await (const feature of ogr2ogrGeoJSONSeq<{
 		properties?: Record<string, unknown>
 		geometry?: { type?: string; coordinates?: unknown }
 	}>(args, `osm addresses (${layer})`)) {
+		if (counts) {
+			counts.matched++
+		}
+
+		const housenumber = feature.properties?.["housenumber"]
+
+		if (housenumber == null || housenumber === "") {
+			if (counts) {
+				counts.emptyHouseNumber++
+			}
+
+			continue
+		}
+
 		const rec = toRecord(feature)
 
 		if (rec) {
 			yield rec
+		} else if (counts) {
+			counts.noGeometry++
 		}
 	}
 }
 
 /**
- * Stream every `features with `addr:housenumber` from a PBF extract (nodes + building polygons), geometry reduced to a representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can count the association gap before deciding to write them.
+ * Per-layer counts of what the driver returned and what the extract discarded before yielding.
+ *
+ * `matched` counts the features the `addr:housenumber` filter selected in that layer.
+ * A `points` feature is a node.
+ *
+ * A `multipolygons` feature is a closed way or relation that GDAL's OSM driver reads as an area.
+ * A house number on an unclosed way is outside both layers and is not counted.
  */
-export async function* extractAddrPoints(pbfPath: string): AsyncGenerator<OSMAddrRecord> {
+export type OSMExtractTally = Record<string, { matched: number; emptyHouseNumber: number; noGeometry: number }>
+
+/**
+ * Stream every feature with `addr:housenumber` from a PBF extract (nodes + building polygons),
+ * geometry reduced to a representative coordinate.
+ *
+ * Records with no `addr:street` are still yielded (street === null), so the caller decides
+ * whether a streetless record is an address.
+ * When `tally` is given, the extract records per-layer match and discard counts in it.
+ */
+export async function* extractAddrPoints(pbfPath: string, tally?: OSMExtractTally): AsyncGenerator<OSMAddrRecord> {
 	for (const layer of ADDR_LAYERS) {
-		yield* runLayer(pbfPath, layer)
+		yield* runLayer(pbfPath, layer, tally)
 	}
 }

@@ -60,7 +60,7 @@
  * only at {@link MUNICIPALITY_LEVEL}, so those two resolve to no entry and are a reference the
  * adapter declines rather than a defect — the same shape Flanders' `refnis1995_1000` reference has.
  *
- * ## The number extension, read and deliberately not rendered
+ * ## The number extension is the box number, rendered as `unit`
  *
  * Every address writes two inline designators: `addressIdentifierGeneral` holds the house
  * number and `addressNumberExtension` holds a four-character code. `ad:level` is
@@ -74,15 +74,18 @@
  * `addressNumberExtension` with its `ad:designator` empty. That empty element is the publisher
  * stating that the address has no extension rather than omitting the field.
  *
- * So the extension is read, counted and left out of the rendered line. This publication states no
- * rule for writing a value of it into an address: unlike ČÚZK, Wallonia publishes no formatted
- * address of its own to compare a rendering against, and appending `0RCH` or `B001` to the number
- * would invent a surface for 347,859 rows. A publisher-rendered line, or a statement of what the
- * field holds, is what would decide it.
+ * ICAR, the register this publication is drawn from, models a sub-address below the police number
+ * and states what identifies it: the SPW's ICAR presentation to the Club des utilisateurs du PICC
+ * (27 February 2015) lists the communes' validation of sub-addresses identified by their
+ * `numéro de boîte`, the box number, and its ICAR address form records each sub-address's `Numéro` apart from the `Index`
+ * field. A box number identifies one delivery point inside the numbered premise, which is the
+ * concept the `unit` tag carries. It is not a floor, a building, an entrance or a staircase, even
+ * where a code such as `0RCH` (rez-de-chaussée) names the box after the floor it sits on.
  *
- * The consequence is recorded rather than hidden: two addresses differing only by extension render
- * the same line. They keep distinct `source_id` values, each the address's own `gml:id`, so the
- * duplication is visible to a later dedup step rather than collapsed here.
+ * The value is rendered as the publisher writes it, with no designator word: `Rue de la Station 29
+ * B004, 1420 Braine-l'Alleud`. Wallonia publishes no formatted line to copy a designator from, so a
+ * word such as `bte` would be a surface this source does not state. Two letterboxes at one number
+ * therefore render two lines, and deduplication keeps both.
  *
  * ## Voids
  *
@@ -143,7 +146,14 @@ import {
 import { inspireGMLChunks } from "#inspire/archive"
 import { InspireArchiveError } from "#inspire/errors"
 import { SourceRegister } from "#registers"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
+import {
+	AddressRole,
+	type AdapterOptions,
+	type CanonicalRow,
+	type CorpusAdapter,
+	countDropped,
+	SurfaceOrigin,
+} from "#types"
 
 /**
  * Registry id for this adapter.
@@ -201,9 +211,9 @@ const GML_MEMBER = /\.gml$/iu
 const HOUSE_NUMBER_DESIGNATOR = "addressIdentifierGeneral"
 
 /**
- * The designator type carrying the letterbox code beside the number.
+ * The designator type carrying the box number beside the house number.
  *
- * Read and counted rather than rendered, for the reason this file's header states.
+ * Emitted as `unit`, for the reason this file's header states.
  */
 const NUMBER_EXTENSION_DESIGNATOR = "addressNumberExtension"
 
@@ -346,28 +356,26 @@ export async function readWallonieComponents(
 }
 
 /**
- * What the adapter refused, counted by reason.
- *
- * Each count is reported rather than folded into the yield, so a run states what it dropped and why.
+ * The reasons the adapter refuses an address, as the keys it increments in `dropped`.
  */
-interface Refusals {
+const Refusal = {
 	/**
 	 * The publisher stated no house number, having written no `addressIdentifierGeneral` designator.
 	 */
-	absentHouseNumber: number
+	AbsentHouseNumber: "row:house-number-absent",
 	/**
 	 * The publisher marked the house number void, so the value could not be read.
 	 */
-	voidHouseNumber: number
+	VoidHouseNumber: "row:house-number-void",
 	/**
 	 * A reference the component index cannot answer, or a component the address never referenced.
 	 */
-	unjoined: number
+	Unjoined: "row:component-unjoined",
 	/**
 	 * An address the codex could not render into a line.
 	 */
-	unrendered: number
-}
+	Unrendered: "row:render-failed",
+} as const
 
 export function createWallonieAdapter(): CorpusAdapter {
 	return {
@@ -392,7 +400,8 @@ export function createWallonieAdapter(): CorpusAdapter {
 
 			let emitted = 0
 			let extensions = 0
-			const refused: Refusals = { absentHouseNumber: 0, voidHouseNumber: 0, unjoined: 0, unrendered: 0 }
+			// A caller that passes no map still gets the stderr summary below, so the adapter keeps its own.
+			const tally = { dropped: opts.dropped ?? new Map<string, number>() }
 
 			try {
 				for await (const address of streamMarkupElements(inspireGMLChunks(opts.inputPath, GML_MEMBER), "ad:Address", {
@@ -413,15 +422,17 @@ export function createWallonieAdapter(): CorpusAdapter {
 						// a number the publisher states the address has none of.
 						// Neither is emitted, and the two are counted apart so a run reports which it met.
 						if (voidDesignatorTypes(address).has(HOUSE_NUMBER_DESIGNATOR)) {
-							refused.voidHouseNumber++
+							countDropped(tally, Refusal.VoidHouseNumber)
 						} else {
-							refused.absentHouseNumber++
+							countDropped(tally, Refusal.AbsentHouseNumber)
 						}
 
 						continue
 					}
 
-					if (designator(byType, NUMBER_EXTENSION_DESIGNATOR) !== undefined) {
+					const box = designator(byType, NUMBER_EXTENSION_DESIGNATOR)
+
+					if (box !== undefined) {
 						extensions++
 					}
 
@@ -446,7 +457,7 @@ export function createWallonieAdapter(): CorpusAdapter {
 					// A component the index cannot answer is a street, postcode or locality this run could not read.
 					// A row emitted without it would record an absence the publisher never stated.
 					if (street === undefined || postcode === undefined || locality === undefined) {
-						refused.unjoined++
+						countDropped(tally, Refusal.Unjoined)
 
 						continue
 					}
@@ -456,6 +467,10 @@ export function createWallonieAdapter(): CorpusAdapter {
 						street,
 						postcode,
 						locality,
+					}
+
+					if (box !== undefined) {
+						components.unit = box
 					}
 
 					// The `partie de commune` is a dependent locality only where it names
@@ -468,7 +483,7 @@ export function createWallonieAdapter(): CorpusAdapter {
 					const rendered = formatAddressRow(components, "BE", { singleLine: true })
 
 					if (!rendered) {
-						refused.unrendered++
+						countDropped(tally, Refusal.Unrendered)
 
 						continue
 					}
@@ -495,23 +510,21 @@ export function createWallonieAdapter(): CorpusAdapter {
 					emitted++
 				}
 			} finally {
-				const dropped = refused.absentHouseNumber + refused.voidHouseNumber + refused.unjoined + refused.unrendered
+				const count = (reason: string): number => tally.dropped.get(reason) ?? 0
+				const dropped = Object.values(Refusal).reduce((sum, reason) => sum + count(reason), 0)
 
 				if (dropped > 0) {
 					process.stderr.write(
 						`  wallonie: ${emitted} rows kept, ${dropped} refused ` +
-							`(${refused.unjoined} hold a reference the archive cannot answer, ` +
-							`${refused.voidHouseNumber} state a void house number, ` +
-							`${refused.absentHouseNumber} state no house number, ` +
-							`${refused.unrendered} did not render)\n`
+							`(${count(Refusal.Unjoined)} hold a reference the archive cannot answer, ` +
+							`${count(Refusal.VoidHouseNumber)} state a void house number, ` +
+							`${count(Refusal.AbsentHouseNumber)} state no house number, ` +
+							`${count(Refusal.Unrendered)} did not render)\n`
 					)
 				}
 
 				if (extensions > 0) {
-					process.stderr.write(
-						`  wallonie: ${extensions} of ${emitted} rows kept carry an addressNumberExtension ` +
-							`that the rendered line leaves out\n`
-					)
+					process.stderr.write(`  wallonie: ${extensions} of ${emitted} rows kept carry a box number as unit\n`)
 				}
 			}
 		},

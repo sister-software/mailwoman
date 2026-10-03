@@ -11,8 +11,10 @@
  *   straight to disk moves in a single pass, where pacing and retry add overhead.
  */
 
-import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { movePath } from "@mailwoman/core/fs/writers"
+import { createHash } from "@mailwoman/core/hash"
+import { streamToDisk } from "@mailwoman/core/utils"
+import { basename } from "path-ts"
 
 const GEOFABRIK_BASE = "https://download.geofabrik.de"
 
@@ -27,30 +29,83 @@ export function geofabrikURL(regionPath: string): string {
 }
 
 /**
- * Download a Geofabrik extract to `destPath`, streaming (these run to several GB for a whole country).
+ * What one Geofabrik download retrieved, recorded beside the extract so a corpus
+ * row can be traced to the exact bytes it was read from.
  *
- * @returns the byte count written.
+ * `last_modified` is the server's `Last-Modified` header, which dates the OSM snapshot inside the file.
+ * `retrieved_at` dates the download.
+ *
+ * A `-latest` URL serves a different file every day, so the URL alone does not
+ * identify the bytes; `sha256` does.
  */
-export async function downloadExtract(regionPath: string, destPath: string): Promise<number> {
+export interface GeofabrikExtractReceipt {
+	readonly region: string
+	readonly source_url: string
+	readonly retrieved_at: string
+	readonly last_modified: string | null
+	readonly filename: string
+	readonly bytes: number
+	readonly sha256: string
+	readonly md5: string
+	/**
+	 * The checksum Geofabrik publishes at `<url>.md5`, or null when that file could not be read.
+	 */
+	readonly published_md5: string | null
+	readonly license: "ODbL-1.0"
+}
+
+/**
+ * Download a Geofabrik extract to `destPath` and hash its bytes in the same pass.
+ *
+ * A whole-country extract runs to several gigabytes, so the body streams to disk.
+ *
+ * `streamToDisk` writes through a `.part` sibling, so an interrupted transfer never lands at the final path.
+ * When Geofabrik's published md5 disagrees with the bytes, the download moves the
+ * file to `<destPath>.md5-mismatch` for inspection and throws.
+ */
+export async function downloadExtract(regionPath: string, destPath: string): Promise<GeofabrikExtractReceipt> {
 	const url = geofabrikURL(regionPath)
-	const res = await fetch(url)
+	const sha256 = createHash("sha256")
+	const md5 = createHash("md5")
+	let lastModified: string | null = null
 
-	if (!res.ok || !res.body) throw new Error(`Geofabrik download failed (${res.status}) for ${url}`)
-	let bytes = 0
-
-	const counter = new TransformStream<Uint8Array, Uint8Array>({
-		transform(chunk, controller) {
-			bytes += chunk.byteLength
-			controller.enqueue(chunk)
+	const bytes = await streamToDisk({
+		url,
+		destination: destPath,
+		context: "Geofabrik download",
+		onResponse: (response) => {
+			lastModified = response.headers.get("last-modified")
+		},
+		onChunk: (chunk) => {
+			sha256.update(chunk)
+			md5.update(chunk)
 		},
 	})
 
-	// Write to a `.tmp` sibling and rename, so an interrupted multi-gigabyte download
-	// never lands at the final path looking like a complete extract.
-	const tmpPath = destPath + ".tmp"
+	const md5Hex = md5.digest("hex")
 
-	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), openWriteStream(tmpPath))
-	await movePath(tmpPath, destPath)
+	const published = await fetch(`${url}.md5`)
+		.then(async (response) => (response.ok ? (await response.text()).trim().split(/\s+/u)[0]! : null))
+		.catch(() => null)
 
-	return bytes
+	if (published !== null && published !== md5Hex) {
+		await movePath(destPath, `${destPath}.md5-mismatch`)
+
+		throw new Error(
+			`Geofabrik md5 mismatch for ${url}: published ${published}, downloaded ${md5Hex} (${destPath}.md5-mismatch)`
+		)
+	}
+
+	return {
+		region: regionPath.replaceAll(/^\/+|\/+$/g, ""),
+		source_url: url,
+		retrieved_at: new Date().toISOString(),
+		last_modified: lastModified,
+		filename: basename(destPath),
+		bytes,
+		sha256: sha256.digest("hex"),
+		md5: md5Hex,
+		published_md5: published,
+		license: "ODbL-1.0",
+	}
 }

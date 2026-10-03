@@ -18,7 +18,14 @@ import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
+import {
+	AddressRole,
+	type AdapterOptions,
+	type CanonicalRow,
+	type CorpusAdapter,
+	countDropped,
+	SurfaceOrigin,
+} from "#types"
 
 /**
  * Registry id for this adapter, stamped into every row it emits.
@@ -34,6 +41,21 @@ export const OSM_ADAPTER_ID = "osm"
 export const OSM_LICENSE = "ODbL-1.0"
 
 /**
+ * The URL of the ODbL license text.
+ */
+export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
+
+/**
+ * The attribution OSM requires in redistributed data and derived works.
+ *
+ * A database built from OSM embeds it, and a model card carries it when OSM-derived
+ * rows reached the checkpoint, which the effective training manifest records.
+ */
+export const OSM_ATTRIBUTION =
+	"© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 " +
+	`(${OSM_LICENSE_URL}); see https://www.openstreetmap.org/copyright.`
+
+/**
  * The per-row shape `@mailwoman/osm`'s `emit-corpus-jsonl` writes.
  */
 interface OSMCorpusRow {
@@ -47,6 +69,7 @@ interface OSMCorpusRow {
 	subdistrict?: string
 	district?: string
 	province?: string
+	country?: string
 }
 
 const MAX_STREET_WORDS = 8
@@ -113,18 +136,48 @@ function parseLine(line: string): OSMCorpusRow | null {
 }
 
 /**
- * Map one jsonl row onto the components the corpus asserts, or null when the row has no usable street.
+ * Maps one jsonl row onto the components the corpus asserts, or returns null when the row is refused.
+ *
+ * A row with a street-shaped `addr:street` is a street address.
+ * A row with no `addr:street` at all is admitted as a streetless premise when its house
+ * number is designator-shaped and a tag that maps to `locality` or `dependent_locality`
+ * (`addr:city`, `addr:place`, `addr:suburb`, `addr:subdistrict`, `addr:district`)
+ * carries the identity the street would have carried.
+ *
+ * That is OSM's documented scheme for addresses numbered within a named place
+ * rather than along a street, and it is the `streetless-premise-identity` shape.
+ * A row whose `addr:street` holds a line rather than a name stays refused:
+ * the mapper supplied a street, and the value is a line.
+ *
+ * Each refusal and each discarded component increments its reason in `dropped`.
  */
-export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components"] | null {
+export function componentsForOSMRow(
+	row: OSMCorpusRow,
+	dropped?: Pick<AdapterOptions, "dropped">
+): CanonicalRow["components"] | null {
+	const tally = dropped ?? {}
 	const street = clean(row.street)
-
-	if (!street || !isStreetName(street)) return null
-
-	const components: CanonicalRow["components"] = { street }
 	const number = clean(row.number)
+	const designator = number !== null && housenumberIsDesignator(number)
 
-	if (number && housenumberIsDesignator(number)) {
+	if (street && !isStreetName(street)) {
+		countDropped(tally, "row:street-not-a-name")
+
+		return null
+	}
+
+	if (!street && !designator) {
+		countDropped(tally, number ? "row:streetless-house-number-not-designator" : "row:streetless-no-house-number")
+
+		return null
+	}
+
+	const components: CanonicalRow["components"] = street ? { street } : {}
+
+	if (designator) {
 		components.house_number = number
+	} else if (number) {
+		countDropped(tally, "component:house_number:not-designator")
 	}
 
 	const unit = clean(row.unit)
@@ -137,6 +190,8 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 
 	if (postcode && /^\d{4,6}$/u.test(postcode)) {
 		components.postcode = postcode
+	} else if (postcode) {
+		countDropped(tally, "component:postcode:not-4-to-6-digits")
 	}
 
 	const city = clean(row.city)
@@ -155,7 +210,7 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 			(value) =>
 				value !== null &&
 				!value.includes(",") &&
-				!sameName(value, street) &&
+				(street === null || !sameName(value, street)) &&
 				(split === null || !sameName(value, split.locality))
 		)
 
@@ -169,9 +224,21 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.region = province
 	}
 
-	// An address row needs another component alongside the street.
+	// A streetless premise is a house number within a named place, so it needs a locality
+	// or a dependent locality, from any of the tags that map to them.
+	if (!street && !components.locality && !components.dependent_locality) {
+		countDropped(tally, "row:streetless-no-locality")
+
+		return null
+	}
+
+	// An address row needs another component alongside the street or the streetless house number.
 	// Coarse adapters already teach bare names.
-	if (Object.keys(components).length === 1) return null
+	if (Object.keys(components).length === 1) {
+		countDropped(tally, street ? "row:street-only" : "row:house-number-only")
+
+		return null
+	}
 
 	return components
 }
@@ -224,17 +291,48 @@ export function createOSMAdapter(): CorpusAdapter {
 
 				const row = parseLine(line)
 
-				if (!row) continue
+				if (!row) {
+					if (line.trim() && !line.trim().startsWith("#")) {
+						countDropped(opts, "row:unparseable-line")
+					}
 
-				const components = componentsForOSMRow(row)
+					continue
+				}
+
+				// A Geofabrik extract's polygon extends past the border, so its records
+				// include addresses in the neighboring country.
+				// A record whose own `addr:country` names another country is refused.
+				// A record without the tag is kept and counted, so the size of the remaining
+				// uncertainty is in the manifest rather than assumed to be zero.
+				const tagged = clean(row.country)?.toUpperCase()
+
+				if (tagged && tagged !== country) {
+					countDropped(opts, "row:country-tag-mismatch")
+
+					continue
+				}
+
+				if (!tagged) {
+					countDropped(opts, "kept:country-untagged")
+				}
+
+				const components = componentsForOSMRow(row, opts)
 
 				if (!components) continue
 
 				const rendered = formatAddressRow(components, country, { singleLine: true })
 
-				if (!rendered) continue
+				if (!rendered) {
+					countDropped(opts, "row:render-failed")
+
+					continue
+				}
 
 				const { raw, components: aligned } = rendered
+
+				for (const tag of rendered.unplaced) {
+					countDropped(opts, `component:${tag}:not-rendered`)
+				}
 
 				yield {
 					raw,

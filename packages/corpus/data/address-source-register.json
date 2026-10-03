@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "b44f82693cb92da40e3d9206df4c1c2f71bcf6c31d909e9153923abdabc42979",
+	"contentDigest": "e141b726cc83bfebc8aee588afa73d5208a145bbd7bfbb208789a8182d145949",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -2096,7 +2096,7 @@
 			"licenseID": "unchecked-access-licensed-cn-cn-business-legal-3",
 			"state": "unchecked",
 			"publisherStatement": "Licensed",
-			"note": "An access label: a licence is sold or granted on application. It states no terms. The research pass recorded no publisher, so this decision is scoped to cn-business-legal-3 alone."
+			"note": "An access label: a license is sold or granted on application. It states no terms. The research pass recorded no publisher, so this decision is scoped to cn-business-legal-3 alone."
 		},
 		{
 			"licenseID": "unchecked-access-licensed-or-query-cr-cr-property-building-1",
@@ -2528,6 +2528,12 @@
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Court of First Instance / Ministry of Justice in CM, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"licenseID": "unchecked-national-terms-cn-national-bureau-of-statistics-of-china-nbs",
+			"state": "unchecked",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"note": "The research pass recorded the register and did not open its terms. Scoped to National Bureau of Statistics of China (NBS) in CN, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
 			"licenseID": "unchecked-national-terms-cn-state-administration-for-market-regulation",
@@ -2990,6 +2996,12 @@
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Courts of Registration / Ministry of Justice in HU, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"licenseID": "unchecked-national-terms-id-badan-pusat-statistik-bps",
+			"state": "unchecked",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"note": "The research pass recorded the register and did not open its terms. Scoped to Badan Pusat Statistik (BPS) in ID, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
 			"licenseID": "unchecked-national-terms-id-ministry-of-law-and-human-rights",
@@ -3505,6 +3517,12 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Corporate Affairs Commission in NG, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
+			"licenseID": "unchecked-national-terms-ng-nigerian-postal-service-nipost",
+			"state": "unchecked",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"note": "The research pass recorded the register and did not open its terms. Scoped to Nigerian Postal Service (NIPOST) in NG, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
 			"licenseID": "unchecked-national-terms-ni-public-registry-mercantile-registration-autho",
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
@@ -3743,6 +3761,12 @@
 			"state": "unchecked",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Federal Tax Service in RU, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"licenseID": "unchecked-national-terms-ru-federal-tax-service-of-russia-fns",
+			"state": "unchecked",
+			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
+			"note": "The research pass recorded the register and did not open its terms. Scoped to Federal Tax Service of Russia (FNS) in RU, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
 			"licenseID": "unchecked-national-terms-rw-office-of-the-registrar-general-rwanda-develo",
@@ -13750,6 +13774,70 @@
 				"reading": "absent",
 				"because": "Every element name the file ever uses was counted over all 474,245,978 decoded bytes of the member, so this is a denominator of the whole publication rather than a sample of its features. The file uses 48 distinct element names and **`ad:locatorName` is not among them: it appears 0 times, as does `ad:LocatorName`**. That element is the free-text `GeographicalName` through which a family name or a business name reaches an INSPIRE address, and this publisher never writes it. The 24,998 `ad:name` elements and 52 `ad:postName` elements sum to 25,050, which equals the 12,574 `gn:GeographicalName` plus 12,476 `ad:ThoroughfareNameValue` the file carries, and those sit on the component features rather than on an address: 6,238 thoroughfare names, 26 postal descriptors and 23 administrative-unit names, all of them place names. The census ran through `inspireGMLChunks`, the same reader the adapter uses, carrying the text after each chunk's final `<` into the next chunk and decoding with a stateful decoder, so neither a split tag nor a split multi-byte character could hide an occurrence."
 			}
+		},
+		{
+			"sourceID": "ru-property-building-1",
+			"iso2": "RU",
+			"sector": "property-building",
+			"name": "State Address Register (GAR, formerly FIAS)",
+			"status": "verified-authority",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "The federal address register; its schema separates postcode, region, municipal district, settlement, planning structure, street, building, premises and room within premises",
+			"geometry": "absent",
+			"license": "unchecked-national-terms-ru-federal-tax-service-of-russia-fns",
+			"researchPass": "2026-10-03-decoder-exposure",
+			"access": "weekly full and delta extracts in XML and DBF from the FIAS portal",
+			"publisher": "Federal Tax Service of Russia (FNS)",
+			"sourceURL": "https://fias.nalog.ru/Frontend",
+			"note": "The authoritative source for Russia's address hierarchy. OpenStreetMap Russia supplies the decoder-exposure rows and this register is recorded as the authority beside it; the two roles stay separate. The terms are not yet retrieved or hashed."
+		},
+		{
+			"sourceID": "ng-public-administration-1",
+			"iso2": "NG",
+			"sector": "public-administration",
+			"name": "National Postcode System and digital addressing",
+			"status": "verified-authority",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Designated postal operator; operates the national postcode system and a national digital addressing system for which API, SDK and bulk access are claimed",
+			"geometry": "unresolved",
+			"license": "unchecked-national-terms-ng-nigerian-postal-service-nipost",
+			"researchPass": "2026-10-03-decoder-exposure",
+			"access": "API / SDK / bulk access claimed; not yet observed",
+			"publisher": "Nigerian Postal Service (NIPOST)",
+			"sourceURL": "https://www.nipost.gov.ng/",
+			"note": "API availability states no open-data grant; the license stays unresolved until the terms are retrieved and hashed."
+		},
+		{
+			"sourceID": "cn-public-administration-1",
+			"iso2": "CN",
+			"sector": "public-administration",
+			"name": "Statistical division and urban-rural classification codes",
+			"status": "verified-authority",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Annual 12-digit statistical division codes from province to village and residents' committee, with a 5-digit urban-rural class",
+			"geometry": "absent",
+			"license": "unchecked-national-terms-cn-national-bureau-of-statistics-of-china-nbs",
+			"researchPass": "2026-10-03-decoder-exposure",
+			"access": "annual web tables through the 2023 edition; NBS stated in 2025 that it stopped publishing the codes in October 2024 and publishes only the compilation rules",
+			"publisher": "National Bureau of Statistics of China (NBS)",
+			"sourceURL": "https://www.stats.gov.cn/hd/lyzx/zxgk/202509/t20250903_1960996.html",
+			"note": "Grounds the administrative hierarchy and locality vocabulary down to village level. It holds no street or premise, so it does not close China's street-level exposure gap."
+		},
+		{
+			"sourceID": "id-public-administration-1",
+			"iso2": "ID",
+			"sector": "public-administration",
+			"name": "Master File Desa and statistical area codes",
+			"status": "verified-authority",
+			"asserts": ["identity", "observation"],
+			"authorityBasis": "Official statistical codes and boundaries for province, regency, district and village",
+			"geometry": "unresolved",
+			"license": "unchecked-national-terms-id-badan-pusat-statistik-bps",
+			"researchPass": "2026-10-03-decoder-exposure",
+			"access": "web portal; not yet observed",
+			"publisher": "Badan Pusat Statistik (BPS)",
+			"sourceURL": "https://sig.bps.go.id/",
+			"note": "Grounds Indonesia's administrative hierarchy. Street-level exposure comes from OpenStreetMap Indonesia rather than from this source."
 		}
 	]
 }

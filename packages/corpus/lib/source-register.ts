@@ -49,12 +49,14 @@ export type { TrainingManifest, TrainingSourceRecord } from "#source-register/tr
 
 export {
 	deriveEffectiveTrainingManifest,
+	DrawEvidence,
 	effectiveManifestDigest,
 	epochMixtureAuditPath,
 	ExclusionReason,
 	provenanceDisagreement,
 	provenanceRefusals,
 	readConfigView,
+	requiredAttributions,
 } from "#source-register/effective-manifest"
 
 export type {
@@ -62,6 +64,8 @@ export type {
 	EffectiveSourceRecord,
 	EffectiveTrainingManifest,
 	EpochMixtureAudit,
+	LabelSetContract,
+	RequiredAttribution,
 } from "#source-register/effective-manifest"
 
 export type * from "#source-register/types"

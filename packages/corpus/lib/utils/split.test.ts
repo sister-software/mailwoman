@@ -173,6 +173,26 @@ describe("defaultHoldouts", () => {
 		expect(regionsOf(d.FR)).toContain("Creuse")
 	})
 
+	it("declares a holdout for every country the decoder-exposure config admits through OSM", () => {
+		// A country admitted to train with no holdout has zero val and zero test rows by construction,
+		// and a model would then be described as evaluated on a country it was never evaluated on.
+		for (const country of ["RU", "CN", "IN", "ID", "NG", "PK", "BD", "VN"]) {
+			const policy = policyOf(defaultHoldouts()[country])
+
+			expect(
+				(policy.regions?.length ?? 0) + (policy.postcodePrefixes?.length ?? 0) + (policy.localities?.length ?? 0),
+				country
+			).toBeGreaterThan(0)
+		}
+	})
+
+	it("holds out an OSM street row by its city when it carries neither region nor postcode", () => {
+		const enugu = { source_id: "osm-1", country: "NG", components: { street: "Ogui Road", locality: "Enugu" } }
+
+		expect(splitForRow(enugu)).not.toBe("train")
+		expect(splitForRow({ ...enugu, components: { street: "Allen Avenue", locality: "Ikeja" } })).toBe("train")
+	})
+
 	it("names the three French departments by postcode prefix as well as by region", () => {
 		// The same three places, in the component BAN emits.
 		// Corse 20, Creuse 23, Lozère 48.

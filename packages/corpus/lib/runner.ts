@@ -149,6 +149,13 @@ export interface AdapterRunManifest {
 	written: number
 	deduped: number
 	/**
+	 * Input records the adapter refused or trimmed before yielding, keyed by reason.
+	 *
+	 * See {@link AdapterOptions.dropped} for the key shapes.
+	 * An empty object means the adapter does not count its drops, so the number it dropped is unmeasured.
+	 */
+	dropped: Record<string, number>
+	/**
 	 * The `yielded` count at which the dedup set stopped growing, or `null` where it never did.
 	 *
 	 * A run reporting a number here deduplicated its rows completely up to that point.
@@ -185,7 +192,11 @@ export interface AdapterRunManifest {
  * Drive a single adapter to completion, writing its jsonl and manifest under `outputDir/<adapter.id>/`.
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
-	const { adapter, adapterOptions, outputDir, corpusVersion } = opts
+	const { adapter, outputDir, corpusVersion } = opts
+	// A caller that passes its own map reads the counts back from it.
+	// Otherwise the runner supplies one, so every manifest carries the adapter's drop reasons.
+	const dropped = opts.adapterOptions.dropped ?? new Map<string, number>()
+	const adapterOptions: AdapterOptions = { ...opts.adapterOptions, dropped }
 	const progressEvery = opts.progressEvery ?? 1000
 
 	const adapterDir = resolvePathBuilder(outputDir, adapter.id)
@@ -323,6 +334,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		yielded,
 		written,
 		deduped: yielded - written,
+		dropped: Object.fromEntries([...dropped].toSorted(([a], [b]) => a.localeCompare(b))),
 		dedup_exhausted_at_yielded: dedupExhaustedAtYielded,
 		dedup_store: fingerprints ? DedupStore.FingerprintTable : DedupStore.CappedSet,
 		dedup_keys: fingerprints?.size ?? seen?.size ?? 0,

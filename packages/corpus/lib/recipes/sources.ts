@@ -258,6 +258,18 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"overture-latam",
 	"gnaf",
 	"osm",
+	// One id per country for the 2026-10-02 Geofabrik extracts, written by `corpus run osm --source-name`.
+	// A country's OSM rows then carry their own weight, so admitting a country,
+	// admitting its OSM rows and sampling them stay three settings.
+	// The September PK, VN and BD rows keep `osm`.
+	"osm-ru",
+	"osm-cn",
+	"osm-in",
+	"osm-id",
+	"osm-ng",
+	"osm-vn",
+	"osm-pk",
+	"osm-bd",
 	"deepseek-kryptonite",
 	"deepseek-translit-cyrl",
 	"deepseek-translit-jpan",

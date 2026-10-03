@@ -24,8 +24,10 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { LicenseObligation, summarizeLicense } from "@mailwoman/core/license/obligations"
 import type { PathBuilder } from "path-ts"
 
+import { OSM_ATTRIBUTION, OSM_LICENSE } from "#adapters/osm/adapter"
 import type { TrainingManifest } from "#source-register/training-manifest"
 
 /**
@@ -111,11 +113,119 @@ export interface EffectiveSourceRecord {
 }
 
 /**
+ * Which stage of the draw chain a manifest's row counts come from.
+ *
+ * The chain runs eligible rows, requested mixture, expected draws, realized draws, checkpoint.
+ * A manifest records the last stage it could read, and a reader treats an earlier
+ * stage as an estimate of the later ones rather than as the fact.
+ */
+export const DrawEvidence = {
+	/**
+	 * The epoch-mixture audit replays epoch 1 of the sampler with the trainer's seed.
+	 *
+	 * It reconstructs the draw.
+	 * The trainer's own count is {@link DrawEvidence.TrainerLogged}.
+	 */
+	ReplayedEpochAudit: "replayed-epoch-audit",
+	/**
+	 * The trainer's `exposure-realized-from-<step>.json`, which counts the rows of every batch it trained on.
+	 */
+	TrainerLogged: "trainer-logged",
+} as const
+
+export type DrawEvidence = (typeof DrawEvidence)[keyof typeof DrawEvidence]
+
+/**
+ * The head a checkpoint trained: its label set and where each head tag sits in the shared
+ * semantic tag registry (`corpus-python/src/mailwoman_train/semantic_tags.py`).
+ */
+export interface LabelSetContract {
+	labelSetID: string
+	semanticTagRegistryVersion: number
+	/**
+	 * The global semantic id of each head tag, in head order.
+	 */
+	headMapping: number[]
+}
+
+/**
+ * An attribution a model card owes because a source under that license reached the trainer.
+ */
+export interface RequiredAttribution {
+	license: string
+	/**
+	 * The training sources carrying the license.
+	 */
+	sources: string[]
+	/**
+	 * The statement to print, or `null` where no statement is recorded for the license
+	 * and the attribution has to be written from each source's register entry.
+	 */
+	statement: string | null
+}
+
+/**
+ * Recorded attribution statements, keyed by license.
+ *
+ * A license appears here only when one statement covers every source carrying it.
+ * OSM's statement covers every OSM-derived row.
+ *
+ * A CC BY source credits its own publisher, so its statement comes from the register.
+ */
+const ATTRIBUTION_STATEMENTS: Readonly<Record<string, string>> = {
+	[OSM_LICENSE]: OSM_ATTRIBUTION,
+}
+
+/**
+ * The attributions owed by the sources that reached the trainer, grouped by license.
+ *
+ * Only `trainingSources` are read, so a source the corpus holds and the run never drew owes no attribution.
+ * A license is included when `summarizeLicense` records an attribution obligation for it, or
+ * when it is unrecognized, since an unrecognized license's obligations are unknown rather than absent.
+ */
+export function requiredAttributions(sources: readonly EffectiveSourceRecord[]): RequiredAttribution[] {
+	const byLicense = new Map<string, string[]>()
+
+	for (const record of sources) {
+		if (record.emittedRows <= 0) continue
+
+		const summary = summarizeLicense(record.license)
+
+		if (summary.recognized && !summary.obligations.includes(LicenseObligation.Attribution)) continue
+
+		byLicense.set(record.license, [...(byLicense.get(record.license) ?? []), record.source])
+	}
+
+	return [...byLicense]
+		.toSorted(([a], [b]) => a.localeCompare(b))
+		.map(([license, licensed]) => ({
+			license,
+			sources: licensed.toSorted(),
+			statement: ATTRIBUTION_STATEMENTS[license] ?? null,
+		}))
+}
+
+/**
  * What one config drew from one corpus in one audited epoch.
  */
 export interface EffectiveTrainingManifest {
 	manifestID: "corpus-effective-training-manifest"
-	schemaVersion: 1
+	schemaVersion: 2
+
+	/**
+	 * The stage of the draw chain the row counts below come from.
+	 */
+	drawEvidence: DrawEvidence
+
+	/**
+	 * The head the run trained, or `null` where the derivation was given none.
+	 */
+	labelSet: LabelSetContract | null
+
+	/**
+	 * The attributions the sources in {@linkcode trainingSources} owe.
+	 */
+	requiredAttributions: RequiredAttribution[]
 
 	/**
 	 * The corpus the rows came from and the digest of its frozen manifest.
@@ -338,6 +448,7 @@ export function deriveEffectiveTrainingManifest(input: {
 	audit: EpochMixtureAudit
 	config: EffectiveConfigView
 	configPath: string
+	labelSet?: LabelSetContract | null
 }): EffectiveTrainingManifest {
 	const emitted = input.audit.emitted_level?.totals
 
@@ -424,7 +535,10 @@ export function deriveEffectiveTrainingManifest(input: {
 
 	const manifest: EffectiveTrainingManifest = {
 		manifestID: "corpus-effective-training-manifest",
-		schemaVersion: 1,
+		schemaVersion: 2,
+		drawEvidence: DrawEvidence.ReplayedEpochAudit,
+		labelSet: input.labelSet ?? null,
+		requiredAttributions: requiredAttributions(sources),
 		corpusVersion: input.corpusManifest.corpusVersion,
 		corpusManifestDigest: input.corpusManifest.contentDigest,
 		config: input.configPath,

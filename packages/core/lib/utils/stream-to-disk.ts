@@ -26,6 +26,18 @@ export interface StreamToDiskOptions {
 	 */
 	headers?: Record<string, string>
 	onProgress?: (message: string) => void
+	/**
+	 * Receives every chunk in order as it is written.
+	 *
+	 * A caller hashes the bytes in the same pass rather than reading a multi-gigabyte file back.
+	 */
+	onChunk?: (chunk: Uint8Array) => void
+	/**
+	 * Receives the OK response before its body is read.
+	 *
+	 * A caller records a header such as `Last-Modified`, which dates the bytes.
+	 */
+	onResponse?: (response: Response) => void
 	progressStrideBytes?: number
 	/**
 	 * What this host's non-OK status means, appended to the refusal: the soil download service answers 400
@@ -61,6 +73,8 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 		)
 	}
 
+	options.onResponse?.(response)
+
 	const strideBytes = options.progressStrideBytes ?? DEFAULT_PROGRESS_STRIDE_BYTES
 
 	let received = 0
@@ -70,6 +84,7 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 
 	source.on("data", (chunk: Buffer) => {
 		received += chunk.byteLength
+		options.onChunk?.(chunk)
 
 		if (received - reported >= strideBytes) {
 			reported = received

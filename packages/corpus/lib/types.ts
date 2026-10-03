@@ -371,6 +371,28 @@ export interface AdapterOptions {
 	 * A cancellation signal that adapters should check at each iteration.
 	 */
 	signal?: AbortSignal
+
+	/**
+	 * Counts of input records the adapter refused or trimmed, keyed by reason.
+	 *
+	 * An adapter that drops a record increments a `row:<reason>` key, and one that keeps the row
+	 * but discards a component increments a `component:<tag>:<reason>` key.
+	 * A `kept:<condition>` key counts records kept under a condition the reader should see,
+	 * such as a country the record does not state.
+	 *
+	 * The runner writes the map into `MANIFEST.json` as `dropped`, so the gap between a
+	 * source's record count and the rows written has a counted reason.
+	 * An adapter that does not count leaves the map empty, which the manifest records
+	 * as an empty object rather than as zero drops of any named kind.
+	 */
+	dropped?: Map<string, number>
+}
+
+/**
+ * Adds one to `reason` in an adapter's {@link AdapterOptions.dropped} map, when the caller supplied one.
+ */
+export function countDropped(opts: Pick<AdapterOptions, "dropped">, reason: string): void {
+	opts.dropped?.set(reason, (opts.dropped.get(reason) ?? 0) + 1)
 }
 
 /**

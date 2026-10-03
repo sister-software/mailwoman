@@ -68,6 +68,24 @@ def normalized_augment(augment: dict[str, float] | None) -> dict[str, float]:
     return filled
 
 
+def config_augment(data: Any) -> dict[str, float]:
+    """A config's ``data`` section as the augmentation probabilities the trainer applies."""
+    return {
+        "directional": data.augment_directional_prob,
+        "region": data.augment_region_prob,
+        "glue": data.augment_glue_prob,
+        "case": data.augment_case_prob,
+        "punct_drop": data.augment_punct_drop_prob,
+        "upper_case": data.augment_upper_case_prob,
+        "ordinal": data.augment_ordinal_prob,
+    }
+
+
+def config_augment_exclude_sources(data: Any) -> tuple[str, ...]:
+    """The sources a config's ``data`` section exempts from augmentation."""
+    return tuple(data.augment_exclude_sources or ())
+
+
 def requested_shares(source_weights: dict[str, float] | None) -> dict[str, float]:
     """The configured weights as the shares they ask for. A zero or negative weight asks for none."""
     if source_weights is None:

@@ -12,6 +12,14 @@ build runs `mailwoman corpus build --license-policy share-alike-free`, which ref
 so the open weights are the only ones that learn from them. The adapter has no license option: the value
 is the interface.
 
+The OpenStreetMap Foundation's Attribution Guidelines include machine-learning guidance. For Mailwoman,
+model documentation generated from an effective training manifest carries the required OSM attribution
+when OSM-derived rows actually contribute to a checkpoint. `requiredAttributions` in
+`#source-register/effective-manifest` derives that from the sources that reached the trainer, and its
+statement is `OSM_ATTRIBUTION` in this adapter. A corpus that holds OSM rows the run never drew owes no
+attribution for them. The statement covers OSM only; another ODbL licensor's terms are read from its
+own register entry.
+
 `--license-policy` reads each row's license value through `readLicenseRecord` and refuses it under one of
 three classes, which `utils/license.ts` documents. It replaced an anchored prefix match over the license
 column, which admitted a row whose license was prose naming ODbL rather than the identifier.
@@ -59,6 +67,17 @@ mailwoman corpus run osm \
 | `city` (the part after the last comma)                              | `locality`                                                            |
 | `suburb` ?? `subdistrict` ?? `district` ?? `place` ?? the city head | `dependent_locality`                                                  |
 | `province`                                                          | `region`, unless it repeats the locality                              |
+
+A record with no `addr:street` is a streetless premise when its house number is designator-shaped and
+an `addr:place` or `addr:city` is present: `12, Ивановка, Тула` keeps `house_number`,
+`dependent_locality` and `locality`. That is OSM's scheme for numbering within a named place, and it is
+the shape the `streetless-premise-identity` phenomenon counts. A record whose `addr:street` holds a line
+rather than a name stays refused.
+
+Every refused record and every discarded component increments a reason in the run's `MANIFEST.json`
+`dropped` map (`row:street-not-a-name`, `component:house_number:not-designator`, …). The extract's own
+counts, per GDAL layer, sit in the `<jsonl>.stats.json` sidecar `emit-corpus-jsonl` writes, beside the
+`<pbf>.receipt.json` that `tools/fetch-extract.ts` writes for the PBF.
 
 Mappers write whole lines into `addr:housenumber` (`House 34, Road 4, Sector 9`) and `addr:street`; those
 rows keep the street and lose the number, or are skipped. A comma in `addr:city` is the neighborhood ahead of the
