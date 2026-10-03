@@ -228,11 +228,17 @@ function installRangeVFS(sqlite3: Sqlite3Static, file: RemoteFile): void {
 async function fetchWhole(url: string): Promise<Uint8Array> {
 	const response = await fetch(url)
 
-	if (!response.ok || !response.body) throw new Error(`${url} returned HTTP ${response.status}`)
+	if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`)
 
-	const body = url.endsWith(".gz") ? response.body.pipeThrough(new DecompressionStream("gzip")) : response.body
+	const bytes = new Uint8Array(await response.arrayBuffer())
 
-	return new Uint8Array(await new Response(body).arrayBuffer())
+	// The body's leading bytes decide inflation: a body that starts with the gzip magic number is inflated
+	// here, and a body the browser already inflated under `Content-Encoding: gzip` is used as it is.
+	if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) return bytes
+
+	const inflated = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))
+
+	return new Uint8Array(await new Response(inflated).arrayBuffer())
 }
 
 function openInMemory(sqlite3: Sqlite3Static, bytes: Uint8Array): Database {

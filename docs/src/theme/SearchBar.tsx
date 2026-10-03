@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The navbar search control. It opens the search modal on a click, on Ctrl+K or Cmd+K, and on `/`
- *   pressed outside a text field. The index is opened in the sqlite-wasm worker on the first query and
- *   kept for the page's lifetime.
+ *   pressed outside a text field. The index is opened in the sqlite-wasm worker when the modal first
+ *   opens and kept for the page's lifetime.
  */
 
 import "@mailwoman/react/styles.css"
@@ -26,24 +26,39 @@ export default function SearchBar() {
 	const [open, setOpen] = useState(false)
 	const database = useRef<Promise<RangeDatabase> | undefined>(undefined)
 
-	const runSearch = useCallback(async (q: string, signal: AbortSignal): Promise<SearchResponse> => {
-		// A failed open clears the memo so the next query retries.
+	const openDatabase = useCallback((): Promise<RangeDatabase> => {
+		// A failed open clears the memo so the next open retries.
 		database.current ??= openWholeDatabase(SEARCH_INDEX_PATH, SQLITE_RUNTIME_PATH).catch((error: unknown) => {
 			database.current = undefined
 			throw error
 		})
 
-		const db = await database.current
-
-		if (signal.aborted) throw new DOMException("aborted", "AbortError")
-
-		return search(db, q)
+		return database.current
 	}, [])
+
+	// Opening the modal starts the index download, so the first query need not wait for all of it.
+	useEffect(() => {
+		if (open) {
+			openDatabase().catch(() => {})
+		}
+	}, [open, openDatabase])
+
+	const runSearch = useCallback(
+		async (q: string, signal: AbortSignal): Promise<SearchResponse> => {
+			const db = await openDatabase()
+
+			if (signal.aborted) throw new DOMException("aborted", "AbortError")
+
+			return search(db, q)
+		},
+		[openDatabase]
+	)
 
 	useEffect(() => {
 		function onKeyDown(event: KeyboardEvent) {
 			const shortcut =
-				(event.key === "k" && (event.metaKey || event.ctrlKey)) || (event.key === "/" && !isEditable(event.target))
+				(event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) ||
+				(event.key === "/" && !isEditable(event.target))
 
 			if (!shortcut) return
 

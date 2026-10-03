@@ -151,6 +151,8 @@ export async function openWholeDatabase(databaseURL: string, runtimeBaseURL: str
 			chunkSize: 0,
 		})
 
+		await client.query("SELECT count(*) FROM sqlite_master")
+
 		return client
 	} catch (error) {
 		client.terminate()

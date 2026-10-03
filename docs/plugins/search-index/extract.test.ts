@@ -60,6 +60,19 @@ describe("extractRecords", () => {
 		expect(records[0]?.content).toBe("Once.")
 	})
 
+	test("counts a table cell's paragraph and list text only in the row record", () => {
+		const records = extractRecords(
+			page(`<h1>A</h1><p>Above.</p><table><tbody>
+				<tr><td>Norway</td><td><p>Elected.</p> <ul><li>Notes.</li></ul></td></tr></tbody></table>`),
+			"/docs/a"
+		)
+
+		expect(records.map((record) => [record.level, record.content])).toEqual([
+			[1, "Above."],
+			[5, "Elected. Notes."],
+		])
+	})
+
 	test("gives distinct ids to headings that share an id or have none", () => {
 		const records = extractRecords(page(`<h1>A</h1><h2 id="x">B</h2><h2 id="x">C</h2><h2>D</h2>`), "/docs/a")
 

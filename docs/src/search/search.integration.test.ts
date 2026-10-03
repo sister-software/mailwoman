@@ -3,24 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The spec's acceptance list against an index built from the real `docs/build`. The test throws when
- *   the build directory is absent rather than passing on an empty index.
+ *   The spec's acceptance list against the shipped `docs/build/search-index.db.gz`. The test throws in CI
+ *   when the file is absent rather than passing on an empty index.
  */
 
-import { readdir } from "node:fs/promises"
-
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { gunzip } from "@mailwoman/core/fs/compression"
+import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
-import { beforeAll, describe, expect, test } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-import { extractRecords } from "../../plugins/search-index/extract.ts"
-import { fixtureDatabase } from "./database.node.ts"
+import type { SearchIndexDatabase } from "../../plugins/search-index/schema.ts"
+import { SEARCH_INDEX_FILENAME } from "./constants.ts"
+import { nodeSearchDatabase } from "./database.node.ts"
 import type { SearchDatabase } from "./database.ts"
 import { search } from "./search.ts"
 
-const BUILD_DIR = repoRootPath("docs", "build")
+const INDEX_FILE = repoRootPath("docs", "build", SEARCH_INDEX_FILENAME)
 const WITHIN = 3
+const MIN_RECORDS = 1000
 
 const ACCEPTANCE: [query: string, url: string][] = [
 	["locales and tiers", "/docs/developers/reference/locales-and-tiers"],
@@ -34,36 +38,40 @@ const ACCEPTANCE: [query: string, url: string][] = [
 // The acceptance suite needs a docs build.
 // CI has one in the docs-build job and refuses its absence.
 // A local checkout without a build skips and says so.
-const buildAbsent = !(await pathExists(BUILD_DIR))
+const indexAbsent = !(await pathExists(INDEX_FILE))
 // oxlint-disable-next-line sister-software/no-process-globals -- the runner's `CI` flag is not a project setting
-const skipSuite = buildAbsent && !process.env.CI
+const skipSuite = indexAbsent && !process.env.CI
 
+let scratch: TemporaryDirectory | undefined
+let client: DatabaseClient<SearchIndexDatabase> | undefined
 let db: SearchDatabase
 
 beforeAll(async () => {
 	if (skipSuite) return
 
-	if (buildAbsent) throw new Error(`${BUILD_DIR} is absent; run yarn workspace @mailwoman/docs build first`)
+	if (indexAbsent) throw new Error(`${INDEX_FILE} is absent; run yarn workspace @mailwoman/docs build first`)
 
-	const records = []
-	const entries = await readdir(BUILD_DIR.toString(), { recursive: true })
-	const htmlEntries = entries.filter((name) => name.endsWith(".html")).toSorted()
+	scratch = await temporaryDirectory("search-acceptance-")
+	const plainPath = resolvePath(scratch.path, "search-index.db")
 
-	for (const entry of htmlEntries) {
-		const route = `/${entry}`.replace(/\/index\.html$/, "").replace(/\.html$/, "")
+	await writeLocalFile(await gunzip(await readLocalBuffer(INDEX_FILE)), plainPath)
 
-		if (route === "/404") continue
+	client = new DatabaseClient<SearchIndexDatabase>(plainPath, { readOnly: true })
 
-		records.push(...extractRecords(await readLocalTextFile(resolvePath(BUILD_DIR, entry)), route === "" ? "/" : route))
-	}
+	const { n } = client.prepare("SELECT count(*) AS n FROM records").get() as { n: number }
+	const { records } = client.prepare("SELECT records FROM build").get() as { records: number }
 
-	if (records.length <= 1000)
-		throw new Error(
-			`${BUILD_DIR} yielded ${records.length} records from ${htmlEntries.length} HTML files; expected more than 1000`
-		)
+	if (n <= MIN_RECORDS) throw new Error(`${INDEX_FILE} holds ${n} records; expected more than ${MIN_RECORDS}`)
 
-	db = fixtureDatabase(records)
+	if (records !== n) throw new Error(`${INDEX_FILE} build row says ${records} records; the records table holds ${n}`)
+
+	db = nodeSearchDatabase(client)
 }, 120_000)
+
+afterAll(async () => {
+	client?.[Symbol.dispose]()
+	await scratch?.[Symbol.asyncDispose]()
+})
 
 describe.skipIf(skipSuite)("the acceptance list", () => {
 	test.each(ACCEPTANCE)(`returns the page for "%s" within the first ${WITHIN} hits`, async (query, url) => {

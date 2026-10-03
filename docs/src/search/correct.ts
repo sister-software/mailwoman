@@ -60,7 +60,10 @@ function trigramExpression(token: string): string | undefined {
 }
 
 async function correctToken(db: SearchDatabase, token: string): Promise<string | undefined> {
-	if (token.length < MIN_TOKEN) return undefined
+	// Lengths count code points, as the trigram windows do.
+	const length = [...token].length
+
+	if (length < MIN_TOKEN) return undefined
 
 	const expression = trigramExpression(token)
 
@@ -68,7 +71,7 @@ async function correctToken(db: SearchDatabase, token: string): Promise<string |
 
 	const candidates = await db.query<{ term: string }>(CANDIDATE_SQL, [expression])
 	const lower = token.toLowerCase()
-	const allowed = token.length < SHORT_TOKEN ? MAX_EDITS_SHORT : MAX_EDITS
+	const allowed = length < SHORT_TOKEN ? MAX_EDITS_SHORT : MAX_EDITS
 	let best: { term: string; distance: number } | undefined
 
 	for (const { term } of candidates) {

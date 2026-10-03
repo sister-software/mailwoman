@@ -32,9 +32,18 @@ export interface SearchModalProps {
 	search: (q: string, signal: AbortSignal) => Promise<SearchResponse>
 }
 
-type Status = { kind: "idle" } | { kind: "results"; response: SearchResponse } | { kind: "failed" }
+type Status =
+	| { kind: "idle" }
+	| { kind: "loading" }
+	| { kind: "results"; response: SearchResponse }
+	| { kind: "failed" }
 
 const DEBOUNCE_MS = 150
+
+/**
+ * How long a request runs before the live region announces that the index is loading.
+ */
+const LOADING_ANNOUNCE_MS = 300
 const MAX_QUERY_LENGTH = 200
 const DEFAULT_CATEGORY = "Documentation"
 
@@ -47,6 +56,8 @@ export function hitHref(hit: Pick<SearchHit, "url" | "anchor">): string {
 
 function statusText(status: Status): string {
 	if (status.kind === "failed") return "Search is unavailable. Try again in a moment."
+
+	if (status.kind === "loading") return "Loading the search index…"
 
 	if (status.kind === "idle") return ""
 
@@ -88,7 +99,9 @@ export function SearchModal({ open, onClose, onNavigate, search }: SearchModalPr
 	const [query, setQuery] = useState("")
 	const [settled, setSettled] = useState<Status>({ kind: "idle" })
 	const [selected, setSelected] = useState(0)
-	const debounced = useDebouncedValue(query.trim().slice(0, MAX_QUERY_LENGTH), DEBOUNCE_MS)
+	const [loading, setLoading] = useState(false)
+	const trimmed = query.trim().slice(0, MAX_QUERY_LENGTH)
+	const debounced = useDebouncedValue(trimmed, DEBOUNCE_MS)
 
 	useEffect(() => {
 		const dialog = dialogRef.current
@@ -108,27 +121,38 @@ export function SearchModal({ open, onClose, onNavigate, search }: SearchModalPr
 
 		// Aborting the earlier request is what keeps a late response from replacing newer results.
 		const controller = new AbortController()
+		const loadingTimer = setTimeout(() => setLoading(true), LOADING_ANNOUNCE_MS)
 
 		search(debounced, controller.signal).then(
 			(response) => {
 				if (controller.signal.aborted) return
 
+				clearTimeout(loadingTimer)
+				setLoading(false)
 				setSettled({ kind: "results", response })
 				setSelected(0)
 			},
 			() => {
-				if (!controller.signal.aborted) {
-					setSettled({ kind: "failed" })
-				}
+				if (controller.signal.aborted) return
+
+				clearTimeout(loadingTimer)
+				setLoading(false)
+				setSettled({ kind: "failed" })
 			}
 		)
 
-		return () => controller.abort()
+		return () => {
+			clearTimeout(loadingTimer)
+			setLoading(false)
+			controller.abort()
+		}
 	}, [debounced, search])
 
 	// An empty query shows no results, whatever the last settled response was.
 	const status: Status = debounced === "" ? { kind: "idle" } : settled
 	const response = status.kind === "results" ? status.response : undefined
+	// The announcement reports a slow request while the last results stay on screen.
+	const announced: Status = loading && debounced !== "" ? { kind: "loading" } : status
 
 	const groups = useMemo(() => {
 		const hits = response?.hits ?? []
@@ -193,6 +217,9 @@ export function SearchModal({ open, onClose, onNavigate, search }: SearchModalPr
 			document.getElementById(optionID(next))?.scrollIntoView({ block: "nearest" })
 		} else if (event.key === "Enter") {
 			event.preventDefault()
+
+			// The hits on screen answer an earlier query until the debounce settles.
+			if (trimmed !== debounced) return
 
 			const entry = ordered[selected]
 
@@ -283,7 +310,7 @@ export function SearchModal({ open, onClose, onNavigate, search }: SearchModalPr
 			</div>
 
 			<p aria-live="polite" className="mw-search__status">
-				{statusText(status)}
+				{statusText(announced)}
 			</p>
 		</dialog>
 	)

@@ -135,7 +135,9 @@ and a `node:sqlite` adapter satisfies it in tests.
    `terms_trigram` is queried with the `OR` of the token's three-character windows for 10 candidates,
    and the candidate with the smallest Damerau-Levenshtein distance that is at most 2, and at most
    one for a token under 6 characters, replaces the token. The primary query runs again with the
-   corrected tokens, and the response reports the correction.
+   corrected tokens, and the response reports the correction. A term that shares no three-character
+   window with the token is never proposed, so a transposition inside a word of four letters or fewer
+   is not corrected.
 4. Hits are the first record per URL, up to `limit`, with a 160-character snippet around the first
    token match and the character ranges that matched.
 
@@ -160,9 +162,11 @@ interface SearchHit {
 
 `openWholeDatabase(databaseURL, runtimeBaseURL)` in `packages/resolver-wof-wasm/lib/httpvfs/database.ts`
 returns the same `RangeDatabase` handle as `openRangeDatabase`. The worker protocol's `open` request
-gains `strategy: "range" | "whole"`. For `whole`, the worker fetches the URL, pipes a URL ending in
-`.gz` through `DecompressionStream("gzip")`, and opens the bytes with `sqlite3_deserialize` into an
-in-memory database. `bytesRead()` reports the decompressed size. The index therefore runs off the main
+gains `strategy: "range" | "whole"`. For `whole`, the worker fetches the URL, inflates the body through
+`DecompressionStream("gzip")` when its first two bytes are the gzip magic number `1f 8b`, and opens the
+bytes with `sqlite3_deserialize` into an in-memory database. The body's leading bytes decide inflation, so the
+open works whether or not the host sends `Content-Encoding: gzip`. The open then reads
+`sqlite_master`, so a corrupt file fails the open rather than the first query. `bytesRead()` reports the decompressed size. The index therefore runs off the main
 thread, and the modal stays responsive during a query.
 
 The docs site stages the worker and runtime under `/mailwoman/sqlite/` already, through the
@@ -178,7 +182,8 @@ neither the index nor sqlite-wasm. The modal:
 - sends the query 150 ms after the last keystroke and aborts the previous request;
 - groups hits by `hierarchy[0]` and renders the heading path with the snippet below it;
 - shows the corrected query when `corrected` is present;
-- states the condition in words when the request fails or returns zero hits.
+- states the condition in words when the request fails or returns zero hits;
+- announces "Loading the search index…" when a request has run for 300 ms without a response.
 
 The modal is built from native elements, and the platform supplies the behavior those elements
 define.
@@ -192,17 +197,18 @@ define.
   and `aria-activedescendant` for the selected hit. DOM focus stays on the input for the whole
   session.
 - The result list is an element with `role="listbox"`. Each `hierarchy[0]` group has `role="group"`
-  and an `aria-labelledby` reference to its heading. Each hit has `role="option"`, a stable `id` and
-  `aria-selected`, and contains an `<a href>` so that a pointer click, a middle click and "open in new
-  tab" navigate as ordinary links.
+  and an `aria-labelledby` reference to its heading. Each hit is an `<a href>` carrying `role="option"`, a
+  stable `id` and `aria-selected`, so a pointer click, a middle click and "open in new tab" navigate as
+  ordinary links, and an axe-core audit reports no nested interactive element.
 - `ArrowDown` and `ArrowUp` move `aria-activedescendant` and wrap at the ends. `Home` and `End` select
-  the first and last hit. `Enter` navigates to the selected hit.
-- An `aria-live="polite"` region announces the hit count, the zero-hit condition and a request
-  failure.
+  the first and last hit. `Enter` navigates to the selected hit once the results answer the typed
+  query.
+- An `aria-live="polite"` region announces the hit count, the zero-hit condition, a request failure,
+  and the loading of the index when a request runs for 300 ms or more.
 
 ### Site wiring
 
-`docs/src/theme/SearchBar.tsx` renders the navbar button and the modal. On the first open it calls
+`docs/src/theme/SearchBar.tsx` renders the navbar button and the modal. When the modal first opens it calls
 `openWholeDatabase("/search-index.db.gz", "/mailwoman/sqlite/")` and keeps the handle for the page's
 lifetime; a second open reuses it. The `search` function it passes composes the query code over that
 handle. The `algolia` block is deleted from `docs/docusaurus.config.ts`.
@@ -224,12 +230,16 @@ types live in `@mailwoman/react/search/types`, and the docs code imports them wi
 - `docs/src/search/snippet.test.ts`: snippet bounds and highlight ranges.
 - `docs/src/search/search.test.ts`: one hit per URL, the limit, the `corrected` field, and an empty
   response for punctuation-only text.
-- `docs/src/search/search.integration.test.ts`: the acceptance list against an index written from
-  `docs/build`. The test throws when the build directory is absent.
+- `docs/src/search/search.integration.test.ts`: the acceptance list against the shipped
+  `docs/build/search-index.db.gz`, inflated and opened read-only. The test checks that the `records`
+  table holds more than 1,000 rows and that the `build` row's count equals it. In CI it throws when the
+  file is absent; elsewhere it skips.
 - `packages/react/lib/search/SearchModal.test.tsx`: the dialog and combobox attributes, groups and
-  options, arrow-key wrap and Enter, Escape, stale-response ordering, and the live region.
-- A Playwright test in `docs/test/` opens the modal on the built site, types a query, and asserts a
-  hit.
+  options, arrow-key wrap and Enter, Enter ignored before the results answer the typed query, Escape,
+  stale-response ordering, the loading announcement, and the live region.
+- `docs/test/e2e/search.spec.ts`, the Playwright `search` project, opens the modal on the built site,
+  types a query, and asserts a hit. The docs-build workflow runs it with `yarn workspace @mailwoman/docs
+test:search` after the acceptance queries, and the Playwright config serves `docs/build` on port 7770.
 
 ## Acceptance list
 

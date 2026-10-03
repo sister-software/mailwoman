@@ -90,6 +90,37 @@ test("moves the selection with the arrow keys, wraps, and navigates on Enter", a
 	expect(onClose).toHaveBeenCalled()
 })
 
+test("ignores Enter until the results answer the typed query", async () => {
+	const { container, input, onNavigate } = mount(async (q) => response(q, [`/${q}`]))
+
+	await userEvent.type(input, "a")
+	await vi.waitFor(() => expect(container.querySelector('[role="option"]')?.getAttribute("href")).toBe("/a"))
+
+	await userEvent.type(input, "b")
+	await userEvent.keyboard("{Enter}")
+	expect(onNavigate).not.toHaveBeenCalled()
+
+	await vi.waitFor(() => expect(container.querySelector('[role="option"]')?.getAttribute("href")).toBe("/ab"))
+	await userEvent.keyboard("{Enter}")
+	expect(onNavigate).toHaveBeenCalledWith("/ab")
+})
+
+test("announces a slow request as loading, then the results", async () => {
+	const { container, input } = mount(
+		(q) =>
+			new Promise<SearchResponse>((resolve) => {
+				setTimeout(() => resolve(response(q, ["/slow"])), 500)
+			})
+	)
+
+	const status = container.querySelector('[aria-live="polite"]') as HTMLElement
+
+	await userEvent.type(input, "slow")
+	await vi.waitFor(() => expect(status.textContent).toBe("Loading the search index…"))
+	await vi.waitFor(() => expect(status.textContent).toBe("1 result."))
+	expect(container.querySelector('[role="option"]')?.getAttribute("href")).toBe("/slow")
+})
+
 test("calls onClose when the dialog closes on Escape", async () => {
 	const { dialog, onClose } = mount(async (q) => response(q, []))
 

@@ -65,5 +65,8 @@ describe("the open request", () => {
 			databaseURL: "https://example.test/search-index.db.gz",
 			runtimeModuleURL: "https://example.test/mailwoman/sqlite/index.mjs",
 		})
+
+		// The open reads the schema so a corrupt file fails here rather than at the first query.
+		expect(FakeWorker.posted[1]).toMatchObject({ type: "query", sql: "SELECT count(*) FROM sqlite_master" })
 	})
 })

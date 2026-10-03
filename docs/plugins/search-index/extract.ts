@@ -25,6 +25,14 @@ function hasClass(element: Element, name: string): boolean {
 	return (getAttributeValue(element, "class") ?? "").split(/\s+/).includes(name)
 }
 
+function insideTableRow(element: Element): boolean {
+	for (let parent = element.parent; parent; parent = parent.parent) {
+		if ("name" in parent && parent.name === "tr") return true
+	}
+
+	return false
+}
+
 function category(document: Document): string {
 	const active = findAll(
 		(element) =>
@@ -103,6 +111,9 @@ export function extractRecords(html: string, url: string): SearchRecord[] {
 		} else if (section) {
 			// A list item that holds a paragraph would add the same text twice.
 			if (element.name === "li" && findOne((child) => child.name === "p", element.children)) continue
+
+			// Text inside a table cell belongs to the row's record.
+			if (insideTableRow(element)) continue
 
 			const text = cleanText(element)
 
