@@ -25,6 +25,23 @@ async function installFixture(
 }
 
 describe("resolvePackageCommand", () => {
+	it("reads the package root manifest when the entrypoint has its own package scope", async () => {
+		await using scratch = await temporaryDirectory("package-nested-manifest-")
+		const directory = scratch.path("node_modules", "@fixture", "nested")
+		await writeLocalJSONFile(
+			{ name: "@fixture/nested", main: "lib/index.js", bin: { tool: "bin/tool.js" } },
+			directory("package.json")
+		)
+		await writeLocalJSONFile({ type: "commonjs" }, directory("lib", "package.json"))
+		await writeLocalTextFile("", directory("lib", "index.js"))
+		await writeLocalTextFile("", directory("bin", "tool.js"))
+		expect(
+			await resolvePackageCommand(pathToFileURL(scratch.path("caller.ts")).href, "@fixture/nested", "tool")
+		).toEqual({
+			file: process.execPath,
+			argv: [directory("bin", "tool.js").toString()],
+		})
+	})
 	it("uses the nearest dependency and preserves spaces in executable paths", async () => {
 		await using scratch = await temporaryDirectory("package-command-")
 		const project = scratch.path("project with spaces")

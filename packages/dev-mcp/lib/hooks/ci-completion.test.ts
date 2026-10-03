@@ -22,6 +22,14 @@ describe("CI completion", () => {
 	it("blocks absent checks", async () => {
 		await expect(assertCIComplete("owner/repo", 1, reader([]))).rejects.toThrow("unresolved")
 	})
+	it("requires the aggregate test check to pass", async () => {
+		await expect(assertCIComplete("owner/repo", 1, reader([{ name: "CodeQL", bucket: "pass" }]))).rejects.toThrow(
+			"unresolved"
+		)
+		await expect(assertCIComplete("owner/repo", 1, reader([{ name: "test", bucket: "skipping" }]))).rejects.toThrow(
+			"unresolved"
+		)
+	})
 	it("accepts successful and conditionally skipped checks on the same head", async () => {
 		await expect(
 			assertCIComplete(

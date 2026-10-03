@@ -14,7 +14,8 @@ export async function assertCIComplete(
 	const args = ["pr", "view", String(pullRequestNumber), "--repo", repo, "--json", "headRefOid,state"]
 	const before = JSON.parse((await run(args)).stdout) as { headRefOid: string; state: string }
 
-	if (before.state !== "OPEN") return
+	if (["CLOSED", "MERGED"].includes(before.state)) return
+	if (before.state !== "OPEN" || !before.headRefOid) throw new Error("GitHub omitted the open PR state or head.")
 
 	const output = await run(["pr", "checks", String(pullRequestNumber), "--repo", repo, "--json", "name,bucket"]).catch(
 		(error: unknown) => {
@@ -26,7 +27,11 @@ export async function assertCIComplete(
 	const after = JSON.parse((await run(args)).stdout) as { headRefOid: string }
 	const unresolved = checks.filter((check) => !["pass", "skipping"].includes(check.bucket))
 
-	if (before.headRefOid !== after.headRefOid || !checks.length || unresolved.length) {
+	if (
+		before.headRefOid !== after.headRefOid ||
+		!checks.some((check) => check.name === "test" && check.bucket === "pass") ||
+		unresolved.length
+	) {
 		throw new Error(
 			`PR #${pullRequestNumber} CI is unresolved for ${after.headRefOid}. Review the current checks, fix failures, and continue monitoring. ` +
 				unresolved.map((check) => `${check.name}: ${check.bucket}`).join(", ")

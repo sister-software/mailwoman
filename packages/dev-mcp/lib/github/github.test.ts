@@ -186,6 +186,7 @@ describe("GitHub MCP tools", () => {
 	})
 
 	it("creates a PR and starts its CI monitor", async () => {
+		const cwd = fixtures.use(await temporaryDirectory("mw-pr-ci-")).path
 		const calls: string[][] = []
 
 		const run: RunGitHub = vi.fn(async (args) => {
@@ -223,7 +224,7 @@ describe("GitHub MCP tools", () => {
 		} satisfies Job)
 
 		const [, tool] = githubTools(
-			{ registry: stubEngineRegistry({ repoRoot: process.cwd() }), jobs, startedAt: Date.now() },
+			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs, startedAt: Date.now() },
 			{ run, lint: async () => undefined, branch: async () => "feature/test" }
 		)
 
@@ -245,8 +246,12 @@ describe("GitHub MCP tools", () => {
 			"CI for pull request #2400",
 			process.execPath,
 			expect.arrayContaining([expect.stringContaining("github/ci-monitor.ts"), "--pull-request", "2400"]),
-			process.cwd()
+			cwd.toString()
 		)
+		expect(JSON.parse(await readLocalTextFile(cwd(".claude", "state", "tracked-ci.json")))).toEqual({
+			repo: "sister-software/mailwoman",
+			pullRequestNumber: 2400,
+		})
 	})
 
 	it("creates a PR from the branch of a named worktree checkout", async () => {
