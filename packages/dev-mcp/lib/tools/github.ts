@@ -4,8 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { currentBranch } from "@mailwoman/core/git"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { resolvePath } from "path-ts"
 import { z } from "zod"
 
 import {
@@ -372,6 +374,17 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 
 				if (!Number.isInteger(pullRequestNumber)) {
 					throw new TypeError(`GitHub returned an unrecognized pull-request URL: ${url}`)
+				}
+
+				await writeLocalJSONFile(
+					{ repo: REPO, pullRequestNumber },
+					resolvePath(cwd, ".claude", "state", "tracked-ci.json")
+				)
+				if (cwd !== deps.registry.repoRoot) {
+					await writeLocalJSONFile(
+						{ repo: REPO, pullRequestNumber },
+						resolvePath(deps.registry.repoRoot, ".claude", "state", "tracked-ci.json")
+					)
 				}
 
 				const monitor = deps.jobs.start(

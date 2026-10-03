@@ -34,7 +34,7 @@ import {
 	type RepoContext,
 	writeBaseline,
 } from "@mailwoman/repo-health"
-import { writeCIScope } from "@mailwoman/repo-health/ci-scope-output"
+import { writeCIScope } from "@mailwoman/repo-health/actions-output"
 import { planPathLiteralRewrites } from "@mailwoman/repo-health/move/literals"
 import { storageOperations, type StorageContext } from "@mailwoman/storage-kit"
 import { resolvePath } from "path-ts"

@@ -20,7 +20,7 @@ workflow dispatches also select every suite. A failed graph read fails the requi
 
 Fast and slow Vitest jobs receive selected test filenames as arguments. The existing Vitest configs
 retain their exclusions and suite boundaries. React, planetary, license-worker, Earth, packaging, and
-full-scale lexicon work run only when selected. Packaging selection uses the published workspace set
+full-scale lexicon work run only when selected. The packaging job uses the published workspace set
 in `.release-it.json`, plus the release tooling. Lexicon selection includes changes that affect
 `mailwoman` or `@mailwoman/codex`; this is broader than the previous list of gazetteer paths.
 
@@ -40,7 +40,7 @@ There is no fallback restore of compiled output from a different source tree.
 The required `test` job checks that every selected job succeeded. A selected job that fails, is
 cancelled, or unexpectedly skips fails that check. The scope summary lists selected suites and affected
 workspaces. An unselected suite did not run. The existing data-fleet exception remains: data-dependent
-jobs skip when no data runner is available, and the result carries a partial-check warning.
+jobs skip when no data runner is available. The required `test` job then emits a partial-check warning.
 
 Workspace-level dependencies can select broad runs. For example, `mailwoman` declares a dependency on
 `@mailwoman/corpus`, and Earth declares a dependency on `mailwoman`. A corpus change therefore selects
