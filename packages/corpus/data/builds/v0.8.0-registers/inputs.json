@@ -1,6 +1,6 @@
 {
 	"$schema-note": "Adapter inputs for one base corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch, because the data root moved from /mnt/playpen/mailwoman-data to /mnt/mw on 2026-09-23 and the previous record's absolute paths stopped resolving.",
-	"$registers-note": "This record is the first to carry the address registers read for #2323. Eight of them write their input through `mailwoman corpus fetch <id>`, and each `inputPath` below is where that fetcher lands: a fetcher writes under `$MAILWOMAN_DATA_ROOT/corpus/sources/<adapter id>/`, and an adapter that wants one file inside that directory states it through its own `…InputPath` helper. Ten further eligible sources have a reader and no fetcher, so they are absent from this record rather than silently empty: `brussels`, `es-bizkaia`, `es-catastro`, `es-gipuzkoa`, `es-navarra`, `matrikkelen`, `nl-kadaster`, `sk-inspire`, `vlaanderen` and `wallonie`.",
+	"$registers-note": "This record carries every address register read for #2323. All eighteen write their input through `mailwoman corpus fetch <id>`: a fetcher writes under `$MAILWOMAN_DATA_ROOT/corpus/sources/<adapter id>/`, and an adapter that wants one file or one subdirectory inside that directory states it through its own `…InputPath` helper, which is where each `inputPath` below comes from.",
 	"$policy-note": "Gipuzkoa's register entry elects CC-BY-SA-4.0 and is absent here for want of a fetcher rather than for its licence. When it gains one, a build behind a published model runs `--license-policy share-alike-free`, which refuses its rows and records the refusal in `refused_rows_by_source`. `internal/strategy/mailwoman-cc-by-sa-training-model-rights-2026-10-03.md` states why that exclusion is a release decision rather than a finding that share-alike reaches trained weights.",
 	"corpusVersion": "v0.8.0-registers",
 	"adapters": {
@@ -57,6 +57,36 @@
 		},
 		"it-anac": {
 			"inputPath": "corpus/sources/it-anac"
+		},
+		"brussels": {
+			"inputPath": "corpus/sources/brussels/URBIS_ADM_Adresses.zip"
+		},
+		"wallonie": {
+			"inputPath": "corpus/sources/wallonie/AD.Addresses.gml.zip"
+		},
+		"vlaanderen": {
+			"inputPath": "corpus/sources/vlaanderen"
+		},
+		"es-catastro": {
+			"inputPath": "corpus/sources/es-catastro"
+		},
+		"es-bizkaia": {
+			"inputPath": "corpus/sources/es-bizkaia"
+		},
+		"es-gipuzkoa": {
+			"inputPath": "corpus/sources/es-gipuzkoa/ES.GFA.AD.zip"
+		},
+		"es-navarra": {
+			"inputPath": "corpus/sources/es-navarra"
+		},
+		"nl-kadaster": {
+			"inputPath": "corpus/sources/nl-kadaster/addresses.gml.gz"
+		},
+		"matrikkelen": {
+			"inputPath": "corpus/sources/matrikkelen/0000/matrikkelenAdresse.csv"
+		},
+		"sk-inspire": {
+			"inputPath": "corpus/sources/sk-inspire"
 		}
 	}
 }
