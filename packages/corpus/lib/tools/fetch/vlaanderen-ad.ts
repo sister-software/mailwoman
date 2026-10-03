@@ -27,12 +27,13 @@
  * the data, so neither is read here.
  */
 
-import type { APIClient } from "@mailwoman/core/api"
+import { APIClient } from "@mailwoman/core/api"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { rootAttribute } from "@mailwoman/core/html/document"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { VlaanderenHarvest } from "#be/adapters/vlaanderen/adapter"
+import { VLAANDEREN_ADAPTER_ID, type VlaanderenHarvest } from "#be/adapters/vlaanderen/adapter"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { readWFSMarkupPage, WFS_VERSION } from "#tools/fetch/wfs-harvest"
 
 /**
@@ -274,4 +275,62 @@ export async function harvestVlaanderenAD(
 	await writeLocalJSONFile(harvest, root("harvest.json"))
 
 	return harvest
+}
+
+/**
+ * The directory `#be/adapters/vlaanderen/adapter` reads, given the root a fetch wrote under.
+ *
+ * The adapter reads the directory rather than one file, because a harvest writes the addresses
+ * and each component type as separate documents beside `harvest.json`.
+ */
+export function vlaanderenInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuilderLike {
+	return outRoot(VLAANDEREN_ADAPTER_ID)
+}
+
+/**
+ * Per-invocation options for the registry entry.
+ */
+export interface FetchVlaanderenOptions extends BaseFetchOptions {
+	maxPages?: number
+	pageSize?: number
+	componentPageSize?: number
+	signal?: AbortSignal
+}
+
+/**
+ * The registry entry.
+ *
+ * `harvestVlaanderenAD` takes a client so a test can drive it against stubbed bodies.
+ * This supplies the client the registry's callers expect, and reports the harvest as a
+ * {@linkcode FetchSummary}: one harvest is one fetched unit whatever the page count,
+ * because the adapter reads the directory rather than any single page.
+ */
+export async function fetchVlaanderenAD(
+	options: FetchVlaanderenOptions,
+	report?: (line: string) => void
+): Promise<FetchSummary> {
+	await using client = new APIClient({ displayName: VLAANDEREN_ADAPTER_ID, retry: true })
+
+	const outputDir = options.outRoot(VLAANDEREN_ADAPTER_ID)
+
+	report?.(`=== ${VLAANDEREN_ADAPTER_ID}: harvesting ${VLAANDEREN_AD_WFS}`)
+
+	// Awaited rather than returned: `await using` disposes the client when this scope exits,
+	// and a disposed `APIClient` refuses every later request.
+	const harvest = await harvestVlaanderenAD(client, {
+		outputDir,
+		maxPages: options.maxPages,
+		pageSize: options.pageSize,
+		componentPageSize: options.componentPageSize,
+		signal: options.signal,
+	})
+
+	report?.(
+		`  ✓ ${harvest.addressCount} addresses over ${harvest.addressPages.length} pages, ` +
+			`components ${Object.entries(harvest.components)
+				.map(([type, files]) => `${type}=${files.length}`)
+				.join(" ")}`
+	)
+
+	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
 }

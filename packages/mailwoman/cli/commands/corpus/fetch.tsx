@@ -28,6 +28,7 @@ const sources = [
 	"ads-ee",
 	"ban",
 	"bd-adresses",
+	"brussels",
 	"cz-cuzk",
 	"dk-inspire",
 	"emuia-pl",
@@ -48,6 +49,8 @@ const sources = [
 	"state-sources",
 	"state-hi-schools",
 	"tiger-full",
+	"vlaanderen",
+	"wallonie",
 	"wikidata-subvenue",
 ] as const satisfies readonly FetchSourceID[]
 
@@ -98,6 +101,9 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchADSEE,
 		fetchBan,
 		fetchBDAdresses,
+		fetchBrussels,
+		fetchVlaanderenAD,
+		fetchWallonie,
 		fetchCzCuzk,
 		fetchDKAddresses,
 		fetchEMUiAPL,
@@ -130,6 +136,12 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchADSEE(base, reportToStderr)
 		case "bd-adresses":
 			return fetchBDAdresses(base, reportToStderr)
+		case "brussels":
+			return fetchBrussels(base, reportToStderr)
+		case "vlaanderen":
+			return fetchVlaanderenAD(base, reportToStderr)
+		case "wallonie":
+			return fetchWallonie(base, reportToStderr)
 		case "cz-cuzk":
 			return fetchCzCuzk(base, reportToStderr)
 		case "dk-inspire":
