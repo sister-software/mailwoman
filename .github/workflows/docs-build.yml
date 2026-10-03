@@ -136,9 +136,11 @@ jobs:
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: yarn vitest run docs/src/search/search.integration.test.ts
 
+      # No --with-deps: it installs apt packages with sudo, and the lab runners have no passwordless sudo.
+      # The host carries the Chromium system libraries from a one-time `playwright install-deps chromium`.
       - name: Install Chromium for Playwright
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
-        run: yarn workspace @mailwoman/docs exec playwright install --with-deps chromium
+        run: yarn workspace @mailwoman/docs exec playwright install chromium
 
       # The Playwright config serves docs/build on port 7770 for the search project.
       - name: Run the search browser suite
