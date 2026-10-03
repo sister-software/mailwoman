@@ -14,7 +14,7 @@ paths, `core/env` for environment access, `cli-kit` for CLI components, Kysely's
 DDL, `@mailwoman/spatial` for geo math, `@mailwoman/annotations` for the annotation interface,
 `api-kit` for HTTP plumbing.
 
-An agent implementing a feature sees the file it was pointed at and its immediate neighbours. It does
+An agent implementing a feature sees the file it was pointed at and its immediate neighbors. It does
 not see the workspace three directories over that already solved the same problem. The agent then
 rebuilds the implementation locally as a second haversine, a second env reader, or a second retry loop,
 and each copy drifts independently.

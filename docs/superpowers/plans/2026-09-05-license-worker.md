@@ -1501,7 +1501,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 ---
 
-### Task 5: Fulfilment — retrieve, check, mint, persist, email
+### Task 5: Fulfillment — retrieve, check, mint, persist, email
 
 **Files:**
 
@@ -1595,7 +1595,7 @@ async function deps() {
 	}
 }
 
-describe("fulfilment", () => {
+describe("fulfillment", () => {
 	it("mints one token for a paid invoice on an allowlisted Price, with expires = period end + 14 days, and emails it once", async () => {
 		const { worker, publicKeyPEM, kid, deps: d } = await deps()
 
@@ -2147,7 +2147,7 @@ Run: `yarn workspace @mailwoman/license-worker test test/fulfil.test.ts`. Expect
 
 ```bash
 git add packages/license-worker/lib packages/license-worker/test
-git commit -m "feat(license-worker): fulfilment — re-read from Stripe, mint once per invoice, persist, email under the invoice id
+git commit -m "feat(license-worker): fulfillment — re-read from Stripe, mint once per invoice, persist, email under the invoice id
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 ```
@@ -2401,7 +2401,7 @@ Expected: the routes answer 404.
 
 - [x] **Step 3: Implement the routes**
 
-Each route file exports `register<Name>Route(app, env, deps)` in the drop-in style. Behaviours:
+Each route file exports `register<Name>Route(app, env, deps)` in the drop-in style. Behaviors:
 
 - **webhook** (`lib/routes/webhook.ts`): `await c.req.text()` once; `verifyStripeEvent`; on `ok: false` answer `c.json({ error: reason }, 400)`; `recordEventOnce`, and on `"duplicate"` answer 200 `{ received: true, duplicate: true }`; `handleStripeEvent` inside a try; on throw, delete no record and answer 500. A failed handler must let Stripe's retry run, so the event is recorded only after the handler succeeds, in the same D1 batch as its last write. The simplest correct order runs the handler first and `recordEventOnce` second. The handler's own writes are idempotent by primary key (`insertToken` on `invoice_id`, `createLicense` on `subscription_id`), so a retry after a crash between handler and record re-runs the handler, which finds everything already written. Answer `{ received: true, handled }`.
 - **claim** (`lib/routes/claim.ts`): `CLAIM_LIMITER.limit({ key: clientIP })` → 429 when exceeded; `findTokenByCheckoutSession`; none → `{ status: "pending" }` when a `licenses` row exists for the session, 404 when none; `license_state` `revoked` → `{ status: "revoked" }`; else `{ status: "issued", token, lid, licensee, issued, expires, refresh_secret? }`. The refresh secret is stored hashed, so it can be shown only once: the `ensureLicenseFromCheckoutSession` return carries the plaintext on creation, and the claim route needs it too. Implement with a `refresh_secret_pending` column holding the plaintext until the first successful claim reads and clears it (one `UPDATE … SET refresh_secret_pending = NULL … RETURNING`), added to the migration in Task 2 (edit `0001_ledger.sql`; the D1 database is recreated from migrations in tests, and no production database exists yet). Exact-origin CORS via `hono/cors` with `origin: env.SITE_ORIGIN` on this route only.
@@ -2412,7 +2412,7 @@ Each route file exports `register<Name>Route(app, env, deps)` in the drop-in sty
 
 - [x] **Step 4: Run and commit**
 
-Run: `yarn workspace @mailwoman/license-worker test`. Expected: every file passes (health, ledger, dates, plans, identifiers, signing, webhook, fulfil, routes).
+Run: `yarn workspace @mailwoman/license-worker test`. Expected: every file passes (health, ledger, dates, plans, identifiers, signing, webhook, fulfill, routes).
 
 ```bash
 git add packages/license-worker
@@ -2681,7 +2681,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 ### Added — `@mailwoman/license-worker` (private)
 
 A Cloudflare Worker that turns a paid Stripe invoice into a signed license token: webhook verification on SubtleCrypto,
-fulfilment that re-reads the invoice, subscription and Checkout Session from Stripe by id, a D1 ledger written under
+fulfillment that re-reads the invoice, subscription and Checkout Session from Stripe by id, a D1 ledger written under
 unique constraints so replayed and reordered events mint one token per invoice, an email per token under the invoice
 id, and the claim, refresh and status routes the site and `mailwoman license refresh` call. Sandbox and production are
 separate Wrangler environments; issuance is off until `ISSUANCE_ENABLED` is flipped, and refuses whenever the signing

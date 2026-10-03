@@ -213,7 +213,7 @@ describe("resolveRingRoles", () => {
 	it("takes the LARGEST ring as the exterior where no ring reads as one, and counts it", () => {
 		// Measured at exactly one feature of 85,330: a three-vertex sliver enclosing 3.0 × 10⁻⁷ m²,
 		// whose winding is floating-point noise rather than something the publisher stated.
-		// It reads clockwise in the source's own metres and counter-clockwise after reprojection.
+		// It reads clockwise in the source's own meters and counter-clockwise after reprojection.
 		// A refusal would fail the build on the publisher's own data.
 		// A skipped feature would invent an absence.
 		const resolved = resolveRingRoles([[holeRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + SIDE, ORIGIN.lat + SIDE)]], "9")

@@ -47,7 +47,7 @@ export interface SpanGeoDelta {
 	placeIDBefore?: string
 	placeIDAfter?: string
 	/**
-	 * Kilometres between the two arms' centroids for this span, when both resolved.
+	 * Kilometers between the two arms' centroids for this span, when both resolved.
 	 */
 	movedKm?: number
 	candidatesBefore?: number
@@ -75,10 +75,10 @@ export interface GeocodeDiff {
 	latAfter?: number | null
 	lonAfter?: number | null
 	/**
-	 * Kilometres the final answer moved.
+	 * Kilometers the final answer moved.
 	 *
 	 * Undefined when either arm returned no coordinate.
-	 * This differs from a zero-kilometre move and must not be read as one.
+	 * This differs from a zero-kilometer move and must not be read as one.
 	 */
 	movedKm?: number
 	uncertaintyBefore?: number | null
@@ -206,9 +206,9 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 }
 
 /**
- * Metres below which a coordinate move is rendered as "same point".
+ * Meters below which a coordinate move is rendered as "same point".
  *
- * Int8 quantization and float round-tripping move a centroid by centimetres.
+ * Int8 quantization and float round-tripping move a centroid by centimeters.
  * A delta rendering buries the moves that matter.
  */
 export const SAME_POINT_M = 1

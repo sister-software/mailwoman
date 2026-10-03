@@ -26,7 +26,7 @@ describe("placetypeSpecificity", () => {
 		expect(new Set(ranks).size).toBeGreaterThan(1)
 	})
 
-	it("ranks a neighbourhood FINER than the locality that contains it — the #1746 case", () => {
+	it("ranks a neighborhood FINER than the locality that contains it — the #1746 case", () => {
 		expect(placetypeSpecificity("neighbourhood")!).toBeGreaterThan(placetypeSpecificity("locality")!)
 	})
 
@@ -39,7 +39,7 @@ describe("placetypeSpecificity", () => {
 })
 
 describe("isAtLeastAsSpecific", () => {
-	it("says a neighbourhood does not cover a locality — the refusal #1746 turned on", () => {
+	it("says a neighborhood does not cover a locality — the refusal #1746 turned on", () => {
 		expect(isAtLeastAsSpecific("neighbourhood", "locality")).toBe(true)
 		expect(isAtLeastAsSpecific("locality", "neighbourhood")).toBe(false)
 	})

@@ -110,11 +110,11 @@ export const ES_CATASTRO_ADAPTER_ID = "es-catastro"
 export const ES_CATASTRO_COUNTRIES: readonly string[] = ["ES"]
 
 /**
- * The licence the address-source register elected for this publisher.
+ * The license the address-source register elected for this publisher.
  *
  * The register elects the titled instrument, `Licencia de acceso y uso de los servicios y conjuntos
  * de datos INSPIRE de la Dirección General del Catastro` at version 1.0, rather than the older
- * `all rights reserved` template the feed still carries. It names no licence instrument a
+ * `all rights reserved` template the feed still carries. It names no license instrument a
  * Creative Commons label or an SPDX identifier would cover, so the row records the instrument's
  * own title.
  *

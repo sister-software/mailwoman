@@ -30,7 +30,7 @@ import {
 import type { SourceRecord } from "#types"
 
 /**
- * Similarity at which two official names count as the same organisation.
+ * Similarity at which two official names count as the same organization.
  *
  * Set high because the feature is a near-exact agreement signal rather than a fuzzy one.
  */

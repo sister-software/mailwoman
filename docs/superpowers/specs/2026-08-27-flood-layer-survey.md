@@ -517,7 +517,7 @@ defect this repository has recorded repeatedly.
 The layer stores the code the authority published, in the authority's own spelling, with the
 authority's date. It adds no score, severity ordering, or cross-country scale. Two authorities that
 both publish "flood zones" are publishing different things. England's Zone 3 is a 1% annual
-probability from rivers, ignoring defences. FEMA's Zone AE is a 1% annual chance with base flood
+probability from rivers, ignoring defenses. FEMA's Zone AE is a 1% annual chance with base flood
 elevations. A column that made them comparable would be this record's invention rather than either
 authority's statement.
 
@@ -560,7 +560,7 @@ Reference, however the FIRM DB template will not have dashes". The December 2020
 
 **The schema consequence.** `zone_code` holds the source's value as published. The builder carries the
 authority's declared domain as a closed set and **throws** on a value outside it. An unknown code
-means the source schema changed, which a reader most needs to know. Conversion to a nearest neighbour
+means the source schema changed, which a reader most needs to know. Conversion to a nearest neighbor
 or to null would turn "the source changed" into "there is no data here".
 
 ### 4.2 Tables

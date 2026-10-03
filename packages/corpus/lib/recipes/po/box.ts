@@ -38,7 +38,7 @@ const PO_BOX_PROVENANCE = {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour this recipe exercises.
+ * See the file header for the parse behavior this recipe exercises.
  * See `description` below for the surface form it generates.
  */
 export const poBoxRecipe: CorpusRecipe = {

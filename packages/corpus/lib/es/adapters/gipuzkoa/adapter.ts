@@ -93,7 +93,7 @@ export const ES_GIPUZKOA_ADAPTER_ID = "es-gipuzkoa"
 export const ES_GIPUZKOA_COUNTRIES: readonly string[] = ["ES"]
 
 /**
- * The licence the address-source register elected for this publisher.
+ * The license the address-source register elected for this publisher.
  *
  * Gipuzkoa states four things, and the register elects the one addressing this dataset:
  * the `otherConstraints` of its ISO 19139 dataset record, `CC BY-SA 4.0`.
@@ -101,7 +101,7 @@ export const ES_GIPUZKOA_COUNTRIES: readonly string[] = ["ES"]
  * records why the stricter reading is the one to err towards: the share-alike filter reads
  * this label, so recording CC BY 4.0 would hide an obligation the publisher may hold.
  *
- * The value is the SPDX identifier the register elected rather than the licence's title,
+ * The value is the SPDX identifier the register elected rather than the license's title,
  * because `licenseVerdict` resolves an identifier and reads a title as unrecognized.
  * Under `LicensePolicy.ShareAlikeFree` the title returns `{refusal: null, mentionsShareAlike: false}`
  * and `CC-BY-SA-4.0` returns `{refusal: "share-alike-carried"}`, so the title admits

@@ -36,8 +36,8 @@ export const FINGERPRINTED_WORKSPACES = [
 ] as const
 
 /**
- * Directory names that never affect behaviour but change constantly; `out/` is excluded on
- * purpose because the daemon imports source, so a recompile must not read as a source edit.
+ * Directory names that never affect behavior but change constantly; `out/` is excluded on purpose
+ * because the daemon imports source, so a recompile must not read as a source edit.
  */
 const SKIP_DIRECTORIES = new Set(["node_modules", "out", ".git", "test", "__pycache__"])
 

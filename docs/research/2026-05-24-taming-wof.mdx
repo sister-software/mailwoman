@@ -21,7 +21,7 @@ If you've ever tried to answer "what city is this address in?" programmatically 
 
 WOF is a gazetteer, a structured database of places. It stores _places_ such as countries, regions, counties, cities, neighborhoods, and venues, rather than addresses, roads, or buildings. Each place gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
 
-It was created by Mapzen (RIP, 2018) as the successor to GeoPlanet (Yahoo's gazetteer, also RIP). The data lives on GitHub as approximately 100 repositories under the `whosonfirst-data` org, totalling several million individual GeoJSON files. Geocode Earth maintains the canonical SQLite distributions at `data.geocode.earth`.
+It was created by Mapzen (RIP, 2018) as the successor to GeoPlanet (Yahoo's gazetteer, also RIP). The data lives on GitHub as approximately 100 repositories under the `whosonfirst-data` org, totaling several million individual GeoJSON files. Geocode Earth maintains the canonical SQLite distributions at `data.geocode.earth`.
 
 WOF gives you something no other open dataset does: **a consistent hierarchy with stable IDs**. You can take a locality (`Houston`, id `85922029`), follow its `parent_id` to a region (`Texas`, id `85688753`), follow _that_ to a country (`United States`, id `85633793`), and know the chain is consistent. OpenStreetMap doesn't give you this. GeoNames gives you a partial version. WOF gives you the whole thing, with an opinion on how the world's administrative boundaries nest.
 

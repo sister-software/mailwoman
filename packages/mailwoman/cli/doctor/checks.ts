@@ -187,8 +187,8 @@ const WEIGHTS_FIX = "npm install @mailwoman/neural-weights-en-us   (or: mailwoma
 
 const WEIGHTS_CONSEQUENCE =
 	"The trained model is what reads an address. Without it every parse falls back to the structural " +
-	"pipeline, which can only recognise shapes it is certain of (a bare postcode, a bare locality) and " +
-	"leaves the rest of the address unlabelled."
+	"pipeline, which can only recognize shapes it is certain of (a bare postcode, a bare locality) and " +
+	"leaves the rest of the address unlabeled."
 
 /**
  * Checks that the required en-us model weights resolve and are not empty.

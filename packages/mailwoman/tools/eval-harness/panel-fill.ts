@@ -84,7 +84,7 @@ export function fillStratum<Item, Row>(
 	// This walk's order selects the rows in the frozen panel.
 	// A published record stores the panel's digest.
 	// So the generator is `SeededRandom`'s, seeded the way `SeededRandom` seeds it,
-	// rather than a normalisation re-typed here.
+	// rather than a normalization re-typed here.
 	const shuffled = [...eligible]
 
 	new SeededRandom(seed).shuffle(shuffled)

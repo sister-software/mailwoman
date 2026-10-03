@@ -2,7 +2,7 @@
 
 The postcode anchor is the first member of the anchor-based-parsing family
 ([design](../docs/articles/plan/2026-06-03-anchor-based-parsing.md), #240). It lifts the postcode out of
-the BIO sequence-labelling problem and treats it as a structured signal: take a postcode-shaped span,
+the BIO sequence-labeling problem and treats it as a structured signal: take a postcode-shaped span,
 resolve it against a gazetteer, and report a country posterior plus a calibrated confidence. The parser
 then weighs that soft signal against the surrounding tokens. The anchor never decides a postcode's
 identity on its own.
@@ -41,9 +41,9 @@ from being treated as a postcode.
 Pass `{ fuzzy: true }` to absorb typos and OCR slips. When an exact lookup finds nothing, the anchor
 retries class-aware edit-distance-1 variants (digit↔digit, letter↔letter substitutions, plus deletions,
 insertions, and adjacent transpositions), tags the result `matchType: "fuzzy"`, and multiplies the
-confidence by a 0.6 penalty. A mistyped `12624` recovers its real neighbour `12623` at low confidence,
+confidence by a 0.6 penalty. A mistyped `12624` recovers its real neighbor `12623` at low confidence,
 leaving the parser's city tokens to confirm it. Fuzzy is off by default so existing callers keep
-exact-match behaviour.
+exact-match behavior.
 
 ## Building the extracts
 

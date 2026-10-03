@@ -56,7 +56,7 @@ The region is **the union of res-6 H3 cells lying wholly inside the Île-de-Fran
 inventories are clipped to exactly that cell set. A cell is interior when its whole `gridDisk(cell, 1)`
 is in the region's own polyfill and all six of its boundary vertices are inside the outline. The
 polyfill keeps a cell whose center is inside, so its edge ring is half outside the region; the vertex
-test catches a boundary that re-enters between two neighbours. Measured: 371 polyfilled cells, 290
+test catches a boundary that re-enters between two neighbors. Measured: 371 polyfilled cells, 290
 interior.
 
 A bounding rectangle would have been simpler and wrong — it claims survey over every corner the
@@ -100,7 +100,7 @@ so one row cannot answer for three.
 | loose    | ≤ 100 m, s ≥ 0.55 | ≤ 250 m, s ≥ 0.85 | ≤ 50 m  |
 
 The grid was fixed before any completeness value was read off it. The bands come from the
-nearest-neighbour distance distribution, which is strongly bimodal: over OSM rows with any Overture
+nearest-neighbor distance distribution, which is strongly bimodal: over OSM rows with any Overture
 row near, p25 = 8 m and p50 = 133 m. True co-locations sit under ~25 m; past ~150 m the near row is
 a different pharmacy.
 
@@ -142,7 +142,7 @@ sources**: if a pharmacy is more likely to be in both inventories than chance wo
 branch on a high street against a single officine on a village lane — then `m` runs high, `N̂` runs
 low, and completeness runs **high**. That is the direction that turns a data gap into confident
 negative evidence, which is the worst failure this system has. The conservative reading (a lower
-confidence bound, minimised across the grid) controls the sampling half and addresses no part of this
+confidence bound, minimized across the grid) controls the sampling half and addresses no part of this
 half.
 
 Two smaller limits, both measured rather than argued:

@@ -101,9 +101,9 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		INSERT INTO spr VALUES (960, 'County Dundo', 'region', 'IE', 54.9, -8.0, 54.0, -8.9, 55.4, -7.2, -1, 0);
 		INSERT INTO spr VALUES (961, 'Kennytown', 'locality', 'IE', 54.95, -7.72, 54.9, -7.8, 55.0, -7.6, -1, 0);
 		INSERT INTO spr VALUES (962, 'Kennytown', 'locality', 'US', 40.0, -77.7, 39.9, -77.8, 40.1, -77.6, -1, 0);
-		-- The #1731 Astoria shape: the qualifier's TRUE instance is a NEIGHBOURHOOD — outside the locality
+		-- The #1731 Astoria shape: the qualifier's TRUE instance is a NEIGHBORHOOD — outside the locality
 		-- filter group, so no reorder can reach it — while a same-name wrong-instance LOCALITY sits under a
-		-- different region. The dependent-band injection must surface the contained neighbourhood.
+		-- different region. The dependent-band injection must surface the contained neighborhood.
 		INSERT INTO spr VALUES (970, 'Yorkia', 'region', 'US', 42.9, -75.6, 40.5, -79.8, 45.0, -71.8, -1, 0);
 		INSERT INTO spr VALUES (971, 'Astorington', 'neighbourhood', 'US', 40.77, -73.92, 40.75, -73.94, 40.79, -73.90, -1, 0);
 		INSERT INTO spr VALUES (972, 'Astorington', 'locality', 'US', 46.19, -123.81, 46.1, -123.9, 46.3, -123.7, -1, 0);
@@ -1002,7 +1002,7 @@ describe("Seat preference through findPlace — where the term can and cannot re
 })
 
 describe("Admin-containment re-rank through findPlace ( stage 2)", () => {
-	test(": a contained NEIGHBOURHOOD is injected past the locality filter group", async () => {
+	test(": a contained NEIGHBORHOOD is injected past the locality filter group", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const hits = await lk.findPlace({

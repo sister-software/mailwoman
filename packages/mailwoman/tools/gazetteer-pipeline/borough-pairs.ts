@@ -84,12 +84,12 @@ function parentTagFor(placetype: string): ComponentTag {
  * instances are shaped by their sources rather than by a universal truth about hierarchy:
  *
  * - **GB** takes boroughs only.
- *   Its neighbourhood pairs come from a curated, venue-confound-boarded file
- *   (`data/gazetteer/london-pairs-v2.jsonl`, campaign R4b) — sweeping in all ~20k GB WOF neighbourhoods
+ *   Its neighborhood pairs come from a curated, venue-confound-boarded file
+ *   (`data/gazetteer/london-pairs-v2.jsonl`, campaign R4b) — sweeping in all ~20k GB WOF neighborhoods
  *   here would ship an unboarded batch and skip the law-1 discipline every GB increment has cleared.
- * - **US** takes boroughs and neighbourhoods.
+ * - **US** takes boroughs and neighborhoods.
  *   It admits `borough` as a parent.
- *   WOF parents US neighbourhoods to the locality rather than to the borough
+ *   WOF parents US neighborhoods to the locality rather than to the borough
  *   ("Astoria" hangs off New York rather than off Queens), so a locality-only parent rule
  *   silently drops the borough-level pairs the US instance exists for (campaign R5).
  *

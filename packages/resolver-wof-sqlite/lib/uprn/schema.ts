@@ -47,7 +47,7 @@ export interface UPRNTable {
 
 /**
  * Build-provenance key/value pairs the fixed `layer_manifest` columns have no room for,
- * including the upstream licence text verbatim.
+ * including the upstream license text verbatim.
  */
 export interface UPRNMetaTable {
 	key: string

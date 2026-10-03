@@ -189,7 +189,7 @@ describe("mwdev_compare — external arm", () => {
 		expect(rows.some((row) => row.b.noResultReason?.includes("no features"))).toBe(true)
 	})
 
-	it("reports the truth's own precision, so a sub-kilometre column is not read as a rooftop claim", async () => {
+	it("reports the truth's own precision, so a sub-kilometer column is not read as a rooftop claim", async () => {
 		const result = await comparison(registryAt(ANDORRA_LA_VELLA), [
 			{ body: peliasBody(ANDORRA_LA_VELLA) },
 			{ body: peliasBody(LES_ESCALDES) },

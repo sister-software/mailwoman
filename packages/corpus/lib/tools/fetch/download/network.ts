@@ -51,7 +51,7 @@ export interface BaseFetchOptions {
 	 * A test that exercises the failure path pays this delay once per retry in real time.
 	 * Measured at 20.1 s for the two failing-transfer cases in `geonames-postal.test.ts`,
 	 * which is the whole cost of that file.
-	 * The retry count is the behaviour under test there.
+	 * The retry count is the behavior under test there.
 	 *
 	 * The pause between attempts is not, so it is a caller's to shorten.
 	 */

@@ -21,7 +21,7 @@ If you've been programming for a while but ML feels opaque, this post is for you
 
 ## What we're building, in one paragraph
 
-Mailwoman is a piece of software that reads address strings (`"350 5th Avenue, New York, NY 10118"`) and turns them into structured place information ("this is in Manhattan, here are the coordinates, here's the postcode, etc."). It uses a small AI model to do the parsing. The model is small by AI standards, with about 9 million numbers inside it. For comparison, GPT-4 is rumoured to have over a trillion.
+Mailwoman is a piece of software that reads address strings (`"350 5th Avenue, New York, NY 10118"`) and turns them into structured place information ("this is in Manhattan, here are the coordinates, here's the postcode, etc."). It uses a small AI model to do the parsing. The model is small by AI standards, with about 9 million numbers inside it. For comparison, GPT-4 is rumored to have over a trillion.
 
 We don't need a giant model because the task is narrow. Addresses follow patterns, and we only need to identify which parts of a string are which (`350` is a house number, `5th Avenue` is a street, etc.).
 
@@ -93,7 +93,7 @@ For weeks we'd been ruling out hypotheses:
 
 - Is the learning rate too high? No. A lower rate only delayed the climb.
 - Is the model too small? No. We made it bigger, and the same thing happened.
-- Is a new feature we added destabilising it? No. We turned it off, and the problem remained.
+- Is a new feature we added destabilizing it? No. We turned it off, and the problem remained.
 - Does the data have a bug? We couldn't rule this out, because it was expensive to check.
 
 Then somebody pointed out something we hadn't questioned: **we were training the model with two different goals at once.**
@@ -146,9 +146,9 @@ The code change is one line: when Voice B's weight is 0, the loop skips computin
 
 ## What we tell ourselves we learned
 
-1. **The two weighted losses looked simple to combine, but their gradients caused failure.** The loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A constant multiplier does not balance a loss's contribution to the optimiser. We watched the loss values and drew the wrong conclusion for nine training runs.
+1. **The two weighted losses looked simple to combine, but their gradients caused failure.** The loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A constant multiplier does not balance a loss's contribution to the optimizer. We watched the loss values and drew the wrong conclusion for nine training runs.
 2. **The five-minute diagnostic was more valuable than the previous month of retraining experiments.** Each experiment that changed a knob and retrained cost hours. The gradient-norm probe cost five minutes and gave a sharper answer than any of them, because it measured what the model was responding to instead of the end result.
-3. **ML debugging is more like programming debugging than the field admits.** Once you have words for what's happening, the techniques are familiar: bisect, isolate, instrument, hypothesise, test. The hard part is finding words for _what's happening inside the model_. After that, the bug is typically findable.
+3. **ML debugging is more like programming debugging than the field admits.** Once you have words for what's happening, the techniques are familiar: bisect, isolate, instrument, hypothesize, test. The hard part is finding words for _what's happening inside the model_. After that, the bug is typically findable.
 4. **Run cheap experiments first.** A 5-minute probe should always run before a 25-hour retrain. We didn't run the probe earlier because we didn't know about it.
 
 ## Where to read more

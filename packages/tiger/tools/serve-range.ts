@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Minimal static file server that honours http Range requests (206) — Python's `http.server` does
+ *   Minimal static file server that honors http Range requests (206) — Python's `http.server` does
  *   not. PMTiles reads via Range, so this server cannot serve it. Used to preview/render a local
  *   `.pmtiles` tileset (e.g. the race-dot map, via `mailwoman tiger race-dots-map --serve`). Not for
  *   production. the deployed tiles go through the tile worker.

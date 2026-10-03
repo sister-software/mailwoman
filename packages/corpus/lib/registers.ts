@@ -101,7 +101,7 @@ export const SourceRegister = {
 	 */
 	WallonieInspireAddresses: "be-wallonie-inspire-ad",
 	/**
-	 * The INSPIRE Addresses theme of the Brussels Regional Informatics Centre, out of UrbIS.
+	 * The INSPIRE Addresses theme of the Brussels Regional Informatics Center, out of UrbIS.
 	 *
 	 * Coverage is the Brussels-Capital Region.
 	 * The address-source register holds no row for this publisher, so no license is elected

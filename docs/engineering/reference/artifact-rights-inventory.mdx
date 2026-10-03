@@ -304,7 +304,7 @@ separate adapter and is unmeasured here.
 **Lineage is recoverable.** `source_id` is `wof-<adapter>-<wof_id>-<slot>-<variant>`, so every
 `wof-*` corpus row carries the id of the Who's On First record it came from, and that record carries
 `src:geom`. `WOFRecord` in `packages/corpus/lib/utils/wof-json.ts` projects a feature to id, parent,
-name, placetype, country and name variants, which is where the provenance properties stop travelling.
+name, placetype, country and name variants, which is where the provenance properties stop traveling.
 
 **What the adapters assert.** `packages/corpus/lib/adapters/wof/admin/json/adapter.ts` and
 `packages/corpus/lib/adapters/wof/postalcode-json/adapter.ts` both set

@@ -131,7 +131,7 @@ single-file overlays would leave seven dead directories and an eight-deep base c
 and zero is falsy. It doubled a recipe output built to emit only its self-contained rows: the po-box military
 output came out at 10,558 rows against the 5,279 asked for. The count now goes through `countOption`, which also
 refuses a blank value, since `Number("")` is zero and would switch a recipe off from the other direction. The
-`po-box` and `trailing-region` recipes honour `--source-name`, so one output can take its own reps per row apart
+`po-box` and `trailing-region` recipes honor `--source-name`, so one output can take its own reps per row apart
 from the rows that share its label
 rather than drawing whatever they draw.
 
@@ -400,11 +400,11 @@ changes the branch; the doctor names which one it saw.
 ### Added — `@mailwoman/license-worker` (private)
 
 A Cloudflare Worker that turns a paid Stripe invoice into a signed license token: webhook verification on SubtleCrypto,
-fulfilment that re-reads the invoice, subscription and Checkout Session from Stripe by id, a D1 ledger written under
+fulfillment that re-reads the invoice, subscription and Checkout Session from Stripe by id, a D1 ledger written under
 unique constraints so replayed and reordered events mint one token per invoice, an email per token under the invoice
 id, and the claim, refresh and status routes the site and `mailwoman license refresh` call. A six-hourly reconciliation
 mints what the webhook missed, re-sends what failed, and corrects a license's state against Stripe, including a dispute
-ruled in the customer's favour. Sandbox and production are separate Wrangler environments; issuance is off until
+ruled in the customer's favor. Sandbox and production are separate Wrangler environments; issuance is off until
 `ISSUANCE_ENABLED` is flipped, and refuses whenever the signing key is not an active entry of the shipped register.
 Deploys by manual dispatch only (`.github/workflows/license-worker.yml`), which refuses a bundle that imports a Node
 builtin. `GET /health` carries `email: ok | failing`, the latter when a token's email has stayed `failed` for over an

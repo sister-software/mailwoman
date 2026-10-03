@@ -55,7 +55,7 @@ export const EA_MIN_REQUEST_INTERVAL_MS = 500
 const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
 /**
- * The licence value that the catalogue entry must contain.
+ * The license value that the catalogue entry must contain.
  * A different value means the terms changed.
  */
 export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
@@ -118,7 +118,7 @@ export function parseAttributionStatement(text: string): string {
 	if (!dated.length) {
 		throw new Error(
 			`coastal client: no attribution statement in the record carries a year (found ${statements.length}: ${stringifyJSON(statements)}) — ` +
-				"the abstract's first copy is inherited from the superseded record and carries none, so a yearless statement is refused rather than shipped as the licence condition"
+				"the abstract's first copy is inherited from the superseded record and carries none, so a yearless statement is refused rather than shipped as the license condition"
 		)
 	}
 
@@ -130,13 +130,13 @@ export function parseAttributionStatement(text: string): string {
  */
 export class EANCERMClient extends APIClient<APIClientConfig> {
 	/**
-	 * Read the catalogue entry, with its reference dates, licence and file URLs.
+	 * Read the catalogue entry, with its reference dates, license and file URLs.
 	 *
 	 * The download URL comes from the entry because the file service keys on an opaque
 	 * ID that changes when the product is republished.
 	 *
 	 * @throws {Error} When the entry is for a different dataset, has no `revision` date,
-	 * or has a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
+	 * or has a license other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<CoastalCatalogueRecord> {
 		return readCKANPackageRecord(this, {
@@ -151,7 +151,7 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	 * Read the live attribution statement from the ISO record.
 	 *
 	 * The build compares it with the `NCERM_ATTRIBUTION` constant, because OGL
-	 * v3.0 makes the statement a licence condition.
+	 * v3.0 makes the statement a license condition.
 	 */
 	public async readAttributionStatement(): Promise<string> {
 		const { data } = await this.fetch<string>({

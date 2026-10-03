@@ -10,7 +10,7 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 /**
- * The default maximum distance, in kilometres, between a postcode and a locality
+ * The default maximum distance, in kilometers, between a postcode and a locality
  * for them to count as consistent.
  *
  * Verdicts did not change anywhere between 15 and 50 km, so the exact value matters little.
@@ -53,7 +53,7 @@ export interface PostcodeCountryScope {
 	evidence: PostcodeCountryScopeEvidence
 
 	/**
-	 * The distance in kilometres between the postcode point and the nearest locality with the same name.
+	 * The distance in kilometers between the postcode point and the nearest locality with the same name.
 	 *
 	 * It is set only for `pair` evidence, because the other verdicts compare no second point.
 	 */
@@ -93,7 +93,7 @@ export interface PostcodeCountryScopeOpts {
 	defaultCountry: string | undefined
 
 	/**
-	 * The consistency radius in kilometres.
+	 * The consistency radius in kilometers.
 	 *
 	 * It defaults to {@link POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM}.
 	 */

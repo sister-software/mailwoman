@@ -21,7 +21,7 @@
  * ČÚZK states one condition of use and states it uniformly. Every one of the 6,259 `rights` elements
  * in the ATOM service document reads `žádné podmínky neplatí`, which renders INSPIRE's controlled
  * value `no conditions apply to access and use`. The address-source register elects that and names
- * no licence instrument, so no SPDX identifier exists to record and the rows carry the controlled
+ * no license instrument, so no SPDX identifier exists to record and the rows carry the controlled
  * value itself. The register also carries a caution this adapter cannot resolve: that value states
  * the absence of a restriction on access and use rather than granting copyright, so what it permits
  * beyond access and use rests on Czech law.
@@ -62,10 +62,10 @@ export const CZ_CUZK_ADAPTER_ID = "cz-cuzk"
 export const CZ_CUZK_COUNTRIES: readonly string[] = ["CZ"]
 
 /**
- * The licence recorded on every row.
+ * The license recorded on every row.
  *
  * INSPIRE's controlled value, in the English the register renders it to, because ČÚZK
- * names no licence instrument and the register therefore writes no SPDX identifier.
+ * names no license instrument and the register therefore writes no SPDX identifier.
  */
 export const CZ_CUZK_LICENSE = "no conditions apply to access and use"
 

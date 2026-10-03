@@ -173,7 +173,7 @@ export const WALLONIE_SOURCE_REGISTER = SourceRegister.WallonieInspireAddresses
 export const WALLONIE_COUNTRIES: readonly string[] = ["BE"]
 
 /**
- * The licence recorded on every row.
+ * The license recorded on every row.
  *
  * The register's elected decision for `unchecked-access-free-be-service-public-de-wallonie-spw`
  * records `spdx: "CC-BY-4.0"`, and `electedLicenseLabel` answers the SPDX id when one is recorded.

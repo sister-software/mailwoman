@@ -38,7 +38,7 @@
  * No column marks a row's language, so `locale` reads `und-LU`.
  * `und` is BCP-47's undetermined language subtag, and the repository already stores it in
  * `#recipes/bare/country` and `#tools/postcode-triples`.
- * Labelling every row `fr-LU` or `lb-LU` would assert a language for a name the publisher did not
+ * Labeling every row `fr-LU` or `lb-LU` would assert a language for a name the publisher did not
  * tag.
  *
  * ## The number comes from `numero`, and never from the street line

@@ -1,4 +1,4 @@
-/* Permalink button — same chip-shape as example buttons but a different colour family so
+/* Permalink button — same chip-shape as example buttons but a different color family so
    it reads as an action rather than an example. Pinned right via margin-left:auto so it
    floats to the end of the .examples row regardless of how many examples are listed. */
 .permalinkBtn {

@@ -18,7 +18,7 @@
  *   The exceptions are the interesting part: Corsica shares prefix `20` across two départements (`2A`
  *   Corse-du-Sud / `2B` Haute-Corse, resolved by the rest of the code), and the overseas DOM use a
  *   three-digit prefix (`971`–`976`). `departementOfCodePostal` handles both. Two further
- *   real-world caveats it does not try to model: a handful of communes sit under a neighbouring
+ *   real-world caveats it does not try to model: a handful of communes sit under a neighboring
  *   département's code (e.g. some `05`/`04` border villages), and a cedex code can include a
  *   large-volume-mail prefix that differs from the geographic one — both rare enough to leave to
  *   the gazetteer.

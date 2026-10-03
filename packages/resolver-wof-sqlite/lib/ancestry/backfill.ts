@@ -62,7 +62,7 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 }
 
 // The `aid === id` check filters out a place's own `locality_id`.
-// For a neighbourhood, that id identifies a real ancestor.
+// For a neighborhood, that id identifies a real ancestor.
 function placetypeFromKey(key: string): string | null {
 	if (!key.endsWith("_id")) return null
 

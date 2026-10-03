@@ -342,7 +342,7 @@ export interface ElectedLicense {
 	 *
 	 * A publisher may state different terms in its dataset metadata, its download service
 	 * and its website, and it may be offering the same material under more than
-	 * one licence, which Creative Commons permits.
+	 * one license, which Creative Commons permits.
 	 * Where that happens, {@linkcode ElectedLicense.spdx} records the one a build filters on
 	 * and this records what the publisher actually said, so a later reviewer reads
 	 * the conflict rather than one reading presented as settled.

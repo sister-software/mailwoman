@@ -371,7 +371,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 /**
  * `bboxCoverageCells` must key a row's observed count off `cellToParent(res9Cell, 6)`,
  * never a direct `latLngToCell(row, 6)`, because H3's hierarchy is not geometrically exact
- * and a builder that disagrees with its readers puts the count on a neighbouring cell.
+ * and a builder that disagrees with its readers puts the count on a neighboring cell.
  */
 const DIVERGENT_POINT = { latitude: 37.119, longitude: -79.6658 }
 

@@ -28,7 +28,7 @@ import styles from "./styles.module.css"
 // ── Constants ───────────────────────────────────────────────────────────
 
 /**
- * Residual bands the chart colours against, in the loss units plotted.
+ * Residual bands the chart colors against, in the loss units plotted.
  *
  * Presentation only.
  */

@@ -129,7 +129,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ product vintage: ${sourceVintage}`)
 
-		// OGL v3.0 makes the attribution statement a licence condition, so a change
+		// OGL v3.0 makes the attribution statement a license condition, so a change
 		// in it changes what a re-user has to publish.
 		// Read from the structured record and compared against the constant the artifact is stamped with.
 		// The abstract repeats this copy.
@@ -249,7 +249,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 				`rings with holes ${result.area.nestedKM2.toFixed(1)} km²` +
 				`${result.area.witness === "source" ? ` (${(result.area.relativeGap * 100).toFixed(3)}% apart)` : ""} · ` +
 				`rings without holes ${result.area.allExteriorKM2.toFixed(1)} km²`,
-			`defence types seen: ${result.defenceTypeCounts.length} distinct`,
+			`defense types seen: ${result.defenceTypeCounts.length} distinct`,
 			`manifest: name=coastal-erosion-ea-england tier=shipped license=OGL-UK-3.0 sourceVintage=${sourceVintage} buildSHA=${buildSHA}`,
 		]
 

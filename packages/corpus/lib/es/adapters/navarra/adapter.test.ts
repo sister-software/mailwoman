@@ -53,7 +53,7 @@ async function rowsFrom(inputPath: PathBuilderLike, limit?: number) {
 }
 
 describe("es-navarra adapter against the fixture partitions", () => {
-	it("emits a row per address under the licence the source register elects", async () => {
+	it("emits a row per address under the license the source register elects", async () => {
 		const { manifest, rows } = await rowsFrom(fixtureDir)
 
 		expect(manifest.yielded).toBe(6)

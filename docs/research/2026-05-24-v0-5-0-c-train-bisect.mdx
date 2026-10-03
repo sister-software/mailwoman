@@ -102,7 +102,7 @@ We found a real bug in our verdict-smoke process along the way. The original 50-
 
 Two things had to change for the smoke to predict the full run:
 
-- **Smoke length matters.** 50 steps capture only the warmup descent. The sustained-peak-LR regime where the recipe destabilises starts at step 500 in our schedule. Smokes need to spend several hundred steps near peak LR, and we set 1500 steps as the minimum.
+- **Smoke length matters.** 50 steps capture only the warmup descent. The sustained-peak-LR regime where the recipe destabilizes starts at step 500 in our schedule. Smokes need to spend several hundred steps near peak LR, and we set 1500 steps as the minimum.
 - **Effective batch must match the full run.** v3's smoke ran at batch_size=8 grad_accum=1 (eff_batch=8), and the full run used eff_batch=128. The smoke was stable, and the full run diverged. **The recipe's stability depends on batch geometry.** A smoke that doesn't reproduce the full-run gradient noise cannot detect this class of failure.
 
 The constant-LR mode that landed in Thread F is still correct. It is what made the v0.5.0 destabilization observable at all instead of hidden under cosine decay. The smoke configuration also needs to mirror the full run's _throughput_ characteristics, in addition to its LR schedule.
@@ -114,7 +114,7 @@ Both lessons will go into `VERDICT_SMOKES.md` as a follow-up. The current text d
 Most of the v0.5.0 fresh-slate work survives this episode intact:
 
 - **The A1 tokenizer's byte-fallback improvements are real.** Multi-script eval went from 36.7% to 18.2%, and B2's targeted scripts (CJK, Cyrillic, Hangul, Han, Armenian) all met or beat their v0.1.0 leakage baselines. The tokenizer is fit for non-Latin addresses. It works fine for inference even though the classifier trained on top of it diverges.
-- **`corpus-v0.4.0` is sound.** corpus-audit passes, the substring-match validator caught the LLM's alignment failures, and both adapter additions load without errors through the new MANIFEST.json-driven harness. Whatever destabilises training, corpus integrity is not the cause.
+- **`corpus-v0.4.0` is sound.** corpus-audit passes, the substring-match validator caught the LLM's alignment failures, and both adapter additions load without errors through the new MANIFEST.json-driven harness. Whatever destabilizes training, corpus integrity is not the cause.
 - **Stage 5 reconcile, the phrase grouper, and the verdict-smoke process** all shipped and are live in `main`. They run on v0.4.0 weights right now and produce correct output on the kryptonite catalogue. They'll keep working when v0.5.0 weights land.
 - **`TRAINING_ENV.md`** documents the lab container's ROCm bootstrap recipe so the next training run doesn't have to rediscover it. The one-time setup takes ~15min and took us most of an hour to work out the first time.
 

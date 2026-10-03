@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The map's initial centre: the tile worker's `/geolocate` answer for the visitor's connection, or the contiguous
+ *   The map's initial center: the tile worker's `/geolocate` answer for the visitor's connection, or the contiguous
  *   United States when that answer does not arrive. The map never waits on it. the hook answers null until one of the
  *   two is known. The caller renders at the default in the meantime.
  */
@@ -14,7 +14,7 @@ import { useEffect, useState } from "react"
 import type { EarthConfig } from "#config"
 
 /**
- * The geographic centre of the contiguous United States, as `[lon, lat]`.
+ * The geographic center of the contiguous United States, as `[lon, lat]`.
  */
 export const DEFAULT_CENTER: Coordinates2D = [-95.7129, 37.0902]
 

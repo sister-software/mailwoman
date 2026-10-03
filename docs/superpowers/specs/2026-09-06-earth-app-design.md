@@ -108,7 +108,7 @@ and one basemap tile.
 ### PWA
 
 The app uses `vite-plugin-pwa` in `injectManifest` mode. The service worker source is the range-cache worker moved
-from `docs/static/range-cache-sw.js` to `packages/earth/lib/service-worker.ts`, unchanged in behaviour
+from `docs/static/range-cache-sw.js` to `packages/earth/lib/service-worker.ts`, unchanged in behavior
 (persistence of validated 64 KB range chunks keyed by URL and offset, torn-chunk integrity), with the
 app-shell precache manifest injected at build. Precache holds the shell, hashed JS/CSS, icons, the sqljs
 runtime files, and the manifest. It never precaches a model, a gazetteer database, or a tile.

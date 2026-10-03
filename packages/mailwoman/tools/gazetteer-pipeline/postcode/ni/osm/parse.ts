@@ -32,7 +32,7 @@ import type { OverpassElement, OverpassResponse } from "#gazetteer/postcode/ni/o
  * The pattern requires the system-wide inward-code shape.
  *
  * The `[A-Z0-9]?` slot cannot fire for a real BT district (they are `BT1`–`BT94`, all-numeric),
- * and is kept rather than tightened to `[0-9]?` so the pattern stays recognisably the national one.
+ * and is kept rather than tightened to `[0-9]?` so the pattern stays recognizably the national one.
  *
  * A narrower check would encode today's district list into the format validation.
  */
@@ -58,7 +58,7 @@ export interface NIOSMParseStats {
 	tagged: number
 	/**
 	 * Elements dropped for having no usable coordinate: neither a node `lat`/`lon`
-	 * nor an `out center` centre.
+	 * nor an `out center` center.
 	 */
 	skippedNoCoordinate: number
 	/**

@@ -152,7 +152,7 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 		throw new TypeError(
 			`${options.context}: ${subject} declares no EPSG authority code — ${
 				options.messages?.noAuthorityCode ??
-				"the projection cannot be checked, and reading its metres as degrees is silent"
+				"the projection cannot be checked, and reading its meters as degrees is silent"
 			}`
 		)
 	}

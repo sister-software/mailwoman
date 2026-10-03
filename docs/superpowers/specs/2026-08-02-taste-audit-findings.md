@@ -17,7 +17,7 @@ was checked against a recorded baseline of 4,617 passing tests taken before any 
 | A3        | `mulberry32` / `makeLcg` thunks → `core/utils/python-random.ts`, 16 sites   |
 | A4        | `check-release-parity` → `APIClient`; file transfers classified + annotated |
 | A5 / A6   | hashing and JSONL callers repointed; four kept raw, annotated               |
-| A7        | data-root literal back to one place; one real behavioural default fixed     |
+| A7        | data-root literal back to one place; one real behavioral default fixed      |
 | A8        | `jaccard` → `match/comparators.ts`                                          |
 | B1        | ray cast → `spatial/geometries/polygon.ts` (corrected — see below)          |
 | B2        | ten-copy regex + splitter → `corpus/src/adapter.ts`                         |
@@ -283,7 +283,7 @@ The `extract-translit` pair matters most. There the literal is a **runtime defau
 (`options.legacyPathPrefix ?? "$MAILWOMAN_DATA_ROOT/"`), so a lab with a different data root
 gets a silently wrong path rewrite.
 
-**Cost of leaving it: low-medium.** One site is a real behavioural default, and the rest are in prose.
+**Cost of leaving it: low-medium.** One site is a real behavioral default, and the rest are in prose.
 **Cost of fixing it: low, mechanical.**
 
 ### A8. String comparators — `@mailwoman/match` is the home; `jaccard` lives outside it ×3
@@ -385,7 +385,7 @@ corpus/src/extract-recipes/{german:47, po-box-cedex:220}.ts                     
 ```
 
 **Proposed home:** `corpus/src/extract-recipes/csv.ts`. Reconcile the two variants first, because their
-behaviours differ in the split itself.
+behaviors differ in the split itself.
 **Cost of leaving it: low-medium.** **Cost of fixing it: low.**
 
 ### B5. `swapDatabaseIntoPlace` ×2 — this is the documented build-then-swap rule
@@ -434,7 +434,7 @@ Six components with the same names exist in both `docs/src/components/` and `rea
 
 `KindBadge.stories.tsx`, `LoadingIndicator.stories.tsx`, and `styles.css` are also duplicated.
 
-A full read of `KindBadge` shows the same markup tree, the same `formatPct` helper, and the same behaviour. The only real
+A full read of `KindBadge` shows the same markup tree, the same `formatPct` helper, and the same behavior. The only real
 differences are CSS-module class names versus BEM strings, and a locally imported `KindResult` type
 versus react's structural `KindBadgeResult`. React's docstring says its copy is "Shared by
 both explorers", but docs never adopted it.

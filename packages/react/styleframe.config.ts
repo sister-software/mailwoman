@@ -31,7 +31,7 @@ const { variable, theme, ref } = s
  */
 
 /**
- * The brand colours from the design system.
+ * The brand colors from the design system.
  * `#ff00b0` is the primary.
  */
 const brandMagenta = variable("brand-magenta", "#ff00b0")
@@ -210,8 +210,8 @@ const controlForeground = variable("control-foreground", ref(neutral900))
 const controlBorder = variable("control-border", ref(neutral300))
 
 /**
- * The state colours.
- * Each colour has a paired background tint.
+ * The state colors.
+ * Each color has a paired background tint.
  */
 const stateSuccess = variable("color-state-success", ref(successBase))
 const stateSuccessBackground = variable("color-state-success-background", "oklch(62% 0.15 150 / 0.14)")
@@ -240,7 +240,7 @@ const confidenceLowTint = variable("color-confidence-low-tint", ref(stateDangerB
 /**
  * The pipeline stage hues for the timing bar.
  *
- * They avoid the confidence colours so that green keeps a single meaning.
+ * They avoid the confidence colors so that green keeps a single meaning.
  */
 const stageShape = variable("color-stage-shape", "#3578e5")
 const stageClassify = variable("color-stage-classify", "#8b5cf6")

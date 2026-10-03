@@ -47,14 +47,14 @@ const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const BOROUGH_DB = wofDatabasePath("admin-global-priority.db")
 const LONDON_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "london-pairs-v2.jsonl")
 /**
- * Northern Ireland neighbourhood pairs.
+ * Northern Ireland neighborhood pairs.
  *
  * A separate file rather than merged into the London one, so each source keeps its own
  * provenance md5 in the header and the freshness guard can tell which one moved.
  */
 const NI_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "ni-pairs-v1.jsonl")
 /**
- * Scotland, Wales and England neighbourhood pairs, the rest of Great Britain
+ * Scotland, Wales and England neighborhood pairs, the rest of Great Britain
  * after London and Northern Ireland.
  */
 const GB_REGIONS_JSONL = repoRootPathBuilder("data", "gazetteer", "gb-regions-v1.jsonl")
@@ -105,7 +105,7 @@ const overlay = await materializeDevOverlay({
 const POSTCODE_BIN_DEST = overlay.destDir("postcode-gb.bin")
 
 /**
- * The licence-clean GB postcode source, Ordnance Survey Code-Point Open (OGL v3.0),
+ * The license-clean GB postcode source, Ordnance Survey Code-Point Open (OGL v3.0),
  * carrying 1,746,976 units with every one placed.
  *
  * The source has zero Northern Ireland (`BT`) codes.

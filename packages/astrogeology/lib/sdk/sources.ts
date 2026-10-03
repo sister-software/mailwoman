@@ -30,7 +30,7 @@ export interface PlanetarySource {
 
 /**
  * The four products the pipeline reads, as measured on 2026-09-07: the nomenclature
- * centre-point shapefiles (9,086 Moon points, 2,052 Mars points, longitude 0..360)
+ * center-point shapefiles (9,086 Moon points, 2,052 Mars points, longitude 0..360)
  * and the lola 118 m and mola 463 m global DEMs.
  */
 const SOURCES = {

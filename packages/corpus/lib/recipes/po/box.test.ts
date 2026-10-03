@@ -60,7 +60,7 @@ describe("po-box military rows", () => {
 	})
 })
 
-describe("po-box source labelling", () => {
+describe("po-box source labeling", () => {
 	it("takes `--source-name`, so a military-only output carries its own reps per row", async () => {
 		// `synth-po-box` is absent from the shipped Latin config's mixture, so rows under that label are
 		// dropped at load and an output with its own class needs a source of its own to be weighted at all.

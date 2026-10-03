@@ -56,11 +56,11 @@ export interface CodePointRecord {
 	 */
 	quality: number
 	/**
-	 * The OSGB36 easting in metres, as published.
+	 * The OSGB36 easting in meters, as published.
 	 */
 	easting: number
 	/**
-	 * The OSGB36 northing in metres, as published.
+	 * The OSGB36 northing in meters, as published.
 	 */
 	northing: number
 	/**

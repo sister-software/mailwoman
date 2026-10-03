@@ -104,7 +104,7 @@ export const MATRIKKELEN_PROJECTION = "4258"
 export const MATRIKKELEN_DOWNLOAD_ROOT = "https://nedlasting.geonorge.no/geonorge/Basisdata/MatrikkelenAdresse/CSV"
 
 /**
- * The dataset's metadata record, which is where the elected licence is stated.
+ * The dataset's metadata record, which is where the elected license is stated.
  */
 export const MATRIKKELEN_METADATA_URL =
 	"https://kartkatalog.geonorge.no/api/getdata/f7df7a18-b30f-4745-bd64-d0863812350c"
@@ -143,7 +143,7 @@ export const MATRIKKELEN_REQUIRED_COLUMNS: readonly string[] = [
 export const MATRIKKELEN_ATTRIBUTION = "Kartverket"
 
 /**
- * The licence the address-source register elected for this publisher.
+ * The license the address-source register elected for this publisher.
  *
  * Kartverket's metadata record states CC BY 4.0 across five agreeing fields,
  * and the adapter stamps the same identifier on every row.

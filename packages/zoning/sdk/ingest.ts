@@ -7,7 +7,7 @@
  *
  *   The stream uses CSV with WKT geometry because the source marks holes by ring orientation. GDAL's
  *   GeoJSON writer rewinds every ring to RFC 7946 order. That turns holes into zoned areas. The source is
- *   in EPSG:2157, declared in a legacy top-level `crs` member that GDAL honours.
+ *   in EPSG:2157, declared in a legacy top-level `crs` member that GDAL honors.
  */
 
 import { declaredFeatureCount } from "@mailwoman/core/layers"

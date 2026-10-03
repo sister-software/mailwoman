@@ -118,7 +118,7 @@ export interface CadastralAddress {
 /**
  * What distinguishes one cadastre's rows from another's.
  *
- * The licence differs per publisher, so it is passed rather than derived: Gipuzkoa's register
+ * The license differs per publisher, so it is passed rather than derived: Gipuzkoa's register
  * entry elects `CC-BY-SA-4.0` where the other three elect no share-alike obligation.
  */
 export interface CadastralSource {
@@ -152,9 +152,11 @@ export function cadastralRow(address: CadastralAddress, source: CadastralSource)
 	if (address.house) {
 		components.house_number = address.house
 	}
+
 	if (address.street) {
 		components.street = address.street
 	}
+
 	if (address.postcode) {
 		components.postcode = address.postcode
 	}

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `PresetChips` is the "Try:" row of example buttons shared by both explorers. Presentational: it
- *   renders a labelled list and calls `onPick` with the chosen preset's value.
+ *   renders a labeled list and calls `onPick` with the chosen preset's value.
  */
 
 import type { ReactNode } from "react"

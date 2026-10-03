@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The test runs in a subprocess against real Ink because the interface calls `process.exit(1)`.
- *   It strips ANSI codes before checking stdout and stderr, so colour cannot make a negative match pass.
+ *   It strips ANSI codes before checking stdout and stderr, so color cannot make a negative match pass.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"

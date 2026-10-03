@@ -209,7 +209,7 @@ macrohood/microhood/venue/building rows that this source does not stock." Replac
 
 ```
  *   The census counts what the source can actually answer. `admin-global-priority.db` carries nine
- *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
+ *   placetypes (locality, localadmin, neighborhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
  *   those; the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
  *   artifact by BUILD RECIPE rather than by WOF's contents — which is COVERAGE rather than fact (the
@@ -481,7 +481,7 @@ the top of the file (`import { DatabaseSync } from "node:sqlite"`) and extend th
  * connections and the builder opens its own read-only handle, so this writes a temp file — the same approach
  * `placetype-census.test.ts` uses.
  *
- * Shape: GB has two locality parents (London, Quiet Town). London carries a borough AND a neighbourhood child, which
+ * Shape: GB has two locality parents (London, Quiet Town). London carries a borough AND a neighborhood child, which
  * must count as ONE covered parent for dependent_locality rather than two. IE has one locality parent and no children at all
  * — a country that bottoms out at locality. One Overture-backfilled locality proves the source split.
  */
@@ -533,7 +533,7 @@ describe("buildGranularityLadder", () => {
 		const rows = buildGranularityLadder(ladderFixtureDB())
 		const gb = rows.find((row) => row.country === "GB")
 
-		// London has a borough child and a neighbourhood child; both project onto dependent_locality.
+		// London has a borough child and a neighborhood child; both project onto dependent_locality.
 		expect(gb?.rungs.dependent_locality?.nodes).toBe(2)
 		expect(gb?.rungs.dependent_locality?.parentsCovered).toBe(1)
 	})
@@ -551,7 +551,7 @@ describe("buildGranularityLadder", () => {
 		const rows = buildGranularityLadder(ladderFixtureDB())
 		const gb = rows.find((row) => row.country === "GB")
 
-		// "Ghost Hood" is deprecated: 3 neighbourhood-family rows exist, 2 count.
+		// "Ghost Hood" is deprecated: 3 neighborhood-family rows exist, 2 count.
 		expect(gb?.rungs.dependent_locality?.nodes).toBe(2)
 	})
 
@@ -663,7 +663,7 @@ function ladderPlacetypes(): string[] {
  *
  * Read-only. Two queries: node counts per (country, rung) with the source split, and distinct covered parents per
  * (country, rung) through `ancestors`. The projection runs in SQL because a parent with both a borough child and a
- * neighbourhood child must count ONCE toward `dependent_locality` — counting distinct parents per placetype and summing
+ * neighborhood child must count ONCE toward `dependent_locality` — counting distinct parents per placetype and summing
  * in JS would double it.
  */
 export function buildGranularityLadder(adminDBPath: string): CountryGranularity[] {
@@ -819,7 +819,7 @@ Node counts and parent-coverage per (country, rung), with the Overture
 backfill split kept visible so the 86-country backfill set cannot present
 self-comparison as corroboration. The placetype-to-rung projection runs in
 SQL, generated from PLACETYPE_PROJECTION, because a parent with both a
-borough and a neighbourhood child must count once toward dependent_locality.
+borough and a neighborhood child must count once toward dependent_locality.
 
 Every rung is seeded at zero for a measured country: a measured-and-empty
 rung is a present zero, never an absent row."

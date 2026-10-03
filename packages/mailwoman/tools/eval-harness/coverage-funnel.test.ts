@@ -159,7 +159,7 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("carries all three ingest conditions, so no one of them reads as the bottleneck", async () => {
-		// `ingestEligibilityProblems` refuses an unchecked licence, an unresolved
+		// `ingestEligibilityProblems` refuses an unchecked license, an unresolved
 		// address role, or unmeasured coverage.
 		// All 389 committed sources have those conditions.
 		const report = await funnel()
@@ -169,7 +169,7 @@ describe("readCoverageFunnel", () => {
 		expect(kenya?.stages.coverage.state).toBe(StageState.Blocked)
 		expect(kenya?.stages.licensed.state).toBe(StageState.Blocked)
 
-		// US has an elected licence and still resolves neither field, so electing terms by itself admits no source.
+		// US has an elected license and still resolves neither field, so electing terms by itself admits no source.
 		const us = report.rows.find((row) => row.iso2 === "US")
 
 		expect(us?.stages.licensed.state).toBe(StageState.Reached)

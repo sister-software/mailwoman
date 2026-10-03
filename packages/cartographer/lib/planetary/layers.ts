@@ -24,7 +24,7 @@ export interface PlanetaryPalette {
 	/**
 	 * Where a slope faces the light.
 	 *
-	 * The tiles store encoded elevation and have no colour of their own.
+	 * The tiles store encoded elevation and have no color of their own.
 	 */
 	reliefHighlight: string
 	/**
@@ -105,7 +105,7 @@ export function spaceLayer(palette: PlanetaryPalette): BackgroundLayerSpecificat
 
 /**
  * The relief, shaded at draw time from the body's encoded elevation,
- * since the tiles store height and have no colour.
+ * since the tiles store height and have no color.
  */
 export function hillshadeLayer(palette: PlanetaryPalette): HillshadeLayerSpecification {
 	return {

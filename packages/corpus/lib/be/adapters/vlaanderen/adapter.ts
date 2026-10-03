@@ -23,7 +23,7 @@
  *
  * The capabilities document's `ows:Fees` and `ows:AccessConstraints` state what calling the service
  * costs and who may call it. They describe the service rather than licensing the data, so the
- * licence comes from the register and this adapter reads the capabilities for feature types alone.
+ * license comes from the register and this adapter reads the capabilities for feature types alone.
  *
  * ## Why the input is a harvest rather than the service
  *

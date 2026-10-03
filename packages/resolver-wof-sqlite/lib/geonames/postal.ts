@@ -12,7 +12,7 @@
  *      every non-letter and non-number stripped. `sanitizeFTSQuery` reduces the parsed token to
  *      that shape at lookup time. A stored `"110 00"` or `"11-041"` can never match the
  *      query `"11000"` or `"11041"`. The display form is preserved as an alt row in `names`.
- *   2. The medoid law. A postcode whose rows contain scattered points has no single true centre.
+ *   2. The medoid law. A postcode whose rows contain scattered points has no single true center.
  *      Their average puts the code somewhere no address is. The medoid is the member point
  *      nearest the group's mean.
  *
@@ -90,7 +90,7 @@ export interface MedoidSupport {
  * GeoNames computes a postal coordinate by matching the code against the names
  * of places and admin divisions.
  *
- * It averages neighbouring codes when the match fails.
+ * It averages neighboring codes when the match fails.
  * One computed value can reach every row that matched it.
  *
  * Uses exact equality rather than a proximity radius.

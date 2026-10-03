@@ -335,7 +335,7 @@ export async function stageSQLJSAssets(destDir: string): Promise<boolean> {
 }
 ```
 
-Compare with `docs/plugins/demo-assets/artifacts.ts`'s `syncArtifact` and `stageSQLJSHTTPVFS` before deleting them: carry over any behaviour above omits (the size-identical skip and the per-file warning are the two the docstrings name). Then in `artifacts.ts` delete both functions; `stageMapLibreWorker` and `stagePairIndexes` stay, and if they called `syncArtifact`, they import it from `@mailwoman/resolver-wof-wasm/host-assets`. In `plugin.ts` replace `stageSQLJSHTTPVFS(sqljsDir)` with `stageSQLJSAssets(sqljsDir)` imported from the same subpath. Add `"sql.js-httpvfs": "^0.8.12"` to `packages/resolver-wof-wasm/package.json` `dependencies`; if `docs/package.json` still declares it after this task, `knip` in Task 8 says whether docs still needs it.
+Compare with `docs/plugins/demo-assets/artifacts.ts`'s `syncArtifact` and `stageSQLJSHTTPVFS` before deleting them: carry over any behavior above omits (the size-identical skip and the per-file warning are the two the docstrings name). Then in `artifacts.ts` delete both functions; `stageMapLibreWorker` and `stagePairIndexes` stay, and if they called `syncArtifact`, they import it from `@mailwoman/resolver-wof-wasm/host-assets`. In `plugin.ts` replace `stageSQLJSHTTPVFS(sqljsDir)` with `stageSQLJSAssets(sqljsDir)` imported from the same subpath. Add `"sql.js-httpvfs": "^0.8.12"` to `packages/resolver-wof-wasm/package.json` `dependencies`; if `docs/package.json` still declares it after this task, `knip` in Task 8 says whether docs still needs it.
 
 - [ ] **Step 4: Exports and the moved tests**
 

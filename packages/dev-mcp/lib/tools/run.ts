@@ -27,7 +27,7 @@ const RUN_ROW_FIELDS = [
 	"components",
 	"lat",
 	"lon",
-	// Haversine kilometres from the row's truth point where the set provides one.
+	// Haversine kilometers from the row's truth point where the set provides one.
 	// `null` on a row with no truth and on a row that resolved no coordinate.
 	// Those are different facts, so read it beside `lat`.
 	"km",

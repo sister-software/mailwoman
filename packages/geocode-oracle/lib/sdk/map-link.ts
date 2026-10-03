@@ -16,12 +16,12 @@
  *   A resolved link contains two coordinate pairs. Each pair represents a different quantity:
  *
  *       .../place/Donkey's+Place/@39.9942189,-74.792132,1062m/data=...!3d39.9933298!4d-74.7902421
- *                                ^^^^^^^^^^^^^^^^^^^^^^^ map viewport centre     ^^^^^^^^^^^^^^^^ the place PIN
+ *                                ^^^^^^^^^^^^^^^^^^^^^^^ map viewport center     ^^^^^^^^^^^^^^^^ the place PIN
  *
  *   The `@` pair marks the camera location. It can be offset from the pin by the view framing and includes a zoom
- *   suffix. This parameter instead of `!3d`/`!4d` can lose tens to hundreds of metres of accuracy.
+ *   suffix. This parameter instead of `!3d`/`!4d` can lose tens to hundreds of meters of accuracy.
  *   That distance can consume a rooftop case's full tolerance budget. The resolver uses the viewport only as a
- *   labelled fallback. A fallback row records that source explicitly.
+ *   labeled fallback. A fallback row records that source explicitly.
  *
  *   ## A link that does not resolve is reported
  *
@@ -171,7 +171,7 @@ export interface CreateMapLinkResolverOptions {
  * A paced resolver for Google Maps share links.
  *
  * Built on {@linkcode APIClient} for the same reasons its siblings are — pacing downstream
- * of the cache, bounded retry honouring `Retry-After`, and `ResourceError` mapping
+ * of the cache, bounded retry honoring `Retry-After`, and `ResourceError` mapping
  * so a caller branches on `error.status` rather than on message prose.
  */
 export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}) {

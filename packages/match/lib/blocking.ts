@@ -15,7 +15,7 @@
  *   (`name-cell and geo-cell`) when a single rule is too loose.
  *
  *   Recall is the priority. A pair the blocker never proposes can never match, the most dangerous
- *   silent failure in record linkage. The spatial grid is generous and neighbour-expanded by
+ *   silent failure in record linkage. The spatial grid is generous and neighbor-expanded by
  *   default. The code reports any block too large to scan instead of dropping it silently.
  */
 
@@ -37,9 +37,9 @@ export type BlockingKey<R> = (record: R) => string[]
  * so a pair straddling a cell boundary still meets.
  *
  * Note: an equal-_degree_ grid (longitude cells shrink toward the poles)
- * and neighbour expansion inflates block sizes ~9×; an equal-area H3/geohash index
- * with a single-cell + neighbour-query is the refinement.
- * Behaviour — proximity co-blocking — is the same.
+ * and neighbor expansion inflates block sizes ~9×; an equal-area H3/geohash index
+ * with a single-cell + neighbor-query is the refinement.
+ * Behavior — proximity co-blocking — is the same.
  */
 export function geoCellKey<R>(
 	extract: (record: R) => GeoCoordinate | null | undefined,

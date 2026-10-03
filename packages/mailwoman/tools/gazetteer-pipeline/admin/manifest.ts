@@ -26,7 +26,7 @@ export interface IngestCounts {
 }
 
 /**
- * Per-source identity: the name that goes in `source`, and the licence its rows arrive under.
+ * Per-source identity: the name that goes in `source`, and the license its rows arrive under.
  *
  * `sourceVintage` is deliberately absent here: WOF's is a git commit per cloned repo,
  * Overture's identity is a release tag.

@@ -22,7 +22,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * Metres per kilometre — {@link haversineKm} returns km and every figure here is reported in metres.
+ * Meters per kilometer — {@link haversineKm} returns km and every figure here is reported in meters.
  */
 const M_PER_KM = 1000
 
@@ -43,7 +43,7 @@ export interface AreaHistogram {
 }
 
 /**
- * The coordinate-disagreement distribution over postcodes present in both databases, in metres.
+ * The coordinate-disagreement distribution over postcodes present in both databases, in meters.
  */
 export interface DeltaDistribution {
 	joined: number
@@ -89,13 +89,13 @@ export interface IncumbentOnlyBreakdown {
 	/**
 	 * `BT` — Northern Ireland.
 	 *
-	 * A permanent, licence-driven gap in Code-Point Open.
+	 * A permanent, license-driven gap in Code-Point Open.
 	 */
 	northernIreland: number
 	/**
 	 * `IM`/`GY`/`JE` — Isle of Man, Guernsey, Jersey.
 	 *
-	 * Outside Great Britain, same licence shape as NI.
+	 * Outside Great Britain, same license shape as NI.
 	 */
 	crownDependencies: number
 	/**
@@ -169,8 +169,8 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * They also cover both coordinate extremes in the join.
  *
  * A Code-Point centroid is the postcode unit's mean delivery point,
- * so tens of metres of offset is correct behaviour.
- * The three city-centre probes near 500-900 m use loose bounds because each landmark is a district.
+ * so tens of meters of offset is correct behavior.
+ * The three city-center probes near 500-900 m use loose bounds because each landmark is a district.
  * Both databases agree there to within 3 m.
  *
  * `CF99 1SN` is not a typo: the Senedd's postcode changed from `CF99 1NA`
@@ -439,12 +439,12 @@ export function formatCodePointCheckReport(report: CodePointCheckReport): string
 		`only in codepoint: ${report.onlyInCodePoint.total.toLocaleString()} — ${topAreas(report.onlyInCodePoint)}`,
 		`only in incumbent: ${report.onlyInIncumbent.total.toLocaleString()} — ${topAreas(report.onlyInIncumbent)}`,
 		`  = Northern Ireland ${report.incumbentOnlyBreakdown.northernIreland.toLocaleString()} + Crown dependencies ${report.incumbentOnlyBreakdown.crownDependencies.toLocaleString()} + terminated postcodes ${report.incumbentOnlyBreakdown.terminated.toLocaleString()}`,
-		`coordinate delta over ${report.delta.joined.toLocaleString()} joined postcodes (metres):`,
+		`coordinate delta over ${report.delta.joined.toLocaleString()} joined postcodes (meters):`,
 		`  p50 ${report.delta.p50.toFixed(1)} · p90 ${report.delta.p90.toFixed(1)} · p99 ${report.delta.p99.toFixed(1)} · max ${report.delta.max.toFixed(1)} · mean ${report.delta.mean.toFixed(1)}`,
 		`  over 1 km: ${report.delta.over1km.toLocaleString()} · over 10 km: ${report.delta.over10km.toLocaleString()}`,
 		`Northern Ireland: incumbent ${report.northernIreland.incumbentBTRows.toLocaleString()} BT rows · codepoint ${report.northernIreland.codepointBTRows.toLocaleString()}`,
 		`Crown dependencies: incumbent ${stringifyJSON(report.crownDependencies.incumbentRows)} · codepoint ${stringifyJSON(report.crownDependencies.codepointRows)}`,
-		"probes (metres from the independently-known landmark position):",
+		"probes (meters from the independently-known landmark position):",
 	]
 
 	for (const probe of report.probes) {

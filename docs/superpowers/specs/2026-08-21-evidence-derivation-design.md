@@ -266,7 +266,7 @@ This arm therefore needs three columns on `PLBlockTable`, one additional segment
 
 The data is public domain, so no license check is needed.
 
-### 4.3 `plausibilityCheck` re-expressed — no behaviour change
+### 4.3 `plausibilityCheck` re-expressed — no behavior change
 
 `filing` → `Observation`. `physical_plant` → `Observation`. `abstain` → the absence of evidence plus
 a `coverage_confidence` that already degrades directly. `coverage_confidence` and `block_resolution`

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The backend's name key for fake gazetteers, modelling `normalizeLocalityForKey` rather than
+ *   The backend's name key for fake gazetteers, modeling `normalizeLocalityForKey` rather than
  *   importing it because `@mailwoman/resolver` is backend-agnostic by design.
  */
 

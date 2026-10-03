@@ -259,7 +259,7 @@ describe("scriptForCodepoint", () => {
 		expect(scriptForCodepoint(0x30_fb)).toBe("Zyyy")
 	})
 
-	it("says Zzzz for a script it has no ranges for, rather than folding it into a neighbour", () => {
+	it("says Zzzz for a script it has no ranges for, rather than folding it into a neighbor", () => {
 		// Devanagari ग has no range in this file.
 		// The function returns Zzzz for it.
 		// Consumers can distinguish missing script coverage from "no script here".
@@ -290,7 +290,7 @@ describe("scriptForRange", () => {
 		expect(scriptForRange(shape.tokenClasses, 0, 7)).toBe("Hani")
 	})
 
-	it("abstains on a range carrying no script, rather than borrowing a neighbour's", () => {
+	it("abstains on a range carrying no script, rather than borrowing a neighbor's", () => {
 		const shape = computeQueryShape("東京都千代田区丸の内1-9-1")
 		const houseNumber = shape.tokenClasses.at(-1)!.span
 

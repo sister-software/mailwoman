@@ -30,7 +30,7 @@ import { SurfaceOrigin } from "#types"
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour this recipe exercises
+ * See the file header for the parse behavior this recipe exercises
  * and `description` below for its surface form.
  */
 export const siBareVillageRecipe: CorpusRecipe = {

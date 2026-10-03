@@ -473,7 +473,7 @@ describe("the area cross-check", () => {
 })
 
 describe("the build-local posture", () => {
-	it("refuses a shipped tier while the licence is unresolved", async () => {
+	it("refuses a shipped tier while the license is unresolved", async () => {
 		await expect(
 			buildZoningDatabase({
 				source: fixtureSource(fixtureFeatures()),

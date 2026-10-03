@@ -467,7 +467,7 @@ async function recoverPostcodeNode(
 }
 
 /**
- * The farthest distance, in kilometres, that {@link applyPostcodeConsistency}
+ * The farthest distance, in kilometers, that {@link applyPostcodeConsistency}
  * moves a locality onto its postcode's point.
  */
 export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300

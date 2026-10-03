@@ -75,7 +75,7 @@ const DATABASE_RECIPES = {
 		scope: "us",
 		level: "3",
 		polygonFile: "wof-polygons-us-full.db",
-		// One prefix per behaviour the arm can produce, so a probe line that goes
+		// One prefix per behavior the arm can produce, so a probe line that goes
 		// quiet identifies the failed rule.
 		probePrefixes: ["605", "946", "205", "995"],
 	},

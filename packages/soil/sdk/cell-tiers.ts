@@ -153,7 +153,7 @@ export function reduceCells(
 
 	// Each delineation touches several cells, so the cache avoids reading its rings once per touch.
 	// The cache is cleared whole when it fills.
-	// The scan runs in `h3_cell` order and visits neighbouring cells together.
+	// The scan runs in `h3_cell` order and visits neighboring cells together.
 	// After a clear, the cache refills with the delineations that the next cells need.
 	const geometry = new Map<string, StoredDelineation>()
 

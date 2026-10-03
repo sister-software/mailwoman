@@ -114,7 +114,7 @@ export { ABLATION_GRADES, type AblationGrade, emptyGrades, PASSING_GRADES } from
  * | locality      | 4,363,942 | 49.2%           | 0.62   | 5.95    |
  * | borough       | 289       | 0.0%            | 4.37   | 10.45   |
  * | macrohood     | 994       | 0.2%            | 1.78   | 4.87    |
- * | neighbourhood | 348,323   | 86.2%           | 0.57   | 2.44    |
+ * | neighborhood | 348,323   | 86.2%           | 0.57   | 2.44    |
  * | microhood     | 1,696     | 8.0%            | 0.69   | 1.76    |
  *
  * Placetype omissions have no floor.

@@ -74,7 +74,7 @@ A span ranked in isolation gets Portland, Maine to Messina, Italy. These checks 
 | `postcode-country-coherence` | Does the postcode's shape agree with the country the rest of the tree implies? |
 | `postcode-shape-coherence`   | Is this span a postcode at all, in any system the query could be in?           |
 | `admin-containment`          | Split candidates by whether they sit inside an established parent.             |
-| `span-rescore`               | A resolved neighbour is evidence about an unresolved span.                     |
+| `span-rescore`               | A resolved neighbor is evidence about an unresolved span.                      |
 | `street-evidence`            | A commune-scoped street hit is evidence of that street's locality.             |
 | `plausibility`               | Is this answer outside the country it claims?                                  |
 

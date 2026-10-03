@@ -22,7 +22,7 @@
  *    `Territorial office <pp> <name>` and are the Dirección General del Catastro's own provinces.
  *    The other three are titled `Provincial Council of Bizkaia`, `… of Gipuzkoa` and
  *    `… of Navarra`, which publish their own cadastres through this feed and state their own terms.
- *    Each of those has its own address-source register row, its own licence and its own adapter, so
+ *    Each of those has its own address-source register row, its own license and its own adapter, so
  *    this harvest selects the territorial offices by a positive match on their title rather than by
  *    excluding three names. A feed that renames its offices then matches zero titles and raises.
  * 2. **A province feed declares ISO-8859-1 and means it, while the national feed declares UTF-8.**
@@ -244,7 +244,7 @@ export function readESCatastroServiceFeed(feed: AtomFeed): readonly ESCatastroPr
 		const titled = TERRITORIAL_OFFICE_TITLE.exec(entry.title.trim())
 
 		// An entry that is not a territorial office belongs to a foral cadastre with its own
-		// register row, licence and adapter, so it is left out rather than refused.
+		// register row, license and adapter, so it is left out rather than refused.
 		if (!titled) continue
 
 		const code = titled[1]!

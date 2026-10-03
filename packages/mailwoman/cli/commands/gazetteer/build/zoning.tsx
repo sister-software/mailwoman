@@ -8,7 +8,7 @@
  *   `@mailwoman/zoning/sdk`.
  *
  *   The artifact is built locally and never shipped: three published statements disagree about the source's
- *   licence. The manifest records `tier: build-local` and `license: noassertion`. The SDK refuses a
+ *   license. The manifest records `tier: build-local` and `license: noassertion`. The SDK refuses a
  *   `shipped` tier while that holds.
  *
  *   `--measure-resolutions` measures without building. The index resolution is a measurement this layer takes
@@ -102,7 +102,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 
 		const client = createGZTClient()
 
-		// The item read supplies the product vintage and the licence text the build
+		// The item read supplies the product vintage and the license text the build
 		// reconciles against, both read rather than trusted from a constant.
 		const item = options.offline ? undefined : await client.readItemRecord()
 		const vintage = options.sourceVintage ?? item?.modifiedDate

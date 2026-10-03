@@ -91,7 +91,7 @@ export class JobRegistry {
 			job.endedAt = Date.now()
 			job.exitCode = code
 			job.child = null
-			// A signalled exit is a cancellation.
+			// A signaled exit is a cancellation.
 			// A failure verdict would let a killed run read as a graded `fail`.
 			job.state = job.state === "cancelled" || signal ? "cancelled" : code === 0 ? "succeeded" : "failed"
 		})

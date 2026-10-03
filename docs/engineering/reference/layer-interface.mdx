@@ -148,7 +148,7 @@ GeoJSONSeq layer-creation option, and `--config OGR_ORGANIZE_POLYGONS SKIP` has 
 that marks holes by winding them opposite to their exterior therefore comes out of a reprojection
 with every ring wound as an exterior. Ireland's largest zoning feature shows this. Meath County
 Council's `RA - Rural Area` is published as 107 single-ring parts, 5 clockwise and 102
-counter-clockwise. Through `-f GeoJSONSeq`, it arrives as 107 counter-clockwise exteriors totalling
+counter-clockwise. Through `-f GeoJSONSeq`, it arrives as 107 counter-clockwise exteriors totaling
 2,371.9 km², against the publisher's own 2,232.1 km². The same conversion written as
 `-f CSV -lco GEOMETRY=AS_WKT` keeps the source's clockwise/counter-clockwise split intact.
 

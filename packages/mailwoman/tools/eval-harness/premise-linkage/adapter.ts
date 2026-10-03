@@ -133,7 +133,7 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			hasHistoricalAlias: false,
 		},
 		matchOn: "bravo terrace",
-		// Committed to a premise and supplied the neighbour's identifier: the `wrong` case.
+		// Committed to a premise and supplied the neighbor's identifier: the `wrong` case.
 		response: fixtureExactMatch({
 			providerPlaceID: "synthetic-place-0902",
 			objectIDs: { [SYNTHETIC_SCHEME]: syntheticIdentifier(9) },

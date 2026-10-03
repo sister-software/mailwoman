@@ -117,7 +117,7 @@ export interface ConformanceFixture {
 	 */
 	rowRef?: string
 	/**
-	 * Coordinate tolerance in metres; supported only by `assembled_coordinate`.
+	 * Coordinate tolerance in meters; supported only by `assembled_coordinate`.
 	 */
 	toleranceM?: number
 	/**

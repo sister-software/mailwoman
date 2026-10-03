@@ -10,7 +10,7 @@
 # FR date-name +52pp, the PL 178 row is fixed — but parity postcode fell 0.986->0.889 (-9.7pp, 7 rows).
 # The 7 rows were all 4-5 digit postcodes (AU/NL 4-digit, FR 5-digit) absorbed into adjacent street/
 # locality spans (docs: scratchpad/deepparse-cmp/numsplice-verdict.md). A single-piece number merges
-# into its neighbour more easily — the property that fixes house_number let 4-5 digit postcodes be
+# into its neighbor more easily — the property that fixes house_number let 4-5 digit postcodes be
 # swallowed. hypothesis: the 4-5 digit pieces account for the whole postcode drop. Keeping those
 # multi-piece (this config) should keep the house_number rise without the postcode drop.
 #

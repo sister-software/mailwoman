@@ -74,7 +74,7 @@ const INPUT = "Testtown"
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
 /**
- * A point at the centre of the FZ3 fixture square.
+ * A point at the center of the FZ3 fixture square.
  */
 const INSIDE_ZONE = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
@@ -165,7 +165,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 			expect(evidence.reading).toBe("designated")
 			// The message describes the map designation because the authority makes no claim about individual properties.
 			expect(marker.message).toMatch(/not whether a property will flood/u)
-			// The licence requires the attribution to accompany the designation.
+			// The license requires the attribution to accompany the designation.
 			expect((evidence.layer as { attribution?: string }).attribution).toMatch(/Environment Agency copyright/u)
 		} finally {
 			route[Symbol.dispose]()

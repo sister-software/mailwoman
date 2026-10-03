@@ -100,7 +100,7 @@ describe("pair-index ↔ model-card parity", () => {
 			)
 
 			// A card claiming a delta the binary does not contain would misdescribe the
-			// shipped behaviour rather than just the shipped size.
+			// shipped behavior rather than just the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
 
 			expect(cardDelta, `${pkg}: card delta_calibration does not mention the artifact's δ=${facts.delta}`).toContain(
@@ -117,7 +117,7 @@ describe("pair-index ↔ model-card parity", () => {
 			// The whole-edge parent bias is default-on for locales that have a board
 			// and off (no header key) for other locales.
 			// The test grades both directions: an omitted shipped parentDelta misdescribes
-			// the behaviour, while a claimed one the artifact lacks is worse.
+			// the behavior, while a claimed one the artifact lacks is worse.
 			// The assertion spells out `parentDelta=<n>` because δ and β are both 5 today,
 			// so a substring match on "5" would pass on a card that never mentioned the parent at all.
 			const parentClaim = `parentDelta=${facts.parentDelta}`

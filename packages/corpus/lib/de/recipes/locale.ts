@@ -18,7 +18,7 @@
  * `--comma-free-fraction` renders that many native-order rows with `" "` as the line separator. OA
  * rows also lack a district, so `--ortsteil-fraction` rows borrow a WOF Ortsteil of the tuple's
  * own locality as `dependent_locality`. The German spelling is recovered from the `names` table
- * ({@link ortsteilSurface}) because WOF's `spr.name` for DE neighbourhoods is the ascii-folded label.
+ * ({@link ortsteilSurface}) because WOF's `spr.name` for DE neighborhoods is the ascii-folded label.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -99,7 +99,7 @@ function sameGermanLabel(left: string, right: string): boolean {
 /**
  * The surface an Ortsteil is written with in an address, from WOF's rows for it.
  *
- * `spr.name` for a DE neighbourhood is the ascii-folded label.
+ * `spr.name` for a DE neighborhood is the ascii-folded label.
  * The `names` rows in `deu` contain the German spelling beside unrelated labels for co-located
  * features (`Bocklemuend` → `Bocklemünd`, `Jüdischer Friedhof Bocklemünd`, `Menara-Garten`).
  *
@@ -119,7 +119,7 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
 }
 
 /**
- * Every current DE neighbourhood with a locality ancestor, keyed by the folded
+ * Every current DE neighborhood with a locality ancestor, keyed by the folded
  * locality name → Ortsteil surfaces.
  *
  * Empty when the admin database is not readable.

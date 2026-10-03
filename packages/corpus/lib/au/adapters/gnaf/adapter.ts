@@ -9,7 +9,7 @@
  * order, where it tags a leading four-digit postcode as a house number and swaps street against
  * locality. This adapter renders each assembled G-NAF tuple (see {@link ./assemble}) in three real
  * AU layouts, rotated by row index, so the locality and postcode each land in every position across
- * the corpus. Input is the assembled component jsonl, one tuple per line. Open G-NAF licence
+ * the corpus. Input is the assembled component jsonl, one tuple per line. Open G-NAF license
  * requires attribution to "Geoscape Australia".
  */
 

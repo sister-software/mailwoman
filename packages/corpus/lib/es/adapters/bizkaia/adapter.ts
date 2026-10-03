@@ -118,9 +118,9 @@ export const ES_BIZKAIA_ADAPTER_ID = "es-bizkaia"
 export const ES_BIZKAIA_COUNTRIES: readonly string[] = ["ES"]
 
 /**
- * The licence the address-source register elected for this publisher.
+ * The license the address-source register elected for this publisher.
  *
- * Bizkaia names no licence instrument, so no SPDX identifier is written and this records the
+ * Bizkaia names no license instrument, so no SPDX identifier is written and this records the
  * publisher's own words. Its INSPIRE metadata carries the controlled values `No limitations to
  * public access` and `No conditions to access and use`, and its feed-level `rights` adds the
  * condition that authorship and ownership of the BFA be stated as «©Bizkaiko Foru Aldundia». The

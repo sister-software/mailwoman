@@ -13,7 +13,7 @@ Mailwoman can parse addresses in four different ways. Each one uses a different 
 
 | Mode             | What it uses                                                    | Analogy                                                                              |
 | ---------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **Rule-only**    | Hand-written rules, pattern matching, dictionaries              | A postmaster who memorises the rulebook                                              |
+| **Rule-only**    | Hand-written rules, pattern matching, dictionaries              | A postmaster who memorizes the rulebook                                              |
 | **Neural**       | The AI model's best guess, decoded with structural constraints  | A student who writes their first instinct, checked for grammar                       |
 | **Hybrid**       | Rules + AI model working together                               | The postmaster and the student collaborating                                         |
 | **Hybrid-joint** | Rules + AI + a "sanity checker" that rejects incoherent guesses | The collaboration, plus an editor who crosses out answers that contradict each other |
@@ -67,7 +67,7 @@ The trade-off: exact match drops from 30.8% (rule-only) to 6.0% (hybrid-joint). 
 
 ### The architecture is working, the quality isn't there yet
 
-The staged pipeline — rules for structure, neural for ambiguity, reconciler for calibration — is producing the behaviour it was designed for. Each layer adds value:
+The staged pipeline — rules for structure, neural for ambiguity, reconciler for calibration — is producing the behavior it was designed for. Each layer adds value:
 
 - Rules contribute high precision on common patterns.
 - Neural contributes coverage on unusual inputs (0% empty parse vs rules' 6.3%).

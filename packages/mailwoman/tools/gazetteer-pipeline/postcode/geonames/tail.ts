@@ -55,7 +55,7 @@ export function geonamesTailTerms(countries: readonly string[]): { tier: LayerTi
 
 /**
  * Kysely read/write interface for the database's provenance table, read at open
- * so the licence obligation and source fingerprints travel with the database.
+ * so the license obligation and source fingerprints travel with the database.
  */
 export interface DatabaseMetaDatabase {
 	meta: ExtractMetaTable
@@ -101,7 +101,7 @@ export interface GeonamesPostalSourceFact {
 	/**
 	 * How many of those codes the dump listed on several rows that all referred to one coordinate.
 	 *
-	 * GeoNames averages that coordinate from neighbouring codes where a name match fails, so the
+	 * GeoNames averages that coordinate from neighboring codes where a name match fails, so the
 	 * count tells a consumer how much of a country's coverage is inherited rather than agreed.
 	 */
 	singlePointRows: number
@@ -314,7 +314,7 @@ const GB_LICENSE_NOTE =
 	'Licensed under the Open Government Licence v3.0 (nationalarchives.gov.uk/doc/open-government-licence/version/3/)." ' +
 	"UNRESOLVED: ~48,990 BT (Northern Ireland) rows plus IM/GY/JE lie outside Code-Point Open coverage with no " +
 	"documented provenance; ONS's OGL grant for postcode products excludes Northern Ireland data and commercial NI " +
-	"use requires a separate Land & Property Services licence. Counsel sign-off pending, as with @mailwoman/osm."
+	"use requires a separate Land & Property Services license. Counsel sign-off pending, as with @mailwoman/osm."
 
 interface DatabaseMetaInput {
 	now: Date
@@ -353,7 +353,7 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 		],
 		[
 			"coordinate_epistemic_status",
-			`${EpistemicStatus.Derived} — GeoNames computes a postal coordinate by matching the code against place names and admin divisions, and averages neighbouring codes where the match fails. These points are an estimate of the code's neighbourhood under a stated rule, not a postal authority's centroid; \`source_files[].singlePointRows\` counts the codes whose several rows all named ONE such point`,
+			`${EpistemicStatus.Derived} — GeoNames computes a postal coordinate by matching the code against place names and admin divisions, and averages neighboring codes where the match fails. These points are an estimate of the code's neighborhood under a stated rule, not a postal authority's centroid; \`source_files[].singlePointRows\` counts the codes whose several rows all named ONE such point`,
 		],
 		["builder", "mailwoman gazetteer build postcode-geonames --countries " + input.countries.join(",")],
 		["source_files", stringifyJSON(input.sources)],

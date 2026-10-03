@@ -33,7 +33,7 @@ export interface StreetMorphologyPriorOpts {
 	maxAffixBias?: number
 	/**
 	 * Maximum bias magnitude (logits) on adjacent tokens for the `street` label, default 2.0 —
-	 * weaker than the affix bias because the neighbour is inferred from adjacency rather than matched.
+	 * weaker than the affix bias because the neighbor is inferred from adjacency rather than matched.
 	 */
 	maxNeighbourStreetBias?: number
 	/**
@@ -80,7 +80,7 @@ export function buildStreetMorphologyEmissionPriors(
 
 	if (!wordGroups.length) return matrix
 
-	// Track matched word-group spans so the neighbour pass needs no second FST walk.
+	// Track matched word-group spans so the neighbor pass needs no second FST walk.
 	interface AffixMatch {
 		startGroupIdx: number
 		endGroupIdx: number // inclusive
@@ -188,7 +188,7 @@ export function buildStreetMorphologyEmissionPriors(
 
 /**
  * Walk word groups outward from `fromGroupIdx` in `direction`, skipping empty groups
- * (whitespace / punctuation), and return the first non-empty neighbour or `null`.
+ * (whitespace / punctuation), and return the first non-empty neighbor or `null`.
  */
 function findNeighbour(groups: WordGroup[], fromGroupIdx: number, direction: 1 | -1): WordGroup | null {
 	for (let i = fromGroupIdx + direction; i >= 0 && i < groups.length; i += direction) {

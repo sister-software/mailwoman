@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the `no-fragment` recipe (Track B — the Norwegian house-number-licence change).
+ *   Tests for the `no-fragment` recipe (Track B — the Norwegian house-number-license change).
  *
  *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *
@@ -63,7 +63,7 @@ describe("no-fragment", () => {
 			const c = r.components!
 
 			// A signal row has a street and may have a house_number, but never a postcode or locality.
-			// That is the whole licence: read the street without its partners.
+			// That is the whole license: read the street without its partners.
 			expect(c.postcode).toBeUndefined()
 			expect(c.locality).toBeUndefined()
 			expect(c.street).toBeTruthy()

@@ -12,7 +12,7 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 /**
- * One additional admin role a resolved place also fulfils, such as Berlin's
+ * One additional admin role a resolved place also fulfills, such as Berlin's
  * federal-state role beside its locality role.
  */
 export interface DualRole {

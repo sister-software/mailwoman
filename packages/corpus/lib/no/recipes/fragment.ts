@@ -36,7 +36,7 @@ const titleNO = (value: string): string =>
 export const noFragmentRecipe: CorpusRecipe = {
 	name: "no-fragment",
 	description:
-		"NO street fragments — the house-number-licence change (Track B): '«st» «n»' / bare «st» with NO postcode partner, + bare-locality & bare-postcode counters",
+		"NO street fragments — the house-number-license change (Track B): '«st» «n»' / bare «st» with NO postcode partner, + bare-locality & bare-postcode counters",
 	mode: "tuples",
 	options: [
 		{
@@ -47,7 +47,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 		{
 			flag: "--bare-street-prob <n>",
 			description:
-				"Share of street rows emitted as a bare street without a house number, the pure licence signal (default 0.30)",
+				"Share of street rows emitted as a bare street without a house number, the pure license signal (default 0.30)",
 		},
 		{
 			flag: "--counter-prob <n>",

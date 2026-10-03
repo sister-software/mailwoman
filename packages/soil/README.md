@@ -95,7 +95,7 @@ grain.
 - **Survey-area archives** (`websoilsurvey.sc.egov.usda.gov/DSD/Download/Cache/SSA`) are file transfers on
   raw `fetch`, streamed to disk. The call site documents that choice.
 
-The code handles three measured behaviours:
+The code handles three measured behaviors:
 
 1. **Failures come back as XML, including on a timeout.** A bad column, a blocked query and a
    server-side timeout all return an OGC `ServiceExceptionReport`, and the timeout arrives with HTTP 200.
@@ -187,7 +187,7 @@ reproducible. Both live in `@mailwoman/spatial`'s `h3/polygon-cells.ts` and are 
 `--verify` runs both halves. The positive half asks Soil Data Access again which map unit covers a sample
 of points drawn deterministically from the artifact, and it compares **map unit against map unit**.
 The derived-class comparison would let a wrong delineation agree by accident whenever two
-neighbours share a class. Disagreements report the distance to the nearest **edge** instead of the nearest
+neighbors share a class. Disagreements report the distance to the nearest **edge** instead of the nearest
 vertex. A point a centimeter from a long edge can be meters from every vertex, and the flood layer's one
 near-miss measured 1.58 m to vertices and 0.009 m to edges.
 

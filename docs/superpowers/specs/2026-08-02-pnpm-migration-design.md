@@ -157,7 +157,7 @@ specified against whichever layout this migration lands, and is not built until 
   package that installs "successfully" and fails at runtime — the meaning-of-zero shape. The 5 known
   builders are listed; a fresh `pnpm install` warning check is part of step 3.
 - **Lab host store.** pnpm's store is global per-user; 20+ agent worktrees sharing one store is a
-  behaviour change from yarn's global cache. Expected to be fine (hardlinks are the design), but
+  behavior change from yarn's global cache. Expected to be fine (hardlinks are the design), but
   worktree isolation is a known-sensitive area here.
 - **No speed win.** A plausible outcome: `2026-08-02-test-suite-performance-design.md` § Finding 3
   shows Fetch is already 0.6s on a warm CI cache, and the local control measured 0.4s. Accepted going

@@ -38,7 +38,7 @@ const RADII = {
 export type PlanetaryBodyID = "earth" | "moon" | "mars"
 
 /**
- * Mean radii in kilometres.
+ * Mean radii in kilometers.
  *
  * Earth's is the value `radii` scales to its units.
  * The Moon's and Mars's are the IAU mean radii the usgs planetary products reference
@@ -118,7 +118,7 @@ export function greatCircleDistance(
 }
 
 /**
- * Returns the great-circle distance in kilometres between two coordinates on Earth.
+ * Returns the great-circle distance in kilometers between two coordinates on Earth.
  *
  * The formula's one true home — every resolver + eval consumer of the
  * `(aLat, aLon, bLat, bLon)` shape imports this instead of re-declaring it.
@@ -135,7 +135,7 @@ export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: numb
 }
 
 /**
- * Metres per degree of latitude.
+ * Meters per degree of latitude.
  *
  * The scale used by {@link segmentDistanceMetres}.
  * It is also the constant the bounding-box estimates in `#h3/polygon-cells` are built on.
@@ -143,18 +143,18 @@ export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: numb
 export const METRES_PER_DEGREE = 111_320
 
 /**
- * Square metres in a square kilometre.
+ * Square meters in a square kilometer.
  *
  * The conversion every polygon layer's area receipt reports through.
  */
 export const M2_PER_KM2 = 1_000_000
 
 /**
- * Metres from a point to a line segment, with longitude scaled for the latitude
+ * Meters from a point to a line segment, with longitude scaled for the latitude
  * so the two axes are comparable.
  *
  * Measure TO the edge rather than TO the nearest vertex.
- * A point a centimetre from a long edge can be metres from every vertex of it,
+ * A point a centimeter from a long edge can be meters from every vertex of it,
  * so a vertex distance overstates the gap without bound.
  *
  * Measured on the flood layer's verification, one near-miss read 1.58 m to vertices
@@ -190,12 +190,12 @@ export function segmentDistanceMetres(
 }
 
 /**
- * Metres from a point to the nearest ring edge of an areal geometry.
+ * Meters from a point to the nearest ring edge of an areal geometry.
  *
  * `Infinity` when the geometry bounds no area or contains no segment.
  *
- * To the edge rather than to the nearest vertex: a point a centimetre from a long edge can
- * be metres from every vertex of it, so a vertex distance overstates the gap without bound.
+ * To the edge rather than to the nearest vertex: a point a centimeter from a long edge can
+ * be meters from every vertex of it, so a vertex distance overstates the gap without bound.
  * Measured on the flood layer's verification, one near-miss read 1.58 m to vertices
  * and 0.009 m to edges, a 9 mm difference overstated 175-fold.
  *

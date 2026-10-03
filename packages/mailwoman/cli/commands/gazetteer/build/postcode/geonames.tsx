@@ -64,7 +64,7 @@ const GazetteerBuildPostcodeGeonames: CommandComponent<typeof spec> = ({ options
 			`${result.inserted.toLocaleString()} distinct postcodes — ${perCountry}`,
 			`fts ${result.ftsRows.toLocaleString()} · bbox ${result.bboxRows.toLocaleString()} · ancestors ${result.ancestorRows.toLocaleString()}`,
 			result.missing.length ? `MISSING dumps (skipped): ${result.missing.join(",")}` : "all requested dumps present",
-			"provenance + licence in the `meta` table (GeoNames CC-BY 4.0; GB also OGL v3 / OS Code-Point Open)",
+			"provenance + license in the `meta` table (GeoNames CC-BY 4.0; GB also OGL v3 / OS Code-Point Open)",
 			"sealed 0444",
 			"next: check on per-country parity vs the frozen database, THEN swap deliberately (wofExtractPaths)",
 		]

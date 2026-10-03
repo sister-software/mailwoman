@@ -220,10 +220,10 @@ async function scanPersonNameSurfaces(): Promise<Set<string>> {
  * Returns whether a one-token surface is prominent enough to be locality evidence.
  *
  * `ownImportance` is the highest importance among places with this name.
- * `parentImportance` is the highest importance among the parent localities of neighbourhoods with this name.
+ * `parentImportance` is the highest importance among the parent localities of neighborhoods with this name.
  *
  * A person-name surface must clear the higher floor on its own importance,
- * because a neighbourhood bearing a person's name in a large city would otherwise pass
+ * because a neighborhood bearing a person's name in a large city would otherwise pass
  * on its parent's importance and match street names such as "Rue Joseph".
  */
 export function clearsProminenceFloor(
@@ -341,7 +341,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 		}
 	}
 
-	// Neighbourhoods have no population rows, so each one takes the importance of its
+	// Neighborhoods have no population rows, so each one takes the importance of its
 	// parent locality or localadmin from the ancestors table.
 	const parentImportanceByID = new Map<number, number>()
 

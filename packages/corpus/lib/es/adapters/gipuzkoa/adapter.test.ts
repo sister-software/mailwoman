@@ -55,7 +55,7 @@ async function rowsFrom(inputPath: PathBuilderLike, limit?: number) {
 }
 
 describe("es-gipuzkoa adapter against the fixture member", () => {
-	it("emits a row per address under the licence the source register elects", async () => {
+	it("emits a row per address under the license the source register elects", async () => {
 		const { manifest, rows } = await rowsFrom(fixture)
 
 		expect(manifest.yielded).toBe(4)

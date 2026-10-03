@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `ConfidenceCell` — a compact confidence bar + value for the component table. The fill colour follows the shared
+ *   `ConfidenceCell` — a compact confidence bar + value for the component table. The fill color follows the shared
  *   confidence tiers. Presentational.
  */
 

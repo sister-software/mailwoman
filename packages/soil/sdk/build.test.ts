@@ -34,7 +34,7 @@ const INDEX_RESOLUTION = 9
 const COVERAGE_RESOLUTION = 6
 
 /**
- * The centre of each fixture square, in the order `fixtureDelineations` lays them out.
+ * The center of each fixture square, in the order `fixtureDelineations` lays them out.
  */
 function squareCentre(index: number): { latitude: number; longitude: number } {
 	return {

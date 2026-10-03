@@ -5,12 +5,12 @@
  *
  *   Streams the NCERM file geodatabase as WGS84 features through ogr2ogr, one layer at a time.
  *
- *   Every NCERM layer is published in British National Grid (EPSG:27700, metres). Each layer's declared EPSG code
+ *   Every NCERM layer is published in British National Grid (EPSG:27700, meters). Each layer's declared EPSG code
  *   is checked before any feature is read. `readOGRLayerIdentity` also checks the OSTN15 datum grid.
  *   Every reprojected vertex is then checked against the declared bounding box. This catches a swapped axis
  *   order that the EPSG check cannot see.
  *
- *   The `OGR_GEOM_AREA` column is computed by gdal in source metres before reprojection. Callers compare it with
+ *   The `OGR_GEOM_AREA` column is computed by gdal in source meters before reprojection. Callers compare it with
  *   the area of the encoded rings to check ring nesting and hole handling.
  *
  *   Each scenario layer uses its own name for the distance column. The query aliases it to `distance_m`.
@@ -52,7 +52,7 @@ export interface CoastalSourceFeature {
 	publishedYear: number | null
 	maxOverlap: number | null
 	/**
-	 * Gdal's area of the source geometry, in square metres of the source projection.
+	 * Gdal's area of the source geometry, in square meters of the source projection.
 	 */
 	sourceAreaM2: number
 	polygons: MultiPolygonRings

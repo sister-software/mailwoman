@@ -109,7 +109,7 @@ The v0.5.0 C-train bisect campaign added two rules. The original framework misse
 
 The v0.5.0 ablation smoke at `batch_size=8, grad_accum=1` (eff_batch=8) passed without error: loss descended, val_macro_f1 climbed, and the run did not diverge through 1500 steps. The full train at `batch_size=16, grad_accum=8` (eff_batch=128) diverged at step 800.
 
-**The recipe's stability depends on batch geometry.** A smoke that does not reproduce the full run's gradient noise cannot detect this class of failure. The per-step gradient noise at `eff_batch=8` is ~4× larger than at `eff_batch=128`. That extra noise _stabilises_ training against the curvature-conflict instability, because the model cannot settle deep enough into the basin where the conflict appears.
+**The recipe's stability depends on batch geometry.** A smoke that does not reproduce the full run's gradient noise cannot detect this class of failure. The per-step gradient noise at `eff_batch=8` is ~4× larger than at `eff_batch=128`. That extra noise _stabilizes_ training against the curvature-conflict instability, because the model cannot settle deep enough into the basin where the conflict appears.
 
 **Rule:** the smoke's `batch_size` × `grad_accum_steps` must equal the full run's product. If the full run uses eff_batch=128, the smoke must too, even if that means fewer steps per wall-clock minute. The smoke exists to reproduce the full run's dynamics, and speed is secondary.
 
@@ -135,7 +135,7 @@ ratio = crf_norm / max(ce_norm, 1e-12)
 **Read the ratio:**
 
 - Ratio &gt;&gt; 1 (v0.5.0 observed 8–20×): The CRF gradient dominates, so the larger loss term drives the updates. Reduce `crf_loss_weight` sharply or drop CRF NLL entirely (CE-only training, with the CRF kept at inference through the frozen mask).
-- Ratio &lt;&lt; 0.01: the CRF gradient has collapsed, and the model has decoupled the two objectives. Use the same repair: CE-only training, or separate optimisers.
+- Ratio &lt;&lt; 0.01: the CRF gradient has collapsed, and the model has decoupled the two objectives. Use the same repair: CE-only training, or separate optimizers.
 - Ratio ≈ 0.5–2: the losses are reasonably balanced, and the divergence has another cause (capacity, data, LR schedule).
 
 This probe takes 5 minutes against an existing checkpoint. It identifies which loss drives the divergence more precisely than a 25-hour retrain. Run it before spending GPU time on the next hypothesis.

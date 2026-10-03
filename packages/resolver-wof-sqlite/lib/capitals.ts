@@ -36,7 +36,7 @@ export type CapitalLevel = (typeof CAPITAL_LEVEL)[keyof typeof CAPITAL_LEVEL]
  * How far a candidate row may sit from the reference point and still read as the same place.
  *
  * A centroid-convention allowance for a GeoNames point against a WOF centroid on a metro-scale city.
- * The name-membership conjunct excludes neighbours inside the radius.
+ * The name-membership conjunct excludes neighbors inside the radius.
  */
 export const CAPITAL_MATCH_RADIUS_KM = 25
 

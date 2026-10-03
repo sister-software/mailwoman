@@ -29,7 +29,7 @@ const scratch = useScratchDir("it-anac")
  * The twelve were selected to exercise one street-line shape each: a plain `VIA GIUSEPPE GARIBALDI
  * 75`, a subdivided `VIA PASTRENGO 2/TER`, a slash range `16/18`, a spaced civic marker `N. 4`, a
  * glued one `N.68`, a `SNC` tail, a trailing locality `CORSO ITALIA, 29 FIRENZE`, a line with no
- * number at all, a kilometre point `S.S. 7 APPIA KM 671`, a qualifier after the number `VIA
+ * number at all, a kilometer point `S.S. 7 APPIA KM 671`, a qualifier after the number `VIA
  * CIRCONVALLAZIONE, 1 PARCO IDROSCALO SEGRATE`, the `N.A.` postcode placeholder, the Brazilian
  * `01238-000` on an Italian cultural institute abroad, an organization name holding a comma, and a
  * party whose name is a fiscal code rather than a name.
@@ -48,7 +48,7 @@ async function run(options: { country?: string; limit?: number } = {}) {
 }
 
 describe("it-anac adapter against fixture sample.jsonl", () => {
-	it("emits one row per admitted party under the licence the register elected", async () => {
+	it("emits one row per admitted party under the license the register elected", async () => {
 		const manifest = await run()
 
 		// 21 of the fixture's 34 party objects: 11 suppliers hold a role the adapter does not read,
@@ -200,7 +200,7 @@ describe("readANACParty", () => {
 		expect(reading).toEqual({ refused: ANACRefusal.StreetNumberUnplaced })
 	})
 
-	it("refuses a kilometre point rather than reading it as a house number", () => {
+	it("refuses a kilometer point rather than reading it as a house number", () => {
 		const reading = readANACParty({
 			name: "STAZIONE AEROMOBILI DELLA MARINA MILITARE",
 			roles: ["buyer"],

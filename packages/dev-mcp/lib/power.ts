@@ -40,7 +40,7 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): { low: n
 /**
  * How tight the upper bound must be before a zero may be read as a real absence.
  *
- * A judgement rather than a measurement: 1% is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
+ * A judgment rather than a measurement: 1% is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
  * where a zero rests on a set larger than any panel assembled by hand here.
  */
 const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01

@@ -7,7 +7,7 @@
  *
  *   This test covers a measured case. The 2024 record's abstract contains the attribution statement twice.
  *   The first copy, inherited from the superseded 2018–2021 record, has no year. OGL v3.0 makes the statement
- *   a licence condition. A parser taking the first match would state that condition incorrectly.
+ *   a license condition. A parser taking the first match would state that condition incorrectly.
  *   The fixture below is the real text from the Environment Agency's CSW.
  */
 
@@ -94,7 +94,7 @@ describe("assertAttributionUnchanged", () => {
 		expect(() => assertAttributionUnchanged(NCERM_ATTRIBUTION)).not.toThrow()
 	})
 
-	it("refuses a changed statement, because it is a licence condition rather than decoration", () => {
+	it("refuses a changed statement, because it is a license condition rather than decoration", () => {
 		expect(() =>
 			assertAttributionUnchanged("© Environment Agency copyright and/or database right 2026. All rights reserved.")
 		).toThrow(/licence condition/u)

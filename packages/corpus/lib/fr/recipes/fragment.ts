@@ -83,7 +83,7 @@ const ALNUM_HOUSE_NUMBER_SHARE = 0.25
 export const frFragmentRecipe: CorpusRecipe = {
 	name: "fr-fragment",
 	description:
-		"FR street fragments with NO house number (#727 T2): the house-number-licence change — bare/particle/date-name/homonym + the bare-locality counter",
+		"FR street fragments with NO house number (#727 T2): the house-number-license change — bare/particle/date-name/homonym + the bare-locality counter",
 	mode: "tuples",
 	options: [
 		{

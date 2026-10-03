@@ -67,7 +67,7 @@ export const ES_NAVARRA_SERVICE_FEED_URL =
 	"https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml"
 
 /**
- * The attribution the publisher's licence requires.
+ * The attribution the publisher's license requires.
  *
  * Every entry's `<rights>` elects `Creative Commons Attribution 4.0 International (CC BY 4.0)`,
  * whose attribution clause requires naming the creator, so a model card carrying

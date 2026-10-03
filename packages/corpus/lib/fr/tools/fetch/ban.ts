@@ -7,7 +7,7 @@
  *   2B) plus 5 overseas DOM/TOM (971-976 excl. 975).
  *
  *   Source: https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/
- *   Licence: Licence Ouverte 2.0 (attribution required — Tier B).
+ *   License: Licence Ouverte 2.0 (attribution required — Tier B).
  *
  *   Files already present with matching sha256 are skipped (re-runnable). Downloads `.csv.gz`,
  *   decompresses to `.csv`, deletes the `.gz` artifact. One shared `manifest.json` at

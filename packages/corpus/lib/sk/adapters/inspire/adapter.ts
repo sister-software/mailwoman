@@ -119,7 +119,7 @@ export const SK_INSPIRE_REGISTER = SourceRegister.SlovakiaInspireAddresses
 export const SK_INSPIRE_COUNTRIES: readonly string[] = ["SK"]
 
 /**
- * The licence the address-source register elected for this publisher.
+ * The license the address-source register elected for this publisher.
  *
  * `unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky` is elected with
  * `electedTerms` `Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)` and no `spdx`,

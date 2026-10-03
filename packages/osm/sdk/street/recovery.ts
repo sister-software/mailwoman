@@ -56,7 +56,7 @@ export class StreetRecoveryIndex {
 	/**
 	 * Nearest highway name within `maxKm`, or null.
 	 *
-	 * Scans the point's cell + the 8 neighbours.
+	 * Scans the point's cell + the 8 neighbors.
 	 */
 	nearest(lon: number, lat: number, maxKm: number): { name: string; km: number } | null {
 		const cx = Math.floor(lon / CELL_DEG)

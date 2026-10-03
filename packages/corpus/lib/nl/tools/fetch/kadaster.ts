@@ -73,7 +73,7 @@ const SLUG = NL_KADASTER_ADAPTER_ID
  * A later run downloads again when that value changes, which is what the ATOM
  * pattern offers in place of an HTTP validator.
  *
- * `rights` is the licence URL the feed states, recorded so a change of terms is
+ * `rights` is the license URL the feed states, recorded so a change of terms is
  * visible in the artifact rather than only in the register.
  */
 export interface NLKadasterManifest extends SourceManifest {

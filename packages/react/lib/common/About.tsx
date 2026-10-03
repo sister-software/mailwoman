@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `About` — the explainer for the browser geocoder: the neural model, the confidence colours, the gazetteer resolver, the byte-range database and the FST prior. It renders no live content.
+ * `About` — the explainer for the browser geocoder: the neural model, the confidence colors, the gazetteer resolver, the byte-range database and the FST prior. It renders no live content.
  */
 
 import type { ReactNode } from "react"

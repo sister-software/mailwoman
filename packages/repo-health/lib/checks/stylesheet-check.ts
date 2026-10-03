@@ -26,7 +26,7 @@ const SYSTEM_STYLESHEET = "packages/react/styles.css"
  *
  * The enclosing at-rules identify a material fallback.
  * Only rules inside `@supports not (backdrop-filter…)` or `@media (prefers-reduced-transparency: reduce)`
- * count as the fallback, even though other rules may paint the fallback colour.
+ * count as the fallback, even though other rules may paint the fallback color.
  */
 interface StyleRule {
 	selector: string

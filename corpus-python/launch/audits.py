@@ -84,7 +84,7 @@ def census_opening_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", dra
     its definition and its sampling level is not evidence, so this counts six nested definitions at
     both levels and lets the comparison be made on stated terms.
 
-    Unlike `audit_epoch_mixture`, the emitted pass honours `augment_exclude_sources`, because the
+    Unlike `audit_epoch_mixture`, the emitted pass honors `augment_exclude_sources`, because the
     trainer does.
     """
     import sys

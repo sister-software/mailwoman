@@ -64,7 +64,7 @@ For webpack: use `asset/resource` rules on the `.wasm` extension and pass the re
 
 ## Which pin the browser shows
 
-`browser-cascade.ts` ranks the resolved places and shows the top one. Most of that table is the demo's own judgement and deliberately **not** `PLACETYPE_SPECIFICITY` — `neighbourhood` sits below `locality` here because that is the pin a viewer wants, where the shared scale ranks it above because it covers less ground.
+`browser-cascade.ts` ranks the resolved places and shows the top one. Most of that table is the demo's own judgment and deliberately **not** `PLACETYPE_SPECIFICITY` — `neighbourhood` sits below `locality` here because that is the pin a viewer wants, where the shared scale ranks it above because it covers less ground.
 
 One rung is not the demo's to decide: where a **postcode** sits against the locality. That has a single answer, it comes from `@mailwoman/codex`, and both routes to it are read here exactly as the Node ladder reads them — an exact hit on a unit-grade code (`isUnitGradePostcodeHit`), or an address system whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`).
 

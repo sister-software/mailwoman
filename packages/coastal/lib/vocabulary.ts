@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Environment Agency NCERM vocabulary: product identity, twelve scenarios, policy and defence
+ *   Environment Agency NCERM vocabulary: product identity, twelve scenarios, policy and defense
  *   domains and OGL v3.0 attribution.
  *
  *   Every stored row and every reading records its scenario, because the twelve layers answer different
@@ -48,7 +48,7 @@ export const NCERM_LAYER_NAME = "coastal-erosion-ea-england"
 export const NCERM_DATASET_ID = "9fede91f-5acd-4fd2-9bd8-98153fa3c2ff"
 
 /**
- * The data.gov.uk catalogue package lists the ISO reference dates, licence field and file URLs.
+ * The data.gov.uk catalogue package lists the ISO reference dates, license field and file URLs.
  */
 export const NCERM_CATALOGUE_PACKAGE_ID = "e75374d5-ef4b-4f9f-abc1-6aefde4627b7"
 
@@ -61,7 +61,7 @@ export const NCERM_CATALOGUE_PACKAGE_ID = "e75374d5-ef4b-4f9f-abc1-6aefde4627b7"
 export const NCERM_SERVICE_SLUG = "ncern-national-2024"
 
 /**
- * The attribution string from the record's structured licence field, with its trailing space trimmed.
+ * The attribution string from the record's structured license field, with its trailing space trimmed.
  *
  * OGL v3.0 requires this attribution.
  * The build writes it to `layer_manifest.attribution`.
@@ -71,12 +71,12 @@ export const NCERM_SERVICE_SLUG = "ncern-national-2024"
 export const NCERM_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
 
 /**
- * The licence expression written into `layer_manifest.license`.
+ * The license expression written into `layer_manifest.license`.
  */
 export const NCERM_LICENSE = "OGL-UK-3.0"
 
 /**
- * The OGL v3.0 licence text URL.
+ * The OGL v3.0 license text URL.
  */
 export const NCERM_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
@@ -86,7 +86,7 @@ export const NCERM_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-g
 export const NCERM_DATASET_URL = `https://environment.data.gov.uk/dataset/${NCERM_DATASET_ID}`
 
 /**
- * The EPSG code that every layer declares: British National Grid, in metres.
+ * The EPSG code that every layer declares: British National Grid, in meters.
  *
  * The ingest reprojects to WGS84 and rejects a layer that declares any other code.
  */
@@ -148,7 +148,7 @@ export interface CoastalScenario {
 	 */
 	climateAllowance: string
 	/**
-	 * The column that holds cumulative erosion distance in metres.
+	 * The column that holds cumulative erosion distance in meters.
 	 *
 	 * Each layer uses a different name, such as `nfi2055_0` or `smp2105_95`.
 	 */
@@ -318,9 +318,9 @@ export const NCERM_POLICY_INTERPRETATION_VALUES: ReadonlySet<string> = new Set(
 )
 
 /**
- * The defence-type domain in folded form.
+ * The defense-type domain in folded form.
  *
- * The source spells some defences with different case, such as `Sheet piles` and `Sheet Piles`.
+ * The source spells some defenses with different case, such as `Sheet piles` and `Sheet Piles`.
  * Membership is tested on the folded form.
  * The stored value keeps the source spelling.
  */
@@ -342,7 +342,7 @@ export const NCERM_DEFENCE_TYPES_FOLDED: ReadonlySet<string> = new Set(
 )
 
 /**
- * Folds a defence type for comparison by trimming, lowercasing and collapsing whitespace.
+ * Folds a defense type for comparison by trimming, lowercasing and collapsing whitespace.
  */
 export function foldDefenceType(value: string): string {
 	return value.trim().toLowerCase().replaceAll(/\s+/gu, " ")
@@ -356,7 +356,7 @@ export const NCERM_SCENARIO_TERMS: ReadonlyArray<CoastalTermDefinition> = NCERM_
 	label: scenario.label,
 	definition:
 		`${MANAGEMENT_LABELS[scenario.management]}, at the ${HORIZON_LABELS[scenario.horizon]?.toLowerCase()} horizon of ${scenario.horizon}, ` +
-		`under the ${ALLOWANCE_LABELS[scenario.climateAllowance]} allowance. The distance is cumulative erosion in metres, ` +
+		`under the ${ALLOWANCE_LABELS[scenario.climateAllowance]} allowance. The distance is cumulative erosion in meters, ` +
 		`published in the source column ${scenario.distanceColumn}.`,
 	definitionURL: NCERM_DATASET_URL,
 }))

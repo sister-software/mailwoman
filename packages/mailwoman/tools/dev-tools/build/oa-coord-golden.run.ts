@@ -7,7 +7,7 @@
  *   OpenAddresses country dump.
  *
  *   Label-F1 on non-US is confounded by labeling convention, since where a Spanish "Calle Mayor"
- *   street boundary falls is a judgement. These rows therefore include the truth lat/lon and are graded
+ *   street boundary falls is a judgment. These rows therefore include the truth lat/lon and are graded
  *   on the assembled coordinate by
  *   `packages/mailwoman/tools/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
  *

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The map chrome over a stand-in map, with every story on a coloured ground rather than white because glass is a material over something.
+ * The map chrome over a stand-in map, with every story on a colored ground rather than white because glass is a material over something.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"

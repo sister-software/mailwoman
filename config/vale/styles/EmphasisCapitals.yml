@@ -20,7 +20,7 @@
 ##   "the prior is ON by default"
 ##      -> "the prior is on by default"
 ##
-## Every token requires the capitalised word to sit between neighbours that
+## Every token requires the capitalized word to sit between neighbors that
 ## are not themselves capitals. The token before it is a plain word: letters,
 ## digits, hyphens, quotes and backticks, with at most a leading capital, that
 ## ends in a lowercase letter, a backtick, a closing bracket or a quote; it may
@@ -34,7 +34,7 @@
 ## an inner capital or an `=` in the token before the keyword, and Vale reads
 ## a code comment as plain text, so backticks do not exempt the fragment the
 ## way they do in markdown. `FROM` is not in the list at all: every capital
-## `FROM` in this repository is SQL. A digit does not count as a neighbour
+## `FROM` in this repository is SQL. A digit does not count as a neighbor
 ## before the word, because a YAML weights table reads `1.0` then `BE:` on
 ## the next line. The two-letter words (`ON`, `NO`, `IS`, `BE`, `DO`, `OR`,
 ## `IF`, `UP`) are every one of them also a country code, a state code or an
@@ -49,7 +49,7 @@
 ##
 ## The word list carries no acronym, no placetype, no tag name and no
 ## identifier. `WOF`, `FTS`, `BIO`, `ONNX`, `CJK` and `USPS` are names and
-## stay capitalised wherever they appear.
+## stay capitalized wherever they appear.
 extends: existence
 message: "'%s' sets an ordinary word in capitals for emphasis or as a telegraph predicate — write it in lowercase, or write the clause the capitals stood in for (the metric, its value, the direction of change)."
 level: error
@@ -61,7 +61,7 @@ nonword: true
 tokens:
   # A longer listed word between two non-capital tokens: "is ABSENT from", "Do NOT add",
   # "`x`), NOT into". `\s+` on both sides, because a comment block wraps at eighty or a hundred
-  # columns and the neighbour is often on the next line. The token before is anchored at
+  # columns and the neighbor is often on the next line. The token before is anchored at
   # whitespace so a match cannot start inside `asOf` or `d.pre`.
   - '(?:^|\s)[(\[#@]?[A-Z]?[a-z0-9`"''’\-]*[a-z`)\]"''’][,;:]?\s+(?:HOLDS|HOLD|HELD|DROPS|DROP|DROPPED|DOWN|FLAT|ABSENT|PRESENT|MATCH|MATCHES|MATCHED|STAYS|STAY|STAYED|SURVIVES|SURVIVED|CONFIRMED|FIXED|RETAINED|RESTORED|REGRESSED|RECOVERED|RECOVERS|MOVES|MOVED|WINS|WIN|PASSES|FAILS|PASS|FAIL|HITS|MISSES|LOST|GONE|UNCHANGED|OFF|NOT|YES|ONLY|JUST|EVEN|STILL|ALREADY|ALSO|TOO|VERY|ALL|ANY|EACH|EVERY|BOTH|EITHER|NEITHER|NONE|NOTHING|ANYTHING|EVERYTHING|SOMETHING|ONE|TWO|THREE|FOUR|FIVE|ZERO|ONCE|TWICE|FIRST|SECOND|LAST|NEXT|NEW|OLD|SAME|OTHER|ANOTHER|DIFFERENT|WHOLE|ENTIRE|ENTIRELY|EXACT|EXACTLY|IDENTICAL|VERBATIM|PURE|REAL|FULL|EMPTY|HARD|SOFT|BARE|LOUD|LOUDLY|SILENT|SILENTLY|DELIBERATE|DELIBERATELY|INSIDE|OUTSIDE|ABOVE|BELOW|BEFORE|AFTER|WITHIN|WITHOUT|WITH|INTO|ONTO|THE|THIS|THAT|THESE|THOSE|THEIR|ITS|OWN|WHY|WHAT|HOW|WHEN|WHO|WHICH|BECAUSE|UNLESS|UNTIL|NOR|BUT|NOW|THEN|THERE|HERE|ALWAYS|NEVER|ANYWHERE|NOWHERE|EVERYWHERE|MUST|SHOULD|WILL|WOULD|COULD|CAN|CANNOT|MAY|MIGHT|DOES|DID|DONE|HAS|HAVE|HAD|ARE|WAS|WERE|BEEN|MORE|LESS|AND|PUBLIC|PRIVATE|SHIPPED|PUBLISHED|REFUSES|REFUSED|REQUIRES|REQUIRED|RESTRICTED|NEEDS|MEANS|READS|WRITES|EXISTS|RUNS|USES|WANTS|KEEPS|TAKES|MAKES|GIVES|SHOWS|SAYS|KNOWS)\s+[a-z0-9(\[`"''’—–-]'
   # A two-letter listed word between a non-capital token and a lowercase word: "is ON by",

@@ -7,7 +7,7 @@
  *
  *   The check assigns one of three outcomes to each point. A live run can only be watched making that decision.
  *   A scripted function makes the decision testable. Points the service places inside agree. Points far from
- *   every service edge disagree. Points within a few centimetres of an edge receive `boundary_tolerance` because
+ *   every service edge disagree. Points within a few centimeters of an edge receive `boundary_tolerance` because
  *   the two channels round the same edge differently.
  *
  *   The service side resolves hole roles the same way the ingest does. The publisher uses one convention on both
@@ -128,7 +128,7 @@ describe("the positive half", () => {
 		expect(verified.agreement[0]!.nearestEdgeMetres).toBeUndefined()
 	})
 
-	it("tolerates a point a few centimetres outside the service's rendering of the same edge", async () => {
+	it("tolerates a point a few centimeters outside the service's rendering of the same edge", async () => {
 		// The service's rendering of zone A's southern edge sits 0.000004° —
 		// about 45 cm — north of the artifact's.
 		// This 45 cm shift measures the rounding difference between two renderings of the same coordinates.

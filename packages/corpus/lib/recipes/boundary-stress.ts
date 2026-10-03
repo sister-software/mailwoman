@@ -59,8 +59,8 @@ function pickTemplate(r: () => number): BoundaryStressTemplate {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour this recipe exercises
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behavior this recipe exercises and `description`
+ * below for the surface form it generates.
  */
 export const boundaryStressRecipe: CorpusRecipe = {
 	name: "boundary-stress",

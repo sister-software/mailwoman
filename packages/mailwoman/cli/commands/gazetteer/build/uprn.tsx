@@ -61,7 +61,7 @@ const GazetteerBuildUPRN: CommandComponent<typeof spec> = ({ options }) => {
 			`archive md5 ${result.archiveMD5 || "(offline — not re-verified)"}`,
 			result.mismatches.length ? `CHECK VIOLATIONS: ${result.mismatches.join(" · ")}` : "every check holds",
 			OPEN_UPRN_COVERAGE_NOTE,
-			"licence + full OGL v3 attribution block in the layer manifest",
+			"license + full OGL v3 attribution block in the layer manifest",
 			result.sealed ? "sealed 0444" : "NOT SEALED",
 		]
 	})

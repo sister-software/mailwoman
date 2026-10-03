@@ -172,7 +172,7 @@ describe("repairPostcodeLabels", () => {
 		expect(postcodeValue(text, out)).toBeNull()
 	})
 
-	it("clips smear: postcode label bleeding onto a neighbour is trimmed to the match", () => {
+	it("clips smear: postcode label bleeding onto a neighbor is trimmed to the match", () => {
 		const text = "Paris 75008 France"
 
 		const tokens = [

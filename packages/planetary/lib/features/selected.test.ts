@@ -20,7 +20,7 @@ test("the origin takes the positive letters", () => {
 	expect(formatCoordinates(0, 0)).toBe("0.0000° N, 0.0000° E")
 })
 
-test("a diameter prints in kilometres with a thousands separator, and absence is null", () => {
+test("a diameter prints in kilometers with a thousands separator, and absence is null", () => {
 	expect(formatDiameter(85.29)).toBe("85.29 km")
 	expect(formatDiameter(1250)).toBe("1,250 km")
 	expect(formatDiameter(undefined)).toBeNull()

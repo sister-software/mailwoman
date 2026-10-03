@@ -5,7 +5,7 @@
  *
  *   Tests the two-path comparison using a scripted service reader.
  *   A point inside a service area agrees. A point far from every service edge disagrees.
- *   A point a few centimetres from an edge receives `boundary_tolerance` because the two channels
+ *   A point a few centimeters from an edge receives `boundary_tolerance` because the two channels
  *   publish six and nine decimal places. Those precisions render the same edge differently.
  *   Inland English points must read `unknown` without a designation.
  */
@@ -123,7 +123,7 @@ describe("the positive half", () => {
 		expect(result.agreement[0]!.nearestEdgeMetres).toBeUndefined()
 	})
 
-	it("tolerates a point a few centimetres outside the service's own edge", async () => {
+	it("tolerates a point a few centimeters outside the service's own edge", async () => {
 		// About 5 cm north of the band's northern edge.
 		// The stored distance separates a rendering difference from a conversion defect on a receipt.
 		const nearEdge = {

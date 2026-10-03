@@ -160,7 +160,7 @@ const LICENSE_DECISIONS: ReadonlyArray<readonly [statement: string, licenseID: s
 	[
 		"Licensed",
 		"unchecked-access-licensed",
-		"An access label: a licence is sold or granted on application. It states no terms.",
+		"An access label: a license is sold or granted on application. It states no terms.",
 	],
 	[
 		"Licensed/query",
@@ -234,7 +234,7 @@ export interface BuildSourceRegisterOptions {
 	sourcesPath: PathBuilderLike
 	outPath: PathBuilderLike
 	/**
-	 * Licence decisions somebody made by reading a publisher's terms, applied over the
+	 * License decisions somebody made by reading a publisher's terms, applied over the
 	 * `unchecked` defaults this build derives from the research pass's access labels.
 	 *
 	 * An input rather than an edit of the output, because the register is generated
@@ -575,8 +575,8 @@ export function readUnresolvedColumn(value: string | undefined, column: string, 
  * rewrite never fires, or when the finished register fails {@linkcode auditAddressSourceRegister}.
  */
 /**
- * The shape of `license-decisions.json`: licence id to the decision minus its own id,
- * keyed by id so each licence has one decision.
+ * The shape of `license-decisions.json`: license id to the decision minus its own id,
+ * keyed by id so each license has one decision.
  */
 /**
  * A decision body without its own id, as `license-decisions.json` records one.
@@ -586,10 +586,10 @@ type RecordedDecision = Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense,
 /**
  * A decision that reuses a body declared once under `sharedReadings`.
  *
- * One publisher can hold a licence over several jurisdictions, and the register
+ * One publisher can hold a license over several jurisdictions, and the register
  * scopes a decision to one publisher in one jurisdiction, so reading that publisher's
  * terms once produces several decisions with the same body.
- * Naming the shared body keeps each licence id's own decision while the prose behind
+ * Naming the shared body keeps each license id's own decision while the prose behind
  * it has one home, so nine copies cannot drift apart under later editing.
  */
 interface SharedDecisionReference {
@@ -602,7 +602,7 @@ interface SharedDecisionReference {
 export interface LicenseDecisionsFile {
 	decisions?: Record<string, RecordedDecision | SharedDecisionReference>
 	/**
-	 * Decision bodies that several licence ids reuse, keyed by a name the ids refer to.
+	 * Decision bodies that several license ids reuse, keyed by a name the ids refer to.
 	 */
 	sharedReadings?: Record<string, RecordedDecision>
 }
@@ -676,7 +676,7 @@ export function applySourceResolutions(
 }
 
 /**
- * Licence decisions read from `decisionsPath`, keyed by licence id.
+ * License decisions read from `decisionsPath`, keyed by license id.
  *
  * An absent file answers an empty map, but a file that exists and cannot be parsed raises,
  * because reading it as empty would silently drop somebody's recorded work.
@@ -689,9 +689,9 @@ async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined):
 }
 
 /**
- * Turns a decisions file into decisions keyed by licence id, resolving every `sameAs` reference.
+ * Turns a decisions file into decisions keyed by license id, resolving every `sameAs` reference.
  *
- * The id comes from the key, so a record cannot disagree with the licence it is filed under.
+ * The id comes from the key, so a record cannot disagree with the license it is filed under.
  * `auditAddressSourceRegister` decides whether the resolved fields form a well-formed decision, so this
  * function checks only that the file declares a reading for each reference.
  *

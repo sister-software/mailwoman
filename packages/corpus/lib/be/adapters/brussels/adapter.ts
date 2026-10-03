@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `brussels`: the INSPIRE Addresses (AD) theme the Brussels Regional Informatics Centre publishes out
+ * `brussels`: the INSPIRE Addresses (AD) theme the Brussels Regional Informatics Center publishes out
  * of UrbIS.
  *
  * Coverage is the Brussels-Capital Region rather than Belgium. Belgium needs three readers, because
@@ -97,13 +97,13 @@
  * **The address-source register holds no row for Brussels.** Its four `BE` sources are
  * `be-business-legal-1`, `be-business-register-1`, `be-property-building-1` (Flanders) and
  * `be-property-building-2` (Wallonia). The word Brussels appears in the register only inside
- * Flanders' and Wallonia's own prose. Both state that Brussels publishes separately. So no licence
+ * Flanders' and Wallonia's own prose. Both state that Brussels publishes separately. So no license
  * decision has been elected for this publisher, `electedLicenseLabel` finds no decision to answer
  * with, and {@linkcode BRUSSELS_DEFAULT_LICENSE} is a label that reads as unreviewed rather than an
  * SPDX id that would read as elected.
  *
  * `createIneligibilityReader` refuses every row whose source no register row declares, so this
- * adapter's rows cannot enter a release-profile corpus until a row exists, a licence is elected for
+ * adapter's rows cannot enter a release-profile corpus until a row exists, a license is elected for
  * it, and its `adapterID` is set to `brussels`. Until then the adapter is a reader without a grant.
  *
  * The publisher is reported to state CC BY 4.0 in its GeoNetwork record. This file records that as
@@ -163,7 +163,7 @@ export const BRUSSELS_SOURCE_REGISTER = SourceRegister.BrusselsInspireAddresses
 export const BRUSSELS_COUNTRIES: readonly string[] = ["BE"]
 
 /**
- * The licence label recorded on every row.
+ * The license label recorded on every row.
  *
  * The register's source `be-property-building-3` elects `CC-BY-4.0` for Paradigm, read from
  * the `gmd:useConstraints` of ISO 19139 record `260abd6f-c5b4-4a79-aa80-d6c265002d65`,
@@ -171,7 +171,7 @@ export const BRUSSELS_COUNTRIES: readonly string[] = ["BE"]
  * That record governs this archive rather than Paradigm's other address product,
  * the BeSt Brussels register, which is CC0-1.0.
  *
- * The value is the SPDX identifier rather than the licence's title, because
+ * The value is the SPDX identifier rather than the license's title, because
  * `licenseVerdict` resolves an identifier and reads a title as unrecognized.
  * This constant previously held `unreviewed-be-brussels-urbis`, which resolved to no expression,
  * so these rows carried unknown obligations into a build that had no way to filter them.

@@ -48,7 +48,7 @@ export const BE_WALLONIE_SERVICE_URL = "https://geoservices.wallonie.be/inspire/
 export const BE_WALLONIE_ARCHIVE_FILENAME = "AD.Addresses.gml.zip"
 
 /**
- * The attribution the publisher's own licence statement requires, quoted as it writes it.
+ * The attribution the publisher's own license statement requires, quoted as it writes it.
  */
 export const BE_WALLONIE_ATTRIBUTION = "Service public de Wallonie (SPW)"
 

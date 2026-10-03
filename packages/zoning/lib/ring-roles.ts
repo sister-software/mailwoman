@@ -48,7 +48,7 @@ export interface ResolvedRingRoles {
 	 */
 	exteriorByMagnitude: number
 	/**
-	 * The signed ring sum over the source's rings as published, in square metres,
+	 * The signed ring sum over the source's rings as published, in square meters,
 	 * positive under this service's clockwise-exterior convention.
 	 * Its sign is the record that the orientation was read.
 	 */

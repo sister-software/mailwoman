@@ -222,7 +222,7 @@ export interface BuildPOIOptions {
 	/**
 	 * The manifest source.
 	 *
-	 * It selects the licence and attribution.
+	 * It selects the license and attribution.
 	 * Defaults to `"overture-places"`.
 	 */
 	source?: "overture-places" | "osm"

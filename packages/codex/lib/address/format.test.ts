@@ -9,7 +9,7 @@
  *   template names `suburb` or `quarter` or neither, whether a connector survived an empty slot, whether a missing line
  *   could be spliced back in afterwards. Those questions disappear once the order is data.
  *   A layout that declares a `dependent_locality` slot has one. A line assembled from present values
- *   writes no connector around an absent slot. These tests assert the resulting behaviour.
+ *   writes no connector around an absent slot. These tests assert the resulting behavior.
  */
 
 import { describe, expect, it } from "vitest"

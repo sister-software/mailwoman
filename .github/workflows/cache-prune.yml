@@ -127,5 +127,5 @@ jobs:
             echo "| before | $((before / 1048576)) MB | ${before_n} |"
             echo "| after  | $((after / 1048576)) MB | ${after_n} |"
             echo ""
-            echo "apply: \`${APPLY}\` — ${deleted} entrie(s) eligible"
+            echo "apply: \`${APPLY}\` — ${deleted} entries eligible"
           } >> "$GITHUB_STEP_SUMMARY"

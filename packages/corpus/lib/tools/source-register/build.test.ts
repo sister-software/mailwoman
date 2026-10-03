@@ -49,7 +49,7 @@ describe("readUnresolvedColumn", () => {
 })
 
 describe("resolveRecordedDecisions", () => {
-	it("gives every licence id that names one shared reading its own decision", () => {
+	it("gives every license id that names one shared reading its own decision", () => {
 		const resolved = resolveRecordedDecisions({
 			sharedReadings: {
 				"one-publisher": {

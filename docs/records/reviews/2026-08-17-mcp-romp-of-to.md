@@ -87,7 +87,7 @@ population **31,951** and has no seat-town duplicate.
 | Parent     | 85679383 (Trabzon) | 8474473525031             |
 
 **This is the clearest "partial work" signal in the document.** The discrepancy exists because TR was never
-pulled from WOF. It is an acquisition gap rather than a modelling error, and it closes the moment
+pulled from WOF. It is an acquisition gap rather than a modeling error, and it closes the moment
 `whosonfirst-data-admin-tr` is synced.
 
 ### What shipped, and what is still unverified
@@ -202,7 +202,7 @@ is not. Any change based on it needs a board to measure it, rather than a decisi
 
 ### Why this survived
 
-Three reasons worth stating, because they generalise:
+Three reasons worth stating, because they generalize:
 
 1. **The fan-out is invisible per query.** Queries do not report a place's key count, so 19 rows for `to`
    looks like a busy key rather than a data problem.

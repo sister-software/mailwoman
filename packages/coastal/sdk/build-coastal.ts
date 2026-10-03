@@ -180,7 +180,7 @@ export interface BuildCoastalResult {
 	 */
 	coverageBasis: CoverageBasis
 	/**
-	 * Defence types seen during the build, with counts.
+	 * Defense types seen during the build, with counts.
 	 */
 	defenceTypeCounts: Array<[string, number]>
 	/**

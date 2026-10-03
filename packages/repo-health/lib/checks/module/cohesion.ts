@@ -149,7 +149,7 @@ function importedBindings(source: ts.SourceFile): Map<string, string> {
 
 /**
  * Runs one level of Louvain over an unweighted undirected graph, moving each node to
- * the neighbouring community that raises modularity most until no node moves.
+ * the neighboring community that raises modularity most until no node moves.
  */
 function partitionByModularity(adjacency: ReadonlyArray<ReadonlySet<number>>): {
 	modularity: number

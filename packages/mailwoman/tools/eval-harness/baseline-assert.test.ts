@@ -107,7 +107,7 @@ describe("assertBaselines", () => {
 		expect(verdict.checked).toBe(3)
 	})
 
-	it("honours a row's absolute tolerance", async () => {
+	it("honors a row's absolute tolerance", async () => {
 		const baseline = (await findBaseline("paris.resolver.street_evidence_rate@ban-street-centroids"))!
 
 		expect(baseline.tolerance_abs).toBe(0.01)

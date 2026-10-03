@@ -17,7 +17,7 @@ import {
 
 /**
  * A license value measured in `v0.7.0-de-holdout`, where the grant is unresolved
- * and the provenance prose names OpenStreetMap's licence.
+ * and the provenance prose names OpenStreetMap's license.
  * An anchored prefix match over the raw column admits it.
  */
 const SUB_VENUE =
@@ -45,8 +45,8 @@ describe("licenseVerdict under LicensePolicy.ShareAlikeFree", () => {
 		}
 	})
 
-	it("refuses a share-alike licence spelled in prose under the mentioned class", () => {
-		// `Open Database License v1.0` is the licence's name rather than its SPDX identifier,
+	it("refuses a share-alike license spelled in prose under the mentioned class", () => {
+		// `Open Database License v1.0` is the license's name rather than its SPDX identifier,
 		// so the value states no grant this repository has recorded obligations for.
 		// The two classes are separate because one reports what the row's own grant is
 		// and the other what its text names.
@@ -60,7 +60,7 @@ describe("licenseVerdict under LicensePolicy.ShareAlikeFree", () => {
 		expect(licenseVerdict("ODC-By-1.0", LicensePolicy.ResolvedOnly).refusal).toBeNull()
 	})
 
-	it("refuses prose mentioning a share-alike licence, which /^ODbL/ admitted", () => {
+	it("refuses prose mentioning a share-alike license, which /^ODbL/ admitted", () => {
 		const verdict = licenseVerdict(SUB_VENUE, LicensePolicy.ShareAlikeFree)
 
 		expect(verdict.refusal).toBe(LicenseRefusalKind.ShareAlikeMentioned)
@@ -75,7 +75,7 @@ describe("licenseVerdict under LicensePolicy.ShareAlikeFree", () => {
 		}
 	})
 
-	it("admits an unresolved value mentioning no share-alike licence, and reports it as unresolved", () => {
+	it("admits an unresolved value mentioning no share-alike license, and reports it as unresolved", () => {
 		const verdict = licenseVerdict("Totally-Made-Up-1.0", LicensePolicy.ShareAlikeFree)
 
 		expect(verdict.refusal).toBeNull()

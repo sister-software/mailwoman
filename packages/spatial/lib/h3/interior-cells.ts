@@ -70,7 +70,7 @@ export function geometryBBox(geometry: ParsedGeometry): {
 }
 
 /**
- * Every cell whose centre falls inside `geometry`, at `resolution` — the raw
+ * Every cell whose center falls inside `geometry`, at `resolution` — the raw
  * polyfill that {@link interiorCoverageCells} narrows.
  */
 export function regionCoverageCells(geometry: ParsedGeometry, resolution: number): H3Cell[] {

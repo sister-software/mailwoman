@@ -40,12 +40,12 @@ const MIN_ENGLISH_STEM_LENGTH = 3
  */
 const NEARBY_KEEP = 2
 /**
- * The search radius in kilometres around the official center when no polygon matches.
+ * The search radius in kilometers around the official center when no polygon matches.
  */
 const FALLBACK_RADIUS_KM = 20
 /**
  * The WOF placetypes that can represent a district.
- * Neighbourhoods qualify only through a name match.
+ * Neighborhoods qualify only through a name match.
  */
 const PLACETYPES = ["locality", "county", "localadmin", "borough", "neighbourhood"] as const
 /**
@@ -470,7 +470,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 				inside.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
 
-				// A neighbouring district's WOF point can fall inside this polygon,
+				// A neighboring district's WOF point can fall inside this polygon,
 				// so a district-tier row with a matching name comes first.
 				// Any district-tier row inside the polygon comes next and outranks the Wikidata
 				// concordance, because some TW concordances point at the wrong district.
@@ -513,7 +513,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 			if (!hit) {
 				// Without a usable polygon, search by name near the official center.
 				// The English stem also finds district rows whose WOF point lies outside their polygon.
-				// Neighbourhood rows qualify only by name.
+				// Neighborhood rows qualify only by name.
 				const cands = nearby(d.lat, d.lon, FALLBACK_RADIUS_KM)
 				const districtTierNameHit = cands.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place))
 				const nameHit = districtTierNameHit ?? cands.find((c) => nameMatches(c.place))
@@ -535,7 +535,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 						rows.push([d.postcode, "TW", region.pid, region.nm, aliases, Math.round(dist * 1000) / 1000, 1])
 					}
 
-					// The first non-neighbourhood candidate is also recorded as non-containing,
+					// The first non-neighborhood candidate is also recorded as non-containing,
 					// so the resolver treats it as proximity evidence only.
 					const weak = cands.find((c) => c.place.placetype !== "neighbourhood")
 
