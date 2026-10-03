@@ -32,13 +32,20 @@ const sources = [
 	"cz-cuzk",
 	"dk-inspire",
 	"emuia-pl",
+	"es-bizkaia",
+	"es-catastro",
+	"es-gipuzkoa",
+	"es-navarra",
 	"gcis-tw",
 	"houjin-jp",
 	"it-anac",
 	"juso-kr",
 	"localdata-kr",
+	"matrikkelen",
 	"nad",
+	"nl-kadaster",
 	"ryhti",
+	"sk-inspire",
 	"geonames-dump",
 	"geonames-postal",
 	"hrsa",
@@ -90,6 +97,20 @@ export const spec = {
 			type: "string",
 			description: "it-anac editions, comma-separated: a year, undated, or full (default: full)",
 		},
+		provinces: {
+			type: "string",
+			description: "es-catastro two-digit province codes, comma-separated (default: all 52)",
+		},
+		municipalities: {
+			type: "string",
+			description: "es-catastro five-digit municipality codes, comma-separated, within the provinces selected",
+		},
+		partitions: { type: "string", description: "es-navarra partition numbers, comma-separated (default: all)" },
+		areas: {
+			type: "string",
+			description: "matrikkelen Geonorge area codes, comma-separated: 0000 and 2100 (default: both)",
+		},
+		limit: { type: "number", description: "es-catastro and es-navarra: stop after this many archives" },
 	},
 } as const satisfies CommandSpec
 
@@ -107,6 +128,10 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchCzCuzk,
 		fetchDKAddresses,
 		fetchEMUiAPL,
+		fetchESBizkaia,
+		fetchESCatastro,
+		fetchESGipuzkoa,
+		fetchESNavarra,
 		fetchGCISTW,
 		fetchGeonamesDumps,
 		fetchGeonamesPostal,
@@ -116,11 +141,14 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchITANAC,
 		fetchJusoKR,
 		fetchLocaldataKR,
+		fetchMatrikkelen,
 		fetchNAD,
+		fetchNLKadaster,
 		fetchNPPES,
 		fetchOpenAddresses,
 		fetchOurAirports,
 		fetchRyhti,
+		fetchSKInspire,
 		fetchStateHISchools,
 		fetchStateSources,
 		fetchTigerFull,
@@ -148,6 +176,43 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchDKAddresses(base, reportToStderr)
 		case "emuia-pl":
 			return fetchEMUiAPL(base, reportToStderr)
+		case "es-bizkaia":
+			return fetchESBizkaia(base, reportToStderr)
+		case "es-catastro":
+			return fetchESCatastro(
+				{
+					...base,
+					provinces: options.provinces === undefined ? undefined : extractDelimited(options.provinces),
+					municipalities: options.municipalities === undefined ? undefined : extractDelimited(options.municipalities),
+					limit: options.limit,
+				},
+				reportToStderr
+			)
+		case "es-gipuzkoa":
+			return fetchESGipuzkoa(base, reportToStderr)
+		case "es-navarra":
+			return fetchESNavarra(
+				{
+					...base,
+					partitions: options.partitions === undefined ? undefined : extractDelimited(options.partitions),
+					limit: options.limit,
+				},
+				reportToStderr
+			)
+		case "matrikkelen":
+			return fetchMatrikkelen(
+				{
+					...base,
+					// Undefined takes both areas the address-source register carries rows for,
+					// `0000` for the mainland and `2100` for Svalbard.
+					areas: options.areas === undefined ? undefined : extractDelimited(options.areas),
+				},
+				reportToStderr
+			)
+		case "nl-kadaster":
+			return fetchNLKadaster(base, reportToStderr)
+		case "sk-inspire":
+			return fetchSKInspire(base, reportToStderr)
 		case "ryhti":
 			return fetchRyhti(base, reportToStderr)
 		case "gcis-tw":
