@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { currentBranch } from "@mailwoman/core/git"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { resolvePath } from "path-ts"
@@ -20,8 +20,11 @@ import {
 	resolveCheckout,
 	runGitHub,
 	taskBlockIsComplete,
+	TODO_SYNC_BEGIN,
+	TODO_SYNC_END,
 	type RunGitHub,
 } from "#github"
+import { assertCIComplete } from "#hooks/ci-completion"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 const REPO = "sister-software/mailwoman"
@@ -160,6 +163,11 @@ const ISSUE_INPUT_SCHEMA = z.object({
 
 const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
 	z.object({
+		action: z.literal("complete"),
+		issue_number: z.number().int().positive(),
+		pull_request_number: z.number().int().positive(),
+	}),
+	z.object({
 		action: z.literal("create"),
 		issue_number: z.number().int().positive(),
 		title: z.string().min(1),
@@ -189,7 +197,7 @@ const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
 ])
 
 const PULL_REQUEST_INPUT_SCHEMA = z.object({
-	action: z.enum(["create", "view", "edit", "append_comment"]),
+	action: z.enum(["create", "view", "edit", "append_comment", "complete"]),
 	issue_number: z.number().int().positive().describe("The issue this pull request closes."),
 	checkout: CHECKOUT_FIELD,
 	pull_request_number: z.number().int().positive().optional(),
@@ -326,6 +334,20 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 			const cwd = await resolveCheckout(deps.registry.repoRoot, CHECKOUT_SCHEMA.parse(raw).checkout)
 			const request = PULL_REQUEST_SCHEMA.parse(raw)
 
+			if (request.action === "complete") {
+				await assertCIComplete(REPO, request.pull_request_number, async (args) => ({
+					stdout: await run(args, { cwd }),
+					stderr: "",
+				}))
+				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
+				const task = `Review successful CI for PR #${request.pull_request_number} on its current head.`
+				const body = issue.body.replace(`- [ ] ${task}`, `- [x] ${task}`)
+				if (!taskBlockIsComplete(body)) throw new Error(`Issue #${request.issue_number} still has incomplete tasks.`)
+				await run(["issue", "edit", String(request.issue_number), "--repo", REPO, "--body", body], { cwd })
+				await removePathIfPresent(resolvePath(cwd, ".claude", "state", "linked-issue"))
+				return { action: request.action, pull_request_number: request.pull_request_number, handoff_ready: true }
+			}
+
 			if (request.action === "create") {
 				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
 
@@ -386,6 +408,21 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 						resolvePath(deps.registry.repoRoot, ".claude", "state", "tracked-ci.json")
 					)
 				}
+				const task = `Review successful CI for PR #${pullRequestNumber} on its current head.`
+				await lint(task)
+				const tasks = issue.body.split(TODO_SYNC_BEGIN)[1]!.split(TODO_SYNC_END)[0]!.trim()
+				await run(
+					[
+						"issue",
+						"edit",
+						String(request.issue_number),
+						"--repo",
+						REPO,
+						"--body",
+						replaceTaskBlock(issue.body, `${tasks}\n- [ ] ${task}`),
+					],
+					{ cwd }
+				)
 
 				const monitor = deps.jobs.start(
 					`CI for pull request #${pullRequestNumber}`,
@@ -404,6 +441,7 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 					action: request.action,
 					pull_request: await fetchGitHubPullRequest(REPO, pullRequestNumber, run),
 					ci_monitor: deps.jobs.summarize(monitor),
+					handoff_ready: false,
 				}
 			}
 

@@ -40,7 +40,9 @@ const MINIMUM_REASON_LENGTH = 20
  */
 const PATH_BUILDERS = new Set(["join", "path", "resolve", "resolvePath", "resolvePathBuilder"])
 
-/** Process and filesystem calls consume paths directly without a path-building call. */
+/**
+ * Process and filesystem calls consume paths directly without a path-building call.
+ */
 const DIRECT_PATH_USERS = new Set([
 	"runFile",
 	"runFileSync",
@@ -201,8 +203,13 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 			}
 			if (consumesPath && firstArgument && isInstallPath(argumentText(firstArgument))) report(node)
 		}
-		if (ts.isVariableDeclaration(node) && node.initializer && ts.isStringLiteralLike(node.initializer)) {
-			if (isInstallPath(node.initializer.text)) report(node.initializer)
+		if (
+			ts.isVariableDeclaration(node) &&
+			node.initializer &&
+			ts.isStringLiteralLike(node.initializer) &&
+			isInstallPath(node.initializer.text)
+		) {
+			report(node.initializer)
 		}
 		if (ts.isTemplateExpression(node) && isInstallPath(argumentText(node))) report(node)
 

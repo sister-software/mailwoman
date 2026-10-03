@@ -96,7 +96,7 @@ export const typecheckTestsCheck: RepoCheck = {
 		try {
 			const base = pathToFileURL(join(context.repoRoot, "package.json")).href
 
-			command = await resolvePackageCommand(base, "typescript", "tsc")
+			command = await resolvePackageCommand(base, "@typescript/native", "tsc")
 		} catch (error) {
 			return [
 				{

@@ -6889,6 +6889,7 @@ __metadata:
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^8.1.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
+    zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
 

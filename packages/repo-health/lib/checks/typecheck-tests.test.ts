@@ -29,7 +29,7 @@ describe("typecheckTestsCheck", () => {
 		expect(await typecheckTestsCheck.run(context)).toEqual([])
 		expect(mocks.resolveCommand).toHaveBeenCalledWith(
 			"file:///checkout%20with%20spaces/package.json",
-			"typescript",
+			"@typescript/native",
 			"tsc"
 		)
 		expect(mocks.run).toHaveBeenCalledWith(

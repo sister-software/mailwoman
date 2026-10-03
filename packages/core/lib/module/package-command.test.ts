@@ -6,7 +6,9 @@ import { writeLocalJSONFile, writeLocalTextFile } from "#fs/writers"
 import { pathToFileURL } from "#module/file-url"
 import { resolvePackageCommand } from "#module/package-command"
 
-/** Plants an installed package independently of the resolver being tested. */
+/**
+ * Plants an installed package independently of the resolver being tested.
+ */
 async function installFixture(
 	root: PathBuilder,
 	bin: string | Record<string, string>,
@@ -105,8 +107,10 @@ describe("resolvePackageCommand", () => {
 		await installFixture(scratch.path, { tool: "bin/missing.cjs" }, {})
 		const base = pathToFileURL(scratch.path("caller.ts")).href
 
-		await expect(resolvePackageCommand(base, "@fixture/tool", "tool")).rejects.toThrow()
+		await expect(resolvePackageCommand(base, "@fixture/tool", "tool")).rejects.toThrow(/ENOENT/u)
 		await expect(resolvePackageCommand(base, "@fixture/tool", "absent")).rejects.toThrow("no bin entry for absent")
-		await expect(resolvePackageCommand(base, "@fixture/not-installed", "tool")).rejects.toThrow()
+		await expect(resolvePackageCommand(base, "@fixture/not-installed", "tool")).rejects.toThrow(
+			/Cannot find|Could not find/u
+		)
 	})
 })

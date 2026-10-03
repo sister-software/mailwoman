@@ -154,6 +154,6 @@ describe("readCIWorkspaces", () => {
 		await writeLocalJSONFile({ workspaces: ["packages/*"] }, root("package.json"))
 		await writeLocalJSONFile({ name: "a" }, root("packages/a/package.json"))
 
-		await expect(readCIWorkspaces(root.toString(), ["packages/a/lib/missing.ts"])).rejects.toThrow()
+		await expect(readCIWorkspaces(root.toString(), ["packages/a/lib/missing.ts"])).rejects.toThrow(/ENOENT/u)
 	})
 })

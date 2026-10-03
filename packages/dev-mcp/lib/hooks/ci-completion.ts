@@ -1,20 +1,25 @@
-/** Prevents task handoff while a tracked pull request has unresolved CI. */
+/**
+ * Prevents task handoff while a tracked pull request has unresolved CI.
+ */
 
 import { pathExists, readLocalJSONFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isProcessError, runFile, type ProcessOutput } from "@mailwoman/core/process"
 import { resolvePath } from "path-ts"
 
-/** Requires successful checks for the same open PR head before and after reading GitHub. */
+/**
+ * Requires successful checks for the same open PR head before and after reading GitHub.
+ */
 export async function assertCIComplete(
 	repo: string,
 	pullRequestNumber: number,
-	run: (args: string[]) => Promise<ProcessOutput> = (args) => runFile("gh", args)
+	run: (args: string[]) => Promise<ProcessOutput> = (args) => runFile("gh", args),
+	allowClosed = false
 ): Promise<void> {
 	const args = ["pr", "view", String(pullRequestNumber), "--repo", repo, "--json", "headRefOid,state"]
-	const before = JSON.parse((await run(args)).stdout) as { headRefOid: string; state: string }
+	const before = parseJSONStrict<{ headRefOid: string; state: string }>((await run(args)).stdout)
 
-	if (["CLOSED", "MERGED"].includes(before.state)) return
+	if (allowClosed && ["CLOSED", "MERGED"].includes(before.state)) return
 	if (before.state !== "OPEN" || !before.headRefOid) throw new Error("GitHub omitted the open PR state or head.")
 
 	const output = await run(["pr", "checks", String(pullRequestNumber), "--repo", repo, "--json", "name,bucket"]).catch(
@@ -23,8 +28,8 @@ export async function assertCIComplete(
 			throw error
 		}
 	)
-	const checks = JSON.parse(output.stdout) as { name: string; bucket: string }[]
-	const after = JSON.parse((await run(args)).stdout) as { headRefOid: string }
+	const checks = parseJSONStrict<{ name: string; bucket: string }[]>(output.stdout)
+	const after = parseJSONStrict<{ headRefOid: string }>((await run(args)).stdout)
 	const unresolved = checks.filter((check) => !["pass", "skipping"].includes(check.bucket))
 
 	if (
@@ -46,7 +51,7 @@ async function main(): Promise<void> {
 	if (!(await pathExists(marker))) return
 
 	const { repo, pullRequestNumber } = await readLocalJSONFile<{ repo: string; pullRequestNumber: number }>(marker)
-	await assertCIComplete(repo, pullRequestNumber)
+	await assertCIComplete(repo, pullRequestNumber, undefined, true)
 }
 
 // oxlint-disable-next-line sister-software/no-process-globals -- executable-entry detection has no project helper.

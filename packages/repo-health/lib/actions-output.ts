@@ -1,17 +1,34 @@
-/** Computes CI scope and writes GitHub Actions outputs without running tests. */
+/**
+ * Computes CI scope and writes GitHub Actions outputs without running tests.
+ */
 
+import { liveEnv } from "@mailwoman/core/env"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { appendLocalTextFile } from "@mailwoman/core/fs/writers"
 import { git, trackedFiles } from "@mailwoman/core/git"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePath } from "path-ts"
+import { z } from "zod"
 
 import { readCIWorkspaces, selectCIScope, type CIScope } from "#ci-scope"
 
-/** Writes the selected suites to GitHub Actions outputs and returns the selection. */
+const ciEnvironment = liveEnv(
+	z.object({
+		GITHUB_EVENT_NAME: z.string().optional(),
+		CI_BASE_SHA: z.string().optional(),
+		CI_HEAD_SHA: z.string().optional(),
+		GITHUB_OUTPUT: z.string().optional(),
+		GITHUB_STEP_SUMMARY: z.string().optional(),
+	})
+)
+
+/**
+ * Writes the selected suites to GitHub Actions outputs and returns the selection.
+ */
 export async function writeCIScope(root: string): Promise<CIScope> {
-	const event = process.env["GITHUB_EVENT_NAME"]
-	const base = process.env["CI_BASE_SHA"]
-	const head = process.env["CI_HEAD_SHA"]
+	const event = ciEnvironment.GITHUB_EVENT_NAME
+	const base = ciEnvironment.CI_BASE_SHA
+	const head = ciEnvironment.CI_HEAD_SHA
 
 	if (event === "pull_request" && (!base || !head || !/^[a-f0-9]{40}$/u.test(base) || !/^[a-f0-9]{40}$/u.test(head))) {
 		throw new Error("A pull request requires valid CI_BASE_SHA and CI_HEAD_SHA commits")
@@ -37,19 +54,19 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 	)
 	const outputs = {
 		...Object.fromEntries(Object.entries(scope).filter(([, value]) => typeof value === "boolean")),
-		fast_files: JSON.stringify(scope.full ? [] : scope.fastFiles),
-		slow_files: JSON.stringify(scope.full ? [] : scope.slowFiles),
+		fast_files: stringifyJSON(scope.full ? [] : scope.fastFiles),
+		slow_files: stringifyJSON(scope.full ? [] : scope.slowFiles),
 	}
 
-	if (process.env["GITHUB_OUTPUT"]) {
+	if (ciEnvironment.GITHUB_OUTPUT) {
 		await appendLocalTextFile(
 			Object.entries(outputs)
 				.map(([key, value]) => `${key}=${value}`)
 				.join("\n") + "\n",
-			process.env["GITHUB_OUTPUT"]
+			ciEnvironment.GITHUB_OUTPUT
 		)
 	}
-	if (process.env["GITHUB_STEP_SUMMARY"]) {
+	if (ciEnvironment.GITHUB_STEP_SUMMARY) {
 		await appendLocalTextFile(
 			[
 				"## Selected CI suites",
@@ -68,7 +85,7 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 				"Unselected suites did not run. Main and dispatched runs select every suite.",
 				"",
 			].join("\n"),
-			process.env["GITHUB_STEP_SUMMARY"]
+			ciEnvironment.GITHUB_STEP_SUMMARY
 		)
 	}
 

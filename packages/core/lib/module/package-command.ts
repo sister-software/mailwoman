@@ -1,11 +1,15 @@
-/** Resolves a package's executable from its manifest and the caller's dependency graph. */
+/**
+ * Resolves a package's executable from its manifest and the caller's dependency graph.
+ */
 
 import { dirname, resolvePath } from "path-ts"
 
 import { readFileHead } from "#fs/readers"
 import { readPackageJSON, resolvePackageJSON } from "#module/resolve-from"
 
-/** A package command identifies the executable and arguments that precede the caller's arguments. */
+/**
+ * A package command identifies the executable and arguments that precede the caller's arguments.
+ */
 export interface PackageCommand {
 	file: string
 	argv: string[]

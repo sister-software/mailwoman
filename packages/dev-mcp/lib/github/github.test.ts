@@ -8,7 +8,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { git, workingTreeRoot } from "@mailwoman/core/git"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
@@ -126,6 +126,44 @@ describe("GitHub prose and task blocks", () => {
 })
 
 describe("GitHub MCP tools", () => {
+	it("refuses completion while CI is pending and leaves the issue unchanged", async () => {
+		const cwd = fixtures.use(await temporaryDirectory("mw-pr-pending-")).path
+		const run: RunGitHub = vi.fn(async (args) => {
+			if (args[1] === "view") return stringifyJSON({ state: "OPEN", headRefOid: "head-a" })
+			return stringifyJSON([{ name: "test", bucket: "pending" }])
+		})
+		const [, tool] = githubTools(
+			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs: new JobRegistry(), startedAt: Date.now() },
+			{ run }
+		)
+		await expect(tool.handler({ action: "complete", issue_number: 2365, pull_request_number: 2400 })).rejects.toThrow(
+			"unresolved"
+		)
+		expect(run).not.toHaveBeenCalledWith(expect.arrayContaining(["edit"]), expect.anything())
+	})
+
+	it("completes the CI review task only after current-head checks pass", async () => {
+		const cwd = fixtures.use(await temporaryDirectory("mw-pr-complete-")).path
+		const task = "Review successful CI for PR #2400 on its current head."
+		const body = COMPLETE_BODY.replace("<!-- todo-sync:end -->", `- [ ] ${task}\n<!-- todo-sync:end -->`)
+		const run: RunGitHub = vi.fn(async (args) => {
+			if (args[0] === "issue") return rawIssue(body)
+			if (args[1] === "view") return stringifyJSON({ state: "OPEN", headRefOid: "head-a" })
+			return stringifyJSON([{ name: "test", bucket: "pass" }])
+		})
+		const [, tool] = githubTools(
+			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs: new JobRegistry(), startedAt: Date.now() },
+			{ run }
+		)
+		expect(await tool.handler({ action: "complete", issue_number: 2365, pull_request_number: 2400 })).toMatchObject({
+			handoff_ready: true,
+		})
+		expect(run).toHaveBeenCalledWith(
+			expect.arrayContaining(["edit", "--body", body.replace(`- [ ] ${task}`, `- [x] ${task}`)]),
+			{ cwd: cwd.toString() }
+		)
+	})
+
 	it("creates a checked issue and links the checkout", async () => {
 		const cwd = fixtures.use(await temporaryDirectory("mw-github-tool-")).path
 		const calls: string[][] = []
@@ -248,7 +286,7 @@ describe("GitHub MCP tools", () => {
 			expect.arrayContaining([expect.stringContaining("github/ci-monitor.ts"), "--pull-request", "2400"]),
 			cwd.toString()
 		)
-		expect(JSON.parse(await readLocalTextFile(cwd(".claude", "state", "tracked-ci.json")))).toEqual({
+		expect(parseJSONStrict(await readLocalTextFile(cwd(".claude", "state", "tracked-ci.json")))).toEqual({
 			repo: "sister-software/mailwoman",
 			pullRequestNumber: 2400,
 		})

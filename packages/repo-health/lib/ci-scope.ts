@@ -11,7 +11,9 @@ import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
-/** A workspace records the dependencies used to select its consumers. */
+/**
+ * A workspace records the dependencies used to select its consumers.
+ */
 export interface CIWorkspace {
 	name: string
 	directory: string
@@ -19,7 +21,9 @@ export interface CIWorkspace {
 	externalInputs?: string[]
 }
 
-/** A selection records the tests and jobs required by a change. */
+/**
+ * A selection records the tests and jobs required by a change.
+ */
 export interface CIScope {
 	full: boolean
 	reasons: string[]
@@ -38,19 +42,25 @@ export interface CIScope {
 	python: boolean
 }
 
-/** Finds the workspace containing a repository-relative path. */
+/**
+ * Finds the workspace containing a repository-relative path.
+ */
 function workspaceForFile(file: string, workspaces: readonly CIWorkspace[]): CIWorkspace | undefined {
 	return workspaces.find((workspace) => file.startsWith(`${workspace.directory}/`))
 }
 
-/** Identifies tests excluded by the root Vitest configuration. */
+/**
+ * Identifies tests excluded by the root Vitest configuration.
+ */
 function excludedFromRootTests(file: string): boolean {
 	return /(?:^|\/)(?:react|license-worker)\/|\/(?:examples|cypress|out|dist)\/|\/(?:test\/browser|test\/e2e)\/|^docs\/test\/build\//u.test(
 		file
 	)
 }
 
-/** Reads manifest dependencies and literal source imports, including imports in tests. */
+/**
+ * Reads manifest dependencies and literal source imports, including imports in tests.
+ */
 export async function readCIWorkspaces(repoRoot: string, files: readonly string[]): Promise<CIWorkspace[]> {
 	const directories = await readWorkspaceDirectories(repoRoot)
 	const workspaces = await Promise.all(
@@ -145,7 +155,9 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 	return workspaces
 }
 
-/** Computes the suites affected by a diff without executing tests. */
+/**
+ * Computes the suites affected by a diff without executing tests.
+ */
 export function selectCIScope(
 	workspaces: readonly CIWorkspace[],
 	files: readonly string[],

@@ -1,3 +1,4 @@
+import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it, vi } from "vitest"
 
 import { assertCIComplete } from "#hooks/ci-completion"
@@ -5,9 +6,9 @@ import { assertCIComplete } from "#hooks/ci-completion"
 function reader(checks: { name: string; bucket: string }[], head = "head-a") {
 	return vi
 		.fn()
-		.mockResolvedValueOnce({ stdout: JSON.stringify({ headRefOid: "head-a", state: "OPEN" }), stderr: "" })
-		.mockResolvedValueOnce({ stdout: JSON.stringify(checks), stderr: "" })
-		.mockResolvedValueOnce({ stdout: JSON.stringify({ headRefOid: head }), stderr: "" })
+		.mockResolvedValueOnce({ stdout: stringifyJSON({ headRefOid: "head-a", state: "OPEN" }), stderr: "" })
+		.mockResolvedValueOnce({ stdout: stringifyJSON(checks), stderr: "" })
+		.mockResolvedValueOnce({ stdout: stringifyJSON({ headRefOid: head }), stderr: "" })
 }
 
 describe("CI completion", () => {

@@ -14,7 +14,9 @@ import { pathExists } from "#fs/readers"
 import { resolvePackageCommand, type PackageCommand } from "#module/package-command"
 import { resolvePackageJSON } from "#module/resolve-from"
 
-/** A Vale command uses the package command's executable and leading arguments. */
+/**
+ * A Vale command uses the package command's executable and leading arguments.
+ */
 export type ValeCommand = PackageCommand
 
 /**
