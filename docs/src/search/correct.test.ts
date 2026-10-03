@@ -39,7 +39,12 @@ describe("correctTokens", () => {
 		// `tier` is in the vocabulary.
 		// `tiexx` is two edits away and stays as typed; `tierr` is one.
 		// The six-character `tierxx` is also two edits away and is accepted.
-		// Each shares a trigram with `tier`, which the candidate query requires.
+		// Each shares a trigram with `tier`; the first assertion shows `tier` is proposed for `tiexx`.
+		const proposed = await db.query<{ term: string }>(
+			"SELECT t.term FROM terms_trigram JOIN terms t ON t.rowid = terms_trigram.rowid WHERE terms_trigram MATCH '\"tie\"'"
+		)
+
+		expect(proposed.map((row) => row.term)).toContain("tier")
 		expect(await correctTokens(db, ["tiexx"])).toBeUndefined()
 		expect(await correctTokens(db, ["tierr"])).toEqual(["tier"])
 		expect(await correctTokens(db, ["tierxx"])).toEqual(["tier"])

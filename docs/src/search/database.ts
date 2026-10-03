@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The one interface the query code needs. The browser passes the sqlite-wasm worker's `RangeDatabase`;
- *   the tests pass a `node:sqlite` adapter from `database.node.ts`.
+ *   the tests pass an adapter over the repository's SQLite client from `database.node.ts`.
  */
 
 export type SQLValue = string | number | bigint | Uint8Array | null
