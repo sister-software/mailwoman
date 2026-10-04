@@ -90,13 +90,16 @@ export const BDCFileCategory = {
 export type BDCFileCategory = (typeof BDCFileCategory)[keyof typeof BDCFileCategory]
 
 /**
+ * Subcategories the live API accepts for `category=Provider`, per the April 2025 BDC Public
+ * Data API specification, verified against the live endpoint on 2026-10-05 (#2465).
+ *
  * @category BDC
  * @category FCC
  */
 export const BDCProviderSubCategory = {
-	FixedBroadband: "Fixed Broadband",
-	MobileBroadband: "Mobile Broadband",
-	MobileVoice: "Mobile Voice",
+	LocationCoverage: "Location Coverage",
+	HexagonCoverage: "Hexagon Coverage",
+	RawCoverage: "Raw Coverage",
 	SupportingData: "Supporting Data",
 } as const
 
@@ -107,14 +110,17 @@ export const BDCProviderSubCategory = {
 export type BDCProviderSubCategory = (typeof BDCProviderSubCategory)[keyof typeof BDCProviderSubCategory]
 
 /**
+ * Subcategories the live API accepts for `category=Summary`, per the April 2025 specification,
+ * verified against the live endpoint on 2026-10-05 (#2465).
+ *
  * @category BDC
  * @category FCC
  */
 export const BDCSummarySubCategory = {
-	BroadbandSummaryByGeography: "Broadband Summary by Geography Type",
+	SummaryByGeographyTypeCensusPlace: "Summary by Geography Type - Census Place",
+	SummaryByGeographyTypeOtherGeographies: "Summary by Geography Type - Other Geographies",
 	ProviderSummaryByGeography: "Provider Summary by Geography Type",
-	ProviderSummaryFixedBroadband: "Provider Summary - Fixed Broadband",
-	ProviderSummaryMobileBroadband: "Provider Summary - Mobile Broadband",
+	ProviderSummary: "Provider Summary",
 } as const
 
 /**
@@ -124,10 +130,33 @@ export const BDCSummarySubCategory = {
 export type BDCSummarySubCategory = (typeof BDCSummarySubCategory)[keyof typeof BDCSummarySubCategory]
 
 /**
+ * Subcategories the live API accepts for `category=State`, per the April 2025 specification,
+ * verified against the live endpoint on 2026-10-05 (#2465).
+ *
+ * Technology is a separate `technology_type` query parameter rather than a subcategory.
+ *
  * @category BDC
  * @category FCC
  */
 export const BDCStateSubCategory = {
+	ProviderList: "Provider List",
+	LocationCoverage: "Location Coverage",
+	HexagonCoverage: "Hexagon Coverage",
+} as const
+
+/**
+ * @category BDC
+ * @category FCC
+ */
+export type BDCStateSubCategory = (typeof BDCStateSubCategory)[keyof typeof BDCStateSubCategory]
+
+/**
+ * Technology values for the listing endpoint's optional `technology_type` query parameter.
+ *
+ * @category BDC
+ * @category FCC
+ */
+export const BDCTechnologyType = {
 	FixedBroadband: "Fixed Broadband",
 	MobileBroadband: "Mobile Broadband",
 	MobileVoice: "Mobile Voice",
@@ -137,7 +166,25 @@ export const BDCStateSubCategory = {
  * @category BDC
  * @category FCC
  */
-export type BDCStateSubCategory = (typeof BDCStateSubCategory)[keyof typeof BDCStateSubCategory]
+export type BDCTechnologyType = (typeof BDCTechnologyType)[keyof typeof BDCTechnologyType]
+
+/**
+ * Speed tiers for the listing endpoint's optional `speed_tier` query parameter,
+ * valid for `category=Provider` hexagon and raw coverage.
+ *
+ * @category BDC
+ * @category FCC
+ */
+export const BDCSpeedTier = {
+	"35/3": "35/3",
+	"7/1": "7/1",
+} as const
+
+/**
+ * @category BDC
+ * @category FCC
+ */
+export type BDCSpeedTier = (typeof BDCSpeedTier)[keyof typeof BDCSpeedTier]
 
 export type BDCSubCategory = BDCProviderSubCategory | BDCStateSubCategory | BDCSummarySubCategory
 

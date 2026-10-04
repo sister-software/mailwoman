@@ -13,12 +13,25 @@ import {
 	type BDCFile,
 	type BDCFileCategory,
 	type BDCProviderSubCategory,
+	type BDCSpeedTier,
 	type BDCStateSubCategory,
 	type BDCSummarySubCategory,
+	type BDCTechnologyType,
 	type RawBDCFile,
 } from "#sdk/common"
 
-export interface RetrieveProviderAvailabilityFilesParams {
+/**
+ * Optional filters the listing endpoint accepts beside `category` and `subcategory`,
+ * per the April 2025 BDC Public Data API specification.
+ *
+ * `speed_tier` is valid for `category=Provider` hexagon and raw coverage.
+ */
+export interface BDCAvailabilityFileFilters {
+	technologyType?: BDCTechnologyType
+	speedTier?: BDCSpeedTier
+}
+
+export interface RetrieveProviderAvailabilityFilesParams extends BDCAvailabilityFileFilters {
 	/**
 	 * The filing's `as_of_date`, e.g. from {@linkcode file://./filing-dates.ts#resolveLatestVintage}.
 	 */
@@ -27,13 +40,13 @@ export interface RetrieveProviderAvailabilityFilesParams {
 	subcategory: BDCProviderSubCategory
 }
 
-export interface RetrieveStateAvailabilityFilesParams {
+export interface RetrieveStateAvailabilityFilesParams extends BDCAvailabilityFileFilters {
 	asOfDate: string
 	category: typeof BDCFileCategory.State
 	subcategory: BDCStateSubCategory
 }
 
-export interface RetrieveSummaryAvailabilityFilesParams {
+export interface RetrieveSummaryAvailabilityFilesParams extends BDCAvailabilityFileFilters {
 	asOfDate: string
 	category: typeof BDCFileCategory.Summary
 	subcategory: BDCSummarySubCategory
@@ -54,13 +67,15 @@ interface ListAvailabilityDataResponseBody {
  */
 export async function retrieveAvailabilityFiles(
 	client: BDCClient,
-	{ asOfDate, category, subcategory }: RetrieveAvailabilityFilesParams
+	{ asOfDate, category, subcategory, technologyType, speedTier }: RetrieveAvailabilityFilesParams
 ): Promise<BDCFile[]> {
 	const pathname = `/map/downloads/listAvailabilityData/${encodeURIComponent(asOfDate)}`
 
 	const body = await client.get<ListAvailabilityDataResponseBody>(pathname, {
 		category,
 		subcategory,
+		technology_type: technologyType,
+		speed_tier: speedTier,
 	})
 
 	return body.data.map(parseRawBDCFile).toSorted(compareRevisionAsc)
