@@ -111,6 +111,9 @@ function GeocoderInner({
 	// The graticule is inserted before the first non-background layer, so it draws under the data layers.
 	const [baseLayerID, setBaseLayerID] = useState<string | undefined>(undefined)
 
+	// Overlays are inserted before the first label layer, so place names stay readable over a fill.
+	const [labelLayerID, setLabelLayerID] = useState<string | undefined>(undefined)
+
 	const onMapLoad = useCallback((event: { target: ReturnType<MapRef["getMap"]> }) => {
 		// Browser tests read the map from this global.
 		;(globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas = event.target
@@ -119,6 +122,7 @@ function GeocoderInner({
 		const layers = event.target.getStyle()?.layers ?? []
 
 		setBaseLayerID(layers.find((layer) => layer.type !== "background")?.id)
+		setLabelLayerID(layers.find((layer) => layer.type === "symbol")?.id)
 	}, [])
 
 	useEffect(
@@ -179,7 +183,7 @@ function GeocoderInner({
 					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
 				>
 					<GraticuleLayer beforeID={baseLayerID} />
-					<OverlayLayers overlays={runtime.overlays} />
+					<OverlayLayers overlays={runtime.overlays} beforeID={labelLayerID} />
 					<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
 					{panels.mapControls}
 				</MapCanvas>

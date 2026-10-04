@@ -119,8 +119,10 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			debugDrawer: ({ result }) => (
 				<DebugDrawer result={result} devMode={devMode} traceParse={traceParse} onClose={() => setDevMode(false)} />
 			),
-			// The feature inspector is developer tooling, shown under the same condition as the decode-path drawer.
-			mapControls: devMode ? <MapControls /> : null,
+			// The jurisdiction legend and hover card always mount.
+			// The feature inspector is developer tooling, shown under the same
+			// condition as the decode-path drawer.
+			mapControls: <MapControls devMode={devMode} />,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
 			// The identity and credits live in `EarthFooter` so this footer and the canned
 			// runtime's cannot differ; `status` is the one thing only this path has.

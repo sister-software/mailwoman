@@ -68,6 +68,32 @@ describe("normalizeReleasesManifest — the single wire boundary", () => {
 	})
 })
 
+describe("the default release falls back to one this runtime can load", () => {
+	test("keeps a default whose required capabilities the runtime has", () => {
+		const m = normalizeReleasesManifest({
+			locale: "en-us",
+			defaultVersion: "v10.1.0",
+			releases: [entry({ version: "v10.1.0", requiresRuntime: ["locale_hint"] }), entry({ version: "v9.1.0" })],
+		})
+
+		expect(m.defaultVersion).toBe("v10.1.0")
+	})
+
+	test("passes over a default that needs a capability the runtime lacks, to the newest release it can load", () => {
+		const m = normalizeReleasesManifest({
+			locale: "en-us",
+			defaultVersion: "v11.0.0",
+			releases: [
+				entry({ version: "v11.0.0", requiresRuntime: ["a-capability-from-the-future"] }),
+				entry({ version: "v10.1.0", requiresRuntime: ["locale_hint"] }),
+				entry({ version: "v9.1.0" }),
+			],
+		})
+
+		expect(m.defaultVersion).toBe("v10.1.0")
+	})
+})
+
 describe("no consumer reads raw legacy wire keys outside the boundary", () => {
 	// Every other consumer reads through `ReleaseInfo`.
 	// It contains no legacy key.
