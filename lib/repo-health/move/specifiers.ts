@@ -79,21 +79,21 @@ function conditionTargets(value: unknown): string[] {
  * The target's text before and after the star must bracket the path.
  * The intervening text becomes the key's star.
  */
-function subpathKeyFor(key: string, target: string, packageRelative: string): string | undefined {
+function subpathKeyFor(key: string, target: string, packageRelative: string): string | null {
 	const star = target.indexOf("*")
 
-	if (star === -1) return target === packageRelative ? key : undefined
+	if (star === -1) return target === packageRelative ? key : null
 
 	const keyStar = key.indexOf("*")
 
-	if (keyStar === -1 || key.lastIndexOf("*") !== keyStar || target.lastIndexOf("*") !== star) return undefined
+	if (keyStar === -1 || key.lastIndexOf("*") !== keyStar || target.lastIndexOf("*") !== star) return null
 
 	const head = target.slice(0, star)
 	const tail = target.slice(star + 1)
 
-	if (!packageRelative.startsWith(head) || !packageRelative.endsWith(tail)) return undefined
+	if (!packageRelative.startsWith(head) || !packageRelative.endsWith(tail)) return null
 
-	if (packageRelative.length <= head.length + tail.length) return undefined
+	if (packageRelative.length <= head.length + tail.length) return null
 
 	return `${key.slice(0, keyStar)}${packageRelative.slice(head.length, packageRelative.length - tail.length)}${key.slice(keyStar + 1)}`
 }
