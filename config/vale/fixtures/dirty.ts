@@ -1,6 +1,6 @@
 /**
  * @file Dirty fixture for `config/vale/.vale-code.ini` + `AmbiguousShorthandCode.yml`. Every line below must trip the
- *   rule. the `vocab-census` check in `packages/repo-health` also uses this file as its positive control, so it must
+ *   rule. the `vocab-census` check in `lib/repo-health` also uses this file as its positive control, so it must
  *   keep containing the words permanently — it is excluded from the census COUNT for the same reason, a fixture is not
  *   repository prose. The gate blocks a release when the count grows. A seam between two packages moved. We cut a new
  *   shard before the check runs.

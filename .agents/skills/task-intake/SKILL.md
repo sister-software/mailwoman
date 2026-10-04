@@ -44,7 +44,7 @@ For a bug, the headings are: `Failing input` (exact string, original spelling), 
 
 The issue tool writes `.claude/state/linked-issue`. The `.claude/state` name is shared integration state
 rather than a Claude Code-only instruction. Claude Code's
-`packages/dev-mcp/lib/hooks/todo-issue-sync.ts` PostToolUse hook rewrites the marker-delimited block after
+`lib/dev-mcp/hooks/todo-issue-sync.ts` PostToolUse hook rewrites the marker-delimited block after
 `TodoWrite`. Codex and Claude Code sessions without `TodoWrite` use the issue tool.
 The hook's interface is:
 

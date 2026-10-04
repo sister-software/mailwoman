@@ -577,7 +577,7 @@ function labelsFromModelCard(card: Record<string, unknown>, url: string): readon
 		)
 	}
 
-	return Object.freeze(labels.slice()) as readonly string[]
+	return Object.freeze(labels.slice())
 }
 
 function toBase64(bytes: Uint8Array): string {

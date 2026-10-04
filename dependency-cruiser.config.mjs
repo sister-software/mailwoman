@@ -16,7 +16,8 @@
  * `out/` is tsc's emit and `dist/` an app's Vite output — bundled chunks whose
  * cycles are the bundler's, not the source graph's.
  * `public/sqlite/` is the range worker and sqlite-wasm runtime staged by
- * `@mailwoman/site-kit/vite/stage-sqlite-runtime`; it is gitignored, and the readers load it by URL.
+ * `@mailwoman/universe/site-kit/vite/stage-sqlite-runtime`; it is gitignored,
+ * and the readers load it by URL.
  *
  * `packages/react/tokens/index.ts` is the TypeScript companion `styleframe build` writes
  * beside the CSS it compiles, and `.gitignore` carries the reason nothing imports it:
@@ -44,7 +45,7 @@ const LOADED_WITHOUT_AN_IMPORT = [
 	"(^|/)test/browser/[^/]+[.]spec[.]ts$",
 	// A worker script must be a real file on disk for the runtime to spawn by path.
 	// `packages/mailwoman/lib/geocode/stream.test.ts` hands this one to a worker, and
-	// `@mailwoman/site-kit/vite/pwa` names `lib/service-worker.ts` as the `injectManifest` entry.
+	// `@mailwoman/universe/site-kit/vite/pwa` names `lib/service-worker.ts` as the `injectManifest` entry.
 	"(^|/)lib/test-fixtures/[^/]+-worker[.](?:js|ts)$",
 	"(^|/)lib/service-worker[.]ts$",
 	// The `browser` condition's target for a subpath whose `node` condition resolves elsewhere.

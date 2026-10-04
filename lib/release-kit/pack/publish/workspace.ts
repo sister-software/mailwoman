@@ -1,0 +1,184 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Publish a single workspace. `@release-it-plugins/workspaces` invokes this once per non-private
+ *   workspace. The per-workspace loop in `publish.yml` also invokes it.
+ *
+ *   Three-step flow:
+ *
+ *   1. `yarn pack -o <tmpfile>` — yarn 4 translates `workspace:*` deps to the concrete sibling version
+ *        while building the tarball. npm's publish step does not translate these dependencies.
+ *        A published `workspace:*` dependency breaks consumer `npm install` (eunsupportedprotocol).
+ *   2. Derive the publish exports map from the dev map inside the tarball — every `node → .ts`
+ *        condition is rewritten to emitted JavaScript. The repo runs source under Node. Consumers get `out/`.
+ *        The dev `exports` in each workspace's package.json is the single source of truth. There is no
+ *        hand-maintained `publishConfig.exports`. That removal left the v7.2.0 publish fully broken.
+ *        This transform replaces it. A guard
+ *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points to a
+ *        file the tarball doesn't contain.
+ *   3. `npm publish <tmpfile>` — npm CLI is the right tool for the actual publish because it
+ *        auto-detects GitHub Actions' OIDC environment and uses it for Trusted Publishing. Yarn's
+ *        `yarn npm publish` doesn't integrate with npm's OIDC flow.
+ *
+ *   Env interface from the plugin (see node_modules/@release-it-plugins/workspaces/index.js):
+ *
+ *   - RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE: ./<workspace>
+ *   - RELEASE_IT_WORKSPACES_TAG: dist-tag (latest / next / etc.)
+ *   - RELEASE_IT_WORKSPACES_ACCESS: "public" / "restricted"
+ *   - RELEASE_IT_WORKSPACES_OTP: one-time password (may be empty)
+ *   - RELEASE_IT_WORKSPACES_DRY_RUN: "true" / "false"
+ *
+ *   Per-workspace skip: MAILWOMAN_SKIP_WEIGHTS=1 makes this operation answer `skipped-weights` for the
+ *   neural-weights-* workspaces. Git versions remain synchronized while npm sees no weights tick.
+ *   No workflow sets it. `publish.yml` publishes every release workspace. Its only weights variable is
+ *   MAILWOMAN_SKIP_WEIGHTS_COPY. That skips the data-root copy because the
+ *   binaries were fetched from Hugging Face earlier in the job. The skip is a local-run switch.
+ */
+
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { spawnProcessSync } from "@mailwoman/core/process"
+import { resolvePath } from "path-ts"
+
+import { $private, $public } from "#release-kit/env"
+import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "#release-kit/pack/pack-workspace"
+import { formatTarballAudit, verifyTarball } from "#release-kit/pack/verify-tarball"
+import { assertWorkspacePublishable } from "#release-kit/release/stage"
+
+export interface PublishWorkspaceOptions {
+	repoRoot: string
+	/**
+	 * `./<workspace>` — the plugin's `RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE` shape.
+	 */
+	workspacePath: string
+	tag: string
+	access: string
+	otp: string
+	dryRun: boolean
+	log: (line: string) => void
+}
+
+export interface PublishWorkspaceReport {
+	workspace: string
+	outcome: "published" | "skipped-weights" | "already-published" | "dry-run"
+	tarballAudit?: string
+}
+
+/**
+ * The plugin's environment interface, read once so the operation's schema can default from it.
+ */
+export function releaseItWorkspaceEnvironment(): {
+	workspacePath: string | undefined
+	tag: string
+	access: string
+	otp: string
+	dryRun: boolean
+} {
+	return {
+		workspacePath: $public.RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE,
+		tag: $public.RELEASE_IT_WORKSPACES_TAG || "latest",
+		access: $public.RELEASE_IT_WORKSPACES_ACCESS || "",
+		otp: $private.RELEASE_IT_WORKSPACES_OTP || "",
+		dryRun: $public.RELEASE_IT_WORKSPACES_DRY_RUN === "true",
+	}
+}
+
+export async function publishWorkspace(options: PublishWorkspaceOptions): Promise<PublishWorkspaceReport> {
+	const { repoRoot, workspacePath, log } = options
+
+	// Check before packing and before the weights skip.
+	// This refuses a held-out workspace on every path into the function,
+	// including paths that do not reach the npm call.
+	assertWorkspacePublishable(workspacePath)
+
+	const skipWeights = !!$public.MAILWOMAN_SKIP_WEIGHTS
+	const isWeightsWorkspace = workspacePath.startsWith("./packages/neural-weights-")
+
+	if (skipWeights && isWeightsWorkspace) {
+		log(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)
+
+		return { workspace: workspacePath, outcome: "skipped-weights" }
+	}
+
+	const cwd = resolvePath(repoRoot, workspacePath)
+
+	// Dereference any symlinks among the workspace's `files` entries before publishing —
+	// npm/yarn refuse to upload tarballs containing symlinks (registry returns http 415).
+	// The neural-weights workspaces in particular can end up with symlinks from a dev linker.
+	await dereferenceWorkspaceSymlinks(cwd)
+
+	await using tmpDir = await temporaryDirectory("mailwoman-publish-")
+	const tarballPath = tmpDir.path("package.tgz")
+
+	// Step 1: pack with the derived publish map injected
+	// (shared helper — same path the CI smoke test uses, so what we test is what we ship).
+	log(`publish-workspace: packing ${workspacePath} with injected publish exports`)
+
+	await packWorkspaceForPublish(cwd, tarballPath)
+
+	// Step 2: verify the tarball contains what the manifest promises —
+	// every concrete exports target, every literal `files` entry
+	// (see verify-tarball.ts for the en-in incident that guard exists for), and every `bin` target.
+	// Throws with every violation listed.
+	const audit = verifyTarball(tarballPath)
+	const tarballAudit = formatTarballAudit(audit)
+
+	log(`publish-workspace: verified ${audit.name} (${tarballAudit})`)
+
+	// Step 3: npm publish <tarball> — npm CLI auto-detects OIDC environment in
+	// GitHub Actions and uses it for Trusted Publishing.
+	const publishArgs = ["publish", tarballPath, "--tag", options.tag]
+
+	if (options.access) {
+		publishArgs.push("--access", options.access)
+	}
+
+	if (options.otp) {
+		publishArgs.push("--otp", options.otp)
+	}
+
+	// npm can only mint a provenance attestation from a CI provider it supports, so this
+	// is conditioned on GitHub Actions rather than on CI generally: a local `yarn release`
+	// passing --provenance fails outright, with no OIDC token to sign against.
+	// Trusted Publishing works either way.
+	// The attestation is the part that needs the CI identity.
+	//
+	// MAILWOMAN_NPM_PROVENANCE=0 turns it off, so a release blocked by a sigstore or registry outage can still ship.
+	if ($public.GITHUB_ACTIONS && $public.MAILWOMAN_NPM_PROVENANCE !== "0") {
+		publishArgs.push("--provenance")
+	}
+
+	log(`publish-workspace: ${options.dryRun ? "[dry-run] " : ""}npm ${publishArgs.join(" ")}`)
+
+	if (options.dryRun) {
+		return { workspace: workspacePath, outcome: "dry-run", tarballAudit }
+	}
+
+	const publishResult = spawnProcessSync("npm", publishArgs, { stdio: ["inherit", "inherit", "pipe"] })
+	const stderr = publishResult.stderr?.toString() ?? ""
+
+	if (publishResult.status !== 0 && /cannot publish over the previously published version/i.test(stderr)) {
+		log(`publish-workspace: ${workspacePath} already published at this version — skipping (tolerate-republish)`)
+
+		return { workspace: workspacePath, outcome: "already-published", tarballAudit }
+	}
+
+	if (stderr) {
+		process.stderr.write(stderr)
+	}
+
+	if (publishResult.status !== 0) {
+		throw new Error(`publish-workspace: npm publish exited ${publishResult.status ?? "by signal"} for ${workspacePath}`)
+	}
+
+	return { workspace: workspacePath, outcome: "published", tarballAudit }
+}
+
+// The tarball audit lives in verify-tarball.ts so both publish paths inherit it.
+// `bless-package` packs a package's first publish.
+// It had no guard, so neural-weights-en-in@8.6.0 shipped without the binary it exists to provide.
+
+// dereferenceWorkspaceSymlinks lives in pack-workspace.ts so packWorkspaceForPublish
+// derefs for every caller (smoke included); the explicit call above stays as the
+// documented safety net (agents.md "symlinks in the publish tarball").

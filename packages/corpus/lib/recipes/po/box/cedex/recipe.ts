@@ -23,7 +23,7 @@ import {
 	US_EVAL_SOURCE,
 	US_TRAIN_SOURCES,
 } from "#recipes/po/box/cedex/sources"
-import type { AUTuple, NZTuple, Rendered, USTuple } from "#recipes/po/box/cedex/types"
+import type { Rendered, USTuple } from "#recipes/po/box/cedex/types"
 import { renderPmbUs, renderPoBoxUs } from "#recipes/po/box/cedex/us"
 import { CLASS_MIX } from "#recipes/po/box/cedex/vocabulary"
 import { recipeSourceID, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
@@ -86,8 +86,8 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 
 		console.error(`  GeoNames CA: QC ${qcAll.length}→${qcPool.length}, ON ${onAll.length}→${onPool.length}`)
 
-		const auAll = (await readPostalTuples(GEONAMES_POSTAL_AU, { withState: true })) as AUTuple[],
-			nzAll = (await readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false })) as NZTuple[]
+		const auAll = await readPostalTuples(GEONAMES_POSTAL_AU, { withState: true })
+		const nzAll = await readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false })
 
 		const auPool = auAll.filter((tuple) => isHoldoutLocality(tuple.locality) === opts.golden),
 			nzPool = nzAll.filter((tuple) => isHoldoutLocality(tuple.locality) === opts.golden)

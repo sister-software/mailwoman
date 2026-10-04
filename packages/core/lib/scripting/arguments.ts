@@ -113,9 +113,10 @@ export type OptionPropertyName<Value extends string> = Value extends `${infer He
 	: Value
 
 /**
- * Convert a kebab-case option name to its TypeScript property name; `@mailwoman/repo-health`'s
- * `cli-flag-properties` check calls this, so a flag with an undeclared property fails
- * a check rather than silently having no effect at runtime.
+ * Convert a kebab-case option name to its TypeScript property name.
+ *
+ * The repository-health `cli-flag-properties` check calls this, so a flag with an
+ * undeclared property fails a check rather than silently having no effect at runtime.
  */
 export function optionPropertyName(value: string): string {
 	const [head = "", ...tail] = value.split("-")

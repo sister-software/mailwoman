@@ -1,0 +1,92 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file Tests release-metadata surfaces over a planted tree and the constraint that keeps the status page published.
+ */
+
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
+import { afterAll, describe, expect, it } from "vitest"
+
+import { verifyReleaseMetadata } from "#release-kit/release/verify-metadata"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
+const MODEL = "9.1.0"
+
+const statusPage = (version: string) =>
+	[
+		"---",
+		"title: Status",
+		"---",
+		"",
+		`:::info[Verified as of release ${version}]`,
+		"",
+		"What ships today.",
+		"",
+		":::",
+		"",
+	].join("\n")
+
+/**
+ * The version matrix, in the shape `checkReleases` reads: newest first, `(current)` on the first column.
+ * The third column contains the model lineage.
+ */
+const releasesPage = (version: string) =>
+	[
+		"# Releases",
+		"",
+		"| Version | Date | Model lineage | Notes |",
+		"| --- | --- | --- | --- |",
+		`| **${version}** (current) | 2026-09-12 | model \`${version}\` | the one |`,
+		"",
+	].join("\n")
+
+async function plant(options: { status: string; statusVersion?: string }) {
+	const repoRoot = fixtures.use(await temporaryDirectory("verify-metadata-")).path
+
+	const files: Record<string, string> = {
+		"packages/neural-weights-en-us/model-card.json": stringifyJSON({ version: MODEL }),
+		"evals/scores-by-version.json": stringifyJSON({ schema_version: 1, runs: [{ model_version: MODEL }] }),
+		"docs/engineering/releases.mdx": releasesPage(MODEL),
+		[options.status]: statusPage(options.statusVersion ?? MODEL),
+	}
+
+	for (const [file, text] of Object.entries(files)) {
+		await makeDirectories(repoRoot(file.slice(0, file.lastIndexOf("/"))))
+		await writeLocalTextFile(text, repoRoot(file))
+	}
+
+	return repoRoot
+}
+
+describe("verifyReleaseMetadata", () => {
+	it("passes when the published status page cites the shipped model", async () => {
+		const repoRoot = await plant({ status: "docs/articles/developers/status.mdx" })
+		const report = await verifyReleaseMetadata({ repoRoot, log: () => {} })
+
+		expect(report.modelVersion).toBe(MODEL)
+		expect(report.surfaces.every((surface) => surface.ok)).toBe(true)
+	})
+
+	it("fails when the published status page cites a superseded release", async () => {
+		const repoRoot = await plant({ status: "docs/articles/developers/status.mdx", statusVersion: "8.6.0" })
+
+		await expect(verifyReleaseMetadata({ repoRoot, log: () => {} })).rejects.toThrow(
+			/1 of 3 surfaces stale for model 9\.1\.0/u
+		)
+	})
+
+	it("refuses a status page outside the tree the site publishes", async () => {
+		const repoRoot = await plant({ status: "docs/records/site-2026-08/status.mdx" })
+
+		// The archived copy cites the shipped model, so without the constraint this run would pass.
+		await expect(
+			verifyReleaseMetadata({ repoRoot, status: "docs/records/site-2026-08/status.mdx", log: () => {} })
+		).rejects.toThrow(/must be a page the site publishes/u)
+	})
+})

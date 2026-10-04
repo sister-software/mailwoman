@@ -1,4 +1,4 @@
-import { previewConfig } from "@mailwoman/site-kit/playwright"
+import { previewConfig } from "@mailwoman/universe/site-kit/playwright"
 
 // The public data bucket's CORS rule must admit http://localhost:7771, the port the Earth preview also uses.
 // On a port it does not admit, the browser refuses the glyph and search-artifact fetches,

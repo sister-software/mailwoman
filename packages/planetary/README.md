@@ -63,4 +63,4 @@ hostname with its compiled body at startup and renders an error instead of the o
 `.github/workflows/deploy.yml` runs the same two commands per body when a push changes this workspace or one of its
 dependencies. The workflow does not use a path list. `mwops release deploy-targets` maps the changed files to
 workspaces. It deploys a body when one of those workspaces lies in the app's dependency closure, computed from the
-manifests, or when a root build file changed. The Worker table the workflow deploys from is `packages/release-kit/lib/deploy/targets.ts`.
+manifests, or when a root build file changed. The Worker table the workflow deploys from is `lib/release-kit/deploy/targets.ts`.

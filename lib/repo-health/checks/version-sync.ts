@@ -1,0 +1,52 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Refuse to publish a tree whose workspace manifests disagree with the root about the version.
+ *
+ *   The publish workflow's phase 2 runs against `main` after the release PR has merged. A drifted tree means phase 1
+ *   never landed or landed partially. A publication with mixed versions would break a release that is supposed to move
+ *   in lockstep. The workflow runs this check and reads the root manifest's version.
+ *   A check reports diagnostics. A passing check establishes that the root and every release workspace use the same version.
+ */
+
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { resolvePath } from "path-ts"
+
+import { releaseWorkspaces } from "#release-kit/release/stage"
+import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
+
+/**
+ * The `version-sync` check: one error per release workspace whose manifest version differs from the root's.
+ */
+export const versionSyncCheck: RepoCheck = {
+	id: "version-sync",
+	description: "Every release workspace's manifest version equals the root's.",
+	async run(context) {
+		const root = await readPackageJSON(resolvePath(context.repoRoot, "package.json"))
+
+		if (typeof root.version !== "string") {
+			throw new TypeError(`version-sync: ${context.repoRoot}/package.json declares no string "version".`)
+		}
+
+		const workspaces = await releaseWorkspaces(context.repoRoot)
+		const diagnostics: Diagnostic[] = []
+
+		for (const workspace of workspaces) {
+			const file = `${workspace}/package.json`
+			const manifest = await readLocalJSONFile<{ version?: unknown }>(resolvePath(context.repoRoot, file))
+
+			if (manifest.version !== root.version) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					message: `${workspace} is at ${String(manifest.version)}, root is at ${root.version} — the release PR has not fully landed, and publishing now ships mixed versions`,
+					file,
+				})
+			}
+		}
+
+		return diagnostics
+	},
+}

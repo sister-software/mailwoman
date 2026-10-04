@@ -1,16 +1,5 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
-	"entry": [
-		"corpus-python/scripts/**/*.ts",
-		"docker/server.ts",
-		"*.config.ts",
-		"oxlint.plugin.ts",
-		"config/oxlint/fix-changed.ts",
-		"config/vale/lint-prose.ts",
-		"config/vale/check-rules.ts",
-		"config/vale/fixtures/clean.ts",
-		"config/vale/fixtures/dirty.ts"
-	],
 	"ignore": [
 		"corpus-python/scripts/**/*.ts",
 		"docker/server.ts",
@@ -25,6 +14,37 @@
 	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uv", "uvx", "wrangler"],
 	"ignoreDependencies": ["@duckdb/node-api", "ts-morph", "onnxruntime-web", "@vvago/vale"],
 	"workspaces": {
+		".": {
+			"entry": [
+				"corpus-python/scripts/**/*.ts",
+				"docker/server.ts",
+				"*.config.ts",
+				"oxlint.plugin.ts",
+				"config/oxlint/fix-changed.ts",
+				"config/vale/lint-prose.ts",
+				"config/vale/check-rules.ts",
+				"config/vale/fixtures/clean.ts",
+				"config/vale/fixtures/dirty.ts",
+				"dependency-cruiser.config.mjs",
+				"lib/dev-mcp/index.ts",
+				"lib/dev-mcp/cli.ts",
+				"lib/dev-mcp/worker.ts",
+				"lib/dev-mcp/hooks/**/*.ts",
+				"lib/release-kit/index.ts",
+				"lib/release-kit/registry.ts",
+				"lib/repo-health/index.ts",
+				"lib/repo-health/registry.ts",
+				"lib/ops-cli/index.ts",
+				"lib/ops-cli/cli.ts",
+				"lib/release-mcp/index.ts",
+				"lib/release-mcp/cli.ts",
+				"lib/**/*.test.ts",
+				"lib/**/*.test.tsx",
+				"vitest.fast.config.ts",
+				"vitest.full.config.ts",
+				"vitest.slow.config.ts"
+			]
+		},
 		"packages/*": {
 			"entry": ["lib/index.ts", "lib/cli.ts", "cli/main.ts", "sdk/**/*.ts", "tools/**/*.ts", "lib/tools/**/*.ts"]
 		},
@@ -49,10 +69,6 @@
 		"packages/astrogeology": {
 			"entry": ["lib/cli.ts", "lib/commands/*.tsx"],
 			"ignoreDependencies": ["wrangler"]
-		},
-		"packages/dev-mcp": {
-			"entry": ["lib/index.ts", "lib/cli.ts", "lib/worker.ts", "lib/hooks/*.ts"],
-			"ignoreDependencies": ["@vvago/vale"]
 		},
 		"packages/{fastify,libpostal,mcp,nominatim,photon}": {
 			"entry": ["lib/index.ts", "cli/main.ts", "tools/**/*.ts"],
@@ -102,19 +118,6 @@
 				"static/**/*.{js,mjs,ts}"
 			],
 			"ignoreDependencies": ["@mailwoman/cartographer"]
-		},
-		"packages/release-kit": {
-			"entry": ["lib/index.ts", "lib/registry.ts"]
-		},
-		"packages/repo-health": {
-			"entry": ["lib/index.ts", "lib/registry.ts"],
-			"ignoreDependencies": ["@vvago/vale"]
-		},
-		"packages/ops-cli": {
-			"entry": ["lib/index.ts", "lib/cli.ts"]
-		},
-		"packages/release-mcp": {
-			"entry": ["lib/index.ts", "lib/cli.ts"]
 		}
 	}
 }

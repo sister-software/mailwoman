@@ -8,7 +8,7 @@
 
 import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
 import { MapFooter } from "@mailwoman/react/map/MapFooter"
-import { commitURL } from "@mailwoman/site-kit/build-info"
+import { commitURL } from "@mailwoman/universe/site-kit/build-info"
 import { DATA_CREDITS } from "mailwoman/browser-runtime/resources"
 import type { ReactNode } from "react"
 

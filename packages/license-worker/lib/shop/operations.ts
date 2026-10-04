@@ -15,7 +15,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/release-kit"
+import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/universe/release-kit/operation"
 import Stripe from "stripe"
 import { z } from "zod"
 

@@ -13,7 +13,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/symbol-precheck.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/symbol-precheck.ts\"",
 						"timeout": 10
 					}
 				]
@@ -23,7 +23,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/bash/write/guard.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/bash/write/guard.ts\"",
 						"timeout": 10,
 						"statusMessage": "Bash write guard"
 					}
@@ -36,7 +36,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/todo-issue-sync.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/todo-issue-sync.ts\"",
 						"timeout": 15
 					}
 				]
@@ -46,7 +46,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/edit/check.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/vale/edit/check.ts\"",
 						"timeout": 30,
 						"statusMessage": "Prose check"
 					}
@@ -58,13 +58,13 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/session-orientation.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/session-orientation.ts\"",
 						"timeout": 15,
 						"statusMessage": "Workspace orientation"
 					},
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/session/digest.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/vale/session/digest.ts\"",
 						"timeout": 15,
 						"statusMessage": "Prose rules"
 					}
@@ -76,13 +76,13 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/ci-completion.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/ci-completion.ts\"",
 						"timeout": 30,
 						"statusMessage": "CI completion check"
 					},
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/response/check.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/vale/response/check.ts\"",
 						"timeout": 30,
 						"statusMessage": "Vale prose check"
 					}

@@ -65,7 +65,7 @@ It stages the tracked tree (`git archive`) into an isolated root and materialize
 artifacts there. It then packs and audits every `.release-it.json` workspace through the same
 `packWorkspaceForPublish` + `verifyTarball` path that the publish workflow uses, and it collects every
 failure in one sweep. It also checks the named-absence identity: the root workspaces minus the release
-list must equal the sanctioned absences by name (see `packages/release-kit/lib/release/stage.ts`).
+list must equal the sanctioned absences by name (see `lib/release-kit/release/stage.ts`).
 Add `--keep` or `--staging <dir>` to inspect the tree afterwards. The preflight writes no state to git,
 GitHub, npm, R2 or HF, and an interrupted run cannot dirty the checkout.
 

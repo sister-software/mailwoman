@@ -13,7 +13,7 @@ import {
 	expectNothingUnderTheFooter,
 	expectPointerQueriesStayScoped,
 	expectReachable,
-} from "@mailwoman/site-kit/playwright/chrome-interface"
+} from "@mailwoman/universe/site-kit/playwright/chrome-interface"
 import { expect, test } from "@playwright/test"
 
 /**

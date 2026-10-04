@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Codex Stop hook: the Codex twin of `vale-response-check.ts`. The lint policy — rule set,
+ *   severity split, finding format — lives in `vale-check-core.ts`; this file owns the Codex
+ *   payload shape, loop guard and output JSON. Codex's hook interface
+ *   (https://learn.chatgpt.com/docs/hooks) matches Claude Code's on the parts this hook uses.
+ *   `Stop` fires when a turn completes. The payload includes `last_assistant_message`.
+ *   The output is `decision: "block"` + `reason` or the non-blocking `systemMessage`.
+ *   The Stop-output schema rejects `hookSpecificOutput` because Stop cannot inject additional context.
+ *
+ *   Two deliberate differences from the Claude adapter:
+ *
+ *   - Codex has no `stop_hook_active` field or built-in loop prevention. The one-pass guard
+ *     uses a session-keyed marker file in the OS temp dir. A block writes the marker.
+ *     The next Stop in that session consumes it and passes unchecked. That approximates Claude's semantics
+ *     — the reply after a block goes unlinted whatever produced it — and caps a false positive at
+ *     one corrective turn.
+ *   - There is no transcript fallback: Codex's `transcript_path` is nullable and its transcript
+ *     schema is Codex's own rather than the jsonl shape the Claude adapter parses. A missing
+ *     `last_assistant_message` here is silence rather than a parse attempt.
+ *
+ *   Register it in `.codex/hooks.json` under `hooks.Stop`; the command path is repo-relative,
+ *   matching how `.codex/config.toml` addresses `lib/dev-mcp/cli.ts`.
+ */
+
+import { tempRootPath } from "@mailwoman/core/data-root"
+import { pathExists, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
+
+import { lintReply, renderVerdict } from "#dev-mcp/hooks/vale/check-core"
+
+function markerPath(sessionID: string): string {
+	return tempRootPath(`mailwoman-vale-codex-${sessionID.replaceAll(/[^\w-]/g, "")}`)
+}
+
+async function main(): Promise<void> {
+	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
+	const sessionID = typeof payload?.session_id === "string" ? payload.session_id : ""
+	const marker = sessionID ? markerPath(sessionID) : ""
+
+	// One revision pass per block: the marker written by the previous block is consumed here,
+	// so the corrective reply passes unchecked rather than looping.
+	if (marker && (await pathExists(marker))) {
+		await removePath(marker)
+
+		return
+	}
+
+	const reply = payload?.last_assistant_message
+
+	if (typeof reply !== "string" || !reply.trim()) return
+
+	const lintedReply = await lintReply(reply)
+	const verdict = renderVerdict(lintedReply)
+
+	if (!verdict) return
+
+	if (verdict.kind === "block") {
+		if (marker) {
+			await writeLocalTextFile("", marker)
+		}
+
+		process.stdout.write(stringifyJSON({ decision: "block", reason: verdict.text }))
+
+		return
+	}
+
+	process.stdout.write(stringifyJSON({ systemMessage: verdict.text }))
+}
+
+await main().catch(() => void 0)

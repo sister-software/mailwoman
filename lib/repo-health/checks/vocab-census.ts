@@ -1,0 +1,318 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the action it needs and reports each as a diagnostic.
+ *
+ *   The three edits increase in cost. Interface-tied terms keep their spelling and need only backticks.
+ *   Modified references use the preceding word to identify the check. Bare references require readers to infer
+ *   the meaning from the paragraph.
+ */
+
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
+import { isProcessError, runFile } from "@mailwoman/core/process"
+import { valeCommand } from "@mailwoman/core/vale"
+import { relative, resolvePath } from "path-ts"
+import { TextSpliterator } from "spliterator"
+
+import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#repo-health/check"
+import { trackedSourcePaths } from "#repo-health/tracked-sources"
+
+/**
+ * Matches one Vale `--output line` record of the form `path:line:col:Rule:message`.
+ *
+ * Vale prefixes a rule with the style package that holds it, and `config/vale/.vale-code-census.ini`
+ * sets that package to `styles` on its `BasedOnStyles = styles` line.
+ * A pattern naming another package matches no record, so `collectHits` returns
+ * an empty array for a tree that has hits.
+ *
+ * The `POSITIVE_CONTROL` check exists for that failure and reports it as a run that measured no rows.
+ */
+const HIT_PATTERN = /^(.*?):(\d+):(\d+):styles\.AmbiguousShorthand(?:Code)?:'([^']+)'/
+
+/**
+ * Matches an interface-tied token.
+ *
+ * The token keeps its spelling and needs only backticks.
+ * The current pattern matches no lines.
+ *
+ * Record the reason in `AmbiguousShorthandCode.yml` for each addition.
+ */
+const INTERFACE_TOKEN = /(?!)/
+
+/**
+ * The action that a hit needs.
+ */
+export const Remedy = {
+	backtick: "backtick",
+	renameCheck: "rename-check",
+	readContext: "read-context",
+} as const
+
+/**
+ * One action from the constant above.
+ */
+export type Remedy = (typeof Remedy)[keyof typeof Remedy]
+
+/**
+ * One classified Vale hit.
+ */
+export interface Hit {
+	path: string
+	line: number
+	word: string
+	remedy: Remedy
+	/**
+	 * The word immediately before the hit.
+	 *
+	 * When this word has meaning, it identifies the intended check.
+	 */
+	modifier: string
+}
+
+/**
+ * Articles and pronouns are examples of preceding words that add no meaning.
+ *
+ * Comment markers also add no meaning.
+ * A hit after any of them is a bare reference.
+ */
+const EMPTY_MODIFIERS = new Set([
+	"the",
+	"a",
+	"an",
+	"this",
+	"that",
+	"these",
+	"those",
+	"its",
+	"their",
+	"every",
+	"each",
+	"both",
+	"is",
+	"as",
+	"at",
+	"to",
+	"of",
+	"and",
+	"or",
+	"no",
+	"not",
+	"one",
+	"two",
+	"three",
+	"s",
+	"it",
+	"//",
+	"/",
+	"*",
+	"`",
+	".",
+	",",
+	"-",
+	"",
+	"per",
+])
+
+/**
+ * The number of lines on each side of Vale's reported line to search for the matched word,
+ * because empty `//` comment lines shift Vale's reported line numbers.
+ */
+const LINE_DRIFT_WINDOW = 3
+
+/**
+ * Finds the line nearest to Vale's reported line that contains `word`, falling back to
+ * the reported line when the window does not contain it so no hit is dropped.
+ */
+function locate(
+	lines: readonly string[],
+	reported: number,
+	column: number,
+	word: string
+): { line: number; source: string; index: number } {
+	const needle = word.toLowerCase()
+
+	for (let offset = 0; offset <= LINE_DRIFT_WINDOW; offset++) {
+		for (const candidate of offset === 0 ? [reported] : [reported - offset, reported + offset]) {
+			const source = lines[candidate - 1] ?? ""
+			const from = candidate === reported ? Math.max(0, column - 3) : 0
+			let index = source.toLowerCase().indexOf(needle, from)
+
+			if (index === -1 && candidate === reported) {
+				index = source.toLowerCase().indexOf(needle)
+			}
+
+			if (index !== -1) return { line: candidate, source, index }
+		}
+	}
+
+	return { line: reported, source: lines[reported - 1] ?? "", index: -1 }
+}
+
+/**
+ * Classifies each Vale `--output line` record against `sources`, a map from paths to file lines.
+ *
+ * The function is pure.
+ * A wrong line offset can mislabel a hit's action, but it cannot drop the hit.
+ */
+export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
+	const hits: Hit[] = []
+
+	for (const raw of hitLines) {
+		const match = HIT_PATTERN.exec(raw)
+
+		if (!match) continue
+
+		const [, path, lineText, colText, word] = match
+		const lines = sources.get(path!) ?? []
+		const { line, source, index } = locate(lines, Number(lineText), Number(colText), word!)
+
+		const before = index === -1 ? "" : source.slice(0, index)
+		const modifier = (/([A-Za-z0-9_.`§/-]+)[\s-]*$/.exec(before.trimEnd())?.[1] ?? "").toLowerCase()
+
+		// An interface-tied name is detected from the whole line, because the word before the hit varies.
+		const remedy = INTERFACE_TOKEN.test(source)
+			? Remedy.backtick
+			: EMPTY_MODIFIERS.has(modifier)
+				? Remedy.readContext
+				: Remedy.renameCheck
+
+		hits.push({ path: path!, line, word: word!, remedy, modifier })
+	}
+
+	return hits
+}
+
+/**
+ * Returns the banned word that a match belongs to, searching the whole token because the
+ * code rule matches whole compounds where the banned word may not come first.
+ */
+function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
+	const lower = word.toLowerCase()
+
+	if (lower.includes("gat")) return "gate"
+
+	if (lower.includes("seam")) return "seam"
+
+	if (lower.includes("shard")) return "shard"
+
+	return "cut"
+}
+
+/**
+ * The tracked source files that the census covers.
+ */
+const TRACKED_GLOBS = ["*.ts", "*.tsx", "corpus-python/*.py"] as const
+
+/**
+ * Runs Vale over every tracked source file and returns its `--output line` records,
+ * resolving Vale through the workspace so it runs the same binary as `yarn lint:prose`.
+ */
+async function collectHits(context: RepoContext): Promise<string[]> {
+	const root = context.repoRoot
+
+	const files = (await trackedSourcePaths(context, { globs: TRACKED_GLOBS, existingOnly: true })).map((path) =>
+		relative(root, path)
+	)
+
+	// The census config includes the Vale fixtures the enforcing config exempts, so the positive control can trip.
+	const vale = await valeCommand(import.meta.url)
+	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
+
+	// Vale must run from the repository root because its paths are repo-relative.
+	// A process error includes the expected output when Vale exits non-zero for alerts.
+	// The function rethrows every other error instead of treating it as zero hits.
+	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
+		cwd: root,
+		maxBuffer: 1 << 28,
+	}).catch((error: unknown) => {
+		if (isProcessError(error)) return { stdout: error.stdout, stderr: error.stderr }
+
+		throw error
+	})
+
+	return TextSpliterator.from(result.stdout)
+		.toArray()
+		.filter((line) => HIT_PATTERN.test(line))
+}
+
+/**
+ * A permanent fixture that must always produce hits, distinguishing a clean
+ * tree from a run that resolved no files.
+ */
+const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
+
+/**
+ * Path prefixes whose hits do not count, each with the reason.
+ * These files spell the banned words as data.
+ */
+const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
+	["config/vale/fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
+	["lib/repo-health/checks/vocab-census.ts", "this file — its patterns have to spell the words it classifies"],
+	["lib/repo-health/checks/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
+	["lib/repo-health/checks/debt.ts", "its banned-vocabulary constant has to spell the word it counts"],
+	["config/vale/check-rules.ts", "the rule fixtures' own harness; its docstring quotes the words the rules match"],
+]
+
+/**
+ * The `vocab-census` check: one error for each ambiguous-shorthand hit outside
+ * {@link UNMEASURED}, with the action the hit needs.
+ */
+export const vocabCensusCheck: RepoCheck = {
+	id: "vocab-census",
+	description:
+		"Every ambiguous-shorthand hit Vale finds in tracked source, classified by the remedy it needs; the target is zero.",
+	async run(context) {
+		const hitLines = await collectHits(context)
+		const paths = new Set<string>()
+
+		for (const raw of hitLines) {
+			const match = HIT_PATTERN.exec(raw)
+
+			if (match) {
+				paths.add(match[1]!)
+			}
+		}
+
+		const sources = new Map<string, readonly string[]>()
+
+		await Promise.all(
+			[...paths].map(async (path) => {
+				// The classifier indexes lines by number, so `skipEmpty: false` must keep blank lines.
+				sources.set(
+					path,
+					TextSpliterator.from(await readLocalTextFile(resolvePath(context.repoRoot, path)), {
+						skipEmpty: false,
+					}).toArray()
+				)
+			})
+		)
+
+		const hits = classify(hitLines, sources)
+
+		// The control checks the classified hits, so it fails when the classifier's
+		// pattern stops matching Vale's output.
+		if (!hits.some((hit) => hit.path === POSITIVE_CONTROL)) {
+			return [
+				{
+					severity: DiagnosticSeverity.Error,
+					message: `the positive control ${POSITIVE_CONTROL} classified no hits, so this run measured nothing — its count is not an absence`,
+					file: POSITIVE_CONTROL,
+				},
+			]
+		}
+
+		// The exclusions apply after the control check, because the control file is itself excluded.
+		const counted = hits.filter((hit) => !UNMEASURED.some(([path]) => hit.path.startsWith(path)))
+
+		const diagnostics: Diagnostic[] = counted.map((hit) => ({
+			severity: DiagnosticSeverity.Error,
+			message: `${stringifyJSON(hit.word)} (${wordFamily(hit.word)}) needs the ${hit.remedy} remedy${hit.modifier ? `; modifier ${stringifyJSON(hit.modifier)}` : ""}`,
+			file: hit.path,
+			line: hit.line,
+		}))
+
+		return diagnostics
+	},
+}
