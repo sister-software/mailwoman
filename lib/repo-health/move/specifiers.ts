@@ -84,7 +84,9 @@ function subpathKeyFor(key: string, target: string, packageRelative: string): st
 
 	if (star === -1) return target === packageRelative ? key : undefined
 
-	if (!key.includes("*")) return undefined
+	const keyStar = key.indexOf("*")
+
+	if (keyStar === -1 || key.lastIndexOf("*") !== keyStar || target.lastIndexOf("*") !== star) return undefined
 
 	const head = target.slice(0, star)
 	const tail = target.slice(star + 1)
@@ -93,7 +95,7 @@ function subpathKeyFor(key: string, target: string, packageRelative: string): st
 
 	if (packageRelative.length <= head.length + tail.length) return undefined
 
-	return key.replace("*", packageRelative.slice(head.length, packageRelative.length - tail.length))
+	return `${key.slice(0, keyStar)}${packageRelative.slice(head.length, packageRelative.length - tail.length)}${key.slice(keyStar + 1)}`
 }
 
 function packageRelativeTarget(manifest: PackageManifest, file: string): string | undefined {

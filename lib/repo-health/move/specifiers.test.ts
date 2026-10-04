@@ -63,6 +63,15 @@ describe("packageSpecifiersFor", () => {
 		expect(internal).toContain("#test-kit/corpus-recipe")
 	})
 
+	test("refuses a pattern with more than one wildcard", () => {
+		const manifest: PackageManifest = {
+			...CORPUS,
+			imports: { "#recipes/*/*": "./lib/recipes/*.ts", "#source/*": "./lib/*/*.ts" },
+		}
+
+		expect(packageSpecifiersFor(manifest, "packages/corpus/lib/recipes/fr/order.ts").internal).toEqual([])
+	})
+
 	test("names the package itself for a root export target", () => {
 		expect(packageSpecifiersFor(CORPUS, "packages/corpus/lib/index.ts").bare).toContain("@mailwoman/corpus")
 	})
