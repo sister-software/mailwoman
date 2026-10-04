@@ -23,6 +23,26 @@ export interface ReleaseInfo {
 	hasWOFDB: boolean
 	hasAnchor?: boolean
 	hasPolygons?: boolean
+	/**
+	 * Runtime capabilities the release's model needs, such as `locale_hint` for a graph with that input.
+	 * A runtime lacking one cannot load the release.
+	 */
+	requiresRuntime?: string[]
+}
+
+/**
+ * The capabilities this browser runtime provides.
+ *
+ * A release whose `requiresRuntime` names one missing from this list is passed over
+ * when the manifest picks the default release.
+ */
+export const BROWSER_RUNTIME_CAPABILITIES: readonly string[] = ["locale_hint"]
+
+/**
+ * Reports whether this runtime provides every capability a release requires.
+ */
+export function runtimeSupports(release: Pick<ReleaseInfo, "requiresRuntime">): boolean {
+	return (release.requiresRuntime ?? []).every((capability) => BROWSER_RUNTIME_CAPABILITIES.includes(capability))
 }
 
 export interface ReleasesManifest {
@@ -87,9 +107,18 @@ export interface WireReleasesManifest {
  * The interface test pins all three parties.
  */
 export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesManifest {
+	const pointed = raw.releases.find((release) => release.version === raw.defaultVersion)
+
+	// A page running older code than the release needs falls back to the newest release it can load.
+	// The manifest lists releases newest first.
+	const defaultVersion =
+		!pointed || runtimeSupports(pointed)
+			? raw.defaultVersion
+			: (raw.releases.find((release) => runtimeSupports(release))?.version ?? raw.defaultVersion)
+
 	return {
 		locale: raw.locale,
-		defaultVersion: raw.defaultVersion,
+		defaultVersion,
 		releases: raw.releases.map((r) => ({
 			...r,
 			hasFST: r.hasFST ?? r.hasFst ?? false,

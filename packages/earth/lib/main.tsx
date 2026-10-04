@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { reloadOnServiceWorkerTakeover } from "@mailwoman/site-kit/service-worker-client"
 import { setWorkerUrl } from "maplibre-gl"
 import maplibreWorkerURL from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
 import { createRoot } from "react-dom/client"
@@ -17,6 +18,7 @@ import { App } from "./App.tsx"
 // and hands back the emitted file's URL.
 setWorkerUrl(maplibreWorkerURL)
 
+reloadOnServiceWorkerTakeover()
 registerSW()
 
 const root = document.getElementById("root")

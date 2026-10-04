@@ -29,8 +29,6 @@ const CASES: Array<{
 		address: "1502 A Cage Street, Houston, TX 77020",
 		lat: 29.7747,
 		lon: -95.335,
-		knownFailure:
-			"The street tier answers nothing for this row and the cascade falls back to the Houston locality centroid (WOF id 101725629, 29.7848, -95.3614); the docs demo on main resolves it identically.",
 	},
 	{ state: "GA", address: "1705 Adolphus Street, Atlanta, GA 30307", lat: 33.7636, lon: -84.3317 },
 	{ state: "WA", address: "1211 Aloha Street, Seattle, WA 98109", lat: 47.6266, lon: -122.332 },

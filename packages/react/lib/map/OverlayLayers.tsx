@@ -23,12 +23,18 @@ export interface OverlayLayersProps {
 	 * The overlays to render, in draw order (first is drawn first / lowest).
 	 */
 	overlays?: OverlaySpec[]
+	/**
+	 * The basemap layer every overlay layer is inserted beneath, such as the first
+	 * label layer, so labels stay readable over a fill.
+	 * Omitted, the layers go on top of the style.
+	 */
+	beforeID?: string
 }
 
 /**
  * Render each overlay as one `<Source>` and its `<Layer>`s, honoring the `visible` flag via `visibility`.
  */
-export function OverlayLayers({ overlays }: OverlayLayersProps): ReactNode {
+export function OverlayLayers({ overlays, beforeID }: OverlayLayersProps): ReactNode {
 	if (!overlays || !overlays.length) return null
 
 	return (
@@ -40,7 +46,12 @@ export function OverlayLayers({ overlays }: OverlayLayersProps): ReactNode {
 					<Fragment key={overlay.id}>
 						<Source id={overlay.id} {...overlay.source} />
 						{overlay.layers.map((layer) => (
-							<Layer key={layer.id} {...layer} layout={{ ...layer.layout, visibility }} />
+							<Layer
+								key={layer.id}
+								{...layer}
+								{...(beforeID ? { beforeId: beforeID } : {})}
+								layout={{ ...layer.layout, visibility }}
+							/>
 						))}
 					</Fragment>
 				)
