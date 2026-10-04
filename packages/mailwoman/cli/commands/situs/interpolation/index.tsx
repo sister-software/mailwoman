@@ -189,7 +189,7 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (await pathExists(RANKED_FILE)) {
-		return await readLocalJSONFile<CountyRecord[]>(RANKED_FILE)
+		return readLocalJSONFile<CountyRecord[]>(RANKED_FILE)
 	}
 
 	const records = await fetchAndBuildRanking()
@@ -206,7 +206,7 @@ async function fetchText(url: string): Promise<string> {
 
 	if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`)
 
-	return await response.text()
+	return response.text()
 }
 
 /**

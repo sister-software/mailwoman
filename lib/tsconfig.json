@@ -1,0 +1,28 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": "..",
+		"outDir": "./out",
+		"emitDeclarationOnly": true,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
+		"lib": ["ESNext", "DOM", "DOM.Iterable"]
+	},
+	"include": ["./**/*", "../.release-it.json"],
+	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [
+		// { "path": "../packages/license-worker" },
+		{ "path": "../packages/core" },
+		{ "path": "../packages/corpus" },
+		{ "path": "../packages/neural" },
+		{ "path": "../packages/sqlite" },
+		{ "path": "../packages/codex" },
+		{ "path": "../packages/resolver-wof-sqlite" },
+		{ "path": "../packages/geocode-oracle" },
+		{ "path": "../packages/libpostal" },
+		{ "path": "../packages/resolver" },
+		{ "path": "../packages/mailwoman" },
+		{ "path": "../packages/mailwoman/cli" },
+		{ "path": "../packages/mailwoman/tools" }
+	]
+}

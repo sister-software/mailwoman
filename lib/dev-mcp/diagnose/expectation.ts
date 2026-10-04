@@ -1,0 +1,95 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @file Diagnosed-row expectation grading.
+ */
+
+import { stringifyJSON } from "@mailwoman/core/json"
+import type { GeocodeRun } from "mailwoman/geocode"
+import { checkCase } from "mailwoman/tools/eval-harness/gauntlet/check-case"
+import { toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
+import type { GauntletCaseTable } from "mailwoman/tools/eval-harness/gauntlet/schema"
+
+import { caseCarriesTruth, seedToCaseTable } from "#dev-mcp/grade"
+import type { ResolvedInput } from "#dev-mcp/input-sets"
+
+/**
+ * How the row was graded and the basis for that grade.
+ *
+ * `met: null` means the row asserts no fact, never that it passed.
+ */
+export interface ExpectationReading {
+	source: "board_case" | "corpus_row" | "none"
+	met: boolean | null
+	issues: string[]
+}
+
+// #region Expectations
+
+/**
+ * The case table this row is graded against, or `null` when it asserts no fact.
+ *
+ * A board row contains a `SeedCase` and grades through the board's own `checkCase`;
+ * a panel / holdout / golden / parity row contains expectations without a seed,
+ * so one is synthesized around what its corpus actually pinned.
+ * The same grader then reads both.
+ */
+export function expectationCase(
+	item: ResolvedInput
+): { table: GauntletCaseTable; source: "board_case" | "corpus_row" } | null {
+	if (item.seed) {
+		return caseCarriesTruth(item.seed) ? { table: seedToCaseTable(item.seed), source: "board_case" } : null
+	}
+
+	const hasCoordinate = typeof item.truthLat === "number" && typeof item.truthLon === "number"
+
+	if (!hasCoordinate && !item.expectComponents) return null
+
+	return {
+		source: "corpus_row",
+		table: {
+			id: item.id,
+			input: item.input,
+			source: "dev-mcp:diagnose",
+			address_kind: item.addressKind ?? "unknown",
+			country: item.country ?? "",
+			status: "pass",
+			expect_components: item.expectComponents ? stringifyJSON(item.expectComponents) : null,
+			expect_component_renderings: null,
+			expect_place_id: null,
+			expect_place_name: null,
+			expect_lat: item.truthLat ?? null,
+			expect_lon: item.truthLon ?? null,
+			// Null where the corpus pinned none, so `checkCase` applies its own default
+			// rather than this module inventing a tolerance no corpus agreed to.
+			expect_tolerance_m: item.toleranceM ?? null,
+			expect_tier: null,
+			default_country: null,
+			added_at: "",
+			bug_ref: null,
+			note: null,
+			ablation_expect: null,
+			locale: null,
+			expect_abstain: null,
+		},
+	}
+}
+
+/**
+ * Grade one row against whatever its corpus pinned.
+ *
+ * Typed against the real `GeocodeResult` rather than {@link AccountInput}:
+ * `checkCase` reads the gauntlet projection.
+ * A second projection makes a recorded answer disagree with the live answer it came from.
+ */
+export function gradeExpectation(item: ResolvedInput, result: GeocodeRun["result"]): ExpectationReading {
+	const expectation = expectationCase(item)
+
+	if (!expectation) return { source: "none", met: null, issues: [] }
+
+	const issues = checkCase(expectation.table, toGauntletResult(result))
+
+	return { source: expectation.source, met: issues.length === 0, issues }
+}
+
+// #endregion

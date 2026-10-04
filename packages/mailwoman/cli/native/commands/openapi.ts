@@ -27,7 +27,7 @@ export const spec = {
  * Run `mw openapi` without loading React, Ink, or the parser/resolver stack.
  */
 export async function run(args: readonly string[]): Promise<number> {
-	return await runNativeCommand(spec, args, async (parsed) => {
+	return runNativeCommand(spec, args, async (parsed) => {
 		const [{ createMailwomanAPI, MAILWOMAN_API_DOC_INFO }, { printOpenAPIDocument }] = await Promise.all([
 			import("@mailwoman/api"),
 			import("@mailwoman/api-kit"),

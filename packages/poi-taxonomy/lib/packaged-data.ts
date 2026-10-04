@@ -45,5 +45,5 @@ export async function readPackagedTable<T>(filename: string): Promise<T> {
 	const path = await resolvePackagedDataPath(filename)
 
 	// A corrupt shipped table means a broken build, so the parse error propagates with its offset.
-	return (await readLocalJSONFile(path)) as T
+	return readLocalJSONFile<T>(path)
 }

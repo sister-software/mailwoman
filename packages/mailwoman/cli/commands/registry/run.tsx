@@ -509,7 +509,7 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 		// `loadSources` can throw on a malformed config.
 		// The hook routes its error to the same handler.
 		if (options.sources) {
-			return await runMultiSource(await loadSources(options.sources), options)
+			return runMultiSource(await loadSources(options.sources), options)
 		}
 
 		const csv = args?.[0]
@@ -521,7 +521,7 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 			)
 		}
 
-		return await runRegistry(csv.trim(), options)
+		return runRegistry(csv.trim(), options)
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />

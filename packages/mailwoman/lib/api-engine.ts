@@ -60,7 +60,7 @@ async function wofPaths(): Promise<string[]> {
 	// that is not on disk is dropped here rather than handed to the resolver to fail on open.
 	const explicit = env ? extractDelimited(env) : undefined
 
-	return await existingWOFDatabasePaths(explicit)
+	return existingWOFDatabasePaths(explicit)
 }
 
 /**

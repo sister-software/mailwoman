@@ -10,7 +10,7 @@
 import type { PlanetaryBuildManifest } from "@mailwoman/astrogeology/schema/manifest"
 import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
 import { MapFooter } from "@mailwoman/react/map/MapFooter"
-import { commitURL } from "@mailwoman/site-kit/build-info"
+import { commitURL } from "@mailwoman/universe/site-kit/build-info"
 
 import type { PlanetaryMapConfig } from "#bodies/config"
 import { useBuildManifest } from "#panels/useBuildManifest"

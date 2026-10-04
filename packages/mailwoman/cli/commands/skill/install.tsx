@@ -75,7 +75,7 @@ async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
 
 const SkillInstall: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
-		async () => await installSkill(options.dest),
+		async () => installSkill(options.dest),
 		(result) => (result.ok ? 0 : 1)
 	)
 

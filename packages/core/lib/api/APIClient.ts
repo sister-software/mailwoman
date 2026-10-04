@@ -263,7 +263,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 				if (this.#shutdown.signal.aborted || !directive.retryable || attempt >= this.#retryPolicy.maxAttempts) {
 					// Always throws — `Promise<never>` is assignable to this method's return type.
-					return await delegateAxiosError(error)
+					return delegateAxiosError(error)
 				}
 
 				const waitMs = retryDelayMs(attempt, directive, this.#retryPolicy)

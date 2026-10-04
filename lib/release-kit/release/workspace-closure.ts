@@ -1,0 +1,103 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file The `workspace:*` closure of a set of seed packages, computed from the manifests rather than copied into a
+ *   list and the pack step that turns a closure into `file:` tarball dependencies. Both clean-install smokes use
+ *   these, so a fix to how a closure is walked or packed lands in one place.
+ */
+
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
+
+import { packWorkspaceForPublish } from "#release-kit/pack/pack-workspace"
+
+const DEPENDENCY_FIELDS = ["dependencies", "optionalDependencies", "peerDependencies"] as const
+
+/**
+ * Every workspace the root `workspaces` field names, expanded, keyed by package name,
+ * with its repo-relative directory.
+ */
+// repo-health-ignore export-name-affix -- keys the shared reader's answer by package name.
+export async function workspaceDirectories(repoRoot: PathBuilderLike): Promise<Map<string, string>> {
+	const byName = new Map<string, string>()
+
+	for (const dir of await readWorkspaceDirectories(repoRoot)) {
+		const manifest = await readPackageJSON<{ name: string }>(resolvePath(repoRoot, dir, "package.json"))
+
+		byName.set(manifest.name, dir)
+	}
+
+	return byName
+}
+
+/**
+ * The seeds plus every workspace they reach through a `workspace:` dependency,
+ * optional or peer dependency, transitively, computed so a package added to a
+ * seed's graph is picked up without editing a list.
+ *
+ * @throws When a seed or a reached dependency names no workspace: a `workspace:`
+ * specifier that resolves nowhere is a broken manifest rather than an absence.
+ */
+export async function walkWorkspaceClosure(
+	repoRoot: PathBuilderLike,
+	seeds: readonly string[]
+): Promise<Map<string, string>> {
+	const byName = await workspaceDirectories(repoRoot)
+	const rootManifest = await readPackageJSON<{ name: string; private: true }>(resolvePath(repoRoot, "package.json"))
+	const closure = new Map<string, string>()
+	const queue = [...seeds]
+
+	while (queue.length) {
+		const name = queue.pop()!
+
+		if (closure.has(name)) continue
+
+		const dir = byName.get(name)
+
+		// The private root package supplies shared tooling to workspaces, but it is not a workspace to pack.
+		if (name === rootManifest.name) continue
+
+		if (!dir) throw new Error(`workspace closure: ${name} names no workspace in the root package.json`)
+
+		closure.set(name, dir)
+
+		const manifest = await readPackageJSON<{ name: string }>(resolvePath(repoRoot, dir, "package.json"))
+
+		for (const field of DEPENDENCY_FIELDS) {
+			for (const [dependency, spec] of Object.entries(manifest[field] ?? {})) {
+				if (spec?.startsWith("workspace:") && !closure.has(dependency)) {
+					queue.push(dependency)
+				}
+			}
+		}
+	}
+
+	return closure
+}
+
+/**
+ * Pack each workspace into `tarDir` with the derived publish map and answer the `dependencies`
+ * block a throwaway consumer project installs from, every entry a `file:` tarball.
+ *
+ * Sequential on purpose: each pack rewrites its own manifest while yarn reads its siblings.
+ */
+export async function packWorkspaces(
+	repoRoot: PathBuilderLike,
+	workspaces: ReadonlyMap<string, string>,
+	tarDir: PathBuilderLike
+): Promise<Record<string, string>> {
+	const tarballs = PathBuilder.from(tarDir)
+	const dependencies: Record<string, string> = {}
+
+	for (const [name, dir] of workspaces) {
+		// A string, because the `file:` specifier embeds it.
+		const tarball = tarballs(`${dir}.tgz`).toString()
+
+		await packWorkspaceForPublish(resolvePath(repoRoot, dir), tarball)
+		dependencies[name] = `file:${tarball}`
+	}
+
+	return dependencies
+}

@@ -18,6 +18,7 @@
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { isIdentical } from "@mailwoman/core/objects"
 import type { PathBuilderLike } from "path-ts"
 
 /**
@@ -110,7 +111,7 @@ export async function readAlignCheckpoint(
 
 	const prefix = expected.adapterOrder.slice(0, checkpoint.completed_adapters.length)
 
-	if (stringifyJSON(prefix) !== stringifyJSON(checkpoint.completed_adapters)) {
+	if (!isIdentical(prefix, checkpoint.completed_adapters)) {
 		throw new Error(
 			`resume refused: ${path.toString()} recorded ${stringifyJSON(checkpoint.completed_adapters)} as aligned ` +
 				`and this build's adapter order begins ${stringifyJSON(prefix)}. Alignment appends, so the rows would ` +

@@ -42,7 +42,7 @@ const ClientsGenerate: CommandComponent<typeof spec> = ({ options }) => {
 		async () => {
 			const { generateClients } = await import("#tools/generate-clients")
 
-			return await generateClients({
+			return generateClients({
 				outDir: options.outDir,
 				skipVerify: options.skipVerify,
 				onPhase: phaseReporter(),

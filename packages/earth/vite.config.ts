@@ -7,9 +7,9 @@
  *   output is a static asset Cloudflare serves without invoking a Worker.
  */
 
-import { buildInfoPlugin } from "@mailwoman/site-kit/vite/build-info"
-import { installablePWA } from "@mailwoman/site-kit/vite/pwa"
-import { stageSQLiteRuntimePlugin } from "@mailwoman/site-kit/vite/stage-sqlite-runtime"
+import { buildInfoPlugin } from "@mailwoman/universe/site-kit/vite/build-info"
+import { installablePWA } from "@mailwoman/universe/site-kit/vite/pwa"
+import { stageSQLiteRuntimePlugin } from "@mailwoman/universe/site-kit/vite/stage-sqlite-runtime"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"

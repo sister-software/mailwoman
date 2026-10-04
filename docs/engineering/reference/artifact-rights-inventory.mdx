@@ -493,7 +493,7 @@ across versions of that license.
 
 `packages/osm` is held out of the release pending ODbL counsel sign-off. It is not `private`, and it
 declares `publishConfig.access: public`. The hold was membership in `SANCTIONED_RELEASE_ABSENCES` in
-`packages/release-kit/lib/release/stage.ts`, a record that `checkReleaseListIdentity` reads so a
+`lib/release-kit/release/stage.ts`, a record that `checkReleaseListIdentity` reads so a
 missing workspace fails with its name. No step on the publish path read it. A run of
 `mwops release publish-workspace --allow-unplanned` against that directory, or `npm publish` by
 hand, would have published it.

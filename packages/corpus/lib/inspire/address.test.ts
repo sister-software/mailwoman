@@ -101,7 +101,7 @@ async function* once(text: string): AsyncIterable<string> {
 }
 
 async function features(document: string, name: string | readonly string[]) {
-	return await Array.fromAsync(streamMarkupElements(once(document), name, { xml: true }))
+	return Array.fromAsync(streamMarkupElements(once(document), name, { xml: true }))
 }
 
 describe("codelistValue", () => {

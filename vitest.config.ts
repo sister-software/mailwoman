@@ -31,7 +31,7 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  */
 async function readManifest<T>(path: string): Promise<T> {
 	// oxlint-disable-next-line no-restricted-properties -- see above.
-	return await readLocalJSONFile<T>(path)
+	return readLocalJSONFile<T>(path)
 }
 
 /**

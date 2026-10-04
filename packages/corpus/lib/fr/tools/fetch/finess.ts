@@ -257,11 +257,11 @@ export async function downloadFinessExtract(
 
 		bytes = written.bytes
 	} catch (error) {
-		return await fail(`download failed: ${error instanceof Error ? error.message : String(error)}`)
+		return fail(`download failed: ${error instanceof Error ? error.message : String(error)}`)
 	}
 
 	if (typeof resource.filesize === "number" && resource.filesize !== bytes) {
-		return await fail(`the record states ${resource.filesize} bytes and ${bytes} arrived`)
+		return fail(`the record states ${resource.filesize} bytes and ${bytes} arrived`)
 	}
 
 	const sha1 = await sha1File(dest)
@@ -274,7 +274,7 @@ export async function downloadFinessExtract(
 		const md5 = await md5File(dest)
 
 		if (servedMD5 !== md5) {
-			return await fail(
+			return fail(
 				`SHA-1 ${sha1} differs from the record's ${resource.checksum.value}, ` +
 					`and MD5 ${md5} differs from the served ETag ${servedMD5 ?? "(absent)"}`
 			)
@@ -290,7 +290,7 @@ export async function downloadFinessExtract(
 	const header = head.split(/\r?\n/u)[0] ?? ""
 
 	if (!header.startsWith(EXTRACT_HEADER)) {
-		return await fail(`the file opens with ${stringifyJSON(header.slice(0, 40))}, not the extract's comment line`)
+		return fail(`the file opens with ${stringifyJSON(header.slice(0, 40))}, not the extract's comment line`)
 	}
 
 	const entry: FinessExtractManifest = {

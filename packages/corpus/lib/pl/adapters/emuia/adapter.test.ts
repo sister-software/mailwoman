@@ -26,7 +26,7 @@ const scratch = useScratchDir("emuia")
 const fixtureGML = workspacePath("corpus", "fixtures", "emuia", "sample.xml")
 
 async function run(options: { country?: string; limit?: number } = {}) {
-	return await runAdapter({
+	return runAdapter({
 		adapter: createEMUiAAdapter(),
 		adapterOptions: { inputPath: fixtureGML, ...options },
 		outputDir: scratch.path,

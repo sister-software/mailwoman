@@ -1,0 +1,222 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file An exported function whose name is another package's exported name plus an affix, such as
+ *   `readWorkspaceDirectories` over `workspaceDirectories`. The longer name is how a duplicate arrives,
+ *   because an author who knew the shorter name would have imported it.
+ *
+ *   The sibling {@linkcode findPrivateNameShadows} compares names for equality. It finds a copy only when both
+ *   authors chose the same word. This check compares camelCase component runs to expose an affix.
+ *
+ *   scoped across packages on purpose. Two names inside one package are usually a deliberate family
+ *   (`buildPostcodeLocalityJP` beside `buildPostcodeLocalityBase`); across packages, the shorter name has a public home the
+ *   longer one could have imported.
+ *
+ *   A pair that stays records why, on the line above the longer declaration:
+ *
+ *       // repo-health-ignore export-name-affix -- <reason>
+ */
+
+import { relative } from "path-ts"
+import ts from "typescript"
+
+import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#repo-health/check"
+import { parseContextSource, readContextSources } from "#repo-health/context"
+import { PACKAGE_SOURCE_GLOBS, trackedSourcePaths } from "#repo-health/tracked-sources"
+
+/**
+ * The comment marker that keeps a deliberate pair out of the census, followed by the reason.
+ */
+const AFFIX_IGNORE_MARKER = "repo-health-ignore export-name-affix --"
+
+/**
+ * How many camelCase components a shared run must include.
+ *
+ * One-component runs are the vocabulary of the tree — `read`, `build`, `file` —
+ * so a floor of one reports nearly every name against nearly every other.
+ * Measured over this repository's exported function names, the floor is the
+ * difference between 417 pairs and 130.
+ */
+const COMPONENT_FLOOR = 2
+
+export interface AffixPair {
+	/**
+	 * Repo-relative path of the module declaring the longer name.
+	 */
+	file: string
+	line: number
+	name: string
+	/**
+	 * The shorter exported name spelled out inside it and the workspace where it lives.
+	 */
+	contains: string
+	containedIn: string[]
+}
+
+interface ExportSite {
+	file: string
+	line: number
+	name: string
+	ignored: boolean
+}
+
+/**
+ * Split an identifier into camelCase components, keeping a run of capitals whole and attaching
+ * digits to the capitals they follow: `readPackageJSON` → `read`, `Package`, `JSON`.
+ */
+function nameComponents(name: string): string[] {
+	return name.match(/[A-Z]+\d*(?![a-z])|[A-Z]?[a-z0-9]+|[A-Z]/gu) ?? []
+}
+
+/**
+ * Every contiguous run of at least {@linkcode COMPONENT_FLOOR} components,
+ * shorter than the whole name, lowercased for comparison.
+ */
+function containedRuns(name: string): string[] {
+	const components = nameComponents(name)
+	const runs = new Set<string>()
+
+	for (let start = 0; start < components.length; start += 1) {
+		for (let end = start + COMPONENT_FLOOR; end <= components.length; end += 1) {
+			if (end - start === components.length) continue
+
+			runs.add(components.slice(start, end).join("").toLowerCase())
+		}
+	}
+
+	return [...runs]
+}
+
+function exportedFunctionSites(file: string, source: ts.SourceFile): ExportSite[] {
+	const { text } = source
+	const sites: ExportSite[] = []
+
+	for (const statement of source.statements) {
+		if (!ts.isFunctionDeclaration(statement) || !statement.name) continue
+
+		if (!(ts.getModifiers(statement) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)) continue
+
+		const leading = ts.getLeadingCommentRanges(text, statement.getFullStart()) ?? []
+
+		// A formatter re-wraps a long comment, so the marker is matched with line breaks and leading asterisks collapsed.
+		const ignored = leading.some((range) =>
+			text
+				.slice(range.pos, range.end)
+				.replaceAll(/\s*\n\s*\*?\s*/gu, " ")
+				.toLowerCase()
+				.includes(AFFIX_IGNORE_MARKER)
+		)
+
+		sites.push({
+			file,
+			line: source.getLineAndCharacterOfPosition(statement.getStart(source)).line + 1,
+			name: statement.name.text,
+			ignored,
+		})
+	}
+
+	return sites
+}
+
+/**
+ * The package a repo-relative path belongs to, so a family inside one workspace
+ * is not reported against itself.
+ */
+function packageOf(file: string): string {
+	return file.split("/").slice(0, 2).join("/")
+}
+
+/**
+ * Every exported function whose name spells out another package's exported name at greater length.
+ */
+export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]> {
+	const paths = await trackedSourcePaths(context, {
+		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` by
+		// itself skips a file directly under `lib/`.
+		globs: PACKAGE_SOURCE_GLOBS.filter((glob) => glob.endsWith(".ts")),
+		existingOnly: true,
+	})
+
+	const sites: ExportSite[] = []
+
+	const read = paths.filter((path) => {
+		const file = relative(context.repoRoot, path)
+
+		return !file.includes("/test/") && !file.endsWith(".d.ts")
+	})
+
+	await readContextSources(context, read)
+
+	// Every path here ends in `.ts`, so this is the tree the other checks parse by default.
+	for (const path of read) {
+		const source = await parseContextSource(context, path, { scriptKind: ts.ScriptKind.TS })
+
+		sites.push(...exportedFunctionSites(relative(context.repoRoot, path), source))
+	}
+
+	const byLowerName = new Map<string, ExportSite[]>()
+
+	for (const site of sites) {
+		const key = site.name.toLowerCase()
+
+		byLowerName.set(key, [...(byLowerName.get(key) ?? []), site])
+	}
+
+	// Emit one diagnostic per declaration.
+	// An overload set has one name, even when the name contains several shorter names.
+	const pairs = new Map<string, AffixPair>()
+
+	for (const site of sites) {
+		if (site.ignored) continue
+
+		for (const run of containedRuns(site.name)) {
+			const elsewhere = (byLowerName.get(run) ?? []).filter((other) => packageOf(other.file) !== packageOf(site.file))
+
+			if (!elsewhere.length) continue
+
+			const key = `${site.file}:${site.name}`
+			const existing = pairs.get(key)
+
+			if (existing) {
+				existing.containedIn = [...new Set([...existing.containedIn, ...elsewhere.map((other) => other.file)])]
+
+				continue
+			}
+
+			pairs.set(key, {
+				file: site.file,
+				line: site.line,
+				name: site.name,
+				contains: elsewhere[0]!.name,
+				containedIn: [...new Set(elsewhere.map((other) => other.file))],
+			})
+		}
+	}
+
+	return [...pairs.values()].toSorted((a, b) => a.file.localeCompare(b.file) || a.line - b.line)
+}
+
+/**
+ * The check: each pair as a warning, so a reviewer sees the longer name
+ * and the home the shorter one already has.
+ */
+export const exportNameAffixCheck: RepoCheck = {
+	id: "export-name-affix",
+	description:
+		"An exported function in packages/*/lib whose name spells out another package's exported name at greater length — the shape a duplicate arrives in; import the shorter home, or keep the pair behind the ignore marker with a reason.",
+	async run(context) {
+		const diagnostics: Diagnostic[] = []
+
+		for (const pair of await findAffixPairs(context)) {
+			diagnostics.push({
+				severity: DiagnosticSeverity.Warning,
+				file: pair.file,
+				line: pair.line,
+				message: `\`${pair.name}\` spells out \`${pair.contains}\`, exported from ${pair.containedIn.join(", ")}. Import that one, or keep both behind \`// ${AFFIX_IGNORE_MARKER} <reason>\`.`,
+			})
+		}
+
+		return diagnostics
+	},
+}

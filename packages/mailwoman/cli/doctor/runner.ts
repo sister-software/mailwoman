@@ -189,7 +189,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		weightsPackageName,
 		dataRoot: () => ({ path: dataRoot.toString(), fromEnv: dataRoot.toString() !== DefaultMailwomanPaths.data }),
 		envCandidatePath: async () =>
-			$public.MAILWOMAN_CANDIDATE_DB ? await resolveCandidateDBPath(undefined, dataRoot) : undefined,
+			$public.MAILWOMAN_CANDIDATE_DB ? resolveCandidateDBPath(undefined, dataRoot) : undefined,
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
 		wofExtractPaths: () => resolveWOFDatabasePaths(undefined, dataRoot),
 		poiPath: () => layerDatabasePath(dataRoot, "poi"),

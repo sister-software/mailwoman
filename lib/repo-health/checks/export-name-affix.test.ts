@@ -1,0 +1,181 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file The affix finder and the doc-link finder over planted trees.
+ */
+
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { afterAll, describe, expect, it } from "vitest"
+
+import { docLinkTargetsCheck, findDanglingLinks } from "#repo-health/checks/doc-link-targets"
+import { exportNameAffixCheck, findAffixPairs } from "#repo-health/checks/export-name-affix"
+import { DiagnosticSeverity } from "#repo-health/index"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
+async function plant(files: Record<string, string>): Promise<{ repoRoot: string; trackedFiles: string[] }> {
+	const root = fixtures.use(await temporaryDirectory("affix-")).path
+
+	for (const [file, text] of Object.entries(files)) {
+		await makeDirectories(root(file.slice(0, file.lastIndexOf("/"))))
+		await writeLocalTextFile(text, root(file))
+	}
+
+	return { repoRoot: root.toString(), trackedFiles: Object.keys(files) }
+}
+
+describe("findAffixPairs", () => {
+	it("reports a longer name that spells out another package's export", async () => {
+		const context = await plant({
+			"packages/a/lib/workspaces.ts":
+				"export function workspaceDirectories(root: string): string[] { return [root] }\n",
+			"packages/b/lib/reader.ts":
+				"export function readWorkspaceDirectories(root: string): string[] { return [root] }\n",
+		})
+
+		const pairs = await findAffixPairs(context)
+
+		expect(pairs).toEqual([
+			{
+				file: "packages/b/lib/reader.ts",
+				line: 1,
+				name: "readWorkspaceDirectories",
+				contains: "workspaceDirectories",
+				containedIn: ["packages/a/lib/workspaces.ts"],
+			},
+		])
+	})
+
+	it("leaves a family inside one package alone", async () => {
+		const context = await plant({
+			"packages/a/lib/base.ts": "export function buildPostcodeLocality(cc: string): string { return cc }\n",
+			"packages/a/lib/jp.ts": "export function buildPostcodeLocalityJP(cc: string): string { return cc }\n",
+		})
+
+		expect(await findAffixPairs(context)).toEqual([])
+	})
+
+	it("respects the ignore marker with its reason", async () => {
+		const context = await plant({
+			"packages/a/lib/home.ts": "export function trackedFiles(root: string): string[] { return [root] }\n",
+			"packages/b/lib/copy.ts":
+				"// repo-health-ignore export-name-affix -- this workspace carries no dependency on a.\nexport function listTrackedFiles(root: string): string[] { return [root] }\n",
+		})
+
+		expect(await findAffixPairs(context)).toEqual([])
+	})
+
+	it("needs two shared components, so a single shared word is not a pair", async () => {
+		const context = await plant({
+			"packages/a/lib/one.ts": "export function readThing(x: string): string { return x }\n",
+			"packages/b/lib/two.ts": "export function readOther(x: string): string { return x }\n",
+		})
+
+		expect(await findAffixPairs(context)).toEqual([])
+	})
+
+	it("gives the check one diagnostic per pair, carrying its file and line", async () => {
+		const context = await plant({
+			"packages/a/lib/workspaces.ts":
+				"export function workspaceDirectories(root: string): string[] { return [root] }\n",
+			"packages/b/lib/reader.ts":
+				"export function readWorkspaceDirectories(root: string): string[] { return [root] }\n",
+		})
+
+		const pairs = await findAffixPairs(context)
+		const diagnostics = await exportNameAffixCheck.run(context)
+
+		expect(pairs).toHaveLength(1)
+
+		expect(diagnostics).toEqual(
+			pairs.map((pair) =>
+				expect.objectContaining({ file: pair.file, line: pair.line, severity: DiagnosticSeverity.Warning })
+			)
+		)
+	})
+})
+
+describe("findDanglingLinks", () => {
+	it("reports a link naming nothing the tree declares", async () => {
+		const context = await plant({
+			"packages/a/lib/reader.ts":
+				"/**\n * @see {@linkcode readPackageJSONFile} for the manifest overload.\n */\nexport function readLocalJSONFile(path: string): string { return path }\n",
+		})
+
+		const dangling = await findDanglingLinks(context)
+
+		expect(dangling).toEqual([{ file: "packages/a/lib/reader.ts", line: 2, target: "readPackageJSONFile" }])
+	})
+
+	it("accepts a link to a name declared in another package, and to a language built-in", async () => {
+		const context = await plant({
+			"packages/a/lib/home.ts": "export function readPackageJSON(path: string): string { return path }\n",
+			"packages/b/lib/user.ts":
+				"/**\n * {@link readPackageJSON} and {@link Object.entries} both resolve.\n */\nexport function use(): void {}\n",
+		})
+
+		expect(await findDanglingLinks(context)).toEqual([])
+	})
+
+	it("reads a declaration-shaped backticked name in a doc comment, and leaves a word alone", async () => {
+		const context = await plant({
+			"packages/a/lib/reader.ts": [
+				"/**",
+				" * @deprecated Use `readPackageJSONFile` instead; `wrapLegacy()` and `db` and `lat` are prose.",
+				" */",
+				"export function readLocalJSONFile(path: string): string { return path }",
+				"// A line comment spelling `missingLineName` is not a doc comment.",
+				"const x = `template with missingTemplateName`",
+			].join("\n"),
+		})
+
+		expect(await findDanglingLinks(context)).toEqual([
+			{ file: "packages/a/lib/reader.ts", line: 2, target: "readPackageJSONFile" },
+			{ file: "packages/a/lib/reader.ts", line: 2, target: "wrapLegacy" },
+		])
+	})
+
+	it("accepts a backticked name the tree spells anywhere, and a registered external name", async () => {
+		const context = await plant({
+			"packages/a/lib/use.ts": [
+				"/**",
+				" * `getShortName` is registered as external. `resolveJsonModule` the test spells. `SW1A2AA` is a code.",
+				" * `admin1CodesASCII.txt` is a file, and `str.isupper()` is a call on a word.",
+				" */",
+				"export const value = other.toLowerCase()",
+			].join("\n"),
+			"packages/a/lib/use.test.ts": "const resolveJsonModule = true\n",
+		})
+
+		expect(await findDanglingLinks(context)).toEqual([])
+	})
+
+	it("leaves a URL target alone", async () => {
+		const context = await plant({
+			"packages/a/lib/x.ts": "/**\n * {@link https://example.com/spec}\n */\nexport function use(): void {}\n",
+		})
+
+		expect(await findDanglingLinks(context)).toEqual([])
+	})
+
+	it("gives the check one diagnostic per dangling link, carrying its file and line", async () => {
+		const context = await plant({
+			"packages/a/lib/x.ts": "/**\n * {@link missingOne}\n * {@link missingTwo}\n */\nexport function use(): void {}\n",
+		})
+
+		const dangling = await findDanglingLinks(context)
+		const diagnostics = await docLinkTargetsCheck.run(context)
+
+		expect(dangling.map((link) => link.target)).toEqual(["missingOne", "missingTwo"])
+
+		expect(diagnostics).toEqual(
+			dangling.map((link) =>
+				expect.objectContaining({ file: link.file, line: link.line, severity: DiagnosticSeverity.Warning })
+			)
+		)
+	})
+})

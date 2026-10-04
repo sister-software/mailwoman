@@ -30,7 +30,7 @@ export function defaultLexiconPath(): string {
  * Reads the sub-venue lexicon and throws on invalid JSON.
  */
 export async function readSubVenueLexicon(path: string = defaultLexiconPath()): Promise<SubVenueLexiconTable> {
-	return await readLocalJSONFile<SubVenueLexiconTable>(path)
+	return readLocalJSONFile<SubVenueLexiconTable>(path)
 }
 
 const MAX_VENUE_NAME_LENGTH = 44

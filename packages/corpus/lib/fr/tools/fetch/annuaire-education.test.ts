@@ -67,7 +67,7 @@ describe("countJSONLines", () => {
 		const count = async (text: string) => {
 			await writeLocalFile(text, scratch.path("export.jsonl"))
 
-			return await countJSONLines(scratch.path("export.jsonl"))
+			return countJSONLines(scratch.path("export.jsonl"))
 		}
 
 		expect(await count('{"a":1}\n{"a":2}\n')).toBe(2)

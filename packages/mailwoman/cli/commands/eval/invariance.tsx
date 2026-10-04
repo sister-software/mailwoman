@@ -53,7 +53,7 @@ const EvalInvariance = harnessCommand(
 	async (options) => {
 		const { runInvarianceCommand } = await import("#tools/eval-harness/invariance/command")
 
-		return await runInvarianceCommand(options)
+		return runInvarianceCommand(options)
 	},
 	{ exitCode: (exitCode) => exitCode }
 )

@@ -108,7 +108,7 @@ async function runCommand(module: CommandModule, commandPath: string, argv: read
 		Object.entries(parsed.values).map(([name, value]) => [optionPropertyName(name), value])
 	)
 
-	return await renderInkCommand(createElement(module.default, { options, args: parsed.positionals }))
+	return renderInkCommand(createElement(module.default, { options, args: parsed.positionals }))
 }
 
 async function groupHelp(parts: readonly string[]): Promise<number> {

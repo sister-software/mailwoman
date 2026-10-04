@@ -1,0 +1,172 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file Reports implementation modules whose top-level declaration surface hides multiple responsibilities.
+ */
+
+import { relative } from "path-ts"
+import ts from "typescript"
+
+import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#repo-health/check"
+import { parseContextSource, readContextSources } from "#repo-health/context"
+import { trackedSourcePaths } from "#repo-health/tracked-sources"
+
+/**
+ * Per-module declaration and divider limits that trigger a structural review warning.
+ */
+const MODULE_SURFACE_THRESHOLDS = {
+	interfaces: 15,
+	constants: 30,
+	functions: 20,
+	sectionDividers: 6,
+} as const
+
+interface ModuleSurface {
+	interfaces: number
+	constants: number
+	functions: number
+	sectionDividers: number
+}
+
+interface SurfaceHit {
+	metric: keyof ModuleSurface
+	count: number
+	line: number
+}
+
+const TEST_FILE = /\.(?:test|spec)\.(?:ts|tsx)$/u
+/**
+ * A closed section-divider comment in either rule character, ascii
+ * or box-drawing has a label between its two rules.
+ *
+ * Both runs are at least two characters long.
+ * A comment whose text continues on the next line has no trailing run and does not form a divider.
+ */
+const SECTION_DIVIDER = /^\s*\/\/\s*[-─]{2,}\s+[^\n]+[-─]{2,}\s*$/gmu
+
+const METRIC_LABEL: Record<keyof ModuleSurface, string> = {
+	interfaces: "interfaces",
+	constants: "const declarations",
+	functions: "functions",
+	sectionDividers: "section-divider comments",
+}
+
+/**
+ * Count declarations directly owned by a source file.
+ *
+ * Nested callbacks, local constants and declarations inside a namespace do not
+ * add to the module's public reading surface.
+ */
+function moduleSurface(sourceFile: ts.SourceFile): ModuleSurface {
+	const surface: ModuleSurface = { interfaces: 0, constants: 0, functions: 0, sectionDividers: 0 }
+
+	for (const statement of sourceFile.statements) {
+		if (ts.isInterfaceDeclaration(statement)) {
+			surface.interfaces++
+		}
+
+		if (ts.isFunctionDeclaration(statement)) {
+			surface.functions++
+		}
+
+		if (ts.isVariableStatement(statement) && statement.declarationList.flags & ts.NodeFlags.Const) {
+			surface.constants += statement.declarationList.declarations.length
+		}
+	}
+
+	surface.sectionDividers = [...sourceFile.text.matchAll(SECTION_DIVIDER)].length
+
+	return surface
+}
+
+function surfaceHits(sourceFile: ts.SourceFile, surface: ModuleSurface): SurfaceHit[] {
+	const firstLine: Partial<Record<keyof ModuleSurface, number>> = {}
+
+	let interfaces = 0
+	let constants = 0
+	let functions = 0
+
+	for (const statement of sourceFile.statements) {
+		const line = sourceFile.getLineAndCharacterOfPosition(statement.getStart(sourceFile)).line + 1
+
+		if (ts.isInterfaceDeclaration(statement)) {
+			interfaces++
+
+			if (interfaces === MODULE_SURFACE_THRESHOLDS.interfaces) {
+				firstLine.interfaces = line
+			}
+		}
+
+		if (ts.isFunctionDeclaration(statement)) {
+			functions++
+
+			if (functions === MODULE_SURFACE_THRESHOLDS.functions) {
+				firstLine.functions = line
+			}
+		}
+
+		if (ts.isVariableStatement(statement) && statement.declarationList.flags & ts.NodeFlags.Const) {
+			constants += statement.declarationList.declarations.length
+
+			if (constants >= MODULE_SURFACE_THRESHOLDS.constants && firstLine.constants === undefined) {
+				firstLine.constants = line
+			}
+		}
+	}
+
+	SECTION_DIVIDER.lastIndex = 0
+	const divider = SECTION_DIVIDER.exec(sourceFile.text)
+
+	if (divider?.index !== undefined) {
+		firstLine.sectionDividers = sourceFile.getLineAndCharacterOfPosition(divider.index).line + 1
+	}
+
+	SECTION_DIVIDER.lastIndex = 0
+
+	return (Object.entries(MODULE_SURFACE_THRESHOLDS) as [keyof ModuleSurface, number][])
+		.filter(([metric, threshold]) => surface[metric] >= threshold)
+		.map(([metric]) => ({ metric, count: surface[metric], line: firstLine[metric] ?? 1 }))
+}
+
+/**
+ * AST-backed reading-surface heuristic.
+ *
+ * Warnings name the declaration kind that crossed its threshold.
+ * They do not claim a decomposition boundary on the checker's behalf.
+ */
+export const moduleSurfaceCheck: RepoCheck = {
+	id: "module-surface",
+	description:
+		"Warn when a package implementation module accumulates many top-level interfaces, constants, functions, or section-divider comments.",
+	async run(context: RepoContext): Promise<Diagnostic[]> {
+		const diagnostics: Diagnostic[] = []
+
+		const filePaths = (await trackedSourcePaths(context, { prefix: "packages/", existingOnly: true })).filter(
+			(filePath) => {
+				const file = relative(context.repoRoot, filePath)
+
+				return file.includes("/lib/") && !TEST_FILE.test(file)
+			}
+		)
+
+		await readContextSources(context, filePaths)
+
+		for (const filePath of filePaths) {
+			const file = relative(context.repoRoot, filePath)
+			const sourceFile = await parseContextSource(context, filePath, { setParentNodes: true })
+			const surface = moduleSurface(sourceFile)
+
+			for (const hit of surfaceHits(sourceFile, surface)) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Warning,
+					message: `${hit.count} top-level ${METRIC_LABEL[hit.metric]} (threshold ${MODULE_SURFACE_THRESHOLDS[hit.metric]}); inspect whether a source, locale, or responsibility can move into its own module`,
+					file,
+					line: hit.line,
+				})
+			}
+		}
+
+		return diagnostics
+	},
+}

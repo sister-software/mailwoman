@@ -521,7 +521,7 @@ export async function packageHasBinaries(dir: PathBuilderLike): Promise<boolean>
 	const cardPath = resolvePath(dir, "model-card.json")
 	const encoder = await readEncoderFromModelCard(cardPath)
 
-	if (encoder.kind === "char") return await pathExists(resolvePath(dir, encoder.charVocab))
+	if (encoder.kind === "char") return pathExists(resolvePath(dir, encoder.charVocab))
 
 	await assertNoOrphanedCharVocab(dir, cardPath)
 

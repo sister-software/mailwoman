@@ -171,15 +171,47 @@ export default {
 			},
 		},
 		{
-			// `@mailwoman/sqlite` opens connections, so it may import `node:sqlite`.
-			files: ["packages/sqlite/**/*.ts"],
-			rules: {
-				"typescript/no-restricted-imports": "off",
-			},
-		},
-		{
-			// The import rule redirects `node:fs` to these wrappers, so they may import it.
-			files: ["packages/core/lib/fs/**/*.ts"],
+			// The files the Node-builtin restriction points at, and the call sites using
+			// builtins core does not wrap yet — each may import its builtin directly.
+			files: [
+				// `@mailwoman/sqlite` opens connections, so it may import `node:sqlite`.
+				"packages/sqlite/**/*.ts",
+				// The import rule redirects `node:fs` to these wrappers, so they may import it.
+				"packages/core/lib/fs/**/*.ts",
+				// `objects.ts` holds the JSON wrappers, `process.ts` wraps `node:child_process`,
+				// and `scripting/arguments.ts` wraps `parseArgs` from `node:util`.
+				"packages/core/lib/objects.ts",
+				"packages/core/lib/process.ts",
+				"packages/core/lib/scripting/arguments.ts",
+				// These core modules wrap `node:os`, `node:timers/promises`, `node:events`,
+				// `node:crypto` and `node:module`.
+				"packages/core/lib/utils/system.ts",
+				"packages/core/lib/utils/sleep.ts",
+				"packages/core/lib/utils/events.ts",
+				"packages/core/lib/hash.ts",
+				"packages/core/lib/module/runtime.ts",
+				"packages/core/lib/crypto/**/*.ts",
+				// Corpus tests sit beside their modules and start local HTTP and TCP servers.
+				"packages/corpus/lib/**/*.test.ts",
+				"packages/corpus/lib/**/*.test.tsx",
+				// These files use builtins that core does not wrap yet, such as readline,
+				// worker_threads, cluster, http and https.
+				"packages/filer/sdk/form499.ts",
+				"packages/filer/sdk/provider-list.ts",
+				"packages/mailwoman/cli/native/commands/geocode.ts",
+				"packages/mailwoman/cli/commands/gazetteer/importance.tsx",
+				"packages/mailwoman/cli/commands/serve.tsx",
+				"packages/api-kit/test/fixtures/cluster-serve.ts",
+				"packages/mailwoman/cli/commands/situs/interpolation/index.tsx",
+				"packages/mailwoman/lib/geocode/worker.ts",
+				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
+				"docs/static/examples/mailwoman-server.mjs",
+				"docs/plugins/runtime-assets/workspace/resolution.ts",
+				"packages/map-tui/lib/tile-source.test.ts",
+				"packages/neural/lib/web/browser-slo.integration.test.ts",
+				"packages/resolver-wof-sqlite/lib/lookup-readonly-open.integration.test.ts",
+				"packages/tiger/tools/serve-range.ts",
+			],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
@@ -230,66 +262,6 @@ export default {
 				"mailwoman/prefer-home": "off",
 			},
 		},
-		{
-			// This file wraps `node:child_process` for the rest of the repo.
-			files: ["packages/core/lib/process.ts"],
-			rules: {
-				"typescript/no-restricted-imports": "off",
-			},
-		},
-		{
-			// This file wraps `parseArgs` from `node:util`.
-			files: ["packages/core/lib/scripting/arguments.ts"],
-			rules: {
-				"typescript/no-restricted-imports": "off",
-			},
-		},
-		{
-			// These core modules wrap `node:os`, `node:timers/promises`, `node:events`,
-			// `node:crypto` and `node:module`.
-			files: [
-				"packages/core/lib/utils/system.ts",
-				"packages/core/lib/utils/sleep.ts",
-				"packages/core/lib/utils/events.ts",
-				"packages/core/lib/hash.ts",
-				"packages/core/lib/module/runtime.ts",
-				"packages/core/lib/crypto/**/*.ts",
-			],
-			rules: {
-				"typescript/no-restricted-imports": "off",
-			},
-		},
-		{
-			// Corpus tests sit beside their modules and start local HTTP and TCP servers.
-			files: ["packages/corpus/lib/**/*.test.ts", "packages/corpus/lib/**/*.test.tsx"],
-			rules: {
-				"typescript/no-restricted-imports": "off",
-			},
-		},
-		{
-			// These files use builtins that core does not wrap yet, such as readline,
-			// worker_threads, cluster, http and https.
-			files: [
-				"packages/filer/sdk/form499.ts",
-				"packages/filer/sdk/provider-list.ts",
-				"packages/mailwoman/cli/native/commands/geocode.ts",
-				"packages/mailwoman/cli/commands/gazetteer/importance.tsx",
-				"packages/mailwoman/cli/commands/serve.tsx",
-				"packages/api-kit/test/fixtures/cluster-serve.ts",
-				"packages/mailwoman/cli/commands/situs/interpolation/index.tsx",
-				"packages/mailwoman/lib/geocode/worker.ts",
-				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
-				"docs/static/examples/mailwoman-server.mjs",
-				"docs/plugins/runtime-assets/workspace/resolution.ts",
-				"packages/map-tui/lib/tile-source.test.ts",
-				"packages/neural/lib/web/browser-slo.integration.test.ts",
-				"packages/resolver-wof-sqlite/lib/lookup-readonly-open.integration.test.ts",
-				"packages/tiger/tools/serve-range.ts",
-			],
-			rules: {
-				"typescript/no-restricted-imports": "off",
-			},
-		},
 	],
 	rules: {
 		...(config.rules as Record<string, unknown>),
@@ -298,6 +270,21 @@ export default {
 		// `tabWidth` matches oxfmt's two-column tab.
 		"mailwoman/comment-reflow": ["warn", { printWidth: 120, targetWidth: 90, tabWidth: 2, paragraphSentences: 2 }],
 		"guard-for-in": "error",
+		// Type-aware adoption (oxlint-config v14): `return-await` is enforced and fixed.
+		// The remaining type-aware rules that the correctness category now activates
+		// are grandfathered off pending a measured adoption pass — 894 sites across
+		// 11 rules on adoption day, too many to sweep blind.
+		"typescript/restrict-template-expressions": "off",
+		"typescript/no-base-to-string": "off",
+		"typescript/no-floating-promises": "off",
+		"typescript/unbound-method": "off",
+		"typescript/require-array-sort-compare": "off",
+		"typescript/no-redundant-type-constituents": "off",
+		"typescript/no-misused-spread": "off",
+		"typescript/no-meaningless-void-operator": "off",
+		"typescript/no-duplicate-type-constituents": "off",
+		"typescript/await-thenable": "off",
+		"typescript/no-useless-default-assignment": "off",
 		// The shared base only warns.
 		// The shared tsconfig disables `noUnusedLocals`, so this rule is an error here.
 		// The local override repeats the base options because a severity-only entry would drop them.
@@ -352,6 +339,7 @@ export default {
 				],
 			},
 		],
+
 		// `split("\n")` builds the whole array before the first segment is read.
 		// A site with bounded input may keep `split` behind a scoped disable that explains the bound.
 		"mailwoman/prefer-spliterator": "error",
@@ -365,9 +353,5 @@ export default {
 		// An override lifts one entry by calling `restrictedPropertiesExcept` with that entry.
 		// An `"off"` value would lift every entry.
 		"no-restricted-properties": restrictedPropertiesExcept(),
-		"typescript/no-explicit-any": "error",
-		"unicorn/no-new-array": "off",
-		// Some suites assert through helpers whose names start with `expect` or `assert` and throw on failure.
-		"vitest/expect-expect": ["error", { assertFunctionNames: ["expect", "expect*", "assert*"] }],
 	},
 }

@@ -100,7 +100,7 @@ export async function existingLocalPath(
 	resolvedAbsPath: string
 ): Promise<string | null> {
 	if (artifact.family && artifact.stateSlug) {
-		return await resolveDatabasePath(dataRoot, artifact.family, artifact.stateSlug, manifest)
+		return resolveDatabasePath(dataRoot, artifact.family, artifact.stateSlug, manifest)
 	}
 
 	return (await pathExists(resolvedAbsPath)) ? resolvedAbsPath : null

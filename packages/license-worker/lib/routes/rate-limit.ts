@@ -8,6 +8,7 @@
  *   refuse when either is spent.
  */
 
+import type { RateLimit } from "@cloudflare/workers-types"
 import type { Context } from "hono"
 
 export function clientAddress(c: Context): string {

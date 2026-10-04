@@ -30,7 +30,7 @@ const EvalScoreTrends: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildScoreTrends } = await import("#tools/eval-harness/score/trends")
 
-		return await buildScoreTrends(options)
+		return buildScoreTrends(options)
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

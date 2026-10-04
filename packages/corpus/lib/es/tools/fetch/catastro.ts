@@ -504,7 +504,7 @@ async function readFeed(
 	// A feed shares the http 200 an exception report arrives on.
 	assertNoOGCServiceException(text, options.context)
 
-	return await readAtomFeed(feedChunks(text))
+	return readAtomFeed(feedChunks(text))
 }
 
 /**

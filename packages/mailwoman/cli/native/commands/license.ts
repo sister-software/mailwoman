@@ -468,24 +468,24 @@ async function registerCommand(parsed: ParsedCommand): Promise<number> {
 }
 
 export async function run(args: readonly string[]): Promise<number> {
-	return await runNativeCommand(spec, args, async (parsed) => {
+	return runNativeCommand(spec, args, async (parsed) => {
 		const action = parsed.positionals[0]
 
 		switch (action) {
 			case "keygen":
-				return await keygen(parsed)
+				return keygen(parsed)
 			case "issue":
-				return await issue(parsed)
+				return issue(parsed)
 			case "verify":
-				return await verifyCommand(parsed)
+				return verifyCommand(parsed)
 			case "register":
-				return await registerCommand(parsed)
+				return registerCommand(parsed)
 			case "adopt":
-				return await adopt(parsed)
+				return adopt(parsed)
 			case "refresh":
-				return await refresh(parsed)
+				return refresh(parsed)
 			case "attribution":
-				return await attributionCommand(parsed)
+				return attributionCommand(parsed)
 			default:
 				throw new CLIUsageError(
 					`Unknown action ${stringifyJSON(action)}. Expected keygen, issue, verify, register, adopt, refresh or attribution.`

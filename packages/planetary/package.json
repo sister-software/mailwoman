@@ -39,7 +39,7 @@
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/react": "workspace:*",
-		"@mailwoman/site-kit": "workspace:*",
+		"@mailwoman/universe": "workspace:*",
 		"maplibre-gl": "^6.7.0",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",

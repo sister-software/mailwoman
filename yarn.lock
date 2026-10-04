@@ -6169,31 +6169,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/dev-mcp@workspace:packages/dev-mcp":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/dev-mcp@workspace:packages/dev-mcp"
-  dependencies:
-    "@mailwoman/codex": "workspace:*"
-    "@mailwoman/core": "workspace:*"
-    "@mailwoman/geocode-oracle": "workspace:*"
-    "@mailwoman/libpostal": "workspace:*"
-    "@mailwoman/neural": "workspace:*"
-    "@mailwoman/normalize": "workspace:*"
-    "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    "@mailwoman/spatial": "workspace:*"
-    "@mailwoman/sqlite": "workspace:*"
-    "@modelcontextprotocol/sdk": "npm:^1.30.0"
-    "@vvago/vale": "npm:^3.20.0"
-    mailwoman: "workspace:*"
-    path-ts: "npm:^2.5.0"
-    spliterator: "npm:^8.1.0"
-    typescript: "npm:@typescript/typescript6@^6.0.2"
-    zod: "npm:^4.5.4"
-  bin:
-    mwdev-mcp: ./lib/cli.ts
-  languageName: unknown
-  linkType: soft
-
 "@mailwoman/docs@workspace:docs":
   version: 0.0.0-use.local
   resolution: "@mailwoman/docs@workspace:docs"
@@ -6270,8 +6245,8 @@ __metadata:
     "@mailwoman/react": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
-    "@mailwoman/site-kit": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/universe": "workspace:*"
     "@playwright/test": "npm:^1.63.0"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.7"
@@ -6413,7 +6388,7 @@ __metadata:
     "@cloudflare/workers-types": "npm:^5.20260906.1"
     "@hono/zod-openapi": "npm:^1.6.3"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/release-kit": "workspace:*"
+    "@mailwoman/universe": "workspace:*"
     "@react-email/components": "npm:^1.0.12"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.7"
@@ -6685,21 +6660,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/ops-cli@workspace:packages/ops-cli":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/ops-cli@workspace:packages/ops-cli"
-  dependencies:
-    "@mailwoman/core": "workspace:*"
-    "@mailwoman/license-worker": "workspace:*"
-    "@mailwoman/release-kit": "workspace:*"
-    "@mailwoman/repo-health": "workspace:*"
-    "@mailwoman/storage-kit": "workspace:*"
-    path-ts: "npm:^2.5.0"
-  bin:
-    mwops: ./lib/cli.ts
-  languageName: unknown
-  linkType: soft
-
 "@mailwoman/osm@workspace:*, @mailwoman/osm@workspace:packages/osm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/osm@workspace:packages/osm"
@@ -6757,7 +6717,7 @@ __metadata:
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/react": "workspace:*"
-    "@mailwoman/site-kit": "workspace:*"
+    "@mailwoman/universe": "workspace:*"
     "@playwright/test": "npm:^1.63.0"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.7"
@@ -6869,57 +6829,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/release-kit@workspace:*, @mailwoman/release-kit@workspace:packages/release-kit":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/release-kit@workspace:packages/release-kit"
-  dependencies:
-    "@mailwoman/core": "workspace:*"
-    "@mailwoman/corpus": "workspace:*"
-    "@mailwoman/neural": "workspace:*"
-    "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    "@types/semver": "npm:^7.8.0"
-    mailwoman: "workspace:*"
-    path-ts: "npm:^2.5.0"
-    semver: "npm:^7.8.5"
-    spliterator: "npm:^8.1.0"
-    zod: "npm:^4.5.4"
-    zx: "npm:^8.8.5"
-  languageName: unknown
-  linkType: soft
-
-"@mailwoman/release-mcp@workspace:packages/release-mcp":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/release-mcp@workspace:packages/release-mcp"
-  dependencies:
-    "@mailwoman/core": "workspace:*"
-    "@mailwoman/release-kit": "workspace:*"
-    "@modelcontextprotocol/sdk": "npm:^1.30.0"
-    path-ts: "npm:^2.5.0"
-    zod: "npm:^4.5.4"
-  bin:
-    mwrelease-mcp: ./lib/cli.ts
-  languageName: unknown
-  linkType: soft
-
-"@mailwoman/repo-health@workspace:*, @mailwoman/repo-health@workspace:packages/repo-health":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/repo-health@workspace:packages/repo-health"
-  dependencies:
-    "@mailwoman/core": "workspace:*"
-    "@mailwoman/corpus": "workspace:*"
-    "@mailwoman/neural": "workspace:*"
-    "@mailwoman/release-kit": "workspace:*"
-    "@mailwoman/sqlite": "workspace:*"
-    "@vvago/vale": "npm:^3.20.0"
-    esbuild: "npm:0.28.2"
-    mailwoman: "workspace:*"
-    path-ts: "npm:^2.5.0"
-    spliterator: "npm:^8.1.0"
-    typescript: "npm:@typescript/typescript6@^6.0.2"
-    zod: "npm:^4.5.4"
-  languageName: unknown
-  linkType: soft
-
 "@mailwoman/resolver-wof-sqlite@workspace:*, @mailwoman/resolver-wof-sqlite@workspace:packages/resolver-wof-sqlite":
   version: 0.0.0-use.local
   resolution: "@mailwoman/resolver-wof-sqlite@workspace:packages/resolver-wof-sqlite"
@@ -6978,19 +6887,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/site-kit@workspace:*, @mailwoman/site-kit@workspace:packages/site-kit":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/site-kit@workspace:packages/site-kit"
-  dependencies:
-    "@mailwoman/core": "workspace:*"
-    "@mailwoman/resolver-wof-wasm": "workspace:*"
-    "@playwright/test": "npm:^1.63.0"
-    path-ts: "npm:^2.5.0"
-    vite: "npm:^8.2.2"
-    vite-plugin-pwa: "npm:^1.3.0"
-  languageName: unknown
-  linkType: soft
-
 "@mailwoman/soil@workspace:*, @mailwoman/soil@workspace:packages/soil":
   version: 0.0.0-use.local
   resolution: "@mailwoman/soil@workspace:packages/soil"
@@ -7034,16 +6930,6 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     kysely: "npm:^0.29.5"
     path-ts: "npm:^2.5.0"
-  languageName: unknown
-  linkType: soft
-
-"@mailwoman/storage-kit@workspace:*, @mailwoman/storage-kit@workspace:packages/storage-kit":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/storage-kit@workspace:packages/storage-kit"
-  dependencies:
-    "@mailwoman/core": "workspace:*"
-    zod: "npm:^4.5.4"
-    zx: "npm:^8.8.5"
   languageName: unknown
   linkType: soft
 
@@ -7103,40 +6989,64 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/universe@workspace:.":
+"@mailwoman/universe@workspace:*, @mailwoman/universe@workspace:.":
   version: 0.0.0-use.local
   resolution: "@mailwoman/universe@workspace:."
   dependencies:
     "@duckdb/node-api": "npm:^1.5.5-r.4"
+    "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/corpus": "workspace:*"
+    "@mailwoman/geocode-oracle": "workspace:*"
+    "@mailwoman/libpostal": "workspace:*"
+    "@mailwoman/license-worker": "workspace:*"
+    "@mailwoman/neural": "workspace:*"
+    "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/resolver-wof-wasm": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    "@modelcontextprotocol/sdk": "npm:^1.30.0"
     "@ocular-d/typos-bin": "npm:^1.50.3"
     "@oxlint/plugins": "npm:1.83.0"
+    "@playwright/test": "npm:^1.63.0"
     "@release-it-plugins/workspaces": "npm:^6.0.0"
     "@sister.software/oxfmt-config": "npm:^13.0.1"
-    "@sister.software/oxlint-config": "npm:^13.0.1"
+    "@sister.software/oxlint-config": "npm:^14.0.0"
     "@sister.software/tsconfig": "npm:^13.0.1"
     "@types/node": "npm:^26.4.1"
     "@types/react": "npm:^19.2.18"
     "@types/regenerate": "npm:^1.4.3"
+    "@types/semver": "npm:^7.8.0"
     "@typescript/native": "npm:typescript@^7.0.2"
     "@vitest/coverage-v8": "npm:4.1.11"
     "@vvago/vale": "npm:^3.20.0"
     dependency-cruiser: "npm:^18.2.0"
+    esbuild: "npm:0.28.2"
     husky: "npm:^9.1.7"
     jscpd: "npm:^5.1.2"
     knip: "npm:^6.34.0"
+    mailwoman: "workspace:*"
     npm-run-all: "npm:^4.1.5"
     onnxruntime-web: "npm:1.29.0"
     oxfmt: "npm:0.66.0"
     oxlint: "npm:1.81.0"
+    oxlint-tsgolint: "npm:7.0.2003"
     path-ts: "npm:^2.5.0"
     release-it: "npm:^19.2.4"
+    semver: "npm:^7.8.5"
     sherif: "npm:^1.13.0"
     spliterator: "npm:^8.1.0"
     ts-morph: "npm:^28.0.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
+    vite: "npm:^8.2.2"
+    vite-plugin-pwa: "npm:^1.3.0"
     vitest: "npm:4.1.11"
+    zod: "npm:^4.5.4"
     zx: "npm:^8.8.5"
+  bin:
+    mwdev-mcp: ./lib/dev-mcp/cli.ts
+    mwrelease-mcp: ./lib/release-mcp/cli.ts
   languageName: unknown
   linkType: soft
 
@@ -8504,6 +8414,48 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint-tsgolint/darwin-arm64@npm:7.0.2003":
+  version: 7.0.2003
+  resolution: "@oxlint-tsgolint/darwin-arm64@npm:7.0.2003"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@oxlint-tsgolint/darwin-x64@npm:7.0.2003":
+  version: 7.0.2003
+  resolution: "@oxlint-tsgolint/darwin-x64@npm:7.0.2003"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@oxlint-tsgolint/linux-arm64@npm:7.0.2003":
+  version: 7.0.2003
+  resolution: "@oxlint-tsgolint/linux-arm64@npm:7.0.2003"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@oxlint-tsgolint/linux-x64@npm:7.0.2003":
+  version: 7.0.2003
+  resolution: "@oxlint-tsgolint/linux-x64@npm:7.0.2003"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@oxlint-tsgolint/win32-arm64@npm:7.0.2003":
+  version: 7.0.2003
+  resolution: "@oxlint-tsgolint/win32-arm64@npm:7.0.2003"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@oxlint-tsgolint/win32-x64@npm:7.0.2003":
+  version: 7.0.2003
+  resolution: "@oxlint-tsgolint/win32-x64@npm:7.0.2003"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-android-arm-eabi@npm:1.81.0":
   version: 1.81.0
   resolution: "@oxlint/binding-android-arm-eabi@npm:1.81.0"
@@ -9824,12 +9776,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/oxlint-config@npm:^13.0.1":
-  version: 13.0.1
-  resolution: "@sister.software/oxlint-config@npm:13.0.1"
+"@sister.software/oxlint-config@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "@sister.software/oxlint-config@npm:14.0.0"
   peerDependencies:
     oxlint: ">=1.75.0 <2"
-  checksum: 10/391bc2428ee0c32f7ad4cfbbd50423422f5463c644e8da5bf2b161847e5f60531d30ec32df0bd3d268c9d6d3af60f897741e98d6c16c9ec880d1ca3afd26c1f1
+    oxlint-tsgolint: ">=7.0.2003 <8"
+  peerDependenciesMeta:
+    oxlint-tsgolint:
+      optional: true
+  checksum: 10/bf0ca939ec74f8ea58b9226c21d96df5ebe203078cf91cc97012d7e5629587723c2aa5f6ef92f507b3fdae88b16d9685348cc0d20270b399f37830e247741ce7
   languageName: node
   linkType: hard
 
@@ -22668,6 +22624,35 @@ __metadata:
   bin:
     oxfmt: bin/oxfmt
   checksum: 10/8b467a440a5a62805bb468a33a630fda5a42930e5226c9fde2e77d04c4b6868ce042c54af952cdad50b96e9b12bd5b4e5b5d3ab406853725a0933e115da093e5
+  languageName: node
+  linkType: hard
+
+"oxlint-tsgolint@npm:7.0.2003":
+  version: 7.0.2003
+  resolution: "oxlint-tsgolint@npm:7.0.2003"
+  dependencies:
+    "@oxlint-tsgolint/darwin-arm64": "npm:7.0.2003"
+    "@oxlint-tsgolint/darwin-x64": "npm:7.0.2003"
+    "@oxlint-tsgolint/linux-arm64": "npm:7.0.2003"
+    "@oxlint-tsgolint/linux-x64": "npm:7.0.2003"
+    "@oxlint-tsgolint/win32-arm64": "npm:7.0.2003"
+    "@oxlint-tsgolint/win32-x64": "npm:7.0.2003"
+  dependenciesMeta:
+    "@oxlint-tsgolint/darwin-arm64":
+      optional: true
+    "@oxlint-tsgolint/darwin-x64":
+      optional: true
+    "@oxlint-tsgolint/linux-arm64":
+      optional: true
+    "@oxlint-tsgolint/linux-x64":
+      optional: true
+    "@oxlint-tsgolint/win32-arm64":
+      optional: true
+    "@oxlint-tsgolint/win32-x64":
+      optional: true
+  bin:
+    tsgolint: ./bin/tsgolint.js
+  checksum: 10/1e2596f5db29acaae7a2702439beca43c3b4cebd5d62853f257c0ea0eb6ed04ad9a2d64d69d6784b11dc070ef6c8e5e1e5ce7295107fe0e5deee5c27a1903b14
   languageName: node
   linkType: hard
 

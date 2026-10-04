@@ -10,7 +10,7 @@
  *   `BUNDLES` records `approxBytes` by hand. The docs site once restated those numbers by hand again. The
  *   artifacts themselves are gigabytes that neither a docs build nor a health check can download, so this file holds
  *   the measurement and `dev-tools/data/published-bundles.run.ts` is its one writer. The `published-bundles` check in
- *   `@mailwoman/repo-health` compares it against the registry. The docs site renders it beside its date.
+ *   The repository-health check compares it against the registry. The docs site renders it beside its date.
  *
  *   A value that could not be measured is recorded as unmeasured with the reason. It is never defaulted, because a
  *   default reads the same as a measurement to everyone downstream.

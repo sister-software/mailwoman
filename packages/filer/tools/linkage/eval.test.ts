@@ -70,7 +70,7 @@ async function runEval(): Promise<FilerLinkageEvalResult> {
 	// A cached promise keeps concurrent callers from starting a second run.
 	cached ??= filerLinkageEval({ date: PUBLISHED_LINKAGE_EVAL_DATE, printMarkdown: false })
 
-	return await cached
+	return cached
 }
 
 describe("buildFilteredEvalInputs — decision 4's leakage exclusion (criterion 4)", () => {
@@ -436,7 +436,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const form499Rows = buildLinkageEvalForm499Rows()
 		const providerRows = buildLinkageEvalProviderRows()
 
-		return await runLinkagePass({
+		return runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),
 			truthGroupOf: buildTruthFamilyGroups(form499Rows, providerRows),

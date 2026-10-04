@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { reloadOnServiceWorkerTakeover } from "@mailwoman/site-kit/service-worker-client"
+import { reloadOnServiceWorkerTakeover } from "@mailwoman/universe/site-kit/service-worker-client"
 import { setWorkerUrl } from "maplibre-gl"
 import maplibreWorkerURL from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
 import { createRoot } from "react-dom/client"

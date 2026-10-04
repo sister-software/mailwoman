@@ -33,7 +33,7 @@ const RegistryConvertTXHHSC: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { convertTXHHSC } = await import("@mailwoman/registry/tools/txhhsc-to-oarow")
 
-		return await convertTXHHSC({ src: options.src, out: options.out }, (line) => console.error(line))
+		return convertTXHHSC({ src: options.src, out: options.out }, (line) => console.error(line))
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

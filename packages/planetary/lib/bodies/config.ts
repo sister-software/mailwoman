@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { PWAIdentity } from "@mailwoman/site-kit/vite/pwa"
+import type { PWAIdentity } from "@mailwoman/universe/site-kit/vite/pwa"
 
 import type { PlanetaryBody } from "#body"
 

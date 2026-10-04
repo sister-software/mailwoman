@@ -43,7 +43,7 @@ const EvalPromote = harnessCommand(
 	async (options) => {
 		const { runPromotionEval } = await import("#tools/eval-harness/promotion/eval")
 
-		return await runPromotionEval(options)
+		return runPromotionEval(options)
 	},
 	{ exitCode: (exitCode) => exitCode }
 )

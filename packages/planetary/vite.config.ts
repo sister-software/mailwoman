@@ -9,8 +9,8 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { buildInfoPlugin } from "@mailwoman/site-kit/vite/build-info"
-import { installablePWA } from "@mailwoman/site-kit/vite/pwa"
+import { buildInfoPlugin } from "@mailwoman/universe/site-kit/vite/build-info"
+import { installablePWA } from "@mailwoman/universe/site-kit/vite/pwa"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
