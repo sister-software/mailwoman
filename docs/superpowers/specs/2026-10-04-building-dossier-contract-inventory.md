@@ -4,7 +4,9 @@ This inventory completes the interface review for
 [#2285](https://github.com/sister-software/mailwoman/issues/2285), under the building feasibility
 application in [#2291](https://github.com/sister-software/mailwoman/issues/2291).
 [#2455](https://github.com/sister-software/mailwoman/issues/2455) owns this document.
-The proposed data model and cases below are awaiting implementation.
+`@mailwoman/dossier` (`packages/dossier`) implements the data model and the eight cases below.
+Until [#2289](https://github.com/sister-software/mailwoman/issues/2289) adds a spatial key,
+the dossier associates every layer reading with every building.
 
 A dossier is a reviewable account of one property's identity, physical premises, network evidence,
 access, engineering, available products and demand. Each conclusion identifies the records behind it
