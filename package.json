@@ -108,7 +108,7 @@
 		"typecheck:tools": "tsc -p tsconfig.tools.json"
 	},
 	"devDependencies": {
-		"@duckdb/node-api": "^1.5.5-r.4",
+		"@duckdb/node-api": "^1.5.5-r.5",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
