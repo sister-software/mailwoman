@@ -6254,6 +6254,8 @@ __metadata:
 "@mailwoman/dossier@workspace:packages/dossier":
   version: 0.0.0-use.local
   resolution: "@mailwoman/dossier@workspace:packages/dossier"
+  dependencies:
+    "@mailwoman/record": "workspace:*"
   languageName: unknown
   linkType: soft
 
