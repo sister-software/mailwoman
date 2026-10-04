@@ -247,7 +247,7 @@ async function runPOI(input: string, options: Options): Promise<string> {
 			)
 		}
 
-		return formatOutcome(result.poiIntent, options)
+		return await formatOutcome(result.poiIntent, options)
 	} finally {
 		resolverHandle?.[Symbol.dispose]()
 	}
@@ -263,7 +263,7 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 			)
 		}
 
-		return await runPOI(input.trim(), options)
+		return runPOI(input.trim(), options)
 	})
 
 	if (state.status !== "done") {

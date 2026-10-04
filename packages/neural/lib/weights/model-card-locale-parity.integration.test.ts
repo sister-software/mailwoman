@@ -47,7 +47,7 @@ interface EvidenceChannel {
 }
 
 const readCard = async (locale: string) =>
-	await readLocalJSONFile<ModelCard>(resolveModulePath(`@mailwoman/neural-weights-${locale}/model-card.json`))
+	readLocalJSONFile<ModelCard>(resolveModulePath(`@mailwoman/neural-weights-${locale}/model-card.json`))
 
 const enUs = await readCard("en-us")
 const frFr = await readCard("fr-fr")

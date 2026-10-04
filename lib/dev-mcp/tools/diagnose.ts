@@ -53,5 +53,5 @@ export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> 
 					"says what it left out. Use for large sets where the census is the point and the row dump is not."
 			),
 	}),
-	handler: async (args) => await runDiagnose(registry, args),
+	handler: async (args) => runDiagnose(registry, args),
 })

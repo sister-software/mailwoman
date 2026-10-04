@@ -54,7 +54,7 @@ const EvalLedgerAppend = harnessCommand(
 	async (options) => {
 		const { ledgerAppend } = await import("#tools/eval-harness/ledger-append")
 
-		return await ledgerAppend(options)
+		return ledgerAppend(options)
 	},
 	{ exitCode: (exitCode) => exitCode }
 )

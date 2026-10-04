@@ -324,7 +324,7 @@ async function readEffectiveTrainingManifest(
 
 	if (!(await pathExists(path))) return null
 
-	return await readLocalJSONFile<EffectiveTrainingManifest>(path)
+	return readLocalJSONFile<EffectiveTrainingManifest>(path)
 }
 
 /**

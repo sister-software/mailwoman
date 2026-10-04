@@ -39,7 +39,7 @@ const FilerLinkageEval: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { filerLinkageEval } = await import("@mailwoman/filer/tools/linkage/eval")
 
-		return await filerLinkageEval({ outMd: options.outMd, date: options.date }, (line) => console.error(line))
+		return filerLinkageEval({ outMd: options.outMd, date: options.date }, (line) => console.error(line))
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

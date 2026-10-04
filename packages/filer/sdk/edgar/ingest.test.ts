@@ -23,7 +23,7 @@ const TICKERS: CompanyTickerEntry[] = [
 ]
 
 async function exhibit(name: string): Promise<string> {
-	return await readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar", name))
+	return readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar", name))
 }
 
 const CABLE_ONE_HEADERS = `

@@ -237,17 +237,17 @@ export async function downloadAnnuaireEducation(
 		retryDelayMs: options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS,
 	})
 
-	if (!isSuccessStatus(status)) return await fail(`export answered HTTP ${status}`)
+	if (!isSuccessStatus(status)) return fail(`export answered HTTP ${status}`)
 
 	const lines = await countJSONLines(dest)
 
 	if (lines !== expected) {
-		return await fail(`the filter selects ${expected} records and the export wrote ${lines}`)
+		return fail(`the filter selects ${expected} records and the export wrote ${lines}`)
 	}
 
 	const stat = await tryStat(dest)
 
-	if (!stat) return await fail(`the export is not at ${dest.toString()}`)
+	if (!stat) return fail(`the export is not at ${dest.toString()}`)
 
 	const entry: AnnuaireExportManifest = {
 		source_url: annuaireExportURL(),

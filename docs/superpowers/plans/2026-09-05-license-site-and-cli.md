@@ -242,7 +242,7 @@ export async function verifyConfiguredLicenseKey(now?: Date): Promise<LicenseKey
 
 	if (!configured) return undefined
 
-	return await verifyLicenseKey(configured.token, { trustedKeys: trustedLicenseSigningKeys(), ...(now ? { now } : {}) })
+	return verifyLicenseKey(configured.token, { trustedKeys: trustedLicenseSigningKeys(), ...(now ? { now } : {}) })
 }
 ```
 

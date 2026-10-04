@@ -186,7 +186,7 @@ export async function harvestADSEE(
 
 	options.report?.(`  Feature count: ${featureCount.count ?? "not stated"} — ${featureCount.because}`)
 
-	return await harvestPagedWFS({
+	return harvestPagedWFS({
 		context: CONTEXT,
 		source: SLUG,
 		outputDir: options.outputDir,
@@ -246,7 +246,7 @@ export type FetchADSEEOptions = BaseFetchOptions &
 export async function fetchADSEE(options: FetchADSEEOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const pageSize = options.pageSize ?? EE_ADS_PAGE_SIZE
 
-	return await runWFSHarvest(
+	return runWFSHarvest(
 		{
 			slug: SLUG,
 			outRoot: options.outRoot,
@@ -257,7 +257,7 @@ export async function fetchADSEE(options: FetchADSEEOptions, report?: (line: str
 			client: options.client,
 			maxPages: options.maxPages,
 			harvest: async (client) =>
-				await harvestADSEE(client, {
+				harvestADSEE(client, {
 					outputDir: options.outRoot(SLUG),
 					pageSize,
 					maxPages: options.maxPages,

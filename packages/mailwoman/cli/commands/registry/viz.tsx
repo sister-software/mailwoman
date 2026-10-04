@@ -87,7 +87,7 @@ async function runFigure(figure: Figure, options: Options): Promise<string> {
 }
 
 const RegistryViz: CommandComponent<typeof spec, [Figure]> = ({ options, args }) => {
-	const state = useCommandTask(async () => await runFigure(args[0], options))
+	const state = useCommandTask(async () => runFigure(args[0], options))
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 

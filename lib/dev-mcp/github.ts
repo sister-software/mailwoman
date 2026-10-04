@@ -266,5 +266,5 @@ export async function resolveCheckout(repoRoot: string, checkout?: string): Prom
 		throw new Error(`${checkout} is not a checkout of the repository at ${repoRoot}.`)
 	}
 
-	return await workingTreeRoot(checkout)
+	return workingTreeRoot(checkout)
 }

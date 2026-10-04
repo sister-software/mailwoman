@@ -19,7 +19,7 @@ import {
 } from "#sdk/cores/client"
 
 async function fixture(name: string): Promise<string> {
-	return await readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", "cores", name))
+	return readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", "cores", name))
 }
 
 const KNOLOGY_FRN = toFRN("0001753557")!
@@ -146,7 +146,7 @@ describe("fetchCORESRegistration", () => {
 			getDocument: async (input) => {
 				requested.push(String(input))
 
-				return await fixture("frn-0003768165-comcast.html")
+				return fixture("frn-0003768165-comcast.html")
 			},
 		}
 
@@ -158,7 +158,7 @@ describe("fetchCORESRegistration", () => {
 
 	it("resolves to null — never throws — when CORES has no record", async () => {
 		const client: CORESDocumentClient = {
-			getDocument: async () => await fixture("frn-0000000000-no-record.html"),
+			getDocument: async () => fixture("frn-0000000000-no-record.html"),
 		}
 
 		await expect(fetchCORESRegistration(client, UNKNOWN_FRN)).resolves.toBeNull()

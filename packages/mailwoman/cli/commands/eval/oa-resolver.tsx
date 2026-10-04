@@ -83,7 +83,7 @@ const EvalOAResolver = harnessCommand(spec, async (options) => {
 
 	const { oaResolverEval } = await import("#tools/eval-harness/oa/resolver/eval")
 
-	return await oaResolverEval({
+	return oaResolverEval({
 		...rest,
 		noAdminCoherence: adminCoherenceOff,
 		noPostcodeConsistency: postcodeConsistencyOff,

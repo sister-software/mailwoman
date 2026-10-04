@@ -35,7 +35,7 @@ export const spec = {
  * Run `mw doctor` without loading its former React/Ink adapter.
  */
 export async function run(args: readonly string[]): Promise<number> {
-	return await runNativeCommand(spec, args, async (parsed) => {
+	return runNativeCommand(spec, args, async (parsed) => {
 		const { runDoctor, describeEnvironment, renderDoctorReport } = await import("#doctor")
 
 		const report = await runDoctor()

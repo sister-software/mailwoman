@@ -143,7 +143,7 @@ async function assertWorkflowExists(options: BlessPackageOptions): Promise<void>
  * The return type requires `name` because every caller publishes or reports under it.
  */
 async function readPkg(dir: PathBuilderLike): Promise<PackageJSONLike<{ name: string }>> {
-	return await readPackageJSON<{ name: string }>(PathBuilder.from(dir)("package.json"))
+	return readPackageJSON<{ name: string }>(PathBuilder.from(dir)("package.json"))
 }
 
 function parseRepo(repository: PackageJSONLike["repository"]): string | undefined {

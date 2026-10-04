@@ -51,7 +51,7 @@ const TEST_TIMEOUT_MS = 40_000
 async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false
 
-	return await isExecutable("/usr/bin/script")
+	return isExecutable("/usr/bin/script")
 }
 
 const HAS_LINUX_SCRIPT = await hasLinuxScript()

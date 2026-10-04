@@ -80,7 +80,7 @@ export const lookupTool = async ({ registry }: DevToolDeps): Promise<DevTool> =>
 		),
 	}),
 	handler: async (args) =>
-		await runLookup(registry, {
+		runLookup(registry, {
 			source: args["source"] as LookupSource,
 			queries: args["queries"] as string[],
 			...(args["locale"] === undefined ? {} : { locale: args["locale"] as string }),

@@ -422,7 +422,7 @@ async function runMove(
 	const manifests: ManifestReplacement[] = []
 
 	if (typeof options["literals-since"] === "string") {
-		return await runLiteralRepair(options["literals-since"], options["dry-run"] === true, io)
+		return runLiteralRepair(options["literals-since"], options["dry-run"] === true, io)
 	}
 
 	if (typeof options.moves === "string") {
@@ -484,13 +484,13 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 
 	if (!id) return usage(io)
 
-	if (id === "baseline") return await runBaseline(rest.slice(1), options, io)
+	if (id === "baseline") return runBaseline(rest.slice(1), options, io)
 
-	if (id === "fix") return await runFix(rest.slice(1), options, io)
+	if (id === "fix") return runFix(rest.slice(1), options, io)
 
-	if (id === "move") return await runMove(rest.slice(1), options, io)
+	if (id === "move") return runMove(rest.slice(1), options, io)
 
-	if (id === "comments") return await runComments(rest.slice(1), options, io)
+	if (id === "comments") return runComments(rest.slice(1), options, io)
 
 	const selected = id === "all" ? checks : [findCheck(id)].filter((check) => check !== undefined)
 
@@ -551,13 +551,13 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 			io.stdout(prettyJSON(await writeCIScope(io.repoRoot)))
 			return 0
 		case "release":
-			return await runOperation(releaseView, rest, io)
+			return runOperation(releaseView, rest, io)
 		case "shop":
-			return await runOperation(shopView, rest, io)
+			return runOperation(shopView, rest, io)
 		case "health":
-			return await runHealth(rest, io)
+			return runHealth(rest, io)
 		case "storage":
-			return await runOperation(storageView, rest, io)
+			return runOperation(storageView, rest, io)
 		default:
 			return usage(io)
 	}

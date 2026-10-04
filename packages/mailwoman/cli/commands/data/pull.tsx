@@ -225,7 +225,7 @@ async function probeRemote(
  * so every transfer here includes `Range: bytes=0-`.
  */
 async function downloadToDisk(url: string, destPath: string): Promise<number> {
-	return await streamToDisk({
+	return streamToDisk({
 		url,
 		destination: destPath,
 		context: "mailwoman data pull",

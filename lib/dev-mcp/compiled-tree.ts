@@ -29,7 +29,7 @@ import { FINGERPRINTED_WORKSPACES } from "#dev-mcp/tree-fingerprint"
  * Whether the compiled tree a spawned CLI will load is newer than the source it was emitted from.
  */
 export async function checkSpawnedTreeFreshness(repoRoot: PathBuilderLike): Promise<CompiledFreshness> {
-	return await checkCompiledFreshness(repoRoot, FINGERPRINTED_WORKSPACES)
+	return checkCompiledFreshness(repoRoot, FINGERPRINTED_WORKSPACES)
 }
 
 /**

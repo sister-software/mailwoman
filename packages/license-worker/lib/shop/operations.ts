@@ -159,7 +159,7 @@ const rehearseOperation = defineOperation({
 	async run(input, context) {
 		if (context.dryRun) throw new Error("a rehearsal creates test-mode objects; there is no dry run of it")
 
-		return await startRehearsal(stripeFor("test"), {
+		return startRehearsal(stripeFor("test"), {
 			siteOrigin: input["site-origin"] ?? DEFAULT_SITE_ORIGIN,
 			plan: input.plan ?? "commercial-monthly-v1",
 			licensee: input.licensee ?? "Rehearsal Licensee Ltd",
@@ -190,7 +190,7 @@ const rehearseRenewalOperation = defineOperation({
 	async run(input, context) {
 		if (context.dryRun) throw new Error("advancing a test clock is the rehearsal; there is no dry run of it")
 
-		return await advanceRehearsal(stripeFor("test"), {
+		return advanceRehearsal(stripeFor("test"), {
 			session: input.session,
 			workerOrigin: input["worker-origin"],
 			days: input.days ?? DEFAULT_ADVANCE_DAYS,

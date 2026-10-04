@@ -115,7 +115,7 @@ export async function runLookup(
 		}
 
 		case LookupSource.Candidate: {
-			return await withArtifact(source, await resolveCandidateDB(config, dataRoot), async (db, path) => {
+			return withArtifact(source, await resolveCandidateDB(config, dataRoot), async (db, path) => {
 				const importancePath = wofDatabaseRoot(dataRoot)("admin-global-priority-importance.db").toString()
 
 				const importanceDB = (await pathExists(importancePath))
@@ -208,7 +208,7 @@ export async function runLookup(
 		}
 
 		case LookupSource.POI: {
-			return await withArtifact(source, poiDatabaseRoot(dataRoot)("poi.db").toString(), (db, path) => ({
+			return withArtifact(source, poiDatabaseRoot(dataRoot)("poi.db").toString(), (db, path) => ({
 				source,
 				provenance: { artifact: path },
 				rows: lookupPOI(db, queries, {
@@ -223,16 +223,16 @@ export async function runLookup(
 		}
 
 		case LookupSource.WOF: {
-			return await runWOFLookup(args, dataRoot)
+			return runWOFLookup(args, dataRoot)
 		}
 
 		case LookupSource.Postcode: {
-			return await runPostcodeLookup(args)
+			return runPostcodeLookup(args)
 		}
 
 		case LookupSource.FST:
 		case LookupSource.StreetMorphology: {
-			return await runFSTLookup(registry, args)
+			return runFSTLookup(registry, args)
 		}
 
 		default: {

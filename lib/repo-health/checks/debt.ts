@@ -628,7 +628,7 @@ async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
  * Read committed baseline counters.
  */
 async function readBaseline(): Promise<DebtCounters> {
-	return await readLocalJSONFile<DebtCounters>(BASELINE_PATH)
+	return readLocalJSONFile<DebtCounters>(BASELINE_PATH)
 }
 
 /**

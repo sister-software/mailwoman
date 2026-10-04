@@ -144,7 +144,7 @@ const DataStatus: CommandComponent<typeof spec> = ({ options, args }) => {
 			const dataRoot = options.dataRoot ?? dataRootPath()
 			const names = args.length ? args : Object.keys(BUNDLES)
 
-			return await statusForBundles(names, dataRoot, options.checkRemote)
+			return statusForBundles(names, dataRoot, options.checkRemote)
 		},
 		(result) => (result.ok ? 0 : 1)
 	)

@@ -391,7 +391,7 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 }
 
 export async function run(args: readonly string[]): Promise<number> {
-	return await runNativeCommand(spec, args, async (parsed) => {
+	return runNativeCommand(spec, args, async (parsed) => {
 		const options = await optionsOf(parsed.values)
 		const input = parsed.positionals.join(" ").trim()
 
@@ -401,7 +401,7 @@ export async function run(args: readonly string[]): Promise<number> {
 				import("#debug-view/command"),
 			])
 
-			return await renderInkCommand(createElement(GeocodeDebugCommand, { input, options }))
+			return renderInkCommand(createElement(GeocodeDebugCommand, { input, options }))
 		}
 
 		if (options.stdin) {

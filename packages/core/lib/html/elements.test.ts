@@ -65,7 +65,7 @@ async function* perByte(text: string): AsyncIterable<Uint8Array> {
 }
 
 async function collect(chunks: AsyncIterable<string | Uint8Array>, name = "ad:Address") {
-	return await Array.fromAsync(streamMarkupElements(chunks, name, { xml: true }))
+	return Array.fromAsync(streamMarkupElements(chunks, name, { xml: true }))
 }
 
 describe("streamMarkupElements", () => {

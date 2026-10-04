@@ -135,7 +135,7 @@ async function digestArtifacts(
 	memo: Map<string, Promise<string>>,
 	deps: RoutedMailwomanArmDeps
 ): Promise<RoutedArtifactRecord[]> {
-	return await Promise.all(
+	return Promise.all(
 		artifacts.map(async (artifact) => {
 			if (!artifact.path) return { name: artifact.name, path: null, origin: artifact.origin, digest: null }
 
@@ -186,7 +186,7 @@ async function resolveLocale(
 	deps: RoutedMailwomanArmDeps,
 	digests: Map<string, Promise<string>>
 ) {
-	if (cacheRoot) return await preflightLocale(locale, cacheRoot, deps, digests)
+	if (cacheRoot) return preflightLocale(locale, cacheRoot, deps, digests)
 
 	const resolved = await deps.resolveWeights({ locale })
 

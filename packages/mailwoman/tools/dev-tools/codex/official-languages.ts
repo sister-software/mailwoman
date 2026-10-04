@@ -60,7 +60,7 @@ interface LanguagePopulation {
 
 async function loadCLDR(file: string, cldrDir: PathBuilderLike | undefined, cldrVersion: string): Promise<unknown> {
 	if (cldrDir) {
-		return await readLocalJSONFile(PathBuilder.from(cldrDir)(`cldr-${file}.json`))
+		return readLocalJSONFile(PathBuilder.from(cldrDir)(`cldr-${file}.json`))
 	}
 
 	const url = `https://cdn.jsdelivr.net/npm/cldr-core@${cldrVersion}/supplemental/${file}.json`

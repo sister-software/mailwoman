@@ -60,5 +60,5 @@ export const compareTool = async ({ registry }: DevToolDeps): Promise<DevTool> =
 			),
 		stratify_by: z.enum(["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]).optional(),
 	}),
-	handler: async (args) => await runCompare(registry, args),
+	handler: async (args) => runCompare(registry, args),
 })

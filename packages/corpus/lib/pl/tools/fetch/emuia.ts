@@ -268,7 +268,7 @@ export async function harvestEMUiAPL(
 
 	options.report?.(`  Feature count: ${featureCount.count ?? "not stated"} — ${featureCount.because}`)
 
-	return await harvestPagedWFS({
+	return harvestPagedWFS({
 		context: CONTEXT,
 		source: SLUG,
 		outputDir: options.outputDir,
@@ -335,7 +335,7 @@ export async function fetchEMUiAPL(
 	// and the manifest records what was asked for rather than what arrived.
 	const pageSize = Math.min(options.pageSize ?? PL_EMUIA_PAGE_SIZE, PL_EMUIA_PAGE_SIZE)
 
-	return await runWFSHarvest(
+	return runWFSHarvest(
 		{
 			slug: SLUG,
 			outRoot: options.outRoot,
@@ -346,7 +346,7 @@ export async function fetchEMUiAPL(
 			client: options.client,
 			maxPages: options.maxPages,
 			harvest: async (client) =>
-				await harvestEMUiAPL(client, {
+				harvestEMUiAPL(client, {
 					outputDir: options.outRoot(SLUG),
 					pageSize,
 					maxPages: options.maxPages,

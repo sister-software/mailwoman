@@ -44,7 +44,7 @@ export const spec = {
  * Run `mw autocomplete` without React, Ink, or Zod.
  */
 export async function run(args: readonly string[]): Promise<number> {
-	return await runNativeCommand(spec, args, async (parsed) => {
+	return runNativeCommand(spec, args, async (parsed) => {
 		const prefix = parsed.positionals.join(" ").trim()
 
 		if (!prefix) throw new CLIUsageError("autocomplete requires a prefix (for example mw autocomplete new yo).")

@@ -86,7 +86,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 }
 
 const PlacerEval: CommandComponent<typeof spec, [Kind]> = ({ options, args }) => {
-	const state = useCommandTask(async () => await runKind(args[0], options))
+	const state = useCommandTask(async () => runKind(args[0], options))
 
 	return <CommandTaskResult state={state} />
 }

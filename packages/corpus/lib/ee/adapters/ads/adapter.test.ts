@@ -25,7 +25,7 @@ const scratch = useScratchDir("ads")
 const fixtureJSONL = workspacePath("corpus", "fixtures", "ads", "sample.jsonl")
 
 async function run(options: { country?: string; limit?: number } = {}) {
-	return await runAdapter({
+	return runAdapter({
 		adapter: createADSAdapter(),
 		adapterOptions: { inputPath: fixtureJSONL, ...options },
 		outputDir: scratch.path,

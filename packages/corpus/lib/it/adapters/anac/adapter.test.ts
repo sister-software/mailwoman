@@ -39,7 +39,7 @@ const scratch = useScratchDir("it-anac")
 const fixtureJSONL = workspacePath("corpus", "fixtures", "anac", "sample.jsonl")
 
 async function run(options: { country?: string; limit?: number } = {}) {
-	return await runAdapter({
+	return runAdapter({
 		adapter: createITANACAdapter(),
 		adapterOptions: { inputPath: fixtureJSONL, ...options },
 		outputDir: scratch.path,

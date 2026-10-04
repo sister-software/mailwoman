@@ -104,7 +104,7 @@ async function writeTables(): Promise<void> {
 async function run(options: { country?: string; limit?: number } = {}) {
 	await writeTables()
 
-	return await runAdapter({
+	return runAdapter({
 		adapter: createVarisAdapter(),
 		adapterOptions: { inputPath: scratch.path, ...options },
 		outputDir: scratch.path("out"),
@@ -113,7 +113,7 @@ async function run(options: { country?: string; limit?: number } = {}) {
 }
 
 async function rows() {
-	return await readCanonicalRows(scratch.path("out"), LV_VARIS_ADAPTER_ID)
+	return readCanonicalRows(scratch.path("out"), LV_VARIS_ADAPTER_ID)
 }
 
 describe("lv-varis adapter against records of the 2026-09-30 edition", () => {

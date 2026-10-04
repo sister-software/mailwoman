@@ -171,10 +171,10 @@ export async function runCompare(
 	const set = await resolveInputSet(options.inputs ?? { kind: "board" })
 
 	if (armA.kind === "mailwoman" && armB.kind === "mailwoman") {
-		return await compareMailwomanArms(registry, set, armA.config, armB.config, options, deps)
+		return compareMailwomanArms(registry, set, armA.config, armB.config, options, deps)
 	}
 
-	return await compareAcrossEngines(registry, set, armA, armB, options, deps)
+	return compareAcrossEngines(registry, set, armA, armB, options, deps)
 }
 
 /**
@@ -549,7 +549,7 @@ async function compareAcrossEngines(
 	const build = async (arm: ArmSpec, side: "a" | "b"): Promise<ArmRunner> => {
 		if (arm.kind === "mailwoman") return mailwomanRunner(registry, arm.config, set)
 
-		if (arm.kind === "recorded") return await recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
+		if (arm.kind === "recorded") return recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
 
 		if (arm.kind === "worktree") return worktreeArmRunner(registry, arm, set)
 
