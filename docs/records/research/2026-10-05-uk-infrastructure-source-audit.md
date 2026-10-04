@@ -193,6 +193,16 @@ it keeps asset presence apart from connectivity, capacity, rights and usability 
 - The dossier's `LayerReading` (`packages/dossier/lib/coverage.ts`) has zero producers yet; every
   layer's coverage rows already store what a producer needs (per-cell `observed_rows` and `basis`). The
   missing piece is an adapter from layer readers to `LayerReading`, rather than new data.
+- The BDC machinery itself is already built and exercised: `@mailwoman/bdc` holds the credentialed
+  public-API client (`packages/bdc/sdk/client.ts` — throttle, disk cache, retry, explained credential
+  failures), vintage discovery (`sdk/filing/dates.ts`), the listing and download path
+  (`sdk/list-files.ts`, `sdk/download.ts`, with the extracted-CSV disk cache), the `bdc.db` layer
+  builder (`sdk/build-bdc.ts`, writing `source_present` coverage cells at H3 — the `LayerReading`
+  feedstock), and the plausibility layer (`lib/plausibility.ts`), which already abstains
+  `insufficient_survey_data` when a cell was never surveyed — the missing-vs-empty distinction,
+  running in production code. The data root holds a prior real download (Texas FTTP, D25 vintage). One
+  defect found on this pass: the listing endpoint's subcategory vocabulary had drifted from the live
+  API (#2465).
 
 ## 4. Missing versus surveyed-empty versus conflicting, demonstrated (DoD item 4)
 
@@ -244,10 +254,20 @@ later), as of 2023-06-30 (Charter cable at the block, Verizon FTTP absent from t
 in the tract), and as of 2026-10-05 (PLUTO's completed 375, alias resolved through PAD, Verizon FTTP
 2300/2300 at the block). 65 dossier tests pass.
 
-The stated limit, carried from the spec: the Fabric location ids in the BDC rows (1146206901,
-1146206903, 1554029131, and neighbors) remain unjoined to addresses on this pass, because the Fabric
-download sits outside the public API. Provider availability therefore reads at census-block
-granularity rather than per-premises. That join is the next refinement when the pilot needs it.
+The stated limit, carried from the spec and reinforced by `@mailwoman/bdc`'s documented boundary
+(`packages/bdc/README.md`): the BDC Fabric — the `location_id` → rooftop/parcel map — is
+CostQuest-licensed. This repository never ingests, ships or derives data from the Fabric; the
+`location_id` values in the BDC rows (1146206901, 1146206903, 1554029131, and neighbors) travel as
+opaque join keys that a Fabric-licensed user may join against their own copy. Census-block granularity
+is therefore the designed boundary for this repository, rather than a stopgap awaiting a join.
+
+The retrieval itself ran twice: once through the raw API during prospecting, and again through the
+package's own machinery (`createBDCClient`, `retrieveAvailabilityFiles`, `downloadBDCFile`), which
+reproduced every count exactly (tract 70 / block 0 FTTP at 2022-06-30, tract 128 / block 2 cable at
+2022-06-30, tract 236 / block 6 FTTP at 2025-12-31). That pass caught one real defect: the SDK's
+subcategory vocabulary for the listing endpoint had drifted from the live API (technology names as
+State subcategories retrieve zero files; the live values are `Provider List`, `Location Coverage` and
+`Hexagon Coverage`). Filed as #2465.
 
 ## 6. Prioritized UK source matrix (DoD item 5)
 
