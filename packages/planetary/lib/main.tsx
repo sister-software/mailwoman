@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { reloadOnServiceWorkerTakeover } from "@mailwoman/universe/site-kit/service-worker-client"
 import { setWorkerUrl } from "maplibre-gl"
 import maplibreWorkerURL from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
 import { createRoot } from "react-dom/client"
@@ -15,6 +16,7 @@ import { App } from "./App.tsx"
 // The `?worker&url` import makes Vite emit the worker and return its URL.
 setWorkerUrl(maplibreWorkerURL)
 
+reloadOnServiceWorkerTakeover()
 registerSW()
 
 const root = document.getElementById("root")

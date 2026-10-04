@@ -76,11 +76,13 @@ Use `createRequire(import.meta.url).resolve` only where the loader cannot provid
 documented in `docs/plugins/demo-assets/resolve.ts`.
 
 Static and dynamic sibling imports use the workspace `#` imports map. Do not use a relative dynamic
-import or `import.meta.resolve`. Importing `package.json` as a JSON module makes TypeScript copy it into
+import. A literal `#` alias may be resolved with `import.meta.resolve` when a child process needs the
+module's file path; convert its `file:` URL with `fileURLToPath`.
+Importing `package.json` as a JSON module makes TypeScript copy it into
 `out/` and changes the compiled package scope. Read it with
 `readLocalJSONFile(resolvePackagePath(name, "package.json"))`.
 
-`packages/repo-health/lib/checks/node-modules-reacharound.ts` reports constructed `node_modules` paths.
+`lib/repo-health/checks/node-modules-reacharound.ts` reports constructed `node_modules` paths.
 Normal path composition under a caller-supplied root, scratch directory, or user output path remains
 valid. A clean-install probe may inspect a foreign install layout because resolving from the monorepo
 would invalidate the probe.

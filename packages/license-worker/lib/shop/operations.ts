@@ -12,9 +12,9 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { isIdentical } from "@mailwoman/core/identical"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/release-kit"
+import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/universe/release-kit/operation"
 import Stripe from "stripe"
 import { z } from "zod"
 
@@ -56,7 +56,7 @@ const ProvisionInputSchema = z.object({
  * The webhook secret is never written.
  * It goes to `wrangler secret put`.
  */
-async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<string | undefined> {
+async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<string | null> {
 	const idsPath = resolvePackagePath("@mailwoman/license-worker", "lib", "shop", "ids.json")
 	const current = await readLocalJSONFile<ShopIDsByMode>(idsPath)
 
@@ -68,7 +68,7 @@ async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<s
 		...(report.portal.url ? { portalURL: report.portal.url } : {}),
 	})
 
-	if (stringifyJSON(next) === stringifyJSON(current)) return undefined
+	if (isIdentical(next, current)) return null
 
 	await writeLocalJSONFile(next, idsPath)
 
@@ -110,7 +110,7 @@ const provisionOperation = defineOperation({
 			)
 		}
 
-		const written = apply ? await recordShopIDs(input.mode, report) : undefined
+		const written = apply ? await recordShopIDs(input.mode, report) : null
 
 		return { ...report, ...(written ? { written } : {}) }
 	},
@@ -127,7 +127,7 @@ const statusOperation = defineOperation({
 	}),
 	outputSchema: ProvisionReportSchema,
 	async run(input, context) {
-		return await provisionShop(stripeFor(input.mode), {
+		return provisionShop(stripeFor(input.mode), {
 			siteOrigin: input["site-origin"] ?? DEFAULT_SITE_ORIGIN,
 			...(input["worker-origin"] ? { workerOrigin: input["worker-origin"] } : {}),
 			apply: false,
@@ -158,7 +158,7 @@ const rehearseOperation = defineOperation({
 	async run(input, context) {
 		if (context.dryRun) throw new Error("a rehearsal creates test-mode objects; there is no dry run of it")
 
-		return await startRehearsal(stripeFor("test"), {
+		return startRehearsal(stripeFor("test"), {
 			siteOrigin: input["site-origin"] ?? DEFAULT_SITE_ORIGIN,
 			plan: input.plan ?? "commercial-monthly-v1",
 			licensee: input.licensee ?? "Rehearsal Licensee Ltd",
@@ -189,7 +189,7 @@ const rehearseRenewalOperation = defineOperation({
 	async run(input, context) {
 		if (context.dryRun) throw new Error("advancing a test clock is the rehearsal; there is no dry run of it")
 
-		return await advanceRehearsal(stripeFor("test"), {
+		return advanceRehearsal(stripeFor("test"), {
 			session: input.session,
 			workerOrigin: input["worker-origin"],
 			days: input.days ?? DEFAULT_ADVANCE_DAYS,

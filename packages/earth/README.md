@@ -50,7 +50,7 @@ yarn workspace @mailwoman/earth build && yarn workspace @mailwoman/earth wrangle
 `.github/workflows/deploy.yml` runs the same two commands when a push reaches this workspace or a dependency of it.
 The reach is not a path list: `mwops release deploy-targets` maps the changed files to workspaces and deploys the app
 when one of them lies in its dependency closure, walked from the manifests, or a root build file changed. The Worker
-table the workflow deploys from is `packages/release-kit/lib/deploy/targets.ts`.
+table the workflow deploys from is `lib/release-kit/deploy/targets.ts`.
 
 Two rules outside the repository decide whether a deployment works: the public bucket's CORS rule must admit the
 origin the app is served from (`https://earth.mailwoman.ai` is admitted; a `*.workers.dev` preview origin is not), and

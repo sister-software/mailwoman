@@ -427,7 +427,9 @@ const noRelativeDynamicImportRule: Rule = {
 }
 
 /**
- * Prefer typed module-resolution helpers over `import.meta.resolve`.
+ * Package import aliases can resolve a sibling executable without a filesystem path literal.
+ *
+ * Other module paths use the shared resolver, which returns a filesystem path.
  */
 const noImportMetaResolveRule: Rule = {
 	meta: {
@@ -449,6 +451,10 @@ const noImportMetaResolveRule: Rule = {
 				if (object?.type !== "MetaProperty" || object.meta?.name !== "import" || object.property?.name !== "meta") {
 					return
 				}
+
+				const specifier = literalDelimiter(node.arguments?.[0])
+
+				if (specifier?.startsWith("#")) return
 
 				context.report({
 					node,

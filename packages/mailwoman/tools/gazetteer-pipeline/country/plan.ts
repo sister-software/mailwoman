@@ -213,5 +213,5 @@ export function planCountryMove(options: {
  * Returns whether an admin gazetteer exists at `path`.
  */
 export async function adminDBAvailable(path: string): Promise<boolean> {
-	return await pathExists(path)
+	return pathExists(path)
 }

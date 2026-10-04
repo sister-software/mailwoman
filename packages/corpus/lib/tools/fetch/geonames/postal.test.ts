@@ -39,7 +39,7 @@ async function readManifest(): Promise<{
 	files: Array<Record<string, unknown>>
 	[key: string]: unknown
 }> {
-	return await readLocalJSONFile(outRoot("geonames-postal", "MANIFEST.json"))
+	return readLocalJSONFile(outRoot("geonames-postal", "MANIFEST.json"))
 }
 
 beforeAll(async () => {

@@ -258,7 +258,7 @@ export async function harvestSKInspireType(
 
 	options.report?.(`  ${type}: ${featureCount.count ?? "no stated count"} — ${featureCount.because}`)
 
-	return await harvestPagedWFS({
+	return harvestPagedWFS({
 		context: `${CONTEXT} ${typeName}`,
 		source: SLUG,
 		outputDir: options.outputDir,
@@ -376,7 +376,7 @@ export async function fetchSKInspire(
 						)
 					}
 
-					return await harvestSKInspireType(client, {
+					return harvestSKInspireType(client, {
 						outputDir: options.outRoot(SLUG, type),
 						typeName,
 						type,

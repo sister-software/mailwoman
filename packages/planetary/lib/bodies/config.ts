@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { PWAIdentity } from "@mailwoman/site-kit/vite/pwa"
+import type { PWAIdentity } from "@mailwoman/universe/site-kit/vite/pwa"
 
 import type { PlanetaryBody } from "#body"
 

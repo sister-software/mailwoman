@@ -66,7 +66,7 @@ const CorpusSubVenueLexicon: CommandComponent<typeof spec> = ({ options }) => {
 			? await readOvertureSubVenues({ databasePath: options.overtureDB })
 			: undefined
 
-		return await generateSubVenueLexicon({
+		return generateSubVenueLexicon({
 			wikidataDir: options.wikidataDir,
 			extracts: parseExtracts(options.extracts),
 			overtureRows,

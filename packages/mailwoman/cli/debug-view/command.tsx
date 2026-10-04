@@ -73,7 +73,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 			}
 		}
 
-		return renderInkToString(
+		return await renderInkToString(
 			<DebugFrame
 				columns={columns}
 				rows={rows}
@@ -89,7 +89,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 }
 
 function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptions }): React.ReactElement | null {
-	const state = useCommandTask(async () => await runStaticDebug(props.input, props.options))
+	const state = useCommandTask(async () => runStaticDebug(props.input, props.options))
 
 	if (state.status === "error") {
 		return <Text color="red">{state.message}</Text>

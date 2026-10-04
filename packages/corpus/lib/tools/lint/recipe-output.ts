@@ -348,6 +348,8 @@ function checkSanity(output: RecipeOutputStats): LintFlag[] {
 	return flags
 }
 
+// repo-health-ignore private-name-shadows-export -- renders a recipe-lint report.
+// The dossier export renders a building dossier, an unrelated document.
 function renderReport(
 	opts: { outputPath: string; statsPath: string; rulesPath: string },
 	output: RecipeOutputStats,

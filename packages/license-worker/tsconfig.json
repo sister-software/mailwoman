@@ -14,5 +14,9 @@
 	},
 	"include": ["./lib/**/*", "./lib/**/*.json"],
 	"exclude": ["./out/**/*", "./**/*.test.ts"],
-	"references": [{ "path": "../core" }, { "path": "../release-kit" }]
+	"references": [
+		// ---
+		{ "path": "../../lib" },
+		{ "path": "../core" }
+	]
 }

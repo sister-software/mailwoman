@@ -125,8 +125,6 @@ test.describe("Demo — resolution cascade", () => {
 			lat: 50.05,
 			lon: 14.45,
 			tolDeg: 0.15,
-			knownFailure:
-				"The v9.1.0 classifier tags `Praha` as a street and splits `100 00` into two house numbers, so the cascade has no locality or postcode to resolve and drops no marker. A model defect rather than a runtime one.",
 		},
 		{
 			name: "Australian postcode 2000 → Sydney",

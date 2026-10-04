@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 import { fetchExhibit21, parseExhibit21, type SECDocumentClient } from "#sdk/exhibit21"
 
 async function fixture(name: string): Promise<string> {
-	return await readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", name))
+	return readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", name))
 }
 
 describe("parseExhibit21 — criterion 3 (decision 6: abstain, never guess)", () => {

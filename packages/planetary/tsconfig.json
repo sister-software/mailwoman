@@ -24,6 +24,6 @@
 		{ "path": "../cartographer" },
 		{ "path": "../core" },
 		{ "path": "../react" },
-		{ "path": "../site-kit" }
+		{ "path": "../../lib" }
 	]
 }

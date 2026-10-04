@@ -382,7 +382,7 @@ export async function verifyEd25519(data: Uint8Array, publicKeyPEM: string, sign
 	const key = await crypto.subtle.importKey("spki", pemToDER(publicKeyPEM), ALGORITHM, false, ["verify"])
 
 	try {
-		return await crypto.subtle.verify(ALGORITHM, key, signature, data)
+		return crypto.subtle.verify(ALGORITHM, key, signature, data)
 	} catch {
 		return false
 	}
@@ -996,7 +996,7 @@ export async function verifyConfiguredLicenseKey(now?: Date): Promise<LicenseKey
 
 	if (!token) return undefined
 
-	return await verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys(), ...(now ? { now } : {}) })
+	return verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys(), ...(now ? { now } : {}) })
 }
 ```
 

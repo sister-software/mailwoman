@@ -100,7 +100,7 @@ interface DumpManifest {
 }
 
 async function readManifest(outRoot: PathBuilder): Promise<DumpManifest> {
-	return await readLocalJSONFile(outRoot("MANIFEST.json"))
+	return readLocalJSONFile(outRoot("MANIFEST.json"))
 }
 
 describe("fetchGeonamesDumps", () => {

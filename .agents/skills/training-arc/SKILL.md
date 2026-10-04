@@ -128,7 +128,7 @@ measurement in this protocol.
   columns, and the corpus census accepts both supported Arrow list shapes while rejecting malformed
   label values (#1858).
 - **Artifact resolution sorts by mtime and prints the artifact chosen** — enforced in
-  `packages/dev-mcp/lib/compiled-tree.ts`. Never resolve by name sort: `v0.9.9` beats `v0.26.0`
+  `lib/dev-mcp/compiled-tree.ts`. Never resolve by name sort: `v0.9.9` beats `v0.26.0`
   lexically.
 - **A smoke run proves the config loads rather than that the new rows are reached.** Read the file through
   the loader's own check (`country_weights.get(cc)`) first.

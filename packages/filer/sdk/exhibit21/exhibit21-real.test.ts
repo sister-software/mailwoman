@@ -34,7 +34,7 @@ const expected = await readLocalJSONFile<ExpectedFixtures>(FIXTURE_DIRECTORY("ex
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
 
 async function fixture(name: string): Promise<string> {
-	return await readLocalTextFile(FIXTURE_DIRECTORY(name))
+	return readLocalTextFile(FIXTURE_DIRECTORY(name))
 }
 
 /**

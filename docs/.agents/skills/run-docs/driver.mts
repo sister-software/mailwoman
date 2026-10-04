@@ -53,7 +53,7 @@ async function withPage<T>(fn: PageCallback<T>): Promise<T> {
 	})
 
 	try {
-		return await fn(page, consoleErrors)
+		return fn(page, consoleErrors)
 	} finally {
 		await browser.close()
 	}
@@ -78,7 +78,7 @@ async function cmdScreenshot(path: string, outArg?: string) {
 }
 
 async function checkRoute(path: string) {
-	return await withPage(async (page: Page, consoleErrors: string[]) => {
+	return withPage(async (page: Page, consoleErrors: string[]) => {
 		const resp = await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })
 
 		// Docusaurus serves its 404 with HTTP 200, so detect the soft-404 by reading the rendered <h1>.
@@ -166,7 +166,7 @@ async function cmdEval(path: string, js: string) {
 	const result = await withPage(async (page) => {
 		await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })
 
-		return await page.evaluate(`(async () => { ${js} })()`)
+		return page.evaluate(`(async () => { ${js} })()`)
 	})
 
 	console.log(prettyJSON(result, false))

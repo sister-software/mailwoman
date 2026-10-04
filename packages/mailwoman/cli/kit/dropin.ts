@@ -183,7 +183,7 @@ export async function gazetteerFreshness({
 		artifacts.push({ name: "reverse-admin", path: adminDBPath })
 	}
 
-	return await readFreshness(artifacts)
+	return readFreshness(artifacts)
 }
 
 /**

@@ -204,7 +204,7 @@ function ParseTask({
 				)
 			}
 
-			return await runBenchmark(input, options, options.benchmark)
+			return runBenchmark(input, options, options.benchmark)
 		}
 
 		if (options.degraded && ((options.policy && options.policy.length) || options.neural)) {
@@ -214,11 +214,11 @@ function ParseTask({
 		if (options.policy && options.policy.length) {
 			const policyOverrides = parsePolicySpecs(options.policy)
 
-			return await runNeural(input, options, policyOverrides)
+			return runNeural(input, options, policyOverrides)
 		}
 
 		if (options.neural) {
-			return await runNeural(input, options, [])
+			return runNeural(input, options, [])
 		}
 
 		// An `unavailable` outcome falls through to `runPipeline`, which attempts the load itself.
@@ -410,7 +410,7 @@ async function runStructuralPipeline(input: string, options: ParseOptions): Prom
 
 	return options.debug
 		? prettyJSON(await serializeResult(result, options.format))
-		: await serializeTree(result.tree, options.format, { includeAlternatives: false })
+		: serializeTree(result.tree, options.format, { includeAlternatives: false })
 }
 
 /**
@@ -512,7 +512,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	const { createRuntimePipeline } = await import("#index")
 
 	if (options.resolve) {
-		return await withResolver(options, async (resolver) => {
+		return withResolver(options, async (resolver) => {
 			const fst = await tryBuildFST(options)
 			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence, poiQueryKind: options.poi })
 			const result = await pipeline(input, pipelineOpts)
@@ -520,7 +520,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 			return options.debug
 				? prettyJSON(await serializeResult(result, options.format))
-				: await serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
+				: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 		})
 	}
 
@@ -531,7 +531,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	return options.debug
 		? prettyJSON(await serializeResult(result, options.format))
-		: await serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
+		: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 }
 
 const BENCHMARK_WARMUP_ITERATIONS = 5
@@ -677,7 +677,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 async function tryLoadNeural(
 	options: ParseOptions
 ): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | undefined> {
-	return await loadClassifierTolerant(options.locale, {
+	return loadClassifierTolerant(options.locale, {
 		modelPath: options.model,
 		tokenizerPath: options.tokenizer,
 		onDegrade: reportToStderr,
@@ -770,7 +770,7 @@ async function runNeural(
 		tree = await withResolver(options, (resolver) => resolveWithCandidates(resolver, tree, options, routedAway))
 	}
 
-	return await serializeTree(tree, options.format, { includeAlternatives: options.candidates != null })
+	return serializeTree(tree, options.format, { includeAlternatives: options.candidates != null })
 }
 
 export default ParseCommand

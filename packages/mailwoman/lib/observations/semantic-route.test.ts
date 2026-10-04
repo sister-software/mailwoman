@@ -33,7 +33,7 @@ async function scratchRoute(
 
 	mutate(model, lexicon)
 
-	return await createSemanticObservationRoute({ model, lexicon })
+	return createSemanticObservationRoute({ model, lexicon })
 }
 
 function brand<Branded>(value: string): Branded {
@@ -409,7 +409,7 @@ describe("a plural affordance", () => {
 
 describe("the assertion's country scope", () => {
 	async function usScopedRoute(): Promise<ReturnType<typeof createSemanticObservationRoute>> {
-		return await scratchRoute((model, lexicon) => {
+		return scratchRoute((model, lexicon) => {
 			withoutPharmacyAffordance(model)
 
 			lexicon.phrases = [entry({ phrase: "prescription" })]

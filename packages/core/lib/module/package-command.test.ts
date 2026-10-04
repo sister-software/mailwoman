@@ -20,8 +20,12 @@ async function installFixture(
 		{ name: "@fixture/tool", main: "index.js", exports: { ".": "./index.js" }, bin },
 		directory("package.json")
 	)
+
 	await writeLocalTextFile("export {}\n", directory("index.js"))
-	for (const [file, text] of Object.entries(files)) await writeLocalTextFile(text, directory(file))
+
+	for (const [file, text] of Object.entries(files)) {
+		await writeLocalTextFile(text, directory(file))
+	}
 
 	return directory.toString()
 }
@@ -30,13 +34,16 @@ describe("resolvePackageCommand", () => {
 	it("reads the package root manifest when the entrypoint has its own package scope", async () => {
 		await using scratch = await temporaryDirectory("package-nested-manifest-")
 		const directory = scratch.path("node_modules", "@fixture", "nested")
+
 		await writeLocalJSONFile(
 			{ name: "@fixture/nested", main: "lib/index.js", bin: { tool: "bin/tool.js" } },
 			directory("package.json")
 		)
+
 		await writeLocalJSONFile({ type: "commonjs" }, directory("lib", "package.json"))
 		await writeLocalTextFile("", directory("lib", "index.js"))
 		await writeLocalTextFile("", directory("bin", "tool.js"))
+
 		expect(
 			await resolvePackageCommand(pathToFileURL(scratch.path("caller.ts")).href, "@fixture/nested", "tool")
 		).toEqual({
@@ -44,16 +51,19 @@ describe("resolvePackageCommand", () => {
 			argv: [directory("bin", "tool.js").toString()],
 		})
 	})
+
 	it("uses the nearest dependency and preserves spaces in executable paths", async () => {
 		await using scratch = await temporaryDirectory("package-command-")
 		const project = scratch.path("project with spaces")
 
 		await installFixture(scratch.path, { tool: "bin/hoisted.cjs" }, { "bin/hoisted.cjs": "// hoisted\n" })
+
 		const nested = await installFixture(
 			project,
 			{ tool: "bin/nested launcher.cjs" },
 			{ "bin/nested launcher.cjs": "// nested\n" }
 		)
+
 		const base = pathToFileURL(project("src", "caller.ts")).href
 
 		expect(await resolvePackageCommand(base, "@fixture/tool", "tool")).toEqual({
@@ -64,11 +74,13 @@ describe("resolvePackageCommand", () => {
 
 	it("runs an extensionless Node launcher without a .bin shim or exported bin subpath", async () => {
 		await using scratch = await temporaryDirectory("package-node-bin-")
+
 		const packageRoot = await installFixture(
 			scratch.path,
 			{ tool: "bin/tool" },
 			{ "bin/tool": "#!/usr/bin/env node\n" }
 		)
+
 		const base = pathToFileURL(scratch.path("caller.ts")).href
 
 		expect(await resolvePackageCommand(base, "@fixture/tool", "tool")).toEqual({
@@ -86,6 +98,7 @@ describe("resolvePackageCommand", () => {
 			file: process.execPath,
 			argv: [`${packageRoot}/bin/tool.js`],
 		})
+
 		await expect(resolvePackageCommand(base, "@fixture/tool", "another-command")).rejects.toThrow(
 			"no bin entry for another-command"
 		)
@@ -109,6 +122,7 @@ describe("resolvePackageCommand", () => {
 
 		await expect(resolvePackageCommand(base, "@fixture/tool", "tool")).rejects.toThrow(/ENOENT/u)
 		await expect(resolvePackageCommand(base, "@fixture/tool", "absent")).rejects.toThrow("no bin entry for absent")
+
 		await expect(resolvePackageCommand(base, "@fixture/not-installed", "tool")).rejects.toThrow(
 			/Cannot find|Could not find/u
 		)

@@ -41,7 +41,7 @@ export async function gitHead(
 ): Promise<string> {
 	const args = options.short ? ["rev-parse", "--short", "HEAD"] : ["rev-parse", "HEAD"]
 
-	return await git(args, repoRoot)
+	return git(args, repoRoot)
 }
 
 /**

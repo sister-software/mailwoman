@@ -155,6 +155,16 @@ export async function readCaLocalities(admin1: string): Promise<string[]> {
 	return [...localities]
 }
 
+export function readPostalTuples(
+	source: { zip: PathBuilderLike; txt: string },
+	opts: { withState: true }
+): Promise<AUTuple[]>
+
+export function readPostalTuples(
+	source: { zip: PathBuilderLike; txt: string },
+	opts: { withState: false }
+): Promise<NZTuple[]>
+
 export async function readPostalTuples(
 	source: { zip: PathBuilderLike; txt: string },
 	opts: { withState: boolean }
@@ -180,7 +190,9 @@ export async function readPostalTuples(
 		const key = `${locality}|${postcode}`.toLowerCase()
 
 		if (seen.has(key)) continue
+
 		seen.add(key)
+
 		tuples.push(opts.withState ? { locality, region, postcode } : { locality, postcode })
 	}
 

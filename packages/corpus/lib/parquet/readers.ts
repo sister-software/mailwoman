@@ -26,7 +26,7 @@ export async function readParquetRows<T>(path: PathBuilderLike, options: Parquet
 		throw new Error(`No parquet file at ${path}`)
 	}
 
-	return await Array.fromAsync(openParquetRowStream<T>(path, options))
+	return Array.fromAsync(openParquetRowStream<T>(path, options))
 }
 
 /**
@@ -40,7 +40,7 @@ export async function tryReadParquetRows<T>(
 ): Promise<T[] | null> {
 	if (!(await pathExists(path))) return null
 
-	return await Array.fromAsync(openParquetRowStream<T>(path, options))
+	return Array.fromAsync(openParquetRowStream<T>(path, options))
 }
 
 /**

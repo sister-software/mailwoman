@@ -50,7 +50,7 @@ This will:
 
 Inspect the output. If it looks wrong, fix and re-run.
 
-## Release preflight — pack and audit all 51 tarballs without publishing (#1894)
+## Release preflight — pack and audit every release tarball without publishing (#1894)
 
 The v9.2.0 release needed four publish dispatches, because no tool could exercise the release tree the
 way CI publishes it without creating a tag or writing to a registry. The preflight does that:
@@ -65,9 +65,17 @@ It stages the tracked tree (`git archive`) into an isolated root and materialize
 artifacts there. It then packs and audits every `.release-it.json` workspace through the same
 `packWorkspaceForPublish` + `verifyTarball` path that the publish workflow uses, and it collects every
 failure in one sweep. It also checks the named-absence identity: the root workspaces minus the release
-list must equal the six sanctioned absences by name (see `packages/release-kit/lib/release/stage.ts`).
+list must equal the sanctioned absences by name (see `lib/release-kit/release/stage.ts`).
 Add `--keep` or `--staging <dir>` to inspect the tree afterwards. The preflight writes no state to git,
 GitHub, npm, R2 or HF, and an interrupted run cannot dirty the checkout.
+
+Both dry and real `mode=publish` runs must complete this audit before creating a tag, a GitHub
+release or publishing a package. After correcting any failed stage, repeat the complete
+`mode=publish, dry_run=true` run against the corrected commit and artifacts before the real dispatch.
+A successful `mode=prepare` run checks the version change; it does not audit the release tarballs.
+
+Publication still packs each workspace again and verifies its release plan. The preflight does not
+yet bind publication to its retained tarballs. That remaining work belongs to #1894.
 
 The two sources differ only in where the bytes come from:
 
@@ -394,7 +402,7 @@ The end-to-end order that worked: **the promotion eval (revised if needed) → c
 - **The `neural-weights-fr-fr` card drifts silently.** release-it only touches `package.json`, so the card is not bumped automatically and its `version` and `model_lineage` go stale. It was once found stuck at `4.6.0` / "v1.5.0-fr-order" long after it had started shipping the en-us binary. Reconcile both fields in every model promotion.
 - **`release.config.json` drifts silently from the card, and copy-weights trusts the config.** The card decides _which_ model ships, but `release.config.json#weights.model` is the path that copy-weights.ts materializes from. The config must change in the same commit as the card (Step 1 items 2+3). When it does not, copy-weights materializes the superseded model and the Gauntlet grades it without warning. In #1024 the config lagged at v220 `a64ad2e6` while the v5.4.0 promotion shipped v230 `ea785a70`, which cost a bisect. **Guardrail (#1024):** the Gauntlet harness now asserts that the materialized `neural-weights-en-us/model.onnx` md5 equals the card's `files_md5["model.onnx"]` for the shipped default, and fails on a mismatch. The Gauntlet is the release `before:release` step, so a drifted config can no longer ship. #1005 fixed the dev-weights-symlink form of the same problem, and #1024 fixed the release-config form.
 - **The floor comparison is `>=`** (`mailwoman eval promote`, `mailwoman/eval-harness/promotion-eval.ts`). A floor set exactly at the measured value passes (95.0 ≥ 95.0), so you do not need to set it lower or re-run to check. A promotion eval that needs a lower floor gets a **new eval file** with a stated `$revision_*` reason, so floors never drift silently. The full promotion eval takes ~12–15 min, so set the floors correctly the first time.
-- **The R2 demo repoint carries files forward and overwrites two of them.** Between model versions only `model.onnx` and `model-card.json` change. The tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json` and `calibration.json` are byte-identical. The fastest path is to download all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend the entry and set `defaultVersion`), and run `publish-demo-assets-to-r2.run.ts --src` once. That is ~60 MB and two commands. (The bucket is `mailwoman-public`, and the credentials are `RCLONE_S3_PUBLIC_*`.)
+- **The R2 demo repoint carries files forward and overwrites two of them.** Between model versions only `model.onnx` and `model-card.json` change. The tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json` and `calibration.json` are byte-identical. The fastest path is to download all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend the entry and set `defaultVersion`), and run `publish-demo-assets-to-r2.run.ts --src` once. That is ~60 MB and two commands. (The bucket is `mailwoman-public`, and the credentials are `RCLONE_S3_PUBLIC_*`.) A model that needs a browser-runtime capability, such as the `locale_hint` input 10.1.0 added, lists it in the entry's `requiresRuntime`. The browser runtime passes over a default release whose requirements it lacks, so a page still running an older bundle falls back to a release it can load (`BROWSER_RUNTIME_CAPABILITIES` in `mailwoman/browser-runtime/manifest`).
 - **The npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version, but `npm pack` returns 404 and a raw tarball `curl` returns a small error JSON. That behavior comes from CDN propagation, and the publish succeeded. In the meantime, verify through `npm view … dist.unpackedSize` (a code-only package is <1 MB, and a model-bundled one is ~33 MB) and the md5 chain `$MAILWOMAN_DATA_ROOT source == HF upload == R2 staging`. Run `npm pack` again once the CDN catches up.
 - **Canonical artifact paths:** model int8 → `$MAILWOMAN_DATA_ROOT/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `$MAILWOMAN_DATA_ROOT/models/tokenizer/<ver>/tokenizer.model`; FST → `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the promotion eval ran against; use it instead of the prior bucket's copy).
 
@@ -438,12 +446,16 @@ A release dir is self-contained, because the demo fetches everything from `en-us
 `model.onnx`, `tokenizer.model`, `model-card.json`, and (if it changed) `anchor-lexicon-v1.json` are new. The
 resolver/gazetteer layer (`fst-en-US.bin`, `wof-hot.db`, `wof-polygons.db`, `postcode-*.bin`) carries forward
 **unchanged**. The safest source is the exact bytes the prior version already serves, because a local rebuild might
-differ. List and pull the files from the prior R2 path, and verify their sizes:
+differ. Download each reused file from the prior release and compare its SHA-256 hash with the staged
+copy. Record the source version, filename and both hashes. Equal file sizes do not establish equal
+contents. Include every reused FST and pair index declared by the release, as well as the resolver files.
+
+Check that the prior objects are readable before downloading them:
 
 ```bash
 B=https://public.mailwoman.ai/mailwoman/en-us/v<PRIOR>      # e.g. v4.6.0
 for f in fst-en-US.bin wof-hot.db wof-polygons.db postcode-us.bin postcode-de.bin postcode-fr.bin; do
-  curl -sI "$B/$f" | head -1   # confirm 200 + note Content-Length
+  curl --fail --silent --show-error --head "$B/$f"
 done
 ```
 
@@ -704,10 +716,12 @@ remaining packages from the lab host without OIDC.
      rule). It then enables auto-merge. The PR merges itself when `test` is green without a human
      click, so one person working alone at night can still release.
    - **`mode=publish`** (after the PR merges) verifies that main is version-synced, fetches the weight
-     binaries from HF at the model-card version, tags `v<NEW>`, creates the GitHub release, and
+     binaries from HF at the model-card version, packs and audits every release workspace, tags
+     `v<NEW>`, creates the GitHub release, and
      publishes every workspace through OIDC. It is idempotent, so re-dispatch it after a partial failure.
    - `dry_run` is a boolean that works with both modes. `prepare` shows the bump diff without pushing,
-     and `publish` verifies version sync and compiles without tagging or publishing.
+     and `publish` verifies version sync, compiles, materializes the staged weights, and audits every
+     release tarball without tagging or publishing.
 
 Each workspace publish runs `yarn pack -o <tmpfile>` (which translates `workspace:*` → concrete versions) followed by `npm publish <tmpfile>`. The npm CLI detects the OIDC environment and authenticates through Trusted Publishing, and it enables `--provenance` automatically. CI no longer invokes release-it itself. `.release-it.json` remains the canonical workspace list that both phases derive from, and it is the config for the legacy local flow, which the ruleset now blocks at the push step (dry runs still work).
 
@@ -913,19 +927,21 @@ loop, but never use it to validate a real change, because verification is the pu
 
 ## Partial release recovery
 
-If a release fails partway through publishing:
+Keep the upload receipt for each package. An accepted upload, a retrievable version and a successful
+clean installation are separate observations. npm may accept an upload before the version resolves,
+and an E409 on a retry does not establish that the original upload failed.
 
-- The git commit + tag are already created by release-it.
-- `yarn npm publish --tolerate-republish` (used by `mwops release publish-workspace`) makes re-publishing already-published versions a no-op.
-- Fix the underlying issue, then resume by invoking the publish script directly for each remaining workspace:
+1. Check each affected version with `npm view <package>@<version> dist.tarball` and record the time.
+2. If npm accepted the upload but the version returns 404, repeat the availability check before
+   attempting another publication. Preserve the receipts if processing remains unresolved; the
+   10.1.0 incident does not establish a universal processing deadline.
+3. If a package failed before upload, fix the reported failure through a PR.
+4. Run `mode=publish, dry_run=true` against the corrected main and staged artifacts, and require success.
+5. Dispatch the real `mode=publish` through CI. The workflow preserves an existing tag and GitHub
+   release, and the publisher skips versions npm reports as already published. A still-processing
+   version can return E409 and requires another availability check.
+6. Verify a clean installation of `mailwoman@<version>` and the hashes of the published artifacts
+   before reporting release completion or repointing the demo.
 
-  ```bash
-  for ws in <remaining workspaces>; do
-    RELEASE_IT_WORKSPACES_TAG=latest \
-    RELEASE_IT_WORKSPACES_ACCESS=public \
-    RELEASE_IT_WORKSPACES_OTP=<otp-if-needed> \
-    yarn mwops release publish-workspace --workspace ./$ws --plan release-plan.json || break
-  done
-  ```
-
-  npm 2FA OTPs expire in ~30s, so run the loop promptly. A single OTP can cover all remaining workspaces.
+The current workflow publishes with `latest` during its package loop. Issue #1894 retains the work
+to advance that default only after the complete dependency set is installable.

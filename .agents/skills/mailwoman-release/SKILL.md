@@ -160,8 +160,9 @@ FSTs and pair indexes from `$MAILWOMAN_DATA_ROOT`, which may hold a rebuild no r
 at 10.1.0 the en-us, fr-fr and en-gb FSTs and every pair index there differed from 9.1.0's. A model
 release that uploads them also changes the gazetteer prior without a measurement. Download those files
 from `en-us/v<previous card version>/` and pass the downloaded copies to `--fsts` and
-`--pair-indexes`. Then compare each file's HTTP `content-length` in the two release directories; a
-file that differs should be one the release meant to change.
+`--pair-indexes`. Compare the SHA-256 hashes of the prior files and the staged copies, and record
+their filenames and source version. Equal HTTP `content-length` values do not establish equal contents.
+A file with a different hash must be an intentional, evaluated change.
 
 ## Step 2b — the release metadata surfaces (the prepare dispatch checks them)
 
@@ -196,7 +197,12 @@ gh run watch $RID --exit-status --interval 15      # must be: completed / succes
 # Wait for the auto-merge (test green → the PR merges itself; no human click needed):
 gh pr view "release/v<target>" --json state -q .state   # until MERGED
 
-# Phase 2 — tag + GitHub release + npm publish of the merged commit on main:
+# Audit the complete publish tree after the release PR merges:
+gh workflow run publish.yml --ref main -f mode=publish -f dry_run=true
+gh run watch <dry-run-id> --exit-status --interval 15
+# Require success, including every tarball audit. Repeat after any correction.
+
+# Phase 2 — preflight + tag + GitHub release + npm publish of the merged commit on main:
 gh workflow run publish.yml --ref main -f mode=publish
 gh run watch <rid> --exit-status --interval 15
 ```
@@ -209,6 +215,9 @@ gh run watch <rid> --exit-status --interval 15
   workspace publishes ride `--tolerate-republish`) — just re-dispatch it.
 - The HF weight fetch + preflight run in **phase 2** (mode=publish), so HF staging must be complete
   before that dispatch; phase 1 needs no binaries.
+- A prepare dry run does not audit tarballs. Both dry and real publish runs must complete the full
+  preflight before tagging or publication. Follow `RELEASING.md` for accepted uploads that still
+  return 404; do not infer upload failure from registry visibility alone.
 
 ## Step 4 — verify the ship (the published tarball rather than the workspace)
 

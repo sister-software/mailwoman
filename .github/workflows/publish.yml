@@ -5,8 +5,8 @@
 #
 # 1. mode=prepare bumps every manifest on a `release/v<version>` branch, opens the release PR and
 #    enables auto-merge. The PR merges when `test` passes.
-# 2. mode=publish runs after the merge. It tags the merged commit, creates the GitHub release,
-#    fetches the weight binaries from Hugging Face and publishes every workspace. Every step
+# 2. mode=publish runs after the merge. It fetches and audits the release artifacts before
+#    tagging the merged commit, creating the GitHub release and publishing every workspace. Every step
 #    tolerates work that already happened, so re-dispatching this mode recovers a partial failure.
 #
 # npm Trusted Publishing accepts OIDC tokens from this workflow file, so no npm token is stored.
@@ -230,6 +230,14 @@ jobs:
       - name: Full-scale locality-surface build
         run: yarn ci:test:lexicon-full
 
+      # Both dry and real runs must audit every package before the first release write.
+      # A later package's audit failure must prevent earlier packages from publishing.
+      - name: Materialize from Hugging Face and audit every release tarball
+        run: | # shell
+          set -euo pipefail
+          yarn compile
+          yarn mwops release preflight --source hf
+
       - name: Tag + GitHub release
         if: ${{ !inputs.dry_run }}
         env:
@@ -260,10 +268,7 @@ jobs:
           RELEASE_IT_WORKSPACES_TAG: latest
           RELEASE_IT_WORKSPACES_ACCESS: public
         run: | # shell
-          set -uo pipefail
-          # The publish operation imports @mailwoman/core/env, which resolves to the compiled
-          # core/out tree (#874) — compile first or every workspace publish dies ERR_MODULE_NOT_FOUND.
-          yarn compile
+          set -euo pipefail
           # Plan → execute: seal head, the version, every release workspace and every weights artifact
           # under one digest, then hand that plan to each publish. publish-workspace refuses when head
           # is dirty, head moved, or the recomputed digest differs from the plan it was given.
@@ -289,16 +294,9 @@ jobs:
           fi
           echo "All workspaces published at v${{ steps.version.outputs.version }}."
 
-      # The dry run stages the tracked tree in an isolated root and fetches the same Hugging Face
-      # files. It then packs and audits every release tarball through the same code as the publish
-      # loop. It writes only inside its staging root. Like a real publish, it needs the weights
-      # staged on Hugging Face.
-      - name: "Dry run: materialize from Hugging Face + audit every release tarball"
+      - name: Report completed dry run
         if: ${{ inputs.dry_run }}
         run: | # shell
-          set -euo pipefail
-          yarn compile
-          yarn mwops release preflight --source hf
           echo "Dry run: v${{ steps.version.outputs.version }} staged, packed and audited. Nothing was tagged, released or published."
 
   # This job regenerates the Python and Rust API clients as workflow artifacts for inspection.

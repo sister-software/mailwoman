@@ -372,7 +372,7 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 			)
 		}
 
-		return await resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
+		return resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
 	}
 
 	let emptyPackageDir: PathBuilder | undefined
@@ -402,7 +402,7 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 	}
 
 	if (await cacheHasBinaries()) {
-		return await resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
+		return resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
 	}
 
 	const familyBase = scriptFamilyBase(locale)

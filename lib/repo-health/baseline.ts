@@ -1,0 +1,31 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   The one mutation this package performs is not a check: rewriting `baseline.json` after a reviewed reduction, called only by `mwops health baseline debt`.
+ */
+
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { relative } from "path-ts"
+
+import type { RepoContext } from "#repo-health/check"
+import { BASELINE_PATH, computeDebtCounters, type DebtCounters } from "#repo-health/checks/debt"
+
+export interface BaselineWrite {
+	/**
+	 * The baseline file, repo-relative.
+	 */
+	file: string
+	counters: DebtCounters
+}
+
+/**
+ * Count every debt counter over the tracked tree and record the readings as the new baseline.
+ */
+export async function writeBaseline(context: RepoContext): Promise<BaselineWrite> {
+	const counters = await computeDebtCounters(context)
+
+	await writeLocalJSONFile(counters, BASELINE_PATH)
+
+	return { file: relative(context.repoRoot, BASELINE_PATH), counters }
+}

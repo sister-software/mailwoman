@@ -20,6 +20,9 @@ export function isIterable(value: unknown): value is Iterable<unknown> {
 	return Symbol.iterator in new Object(value)
 }
 
+/**
+ * Predicate to check if a value is a plain object.
+ */
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value)
 }

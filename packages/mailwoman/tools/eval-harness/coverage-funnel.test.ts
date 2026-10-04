@@ -121,7 +121,7 @@ const KE_COVERAGE: CountryCoverage = {
 }
 
 async function funnel(overrides: Partial<Parameters<typeof readCoverageFunnel>[0]> = {}) {
-	return await readCoverageFunnel({
+	return readCoverageFunnel({
 		coverage: [US_COVERAGE, KE_COVERAGE],
 		register: testRegister(),
 		tieredCountries: ["US", "KE"],

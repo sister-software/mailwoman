@@ -15,5 +15,5 @@ import { readCompiledGeographicModel } from "@mailwoman/geographic-model/package
  * and traversing authoring JSON is what the boundary record excludes.
  */
 export async function readCommittedModel(): Promise<CompiledGeographicModel> {
-	return await readCompiledGeographicModel()
+	return readCompiledGeographicModel()
 }

@@ -5,7 +5,7 @@
  * @file The asynchronous read surface. Every reader here takes a {@linkcode PathBuilderLike} and answers a promise.
  *
  *   Repository code accesses `node:fs` through this directory. Every reader returns a promise, so executable code
- *   makes no blocking filesystem calls. The `debt` check in `packages/repo-health` counts any violations.
+ *   makes no blocking filesystem calls. The `debt` check in `lib/repo-health` counts any violations.
  */
 
 import { readFile } from "node:fs/promises"

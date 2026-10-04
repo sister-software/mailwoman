@@ -1,0 +1,10 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ * @file The release-kit registry as an MCP server. It is private, maintainer-only and a view: every
+ *   decision about what a release operation does belongs to `release-kit`.
+ */
+
+export * from "#release-mcp/server"
+export * from "#release-mcp/tool-table"

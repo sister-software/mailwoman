@@ -12,6 +12,11 @@
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
+import {
+	createJurisdictionSource,
+	JurisdictionLayers,
+	JurisdictionTileSetID,
+} from "@mailwoman/cartographer/jurisdictions"
 import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
 import { useReleaseRuntime } from "@mailwoman/react"
@@ -506,6 +511,13 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				layers: CoverageLayers,
 				visible: false,
 				label: "Coverage",
+			},
+			{
+				id: JurisdictionTileSetID,
+				source: createJurisdictionSource(new URL(`${JurisdictionTileSetID}.json`, config.tileWorkerURL).href),
+				layers: JurisdictionLayers,
+				visible: false,
+				label: "Jurisdictions",
 			},
 		],
 		[config.tileWorkerURL]

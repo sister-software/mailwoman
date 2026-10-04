@@ -224,3 +224,5 @@ nightshift
 # imports it — consumers read tokens/index.css and tokens/tokens.json, and both of those ARE committed so a build
 # never needs the token compiler.
 packages/react/tokens/index.ts
+
+release-plan.json

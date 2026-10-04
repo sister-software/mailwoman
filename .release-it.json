@@ -1,5 +1,5 @@
 {
-	"$schema": "https://unpkg.com/release-it/schema/release-it.json",
+	"$schema": "./config/release.schema.json",
 	"plugins": {
 		"@release-it-plugins/workspaces": {
 			"workspaces": [
@@ -17,6 +17,7 @@
 				"packages/codex",
 				"packages/core",
 				"packages/corpus",
+				"packages/dossier",
 				"packages/fastify",
 				"packages/filer",
 				"packages/flood",
@@ -90,5 +91,16 @@
 		],
 		"after:bump": "yarn oxfmt package.json '**/package.json'",
 		"after:release": "echo 'Released v${version}'"
+	},
+	"absences": {
+		"docs": "private Docusaurus site — never publishes",
+		"packages/tile-worker": "private demo-map tile worker — never publishes",
+		"packages/license-worker": "private license worker — Cloudflare infrastructure, never publishes",
+		"packages/earth": "private Earth map app — Cloudflare infrastructure, never publishes",
+		"packages/planetary": "private Moon and Mars map app — Cloudflare infrastructure, never publishes",
+		"packages/astrogeology": "private planetary data pipeline — no published consumer yet",
+		"packages/geocode-oracle": "private verification oracle — never a runtime dependency, never publishes",
+		"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
+		"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)"
 	}
 }

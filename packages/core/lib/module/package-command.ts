@@ -20,6 +20,7 @@ export interface PackageCommand {
  *
  * The base URL identifies the caller whose dependencies should be searched.
  * Node launchers run through the current Node executable, including extensionless files with a Node shebang.
+ *
  * A bin entry need not be an exported module subpath.
  * Missing packages, bin entries, or executable files raise errors before a process starts.
  */
@@ -31,6 +32,7 @@ export async function resolvePackageCommand(
 	const manifestPath = resolvePackageJSON(base, packageName)
 	const manifest = await readPackageJSON(manifestPath)
 	const defaultBinName = manifest.name?.split("/").at(-1)
+
 	const bin =
 		typeof manifest.bin === "string" ? (binName === defaultBinName ? manifest.bin : undefined) : manifest.bin?.[binName]
 

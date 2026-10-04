@@ -48,7 +48,7 @@ const CorpusSourceRegister: CommandComponent<typeof spec> = ({ options }) => {
 
 		if (!options.authoredAt) throw new Error("--authored-at is required")
 
-		return await buildSourceRegister({
+		return buildSourceRegister({
 			inventoryPath: options.inventory,
 			sourcesPath: options.sources,
 			outPath: options.out,

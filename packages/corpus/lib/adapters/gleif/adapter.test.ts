@@ -374,7 +374,7 @@ describe("gleif-lei adapter", () => {
 
 		await writeLocalFile(toCSV(records), inputPath)
 
-		return await runAdapter({
+		return runAdapter({
 			adapter: createGLEIFAdapter(),
 			adapterOptions: { inputPath, ...options },
 			outputDir: scratch.path,
