@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { isIdentical } from "@mailwoman/core/identical"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { isIdentical } from "@mailwoman/core/objects"
 import { runFileSync } from "@mailwoman/core/process"
 
 import { effectiveKeyFor } from "#dev-mcp/engine/registry"

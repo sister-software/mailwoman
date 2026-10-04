@@ -10,8 +10,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { isIdentical } from "@mailwoman/core/identical"
 import { publishedLicenseKeys } from "@mailwoman/core/license"
-import { isIdentical } from "@mailwoman/core/objects"
 import { resolvePath } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"

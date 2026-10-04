@@ -6,8 +6,6 @@
  *   Utility functions for working with objects.
  */
 
-import { isDeepStrictEqual } from "node:util"
-
 import type { JsonObject } from "type-fest"
 
 /**
@@ -28,15 +26,6 @@ export function isIterable(value: unknown): value is Iterable<unknown> {
  */
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
-/**
- * Predicate to check if two values are deeply identical.
- *
- * Not a type predicate: asserting one would narrow the arguments at call sites that keep both values.
- */
-export function isIdentical<A, E>(actual: A, expected: E): boolean {
-	return isDeepStrictEqual(actual, expected)
 }
 
 type SetLike<T> = { has(value: T): boolean } | Iterable<T>

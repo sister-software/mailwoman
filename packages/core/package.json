@@ -257,6 +257,11 @@
 			"node": "./lib/objects.ts",
 			"default": "./out/objects.js"
 		},
+		"./identical": {
+			"types": "./out/identical.d.ts",
+			"node": "./lib/identical.ts",
+			"default": "./out/identical.js"
+		},
 		"./locale": {
 			"types": "./out/locale.d.ts",
 			"node": "./lib/locale.ts",

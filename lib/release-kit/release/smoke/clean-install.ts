@@ -6,9 +6,9 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { isIdentical } from "@mailwoman/core/identical"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { isIdentical } from "@mailwoman/core/objects"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { type PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
 

@@ -10,7 +10,7 @@
  *   unresolved. `LICENSE.md` states that the commercial grant excludes third-party inputs.
  */
 
-import { isIdentical } from "@mailwoman/core/objects"
+import { isIdentical } from "@mailwoman/core/identical"
 
 import { describeModelGraph } from "#release-kit/weights/rights/model-graph"
 import type { AttributionRecord, WeightsRightsRecord } from "#release-kit/weights/rights/record"

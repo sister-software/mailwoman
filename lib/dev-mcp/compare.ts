@@ -12,8 +12,8 @@
  * Shared reporting logic is reused across both paths.
  */
 
+import { isIdentical } from "@mailwoman/core/identical"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { isIdentical } from "@mailwoman/core/objects"
 import { formatPercent } from "@mailwoman/core/stats"
 import { checkCase } from "mailwoman/tools/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"

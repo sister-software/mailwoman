@@ -13,8 +13,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { isIdentical } from "@mailwoman/core/identical"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { isIdentical } from "@mailwoman/core/objects"
 import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/universe/release-kit/operation"
 import Stripe from "stripe"
 import { z } from "zod"

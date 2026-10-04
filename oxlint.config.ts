@@ -178,9 +178,9 @@ export default {
 				"packages/sqlite/**/*.ts",
 				// The import rule redirects `node:fs` to these wrappers, so they may import it.
 				"packages/core/lib/fs/**/*.ts",
-				// `objects.ts` holds the JSON wrappers, `process.ts` wraps `node:child_process`,
-				// and `scripting/arguments.ts` wraps `parseArgs` from `node:util`.
-				"packages/core/lib/objects.ts",
+				// `identical.ts` wraps `isDeepStrictEqual` from `node:util`, `process.ts` wraps
+				// `node:child_process`, and `scripting/arguments.ts` wraps `parseArgs` from `node:util`.
+				"packages/core/lib/identical.ts",
 				"packages/core/lib/process.ts",
 				"packages/core/lib/scripting/arguments.ts",
 				// These core modules wrap `node:os`, `node:timers/promises`, `node:events`,
