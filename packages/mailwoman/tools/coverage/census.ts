@@ -359,7 +359,9 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 	let inBlock = false
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded and sync by interface
-	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
+	for (const rawLine of (await readLocalTextFile(configPath)).split("\n")) {
+		const line = rawLine.replace(/\s#.*$/u, "")
+
 		if (/^\s*country_weights:\s*$/.test(line)) {
 			inBlock = true
 
@@ -371,10 +373,9 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 		// A top-level key that is not a country code ends the block.
 		if (/^\s{0,2}\S/.test(line) && !/^\s*["']?[A-Za-z]{2}["']?\s*:/.test(line)) break
 
-		const match = /^\s*["']?([A-Za-z]{2})["']?\s*:\s*([0-9.eE+-]+)/.exec(line)
-
-		if (match && Number(match[2]) > 0) {
-			admitted.add(match[1]!.toUpperCase())
+		// A flow-style mapping writes many `CC: weight` pairs on one line, so every pair on the line is read.
+		for (const match of line.matchAll(/["']?\b([A-Za-z]{2})\b["']?\s*:\s*([0-9.eE+-]+)/g)) {
+			if (Number(match[2]) > 0) { admitted.add(match[1]!.toUpperCase()) }
 		}
 	}
 

@@ -131,6 +131,35 @@ The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible
 - **Don't serve PMTiles client-side.** XYZ via the tile worker only.
 - **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale; it does not subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — accurate, since a postcode is coarse. Don't "finish" it to street level.
 
+## The jurisdiction layer
+
+`mailwoman coverage jurisdictions` builds a second tile set, `jurisdictions-v1`: one Natural Earth
+v5.1.2 map unit per jurisdiction, 281 units carrying the register's 250 jurisdictions. Natural Earth
+is public domain, so its polygons can be published. The map-units file gives the French overseas
+departments, the US Minor Outlying Islands and Taiwan polygons of their own, which the countries file
+does not.
+
+Each feature carries what a training run drew from the jurisdiction (`draws`, `draw_share`), the
+address-shape forms among those rows (`shape_forms`, `postcode_first_share`,
+`house_number_first_share`), the register's sources and the ones eligible for a corpus (`sources`,
+`eligible_sources`, `backbone`), its address system (`address_system`, `address_system_key`,
+`address_system_draws`), admission (`admitted`) and board rows (`board_rows`, `board_checking_rows`).
+A share with no rows behind it is omitted from the feature rather than written as zero.
+
+The draws come from a run's realized-draws exposure report, `exposure-realized-from-0.json` in the
+run's checkpoint directory, which records the rows the trainer drew. Copy it under the data root as
+`exposure/exposure-realized-<run>.json` and pass `--exposure`. Admission reads the config that
+`scope.config.json` registers for `en-us` unless `--config` names another.
+
+```sh
+node packages/mailwoman/cli/main.ts coverage jurisdictions
+# The same PUBLIC key mapping as the H3 layer above:
+node packages/mailwoman/cli/main.ts tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/jurisdictions-v1.pmtiles --tileset jurisdictions-v1
+```
+
+Earth registers the layer from `@mailwoman/cartographer/jurisdictions`, with one toggle per measure
+and one for the borders.
+
 ## Follow-ups / open work
 
 1. **Close real holes with rooftop/postcode data.** The map now NAMES the gaps — biggest wins: UK/Ireland (Royal Mail isn't in open GeoNames; needs Code-Point Open or OA), and the Overture-EU address parquets already on disk (`…/overture/<rel>/addresses-<cc>.parquet`) → real EU **rooftop** databases (would upgrade EU from postcode-coarse to street-level + clear more holes).
