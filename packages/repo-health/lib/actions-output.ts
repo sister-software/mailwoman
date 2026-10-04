@@ -41,10 +41,13 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 					.split("\0")
 					.filter((path) => path.length > 0)
 			: []
+
 	const files = await trackedFiles(root)
+
 	const release = await readLocalJSONFile<{
 		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
 	}>(resolvePath(root, ".release-it.json"))
+
 	const scope = selectCIScope(
 		await readCIWorkspaces(root, files),
 		files,
@@ -52,6 +55,7 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 		release.plugins["@release-it-plugins/workspaces"].workspaces,
 		event !== "pull_request"
 	)
+
 	const outputs = {
 		...Object.fromEntries(Object.entries(scope).filter(([, value]) => typeof value === "boolean")),
 		fast_files: stringifyJSON(scope.full ? [] : scope.fastFiles),
@@ -66,6 +70,7 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 			ciEnvironment.GITHUB_OUTPUT
 		)
 	}
+
 	if (ciEnvironment.GITHUB_STEP_SUMMARY) {
 		await appendLocalTextFile(
 			[

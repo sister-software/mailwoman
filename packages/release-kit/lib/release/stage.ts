@@ -26,26 +26,11 @@ import { verifyTarball } from "#pack/verify-tarball"
  * The root workspaces that sit outside `.release-it.json`'s publish list,
  * each with the reason a reader can state.
  */
-export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
-	docs: "private Docusaurus site — never publishes",
-	"packages/tile-worker": "private demo-map tile worker — never publishes",
-	"packages/license-worker": "private license worker — Cloudflare infrastructure, never publishes",
-	"packages/earth": "private Earth map app — Cloudflare infrastructure, never publishes",
-	"packages/planetary": "private Moon and Mars map app — Cloudflare infrastructure, never publishes",
-	"packages/site-kit": "private static-site build conventions for the Earth and planetary apps — never publishes",
-	"packages/astrogeology": "private planetary data pipeline — no published consumer yet",
-	"packages/geocode-oracle": "private verification oracle — never a runtime dependency, never publishes",
-	"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
-	"packages/dev-mcp": "private maintainer MCP server — never publishes",
-	"packages/release-kit": "private release-operation registry — never publishes",
-	"packages/repo-health": "private repository health registry — never publishes",
-	"packages/ops-cli": "private operator CLI (mwops) — never publishes",
-	"packages/storage-kit": "private data-root storage-operation registry, consumed through mwops — never publishes",
-	"packages/release-mcp": "private maintainer MCP server over the release registry — never publishes",
-	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
-	"packages/dossier":
-		"published package awaiting the bless-package first publish of its npm name; move it to .release-it.json once blessed",
-}
+export const SANCTIONED_RELEASE_ABSENCES =
+	// oxlint-disable-next-line mailwoman/no-relative-dynamic-import -- temp
+	await import("../../../../.release-it.json", {
+		with: { type: "json" },
+	}).then((module) => module.default.absences as Record<string, string>)
 
 /**
  * Refuse to publish a workspace this repository holds out of the release, naming the recorded reason.
