@@ -22,18 +22,25 @@ function totalLine(stage: string, total: UnitTotal): string {
 	return `- ${stage}: unresolved — ${total.reason}${values ? ` (${values})` : ""}`
 }
 
-function readingLine(reading: { layer: string; extent: string; class: LayerReadingClass }): string {
+function readingLine(reading: {
+	layer: string
+	extent: string
+	surveyedAt?: string
+	class: LayerReadingClass
+}): string {
+	const vintage = reading.surveyedAt ? ` as of ${reading.surveyedAt}` : ""
+
 	switch (reading.class) {
 		case LayerReadingClass.Records:
-			return `- ${reading.layer} over ${reading.extent}: records present`
+			return `- ${reading.layer} over ${reading.extent}${vintage}: records present`
 		case LayerReadingClass.SurveyedEmpty:
-			return `- ${reading.layer} over ${reading.extent}: surveyed, zero records. Absence is established for the surveyed extent`
+			return `- ${reading.layer} over ${reading.extent}${vintage}: surveyed, zero records. Absence is established for the surveyed extent`
 		case LayerReadingClass.SourcePresentEmpty:
-			return `- ${reading.layer} over ${reading.extent}: the source looked and found no record; absence is unknown`
+			return `- ${reading.layer} over ${reading.extent}${vintage}: the source looked and found no record; absence is unknown`
 		case LayerReadingClass.Conflicting:
-			return `- ${reading.layer} over ${reading.extent}: conflicting readings. See unresolved questions`
+			return `- ${reading.layer} over ${reading.extent}${vintage}: conflicting readings. See unresolved questions`
 		case LayerReadingClass.Unknown:
-			return `- ${reading.layer} over ${reading.extent}: no survey. Unknown`
+			return `- ${reading.layer} over ${reading.extent}${vintage}: no survey. Unknown`
 	}
 }
 

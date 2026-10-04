@@ -8,6 +8,7 @@ import { describe, expect, test } from "vitest"
 
 import { buildDossier } from "#dossier"
 import { EXAMPLE_RECORDS, HOUSE, NORTH } from "#test/fixtures/example-house"
+import { OPP_BUILDING, OPP_RECORDS } from "#test/fixtures/one-park-point"
 
 describe("buildDossier as of 2022-06-30", () => {
 	const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
@@ -76,5 +77,112 @@ describe("buildDossier as of 2023-06-30", () => {
 		const house = dossier.buildings.find((section) => section.building.id === HOUSE)!
 
 		expect(house.counts.occupied).toMatchObject({ status: "resolved", total: 18 })
+	})
+})
+
+describe("one park point, real records", () => {
+	const building = OPP_BUILDING
+
+	describe("as of 2022-06-30, the pre-permit decision date", () => {
+		const dossier = buildDossier(OPP_RECORDS, { asOf: "2022-06-30" })
+		const section = dossier.buildings.find((entry) => entry.building.id === building)!
+
+		test("admits only the filing and the pavement plan. Excludes everything published later", () => {
+			expect(dossier.admitted).toEqual(["dobnow-filing-b00520132-i1", "dob-bpp-3314476"])
+
+			expect(dossier.excluded.map((record) => record.id)).toEqual([
+				"dobnow-approval-b00520132-i1",
+				"dobnow-first-permit-b00520132-i1",
+				"pluto-26v2",
+				"pad-geosearch-26c",
+				"fcc-bdc-cable-j22",
+				"fcc-bdc-fttp-j22",
+				"fcc-bdc-fttp-d25",
+			])
+		})
+
+		test("shows 375 planned units from the filing, with completed and occupied unresolved", () => {
+			expect(section.counts.planned).toMatchObject({ status: "resolved", total: 375 })
+
+			expect(section.counts.completed).toMatchObject({
+				status: "unresolved",
+				reason: expect.stringMatching(/no completed count/),
+			})
+		})
+
+		test("names the developer and architect with signing authority unknown, and no provider or reading", () => {
+			expect(section.authority.unknown.map((relation) => relation.organization)).toEqual([
+				"JEMB Realty",
+				"FXCollaborative Architects LLP",
+			])
+
+			expect(section.availability).toEqual([])
+			expect(section.readings).toEqual([])
+
+			expect(section.unresolved.map((item) => item.question)).toContainEqual(
+				expect.stringMatching(/construction window.*no end/)
+			)
+		})
+	})
+
+	describe("as of 2023-06-30, with the first BDC vintage public", () => {
+		const dossier = buildDossier(OPP_RECORDS, { asOf: "2023-06-30" })
+		const section = dossier.buildings.find((entry) => entry.building.id === building)!
+
+		test("shows Charter cable at the block and Verizon not yet filed there", () => {
+			expect(section.availability.map((entry) => [entry.provider, entry.answer.status])).toEqual([
+				["Charter Communications (Spectrum)", "available"],
+			])
+
+			expect(section.readings).toContainEqual({
+				layer: "fcc-bdc-fttp",
+				extent: "census-block:360470504012000",
+				surveyedAt: "2022-06-30",
+				class: "source_present_empty",
+			})
+
+			expect(section.readings).toContainEqual({
+				layer: "fcc-bdc-fttp",
+				extent: "census-tract:36047050401",
+				surveyedAt: "2022-06-30",
+				class: "records",
+			})
+		})
+
+		test("the completed count stays unresolved until PLUTO", () => {
+			expect(section.counts.completed).toMatchObject({ status: "unresolved" })
+		})
+	})
+
+	describe("as of 2026-10-05, retrieval day", () => {
+		const dossier = buildDossier(OPP_RECORDS, { asOf: "2026-10-05" })
+		const section = dossier.buildings.find((entry) => entry.building.id === building)!
+
+		test("resolves the alias, the completed count and Verizon FTTP at the block", () => {
+			expect(section.aliases).toEqual([
+				{
+					text: "11 Ocean Parkway, Brooklyn, NY 11218",
+					resolution: { kind: "resolved", entity: building, evidence: { source: "pad-geosearch-26c" } },
+				},
+			])
+
+			expect(section.counts.completed).toMatchObject({ status: "resolved", total: 375 })
+
+			expect(section.availability.map((entry) => [entry.provider, entry.answer.status])).toEqual([
+				["Charter Communications (Spectrum)", "available"],
+				["Verizon", "available"],
+			])
+		})
+
+		test("the two FTTP vintages are separate surveys, never a conflict", () => {
+			expect(section.readings).toContainEqual({
+				layer: "fcc-bdc-fttp",
+				extent: "census-block:360470504012000",
+				surveyedAt: "2025-12-31",
+				class: "records",
+			})
+
+			expect(section.readings.every((reading) => reading.class !== "conflicting")).toBe(true)
+		})
 	})
 })
