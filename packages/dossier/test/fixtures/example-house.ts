@@ -8,10 +8,23 @@
  *   excludes the later manager statement.
  */
 
+import type { ProviderAvailability } from "#availability"
+import { type Claim, ClaimAxis } from "#claims"
+import { type UnitCount, UnitStage } from "#counts"
+import type { LayerReading } from "#coverage"
 import type { Entity } from "#entities"
+import {
+	type CommercialEvent,
+	CommercialEventKind,
+	type ConstructionWindow,
+	type OrganizationRelation,
+	OrganizationRole,
+} from "#events"
+import type { FilingRow } from "#filings"
 import { entityID } from "#identifiers"
 import { type Alias, type Containment, ContainmentRelation } from "#links"
 import type { SourceRecord } from "#sources"
+import type { DossierRecords } from "#validate"
 
 export const PARCEL = entityID("parcel", "example-parcel")
 export const HOUSE = entityID("building", "example-house")
@@ -100,3 +113,231 @@ export const CONTAINMENT: Containment[] = [
 		evidence: { source: "permit-2021", observedAt: "2021-05-10" },
 	},
 ]
+
+const CLAIMS: Claim[] = [
+	{
+		id: "c1",
+		subject: HOUSE,
+		axis: ClaimAxis.Premises,
+		predicate: "storeys",
+		value: 13,
+		status: "observed",
+		evidence: { source: "permit-2021", observedAt: "2021-05-10" },
+	},
+	{
+		id: "c2",
+		subject: HOUSE,
+		axis: ClaimAxis.Network,
+		predicate: "nearest_cabinet_connects",
+		value: "unknown",
+		status: "inferred",
+		derivedFrom: ["c1"],
+		explanation: "A cabinet within 40 m is an observation of proximity, and connection requires its own record.",
+		evidence: { source: "survey-2022" },
+	},
+]
+
+export const PLANNED: UnitCount = {
+	id: "p",
+	subject: HOUSE,
+	stage: UnitStage.Planned,
+	count: 24,
+	at: "2021-05-10",
+	membership: "example-house:all",
+	evidence: { source: "permit-2021" },
+}
+
+export const COMPLETED20: UnitCount = {
+	id: "c20",
+	subject: HOUSE,
+	stage: UnitStage.Completed,
+	count: 20,
+	at: "2022-04-01",
+	membership: "example-house:all",
+	evidence: { source: "inspection-2022", observedAt: "2022-04-01" },
+}
+
+export const COMPLETED22: UnitCount = {
+	id: "c22",
+	subject: HOUSE,
+	stage: UnitStage.Completed,
+	count: 22,
+	at: "2022-04-01",
+	membership: "example-house:all",
+	evidence: { source: "undated-listing" },
+}
+
+export const OCCUPIED: UnitCount = {
+	id: "o",
+	subject: HOUSE,
+	stage: UnitStage.Occupied,
+	count: 18,
+	at: "2023-02-01",
+	membership: "example-house:all",
+	evidence: { source: "manager-2023" },
+}
+
+const COUNTS: UnitCount[] = [PLANNED, COMPLETED20, COMPLETED22, OCCUPIED]
+
+export const EVENTS: CommercialEvent[] = [
+	{
+		id: "e1",
+		kind: CommercialEventKind.Inquiry,
+		parties: [{ name: "Household A", role: "resident" }],
+		scope: [HOUSE],
+		date: "2022-05-01",
+		evidence: { source: "manager-2023" },
+	},
+	{
+		id: "e2",
+		kind: CommercialEventKind.Order,
+		parties: [{ name: "Household B", role: "resident" }],
+		scope: [HOUSE],
+		date: "2022-05-02",
+		evidence: { source: "manager-2023" },
+	},
+	{
+		id: "e3",
+		kind: CommercialEventKind.ActiveSubscription,
+		parties: [{ name: "Household C", role: "resident" }],
+		scope: [HOUSE],
+		date: "2022-05-03",
+		evidence: { source: "manager-2023" },
+	},
+	{
+		id: "e4",
+		kind: CommercialEventKind.LandlordPermission,
+		parties: [{ name: "Example Management Co", role: "manager" }],
+		scope: [NORTH],
+		date: "2022-05-10",
+		evidence: { source: "survey-2022" },
+	},
+	{
+		id: "e5",
+		kind: CommercialEventKind.ActiveSubscription,
+		parties: [{ name: "Household D", role: "resident" }],
+		scope: [HOUSE],
+		evidence: { source: "undated-listing" },
+	},
+]
+
+export const RELATIONS: OrganizationRelation[] = [
+	{
+		organization: "Example Holdings LLC",
+		role: OrganizationRole.Owner,
+		subject: HOUSE,
+		signingAuthority: "unknown",
+		evidence: { source: "permit-2021" },
+	},
+	{
+		organization: "Example Management Co",
+		role: OrganizationRole.Manager,
+		subject: HOUSE,
+		signingAuthority: "unknown",
+		evidence: { source: "manager-2023" },
+	},
+]
+
+const WINDOWS: ConstructionWindow[] = [
+	{ subject: HOUSE, start: "2021-06-01", stage: "permit issued", evidence: { source: "permit-2021" } },
+]
+
+export const AVAILABILITY: ProviderAvailability[] = [
+	{
+		provider: "Example Fiber",
+		subject: HOUSE,
+		product: "1 Gbps",
+		from: "2022-03-01",
+		to: "2022-09-30",
+		evidence: { source: "survey-2022" },
+	},
+]
+
+const surveyEvidence = { source: "survey-2022" }
+
+export const MISSING_READING: LayerReading = {
+	layer: "ducts",
+	extent: "cell-1",
+	basis: null,
+	records: null,
+	evidence: surveyEvidence,
+}
+
+export const SURVEYED_EMPTY_READING: LayerReading = {
+	layer: "cabinets",
+	extent: "cell-1",
+	basis: "surveyed",
+	surveyedAt: "2022-03-15",
+	records: 0,
+	evidence: surveyEvidence,
+}
+
+export const SOURCE_PRESENT_EMPTY_READING: LayerReading = {
+	layer: "poles",
+	extent: "cell-1",
+	basis: "source_present",
+	records: 0,
+	evidence: surveyEvidence,
+}
+
+export const POSITIVE_READING: LayerReading = {
+	layer: "cabinets",
+	extent: "cell-1",
+	basis: "source_present",
+	records: 1,
+	evidence: { source: "undated-listing" },
+}
+
+const READINGS: LayerReading[] = [
+	MISSING_READING,
+	SURVEYED_EMPTY_READING,
+	SOURCE_PRESENT_EMPTY_READING,
+	POSITIVE_READING,
+]
+
+export const FILING_ROWS: FilingRow[] = [
+	{
+		block: "360470001001000",
+		provider: "Example Cable",
+		technology: "cable",
+		speedTier: "100/20",
+		evidence: { source: "survey-2022" },
+	},
+	{
+		block: "360470001001000",
+		provider: "Example Cable",
+		technology: "cable",
+		speedTier: "1000/35",
+		evidence: { source: "survey-2022" },
+	},
+]
+
+export const EXAMPLE_RECORDS: DossierRecords = {
+	sources: SOURCES,
+	entities: ENTITIES,
+	aliases: ALIASES,
+	containment: CONTAINMENT,
+	claims: CLAIMS,
+	counts: COUNTS,
+	events: EVENTS,
+	relations: RELATIONS,
+	windows: WINDOWS,
+	availability: AVAILABILITY,
+	readings: READINGS,
+	filings: FILING_ROWS,
+}
+
+export const EMPTY_RECORDS: DossierRecords = {
+	sources: [],
+	entities: [],
+	aliases: [],
+	containment: [],
+	claims: [],
+	counts: [],
+	events: [],
+	relations: [],
+	windows: [],
+	availability: [],
+	readings: [],
+	filings: [],
+}

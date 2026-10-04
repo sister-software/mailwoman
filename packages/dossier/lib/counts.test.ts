@@ -7,7 +7,7 @@
 import { describe, expect, test } from "vitest"
 
 import { countsByStage, totalUnits, type UnitCount, UnitStage } from "#counts"
-import { ANNEX, HOUSE } from "#test/fixtures/example-house"
+import { ANNEX, COMPLETED20, COMPLETED22, HOUSE, OCCUPIED, PLANNED } from "#test/fixtures/example-house"
 
 const inspection = { source: "inspection-2022", observedAt: "2022-04-01" }
 
@@ -41,48 +41,8 @@ describe("shared parcel", () => {
 })
 
 describe("conflicting counts", () => {
-	const planned: UnitCount = {
-		id: "p",
-		subject: HOUSE,
-		stage: UnitStage.Planned,
-		count: 24,
-		at: "2021-05-10",
-		membership: "example-house:all",
-		evidence: { source: "permit-2021" },
-	}
-
-	const completed20: UnitCount = {
-		id: "c20",
-		subject: HOUSE,
-		stage: UnitStage.Completed,
-		count: 20,
-		at: "2022-04-01",
-		membership: "example-house:all",
-		evidence: inspection,
-	}
-
-	const completed22: UnitCount = {
-		id: "c22",
-		subject: HOUSE,
-		stage: UnitStage.Completed,
-		count: 22,
-		at: "2022-04-01",
-		membership: "example-house:all",
-		evidence: { source: "undated-listing" },
-	}
-
-	const occupied: UnitCount = {
-		id: "o",
-		subject: HOUSE,
-		stage: UnitStage.Occupied,
-		count: 18,
-		at: "2023-02-01",
-		membership: "example-house:all",
-		evidence: { source: "manager-2023" },
-	}
-
 	test("keeps planned, completed and occupied apart", () => {
-		const byStage = countsByStage([planned, completed20, occupied], HOUSE)
+		const byStage = countsByStage([PLANNED, COMPLETED20, OCCUPIED], HOUSE)
 
 		expect(byStage.planned.map((count) => count.count)).toEqual([24])
 		expect(byStage.completed.map((count) => count.count)).toEqual([20])
@@ -90,7 +50,7 @@ describe("conflicting counts", () => {
 	})
 
 	test("two completed counts at the same date and scope stay unresolved, never zero and never a sum", () => {
-		const total = totalUnits([completed20, completed22], {
+		const total = totalUnits([COMPLETED20, COMPLETED22], {
 			subjects: [HOUSE],
 			stage: UnitStage.Completed,
 			at: "2022-04-01",
@@ -105,7 +65,7 @@ describe("conflicting counts", () => {
 	})
 
 	test("a planned count and a completed count with the same membership never combine", () => {
-		const total = totalUnits([planned, completed20], {
+		const total = totalUnits([PLANNED, COMPLETED20], {
 			subjects: [HOUSE],
 			stage: UnitStage.Completed,
 			at: "2022-04-01",
@@ -115,7 +75,7 @@ describe("conflicting counts", () => {
 	})
 
 	test("a query with no matching count is unresolved for want of a record", () => {
-		const total = totalUnits([planned], { subjects: [HOUSE], stage: UnitStage.Occupied, at: "2022-04-01" })
+		const total = totalUnits([PLANNED], { subjects: [HOUSE], stage: UnitStage.Occupied, at: "2022-04-01" })
 
 		expect(total).toMatchObject({ status: "unresolved", reason: expect.stringMatching(/no occupied count/) })
 	})
