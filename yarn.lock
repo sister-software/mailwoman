@@ -6251,6 +6251,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/dossier@workspace:packages/dossier":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/dossier@workspace:packages/dossier"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/earth@workspace:packages/earth":
   version: 0.0.0-use.local
   resolution: "@mailwoman/earth@workspace:packages/earth"

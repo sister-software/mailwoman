@@ -17,6 +17,7 @@ import { packWorkspaces } from "#release/workspace-closure"
 const WORKSPACES: Record<string, string> = {
 	"@mailwoman/core": "packages/core",
 	"@mailwoman/evidence": "packages/evidence",
+	"@mailwoman/dossier": "packages/dossier",
 	"@mailwoman/spatial": "packages/spatial",
 	"@mailwoman/sqlite": "packages/sqlite",
 	"@mailwoman/resolver": "packages/resolver",

@@ -1,0 +1,12 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Building opportunity dossiers: sourced claims over parcels, buildings, entrances and units,
+ *   projected for an explicit as-of date with every unresolved question and the record that would
+ *   resolve it.
+ */
+
+export * from "#identifiers"
+export * from "#time"

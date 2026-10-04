@@ -1,8 +1,8 @@
 # AGENTS.md
 
 Mailwoman is a postal-address parser. The unscoped `mailwoman` package provides the CLI and library.
-The repository also contains 74 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
-76 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
+The repository also contains 75 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
+77 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
 Sixty workspaces publish to npm. `.release-it.json` defines that set. Fifteen workspaces are private,

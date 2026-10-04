@@ -43,6 +43,8 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/storage-kit": "private data-root storage-operation registry, consumed through mwops — never publishes",
 	"packages/release-mcp": "private maintainer MCP server over the release registry — never publishes",
 	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
+	"packages/dossier":
+		"published package awaiting the bless-package first publish of its npm name; move it to .release-it.json once blessed",
 }
 
 /**
