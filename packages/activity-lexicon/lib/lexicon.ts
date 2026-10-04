@@ -12,6 +12,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagedDataPath } from "@mailwoman/core/module/packaged-data"
+import { isIdentical } from "@mailwoman/core/objects"
 import { resolveLocaleScope } from "@mailwoman/variant-aliases"
 
 import type {
@@ -181,7 +182,7 @@ function auditAttestation(entry: ActivityPhraseEntry, byPhrase: ReadonlyMap<stri
 					)
 				}
 
-				if (stringifyJSON(entry.locales ?? null) !== stringifyJSON(base.locales ?? null)) {
+				if (!isIdentical(entry.locales ?? null, base.locales ?? null)) {
 					problems.push(
 						`phrase ${named} is a derived form whose locale scope differs from its base — a regular transformation does not change where a phrasing is used`
 					)

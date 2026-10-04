@@ -10,8 +10,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { publishedLicenseKeys } from "@mailwoman/core/license"
+import { isIdentical } from "@mailwoman/core/objects"
 import { resolvePath } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
@@ -30,7 +30,7 @@ export const licenseRegisterCheck: RepoCheck = {
 		const derived = publishedLicenseKeys()
 		const diagnostics: Diagnostic[] = []
 
-		if (stringifyJSON(committed) !== stringifyJSON(derived)) {
+		if (!isIdentical(committed, derived)) {
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,
 				message: `${WELL_KNOWN_FILE} differs from packages/core/lib/license/register.ts — run \`mailwoman license register --write\``,

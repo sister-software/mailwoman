@@ -231,15 +231,13 @@ export default {
 			},
 		},
 		{
-			// This file wraps `node:child_process` for the rest of the repo.
-			files: ["packages/core/lib/process.ts"],
-			rules: {
-				"typescript/no-restricted-imports": "off",
-			},
-		},
-		{
-			// This file wraps `parseArgs` from `node:util`.
-			files: ["packages/core/lib/scripting/arguments.ts"],
+			files: [
+				"packages/core/lib/objects.ts",
+				// This file wraps `node:child_process` for the rest of the repo.
+				"packages/core/lib/process.ts",
+				// This file wraps `parseArgs` from `node:util`.
+				"packages/core/lib/scripting/arguments.ts",
+			],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},

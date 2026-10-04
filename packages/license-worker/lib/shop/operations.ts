@@ -13,8 +13,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { isIdentical } from "@mailwoman/core/objects"
 import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/universe/release-kit/operation"
 import Stripe from "stripe"
 import { z } from "zod"
@@ -57,7 +57,7 @@ const ProvisionInputSchema = z.object({
  * The webhook secret is never written.
  * It goes to `wrangler secret put`.
  */
-async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<string | undefined> {
+async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<string | null> {
 	const idsPath = resolvePackagePath("@mailwoman/license-worker", "lib", "shop", "ids.json")
 	const current = await readLocalJSONFile<ShopIDsByMode>(idsPath)
 
@@ -69,7 +69,7 @@ async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<s
 		...(report.portal.url ? { portalURL: report.portal.url } : {}),
 	})
 
-	if (stringifyJSON(next) === stringifyJSON(current)) return undefined
+	if (isIdentical(next, current)) return null
 
 	await writeLocalJSONFile(next, idsPath)
 
@@ -111,7 +111,7 @@ const provisionOperation = defineOperation({
 			)
 		}
 
-		const written = apply ? await recordShopIDs(input.mode, report) : undefined
+		const written = apply ? await recordShopIDs(input.mode, report) : null
 
 		return { ...report, ...(written ? { written } : {}) }
 	},
@@ -128,7 +128,7 @@ const statusOperation = defineOperation({
 	}),
 	outputSchema: ProvisionReportSchema,
 	async run(input, context) {
-		return await provisionShop(stripeFor(input.mode), {
+		return provisionShop(stripeFor(input.mode), {
 			siteOrigin: input["site-origin"] ?? DEFAULT_SITE_ORIGIN,
 			...(input["worker-origin"] ? { workerOrigin: input["worker-origin"] } : {}),
 			apply: false,

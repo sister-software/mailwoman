@@ -10,7 +10,7 @@
  *   unresolved. `LICENSE.md` states that the commercial grant excludes third-party inputs.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { isIdentical } from "@mailwoman/core/objects"
 
 import { describeModelGraph } from "#release-kit/weights/rights/model-graph"
 import type { AttributionRecord, WeightsRightsRecord } from "#release-kit/weights/rights/record"
@@ -343,7 +343,7 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
  * parsed JSON rather than text so the repository formatter may lay the file out as it likes.
  */
 export function provenanceMatches(committed: unknown, record: WeightsRightsRecord): boolean {
-	return stringifyJSON(committed) === stringifyJSON(renderProvenance(record))
+	return isIdentical(committed, renderProvenance(record))
 }
 
 /**

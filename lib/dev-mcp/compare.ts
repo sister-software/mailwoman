@@ -13,6 +13,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { isIdentical } from "@mailwoman/core/objects"
 import { formatPercent } from "@mailwoman/core/stats"
 import { checkCase } from "mailwoman/tools/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
@@ -247,7 +248,7 @@ async function compareMailwomanArms(
 			country: item.country,
 			address_kind: item.addressKind,
 			status: item.status,
-			differed: stringifyJSON(a) !== stringifyJSON(b),
+			differed: !isIdentical(a, b),
 			grade,
 			a,
 			b,

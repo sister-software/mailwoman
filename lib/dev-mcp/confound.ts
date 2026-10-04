@@ -5,6 +5,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { isIdentical } from "@mailwoman/core/objects"
 import { runFileSync } from "@mailwoman/core/process"
 
 import { effectiveKeyFor } from "#dev-mcp/engine/registry"
@@ -51,7 +52,7 @@ export interface ConfoundReading {
 function differingKeys(a: Record<string, unknown>, b: Record<string, unknown>): string[] {
 	const keys = new Set([...Object.keys(a), ...Object.keys(b)])
 
-	return [...keys].filter((key) => stringifyJSON(a[key]) !== stringifyJSON(b[key])).toSorted()
+	return [...keys].filter((key) => !isIdentical(a[key], b[key])).toSorted()
 }
 
 /**
