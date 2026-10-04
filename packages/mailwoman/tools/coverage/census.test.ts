@@ -74,6 +74,20 @@ describe("readAdmittedCountries", () => {
 		expect(admitted.size).toBe(3)
 	})
 
+	it("reads every pair of a flow-style mapping, many to a line", async () => {
+		const path = root("flow.yaml")
+
+		await writeLocalTextFile(
+			"data:\n  country_weights:\n    {\n      AD: 1.0, AE: 1.0, AF: 0.0,\n" +
+				'      "NO": 1.0, US: 2.0, # a comment naming XX: 1.0\n    }\n  source_weights:\n    x: 1.0\n',
+			path
+		)
+
+		const admitted = await readAdmittedCountries(path)
+
+		expect([...admitted].toSorted()).toEqual(["AD", "AE", "NO", "US"])
+	})
+
 	it("reads a QUOTED code the same as a bare one", async () => {
 		const path = root("quoted.yaml")
 

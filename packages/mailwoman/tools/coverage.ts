@@ -6,4 +6,6 @@
 
 export * from "#tools/coverage/census"
 export * from "#tools/coverage/core"
+export * from "#tools/coverage/jurisdictions"
+export * from "#tools/coverage/natural-earth"
 export * from "#tools/coverage/readings"

@@ -31,6 +31,12 @@ const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	// Two separate groups so each fog reading gets its own checkbox.
 	{ name: "Coverage · optimistic fog", match: /^coverage-opt/ },
 	{ name: "Coverage · measured fog", match: /^coverage-honest/ },
+	// One group per jurisdiction measure, and one for the jurisdiction borders.
+	{ name: "Jurisdictions · training draws", match: /^jurisdictions-draws/ },
+	{ name: "Jurisdictions · eligible sources", match: /^jurisdictions-sources/ },
+	{ name: "Jurisdictions · address system", match: /^jurisdictions-address-system/ },
+	{ name: "Jurisdictions · address shapes", match: /^jurisdictions-shapes/ },
+	{ name: "Jurisdictions · borders", match: /^jurisdictions-outline/ },
 	// Per-category default-off layers, one checkbox each, so the full mosaic or a single group's geography can be shown.
 	{ name: "Race · White", match: /^race-dots-white/ },
 	{ name: "Race · Black", match: /^race-dots-black/ },
