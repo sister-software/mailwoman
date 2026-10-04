@@ -7,6 +7,7 @@
  *   strings in Wrangler. the two booleans are parsed here so no route compares a string to "true".
  */
 
+import type { D1Database, RateLimit, SendEmail } from "@cloudflare/workers-types"
 import { z } from "zod"
 
 export interface LicenseWorkerBindings {

@@ -8,6 +8,8 @@
  *   ledger's `email_state` is what keeps that window to the crash between the provider's answer and the row.
  */
 
+import type { SendEmail } from "@cloudflare/workers-types"
+
 import type { EmailProvider } from "#email/provider"
 import { licenseEmailSubject, renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
 import type { LicenseWorkerEnv } from "#env"
