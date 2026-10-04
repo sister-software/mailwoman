@@ -1,0 +1,672 @@
+{
+	"gitHead": "6ff4522a10e95e8e8f2123568bb1f26c343c69ed",
+	"version": "10.1.0",
+	"packages": [
+		{
+			"workspace": "packages/activity-lexicon",
+			"name": "@mailwoman/activity-lexicon",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/address-id",
+			"name": "@mailwoman/address-id",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/ancestrie",
+			"name": "@mailwoman/ancestrie",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/evidence",
+			"name": "@mailwoman/evidence",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/annotations",
+			"name": "@mailwoman/annotations",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/api",
+			"name": "@mailwoman/api",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/api-kit",
+			"name": "@mailwoman/api-kit",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/ban",
+			"name": "@mailwoman/ban",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/bdc",
+			"name": "@mailwoman/bdc",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/cartographer",
+			"name": "@mailwoman/cartographer",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/coastal",
+			"name": "@mailwoman/coastal",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/codex",
+			"name": "@mailwoman/codex",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/core",
+			"name": "@mailwoman/core",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/corpus",
+			"name": "@mailwoman/corpus",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/fastify",
+			"name": "@mailwoman/fastify",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/filer",
+			"name": "@mailwoman/filer",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/flood",
+			"name": "@mailwoman/flood",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/geographic-model",
+			"name": "@mailwoman/geographic-model",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/kind-classifier",
+			"name": "@mailwoman/kind-classifier",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/libpostal",
+			"name": "@mailwoman/libpostal",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/locale-hint",
+			"name": "@mailwoman/locale-hint",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/mailwoman",
+			"name": "mailwoman",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/map-tui",
+			"name": "@mailwoman/map-tui",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/match",
+			"name": "@mailwoman/match",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/mcp",
+			"name": "@mailwoman/mcp",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural",
+			"name": "@mailwoman/neural",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-de-de",
+			"name": "@mailwoman/neural-weights-de-de",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-en-au",
+			"name": "@mailwoman/neural-weights-en-au",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-en-gb",
+			"name": "@mailwoman/neural-weights-en-gb",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-en-in",
+			"name": "@mailwoman/neural-weights-en-in",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-cjk",
+			"name": "@mailwoman/neural-weights-cjk",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-en-nz",
+			"name": "@mailwoman/neural-weights-en-nz",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"name": "@mailwoman/neural-weights-en-us",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-es-es",
+			"name": "@mailwoman/neural-weights-es-es",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-fr-fr",
+			"name": "@mailwoman/neural-weights-fr-fr",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-it-it",
+			"name": "@mailwoman/neural-weights-it-it",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-ja-jp",
+			"name": "@mailwoman/neural-weights-ja-jp",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/neural-weights-zh-cn",
+			"name": "@mailwoman/neural-weights-zh-cn",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/nominatim",
+			"name": "@mailwoman/nominatim",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/normalize",
+			"name": "@mailwoman/normalize",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/nuts-lookup",
+			"name": "@mailwoman/nuts-lookup",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/photon",
+			"name": "@mailwoman/photon",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/phrase-grouper",
+			"name": "@mailwoman/phrase-grouper",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/poi-taxonomy",
+			"name": "@mailwoman/poi-taxonomy",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/query-shape",
+			"name": "@mailwoman/query-shape",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/react",
+			"name": "@mailwoman/react",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/record",
+			"name": "@mailwoman/record",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/registry",
+			"name": "@mailwoman/registry",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/resolver",
+			"name": "@mailwoman/resolver",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/resolver-wof-sqlite",
+			"name": "@mailwoman/resolver-wof-sqlite",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/resolver-wof-wasm",
+			"name": "@mailwoman/resolver-wof-wasm",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/sentencepiece-wasm",
+			"name": "@mailwoman/sentencepiece-wasm",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/soil",
+			"name": "@mailwoman/soil",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/spatial",
+			"name": "@mailwoman/spatial",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/sqlite",
+			"name": "@mailwoman/sqlite",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/tiger",
+			"name": "@mailwoman/tiger",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/timezone-lookup",
+			"name": "@mailwoman/timezone-lookup",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/un-locode-lookup",
+			"name": "@mailwoman/un-locode-lookup",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/variant-aliases",
+			"name": "@mailwoman/variant-aliases",
+			"version": "10.1.0"
+		},
+		{
+			"workspace": "packages/zoning",
+			"name": "@mailwoman/zoning",
+			"version": "10.1.0"
+		}
+	],
+	"artifacts": [
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "model.onnx",
+			"origin": "hf",
+			"expectedMD5": "0f7de7042a1a888d6cbc201c768e9f00"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "tokenizer.model",
+			"origin": "hf",
+			"expectedMD5": "5c01cdcd4ae25849c5cb26b69fd3dde9"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "postcode-us.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "pair-index-us.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "fst-en-us.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "fst-street-morphology.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "anchor-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "locality-surface-lexicon-v7.json",
+			"origin": "hf",
+			"expectedMD5": "08b0305aab6e65fd3556be23b01b7756"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "street-type-lexicon-v3.json",
+			"origin": "repo",
+			"expectedMD5": "d0194a730805f9e6a886a98e8421061a"
+		},
+		{
+			"workspace": "packages/neural-weights-en-us",
+			"filename": "country-surface-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-fr-fr",
+			"filename": "postcode-fr.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-fr-fr",
+			"filename": "pair-index-fr.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-fr-fr",
+			"filename": "fst-fr-fr.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-fr-fr",
+			"filename": "fst-street-morphology.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-fr-fr",
+			"filename": "anchor-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-fr-fr",
+			"filename": "locality-surface-lexicon-v7.json",
+			"origin": "hf",
+			"expectedMD5": "08b0305aab6e65fd3556be23b01b7756"
+		},
+		{
+			"workspace": "packages/neural-weights-fr-fr",
+			"filename": "street-type-lexicon-v3.json",
+			"origin": "repo",
+			"expectedMD5": "d0194a730805f9e6a886a98e8421061a"
+		},
+		{
+			"workspace": "packages/neural-weights-fr-fr",
+			"filename": "country-surface-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-en-gb",
+			"filename": "postcode-gb.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-gb",
+			"filename": "pair-index-gb.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-gb",
+			"filename": "fst-en-gb.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-gb",
+			"filename": "fst-street-morphology.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-gb",
+			"filename": "anchor-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-en-gb",
+			"filename": "locality-surface-lexicon-v7.json",
+			"origin": "hf",
+			"expectedMD5": "08b0305aab6e65fd3556be23b01b7756"
+		},
+		{
+			"workspace": "packages/neural-weights-en-gb",
+			"filename": "street-type-lexicon-v3.json",
+			"origin": "repo",
+			"expectedMD5": "d0194a730805f9e6a886a98e8421061a"
+		},
+		{
+			"workspace": "packages/neural-weights-en-gb",
+			"filename": "country-surface-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-de-de",
+			"filename": "pair-index-de.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-de-de",
+			"filename": "fst-de-de.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-de-de",
+			"filename": "fst-street-morphology.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-de-de",
+			"filename": "anchor-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-de-de",
+			"filename": "locality-surface-lexicon-v7.json",
+			"origin": "hf",
+			"expectedMD5": "08b0305aab6e65fd3556be23b01b7756"
+		},
+		{
+			"workspace": "packages/neural-weights-de-de",
+			"filename": "street-type-lexicon-v3.json",
+			"origin": "repo",
+			"expectedMD5": "d0194a730805f9e6a886a98e8421061a"
+		},
+		{
+			"workspace": "packages/neural-weights-de-de",
+			"filename": "country-surface-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-en-in",
+			"filename": "pair-index-in.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-in",
+			"filename": "fst-street-morphology.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-in",
+			"filename": "anchor-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-en-in",
+			"filename": "locality-surface-lexicon-v7.json",
+			"origin": "hf",
+			"expectedMD5": "08b0305aab6e65fd3556be23b01b7756"
+		},
+		{
+			"workspace": "packages/neural-weights-en-in",
+			"filename": "street-type-lexicon-v3.json",
+			"origin": "repo",
+			"expectedMD5": "d0194a730805f9e6a886a98e8421061a"
+		},
+		{
+			"workspace": "packages/neural-weights-en-in",
+			"filename": "country-surface-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-es-es",
+			"filename": "pair-index-es.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-es-es",
+			"filename": "fst-es-es.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-es-es",
+			"filename": "fst-street-morphology.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-es-es",
+			"filename": "anchor-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-es-es",
+			"filename": "locality-surface-lexicon-v7.json",
+			"origin": "hf",
+			"expectedMD5": "08b0305aab6e65fd3556be23b01b7756"
+		},
+		{
+			"workspace": "packages/neural-weights-es-es",
+			"filename": "street-type-lexicon-v3.json",
+			"origin": "repo",
+			"expectedMD5": "d0194a730805f9e6a886a98e8421061a"
+		},
+		{
+			"workspace": "packages/neural-weights-es-es",
+			"filename": "country-surface-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-it-it",
+			"filename": "pair-index-it.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-it-it",
+			"filename": "fst-it-it.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-it-it",
+			"filename": "fst-street-morphology.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-it-it",
+			"filename": "anchor-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-it-it",
+			"filename": "locality-surface-lexicon-v7.json",
+			"origin": "hf",
+			"expectedMD5": "08b0305aab6e65fd3556be23b01b7756"
+		},
+		{
+			"workspace": "packages/neural-weights-it-it",
+			"filename": "street-type-lexicon-v3.json",
+			"origin": "repo",
+			"expectedMD5": "d0194a730805f9e6a886a98e8421061a"
+		},
+		{
+			"workspace": "packages/neural-weights-it-it",
+			"filename": "country-surface-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-en-nz",
+			"filename": "pair-index-nz.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-nz",
+			"filename": "fst-street-morphology.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-nz",
+			"filename": "anchor-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-en-nz",
+			"filename": "locality-surface-lexicon-v7.json",
+			"origin": "hf",
+			"expectedMD5": "08b0305aab6e65fd3556be23b01b7756"
+		},
+		{
+			"workspace": "packages/neural-weights-en-nz",
+			"filename": "street-type-lexicon-v3.json",
+			"origin": "repo",
+			"expectedMD5": "d0194a730805f9e6a886a98e8421061a"
+		},
+		{
+			"workspace": "packages/neural-weights-en-nz",
+			"filename": "country-surface-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-en-au",
+			"filename": "fst-street-morphology.bin",
+			"origin": "hf"
+		},
+		{
+			"workspace": "packages/neural-weights-en-au",
+			"filename": "anchor-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-en-au",
+			"filename": "locality-surface-lexicon-v7.json",
+			"origin": "hf",
+			"expectedMD5": "08b0305aab6e65fd3556be23b01b7756"
+		},
+		{
+			"workspace": "packages/neural-weights-en-au",
+			"filename": "street-type-lexicon-v3.json",
+			"origin": "repo",
+			"expectedMD5": "d0194a730805f9e6a886a98e8421061a"
+		},
+		{
+			"workspace": "packages/neural-weights-en-au",
+			"filename": "country-surface-lexicon-v1.json",
+			"origin": "repo"
+		},
+		{
+			"workspace": "packages/neural-weights-cjk",
+			"filename": "model.onnx",
+			"origin": "hf",
+			"base": "https://huggingface.co/buckets/sister-software/mailwoman/resolve/cjk/v0.0.3",
+			"expectedMD5": "a876d99a1ce90faf1b3be5ab17ada97b"
+		},
+		{
+			"workspace": "packages/neural-weights-ja-jp",
+			"filename": "fst-ja-jp.bin",
+			"origin": "hf",
+			"base": "https://huggingface.co/buckets/sister-software/mailwoman/resolve/cjk/v0.0.3"
+		},
+		{
+			"workspace": "packages/neural-weights-zh-cn",
+			"filename": "fst-zh-cn.bin",
+			"origin": "hf",
+			"base": "https://huggingface.co/buckets/sister-software/mailwoman/resolve/cjk/v0.0.3"
+		}
+	],
+	"destinations": {
+		"npmRegistry": "https://registry.npmjs.org",
+		"hfBase": "https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v10.1.0"
+	},
+	"planDigest": "eccd29542ecbe9cb6c9a3f9a7ee7d13751732e8ab81440ba436af1523471d603"
+}

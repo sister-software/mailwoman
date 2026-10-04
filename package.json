@@ -34,6 +34,7 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
+		"./.release-it.json": "./.release-it.json",
 		"./release-it.json": "./.release-it.json",
 		"./config/*.json": "./config.json",
 		"./config/*": "./config.ts",
