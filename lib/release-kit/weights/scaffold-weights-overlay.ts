@@ -21,11 +21,6 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isRegisteredWorkspace } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 
-/**
- * Relative path to the clean-install smoke pack set.
- */
-const SMOKE_PACK_SET_PATH = "lib/release-kit/release/smoke/clean-install.ts"
-
 export interface ScaffoldWeightsOverlayOptions {
 	repoRoot: string
 	/**
@@ -291,21 +286,7 @@ await materializeDevOverlay({
 		registered.push("release.config.json locales")
 	}
 
-	// 4. Smoke pack set.
-	const smokePath = repoPath(SMOKE_PACK_SET_PATH)
-	const smokeText = await readLocalTextFile(smokePath)
-
-	if (!smokeText.includes(packageName)) {
-		await writeLocalTextFile(
-			smokeText.replace(
-				`\t"@mailwoman/neural-weights-en-nz": "packages/neural-weights-en-nz",`,
-				`\t"@mailwoman/neural-weights-en-nz": "packages/neural-weights-en-nz",\n\t"${packageName}": "packages/neural-weights-${slug}",`
-			),
-			smokePath
-		)
-
-		registered.push("smoke pack set")
-	}
+	// The clean-install smoke pack set derives from `.release-it.json` (step 2), so no edit lands there.
 
 	log(`scaffolded ${pkgDir}`)
 	log(`  package: ${packageName}@${rootVersion}`)

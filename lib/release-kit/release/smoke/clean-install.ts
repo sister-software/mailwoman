@@ -8,91 +8,41 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { isIdentical } from "@mailwoman/core/objects"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { type PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
 
 import { installedMailwomanBin } from "#release-kit/release/smoke/installed-bin"
-import { packWorkspaces } from "#release-kit/release/workspace-closure"
+import { releaseWorkspaces } from "#release-kit/release/stage"
+import { packWorkspaces, walkWorkspaceClosure, workspaceDirectories } from "#release-kit/release/workspace-closure"
 
-// TODO: Remove this.
-const WORKSPACES: Record<string, string> = {
-	"@mailwoman/core": "packages/core",
-	"@mailwoman/evidence": "packages/evidence",
-	"@mailwoman/dossier": "packages/dossier",
-	"@mailwoman/spatial": "packages/spatial",
-	"@mailwoman/sqlite": "packages/sqlite",
-	"@mailwoman/resolver": "packages/resolver",
+/**
+ * The publish set as a name → directory map, derived from `.release-it.json`
+ * so a workspace added to the release is smoked without a second edit here.
+ */
+async function publishSet(repoRoot: PathBuilderLike): Promise<Map<string, string>> {
+	const released = new Set(await releaseWorkspaces(repoRoot))
+	const byName = await workspaceDirectories(repoRoot)
+	const set = new Map<string, string>()
 
-	"@mailwoman/resolver-wof-sqlite": "packages/resolver-wof-sqlite",
+	for (const [name, dir] of byName) {
+		if (released.has(dir)) {
+			set.set(name, dir)
+		}
+	}
 
-	"@mailwoman/ancestrie": "packages/ancestrie",
-	"@mailwoman/ban": "packages/ban",
-	"@mailwoman/codex": "packages/codex",
-	"@mailwoman/poi-taxonomy": "packages/poi-taxonomy",
-
-	"@mailwoman/activity-lexicon": "packages/activity-lexicon",
-
-	"@mailwoman/geographic-model": "packages/geographic-model",
-	"@mailwoman/kind-classifier": "packages/kind-classifier",
-
-	"@mailwoman/react": "packages/react",
-	"@mailwoman/locale-hint": "packages/locale-hint",
-	"@mailwoman/normalize": "packages/normalize",
-	"@mailwoman/phrase-grouper": "packages/phrase-grouper",
-	"@mailwoman/query-shape": "packages/query-shape",
-
-	"@mailwoman/sentencepiece-wasm": "packages/sentencepiece-wasm",
-	"@mailwoman/neural": "packages/neural",
-
-	"@mailwoman/neural-weights-en-us": "packages/neural-weights-en-us",
-	"@mailwoman/neural-weights-fr-fr": "packages/neural-weights-fr-fr",
-	"@mailwoman/neural-weights-en-gb": "packages/neural-weights-en-gb",
-	"@mailwoman/neural-weights-en-nz": "packages/neural-weights-en-nz",
-	"@mailwoman/neural-weights-it-it": "packages/neural-weights-it-it",
-	"@mailwoman/neural-weights-es-es": "packages/neural-weights-es-es",
-	"@mailwoman/neural-weights-de-de": "packages/neural-weights-de-de",
-	"@mailwoman/neural-weights-en-in": "packages/neural-weights-en-in",
-	"@mailwoman/neural-weights-cjk": "packages/neural-weights-cjk",
-	"@mailwoman/neural-weights-zh-cn": "packages/neural-weights-zh-cn",
-	"@mailwoman/neural-weights-ja-jp": "packages/neural-weights-ja-jp",
-	"@mailwoman/variant-aliases": "packages/variant-aliases",
-
-	"@mailwoman/tiger": "packages/tiger",
-	"@mailwoman/record": "packages/record",
-	"@mailwoman/match": "packages/match",
-	"@mailwoman/registry": "packages/registry",
-	"@mailwoman/address-id": "packages/address-id",
-	"@mailwoman/corpus": "packages/corpus",
-
-	"@mailwoman/map-tui": "packages/map-tui",
-	mailwoman: "packages/mailwoman",
-
-	"@mailwoman/annotations": "packages/annotations",
-	"@mailwoman/timezone-lookup": "packages/timezone-lookup",
-	"@mailwoman/un-locode-lookup": "packages/un-locode-lookup",
-	"@mailwoman/nuts-lookup": "packages/nuts-lookup",
-	"@mailwoman/api-kit": "packages/api-kit",
-	"@mailwoman/api": "packages/api",
-	"@mailwoman/libpostal": "packages/libpostal",
-	"@mailwoman/photon": "packages/photon",
-	"@mailwoman/nominatim": "packages/nominatim",
-
-	"@mailwoman/fastify": "packages/fastify",
-
-	"@mailwoman/mcp": "packages/mcp",
-
-	"@mailwoman/bdc": "packages/bdc",
-	"@mailwoman/filer": "packages/filer",
-
-	"@mailwoman/flood": "packages/flood",
-
-	"@mailwoman/soil": "packages/soil",
-
-	"@mailwoman/coastal": "packages/coastal",
-
-	"@mailwoman/zoning": "packages/zoning",
+	return set
 }
 
+/**
+ * Entrypoints a consumer imports directly: the drop-in parser surfaces, the annotation
+ * and lookup kits, and the server adapters.
+ *
+ * Hand-maintained on purpose — the CLI and MCP bins are probed by execution below,
+ * and the data-only weights packages carry no importable entrypoint.
+ * Add a package here when its import-time behavior is something a consumer can
+ * break without the CLI ever running.
+ */
 const IMPORT_CHECK = [
 	"@mailwoman/annotations",
 	"@mailwoman/timezone-lookup",
@@ -109,29 +59,6 @@ const IMPORT_CHECK = [
 ]
 
 const STANDALONE_LEAVES: readonly string[] = ["@mailwoman/core"]
-
-async function firstPartyClosure(repoRoot: string, leaf: string): Promise<string[]> {
-	const closure = new Set<string>()
-	const pending = [leaf]
-
-	while (pending.length) {
-		const name = pending.pop()!
-		const manifest = await readPackageJSON(resolve(repoRoot, WORKSPACES[name]!, "package.json"))
-
-		for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {
-			for (const dep of Object.keys(manifest[depType] ?? {})) {
-				const firstParty = dep.startsWith("@mailwoman/") || dep === "mailwoman"
-
-				if (firstParty && dep in WORKSPACES && !closure.has(dep)) {
-					closure.add(dep)
-					pending.push(dep)
-				}
-			}
-		}
-	}
-
-	return [...closure].toSorted()
-}
 
 const MCP_EXPECTED_TOOLS = [
 	"mailwoman_parse",
@@ -250,7 +177,7 @@ async function checkMCPBin(projDir: PathBuilder, timeoutMs = 30_000): Promise<nu
 		const names = tools.map((t) => (t as { name?: string }).name ?? "?").toSorted()
 		const expected = MCP_EXPECTED_TOOLS.toSorted()
 
-		if (stringifyJSON(names) !== stringifyJSON(expected)) {
+		if (!isIdentical(names, expected)) {
 			const missing = expected.filter((n) => !names.includes(n))
 			const surplus = names.filter((n) => !expected.includes(n))
 
@@ -291,17 +218,22 @@ function run(cmd: string, args: PathBuilderLike[], cwd: PathBuilderLike): string
 	return runFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
 }
 
-async function assertClosureComplete(repoRoot: string): Promise<void> {
+/**
+ * Refuse to smoke when a packed workspace depends on a workspace outside the pack set:
+ * `yarn pack` freezes that edge to a registry version, so the throwaway project would
+ * install it from npm rather than from the tarball under test.
+ */
+async function assertClosureComplete(repoRoot: string, packSet: ReadonlyMap<string, string>): Promise<void> {
 	const missing = new Map<string, string[]>()
 
-	for (const [name, dir] of Object.entries(WORKSPACES)) {
+	for (const [name, dir] of packSet) {
 		const manifest = await readPackageJSON(resolve(repoRoot, dir, "package.json"))
 
 		for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {
 			for (const [dep, spec] of Object.entries(manifest[depType] ?? {})) {
 				const firstParty = dep.startsWith("@mailwoman/") || dep === "mailwoman"
 
-				if (firstParty && spec?.startsWith("workspace:") && !(dep in WORKSPACES)) {
+				if (firstParty && spec?.startsWith("workspace:") && !packSet.has(dep)) {
 					missing.set(dep, [...(missing.get(dep) ?? []), `${name} (${depType})`])
 				}
 			}
@@ -311,7 +243,9 @@ async function assertClosureComplete(repoRoot: string): Promise<void> {
 	if (missing.size) {
 		const edges = [...missing].map(([dep, users]) => `  ${dep} <- ${users.join(", ")}`).join("\n")
 
-		throw new Error(`[smoke] WORKSPACES closure incomplete — add these to the pack set:\n${edges}`)
+		throw new Error(
+			`[smoke] pack set closure incomplete — these workspaces are depended on but not in the release list:\n${edges}`
+		)
 	}
 }
 
@@ -347,11 +281,13 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 	await makeDirectories(tarDir, proj)
 
 	try {
-		await assertClosureComplete(repoRoot)
+		const packSet = await publishSet(repoRoot)
 
-		log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
+		await assertClosureComplete(repoRoot, packSet)
 
-		const deps = await packWorkspaces(repoRoot, new Map(Object.entries(WORKSPACES)), tarDir)
+		log(`[smoke] packing ${packSet.size} workspaces…`)
+
+		const deps = await packWorkspaces(repoRoot, packSet, tarDir)
 
 		await writeLocalJSONFile({ name: "mw-smoke", private: true, dependencies: deps }, proj("package.json"))
 
@@ -389,8 +325,12 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 		log(`[smoke]   → ${toolCount} tools listed, bin shut down cleanly`)
 
 		for (const leaf of STANDALONE_LEAVES) {
-			const leafDir = WORKSPACES[leaf]!
-			const firstPartyDependencies = await firstPartyClosure(repoRoot, leaf)
+			const leafDir = packSet.get(leaf)
+
+			if (!leafDir) throw new Error(`[smoke] standalone leaf ${leaf} is not in the pack set`)
+
+			const closure = await walkWorkspaceClosure(repoRoot, [leaf])
+			const firstPartyDependencies = [...closure.keys()].filter((name) => name !== leaf).toSorted()
 
 			log(
 				`[smoke] standalone-leaf import: ${leaf} alone (without the umbrella or hoisting; closure ${firstPartyDependencies.join(", ") || "none"})…`
@@ -406,7 +346,9 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 					type: "module",
 					dependencies: Object.fromEntries(
 						[leaf, ...firstPartyDependencies].map((name) => {
-							const workspaceDir = WORKSPACES[name]!
+							const workspaceDir = packSet.get(name)
+
+							if (!workspaceDir) throw new Error(`[smoke] ${leaf} closure member ${name} is not in the pack set`)
 
 							return [name, `file:${tarDir(`${workspaceDir}.tgz`).toString()}`]
 						})
@@ -422,7 +364,7 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 		log("\n[smoke] ✅ clean install + CLI run succeeded")
 
 		return {
-			packed: Object.keys(WORKSPACES).length,
+			packed: packSet.size,
 			mcpTools: toolCount,
 			standaloneLeaves: [...STANDALONE_LEAVES],
 		}
