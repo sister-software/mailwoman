@@ -36,6 +36,19 @@ leave the building's position unresolved, and the report lists both. A synthetic
 synthetic wherever it appears. The dossier computes no geometry. The map model in
 `@mailwoman/opportunity-map` reads the memberships and positions.
 
+## Claims
+
+A claim states one value about one entity on one of the eight axes, with its status and the record that
+supports it. The report lists each building's claims after its layer readings. Each line gives the
+claim's identifier, axis, predicate, value, status, source record and evidence date. The evidence date is
+the claim's own `observedAt`, else its source record's `observedAt`, else the word `undated`. A record's
+availability and retrieval dates never date a claim. A derived or inferred claim also lists the claims it
+derives from, and an inferred claim gives its explanation.
+
+`validateRecords` reports a `derivedFrom` identifier that names no supplied claim as an `unknown_claim`
+error. A dossier admits a derived or inferred claim only when it admits every claim that the claim derives
+from, whatever the date of the claim's own record.
+
 ## Serviceability checks
 
 An availability check identifies a building, a layer, and the extent at which that layer's source keys
@@ -71,7 +84,8 @@ membership. The survey places Example House in cell-1, and the permit places Exa
 Annex in district-1. The Annex therefore shows only the district reading. No record places a building in
 cell-3, so the report lists the cable reading there as unplaced, and the route explanation for Example
 House does not cite it. Every position is synthetic, and the permit and the survey state two different
-positions for the Annex.
+positions for the Annex. Example House's inferred claim c2 derives from its observed claim c1. The
+evidence of c2 states no observation date, so the survey's observation date, 2022-03-15, dates it.
 
 ```text
 # Building dossier as of 2022-06-30
@@ -120,6 +134,13 @@ Roles with unknown signing authority: Example Holdings LLC (owner)
 - poles over cell-1: the source looked and found no record; absence is unknown
 - cable over cell-1 as of 2022-03-15: the source looked and found no record; absence is unknown
 - cable over district-1 as of 2022-03-15: records present
+
+### Claims
+
+- c1 — premises storeys: 13 (observed, permit-2021, 2021-05-10)
+- c2 — network nearest_cabinet_connects: "unknown" (inferred, survey-2022, 2022-03-15)
+  - derives from: c1
+  - explanation: A cabinet within 40 m is an observation of proximity, and connection requires its own record.
 
 ### Unresolved
 
@@ -222,6 +243,9 @@ Roles with unknown signing authority: none
 ### Layer readings
 
 - cable over district-1 as of 2022-03-15: records present
+
+### Claims
+
 
 ### Unresolved
 

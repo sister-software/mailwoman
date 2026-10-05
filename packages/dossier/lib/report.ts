@@ -10,8 +10,14 @@
  *   unknown. In the serviceability section every statement line opens with its kind, so a fact, a
  *   deduction, an estimate, a hypothesis and a decision never read alike. A reading that attaches to no
  *   building is listed once, after the building sections.
+ *
+ *   Each claim line gives the claim's status, source record and evidence date beside its value, so an
+ *   inferred value never reads as an observed one. The evidence date is the date the fact was observed.
+ *   A record's availability and retrieval dates say when the record could be read, so neither dates a
+ *   claim, and a claim with no observation date is printed as undated.
  */
 
+import type { Claim } from "#claims"
 import type { UnitTotal } from "#counts"
 import { LayerReadingClass } from "#coverage"
 import type { Dossier } from "#dossier"
@@ -24,7 +30,7 @@ import {
 } from "#explanations"
 import { outcomeStatements } from "#outcomes"
 import type { ExtentMembership, PositionAnswer } from "#placement"
-import type { SourceRecordID } from "#sources"
+import type { SourceRecord, SourceRecordID } from "#sources"
 
 /**
  * Joins words as English prose without a serial comma: `a, b and c`.
@@ -182,6 +188,54 @@ function extentsLine(memberships: readonly ExtentMembership[]): string {
 	return `Extents: ${extents.join(", ") || "none"}`
 }
 
+/**
+ * A claim value as the report prints it.
+ *
+ * A string is quoted, so the value `unknown` never reads as the report's own word.
+ * An array or an object prints each member the same way, and an object names each member.
+ */
+function valueText(value: unknown): string {
+	if (typeof value === "string") return `"${value}"`
+
+	if (Array.isArray(value)) return `[${value.map(valueText).join(", ")}]`
+
+	if (value !== null && typeof value === "object") {
+		const members = Object.entries(value).map(([key, member]) => `${key}: ${valueText(member)}`)
+
+		return members.length ? `{ ${members.join(", ")} }` : "{}"
+	}
+
+	return String(value)
+}
+
+/**
+ * The date of a claim's evidence: the claim's own observation date,
+ * else its source record's, else `undated`.
+ */
+function claimDate(claim: Claim, sources: ReadonlyMap<SourceRecordID, SourceRecord>): string {
+	return claim.evidence.observedAt ?? sources.get(claim.evidence.source)?.observedAt ?? "undated"
+}
+
+/**
+ * The lines for one claim: the claim itself, then the claims a derived or inferred
+ * claim derives from, then an inferred claim's explanation.
+ */
+function claimLines(claim: Claim, sources: ReadonlyMap<SourceRecordID, SourceRecord>): string[] {
+	const lines = [
+		`- ${claim.id} — ${claim.axis} ${claim.predicate}: ${valueText(claim.value)} (${claim.status}, ${claim.evidence.source}, ${claimDate(claim, sources)})`,
+	]
+
+	if (claim.status === "derived" || claim.status === "inferred") {
+		lines.push(`  - derives from: ${claim.derivedFrom.join(", ")}`)
+	}
+
+	if (claim.status === "inferred") {
+		lines.push(`  - explanation: ${claim.explanation}`)
+	}
+
+	return lines
+}
+
 function readingLine(reading: {
 	layer: string
 	extent: string
@@ -205,6 +259,8 @@ function readingLine(reading: {
 }
 
 export function renderReport(dossier: Dossier): string {
+	const sources = new Map(dossier.admittedSources.map((source) => [source.id, source]))
+
 	const lines: string[] = [
 		`# Building dossier as of ${dossier.asOf}`,
 		"",
@@ -277,6 +333,7 @@ export function renderReport(dossier: Dossier): string {
 		)
 
 		lines.push("### Layer readings", "", ...section.readings.map(readingLine), "")
+		lines.push("### Claims", "", ...section.claims.flatMap((claim) => claimLines(claim, sources)), "")
 		lines.push("### Unresolved", "")
 
 		for (const item of section.unresolved) {

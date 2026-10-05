@@ -122,14 +122,35 @@ postcode].
 
 ### Dates of the identity sources
 
-| Source record                                             | `observedAt`                | `availableAt` | `retrievedAt` | How each date was established                                                                                                                                            |
-| --------------------------------------------------------- | --------------------------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| LDD row (A, B, C)                                         | completion date of each row | 2021-01-13    | 2026-10-05    | The extract states it was generated 2020-07-02, and its Datastore entry was last updated 2021-01-13. The first publication date is unknown, so the later date bounds it. |
-| GLA referral row (A, C)                                   | Stage 2 date of each row    | 2026-01-21    | 2026-10-05    | The Datastore entry states the file was updated on 21 January 2026 to include data up to 31 December 2024.                                                               |
-| ONS Postcode Directory, February 2026                     | 2026-02                     | 2026-02-27    | 2026-07-22    | The ONS portal item for the CSV collection was created 2026-02-27. The host copy sits in a directory dated 2026-07-22.                                                   |
-| National Statistics UPRN Lookup, June 2026 (Epoch 127)    | 2026-06                     | 2026-07-31    | 2026-09-03    | The ONS portal item was created 2026-07-31. The host's `nsul.db` was built from that archive on 2026-09-03.                                                              |
-| Ofcom all-premises postcode files, version 2 (`_r2_`)     | 2026-01                     | 2026-07-07    | 2026-10-05    | The guide dates version 2 to 2026-07-07. The ZIP was last modified 2026-07-20.                                                                                           |
-| Ofcom residential postcode and output-area files (`_r1_`) | 2026-01                     | 2026-05-13    | 2026-10-05    | The Spring 2026 update was published 2026-05-13, and the version 2 note lists no change to these files [inferred].                                                       |
+| Source record                                                        | `observedAt`                | `availableAt` | `retrievedAt` | How each date was established                                                                                                                                            |
+| -------------------------------------------------------------------- | --------------------------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| LDD row (A, B, C)                                                    | completion date of each row | 2021-01-13    | 2026-10-05    | The extract states it was generated 2020-07-02, and its Datastore entry was last updated 2021-01-13. The first publication date is unknown, so the later date bounds it. |
+| GLA referral row (A, C)                                              | Stage 2 date of each row    | 2026-01-21    | 2026-10-05    | The Datastore entry states the file was updated on 21 January 2026 to include data up to 31 December 2024.                                                               |
+| ONS Postcode Directory, February 2026                                | 2026-02                     | 2026-02-27    | 2026-07-22    | The ONS portal item for the CSV collection was created 2026-02-27. The host copy sits in a directory dated 2026-07-22.                                                   |
+| National Statistics UPRN Lookup, June 2026 (Epoch 127)               | 2026-06                     | 2026-07-31    | 2026-09-03    | The ONS portal item was created 2026-07-31. The host's `nsul.db` was built from that archive on 2026-09-03.                                                              |
+| Ofcom all-premises postcode files, version 2 (`_r2_`)                | 2026-01                     | 2026-07-07    | 2026-10-05    | The guide dates version 2 to 2026-07-07. The ZIP was last modified 2026-07-20.                                                                                           |
+| Ofcom residential postcode files and both output-area files (`_r1_`) | 2026-01                     | 2026-05-13    | 2026-10-05    | The Spring 2026 update was published 2026-05-13, and the version 2 note lists no change to these files [inferred].                                                       |
+
+### Flood zone at each planning grid reference
+
+The dossier fixture `packages/opportunity-map/test/fixtures/london-three-buildings.ts` places each
+building at its LDD grid reference, converted to WGS 84 with `osgb36ToWGS84` from
+`@mailwoman/spatial/osgb36`. One run of `floodLayerReading` from `@mailwoman/flood/layer-readings` read
+each point from the host's `flood.db` on 2026-10-05. The database's manifest gives layer
+`flood-zones-ea-england`, version and source vintage `2026-05-20`, which is the Environment Agency
+product's revision date, license `OGL-UK-3.0`, source
+`environment.data.gov.uk/dataset/04532375-a198-476e-985e-0579a0a11b47`, and creation time
+`2026-08-28T01:46:44.206Z`.
+
+| Site | Grid reference | WGS 84 latitude, longitude               | Answer             | Layer reading                 | Claim                          |
+| ---- | -------------- | ---------------------------------------- | ------------------ | ----------------------------- | ------------------------------ |
+| A    | 533018, 165662 | 51.374440135180215, -0.09027853614389186 | designated absence | basis `designated`, 0 records | `flood_zone` `FZ1`, designated |
+| B    | 524237, 186057 | 51.55972024704242, -0.2092077726372136   | designated absence | basis `designated`, 0 records | `flood_zone` `FZ1`, designated |
+| C    | 530963, 183109 | 51.53170792370784, -0.1133329237818912   | designated absence | basis `designated`, 0 records | `flood_zone` `FZ1`, designated |
+
+The zone is the zone that the Environment Agency's map assigns at the point. It describes the map rather
+than a building's flood risk, and Zone 1 is silent about surface water, groundwater and residual risk in
+defended areas.
 
 ## 4. Competition sources for each building
 
@@ -140,25 +161,27 @@ coverage level in January 2026. Ofcom names no network at these levels and withh
 availability there. A postcode row carries no premises count. The NSUL UPRN count beside it is a
 different register's count. None of these values is a result for the building. Columns: superfast
 (30 Mbit/s), ultrafast (100 and 300 Mbit/s), gigabit, and premises unable to receive decent broadband.
-The residential column reports whether Ofcom's residential file has a row for the area.
+For an output area, the premises count also gives the all-premises file's `Number of premises with
+Gigabit availability`. The residential column reports whether Ofcom's residential file has a row for the
+area.
 
-| Site | Area      | Resolution  | Premises count                             | SFBB % | UFBB 100 % | UFBB 300 % | Gigabit % | No decent % | Residential row                               |
-| ---- | --------- | ----------- | ------------------------------------------ | ------ | ---------- | ---------- | --------- | ----------- | --------------------------------------------- |
-| A    | CR0 5BX   | postcode    | unpublished (75 UPRNs in NSUL)             | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
-| A    | CR0 5BY   | postcode    | unpublished (81 UPRNs in NSUL)             | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
-| A    | CR0 5LP   | postcode    | unpublished (11 UPRNs in NSUL)             | 100.0  | 0.0        | 0.0        | 0.0       | 0.0         | absent                                        |
-| A    | E00005233 | output area | All Premises 509, All Matched Premises 509 | 100    | 72.9       | 72.9       | 72.9      | 0           | All Premises 447, Gigabit 81.2 (363 premises) |
-| B    | NW2 2DL   | postcode    | unpublished (78 UPRNs in NSUL)             | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
-| B    | NW2 2DW   | postcode    | unpublished (40 UPRNs in NSUL)             | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
-| B    | NW2 2DP   | postcode    | unpublished (38 UPRNs in NSUL)             | 100.0  | 96.4       | 96.4       | 96.4      | 0.0         | present, Gigabit 95.8                         |
-| B    | E00178816 | output area | All Premises 127, All Matched Premises 127 | 100    | 99.2       | 99.2       | 99.2      | 0           | All Premises 122, Gigabit 99.2 (121 premises) |
-| C    | N1 9FS    | postcode    | unpublished (37 UPRNs in NSUL)             | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
-| C    | N1 9FT    | postcode    | unpublished (29 UPRNs in NSUL)             | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
-| C    | N1 9FU    | postcode    | unpublished (33 UPRNs in NSUL)             | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
-| C    | N1 9FW    | postcode    | unpublished (6 UPRNs in NSUL)              | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | absent                                        |
-| C    | N1 9JE    | postcode    | unpublished (8 UPRNs in NSUL)              | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | absent                                        |
-| C    | E00174805 | output area | All Premises 163, All Matched Premises 163 | 100    | 98.2       | 98.2       | 98.2      | 0           | All Premises 150, Gigabit 100 (150 premises)  |
-| C    | E00174843 | output area | All Premises 88, All Matched Premises 88   | 100    | 93.2       | 93.2       | 93.2      | 0           | All Premises 74, Gigabit 94.6 (70 premises)   |
+| Site | Area      | Resolution  | Premises count                                          | SFBB % | UFBB 100 % | UFBB 300 % | Gigabit % | No decent % | Residential row                               |
+| ---- | --------- | ----------- | ------------------------------------------------------- | ------ | ---------- | ---------- | --------- | ----------- | --------------------------------------------- |
+| A    | CR0 5BX   | postcode    | unpublished (75 UPRNs in NSUL)                          | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
+| A    | CR0 5BY   | postcode    | unpublished (81 UPRNs in NSUL)                          | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
+| A    | CR0 5LP   | postcode    | unpublished (11 UPRNs in NSUL)                          | 100.0  | 0.0        | 0.0        | 0.0       | 0.0         | absent                                        |
+| A    | E00005233 | output area | All Premises 509, All Matched Premises 509, Gigabit 371 | 100    | 72.9       | 72.9       | 72.9      | 0           | All Premises 447, Gigabit 81.2 (363 premises) |
+| B    | NW2 2DL   | postcode    | unpublished (78 UPRNs in NSUL)                          | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
+| B    | NW2 2DW   | postcode    | unpublished (40 UPRNs in NSUL)                          | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
+| B    | NW2 2DP   | postcode    | unpublished (38 UPRNs in NSUL)                          | 100.0  | 96.4       | 96.4       | 96.4      | 0.0         | present, Gigabit 95.8                         |
+| B    | E00178816 | output area | All Premises 127, All Matched Premises 127, Gigabit 126 | 100    | 99.2       | 99.2       | 99.2      | 0           | All Premises 122, Gigabit 99.2 (121 premises) |
+| C    | N1 9FS    | postcode    | unpublished (37 UPRNs in NSUL)                          | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
+| C    | N1 9FT    | postcode    | unpublished (29 UPRNs in NSUL)                          | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
+| C    | N1 9FU    | postcode    | unpublished (33 UPRNs in NSUL)                          | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | present, Gigabit 100.0                        |
+| C    | N1 9FW    | postcode    | unpublished (6 UPRNs in NSUL)                           | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | absent                                        |
+| C    | N1 9JE    | postcode    | unpublished (8 UPRNs in NSUL)                           | 100.0  | 100.0      | 100.0      | 100.0     | 0.0         | absent                                        |
+| C    | E00174805 | output area | All Premises 163, All Matched Premises 163, Gigabit 160 | 100    | 98.2       | 98.2       | 98.2      | 0           | All Premises 150, Gigabit 100 (150 premises)  |
+| C    | E00174843 | output area | All Premises 88, All Matched Premises 88, Gigabit 82    | 100    | 93.2       | 93.2       | 93.2      | 0           | All Premises 74, Gigabit 94.6 (70 premises)   |
 
 The queried key for each postcode row was the postcode in the `postcode_space` column of
 `202601_fixed_pc_coverage_r2_<area>.csv` (all premises) and `202601_fixed_pc_coverage_res_r1_<area>.csv`
@@ -225,6 +248,9 @@ National Statistics UPRN Lookup (June 2026, Epoch 127): Contains OS data © Crow
 right 2026. Contains Royal Mail data © Royal Mail copyright and Database right 2026. Contains GeoPlace
 data © Local Government Information House Limited copyright and database right 2026. Source: Office for
 National Statistics licensed under the Open Government Licence v.3.0.
+
+Environment Agency, Flood Map for Planning, revision 2026-05-20: © Environment Agency copyright and/or
+database right 2025. All rights reserved. Licensed under the Open Government Licence v3.0.
 ```
 
 ## Source register
@@ -242,3 +268,5 @@ National Statistics licensed under the Open Government Licence v.3.0.
 - Ofcom website terms, checker FAQ, API portal and API terms of use 2025 — 2026-10-05
 - Openreach, CityFibre and Virgin Media website terms; Community Fibre legal page — 2026-10-05
 - thinkbroadband Broadband Availability API page (HTTP 403, unread) — 2026-10-05
+- Environment Agency Flood Map for Planning, revision 2026-05-20, as built into the host's `flood.db`
+  (created 2026-08-28) — 2026-10-05

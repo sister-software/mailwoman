@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   Validation of supplied records before a dossier is built. An error is a record the dossier cannot use
- *   (a dangling reference, a duplicate id, a malformed date, a reading, check, membership or position
- *   whose subject is not a building, a position outside the range of latitude and longitude, a
- *   probability outside 0 to 1 or without a basis, a negative duration). A warning is a record the
- *   dossier will use with a stated limit (a missing availability date, a missing event date, unknown
- *   signing authority).
+ *   (a dangling reference, including a claim derived from a claim that is not supplied, a duplicate id, a
+ *   malformed date, a reading, check, membership or position whose subject is not a building, a position
+ *   outside the range of latitude and longitude, a probability outside 0 to 1 or without a basis, a
+ *   negative duration). A warning is a record the dossier will use with a stated limit (a missing
+ *   availability date, a missing event date, unknown signing authority).
  */
 
 import type { ProviderAvailability } from "#availability"
-import type { Claim } from "#claims"
+import { type Claim, derivationOf } from "#claims"
 import type { UnitCount } from "#counts"
 import type { LayerReading } from "#coverage"
 import type { Entity } from "#entities"
@@ -176,9 +176,22 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 		checkEntity(`containment ${index}`, link.parent)
 	})
 
+	const claims = new Set(records.claims.map((claim) => claim.id))
+
 	for (const claim of records.claims) {
 		checkSource(claim.id, claim.evidence.source)
 		checkEntity(claim.id, claim.subject)
+
+		for (const parent of derivationOf(claim)) {
+			if (!claims.has(parent)) {
+				issues.push({
+					severity: "error",
+					code: "unknown_claim",
+					message: `${claim.id} derives from claim ${parent}, which is not supplied`,
+					ref: claim.id,
+				})
+			}
+		}
 	}
 
 	for (const count of records.counts) {

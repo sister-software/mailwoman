@@ -67,6 +67,10 @@
 		"@mailwoman/route-scenarios": "workspace:*",
 		"@mailwoman/spatial": "workspace:*"
 	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/flood": "workspace:*"
+	},
 	"engines": {
 		"node": ">=24.18.0"
 	}

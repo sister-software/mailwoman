@@ -6676,7 +6676,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/opportunity-map@workspace:packages/opportunity-map"
   dependencies:
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/dossier": "workspace:*"
+    "@mailwoman/flood": "workspace:*"
     "@mailwoman/route-scenarios": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
   languageName: unknown

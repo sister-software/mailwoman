@@ -19,6 +19,7 @@ import {
 	NORTH,
 } from "#test/fixtures/example-house"
 import { OPP_BUILDING, OPP_RECORDS } from "#test/fixtures/one-park-point"
+import type { DossierRecords } from "#validate"
 
 function sectionOf(dossier: Dossier, building: EntityID) {
 	return dossier.buildings.find((section) => section.building.id === building)!
@@ -298,6 +299,95 @@ describe("buildDossier: building positions", () => {
 		expect(() =>
 			buildDossier({ ...EXAMPLE_RECORDS, positions: [{ ...HOUSE_POSITION, latitude: 91 }] }, { asOf: "2022-06-30" })
 		).toThrow(/position_out_of_range/)
+	})
+})
+
+describe("buildDossier: the claims a section shows", () => {
+	/**
+	 * The manager's 2023 statement supplies c3.
+	 *
+	 * The survey's c4 infers from c3, and the permit's c5 derives from c4.
+	 */
+	const records: DossierRecords = {
+		...EXAMPLE_RECORDS,
+		claims: [
+			...EXAMPLE_RECORDS.claims,
+			{
+				id: "c3",
+				subject: HOUSE,
+				axis: "access",
+				predicate: "riser_access",
+				value: "shared riser",
+				status: "observed",
+				evidence: { source: "manager-2023" },
+			},
+			{
+				id: "c4",
+				subject: HOUSE,
+				axis: "engineering",
+				predicate: "riser_route",
+				value: "unknown",
+				status: "inferred",
+				derivedFrom: ["c3"],
+				explanation: "A shared riser may not reach the roof.",
+				evidence: { source: "survey-2022" },
+			},
+			{
+				id: "c5",
+				subject: HOUSE,
+				axis: "engineering",
+				predicate: "riser_route_length_m",
+				value: 40,
+				status: "derived",
+				derivedFrom: ["c4"],
+				evidence: { source: "permit-2021" },
+			},
+		],
+	}
+
+	const claimIDs = (dossier: Dossier, building: EntityID) =>
+		sectionOf(dossier, building).claims.map((claim) => claim.id)
+
+	test("an inferred claim appears with the claim it derives from when both records are admitted", () => {
+		expect(claimIDs(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }), HOUSE)).toEqual(["c1", "c2"])
+		expect(claimIDs(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }), ANNEX)).toEqual([])
+	})
+
+	test("a derived or inferred claim waits for every claim it derives from, whatever its own record's date", () => {
+		expect(claimIDs(buildDossier(records, { asOf: "2022-06-30" }), HOUSE)).toEqual(["c1", "c2"])
+		expect(claimIDs(buildDossier(records, { asOf: "2023-06-30" }), HOUSE)).toEqual(["c1", "c2", "c3", "c4", "c5"])
+	})
+
+	test("refuses a claim that derives from a claim no record supplies", () => {
+		expect(() =>
+			buildDossier(
+				{
+					...EXAMPLE_RECORDS,
+					claims: [
+						{
+							id: "c6",
+							subject: HOUSE,
+							axis: "network",
+							predicate: "nearest_cabinet_connects",
+							value: "unknown",
+							status: "inferred",
+							derivedFrom: ["c9"],
+							explanation:
+								"A cabinet within 40 m is an observation of proximity, and connection requires its own record.",
+							evidence: { source: "survey-2022" },
+						},
+					],
+				},
+				{ asOf: "2022-06-30" }
+			)
+		).toThrow(/unknown_claim: c6 derives from claim c9, which is not supplied/)
+	})
+
+	test("lists the admitted source records in the order of their identifiers", () => {
+		const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
+
+		expect(dossier.admittedSources.map((source) => source.id)).toEqual(dossier.admitted)
+		expect(dossier.admittedSources[0]).toEqual(EXAMPLE_RECORDS.sources[0])
 	})
 })
 

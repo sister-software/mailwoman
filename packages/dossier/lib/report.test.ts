@@ -9,8 +9,9 @@ import { describe, expect, test } from "vitest"
 import { buildDossier } from "#dossier"
 import { StatementKind } from "#explanations"
 import { renderReport } from "#report"
-import { EXAMPLE_RECORDS } from "#test/fixtures/example-house"
+import { EXAMPLE_RECORDS, HOUSE } from "#test/fixtures/example-house"
 import { OPP_RECORDS } from "#test/fixtures/one-park-point"
+import type { DossierRecords } from "#validate"
 
 /**
  * The lines of one building's serviceability section, from its heading to the next building.
@@ -20,6 +21,20 @@ function serviceabilityLines(report: string, building: string): string[] {
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one rendered report section, already in memory and under 100 lines
 	return section.split("### Serviceability checks\n")[1]!.split("\n")
+}
+
+/**
+ * The non-empty lines of one building's claims part, from its heading to the next part.
+ */
+function claimLines(report: string, building: string): string[] {
+	const section = report.split(`## ${building}\n`)[1]!.split("\n## ")[0]!
+
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one rendered report section, already in memory and under 100 lines
+	return section
+		.split("### Claims\n")[1]!
+		.split("\n### ")[0]!
+		.split("\n")
+		.filter((line) => line !== "")
 }
 
 describe("renderReport", () => {
@@ -121,6 +136,113 @@ describe("renderReport: the serviceability section", () => {
 
 	test("a building without a check has no serviceability section", () => {
 		expect(report.split("## Example Annex\n")[1]).not.toContain("### Serviceability checks")
+	})
+})
+
+describe("renderReport: the claims part", () => {
+	const report = renderReport(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }))
+
+	test("prints each claim's identifier, axis, predicate, value, status, source record and evidence date", () => {
+		expect(claimLines(report, "Example House")).toEqual([
+			"- c1 — premises storeys: 13 (observed, permit-2021, 2021-05-10)",
+			'- c2 — network nearest_cabinet_connects: "unknown" (inferred, survey-2022, 2022-03-15)',
+			"  - derives from: c1",
+			"  - explanation: A cabinet within 40 m is an observation of proximity, and connection requires its own record.",
+		])
+
+		expect(claimLines(report, "Example Annex")).toEqual([])
+	})
+
+	test("places the claims part after the layer readings and before the unresolved questions", () => {
+		const section = report.split("## Example House\n")[1]!.split("\n## ")[0]!
+
+		expect(section.match(/^### .+$/gm)).toEqual([
+			"### Units",
+			"### Events",
+			"### Access",
+			"### Construction",
+			"### Providers",
+			"### Layer readings",
+			"### Claims",
+			"### Unresolved",
+			"### Serviceability checks",
+		])
+	})
+
+	test("dates a claim by its evidence's observation date, then its source record's, and otherwise prints undated", () => {
+		// The listing became available on 2022-01-03 and was retrieved on 2026-10-04, and it states no observation date.
+		const records: DossierRecords = {
+			...EXAMPLE_RECORDS,
+			sources: [
+				...EXAMPLE_RECORDS.sources,
+				{
+					id: "listing-2022",
+					publisher: "Example Listings",
+					title: "Dated rental listing",
+					availableAt: "2022-01-03",
+					retrievedAt: "2026-10-04",
+				},
+			],
+			claims: [
+				{
+					id: "c6",
+					subject: HOUSE,
+					axis: "demand",
+					predicate: "listed_units",
+					value: 3,
+					status: "observed",
+					evidence: { source: "listing-2022" },
+				},
+				{
+					id: "c7",
+					subject: HOUSE,
+					axis: "premises",
+					predicate: "storeys",
+					value: 13,
+					status: "observed",
+					evidence: { source: "survey-2022", observedAt: "2022-03-16" },
+				},
+				{
+					id: "c8",
+					subject: HOUSE,
+					axis: "premises",
+					predicate: "storeys",
+					value: 13,
+					status: "observed",
+					evidence: { source: "survey-2022" },
+				},
+			],
+		}
+
+		expect(claimLines(renderReport(buildDossier(records, { asOf: "2022-06-30" })), "Example House")).toEqual([
+			"- c6 — demand listed_units: 3 (observed, listing-2022, undated)",
+			"- c7 — premises storeys: 13 (observed, survey-2022, 2022-03-16)",
+			"- c8 — premises storeys: 13 (observed, survey-2022, 2022-03-15)",
+		])
+	})
+
+	test("prints a derived claim's parents without an explanation, and each member of an object value", () => {
+		const records: DossierRecords = {
+			...EXAMPLE_RECORDS,
+			claims: [
+				...EXAMPLE_RECORDS.claims,
+				{
+					id: "c9",
+					subject: HOUSE,
+					axis: "identity",
+					predicate: "site_grid_reference",
+					value: { easting: 533_018, northing: 165_662, system: "OSGB36", corners: [] },
+					status: "derived",
+					derivedFrom: ["c1", "c2"],
+					evidence: { source: "permit-2021" },
+				},
+			],
+		}
+
+		expect(claimLines(renderReport(buildDossier(records, { asOf: "2022-06-30" })), "Example House").slice(4)).toEqual([
+			'- c9 — identity site_grid_reference: { easting: 533018, northing: 165662, system: "OSGB36", corners: [] } (derived, permit-2021, 2021-05-10)',
+			"  - derives from: c1, c2",
+		])
 	})
 })
 

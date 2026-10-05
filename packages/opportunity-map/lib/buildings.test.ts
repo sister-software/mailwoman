@@ -23,6 +23,14 @@ import {
 	PERMIT,
 	SURVEY,
 } from "#test/fixtures/example-district"
+import {
+	ADDISCOMBE_GROVE,
+	CRICKLEWOOD_LANE,
+	LONDON_SITES,
+	londonDossier,
+	PENTONVILLE_ROAD,
+	sitePosition,
+} from "#test/fixtures/london-three-buildings"
 
 const collection = buildingFeatures(districtDossier(), { unitStage: UnitStage.Completed })
 
@@ -196,5 +204,79 @@ describe("buildingFeatures: geometry, access and economics", () => {
 		])
 
 		expect(feature(BUILDING_A).properties.access).toEqual({ permissions: [], roles: [] })
+	})
+})
+
+describe("buildingFeatures: the three London buildings at the planned stage", () => {
+	const london = buildingFeatures(londonDossier(), { unitStage: UnitStage.Planned })
+
+	// The fixture's identifiers keep each planning reference, so the tests name them through the fixture.
+	const [addiscombe, cricklewood, pentonville] = LONDON_SITES
+
+	function londonFeature(building: EntityID) {
+		return london.features.find((entry) => entry.properties.building === building)!
+	}
+
+	test("28-30 Addiscombe Grove: two sources agree on 153 planned units, and no record bears on service", () => {
+		const sources = [addiscombe!.ldd, "gla-referral-3831a"]
+
+		expect(addiscombe!.referral?.source).toBe("gla-referral-3831a")
+
+		expect(londonFeature(ADDISCOMBE_GROVE).properties).toMatchObject({
+			label: "28-30 Addiscombe Grove",
+			state: BuildingState.UnknownCoverage,
+			reason: "On 2026-10-05, no provider is recorded as available, and the building has no check.",
+			units: { stage: "planned", at: "2018-02-20", total: 153, sources },
+			service: { available: [], checks: [] },
+			sources,
+		})
+	})
+
+	test("112-132 Cricklewood Lane: the planning row's 122 planned units, and no record bears on service", () => {
+		expect(londonFeature(CRICKLEWOOD_LANE).properties).toMatchObject({
+			label: "112-132 Cricklewood Lane",
+			state: BuildingState.UnknownCoverage,
+			reason: "On 2026-10-05, no provider is recorded as available, and the building has no check.",
+			units: { stage: "planned", at: "2016-08-30", total: 122, sources: [cricklewood!.ldd] },
+			sources: [cricklewood!.ldd],
+		})
+	})
+
+	test("130-154, 154a Pentonville Road: 119 and 118 planned units leave the denominator unresolved", () => {
+		const reason = `2 counts share the same subject, stage, date and membership (${pentonville!.key}:residential-units) and disagree: 119 versus 118`
+		const sources = [pentonville!.ldd, "gla-referral-2924b"]
+
+		expect(pentonville!.referral?.source).toBe("gla-referral-2924b")
+
+		expect(londonFeature(PENTONVILLE_ROAD).properties).toMatchObject({
+			label: "130-154, 154a Pentonville Road",
+			state: BuildingState.UnknownUnitCount,
+			reason: `The planned unit total is unresolved: ${reason}.`,
+			units: { stage: "planned", at: "2014-12-12", total: "unresolved", reason, sources },
+			sources,
+		})
+	})
+
+	test("each feature is a point at the converted planning grid reference, sourced to the planning row and not synthetic", () => {
+		expect(london.features.map((entry) => [entry.geometry, entry.properties.position])).toEqual(
+			LONDON_SITES.map((site) => {
+				const { latitude, longitude } = sitePosition(site)
+
+				return [
+					{ type: "Point", coordinates: [longitude, latitude] },
+					{ status: "resolved", synthetic: false, sources: [site.ldd] },
+				]
+			})
+		)
+	})
+
+	test("at the completed stage every building has an unknown unit count, because no source states a completed count", () => {
+		const completed = buildingFeatures(londonDossier(), { unitStage: UnitStage.Completed })
+
+		expect(completed.features.map((entry) => entry.properties.state)).toEqual([
+			BuildingState.UnknownUnitCount,
+			BuildingState.UnknownUnitCount,
+			BuildingState.UnknownUnitCount,
+		])
 	})
 })
