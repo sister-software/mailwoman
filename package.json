@@ -134,7 +134,7 @@
 		"@types/regenerate": "^1.4.3",
 		"@types/semver": "^7.8.0",
 		"@typescript/native": "npm:typescript@^7.0.2",
-		"@vitest/coverage-v8": "5.0.3",
+		"@vitest/coverage-v8": "4.1.11",
 		"@vvago/vale": "^3.24.0",
 		"dependency-cruiser": "^18.5.0",
 		"esbuild": "0.28.2",
@@ -148,16 +148,16 @@
 		"oxlint": "1.87.0",
 		"oxlint-tsgolint": "7.0.2003",
 		"path-ts": "^2.5.0",
-		"release-it": "^21.1.0",
+		"release-it": "^19.2.4",
 		"semver": "^7.8.5",
 		"sherif": "^1.13.0",
 		"spliterator": "^8.1.0",
 		"ts-morph": "^28.0.0",
-		"typescript": "^6.0.2",
+		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"vite": "^8.3.2",
 		"vite-plugin-pwa": "^2.0.0",
-		"vitest": "5.0.3",
-		"zod": "^4.6.5",
+		"vitest": "4.1.11",
+		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	},
 	"resolutions": {
@@ -165,7 +165,8 @@
 		"serialize-javascript": "^7.0.5",
 		"sockjs/uuid": "^11.1.1",
 		"undici": "^6.24.0",
-		"websocket-driver": "^0.7.5"
+		"websocket-driver": "^0.7.5",
+		"zod@^4.5.4": "4.5.4"
 	},
 	"engines": {
 		"node": ">=24.18.0"

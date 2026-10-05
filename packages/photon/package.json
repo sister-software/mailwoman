@@ -69,6 +69,6 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"hono": "^4.13.13",
 		"mailwoman": "workspace:*",
-		"zod": "^4.6.5"
+		"zod": "^4.5.4"
 	}
 }

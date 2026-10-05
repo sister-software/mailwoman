@@ -254,13 +254,13 @@
 		"chalk": "^6.0.1",
 		"d3-scale-chromatic": "^3.1.0",
 		"h3-js": "^4.5.0",
-		"ink": "^8.0.0",
+		"ink": "^7.1.1",
 		"kysely": "^0.29.6",
 		"onnxruntime-node": "^1.30.0",
 		"path-ts": "^2.5.0",
 		"react": "^19.3.0",
 		"spliterator": "^8.1.0",
-		"zod": "^4.6.5",
+		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	},
 	"devDependencies": {
@@ -268,7 +268,7 @@
 		"@mailwoman/resolver-wof-wasm": "workspace:*"
 	},
 	"peerDependencies": {
-		"@duckdb/node-api": "1.5.3-r.3"
+		"@duckdb/node-api": "1.5.6-r.1"
 	},
 	"peerDependenciesMeta": {
 		"@duckdb/node-api": {

@@ -649,7 +649,7 @@
 		"trusted-types": "^2.0.0",
 		"type-fest": "^5.10.0",
 		"yauzl-promise": "^4.0.0",
-		"zod": "^4.6.5"
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "1.5.6-r.1",
