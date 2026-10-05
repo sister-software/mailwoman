@@ -260,7 +260,7 @@
 		"path-ts": "^2.5.0",
 		"react": "^19.3.0",
 		"spliterator": "^8.1.0",
-		"zod": "^4.5.4",
+		"zod": "^4.6.5",
 		"zx": "^8.8.5"
 	},
 	"devDependencies": {

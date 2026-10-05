@@ -49,6 +49,6 @@
 		"@hono/zod-openapi": "^1.6.3",
 		"@mailwoman/core": "workspace:*",
 		"hono": "^4.13.13",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	}
 }

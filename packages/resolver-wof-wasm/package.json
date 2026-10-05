@@ -58,6 +58,6 @@
 		"@sqlite.org/sqlite-wasm": "^3.53.4-build2",
 		"h3-js": "^4.5.0",
 		"path-ts": "^2.5.0",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	}
 }
