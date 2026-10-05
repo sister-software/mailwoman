@@ -22,10 +22,9 @@ export interface LayerReading {
 	extent: string
 	/**
 	 * The building the reading belongs to.
+	 * It must be a building the dossier's records supply.
 	 *
-	 * Absent readings associate with every building in the dossier — the stated limit
-	 * until #2289 adds a spatial key.
-	 * A producer that resolves the association sets this (#2468).
+	 * A reading without a subject associates with every building in the dossier.
 	 */
 	subject?: EntityID
 	basis: CoverageBasis | null

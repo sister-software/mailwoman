@@ -6,9 +6,30 @@
 
 import { describe, expect, test } from "vitest"
 
-import { buildDossier } from "#dossier"
-import { EXAMPLE_RECORDS, HOUSE, NORTH } from "#test/fixtures/example-house"
+import type { LayerReading } from "#coverage"
+import { buildDossier, type Dossier } from "#dossier"
+import type { EntityID } from "#identifiers"
+import { ANNEX, EXAMPLE_RECORDS, HOUSE, NORTH } from "#test/fixtures/example-house"
 import { OPP_BUILDING, OPP_RECORDS } from "#test/fixtures/one-park-point"
+
+function sectionOf(dossier: Dossier, building: EntityID) {
+	return dossier.buildings.find((section) => section.building.id === building)!
+}
+
+/**
+ * A surveyed-empty reading over `cell-2`, an extent the Example House fixture never reads.
+ */
+function cell2Reading(overrides: Partial<LayerReading>): LayerReading {
+	return {
+		layer: "ducts",
+		extent: "cell-2",
+		basis: "surveyed",
+		surveyedAt: "2022-03-15",
+		records: 0,
+		evidence: { source: "survey-2022" },
+		...overrides,
+	}
+}
 
 describe("buildDossier as of 2022-06-30", () => {
 	const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
@@ -68,6 +89,82 @@ describe("buildDossier as of 2022-06-30", () => {
 				{ asOf: "2022-06-30" }
 			)
 		).toThrow(/unknown_entity/)
+	})
+})
+
+describe("buildDossier: the building a layer reading attaches to", () => {
+	test("a reading with a subject attaches to that building and to no other", () => {
+		const dossier = buildDossier(
+			{ ...EXAMPLE_RECORDS, readings: [...EXAMPLE_RECORDS.readings, cell2Reading({ subject: ANNEX })] },
+			{ asOf: "2022-06-30" }
+		)
+
+		expect(sectionOf(dossier, ANNEX).readings).toContainEqual({
+			layer: "ducts",
+			extent: "cell-2",
+			surveyedAt: "2022-03-15",
+			class: "surveyed_empty",
+		})
+
+		expect(sectionOf(dossier, HOUSE).readings.map((reading) => reading.extent)).not.toContain("cell-2")
+	})
+
+	test("a reading without a subject attaches to every building", () => {
+		const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
+
+		expect(EXAMPLE_RECORDS.readings.every((reading) => reading.subject === undefined)).toBe(true)
+
+		for (const building of [HOUSE, ANNEX]) {
+			expect(sectionOf(dossier, building).readings.map((reading) => reading.layer)).toEqual([
+				"ducts",
+				"cabinets",
+				"poles",
+			])
+		}
+	})
+
+	test("two vintages of one layer and extent for one subject stay two readings", () => {
+		const dossier = buildDossier(
+			{
+				...EXAMPLE_RECORDS,
+				readings: [
+					cell2Reading({ subject: HOUSE, basis: "source_present", surveyedAt: "2021-03-15", records: 0 }),
+					cell2Reading({ subject: HOUSE, basis: "source_present", surveyedAt: "2022-03-15", records: 3 }),
+				],
+			},
+			{ asOf: "2022-06-30" }
+		)
+
+		expect(sectionOf(dossier, HOUSE).readings).toEqual([
+			{ layer: "ducts", extent: "cell-2", surveyedAt: "2021-03-15", class: "source_present_empty" },
+			{ layer: "ducts", extent: "cell-2", surveyedAt: "2022-03-15", class: "records" },
+		])
+
+		expect(sectionOf(dossier, ANNEX).readings).toEqual([])
+	})
+
+	test("a layer and extent whose texts concatenate alike stay two readings", () => {
+		const dossier = buildDossier(
+			{
+				...EXAMPLE_RECORDS,
+				readings: [
+					cell2Reading({ layer: "duct", extent: "s-cell" }),
+					cell2Reading({ layer: "ducts", extent: "-cell" }),
+				],
+			},
+			{ asOf: "2022-06-30" }
+		)
+
+		expect(sectionOf(dossier, HOUSE).readings.map((reading) => [reading.layer, reading.extent])).toEqual([
+			["duct", "s-cell"],
+			["ducts", "-cell"],
+		])
+	})
+
+	test("refuses a reading whose subject is not a building", () => {
+		expect(() =>
+			buildDossier({ ...EXAMPLE_RECORDS, readings: [cell2Reading({ subject: NORTH })] }, { asOf: "2022-06-30" })
+		).toThrow(/subject_not_building/)
 	})
 })
 

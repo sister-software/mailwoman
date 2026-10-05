@@ -6,8 +6,14 @@
 
 import { describe, expect, test } from "vitest"
 
-import { EMPTY_RECORDS, EXAMPLE_RECORDS } from "#test/fixtures/example-house"
+import type { LayerReading } from "#coverage"
+import type { EntityID } from "#identifiers"
+import { EMPTY_RECORDS, EXAMPLE_RECORDS, HOUSE, NORTH } from "#test/fixtures/example-house"
 import { validateRecords } from "#validate"
+
+function readingFor(subject: EntityID): LayerReading {
+	return { layer: "ducts", extent: "cell-1", subject, basis: null, records: null, evidence: { source: "survey-2022" } }
+}
 
 describe("validateRecords", () => {
 	test("the example records produce warnings only", () => {
@@ -51,6 +57,26 @@ describe("validateRecords", () => {
 	test("an event without a date is a warning", () => {
 		expect(validateRecords(EXAMPLE_RECORDS)).toContainEqual(
 			expect.objectContaining({ severity: "warning", code: "event_without_date", ref: "e5" })
+		)
+	})
+})
+
+describe("validateRecords: a layer reading's subject", () => {
+	test("a supplied building is accepted", () => {
+		const issues = validateRecords({ ...EXAMPLE_RECORDS, readings: [readingFor(HOUSE)] })
+
+		expect(issues.filter((issue) => issue.severity === "error")).toEqual([])
+	})
+
+	test("an identifier that names no supplied entity is an unknown_entity error", () => {
+		expect(validateRecords({ ...EXAMPLE_RECORDS, readings: [readingFor("building:ghost")] })).toContainEqual(
+			expect.objectContaining({ severity: "error", code: "unknown_entity", ref: "reading 0" })
+		)
+	})
+
+	test("a supplied entrance is a subject_not_building error", () => {
+		expect(validateRecords({ ...EXAMPLE_RECORDS, readings: [readingFor(NORTH)] })).toContainEqual(
+			expect.objectContaining({ severity: "error", code: "subject_not_building", ref: "reading 0" })
 		)
 	})
 })
