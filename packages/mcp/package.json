@@ -67,9 +67,9 @@
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"@modelcontextprotocol/sdk": "^1.30.0",
+		"@modelcontextprotocol/sdk": "^1.32.0",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	}
 }
