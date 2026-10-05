@@ -27,6 +27,10 @@ export interface OutcomeReport {
 	 * Neither measure counts them.
 	 */
 	pending: number
+	/**
+	 * The records of the dispositions that await an outcome.
+	 */
+	pendingSources: readonly SourceRecordID[]
 	blockerAccuracy: BlockerAccuracy
 	timeSaved: TimeSaved
 }
@@ -46,6 +50,9 @@ export function reportOutcomes(dispositions: readonly OperatorDisposition[]): Ou
 	return {
 		dispositions: dispositions.length,
 		pending: dispositions.length - outcomes.length,
+		pendingSources: [
+			...new Set(dispositions.flatMap((disposition) => (disposition.outcome ? [] : [disposition.evidence.source]))),
+		],
 		blockerAccuracy: outcomes.length
 			? {
 					status: "measured",
@@ -69,7 +76,9 @@ export function reportOutcomes(dispositions: readonly OperatorDisposition[]): Ou
  * The report's statements for an {@link OutcomeReport}.
  *
  * A measured value is an estimate with its denominator.
- * An unknown measure is a deduction that states which record it lacks.
+ * An unknown measure is an absence: a deduction that states which record it lacks.
+ *
+ * The count of dispositions that await an outcome cites those dispositions' records.
  */
 export function outcomeStatements(report: OutcomeReport): readonly Statement[] {
 	const statements: Statement[] = []
@@ -86,6 +95,7 @@ export function outcomeStatements(report: OutcomeReport): readonly Statement[] {
 			kind: StatementKind.Deduction,
 			text: `Blocker accuracy is unknown because ${blockerAccuracy.reason}.`,
 			sources: [],
+			absence: true,
 		})
 	}
 
@@ -105,6 +115,7 @@ export function outcomeStatements(report: OutcomeReport): readonly Statement[] {
 			kind: StatementKind.Deduction,
 			text: `Time saved is unknown because ${timeSaved.reason}.`,
 			sources: [],
+			absence: true,
 		})
 	}
 
@@ -112,7 +123,7 @@ export function outcomeStatements(report: OutcomeReport): readonly Statement[] {
 		statements.push({
 			kind: StatementKind.Fact,
 			text: `${report.pending} of ${report.dispositions} dispositions ${report.pending === 1 ? "awaits" : "await"} an outcome.`,
-			sources: [],
+			sources: report.pendingSources,
 		})
 	}
 

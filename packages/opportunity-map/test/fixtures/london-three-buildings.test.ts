@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type EntityID, renderReport, validateRecords } from "@mailwoman/dossier"
+import { type EntityID, renderReport, ReportLineKind, reportLines, validateRecords } from "@mailwoman/dossier"
 import { osgb36ToWGS84 } from "@mailwoman/spatial/osgb36"
 import { describe, expect, test } from "vitest"
 
@@ -56,30 +56,52 @@ describe("the three London buildings as one dossier", () => {
 		expect(new Set(LONDON_RECORDS.counts.map((count) => count.stage))).toEqual(new Set(["planned"]))
 	})
 
-	test("names each building by its planning authority's reference and its site address", () => {
+	test("names each building by its planning authority's reference, cited to its planning row, and its site address", () => {
 		expect(
 			dossier.buildings.map((section) => [
 				section.building.label,
-				section.building.externalIDs,
+				section.identifiers,
 				section.aliases.map((alias) => alias.text),
 			])
 		).toEqual([
 			[
 				"28-30 Addiscombe Grove",
-				[{ namespace: "croydon:planning-application", value: "17/02680/FUL" }],
+				[
+					{
+						namespace: "croydon:planning-application",
+						value: "17/02680/FUL",
+						evidence: { source: "ldd-17-02680-ful" },
+					},
+				],
 				["28-30 Addiscombe Grove, CR0 5LP"],
 			],
 			[
 				"112-132 Cricklewood Lane",
-				[{ namespace: "barnet:planning-application", value: "16/0601/FUL" }],
+				[
+					{
+						namespace: "barnet:planning-application",
+						value: "16/0601/FUL",
+						evidence: { source: "ldd-16-0601-ful" },
+					},
+				],
 				["112-132 Cricklewood Lane, NW2 2DP"],
 			],
 			[
 				"130-154, 154a Pentonville Road",
-				[{ namespace: "islington:planning-application", value: "P2014/1017/FUL" }],
+				[
+					{
+						namespace: "islington:planning-application",
+						value: "P2014/1017/FUL",
+						evidence: { source: "ldd-p2014-1017-ful" },
+					},
+				],
 				["130-154, 154a Pentonville Road, N1 9JE"],
 			],
 		])
+
+		expect(dossier.buildings.map((section) => section.identifiers)).toEqual(
+			dossier.buildings.map((section) => section.building.externalIDs)
+		)
 	})
 
 	test("places each building at its planning grid reference, converted with osgb36ToWGS84", () => {
@@ -471,6 +493,37 @@ describe("the three London buildings: the report", () => {
 		expect(report).toContain(
 			'- flood-zones-ea-england:building:barnet-16-0601-ful:2026-05-20 — premises flood_zone: "FZ1" (designated, ea-flood-map-2026-05-20, 2026-05-20)'
 		)
+	})
+
+	test("every conclusion cites a source record the dossier admitted, and its text gives each record it cites", () => {
+		const admitted = new Set(dossier.admitted)
+		const conclusions = reportLines(dossier).filter((line) => line.kind === ReportLineKind.Conclusion)
+
+		expect(conclusions.length).toBeGreaterThan(0)
+
+		expect(
+			conclusions.filter((line) => !line.sources.some((source) => admitted.has(source))).map((line) => line.text)
+		).toEqual([])
+
+		expect(
+			conclusions
+				.filter((line) => !line.sources.every((source) => admitted.has(source) && line.text.includes(source)))
+				.map((line) => line.text)
+		).toEqual([])
+
+		expect(report).not.toContain("source unstated")
+	})
+
+	test("cites each building's identifier to its planning row and lists each admitted record in the sources part", () => {
+		expect(report).toContain("Identifiers: croydon:planning-application 17/02680/FUL (ldd-17-02680-ful)")
+		expect(report).toContain("Identifiers: barnet:planning-application 16/0601/FUL (ldd-16-0601-ful)")
+		expect(report).toContain("Identifiers: islington:planning-application P2014/1017/FUL (ldd-p2014-1017-ful)")
+
+		expect(
+			reportLines(dossier)
+				.filter((line) => line.kind === ReportLineKind.Source && line.text.startsWith("- "))
+				.map((line) => line.sources)
+		).toEqual(dossier.admitted.map((source) => [source]))
 	})
 
 	test("lists the unresolved unit totals as each building's open questions", () => {

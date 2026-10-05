@@ -11,6 +11,7 @@ import { ExplanationKind } from "#explanations"
 import type { EntityID } from "#identifiers"
 import {
 	ACCESS_DISPOSITION,
+	ANNEX,
 	CABLE_CHECK,
 	EMPTY_RECORDS,
 	EXAMPLE_RECORDS,
@@ -66,6 +67,51 @@ describe("validateRecords", () => {
 		expect(validateRecords(EXAMPLE_RECORDS)).toContainEqual(
 			expect.objectContaining({ severity: "warning", code: "event_without_date", ref: "e5" })
 		)
+	})
+})
+
+describe("validateRecords: external identifiers", () => {
+	test("an identifier without evidence is an identifier_without_evidence warning", () => {
+		expect(
+			validateRecords(EXAMPLE_RECORDS)
+				.filter((issue) => issue.code === "identifier_without_evidence")
+				.map((issue) => [issue.severity, issue.ref, issue.message])
+		).toEqual([
+			[
+				"warning",
+				"parcel:example-parcel identifier 0",
+				"parcel:example-parcel identifier 0 (example:lot 12-34) has no evidence, so the report prints it with the words source unstated",
+			],
+			[
+				"warning",
+				"building:example-house identifier 0",
+				"building:example-house identifier 0 (example:bin 1001) has no evidence, so the report prints it with the words source unstated",
+			],
+			[
+				"warning",
+				"building:example-annex identifier 0",
+				"building:example-annex identifier 0 (example:bin 1002) has no evidence, so the report prints it with the words source unstated",
+			],
+		])
+	})
+
+	test("an identifier whose evidence cites a supplied source raises no issue, and one citing an unsupplied source is an error", () => {
+		const issues = validateRecords({
+			...EXAMPLE_RECORDS,
+			entities: EXAMPLE_RECORDS.entities.map((entity) =>
+				entity.id === HOUSE
+					? { ...entity, externalIDs: [{ ...entity.externalIDs[0]!, evidence: { source: "permit-2021" } }] }
+					: entity.id === ANNEX
+						? { ...entity, externalIDs: [{ ...entity.externalIDs[0]!, evidence: { source: "no-such-permit" } }] }
+						: entity
+			),
+		})
+
+		expect(
+			issues
+				.filter((issue) => issue.ref?.startsWith(HOUSE) || issue.ref?.startsWith(ANNEX))
+				.map((issue) => [issue.severity, issue.code, issue.ref])
+		).toEqual([["error", "unknown_source", "building:example-annex identifier 0"]])
 	})
 })
 

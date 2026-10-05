@@ -10,8 +10,8 @@ record that would resolve each.
 The package checks supplied property records and refuses dangling references, duplicate identifiers and
 malformed dates; the admitted records project into a dossier for an explicit `asOf` date. A record is
 admitted by its availability date alone, so a decision dated 2022 cannot rest on a record published in 2023. The package acquires no source, computes no cost, and renders no map: it checks what it is given and
-says what the given records support. `renderReport` turns a dossier into the Markdown report an operator
-reads.
+says what the given records support. `reportLines` turns a dossier into the line records of the report an
+operator reads, and `renderReport` prints them as Markdown.
 
 The eight synthetic scenarios of the inventory spec
 (`docs/superpowers/specs/2026-10-04-building-dossier-contract-inventory.md`) each live in a `describe`
@@ -49,6 +49,36 @@ derives from, and an inferred claim gives its explanation.
 error. A dossier admits a derived or inferred claim only when it admits every claim that the claim derives
 from, whatever the date of the claim's own record.
 
+## Line records and citations
+
+`reportLines` returns the report as line records. Each record holds the line's text, the part of the
+report it belongs to, its kind, the building whose section holds it, and the source records behind it.
+`renderReport` prints the text of each record in order, one line per record, so the printed report and the
+records cannot disagree. A line's kind says what the line states:
+
+- A `conclusion` states a value that admitted records supply. Its text cites each of those records in
+  parentheses after the value it supports.
+- An `absence` states in words that no admitted record supplies a value, as `Permissions: none on record`,
+  a provider answer of `unknown` and `no occupied count` do.
+- A `question` is an unresolved question, the candidate answers the records give for it, or an
+  explanation's hypothesis.
+- A `guidance` line states the record or the action that would resolve a question or test an explanation.
+- A `derivation` line gives the claims that a derived or inferred claim derives from, or an inferred
+  claim's explanation.
+- A `source` line describes source records: a list in the records header or an entry of the sources part.
+- A `heading` titles a part or a block, and a `blank` line separates two blocks.
+
+Every conclusion cites at least one admitted record, with one exception. An external identifier cites the
+record that states it, and an identifier without evidence prints the words `source unstated` in place of
+a citation. `validateRecords` reports each such identifier as an `identifier_without_evidence` warning. A
+building's section shows an identifier once the dossier admits the record that states it, as it shows an
+alias. A provider line gives each availability record's dates and record, and a provider answer of
+`unknown` is an absence.
+
+The sources part ends the report. It lists each admitted source record with its identifier, publisher,
+title, URL when it has one, and its observation, availability and retrieval dates. A missing date prints
+as the word `undated`.
+
 ## Serviceability checks
 
 An availability check identifies a building, a layer, and the extent at which that layer's source keys
@@ -74,7 +104,8 @@ the exception. The building is the `subject` of each of the fixture's readings, 
 `@mailwoman/bdc` writes a reading of a building's block. PLUTO 26v2 places the building in census block
 360470504012000 and census tract 36047050401 from 2026-08-24. The building's position is the point that
 NYC Planning's Geosearch returned for 11 Ocean Parkway on 2026-10-05, latitude 40.65017 and longitude
--73.97264, so a dossier admits it from that date.
+-73.97264, so a dossier admits it from that date. The same Geosearch record states the building's BIN, so
+the report shows the BIN from that date too.
 
 ## The Example House report
 
@@ -85,7 +116,8 @@ Annex in district-1. The Annex therefore shows only the district reading. No rec
 cell-3, so the report lists the cable reading there as unplaced, and the route explanation for Example
 House does not cite it. Every position is synthetic, and the permit and the survey state two different
 positions for the Annex. Example House's inferred claim c2 derives from its observed claim c1. The
-evidence of c2 states no observation date, so the survey's observation date, 2022-03-15, dates it.
+evidence of c2 states no observation date, so the survey's observation date, 2022-03-15, dates it. The
+fixture states no source for either building's identifier, so each prints `source unstated`.
 
 ```text
 # Building dossier as of 2022-06-30
@@ -98,8 +130,8 @@ Undated, no availability date (1): undated-listing
 
 ## Example House
 
-Identifiers: example:bin 1001
-Entrances: 2. Aliases: "North entrance, Example House" (resolved), "South entrance, Example House" (resolved)
+Identifiers: example:bin 1001 (source unstated)
+Entrances: 2 (survey-2022). Aliases: "North entrance, Example House" (resolved) (survey-2022), "South entrance, Example House" (resolved) (survey-2022)
 Position: -30.00012, -20.00034 (survey-2022), synthetic
 Extents: cell-1 (survey-2022), district-1 (permit-2021)
 
@@ -111,13 +143,13 @@ Extents: cell-1 (survey-2022), district-1 (permit-2021)
 
 ### Events
 
-- landlord_permission on 2022-05-10 (Example Management Co. Scope entrance:example-house-north)
+- landlord_permission on 2022-05-10 (Example Management Co. Scope entrance:example-house-north) (survey-2022)
 
 ### Access
 
-Permissions: Example Management Co for entrance:example-house-north
+Permissions: Example Management Co for entrance:example-house-north (survey-2022)
 Roles with known signing authority: none
-Roles with unknown signing authority: Example Holdings LLC (owner)
+Roles with unknown signing authority: Example Holdings LLC (owner) (permit-2021)
 
 ### Construction
 
@@ -125,15 +157,15 @@ Roles with unknown signing authority: Example Holdings LLC (owner)
 
 ### Providers
 
-- Example Fiber 1 Gbps: available on 2022-06-30
+- Example Fiber 1 Gbps: available on 2022-06-30 (from 2022-03-01 to 2022-09-30 per survey-2022)
 
 ### Layer readings
 
-- ducts over cell-1: no survey. Unknown
-- cabinets over cell-1 as of 2022-03-15: surveyed, zero records. Absence is established for the surveyed extent
-- poles over cell-1: the source looked and found no record; absence is unknown
-- cable over cell-1 as of 2022-03-15: the source looked and found no record; absence is unknown
-- cable over district-1 as of 2022-03-15: records present
+- ducts over cell-1: no survey. Unknown (survey-2022)
+- cabinets over cell-1 as of 2022-03-15: surveyed, zero records. Absence is established for the surveyed extent (survey-2022)
+- poles over cell-1: the source looked and found no record; absence is unknown (survey-2022)
+- cable over cell-1 as of 2022-03-15: the source looked and found no record; absence is unknown (survey-2022)
+- cable over district-1 as of 2022-03-15: records present (survey-2022)
 
 ### Claims
 
@@ -214,7 +246,7 @@ Decisions and outcomes:
 
 ## Example Annex
 
-Identifiers: example:bin 1002
+Identifiers: example:bin 1002 (source unstated)
 Entrances: 0. Aliases: none
 Position: unresolved — 2 positions state 2 different locations (-30.00021, -20.00032 per permit-2021, synthetic. -30.00025, -20.00041 per survey-2022, synthetic)
 Extents: district-1 (permit-2021)
@@ -242,7 +274,7 @@ Roles with unknown signing authority: none
 
 ### Layer readings
 
-- cable over district-1 as of 2022-03-15: records present
+- cable over district-1 as of 2022-03-15: records present (survey-2022)
 
 ### Claims
 
@@ -270,4 +302,11 @@ Neither a subject nor an admitted membership places these readings at a building
 
 - estimate (operator-log-2022): The investigated explanation held in 1 of 1 dispositions with a recorded outcome.
 - estimate (operator-log-2022): Against the operator's baselines, the investigations saved 60 minutes over 1 outcome that records both times.
+
+## Sources
+
+- permit-2021: Example City Buildings Department, "New building permit" (observed 2021-05-10, available 2021-05-12, retrieved 2026-10-04)
+- inspection-2022: Example City Buildings Department, "Inspection record" (observed 2022-04-01, available 2022-04-03, retrieved 2026-10-04)
+- survey-2022: Example Surveyor, "Entrance survey" (observed 2022-03-15, available 2022-03-20, retrieved 2026-10-04)
+- operator-log-2022: Example Operator, "Investigation log" (observed 2022-06-20, available 2022-06-25, retrieved 2026-10-04)
 ```

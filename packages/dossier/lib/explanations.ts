@@ -56,6 +56,13 @@ export interface Statement {
 	 * Its supporting statements cite the records.
 	 */
 	sources: readonly SourceRecordID[]
+	/**
+	 * `true` when the statement reports that no admitted record exists for its subject.
+	 *
+	 * A check's extent that no admitted reading covers is one such subject.
+	 * Such a statement cites no source, and the report prints it as an absence.
+	 */
+	absence?: true
 }
 
 /**
@@ -233,13 +240,18 @@ export interface Explanation {
 /**
  * How the section orders the supported explanations.
  *
- * `ranked` needs exactly one documented probability for every supported explanation, ordered highest first.
- * `scenarios` lists the explanations that lack one, and the section then shows each
- * explanation's next action if it holds and if it fails.
+ * `ranked` needs exactly one documented probability for every supported explanation.
+ * Its entries run from the highest probability down, each with the records that document it.
+ *
+ * `scenarios` lists the explanations that lack one.
+ * The section then shows each explanation's next action if it holds and if it fails.
  * `none` means no explanation has a supporting record.
  */
 export type ExplanationRanking =
-	| { kind: "ranked"; order: readonly { explanation: ExplanationKind; probability: number }[] }
+	| {
+			kind: "ranked"
+			order: readonly { explanation: ExplanationKind; probability: number; sources: readonly SourceRecordID[] }[]
+	  }
 	| { kind: "scenarios"; undocumented: readonly ExplanationKind[] }
 	| { kind: "none" }
 
@@ -355,6 +367,13 @@ function statement(kind: StatementKind, text: string, sources: readonly SourceRe
 	return { kind, text, sources: [...new Set(sources)] }
 }
 
+/**
+ * A statement whose text reports that no admitted record exists for its subject.
+ */
+function absentStatement(kind: StatementKind, text: string): Statement {
+	return { kind, text, sources: [], absence: true }
+}
+
 function plural(count: number, noun: string): string {
 	return `${count} ${noun}${count === 1 ? "" : "s"}`
 }
@@ -420,7 +439,8 @@ function readingFact(reading: LayerReading): Statement {
 }
 
 function readingFacts(check: AvailabilityCheck, group: VintageGroup | undefined): Statement[] {
-	if (!group) return [statement(StatementKind.Fact, `No admitted reading of ${check.layer} covers ${check.extent}.`)]
+	if (!group)
+		return [absentStatement(StatementKind.Fact, `No admitted reading of ${check.layer} covers ${check.extent}.`)]
 
 	return group.readings.map(readingFact)
 }
@@ -460,12 +480,13 @@ function classDeduction(check: AvailabilityCheck, group: VintageGroup | undefine
 				`The readings disagree, so whether ${service} exists stays unresolved until a record settles them.`,
 				sources
 			)
-		case LayerReadingClass.Unknown:
-			return statement(
-				StatementKind.Deduction,
-				`Without a survey of ${check.extent}, whether ${check.layer} service exists there on ${date} is unknown.`,
-				sources
-			)
+		case LayerReadingClass.Unknown: {
+			const text = `Without a survey of ${check.extent}, whether ${check.layer} service exists there on ${date} is unknown.`
+
+			// A reading that states no survey is a record of the gap, and the deduction cites it.
+			// When the extent has no admitted reading at all, the deduction is an absence.
+			return group ? statement(StatementKind.Deduction, text, sources) : absentStatement(StatementKind.Deduction, text)
+		}
 	}
 }
 
@@ -814,14 +835,19 @@ export function rankExplanations(
 ): ExplanationRanking {
 	if (!kinds.length) return { kind: "none" }
 
-	const documented: { explanation: ExplanationKind; probability: number }[] = []
+	const documented: { explanation: ExplanationKind; probability: number; sources: readonly SourceRecordID[] }[] = []
 	const undocumented: ExplanationKind[] = []
 
 	for (const kind of kinds) {
-		const values = [...new Set(probabilities.filter((entry) => entry.kind === kind).map((entry) => entry.probability))]
+		const entries = probabilities.filter((entry) => entry.kind === kind)
+		const values = [...new Set(entries.map((entry) => entry.probability))]
 
 		if (values.length === 1) {
-			documented.push({ explanation: kind, probability: values[0]! })
+			documented.push({
+				explanation: kind,
+				probability: values[0]!,
+				sources: [...new Set(entries.map((entry) => entry.evidence.source))],
+			})
 		} else {
 			undocumented.push(kind)
 		}

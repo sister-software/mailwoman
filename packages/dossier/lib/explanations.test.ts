@@ -505,12 +505,14 @@ describe("explainCheck: membership at the source's key", () => {
 
 		expect(result.status).toBe("unknown")
 
+		// Both statements say that no admitted record exists, so each is an absence and cites no source.
 		expect(result.answer).toEqual([
-			fact("No admitted reading of fiber covers cell-9.", []),
+			{ ...fact("No admitted reading of fiber covers cell-9.", []), absence: true },
 			{
 				kind: "deduction",
 				text: "Without a survey of cell-9, whether fiber service exists there on 2022-06-30 is unknown.",
 				sources: [],
+				absence: true,
 			},
 		])
 
@@ -631,8 +633,8 @@ describe("rankExplanations", () => {
 		).toEqual({
 			kind: "ranked",
 			order: [
-				{ explanation: "route", probability: 0.6 },
-				{ explanation: "installation", probability: 0.3 },
+				{ explanation: "route", probability: 0.6, sources: [STUDY.id] },
+				{ explanation: "installation", probability: 0.3, sources: [STUDY.id] },
 			],
 		})
 	})
@@ -669,8 +671,8 @@ describe("rankExplanations", () => {
 		expect(result.exception!.ranking).toEqual({
 			kind: "ranked",
 			order: [
-				{ explanation: "route", probability: 0.6 },
-				{ explanation: "installation", probability: 0.3 },
+				{ explanation: "route", probability: 0.6, sources: [STUDY.id] },
+				{ explanation: "installation", probability: 0.3, sources: [STUDY.id] },
 			],
 		})
 
