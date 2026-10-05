@@ -6893,6 +6893,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/route-scenarios@workspace:packages/route-scenarios":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/route-scenarios@workspace:packages/route-scenarios"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/dossier": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/sentencepiece-wasm@workspace:*, @mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm"
