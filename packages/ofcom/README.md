@@ -47,3 +47,8 @@ residential postcode files, and one output-area file for each premises set. Ofco
 under OGL v3.0. Its website terms ask that reproduced material be "reproduced accurately and not used
 in a misleading context" and acknowledged as Ofcom copyright. The package ships no Ofcom data. Its
 test fixtures copy a few published rows and cite their snapshot.
+
+The fixture rows carry this attribution:
+
+> Ofcom, Connected Nations update Spring 2026, fixed coverage data (January 2026). © Ofcom. Licensed
+> under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
