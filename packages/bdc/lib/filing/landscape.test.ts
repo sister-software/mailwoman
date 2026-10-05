@@ -37,7 +37,7 @@ import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
-import { latLngToCell } from "h3-js"
+import { cellToParent, latLngToCell } from "h3-js"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -46,11 +46,13 @@ import {
 	BDC_SPEED_BUCKET_25_100,
 	BDC_SPEED_BUCKET_GIGABIT,
 	BDC_SPEED_BUCKET_UNDER_25,
+	blockCentroidCells,
 	filingLandscape,
+	geoidCellResolver,
 	res9ShortCellToRes6Parent,
 	speedBucketForDownloadSpeed,
 } from "#filing/landscape"
-import { BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
+import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
 import { buildBDCDatabase } from "#sdk/build-bdc"
 import type { BDCAvailabilityRow } from "#sdk/parsing"
 
@@ -68,10 +70,10 @@ const GEOID_NY = "360610001001001"
 const GEOID_DIVERGENT = "510090101001001"
 // Never passed to `buildBDCDatabase` — criterion 2's "absent from the fixture" block.
 const GEOID_UNKNOWN = "999999999999999"
-// #1372: the builder never receives this block either, but its centroid sits in SF's covered res-6
-// cell, so a resolver can distinguish surveyed-empty from unknown.
+// The builder never receives this block either.
+// A resolver places it in SF's covered res-6 cell, where it reads as surveyed with zero filings.
 const GEOID_ZERO_ROW = "060750001009999"
-// #1372 decision 2: one block, one provider, one technology, two advertised speed tiers.
+// One block, one provider, one technology, two advertised speed tiers.
 const GEOID_TWO_TIER = "360610001009999"
 
 const CENTROID_SF = { lat: 37.7749, lon: -122.4194 }
@@ -96,15 +98,11 @@ function blockCentroids(geoid: string): { lat: number; lon: number } | undefined
 }
 
 /**
- * The resolver #1372's geoid path consults for a zero-row block: GEOID_ZERO_ROW
- * resolves into SF's cell, so the coverage check runs.
- * Every other geoid stays unresolved.
+ * A resolver over a centroid source that places GEOID_ZERO_ROW at SF's centroid,
+ * inside SF's covered res-6 cell.
+ * Every other GEOID stays unplaced.
  */
-function resolveGeoidCell(geoid: string): number | undefined {
-	if (geoid !== GEOID_ZERO_ROW) return undefined
-
-	return shortCellToInt(latLngToCell(CENTROID_SF.lat, CENTROID_SF.lon, BDC_H3_RESOLUTION) as H3Cell)
-}
+const resolveGeoidCell = geoidCellResolver((geoid) => (geoid === GEOID_ZERO_ROW ? CENTROID_SF : undefined))
 
 const PROVIDER_A = 130_077
 const PROVIDER_B = 130_080
@@ -170,7 +168,7 @@ function fixtureRows(): BDCAvailabilityRow[] {
 			low_latency: 1,
 			business_residential_code: "R",
 		},
-		// #1372 decision 2's case: two tiers from one provider at one technology on one block.
+		// Two tiers from one provider at one technology on one block.
 		{
 			geoid: GEOID_TWO_TIER,
 			provider_id: PROVIDER_A,
@@ -337,7 +335,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 	})
 })
 
-describe("filingLandscape — #1372 decision 1: a zero-row geoid with a resolver can be surveyed-empty", () => {
+describe("filingLandscape — a zero-row GEOID that a resolver places in a covered cell is surveyed-empty", () => {
 	it("with resolveGeoidCell, a covered block with no rows is surveyed with zero filings, not unknown", async () => {
 		using db = openFixture()
 
@@ -368,11 +366,10 @@ describe("filingLandscape — #1372 decision 1: a zero-row geoid with a resolver
 	})
 })
 
-describe("filingLandscape — #1372 decision 2: two speed tiers on one block stay two rows", () => {
-	// The decision: the bundle retains every advertised tier.
-	// Collapsing to the maximum would lose that the provider also files a slower tier
-	// (25/3 alongside gigabit here) and would make the per-tier corroboration check
-	// in `plausibilityCheck` unanswerable for mid-tier claims.
+describe("filingLandscape — every advertised speed tier on one block stays its own row", () => {
+	// A collapse to the maximum tier would drop the slower tier the provider also
+	// files (25/3 beside gigabit here).
+	// The per-tier corroboration in `plausibilityCheck` would then have no row for a mid-tier claim.
 	it("keeps one summary row per speed bucket for one block, provider and technology", async () => {
 		using db = openFixture()
 
@@ -429,6 +426,104 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		expect(result.filings).toEqual([
 			{ provider_id: PROVIDER_A, technology_code: 30, speed_bucket: BDC_SPEED_BUCKET_100_1000, block_count: 1 },
 		])
+	})
+})
+
+describe("blockCentroidCells", () => {
+	it("returns the res-9 cell the builder stored for each fixture block and that cell's covered res-6 parent", async () => {
+		using db = openFixture()
+
+		for (const [geoid, centroid] of Object.entries(CENTROIDS)) {
+			const row = await db
+				.selectFrom("bdc_availability")
+				.select("h3_cell")
+				.where("geoid", "=", geoid)
+				.executeTakeFirstOrThrow()
+
+			const cells = blockCentroidCells(centroid)
+
+			expect(cells.h3Cell).toBe(row.h3_cell)
+			expect(cells.coverageCell).toBe(res9ShortCellToRes6Parent(row.h3_cell))
+			expect(await readLayerCoverage(db, cells.coverageCell)).toBeDefined()
+		}
+	})
+
+	it("takes the coverage cell as the full res-9 cell's parent over a grid of points and at the divergent point", () => {
+		const points = [CENTROID_DIVERGENT]
+
+		for (let lat = -60; lat <= 70; lat += 13) {
+			for (let lon = -180; lon < 180; lon += 35) {
+				points.push({ lat, lon })
+			}
+		}
+
+		for (const point of points) {
+			const fullRes9Cell = latLngToCell(point.lat, point.lon, BDC_H3_RESOLUTION)
+
+			expect(blockCentroidCells(point)).toEqual({
+				h3Cell: shortCellToInt(fullRes9Cell as H3Cell),
+				coverageCell: shortCellToInt(cellToParent(fullRes9Cell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell),
+			})
+		}
+
+		const directRes6 = latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, BDC_COVERAGE_H3_RESOLUTION)
+
+		expect(blockCentroidCells(CENTROID_DIVERGENT).coverageCell).not.toBe(shortCellToInt(directRes6 as H3Cell))
+	})
+})
+
+describe("geoidCellResolver", () => {
+	it("resolves a GEOID to its centroid's res-9 cell and leaves a GEOID the lookup cannot place unresolved", () => {
+		const resolve = geoidCellResolver(blockCentroids)
+
+		expect(resolve(GEOID_NY)).toBe(blockCentroidCells(CENTROID_NY).h3Cell)
+		expect(resolve(GEOID_UNKNOWN)).toBeUndefined()
+	})
+})
+
+describe("filingLandscape — the coverage basis", () => {
+	it("returns the basis the surveyed blocks' coverage rows store", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY] })
+
+		expect(result.coverage_basis).toBe("source_present")
+	})
+
+	it("returns null when no queried block is surveyed", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_UNKNOWN] })
+
+		expect(result.surveyed_block_count).toBe(0)
+		expect(result.coverage_basis).toBeNull()
+	})
+
+	it("reads the basis from the row, and refuses one summary over rows with two bases", async () => {
+		await using basisScratch = await temporaryDirectory("bdc-filing-landscape-basis-")
+		const basisOut = basisScratch.path("bdc.db")
+
+		await buildBDCDatabase({
+			rows: fixtureRows(),
+			out: basisOut,
+			asOfDate: ASOF_DATE,
+			buildSHA: "deadbeef",
+			blockCentroids,
+		})
+
+		await changeMode(basisOut, 0o644)
+
+		using writable = await openBuiltClient<BDCDatabase>(basisOut, { write: true })
+
+		await writable
+			.updateTable("layer_coverage")
+			.set({ basis: "surveyed" })
+			.where("h3_cell", "=", blockCentroidCells(CENTROID_NY).coverageCell)
+			.execute()
+
+		expect((await filingLandscape(writable, { geoids: [GEOID_NY] })).coverage_basis).toBe("surveyed")
+		expect((await filingLandscape(writable, { geoids: [GEOID_SF] })).coverage_basis).toBe("source_present")
+		await expect(filingLandscape(writable, { geoids: [GEOID_SF, GEOID_NY] })).rejects.toThrow(/2 bases/)
 	})
 })
 

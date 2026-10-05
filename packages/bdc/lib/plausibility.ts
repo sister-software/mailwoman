@@ -160,8 +160,10 @@ export interface PlausibilityDeps {
 	poi?: PlausibilityPOIDeps
 	geocode?: (address: string) => Promise<GeocodeLike>
 	/**
-	 * Resolves a claim's GEOID to its res-9 short cell when the block has no filing rows of its own,
-	 * so a covered block with zero filings reads as surveyed rather than unknown (#1372).
+	 * Resolves a claim's GEOID to its res-9 short cell when the block has no filing rows of
+	 * its own, so a covered block with zero filings reads as surveyed rather than unknown.
+	 *
+	 * `geoidCellResolver` builds one from a block-centroid lookup.
 	 *
 	 * Without it, a zero-row GEOID keeps the documented safe result: unknown.
 	 */

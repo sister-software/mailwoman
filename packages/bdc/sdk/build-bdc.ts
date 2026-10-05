@@ -20,17 +20,15 @@ import {
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { FRN } from "@mailwoman/filer/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { beginBatched } from "@mailwoman/sqlite/batched"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
+import { blockCentroidCells } from "#filing/landscape"
 import {
-	BDC_COVERAGE_H3_RESOLUTION,
 	BDC_H3_RESOLUTION,
 	createBDCAvailabilityTable,
 	createBDCGeoidIndex,
@@ -450,16 +448,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			if (resolved === undefined) {
 				const centroid = options.blockCentroids(row.geoid)
 
-				resolved = centroid
-					? (() => {
-							const fullRes9Cell = latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION) as H3Cell
-
-							return {
-								h3Cell: shortCellToInt(fullRes9Cell),
-								coverageCell: shortCellToInt(cellToParent(fullRes9Cell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell),
-							}
-						})()
-					: null
+				resolved = centroid ? blockCentroidCells(centroid) : null
 
 				centroidCache.set(row.geoid, resolved)
 			}

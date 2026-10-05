@@ -456,7 +456,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 		expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "not_applicable" })
 	})
 
-	it("a zero-row geoid with deps.bdcGeoidCell reads as covered with no filing evidence — #1372 decision 1", async () => {
+	it("a zero-row geoid with deps.bdcGeoidCell reads as covered with no filing evidence", async () => {
 		await using bdc = await buildBDCFixture()
 
 		const bundle = await plausibilityCheck(
@@ -482,7 +482,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "insufficient_survey_data", layer: "bdc" })
 	})
 
-	it("retains both speed tiers from one provider, technology and block, corroborating per tier — #1372 decision 2", async () => {
+	it("retains both speed tiers from one provider, technology and block, corroborating per tier", async () => {
 		await using scratch = await temporaryDirectory("bdc-plausibility-two-tier-")
 		const out = scratch.path("bdc.db")
 
