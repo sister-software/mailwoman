@@ -5,6 +5,8 @@
  *
  *   Provider presence as a dated relation between a provider and an entity. The answer for a date is
  *   available, withdrawn or unknown. It records what the provider advertised. Uptake needs its own record.
+ *   A record can state the extent at which its source states availability, such as a census block, so a
+ *   reader can tell an answer for the premises from an answer for a wider area.
  */
 
 import type { EntityID } from "#identifiers"
@@ -17,6 +19,12 @@ export interface ProviderAvailability {
 	product: string
 	from: ISODate
 	to?: ISODate
+	/**
+	 * The extent at which the record's source states availability.
+	 *
+	 * It is written as a layer reading writes its extent, such as `census-block:<GEOID>`.
+	 */
+	extent?: string
 	evidence: Evidence
 }
 

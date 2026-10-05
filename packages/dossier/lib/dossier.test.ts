@@ -16,6 +16,7 @@ import {
 	EXAMPLE_RECORDS,
 	HOUSE,
 	HOUSE_POSITION,
+	MISSING_READING,
 	NORTH,
 } from "#test/fixtures/example-house"
 import { OPP_BUILDING, OPP_RECORDS } from "#test/fixtures/one-park-point"
@@ -117,6 +118,7 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 			extent: "cell-2",
 			surveyedAt: "2022-03-15",
 			class: "surveyed_empty",
+			sources: ["survey-2022"],
 		})
 
 		expect(sectionOf(dossier, HOUSE).readings.map((reading) => reading.extent)).not.toContain("cell-2")
@@ -202,8 +204,14 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 		)
 
 		expect(sectionOf(dossier, HOUSE).readings).toEqual([
-			{ layer: "ducts", extent: "cell-2", surveyedAt: "2021-03-15", class: "source_present_empty" },
-			{ layer: "ducts", extent: "cell-2", surveyedAt: "2022-03-15", class: "records" },
+			{
+				layer: "ducts",
+				extent: "cell-2",
+				surveyedAt: "2021-03-15",
+				class: "source_present_empty",
+				sources: ["survey-2022"],
+			},
+			{ layer: "ducts", extent: "cell-2", surveyedAt: "2022-03-15", class: "records", sources: ["survey-2022"] },
 		])
 
 		expect(sectionOf(dossier, ANNEX).readings).toEqual([])
@@ -246,6 +254,102 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 	})
 })
 
+describe("buildDossier: a building's external identifiers", () => {
+	/**
+	 * Example House with a BIN the permit states, a UPRN the 2023 manager statement states,
+	 * and a listing number that states no evidence.
+	 */
+	const records: DossierRecords = {
+		...EXAMPLE_RECORDS,
+		entities: EXAMPLE_RECORDS.entities.map((entity) =>
+			entity.id === HOUSE
+				? {
+						...entity,
+						externalIDs: [
+							{ namespace: "example:bin", value: "1001", evidence: { source: "permit-2021" } },
+							{ namespace: "example:uprn", value: "77", evidence: { source: "manager-2023" } },
+							{ namespace: "example:listing", value: "L-9" },
+						],
+					}
+				: entity
+		),
+	}
+
+	test("a section keeps an identifier with admitted evidence and one without evidence, and leaves out one whose evidence it excludes", () => {
+		expect(sectionOf(buildDossier(records, { asOf: "2022-06-30" }), HOUSE).identifiers).toEqual([
+			{ namespace: "example:bin", value: "1001", evidence: { source: "permit-2021" } },
+			{ namespace: "example:listing", value: "L-9" },
+		])
+
+		expect(
+			sectionOf(buildDossier(records, { asOf: "2023-06-30" }), HOUSE).identifiers.map((id) => id.namespace)
+		).toEqual(["example:bin", "example:uprn", "example:listing"])
+	})
+
+	test("an identifier whose source record is undated stays out, as the record does", () => {
+		const undated: DossierRecords = {
+			...records,
+			entities: records.entities.map((entity) =>
+				entity.id === ANNEX
+					? { ...entity, externalIDs: [{ ...entity.externalIDs[0]!, evidence: { source: "undated-listing" } }] }
+					: entity
+			),
+		}
+
+		expect(sectionOf(buildDossier(undated, { asOf: "2026-10-05" }), ANNEX).identifiers).toEqual([])
+	})
+
+	test("One Park Point's BIN waits for the Geosearch record that states it", () => {
+		expect(sectionOf(buildDossier(OPP_RECORDS, { asOf: "2023-06-30" }), OPP_BUILDING).identifiers).toEqual([])
+
+		expect(sectionOf(buildDossier(OPP_RECORDS, { asOf: "2026-10-05" }), OPP_BUILDING).identifiers).toEqual([
+			{ namespace: "nyc:bin", value: "3429422", evidence: { source: "pad-geosearch-26c" } },
+		])
+	})
+})
+
+describe("buildDossier: the records behind a section's readings and questions", () => {
+	test("each reading group lists the admitted source records of its readings, each once", () => {
+		const dossier = buildDossier(
+			{
+				...EXAMPLE_RECORDS,
+				readings: [
+					...EXAMPLE_RECORDS.readings,
+					{ ...MISSING_READING, evidence: { source: "inspection-2022" } },
+					{ ...MISSING_READING, evidence: { source: "survey-2022" } },
+				],
+			},
+			{ asOf: "2022-06-30" }
+		)
+
+		expect(
+			sectionOf(dossier, HOUSE).readings.map((reading) => [reading.layer, reading.extent, reading.sources])
+		).toEqual([
+			["ducts", "cell-1", ["survey-2022", "inspection-2022"]],
+			["cabinets", "cell-1", ["survey-2022"]],
+			["poles", "cell-1", ["survey-2022"]],
+			["cable", "cell-1", ["survey-2022"]],
+			["cable", "district-1", ["survey-2022"]],
+		])
+	})
+
+	test("an unresolved question lists the admitted records it rests on, and none when no record bears on it", () => {
+		const house = sectionOf(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }), HOUSE)
+
+		expect(house.unresolved.map((item) => [item.question, item.sources])).toEqual([
+			["How many occupied units does Example House have?", []],
+			["Does Example Holdings LLC (owner) hold signing authority for Example House?", ["permit-2021"]],
+			[
+				"When does the construction window that opened 2021-06-01 (permit issued) close? The record states no end.",
+				["permit-2021"],
+			],
+			["What does the ducts layer hold for cell-1?", ["survey-2022"]],
+			["What does the poles layer hold for cell-1?", ["survey-2022"]],
+			["What does the cable layer hold for cell-1 as of 2022-03-15?", ["survey-2022"]],
+		])
+	})
+})
+
 describe("buildDossier: building positions", () => {
 	const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
 
@@ -275,6 +379,7 @@ describe("buildDossier: building positions", () => {
 			subject: ANNEX,
 			candidates: ["-30.00021, -20.00032 (permit-2021)", "-30.00025, -20.00041 (survey-2022)"],
 			missingRecord: "a record that settles which of the 2 positions locates Example Annex",
+			sources: ["permit-2021", "survey-2022"],
 		})
 	})
 
@@ -396,6 +501,7 @@ describe("buildDossier: operator outcomes", () => {
 		expect(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }).outcomes).toEqual({
 			dispositions: 1,
 			pending: 0,
+			pendingSources: [],
 			blockerAccuracy: { status: "measured", held: 1, denominator: 1, sources: ["operator-log-2022"] },
 			timeSaved: { status: "measured", minutes: 60, denominator: 1, sources: ["operator-log-2022"] },
 		})
@@ -488,6 +594,7 @@ describe("one park point, real records", () => {
 				extent: "census-block:360470504012000",
 				surveyedAt: "2022-06-30",
 				class: "source_present_empty",
+				sources: ["fcc-bdc-fttp-j22"],
 			})
 
 			expect(section.readings).toContainEqual({
@@ -495,6 +602,7 @@ describe("one park point, real records", () => {
 				extent: "census-tract:36047050401",
 				surveyedAt: "2022-06-30",
 				class: "records",
+				sources: ["fcc-bdc-fttp-j22"],
 			})
 		})
 
@@ -549,6 +657,7 @@ describe("one park point, real records", () => {
 				extent: "census-block:360470504012000",
 				surveyedAt: "2025-12-31",
 				class: "records",
+				sources: ["fcc-bdc-fttp-d25"],
 			})
 
 			expect(section.readings.every((reading) => reading.class !== "conflicting")).toBe(true)

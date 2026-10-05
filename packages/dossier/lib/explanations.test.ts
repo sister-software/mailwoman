@@ -349,6 +349,19 @@ describe("explainCheck: supporting, conflicting and missing records, and the inv
 		])
 	})
 
+	test("an availability record that states an extent is worded over that extent, and one without an extent at the building", () => {
+		const conflicting = (availability: DossierRecords["availability"]) =>
+			explanationOf(checkResult(recordsWith({ windows: [OPEN_WINDOW], availability })), "installation").conflicting
+
+		expect(conflicting(AVAILABILITY)).toEqual([
+			fact("Example Fiber 1 Gbps is recorded as available at Example House on 2022-03-15.", ["survey-2022"]),
+		])
+
+		expect(conflicting([{ ...AVAILABILITY[0]!, extent: "district-9" }])).toEqual([
+			fact("Example Fiber 1 Gbps is recorded as available over district-9 on 2022-03-15.", ["survey-2022"]),
+		])
+	})
+
 	test("a construction window that closed before the reading conflicts with installation and supports nothing", () => {
 		const result = checkResult(recordsWith({ windows: [{ ...OPEN_WINDOW, end: "2022-02-01" }] }))
 
@@ -505,12 +518,14 @@ describe("explainCheck: membership at the source's key", () => {
 
 		expect(result.status).toBe("unknown")
 
+		// Both statements say that no admitted record exists, so each is an absence and cites no source.
 		expect(result.answer).toEqual([
-			fact("No admitted reading of fiber covers cell-9.", []),
+			{ ...fact("No admitted reading of fiber covers cell-9.", []), absence: true },
 			{
 				kind: "deduction",
 				text: "Without a survey of cell-9, whether fiber service exists there on 2022-06-30 is unknown.",
 				sources: [],
+				absence: true,
 			},
 		])
 
@@ -631,8 +646,8 @@ describe("rankExplanations", () => {
 		).toEqual({
 			kind: "ranked",
 			order: [
-				{ explanation: "route", probability: 0.6 },
-				{ explanation: "installation", probability: 0.3 },
+				{ explanation: "route", probability: 0.6, sources: [STUDY.id] },
+				{ explanation: "installation", probability: 0.3, sources: [STUDY.id] },
 			],
 		})
 	})
@@ -669,8 +684,8 @@ describe("rankExplanations", () => {
 		expect(result.exception!.ranking).toEqual({
 			kind: "ranked",
 			order: [
-				{ explanation: "route", probability: 0.6 },
-				{ explanation: "installation", probability: 0.3 },
+				{ explanation: "route", probability: 0.6, sources: [STUDY.id] },
+				{ explanation: "installation", probability: 0.3, sources: [STUDY.id] },
 			],
 		})
 
@@ -787,7 +802,7 @@ describe("one park point, the fiber check at its census block", () => {
 
 			expect(installation.conflicting).toEqual([
 				fact(
-					"Charter Communications (Spectrum) cable 1000/35 Mbps (census block, business) is recorded as available at 11 Ocean Parkway on 2022-06-30.",
+					"Charter Communications (Spectrum) cable 1000/35 Mbps (business) is recorded as available over census-block:360470504012000 on 2022-06-30.",
 					["fcc-bdc-cable-j22"]
 				),
 			])

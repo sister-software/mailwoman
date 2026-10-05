@@ -9,6 +9,9 @@
  *   reading evidence, and lists each unresolved question beside the record that would resolve it. A
  *   building's availability checks are answered and explained from the same admitted records.
  *
+ *   An external identifier is admitted by its evidence like every other record. An identifier without
+ *   evidence stays in the section, and the report prints it with the words `source unstated`.
+ *
  *   A derived or inferred claim is admitted only when every claim it derives from is admitted.
  *
  *   A layer reading attaches by its subject, then by an admitted membership, and otherwise to no
@@ -35,7 +38,7 @@ import {
 	type ExplanationProbability,
 	type OperatorDisposition,
 } from "#explanations"
-import type { EntityID } from "#identifiers"
+import type { EntityID, ExternalID } from "#identifiers"
 import { type AliasResolution, type Containment, entrancesOf, resolveAlias } from "#links"
 import { type OutcomeReport, reportOutcomes } from "#outcomes"
 import {
@@ -57,10 +60,26 @@ export interface Unresolved {
 	 * The record that would resolve the question, in words a reader can act on.
 	 */
 	missingRecord: string
+	/**
+	 * The admitted records the question rests on.
+	 *
+	 * They are the records of its candidates, or the record that raises the question.
+	 * The list is empty when no admitted record bears on the question.
+	 */
+	sources: readonly SourceRecordID[]
 }
 
 export interface BuildingSection {
 	building: Building
+	/**
+	 * The building's external identifiers on the as-of date.
+	 *
+	 * An identifier whose evidence the dossier admits is listed with that evidence.
+	 * An identifier without evidence is listed as supplied.
+	 *
+	 * An identifier whose evidence is excluded or undated is left out, as an alias is.
+	 */
+	identifiers: readonly ExternalID[]
 	entrances: readonly Containment[]
 	aliases: readonly { text: string; resolution: AliasResolution }[]
 	counts: Record<UnitStage, UnitTotal>
@@ -69,7 +88,18 @@ export interface BuildingSection {
 	authority: ReturnType<typeof signingAuthorityFor>
 	windows: readonly ConstructionWindow[]
 	availability: readonly { provider: string; product: string; answer: AvailabilityAnswer }[]
-	readings: readonly { layer: string; extent: string; surveyedAt?: ISODate; class: LayerReadingClass }[]
+	/**
+	 * The admitted readings of the building, grouped by layer, extent and survey date.
+	 *
+	 * Each group lists the admitted source records of its readings, as an unplaced reading does.
+	 */
+	readings: readonly {
+		layer: string
+		extent: string
+		surveyedAt?: ISODate
+		class: LayerReadingClass
+		sources: readonly SourceRecordID[]
+	}[]
 	claims: readonly Claim[]
 	unresolved: readonly Unresolved[]
 	/**
@@ -219,6 +249,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 
 	const sections = buildings.map((building) =>
 		sectionFor(building, options.asOf, {
+			sourceIDs: admittedSet,
 			containment,
 			counts,
 			events,
@@ -260,6 +291,10 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 }
 
 interface Admitted {
+	/**
+	 * The identifiers of the admitted source records.
+	 */
+	sourceIDs: ReadonlySet<SourceRecordID>
 	containment: readonly Containment[]
 	counts: DossierRecords["counts"]
 	events: readonly CommercialEvent[]
@@ -281,11 +316,23 @@ interface Admitted {
 	positions: readonly BuildingPosition[]
 }
 
+/**
+ * The distinct source records of `items`, in the order of their first citation.
+ */
+function sourcesOf(items: readonly { evidence: { source: SourceRecordID } }[]): SourceRecordID[] {
+	return [...new Set(items.map((item) => item.evidence.source))]
+}
+
 function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): BuildingSection {
 	const unresolved: Unresolved[] = []
 	const entrances = entrancesOf(building.id, admitted.containment)
 	const mine = new Set<EntityID>([building.id, ...entrances.map((link) => link.child)])
 	const position = positionOf(admitted.positions, { subject: building.id, asOf })
+
+	// An identifier with evidence waits for its record, as an alias candidate does.
+	const identifiers = building.externalIDs.filter(
+		(id) => id.evidence === undefined || admitted.sourceIDs.has(id.evidence.source)
+	)
 
 	const aliases = admitted.aliases
 		.filter((alias) => alias.candidates.some((candidate) => mine.has(candidate.entity)))
@@ -298,6 +345,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 					subject: building.id,
 					candidates: resolution.candidates.map((candidate) => candidate.entity),
 					missingRecord: `a source that links "${alias.text}" to one of ${resolution.candidates.map((candidate) => candidate.entity).join(", ")}`,
+					sources: sourcesOf(resolution.candidates),
 				})
 			}
 
@@ -314,6 +362,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 			missingRecord: position.conflicting.length
 				? `a record that settles which of the ${position.conflicting.length} positions locates ${building.label}`
 				: `a dated position record for ${building.label}`,
+			sources: sourcesOf(position.conflicting),
 		})
 	}
 
@@ -334,6 +383,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 					missingRecord: total.conflicting.length
 						? `a record that settles ${total.reason}`
 						: `a dated ${stage} unit count for ${building.label}`,
+					sources: sourcesOf(total.conflicting),
 				})
 			}
 
@@ -351,6 +401,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 			subject: building.id,
 			candidates: [],
 			missingRecord: `a dated record naming the signatory for ${building.label}`,
+			sources: [relation.evidence.source],
 		})
 	}
 
@@ -363,6 +414,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 				subject: building.id,
 				candidates: [],
 				missingRecord: `a completion or occupancy record for ${building.label}`,
+				sources: [window.evidence.source],
 			})
 		}
 	}
@@ -383,6 +435,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 				subject: building.id,
 				candidates: [],
 				missingRecord: `a dated availability record from ${provider} covering ${asOf}`,
+				sources: sourcesOf(answer.records),
 			})
 		}
 
@@ -396,16 +449,19 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 	)
 
 	const readings = readingGroups(attached).map((group) => {
+		const sources = sourcesOf(group.readings)
+
 		if (group.class !== "records" && group.class !== "surveyed_empty") {
 			unresolved.push({
 				question: `What does the ${group.layer} layer hold for ${group.extent}${group.surveyedAt ? ` as of ${group.surveyedAt}` : ""}?`,
 				subject: building.id,
 				candidates: group.readings.map((reading) => `${reading.records ?? "no survey"} (${reading.evidence.source})`),
 				missingRecord: `a surveyed or designated reading of ${group.layer} over ${group.extent}`,
+				sources,
 			})
 		}
 
-		return { layer: group.layer, extent: group.extent, surveyedAt: group.surveyedAt, class: group.class }
+		return { layer: group.layer, extent: group.extent, surveyedAt: group.surveyedAt, class: group.class, sources }
 	})
 
 	const checks = admitted.checks
@@ -431,6 +487,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 
 	return {
 		building,
+		identifiers,
 		entrances,
 		aliases,
 		counts,

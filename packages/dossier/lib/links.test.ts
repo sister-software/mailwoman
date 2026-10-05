@@ -52,7 +52,10 @@ describe("two frontages", () => {
 describe("shared parcel", () => {
 	test("two buildings stand on the parcel and each keeps its identity", () => {
 		expect(buildingsOn(PARCEL, CONTAINMENT).map((link) => link.child)).toEqual([HOUSE, ANNEX])
-		expect(entityIndex(ENTITIES).get(ANNEX)?.externalIDs).toEqual([{ namespace: "example:bin", value: "1002" }])
+
+		expect(entityIndex(ENTITIES).get(ANNEX)?.externalIDs).toEqual([
+			{ namespace: "example:bin", value: "1002", evidence: { source: "permit-2021", observedAt: "2021-05-10" } },
+		])
 	})
 })
 

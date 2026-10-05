@@ -8,7 +8,8 @@
  *   malformed date, a reading, check, membership or position whose subject is not a building, a position
  *   outside the range of latitude and longitude, a probability outside 0 to 1 or without a basis, a
  *   negative duration). A warning is a record the dossier will use with a stated limit (a missing
- *   availability date, a missing event date, unknown signing authority).
+ *   availability date, a missing event date, unknown signing authority, an external identifier without
+ *   evidence). The report prints an identifier without evidence with the words `source unstated`.
  */
 
 import type { ProviderAvailability } from "#availability"
@@ -161,6 +162,23 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 				ref,
 			})
 		}
+	}
+
+	for (const entity of records.entities) {
+		entity.externalIDs.forEach((id, index) => {
+			const ref = `${entity.id} identifier ${index}`
+
+			if (id.evidence) {
+				checkSource(ref, id.evidence.source)
+			} else {
+				issues.push({
+					severity: "warning",
+					code: "identifier_without_evidence",
+					message: `${ref} (${id.namespace} ${id.value}) has no evidence, so the report prints it with the words source unstated`,
+					ref,
+				})
+			}
+		})
 	}
 
 	records.aliases.forEach((alias, index) =>

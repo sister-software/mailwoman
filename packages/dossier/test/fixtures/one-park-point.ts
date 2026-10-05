@@ -21,7 +21,8 @@
  *     lessor. JEMB Realty is the development entity named as owner on the DOB filings).
  *   - NYC Planning Geosearch (PAD 26c), live lookup: address 11 Ocean Parkway ↔ BIN 3429422 ↔ BBL
  *     3053220010, at the point [-73.97264, 40.65017] (longitude, latitude), which is the building's
- *     position below. A live service, so `availableAt` is the retrieval date.
+ *     position below. A live service, so `availableAt` is the retrieval date. The lookup is the evidence
+ *     for the building's BIN and the tax lot's BBL, so a dossier dated before the retrieval shows neither.
  *   - FCC Broadband Data Collection, through the National Broadband Map Public Data API
  *     (bdc.fcc.gov, credentialed). Three files, all NY state location coverage: cable as of
  *     2022-06-30 (file bdc_36_Cable_fixed_broadband_J22_10may2024) and fiber-to-the-premises as of
@@ -31,9 +32,9 @@
  *     date: a dossier built for mid-2022 cannot have known it. Rows are provider-filed claims, so a
  *     block with no row is `source_present` empty, never established absence. Readings are block- and
  *     tract-scoped because the location id was not joined to the Fabric on this pass. Provider
- *     availability below therefore reads at census-block granularity rather than per-premises. The
- *     building is each reading's subject, as `bdcLayerReadings` in `@mailwoman/bdc` writes a reading
- *     of a building's block.
+ *     availability below therefore reads at census-block granularity rather than per-premises, and each
+ *     availability record states the building's census block as its `extent`. The building is each
+ *     reading's subject, as `bdcLayerReadings` in `@mailwoman/bdc` writes a reading of a building's block.
  *
  *   PLUTO's `bctcb2020` (30504012000) and `bct2020` (3050401) place the tax lot in census block
  *   360470504012000 and census tract 36047050401. They are the building's memberships, admitted from
@@ -150,13 +151,13 @@ const OPP_ENTITIES: Entity[] = [
 	{
 		id: OPP_PARCEL,
 		kind: "parcel",
-		externalIDs: [{ namespace: "nyc:bbl", value: "3053220010" }],
+		externalIDs: [{ namespace: "nyc:bbl", value: "3053220010", evidence: { source: "pad-geosearch-26c" } }],
 		label: "Brooklyn tax lot 5322-10",
 	},
 	{
 		id: OPP_BUILDING,
 		kind: "building",
-		externalIDs: [{ namespace: "nyc:bin", value: "3429422" }],
+		externalIDs: [{ namespace: "nyc:bin", value: "3429422", evidence: { source: "pad-geosearch-26c" } }],
 		label: "11 Ocean Parkway",
 	},
 ]
@@ -361,15 +362,17 @@ const OPP_AVAILABILITY: ProviderAvailability[] = [
 	{
 		provider: "Charter Communications (Spectrum)",
 		subject: OPP_BUILDING,
-		product: "cable 1000/35 Mbps (census block, business)",
+		product: "cable 1000/35 Mbps (business)",
 		from: "2022-06-30",
+		extent: "census-block:360470504012000",
 		evidence: { source: "fcc-bdc-cable-j22" },
 	},
 	{
 		provider: "Verizon",
 		subject: OPP_BUILDING,
-		product: "fiber to the premises 2300/2300 Mbps (census block, residential)",
+		product: "fiber to the premises 2300/2300 Mbps (residential)",
 		from: "2025-12-31",
+		extent: "census-block:360470504012000",
 		evidence: { source: "fcc-bdc-fttp-d25" },
 	},
 ]
