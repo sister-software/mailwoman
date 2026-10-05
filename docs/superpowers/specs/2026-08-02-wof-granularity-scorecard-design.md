@@ -240,7 +240,7 @@ Three direct caveats before anyone treats 186,469 as shippable:
   `@mailwoman/neural-weights-*` overlay first, the same blocker `placetype-evidence.mdx` records for
   IE/DE/ES/IT.
 - **Whether Indian postal format writes a dependent-locality line is unverified here.** `Mulund East,
-Mumbai` suggests yes, but the demand-side check does not exist for this tier (Finding 4), so that
+  Mumbai` suggests yes, but the demand-side check does not exist for this tier (Finding 4), so that
   remains an assumption rather than a measurement.
 
 Two incidental confirmations that PR A was necessary: the IE and BR repos carry `campus` rows (2 and

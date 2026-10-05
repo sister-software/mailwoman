@@ -43,7 +43,7 @@ on supply: 126 labeled rows. Korean joins the same package when its corpus is bu
    selects the CJK package when the input is mostly Han, kana or Hangul. The Latin model is untouched.
 6. **Evaluation through the served path.** The board scorer in `corpus-python/scripts/score_jp_probe_board.py`
    runs PyTorch. The serving path needs the same read through TypeScript: the JP board rows through `mailwoman
-geocode` with the CJK package, coordinate-acceptability at 15 km against the same centroid table. A parity test
+   geocode` with the CJK package, coordinate-acceptability at 15 km against the same centroid table. A parity test
    on the encoder (TypeScript `char_ids` equal to Python's for every board row) and on the runner (ONNX logits
    within tolerance of PyTorch logits on a fixed batch) is what makes the served number comparable to the record.
 

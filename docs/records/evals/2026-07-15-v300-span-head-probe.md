@@ -50,7 +50,7 @@ converged:
 - **The decode looks random**, exactly as a near-random head should:
   `Korunni 810, Praha` → `▁Kor:street un:region ni:subregion ▁8|1|0:postcode` — a type per token with
   no structure. Compare the BIO head on the same input: `▁Kor|un|ni:street ▁8|1|0:house_number
-▁Pra|ha:locality` — correct.
+  ▁Pra|ha:locality` — correct.
 
 **The probe was mis-specified, and that is my error.** `lr: 1e-5` was inherited verbatim from
 v2.6.4 — a recipe that _fine-tunes existing weights_. The span head is **randomly initialized**. A

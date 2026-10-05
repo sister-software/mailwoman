@@ -55,7 +55,7 @@ too strict here, because the rows a rename leaves behind are the non-official on
   (98.3%)**. The single miss is a trailing period (`Pimpale Bk` vs `Pimpale Bk.`), which is a
   tokenization artifact rather than a retrieval failure.
 - **D-R10.4.** Before and after on real addresses: `12 MG Road, Indiranagar, Bengaluru, Karnataka
-560038` previously fused the locality as `"Indiranagar Bengaluru Karnataka"` and emitted no
+  560038` previously fused the locality as `"Indiranagar Bengaluru Karnataka"` and emitted no
   dependent locality. It now yields `dependent_locality=Indiranagar, locality=Bengaluru`.
 
 ## Consolidation carried in the same change

@@ -61,8 +61,8 @@ request body", detail: "<short zod summary>" }` — never the raw zod shape.
 ## Library use
 
 ```ts
-import { serveNode } from "@mailwoman/api-kit"
 import { createMailwomanAPI, type MailwomanAPIEngine } from "@mailwoman/api"
+import { serveNode } from "@mailwoman/api-kit"
 
 const engine: MailwomanAPIEngine = {
 	/* parse, geocode, batch, resolveTree, reload, health — backed by your Mailwoman pipeline */

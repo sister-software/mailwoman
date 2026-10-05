@@ -687,6 +687,7 @@ import {
 	recordEventOnce,
 	setLicenseState,
 } from "#ledger/licenses"
+
 import { applyMigrations } from "./support/migrations.ts"
 
 beforeEach(async () => {
@@ -1055,6 +1056,7 @@ import { describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
 import { signingSelfTest } from "#signing"
+
 import { envWithSigningKey } from "./support/keys.ts"
 
 describe("the signing self-test", () => {
@@ -1301,6 +1303,7 @@ import { describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
 import { ACCEPTED_EVENT_TYPES, verifyStripeEvent } from "#stripe/webhook"
+
 import { invoicePaidEvent } from "./support/stripe-fixtures.ts"
 import { signedWebhook } from "./support/stripe-mock.ts"
 
@@ -1534,7 +1537,8 @@ export interface FulfilDependencies {
 	now?: () => Date
 }
 export type FulfilOutcome =
-	{ outcome: "minted" | "already_minted"; lid: string; invoiceID: string } | { outcome: "refused"; reason: string }
+	| { outcome: "minted" | "already_minted"; lid: string; invoiceID: string }
+	| { outcome: "refused"; reason: string }
 export async function fulfilInvoice(
 	env: LicenseWorkerEnv,
 	deps: FulfilDependencies,
@@ -1548,17 +1552,18 @@ export async function handleStripeEvent(env, deps, event: Stripe.Event): Promise
 - [x] **Step 1: Write the failing test**
 
 ```ts
+import { verifyLicenseKey } from "@mailwoman/core/license/key"
 // test/fulfil.test.ts
 import { env } from "cloudflare:test"
-import { verifyLicenseKey } from "@mailwoman/core/license/key"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
 import { fulfilInvoice } from "#fulfil"
 import { openLedger } from "#ledger/client"
 import { currentToken, findLicenseBySubscription, findToken } from "#ledger/licenses"
-import { handleStripeEvent } from "#stripe/handlers"
 import { stripeClient } from "#stripe/client"
+import { handleStripeEvent } from "#stripe/handlers"
+
 import { envWithSigningKey } from "./support/keys.ts"
 import { applyMigrations } from "./support/migrations.ts"
 import {
@@ -1780,8 +1785,8 @@ Expected: the tests fail because the modules are missing.
 `lib/email/provider.ts` declares the two interfaces. `lib/email/resend.ts`:
 
 ```ts
-import type { LicenseWorkerEnv } from "#env"
 import type { EmailProvider, LicenseEmail } from "#email/provider"
+import type { LicenseWorkerEnv } from "#env"
 
 /**
  * Resend over its HTTP API. The `Idempotency-Key` is the invoice id, so a retried send after a failed D1 write is one
@@ -1874,7 +1879,8 @@ export interface FulfilDependencies {
 }
 
 export type FulfilOutcome =
-	{ outcome: "minted" | "already_minted"; lid: string; invoiceID: string } | { outcome: "refused"; reason: string }
+	| { outcome: "minted" | "already_minted"; lid: string; invoiceID: string }
+	| { outcome: "refused"; reason: string }
 
 const LICENSEE_FIELD_KEY = "licensee_legal_name"
 
@@ -2174,6 +2180,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { createLicenseWorkerApp } from "#app"
 import { readEnv } from "#env"
 import { openLedger } from "#ledger/client"
+
 import { envWithSigningKey } from "./support/keys.ts"
 import { applyMigrations } from "./support/migrations.ts"
 import {
@@ -2443,6 +2450,7 @@ import { openLedger } from "#ledger/client"
 import { findToken } from "#ledger/licenses"
 import { reconcile } from "#reconcile"
 import { stripeClient } from "#stripe/client"
+
 import { envWithSigningKey } from "./support/keys.ts"
 import { applyMigrations } from "./support/migrations.ts"
 import {

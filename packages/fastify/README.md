@@ -7,8 +7,8 @@ npm i @mailwoman/fastify fastify
 ```
 
 ```ts
-import Fastify from "fastify"
 import mailwomanFastify from "@mailwoman/fastify"
+import Fastify from "fastify"
 
 const app = Fastify()
 await app.register(mailwomanFastify, { resolveDatabasePath: "/data/candidate.db" })

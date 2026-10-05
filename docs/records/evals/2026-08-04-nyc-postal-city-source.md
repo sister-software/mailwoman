@@ -99,7 +99,7 @@ has not been traced yet. Do not assume the fix is adding `"US"` to a list until 
 All inherit the same hole or carry no city name at all:
 
 - **`postal-city-alias-us.db`** — models exactly this concept (`postal_city_alias(postcode,
-postal_city, geo_locality, divergent)`) but is built `FROM overture:US`, so it inherits the hole.
+  postal_city, geo_locality, divergent)`) but is built `FROM overture:US`, so it inherits the hole.
   12,088 postcodes, 300 NY-shaped, zero NYC. Its only Brooklyn rows are **IA 52211, CT 06234, MD
   21225, OH 44144, IL 62059**. A GeoNames rebuild is the natural follow-on.
 - **`postalcode-us.db`** — 42,319 postalcode nodes; 11201 / 10001 / 10451 all present, but the

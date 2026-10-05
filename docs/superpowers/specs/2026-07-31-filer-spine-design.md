@@ -287,8 +287,8 @@ easier alternative to the fixed-width archives. It is easier to use, but we veri
 1. **It covers one state instead of the whole country.** `asr_asr_OR` returns **351 features**, while the national register
    holds well over a hundred thousand structures. The sample shows Oregon-area geometry.
 2. **It has no FRN field.** All 29 fields are: `OBJECTID, RegNum, UniqSysID, Entity, ContAdd, ContPO,
-ContCity, ContState, ContZip, ContName, LatDeg…LonDir, CoordsType, StatusCode, LocAdd, LocCity,
-LocState, Strucht, FAAstudy, FAAcirc, latdec, londec, url`. Owner appears only as `Entity`, a name
+   ContCity, ContState, ContZip, ContName, LatDeg…LonDir, CoordsType, StatusCode, LocAdd, LocCity,
+   LocState, Strucht, FAAstudy, FAAcirc, latdec, londec, url`. Owner appears only as `Entity`, a name
    string. **A structure joined to a filer by name rather than FRN produces exactly the false identity links
    that 3a's identifier veto exists to prevent** ("American Broadband LLC" vs "American Broadband,
    Inc."). The FRN is the whole reason ASR matters to this project, so the convenient source is the

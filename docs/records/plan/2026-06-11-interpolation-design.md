@@ -125,7 +125,7 @@ Given `{ street, number, postcode? }`:
    length to the point at fraction `t`. A descending range needs no special case: `t` is
    computed against the raw from/to, which already encodes direction.
 6. **Answer:** `{ lat, lon, interpolated: true, parityMatched, uncertaintyM, source,
-release }` where `uncertaintyM` is half the segment's polyline length in meters.
+   release }` where `uncertaintyM` is half the segment's polyline length in meters.
 
 This increment applies no side-of-street offset. It reports the TIGER centerline point with
 half-segment uncertainty. A perpendicular offset of ~10 m to the matched side is a cheap

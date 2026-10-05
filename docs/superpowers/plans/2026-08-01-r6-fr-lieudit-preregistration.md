@@ -17,7 +17,7 @@ a mistake. The reasons are worth stating, because the US instance made the oppos
   quartier is a cartographic subdivision rather than an address line.
 - The line that does appear is the **lieu-dit**, a named hamlet or place within a commune. It is
   written on its own line between the street and the commune, as in `261 Impasse des Pinsons /
-Pinsonnac / 12210 Montpeyroux`.
+  Pinsonnac / 12210 Montpeyroux`.
 
 The FR source is therefore BAN's `nom_ld` field (DINUM/IGN, Licence Ouverte 2.0) rather than WOF.
 The mechanism is the same, and the source is chosen by what the postal format carries. WOF

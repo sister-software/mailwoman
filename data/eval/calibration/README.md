@@ -37,6 +37,7 @@ The table is OPT-IN. The default decode path is byte-stable. Build a calibrator 
 
 ```ts
 import { createCalibrator } from "@mailwoman/core/decoder"
+
 import table from "../data/eval/calibration/isotonic-en-us-v4.0.0.json" assert { type: "json" }
 
 const calibrate = createCalibrator(table)

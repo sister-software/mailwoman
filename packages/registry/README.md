@@ -47,7 +47,6 @@ import { inferMapping, ingestRows, normalizeCSV, parseCSV } from "@mailwoman/reg
 // parseCSV(text): Record<string, string>[]
 // inferMapping(header): ColumnMapping
 // normalizeCSV(path, { mapping, delimiter? }): AsyncGenerator<SourceRecord>  — streams, does NOT geocode
-
 // Resolve — run the full matcher pipeline
 import { resolveEntities } from "@mailwoman/registry"
 // resolveEntities(records, config?): ResolveResult
@@ -55,10 +54,8 @@ import { resolveEntities } from "@mailwoman/registry"
 //   config: { model?, blockingKeys?, threshold?, maxBlockSize?, trainEM?, addressFrequency?,
 //             collapseSpatial?, requireCorroboration?, usePhone?, linkage?, discriminators?,
 //             exactDiscriminators?, scorer?, learnedScorer? }
-
 // Export — GeoJSON, MapLibre HTML, reconciliation reports
 import { reconcile, toGeoJSON, toMapHTML } from "@mailwoman/registry"
-
 // Learned scorer — pre-trained GBT for single-dataset dedup, default-on
 import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "@mailwoman/registry"
 ```

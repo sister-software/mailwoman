@@ -166,6 +166,7 @@ You can also build the index programmatically via the package's `./fts` subpath:
 
 ```ts
 import { DatabaseSync } from "node:sqlite"
+
 import { buildPlaceSearchFts } from "@mailwoman/resolver-wof-sqlite/fts"
 
 using db = new DatabaseSync("/path/to/wof.db")
