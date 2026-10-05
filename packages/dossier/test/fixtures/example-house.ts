@@ -5,7 +5,8 @@
  *
  *   The fictional Example House, Example Annex and Example Parcel that every scenario in the spec uses.
  *   Dates are chosen so that an `asOf` of 2022-06-30 admits the permit and the first inspection and
- *   excludes the later manager statement.
+ *   excludes the later manager statement. The permit states the parcel's lot number and each building's
+ *   identification number, so each identifier cites the permit.
  *
  *   The cable check on Example House fails at a source-present empty reading, and the operator's log
  *   records one investigation of it with its outcome.
@@ -86,10 +87,30 @@ export const SOURCES: SourceRecord[] = [
 	},
 ]
 
+/**
+ * The permit's statement of an identifier.
+ */
+const permitEvidence = { source: "permit-2021", observedAt: "2021-05-10" }
+
 export const ENTITIES: Entity[] = [
-	{ id: PARCEL, kind: "parcel", externalIDs: [{ namespace: "example:lot", value: "12-34" }], label: "Example Parcel" },
-	{ id: HOUSE, kind: "building", externalIDs: [{ namespace: "example:bin", value: "1001" }], label: "Example House" },
-	{ id: ANNEX, kind: "building", externalIDs: [{ namespace: "example:bin", value: "1002" }], label: "Example Annex" },
+	{
+		id: PARCEL,
+		kind: "parcel",
+		externalIDs: [{ namespace: "example:lot", value: "12-34", evidence: permitEvidence }],
+		label: "Example Parcel",
+	},
+	{
+		id: HOUSE,
+		kind: "building",
+		externalIDs: [{ namespace: "example:bin", value: "1001", evidence: permitEvidence }],
+		label: "Example House",
+	},
+	{
+		id: ANNEX,
+		kind: "building",
+		externalIDs: [{ namespace: "example:bin", value: "1002", evidence: permitEvidence }],
+		label: "Example Annex",
+	},
 	{ id: NORTH, kind: "entrance", externalIDs: [], label: "North entrance" },
 	{ id: SOUTH, kind: "entrance", externalIDs: [], label: "South entrance" },
 ]
@@ -438,6 +459,19 @@ export const EXAMPLE_RECORDS: DossierRecords = {
 	positions: [HOUSE_POSITION, ANNEX_PERMIT_POSITION, ANNEX_SURVEY_POSITION],
 	checks: [CABLE_CHECK],
 	dispositions: [ACCESS_DISPOSITION],
+}
+
+/**
+ * The example records with each external identifier stripped of its evidence.
+ *
+ * The tests of an identifier whose source is unstated read these records.
+ */
+export const UNSTATED_IDENTIFIER_RECORDS: DossierRecords = {
+	...EXAMPLE_RECORDS,
+	entities: ENTITIES.map((entity) => ({
+		...entity,
+		externalIDs: entity.externalIDs.map(({ namespace, value }) => ({ namespace, value })),
+	})),
 }
 
 export const EMPTY_RECORDS: DossierRecords = {

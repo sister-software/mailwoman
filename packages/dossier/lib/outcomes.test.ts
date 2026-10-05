@@ -31,6 +31,7 @@ describe("reportOutcomes", () => {
 		expect(reportOutcomes([])).toEqual({
 			dispositions: 0,
 			pending: 0,
+			pendingSources: [],
 			blockerAccuracy: { status: "unknown", reason: "no disposition records an outcome" },
 			timeSaved: {
 				status: "unknown",
@@ -39,10 +40,13 @@ describe("reportOutcomes", () => {
 		})
 	})
 
-	test("dispositions that await an outcome are counted and leave both measures unknown", () => {
-		expect(reportOutcomes([disposition("d1"), disposition("d2")])).toMatchObject({
+	test("dispositions that await an outcome are counted with their records and leave both measures unknown", () => {
+		expect(
+			reportOutcomes([disposition("d1"), { ...disposition("d2"), evidence: { source: "operator-log-2" } }])
+		).toMatchObject({
 			dispositions: 2,
 			pending: 2,
+			pendingSources: ["operator-log", "operator-log-2"],
 			blockerAccuracy: { status: "unknown" },
 			timeSaved: { status: "unknown" },
 		})
@@ -105,7 +109,7 @@ describe("outcomeStatements", () => {
 				text: "Against the operator's baselines, the investigations saved 60 minutes over 1 outcome that records both times.",
 				sources: ["outcome-d1"],
 			},
-			{ kind: "fact", text: "1 of 3 dispositions awaits an outcome.", sources: [] },
+			{ kind: "fact", text: "1 of 3 dispositions awaits an outcome.", sources: ["operator-log"] },
 		])
 	})
 
@@ -119,17 +123,19 @@ describe("outcomeStatements", () => {
 		})
 	})
 
-	test("with zero outcomes, each unknown measure is a deduction that names the missing record", () => {
+	test("with zero outcomes, each unknown measure is a deduction that states the missing record as an absence", () => {
 		expect(outcomeStatements(reportOutcomes([]))).toEqual([
 			{
 				kind: "deduction",
 				text: "Blocker accuracy is unknown because no disposition records an outcome.",
 				sources: [],
+				absence: true,
 			},
 			{
 				kind: "deduction",
 				text: "Time saved is unknown because no outcome records both the minutes spent and the operator's baseline.",
 				sources: [],
+				absence: true,
 			},
 		])
 	})

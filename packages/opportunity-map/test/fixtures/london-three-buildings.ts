@@ -13,7 +13,8 @@
  *     permission, start and completion dates, and proposed residential units. A building's position is
  *     the row's grid reference converted with `osgb36ToWGS84`, so it locates the planning site's
  *     reference point. The row states the site's planning authority and postcode, and those are the
- *     building's two memberships.
+ *     building's two memberships. The row's planning authority and borough reference are the building's
+ *     identifier, and the row is its evidence.
  *   - Referred planning applications since 2011 (Greater London Authority, London Datastore `2w1xz`):
  *     the Stage 2 total units of 28-30 Addiscombe Grove and of 130-154, 154a Pentonville Road. The file
  *     holds no row for 112-132 Cricklewood Lane.
@@ -603,7 +604,13 @@ function siteEntity(site: LondonSite): Entity {
 	return {
 		id: site.building,
 		kind: "building",
-		externalIDs: [{ namespace: `${site.authority.toLowerCase()}:planning-application`, value: site.reference }],
+		externalIDs: [
+			{
+				namespace: `${site.authority.toLowerCase()}:planning-application`,
+				value: site.reference,
+				evidence: { source: site.ldd },
+			},
+		],
 		label: site.label,
 	}
 }
