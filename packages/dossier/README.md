@@ -20,9 +20,10 @@ House, Example Annex and Example Parcel — are `test/fixtures/example-house.ts`
 ## The Example House report
 
 The report below is the verbatim output of `renderReport(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }))`
-over the fixture records. Until [#2289](https://github.com/sister-software/mailwoman/issues/2289) adds a
-spatial key, the dossier associates every layer reading with every building, which is why the Annex shows
-the same three readings as the House.
+over the fixture records. A layer reading with a `subject` attaches to that building and to no other. A
+reading without a `subject` attaches to every building until
+[#2289](https://github.com/sister-software/mailwoman/issues/2289) adds a spatial key. The fixture's readings
+carry no `subject`, which is why the Annex shows the same three readings as the House.
 
 ```markdown
 # Building dossier as of 2022-06-30

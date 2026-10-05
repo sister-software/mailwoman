@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Validation of supplied records before a dossier is built. An error is a record the dossier cannot use
- *   (a dangling reference, a duplicate id, a malformed date). A warning is a record the dossier will use
- *   with a stated limit (a missing availability date, a missing event date, unknown signing authority).
+ *   (a dangling reference, a duplicate id, a malformed date, a reading whose subject is not a building).
+ *   A warning is a record the dossier will use with a stated limit (a missing availability date, a
+ *   missing event date, unknown signing authority).
  */
 
 import type { ProviderAvailability } from "#availability"
@@ -15,6 +16,7 @@ import type { LayerReading } from "#coverage"
 import type { Entity } from "#entities"
 import type { CommercialEvent, ConstructionWindow, OrganizationRelation } from "#events"
 import type { FilingRow } from "#filings"
+import type { EntityKind } from "#identifiers"
 import type { Alias, Containment } from "#links"
 import type { SourceRecord } from "#sources"
 import { isISODate } from "#time"
@@ -44,7 +46,7 @@ export interface ValidationIssue {
 export function validateRecords(records: DossierRecords): readonly ValidationIssue[] {
 	const issues: ValidationIssue[] = []
 	const sources = new Set<string>()
-	const entities = new Set<string>()
+	const entities = new Map<string, EntityKind>()
 
 	for (const source of records.sources) {
 		if (sources.has(source.id)) {
@@ -93,7 +95,7 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 			})
 		}
 
-		entities.add(entity.id)
+		entities.set(entity.id, entity.kind)
 	}
 
 	const checkSource = (ref: string, source: string) => {
@@ -196,7 +198,27 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 		checkDate(`availability ${index}`, "to", record.to)
 	})
 
-	records.readings.forEach((reading, index) => checkSource(`reading ${index}`, reading.evidence.source))
+	records.readings.forEach((reading, index) => {
+		const ref = `reading ${index}`
+
+		checkSource(ref, reading.evidence.source)
+
+		if (reading.subject === undefined) return
+
+		const kind = entities.get(reading.subject)
+
+		if (kind === undefined) {
+			checkEntity(ref, reading.subject)
+		} else if (kind !== "building") {
+			issues.push({
+				severity: "error",
+				code: "subject_not_building",
+				message: `${ref} has subject ${reading.subject}, a ${kind}. A reading's subject must be a building`,
+				ref,
+			})
+		}
+	})
+
 	records.filings.forEach((row, index) => checkSource(`filing ${index}`, row.evidence.source))
 
 	return issues

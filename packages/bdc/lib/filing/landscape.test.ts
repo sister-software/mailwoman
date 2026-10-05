@@ -37,7 +37,7 @@ import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
-import { latLngToCell } from "h3-js"
+import { cellToParent, latLngToCell } from "h3-js"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -46,11 +46,13 @@ import {
 	BDC_SPEED_BUCKET_25_100,
 	BDC_SPEED_BUCKET_GIGABIT,
 	BDC_SPEED_BUCKET_UNDER_25,
+	blockCentroidCells,
 	filingLandscape,
+	geoidCellResolver,
 	res9ShortCellToRes6Parent,
 	speedBucketForDownloadSpeed,
 } from "#filing/landscape"
-import { BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
+import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
 import { buildBDCDatabase } from "#sdk/build-bdc"
 import type { BDCAvailabilityRow } from "#sdk/parsing"
 
@@ -68,6 +70,11 @@ const GEOID_NY = "360610001001001"
 const GEOID_DIVERGENT = "510090101001001"
 // Never passed to `buildBDCDatabase` — criterion 2's "absent from the fixture" block.
 const GEOID_UNKNOWN = "999999999999999"
+// The builder never receives this block either.
+// A resolver places it in SF's covered res-6 cell, where it reads as surveyed with zero filings.
+const GEOID_ZERO_ROW = "060750001009999"
+// One block, one provider, one technology, two advertised speed tiers.
+const GEOID_TWO_TIER = "360610001009999"
 
 const CENTROID_SF = { lat: 37.7749, lon: -122.4194 }
 const CENTROID_NY = { lat: 40.7128, lon: -74.006 }
@@ -80,11 +87,22 @@ const CENTROIDS: Record<string, { lat: number; lon: number }> = {
 	[GEOID_SF]: CENTROID_SF,
 	[GEOID_NY]: CENTROID_NY,
 	[GEOID_DIVERGENT]: CENTROID_DIVERGENT,
+	// A different res-9 cell from NY's but the same res-6 parent
+	// (verified by the two-tier test's premise assertions), so the h3Cells equivalence
+	// test's NY cell never picks up these rows.
+	[GEOID_TWO_TIER]: { lat: 40.7178, lon: -74.006 },
 }
 
 function blockCentroids(geoid: string): { lat: number; lon: number } | undefined {
 	return CENTROIDS[geoid]
 }
+
+/**
+ * A resolver over a centroid source that places GEOID_ZERO_ROW at SF's centroid,
+ * inside SF's covered res-6 cell.
+ * Every other GEOID stays unplaced.
+ */
+const resolveGeoidCell = geoidCellResolver((geoid) => (geoid === GEOID_ZERO_ROW ? CENTROID_SF : undefined))
 
 const PROVIDER_A = 130_077
 const PROVIDER_B = 130_080
@@ -147,6 +165,27 @@ function fixtureRows(): BDCAvailabilityRow[] {
 			location_id: "DIVERGENT-A",
 			max_advertised_download_speed: 500,
 			max_advertised_upload_speed: 500,
+			low_latency: 1,
+			business_residential_code: "R",
+		},
+		// Two tiers from one provider at one technology on one block.
+		{
+			geoid: GEOID_TWO_TIER,
+			provider_id: PROVIDER_A,
+			technology_code: 50,
+			location_id: "TT-A-25",
+			max_advertised_download_speed: 25,
+			max_advertised_upload_speed: 3,
+			low_latency: 1,
+			business_residential_code: "R",
+		},
+		{
+			geoid: GEOID_TWO_TIER,
+			provider_id: PROVIDER_A,
+			technology_code: 50,
+			location_id: "TT-A-1000",
+			max_advertised_download_speed: 1000,
+			max_advertised_upload_speed: 1000,
 			low_latency: 1,
 			business_residential_code: "R",
 		},
@@ -296,6 +335,64 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 	})
 })
 
+describe("filingLandscape — a zero-row GEOID that a resolver places in a covered cell is surveyed-empty", () => {
+	it("with resolveGeoidCell, a covered block with no rows is surveyed with zero filings, not unknown", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_ZERO_ROW], resolveGeoidCell })
+
+		expect(result.surveyed_block_count).toBe(1)
+		expect(result.unknown_block_count).toBe(0)
+		// Surveyed-empty, stated as zero filings rather than folded into a claim:
+		expect(result.filings).toEqual([])
+	})
+
+	it("without a resolver, the same block keeps the documented safe result: unknown", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_ZERO_ROW] })
+
+		expect(result.surveyed_block_count).toBe(0)
+		expect(result.unknown_block_count).toBe(1)
+	})
+
+	it("a resolver that cannot place the geoid leaves it unknown", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_UNKNOWN], resolveGeoidCell })
+
+		expect(result.surveyed_block_count).toBe(0)
+		expect(result.unknown_block_count).toBe(1)
+	})
+})
+
+describe("filingLandscape — every advertised speed tier on one block stays its own row", () => {
+	// A collapse to the maximum tier would drop the slower tier the provider also
+	// files (25/3 beside gigabit here).
+	// The per-tier corroboration in `plausibilityCheck` would then have no row for a mid-tier claim.
+	it("keeps one summary row per speed bucket for one block, provider and technology", async () => {
+		using db = openFixture()
+
+		// Premise: the two-tier block's centroid sits in its own res-9 cell inside NY's res-6
+		// parent, so the h3Cells equivalence test over NY's cell never reads these rows.
+		const twoTierCell = shortCellToInt(latLngToCell(40.7178, -74.006, BDC_H3_RESOLUTION) as H3Cell)
+		const nyCell = shortCellToInt(latLngToCell(CENTROID_NY.lat, CENTROID_NY.lon, BDC_H3_RESOLUTION) as H3Cell)
+
+		expect(twoTierCell).not.toBe(nyCell)
+		expect(res9ShortCellToRes6Parent(twoTierCell)).toBe(res9ShortCellToRes6Parent(nyCell))
+
+		const result = await filingLandscape(db, { geoids: [GEOID_TWO_TIER] })
+
+		expect(result.surveyed_block_count).toBe(1)
+		expect(result.unknown_block_count).toBe(0)
+
+		expect(result.filings).toEqual([
+			{ provider_id: PROVIDER_A, technology_code: 50, speed_bucket: BDC_SPEED_BUCKET_25_100, block_count: 1 },
+			{ provider_id: PROVIDER_A, technology_code: 50, speed_bucket: BDC_SPEED_BUCKET_GIGABIT, block_count: 1 },
+		])
+	})
+})
+
 describe("filingLandscape — builder/reader coverage-cell unification", () => {
 	it("agrees with the builder's coverage cell even at a point where the two derivations used to disagree", async () => {
 		using db = openFixture()
@@ -329,6 +426,104 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		expect(result.filings).toEqual([
 			{ provider_id: PROVIDER_A, technology_code: 30, speed_bucket: BDC_SPEED_BUCKET_100_1000, block_count: 1 },
 		])
+	})
+})
+
+describe("blockCentroidCells", () => {
+	it("returns the res-9 cell the builder stored for each fixture block and that cell's covered res-6 parent", async () => {
+		using db = openFixture()
+
+		for (const [geoid, centroid] of Object.entries(CENTROIDS)) {
+			const row = await db
+				.selectFrom("bdc_availability")
+				.select("h3_cell")
+				.where("geoid", "=", geoid)
+				.executeTakeFirstOrThrow()
+
+			const cells = blockCentroidCells(centroid)
+
+			expect(cells.h3Cell).toBe(row.h3_cell)
+			expect(cells.coverageCell).toBe(res9ShortCellToRes6Parent(row.h3_cell))
+			expect(await readLayerCoverage(db, cells.coverageCell)).toBeDefined()
+		}
+	})
+
+	it("takes the coverage cell as the full res-9 cell's parent over a grid of points and at the divergent point", () => {
+		const points = [CENTROID_DIVERGENT]
+
+		for (let lat = -60; lat <= 70; lat += 13) {
+			for (let lon = -180; lon < 180; lon += 35) {
+				points.push({ lat, lon })
+			}
+		}
+
+		for (const point of points) {
+			const fullRes9Cell = latLngToCell(point.lat, point.lon, BDC_H3_RESOLUTION)
+
+			expect(blockCentroidCells(point)).toEqual({
+				h3Cell: shortCellToInt(fullRes9Cell as H3Cell),
+				coverageCell: shortCellToInt(cellToParent(fullRes9Cell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell),
+			})
+		}
+
+		const directRes6 = latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, BDC_COVERAGE_H3_RESOLUTION)
+
+		expect(blockCentroidCells(CENTROID_DIVERGENT).coverageCell).not.toBe(shortCellToInt(directRes6 as H3Cell))
+	})
+})
+
+describe("geoidCellResolver", () => {
+	it("resolves a GEOID to its centroid's res-9 cell and leaves a GEOID the lookup cannot place unresolved", () => {
+		const resolve = geoidCellResolver(blockCentroids)
+
+		expect(resolve(GEOID_NY)).toBe(blockCentroidCells(CENTROID_NY).h3Cell)
+		expect(resolve(GEOID_UNKNOWN)).toBeUndefined()
+	})
+})
+
+describe("filingLandscape — the coverage basis", () => {
+	it("returns the basis the surveyed blocks' coverage rows store", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY] })
+
+		expect(result.coverage_basis).toBe("source_present")
+	})
+
+	it("returns null when no queried block is surveyed", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_UNKNOWN] })
+
+		expect(result.surveyed_block_count).toBe(0)
+		expect(result.coverage_basis).toBeNull()
+	})
+
+	it("reads the basis from the row, and refuses one summary over rows with two bases", async () => {
+		await using basisScratch = await temporaryDirectory("bdc-filing-landscape-basis-")
+		const basisOut = basisScratch.path("bdc.db")
+
+		await buildBDCDatabase({
+			rows: fixtureRows(),
+			out: basisOut,
+			asOfDate: ASOF_DATE,
+			buildSHA: "deadbeef",
+			blockCentroids,
+		})
+
+		await changeMode(basisOut, 0o644)
+
+		using writable = await openBuiltClient<BDCDatabase>(basisOut, { write: true })
+
+		await writable
+			.updateTable("layer_coverage")
+			.set({ basis: "surveyed" })
+			.where("h3_cell", "=", blockCentroidCells(CENTROID_NY).coverageCell)
+			.execute()
+
+		expect((await filingLandscape(writable, { geoids: [GEOID_NY] })).coverage_basis).toBe("surveyed")
+		expect((await filingLandscape(writable, { geoids: [GEOID_SF] })).coverage_basis).toBe("source_present")
+		await expect(filingLandscape(writable, { geoids: [GEOID_SF, GEOID_NY] })).rejects.toThrow(/2 bases/)
 	})
 })
 

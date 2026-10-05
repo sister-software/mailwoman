@@ -13,6 +13,7 @@
 		{ "path": "../sqlite" },
 		// ---
 		{ "path": "../core" },
+		{ "path": "../dossier" },
 		{ "path": "../spatial" }
 	]
 }

@@ -6046,6 +6046,7 @@ __metadata:
   resolution: "@mailwoman/bdc@workspace:packages/bdc"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/dossier": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/filer": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
@@ -6226,7 +6227,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/dossier@workspace:packages/dossier":
+"@mailwoman/dossier@workspace:*, @mailwoman/dossier@workspace:packages/dossier":
   version: 0.0.0-use.local
   resolution: "@mailwoman/dossier@workspace:packages/dossier"
   dependencies:
@@ -6316,6 +6317,7 @@ __metadata:
   resolution: "@mailwoman/flood@workspace:packages/flood"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/dossier": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
