@@ -6660,6 +6660,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/ofcom@workspace:packages/ofcom":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/ofcom@workspace:packages/ofcom"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    path-ts: "npm:^2.5.0"
+    spliterator: "npm:^8.1.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/osm@workspace:*, @mailwoman/osm@workspace:packages/osm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/osm@workspace:packages/osm"
