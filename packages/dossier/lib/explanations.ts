@@ -23,7 +23,7 @@ import { type CommercialEvent, CommercialEventKind, type ConstructionWindow, typ
 import type { EntityID } from "#identifiers"
 import type { AliasResolution, Evidence } from "#links"
 import { type ExtentMembership, readingBuildings } from "#placement"
-import type { SourceRecordID } from "#sources"
+import { distinctSources, type SourceRecordID } from "#sources"
 import { compareISODate, type ISODate } from "#time"
 
 /**
@@ -364,7 +364,7 @@ export interface ExplanationInput {
 }
 
 function statement(kind: StatementKind, text: string, sources: readonly SourceRecordID[] = []): Statement {
-	return { kind, text, sources: [...new Set(sources)] }
+	return { kind, text, sources: distinctSources(sources) }
 }
 
 /**
@@ -861,7 +861,7 @@ export function rankExplanations(
 			documented.push({
 				explanation: kind,
 				probability: values[0]!,
-				sources: [...new Set(entries.map((entry) => entry.evidence.source))],
+				sources: distinctSources(entries.map((entry) => entry.evidence.source)),
 			})
 		} else {
 			undocumented.push(kind)

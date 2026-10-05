@@ -69,13 +69,6 @@ export function buildingLabels(dossier: Dossier): ReadonlyMap<EntityID, string> 
 }
 
 /**
- * Returns `text` as a regular-expression source that matches the text literally.
- */
-export function literalPattern(text: string): string {
-	return text.replaceAll(/[.*+?^${}()|[\]\\]/gu, "\\$&")
-}
-
-/**
  * The words of a building state: its wire value with spaces for underscores.
  */
 export function stateWords(state: BuildingState): string {

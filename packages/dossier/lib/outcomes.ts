@@ -10,7 +10,7 @@
  */
 
 import { type OperatorDisposition, type Statement, StatementKind } from "#explanations"
-import type { SourceRecordID } from "#sources"
+import { distinctSources, type SourceRecordID } from "#sources"
 
 export type BlockerAccuracy =
 	| { status: "measured"; held: number; denominator: number; sources: readonly SourceRecordID[] }
@@ -50,15 +50,15 @@ export function reportOutcomes(dispositions: readonly OperatorDisposition[]): Ou
 	return {
 		dispositions: dispositions.length,
 		pending: dispositions.length - outcomes.length,
-		pendingSources: [
-			...new Set(dispositions.flatMap((disposition) => (disposition.outcome ? [] : [disposition.evidence.source]))),
-		],
+		pendingSources: distinctSources(
+			dispositions.flatMap((disposition) => (disposition.outcome ? [] : [disposition.evidence.source]))
+		),
 		blockerAccuracy: outcomes.length
 			? {
 					status: "measured",
 					held: outcomes.filter((outcome) => outcome.held).length,
 					denominator: outcomes.length,
-					sources: [...new Set(outcomes.map((outcome) => outcome.evidence.source))],
+					sources: distinctSources(outcomes.map((outcome) => outcome.evidence.source)),
 				}
 			: { status: "unknown", reason: "no disposition records an outcome" },
 		timeSaved: timed.length
@@ -66,7 +66,7 @@ export function reportOutcomes(dispositions: readonly OperatorDisposition[]): Ou
 					status: "measured",
 					minutes: timed.reduce((sum, entry) => sum + entry.saved, 0),
 					denominator: timed.length,
-					sources: [...new Set(timed.map((entry) => entry.source))],
+					sources: distinctSources(timed.map((entry) => entry.source)),
 				}
 			: { status: "unknown", reason: "no outcome records both the minutes spent and the operator's baseline" },
 	}

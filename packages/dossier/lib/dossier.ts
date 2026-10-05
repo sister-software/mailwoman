@@ -285,7 +285,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 			extent: group.extent,
 			surveyedAt: group.surveyedAt,
 			class: group.class,
-			sources: [...new Set(group.readings.map((reading) => reading.evidence.source))],
+			sources: distinctSources(group.readings.map((reading) => reading.evidence.source)),
 		})),
 	}
 }
