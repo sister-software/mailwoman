@@ -9,6 +9,11 @@
  *
  *   The cable check on Example House fails at a source-present empty reading, and the operator's log
  *   records one investigation of it with its outcome.
+ *
+ *   The survey places Example House in cell-1, and the permit places both buildings in district-1. No
+ *   record places a building in cell-3, so the survey's cable reading there attaches to no building. Every
+ *   position is synthetic: its coordinates lie in the open South Atlantic, where no building stands. The
+ *   permit and the survey state two different positions for Example Annex.
  */
 
 import type { ProviderAvailability } from "#availability"
@@ -27,6 +32,7 @@ import { type AvailabilityCheck, ExplanationKind, type OperatorDisposition } fro
 import type { FilingRow } from "#filings"
 import { entityID } from "#identifiers"
 import { type Alias, type Containment, ContainmentRelation } from "#links"
+import type { BuildingPosition, ExtentMembership } from "#placement"
 import type { SourceRecord } from "#sources"
 import type { DossierRecords } from "#validate"
 
@@ -324,6 +330,19 @@ const CABLE_DISTRICT_READING: LayerReading = {
 	evidence: surveyEvidence,
 }
 
+/**
+ * Cable records over cell-3 on the same survey.
+ * No membership places a building in cell-3.
+ */
+const CABLE_CELL3_READING: LayerReading = {
+	layer: "cable",
+	extent: "cell-3",
+	basis: "source_present",
+	surveyedAt: "2022-03-15",
+	records: 2,
+	evidence: surveyEvidence,
+}
+
 const READINGS: LayerReading[] = [
 	MISSING_READING,
 	SURVEYED_EMPTY_READING,
@@ -331,7 +350,38 @@ const READINGS: LayerReading[] = [
 	POSITIVE_READING,
 	CABLE_EMPTY_READING,
 	CABLE_DISTRICT_READING,
+	CABLE_CELL3_READING,
 ]
+
+const MEMBERSHIPS: ExtentMembership[] = [
+	{ subject: HOUSE, extent: "cell-1", evidence: { source: "survey-2022", observedAt: "2022-03-15" } },
+	{ subject: HOUSE, extent: "district-1", evidence: { source: "permit-2021" } },
+	{ subject: ANNEX, extent: "district-1", evidence: { source: "permit-2021" } },
+]
+
+export const HOUSE_POSITION: BuildingPosition = {
+	subject: HOUSE,
+	latitude: -30.00012,
+	longitude: -20.00034,
+	synthetic: true,
+	evidence: { source: "survey-2022", observedAt: "2022-03-15" },
+}
+
+export const ANNEX_PERMIT_POSITION: BuildingPosition = {
+	subject: ANNEX,
+	latitude: -30.00021,
+	longitude: -20.00032,
+	synthetic: true,
+	evidence: { source: "permit-2021" },
+}
+
+export const ANNEX_SURVEY_POSITION: BuildingPosition = {
+	subject: ANNEX,
+	latitude: -30.00025,
+	longitude: -20.00041,
+	synthetic: true,
+	evidence: { source: "survey-2022", observedAt: "2022-03-15" },
+}
 
 /**
  * Whether the cable layer's source holds service at cell-1, where it keys Example House.
@@ -384,6 +434,8 @@ export const EXAMPLE_RECORDS: DossierRecords = {
 	availability: AVAILABILITY,
 	readings: READINGS,
 	filings: FILING_ROWS,
+	memberships: MEMBERSHIPS,
+	positions: [HOUSE_POSITION, ANNEX_PERMIT_POSITION, ANNEX_SURVEY_POSITION],
 	checks: [CABLE_CHECK],
 	dispositions: [ACCESS_DISPOSITION],
 }

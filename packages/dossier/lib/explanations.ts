@@ -22,6 +22,7 @@ import type { Building } from "#entities"
 import { type CommercialEvent, CommercialEventKind, type ConstructionWindow, type OrganizationRelation } from "#events"
 import type { EntityID } from "#identifiers"
 import type { AliasResolution, Evidence } from "#links"
+import { type ExtentMembership, readingBuildings } from "#placement"
 import type { SourceRecordID } from "#sources"
 import { compareISODate, type ISODate } from "#time"
 
@@ -92,8 +93,8 @@ export interface AvailabilityCheck {
 	/**
 	 * The extent at which the layer's source keys its lookup, such as `census-block:<GEOID>`.
 	 *
-	 * The check reads every admitted reading of the layer at this extent,
-	 * whichever building the reading was supplied for.
+	 * The check reads every admitted reading of the layer at this extent, whichever building
+	 * the reading was supplied for and whether or not it attaches to a building.
 	 * The source answers for the extent, so a membership test keyed any more strictly
 	 * would report an absence the source never stated.
 	 */
@@ -340,6 +341,14 @@ export interface ExplanationInput {
 	blockers: readonly BlockerObservation[]
 	probabilities: readonly ExplanationProbability[]
 	dispositions: readonly OperatorDisposition[]
+	/**
+	 * The admitted memberships.
+	 *
+	 * A reading without a subject is a reading of the building only where one of
+	 * them places the building in the reading's extent.
+	 * Without them, such a reading attaches to no building.
+	 */
+	memberships?: readonly ExtentMembership[]
 }
 
 function statement(kind: StatementKind, text: string, sources: readonly SourceRecordID[] = []): Statement {
@@ -735,8 +744,10 @@ function installationFinding(context: RuleContext): Finding {
 
 /**
  * Route is supported by an established absence at the check's extent, or by records of
- * the check's layer at another extent of the building on the same survey.
+ * the check's layer on the same survey in a reading of the building at another extent.
  *
+ * A reading is the building's when its subject is the building, or when it has no subject
+ * and an admitted membership places the building in its extent.
  * A zero that supports no exclusion is never support: it is missing evidence.
  */
 function routeFinding(context: RuleContext): Finding {
@@ -746,7 +757,7 @@ function routeFinding(context: RuleContext): Finding {
 
 	const nearby = input.readings.filter(
 		(reading) =>
-			(reading.subject === undefined || reading.subject === building) &&
+			readingBuildings(reading, input.memberships ?? []).includes(building) &&
 			reading.layer === check.layer &&
 			reading.extent !== check.extent &&
 			(reading.records ?? 0) > 0 &&

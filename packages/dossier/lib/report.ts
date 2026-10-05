@@ -4,10 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   The report an operator reads. Every section states what the admitted records support and lists each
- *   unresolved question with the record that would resolve it. Wording rules: an unresolved total is
- *   written as unresolved with its conflicting values. A source-present empty reading is written as the
- *   source having looked, with absence unknown. In the serviceability section every statement line
- *   opens with its kind, so a fact, a deduction, an estimate, a hypothesis and a decision never read alike.
+ *   unresolved question with the record that would resolve it. Wording rules: an unresolved total or
+ *   position is written as unresolved with its conflicting values. A synthetic position is labeled
+ *   synthetic. A source-present empty reading is written as the source having looked, with absence
+ *   unknown. In the serviceability section every statement line opens with its kind, so a fact, a
+ *   deduction, an estimate, a hypothesis and a decision never read alike. A reading that attaches to no
+ *   building is listed once, after the building sections.
  */
 
 import type { UnitTotal } from "#counts"
@@ -21,6 +23,8 @@ import {
 	type Statement,
 } from "#explanations"
 import { outcomeStatements } from "#outcomes"
+import type { ExtentMembership, PositionAnswer } from "#placement"
+import type { SourceRecordID } from "#sources"
 
 /**
  * Joins words as English prose without a serial comma: `a, b and c`.
@@ -147,6 +151,37 @@ function totalLine(stage: string, total: UnitTotal): string {
 	return `- ${stage}: unresolved — ${total.reason}${values ? ` (${values})` : ""}`
 }
 
+function positionLine(position: PositionAnswer): string {
+	const synthetic = (flag: boolean) => (flag ? ", synthetic" : "")
+
+	if (position.status === "resolved") {
+		const sources = [...new Set(position.positions.map((entry) => entry.evidence.source))].join(", ")
+
+		return `Position: ${position.latitude}, ${position.longitude} (${sources})${synthetic(position.synthetic)}`
+	}
+
+	const values = position.conflicting
+		.map((entry) => `${entry.latitude}, ${entry.longitude} per ${entry.evidence.source}${synthetic(entry.synthetic)}`)
+		.join(". ")
+
+	return `Position: unresolved — ${position.reason}${values ? ` (${values})` : ""}`
+}
+
+/**
+ * Each extent with the records that place the building in it.
+ */
+function extentsLine(memberships: readonly ExtentMembership[]): string {
+	const sources = new Map<string, Set<SourceRecordID>>()
+
+	for (const membership of memberships) {
+		sources.set(membership.extent, (sources.get(membership.extent) ?? new Set()).add(membership.evidence.source))
+	}
+
+	const extents = [...sources].map(([extent, cited]) => `${extent} (${[...cited].join(", ")})`)
+
+	return `Extents: ${extents.join(", ") || "none"}`
+}
+
 function readingLine(reading: {
 	layer: string
 	extent: string
@@ -190,6 +225,8 @@ export function renderReport(dossier: Dossier): string {
 
 		lines.push(
 			`Entrances: ${section.entrances.length}. Aliases: ${section.aliases.map((alias) => `"${alias.text}" (${alias.resolution.kind})`).join(", ") || "none"}`,
+			positionLine(section.position),
+			extentsLine(section.memberships),
 			""
 		)
 
@@ -261,6 +298,26 @@ export function renderReport(dossier: Dossier): string {
 				lines.push(...checkLines(result, dossier.asOf))
 			}
 		}
+	}
+
+	lines.push("## Unplaced layer readings", "")
+
+	if (dossier.unplaced.length) {
+		lines.push(
+			"Neither a subject nor an admitted membership places these readings at a building, so no building's section shows them.",
+			""
+		)
+
+		for (const reading of dossier.unplaced) {
+			lines.push(
+				`${readingLine(reading)} (${reading.sources.join(", ")})`,
+				`  - would resolve: a record that places a building in ${reading.extent}`
+			)
+		}
+
+		lines.push("")
+	} else {
+		lines.push("Every admitted reading attaches to a building.", "")
 	}
 
 	if (dossier.buildings.some((section) => section.checks.length)) {

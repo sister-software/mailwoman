@@ -20,7 +20,8 @@
  *     total, 13 floors, year built 2022, owner of record International Baptist Church (the ground
  *     lessor. JEMB Realty is the development entity named as owner on the DOB filings).
  *   - NYC Planning Geosearch (PAD 26c), live lookup: address 11 Ocean Parkway ↔ BIN 3429422 ↔ BBL
- *     3053220010. A live service, so `availableAt` is the retrieval date.
+ *     3053220010, at the point [-73.97264, 40.65017] (longitude, latitude), which is the building's
+ *     position below. A live service, so `availableAt` is the retrieval date.
  *   - FCC Broadband Data Collection, through the National Broadband Map Public Data API
  *     (bdc.fcc.gov, credentialed). Three files, all NY state location coverage: cable as of
  *     2022-06-30 (file bdc_36_Cable_fixed_broadband_J22_10may2024) and fiber-to-the-premises as of
@@ -30,7 +31,13 @@
  *     date: a dossier built for mid-2022 cannot have known it. Rows are provider-filed claims, so a
  *     block with no row is `source_present` empty, never established absence. Readings are block- and
  *     tract-scoped because the location id was not joined to the Fabric on this pass. Provider
- *     availability below therefore reads at census-block granularity rather than per-premises.
+ *     availability below therefore reads at census-block granularity rather than per-premises. The
+ *     building is each reading's subject, as `bdcLayerReadings` in `@mailwoman/bdc` writes a reading
+ *     of a building's block.
+ *
+ *   PLUTO's `bctcb2020` (30504012000) and `bct2020` (3050401) place the tax lot in census block
+ *   360470504012000 and census tract 36047050401. They are the building's memberships, admitted from
+ *   PLUTO 26v2's availability date.
  *
  *   Claims in a dossier are scoped to record fields dated on or before the cutoff, so a row retrieved
  *   today does not leak its later statuses into an earlier `asOf`.
@@ -49,6 +56,7 @@ import type { OrganizationRelation, ConstructionWindow } from "#events"
 import type { AvailabilityCheck } from "#explanations"
 import { entityID } from "#identifiers"
 import { type Alias, type Containment, ContainmentRelation } from "#links"
+import type { BuildingPosition, ExtentMembership } from "#placement"
 import type { SourceRecord } from "#sources"
 import type { DossierRecords } from "#validate"
 
@@ -299,6 +307,7 @@ const OPP_READINGS: LayerReading[] = [
 	{
 		layer: "fcc-bdc-fttp",
 		extent: "census-block:360470504012000",
+		subject: OPP_BUILDING,
 		basis: "source_present",
 		surveyedAt: "2022-06-30",
 		records: 0,
@@ -307,6 +316,7 @@ const OPP_READINGS: LayerReading[] = [
 	{
 		layer: "fcc-bdc-fttp",
 		extent: "census-tract:36047050401",
+		subject: OPP_BUILDING,
 		basis: "source_present",
 		surveyedAt: "2022-06-30",
 		records: 70,
@@ -315,6 +325,7 @@ const OPP_READINGS: LayerReading[] = [
 	{
 		layer: "fcc-bdc-cable",
 		extent: "census-block:360470504012000",
+		subject: OPP_BUILDING,
 		basis: "source_present",
 		surveyedAt: "2022-06-30",
 		records: 2,
@@ -323,10 +334,26 @@ const OPP_READINGS: LayerReading[] = [
 	{
 		layer: "fcc-bdc-fttp",
 		extent: "census-block:360470504012000",
+		subject: OPP_BUILDING,
 		basis: "source_present",
 		surveyedAt: "2025-12-31",
 		records: 6,
 		evidence: { source: "fcc-bdc-fttp-d25" },
+	},
+]
+
+const OPP_MEMBERSHIPS: ExtentMembership[] = [
+	{ subject: OPP_BUILDING, extent: "census-block:360470504012000", evidence: { source: "pluto-26v2" } },
+	{ subject: OPP_BUILDING, extent: "census-tract:36047050401", evidence: { source: "pluto-26v2" } },
+]
+
+const OPP_POSITIONS: BuildingPosition[] = [
+	{
+		subject: OPP_BUILDING,
+		latitude: 40.65017,
+		longitude: -73.97264,
+		synthetic: false,
+		evidence: { source: "pad-geosearch-26c" },
 	},
 ]
 
@@ -367,5 +394,7 @@ export const OPP_RECORDS: DossierRecords = {
 	availability: OPP_AVAILABILITY,
 	readings: OPP_READINGS,
 	filings: [],
+	memberships: OPP_MEMBERSHIPS,
+	positions: OPP_POSITIONS,
 	checks: [OPP_FIBER_CHECK],
 }

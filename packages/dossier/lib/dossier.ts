@@ -5,15 +5,18 @@
  *
  *   The as-of projection. Records are admitted by their availability date, so a dossier for a 2022
  *   decision contains what a reader could have known in 2022. Each building section assembles the
- *   admitted identity, count, event, authority, window, availability and reading evidence, and lists each
- *   unresolved question beside the record that would resolve it. A building's availability checks are
- *   answered and explained from the same admitted records.
+ *   admitted identity, position, membership, count, event, authority, window, availability and reading
+ *   evidence, and lists each unresolved question beside the record that would resolve it. A building's
+ *   availability checks are answered and explained from the same admitted records.
+ *
+ *   A layer reading attaches by its subject, then by an admitted membership, and otherwise to no
+ *   building. The dossier lists a reading that neither rule places as unplaced, and no section shows it.
  */
 
 import { availabilityAt, type AvailabilityAnswer } from "#availability"
 import { type Claim, claimsFor } from "#claims"
 import { totalUnits, type UnitStage, type UnitTotal } from "#counts"
-import { classifyReadings, type LayerReadingClass } from "#coverage"
+import { classifyReadings, type LayerReading, type LayerReadingClass } from "#coverage"
 import type { Building } from "#entities"
 import {
 	type CommercialEvent,
@@ -33,6 +36,13 @@ import {
 import type { EntityID } from "#identifiers"
 import { type AliasResolution, type Containment, entrancesOf, resolveAlias } from "#links"
 import { type OutcomeReport, reportOutcomes } from "#outcomes"
+import {
+	type BuildingPosition,
+	type ExtentMembership,
+	positionOf,
+	type PositionAnswer,
+	readingBuildings,
+} from "#placement"
 import type { SourceRecordID } from "#sources"
 import { admitsAsOf, type ISODate } from "#time"
 import { type DossierRecords, validateRecords, type ValidationIssue } from "#validate"
@@ -64,6 +74,28 @@ export interface BuildingSection {
 	 * The building's availability checks, each answered and, when it fails, explained.
 	 */
 	checks: readonly CheckResult[]
+	/**
+	 * The admitted memberships that place the building in an extent.
+	 *
+	 * A reading without a subject attaches to the building through one of them.
+	 */
+	memberships: readonly ExtentMembership[]
+	/**
+	 * The building's location on the as-of date, from its admitted positions.
+	 */
+	position: PositionAnswer
+}
+
+/**
+ * Admitted readings of one layer, extent and survey date that neither a subject
+ * nor an admitted membership places at a building.
+ */
+export interface UnplacedReading {
+	layer: string
+	extent: string
+	surveyedAt?: ISODate
+	class: LayerReadingClass
+	sources: readonly SourceRecordID[]
 }
 
 export interface Dossier {
@@ -78,6 +110,47 @@ export interface Dossier {
 	 * Blocker accuracy and time saved over the admitted operator dispositions.
 	 */
 	outcomes: OutcomeReport
+	/**
+	 * The admitted readings that attach to no building.
+	 * No building's section shows them.
+	 */
+	unplaced: readonly UnplacedReading[]
+}
+
+interface ReadingGroup {
+	layer: string
+	extent: string
+	surveyedAt?: ISODate
+	class: LayerReadingClass
+	readings: readonly LayerReading[]
+}
+
+/**
+ * Groups readings by layer, extent and survey date, in the order of each group's
+ * first reading, and classifies each group.
+ */
+function readingGroups(readings: readonly LayerReading[]): ReadingGroup[] {
+	const groups = new Map<string, LayerReading[]>()
+
+	for (const reading of readings) {
+		// A vintage is part of a survey's identity.
+		// Two vintages of one layer and extent group separately.
+		const key = `${reading.layer}\u0001${reading.extent}\u0001${reading.surveyedAt ?? ""}`
+
+		groups.set(key, [...(groups.get(key) ?? []), reading])
+	}
+
+	return [...groups.values()].map((group) => {
+		const [first] = group
+
+		return {
+			layer: first!.layer,
+			extent: first!.extent,
+			surveyedAt: first!.surveyedAt,
+			class: classifyReadings(group).class,
+			readings: group,
+		}
+	})
 }
 
 const STAGES: readonly UnitStage[] = ["planned", "completed", "occupied"]
@@ -121,6 +194,8 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 	const aliases = records.aliases.map((alias) => ({ ...alias, candidates: admittedOnly(alias.candidates) }))
 	const blockers = admittedOnly(records.blockers ?? [])
 	const probabilities = admittedOnly(records.probabilities ?? [])
+	const memberships = admittedOnly(records.memberships ?? [])
+	const positions = admittedOnly(records.positions ?? [])
 
 	// A disposition and its outcome cite separate records, so a dossier dated between
 	// the two shows the decision with its outcome pending.
@@ -147,8 +222,12 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 			blockers,
 			probabilities,
 			dispositions,
+			memberships,
+			positions,
 		})
 	)
+
+	const unplaced = readingGroups(readings.filter((reading) => !readingBuildings(reading, memberships).length))
 
 	return {
 		asOf: options.asOf,
@@ -159,6 +238,13 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 		unresolved: sections.flatMap((section) => section.unresolved),
 		issues,
 		outcomes: reportOutcomes(dispositions),
+		unplaced: unplaced.map((group) => ({
+			layer: group.layer,
+			extent: group.extent,
+			surveyedAt: group.surveyedAt,
+			class: group.class,
+			sources: [...new Set(group.readings.map((reading) => reading.evidence.source))],
+		})),
 	}
 }
 
@@ -180,12 +266,15 @@ interface Admitted {
 	blockers: readonly BlockerObservation[]
 	probabilities: readonly ExplanationProbability[]
 	dispositions: readonly OperatorDisposition[]
+	memberships: readonly ExtentMembership[]
+	positions: readonly BuildingPosition[]
 }
 
 function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): BuildingSection {
 	const unresolved: Unresolved[] = []
 	const entrances = entrancesOf(building.id, admitted.containment)
 	const mine = new Set<EntityID>([building.id, ...entrances.map((link) => link.child)])
+	const position = positionOf(admitted.positions, { subject: building.id, asOf })
 
 	const aliases = admitted.aliases
 		.filter((alias) => alias.candidates.some((candidate) => mine.has(candidate.entity)))
@@ -203,6 +292,19 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 
 			return { text: alias.text, resolution }
 		})
+
+	if (position.status === "unresolved") {
+		unresolved.push({
+			question: `Where is ${building.label}?`,
+			subject: building.id,
+			candidates: position.conflicting.map(
+				(entry) => `${entry.latitude}, ${entry.longitude} (${entry.evidence.source})`
+			),
+			missingRecord: position.conflicting.length
+				? `a record that settles which of the ${position.conflicting.length} positions locates ${building.label}`
+				: `a dated position record for ${building.label}`,
+		})
+	}
 
 	const counts = Object.fromEntries(
 		STAGES.map((stage) => {
@@ -276,34 +378,23 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 		return { provider, product, answer }
 	})
 
-	const byLayer = new Map<string, DossierRecords["readings"]>()
+	// A reading with a subject attaches to that building and to no other.
+	// A reading without one attaches to each building that an admitted membership places in its extent.
+	const attached = admitted.readings.filter((reading) =>
+		readingBuildings(reading, admitted.memberships).includes(building.id)
+	)
 
-	for (const reading of admitted.readings) {
-		// A reading with a subject attaches to that building and to no other.
-		// A reading without a subject attaches to every building.
-		if (reading.subject !== undefined && reading.subject !== building.id) continue
-
-		// A vintage is part of a survey's identity.
-		// Two vintages of one layer and extent group separately.
-		const key = `${reading.layer}\u0001${reading.extent}\u0001${reading.surveyedAt ?? ""}`
-
-		byLayer.set(key, [...(byLayer.get(key) ?? []), reading])
-	}
-
-	const readings = [...byLayer.values()].map((group) => {
-		const classified = classifyReadings(group)
-		const [first] = group
-
-		if (classified.class !== "records" && classified.class !== "surveyed_empty") {
+	const readings = readingGroups(attached).map((group) => {
+		if (group.class !== "records" && group.class !== "surveyed_empty") {
 			unresolved.push({
-				question: `What does the ${first!.layer} layer hold for ${first!.extent}${first!.surveyedAt ? ` as of ${first!.surveyedAt}` : ""}?`,
+				question: `What does the ${group.layer} layer hold for ${group.extent}${group.surveyedAt ? ` as of ${group.surveyedAt}` : ""}?`,
 				subject: building.id,
-				candidates: group.map((reading) => `${reading.records ?? "no survey"} (${reading.evidence.source})`),
-				missingRecord: `a surveyed or designated reading of ${first!.layer} over ${first!.extent}`,
+				candidates: group.readings.map((reading) => `${reading.records ?? "no survey"} (${reading.evidence.source})`),
+				missingRecord: `a surveyed or designated reading of ${group.layer} over ${group.extent}`,
 			})
 		}
 
-		return { layer: first!.layer, extent: first!.extent, surveyedAt: first!.surveyedAt, class: classified.class }
+		return { layer: group.layer, extent: group.extent, surveyedAt: group.surveyedAt, class: group.class }
 	})
 
 	const checks = admitted.checks
@@ -323,6 +414,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 				blockers: admitted.blockers,
 				probabilities: admitted.probabilities,
 				dispositions: admitted.dispositions,
+				memberships: admitted.memberships,
 			})
 		)
 
@@ -340,5 +432,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 		claims: claimsFor(building.id, admitted.claims),
 		unresolved,
 		checks,
+		memberships: admitted.memberships.filter((membership) => membership.subject === building.id),
+		position,
 	}
 }

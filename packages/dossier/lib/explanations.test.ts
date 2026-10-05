@@ -96,7 +96,15 @@ const NEARBY = fiberReading({ extent: "district-9", records: 4 })
 const OPEN_WINDOW = { subject: HOUSE, start: "2021-06-01", stage: "permit issued", evidence: { source: "permit-2021" } }
 
 /**
- * Example House with its entrances, the fiber check and the failing reading.
+ * The survey's statements that Example House lies in cell-9 and in district-9.
+ */
+const HOUSE_MEMBERSHIPS = [
+	{ subject: HOUSE, extent: "cell-9", evidence: { source: "survey-2022" } },
+	{ subject: HOUSE, extent: "district-9", evidence: { source: "survey-2022" } },
+]
+
+/**
+ * Example House with its entrances, its memberships, the fiber check and the failing reading.
  *
  * Every explanation kind is checked against these records, and none has a supporting record.
  */
@@ -106,6 +114,7 @@ function recordsWith(overrides: Partial<DossierRecords> = {}): DossierRecords {
 		sources: [...SOURCES, STUDY, LATER_SURVEY, DECISION_LOG, OUTCOME_LOG],
 		entities: ENTITIES,
 		containment: CONTAINMENT,
+		memberships: HOUSE_MEMBERSHIPS,
 		readings: [fiberReading()],
 		checks: [CHECK],
 		...overrides,
@@ -300,6 +309,21 @@ describe("explainCheck: identity, access, capacity, installation and route", () 
 
 		expect(kindsOf(result)).toEqual(["installation", "route"])
 		expect(result.exception!.unsupported).toEqual(["identity", "access", "capacity"])
+	})
+
+	test("route: records at an extent that no membership places the building in support nothing", () => {
+		const result = checkResult(
+			recordsWith({ readings: [fiberReading(), NEARBY], memberships: [HOUSE_MEMBERSHIPS[0]!] })
+		)
+
+		expect(result.exception!.explanations).toEqual([])
+		expect(result.exception!.unsupported).toContain("route")
+	})
+
+	test("route: records supplied for another building support nothing", () => {
+		const result = checkResult(recordsWith({ readings: [fiberReading(), { ...NEARBY, subject: ANNEX }] }))
+
+		expect(result.exception!.unsupported).toContain("route")
 	})
 })
 

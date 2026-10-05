@@ -124,6 +124,42 @@ describe("renderReport: the serviceability section", () => {
 	})
 })
 
+describe("renderReport: positions, extents and unplaced readings", () => {
+	const report = renderReport(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }))
+	const sectionText = (building: string) => report.split(`## ${building}\n`)[1]!.split("\n## ")[0]!
+
+	test("prints a building's position with its source and synthetic label, and the extents that place it", () => {
+		expect(sectionText("Example House")).toContain("Position: -30.00012, -20.00034 (survey-2022), synthetic")
+		expect(sectionText("Example House")).toContain("Extents: cell-1 (survey-2022), district-1 (permit-2021)")
+		expect(sectionText("Example Annex")).toContain("Extents: district-1 (permit-2021)")
+	})
+
+	test("prints an unresolved position with each position that differs", () => {
+		expect(sectionText("Example Annex")).toContain(
+			"Position: unresolved — 2 positions state 2 different locations (-30.00021, -20.00032 per permit-2021, synthetic. -30.00025, -20.00041 per survey-2022, synthetic)"
+		)
+	})
+
+	test("lists an unplaced reading in its own section with the record that would place it", () => {
+		const unplaced = sectionText("Unplaced layer readings")
+
+		expect(unplaced).toContain("- cable over cell-3 as of 2022-03-15: records present (survey-2022)")
+		expect(unplaced).toContain("  - would resolve: a record that places a building in cell-3")
+		expect(sectionText("Example House")).not.toContain("cell-3")
+		expect(sectionText("Example Annex")).not.toContain("cell-3")
+	})
+
+	test("states that every admitted reading attaches to a building when none is unplaced", () => {
+		const oppReport = renderReport(buildDossier(OPP_RECORDS, { asOf: "2026-10-05" }))
+
+		expect(oppReport.split("## Unplaced layer readings\n")[1]).toContain(
+			"Every admitted reading attaches to a building."
+		)
+
+		expect(oppReport).toContain("Position: 40.65017, -73.97264 (pad-geosearch-26c)\n")
+	})
+})
+
 describe("renderReport: one park point as of 2023-06-30", () => {
 	const lines = serviceabilityLines(renderReport(buildDossier(OPP_RECORDS, { asOf: "2023-06-30" })), "11 Ocean Parkway")
 

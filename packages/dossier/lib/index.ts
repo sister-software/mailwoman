@@ -5,7 +5,8 @@
  *
  *   Building opportunity dossiers: sourced claims over parcels, buildings, entrances and units,
  *   projected for an explicit as-of date with every unresolved question and the record that would
- *   resolve it, and the competing explanations for each failed availability check.
+ *   resolve it, and the competing explanations for each failed availability check. Sourced memberships
+ *   decide which building a layer reading attaches to, and sourced positions locate each building.
  */
 
 export * from "#identifiers"
@@ -18,6 +19,7 @@ export * from "#counts"
 export * from "#events"
 export * from "#availability"
 export * from "#coverage"
+export * from "#placement"
 export * from "#filings"
 export * from "#explanations"
 export * from "#outcomes"

@@ -89,6 +89,53 @@ describe("validateRecords: a layer reading's subject", () => {
 	})
 })
 
+describe("validateRecords: memberships and positions", () => {
+	test("a membership must cite a supplied source and place a supplied building", () => {
+		const issues = validateRecords({
+			...EXAMPLE_RECORDS,
+			memberships: [
+				{ subject: HOUSE, extent: "cell-1", evidence: { source: "no-such-survey" } },
+				{ subject: NORTH, extent: "cell-1", evidence: { source: "survey-2022" } },
+				{ subject: "building:ghost", extent: "cell-1", evidence: { source: "survey-2022" } },
+			],
+		})
+
+		expect(issues.filter((issue) => issue.severity === "error").map((issue) => [issue.code, issue.ref])).toEqual([
+			["unknown_source", "membership 0"],
+			["subject_not_building", "membership 1"],
+			["unknown_entity", "membership 2"],
+		])
+	})
+
+	test("a position must locate a supplied building inside the range of latitude and longitude", () => {
+		const position = {
+			subject: HOUSE,
+			latitude: 40.1,
+			longitude: -73.9,
+			synthetic: true,
+			evidence: { source: "survey-2022" },
+		}
+
+		const issues = validateRecords({
+			...EXAMPLE_RECORDS,
+			positions: [
+				position,
+				{ ...position, subject: NORTH },
+				{ ...position, latitude: -90.5 },
+				{ ...position, longitude: 180.5 },
+				{ ...position, latitude: Number.NaN },
+			],
+		})
+
+		expect(issues.filter((issue) => issue.severity === "error").map((issue) => [issue.code, issue.ref])).toEqual([
+			["subject_not_building", "position 1"],
+			["position_out_of_range", "position 2"],
+			["position_out_of_range", "position 3"],
+			["position_out_of_range", "position 4"],
+		])
+	})
+})
+
 describe("validateRecords: availability checks and the records that explain them", () => {
 	test("a check's subject must be a supplied building, and a check id appears once", () => {
 		const issues = validateRecords({

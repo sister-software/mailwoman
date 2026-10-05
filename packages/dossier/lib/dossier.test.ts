@@ -9,11 +9,23 @@ import { describe, expect, test } from "vitest"
 import type { LayerReading } from "#coverage"
 import { buildDossier, type Dossier } from "#dossier"
 import type { EntityID } from "#identifiers"
-import { ANNEX, EXAMPLE_RECORDS, HOUSE, NORTH } from "#test/fixtures/example-house"
+import {
+	ANNEX,
+	ANNEX_PERMIT_POSITION,
+	ANNEX_SURVEY_POSITION,
+	EXAMPLE_RECORDS,
+	HOUSE,
+	HOUSE_POSITION,
+	NORTH,
+} from "#test/fixtures/example-house"
 import { OPP_BUILDING, OPP_RECORDS } from "#test/fixtures/one-park-point"
 
 function sectionOf(dossier: Dossier, building: EntityID) {
 	return dossier.buildings.find((section) => section.building.id === building)!
+}
+
+function layersAndExtents(dossier: Dossier, building: EntityID): string[][] {
+	return sectionOf(dossier, building).readings.map((reading) => [reading.layer, reading.extent])
 }
 
 /**
@@ -109,20 +121,71 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 		expect(sectionOf(dossier, HOUSE).readings.map((reading) => reading.extent)).not.toContain("cell-2")
 	})
 
-	test("a reading without a subject attaches to every building", () => {
+	test("a reading without a subject attaches to each building that an admitted membership places in its extent", () => {
 		const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
 
 		expect(EXAMPLE_RECORDS.readings.every((reading) => reading.subject === undefined)).toBe(true)
 
+		expect(layersAndExtents(dossier, HOUSE)).toEqual([
+			["ducts", "cell-1"],
+			["cabinets", "cell-1"],
+			["poles", "cell-1"],
+			["cable", "cell-1"],
+			["cable", "district-1"],
+		])
+
+		expect(layersAndExtents(dossier, ANNEX)).toEqual([["cable", "district-1"]])
+	})
+
+	test("a reading that neither rule places is listed as unplaced and appears in no building's section", () => {
+		const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
+
+		expect(dossier.unplaced).toEqual([
+			{ layer: "cable", extent: "cell-3", surveyedAt: "2022-03-15", class: "records", sources: ["survey-2022"] },
+		])
+
 		for (const building of [HOUSE, ANNEX]) {
-			expect(sectionOf(dossier, building).readings.map((reading) => [reading.layer, reading.extent])).toEqual([
-				["ducts", "cell-1"],
-				["cabinets", "cell-1"],
-				["poles", "cell-1"],
-				["cable", "cell-1"],
-				["cable", "district-1"],
-			])
+			expect(sectionOf(dossier, building).readings.map((reading) => reading.extent)).not.toContain("cell-3")
 		}
+	})
+
+	test("a membership places a reading only once its source is admitted", () => {
+		const records = {
+			...EXAMPLE_RECORDS,
+			memberships: [
+				...EXAMPLE_RECORDS.memberships!,
+				{ subject: ANNEX, extent: "cell-3", evidence: { source: "manager-2023" } },
+			],
+		}
+
+		const before = buildDossier(records, { asOf: "2022-06-30" })
+
+		expect(before.unplaced.map((reading) => reading.extent)).toEqual(["cell-3"])
+		expect(layersAndExtents(before, ANNEX)).toEqual([["cable", "district-1"]])
+
+		const after = buildDossier(records, { asOf: "2023-06-30" })
+
+		expect(after.unplaced).toEqual([])
+
+		expect(layersAndExtents(after, ANNEX)).toEqual([
+			["cable", "district-1"],
+			["cable", "cell-3"],
+		])
+
+		expect(sectionOf(after, ANNEX).memberships.map((membership) => membership.extent)).toEqual(["district-1", "cell-3"])
+	})
+
+	test("a reading with a subject attaches to its subject alone, even where a membership places another building", () => {
+		const dossier = buildDossier(
+			{
+				...EXAMPLE_RECORDS,
+				readings: [...EXAMPLE_RECORDS.readings, cell2Reading({ extent: "district-1", subject: HOUSE })],
+			},
+			{ asOf: "2022-06-30" }
+		)
+
+		expect(layersAndExtents(dossier, HOUSE)).toContainEqual(["ducts", "district-1"])
+		expect(layersAndExtents(dossier, ANNEX)).toEqual([["cable", "district-1"]])
 	})
 
 	test("two vintages of one layer and extent for one subject stay two readings", () => {
@@ -150,14 +213,14 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 			{
 				...EXAMPLE_RECORDS,
 				readings: [
-					cell2Reading({ layer: "duct", extent: "s-cell" }),
-					cell2Reading({ layer: "ducts", extent: "-cell" }),
+					cell2Reading({ layer: "duct", extent: "s-cell", subject: HOUSE }),
+					cell2Reading({ layer: "ducts", extent: "-cell", subject: HOUSE }),
 				],
 			},
 			{ asOf: "2022-06-30" }
 		)
 
-		expect(sectionOf(dossier, HOUSE).readings.map((reading) => [reading.layer, reading.extent])).toEqual([
+		expect(layersAndExtents(dossier, HOUSE)).toEqual([
 			["duct", "s-cell"],
 			["ducts", "-cell"],
 		])
@@ -167,6 +230,74 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 		expect(() =>
 			buildDossier({ ...EXAMPLE_RECORDS, readings: [cell2Reading({ subject: NORTH })] }, { asOf: "2022-06-30" })
 		).toThrow(/subject_not_building/)
+	})
+
+	test("refuses a membership whose subject is not a building", () => {
+		expect(() =>
+			buildDossier(
+				{
+					...EXAMPLE_RECORDS,
+					memberships: [{ subject: NORTH, extent: "cell-1", evidence: { source: "survey-2022" } }],
+				},
+				{ asOf: "2022-06-30" }
+			)
+		).toThrow(/subject_not_building/)
+	})
+})
+
+describe("buildDossier: building positions", () => {
+	const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
+
+	test("one admitted position resolves, and the dossier keeps its synthetic label", () => {
+		expect(sectionOf(dossier, HOUSE).position).toEqual({
+			status: "resolved",
+			latitude: HOUSE_POSITION.latitude,
+			longitude: HOUSE_POSITION.longitude,
+			synthetic: true,
+			positions: [HOUSE_POSITION],
+		})
+
+		expect(sectionOf(dossier, HOUSE).unresolved.map((item) => item.question)).not.toContain("Where is Example House?")
+	})
+
+	test("two admitted positions that differ stay unresolved, listed with the record that would settle them", () => {
+		const annex = sectionOf(dossier, ANNEX)
+
+		expect(annex.position).toEqual({
+			status: "unresolved",
+			reason: "2 positions state 2 different locations",
+			conflicting: [ANNEX_PERMIT_POSITION, ANNEX_SURVEY_POSITION],
+		})
+
+		expect(annex.unresolved).toContainEqual({
+			question: "Where is Example Annex?",
+			subject: ANNEX,
+			candidates: ["-30.00021, -20.00032 (permit-2021)", "-30.00025, -20.00041 (survey-2022)"],
+			missingRecord: "a record that settles which of the 2 positions locates Example Annex",
+		})
+	})
+
+	test("a position whose source is not yet available stays out, and a later one that differs unresolves the position", () => {
+		const records = {
+			...EXAMPLE_RECORDS,
+			positions: [
+				...EXAMPLE_RECORDS.positions!,
+				{ ...HOUSE_POSITION, latitude: -30.00015, evidence: { source: "manager-2023" } },
+			],
+		}
+
+		expect(sectionOf(buildDossier(records, { asOf: "2022-06-30" }), HOUSE).position.status).toBe("resolved")
+
+		expect(sectionOf(buildDossier(records, { asOf: "2023-06-30" }), HOUSE).position).toMatchObject({
+			status: "unresolved",
+			reason: "2 positions state 2 different locations",
+		})
+	})
+
+	test("refuses a position outside the range of latitude and longitude", () => {
+		expect(() =>
+			buildDossier({ ...EXAMPLE_RECORDS, positions: [{ ...HOUSE_POSITION, latitude: 91 }] }, { asOf: "2022-06-30" })
+		).toThrow(/position_out_of_range/)
 	})
 })
 
@@ -241,6 +372,16 @@ describe("one park point, real records", () => {
 				expect.stringMatching(/construction window.*no end/)
 			)
 		})
+
+		test("has no position or membership, because Geosearch and PLUTO 26v2 became available later", () => {
+			expect(section.position).toEqual({
+				status: "unresolved",
+				reason: "no position on 2022-06-30 for building:nyc-bin-3429422",
+				conflicting: [],
+			})
+
+			expect(section.memberships).toEqual([])
+		})
 	})
 
 	describe("as of 2023-06-30, with the first BDC vintage public", () => {
@@ -290,6 +431,26 @@ describe("one park point, real records", () => {
 				["Charter Communications (Spectrum)", "available"],
 				["Verizon", "available"],
 			])
+		})
+
+		test("places the building at the Geosearch point, inside the census block and tract PLUTO 26v2 names", () => {
+			expect(section.position).toMatchObject({
+				status: "resolved",
+				latitude: 40.65017,
+				longitude: -73.97264,
+				synthetic: false,
+			})
+
+			expect(section.position.status === "resolved" && section.position.positions[0]!.evidence.source).toBe(
+				"pad-geosearch-26c"
+			)
+
+			expect(section.memberships.map((membership) => [membership.extent, membership.evidence.source])).toEqual([
+				["census-block:360470504012000", "pluto-26v2"],
+				["census-tract:36047050401", "pluto-26v2"],
+			])
+
+			expect(dossier.unplaced).toEqual([])
 		})
 
 		test("the two FTTP vintages are separate surveys, never a conflict", () => {
