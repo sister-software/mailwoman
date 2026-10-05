@@ -41,7 +41,7 @@ export const spec = {
 const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [
-			{ BDCFileCategory, BDCFilingDataType, BDCProviderSubCategory },
+			{ BDCFileCategory, BDCFilingDataType, BDCProviderSubCategory, BDCTechnologyType },
 			{ buildBDCDatabase },
 			{ createBDCClient, formatBDCThrottleStats },
 			{ createTIGERBlockCentroidLookup },
@@ -103,7 +103,8 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		const files = await retrieveAvailabilityFiles(client, {
 			asOfDate,
 			category: BDCFileCategory.Provider,
-			subcategory: BDCProviderSubCategory.FixedBroadband,
+			subcategory: BDCProviderSubCategory.LocationCoverage,
+			technologyType: BDCTechnologyType.FixedBroadband,
 		})
 
 		const stateFiles = files.filter((file) => file.stateCode === options.state)

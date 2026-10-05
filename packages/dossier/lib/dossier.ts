@@ -47,7 +47,7 @@ export interface BuildingSection {
 	authority: ReturnType<typeof signingAuthorityFor>
 	windows: readonly ConstructionWindow[]
 	availability: readonly { provider: string; product: string; answer: AvailabilityAnswer }[]
-	readings: readonly { layer: string; extent: string; class: LayerReadingClass }[]
+	readings: readonly { layer: string; extent: string; surveyedAt?: ISODate; class: LayerReadingClass }[]
 	claims: readonly Claim[]
 	unresolved: readonly Unresolved[]
 }
@@ -238,7 +238,9 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 	const byLayer = new Map<string, DossierRecords["readings"]>()
 
 	for (const reading of admitted.readings) {
-		const key = `${reading.layer}${reading.extent}`
+		// A vintage is part of a survey's identity.
+		// Two vintages of one layer and extent group separately.
+		const key = `${reading.layer}${reading.extent}${reading.surveyedAt ?? ""}`
 
 		byLayer.set(key, [...(byLayer.get(key) ?? []), reading])
 	}
@@ -249,14 +251,14 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 
 		if (classified.class !== "records" && classified.class !== "surveyed_empty") {
 			unresolved.push({
-				question: `What does the ${first!.layer} layer hold for ${first!.extent}?`,
+				question: `What does the ${first!.layer} layer hold for ${first!.extent}${first!.surveyedAt ? ` as of ${first!.surveyedAt}` : ""}?`,
 				subject: building.id,
 				candidates: group.map((reading) => `${reading.records ?? "no survey"} (${reading.evidence.source})`),
 				missingRecord: `a surveyed or designated reading of ${first!.layer} over ${first!.extent}`,
 			})
 		}
 
-		return { layer: first!.layer, extent: first!.extent, class: classified.class }
+		return { layer: first!.layer, extent: first!.extent, surveyedAt: first!.surveyedAt, class: classified.class }
 	})
 
 	return {

@@ -327,6 +327,14 @@ extend-glob = [
 ]
 extend-words = { yor = "yor", tham = "tham" }
 
+[type.uk-source-audit]
+extend-glob = ["2026-10-05-uk-infrastructure-source-audit.md"]
+# The audit quotes UK publishers' own spellings: `full-fibre` (Ofcom's product category),
+# `utilisation` (UKPN's dataset field), `authorised` (NUAR's access term), and `Licence` in the proper
+# names `Open Government Licence`, `UK Power Networks Shared Data Licence` and the wire value
+# `Licence: None`.
+extend-words = { fibre = "fibre", utilisation = "utilisation", authorised = "authorised", Licence = "Licence" }
+
 [type.intentional-typos]
 extend-glob = [
 	"intent.test.ts",
