@@ -10,7 +10,7 @@
  */
 
 import { UnitStage } from "@mailwoman/dossier"
-import { type FormEvent, type ReactNode, useState } from "react"
+import { type ReactNode, type SubmitEvent, useState } from "react"
 
 import { type ControlField, type ControlText, controlText, type ControlValues, parseControls } from "#controls"
 
@@ -65,7 +65,7 @@ export function ScenarioControls({ defaults, currency, onApply }: ScenarioContro
 		},
 	]
 
-	const apply = (event: FormEvent<HTMLFormElement>) => {
+	const apply = (event: SubmitEvent<HTMLFormElement>) => {
 		event.preventDefault()
 
 		const parsed = parseControls(text, currency)
