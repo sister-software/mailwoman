@@ -238,6 +238,10 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 	const byLayer = new Map<string, DossierRecords["readings"]>()
 
 	for (const reading of admitted.readings) {
+		// A subject-scoped reading attaches to its building alone.
+		// An unscoped reading keeps the every-building association that #2289's spatial key will replace.
+		if (reading.subject !== undefined && reading.subject !== building.id) continue
+
 		// A vintage is part of a survey's identity.
 		// Two vintages of one layer and extent group separately.
 		const key = `${reading.layer}${reading.extent}${reading.surveyedAt ?? ""}`

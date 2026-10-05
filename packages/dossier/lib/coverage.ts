@@ -10,6 +10,7 @@
 
 import { type CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 
+import type { EntityID } from "#identifiers"
 import type { Evidence } from "#links"
 import type { ISODate } from "#time"
 
@@ -19,6 +20,14 @@ export interface LayerReading {
 	 * The surveyed extent as the layer states it, such as an H3 cell or a named area.
 	 */
 	extent: string
+	/**
+	 * The building the reading belongs to.
+	 *
+	 * Absent readings associate with every building in the dossier — the stated limit
+	 * until #2289 adds a spatial key.
+	 * A producer that resolves the association sets this (#2468).
+	 */
+	subject?: EntityID
 	basis: CoverageBasis | null
 	surveyedAt?: ISODate
 	/**
