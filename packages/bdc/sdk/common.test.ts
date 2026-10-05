@@ -21,7 +21,7 @@ import {
 const rawFixture: RawBDCFile = {
 	file_id: 84_213,
 	category: BDCFileCategory.State,
-	subcategory: BDCStateSubCategory.FixedBroadband,
+	subcategory: BDCStateSubCategory.LocationCoverage,
 	technology_code: "10,11,50",
 	technology_code_desc: "Asymmetric xDSL, ADSL2/ADSL2+, Optical Carrier Fiber",
 	state_fips: "06",
@@ -45,7 +45,7 @@ test("parseRawBDCFile: parses timestamps into Dates and preserves category/subca
 	expect(parsed.vintage.getMonth()).toBe(11)
 
 	expect(parsed.category).toBe(BDCFileCategory.State)
-	expect(parsed.subcategory).toBe(BDCStateSubCategory.FixedBroadband)
+	expect(parsed.subcategory).toBe(BDCStateSubCategory.LocationCoverage)
 	expect(parsed.fileID).toBe(84_213)
 	expect(parsed.stateCode).toBe("06")
 	expect(parsed.providerID).toBe(130_077)

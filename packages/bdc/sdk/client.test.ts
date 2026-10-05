@@ -746,7 +746,7 @@ describe("the SDK callers, over the migrated client", () => {
 			{
 				file_id: 1,
 				category: BDCFileCategory.State,
-				subcategory: BDCStateSubCategory.FixedBroadband,
+				subcategory: BDCStateSubCategory.LocationCoverage,
 				technology_code: "10",
 				technology_code_desc: "Asymmetric xDSL",
 				state_fips: "06",
@@ -760,7 +760,7 @@ describe("the SDK callers, over the migrated client", () => {
 			{
 				file_id: 2,
 				category: BDCFileCategory.State,
-				subcategory: BDCStateSubCategory.FixedBroadband,
+				subcategory: BDCStateSubCategory.LocationCoverage,
 				technology_code: "10",
 				technology_code_desc: "Asymmetric xDSL",
 				state_fips: "06",
@@ -779,7 +779,7 @@ describe("the SDK callers, over the migrated client", () => {
 		const files = await retrieveAvailabilityFiles(client, {
 			asOfDate: "2024-12-31",
 			category: BDCFileCategory.State,
-			subcategory: BDCStateSubCategory.FixedBroadband,
+			subcategory: BDCStateSubCategory.LocationCoverage,
 		})
 
 		expect(files.map((file) => file.fileID)).toEqual([2, 1])
