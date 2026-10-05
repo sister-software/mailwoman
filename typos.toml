@@ -335,6 +335,12 @@ extend-glob = ["2026-10-05-uk-infrastructure-source-audit.md"]
 # `Licence: None`.
 extend-words = { fibre = "fibre", utilisation = "utilisation", authorised = "authorised", Licence = "Licence" }
 
+[type.uk-three-buildings]
+extend-glob = ["2026-10-05-uk-three-building-competition-sources.md"]
+# The record quotes UK proper names: the operators `CityFibre` and `Community Fibre`, Ofcom's product
+# category `full-fibre`, and the Barnet ward `Childs Hill`.
+extend-words = { fibre = "fibre", Childs = "Childs" }
+
 [type.intentional-typos]
 extend-glob = [
 	"intent.test.ts",
