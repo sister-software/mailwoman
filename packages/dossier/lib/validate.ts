@@ -4,10 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Validation of supplied records before a dossier is built. An error is a record the dossier cannot use
- *   (a dangling reference, a duplicate id, a malformed date, a reading or check whose subject is not a
- *   building, a probability outside 0 to 1 or without a basis, a negative duration). A warning is a
- *   record the dossier will use with a stated limit (a missing availability date, a missing event date,
- *   unknown signing authority).
+ *   (a dangling reference, a duplicate id, a malformed date, a reading, check, membership or position
+ *   whose subject is not a building, a position outside the range of latitude and longitude, a
+ *   probability outside 0 to 1 or without a basis, a negative duration). A warning is a record the
+ *   dossier will use with a stated limit (a missing availability date, a missing event date, unknown
+ *   signing authority).
  */
 
 import type { ProviderAvailability } from "#availability"
@@ -20,6 +21,7 @@ import type { AvailabilityCheck, BlockerObservation, ExplanationProbability, Ope
 import type { FilingRow } from "#filings"
 import type { EntityKind } from "#identifiers"
 import type { Alias, Containment } from "#links"
+import type { BuildingPosition, ExtentMembership } from "#placement"
 import type { SourceRecord } from "#sources"
 import { isISODate } from "#time"
 
@@ -44,6 +46,16 @@ export interface DossierRecords {
 	blockers?: readonly BlockerObservation[]
 	probabilities?: readonly ExplanationProbability[]
 	dispositions?: readonly OperatorDisposition[]
+	/**
+	 * Sources' statements that a building lies in an extent.
+	 *
+	 * A reading without a subject attaches to a building only through one of them.
+	 */
+	memberships?: readonly ExtentMembership[]
+	/**
+	 * Sources' statements of a building's latitude and longitude.
+	 */
+	positions?: readonly BuildingPosition[]
 }
 
 export interface ValidationIssue {
@@ -52,6 +64,16 @@ export interface ValidationIssue {
 	message: string
 	ref?: string
 }
+
+/**
+ * The magnitude of a WGS 84 latitude at either pole, in degrees.
+ */
+const POLAR_LATITUDE = 90
+
+/**
+ * The magnitude of a WGS 84 longitude at the antimeridian, in degrees.
+ */
+const ANTIMERIDIAN_LONGITUDE = 180
 
 export function validateRecords(records: DossierRecords): readonly ValidationIssue[] {
 	const issues: ValidationIssue[] = []
@@ -230,6 +252,30 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 
 		if (reading.subject !== undefined) {
 			checkBuilding(ref, "reading", reading.subject)
+		}
+	})
+
+	records.memberships?.forEach((membership, index) => {
+		const ref = `membership ${index}`
+
+		checkSource(ref, membership.evidence.source)
+		checkBuilding(ref, "membership", membership.subject)
+	})
+
+	records.positions?.forEach((position, index) => {
+		const ref = `position ${index}`
+
+		checkSource(ref, position.evidence.source)
+		checkBuilding(ref, "position", position.subject)
+
+		// A comparison with NaN is false, so a missing or non-finite coordinate fails here too.
+		if (!(Math.abs(position.latitude) <= POLAR_LATITUDE && Math.abs(position.longitude) <= ANTIMERIDIAN_LONGITUDE)) {
+			issues.push({
+				severity: "error",
+				code: "position_out_of_range",
+				message: `${ref} gives latitude ${position.latitude} and longitude ${position.longitude}. A latitude lies from -${POLAR_LATITUDE} to ${POLAR_LATITUDE} degrees and a longitude from -${ANTIMERIDIAN_LONGITUDE} to ${ANTIMERIDIAN_LONGITUDE}`,
+				ref,
+			})
 		}
 	})
 

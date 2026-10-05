@@ -102,6 +102,7 @@
 		"packages/geocode-oracle": "private verification oracle — never a runtime dependency, never publishes",
 		"packages/ofcom": "private Ofcom Connected Nations reader — no published consumer yet",
 		"packages/route-scenarios": "private shared-route cost and cash-flow scenario calculator — no published consumer yet",
+		"packages/opportunity-map": "private data model of the building and shared-route opportunity map — no published consumer yet",
 		"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
 		"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)"
 	}

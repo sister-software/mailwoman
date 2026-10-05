@@ -5,9 +5,11 @@ This inventory completes the interface review for
 application in [#2291](https://github.com/sister-software/mailwoman/issues/2291).
 [#2455](https://github.com/sister-software/mailwoman/issues/2455) owns this document.
 `@mailwoman/dossier` (`packages/dossier`) implements the data model and the eight cases below.
-A layer reading with a `subject` attaches to that building. Until
-[#2289](https://github.com/sister-software/mailwoman/issues/2289) adds a spatial key, the dossier
-associates a reading without a `subject` with every building.
+A layer reading with a `subject` attaches to that building. A reading without one attaches to each
+building that an admitted membership record places in the reading's extent, and the dossier lists a
+reading that neither rule places as unplaced. A membership record cites the source that places the
+building in the extent ([#2477](https://github.com/sister-software/mailwoman/issues/2477), under
+[#2289](https://github.com/sister-software/mailwoman/issues/2289)).
 
 A dossier is a reviewable account of one property's identity, physical premises, network evidence,
 access, engineering, available products and demand. Each conclusion identifies the records behind it

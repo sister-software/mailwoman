@@ -24,7 +24,8 @@ export interface LayerReading {
 	 * The building the reading belongs to.
 	 * It must be a building the dossier's records supply.
 	 *
-	 * A reading without a subject associates with every building in the dossier.
+	 * A reading without a subject attaches to each building that an admitted membership
+	 * places in its extent, and to no building otherwise.
 	 */
 	subject?: EntityID
 	basis: CoverageBasis | null
