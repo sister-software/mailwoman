@@ -448,7 +448,13 @@ describe("the three London buildings: flood readings", () => {
 			const { reading } = siteFloodRecords(entry)
 
 			expect(sectionOf(entry.building).readings).toEqual([
-				{ layer: "flood-zones-ea-england", extent: reading.extent, surveyedAt: "2026-05-20", class: "surveyed_empty" },
+				{
+					layer: "flood-zones-ea-england",
+					extent: reading.extent,
+					surveyedAt: "2026-05-20",
+					class: "surveyed_empty",
+					sources: [FLOOD_MAP],
+				},
 			])
 
 			expect(reading).toMatchObject({ subject: entry.building, basis: "designated", records: 0 })

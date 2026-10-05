@@ -72,8 +72,9 @@ Every conclusion cites at least one admitted record, with one exception. An exte
 record that states it, and an identifier without evidence prints the words `source unstated` in place of
 a citation. `validateRecords` reports each such identifier as an `identifier_without_evidence` warning. A
 building's section shows an identifier once the dossier admits the record that states it, as it shows an
-alias. A provider line gives each availability record's dates and record, and a provider answer of
-`unknown` is an absence.
+alias. A provider line gives each availability record's dates, the extent at which the record's source
+states availability when the record gives one, and the record itself. A provider answer of `unknown` is an
+absence.
 
 The sources part ends the report. It lists each admitted source record with its identifier, publisher,
 title, URL when it has one, and its observation, availability and retrieval dates. A missing date prints
@@ -105,7 +106,8 @@ the exception. The building is the `subject` of each of the fixture's readings, 
 360470504012000 and census tract 36047050401 from 2026-08-24. The building's position is the point that
 NYC Planning's Geosearch returned for 11 Ocean Parkway on 2026-10-05, latitude 40.65017 and longitude
 -73.97264, so a dossier admits it from that date. The same Geosearch record states the building's BIN, so
-the report shows the BIN from that date too.
+the report shows the BIN from that date too. Each of the fixture's two provider availability records states
+the building's census block as its extent, because the FCC files state availability by census block.
 
 ## The Example House report
 
@@ -117,7 +119,7 @@ cell-3, so the report lists the cable reading there as unplaced, and the route e
 House does not cite it. Every position is synthetic, and the permit and the survey state two different
 positions for the Annex. Example House's inferred claim c2 derives from its observed claim c1. The
 evidence of c2 states no observation date, so the survey's observation date, 2022-03-15, dates it. The
-fixture states no source for either building's identifier, so each prints `source unstated`.
+permit states each building's identification number, so each identifier cites the permit.
 
 ```text
 # Building dossier as of 2022-06-30
@@ -130,7 +132,7 @@ Undated, no availability date (1): undated-listing
 
 ## Example House
 
-Identifiers: example:bin 1001 (source unstated)
+Identifiers: example:bin 1001 (permit-2021)
 Entrances: 2 (survey-2022). Aliases: "North entrance, Example House" (resolved) (survey-2022), "South entrance, Example House" (resolved) (survey-2022)
 Position: -30.00012, -20.00034 (survey-2022), synthetic
 Extents: cell-1 (survey-2022), district-1 (permit-2021)
@@ -246,7 +248,7 @@ Decisions and outcomes:
 
 ## Example Annex
 
-Identifiers: example:bin 1002 (source unstated)
+Identifiers: example:bin 1002 (permit-2021)
 Entrances: 0. Aliases: none
 Position: unresolved — 2 positions state 2 different locations (-30.00021, -20.00032 per permit-2021, synthetic. -30.00025, -20.00041 per survey-2022, synthetic)
 Extents: district-1 (permit-2021)

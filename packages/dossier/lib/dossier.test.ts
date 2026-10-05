@@ -118,6 +118,7 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 			extent: "cell-2",
 			surveyedAt: "2022-03-15",
 			class: "surveyed_empty",
+			sources: ["survey-2022"],
 		})
 
 		expect(sectionOf(dossier, HOUSE).readings.map((reading) => reading.extent)).not.toContain("cell-2")
@@ -203,8 +204,14 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 		)
 
 		expect(sectionOf(dossier, HOUSE).readings).toEqual([
-			{ layer: "ducts", extent: "cell-2", surveyedAt: "2021-03-15", class: "source_present_empty" },
-			{ layer: "ducts", extent: "cell-2", surveyedAt: "2022-03-15", class: "records" },
+			{
+				layer: "ducts",
+				extent: "cell-2",
+				surveyedAt: "2021-03-15",
+				class: "source_present_empty",
+				sources: ["survey-2022"],
+			},
+			{ layer: "ducts", extent: "cell-2", surveyedAt: "2022-03-15", class: "records", sources: ["survey-2022"] },
 		])
 
 		expect(sectionOf(dossier, ANNEX).readings).toEqual([])
@@ -302,21 +309,21 @@ describe("buildDossier: a building's external identifiers", () => {
 })
 
 describe("buildDossier: the records behind a section's readings and questions", () => {
-	test("each reading group lists its admitted source records at the index of its reading", () => {
+	test("each reading group lists the admitted source records of its readings, each once", () => {
 		const dossier = buildDossier(
 			{
 				...EXAMPLE_RECORDS,
-				readings: [...EXAMPLE_RECORDS.readings, { ...MISSING_READING, evidence: { source: "inspection-2022" } }],
+				readings: [
+					...EXAMPLE_RECORDS.readings,
+					{ ...MISSING_READING, evidence: { source: "inspection-2022" } },
+					{ ...MISSING_READING, evidence: { source: "survey-2022" } },
+				],
 			},
 			{ asOf: "2022-06-30" }
 		)
 
-		const house = sectionOf(dossier, HOUSE)
-
-		expect(house.readingSources).toHaveLength(house.readings.length)
-
 		expect(
-			house.readings.map((reading, index) => [reading.layer, reading.extent, house.readingSources[index]])
+			sectionOf(dossier, HOUSE).readings.map((reading) => [reading.layer, reading.extent, reading.sources])
 		).toEqual([
 			["ducts", "cell-1", ["survey-2022", "inspection-2022"]],
 			["cabinets", "cell-1", ["survey-2022"]],
@@ -587,6 +594,7 @@ describe("one park point, real records", () => {
 				extent: "census-block:360470504012000",
 				surveyedAt: "2022-06-30",
 				class: "source_present_empty",
+				sources: ["fcc-bdc-fttp-j22"],
 			})
 
 			expect(section.readings).toContainEqual({
@@ -594,6 +602,7 @@ describe("one park point, real records", () => {
 				extent: "census-tract:36047050401",
 				surveyedAt: "2022-06-30",
 				class: "records",
+				sources: ["fcc-bdc-fttp-j22"],
 			})
 		})
 
@@ -648,6 +657,7 @@ describe("one park point, real records", () => {
 				extent: "census-block:360470504012000",
 				surveyedAt: "2025-12-31",
 				class: "records",
+				sources: ["fcc-bdc-fttp-d25"],
 			})
 
 			expect(section.readings.every((reading) => reading.class !== "conflicting")).toBe(true)

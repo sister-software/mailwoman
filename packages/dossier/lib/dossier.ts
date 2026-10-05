@@ -88,11 +88,18 @@ export interface BuildingSection {
 	authority: ReturnType<typeof signingAuthorityFor>
 	windows: readonly ConstructionWindow[]
 	availability: readonly { provider: string; product: string; answer: AvailabilityAnswer }[]
-	readings: readonly { layer: string; extent: string; surveyedAt?: ISODate; class: LayerReadingClass }[]
 	/**
-	 * The admitted source records behind each entry of `readings`, at the same index.
+	 * The admitted readings of the building, grouped by layer, extent and survey date.
+	 *
+	 * Each group lists the admitted source records of its readings, as an unplaced reading does.
 	 */
-	readingSources: readonly (readonly SourceRecordID[])[]
+	readings: readonly {
+		layer: string
+		extent: string
+		surveyedAt?: ISODate
+		class: LayerReadingClass
+		sources: readonly SourceRecordID[]
+	}[]
 	claims: readonly Claim[]
 	unresolved: readonly Unresolved[]
 	/**
@@ -441,20 +448,20 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 		readingBuildings(reading, admitted.memberships).includes(building.id)
 	)
 
-	const groups = readingGroups(attached)
+	const readings = readingGroups(attached).map((group) => {
+		const sources = sourcesOf(group.readings)
 
-	const readings = groups.map((group) => {
 		if (group.class !== "records" && group.class !== "surveyed_empty") {
 			unresolved.push({
 				question: `What does the ${group.layer} layer hold for ${group.extent}${group.surveyedAt ? ` as of ${group.surveyedAt}` : ""}?`,
 				subject: building.id,
 				candidates: group.readings.map((reading) => `${reading.records ?? "no survey"} (${reading.evidence.source})`),
 				missingRecord: `a surveyed or designated reading of ${group.layer} over ${group.extent}`,
-				sources: sourcesOf(group.readings),
+				sources,
 			})
 		}
 
-		return { layer: group.layer, extent: group.extent, surveyedAt: group.surveyedAt, class: group.class }
+		return { layer: group.layer, extent: group.extent, surveyedAt: group.surveyedAt, class: group.class, sources }
 	})
 
 	const checks = admitted.checks
@@ -490,7 +497,6 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 		windows,
 		availability,
 		readings,
-		readingSources: groups.map((group) => sourcesOf(group.readings)),
 		claims: claimsFor(building.id, admitted.claims),
 		unresolved,
 		checks,

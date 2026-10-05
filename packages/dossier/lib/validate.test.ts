@@ -17,6 +17,7 @@ import {
 	EXAMPLE_RECORDS,
 	HOUSE,
 	NORTH,
+	UNSTATED_IDENTIFIER_RECORDS,
 } from "#test/fixtures/example-house"
 import { validateRecords } from "#validate"
 
@@ -71,9 +72,13 @@ describe("validateRecords", () => {
 })
 
 describe("validateRecords: external identifiers", () => {
+	test("the example records' identifiers each cite the permit and raise no identifier issue", () => {
+		expect(validateRecords(EXAMPLE_RECORDS).filter((issue) => / identifier \d+$/.test(issue.ref ?? ""))).toEqual([])
+	})
+
 	test("an identifier without evidence is an identifier_without_evidence warning", () => {
 		expect(
-			validateRecords(EXAMPLE_RECORDS)
+			validateRecords(UNSTATED_IDENTIFIER_RECORDS)
 				.filter((issue) => issue.code === "identifier_without_evidence")
 				.map((issue) => [issue.severity, issue.ref, issue.message])
 		).toEqual([

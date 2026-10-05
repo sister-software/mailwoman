@@ -789,7 +789,7 @@ describe("one park point, the fiber check at its census block", () => {
 
 			expect(installation.conflicting).toEqual([
 				fact(
-					"Charter Communications (Spectrum) cable 1000/35 Mbps (census block, business) is recorded as available at 11 Ocean Parkway on 2022-06-30.",
+					"Charter Communications (Spectrum) cable 1000/35 Mbps (business) is recorded as available at 11 Ocean Parkway on 2022-06-30.",
 					["fcc-bdc-cable-j22"]
 				),
 			])

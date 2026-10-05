@@ -163,7 +163,7 @@ function blank(part: ReportPart): ReportLine {
 }
 
 /**
- * A statement's line, which opens with the statement's kind and the records it cites.
+ * A statement's line, opened by the statement's kind and the records the statement cites.
  *
  * A hypothesis is a question, and a statement marked as an absence is an absence.
  * Every other statement is a conclusion, and one that cites no record prints `source unstated`.
@@ -507,7 +507,8 @@ function rolesRecord(label: string, relations: readonly OrganizationRelation[], 
 }
 
 /**
- * A provider's answer on the as-of date, followed by the dates and record of each availability record.
+ * A provider's answer on the as-of date, followed by each availability record's dates,
+ * the extent it states when it states one, and its source record.
  *
  * An unknown answer is an absence: no admitted record covers the date.
  */
@@ -518,7 +519,8 @@ function providerRecord(
 	const { records, status } = entry.answer
 
 	const dated = records.map(
-		(record) => `from ${record.from}${record.to ? ` to ${record.to}` : ""} per ${record.evidence.source}`
+		(record) =>
+			`from ${record.from}${record.to ? ` to ${record.to}` : ""}${record.extent ? ` over ${record.extent}` : ""} per ${record.evidence.source}`
 	)
 
 	return line(
@@ -677,11 +679,14 @@ function sectionRecords(
 
 		heading(ReportPart.Readings, "### Layer readings"),
 		blank(ReportPart.Readings),
-		...section.readings.map((reading, index) => {
-			const cited = section.readingSources[index] ?? []
-
-			return line(ReportPart.Readings, ReportLineKind.Conclusion, `${readingLine(reading)}${cite(cited)}`, cited)
-		}),
+		...section.readings.map((reading) =>
+			line(
+				ReportPart.Readings,
+				ReportLineKind.Conclusion,
+				`${readingLine(reading)}${cite(reading.sources)}`,
+				reading.sources
+			)
+		),
 		blank(ReportPart.Readings),
 
 		heading(ReportPart.Claims, "### Claims"),

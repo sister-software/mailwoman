@@ -16,6 +16,7 @@ import {
 	EXAMPLE_RECORDS,
 	HOUSE,
 	RELATIONS,
+	UNSTATED_IDENTIFIER_RECORDS,
 } from "#test/fixtures/example-house"
 import { OPP_RECORDS } from "#test/fixtures/one-park-point"
 import { type DossierRecords, validateRecords } from "#validate"
@@ -314,7 +315,7 @@ describe("renderReport: one park point as of 2023-06-30", () => {
 		)
 
 		expect(lines).toContain(
-			"    - fact (fcc-bdc-cable-j22): Charter Communications (Spectrum) cable 1000/35 Mbps (census block, business) is recorded as available at 11 Ocean Parkway on 2022-06-30."
+			"    - fact (fcc-bdc-cable-j22): Charter Communications (Spectrum) cable 1000/35 Mbps (business) is recorded as available at 11 Ocean Parkway on 2022-06-30."
 		)
 	})
 })
@@ -426,21 +427,32 @@ describe("reportLines: the line records renderReport prints", () => {
 })
 
 describe("reportLines: every conclusion cites a source record the dossier admitted", () => {
-	test("Example House as of 2022-06-30: the two building identifiers state no evidence and print source unstated", () => {
-		const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
+	test.each([
+		["Example House", EXAMPLE_RECORDS, "2022-06-30"],
+		["One Park Point", OPP_RECORDS, "2022-06-30"],
+		["One Park Point", OPP_RECORDS, "2023-06-30"],
+		["One Park Point", OPP_RECORDS, "2026-10-05"],
+	] as const)("%s as of %s", (_, records, asOf) => {
+		const dossier = buildDossier(records, { asOf })
 
 		expect(reportLines(dossier).filter((line) => line.kind === ReportLineKind.Conclusion).length).toBeGreaterThan(0)
+		expect(uncitedConclusions(dossier)).toEqual([])
+		expect(misattributedConclusions(dossier)).toEqual([])
+		expect(renderReport(dossier)).not.toContain("source unstated")
+	})
+
+	test("an identifier without evidence stays a conclusion, prints source unstated, and is reported by validation", () => {
+		const dossier = buildDossier(UNSTATED_IDENTIFIER_RECORDS, { asOf: "2022-06-30" })
+
 		expect(misattributedConclusions(dossier)).toEqual([])
 
-		// The fixture states no source for its identifiers.
-		// Each one stays a conclusion without a source, and validation reports it.
 		expect(uncitedConclusions(dossier)).toEqual([
 			"Identifiers: example:bin 1001 (source unstated)",
 			"Identifiers: example:bin 1002 (source unstated)",
 		])
 
 		expect(
-			validateRecords(EXAMPLE_RECORDS)
+			validateRecords(UNSTATED_IDENTIFIER_RECORDS)
 				.filter((issue) => issue.code === "identifier_without_evidence")
 				.map((issue) => [issue.severity, issue.ref])
 		).toEqual([
@@ -448,15 +460,6 @@ describe("reportLines: every conclusion cites a source record the dossier admitt
 			["warning", "building:example-house identifier 0"],
 			["warning", "building:example-annex identifier 0"],
 		])
-	})
-
-	test.each(["2022-06-30", "2023-06-30", "2026-10-05"])("One Park Point as of %s", (asOf) => {
-		const dossier = buildDossier(OPP_RECORDS, { asOf })
-
-		expect(reportLines(dossier).filter((line) => line.kind === ReportLineKind.Conclusion).length).toBeGreaterThan(0)
-		expect(uncitedConclusions(dossier)).toEqual([])
-		expect(misattributedConclusions(dossier)).toEqual([])
-		expect(renderReport(dossier)).not.toContain("source unstated")
 	})
 })
 
@@ -474,6 +477,14 @@ describe("reportLines: the citation that each line without one gains", () => {
 		})
 
 		expect(lineStarting(house, "Identifiers:")).toMatchObject({
+			text: "Identifiers: example:bin 1001 (permit-2021)",
+			kind: ReportLineKind.Conclusion,
+			sources: ["permit-2021"],
+		})
+
+		const unstated = sectionRecords(buildDossier(UNSTATED_IDENTIFIER_RECORDS, { asOf: "2022-06-30" }), HOUSE)
+
+		expect(lineStarting(unstated, "Identifiers:")).toMatchObject({
 			text: "Identifiers: example:bin 1001 (source unstated)",
 			kind: ReportLineKind.Conclusion,
 			sources: [],
@@ -592,16 +603,28 @@ describe("reportLines: the citation that each line without one gains", () => {
 			sources: ["survey-2022"],
 		})
 
+		const extended = buildDossier(
+			{ ...EXAMPLE_RECORDS, availability: [{ ...AVAILABILITY[0]!, extent: "cell-1" }] },
+			{ asOf: "2022-06-30" }
+		)
+
+		expect(lineStarting(sectionRecords(extended, HOUSE), "- Example Fiber").text).toBe(
+			"- Example Fiber 1 Gbps: available on 2022-06-30 (from 2022-03-01 to 2022-09-30 over cell-1 per survey-2022)"
+		)
+
+		// Each One Park Point record states the census block at which its filing states availability.
 		const opp = sectionRecords(buildDossier(OPP_RECORDS, { asOf: "2026-10-05" }), "building:nyc-bin-3429422")
 
 		expect(opp.filter((line) => line.part === ReportPart.Providers && line.text.startsWith("- "))).toMatchObject([
 			{
-				text: "- Charter Communications (Spectrum) cable 1000/35 Mbps (census block, business): available on 2026-10-05 (from 2022-06-30 per fcc-bdc-cable-j22)",
+				text: "- Charter Communications (Spectrum) cable 1000/35 Mbps (business): available on 2026-10-05 (from 2022-06-30 over census-block:360470504012000 per fcc-bdc-cable-j22)",
 				kind: ReportLineKind.Conclusion,
+				sources: ["fcc-bdc-cable-j22"],
 			},
 			{
-				text: "- Verizon fiber to the premises 2300/2300 Mbps (census block, residential): available on 2026-10-05 (from 2025-12-31 per fcc-bdc-fttp-d25)",
+				text: "- Verizon fiber to the premises 2300/2300 Mbps (residential): available on 2026-10-05 (from 2025-12-31 over census-block:360470504012000 per fcc-bdc-fttp-d25)",
 				kind: ReportLineKind.Conclusion,
+				sources: ["fcc-bdc-fttp-d25"],
 			},
 		])
 	})
@@ -697,11 +720,7 @@ describe("reportLines: the citation that each line without one gains", () => {
 			},
 		])
 
-		expect(uncitedConclusions(dossier)).toEqual([
-			"Identifiers: example:bin 1001 (source unstated)",
-			"Identifiers: example:bin 1002 (source unstated)",
-			"- fact (source unstated): 1 of 2 dispositions awaits an outcome.",
-		])
+		expect(uncitedConclusions(dossier)).toEqual(["- fact (source unstated): 1 of 2 dispositions awaits an outcome."])
 	})
 })
 

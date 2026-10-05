@@ -281,8 +281,15 @@ describe("bdcLayerReadings", () => {
 				extent: `census-block:${GEOID_FILED}`,
 				surveyedAt: "2022-06-30",
 				class: "source_present_empty",
+				sources: ["fcc-bdc-j22"],
 			},
-			{ layer: "fcc-bdc-fttp", extent: `census-block:${GEOID_FILED}`, surveyedAt: "2025-12-31", class: "records" },
+			{
+				layer: "fcc-bdc-fttp",
+				extent: `census-block:${GEOID_FILED}`,
+				surveyedAt: "2025-12-31",
+				class: "records",
+				sources: ["fcc-bdc-d25"],
+			},
 		])
 	})
 
