@@ -87,8 +87,9 @@ Token normalization uses Unicode property escapes (`/[\p{P}\p{S}]/gu`) instead o
 ## Usage (JavaScript)
 
 ```js
-import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { readFile } from "node:fs/promises"
+
+import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
 const buf = await readFile("./fst-en-us.bin")
 const matcher = deserializeFst(buf)

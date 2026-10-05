@@ -17,8 +17,9 @@ Coordinates in a JSON array tell you the geocoder worked. They don't tell you wh
 The path is three calls. Resolve your source records into canonical entities, turn those into GeoJSON, and render the GeoJSON to HTML:
 
 ```ts
-import { resolveEntities, toGeoJSON, toMapHTML } from "@mailwoman/registry"
 import { writeFileSync } from "node:fs"
+
+import { resolveEntities, toGeoJSON, toMapHTML } from "@mailwoman/registry"
 
 const { entities } = resolveEntities(records)
 const html = toMapHTML(toGeoJSON(entities), { title: "Clinics — resolved" })

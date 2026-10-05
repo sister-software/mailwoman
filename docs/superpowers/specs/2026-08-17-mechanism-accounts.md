@@ -158,7 +158,7 @@ than prevent them), RRR gradient penalties, and attention-as-explanation.
   outcome boundaries. It includes seven mechanism-state shapes as documented predicates, the
   five-change counterfactual sweep, and `by_shape` aggregation. v1 reports the set of matching shapes
   with each predicate attached and `calibration: "none"`, rather than the normalized posterior §4
-  describes. The scoring layer arrives with the v2 conformal calibration, which gives a posterior's
+  describes. The scoring layer arrives with the v2 conformal calibration. That calibration gives a posterior's
   numbers their meaning. Version 1 exposed a coverage limit: the resolver-interior trace (#1721)
   records only the walk's own `#lookupAndPick`. A row answered by the post-walk span-rescore
   therefore carries a resolved coordinate beside an empty lookup list. Accounts report that case

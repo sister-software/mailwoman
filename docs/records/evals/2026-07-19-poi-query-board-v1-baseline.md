@@ -96,7 +96,7 @@ this board's job to fix.
 - `gradeCase` (the grading core) is pure and unit-tested against synthetic outcomes — no db,
   no classifier, no resolver (`eval-harness/poi-board.test.ts`, 20 tests, all green). The live
   run above exercises the real `createRuntimePipeline({ classifier, resolver, poiQueryKind:
-{ poiDatabasePath } })` construction, mirroring `commands/poi.tsx`.
+  { poiDatabasePath } })` construction, mirroring `commands/poi.tsx`.
 - Exit code is 0 regardless of case failures — non-zero is reserved for harness errors
   (missing fixtures file, pipeline construction failure). Confirmed live: the 3-failure run
   above exits 0.

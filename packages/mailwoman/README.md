@@ -15,8 +15,8 @@ npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 ```ts
 // Library — parse programmatically
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createRuntimePipeline } from "mailwoman"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const parse = createRuntimePipeline({ classifier })
@@ -91,8 +91,8 @@ classification with production-ready defaults.
 
 ```ts
 import { decodeAsJSON, decodeAsTuples } from "@mailwoman/core/decoder"
-import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createRuntimePipeline } from "mailwoman"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const parse = createRuntimePipeline({ classifier })

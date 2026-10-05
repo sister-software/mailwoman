@@ -91,10 +91,9 @@ The app cannot import `packages/react/test/mocks.tsx`, because a test helper is 
  *   mount, and what a host mounts to show the UI without the model.
  */
 
-import type { ParseResult, PipelineRuntime } from "#pipeline/types"
-
-import type { DemoMapStyle, DemoRuntime, Suggestion } from "#map/types"
 import type { ResolvedMapPlace } from "#map/place-render"
+import type { DemoMapStyle, DemoRuntime, Suggestion } from "#map/types"
+import type { ParseResult, PipelineRuntime } from "#pipeline/types"
 ```
 
 `STUB_MAP_STYLE` and `FAKE_SUGGESTIONS` become `export const`. Check each type's home before committing: `ResolvedMapPlace` is exported from `#map/place-render`, `ParseResult` and `PipelineRuntime` from `#pipeline/types`, `DemoMapStyle`, `DemoRuntime` and `Suggestion` from `#map/types`. If `grep -n "export interface ParseResult" packages/react/lib/pipeline/types.ts` finds no match, follow `packages/react/lib/index.ts` to where it is.
@@ -931,7 +930,6 @@ main[data-route] {
 import "maplibre-gl/dist/maplibre-gl.css"
 import "@mailwoman/react/styles.css"
 import "./styles/app.css"
-
 import { GeocoderDemo } from "@mailwoman/react/map"
 import { makeDemoRuntime } from "@mailwoman/react/map/fake-runtime"
 import { useMemo } from "react"

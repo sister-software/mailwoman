@@ -68,7 +68,7 @@ GeoJSON). An ALS-to-FST/gazetteer compilation is adaptation. Is that permitted?
   No coordinates ship. The board's coordinates are read locally.
 - Where the corpus came from: OpenAddresses' `asia.zip` (collected 2021-10-20), whose `LICENSE.txt`
   lists every `kr/<province>/provincewide` as `License: Unknown`, `Required attribution: Ministry of
-the Interior`. The source definition (`sources/kr/11/provincewide.json`) points at a contributor
+  the Interior`. The source definition (`sources/kr/11/provincewide.json`) points at a contributor
   upload, `korea-feb2017.zip`, and its `license` field carries only an attribution name. The pull
   request that added it (openaddresses/openaddresses#2688, merged 2017-03-26) says "I did not see a
   clear license". The file inside is the building-entrance point file (`entrc_<region>.txt`).

@@ -92,11 +92,11 @@
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"kysely": "^0.29.5",
+		"kysely": "^0.29.6",
 		"path-ts": "^2.5.0",
 		"read-excel-file": "^9.3.10",
 		"spliterator": "^8.1.0",
-		"type-fest": "^5.9.0",
+		"type-fest": "^5.10.0",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {

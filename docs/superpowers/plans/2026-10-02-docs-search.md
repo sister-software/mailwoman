@@ -1484,8 +1484,8 @@ Expected: PASS, 5 tests.
 
 import { describe, expect, test } from "vitest"
 
-import type { SearchDatabase, SQLValue } from "./database.ts"
 import { fixtureDatabase } from "./database.node.ts"
+import type { SearchDatabase, SQLValue } from "./database.ts"
 import { FIXTURE_RECORDS } from "./fixtures.ts"
 import { search } from "./search.ts"
 
@@ -1650,8 +1650,8 @@ import { beforeAll, describe, expect, test } from "vitest"
 import { extractRecords } from "../../plugins/search-index/extract.ts"
 import { FILL_SQL, SCHEMA_SQL } from "../../plugins/search-index/schema.ts"
 import { insertRecords } from "../../plugins/search-index/write-index.ts"
-import type { SearchDatabase } from "./database.ts"
 import { nodeSearchDatabase } from "./database.node.ts"
+import type { SearchDatabase } from "./database.ts"
 import { search } from "./search.ts"
 
 const BUILD_DIR = resolvePath(import.meta.dirname, "../../build")

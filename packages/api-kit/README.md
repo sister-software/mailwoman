@@ -7,8 +7,8 @@ OpenAPI emit helpers shared by the drop-in packages ([`@mailwoman/libpostal`](..
 **The package supplies shared HTTP helpers.** Domain schemas, routes, and wire interfaces live with the package that owns them, so this package has no `ParseRequestSchema` or `/parse` handler.
 
 ```ts
-import { attachOpenAPIDocs, serveNode } from "@mailwoman/api-kit"
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { attachOpenAPIDocs, serveNode } from "@mailwoman/api-kit"
 
 const app = new OpenAPIHono()
 // ...register routes with app.openapi(...)...

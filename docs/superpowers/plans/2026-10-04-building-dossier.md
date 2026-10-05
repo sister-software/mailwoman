@@ -1817,8 +1817,8 @@ A record is admitted when `admitsAsOf(source, asOf)` is `admitted`; every claim,
 
 import { describe, expect, test } from "vitest"
 
-import { validateRecords } from "#validate"
 import { EMPTY_RECORDS, EXAMPLE_RECORDS } from "#test/fixtures/example-house"
+import { validateRecords } from "#validate"
 
 describe("validateRecords", () => {
 	test("the example records produce warnings only", () => {

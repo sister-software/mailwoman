@@ -22,7 +22,7 @@ adds a distinctive feature: **two-line addresses**. The `street1` /
 - `street1` carries the canonical postal address (`"123 Main St"`).
 - `street2` carries the suite / floor / sub-tenant designator
   (`"Suite C, behind main building"`, `"2nd Floor"`, `"Adjacent to
-pharmacy"`).
+  pharmacy"`).
 
 The adapter joins them with `", "` into a single `street` component so
 the model sees the natural envelope-style surface form humans type into

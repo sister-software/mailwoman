@@ -68,6 +68,10 @@ if [ -n "$STAGED" ]; then
 
 	# Re-stage fixed files so they're included in the commit
 	printf '%s\n' "$STAGED" | tr '\n' '\0' | xargs -0 git add
+
+	# Vale reads the same prose surfaces as full lint, narrowed to files in the index.
+	# It reads working-tree contents, as the other staged checks above do.
+	node config/vale/lint-prose.ts --staged -s docs-vocab -s code
 fi
 
 # CLI-reference freshness (2026-08-05): the docs CI check asserts docs/articles/developers/reference/

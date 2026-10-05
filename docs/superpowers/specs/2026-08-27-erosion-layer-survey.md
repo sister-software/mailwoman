@@ -542,7 +542,7 @@ the same finding the flood survey reached for flood zones.
   `DYNAMICCOAST2_SCOTLAND_SHP_27700.zip` **569,264,779 bytes** and the GeoPackage **577,451,224 bytes**;
   WFS `dc2erosion2100high` `resultType=hits` **40,559**. Its access constraints carry a **stronger
   property-level prohibition than England's**, verbatim: `["Dynamic Coast analyses cannot be used for
-property-level assessments.", "Available under an Open Government Licence: …"]`. The umbrella NCCA
+  property-level assessments.", "Available under an Open Government Licence: …"]`. The umbrella NCCA
   record's own constraint is vaguer ("Variable licencing please see individual record metadata"), so
   the license must be read per layer.
 - **Northern Ireland — NI Coastal Erosion High Level Risk Appraisal**, DAERA/DfI via OpenDataNI, OGL.
@@ -882,11 +882,11 @@ nearest neighbor or to NULL would turn "the source changed" into "there is no va
 The measurements lead to two source-specific parsing rules:
 
 - **Case-fold `def_type`.** The census found `Sheet Piles` beside `Sheet piles` and `Vertical Wall -
-concrete` beside `Vertical Wall - Concrete`. Store the source string and compare case-insensitively;
+  concrete` beside `Vertical Wall - Concrete`. Store the source string and compare case-insensitively;
   do not normalize the stored value.
 - **Do not assume the policy strings match between the medium- and long-term fields.** `No Active
-Intervention / Managed Realignment` in `mt_smp` is spelled `No Active Intervention/Managed
-Realignment` in `lt_smp`.
+  Intervention / Managed Realignment` in `mt_smp` is spelled `No Active Intervention/Managed
+  Realignment` in `lt_smp`.
 
 ### 4.2 Which storage shape each source takes — and the third shape
 

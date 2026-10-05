@@ -215,8 +215,8 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1141.0",
-		"@aws-sdk/lib-storage": "^3.1141.0",
+		"@aws-sdk/client-s3": "^3.1146.0",
+		"@aws-sdk/lib-storage": "^3.1146.0",
 		"@inkjs/ui": "^2.0.0",
 		"@isaacs/cliui": "^9.0.0",
 		"@mailwoman/activity-lexicon": "workspace:*",
@@ -251,14 +251,14 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/variant-aliases": "workspace:*",
 		"@mailwoman/zoning": "workspace:*",
-		"chalk": "^6.0.0",
+		"chalk": "^6.0.1",
 		"d3-scale-chromatic": "^3.1.0",
 		"h3-js": "^4.5.0",
 		"ink": "^7.1.1",
-		"kysely": "^0.29.5",
-		"onnxruntime-node": "^1.29.0",
+		"kysely": "^0.29.6",
+		"onnxruntime-node": "^1.30.0",
 		"path-ts": "^2.5.0",
-		"react": "^19.2.8",
+		"react": "^19.3.0",
 		"spliterator": "^8.1.0",
 		"zod": "^4.5.4",
 		"zx": "^8.8.5"
@@ -268,7 +268,7 @@
 		"@mailwoman/resolver-wof-wasm": "workspace:*"
 	},
 	"peerDependencies": {
-		"@duckdb/node-api": "1.5.3-r.3"
+		"@duckdb/node-api": "1.5.6-r.1"
 	},
 	"peerDependenciesMeta": {
 		"@duckdb/node-api": {

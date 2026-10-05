@@ -53,7 +53,7 @@ training_image = (
         "torch==2.12.0",
         "transformers==5.9.0",
         "onnx==1.22.0",
-        "onnxruntime==1.29.0",
+        "onnxruntime==1.30.0",
         "onnxscript==0.7.2",
         # SentencePiece determines the token IDs used in training. The shipped wasm runtime
         # (@mailwoman/sentencepiece-wasm) is built from 0.2.2. Training also pins 0.2.2 so train

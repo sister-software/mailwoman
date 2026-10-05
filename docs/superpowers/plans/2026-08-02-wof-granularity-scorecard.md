@@ -1042,12 +1042,11 @@ Create `mailwoman/gazetteer-pipeline/granularity-report.test.ts`:
  */
 
 import type { ComponentTag } from "@mailwoman/core/types"
-
 import { describe, expect, it } from "vitest"
 
+import { renderGranularityReport } from "./granularity-report.ts"
 import type { CountryGranularity, RungMeasurement } from "./granularity.ts"
 import { LADDER } from "./granularity.ts"
-import { renderGranularityReport } from "./granularity-report.ts"
 
 function row(
 	country: string,
@@ -1324,8 +1323,8 @@ import { Box, Text } from "ink"
 import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
-import { DEFAULT_COVERAGE_FLOOR, bottomsOutAt, buildGranularityLadder } from "../../gazetteer-pipeline/granularity.ts"
 import { renderGranularityReport } from "../../gazetteer-pipeline/granularity-report.ts"
+import { DEFAULT_COVERAGE_FLOOR, bottomsOutAt, buildGranularityLadder } from "../../gazetteer-pipeline/granularity.ts"
 
 const OptionsSchema = zod.object({
 	out: zod

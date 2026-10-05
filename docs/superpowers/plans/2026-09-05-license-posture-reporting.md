@@ -591,7 +591,7 @@ Expected: the two new tests fail (stderr is empty); the three existing tests pas
 Replace the launcher's final line:
 
 ```ts
-process.exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())
+process.exitCode = await(rootVersionRequest ? printVersion() : dispatchCommand())
 ```
 
 with:

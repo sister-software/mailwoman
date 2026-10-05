@@ -187,7 +187,8 @@ describe("base64url", () => {
  * @author Teffen Ellis, et al.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { createHash, sign as nodeSign, createPrivateKey } from "node:crypto"
+
 import {
 	generateEd25519KeyPair,
 	publicKeyDER,
@@ -195,8 +196,8 @@ import {
 	signEd25519,
 	verifyEd25519,
 } from "@mailwoman/core/crypto/ed25519"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { createHash, sign as nodeSign, createPrivateKey } from "node:crypto"
 import { describe, expect, it } from "vitest"
 
 interface LegacyFixture {
@@ -1066,6 +1067,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
  *   that does not carry the new key (refused), verify a token, and `register` printing the derivation.
  */
 
+import { makeTemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
@@ -1076,7 +1078,6 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/paths"
 import { isProcessError, runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { makeTemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { describe, expect, test } from "vitest"
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
