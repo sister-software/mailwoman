@@ -5,6 +5,7 @@
  */
 
 import { UnitStage } from "@mailwoman/dossier"
+import { sum } from "@mailwoman/route-scenarios"
 import { describe, expect, test } from "vitest"
 
 import { BuildingState, buildingFeatures } from "#buildings"
@@ -32,10 +33,6 @@ import {
 const dossier = districtDossier()
 const options = { unitStage: UnitStage.Completed, extentKind: "example-district" }
 const districts = districtFeatures(dossier, options)
-
-function total(values: readonly number[]): number {
-	return values.reduce((sum, value) => sum + value, 0)
-}
 
 describe("districtFeatures", () => {
 	test("returns one feature per district, then the buildings that one membership of the kind does not place", () => {
@@ -77,17 +74,17 @@ describe("districtFeatures", () => {
 			entry.properties.units.total === "unresolved" ? [] : [entry.properties.units.total]
 		)
 
-		expect(total(districts.features.map((entry) => entry.properties.units.resolved))).toBe(total(resolved))
-		expect(total(resolved)).toBe(90)
+		expect(sum(districts.features.map((entry) => entry.properties.units.resolved))).toBe(sum(resolved))
+		expect(sum(resolved)).toBe(90)
 
-		expect(total(districts.features.map((entry) => entry.properties.units.unresolvedBuildings))).toBe(
+		expect(sum(districts.features.map((entry) => entry.properties.units.unresolvedBuildings))).toBe(
 			buildings.filter((entry) => entry.properties.units.total === "unresolved").length
 		)
 
-		expect(total(districts.features.map((entry) => entry.properties.buildings.length))).toBe(buildings.length)
+		expect(sum(districts.features.map((entry) => entry.properties.buildings.length))).toBe(buildings.length)
 
 		for (const state of Object.values(BuildingState)) {
-			expect(total(districts.features.map((entry) => entry.properties.states[state]))).toBe(
+			expect(sum(districts.features.map((entry) => entry.properties.states[state]))).toBe(
 				buildings.filter((entry) => entry.properties.state === state).length
 			)
 		}
@@ -160,8 +157,8 @@ describe("districtFeatures: the three London buildings by planning authority", (
 
 		const buildings = buildingFeatures(london, { unitStage: UnitStage.Planned }).features
 
-		expect(total(authorities.features.map((entry) => entry.properties.units.resolved))).toBe(275)
-		expect(total(authorities.features.map((entry) => entry.properties.buildings.length))).toBe(buildings.length)
+		expect(sum(authorities.features.map((entry) => entry.properties.units.resolved))).toBe(275)
+		expect(sum(authorities.features.map((entry) => entry.properties.buildings.length))).toBe(buildings.length)
 	})
 
 	test("a cluster's geometry is its building's converted planning grid reference", () => {

@@ -10,6 +10,7 @@
  *   `routeFeatures` and `districtFeatures` for the Example District on its scenario date.
  */
 
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { type EntityID, UnitStage } from "@mailwoman/dossier"
 import {
 	type BuildingFeature,
@@ -32,7 +33,7 @@ import {
 	districtDossierOn,
 	expect,
 	expectRecalculation,
-	literalPattern,
+	PROSE_LIST,
 	recalculate,
 	stateWords,
 	statusWords,
@@ -41,11 +42,6 @@ import {
 } from "../e2e/opportunity.ts"
 
 const EXTENT_KIND = "example-district"
-
-/**
- * Joins words as English prose without a serial comma: `a, b and c`.
- */
-const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
 
 function checkbox(page: Page, label: string) {
 	return page.getByRole("checkbox", { name: label, exact: true })
@@ -68,7 +64,7 @@ async function expectBuildingRows(
 		const selection = selected.has(building) ? "selected " : ""
 
 		await expect(box).toHaveAccessibleDescription(
-			new RegExp(`^${selection}${literalPattern(stateWords(state))} ${literalPattern(unitsWords(units))}$`, "u")
+			new RegExp(`^${selection}${escapeRegExp(stateWords(state))} ${escapeRegExp(unitsWords(units))}$`, "u")
 		)
 
 		await (selected.has(building) ? expect(box).toBeChecked() : expect(box).not.toBeChecked())
