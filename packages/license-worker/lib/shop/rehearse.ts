@@ -13,6 +13,7 @@
  *   Payment Links cannot use a test clock, so the rehearsal creates its own Checkout Session.
  */
 
+import { sleep as defaultSleep } from "@mailwoman/core/utils/sleep"
 import type Stripe from "stripe"
 
 import { type ClaimResponse, parseClaimResponse } from "#claim-interface"
@@ -139,12 +140,6 @@ export interface AdvanceRehearsalInput {
 
 const DEFAULT_POLL_MS = 5000
 const DEFAULT_ATTEMPTS = 60
-
-function defaultSleep(ms: number): Promise<void> {
-	return new Promise((resolve) => {
-		setTimeout(resolve, ms)
-	})
-}
 
 async function readClaim(fetchFn: typeof fetch, workerOrigin: string, session: string): Promise<ClaimResponse> {
 	const response = await fetchFn(`${workerOrigin}/v1/checkout-sessions/${session}/license`, {

@@ -24,6 +24,7 @@
 import { isExecutable } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { spawnProcess } from "@mailwoman/core/process"
+import { sleep } from "@mailwoman/core/utils/sleep"
 import { describe, expect, it } from "vitest"
 
 const ESC = "\u001B"
@@ -55,12 +56,6 @@ async function hasLinuxScript(): Promise<boolean> {
 
 const HAS_LINUX_SCRIPT = await hasLinuxScript()
 
-function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => {
-		setTimeout(resolve, ms)
-	})
-}
-
 /**
  * Run the probe under a pty and feed it `keys`, one write at a time, once the first frame is on screen.
  */
@@ -85,18 +80,18 @@ async function driveInput(keys: string[]): Promise<string> {
 	const deadline = Date.now() + READY_TIMEOUT_MS
 
 	while (!output.includes("READY") && Date.now() < deadline) {
-		await delay(25)
+		await sleep(25)
 	}
 
 	for (const key of keys) {
 		child.stdin.write(key)
-		await delay(KEYSTROKE_GAP_MS)
+		await sleep(KEYSTROKE_GAP_MS)
 	}
 
 	// Escape is the probe's quit.
 	// The kill is the belt-and-braces for a frame that never arrived.
 	child.stdin.write(ESC)
-	await delay(KEYSTROKE_GAP_MS)
+	await sleep(KEYSTROKE_GAP_MS)
 	child.kill("SIGKILL")
 	await exited
 
