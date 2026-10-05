@@ -5,16 +5,18 @@
  *
  *   The as-of projection. Records are admitted by their availability date, so a dossier for a 2022
  *   decision contains what a reader could have known in 2022. Each building section assembles the
- *   admitted identity, position, membership, count, event, authority, window, availability and reading
- *   evidence, and lists each unresolved question beside the record that would resolve it. A building's
- *   availability checks are answered and explained from the same admitted records.
+ *   admitted identity, position, membership, claim, count, event, authority, window, availability and
+ *   reading evidence, and lists each unresolved question beside the record that would resolve it. A
+ *   building's availability checks are answered and explained from the same admitted records.
+ *
+ *   A derived or inferred claim is admitted only when every claim it derives from is admitted.
  *
  *   A layer reading attaches by its subject, then by an admitted membership, and otherwise to no
  *   building. The dossier lists a reading that neither rule places as unplaced, and no section shows it.
  */
 
 import { availabilityAt, type AvailabilityAnswer } from "#availability"
-import { type Claim, claimsFor } from "#claims"
+import { admittedClaims, type Claim, claimsFor } from "#claims"
 import { totalUnits, type UnitStage, type UnitTotal } from "#counts"
 import { classifyReadings, type LayerReading, type LayerReadingClass } from "#coverage"
 import type { Building } from "#entities"
@@ -43,7 +45,7 @@ import {
 	type PositionAnswer,
 	readingBuildings,
 } from "#placement"
-import type { SourceRecordID } from "#sources"
+import type { SourceRecord, SourceRecordID } from "#sources"
 import { admitsAsOf, type ISODate } from "#time"
 import { type DossierRecords, validateRecords, type ValidationIssue } from "#validate"
 
@@ -101,6 +103,12 @@ export interface UnplacedReading {
 export interface Dossier {
 	asOf: ISODate
 	admitted: readonly SourceRecordID[]
+	/**
+	 * The admitted source records, in the order of {@link Dossier.admitted}.
+	 *
+	 * The report dates each claim from its evidence or from these records.
+	 */
+	admittedSources: readonly SourceRecord[]
 	excluded: readonly { id: SourceRecordID; availableAt: ISODate; observedAt?: ISODate }[]
 	undated: readonly SourceRecordID[]
 	buildings: readonly BuildingSection[]
@@ -163,6 +171,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 		throw new Error(`buildDossier: ${errors.map((issue) => `${issue.code}: ${issue.message}`).join(". ")}`)
 
 	const admitted: SourceRecordID[] = []
+	const admittedSources: SourceRecord[] = []
 	const excluded: { id: SourceRecordID; availableAt: ISODate; observedAt?: ISODate }[] = []
 	const undated: SourceRecordID[] = []
 
@@ -171,6 +180,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 
 		if (admission === "admitted") {
 			admitted.push(source.id)
+			admittedSources.push(source)
 		} else if (admission === "excluded") {
 			excluded.push({ id: source.id, availableAt: source.availableAt!, observedAt: source.observedAt })
 		} else {
@@ -190,7 +200,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 	const windows = admittedOnly(records.windows)
 	const availability = admittedOnly(records.availability)
 	const readings = admittedOnly(records.readings)
-	const claims = admittedOnly(records.claims)
+	const claims = admittedClaims(records.claims, admittedSet)
 	const aliases = records.aliases.map((alias) => ({ ...alias, candidates: admittedOnly(alias.candidates) }))
 	const blockers = admittedOnly(records.blockers ?? [])
 	const probabilities = admittedOnly(records.probabilities ?? [])
@@ -232,6 +242,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 	return {
 		asOf: options.asOf,
 		admitted,
+		admittedSources,
 		excluded,
 		undated,
 		buildings: sections,

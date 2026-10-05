@@ -79,6 +79,16 @@ buildings in the five states, two districts, a proposed trench shared by two bui
 duct that a synthetic plant record verifies. Its coordinates lie in the open South Atlantic, where no
 building stands.
 
+The fixture `test/fixtures/london-three-buildings.ts` holds three London residential buildings as one
+dossier dated 2026-10-05, built from the public records that
+`docs/records/research/2026-10-05-uk-three-building-competition-sources.md` lists. Each position is a
+planning row's grid reference converted with `osgb36ToWGS84`. The fixture holds no availability check and
+no provider record, so each building's state follows from its planned unit total. 28-30 Addiscombe Grove
+and 112-132 Cricklewood Lane are in `unknown_coverage`. 130-154, 154a Pentonville Road is in
+`unknown_unit_count`, because its planning row states 119 planned units and its GLA referral states 118.
+Ofcom's area figures are inferred claims and decide no state. `london-three-buildings.full.test.ts`
+recomputes the fixture's flood readings from the host's `flood.db` and skips when the database is absent.
+
 ## Limits
 
 - The interactive map is a later change. Scenario controls that update investment, value, evidence, dates

@@ -20,6 +20,14 @@ import {
 	districtDossier,
 	GARAGE,
 } from "#test/fixtures/example-district"
+import {
+	ADDISCOMBE_GROVE,
+	CRICKLEWOOD_LANE,
+	LONDON_SITES,
+	londonDossier,
+	PENTONVILLE_ROAD,
+	sitePosition,
+} from "#test/fixtures/london-three-buildings"
 
 const dossier = districtDossier()
 const options = { unitStage: UnitStage.Completed, extentKind: "example-district" }
@@ -115,5 +123,54 @@ describe("districtFeatures", () => {
 	test("refuses an extent kind that is empty or holds a colon", () => {
 		expect(() => districtFeatures(dossier, { ...options, extentKind: " " })).toThrow(MapInputError)
 		expect(() => districtFeatures(dossier, { ...options, extentKind: "example-district:north" })).toThrow(/extentKind/)
+	})
+})
+
+describe("districtFeatures: the three London buildings by planning authority", () => {
+	const london = londonDossier()
+	const authorities = districtFeatures(london, { unitStage: UnitStage.Planned, extentKind: "planning-authority" })
+
+	function states(counts: Partial<Record<BuildingState, number>>): Record<BuildingState, number> {
+		return { ...Object.fromEntries(Object.values(BuildingState).map((state) => [state, 0])), ...counts } as Record<
+			BuildingState,
+			number
+		>
+	}
+
+	test("clusters each building under the planning authority its planning row states", () => {
+		expect(
+			authorities.features.map((entry) => [
+				entry.properties.placement,
+				entry.properties.extent,
+				entry.properties.buildings,
+			])
+		).toEqual([
+			["clustered", "planning-authority:Croydon", [ADDISCOMBE_GROVE]],
+			["clustered", "planning-authority:Barnet", [CRICKLEWOOD_LANE]],
+			["clustered", "planning-authority:Islington", [PENTONVILLE_ROAD]],
+		])
+	})
+
+	test("sums only resolved planned totals and counts the unresolved one apart", () => {
+		expect(authorities.features.map((entry) => [entry.properties.units, entry.properties.states])).toEqual([
+			[{ stage: "planned", resolved: 153, unresolvedBuildings: 0 }, states({ [BuildingState.UnknownCoverage]: 1 })],
+			[{ stage: "planned", resolved: 122, unresolvedBuildings: 0 }, states({ [BuildingState.UnknownCoverage]: 1 })],
+			[{ stage: "planned", resolved: 0, unresolvedBuildings: 1 }, states({ [BuildingState.UnknownUnitCount]: 1 })],
+		])
+
+		const buildings = buildingFeatures(london, { unitStage: UnitStage.Planned }).features
+
+		expect(total(authorities.features.map((entry) => entry.properties.units.resolved))).toBe(275)
+		expect(total(authorities.features.map((entry) => entry.properties.buildings.length))).toBe(buildings.length)
+	})
+
+	test("a cluster's geometry is its building's converted planning grid reference", () => {
+		expect(authorities.features.map((entry) => entry.geometry)).toEqual(
+			LONDON_SITES.map((site) => {
+				const { latitude, longitude } = sitePosition(site)
+
+				return { type: "MultiPoint", coordinates: [[longitude, latitude]] }
+			})
+		)
 	})
 })

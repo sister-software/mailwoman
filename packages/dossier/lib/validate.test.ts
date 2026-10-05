@@ -69,6 +69,49 @@ describe("validateRecords", () => {
 	})
 })
 
+describe("validateRecords: the claims a claim derives from", () => {
+	test("the example records' inferred claim derives from a supplied claim", () => {
+		expect(validateRecords(EXAMPLE_RECORDS).map((issue) => issue.code)).not.toContain("unknown_claim")
+	})
+
+	test("a derived or inferred claim that names an identifier no supplied claim has is an unknown_claim error", () => {
+		const issues = validateRecords({
+			...EXAMPLE_RECORDS,
+			claims: [
+				...EXAMPLE_RECORDS.claims,
+				{
+					id: "c3",
+					subject: HOUSE,
+					axis: "engineering",
+					predicate: "riser_route_length_m",
+					value: 40,
+					status: "derived",
+					derivedFrom: ["c1", "c9"],
+					evidence: { source: "survey-2022" },
+				},
+				{
+					id: "c4",
+					subject: HOUSE,
+					axis: "engineering",
+					predicate: "riser_route",
+					value: "unknown",
+					status: "inferred",
+					derivedFrom: ["c8"],
+					explanation: "A riser shown on a plan may not reach the roof.",
+					evidence: { source: "survey-2022" },
+				},
+			],
+		})
+
+		expect(
+			issues.filter((issue) => issue.severity === "error").map((issue) => [issue.code, issue.ref, issue.message])
+		).toEqual([
+			["unknown_claim", "c3", "c3 derives from claim c9, which is not supplied"],
+			["unknown_claim", "c4", "c4 derives from claim c8, which is not supplied"],
+		])
+	})
+})
+
 describe("validateRecords: a layer reading's subject", () => {
 	test("a supplied building is accepted", () => {
 		const issues = validateRecords({ ...EXAMPLE_RECORDS, readings: [readingFor(HOUSE)] })
