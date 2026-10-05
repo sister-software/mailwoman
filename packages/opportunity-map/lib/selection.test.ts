@@ -8,8 +8,6 @@ import { type EntityID, UnitStage } from "@mailwoman/dossier"
 import { prepareScenario, projectCashFlow, UnresolvedUnitTotalError } from "@mailwoman/route-scenarios"
 import { describe, expect, test } from "vitest"
 
-import { MapInputError } from "#inputs"
-import { OverlappingProjectsError, portfolioTotals, selectionEconomics } from "#selection"
 import {
 	BUILDING_A,
 	BUILDING_B,
@@ -18,7 +16,9 @@ import {
 	DISTRICT_SCENARIO,
 	districtDossier,
 	SYNTHETIC,
-} from "#test/fixtures/example-district"
+} from "#example-district"
+import { MapInputError } from "#inputs"
+import { OverlappingProjectsError, portfolioTotals, selectionEconomics } from "#selection"
 
 const dossier = districtDossier()
 

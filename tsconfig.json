@@ -106,6 +106,8 @@
 		{ "path": "./packages/earth/tsconfig.test.json" },
 		{ "path": "./packages/planetary" },
 		{ "path": "./packages/planetary/tsconfig.test.json" },
+		{ "path": "./packages/opportunity-app" },
+		{ "path": "./packages/opportunity-app/tsconfig.test.json" },
 		{ "path": "./packages/license-worker" },
 		{ "path": "./packages/license-worker/tsconfig.test.json" },
 		{ "path": "./packages/map-tui" },

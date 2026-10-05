@@ -7,8 +7,6 @@
 import { InputBasisKind } from "@mailwoman/route-scenarios"
 import { describe, expect, test } from "vitest"
 
-import { MapInputError } from "#inputs"
-import { routeFeatures, type SegmentPath, SegmentStatus } from "#routes"
 import {
 	BUILDING_A,
 	BUILDING_B,
@@ -18,7 +16,9 @@ import {
 	districtDossier,
 	PLANT_RECORD,
 	SEGMENT_PATHS,
-} from "#test/fixtures/example-district"
+} from "#example-district"
+import { MapInputError } from "#inputs"
+import { routeFeatures, type SegmentPath, SegmentStatus } from "#routes"
 
 const dossier = districtDossier()
 

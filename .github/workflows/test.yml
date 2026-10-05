@@ -53,6 +53,7 @@ jobs:
       earth: ${{ steps.select.outputs.earth }}
       react: ${{ steps.select.outputs.react }}
       planetary: ${{ steps.select.outputs.planetary }}
+      opportunity: ${{ steps.select.outputs.opportunity }}
       worker: ${{ steps.select.outputs.worker }}
       smoke: ${{ steps.select.outputs.smoke }}
       lexicon: ${{ steps.select.outputs.lexicon }}
@@ -443,7 +444,7 @@ jobs:
   # suites waited on it.
   react:
     needs: scope
-    if: needs.scope.outputs.react == 'true' || needs.scope.outputs.planetary == 'true' || needs.scope.outputs.worker == 'true'
+    if: needs.scope.outputs.react == 'true' || needs.scope.outputs.planetary == 'true' || needs.scope.outputs.opportunity == 'true' || needs.scope.outputs.worker == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -480,7 +481,7 @@ jobs:
 
       # `--with-deps` installs the Chromium system libraries with sudo, which hosted runners allow.
       - name: Install Playwright chromium (react browser tests)
-        if: needs.scope.outputs.react == 'true' || needs.scope.outputs.planetary == 'true'
+        if: needs.scope.outputs.react == 'true' || needs.scope.outputs.planetary == 'true' || needs.scope.outputs.opportunity == 'true'
         run: yarn workspace @mailwoman/react exec playwright install --with-deps chromium
 
       - name: Test react (browser mode)
@@ -498,6 +499,11 @@ jobs:
         run: yarn workspace @mailwoman/planetary test:browser
         env:
           PLANETARY_BODY: mars
+
+      # The opportunity application's specs build it without a basemap URL, so every request goes to the preview server.
+      - name: Opportunity application browser tests
+        if: needs.scope.outputs.opportunity == 'true'
+        run: yarn workspace @mailwoman/opportunity-app test:browser
 
       # The license worker tests need the Workers runtime, so the root sweep excludes them.
       - name: Test license worker (Workers pool)
@@ -626,7 +632,7 @@ jobs:
           node --input-type=module <<'JS'
           const jobs = JSON.parse(process.env.JOBS);
           const scope = jobs.scope.outputs;
-          for (const key of ['full', 'fast', 'slow', 'earth', 'react', 'planetary', 'worker', 'smoke', 'lexicon', 'docs', 'python']) {
+          for (const key of ['full', 'fast', 'slow', 'earth', 'react', 'planetary', 'opportunity', 'worker', 'smoke', 'lexicon', 'docs', 'python']) {
             if (!['true', 'false'].includes(scope[key])) {
               throw new Error('Scope did not report a boolean for ' + key);
             }
@@ -640,7 +646,7 @@ jobs:
             'unit-fast': scope.fast === 'true',
             'unit-slow': fleet && scope.slow === 'true',
             'lexicon-full': fleet && scope.lexicon === 'true',
-            react: ['react', 'planetary', 'worker'].some(key => scope[key] === 'true'),
+            react: ['react', 'planetary', 'opportunity', 'worker'].some(key => scope[key] === 'true'),
             earth: scope.earth === 'true',
             smoke: fleet && scope.smoke === 'true',
           };

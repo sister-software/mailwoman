@@ -1,0 +1,8 @@
+{
+	// Non-emitting companion to ./tsconfig.json — see ../../tsconfig.test-base.json for why it exists.
+	// The Vite and Playwright configs sit outside lib/ and are checked here, where the tests live.
+	"extends": ["./tsconfig.json", "../../tsconfig.test-base.json"],
+	"include": ["./lib/**/*", "./test/**/*", "./vite.config.ts", "./playwright.config.ts"],
+	"exclude": ["./out/**/*", "./dist/**/*"],
+	"references": [{ "path": "./tsconfig.json" }]
+}

@@ -22,7 +22,7 @@ import {
 	LISTING,
 	PERMIT,
 	SURVEY,
-} from "#test/fixtures/example-district"
+} from "#example-district"
 import {
 	ADDISCOMBE_GROVE,
 	CRICKLEWOOD_LANE,
@@ -65,6 +65,65 @@ describe("buildingFeatures: the five states", () => {
 			},
 			sources: [INSPECTION, LISTING],
 		})
+
+		expect(feature(BUILDING_A).properties.service.available[0]).not.toHaveProperty("extent")
+	})
+
+	test("partial availability over an extent: the reason and the service evidence keep the record's extent", () => {
+		const records = {
+			...DISTRICT_RECORDS,
+			availability: DISTRICT_RECORDS.availability.map((record) => ({ ...record, extent: "example-cell:a" })),
+		}
+
+		const properties = buildingFeatures(districtDossier(records), { unitStage: UnitStage.Completed }).features.find(
+			(entry) => entry.properties.building === BUILDING_A
+		)!.properties
+
+		expect(properties).toMatchObject({
+			state: BuildingState.PartialAvailability,
+			reason:
+				"On 2026-09-30, Example Fiber Co fiber 1 Gbps is recorded as available over example-cell:a. No admitted record establishes service to all 24 completed units.",
+			service: {
+				available: [
+					{ provider: "Example Fiber Co", product: "fiber 1 Gbps", extent: "example-cell:a", sources: [LISTING] },
+				],
+			},
+			sources: [INSPECTION, LISTING],
+		})
+	})
+
+	test("a record for the building and a record over an extent are stated apart, and an ended record states no availability", () => {
+		const [listing] = DISTRICT_RECORDS.availability
+
+		const records = {
+			...DISTRICT_RECORDS,
+			availability: [
+				listing!,
+				{ ...listing!, extent: "example-cell:a", evidence: { source: SURVEY } },
+				{
+					...listing!,
+					from: "2026-01-01",
+					to: "2026-05-31",
+					extent: "example-district:north",
+					evidence: { source: PERMIT },
+				},
+			],
+		}
+
+		const properties = buildingFeatures(districtDossier(records), { unitStage: UnitStage.Completed }).features.find(
+			(entry) => entry.properties.building === BUILDING_A
+		)!.properties
+
+		expect(properties.reason).toBe(
+			"On 2026-09-30, Example Fiber Co fiber 1 Gbps is recorded as available and Example Fiber Co fiber 1 Gbps is recorded as available over example-cell:a. No admitted record establishes service to all 24 completed units."
+		)
+
+		expect(properties.service.available).toEqual([
+			{ provider: "Example Fiber Co", product: "fiber 1 Gbps", sources: [LISTING] },
+			{ provider: "Example Fiber Co", product: "fiber 1 Gbps", extent: "example-cell:a", sources: [SURVEY] },
+		])
+
+		expect(properties.sources).toEqual([INSPECTION, LISTING, SURVEY])
 	})
 
 	test("known unserved: the latest readings of every check establish absence", () => {

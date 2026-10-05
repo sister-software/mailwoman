@@ -701,7 +701,8 @@ function openWindowText(window: ConstructionWindow, date: ISODate): string {
 /**
  * Where an availability record states its provider's service, in the words of a statement.
  *
- * A record with an extent states availability for each premises in that extent.
+ * A record with an extent states availability over that extent, and it does not say
+ * which premises in the extent are served.
  * The statement then gives the extent in place of the building's label.
  */
 function availabilityPlace(record: ProviderAvailability, label: string): string {
