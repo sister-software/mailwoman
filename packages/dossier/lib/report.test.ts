@@ -315,7 +315,7 @@ describe("renderReport: one park point as of 2023-06-30", () => {
 		)
 
 		expect(lines).toContain(
-			"    - fact (fcc-bdc-cable-j22): Charter Communications (Spectrum) cable 1000/35 Mbps (business) is recorded as available at 11 Ocean Parkway on 2022-06-30."
+			"    - fact (fcc-bdc-cable-j22): Charter Communications (Spectrum) cable 1000/35 Mbps (business) is recorded as available over census-block:360470504012000 on 2022-06-30."
 		)
 	})
 })

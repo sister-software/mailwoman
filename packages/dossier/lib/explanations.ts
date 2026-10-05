@@ -699,11 +699,21 @@ function openWindowText(window: ConstructionWindow, date: ISODate): string {
 }
 
 /**
+ * Where an availability record states its provider's service, in the words of a statement.
+ *
+ * A record with an extent states availability for each premises in that extent.
+ * The statement then gives the extent in place of the building's label.
+ */
+function availabilityPlace(record: ProviderAvailability, label: string): string {
+	return record.extent ? `over ${record.extent}` : `at ${label}`
+}
+
+/**
  * Installation is supported by a construction window of the building that had
  * not closed on the check's date.
  *
  * It conflicts with a window that had closed, a completed unit count, and any
- * provider's availability at the building on that date.
+ * provider's availability recorded for the building on that date.
  */
 function installationFinding(context: RuleContext): Finding {
 	const { check, input, label, date } = context
@@ -751,7 +761,7 @@ function installationFinding(context: RuleContext): Finding {
 			...served.map((record) =>
 				statement(
 					StatementKind.Fact,
-					`${record.provider} ${record.product} is recorded as available at ${label} on ${date}.`,
+					`${record.provider} ${record.product} is recorded as available ${availabilityPlace(record, label)} on ${date}.`,
 					[record.evidence.source]
 				)
 			),
