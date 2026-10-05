@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Validation of supplied records before a dossier is built. An error is a record the dossier cannot use
- *   (a dangling reference, a duplicate id, a malformed date, a reading whose subject is not a building).
- *   A warning is a record the dossier will use with a stated limit (a missing availability date, a
- *   missing event date, unknown signing authority).
+ *   (a dangling reference, a duplicate id, a malformed date, a reading or check whose subject is not a
+ *   building, a probability outside 0 to 1 or without a basis, a negative duration). A warning is a
+ *   record the dossier will use with a stated limit (a missing availability date, a missing event date,
+ *   unknown signing authority).
  */
 
 import type { ProviderAvailability } from "#availability"
@@ -15,6 +16,7 @@ import type { UnitCount } from "#counts"
 import type { LayerReading } from "#coverage"
 import type { Entity } from "#entities"
 import type { CommercialEvent, ConstructionWindow, OrganizationRelation } from "#events"
+import type { AvailabilityCheck, BlockerObservation, ExplanationProbability, OperatorDisposition } from "#explanations"
 import type { FilingRow } from "#filings"
 import type { EntityKind } from "#identifiers"
 import type { Alias, Containment } from "#links"
@@ -34,6 +36,14 @@ export interface DossierRecords {
 	availability: readonly ProviderAvailability[]
 	readings: readonly LayerReading[]
 	filings: readonly FilingRow[]
+	/**
+	 * The availability checks the dossier explains.
+	 * A check is a question and cites no source.
+	 */
+	checks?: readonly AvailabilityCheck[]
+	blockers?: readonly BlockerObservation[]
+	probabilities?: readonly ExplanationProbability[]
+	dispositions?: readonly OperatorDisposition[]
 }
 
 export interface ValidationIssue {
@@ -198,28 +208,115 @@ export function validateRecords(records: DossierRecords): readonly ValidationIss
 		checkDate(`availability ${index}`, "to", record.to)
 	})
 
+	const checkBuilding = (ref: string, what: string, subject: string) => {
+		const kind = entities.get(subject)
+
+		if (kind === undefined) {
+			checkEntity(ref, subject)
+		} else if (kind !== "building") {
+			issues.push({
+				severity: "error",
+				code: "subject_not_building",
+				message: `${ref} has subject ${subject}, a ${kind}. A ${what}'s subject must be a building`,
+				ref,
+			})
+		}
+	}
+
 	records.readings.forEach((reading, index) => {
 		const ref = `reading ${index}`
 
 		checkSource(ref, reading.evidence.source)
 
-		if (reading.subject === undefined) return
+		if (reading.subject !== undefined) {
+			checkBuilding(ref, "reading", reading.subject)
+		}
+	})
 
-		const kind = entities.get(reading.subject)
+	records.filings.forEach((row, index) => checkSource(`filing ${index}`, row.evidence.source))
 
-		if (kind === undefined) {
-			checkEntity(ref, reading.subject)
-		} else if (kind !== "building") {
+	const checks = new Set<string>()
+
+	for (const check of records.checks ?? []) {
+		if (checks.has(check.id)) {
 			issues.push({
 				severity: "error",
-				code: "subject_not_building",
-				message: `${ref} has subject ${reading.subject}, a ${kind}. A reading's subject must be a building`,
+				code: "duplicate_check",
+				message: `check ${check.id} appears twice`,
+				ref: check.id,
+			})
+		}
+
+		checks.add(check.id)
+		checkBuilding(check.id, "check", check.subject)
+	}
+
+	const checkCheck = (ref: string, check: string) => {
+		if (!checks.has(check)) {
+			issues.push({
+				severity: "error",
+				code: "unknown_check",
+				message: `${ref} refers to check ${check}, which is not supplied`,
+				ref,
+			})
+		}
+	}
+
+	const checkDuration = (ref: string, field: string, value: number | undefined) => {
+		if (value !== undefined && !(value >= 0)) {
+			issues.push({
+				severity: "error",
+				code: "negative_duration",
+				message: `${ref} ${field} ${value} is not a duration of zero or more minutes`,
+				ref,
+			})
+		}
+	}
+
+	for (const blocker of records.blockers ?? []) {
+		checkSource(blocker.id, blocker.evidence.source)
+		checkEntity(blocker.id, blocker.subject)
+	}
+
+	records.probabilities?.forEach((probability, index) => {
+		const ref = `probability ${index}`
+
+		checkSource(ref, probability.evidence.source)
+		checkCheck(ref, probability.check)
+
+		if (!(probability.probability >= 0 && probability.probability <= 1)) {
+			issues.push({
+				severity: "error",
+				code: "probability_out_of_range",
+				message: `${ref} gives ${probability.probability}, which is not a probability from 0 to 1`,
+				ref,
+			})
+		}
+
+		if (!probability.basis.trim()) {
+			issues.push({
+				severity: "error",
+				code: "probability_without_basis",
+				message: `${ref} states no basis for its probability`,
 				ref,
 			})
 		}
 	})
 
-	records.filings.forEach((row, index) => checkSource(`filing ${index}`, row.evidence.source))
+	for (const disposition of records.dispositions ?? []) {
+		const ref = disposition.id
+
+		checkSource(ref, disposition.evidence.source)
+		checkCheck(ref, disposition.check)
+		checkDate(ref, "decidedAt", disposition.decidedAt)
+
+		if (disposition.outcome) {
+			checkSource(ref, disposition.outcome.evidence.source)
+			checkDate(ref, "outcome.at", disposition.outcome.at)
+			checkDuration(ref, "outcome.minutesSpent", disposition.outcome.minutesSpent)
+			checkDuration(ref, "outcome.baselineMinutes", disposition.outcome.baselineMinutes)
+		}
+	}
 
 	return issues
 }

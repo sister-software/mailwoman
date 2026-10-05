@@ -5,7 +5,7 @@
  *
  *   Building opportunity dossiers: sourced claims over parcels, buildings, entrances and units,
  *   projected for an explicit as-of date with every unresolved question and the record that would
- *   resolve it.
+ *   resolve it, and the competing explanations for each failed availability check.
  */
 
 export * from "#identifiers"
@@ -19,6 +19,8 @@ export * from "#events"
 export * from "#availability"
 export * from "#coverage"
 export * from "#filings"
+export * from "#explanations"
+export * from "#outcomes"
 export * from "#validate"
 export * from "#dossier"
 export * from "#report"

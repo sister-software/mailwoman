@@ -6,7 +6,8 @@
  *   The as-of projection. Records are admitted by their availability date, so a dossier for a 2022
  *   decision contains what a reader could have known in 2022. Each building section assembles the
  *   admitted identity, count, event, authority, window, availability and reading evidence, and lists each
- *   unresolved question beside the record that would resolve it.
+ *   unresolved question beside the record that would resolve it. A building's availability checks are
+ *   answered and explained from the same admitted records.
  */
 
 import { availabilityAt, type AvailabilityAnswer } from "#availability"
@@ -21,8 +22,17 @@ import {
 	permissionCovers,
 	signingAuthorityFor,
 } from "#events"
+import {
+	type AvailabilityCheck,
+	type BlockerObservation,
+	type CheckResult,
+	explainCheck,
+	type ExplanationProbability,
+	type OperatorDisposition,
+} from "#explanations"
 import type { EntityID } from "#identifiers"
 import { type AliasResolution, type Containment, entrancesOf, resolveAlias } from "#links"
+import { type OutcomeReport, reportOutcomes } from "#outcomes"
 import type { SourceRecordID } from "#sources"
 import { admitsAsOf, type ISODate } from "#time"
 import { type DossierRecords, validateRecords, type ValidationIssue } from "#validate"
@@ -50,6 +60,10 @@ export interface BuildingSection {
 	readings: readonly { layer: string; extent: string; surveyedAt?: ISODate; class: LayerReadingClass }[]
 	claims: readonly Claim[]
 	unresolved: readonly Unresolved[]
+	/**
+	 * The building's availability checks, each answered and, when it fails, explained.
+	 */
+	checks: readonly CheckResult[]
 }
 
 export interface Dossier {
@@ -60,6 +74,10 @@ export interface Dossier {
 	buildings: readonly BuildingSection[]
 	unresolved: readonly Unresolved[]
 	issues: readonly ValidationIssue[]
+	/**
+	 * Blocker accuracy and time saved over the admitted operator dispositions.
+	 */
+	outcomes: OutcomeReport
 }
 
 const STAGES: readonly UnitStage[] = ["planned", "completed", "occupied"]
@@ -101,6 +119,16 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 	const readings = admittedOnly(records.readings)
 	const claims = admittedOnly(records.claims)
 	const aliases = records.aliases.map((alias) => ({ ...alias, candidates: admittedOnly(alias.candidates) }))
+	const blockers = admittedOnly(records.blockers ?? [])
+	const probabilities = admittedOnly(records.probabilities ?? [])
+
+	// A disposition and its outcome cite separate records, so a dossier dated between
+	// the two shows the decision with its outcome pending.
+	const dispositions = admittedOnly(records.dispositions ?? []).map((disposition) =>
+		disposition.outcome && !admittedSet.has(disposition.outcome.evidence.source)
+			? { ...disposition, outcome: undefined }
+			: disposition
+	)
 
 	const buildings = records.entities.filter((entity): entity is Building => entity.kind === "building")
 
@@ -115,6 +143,10 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 			readings,
 			claims,
 			aliases,
+			checks: records.checks ?? [],
+			blockers,
+			probabilities,
+			dispositions,
 		})
 	)
 
@@ -126,6 +158,7 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 		buildings: sections,
 		unresolved: sections.flatMap((section) => section.unresolved),
 		issues,
+		outcomes: reportOutcomes(dispositions),
 	}
 }
 
@@ -139,6 +172,14 @@ interface Admitted {
 	readings: DossierRecords["readings"]
 	claims: readonly Claim[]
 	aliases: DossierRecords["aliases"]
+	/**
+	 * Every supplied check.
+	 * A check is a question and cites no record to admit it by.
+	 */
+	checks: readonly AvailabilityCheck[]
+	blockers: readonly BlockerObservation[]
+	probabilities: readonly ExplanationProbability[]
+	dispositions: readonly OperatorDisposition[]
 }
 
 function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): BuildingSection {
@@ -265,6 +306,26 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 		return { layer: first!.layer, extent: first!.extent, surveyedAt: first!.surveyedAt, class: classified.class }
 	})
 
+	const checks = admitted.checks
+		.filter((check) => check.subject === building.id)
+		.map((check) =>
+			explainCheck(check, {
+				asOf,
+				building,
+				entrances: entrances.map((link) => link.child),
+				aliases,
+				readings: admitted.readings,
+				windows: admitted.windows,
+				counts: admitted.counts,
+				availability: admitted.availability,
+				events: admitted.events,
+				relations: admitted.relations,
+				blockers: admitted.blockers,
+				probabilities: admitted.probabilities,
+				dispositions: admitted.dispositions,
+			})
+		)
+
 	return {
 		building,
 		entrances,
@@ -278,5 +339,6 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 		readings,
 		claims: claimsFor(building.id, admitted.claims),
 		unresolved,
+		checks,
 	}
 }

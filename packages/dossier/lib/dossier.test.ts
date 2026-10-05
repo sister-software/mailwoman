@@ -35,8 +35,8 @@ describe("buildDossier as of 2022-06-30", () => {
 	const dossier = buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" })
 	const house = dossier.buildings.find((section) => section.building.id === HOUSE)!
 
-	test("admits the permit, inspection and survey. Excludes the 2023 statement. Lists the undated listing", () => {
-		expect(dossier.admitted).toEqual(["permit-2021", "inspection-2022", "survey-2022"])
+	test("admits the permit, inspection, survey and operator log. Excludes the 2023 statement. Lists the undated listing", () => {
+		expect(dossier.admitted).toEqual(["permit-2021", "inspection-2022", "survey-2022", "operator-log-2022"])
 		expect(dossier.excluded).toEqual([{ id: "manager-2023", availableAt: "2023-02-01", observedAt: "2023-02-01" }])
 		expect(dossier.undated).toEqual(["undated-listing"])
 	})
@@ -115,10 +115,12 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 		expect(EXAMPLE_RECORDS.readings.every((reading) => reading.subject === undefined)).toBe(true)
 
 		for (const building of [HOUSE, ANNEX]) {
-			expect(sectionOf(dossier, building).readings.map((reading) => reading.layer)).toEqual([
-				"ducts",
-				"cabinets",
-				"poles",
+			expect(sectionOf(dossier, building).readings.map((reading) => [reading.layer, reading.extent])).toEqual([
+				["ducts", "cell-1"],
+				["cabinets", "cell-1"],
+				["poles", "cell-1"],
+				["cable", "cell-1"],
+				["cable", "district-1"],
 			])
 		}
 	})
@@ -165,6 +167,25 @@ describe("buildDossier: the building a layer reading attaches to", () => {
 		expect(() =>
 			buildDossier({ ...EXAMPLE_RECORDS, readings: [cell2Reading({ subject: NORTH })] }, { asOf: "2022-06-30" })
 		).toThrow(/subject_not_building/)
+	})
+})
+
+describe("buildDossier: operator outcomes", () => {
+	test("reports blocker accuracy and time saved over the admitted dispositions", () => {
+		expect(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }).outcomes).toEqual({
+			dispositions: 1,
+			pending: 0,
+			blockerAccuracy: { status: "measured", held: 1, denominator: 1, sources: ["operator-log-2022"] },
+			timeSaved: { status: "measured", minutes: 60, denominator: 1, sources: ["operator-log-2022"] },
+		})
+	})
+
+	test("a disposition whose record is not yet available leaves both measures unknown", () => {
+		expect(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-20" }).outcomes).toMatchObject({
+			dispositions: 0,
+			blockerAccuracy: { status: "unknown" },
+			timeSaved: { status: "unknown" },
+		})
 	})
 })
 
