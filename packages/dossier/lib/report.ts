@@ -6,12 +6,137 @@
  *   The report an operator reads. Every section states what the admitted records support and lists each
  *   unresolved question with the record that would resolve it. Wording rules: an unresolved total is
  *   written as unresolved with its conflicting values. A source-present empty reading is written as the
- *   source having looked, with absence unknown.
+ *   source having looked, with absence unknown. In the serviceability section every statement line
+ *   opens with its kind, so a fact, a deduction, an estimate, a hypothesis and a decision never read alike.
  */
 
 import type { UnitTotal } from "#counts"
 import { LayerReadingClass } from "#coverage"
 import type { Dossier } from "#dossier"
+import {
+	type CheckResult,
+	ExplanationKind,
+	type ExplanationRanking,
+	type ServiceabilityException,
+	type Statement,
+} from "#explanations"
+import { outcomeStatements } from "#outcomes"
+
+/**
+ * Joins words as English prose without a serial comma: `a, b and c`.
+ */
+const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
+
+function statementLine(statement: Statement, indent = ""): string {
+	const sources = statement.sources.length ? ` (${statement.sources.join(", ")})` : ""
+
+	return `${indent}- ${statement.kind}${sources}: ${statement.text}`
+}
+
+function rankingLine(ranking: ExplanationRanking): string {
+	switch (ranking.kind) {
+		case "ranked":
+			return `Ranking by documented probability: ${ranking.order.map((entry) => `${entry.explanation} (${entry.probability})`).join(", ")}.`
+		case "scenarios": {
+			const named = `The ${PROSE_LIST.format(ranking.undocumented)} ${ranking.undocumented.length === 1 ? "explanation has" : "explanations have"}`
+
+			return `Ranking: none. ${named} no documented probability, so each explanation states the next action if it holds and if it fails.`
+		}
+		case "none":
+			return "Ranking: none. No explanation has a supporting record."
+	}
+}
+
+/**
+ * The lines for one exception.
+ *
+ * A resolved exception keeps its explanations and their investigations as a record
+ * of what the evidence supported on its date.
+ * It prints no next action, because no decision waits on it.
+ */
+function exceptionLines(exception: ServiceabilityException): string[] {
+	const resolved = exception.resolution.length > 0
+	const where = exception.vintage ? `at the ${exception.vintage} readings` : `as of ${exception.checkedAt}`
+	const lines = [`Exception ${where}, ${resolved ? "resolved" : "open"}.`, ""]
+
+	// An open exception's readings are the check's answer.
+	// The report has already printed them.
+	if (resolved) {
+		lines.push(
+			...[...exception.facts, ...exception.deductions, ...exception.resolution].map((entry) => statementLine(entry)),
+			""
+		)
+	}
+
+	lines.push(
+		`Explanations checked: ${PROSE_LIST.format(Object.values(ExplanationKind))}.`,
+		`Checked without a supporting record: ${PROSE_LIST.format(exception.unsupported) || "none"}.`,
+		""
+	)
+
+	for (const explanation of exception.explanations) {
+		lines.push(`- explanation: ${explanation.kind}`, statementLine(explanation.hypothesis, "  "), "  - supporting:")
+		lines.push(...explanation.supporting.map((entry) => statementLine(entry, "    ")))
+
+		if (explanation.conflicting.length) {
+			lines.push("  - conflicting:", ...explanation.conflicting.map((entry) => statementLine(entry, "    ")))
+		} else {
+			lines.push("  - conflicting: none on record")
+		}
+
+		lines.push(
+			...explanation.missing.map((record) => `  - missing: ${record}`),
+			`  - investigate: ${explanation.investigation.action}`
+		)
+
+		if (!resolved) {
+			lines.push(
+				`  - if it holds: ${explanation.investigation.ifHolds}`,
+				`  - if it fails: ${explanation.investigation.ifFails}`
+			)
+		}
+	}
+
+	if (exception.explanations.length) {
+		lines.push("")
+	}
+
+	lines.push(
+		resolved
+			? "Ranking: none. The exception is resolved, so no next action depends on its explanations."
+			: rankingLine(exception.ranking),
+		""
+	)
+
+	if (exception.estimates.length) {
+		lines.push(...exception.estimates.map((entry) => statementLine(entry)), "")
+	}
+
+	return lines
+}
+
+function checkLines(result: CheckResult, asOf: string): string[] {
+	const lines = [
+		`#### Check ${result.check.id}: ${result.check.layer} keyed at ${result.check.extent}`,
+		"",
+		`Answer as of ${asOf}:`,
+		"",
+		...result.answer.map((entry) => statementLine(entry)),
+		"",
+	]
+
+	if (result.exception) {
+		lines.push(...exceptionLines(result.exception))
+	}
+
+	if (result.decisions.length) {
+		lines.push("Decisions and outcomes:", "", ...result.decisions.map((entry) => statementLine(entry)), "")
+	} else {
+		lines.push("Decisions and outcomes: none on record.", "")
+	}
+
+	return lines
+}
 
 function totalLine(stage: string, total: UnitTotal): string {
 	if (total.status === "resolved")
@@ -128,6 +253,23 @@ export function renderReport(dossier: Dossier): string {
 		}
 
 		lines.push("")
+
+		if (section.checks.length) {
+			lines.push("### Serviceability checks", "")
+
+			for (const result of section.checks) {
+				lines.push(...checkLines(result, dossier.asOf))
+			}
+		}
+	}
+
+	if (dossier.buildings.some((section) => section.checks.length)) {
+		lines.push(
+			"## Operator outcomes",
+			"",
+			...outcomeStatements(dossier.outcomes).map((entry) => statementLine(entry)),
+			""
+		)
 	}
 
 	return lines.join("\n")

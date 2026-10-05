@@ -7,8 +7,20 @@
 import { describe, expect, test } from "vitest"
 
 import { buildDossier } from "#dossier"
+import { StatementKind } from "#explanations"
 import { renderReport } from "#report"
 import { EXAMPLE_RECORDS } from "#test/fixtures/example-house"
+import { OPP_RECORDS } from "#test/fixtures/one-park-point"
+
+/**
+ * The lines of one building's serviceability section, from its heading to the next building.
+ */
+function serviceabilityLines(report: string, building: string): string[] {
+	const section = report.split(`## ${building}\n`)[1]!.split("\n## ")[0]!
+
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one rendered report section, already in memory and under 100 lines
+	return section.split("### Serviceability checks\n")[1]!.split("\n")
+}
 
 describe("renderReport", () => {
 	const report = renderReport(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }))
@@ -31,5 +43,137 @@ describe("renderReport", () => {
 
 	test("lists each unresolved question with the record that would resolve it", () => {
 		expect(report).toMatch(/signing authority[\s\S]*would resolve/)
+	})
+})
+
+describe("renderReport: the serviceability section", () => {
+	const report = renderReport(buildDossier(EXAMPLE_RECORDS, { asOf: "2022-06-30" }))
+	const lines = serviceabilityLines(report, "Example House")
+
+	test("heads each check with its layer and the extent at which the source keys its lookup", () => {
+		expect(lines).toContain("#### Check house-cable: cable keyed at cell-1")
+	})
+
+	test("prints the kind of every statement at the start of its line", () => {
+		const kindLabel = new RegExp(`^\\s*- (${Object.values(StatementKind).join("|")})( \\([^)]*\\))?: `)
+		const structureLabel = /^\s*- (explanation|supporting|conflicting|missing|investigate|if it holds|if it fails):/
+		const items = lines.filter((line) => /^\s*- /.test(line))
+
+		expect(items.filter((line) => !kindLabel.test(line) && !structureLabel.test(line))).toEqual([])
+
+		const kinds = new Set(items.flatMap((line) => kindLabel.exec(line)?.[1] ?? []))
+
+		expect([...kinds].toSorted()).toEqual(["decision", "deduction", "fact", "hypothesis"])
+	})
+
+	test("shows scenarios rather than a ranking when no probability is documented", () => {
+		expect(lines).toContain(
+			"Ranking: none. The access, installation and route explanations have no documented probability, so each explanation states the next action if it holds and if it fails."
+		)
+
+		expect(lines.filter((line) => line.startsWith("  - if it holds: "))).toHaveLength(3)
+		expect(lines.filter((line) => line.startsWith("  - if it fails: "))).toHaveLength(3)
+	})
+
+	test("prints a documented ranking and its estimates", () => {
+		const ranked = renderReport(
+			buildDossier(
+				{
+					...EXAMPLE_RECORDS,
+					probabilities: (["access", "installation", "route"] as const).map((kind, index) => ({
+						check: "house-cable",
+						kind,
+						probability: [0.5, 0.2, 0.3][index]!,
+						basis: "a synthetic study",
+						evidence: { source: "operator-log-2022" },
+					})),
+				},
+				{ asOf: "2022-06-30" }
+			)
+		)
+
+		const rankedLines = serviceabilityLines(ranked, "Example House")
+
+		expect(rankedLines).toContain("Ranking by documented probability: access (0.5), route (0.3), installation (0.2).")
+
+		expect(rankedLines).toContain(
+			"- estimate (operator-log-2022): The probability that the route explanation holds is 0.3 (a synthetic study)."
+		)
+	})
+
+	test("prints the operator's decision and its outcome", () => {
+		expect(lines).toContain(
+			'- decision (operator-log-2022): On 2022-06-01 the operator decided to investigate access: "Ask Example Management Co whether the provider holds permission for the south entrance".'
+		)
+	})
+
+	test("reports blocker accuracy and time saved with their denominators", () => {
+		const outcomes = report.split("## Operator outcomes\n")[1]!
+
+		expect(outcomes).toContain(
+			"- estimate (operator-log-2022): The investigated explanation held in 1 of 1 dispositions with a recorded outcome."
+		)
+
+		expect(outcomes).toContain(
+			"- estimate (operator-log-2022): Against the operator's baselines, the investigations saved 60 minutes over 1 outcome that records both times."
+		)
+	})
+
+	test("a building without a check has no serviceability section", () => {
+		expect(report.split("## Example Annex\n")[1]).not.toContain("### Serviceability checks")
+	})
+})
+
+describe("renderReport: one park point as of 2023-06-30", () => {
+	const lines = serviceabilityLines(renderReport(buildDossier(OPP_RECORDS, { asOf: "2023-06-30" })), "11 Ocean Parkway")
+
+	test("states the open exception and the two competing hypotheses", () => {
+		expect(lines).toContain("Exception at the 2022-06-30 readings, open.")
+
+		expect(lines).toContain(
+			"  - hypothesis: 11 Ocean Parkway may not have been ready to receive service on 2022-06-30."
+		)
+
+		expect(lines).toContain(
+			"  - hypothesis: The fcc-bdc-fttp network may not have reached census-block:360470504012000 on 2022-06-30."
+		)
+
+		expect(lines).toContain("Checked without a supporting record: identity, access and capacity.")
+	})
+
+	test("cites each supporting and conflicting record", () => {
+		expect(lines).toContain(
+			"    - fact (fcc-bdc-fttp-j22): The fcc-bdc-fttp reading over census-tract:36047050401 as of 2022-06-30 holds 70 records."
+		)
+
+		expect(lines).toContain(
+			"    - fact (fcc-bdc-cable-j22): Charter Communications (Spectrum) cable 1000/35 Mbps (census block, business) is recorded as available at 11 Ocean Parkway on 2022-06-30."
+		)
+	})
+})
+
+describe("renderReport: one park point as of 2026-10-05", () => {
+	const lines = serviceabilityLines(renderReport(buildDossier(OPP_RECORDS, { asOf: "2026-10-05" })), "11 Ocean Parkway")
+
+	test("states the resolved exception with the readings it failed on and the record that resolved it", () => {
+		expect(lines).toContain("Exception at the 2022-06-30 readings, resolved.")
+
+		expect(lines).toContain(
+			"- fact (fcc-bdc-fttp-j22): The fcc-bdc-fttp reading over census-block:360470504012000 as of 2022-06-30 holds 0 records on a source_present basis."
+		)
+
+		expect(lines).toContain(
+			"- deduction (fcc-bdc-fttp-d25): The fcc-bdc-fttp readings over census-block:360470504012000 from 2025-12-31 hold records, so the check passes from 2025-12-31 and resolves the exception recorded on 2022-06-30. A reading dated 2025-12-31 does not establish whether any explanation held on 2022-06-30."
+		)
+	})
+
+	test("keeps the hypotheses and their investigations and prints no next action", () => {
+		expect(lines).toContain(
+			"  - hypothesis: 11 Ocean Parkway may not have been ready to receive service on 2022-06-30."
+		)
+
+		expect(lines).toContainEqual(expect.stringMatching(/^ {2}- investigate: /))
+		expect(lines.filter((line) => /^ {2}- if it (holds|fails): /.test(line))).toEqual([])
+		expect(lines).toContain("Ranking: none. The exception is resolved, so no next action depends on its explanations.")
 	})
 })

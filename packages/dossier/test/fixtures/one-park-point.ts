@@ -34,6 +34,10 @@
  *
  *   Claims in a dossier are scoped to record fields dated on or before the cutoff, so a row retrieved
  *   today does not leak its later statuses into an earlier `asOf`.
+ *
+ *   The fiber check is the demonstration's question rather than a public record. It asks whether the
+ *   FCC's fiber-to-the-premises filings hold service at the building's census block, the extent at
+ *   which the readings above are keyed.
  */
 
 import type { ProviderAvailability } from "#availability"
@@ -42,6 +46,7 @@ import { type UnitCount, UnitStage } from "#counts"
 import type { LayerReading } from "#coverage"
 import type { Entity } from "#entities"
 import type { OrganizationRelation, ConstructionWindow } from "#events"
+import type { AvailabilityCheck } from "#explanations"
 import { entityID } from "#identifiers"
 import { type Alias, type Containment, ContainmentRelation } from "#links"
 import type { SourceRecord } from "#sources"
@@ -342,6 +347,13 @@ const OPP_AVAILABILITY: ProviderAvailability[] = [
 	},
 ]
 
+const OPP_FIBER_CHECK: AvailabilityCheck = {
+	id: "opp-fttp-block",
+	subject: OPP_BUILDING,
+	layer: "fcc-bdc-fttp",
+	extent: "census-block:360470504012000",
+}
+
 export const OPP_RECORDS: DossierRecords = {
 	sources: OPP_SOURCES,
 	entities: OPP_ENTITIES,
@@ -355,4 +367,5 @@ export const OPP_RECORDS: DossierRecords = {
 	availability: OPP_AVAILABILITY,
 	readings: OPP_READINGS,
 	filings: [],
+	checks: [OPP_FIBER_CHECK],
 }

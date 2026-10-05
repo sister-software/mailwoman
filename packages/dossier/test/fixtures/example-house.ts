@@ -6,6 +6,9 @@
  *   The fictional Example House, Example Annex and Example Parcel that every scenario in the spec uses.
  *   Dates are chosen so that an `asOf` of 2022-06-30 admits the permit and the first inspection and
  *   excludes the later manager statement.
+ *
+ *   The cable check on Example House fails at a source-present empty reading, and the operator's log
+ *   records one investigation of it with its outcome.
  */
 
 import type { ProviderAvailability } from "#availability"
@@ -20,6 +23,7 @@ import {
 	type OrganizationRelation,
 	OrganizationRole,
 } from "#events"
+import { type AvailabilityCheck, ExplanationKind, type OperatorDisposition } from "#explanations"
 import type { FilingRow } from "#filings"
 import { entityID } from "#identifiers"
 import { type Alias, type Containment, ContainmentRelation } from "#links"
@@ -66,6 +70,14 @@ export const SOURCES: SourceRecord[] = [
 		retrievedAt: "2026-10-04",
 	},
 	{ id: "undated-listing", publisher: "Example Listings", title: "Rental listing", retrievedAt: "2026-10-04" },
+	{
+		id: "operator-log-2022",
+		publisher: "Example Operator",
+		title: "Investigation log",
+		observedAt: "2022-06-20",
+		availableAt: "2022-06-25",
+		retrievedAt: "2026-10-04",
+	},
 ]
 
 export const ENTITIES: Entity[] = [
@@ -288,12 +300,59 @@ export const POSITIVE_READING: LayerReading = {
 	evidence: { source: "undated-listing" },
 }
 
+/**
+ * The cable reading that fails {@link CABLE_CHECK}: the source looked at cell-1 and found no record.
+ */
+const CABLE_EMPTY_READING: LayerReading = {
+	layer: "cable",
+	extent: "cell-1",
+	basis: "source_present",
+	surveyedAt: "2022-03-15",
+	records: 0,
+	evidence: surveyEvidence,
+}
+
+/**
+ * Cable records in the surrounding district on the same survey.
+ */
+const CABLE_DISTRICT_READING: LayerReading = {
+	layer: "cable",
+	extent: "district-1",
+	basis: "source_present",
+	surveyedAt: "2022-03-15",
+	records: 4,
+	evidence: surveyEvidence,
+}
+
 const READINGS: LayerReading[] = [
 	MISSING_READING,
 	SURVEYED_EMPTY_READING,
 	SOURCE_PRESENT_EMPTY_READING,
 	POSITIVE_READING,
+	CABLE_EMPTY_READING,
+	CABLE_DISTRICT_READING,
 ]
+
+/**
+ * Whether the cable layer's source holds service at cell-1, where it keys Example House.
+ */
+export const CABLE_CHECK: AvailabilityCheck = { id: "house-cable", subject: HOUSE, layer: "cable", extent: "cell-1" }
+
+export const ACCESS_DISPOSITION: OperatorDisposition = {
+	id: "d1",
+	check: CABLE_CHECK.id,
+	investigated: ExplanationKind.Access,
+	decision: "Ask Example Management Co whether the provider holds permission for the south entrance",
+	decidedAt: "2022-06-01",
+	evidence: { source: "operator-log-2022" },
+	outcome: {
+		held: true,
+		at: "2022-06-20",
+		minutesSpent: 30,
+		baselineMinutes: 90,
+		evidence: { source: "operator-log-2022" },
+	},
+}
 
 export const FILING_ROWS: FilingRow[] = [
 	{
@@ -325,6 +384,8 @@ export const EXAMPLE_RECORDS: DossierRecords = {
 	availability: AVAILABILITY,
 	readings: READINGS,
 	filings: FILING_ROWS,
+	checks: [CABLE_CHECK],
+	dispositions: [ACCESS_DISPOSITION],
 }
 
 export const EMPTY_RECORDS: DossierRecords = {
