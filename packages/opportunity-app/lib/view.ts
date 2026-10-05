@@ -5,7 +5,7 @@
  *
  *   Everything the page shows for one set of control values and one selection, computed by the model. The
  *   collections come from `buildingFeatures`, `districtFeatures` and `routeFeatures`, the figures from
- *   `selectionEconomics`, and the report text from `renderReport` and `renderScenarioReport`. Every figure on the
+ *   `selectionEconomics`, and the report text from `reportLines` and `renderScenarioReport`. Every figure on the
  *   page is one of those functions' values, and this module adds, averages and estimates no figure of its own.
  *
  *   A model function that refuses its input throws. The view keeps that refusal as the error's name and message,
@@ -13,7 +13,7 @@
  *   selected buildings in the dossier's building order, so a figure never depends on the order of the clicks.
  */
 
-import { type Dossier, type DossierRecords, type EntityID, renderReport } from "@mailwoman/dossier"
+import { type Dossier, type DossierRecords, type EntityID, reportLines } from "@mailwoman/dossier"
 import {
 	type BuildingCollection,
 	buildingFeatures,
@@ -29,7 +29,7 @@ import { DISTRICT_RECORDS, DISTRICT_SCENARIO, SEGMENT_PATHS } from "@mailwoman/o
 import { renderScenarioReport, type Scenario, scenarioReport } from "@mailwoman/route-scenarios"
 
 import { type ControlValues, dossierFor, type InputRow, inputRows, scenarioFor } from "#controls"
-import { dossierReportParts, REPORT_OPTIONS } from "#evidence"
+import { buildingReportPart, REPORT_OPTIONS } from "#evidence"
 
 /**
  * The records, scenario and segment paths the application draws, and the extent
@@ -88,9 +88,9 @@ export interface OpportunityView {
 	 */
 	costAndValue: Outcome<string>
 	/**
-	 * Each building's part of the `renderReport` text.
+	 * Each building's part of the dossier report: the text of its `reportLines` records.
 	 */
-	dossierParts: Outcome<ReadonlyMap<EntityID, string>>
+	dossierParts: ReadonlyMap<EntityID, string>
 	inputs: readonly InputRow[]
 }
 
@@ -108,6 +108,7 @@ export function opportunityView(
 	const selection = buildings.map((building) => building.id).filter((building) => selected.has(building))
 
 	const forSelection = <T>(compute: () => T): Outcome<T> => (selection.length ? outcome(compute) : { status: "empty" })
+	const lines = reportLines(dossier)
 
 	return {
 		dossier,
@@ -121,7 +122,7 @@ export function opportunityView(
 		costAndValue: forSelection(() =>
 			renderScenarioReport(scenarioReport(dossier, { ...scenario, selected: selection }, REPORT_OPTIONS))
 		),
-		dossierParts: outcome(() => dossierReportParts(renderReport(dossier), buildings)),
+		dossierParts: new Map(buildings.map((building) => [building.id, buildingReportPart(lines, building.id)])),
 		inputs: inputRows(dataset.scenario, scenario, dossier, dataset.records),
 	}
 }

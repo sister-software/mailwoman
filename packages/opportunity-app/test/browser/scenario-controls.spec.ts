@@ -12,7 +12,7 @@
  *   those cases compare the building list and the district table with `buildingFeatures` and `districtFeatures`.
  */
 
-import { type ISODate, UnitStage } from "@mailwoman/dossier"
+import { type ISODate, reportLines, UnitStage } from "@mailwoman/dossier"
 import { buildingFeatures, type DistrictPlacement, districtFeatures } from "@mailwoman/opportunity-map"
 import { BUILDING_A, BUILDING_B, BUILDING_C, DISTRICT_SCENARIO } from "@mailwoman/opportunity-map/example-district"
 import { CostCategory, renderScenarioReport, type Scenario, scenarioReport } from "@mailwoman/route-scenarios"
@@ -272,6 +272,7 @@ test("each scenario control recalculates the selection through selectionEconomic
 test("a selection links to each building's dossier part and to its cost and value report", async ({ page }) => {
 	const dossier = districtDossierOn(SCENARIO_DATE)
 	const labels = buildingLabels(dossier)
+	const lines = reportLines(dossier)
 
 	await page.goto("/")
 	await selectBuildings(page, labels)
@@ -283,15 +284,21 @@ test("a selection links to each building's dossier part and to its cost and valu
 		"Cost and value report for the selection",
 	])
 
+	// A building's part is the text of exactly its line records, compared character for character.
 	for (const building of SELECTION) {
 		const label = labels.get(building)!
+		const own = lines.filter((entry) => entry.building === building)
 
 		await expect(page.getByRole("link", { name: `Dossier part: ${label}` })).toHaveAttribute(
 			"href",
 			`#${dossierAnchor(building)}`
 		)
 
-		await expect(page.locator(`#${dossierAnchor(building)} pre`)).toContainText(`## ${label}`)
+		expect(own[0]?.text).toBe(`## ${label}`)
+
+		expect(await page.locator(`#${dossierAnchor(building)} pre`).textContent()).toBe(
+			own.map((entry) => entry.text).join("\n")
+		)
 	}
 
 	await expect(page.getByRole("link", { name: "Cost and value report for the selection" })).toHaveAttribute(
@@ -303,6 +310,6 @@ test("a selection links to each building's dossier part and to its cost and valu
 		scenarioReport(dossier, { ...DISTRICT_SCENARIO, selected: SELECTION }, REPORT_OPTIONS)
 	)
 
-	await expect(page.locator(`#${COST_AND_VALUE_ANCHOR} pre`)).toHaveText(report)
+	expect(await page.locator(`#${COST_AND_VALUE_ANCHOR} pre`).textContent()).toBe(report)
 	expect(report).toContain("Every input in this section is synthetic.")
 })

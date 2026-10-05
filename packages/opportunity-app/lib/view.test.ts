@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { buildDossier, renderReport, UnitStage } from "@mailwoman/dossier"
+import { buildDossier, reportLines, UnitStage } from "@mailwoman/dossier"
 import { buildingFeatures, districtFeatures, routeFeatures, selectionEconomics } from "@mailwoman/opportunity-map"
 import {
 	BUILDING_A,
@@ -19,7 +19,7 @@ import { renderScenarioReport, scenarioReport, UnresolvedUnitTotalError } from "
 import { describe, expect, test } from "vitest"
 
 import { controlDefaults, scenarioFor } from "#controls"
-import { dossierReportParts, REPORT_OPTIONS } from "#evidence"
+import { REPORT_OPTIONS } from "#evidence"
 import { EXAMPLE_DISTRICT, opportunityView } from "#view"
 
 const defaults = controlDefaults(DISTRICT_SCENARIO)
@@ -54,13 +54,18 @@ describe("opportunityView", () => {
 			),
 		})
 
-		expect(view.dossierParts).toEqual({
-			status: "computed",
-			value: dossierReportParts(
-				renderReport(dossier),
-				dossier.buildings.map((section) => section.building)
-			),
-		})
+		const lines = reportLines(dossier)
+
+		expect([...view.dossierParts.keys()]).toEqual(dossier.buildings.map((section) => section.building.id))
+
+		for (const [building, part] of view.dossierParts) {
+			expect(part).toBe(
+				lines
+					.filter((entry) => entry.building === building)
+					.map((entry) => entry.text)
+					.join("\n")
+			)
+		}
 	})
 
 	test("orders the selection as the dossier orders its buildings, whatever the order of selection", () => {

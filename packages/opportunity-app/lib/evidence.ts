@@ -6,12 +6,12 @@
  *   The evidence a selection links to: each selected building's part of the dossier report, and the cost and value
  *   report that `@mailwoman/route-scenarios` writes for the selection.
  *
- *   `renderReport` heads each building's part with `## <label>` and ends it where the next level-two heading
- *   starts, so a part is the text from its heading to that next heading. A label that heads no part, or heads two,
- *   throws rather than returning a part that belongs to another building.
+ *   `reportLines` returns the dossier report as line records, and each line of a building's section names that
+ *   building. A building's part is the text of exactly those records, in the report's order, so the part shows
+ *   each of the building's lines once and holds no line of another building.
  */
 
-import type { EntityID } from "@mailwoman/dossier"
+import type { EntityID, ReportLine } from "@mailwoman/dossier"
 import { CostCategory, noBuildCase, type ScenarioReportOptions } from "@mailwoman/route-scenarios"
 
 /**
@@ -49,28 +49,12 @@ export const REPORT_OPTIONS: ScenarioReportOptions = {
 }
 
 /**
- * Each building's part of a `renderReport` text, by building identifier.
+ * A building's part of the dossier report: the text of the line records whose
+ * `building` is the building, in order, one record per line.
  */
-export function dossierReportParts(
-	report: string,
-	buildings: readonly { id: EntityID; label: string }[]
-): ReadonlyMap<EntityID, string> {
-	const parts = new Map<EntityID, string>()
-
-	for (const building of buildings) {
-		const heading = `\n## ${building.label}\n`
-		const start = report.indexOf(heading)
-
-		if (start === -1) throw new Error(`the dossier report has no part headed "## ${building.label}"`)
-
-		if (report.includes(heading, start + 1)) {
-			throw new Error(`the dossier report heads two parts "## ${building.label}", so neither belongs to one building`)
-		}
-
-		const end = report.indexOf("\n## ", start + heading.length - 1)
-
-		parts.set(building.id, report.slice(start + 1, end === -1 ? undefined : end).trimEnd())
-	}
-
-	return parts
+export function buildingReportPart(lines: readonly ReportLine[], building: EntityID): string {
+	return lines
+		.filter((entry) => entry.building === building)
+		.map((entry) => entry.text)
+		.join("\n")
 }

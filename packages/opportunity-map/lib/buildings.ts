@@ -13,7 +13,9 @@
  *   3. `partial_availability`: a provider is recorded as available on the dossier date, or the latest
  *      readings of one of the building's checks hold records. A dossier records availability for a
  *      building or its extent, and no record establishes service to every unit, so no state claims a
- *      fully served building.
+ *      fully served building. For a record that states an extent, the reason says the provider is
+ *      recorded as available over that extent, because such a record does not say which premises in
+ *      the extent are served.
  *   4. `known_unserved`: the building has a check, the latest readings of every check establish absence,
  *      and no provider is recorded as available.
  *   5. `unknown_coverage`: every other building.
@@ -25,6 +27,7 @@
  */
 
 import {
+	availabilityAt,
 	type BuildingSection,
 	type Dossier,
 	type EntityID,
@@ -64,9 +67,14 @@ export type UnitDenominator =
  */
 export interface ServiceEvidence {
 	/**
-	 * Each provider recorded as available at the building on the dossier date.
+	 * Each provider recorded as available at the building on the dossier date, once for
+	 * each extent at which the records current on that date state the availability.
+	 *
+	 * An entry without an `extent` rests on records that state availability for the building itself.
+	 * An entry with one rests on records whose source states availability over that extent, such as
+	 * `census-block:<GEOID>`, and those records do not say which premises in the extent are served.
 	 */
-	available: readonly { provider: string; product: string; sources: readonly SourceRecordID[] }[]
+	available: readonly { provider: string; product: string; extent?: string; sources: readonly SourceRecordID[] }[]
 	/**
 	 * Each of the building's availability checks, with the class of its latest readings.
 	 */
@@ -166,15 +174,35 @@ function unitDenominator(section: BuildingSection, stage: UnitStage): UnitDenomi
 	}
 }
 
-function serviceEvidence(section: BuildingSection): ServiceEvidence {
-	return {
-		available: section.availability
-			.filter((entry) => entry.answer.status === "available")
-			.map((entry) => ({
+/**
+ * Each available provider's records current on the dossier date, grouped by the extent each record states.
+ *
+ * `availabilityAt` decides currency over one record at a time, so the grouping uses the dossier's own rule.
+ */
+function availableEvidence(section: BuildingSection, asOf: ISODate): ServiceEvidence["available"] {
+	return section.availability
+		.filter((entry) => entry.answer.status === "available")
+		.flatMap((entry) => {
+			const byExtent = new Map<string | undefined, SourceRecordID[]>()
+
+			for (const record of entry.answer.records) {
+				if (availabilityAt([record], record.provider, record.subject, asOf).status !== "available") continue
+
+				byExtent.set(record.extent, [...(byExtent.get(record.extent) ?? []), record.evidence.source])
+			}
+
+			return [...byExtent].map(([extent, sources]) => ({
 				provider: entry.provider,
 				product: entry.product,
-				sources: distinct(entry.answer.records.map((record) => record.evidence.source)),
-			})),
+				...(extent === undefined ? {} : { extent }),
+				sources: distinct(sources),
+			}))
+		})
+}
+
+function serviceEvidence(section: BuildingSection, asOf: ISODate): ServiceEvidence {
+	return {
+		available: availableEvidence(section, asOf),
 		checks: section.checks.map((result) => ({
 			check: result.check.id,
 			layer: result.check.layer,
@@ -235,7 +263,10 @@ function stateOf(
 
 	if (service.available.length || serving.length) {
 		const recorded = [
-			...service.available.map((entry) => `${entry.provider} ${entry.product} is recorded as available`),
+			...service.available.map(
+				(entry) =>
+					`${entry.provider} ${entry.product} is recorded as available${entry.extent ? ` over ${entry.extent}` : ""}`
+			),
 			...serving.map((check) => `the latest readings of check ${check.check} hold records`),
 		]
 
@@ -283,7 +314,7 @@ export function buildingProperties(
 	options: BuildingOptions & { asOf: ISODate }
 ): BuildingProperties {
 	const units = unitDenominator(section, options.unitStage)
-	const service = serviceEvidence(section)
+	const service = serviceEvidence(section, options.asOf)
 	const { state, reason, sources } = stateOf(units, service, options.asOf)
 
 	return {

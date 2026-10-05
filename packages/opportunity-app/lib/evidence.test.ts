@@ -4,45 +4,44 @@
  * @author Teffen Ellis, et al.
  */
 
-import { buildDossier, renderReport } from "@mailwoman/dossier"
+import { buildDossier, renderReport, reportLines } from "@mailwoman/dossier"
 import { BUILDING_A, DISTRICT_RECORDS, DISTRICT_SCENARIO } from "@mailwoman/opportunity-map/example-district"
 import { describe, expect, test } from "vitest"
 
-import { dossierAnchor, dossierReportParts } from "#evidence"
+import { buildingReportPart, dossierAnchor } from "#evidence"
 
 const dossier = buildDossier(DISTRICT_RECORDS, { asOf: DISTRICT_SCENARIO.asOf })
-const report = renderReport(dossier)
-const buildings = dossier.buildings.map((section) => section.building)
+const lines = reportLines(dossier)
 
-describe("dossierReportParts", () => {
-	test("returns each building's part of the report, from its heading to the next level-two heading", () => {
-		const parts = dossierReportParts(report, buildings)
+describe("buildingReportPart", () => {
+	test("is the text of exactly the building's line records, in the report's order", () => {
+		for (const section of dossier.buildings) {
+			const { id, label } = section.building
+			const own = lines.filter((entry) => entry.building === id)
+			const part = buildingReportPart(lines, id)
 
-		expect([...parts.keys()]).toEqual(buildings.map((building) => building.id))
-
-		for (const building of buildings) {
-			const part = parts.get(building.id)!
-
-			expect(part.startsWith(`## ${building.label}\n`)).toBe(true)
-			expect(part).not.toContain("\n## ")
-			expect(report).toContain(part)
+			expect(own.length).toBeGreaterThan(0)
+			expect(part).toBe(own.map((entry) => entry.text).join("\n"))
+			expect(part.startsWith(`## ${label}\n`)).toBe(true)
+			expect(renderReport(dossier)).toContain(part)
 		}
-
-		expect(parts.get(BUILDING_A)).toContain("Example Fiber Co fiber 1 Gbps: available on 2026-09-30")
 	})
 
-	test("throws for a label that heads no part", () => {
-		expect(() => dossierReportParts(report, [{ id: BUILDING_A, label: "Example Building Z" }])).toThrow(
-			'the dossier report has no part headed "## Example Building Z"'
-		)
+	test("the parts hold every building line once, in order, and no line outside the building sections", () => {
+		const parts = dossier.buildings.map((section) => buildingReportPart(lines, section.building.id))
+		const buildingLines = lines.filter((entry) => entry.building !== undefined)
+
+		expect(parts.join("\n")).toBe(buildingLines.map((entry) => entry.text).join("\n"))
+		expect(parts.join("\n")).not.toContain("## Sources")
+		expect(parts.join("\n")).not.toContain("## Unplaced layer readings")
 	})
 
-	test("throws for a label that heads two parts", () => {
-		const twice = `${report}\n## Example Building A\n\nA second part.\n`
+	test("is empty for a building the report does not hold", () => {
+		expect(buildingReportPart(lines, "building:example-z")).toBe("")
+	})
 
-		expect(() => dossierReportParts(twice, [{ id: BUILDING_A, label: "Example Building A" }])).toThrow(
-			/heads two parts/
-		)
+	test("holds the provider line of Example Building A", () => {
+		expect(buildingReportPart(lines, BUILDING_A)).toContain("Example Fiber Co fiber 1 Gbps: available on 2026-09-30")
 	})
 })
 

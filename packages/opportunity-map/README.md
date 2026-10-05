@@ -29,6 +29,11 @@ geometry is a point at the building's resolved position. It is `null` when the d
 the building or when two positions differ, and the properties then list the positions that differ. A
 synthetic position is labeled synthetic.
 
+The service evidence lists each provider available on the dossier date once for each extent that the
+records current on that date state, with the extent as data. A reason states a provider with an extent as
+available over that extent, because the record does not say which premises in the extent are served. A
+record without an extent states availability for the building, and its reason reads as available.
+
 ## The district scale
 
 `districtFeatures` clusters buildings by an extent kind the caller chooses. An extent's kind is its text

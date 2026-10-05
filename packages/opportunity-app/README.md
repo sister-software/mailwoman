@@ -31,11 +31,14 @@ every request of the page goes to its own server. The browser tests build withou
 ## What the page shows
 
 Every value comes from one call of `opportunityView` in `lib/view.ts`, which calls `buildingFeatures`,
-`districtFeatures`, `routeFeatures` and `selectionEconomics` from `@mailwoman/opportunity-map`, `renderReport` from
+`districtFeatures`, `routeFeatures` and `selectionEconomics` from `@mailwoman/opportunity-map`, `reportLines` from
 `@mailwoman/dossier`, and `renderScenarioReport` from `@mailwoman/route-scenarios`. The application adds, averages and
 estimates no figure of its own. When a model function refuses its input, the page shows the refusal's message in
 place of what the function would have returned. A selection that includes an unresolved unit total therefore shows
 the message of `UnresolvedUnitTotalError` in place of figures.
+
+A selected building's dossier part is the text of exactly the `reportLines` records whose `building` is that
+building, in the report's order. `buildingReportPart` in `lib/evidence.ts` joins them one record per line.
 
 A scale control switches the map between the building and district collections. A building with a resolved position
 is a marker in its state's shape, numbered as its row in the building list. A district's marker sits at the first
