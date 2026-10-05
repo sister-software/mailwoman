@@ -68,6 +68,11 @@ const GEOID_NY = "360610001001001"
 const GEOID_DIVERGENT = "510090101001001"
 // Never passed to `buildBDCDatabase` — criterion 2's "absent from the fixture" block.
 const GEOID_UNKNOWN = "999999999999999"
+// #1372: the builder never receives this block either, but its centroid sits in SF's covered res-6
+// cell, so a resolver can distinguish surveyed-empty from unknown.
+const GEOID_ZERO_ROW = "060750001009999"
+// #1372 decision 2: one block, one provider, one technology, two advertised speed tiers.
+const GEOID_TWO_TIER = "360610001009999"
 
 const CENTROID_SF = { lat: 37.7749, lon: -122.4194 }
 const CENTROID_NY = { lat: 40.7128, lon: -74.006 }
@@ -80,10 +85,25 @@ const CENTROIDS: Record<string, { lat: number; lon: number }> = {
 	[GEOID_SF]: CENTROID_SF,
 	[GEOID_NY]: CENTROID_NY,
 	[GEOID_DIVERGENT]: CENTROID_DIVERGENT,
+	// A different res-9 cell from NY's but the same res-6 parent
+	// (verified by the two-tier test's premise assertions), so the h3Cells equivalence
+	// test's NY cell never picks up these rows.
+	[GEOID_TWO_TIER]: { lat: 40.7178, lon: -74.006 },
 }
 
 function blockCentroids(geoid: string): { lat: number; lon: number } | undefined {
 	return CENTROIDS[geoid]
+}
+
+/**
+ * The resolver #1372's geoid path consults for a zero-row block: GEOID_ZERO_ROW
+ * resolves into SF's cell, so the coverage check runs.
+ * Every other geoid stays unresolved.
+ */
+function resolveGeoidCell(geoid: string): number | undefined {
+	if (geoid !== GEOID_ZERO_ROW) return undefined
+
+	return shortCellToInt(latLngToCell(CENTROID_SF.lat, CENTROID_SF.lon, BDC_H3_RESOLUTION) as H3Cell)
 }
 
 const PROVIDER_A = 130_077
@@ -147,6 +167,27 @@ function fixtureRows(): BDCAvailabilityRow[] {
 			location_id: "DIVERGENT-A",
 			max_advertised_download_speed: 500,
 			max_advertised_upload_speed: 500,
+			low_latency: 1,
+			business_residential_code: "R",
+		},
+		// #1372 decision 2's case: two tiers from one provider at one technology on one block.
+		{
+			geoid: GEOID_TWO_TIER,
+			provider_id: PROVIDER_A,
+			technology_code: 50,
+			location_id: "TT-A-25",
+			max_advertised_download_speed: 25,
+			max_advertised_upload_speed: 3,
+			low_latency: 1,
+			business_residential_code: "R",
+		},
+		{
+			geoid: GEOID_TWO_TIER,
+			provider_id: PROVIDER_A,
+			technology_code: 50,
+			location_id: "TT-A-1000",
+			max_advertised_download_speed: 1000,
+			max_advertised_upload_speed: 1000,
 			low_latency: 1,
 			business_residential_code: "R",
 		},
@@ -293,6 +334,65 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 		expect(result.unknown_block_count).toBe(1)
 		expect(result.surveyed_block_count).toBe(0)
 		expect(result.filings).toEqual([])
+	})
+})
+
+describe("filingLandscape — #1372 decision 1: a zero-row geoid with a resolver can be surveyed-empty", () => {
+	it("with resolveGeoidCell, a covered block with no rows is surveyed with zero filings, not unknown", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_ZERO_ROW], resolveGeoidCell })
+
+		expect(result.surveyed_block_count).toBe(1)
+		expect(result.unknown_block_count).toBe(0)
+		// Surveyed-empty, stated as zero filings rather than folded into a claim:
+		expect(result.filings).toEqual([])
+	})
+
+	it("without a resolver, the same block keeps the documented safe result: unknown", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_ZERO_ROW] })
+
+		expect(result.surveyed_block_count).toBe(0)
+		expect(result.unknown_block_count).toBe(1)
+	})
+
+	it("a resolver that cannot place the geoid leaves it unknown", async () => {
+		using db = openFixture()
+
+		const result = await filingLandscape(db, { geoids: [GEOID_UNKNOWN], resolveGeoidCell })
+
+		expect(result.surveyed_block_count).toBe(0)
+		expect(result.unknown_block_count).toBe(1)
+	})
+})
+
+describe("filingLandscape — #1372 decision 2: two speed tiers on one block stay two rows", () => {
+	// The decision: the bundle retains every advertised tier.
+	// Collapsing to the maximum would lose that the provider also files a slower tier
+	// (25/3 alongside gigabit here) and would make the per-tier corroboration check
+	// in `plausibilityCheck` unanswerable for mid-tier claims.
+	it("keeps one summary row per speed bucket for one block, provider and technology", async () => {
+		using db = openFixture()
+
+		// Premise: the two-tier block's centroid sits in its own res-9 cell inside NY's res-6
+		// parent, so the h3Cells equivalence test over NY's cell never reads these rows.
+		const twoTierCell = shortCellToInt(latLngToCell(40.7178, -74.006, BDC_H3_RESOLUTION) as H3Cell)
+		const nyCell = shortCellToInt(latLngToCell(CENTROID_NY.lat, CENTROID_NY.lon, BDC_H3_RESOLUTION) as H3Cell)
+
+		expect(twoTierCell).not.toBe(nyCell)
+		expect(res9ShortCellToRes6Parent(twoTierCell)).toBe(res9ShortCellToRes6Parent(nyCell))
+
+		const result = await filingLandscape(db, { geoids: [GEOID_TWO_TIER] })
+
+		expect(result.surveyed_block_count).toBe(1)
+		expect(result.unknown_block_count).toBe(0)
+
+		expect(result.filings).toEqual([
+			{ provider_id: PROVIDER_A, technology_code: 50, speed_bucket: BDC_SPEED_BUCKET_25_100, block_count: 1 },
+			{ provider_id: PROVIDER_A, technology_code: 50, speed_bucket: BDC_SPEED_BUCKET_GIGABIT, block_count: 1 },
+		])
 	})
 })
 

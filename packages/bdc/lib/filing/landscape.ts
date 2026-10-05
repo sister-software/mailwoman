@@ -7,12 +7,17 @@
  *
  *   A queried block counts as surveyed only when its res-6 parent cell appears in `layer_coverage`;
  *   anything else is unknown. A surveyed block with zero filings is a different result. A GEOID
- *   query takes each block's res-9 cell from its `bdc_availability` rows, so a GEOID without rows is
- *   unknown. An `h3Cells` query supplies the cell, so a covered cell with no rows reports as
- *   surveyed with zero filings.
+ *   query takes each block's res-9 cell from its `bdc_availability` rows. A GEOID with no rows can
+ *   still reach the coverage check when the caller supplies `resolveGeoidCell` (a block-centroid
+ *   lookup, as `build-bdc.ts` uses at build time). Without it, a GEOID without rows is unknown — the
+ *   documented safe result. An `h3Cells` query supplies the cell, so a covered cell with no rows
+ *   reports as surveyed with zero filings.
  *
  *   The res-6 parent comes from the stored res-9 cell, as it does in `build-bdc.ts`; recomputing it
- *   from the block centroid disagrees for some points because H3 cells do not nest exactly.
+ *   from the block centroid disagrees for some points because H3 cells do not nest exactly. The
+ *   resolver's centroid-derived cell is consulted only for a block with no stored rows, so it can
+ *   never disagree with a stored row. At a res-6 boundary it can place a block's coverage in the
+ *   neighbor cell, a limit the resolver's precision bounds.
  */
 
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
@@ -28,6 +33,14 @@ import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from 
 export interface FilingLandscapeQuery {
 	geoids?: string[]
 	h3Cells?: number[]
+	/**
+	 * Resolves a GEOID to its res-9 short cell when the block has no `bdc_availability` rows
+	 * of its own — typically from a TIGER block-centroid lookup, as the builder uses.
+	 *
+	 * Consulted only in `geoids` mode.
+	 * Without it, a GEOID with zero rows reports as unknown rather than surveyed-empty.
+	 */
+	resolveGeoidCell?: (geoid: string) => number | undefined
 }
 
 /**
@@ -164,6 +177,20 @@ export async function filingLandscape(
 
 		for (const row of rows) {
 			candidateCellByUnit.set(row.geoid, row.h3_cell)
+		}
+
+		// A block with no rows of its own can still sit in a covered cell.
+		// The resolver supplies that cell, so surveyed-empty is distinguished from unknown.
+		if (query.resolveGeoidCell) {
+			for (const geoid of query.geoids) {
+				if (candidateCellByUnit.has(geoid)) continue
+
+				const resolvedCell = query.resolveGeoidCell(geoid)
+
+				if (resolvedCell !== undefined) {
+					candidateCellByUnit.set(geoid, resolvedCell)
+				}
+			}
 		}
 	} else {
 		for (const cell of query.h3Cells!) {

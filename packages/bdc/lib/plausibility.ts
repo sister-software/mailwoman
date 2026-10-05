@@ -159,6 +159,13 @@ export interface PlausibilityDeps {
 	bdcDB?: DatabaseClient<BDCDatabase>
 	poi?: PlausibilityPOIDeps
 	geocode?: (address: string) => Promise<GeocodeLike>
+	/**
+	 * Resolves a claim's GEOID to its res-9 short cell when the block has no filing rows of its own,
+	 * so a covered block with zero filings reads as surveyed rather than unknown (#1372).
+	 *
+	 * Without it, a zero-row GEOID keeps the documented safe result: unknown.
+	 */
+	bdcGeoidCell?: (geoid: string) => number | undefined
 }
 
 /**
@@ -311,7 +318,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		// A claim without a geoid has a point, so `pointCell` is defined here.
 		const landscape =
 			blockResolution === "geoid"
-				? await filingLandscape(deps.bdcDB, { geoids: [claim.geoid!] })
+				? await filingLandscape(deps.bdcDB, { geoids: [claim.geoid!], resolveGeoidCell: deps.bdcGeoidCell })
 				: await filingLandscape(deps.bdcDB, { h3Cells: [pointCell!] })
 
 		vintage = landscape.vintage
