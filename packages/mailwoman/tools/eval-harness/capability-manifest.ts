@@ -41,6 +41,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
 import type { ScorerOverrides } from "@mailwoman/neural/scorer"
+import type { CapabilityManifest, TagCapability } from "@mailwoman/neural/weights/channels"
 import type { PathBuilderLike } from "path-ts"
 
 import {
@@ -121,16 +122,6 @@ const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
 
-/**
- * `{ maskOffF1, maskOnF1? }`, where maskOnF1 is present only for forbidden-set tags the model emits.
- */
-interface TagCapability {
-	maskOffF1: number
-	maskOnF1?: number
-}
-
-type Capabilities = Record<string, Record<string, Record<string, TagCapability>>>
-
 interface ResolvedPaths {
 	model: PathBuilderLike
 	tokenizer: PathBuilderLike
@@ -139,8 +130,8 @@ interface ResolvedPaths {
 	gazetteerLexicon: string
 }
 
-async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
-	const capabilities: Capabilities = {}
+async function buildManifest(paths: ResolvedPaths): Promise<CapabilityManifest> {
+	const capabilities: CapabilityManifest = {}
 
 	for (const [tier, tierOverrides] of Object.entries(TIERS)) {
 		capabilities[tier] = {}

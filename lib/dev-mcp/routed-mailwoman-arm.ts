@@ -43,10 +43,10 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
  * of names alone cannot establish that the arms were fed the same artifact.
  * The digest is what settles it.
  *
- * `digest` is `null` only when the artifact resolved to no path, which states that
- * this arm fed no such artifact rather than that its bytes are unknown.
+ * The routed arm writes `digest` as `null` only when the artifact resolved to no path,
+ * which states that this arm fed no such artifact rather than that its bytes are unknown.
  */
-interface RoutedArtifactRecord {
+export interface RoutedArtifactRecord {
 	name: string
 	path: string | null
 	origin: string | null

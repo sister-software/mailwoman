@@ -30,11 +30,16 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, streamToDisk } from "@mailwoman/core/utils"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { countRows } from "@mailwoman/sqlite/introspection"
-import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 import { createReadStream } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import type { FanoutCandidate } from "#gazetteer/importance-fanout"
 
 /**
@@ -287,16 +292,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null // step progress streams to stderr until the tally lands

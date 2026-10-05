@@ -14,13 +14,13 @@ import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { Box, Text } from "ink"
 import { basename, dirname, PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import {
 	type CommandSpec,
+	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
 	positiveInteger,
@@ -67,60 +67,6 @@ export const spec = {
 		"build-only": { type: "boolean", default: false, description: "Only build existing downloads" },
 	},
 } as const satisfies CommandSpec
-
-const STATE_FIPS: Record<string, string> = {
-	AL: "01",
-	AK: "02",
-	AZ: "04",
-	AR: "05",
-	CA: "06",
-	CO: "08",
-	CT: "09",
-	DE: "10",
-	DC: "11",
-	FL: "12",
-	GA: "13",
-	HI: "15",
-	ID: "16",
-	IL: "17",
-	IN: "18",
-	IA: "19",
-	KS: "20",
-	KY: "21",
-	LA: "22",
-	ME: "23",
-	MD: "24",
-	MA: "25",
-	MI: "26",
-	MN: "27",
-	MS: "28",
-	MO: "29",
-	MT: "30",
-	NE: "31",
-	NV: "32",
-	NH: "33",
-	NJ: "34",
-	NM: "35",
-	NY: "36",
-	NC: "37",
-	ND: "38",
-	OH: "39",
-	OK: "40",
-	OR: "41",
-	PA: "42",
-	RI: "44",
-	SC: "45",
-	SD: "46",
-	TN: "47",
-	TX: "48",
-	UT: "49",
-	VT: "50",
-	VA: "51",
-	WA: "53",
-	WV: "54",
-	WI: "55",
-	WY: "56",
-}
 
 /**
  * The cached county-population ranking.
@@ -411,7 +357,8 @@ interface StateResult {
 
 const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { parseTIGERRelease } = await import("@mailwoman/tiger")
+		const { FIPSStateCode, parseTIGERRelease } = await import("@mailwoman/tiger")
+		const STATE_FIPS: Readonly<Record<string, string>> = FIPSStateCode
 		const RELEASE = options.release
 		const VINTAGE = parseTIGERRelease(RELEASE)
 		const EDGES_DIR = PathBuilder.from(options.edgesDir ?? dataRootPath("census", `tiger${VINTAGE}-edges`))
@@ -579,16 +526,7 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

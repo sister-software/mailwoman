@@ -15,7 +15,6 @@
 
 import { Spinner } from "@inkjs/ui"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { errorMessage } from "@mailwoman/core/errors/schema"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
@@ -34,6 +33,7 @@ import {
 	isLocaleTag,
 	type OptionsOf,
 	type ParsedCommandComponent,
+	requireCommandWOFPath,
 	useCommandTask,
 } from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
@@ -112,16 +112,6 @@ export async function loadMapping(
 	return { ...base, ...provided, ...(source ? { source } : {}) }
 }
 
-async function resolveWOFPath(options: Options): Promise<string> {
-	const { requireWOFPath } = await import("#resolver-backend")
-
-	try {
-		return await requireWOFPath(options.resolveDB)
-	} catch (error) {
-		throw new CommandError(errorMessage(error), { cause: error })
-	}
-}
-
 /**
  * Construct the heavy geocoder once with a neural parser, WOF resolver and per-state
  * databases. and wire it into the matcher's {@link GeocodeAddress} interface.
@@ -142,7 +132,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
 	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
 
-	const wofPath = await resolveWOFPath(options)
+	const wofPath = await requireCommandWOFPath(options)
 
 	let classifier: NeuralAddressClassifier
 

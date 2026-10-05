@@ -13,11 +13,16 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { buildSHA, stampLayerManifest } from "#gazetteer/stamp-manifest"
 
 /**
@@ -335,16 +340,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

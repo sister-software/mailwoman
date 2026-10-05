@@ -14,6 +14,7 @@
 import { isExecutable } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { spawnProcess } from "@mailwoman/core/process"
+import { sleep } from "@mailwoman/core/utils/sleep"
 import { describe, expect, it } from "vitest"
 
 const ESC = "\u001B"
@@ -61,12 +62,6 @@ interface PTYRun {
 	code: number | null
 }
 
-function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => {
-		setTimeout(resolve, ms)
-	})
-}
-
 async function driveMap(keys: string[]): Promise<PTYRun> {
 	const command = [
 		`stty cols ${PTY_COLUMNS} rows ${PTY_ROWS}`,
@@ -92,12 +87,12 @@ async function driveMap(keys: string[]): Promise<PTYRun> {
 	const deadline = Date.now() + READY_TIMEOUT_MS
 
 	while (!output.includes("q quit") && Date.now() < deadline) {
-		await delay(25)
+		await sleep(25)
 	}
 
 	for (const key of keys) {
 		child.stdin.write(key)
-		await delay(KEYSTROKE_GAP_MS)
+		await sleep(KEYSTROKE_GAP_MS)
 	}
 
 	const code = await exited

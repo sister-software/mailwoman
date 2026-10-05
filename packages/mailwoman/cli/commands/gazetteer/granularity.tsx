@@ -5,10 +5,15 @@
  */
 
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { Box, Text } from "ink"
 import { dirname, isAbsolute, relative, resolvePath, sep } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer/defaults"
 
 /**
@@ -82,16 +87,7 @@ const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

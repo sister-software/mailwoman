@@ -10,6 +10,7 @@
 import { formatAsCountryISO2, type CountryISO2 } from "@mailwoman/codex/country"
 import { formatAsUSStateAbbreviation, type USStateAbbreviation } from "@mailwoman/codex/us"
 // Subpath imports from core keep each command's dependency graph small.
+import { errorMessage } from "@mailwoman/core/errors/schema"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -390,5 +391,21 @@ export async function loadClassifierTolerant(
 		)
 
 		return undefined
+	}
+}
+
+/**
+ * Returns the WOF admin database path a command reads, from its `--resolve-db` value or `$MAILWOMAN_WOF_DB`.
+ *
+ * A missing path becomes a {@linkcode CommandError} with the resolver's message.
+ * The CLI prints a `CommandError` as guidance rather than as a stack.
+ */
+export async function requireCommandWOFPath(options: { resolveDB?: string }): Promise<string> {
+	const { requireWOFPath } = await import("#resolver-backend")
+
+	try {
+		return await requireWOFPath(options.resolveDB)
+	} catch (error) {
+		throw new CommandError(errorMessage(error), { cause: error })
 	}
 }

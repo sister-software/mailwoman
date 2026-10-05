@@ -7,7 +7,6 @@
 import { Spinner } from "@inkjs/ui"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { errorMessage } from "@mailwoman/core/errors/schema"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -28,6 +27,7 @@ import {
 	loadClassifierTolerant,
 	type ParsedCommandComponent,
 	reportToStderr,
+	requireCommandWOFPath,
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
@@ -238,16 +238,6 @@ function ParseTask({
 	return writeRawStdout(state.result)
 }
 
-async function resolveWOFPath(options: ParseOptions): Promise<string> {
-	const { requireWOFPath } = await import("#resolver-backend")
-
-	try {
-		return await requireWOFPath(options.resolveDB)
-	} catch (error) {
-		throw new CommandError(errorMessage(error), { cause: error })
-	}
-}
-
 async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefined> {
 	const { $public } = await import("#env")
 	const dbPath = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
@@ -340,7 +330,7 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 
 	// A configured candidate database needs no WOF admin path.
 	const lookup = await createResolverBackend(mod, {
-		wofPaths: (await resolveCandidateDBPath()) ? "" : await resolveWOFPath(options),
+		wofPaths: (await resolveCandidateDBPath()) ? "" : await requireCommandWOFPath(options),
 	})
 
 	try {

@@ -11,10 +11,15 @@ import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
-import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Declares the options of `mailwoman situs address-points`.
@@ -394,16 +399,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null
