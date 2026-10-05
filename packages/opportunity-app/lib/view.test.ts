@@ -12,6 +12,7 @@ import {
 	BUILDING_C,
 	DISTRICT_RECORDS,
 	DISTRICT_SCENARIO,
+	districtDossier,
 	GARAGE,
 	SEGMENT_PATHS,
 } from "@mailwoman/opportunity-map/example-district"
@@ -23,7 +24,7 @@ import { REPORT_OPTIONS } from "#evidence"
 import { EXAMPLE_DISTRICT, opportunityView } from "#view"
 
 const defaults = controlDefaults(DISTRICT_SCENARIO)
-const dossier = buildDossier(DISTRICT_RECORDS, { asOf: DISTRICT_SCENARIO.asOf })
+const dossier = districtDossier()
 const SELECTION = [BUILDING_A, BUILDING_B, BUILDING_C]
 
 describe("opportunityView", () => {

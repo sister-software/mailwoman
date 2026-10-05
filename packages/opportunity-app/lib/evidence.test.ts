@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { buildDossier, renderReport, reportLines } from "@mailwoman/dossier"
-import { BUILDING_A, DISTRICT_RECORDS, DISTRICT_SCENARIO } from "@mailwoman/opportunity-map/example-district"
+import { renderReport, reportLines } from "@mailwoman/dossier"
+import { BUILDING_A, districtDossier } from "@mailwoman/opportunity-map/example-district"
 import { describe, expect, test } from "vitest"
 
 import { buildingReportPart, dossierAnchor } from "#evidence"
 
-const dossier = buildDossier(DISTRICT_RECORDS, { asOf: DISTRICT_SCENARIO.asOf })
+const dossier = districtDossier()
 const lines = reportLines(dossier)
 
 describe("buildingReportPart", () => {

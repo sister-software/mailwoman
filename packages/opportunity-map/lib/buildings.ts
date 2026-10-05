@@ -29,11 +29,13 @@
 import {
 	availabilityAt,
 	type BuildingSection,
+	distinctSources,
 	type Dossier,
 	type EntityID,
 	type ISODate,
 	LayerReadingClass,
 	type PositionAnswer,
+	proseList,
 	type SourceRecordID,
 	type UnitStage,
 } from "@mailwoman/dossier"
@@ -144,15 +146,6 @@ export interface BuildingOptions {
 	unitStage: UnitStage
 }
 
-/**
- * Joins words as English prose without a serial comma: `a, b and c`.
- */
-const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
-
-function distinct(sources: Iterable<SourceRecordID>): SourceRecordID[] {
-	return [...new Set(sources)]
-}
-
 function unitDenominator(section: BuildingSection, stage: UnitStage): UnitDenominator {
 	const total = section.counts[stage]
 
@@ -161,7 +154,7 @@ function unitDenominator(section: BuildingSection, stage: UnitStage): UnitDenomi
 			stage,
 			at: total.at,
 			total: total.total,
-			sources: distinct(total.parts.map((part) => part.evidence.source)),
+			sources: distinctSources(total.parts.map((part) => part.evidence.source)),
 		}
 	}
 
@@ -170,7 +163,7 @@ function unitDenominator(section: BuildingSection, stage: UnitStage): UnitDenomi
 		at: total.at,
 		total: "unresolved",
 		reason: total.reason,
-		sources: distinct(total.conflicting.map((count) => count.evidence.source)),
+		sources: distinctSources(total.conflicting.map((count) => count.evidence.source)),
 	}
 }
 
@@ -195,7 +188,7 @@ function availableEvidence(section: BuildingSection, asOf: ISODate): ServiceEvid
 				provider: entry.provider,
 				product: entry.product,
 				...(extent === undefined ? {} : { extent }),
-				sources: distinct(sources),
+				sources: distinctSources(sources),
 			}))
 		})
 }
@@ -209,7 +202,7 @@ function serviceEvidence(section: BuildingSection, asOf: ISODate): ServiceEviden
 			extent: result.check.extent,
 			status: result.status,
 			vintage: result.vintage,
-			sources: distinct(result.answer.flatMap((statement) => statement.sources)),
+			sources: distinctSources(result.answer.flatMap((statement) => statement.sources)),
 		})),
 	}
 }
@@ -219,7 +212,7 @@ function featurePosition(position: PositionAnswer): FeaturePosition {
 		return {
 			status: "resolved",
 			synthetic: position.synthetic,
-			sources: distinct(position.positions.map((entry) => entry.evidence.source)),
+			sources: distinctSources(position.positions.map((entry) => entry.evidence.source)),
 		}
 	}
 
@@ -272,8 +265,8 @@ function stateOf(
 
 		return {
 			state: BuildingState.PartialAvailability,
-			reason: `On ${asOf}, ${PROSE_LIST.format(recorded)}. No admitted record establishes service to all ${units.total} ${units.stage} units.`,
-			sources: distinct([
+			reason: `On ${asOf}, ${proseList(recorded)}. No admitted record establishes service to all ${units.total} ${units.stage} units.`,
+			sources: distinctSources([
 				...units.sources,
 				...service.available.flatMap((entry) => entry.sources),
 				...serving.flatMap((check) => check.sources),
@@ -281,12 +274,12 @@ function stateOf(
 		}
 	}
 
-	const checked = distinct([...units.sources, ...service.checks.flatMap((check) => check.sources)])
+	const checked = distinctSources([...units.sources, ...service.checks.flatMap((check) => check.sources)])
 
 	if (service.checks.length && service.checks.every((check) => check.status === LayerReadingClass.SurveyedEmpty)) {
 		return {
 			state: BuildingState.KnownUnserved,
-			reason: `On ${asOf}, the latest readings of ${PROSE_LIST.format(service.checks.map((check) => `check ${check.check}`))} establish absence, and no provider is recorded as available.`,
+			reason: `On ${asOf}, the latest readings of ${proseList(service.checks.map((check) => `check ${check.check}`))} establish absence, and no provider is recorded as available.`,
 			sources: checked,
 		}
 	}
@@ -301,7 +294,7 @@ function stateOf(
 
 	return {
 		state: BuildingState.UnknownCoverage,
-		reason: `On ${asOf}, no provider is recorded as available. The latest readings are ${PROSE_LIST.format(service.checks.map((check) => `${check.status} for check ${check.check}`))}, so service at the building is unknown.`,
+		reason: `On ${asOf}, no provider is recorded as available. The latest readings are ${proseList(service.checks.map((check) => `${check.status} for check ${check.check}`))}, so service at the building is unknown.`,
 		sources: checked,
 	}
 }

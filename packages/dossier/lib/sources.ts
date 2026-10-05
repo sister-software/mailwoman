@@ -19,6 +19,13 @@ export interface SourceRecord extends SourceTime {
 	url?: string
 }
 
+/**
+ * Returns each source record identifier in `sources` once, in the order of its first appearance.
+ */
+export function distinctSources(sources: Iterable<SourceRecordID>): SourceRecordID[] {
+	return [...new Set(sources)]
+}
+
 export function sourceIndex(records: readonly SourceRecord[]): ReadonlyMap<SourceRecordID, SourceRecord> {
 	const index = new Map<SourceRecordID, SourceRecord>()
 

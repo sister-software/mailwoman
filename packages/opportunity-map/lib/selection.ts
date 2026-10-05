@@ -15,7 +15,7 @@
  *   of projects with the buildings and segments the pair shares.
  */
 
-import type { Dossier, EntityID } from "@mailwoman/dossier"
+import { type Dossier, type EntityID, proseList } from "@mailwoman/dossier"
 import {
 	buildingPlan,
 	type EligibleBuilding,
@@ -119,17 +119,12 @@ export interface ProjectOverlap {
 	segments: readonly string[]
 }
 
-/**
- * Joins words as English prose without a serial comma: `a, b and c`.
- */
-const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
-
 function overlapText(overlap: ProjectOverlap): string {
 	const segments = overlap.segments.length
-		? [`${overlap.segments.length === 1 ? "segment" : "segments"} ${PROSE_LIST.format(overlap.segments)}`]
+		? [`${overlap.segments.length === 1 ? "segment" : "segments"} ${proseList(overlap.segments)}`]
 		: []
 
-	return `projects ${overlap.projects[0]} and ${overlap.projects[1]} share ${PROSE_LIST.format([...overlap.buildings, ...segments])}`
+	return `projects ${overlap.projects[0]} and ${overlap.projects[1]} share ${proseList([...overlap.buildings, ...segments])}`
 }
 
 /**

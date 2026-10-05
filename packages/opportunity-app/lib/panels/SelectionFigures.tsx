@@ -9,14 +9,14 @@
  *   that announces the recalculated figures after each change, and the links lead to the selection's evidence.
  */
 
-import type { EntityID } from "@mailwoman/dossier"
+import { type EntityID, proseList } from "@mailwoman/dossier"
 import type { SelectionEconomics } from "@mailwoman/opportunity-map"
 import { formatMoney, type Scenario } from "@mailwoman/route-scenarios"
 import type { ReactNode } from "react"
 
 import { COST_AND_VALUE_ANCHOR, dossierAnchor } from "#evidence"
 import type { Outcome } from "#view"
-import { monthText, originText, proseList, recalculationText } from "#words"
+import { monthText, originText, recalculationText } from "#words"
 
 export interface SelectionFiguresProps {
 	economics: Outcome<SelectionEconomics>

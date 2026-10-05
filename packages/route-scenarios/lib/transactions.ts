@@ -28,10 +28,10 @@ import {
 	amountInMonth,
 	checkBasis,
 	checkScheduledAmounts,
+	fail,
 	type InputBasis,
 	type ScheduledAmount,
 	ScenarioInput,
-	ScenarioInputError,
 } from "#scenario"
 
 /**
@@ -123,21 +123,17 @@ export interface TransactionView {
 
 const KINDS: ReadonlySet<string> = new Set(Object.values(TransactionKind))
 
-function refuse(input: ScenarioInput, path: string, message: string): never {
-	throw new ScenarioInputError(input, path, message)
-}
-
 function checkTransaction(prepared: PreparedScenario, transaction: TransactionCase): void {
 	const { scenario } = prepared
 	const horizon = scenario.horizonMonths
 	const at = `transactions[${transaction.id}]`
 
 	if (typeof transaction.id !== "string" || transaction.id === "") {
-		refuse(ScenarioInput.Identifier, "transactions", "the identifier is missing")
+		fail(ScenarioInput.Identifier, "transactions", "the identifier is missing")
 	}
 
 	if (!KINDS.has(transaction.kind)) {
-		refuse(ScenarioInput.Field, `${at}.kind`, `${String(transaction.kind)} is not a transaction kind`)
+		fail(ScenarioInput.Field, `${at}.kind`, `${String(transaction.kind)} is not a transaction kind`)
 	}
 
 	if (
@@ -145,7 +141,7 @@ function checkTransaction(prepared: PreparedScenario, transaction: TransactionCa
 		transaction.integrationMonth < 0 ||
 		transaction.integrationMonth > horizon
 	) {
-		refuse(
+		fail(
 			ScenarioInput.Month,
 			`${at}.integrationMonth`,
 			`${transaction.integrationMonth} is outside months 0 to ${horizon}`
@@ -161,7 +157,7 @@ function checkTransaction(prepared: PreparedScenario, transaction: TransactionCa
 	const isAcquisition = transaction.kind === TransactionKind.Acquisition
 
 	if (isLease !== transaction.leasedSegments.length > 0) {
-		refuse(
+		fail(
 			ScenarioInput.Segment,
 			`${at}.leasedSegments`,
 			isLease ? "a lease names no segment" : "only a lease names leased segments"
@@ -169,7 +165,7 @@ function checkTransaction(prepared: PreparedScenario, transaction: TransactionCa
 	}
 
 	if (isAcquisition !== transaction.acquiredSubscribers.length > 0) {
-		refuse(
+		fail(
 			ScenarioInput.Subscribers,
 			`${at}.acquiredSubscribers`,
 			isAcquisition ? "an acquisition names no subscribers" : "only an acquisition names acquired subscribers"
@@ -181,15 +177,11 @@ function checkTransaction(prepared: PreparedScenario, transaction: TransactionCa
 
 	for (const [index, segment] of transaction.leasedSegments.entries()) {
 		if (!used.has(segment)) {
-			refuse(
-				ScenarioInput.Segment,
-				`${at}.leasedSegments[${index}]`,
-				`the selected buildings use no segment ${segment}`
-			)
+			fail(ScenarioInput.Segment, `${at}.leasedSegments[${index}]`, `the selected buildings use no segment ${segment}`)
 		}
 
 		if (leased.has(segment)) {
-			refuse(ScenarioInput.Segment, `${at}.leasedSegments[${index}]`, `${segment} is leased twice`)
+			fail(ScenarioInput.Segment, `${at}.leasedSegments[${index}]`, `${segment} is leased twice`)
 		}
 
 		leased.add(segment)
@@ -201,15 +193,15 @@ function checkTransaction(prepared: PreparedScenario, transaction: TransactionCa
 		const path = `${at}.acquiredSubscribers[${index}]`
 
 		if (!scenario.selected.includes(entry.building)) {
-			refuse(ScenarioInput.Building, path, `${entry.building} is not a selected building`)
+			fail(ScenarioInput.Building, path, `${entry.building} is not a selected building`)
 		}
 
 		if (acquired.has(entry.building)) {
-			refuse(ScenarioInput.Building, path, `${entry.building} is listed twice`)
+			fail(ScenarioInput.Building, path, `${entry.building} is listed twice`)
 		}
 
 		if (!Number.isSafeInteger(entry.count) || entry.count < 1) {
-			refuse(ScenarioInput.Subscribers, `${path}.count`, `${entry.count} is not a positive count`)
+			fail(ScenarioInput.Subscribers, `${path}.count`, `${entry.count} is not a positive count`)
 		}
 
 		acquired.add(entry.building)
@@ -219,17 +211,17 @@ function checkTransaction(prepared: PreparedScenario, transaction: TransactionCa
 		(transaction.kind === TransactionKind.Wholesale || transaction.kind === TransactionKind.Salvage) &&
 		!transaction.proceeds.length
 	) {
-		refuse(ScenarioInput.Amount, `${at}.proceeds`, `a ${transaction.kind} case states no proceeds`)
+		fail(ScenarioInput.Amount, `${at}.proceeds`, `a ${transaction.kind} case states no proceeds`)
 	}
 
 	if (transaction.kind === TransactionKind.Salvage) {
 		if (transaction.integrationMonth !== horizon) {
-			refuse(ScenarioInput.Month, `${at}.integrationMonth`, `salvage takes effect in the last month, ${horizon}`)
+			fail(ScenarioInput.Month, `${at}.integrationMonth`, `salvage takes effect in the last month, ${horizon}`)
 		}
 
 		for (const entry of transaction.proceeds) {
 			if (entry.fromMonth !== horizon || entry.toMonth !== horizon) {
-				refuse(
+				fail(
 					ScenarioInput.Month,
 					`${at}.proceeds[${entry.id}]`,
 					`salvage proceeds arrive in the last month, ${horizon}`

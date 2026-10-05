@@ -52,7 +52,7 @@ export const test = base.extend<{ foreignRequests: string[] }>({
 /**
  * Joins words as English prose without a serial comma: `a, b and c`.
  */
-const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
+export const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
 
 /**
  * The dossier the application builds from the Example District's records on a dossier date.

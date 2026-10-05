@@ -48,7 +48,7 @@ import {
 	type PositionAnswer,
 	readingBuildings,
 } from "#placement"
-import type { SourceRecord, SourceRecordID } from "#sources"
+import { distinctSources, type SourceRecord, type SourceRecordID } from "#sources"
 import { admitsAsOf, type ISODate } from "#time"
 import { type DossierRecords, validateRecords, type ValidationIssue } from "#validate"
 
@@ -320,7 +320,7 @@ interface Admitted {
  * The distinct source records of `items`, in the order of their first citation.
  */
 function sourcesOf(items: readonly { evidence: { source: SourceRecordID } }[]): SourceRecordID[] {
-	return [...new Set(items.map((item) => item.evidence.source))]
+	return distinctSources(items.map((item) => item.evidence.source))
 }
 
 function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): BuildingSection {

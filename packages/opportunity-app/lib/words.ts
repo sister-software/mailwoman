@@ -8,7 +8,7 @@
  *   carries one of them alone. An unresolved unit total is written as the word unresolved and never as a number.
  */
 
-import type { EntityID, ISODate } from "@mailwoman/dossier"
+import { type EntityID, type ISODate, proseList } from "@mailwoman/dossier"
 import {
 	BuildingState,
 	type DistrictProperties,
@@ -40,15 +40,6 @@ export const STATE_WORDS: Readonly<Record<BuildingState, string>> = {
 export const SEGMENT_WORDS: Readonly<Record<SegmentStatus, string>> = {
 	[SegmentStatus.Verified]: "verified existing segment",
 	[SegmentStatus.Proposed]: "proposed construction",
-}
-
-/**
- * Joins words as English prose without a serial comma: `a, b and c`.
- */
-const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
-
-export function proseList(items: readonly string[]): string {
-	return PROSE_LIST.format(items)
 }
 
 /**

@@ -378,10 +378,14 @@ function plural(count: number, noun: string): string {
 	return `${count} ${noun}${count === 1 ? "" : "s"}`
 }
 
+const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
+
 /**
  * Joins words as English prose without a serial comma: `a, b and c`.
  */
-const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
+export function proseList(items: readonly string[]): string {
+	return PROSE_LIST.format(items)
+}
 
 function withoutFinalPeriod(text: string): string {
 	return text.trim().replace(/\.$/, "")
@@ -917,8 +921,8 @@ function exceptionFor(
 				action: finding.action,
 				ifHolds: finding.ifHolds,
 				ifFails: others.length
-					? `Investigate ${PROSE_LIST.format(others)} next.`
-					: `No other explanation has a supporting record. Look for a record on ${PROSE_LIST.format(unsupported)}.`,
+					? `Investigate ${proseList(others)} next.`
+					: `No other explanation has a supporting record. Look for a record on ${proseList(unsupported)}.`,
 			},
 		}
 	})

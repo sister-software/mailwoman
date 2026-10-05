@@ -18,10 +18,11 @@
  *   The reader therefore requires that name and derives all three from it.
  */
 
+import { checkRecordCount, headerColumnIndex } from "@mailwoman/core/fs/delimited"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, type PathBuilderLike } from "path-ts"
-import { CSVSpliterator, TextSpliterator } from "spliterator"
+import { CSVSpliterator } from "spliterator"
 
 /**
  * The two levels this reader accepts.
@@ -236,21 +237,6 @@ export function parseOfcomCoverageFileName(file: string): OfcomCoverageSource {
 }
 
 /**
- * The column index of each label in a header row, or throws on a repeated label.
- */
-function indexHeader(file: string, header: readonly string[]): Map<string, number> {
-	const columns = new Map<string, number>()
-
-	for (const [index, label] of header.entries()) {
-		if (columns.has(label)) throw new Error(`${file} repeats the header column "${label}".`)
-
-		columns.set(label, index)
-	}
-
-	return columns
-}
-
-/**
  * Parses the text of one fixed-coverage file and returns the requested fields for every area it reports.
  *
  * The file's name must be the published one, because the snapshot, premises set
@@ -273,7 +259,7 @@ export function parseOfcomCoverage<const F extends OfcomCoverageField>(
 
 	if (!header) throw new Error(`${file} is empty.`)
 
-	const columns = indexHeader(file, header)
+	const columns = headerColumnIndex(file, header)
 	const keyColumn = source.level === OfcomCoverageLevel.Postcode ? POSTCODE_KEY : OUTPUT_AREA_KEY
 	const keyIndex = columns.get(keyColumn)
 
@@ -285,13 +271,7 @@ export function parseOfcomCoverage<const F extends OfcomCoverageField>(
 
 	if (missing.length) throw new OfcomCoverageFieldError(file, source.level, missing)
 
-	// A quoted region that never closes joins every following line into one record.
-	// The file would then read short with no other sign, so the record count must match the line count.
-	const lines = TextSpliterator.from(text).toArray().length
-
-	if (records.length !== lines - 1) {
-		throw new Error(`${file}: read ${records.length} records from ${lines - 1} data lines.`)
-	}
+	checkRecordCount(file, text, records.length)
 
 	const compactIndex = columns.get(POSTCODE_COMPACT)
 	const areaIndex = columns.get(POSTCODE_AREA)
