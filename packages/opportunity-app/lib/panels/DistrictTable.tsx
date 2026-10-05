@@ -8,11 +8,11 @@
  *   count is never folded into the sum as a zero.
  */
 
-import type { EntityID } from "@mailwoman/dossier"
+import { type EntityID, proseList } from "@mailwoman/dossier"
 import type { DistrictCollection } from "@mailwoman/opportunity-map"
 import type { ReactNode } from "react"
 
-import { districtHeading, proseList, statesText } from "#words"
+import { districtHeading, statesText } from "#words"
 
 export interface DistrictTableProps {
 	districts: DistrictCollection

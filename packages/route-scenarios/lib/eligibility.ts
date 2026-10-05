@@ -14,14 +14,15 @@
  *   of two selected buildings would count the same units twice, so {@link SharedUnitMembershipError} refuses it.
  */
 
-import type {
-	BuildingSection,
-	Dossier,
-	EntityID,
-	ISODate,
-	SourceRecordID,
-	UnitStage,
-	UnitTotal,
+import {
+	type BuildingSection,
+	distinctSources,
+	type Dossier,
+	type EntityID,
+	type ISODate,
+	type SourceRecordID,
+	type UnitStage,
+	type UnitTotal,
 } from "@mailwoman/dossier"
 
 import {
@@ -149,7 +150,7 @@ export function eligibleBuildings(dossier: Dossier, scenario: Scenario): readonl
 			stage: total.stage,
 			at: total.at,
 			units: total.total,
-			sources: [...new Set(total.parts.map((part) => part.evidence.source))],
+			sources: distinctSources(total.parts.map((part) => part.evidence.source)),
 			memberships,
 		})
 	}

@@ -24,10 +24,11 @@
  *   The OMR month appears only in the published file name, so the reader requires that name.
  */
 
+import { checkRecordCount, headerColumnIndex } from "@mailwoman/core/fs/delimited"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
-import { CSVSpliterator, TextSpliterator } from "spliterator"
+import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -393,21 +394,6 @@ export function parseBDUKReleaseFileName(file: string): BDUKReleaseSource {
 }
 
 /**
- * The column index of each label in a header row, or throws on a repeated label.
- */
-function headerColumns(file: string, header: readonly string[]): Map<string, number> {
-	const columns = new Map<string, number>()
-
-	for (const [index, label] of header.entries()) {
-		if (columns.has(label)) throw new Error(`${file} repeats the header column "${label}".`)
-
-		columns.set(label, index)
-	}
-
-	return columns
-}
-
-/**
  * Parses the text of one release file and returns the requested columns of the selected rows.
  *
  * The file's name must be the published one, because the OMR month is stated nowhere else.
@@ -431,7 +417,7 @@ export function parseBDUKRelease<const C extends BDUKColumn>(
 	if (first.done) throw new Error(`${file} is empty.`)
 
 	const header = first.value as string[]
-	const indices = headerColumns(file, header)
+	const indices = headerColumnIndex(file, header)
 	const postcodes = selection.postcodes ? new Set(selection.postcodes) : null
 
 	const needed: string[] = [BDUK_UPRN_COLUMN, ...columns, ...(postcodes ? ["postcode"] : [])]
@@ -500,12 +486,9 @@ export function parseBDUKRelease<const C extends BDUKColumn>(
 		rows.push({ uprn, file, line, values: values as BDUKRow<C>["values"] })
 	}
 
-	// A quoted region that never closes joins every following line into one record.
-	// The file would then read short with no other sign, so the record count must match the line count.
-	const dataLines = TextSpliterator.from(text).toArray().length - 1
 	const rowCount = line - 1
 
-	if (rowCount !== dataLines) throw new Error(`${file}: read ${rowCount} records from ${dataLines} data lines.`)
+	checkRecordCount(file, text, rowCount)
 
 	return { source, rowCount, rows }
 }

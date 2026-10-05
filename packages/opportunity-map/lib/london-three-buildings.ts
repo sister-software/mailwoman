@@ -64,6 +64,7 @@ import {
 	type ExtentMembership,
 	type ISODate,
 	type LayerReading,
+	proseList,
 	type SourceRecord,
 	type SourceRecordID,
 	type UnitCount,
@@ -518,11 +519,6 @@ const SOURCES: SourceRecord[] = [
 ]
 
 /**
- * Joins words as English prose without a serial comma: `a, b and c`.
- */
-const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
-
-/**
  * The building's position: the LDD row's grid reference converted to WGS 84.
  */
 export function sitePosition(site: LondonSite): BuildingPosition {
@@ -672,7 +668,7 @@ function siteClaims(site: LondonSite): Claim[] {
 			value: area.outputArea,
 			status: "inferred",
 			derivedFrom: area.postcodes.map(postcodeClaim),
-			explanation: `ONSPD assigns ${PROSE_LIST.format(area.postcodes)} to output area ${area.outputArea}. No source states the building's output area, so the link rests on the building's postcodes.`,
+			explanation: `ONSPD assigns ${proseList(area.postcodes)} to output area ${area.outputArea}. No source states the building's output area, so the link rests on the building's postcodes.`,
 			evidence: { source: ONSPD },
 		})
 	}

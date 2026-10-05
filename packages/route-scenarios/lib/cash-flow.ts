@@ -27,7 +27,7 @@
 
 import type { EntityID } from "@mailwoman/dossier"
 
-import { constructionCost, type ConstructionCost, constructionSchedule, priceLine } from "#construction"
+import { constructionCost, type ConstructionCost, constructionSchedule, priceLine, sum } from "#construction"
 import type { PreparedScenario } from "#eligibility"
 import {
 	applyBasisPoints,
@@ -151,16 +151,6 @@ function floorDivide(numerator: number, denominator: number): number {
 	return (numerator - (numerator % denominator)) / denominator
 }
 
-function total(values: Iterable<number>): number {
-	let sum = 0
-
-	for (const value of values) {
-		sum += value
-	}
-
-	return sum
-}
-
 /**
  * Each selected building's monthly counts from month 0 through the horizon.
  */
@@ -183,7 +173,7 @@ function subscriberPaths(prepared: PreparedScenario): readonly (readonly Buildin
 			const churn = whole - churned
 			churned = whole
 
-			const joined = total(plan.existingSubscribers.filter((step) => step.month === month).map((step) => step.count))
+			const joined = sum(plan.existingSubscribers.filter((step) => step.month === month).map((step) => step.count))
 			const retained = active - churn + joined
 
 			if (retained > occupied) {
@@ -233,7 +223,7 @@ function summarize(
 	monthly: number,
 	build: boolean
 ): CashFlowTable {
-	const column = (key: keyof CashFlowTotals) => total(rows.map((row) => row[key]))
+	const column = (key: keyof CashFlowTotals) => sum(rows.map((row) => row[key]))
 
 	const totals: CashFlowTotals = {
 		newActivations: column("newActivations"),
@@ -296,8 +286,8 @@ export function projectCashFlow(prepared: PreparedScenario): CashFlowTable {
 
 	for (let month = 0; month <= scenario.horizonMonths; month++) {
 		const buildings = paths.map((path) => path[month]!)
-		const active = total(buildings.map((entry) => entry.active))
-		const newActivations = total(buildings.map((entry) => entry.newActivations))
+		const active = sum(buildings.map((entry) => entry.active))
+		const newActivations = sum(buildings.map((entry) => entry.newActivations))
 		const price = stepAt(operating.prices, month).amount
 		const receipts = active * price
 		const promotion = newActivations * applyBasisPoints(price, operating.promotion.basisPoints)
@@ -306,7 +296,7 @@ export function projectCashFlow(prepared: PreparedScenario): CashFlowTable {
 
 		const constructionAndReplacement =
 			(schedule.get(month) ?? 0) +
-			total(replacements.filter((priced) => priced.line.month === month).map((priced) => priced.amount))
+			sum(replacements.filter((priced) => priced.line.month === month).map((priced) => priced.amount))
 
 		const balance = workingCapitalBalance(scenario, month)
 		const workingCapitalIncrease = balance - previousBalance
@@ -332,11 +322,11 @@ export function projectCashFlow(prepared: PreparedScenario): CashFlowTable {
 		rows.push({
 			month,
 			calendarMonth: calendarMonth(scenario.monthZero, month),
-			occupied: total(buildings.map((entry) => entry.occupied)),
+			occupied: sum(buildings.map((entry) => entry.occupied)),
 			active,
 			newActivations,
-			churn: total(buildings.map((entry) => entry.churn)),
-			joined: total(buildings.map((entry) => entry.joined)),
+			churn: sum(buildings.map((entry) => entry.churn)),
+			joined: sum(buildings.map((entry) => entry.joined)),
 			receipts,
 			promotion,
 			serviceAndMaintenance,
@@ -378,7 +368,7 @@ export function noBuildCashFlow(prepared: PreparedScenario): CashFlowTable {
 		rows.push({
 			month,
 			calendarMonth: calendarMonth(scenario.monthZero, month),
-			occupied: total(buildings.map((entry) => entry.occupied)),
+			occupied: sum(buildings.map((entry) => entry.occupied)),
 			active: 0,
 			newActivations: 0,
 			churn: 0,

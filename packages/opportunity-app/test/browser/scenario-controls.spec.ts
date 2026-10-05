@@ -12,6 +12,7 @@
  *   those cases compare the building list and the district table with `buildingFeatures` and `districtFeatures`.
  */
 
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { type ISODate, reportLines, UnitStage } from "@mailwoman/dossier"
 import { buildingFeatures, type DistrictPlacement, districtFeatures } from "@mailwoman/opportunity-map"
 import { BUILDING_A, BUILDING_B, BUILDING_C, DISTRICT_SCENARIO } from "@mailwoman/opportunity-map/example-district"
@@ -26,7 +27,6 @@ import {
 	expect,
 	expectRecalculation,
 	figureRows,
-	literalPattern,
 	recalculate,
 	stateWords,
 	test,
@@ -233,7 +233,7 @@ test("each scenario control recalculates the selection through selectionEconomic
 					const { label, state, units } = feature.properties
 
 					await expect(page.getByRole("checkbox", { name: label, exact: true })).toHaveAccessibleDescription(
-						new RegExp(`${literalPattern(stateWords(state))}.*${literalPattern(unitsWords(units))}`, "u")
+						new RegExp(`${escapeRegExp(stateWords(state))}.*${escapeRegExp(unitsWords(units))}`, "u")
 					)
 				}
 

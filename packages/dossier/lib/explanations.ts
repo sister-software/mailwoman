@@ -23,7 +23,7 @@ import { type CommercialEvent, CommercialEventKind, type ConstructionWindow, typ
 import type { EntityID } from "#identifiers"
 import type { AliasResolution, Evidence } from "#links"
 import { type ExtentMembership, readingBuildings } from "#placement"
-import type { SourceRecordID } from "#sources"
+import { distinctSources, type SourceRecordID } from "#sources"
 import { compareISODate, type ISODate } from "#time"
 
 /**
@@ -364,7 +364,7 @@ export interface ExplanationInput {
 }
 
 function statement(kind: StatementKind, text: string, sources: readonly SourceRecordID[] = []): Statement {
-	return { kind, text, sources: [...new Set(sources)] }
+	return { kind, text, sources: distinctSources(sources) }
 }
 
 /**
@@ -378,10 +378,14 @@ function plural(count: number, noun: string): string {
 	return `${count} ${noun}${count === 1 ? "" : "s"}`
 }
 
+const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
+
 /**
  * Joins words as English prose without a serial comma: `a, b and c`.
  */
-const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
+export function proseList(items: readonly string[]): string {
+	return PROSE_LIST.format(items)
+}
 
 function withoutFinalPeriod(text: string): string {
 	return text.trim().replace(/\.$/, "")
@@ -857,7 +861,7 @@ export function rankExplanations(
 			documented.push({
 				explanation: kind,
 				probability: values[0]!,
-				sources: [...new Set(entries.map((entry) => entry.evidence.source))],
+				sources: distinctSources(entries.map((entry) => entry.evidence.source)),
 			})
 		} else {
 			undocumented.push(kind)
@@ -917,8 +921,8 @@ function exceptionFor(
 				action: finding.action,
 				ifHolds: finding.ifHolds,
 				ifFails: others.length
-					? `Investigate ${PROSE_LIST.format(others)} next.`
-					: `No other explanation has a supporting record. Look for a record on ${PROSE_LIST.format(unsupported)}.`,
+					? `Investigate ${proseList(others)} next.`
+					: `No other explanation has a supporting record. Look for a record on ${proseList(unsupported)}.`,
 			},
 		}
 	})

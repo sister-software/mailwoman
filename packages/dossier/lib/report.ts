@@ -37,6 +37,7 @@ import {
 	type CheckResult,
 	ExplanationKind,
 	type ExplanationRanking,
+	proseList,
 	type ServiceabilityException,
 	type Statement,
 	StatementKind,
@@ -45,7 +46,7 @@ import type { EntityID } from "#identifiers"
 import type { AliasResolution } from "#links"
 import { outcomeStatements } from "#outcomes"
 import type { ExtentMembership, PositionAnswer } from "#placement"
-import type { SourceRecord, SourceRecordID } from "#sources"
+import { distinctSources, type SourceRecord, type SourceRecordID } from "#sources"
 import type { ISODate } from "#time"
 
 /**
@@ -129,20 +130,11 @@ export interface ReportLine {
 }
 
 /**
- * Joins words as English prose without a serial comma: `a, b and c`.
- */
-const PROSE_LIST = new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" })
-
-function distinct(sources: readonly SourceRecordID[]): SourceRecordID[] {
-	return [...new Set(sources)]
-}
-
-/**
  * The citation that follows a value: its source records in parentheses,
  * or the words `source unstated` when no record is given for it.
  */
 function cite(sources: readonly SourceRecordID[]): string {
-	return sources.length ? ` (${distinct(sources).join(", ")})` : " (source unstated)"
+	return sources.length ? ` (${distinctSources(sources).join(", ")})` : " (source unstated)"
 }
 
 function line(
@@ -151,7 +143,7 @@ function line(
 	text: string,
 	sources: readonly SourceRecordID[] = []
 ): ReportLine {
-	return { text, part, kind, sources: distinct(sources) }
+	return { text, part, kind, sources: distinctSources(sources) }
 }
 
 function heading(part: ReportPart, text: string): ReportLine {
@@ -195,7 +187,7 @@ function rankingRecord(ranking: ExplanationRanking): ReportLine {
 			)
 		}
 		case "scenarios": {
-			const named = `The ${PROSE_LIST.format(ranking.undocumented)} ${ranking.undocumented.length === 1 ? "explanation has" : "explanations have"}`
+			const named = `The ${proseList(ranking.undocumented)} ${ranking.undocumented.length === 1 ? "explanation has" : "explanations have"}`
 
 			return line(
 				ReportPart.Checks,
@@ -233,15 +225,11 @@ function exceptionRecords(exception: ServiceabilityException): ReportLine[] {
 	}
 
 	lines.push(
-		heading(part, `Explanations checked: ${PROSE_LIST.format(Object.values(ExplanationKind))}.`),
+		heading(part, `Explanations checked: ${proseList(Object.values(ExplanationKind))}.`),
 		// The line lists the kinds without a supporting record, an absence of support for each.
 		// When every kind has one, the line introduces the explanations below and states no absence.
 		exception.unsupported.length
-			? line(
-					part,
-					ReportLineKind.Absence,
-					`Checked without a supporting record: ${PROSE_LIST.format(exception.unsupported)}.`
-				)
+			? line(part, ReportLineKind.Absence, `Checked without a supporting record: ${proseList(exception.unsupported)}.`)
 			: heading(part, "Checked without a supporting record: none."),
 		blank(part)
 	)
@@ -366,7 +354,7 @@ function positionRecord(position: PositionAnswer): ReportLine {
 	const synthetic = (flag: boolean) => (flag ? ", synthetic" : "")
 
 	if (position.status === "resolved") {
-		const sources = distinct(position.positions.map((entry) => entry.evidence.source))
+		const sources = distinctSources(position.positions.map((entry) => entry.evidence.source))
 
 		return line(
 			ReportPart.Building,
@@ -437,7 +425,7 @@ function aliasSources(resolution: AliasResolution): SourceRecordID[] {
 		case "resolved":
 			return [resolution.evidence.source]
 		case "ambiguous":
-			return distinct(resolution.candidates.map((candidate) => candidate.evidence.source))
+			return distinctSources(resolution.candidates.map((candidate) => candidate.evidence.source))
 		case "unlinked":
 			return []
 	}

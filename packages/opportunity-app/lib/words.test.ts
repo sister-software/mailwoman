@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { buildDossier, UnitStage } from "@mailwoman/dossier"
+import { UnitStage } from "@mailwoman/dossier"
 import {
 	BuildingState,
 	districtFeatures,
@@ -16,8 +16,8 @@ import {
 	BUILDING_A,
 	BUILDING_B,
 	BUILDING_C,
-	DISTRICT_RECORDS,
 	DISTRICT_SCENARIO,
+	districtDossier,
 	SEGMENT_PATHS,
 } from "@mailwoman/opportunity-map/example-district"
 import { describe, expect, test } from "vitest"
@@ -35,7 +35,7 @@ import {
 	unitsText,
 } from "#words"
 
-const dossier = buildDossier(DISTRICT_RECORDS, { asOf: DISTRICT_SCENARIO.asOf })
+const dossier = districtDossier()
 const labels = new Map(dossier.buildings.map((section) => [section.building.id, section.building.label]))
 
 describe("STATE_WORDS and SEGMENT_WORDS", () => {

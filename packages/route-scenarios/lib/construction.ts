@@ -83,11 +83,14 @@ export interface IncrementalCost {
 	newSegments: readonly string[]
 }
 
-function sum(amounts: Iterable<MinorUnits>): MinorUnits {
+/**
+ * Returns the sum of `values`, such as amounts in minor units or counts of subscribers.
+ */
+export function sum(values: Iterable<number>): number {
 	let total = 0
 
-	for (const amount of amounts) {
-		total += amount
+	for (const value of values) {
+		total += value
 	}
 
 	return total

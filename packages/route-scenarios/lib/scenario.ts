@@ -405,7 +405,10 @@ export class ScenarioInputError extends Error {
 	}
 }
 
-function fail(input: ScenarioInput, path: string, message: string): never {
+/**
+ * Throws a {@link ScenarioInputError} for the input of kind `input` at `path`, with `message`.
+ */
+export function fail(input: ScenarioInput, path: string, message: string): never {
 	throw new ScenarioInputError(input, path, message)
 }
 

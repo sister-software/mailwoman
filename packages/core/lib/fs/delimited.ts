@@ -11,6 +11,9 @@
  *   Downstream counts cannot distinguish this result from a small source file.
  *
  *   The GeoNames country dumps are unquoted TSV and contain `"` in place names (`Ovrag Kyzylak"on`).
+ *
+ *   A quote-aware reader of CSV text indexes its header with {@linkcode headerColumnIndex} and passes its
+ *   record count to {@linkcode checkRecordCount}. A quote that never closes shortens that read in the same way.
  */
 
 import { createReadStream } from "node:fs"
@@ -81,6 +84,37 @@ export async function readUnquotedTSVChecked(path: PathBuilderLike): Promise<str
 	}
 
 	return rows
+}
+
+/**
+ * Maps each label of a header row to its column index, and throws when a label repeats.
+ *
+ * `file` identifies the file in the error message.
+ */
+export function headerColumnIndex(file: string, header: readonly string[]): Map<string, number> {
+	const columns = new Map<string, number>()
+
+	for (const [index, label] of header.entries()) {
+		if (columns.has(label)) throw new Error(`${file} repeats the header column "${label}".`)
+
+		columns.set(label, index)
+	}
+
+	return columns
+}
+
+/**
+ * Throws when the count of records parsed from a delimited text differs from the text's count of data lines.
+ *
+ * The first non-empty line of `text` is its header, and each later non-empty line is a data line.
+ *
+ * A quote-aware reader joins every line after a quote that never closes into one record.
+ * The read then answers short with no other sign, so a reader of quoted text compares the two counts.
+ */
+export function checkRecordCount(file: string, text: string, records: number): void {
+	const dataLines = TextSpliterator.from(text).toArray().length - 1
+
+	if (records !== dataLines) throw new Error(`${file}: read ${records} records from ${dataLines} data lines.`)
 }
 
 /**
