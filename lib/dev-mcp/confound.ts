@@ -9,6 +9,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
 
 import { effectiveKeyFor } from "#dev-mcp/engine/registry"
+import type { RoutedArtifactRecord } from "#dev-mcp/routed-mailwoman-arm"
 
 /**
  * Enumerates how cleanly a two-arm comparison isolates its declared configuration
@@ -182,29 +183,22 @@ export function assertComparableField(field: string): void {
 	}
 }
 
-interface ResolvedArtifact {
-	name: string
-	path: string | null
-	origin: string | null
-	/**
-	 * The digest of the bytes the arm read, or `null` when the arm recorded none.
-	 *
-	 * Two recorded digests that differ make isolation ambiguous.
-	 * A `null` on either side leaves the comparison unable to say whether the bytes agree,
-	 * which is a different reading from agreement.
-	 */
-	digest: string | null
-}
-
 /**
  * One locale's resolved artifacts, keyed by artifact name.
  */
-type ResolvedByName = Map<string, Pick<ResolvedArtifact, "origin" | "path" | "digest">>
+type ResolvedByName = Map<string, Pick<RoutedArtifactRecord, "origin" | "path" | "digest">>
 
-function readArtifacts(value: unknown): ResolvedArtifact[] | null {
+/**
+ * Reads one locale's artifact records, with a `null` digest where the arm recorded none.
+ *
+ * Two recorded digests that differ make isolation ambiguous.
+ * A `null` on either side leaves the comparison unable to say whether the bytes agree,
+ * which is a different reading from agreement.
+ */
+function readArtifacts(value: unknown): RoutedArtifactRecord[] | null {
 	if (!Array.isArray(value)) return null
 
-	const artifacts: ResolvedArtifact[] = []
+	const artifacts: RoutedArtifactRecord[] = []
 
 	for (const entry of value) {
 		if (typeof entry !== "object" || entry === null) return null
