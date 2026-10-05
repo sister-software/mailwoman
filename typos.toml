@@ -132,6 +132,8 @@ extend-ignore-re = [
 	'''further investigations and modelling may be required''',
 	'''Myplan\.ie uses a \*\*generalised, homogenised version\*\*''',
 	'''Territory characterised according to its''',
+	# Building Digital UK's UPRN-level release names this column with its British spelling.
+	'''\bbduk_recognised_premises\b''',
 ]
 
 [default.extend-words]
@@ -340,6 +342,12 @@ extend-glob = ["2026-10-05-uk-three-building-competition-sources.md"]
 # The record quotes UK proper names: the operators `CityFibre` and `Community Fibre`, Ofcom's product
 # category `full-fibre`, and the Barnet ward `Childs Hill`.
 extend-words = { fibre = "fibre", Childs = "Childs" }
+
+[type.london-three-buildings]
+extend-glob = ["london-three-buildings.ts", "london-three-buildings.test.ts", "london-three-buildings.full.test.ts"]
+# The London planning references end in `FUL`, a borough's code for a full planning application, and the
+# module keys each building by its lowercased reference, such as `croydon-17-02680-ful`.
+extend-words = { ful = "ful" }
 
 [type.intentional-typos]
 extend-glob = [

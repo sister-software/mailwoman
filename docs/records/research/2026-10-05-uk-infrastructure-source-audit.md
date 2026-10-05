@@ -115,6 +115,65 @@ fourth, commercial channel. The four entries below were verified on 2026-10-05.
 - Unknown: the field list, coverage of a given address, price and the right to redistribute results in
   a report, until the operator reads the page and its license.
 
+### Building Digital UK UPRN-level release (per premises, England and Wales)
+
+Building Digital UK (BDUK) publishes its own premises-level view, built from suppliers' returns to its
+Open Market Review (OMR) and from its delivery data. The entry below was verified on 2026-10-05 from
+GOV.UK's publication page, its content item, the user guide and the files.
+
+- Publisher: Building Digital UK. Publication: "May 2026 OMR and premises in BDUK plans (England and
+  Wales)" (`gov.uk/government/publications/may-2026-omr-and-premises-in-bduk-plans-england-and-wales`),
+  a transparency publication first published 2026-09-17. GOV.UK's content item for the page
+  (`https://www.gov.uk/api/content/<page path>`) lists 13 attachments with their URLs and sizes: the HTML
+  user guide "UPRN level release user guide and technical note for premises in BDUK plans", a sample of
+  900 rows (`202605_BDUK_uprn_release_sample.csv`, 174,344 bytes), ten regional ZIP archives, and one
+  CSV of 29 premises with no region or local authority district (4,817 bytes).
+- Content: one row per UPRN in 28 columns: `uprn`, `struprn`, `bduk_recognised_premises`, `country`,
+  `postcode`, `lot_id`, `lot_name`, `subsidy_control_status`, `current_gigabit`, `future_gigabit`, the ONS
+  code and name of the local authority district and of the region, and four groups of contract fields
+  for Gigabit Infrastructure Subsidy (`bduk_gis`), vouchers, Superfast and hubs contracts, each with the
+  contract's supplier. `subsidy_control_status` takes three values in this release: `Gigabit Grey/Black`
+  (one or more qualifying gigabit networks from different suppliers now or within three years),
+  `Gigabit White` (no gigabit network, and none likely within three years) and `Gigabit Under Review`.
+  The guide also defines `Unassessed`, which no row holds. No field identifies the network behind
+  commercial coverage: the supplier columns give the supplier of a BDUK contract, and Grey/Black covers
+  one network or several.
+- Premises base: the AddressBase Premium epoch current at the OMR, filtered to postal addresses that are
+  not demolished. A UPRN the release omits was not assessed, and the guide gives demolished or derelict
+  premises and new builds after that epoch as possible reasons. `bduk_recognised_premises` marks BDUK's
+  premises base, the premises "where a gigabit-capable connection would provide benefit", from
+  AddressBase Premium classes and local intelligence.
+- Coverage: England and Wales. The ten regional archives hold 318 CSV files, one per local authority
+  district, with 31,062,864 rows, and the no-region file adds 29. The London archive,
+  `2026-09-10_zipped_files_release_london.zip`, is 57,082,748 bytes with SHA-256
+  `8ed1fb0b100fa248892be39b9833886066c7c57d8cd1d7e74a7d8bf83eedeb8f`, and it holds 33 files with
+  4,478,945 rows, each a distinct UPRN.
+- Vintage: the May 2026 OMR. The guide plans a release with each OMR closure notice, once every four
+  months.
+- Access: anonymous download from GOV.UK. The files are comma-separated, and a field that contains a
+  comma is quoted. The London files, the sample and the no-region file end their lines with LF and
+  carry no byte-order mark.
+- Permitted use: GOV.UK's publication page states "All content is available under the
+  Open Government Licence v3.0, except where otherwise stated". The guide's page states "This
+  publication is licensed under the terms of the Open Government Licence v3.0 except where otherwise
+  stated", with GOV.UK's notice that third-party copyright information, where identified, needs its
+  holder's permission. The guide identifies no third-party copyright information and states no
+  exception for the files.
+- Limits the guide states: `current_gigabit` comes from BDUK's OMR data and its delivery data, so a
+  premises connected after the May 2026 OMR reads `false`. The guide states that "not all suppliers
+  provide returns to our OMR process, so there are gaps in our coverage", and that the view "may differ
+  from other providers of coverage data including Ofcom and ThinkBroadband". `future_gigabit` comes from
+  the OMR alone. BDUK's premises base includes "child" premises "(e.g. apartments in houses of multiple
+  occupancy)", and Ofcom's does not. About 4,400 premises in GIS contracts are absent because OS now
+  classes them as demolished, and recent contract changes may be missing.
+- Observed beside the guide: every flag column writes lowercase `true` and `false`, where the guide's
+  examples write `TRUE`. `bduk_gis_contract_scope` writes `Initial` and `Deferred`, where the guide's
+  example writes `deferred`. The guide calls the three hubs columns blank, and `bduk_hubs` holds `false`
+  in every row. `country` is empty in 41,608 rows, 8,101 of them in London.
+- Authority: BDUK's classification of each premises from suppliers' OMR returns and its delivery data. A
+  row identifies no network, so it cannot say which operator serves a premises. `packages/bduk` reads
+  the release, and its download step stores one region's archive under the data root.
+
 ### UK Power Networks open data (and the other GB DNOs)
 
 - Publisher: UK Power Networks (the DNO for London, the South East and the East of England). Portal:
@@ -263,17 +322,17 @@ fourth, commercial channel. The four entries below were verified on 2026-10-05.
 
 ## 2. The required relations, mapped to sources
 
-| Relation                        | Best public source                                                                                                                | Limit                                                                                                                                      |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| owns (network plant)            | Operator records; UKPN for power assets it owns                                                                                   | Public telecom ownership layers are absent.                                                                                                |
-| owns (the building)             | HM Land Registry (paid; outside this audit); PLUTO-style municipal data exists only in the US                                     | UK fee ownership is closed data.                                                                                                           |
-| connects-to (physical topology) | NUAR internally for buried plant; operator GIS                                                                                    | Public topology sources are absent; proximity implies presence at best.                                                                    |
-| supplies (service availability) | Ofcom bulk files per postcode and output area; Ofcom's registered API per UPRN; Ofcom's checker and operator checkers per address | Per-UPRN provider records are collected and stay unpublished; the API names no network; checker terms bar automated use and republication. |
-| may-attach (poles, ducts)       | Openreach PIA, CP-only; CityFibre plant portal, credentialed                                                                      | Public attachment sources are absent.                                                                                                      |
-| capacity                        | UKPN substation ratings and utilisation (electrical only)                                                                         | Telecom capacity data is unpublished.                                                                                                      |
-| condition                       | UKPN per-site assessment dates (partial)                                                                                          | Public telecom condition data is absent.                                                                                                   |
-| access (wayleave, consent)      | Operator and landlord records only                                                                                                | Always private.                                                                                                                            |
-| observation date                | PLD per-stage dates; Ofcom snapshot dates; UKPN dataset modified dates; OSM edit timestamps (edit rather than survey)             | Most asset records carry zero survey dates.                                                                                                |
+| Relation                        | Best public source                                                                                                                                                                             | Limit                                                                                                                                                        |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| owns (network plant)            | Operator records; UKPN for power assets it owns                                                                                                                                                | Public telecom ownership layers are absent.                                                                                                                  |
+| owns (the building)             | HM Land Registry (paid; outside this audit); PLUTO-style municipal data exists only in the US                                                                                                  | UK fee ownership is closed data.                                                                                                                             |
+| connects-to (physical topology) | NUAR internally for buried plant; operator GIS                                                                                                                                                 | Public topology sources are absent; proximity implies presence at best.                                                                                      |
+| supplies (service availability) | Ofcom bulk files per postcode and output area; Ofcom's registered API per UPRN; Ofcom's checker and operator checkers per address; BDUK's UPRN-level release per premises in England and Wales | Per-UPRN provider records are collected and stay unpublished; the API and BDUK's release name no network; checker terms bar automated use and republication. |
+| may-attach (poles, ducts)       | Openreach PIA, CP-only; CityFibre plant portal, credentialed                                                                                                                                   | Public attachment sources are absent.                                                                                                                        |
+| capacity                        | UKPN substation ratings and utilisation (electrical only)                                                                                                                                      | Telecom capacity data is unpublished.                                                                                                                        |
+| condition                       | UKPN per-site assessment dates (partial)                                                                                                                                                       | Public telecom condition data is absent.                                                                                                                     |
+| access (wayleave, consent)      | Operator and landlord records only                                                                                                                                                             | Always private.                                                                                                                                              |
+| observation date                | PLD per-stage dates; Ofcom snapshot dates; UKPN dataset modified dates; OSM edit timestamps (edit rather than survey)                                                                          | Most asset records carry zero survey dates.                                                                                                                  |
 
 ## 3. Existing extraction, audited before any new work (DoD item 3)
 
@@ -378,11 +437,12 @@ State subcategories retrieve zero files; the live values are `Provider List`, `L
 
 | Priority | Source                                                     | Feeds                                                                                       | Basis it can carry                     | Cadence                                      | License                                                          |
 | -------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------- |
-| 1        | Ofcom Connected Nations bulk files                         | service availability per postcode and output area; premises denominator from output area up | source_present (operator declarations) | 3 releases/yr                                | OGL v3                                                           |
-| 2        | LDD and GLA referred applications; Planning London Datahub | demand pipeline, construction windows, unit counts                                          | observed per record, dated per stage   | LDD final 2020; referrals to 2024; PLD daily | OGL v3 (LDD, referrals); PLD none stated                         |
-| 3        | OS OpenMap Local (+ OS NGD access points when licensed)    | building footprints, entrances                                                              | surveyed                               | 6-monthly                                    | OGL / licensed                                                   |
-| 4        | UKPN open data                                             | power poles, substations, cable routes (co-location evidence)                               | designated by the owner for presence   | irregular                                    | CC BY 4.0 (poles/sites); bespoke for cables                      |
-| 5        | OSM telecom extract (#1375 branch)                         | cabinets, exchanges, connection points                                                      | source_present, completeness unknown   | continuous                                   | ODbL (build-local)                                               |
+| 1        | BDUK UPRN-level release (the first UK broadband adapter)   | gigabit status per UPRN in England and Wales without a network name; premises denominator   | source_present (supplier OMR returns)  | every four months                            | OGL v3.0                                                         |
+| 2        | Ofcom Connected Nations bulk files                         | service availability per postcode and output area; premises denominator from output area up | source_present (operator declarations) | 3 releases/yr                                | OGL v3                                                           |
+| 3        | LDD and GLA referred applications; Planning London Datahub | demand pipeline, construction windows, unit counts                                          | observed per record, dated per stage   | LDD final 2020; referrals to 2024; PLD daily | OGL v3 (LDD, referrals); PLD none stated                         |
+| 4        | OS OpenMap Local (+ OS NGD access points when licensed)    | building footprints, entrances                                                              | surveyed                               | 6-monthly                                    | OGL / licensed                                                   |
+| 5        | UKPN open data                                             | power poles, substations, cable routes (co-location evidence)                               | designated by the owner for presence   | irregular                                    | CC BY 4.0 (poles/sites); bespoke for cables                      |
+| 6        | OSM telecom extract (#1375 branch)                         | cabinets, exchanges, connection points                                                      | source_present, completeness unknown   | continuous                                   | ODbL (build-local)                                               |
 | —        | NUAR                                                       | buried ducts and cables                                                                     | owner-supplied                         | live                                         | barred for feasibility use                                       |
 | —        | Ofcom Connected Nations Broadband API                      | predicted speed categories per UPRN without a network name                                  | source_present (operator predictions)  | unknown                                      | Ofcom API terms 2025; approval required; cache at most one month |
 | —        | Ofcom broadband checker                                    | per-address availability, consenting networks named                                         | source_present (operator declarations) | address base twice a year                    | Ofcom site terms; manual use                                     |
@@ -400,7 +460,8 @@ building real, what does regulation declare available." The operator's own recor
 2. **Pole attachment feasibility** — pole locations (UKPN) exist; attachment rights and pole-top space
    stay private. Request: PIA-equivalent attachment status or a named contact for mixed pole routes.
 3. **Per-premises orderability in bulk** — Ofcom withholds full-fibre at output-area and postcode
-   level, its registered API predicts speed categories per UPRN without naming a network, and the
+   level, its registered API predicts speed categories per UPRN without naming a network, BDUK's
+   release states its gigabit view per UPRN without naming a network, and the
    operator checkers' terms bar automated queries. Request: the operator's own premises-passed extract
    for the pilot geography, or its serviceability API under a rate limit rather than a ToS wall.
 4. **Wayleave and landlord consent status** — private by definition. Request: the operator's wayleave
@@ -422,6 +483,9 @@ evidence trail the answer would resolve.
 - Ofcom API developer portal (api.ofcom.org.uk: published API, operation, schema and products), Ofcom
   API terms of use 2025, Ofcom checker page and checker FAQ — 2026-10-05
 - thinkbroadband Broadband Availability API and broadband data pages (HTTP 403, unread) — 2026-10-05
+- Building Digital UK, "May 2026 OMR and premises in BDUK plans (England and Wales)": the GOV.UK page,
+  its content item, the user guide's page, the sample file, the no-region file and the ten regional
+  archives, of which the London archive is stored under the data root's `bduk` directory — 2026-10-05
 - UKPN open data portal and catalogue API (ukpowernetworks.opendatasoft.com) — 2026-10-05
 - NUAR guidance and FAQ (gov.uk, nuar.uk); OS news 2026-09-15 — 2026-10-05
 - planning.data.gov.uk dataset pages and entity API; Camden Socrata portal — 2026-10-05

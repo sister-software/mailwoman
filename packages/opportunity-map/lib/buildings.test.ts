@@ -30,7 +30,7 @@ import {
 	londonDossier,
 	PENTONVILLE_ROAD,
 	sitePosition,
-} from "#test/fixtures/london-three-buildings"
+} from "#london-three-buildings"
 
 const collection = buildingFeatures(districtDossier(), { unitStage: UnitStage.Completed })
 

@@ -10,7 +10,8 @@ UPRN on a recorded date. Area context describes a postcode or a larger area, wit
 denominator, snapshot date and resolution. Unknown covers a source that was unavailable, withheld a
 provider name, lacked the address or gave no result. This pass holds area context and unattempted
 sources. It holds zero address observations, because it submitted no address to a consumer checker and
-holds no API key or license.
+holds no API key or license. Section 5 compares the sources and records the choice of the first UK
+broadband adapter, and section 6 gives that adapter's counts for the buildings' postcodes.
 
 ## 1. Sources of planning records
 
@@ -133,7 +134,7 @@ postcode].
 
 ### Flood zone at each planning grid reference
 
-The dossier fixture `packages/opportunity-map/test/fixtures/london-three-buildings.ts` places each
+The dossier fixture `packages/opportunity-map/lib/london-three-buildings.ts` places each
 building at its LDD grid reference, converted to WGS 84 with `osgb36ToWGS84` from
 `@mailwoman/spatial/osgb36`. One run of `floodLayerReading` from `@mailwoman/flood/layer-readings` read
 each point from the host's `flood.db` on 2026-10-05. The database's manifest gives layer
@@ -212,7 +213,88 @@ buildings. Each term was read on 2026-10-05.
 The Ofcom checker is the discovery step for networks beyond these four operators, because it names
 every consenting network at an address. A network it omits stays unknown.
 
-## 5. Operator actions
+## 5. Source comparison and the first UK adapter
+
+#2467's sixth task asks for the first UK broadband adapter once a comparison establishes each source's
+useful fields, permitted report use and coverage limits. The table compares the sources of section 4
+and BDUK's UPRN-level release on those three points and on the key each takes. Each term was read on
+2026-10-05, and the [UK source audit](2026-10-05-uk-infrastructure-source-audit.md) describes each source
+in full. The operator looked up five addresses by hand on 2026-10-05, and the results are recorded
+privately.
+
+| Source                                                                  | Key it takes                                             | Useful fields                                                                                                                                      | Permitted report use                                                                                                                                                                                         | Coverage limits                                                                                                                                                                                        |
+| ----------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Ofcom postcode files, January 2026                                      | the unit postcode                                        | 17 percentages, among them superfast, ultrafast at 100 and 300 Mbit/s, gigabit and decent broadband, for all premises and for residential premises | Open Government Licence v3.0; Ofcom's site terms allow reproduction "provided that it is reproduced accurately and not used in a misleading context", acknowledged as Ofcom copyright                        | area context only; no premises count; no network name; full fiber withheld                                                                                                                             |
+| Ofcom output-area files, January 2026                                   | the 2021 census output-area code                         | the premises count and the count of premises at each coverage level, for all premises and for residential premises                                 | as for the postcode files                                                                                                                                                                                    | area context for every premises in the area, 88 to 509 premises in the four areas here; no network name; full fiber withheld                                                                           |
+| Ofcom broadband checker                                                 | a postcode, then one address                             | speed categories at the address and the names of the networks that consented to be named                                                           | Ofcom's site terms; manual use                                                                                                                                                                               | names only consenting networks, so an omitted network is unknown; the address base updates twice a year                                                                                                |
+| Ofcom Connected Nations Broadband API                                   | a postcode, answered with one row per UPRN               | predicted maximum download and upload speeds per UPRN, overall and by speed category                                                               | a commercial license with Ofcom's logo and attribution and no modification; clause 4.3.6 bars storing responses "to build a partial or full dataset of your own" and limits a performance cache to one month | needs registration and Ofcom's approval; names no network                                                                                                                                              |
+| BDUK UPRN-level release, May 2026 OMR                                   | the UPRN, with its postcode and local authority district | `current_gigabit`, `future_gigabit`, the subsidy control status, membership of BDUK's premises base, and BDUK's contracts with their suppliers     | Open Government Licence v3.0 except where otherwise stated; the user guide states no exception                                                                                                               | England and Wales; names no network for commercial coverage; gaps where a supplier sent no OMR return; premises fixed at the OMR's AddressBase Premium epoch; may differ from Ofcom and thinkbroadband |
+| Operator checkers (Openreach, Virgin Media, CityFibre, Community Fibre) | one address                                              | the operator's orderability state at the address                                                                                                   | Openreach, Virgin Media and CityFibre bar republication without permission; Community Fibre's website terms are unknown                                                                                      | one network each; manual use only                                                                                                                                                                      |
+| thinkbroadband Broadband Availability API                               | a postcode, and a UPRN for some networks [unverified]    | unknown: the API page returned HTTP 403                                                                                                            | a commercial license whose terms are unread                                                                                                                                                                  | price, coverage of the nine postcodes and report rights unknown                                                                                                                                        |
+
+BDUK's UPRN-level release is the first UK broadband adapter [decided, 2026-10-05]. It is the one source
+in the table that is open, keyed by UPRN and gives a premises denominator, so the premises near a
+building can be counted from its rows with BDUK's gigabit view of each. Ofcom's output-area file stays
+as area context. Network names stay a manual lookup, because no open source in the table identifies
+the network at a premises. `packages/bduk` reads the release's files, and its download step stores one
+region's archive under the data root's `bduk` directory.
+
+## 6. BDUK's counts for the eleven postcodes
+
+The counts read every row of the London archive of BDUK's May 2026 release,
+`2026-09-10_zipped_files_release_london.zip` (57,082,748 bytes, SHA-256
+`8ed1fb0b100fa248892be39b9833886066c7c57d8cd1d7e74a7d8bf83eedeb8f`, retrieved 2026-10-05): 33 files and
+4,478,945 rows, read through `readBDUKReleaseDirectory` from `@mailwoman/bduk`. They keep the rows of
+the eleven postcodes in section 4, the eight that section 3 infers and the three that the planning
+rows state. Every row of those postcodes is in its own borough's file. Each listed UPRN is placed at its
+point in the host's `nsul.db` (National Statistics UPRN Lookup, June 2026), whose latitude and longitude
+the build copied from OS Open UPRN (the host's `uprn.db`, version 2026-08), and every listed UPRN has a
+point under the same postcode. A UPRN counts as within 50 m when the great-circle distance
+(`haversineKm` from `@mailwoman/spatial/distance`) from its point to the planning grid reference,
+converted with `osgb36ToWGS84`, is 50 m or less, the rule by which section 3 infers the postcodes. The
+four columns on the right count only the UPRNs within 50 m.
+`packages/opportunity-map/lib/london-three-buildings.full.test.ts` recomputes every count.
+
+A row's link to a building is inferred: it rests on the postcode's link in section 3 and on the 50 m
+rule [inferred]. Section 3 does not infer the three planning-row postcodes as postcodes of the
+dwellings, so a premises listed with one of them is linked to the building by the 50 m rule alone.
+
+| Site | Postcode | Postcode's link | UPRNs BDUK lists | UPRNs NSUL holds | Distance of the listed UPRNs' points | Within 50 m | `current_gigabit` true | Gigabit White | Gigabit Under Review | In BDUK's premises base |
+| ---- | -------- | --------------- | ---------------- | ---------------- | ------------------------------------ | ----------- | ---------------------- | ------------- | -------------------- | ----------------------- |
+| A    | CR0 5BX  | inferred        | 73               | 75               | 2.4 m                                | 73          | 72                     | 1             | 0                    | 72                      |
+| A    | CR0 5BY  | inferred        | 81               | 81               | 2.4 m                                | 81          | 81                     | 0             | 0                    | 81                      |
+| A    | CR0 5LP  | planning row    | 2                | 11               | 60.1 m                               | 0           | 0                      | 0             | 0                    | 0                       |
+| B    | NW2 2DL  | inferred        | 77               | 78               | 7.6 m                                | 77          | 72                     | 5             | 0                    | 77                      |
+| B    | NW2 2DW  | inferred        | 21               | 40               | 28.9 m                               | 21          | 21                     | 0             | 0                    | 21                      |
+| B    | NW2 2DP  | planning row    | 29               | 38               | 34.7 to 43.7 m                       | 29          | 28                     | 0             | 1                    | 29                      |
+| C    | N1 9FS   | inferred        | 37               | 37               | 45.6 m                               | 37          | 37                     | 0             | 0                    | 2                       |
+| C    | N1 9FT   | inferred        | 28               | 29               | 22.2 m                               | 28          | 28                     | 0             | 0                    | 28                      |
+| C    | N1 9FU   | inferred        | 30               | 33               | 6.8 to 13.6 m                        | 30          | 30                     | 0             | 0                    | 19                      |
+| C    | N1 9FW   | inferred        | 2                | 6                | 16.0 to 21.8 m                       | 2           | 2                      | 0             | 0                    | 2                       |
+| C    | N1 9JE   | planning row    | 1                | 8                | 105.8 m                              | 0           | 0                      | 0             | 0                    | 0                       |
+
+Over the inferred postcodes, BDUK lists 154 UPRNs for building A, 153 of them with `current_gigabit`
+true, against 153 planned units. It lists 98 for building B against 122 planned units: 93 have
+`current_gigabit` true and 5 are classed Gigabit White. It lists 97 for building C against 119 and 118
+planned units, all with `current_gigabit` true, and 51 of the 97 are in BDUK's premises base. The release
+lists fewer UPRNs than NSUL holds for nine of the eleven postcodes, and BDUK's guide states that a UPRN
+it omits was not assessed. The three rows beyond 50 m are both CR0 5LP rows, one Gigabit Grey/Black
+with `current_gigabit` true and one Gigabit Under Review with `current_gigabit` false, and the N1 9JE
+row, Gigabit Grey/Black with `current_gigabit` true.
+
+Ofcom and BDUK disagree on NW2 2DL. Ofcom's January 2026 rows give gigabit availability for 100.0
+percent of all premises and of residential premises with that postcode. BDUK's May 2026 release lists 77
+UPRNs with NW2 2DL, all at one NSUL point 7.6 m from the grid reference and all in its premises base, and
+it classes 5 of them Gigabit White with `current_gigabit` false. The two sources differ in date, in
+premises base and in method. Ofcom's snapshot is January 2026 and BDUK's OMR is May 2026. BDUK's guide
+states that its premises base includes child premises and Ofcom's does not. Ofcom aggregates operators'
+declarations, and BDUK classes premises from suppliers' OMR returns and its delivery data, with gaps
+where a supplier sent no return. Which source describes the five premises correctly is unknown
+[unknown]. CR0 5LP shows a smaller difference: Ofcom gives 0.0 percent gigabit availability for its
+premises, and BDUK lists 2 of the 11 UPRNs that NSUL holds for it, one of them with `current_gigabit`
+true.
+
+## 7. Operator actions
 
 Each action needs a person, a registration or a license, so this pass leaves it to the operator.
 
@@ -251,6 +333,9 @@ National Statistics licensed under the Open Government Licence v.3.0.
 
 Environment Agency, Flood Map for Planning, revision 2026-05-20: © Environment Agency copyright and/or
 database right 2025. All rights reserved. Licensed under the Open Government Licence v3.0.
+
+Building Digital UK, May 2026 OMR and premises in BDUK plans (England and Wales), UPRN-level release.
+© Crown copyright 2026. Licensed under the Open Government Licence v3.0.
 ```
 
 ## Source register
@@ -270,3 +355,6 @@ database right 2025. All rights reserved. Licensed under the Open Government Lic
 - thinkbroadband Broadband Availability API page (HTTP 403, unread) — 2026-10-05
 - Environment Agency Flood Map for Planning, revision 2026-05-20, as built into the host's `flood.db`
   (created 2026-08-28) — 2026-10-05
+- Building Digital UK, "May 2026 OMR and premises in BDUK plans (England and Wales)": the GOV.UK page and
+  its content item, the user guide's page, and the London archive, stored under the data root's `bduk`
+  directory — 2026-10-05

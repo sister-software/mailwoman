@@ -71,14 +71,15 @@ synthetic when the scenario's inputs are synthetic.
 
 ## Modules
 
-| Module                    | Contents                                                                       |
-| ------------------------- | ------------------------------------------------------------------------------ |
-| `lib/inputs.ts`           | `MapInputError` and the check of a line's coordinates                          |
-| `lib/buildings.ts`        | The five states, their rules, the unit denominator and `buildingFeatures`      |
-| `lib/districts.ts`        | `districtFeatures` and the unplaced and ambiguous features                     |
-| `lib/routes.ts`           | `SegmentPath`, the verified, proposed and shared segments, and `routeFeatures` |
-| `lib/selection.ts`        | `selectionEconomics`, `portfolioTotals` and `OverlappingProjectsError`         |
-| `lib/example-district.ts` | The synthetic Example District's records, scenario and segment paths           |
+| Module                          | Contents                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| `lib/inputs.ts`                 | `MapInputError` and the check of a line's coordinates                          |
+| `lib/buildings.ts`              | The five states, their rules, the unit denominator and `buildingFeatures`      |
+| `lib/districts.ts`              | `districtFeatures` and the unplaced and ambiguous features                     |
+| `lib/routes.ts`                 | `SegmentPath`, the verified, proposed and shared segments, and `routeFeatures` |
+| `lib/selection.ts`              | `selectionEconomics`, `portfolioTotals` and `OverlappingProjectsError`         |
+| `lib/example-district.ts`       | The synthetic Example District's records, scenario and segment paths           |
+| `lib/london-three-buildings.ts` | The records of three London buildings from public sources                      |
 
 `lib/example-district.ts` holds the synthetic Example District: seven fictional buildings in the five
 states, two districts, a proposed trench shared by two buildings and an existing duct that a synthetic
@@ -86,15 +87,23 @@ plant record verifies. Its coordinates lie in the open South Atlantic, where no 
 workspace's tests import it as `#example-district`, and the application in `packages/opportunity-app`
 imports it as `@mailwoman/opportunity-map/example-district`. The package's root entry leaves it out.
 
-The fixture `test/fixtures/london-three-buildings.ts` holds three London residential buildings as one
-dossier dated 2026-10-05, built from the public records that
+`lib/london-three-buildings.ts` holds three London residential buildings as one dossier dated
+2026-10-05, built from the public records that
 `docs/records/research/2026-10-05-uk-three-building-competition-sources.md` lists. Each position is a
-planning row's grid reference converted with `osgb36ToWGS84`. The fixture holds no availability check and
+planning row's grid reference converted with `osgb36ToWGS84`. The records hold no availability check and
 no provider record, so each building's state follows from its planned unit total. 28-30 Addiscombe Grove
 and 112-132 Cricklewood Lane are in `unknown_coverage`. 130-154, 154a Pentonville Road is in
 `unknown_unit_count`, because its planning row states 119 planned units and its GLA referral states 118.
-Ofcom's area figures are inferred claims and decide no state. `london-three-buildings.full.test.ts`
-recomputes the fixture's flood readings from the host's `flood.db` and skips when the database is absent.
+Ofcom's area figures and BDUK's counts for each of the buildings' eleven postcodes are inferred claims and
+decide no state. A BDUK claim gives the UPRNs that BDUK's May 2026 release lists with the postcode, the
+UPRNs that NSUL places within 50 m of the planning grid reference, and how many of those have
+`current_gigabit` true, are classed Gigabit White or Gigabit Under Review, and are in BDUK's premises base.
+The workspace's tests import the module as `#london-three-buildings`, another workspace imports it as
+`@mailwoman/opportunity-map/london-three-buildings`, and the package's root entry leaves it out.
+
+`london-three-buildings.full.test.ts` recomputes the flood readings from the host's `flood.db`, and
+BDUK's counts from the London archive that `@mailwoman/bduk`'s download step stores under the data root
+and from `nsul.db`. Each suite skips when one of its inputs is absent.
 
 ## Limits
 
