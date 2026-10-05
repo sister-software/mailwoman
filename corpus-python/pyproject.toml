@@ -61,15 +61,9 @@ train = [
 	# 8, 64 and 128, so the dynamic sequence axis survives the fold. A rebuild of an artifact exported
 	# before this pin will therefore differ in md5 and be correct; compare outputs, not bytes.
 	"onnxscript==0.7.2",
-	# Matches the `onnxruntime-web` the browser runs (package.json, packages/neural/package.json), which
-	# is npm's current `latest`. It quantizes the graph that runtime executes, so a version gap means
-	# the artifact is validated by a runtime that is not the one serving it. Verified graph-neutral:
-	# 1.26.0 and 1.29.0 quantize one fixed fp32 to a byte-identical int8 (same sha256, opset 17, same
-	# node, initializer and value_info counts), so this bump cannot move what ships. The two runtimes
-	# do differ numerically executing that graph — up to ~1e-1 on a logit — and agree on every
-	# decision: 0 argmax flips over 172 real tokens across ten addresses. `verify_toolchain.py`
-	# holds the two sides together.
-	"onnxruntime==1.29.0",
+	# Match the browser's `onnxruntime-web` pin in both package manifests. The quantizer and browser
+	# runtime must be evaluated together before exporting a new artifact.
+	"onnxruntime==1.30.0",
 	"tqdm>=4.70.0",
 	# Optional experiment tracking. Logging is best-effort and guarded at runtime
 	# (see mailwoman_train/trackio_logging.py) so its absence never breaks a train run.
