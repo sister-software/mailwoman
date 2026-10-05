@@ -6,10 +6,16 @@
 
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	splitCountryCodes,
+	useCommandTask,
+} from "#cli-kit"
 
 // Overture prunes old releases from its bucket, so a stale pin makes the default ingest fail.
 // Keep this pin in step with `DEFAULT_RELEASE` in `gazetteer-pipeline/poi/defaults.ts`.
@@ -294,16 +300,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

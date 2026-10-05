@@ -10,10 +10,15 @@ import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
-import { Box, Text } from "ink"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * The expected distinct-pair count for a GB build using only the PPD CSV.
@@ -352,16 +357,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

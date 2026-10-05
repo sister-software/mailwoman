@@ -11,10 +11,15 @@ import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
-import { Box, Text } from "ink"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandSummaryLines,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 /**
@@ -166,16 +171,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null

@@ -14,13 +14,13 @@ import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { Box, Text } from "ink"
 import { basename, dirname, PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import {
 	type CommandSpec,
+	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
 	positiveInteger,
@@ -526,16 +526,7 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
-		return (
-			<Box flexDirection="column">
-				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
-						{i === 0 ? "✓ " : "  "}
-						{line}
-					</Text>
-				))}
-			</Box>
-		)
+		return <CommandSummaryLines lines={state.result} />
 	}
 
 	return null
