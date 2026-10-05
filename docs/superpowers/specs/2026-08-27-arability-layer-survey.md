@@ -369,8 +369,8 @@ web-service host does not.
   blocked port cannot produce a `CreateProcess` fault string, so **the failure is in the backend rather
   than this network**. The year range is a separate limit. Out-of-range years are rejected with
   `"Error: The year must be between 1997 and 2019."`, which is **six crop years behind the shipped 2025
-  CDL** even if the backend were repaired. The WSDL's own SOAP binding address uses port 80, which
-  redirects to the dead 443, so the only working entry is the explicit `:8080`.
+  CDL** even if the backend were repaired. The WSDL's own SOAP binding address uses port 80.
+  That port redirects to the dead 443. The only working entry is the explicit `:8080`.
 
   **Treat the CropScape API as unavailable for data retrieval.** It can be reached, but it answers and
   then fails. NASS publishes no decommissioning statement. This absence was checked: the FAQ, last
@@ -685,7 +685,7 @@ builder must read them before the CDL becomes an observation of anything.
 From its FGDC metadata (`metadata_Crop-Frequency-Layers-2025_FGDC-STD-001-1998.htm`), the value domain
 runs `"1" Planted 1 time in 18 years` … `"18" Planted 18 times in 18 years`, and then
 **`"255" Planted 0 times in 18 years`**, while **`"0"` is No Data / Background**. A reader that takes 0
-as "never planted" gets the answer backwards: it reads _we have no data here_ as _nothing was ever grown
+as "never planted" gets the answer backwards: it reads _we have no data here_ as _no crop was ever grown
 here_. This repository's meaning-of-zero rule exists to prevent that failure, and here the source's own
 encoding builds it in. Whoever ingests that product must map 255 and 0 before anything else.
 

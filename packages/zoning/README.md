@@ -12,7 +12,7 @@ does not mean that a zoning polygon covers your address.
 
 **The artifact is built locally and never redistributed.** Three published statements disagree about the
 source's license, so the manifest carries `tier: build-local` and `license: NOASSERTION`. The builder refuses
-a `shipped` tier until the license question is resolved in writing. See _Licence and posture_ below.
+a `shipped` tier until the license question is resolved in writing. See _License and posture_ below.
 
 ## What it reports, and what it refuses to
 

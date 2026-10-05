@@ -117,7 +117,7 @@ and the build is bounded by construction.
   catches a coordinate-order mistake the projection check cannot see.
 - **A center-containment polyfill drops most of this product.** The first feature is a 128 m²
   square, and `polygonToCells` returns zero cells for it at resolutions 7, 8, 9 and 10 alike. The
-  index takes overlapping containment, and a feature that reaches no cell fails the build — a
+  index takes overlapping containment, and a feature that reaches no cell fails the build. A
   dropped feature reads downstream as an absence, which is the one answer this layer must never
   invent.
 - **h3's allocator is sized from the bounding box**, so a long meandering river polygon reserves the

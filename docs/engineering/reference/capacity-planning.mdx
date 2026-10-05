@@ -94,8 +94,8 @@ Three changes, held behind the five-arm benchmark's per-query-class latency and 
    parent-relative encoding: per-locality street dictionaries, delta-encoded number
    sequences, coordinates as 16-bit offsets from the parent H3 res-9 cell. The 40× GB
    postcode receipt above is the evidence base; landing estimate 40–60 B/point, taking the
-   world spine from ~150 GB to ~30–50 GB. Decode must stay fixed-stride trivial — the
-   resolver ladder is synchronous and per-keystroke.
+   world spine from ~150 GB to ~30–50 GB. Decode must stay fixed-stride trivial. The
+   resolver ladder runs synchronously on every keystroke.
 2. **Admin-keyed distribution by country file** ([#1548](https://github.com/sister-software/mailwoman/issues/1548)) —
    deployment scope becomes a fetch list of per-country files, each carrying its own coverage
    manifest (the meaning-of-zero rule). Differential updates: a register rev re-fetches one

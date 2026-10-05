@@ -484,7 +484,7 @@ anonymously**; the median reachable layer holds 150 features. And the license fi
 **That 85 % is a real absence rather than a measurement artifact, and the failure direction was tested
 specifically**: re-checking 25 search-reported-empty items against the item endpoint confirmed **25 of 25
 empty, zero false negatives**. So the largest single obstacle to a US zoning layer is measurable, and it
-is not discovery and not format — **it is that five publishers in six make no statement at all about reuse**,
+comes from reuse terms: **five publishers in six make no statement at all about reuse**,
 which leaves reuse governed by default copyright.
 
 **The conclusion this forces is §7.2's.** A jurisdiction-coverage map of the United States cannot be

@@ -18,7 +18,7 @@ whenever the hot DB is present and skips with a loud note when it isn't.
 - **Rows assert the RESOLVED WOF PLACE ID** — the top cascade hit's `id` — not
   parse components. A row passes only when the entire stack lands on the right
   place. (`expect.name` / `expect.placetype` are human-readable cross-checks,
-  not graded.)
+  excluded from grading.)
 - **Whole-stack**: each `input` goes through the full pipeline — neural parse
   with the ship config (gazetteer lexicon, postcode anchor, conventions mask,
   span bridge, FST), joint reconcile, grouper audit, then the demo's cascade

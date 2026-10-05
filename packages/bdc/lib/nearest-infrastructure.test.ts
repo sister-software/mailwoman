@@ -6,7 +6,7 @@
  *   Tests for {@link nearestInfrastructure} (decision 7). The fixture `poi.db` is built via
  *   the rows injection point directly against `poi-schema.ts` — the same idiom
  *   `resolver-wof-sqlite/poi-lookup.test.ts` uses (a tiny hand-built `poi`/`poi_category_codes` fixture,
- *   no DuckDB/network) — rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s
+ *   without DuckDB or network access) — rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s
  *   `buildPOIDatabase`: `bdc` cannot depend on the `mailwoman` workspace (the top-level CLI package
  *   already depends on `@mailwoman/bdc`, so the reverse edge would be circular). `bdc`'s only POI-side
  *   dependency is `@mailwoman/resolver-wof-sqlite`, and the injected-rows idiom (inject synthetic rows, skip
