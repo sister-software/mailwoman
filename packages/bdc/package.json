@@ -77,6 +77,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/dossier": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/filer": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
