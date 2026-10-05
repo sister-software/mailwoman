@@ -9,7 +9,6 @@ import { describe, expect, test } from "vitest"
 
 import { BuildingState, buildingFeatures } from "#buildings"
 import { districtFeatures } from "#districts"
-import { MapInputError } from "#inputs"
 import {
 	BUILDING_A,
 	BUILDING_B,
@@ -19,7 +18,8 @@ import {
 	BUILDING_G,
 	districtDossier,
 	GARAGE,
-} from "#test/fixtures/example-district"
+} from "#example-district"
+import { MapInputError } from "#inputs"
 import {
 	ADDISCOMBE_GROVE,
 	CRICKLEWOOD_LANE,

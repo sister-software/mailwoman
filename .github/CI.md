@@ -20,7 +20,9 @@ workflow dispatches also select every suite. A failed graph read fails the requi
 
 Fast and slow Vitest jobs receive selected test filenames as arguments. The existing Vitest configs
 retain their exclusions and suite boundaries. React, planetary, license-worker, Earth, packaging, and
-full-scale lexicon work run only when selected. The packaging job uses the published workspace set
+full-scale lexicon work run only when selected. The `opportunity` output selects the browser tests of
+the private opportunity map application, a step of the `react` job, when `@mailwoman/opportunity-app`
+or a workspace it depends on changes. The packaging job uses the published workspace set
 in `.release-it.json`, plus the release tooling. Lexicon selection includes changes that affect
 `mailwoman` or `@mailwoman/codex`; this is broader than the previous list of gazetteer paths.
 

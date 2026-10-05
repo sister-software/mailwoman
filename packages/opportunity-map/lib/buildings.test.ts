@@ -22,7 +22,7 @@ import {
 	LISTING,
 	PERMIT,
 	SURVEY,
-} from "#test/fixtures/example-district"
+} from "#example-district"
 import {
 	ADDISCOMBE_GROVE,
 	CRICKLEWOOD_LANE,

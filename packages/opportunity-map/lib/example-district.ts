@@ -43,18 +43,66 @@ import type { SegmentPath } from "#routes"
 
 const DISTRICT_AS_OF = "2026-09-30"
 
+/**
+ * Example Building A, in `partial_availability`: a provider's availability record covers it.
+ */
 export const BUILDING_A = entityID("building", "example-a")
+
+/**
+ * Example Building B, in `known_unserved`: a surveyed empty reading answers its check.
+ */
 export const BUILDING_B = entityID("building", "example-b")
+
+/**
+ * Example Building C, in `unknown_coverage`: a source-present empty reading answers
+ * its check, and two sources state different positions for it.
+ */
 export const BUILDING_C = entityID("building", "example-c")
+
+/**
+ * Example Garage, in `zero_premises`: its completed unit total is 0.
+ */
 export const GARAGE = entityID("building", "example-garage")
+
+/**
+ * Example Building E, in `unknown_unit_count` at the completed stage: it has a planned count only.
+ */
 export const BUILDING_E = entityID("building", "example-e")
+
+/**
+ * Example Building F, in `unknown_coverage`: the records hold no check, provider
+ * or district membership for it.
+ */
 export const BUILDING_F = entityID("building", "example-f")
+
+/**
+ * Example Building G, in `unknown_coverage`: two sources place it in two districts.
+ */
 export const BUILDING_G = entityID("building", "example-g")
 
+/**
+ * The synthetic completion inspection: the completed unit counts, available on 2026-08-03.
+ */
 export const INSPECTION = "synthetic-inspection-2026"
+
+/**
+ * The synthetic survey: the positions, memberships and readings, available on 2026-07-20.
+ */
 export const SURVEY = "synthetic-survey-2026"
+
+/**
+ * The synthetic building permit: Example Building E's planned count, available on 2026-03-02.
+ */
 export const PERMIT = "synthetic-permit-2026"
+
+/**
+ * The synthetic availability listing of Example Fiber Co at Example Building A, available on 2026-06-02.
+ */
 export const LISTING = "synthetic-listing-2026"
+
+/**
+ * The synthetic plant record that verifies the existing duct, available on 2026-05-05.
+ */
 export const PLANT_RECORD = "synthetic-plant-record-2026"
 
 function syntheticSource(id: string, title: string, observedAt: string, availableAt: string): SourceRecord {
@@ -104,6 +152,9 @@ function membership(subject: EntityID, extent: string, source = SURVEY) {
 	return { subject, extent, evidence: { source } }
 }
 
+/**
+ * The dossier records of the Example District's seven buildings.
+ */
 export const DISTRICT_RECORDS: DossierRecords = {
 	sources: SOURCES,
 	entities: Object.entries(LABELS).map(([id, label]) => ({ id, kind: "building" as const, externalIDs: [], label })),
@@ -189,6 +240,9 @@ export function districtDossier(records: DossierRecords = DISTRICT_RECORDS): Dos
 	return buildDossier(records, { asOf: DISTRICT_AS_OF })
 }
 
+/**
+ * The basis of every invented rate, quantity and assumption of the scenario.
+ */
 export const SYNTHETIC: InputBasis = {
 	kind: InputBasisKind.OperatorAssumption,
 	statedBy: "synthetic example for #2289",
@@ -219,6 +273,10 @@ function plan(building: EntityID, route: readonly string[], works: CostLine, uni
 	}
 }
 
+/**
+ * The synthetic scenario that plans Example Buildings A, B and C over the
+ * shared trench and the existing duct.
+ */
 export const DISTRICT_SCENARIO: Scenario = {
 	id: "synthetic-example-district",
 	label: "Synthetic routes in the Example District",

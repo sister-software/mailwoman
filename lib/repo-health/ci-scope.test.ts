@@ -9,6 +9,12 @@ const workspaces: CIWorkspace[] = [
 	{ name: "@mailwoman/react", directory: "packages/react", dependencies: ["@mailwoman/core"] },
 	{ name: "@mailwoman/earth", directory: "packages/earth", dependencies: ["@mailwoman/react"] },
 	{ name: "@mailwoman/planetary", directory: "packages/planetary", dependencies: ["@mailwoman/react"] },
+	{ name: "@mailwoman/opportunity-map", directory: "packages/opportunity-map", dependencies: [] },
+	{
+		name: "@mailwoman/opportunity-app",
+		directory: "packages/opportunity-app",
+		dependencies: ["@mailwoman/react", "@mailwoman/opportunity-map"],
+	},
 	{ name: "@mailwoman/license-worker", directory: "packages/license-worker", dependencies: [] },
 	{ name: "@mailwoman/corpus", directory: "packages/corpus", dependencies: [] },
 	{ name: "@mailwoman/docs", directory: "docs", dependencies: ["@mailwoman/react"] },
@@ -22,6 +28,9 @@ const files = [
 	"packages/react/lib/button.test.tsx",
 	"packages/react/lib/button.integration.test.tsx",
 	"packages/earth/test/e2e/map.spec.ts",
+	"packages/opportunity-map/lib/selection.test.ts",
+	"packages/opportunity-app/lib/controls.test.ts",
+	"packages/opportunity-app/test/browser/keyboard.spec.ts",
 	"packages/license-worker/lib/key.test.ts",
 	"packages/corpus/lib/adapter.test.ts",
 	"packages/corpus/lib/adapter.integration.test.ts",
@@ -35,19 +44,45 @@ describe("selectCIScope", () => {
 		const scope = selectCIScope(workspaces, files, ["packages/core/lib/path.ts"], ["packages/core"])
 
 		expect(scope.full).toBe(false)
-		expect(scope.affected).toEqual(["docs", "packages/core", "packages/earth", "packages/planetary", "packages/react"])
-		expect(scope.fastFiles).toEqual(["docs/src/page.test.tsx", "packages/core/lib/path.test.ts"])
+
+		expect(scope.affected).toEqual([
+			"docs",
+			"packages/core",
+			"packages/earth",
+			"packages/opportunity-app",
+			"packages/planetary",
+			"packages/react",
+		])
+
+		expect(scope.fastFiles).toEqual([
+			"docs/src/page.test.tsx",
+			"packages/core/lib/path.test.ts",
+			"packages/opportunity-app/lib/controls.test.ts",
+		])
+
 		expect(scope.slowFiles).toEqual(["packages/core/lib/path.integration.test.ts"])
 
 		expect(scope).toMatchObject({
 			earth: true,
 			react: true,
 			planetary: true,
+			opportunity: true,
 			worker: false,
 			docs: true,
 			smoke: true,
 			python: false,
 		})
+	})
+
+	it("selects the opportunity application's browser tests for a change in it or in the map model it draws", () => {
+		for (const file of ["packages/opportunity-app/lib/App.tsx", "packages/opportunity-map/lib/selection.ts"]) {
+			const scope = selectCIScope(workspaces, files, [file], [])
+
+			expect(scope.full).toBe(false)
+			expect(scope).toMatchObject({ opportunity: true, react: false, planetary: false, earth: false })
+			expect(scope.fastFiles).toContain("packages/opportunity-app/lib/controls.test.ts")
+			expect(scope.fastFiles).not.toContain("packages/opportunity-app/test/browser/keyboard.spec.ts")
+		}
 	})
 
 	it("selects workspace tests for a fixture change without selecting unrelated browser suites", () => {

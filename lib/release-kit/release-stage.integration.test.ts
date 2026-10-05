@@ -36,7 +36,7 @@ describe("checkReleaseListIdentity", () => {
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])
-		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(12)
+		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(13)
 	})
 
 	it("names an unsanctioned absence instead of reporting a count mismatch", async () => {

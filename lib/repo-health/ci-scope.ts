@@ -37,6 +37,10 @@ export interface CIScope {
 	earth: boolean
 	react: boolean
 	planetary: boolean
+	/**
+	 * The browser tests of the private opportunity map application.
+	 */
+	opportunity: boolean
 	worker: boolean
 	smoke: boolean
 	lexicon: boolean
@@ -266,6 +270,7 @@ export function selectCIScope(
 		earth: has("@mailwoman/earth"),
 		react: has("@mailwoman/react"),
 		planetary: has("@mailwoman/planetary"),
+		opportunity: has("@mailwoman/opportunity-app"),
 		worker: has("@mailwoman/license-worker"),
 		smoke:
 			full ||

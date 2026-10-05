@@ -4,7 +4,7 @@ The data model of the building and shared-route opportunity map in
 [#2289](https://github.com/sister-software/mailwoman/issues/2289). It reads a dossier from
 `@mailwoman/dossier` and a scenario from `@mailwoman/route-scenarios`, and it returns GeoJSON feature
 collections at building, route and district scales as plain objects. The workspace imports no map library,
-and a later change adds the interactive map that draws these collections. It is private, and this
+and the private application in `packages/opportunity-app` draws these collections. It is private, and this
 repository holds synthetic economic inputs only.
 
 ## The building scale
@@ -66,18 +66,20 @@ synthetic when the scenario's inputs are synthetic.
 
 ## Modules
 
-| Module             | Contents                                                                       |
-| ------------------ | ------------------------------------------------------------------------------ |
-| `lib/inputs.ts`    | `MapInputError` and the check of a line's coordinates                          |
-| `lib/buildings.ts` | The five states, their rules, the unit denominator and `buildingFeatures`      |
-| `lib/districts.ts` | `districtFeatures` and the unplaced and ambiguous features                     |
-| `lib/routes.ts`    | `SegmentPath`, the verified, proposed and shared segments, and `routeFeatures` |
-| `lib/selection.ts` | `selectionEconomics`, `portfolioTotals` and `OverlappingProjectsError`         |
+| Module                    | Contents                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `lib/inputs.ts`           | `MapInputError` and the check of a line's coordinates                          |
+| `lib/buildings.ts`        | The five states, their rules, the unit denominator and `buildingFeatures`      |
+| `lib/districts.ts`        | `districtFeatures` and the unplaced and ambiguous features                     |
+| `lib/routes.ts`           | `SegmentPath`, the verified, proposed and shared segments, and `routeFeatures` |
+| `lib/selection.ts`        | `selectionEconomics`, `portfolioTotals` and `OverlappingProjectsError`         |
+| `lib/example-district.ts` | The synthetic Example District's records, scenario and segment paths           |
 
-The fixture `test/fixtures/example-district.ts` holds the synthetic Example District: seven fictional
-buildings in the five states, two districts, a proposed trench shared by two buildings and an existing
-duct that a synthetic plant record verifies. Its coordinates lie in the open South Atlantic, where no
-building stands.
+`lib/example-district.ts` holds the synthetic Example District: seven fictional buildings in the five
+states, two districts, a proposed trench shared by two buildings and an existing duct that a synthetic
+plant record verifies. Its coordinates lie in the open South Atlantic, where no building stands. The
+workspace's tests import it as `#example-district`, and the application in `packages/opportunity-app`
+imports it as `@mailwoman/opportunity-map/example-district`. The package's root entry leaves it out.
 
 The fixture `test/fixtures/london-three-buildings.ts` holds three London residential buildings as one
 dossier dated 2026-10-05, built from the public records that
@@ -91,8 +93,5 @@ recomputes the fixture's flood readings from the host's `flood.db` and skips whe
 
 ## Limits
 
-- The interactive map is a later change. Scenario controls that update investment, value, evidence, dates
-  and assumptions, and keyboard access with labels beyond color for selection, unknowns and sources,
-  remain open as items 4 and 5 of #2289.
 - A route segment's path is supplied beside the scenario. The model draws no route from proximity.
 - A portfolio compares segments by their identifiers in one scenario.
