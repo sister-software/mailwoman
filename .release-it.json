@@ -101,6 +101,7 @@
 		"packages/astrogeology": "private planetary data pipeline — no published consumer yet",
 		"packages/geocode-oracle": "private verification oracle — never a runtime dependency, never publishes",
 		"packages/ofcom": "private Ofcom Connected Nations reader — no published consumer yet",
+		"packages/bduk": "private reader for Building Digital UK's UPRN-level release — no published consumer yet",
 		"packages/route-scenarios": "private shared-route cost and cash-flow scenario calculator — no published consumer yet",
 		"packages/opportunity-map": "private data model of the building and shared-route opportunity map — no published consumer yet",
 		"packages/opportunity-app": "private opportunity map application — undeployed, never publishes",

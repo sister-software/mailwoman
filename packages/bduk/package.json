@@ -1,13 +1,14 @@
 {
-	"name": "@mailwoman/opportunity-map",
+	"name": "@mailwoman/bduk",
 	"version": "1.0.0",
 	"private": true,
-	"description": "The data model of the building and shared-route opportunity map: GeoJSON feature collections at building, route and district scales over a dossier, with each selection's economics computed through @mailwoman/route-scenarios",
+	"description": "Building Digital UK's UPRN-level release of OMR and premises in BDUK plans — the reader for its CSV files and the download of one region's archive",
 	"keywords": [
+		"bduk",
 		"broadband",
-		"dossier",
-		"geojson",
-		"map"
+		"gigabit",
+		"uk",
+		"uprn"
 	],
 	"homepage": "https://github.com/sister-software/mailwoman",
 	"bugs": {
@@ -23,7 +24,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/sister-software/mailwoman.git",
-		"directory": "packages/opportunity-map"
+		"directory": "packages/bduk"
 	},
 	"files": [
 		"out/**/*.js",
@@ -33,12 +34,17 @@
 		"README.md",
 		"lib/**/*.ts",
 		"lib/**/*.tsx",
+		"sdk/**/*.ts",
 		"!**/*.test.ts",
 		"!**/*.test.tsx"
 	],
 	"type": "module",
-	"sideEffects": false,
 	"imports": {
+		"#sdk/*": {
+			"types": "./out/sdk/*.d.ts",
+			"node": "./sdk/*.ts",
+			"default": "./out/sdk/*.js"
+		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -52,6 +58,11 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
+		"./sdk/*": {
+			"types": "./out/sdk/*.d.ts",
+			"node": "./sdk/*.ts",
+			"default": "./out/sdk/*.js"
+		},
 		"./*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -62,15 +73,12 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@mailwoman/dossier": "workspace:*",
-		"@mailwoman/route-scenarios": "workspace:*",
-		"@mailwoman/spatial": "workspace:*"
+		"@mailwoman/core": "workspace:*",
+		"path-ts": "^2.5.0",
+		"spliterator": "^8.1.0"
 	},
 	"devDependencies": {
-		"@mailwoman/bduk": "workspace:*",
-		"@mailwoman/core": "workspace:*",
-		"@mailwoman/flood": "workspace:*",
-		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+		"adm-zip": "^0.6.1"
 	},
 	"engines": {
 		"node": ">=24.18.0"

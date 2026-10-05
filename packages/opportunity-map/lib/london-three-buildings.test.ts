@@ -10,6 +10,8 @@ import { describe, expect, test } from "vitest"
 
 import {
 	ADDISCOMBE_GROVE,
+	BDUK_LONDON,
+	BDUK_LONDON_ARCHIVE,
 	CRICKLEWOOD_LANE,
 	FLOOD_MAP,
 	LONDON_AS_OF,
@@ -24,7 +26,7 @@ import {
 	ONSPD,
 	PENTONVILLE_ROAD,
 	siteFloodRecords,
-} from "#test/fixtures/london-three-buildings"
+} from "#london-three-buildings"
 
 const dossier = londonDossier()
 
@@ -228,6 +230,7 @@ describe("the three London buildings: claims", () => {
 				"inferred postcode": 2,
 				"inferred output_area": 1,
 				"inferred area_gigabit_availability": 7,
+				"inferred bduk_premises": 3,
 				"designated flood_zone": 1,
 			},
 			{
@@ -237,6 +240,7 @@ describe("the three London buildings: claims", () => {
 				"inferred postcode": 2,
 				"inferred output_area": 1,
 				"inferred area_gigabit_availability": 8,
+				"inferred bduk_premises": 3,
 				"designated flood_zone": 1,
 			},
 			{
@@ -247,6 +251,7 @@ describe("the three London buildings: claims", () => {
 				"inferred postcode": 4,
 				"inferred output_area": 2,
 				"inferred area_gigabit_availability": 12,
+				"inferred bduk_premises": 5,
 				"designated flood_zone": 1,
 			},
 		])
@@ -442,6 +447,131 @@ describe("the three London buildings: claims", () => {
 	})
 })
 
+describe("the three London buildings: BDUK's counts", () => {
+	const bdukClaims = (building: EntityID) =>
+		sectionOf(building).claims.filter((claim) => claim.predicate === "bduk_premises")
+
+	test("each building postcode has one inferred network claim that cites the BDUK record", () => {
+		expect(
+			dossier.buildings.map((section) =>
+				bdukClaims(section.building.id).map((claim) => [claim.id, claim.axis, claim.status, claim.evidence.source])
+			)
+		).toEqual([
+			[
+				["croydon-17-02680-ful:bduk:postcode:CR0 5BX", "network", "inferred", BDUK_LONDON],
+				["croydon-17-02680-ful:bduk:postcode:CR0 5BY", "network", "inferred", BDUK_LONDON],
+				["croydon-17-02680-ful:bduk:postcode:CR0 5LP", "network", "inferred", BDUK_LONDON],
+			],
+			[
+				["barnet-16-0601-ful:bduk:postcode:NW2 2DL", "network", "inferred", BDUK_LONDON],
+				["barnet-16-0601-ful:bduk:postcode:NW2 2DW", "network", "inferred", BDUK_LONDON],
+				["barnet-16-0601-ful:bduk:postcode:NW2 2DP", "network", "inferred", BDUK_LONDON],
+			],
+			[
+				["islington-p2014-1017-ful:bduk:postcode:N1 9FS", "network", "inferred", BDUK_LONDON],
+				["islington-p2014-1017-ful:bduk:postcode:N1 9FT", "network", "inferred", BDUK_LONDON],
+				["islington-p2014-1017-ful:bduk:postcode:N1 9FU", "network", "inferred", BDUK_LONDON],
+				["islington-p2014-1017-ful:bduk:postcode:N1 9FW", "network", "inferred", BDUK_LONDON],
+				["islington-p2014-1017-ful:bduk:postcode:N1 9JE", "network", "inferred", BDUK_LONDON],
+			],
+		])
+
+		expect(LONDON_RECORDS.readings.map((reading) => reading.evidence.source)).not.toContain(BDUK_LONDON)
+		expect(LONDON_RECORDS.availability).toEqual([])
+	})
+
+	test("a claim states the UPRNs listed with the postcode, those within 50 m, and four counts over those within 50 m", () => {
+		expect(bdukClaims(CRICKLEWOOD_LANE).map((claim) => claim.value)).toEqual([
+			{
+				extent: "postcode:NW2 2DL",
+				listed: 77,
+				within50m: 77,
+				currentGigabit: 72,
+				white: 5,
+				underReview: 0,
+				recognized: 77,
+			},
+			{
+				extent: "postcode:NW2 2DW",
+				listed: 21,
+				within50m: 21,
+				currentGigabit: 21,
+				white: 0,
+				underReview: 0,
+				recognized: 21,
+			},
+			{
+				extent: "postcode:NW2 2DP",
+				listed: 29,
+				within50m: 29,
+				currentGigabit: 28,
+				white: 0,
+				underReview: 1,
+				recognized: 29,
+			},
+		])
+
+		expect(bdukClaims(PENTONVILLE_ROAD).map((claim) => claim.value)).toContainEqual({
+			extent: "postcode:N1 9JE",
+			listed: 1,
+			within50m: 0,
+			currentGigabit: 0,
+			white: 0,
+			underReview: 0,
+			recognized: 0,
+		})
+	})
+
+	test("a claim derives from the postcode's claim and the planning grid reference, and explains the 50 m rule", () => {
+		const [inferred, , planning] = bdukClaims(ADDISCOMBE_GROVE)
+
+		expect(inferred).toMatchObject({
+			derivedFrom: ["croydon-17-02680-ful:postcode:CR0 5BX", "croydon-17-02680-ful:site-grid-reference"],
+			explanation:
+				"BDUK's May 2026 release lists 73 UPRNs with postcode CR0 5BX in its London files, and NSUL places all 73 within 50 m of the planning grid reference. The other counts cover only the premises within 50 m. The building's link to CR0 5BX is inferred from proximity and introduction date, and the link between the building and a premises that BDUK lists there rests on the 50 m rule. The release names no network.",
+		})
+
+		expect(planning).toMatchObject({
+			derivedFrom: ["croydon-17-02680-ful:site-postcode", "croydon-17-02680-ful:site-grid-reference"],
+			explanation:
+				"BDUK's May 2026 release lists 2 UPRNs with postcode CR0 5LP in its London files, and NSUL places each of them more than 50 m from the planning grid reference. The other counts cover only the premises within 50 m. The planning row states CR0 5LP as the site's postcode, and the record does not infer it as a postcode of the dwellings, so the link between the building and a premises that BDUK lists there rests on the 50 m rule alone. The release names no network.",
+		})
+	})
+
+	test("BDUK's White premises in NW2 2DL stand beside Ofcom's 100 percent for the postcode, and neither replaces the other", () => {
+		const extentOf = (claim: { value: unknown }) => (claim.value as { extent: string }).extent
+
+		const nw22dl = sectionOf(CRICKLEWOOD_LANE).claims.filter((claim) => extentOf(claim) === "postcode:NW2 2DL")
+
+		expect(nw22dl.map((claim) => [claim.predicate, claim.evidence.source])).toEqual([
+			["area_gigabit_availability", OFCOM_POSTCODES_ALL],
+			["area_gigabit_availability", OFCOM_POSTCODES_RESIDENTIAL],
+			["bduk_premises", BDUK_LONDON],
+		])
+
+		expect(nw22dl.map((claim) => claim.value)).toMatchObject([
+			{ gigabitPercent: 100 },
+			{ gigabitPercent: 100 },
+			{ within50m: 77, currentGigabit: 72, white: 5 },
+		])
+	})
+
+	test("the BDUK record gives the release's OMR month, its publication date and the retrieval date", () => {
+		expect(LONDON_RECORDS.sources.find((source) => source.id === BDUK_LONDON)).toEqual({
+			id: BDUK_LONDON,
+			publisher: "Building Digital UK",
+			title:
+				"May 2026 OMR and premises in BDUK plans (England and Wales), UPRN-level release, London (2026-09-10_zipped_files_release_london.zip)",
+			url: "https://www.gov.uk/government/publications/may-2026-omr-and-premises-in-bduk-plans-england-and-wales",
+			observedAt: "2026-05-31",
+			availableAt: "2026-09-17",
+			retrievedAt: "2026-10-05",
+		})
+
+		expect(BDUK_LONDON_ARCHIVE).toMatchObject({ bytes: 57_082_748, file: "2026-09-10_zipped_files_release_london.zip" })
+	})
+})
+
 describe("the three London buildings: flood readings", () => {
 	test("each building's flood reading attaches by its subject and establishes the absence of a flood zone at its position", () => {
 		for (const entry of LONDON_SITES) {
@@ -498,6 +628,10 @@ describe("the three London buildings: the report", () => {
 
 		expect(report).toContain(
 			'- flood-zones-ea-england:building:barnet-16-0601-ful:2026-05-20 — premises flood_zone: "FZ1" (designated, ea-flood-map-2026-05-20, 2026-05-20)'
+		)
+
+		expect(report).toContain(
+			'- barnet-16-0601-ful:bduk:postcode:NW2 2DL — network bduk_premises: { extent: "postcode:NW2 2DL", listed: 77, within50m: 77, currentGigabit: 72, white: 5, underReview: 0, recognized: 77 } (inferred, bduk-2026-05-london, 2026-05-31)'
 		)
 	})
 

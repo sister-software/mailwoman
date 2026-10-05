@@ -27,7 +27,7 @@ import {
 	londonDossier,
 	PENTONVILLE_ROAD,
 	sitePosition,
-} from "#test/fixtures/london-three-buildings"
+} from "#london-three-buildings"
 
 const dossier = districtDossier()
 const options = { unitStage: UnitStage.Completed, extentKind: "example-district" }

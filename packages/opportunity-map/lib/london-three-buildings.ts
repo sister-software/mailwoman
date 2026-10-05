@@ -25,6 +25,14 @@
  *     counts and each postcode's gigabit percentage, for all premises and for residential premises. A
  *     figure describes every premises in an area, so it enters as an inferred claim on the network axis
  *     and never as a layer reading, an availability record or a check.
+ *   - Building Digital UK's UPRN-level release, May 2026 OMR and premises in BDUK plans, London archive:
+ *     for each of a building's postcodes, the UPRNs the release lists with that postcode, how many of
+ *     them NSUL places within 50 m of the planning grid reference, and four counts over those within
+ *     50 m: `current_gigabit` true, classed Gigabit White, classed Gigabit Under Review, and in BDUK's
+ *     premises base. A listed premises belongs to the building only through the postcode's link and the
+ *     50 m rule, so each postcode's counts enter as one inferred claim on the network axis. The release
+ *     names no network. `london-three-buildings.full.test.ts` recomputes the counts from the extracted
+ *     London files and `nsul.db`.
  *   - Environment Agency Flood Map for Planning, as built into the host's `flood.db`: the reading and
  *     claim that `floodLayerReading` returned at each position. The source record's dates are the
  *     database manifest's, and `london-three-buildings.full.test.ts` recomputes the records from the
@@ -63,25 +71,94 @@ import {
 } from "@mailwoman/dossier"
 import { type NationalGridPoint, osgb36ToWGS84 } from "@mailwoman/spatial/osgb36"
 
+/**
+ * The dossier's date: the day the planning, Ofcom and BDUK records were read.
+ */
 export const LONDON_AS_OF = "2026-10-05"
 
+/**
+ * 28-30 Addiscombe Grove, keyed by Croydon's planning reference 17/02680/FUL.
+ */
 export const ADDISCOMBE_GROVE = entityID("building", "croydon-17-02680-ful")
+
+/**
+ * 112-132 Cricklewood Lane, keyed by Barnet's planning reference 16/0601/FUL.
+ */
 export const CRICKLEWOOD_LANE = entityID("building", "barnet-16-0601-ful")
+
+/**
+ * 130-154, 154a Pentonville Road, keyed by Islington's planning reference P2014/1017/FUL.
+ */
 export const PENTONVILLE_ROAD = entityID("building", "islington-p2014-1017-ful")
 
+/**
+ * The source record of the ONS Postcode Directory, February 2026.
+ */
 export const ONSPD = "onspd-2026-02"
+
+/**
+ * The source record of the National Statistics UPRN Lookup, June 2026.
+ */
 export const NSUL = "nsul-2026-06"
+
+/**
+ * The source record of Ofcom's January 2026 all-premises postcode files, revision 2.
+ */
 export const OFCOM_POSTCODES_ALL = "ofcom-2026-01-postcode-all-r2"
+
+/**
+ * The source record of Ofcom's January 2026 residential postcode files, revision 1.
+ */
 export const OFCOM_POSTCODES_RESIDENTIAL = "ofcom-2026-01-postcode-residential-r1"
+
+/**
+ * The source record of Ofcom's January 2026 all-premises output-area file, revision 1.
+ */
 export const OFCOM_OUTPUT_AREAS_ALL = "ofcom-2026-01-output-area-all-r1"
+
+/**
+ * The source record of Ofcom's January 2026 residential output-area file, revision 1.
+ */
 export const OFCOM_OUTPUT_AREAS_RESIDENTIAL = "ofcom-2026-01-output-area-residential-r1"
+
+/**
+ * The source record of the Environment Agency's Flood Map for Planning as built into the host's `flood.db`.
+ */
 export const FLOOD_MAP = "ea-flood-map-2026-05-20"
 
 /**
  * The layer name and source vintage in the host `flood.db` manifest.
  */
 export const FLOOD_LAYER = "flood-zones-ea-england"
+
+/**
+ * The flood map's revision date, which the host `flood.db` manifest gives as its source vintage.
+ */
 export const FLOOD_VINTAGE = "2026-05-20"
+
+/**
+ * The source record of the London archive of BDUK's May 2026 UPRN-level release.
+ */
+export const BDUK_LONDON = "bduk-2026-05-london"
+
+/**
+ * The London archive of BDUK's May 2026 release as GOV.UK's content item lists it,
+ * with the size and SHA-256 of the archive that the counts below were read from.
+ */
+export const BDUK_LONDON_ARCHIVE = {
+	release: "2026-05",
+	region: "london",
+	file: "2026-09-10_zipped_files_release_london.zip",
+	url: "https://assets.publishing.service.gov.uk/media/6aa9aa09f1f8d2a39605f870/2026-09-10_zipped_files_release_london.zip",
+	bytes: 57_082_748,
+	sha256: "8ed1fb0b100fa248892be39b9833886066c7c57d8cd1d7e74a7d8bf83eedeb8f",
+} as const
+
+/**
+ * The distance from a planning grid reference within which a premises that BDUK lists counts
+ * toward the building, the same rule by which the record infers the building's postcodes.
+ */
+export const BDUK_SITE_RADIUS_METERS = 50
 
 /**
  * The premises an Ofcom file counts.
@@ -95,6 +172,35 @@ type PremisesSet = "all" | "residential"
 interface AreaCounts {
 	premises: number
 	gigabitPremises: number
+}
+
+/**
+ * BDUK's counts for one postcode in the London archive.
+ *
+ * `listed` counts every UPRN the release lists with the postcode.
+ * `within50m` counts those whose NSUL point lies within 50 m of the planning grid
+ * reference, and the other four count among those.
+ */
+export interface BDUKPostcodeCounts {
+	postcode: string
+	listed: number
+	within50m: number
+	/**
+	 * Premises with `current_gigabit` true.
+	 */
+	currentGigabit: number
+	/**
+	 * Premises classed Gigabit White.
+	 */
+	white: number
+	/**
+	 * Premises classed Gigabit Under Review.
+	 */
+	underReview: number
+	/**
+	 * Premises in BDUK's premises base.
+	 */
+	recognized: number
 }
 
 /**
@@ -163,12 +269,19 @@ export interface LondonSite {
 	 */
 	outputAreaFigures: readonly { outputArea: string; all: AreaCounts; residential: AreaCounts }[]
 	/**
+	 * BDUK's counts for each of the building's postcodes, the planning row's postcode included.
+	 */
+	bduk: readonly BDUKPostcodeCounts[]
+	/**
 	 * The flood reading's basis and record count and the claim's zone code,
 	 * as `floodLayerReading` returned them.
 	 */
 	flood: { basis: LayerReading["basis"]; records: number; zone: string }
 }
 
+/**
+ * The three buildings, each with the values that its planning row, its referral row and the record state.
+ */
 export const LONDON_SITES: readonly LondonSite[] = [
 	{
 		building: ADDISCOMBE_GROVE,
@@ -202,6 +315,11 @@ export const LONDON_SITES: readonly LondonSite[] = [
 				residential: { premises: 447, gigabitPremises: 363 },
 			},
 		],
+		bduk: [
+			{ postcode: "CR0 5BX", listed: 73, within50m: 73, currentGigabit: 72, white: 1, underReview: 0, recognized: 72 },
+			{ postcode: "CR0 5BY", listed: 81, within50m: 81, currentGigabit: 81, white: 0, underReview: 0, recognized: 81 },
+			{ postcode: "CR0 5LP", listed: 2, within50m: 0, currentGigabit: 0, white: 0, underReview: 0, recognized: 0 },
+		],
 		flood: { basis: "designated", records: 0, zone: "FZ1" },
 	},
 	{
@@ -234,6 +352,11 @@ export const LONDON_SITES: readonly LondonSite[] = [
 				all: { premises: 127, gigabitPremises: 126 },
 				residential: { premises: 122, gigabitPremises: 121 },
 			},
+		],
+		bduk: [
+			{ postcode: "NW2 2DL", listed: 77, within50m: 77, currentGigabit: 72, white: 5, underReview: 0, recognized: 77 },
+			{ postcode: "NW2 2DW", listed: 21, within50m: 21, currentGigabit: 21, white: 0, underReview: 0, recognized: 21 },
+			{ postcode: "NW2 2DP", listed: 29, within50m: 29, currentGigabit: 28, white: 0, underReview: 1, recognized: 29 },
 		],
 		flood: { basis: "designated", records: 0, zone: "FZ1" },
 	},
@@ -281,6 +404,13 @@ export const LONDON_SITES: readonly LondonSite[] = [
 				all: { premises: 88, gigabitPremises: 82 },
 				residential: { premises: 74, gigabitPremises: 70 },
 			},
+		],
+		bduk: [
+			{ postcode: "N1 9FS", listed: 37, within50m: 37, currentGigabit: 37, white: 0, underReview: 0, recognized: 2 },
+			{ postcode: "N1 9FT", listed: 28, within50m: 28, currentGigabit: 28, white: 0, underReview: 0, recognized: 28 },
+			{ postcode: "N1 9FU", listed: 30, within50m: 30, currentGigabit: 30, white: 0, underReview: 0, recognized: 19 },
+			{ postcode: "N1 9FW", listed: 2, within50m: 2, currentGigabit: 2, white: 0, underReview: 0, recognized: 2 },
+			{ postcode: "N1 9JE", listed: 1, within50m: 0, currentGigabit: 0, white: 0, underReview: 0, recognized: 0 },
 		],
 		flood: { basis: "designated", records: 0, zone: "FZ1" },
 	},
@@ -368,6 +498,15 @@ const SOURCES: SourceRecord[] = [
 	},
 	...OFCOM_SOURCES,
 	{
+		id: BDUK_LONDON,
+		publisher: "Building Digital UK",
+		title: `May 2026 OMR and premises in BDUK plans (England and Wales), UPRN-level release, London (${BDUK_LONDON_ARCHIVE.file})`,
+		url: "https://www.gov.uk/government/publications/may-2026-omr-and-premises-in-bduk-plans-england-and-wales",
+		observedAt: "2026-05-31",
+		availableAt: "2026-09-17",
+		retrievedAt: "2026-10-05",
+	},
+	{
 		id: FLOOD_MAP,
 		publisher: "Environment Agency",
 		title: `Flood Map for Planning (England), revision ${FLOOD_VINTAGE}, as built into flood.db layer ${FLOOD_LAYER}`,
@@ -422,8 +561,34 @@ export function siteFloodRecords(site: LondonSite): { reading: LayerReading; cla
 }
 
 /**
- * The claims about one building: the LDD row's observed values, the postcodes
- * and output areas the record infers, Ofcom's figures for each area, and the flood zone.
+ * Why BDUK's counts for one postcode describe the building: the postcode's link and the 50 m rule.
+ */
+function bdukExplanation(site: LondonSite, { postcode, listed, within50m }: BDUKPostcodeCounts): string {
+	const uprns = listed === 1 ? "1 UPRN" : `${listed} UPRNs`
+
+	const placed =
+		within50m === 0
+			? `places ${listed === 1 ? "it" : "each of them"} more than 50 m from`
+			: within50m === listed
+				? `places ${listed === 1 ? "it" : `all ${listed}`} within 50 m of`
+				: `places ${within50m} of them within 50 m of`
+
+	// The record infers no planning-row postcode as a postcode of the dwellings,
+	// so a premises listed with one is linked to the building by the radius alone.
+	const link =
+		postcode === site.postcode
+			? `The planning row states ${postcode} as the site's postcode, and the record does not infer it as a postcode of the dwellings, so the link between the building and a premises that BDUK lists there rests on the 50 m rule alone.`
+			: `The building's link to ${postcode} is inferred from proximity and introduction date, and the link between the building and a premises that BDUK lists there rests on the 50 m rule.`
+
+	return (
+		`BDUK's May 2026 release lists ${uprns} with postcode ${postcode} in its London files, and NSUL ${placed} the planning grid reference. ` +
+		`The other counts cover only the premises within 50 m. ${link} The release names no network.`
+	)
+}
+
+/**
+ * The claims about one building: the LDD row's observed values, the postcodes and output areas the
+ * record infers, Ofcom's figures for each area, BDUK's counts for each postcode, and the flood zone.
  */
 function siteClaims(site: LondonSite): Claim[] {
 	const id = (...parts: string[]) => [site.key, ...parts].join(":")
@@ -562,6 +727,23 @@ function siteClaims(site: LondonSite): Claim[] {
 		}
 	}
 
+	for (const counts of site.bduk) {
+		const { postcode, listed, within50m, currentGigabit, white, underReview, recognized } = counts
+		const extent = `postcode:${postcode}`
+
+		claims.push({
+			id: id("bduk", extent),
+			subject,
+			axis: ClaimAxis.Network,
+			predicate: "bduk_premises",
+			value: { extent, listed, within50m, currentGigabit, white, underReview, recognized },
+			status: "inferred",
+			derivedFrom: [postcodeClaim(postcode), id("site-grid-reference")],
+			explanation: bdukExplanation(site, counts),
+			evidence: { source: BDUK_LONDON },
+		})
+	}
+
 	claims.push(siteFloodRecords(site).claim)
 
 	return claims
@@ -636,6 +818,9 @@ function siteWindow(site: LondonSite): ConstructionWindow {
 	}
 }
 
+/**
+ * The dossier records of the three buildings, built from {@link LONDON_SITES} and the source records above.
+ */
 export const LONDON_RECORDS: DossierRecords = {
 	sources: SOURCES,
 	entities: LONDON_SITES.map(siteEntity),
@@ -654,6 +839,9 @@ export const LONDON_RECORDS: DossierRecords = {
 	positions: LONDON_SITES.map(sitePosition),
 }
 
+/**
+ * The dossier of the three buildings on {@link LONDON_AS_OF}.
+ */
 export function londonDossier(records: DossierRecords = LONDON_RECORDS): Dossier {
 	return buildDossier(records, { asOf: LONDON_AS_OF })
 }

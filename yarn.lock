@@ -6061,6 +6061,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/bduk@workspace:*, @mailwoman/bduk@workspace:packages/bduk":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/bduk@workspace:packages/bduk"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    adm-zip: "npm:^0.6.1"
+    path-ts: "npm:^2.5.0"
+    spliterator: "npm:^8.1.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/cartographer@workspace:*, @mailwoman/cartographer@workspace:packages/cartographer":
   version: 0.0.0-use.local
   resolution: "@mailwoman/cartographer@workspace:packages/cartographer"
@@ -6700,9 +6711,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/opportunity-map@workspace:packages/opportunity-map"
   dependencies:
+    "@mailwoman/bduk": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/dossier": "workspace:*"
     "@mailwoman/flood": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/route-scenarios": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
   languageName: unknown
