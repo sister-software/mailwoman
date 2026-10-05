@@ -397,8 +397,8 @@ export async function loadClassifierTolerant(
 /**
  * Returns the WOF admin database path a command reads, from its `--resolve-db` value or `$MAILWOMAN_WOF_DB`.
  *
- * A missing path becomes a {@linkcode CommandError} with the resolver's message,
- * which the CLI prints as guidance rather than as a stack.
+ * A missing path becomes a {@linkcode CommandError} with the resolver's message.
+ * The CLI prints a `CommandError` as guidance rather than as a stack.
  */
 export async function requireCommandWOFPath(options: { resolveDB?: string }): Promise<string> {
 	const { requireWOFPath } = await import("#resolver-backend")
