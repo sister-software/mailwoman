@@ -6,9 +6,8 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { htmlToLayoutText } from "@mailwoman/core/html/text"
+import { htmlToText } from "@mailwoman/core/html/text"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { describe, expect, it } from "vitest"
 
 import { fetchExhibit21, parseExhibit21, type SECDocumentClient } from "#sdk/exhibit21"
@@ -277,15 +276,6 @@ describe("fetchExhibit21", () => {
 })
 
 /**
- * A name is only emitted if it appears in the input as a contiguous string,
- * checked here against the same strip/decode/collapse normalization every parse
- * strategy applies rather than against the raw source.
- */
-function normalizedDocument(html: string): string {
-	return normalizeWhitespace(htmlToLayoutText(html))
-}
-
-/**
  * Every case the fabrication audit found, kept so the substring-invariant test runs across them.
  * mutating any of the tightenings above regresses at least one back to a name that fails the check.
  */
@@ -323,12 +313,14 @@ const NAME_ONLY_PROBES: Record<string, string> = {
 	"name-only plain-text line": "Standalone Sub LLC\n",
 }
 
+// Each test checks the text after the strip, decode and collapse steps that every
+// parse strategy applies, rather than the raw source.
 describe("parseExhibit21 — substring invariant (decision 6, criterion 3): a name is only emitted if the input contains it", () => {
 	it.each(FIXTURE_FILES)(
 		"every emitted name/jurisdiction is a substring of the normalized document: %s",
 		async (name) => {
 			const html = await fixture(name)
-			const normalized = normalizedDocument(html)
+			const normalized = htmlToText(html)
 			const result = parseExhibit21(html)
 
 			for (const subsidiary of result.subsidiaries) {
@@ -344,7 +336,7 @@ describe("parseExhibit21 — substring invariant (decision 6, criterion 3): a na
 	it.each(Object.entries(FABRICATION_AUDIT_CASES))(
 		"every emitted name/jurisdiction is a substring of the normalized document: %s",
 		(_label, html) => {
-			const normalized = normalizedDocument(html)
+			const normalized = htmlToText(html)
 			const result = parseExhibit21(html)
 
 			for (const subsidiary of result.subsidiaries) {
@@ -360,7 +352,7 @@ describe("parseExhibit21 — substring invariant (decision 6, criterion 3): a na
 	it.each(Object.entries(NAME_ONLY_PROBES))(
 		"every emitted name/jurisdiction is a substring of the normalized document: %s",
 		(_label, html) => {
-			const normalized = normalizedDocument(html)
+			const normalized = htmlToText(html)
 			const result = parseExhibit21(html)
 
 			for (const subsidiary of result.subsidiaries) {
