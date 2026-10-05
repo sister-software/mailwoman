@@ -6226,7 +6226,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/dossier@workspace:packages/dossier":
+"@mailwoman/dossier@workspace:*, @mailwoman/dossier@workspace:packages/dossier":
   version: 0.0.0-use.local
   resolution: "@mailwoman/dossier@workspace:packages/dossier"
   dependencies:
@@ -6888,6 +6888,15 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^8.1.0"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/route-scenarios@workspace:packages/route-scenarios":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/route-scenarios@workspace:packages/route-scenarios"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/dossier": "workspace:*"
   languageName: unknown
   linkType: soft
 

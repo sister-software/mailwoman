@@ -1,0 +1,72 @@
+{
+	"name": "@mailwoman/route-scenarios",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Shared-route construction cost and monthly cash-flow scenarios for the buildings of a dossier, computed from supplied assumptions and rendered as a report section a reader can check by hand",
+	"keywords": [
+		"broadband",
+		"cash-flow",
+		"construction-cost",
+		"scenario"
+	],
+	"homepage": "https://github.com/sister-software/mailwoman",
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/route-scenarios"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#test/*": "./test/*.ts",
+		"#*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"types": "./out/index.d.ts",
+			"node": "./lib/index.ts",
+			"default": "./out/index.js"
+		},
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/dossier": "workspace:*"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}
