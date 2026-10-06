@@ -6672,7 +6672,7 @@ __metadata:
     kysely-d1: "npm:^0.4.0"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
-    stripe: "npm:^22.6.1"
+    stripe: "npm:^23.0.0"
     vitest: "npm:4.1.11"
     wrangler: "npm:^4.147.0"
     zod: "npm:^4.6.5"
@@ -27805,15 +27805,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stripe@npm:^22.6.1":
-  version: 22.6.2
-  resolution: "stripe@npm:22.6.2"
+"stripe@npm:^23.0.0":
+  version: 23.0.0
+  resolution: "stripe@npm:23.0.0"
   peerDependencies:
-    "@types/node": ">=18"
+    "@types/node": ">=20"
   peerDependenciesMeta:
     "@types/node":
       optional: true
-  checksum: 10/715625ef59a76913a72a03a2e2d3f9a641a8f93f7196d8ae07e68d56f1ee89843924ddd76e1f877c594c4e2fe739100b134bd3bf215a9fbeec90128f236da1be
+  checksum: 10/0e29ada7eab539b95c27b72aec7485ad4f2714a844f662c9a09f59b8716b78c9966c9f82f6627f24ccc2b4a740836f0aa52d1a5c062875f31a883866a4d0295c
   languageName: node
   linkType: hard
 
