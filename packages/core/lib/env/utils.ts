@@ -6,7 +6,8 @@
  * Utility functions for working with the runtime environment.
  */
 
-import { z } from "zod"
+import { preprocess } from "zod"
+import type { ZodType } from "zod"
 
 /**
  * Wrap a coerced schema so a blank value means the same as an absent one: a shell `export FOO=`,
@@ -17,6 +18,6 @@ import { z } from "zod"
  * The `.optional()`/`.default()` must be applied to `inner` before it reaches here,
  * because the outer value is present and an outer `.optional()` never fires.
  */
-export function blankAsAbsent<T extends z.ZodType>(inner: T) {
-	return z.preprocess((v) => (v === "" ? undefined : v), inner)
+export function blankAsAbsent<T extends ZodType>(inner: T) {
+	return preprocess((v) => (v === "" ? undefined : v), inner)
 }

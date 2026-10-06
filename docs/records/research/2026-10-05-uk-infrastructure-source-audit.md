@@ -115,9 +115,9 @@ fourth, commercial channel. The four entries below were verified on 2026-10-05.
 - Unknown: the field list, coverage of a given address, price and the right to redistribute results in
   a report, until the operator reads the page and its license.
 
-### Building Digital UK UPRN-level release (per premises, England and Wales)
+### Release: Building Digital UK UPRN-level data (per premises, England and Wales)
 
-Building Digital UK (BDUK) publishes its own premises-level view, built from suppliers' returns to its
+BDUK publishes its own premises-level view, built from suppliers' returns to its
 Open Market Review (OMR) and from its delivery data. The entry below was verified on 2026-10-05 from
 GOV.UK's publication page, its content item, the user guide and the files.
 
@@ -203,7 +203,7 @@ GOV.UK's publication page, its content item, the user guide and the files.
   `gov.uk/guidance/national-underground-asset-register-nuar`; portal `nuar.uk`.
 - Status: operational since December 2025 (public beta June 2025), on a statutory footing via the Data
   (Use and Access) Act 2025. Over 400 asset owners, 3.2M km of underground assets, about 80% of known
-  buried plant (OS, 2026-09-15). Telecom ducts and buried cables are in scope, including a significant
+  buried plant (OS, 2026-09-15). Telecom ducts and buried cables are in scope, including an unquantified
   proportion of Openreach's network.
 - Coverage: England, Wales, Northern Ireland. Scotland runs the separate VAULT system. Per-asset
   geometry at safe-dig detail. Underground only — poles, cabinets, exchanges and entrances are outside
@@ -222,7 +222,7 @@ GOV.UK's publication page, its content item, the user guide and the files.
 - Authority: owner-supplied records aggregated by OS. Presence of buried plant only — capacity, spare
   duct space and orderability are outside the data model.
 
-### Planning records (planning.data.gov.uk, Planning London Datahub, borough portals)
+### Records from planning portals (planning.data.gov.uk, Planning London Datahub, borough portals)
 
 - Publishers: MHCLG (`planning.data.gov.uk`), the GLA (the Planning London Datahub at
   `planninglondondatahub.london.gov.uk`, with a guest API at `planningdata.london.gov.uk/api-guest/`;
@@ -334,7 +334,7 @@ GOV.UK's publication page, its content item, the user guide and the files.
 | access (wayleave, consent)      | Operator and landlord records only                                                                                                                                                             | Always private.                                                                                                                                              |
 | observation date                | PLD per-stage dates; Ofcom snapshot dates; UKPN dataset modified dates; OSM edit timestamps (edit rather than survey)                                                                          | Most asset records carry zero survey dates.                                                                                                                  |
 
-## 3. Existing extraction, audited before any new work (DoD item 3)
+## 3. Audit of current extraction before any new work (DoD item 3)
 
 - #1375's OSM telecom extractor is `packages/osm/sdk/extract/poi.ts` (`extractOSMPOIs`, ogr2ogr over
   Geofabrik PBF): four categories — `telecom_exchange`, `telecom_cabinet`, `tower_comms`,
@@ -348,7 +348,7 @@ GOV.UK's publication page, its content item, the user guide and the files.
   semantics this issue asks to demonstrate: `layer_coverage` rows carry `basis`
   (`designated`/`surveyed`/`source_present`) and `observed_rows`, and a missing row means unknown
   rather than zero.
-- Existing layers and their bases: flood (`packages/flood`, EA Flood Map for Planning, England,
+- Current layers and their bases: flood (`packages/flood`, EA Flood Map for Planning, England,
   `designated` — the one layer that can establish absence, including for London sites), soil (US only),
   coastal erosion (EA NCERM England, `source_present`), zoning (Ireland). The GB unit register
   (`nsul.db`, build-local) maps UPRN to unit postcodes — the per-premises denominator a UK dossier
@@ -368,11 +368,11 @@ GOV.UK's publication page, its content item, the user guide and the files.
   defect found on this pass: the listing endpoint's subcategory vocabulary had drifted from the live
   API (#2465).
 
-## 4. Missing versus surveyed-empty versus conflicting, demonstrated (DoD item 4)
+## 4. Evidence for unknown, surveyed-empty and conflicting coverage (DoD item 4)
 
 The dossier package's four classes now each have a real or executable demonstration:
 
-- **Missing (unknown)**: NUAR. A survey of underground telecom plant from public data is impossible,
+- **Unknown coverage**: NUAR. A survey of underground telecom plant from public data is impossible,
   and NUAR's terms bar feasibility use even for participants. A dossier reading records basis `null`,
   records `null` → class `unknown`.
 - **Source-present empty**: One Park Point, census block 360470504012000, FCC BDC fiber-to-the-premises
@@ -383,7 +383,7 @@ The dossier package's four classes now each have a real or executable demonstrat
 - **Surveyed empty**: the EA flood layer's `designated` basis is the one current source that can
   establish absence (a Zone 1 reading is a defined complement). Synthetic coverage in
   `packages/dossier/lib/coverage.test.ts` pins the class.
-- **Conflicting**: pinned synthetically in the same test. Real BDC data exposed a modeling bug on this
+- **Evidence conflict**: pinned synthetically in the same test. Real BDC data exposed a modeling bug on this
   pass: two vintages of one layer and extent (0 rows as of 2022-06-30; 6 rows as of 2025-12-31) grouped
   as "conflicting" until `buildDossier` learned that a vintage is part of a survey's identity
   (`packages/dossier/lib/dossier.ts`). Two vintages are two surveys.
@@ -483,7 +483,7 @@ evidence trail the answer would resolve.
 - Ofcom API developer portal (api.ofcom.org.uk: published API, operation, schema and products), Ofcom
   API terms of use 2025, Ofcom checker page and checker FAQ — 2026-10-05
 - thinkbroadband Broadband Availability API and broadband data pages (HTTP 403, unread) — 2026-10-05
-- Building Digital UK, "May 2026 OMR and premises in BDUK plans (England and Wales)": the GOV.UK page,
+- Source: Building Digital UK, "May 2026 OMR and premises in BDUK plans (England and Wales)": the GOV.UK page,
   its content item, the user guide's page, the sample file, the no-region file and the ten regional
   archives, of which the London archive is stored under the data root's `bduk` directory — 2026-10-05
 - UKPN open data portal and catalogue API (ukpowernetworks.opendatasoft.com) — 2026-10-05

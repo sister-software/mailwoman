@@ -7,45 +7,45 @@
  *   that reads its own variables declares them beside its readers and extends these views with `liveEnv`.
  */
 
-import { z } from "zod"
+import { object, string } from "zod"
 
 import { DefaultMailwomanPaths } from "#env/paths"
 import { blankAsAbsent } from "#env/utils"
 
 // #region Public
 
-const StorageEnvSchema = z.object({
+const StorageEnvSchema = object({
 	// Platform-native application directories.
 	// Environment values override these defaults.
 	//
 	// A bare `.default()` fires only on `undefined`, so a present-but-empty variable passes validation intact.
-	MAILWOMAN_DATA_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.data)).meta({
+	MAILWOMAN_DATA_ROOT: blankAsAbsent(string().default(DefaultMailwomanPaths.data)).meta({
 		title: "Data root",
 		description: "Root directory for downloaded Mailwoman data and runtime artifacts.",
 	}),
-	MAILWOMAN_CONFIG_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.config)).meta({
+	MAILWOMAN_CONFIG_ROOT: blankAsAbsent(string().default(DefaultMailwomanPaths.config)).meta({
 		title: "Config root",
 		description: "Directory for Mailwoman configuration files.",
 	}),
-	MAILWOMAN_CACHE_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.cache)).meta({
+	MAILWOMAN_CACHE_ROOT: blankAsAbsent(string().default(DefaultMailwomanPaths.cache)).meta({
 		title: "Cache root",
 		description: "Directory for reusable downloaded and generated caches.",
 	}),
-	MAILWOMAN_TEMP_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.temp)).meta({
+	MAILWOMAN_TEMP_ROOT: blankAsAbsent(string().default(DefaultMailwomanPaths.temp)).meta({
 		title: "Temporary root",
 		description: "Directory for named temporary outputs and evaluation staging.",
 	}),
 })
 
-const RuntimeEnvSchema = z.object({
-	MAILWOMAN_COARSE_PLACER_DIR: z.string().optional().meta({
+const RuntimeEnvSchema = object({
+	MAILWOMAN_COARSE_PLACER_DIR: string().optional().meta({
 		title: "Coarse placer directory",
 		description: "Directory containing the coarse country-placement model artifacts.",
 	}),
 })
 
-const LicenseEnvSchema = z.object({
-	MAILWOMAN_DOCS_URL: z.string().optional().meta({
+const LicenseEnvSchema = object({
+	MAILWOMAN_DOCS_URL: string().optional().meta({
 		title: "Documentation URL",
 		description: "Base URL used by documentation and demo tooling.",
 	}),
@@ -61,7 +61,7 @@ const LicenseEnvSchema = z.object({
 	 * Public in the sense that it is a signed assertion rather than a secret,
 	 * but the doctor prints the licensee and expiry rather than the token.
 	 */
-	MAILWOMAN_LICENSE_KEY: blankAsAbsent(z.string().min(1).optional()).meta({
+	MAILWOMAN_LICENSE_KEY: blankAsAbsent(string().min(1).optional()).meta({
 		title: "Commercial license key",
 		description: "Signed commercial license assertion used by `mailwoman doctor`; it does not change runtime behavior.",
 	}),
@@ -71,7 +71,7 @@ const LicenseEnvSchema = z.object({
 	 *
 	 * Pointed at a sandbox deploy or a test stub.
 	 */
-	MAILWOMAN_LICENSE_URL: blankAsAbsent(z.string().min(1).optional()).meta({
+	MAILWOMAN_LICENSE_URL: blankAsAbsent(string().min(1).optional()).meta({
 		title: "License service URL",
 		description: "License-service origin used by license refresh and online status checks.",
 	}),
@@ -82,16 +82,14 @@ const LicenseEnvSchema = z.object({
  *
  * The schema strips any other key from `process.env` during parsing.
  */
-export const PublicEnvSchema = z
-	.object({
-		...StorageEnvSchema.shape,
-		...RuntimeEnvSchema.shape,
-		...LicenseEnvSchema.shape,
-	})
-	.meta({
-		title: "Public environment configuration",
-		description: "Non-secret operational configuration exposed through `$public`.",
-	})
+export const PublicEnvSchema = object({
+	...StorageEnvSchema.shape,
+	...RuntimeEnvSchema.shape,
+	...LicenseEnvSchema.shape,
+}).meta({
+	title: "Public environment configuration",
+	description: "Non-secret operational configuration exposed through `$public`.",
+})
 
 // #endregion
 
@@ -103,7 +101,7 @@ export const PublicEnvSchema = z
  * Core reads none: this is the base every package's private view extends,
  * so a credential is declared once, beside the code that sends it.
  */
-export const PrivateEnvSchema = z.object({}).meta({
+export const PrivateEnvSchema = object({}).meta({
 	title: "Private environment configuration",
 	description: "Secrets and credentials exposed through `$private`; never log their values.",
 })
