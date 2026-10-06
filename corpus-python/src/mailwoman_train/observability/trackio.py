@@ -1,26 +1,28 @@
-"""Optional Trackio experiment-tracking shim for the Phase 2 training loop.
+"""Optional Trackio shim for Phase 2 training.
 
-Trackio (https://huggingface.co/docs/trackio) is a lightweight, ``wandb``-compatible
-experiment tracker. We mirror the metrics already written to ``train_log.csv`` into a
-Trackio project so training curves and cross-version eval metrics show up on a
-self-hosted Hugging Face Space dashboard (free CPU-basic tier) instead of only living
-in a CSV. With ``space_id`` set, Trackio deploys/syncs the dashboard Space and persists
-every run to a backing HF Dataset. with no ``space_id`` it logs to a local dashboard
-(``~/.cache/huggingface/trackio``).
+What this does
+- Mirrors metrics from ``train_log.csv`` into Trackio.
+- Gives a dashboard for curves + cross-version eval metrics.
+- Works with:
+    - Hugging Face Space (when ``space_id`` is set), backed by an HF Dataset.
+    - Local dashboard (when ``space_id`` is empty):
+        ``~/.cache/huggingface/trackio``.
 
-Design rule — tracking must never crash training. An A100 run costs real money and the
-night-shift workflow runs unattended. a metrics upload that 401s, a missing package, or
-an API drift must degrade to CSV-only rather than take the run down with it. So:
+Non-negotiable rule
+- Tracking must never crash training.
 
-  * the whole thing no-ops when ``cfg.train.trackio_enabled`` is False (the default), or
-    when the ``trackio`` package isn't installed (plain tokenizer-only installs don't
-    pull it in — see corpus-python/pyproject.toml ``[train]`` extra);
-  * ``init`` failures fall back to a null tracker (CSV-only);
-  * every ``log``/``finish`` call swallows exceptions behind a one-line warning.
+Failure behavior (by design)
+- ``cfg.train.trackio_enabled=False`` (default) -> no-op tracker.
+- ``trackio`` package missing -> no-op tracker (CSV-only).
+- ``trackio.init(...)`` fails -> no-op tracker (CSV-only).
+- ``log`` / ``finish`` failures -> warning only, then continue training.
 
-Auth: Trackio uploads to the Space using the HF cached login or ``HF_TOKEN``. On Modal,
-``HF_TOKEN`` is injected via the ``hf_secret`` in launch/train_remote.py. locally
-it uses your ``hf auth login`` token. No token -> Space upload fails -> CSV-only.
+Auth notes
+- Space uploads use cached HF login or ``HF_TOKEN``.
+- On Modal, ``HF_TOKEN`` comes from ``hf_secret`` in
+    ``launch/train_remote.py``.
+- Locally, it uses ``hf auth login`` credentials.
+- No token -> Space upload fails -> CSV-only.
 """
 
 from __future__ import annotations
@@ -29,7 +31,7 @@ from typing import Any
 
 
 class _NullTracker:
-    """No-op tracker. Returned when tracking is disabled or unavailable."""
+    """No-op tracker used when Trackio is disabled or unavailable."""
 
     enabled = False
 
@@ -41,7 +43,7 @@ class _NullTracker:
 
 
 class _TrackioTracker:
-    """Thin best-effort wrapper around the ``trackio`` module. Never raises."""
+    """Best-effort wrapper around ``trackio``. Never raises upstream."""
 
     enabled = True
 
@@ -70,11 +72,15 @@ class _TrackioTracker:
 
 
 def init_tracker(cfg: Any) -> _NullTracker | _TrackioTracker:
-    """Initialize Trackio for this run, or return a no-op tracker.
+    """Initialize Trackio, or return a no-op tracker.
 
-    Reads ``cfg.train.trackio_enabled`` / ``trackio_project`` / ``trackio_space`` /
-    ``trackio_run_name``. Returns a tracker whose ``.log()`` / ``.finish()`` are safe to
-    call unconditionally from the training loop.
+    Reads these config keys from ``cfg.train``:
+    - ``trackio_enabled``
+    - ``trackio_project``
+    - ``trackio_space``
+    - ``trackio_run_name``
+
+    Always returns a tracker with safe ``.log()`` and ``.finish()`` calls.
     """
     tcfg = cfg.train
     if not getattr(tcfg, "trackio_enabled", False):
@@ -112,10 +118,12 @@ def init_tracker(cfg: Any) -> _NullTracker | _TrackioTracker:
 
 
 def _default_run_name(output_dir: str) -> str:
-    """Derive a stable run name from the output dir so resumes continue the same run.
+    """Build a stable run name from ``output_dir``.
 
-    ``/data/output-v072/checkpoints`` -> ``output-v072`` (the bare ``checkpoints`` leaf
-    isn't distinctive, so fall back to its parent).
+    Example:
+    - ``/data/output-v072/checkpoints`` -> ``output-v072``
+
+    If the final path part is ``checkpoints`` (or empty), use the parent folder.
     """
     import os
 
@@ -126,19 +134,19 @@ def _default_run_name(output_dir: str) -> str:
 
 
 def _run_config(cfg: Any) -> dict[str, Any]:
-    """A flat, comparison-relevant snapshot of the run's hyperparameters.
+    """Return flat, comparison-friendly run hyperparameters.
 
-    Kept to flat scalars (rather than ``asdict`` of the whole nested Config) so it renders
-    cleanly as filterable columns in the Trackio dashboard — these are the knobs we
-    actually sweep between model versions.
+    Why flat scalars only:
+    - Cleaner Trackio table columns.
+    - Easier filtering/sorting across runs.
+    - Focused on knobs actually changed between model versions.
     """
     t, m, d = cfg.train, cfg.model, cfg.data
     return {
-        # Human-readable legend shown in the run's config panel — so a viewer who isn't
-        # steeped in the metrics knows how to read the charts (esp. the blank/gap ones).
-        # NB: the key must not start with "_" — current trackio reserves the "_" prefix and
-        # raises "Config key '_legend' is reserved" from init(), which trackio_logging.py catches
-        # and silently downgrades the whole run to CSV-only (no Space dashboard). Plain "legend".
+        # Human-readable metric legend shown in Trackio config.
+        # Important: never prefix this key with "_".
+        # Trackio reserves "_..." keys and can reject init() (e.g. "_legend").
+        # Rejection gets caught and downgrades to CSV-only.
         "legend": (
             "f1.<tag> = token-level F1 for that address component on the val set (higher is better). "
             "support.<tag> = how many val examples contain that component. A MISSING/BLANK f1.<tag> "

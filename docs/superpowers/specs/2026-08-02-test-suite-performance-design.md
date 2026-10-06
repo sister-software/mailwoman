@@ -120,11 +120,11 @@ native addon in shared-process land. Not pursued.
 ### Vitest collects a Python virtualenv (local only)
 
 The root config excludes `node_modules` but not `.venv`. In the main checkout vitest collects five
-files from `corpus-python/.venv/lib/python3.12/site-packages/trackio/frontend/`, a vendored Svelte
+files from `.venv/lib/python3.12/site-packages/trackio/frontend/`, a vendored Svelte
 app. At `--maxWorkers=4` one of them failed the run:
 
 ```
-FAIL corpus-python/.venv/.../trackio/frontend/src/lib/legend.test.js
+FAIL .venv/.../trackio/frontend/src/lib/legend.test.js
 Error: No test suite found in file .../legend.test.js
 ```
 

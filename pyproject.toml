@@ -1,0 +1,154 @@
+[project]
+name = "mailwoman-corpus-python"
+version = "0.1.0"
+description = "Python helpers for the Mailwoman corpus pipeline (SentencePiece tokenizer training + Phase 2 training)."
+readme = "corpus-python/README.md"
+license = { text = "AGPL-3.0-only OR LicenseRef-Commercial" }
+requires-python = ">=3.11"
+authors = [{ name = "Sister Software", email = "contact@sister.software" }]
+dependencies = [
+	"sentencepiece==0.2.2", # PINNED, not floored — see corpus-python/launch/train_remote.py for the 0.2.1/0.2.2 tie-break divergence
+	"pyarrow>=25.0.0",
+	"pyyaml>=6",
+	"numpy>=1.26,<3",
+	# - Python and TypeScript must resolve the same default paths per platform.
+	# - Otherwise, one side cannot find files written by the other.
+	# - See: `mailwoman_train/env.py`.
+	"platformdirs>=4.3",
+	# zstd is required:
+	# - Corpus parts are stored zstd-compressed at rest (~20-25x).
+	# - Python 3.12 lacks stdlib `compression.zstd` (arrives in 3.14), so this is not optional.
+	# - TS side uses `node:zlib` (zstd supported since Node 22.15).
+	"zstandard>=0.23",
+]
+
+# Why extras:
+# - Heavy ML deps stay under `[train]`.
+# - Base installs can run tokenizer/corpus utilities without Torch/Transformers/ONNX.
+[project.optional-dependencies]
+dev = [
+	# Dev tooling:
+	# - `ruff` is exact-pinned here and only here.
+	# - package.json / .husky call `uv run ruff`.
+	# - verify_toolchain fails if another `uvx ruff@<version>` pin appears.
+	# - `mypy` and `bandit` use floor pins (exacts come from uv.lock).
+	"pytest>=9.1.1",
+	"ruff==0.16.10",
+	"mypy>=1.15",
+	"bandit>=1.8",
+	# PyYAML is untyped upstream; the stub package keeps `mypy --strict` honest about our code.
+	"types-PyYAML>=6.0.12",
+]
+train = [
+	# Train stack is pinned on purpose:
+	# - Matches the exact toolchain used for ONNX artifact export.
+	# - Prior `>=` drift broke int8 quant (transformers 5.x, onnx 1.21).
+	# - Kept in sync with `corpus-python/launch/train_remote.py` image for reproducible export.
+	# - Check Safari/WebGPU invariant in that file before bumping.
+	"torch==2.12.0",
+	"transformers==5.9.0",
+	"datasets>=5.0.1",
+	"onnx==1.22.0",
+	# `onnxscript` controls graph export:
+	# - 0.7.0 -> 0.7.2 changes bytes (not behavior) via optimizer constant-folding.
+	# - Graph IO, opset, weights, and logits remain equivalent.
+	# - Rebuilt artifacts may differ in md5 and still be correct.
+	# - Validate outputs, not file bytes.
+	"onnxscript==0.7.2",
+	# Keep aligned with browser `onnxruntime-web` pin across manifests.
+	# Quantizer + browser runtime must be evaluated together before export.
+	"onnxruntime==1.30.0",
+	"tqdm>=4.70.0",
+	# Optional experiment tracking:
+	# - Best-effort logging, runtime-guarded.
+	# - Missing package must not break training.
+	# - See `mailwoman_train/trackio_logging.py`.
+	"trackio",
+]
+
+[build-system]
+requires = ["setuptools>=84.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["corpus-python/src"]
+
+[tool.setuptools.package-dir]
+"" = "corpus-python/src"
+
+# Package data shipped with modules:
+# - `py.typed`: exposes type hints to downstream users.
+# - `features/postcode-shapes.json`: required by `features/postcode_shapes.py`.
+# - Missing these in wheel can fail import-time behavior.
+[tool.setuptools.package-data]
+mailwoman_train = [
+	"py.typed",
+	"address_systems.json",
+	"features/postcode-shapes.json",
+	"exposure/floors.json",
+	"configs/*.yaml",
+]
+
+# Ruff: Python equivalent of repo's oxlint + oxfmt (lint + format).
+[tool.ruff]
+# Mirror the JS house style: 120-column width (double quotes are Ruff's default).
+line-length = 120
+target-version = "py311"
+src = ["corpus-python/src", "corpus-python/tests", "corpus-python/scripts"]
+
+[tool.ruff.lint]
+# Ruff lint rules:
+# - Defaults: pyflakes (`F`) + pycodestyle (`E`)
+# - Added: import sort (`I`), pyupgrade (`UP`), bugbear (`B`)
+# - `E501` off: formatter owns line length, avoids duplicate reports.
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+# Format code blocks inside docstrings too (this package is docstring-heavy).
+docstring-code-format = true
+
+# mypy intent:
+# - Strict typing over project code.
+# - `launch/` is included, but Modal SDK is not installed locally by default.
+# - Tests are currently out of scope.
+[tool.mypy]
+python_version = "3.12"
+files = ["corpus-python/src", "corpus-python/launch"]
+strict = true
+show_error_codes = true
+pretty = true
+warn_unused_configs = true
+
+# Missing-typing overrides:
+# - `pyarrow` and `onnxruntime` lack complete typing markers here.
+# - Include both module name and submodules (`x` + `x.*`).
+# - Remove override if proper upstream stubs become available.
+[[tool.mypy.overrides]]
+module = ["pyarrow", "pyarrow.*", "onnxruntime", "onnxruntime.*"]
+ignore_missing_imports = true
+
+# `sentencepiece_model_pb2` stubs are incomplete for protobuf usage.
+# Skip import following so classes are treated as untyped (safer than partial types).
+[[tool.mypy.overrides]]
+module = ["sentencepiece.sentencepiece_model_pb2"]
+follow_imports = "skip"
+
+# Modal SDK is available in `modal run` environments, not local default env.
+# Without it, decorators become `Any` and trigger cascading untyped-decorator noise.
+# Keep checks meaningful by ignoring missing `modal` imports and relaxing decorators in `launch.*`.
+[[tool.mypy.overrides]]
+module = ["modal"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["launch.*"]
+disallow_untyped_decorators = false
+
+# bandit: security/static analysis over source.
+[tool.bandit]
+exclude_dirs = ["corpus-python/launch", "corpus-python/scripts"]
+# B311 rationale:
+# - Uses pseudo-randomness for reproducible data generation/splitting.
+# - Not used for security/cryptography.
+skips = ["B311"]

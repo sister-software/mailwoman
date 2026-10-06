@@ -110,7 +110,7 @@ const mixtureAuditPresent = await pathExists(mixtureAuditPath)
 if (!mixtureAuditPresent) {
 	console.error(
 		`sampled stage: no audit at ${mixtureAuditPath}. Produce one with\n` +
-			`  cd corpus-python && uv run --extra dev --extra train python -m mailwoman_train.audits.epoch_mixture \\\n` +
+			`  uv run --extra dev --extra train python -m mailwoman_train.audits.epoch_mixture \\\n` +
 			`    --config ${configPath} --corpus-dir <corpus> --json ${mixtureAuditPath}\n` +
 			`The stage reads \`unknown\` until then, which states what this checkout holds rather than what a ` +
 			`jurisdiction has.\n`

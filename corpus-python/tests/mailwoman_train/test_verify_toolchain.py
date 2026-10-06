@@ -1,8 +1,15 @@
 """Tests for scripts/verify_toolchain.py.
 
-The checks keep the pinned export and quantization versions consistent. They check pyproject, the Modal image, plus the export opset. Each `uvx ruff@` call site must also match the pinned Ruff version.
+What this file guards:
+- `pyproject.toml` pins match the Modal image pins.
+- Base requirements are actually installed in the Modal image.
+- Package names are parsed from real code only.
+- Export opset stays within the web/runtime compatibility limit.
+- Ruff is invoked as `uv run ruff` (no extra `uvx ruff@...` version pins).
 
-A one-sided version bump fails here before the next export. This check catches disagreement between the local linter and CI.
+Why this exists:
+- A one-sided version bump should fail fast here.
+- It prevents drift between local tooling and CI.
 """
 
 from __future__ import annotations
@@ -32,16 +39,16 @@ def test_pyproject_and_modal_pins_agree():
 
 
 def test_every_base_requirement_is_installed_in_the_modal_image():
-    # A base requirement absent from the image raises inside the container at first import, after
-    # the run has taken a GPU.
+    # Missing a base dependency means the container fails on first import,
+    # often after a GPU has already been allocated.
     vt = _load()
     missing = sorted(vt._base_requirements() - vt._modal_packages())
     assert not missing, f"the Modal image does not install: {missing}"
 
 
 def test_modal_package_names_are_read_from_code_not_comments():
-    # The pin block's prose quotes version specifiers in passing, so a name read out of a comment
-    # would make a missing install look present.
+    # The pin block prose mentions version strings in comments.
+    # If parsing reads comments, a missing package could look installed.
     vt = _load()
     packages = vt._modal_packages()
     assert "torch" in packages
@@ -62,13 +69,16 @@ def test_main_passes_on_a_consistent_tree():
     assert vt.main() == 0
 
 
-def test_every_ruff_call_site_names_the_pinned_version():
-    """The [dev] ruff pin and every `uvx ruff@` call site must name one version, or local and CI ruff disagree."""
+def test_no_ruff_call_site_names_a_version():
+    """Ruff should run as `uv run ruff`.
+
+    The only allowed Ruff version pin is in `[dev]`.
+    Any `uvx ruff@...` call site adds a second pin and must fail.
+    """
     vt = _load()
     pin = vt._ruff_dev_pin()
     assert pin, "pyproject [dev] carries no exact ruff== pin"
     sites = vt._ruff_call_site_versions()
     assert sites, "no ruff call sites are declared"
     for path, versions in sites.items():
-        assert versions, f"{path} declares no `uvx ruff@<version>` — the check reads a file it no longer guards"
-        assert versions == {pin}, f"{path} calls ruff@{sorted(versions)} but the pin is =={pin}"
+        assert not versions, f"{path} pins ruff via `uvx ruff@{sorted(versions)}` — invoke `uv run ruff` instead"

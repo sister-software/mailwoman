@@ -12,7 +12,7 @@ defect made unreachable), uppercase-conditional short codes, homograph bits, mul
 matches, the lowercase register (operator doctrine), and negative rows.
 
 Run from the repository root:
-    PYTHONPATH=corpus-python/src corpus-python/.venv/bin/python \
+    PYTHONPATH=corpus-python/src .venv/bin/python \
         packages/neural/test/fixtures/generate-evidence-parity.py
 """
 
@@ -106,35 +106,23 @@ PROBES = [
 def validate_lexicon(name: str, raw: FixtureLexicon) -> None:
     """Raise when fixture metadata cannot describe its declared feature vectors."""
     if raw["feature_dim"] != len(raw["slots"]):
-        raise ValueError(
-            f"{name}: feature_dim={raw['feature_dim']} but slots has "
-            f"{len(raw['slots'])} entries"
-        )
+        raise ValueError(f"{name}: feature_dim={raw['feature_dim']} but slots has {len(raw['slots'])} entries")
 
     if set(raw["bits"]) != set(raw["slots"]):
         raise ValueError(f"{name}: bits keys must equal slots")
 
     valid_mask = (1 << raw["feature_dim"]) - 1
     for section in ("bits", "entries", "code_entries"):
-        invalid = {
-            key: value
-            for key, value in raw[section].items()
-            if value <= 0 or value & ~valid_mask
-        }
+        invalid = {key: value for key, value in raw[section].items() if value <= 0 or value & ~valid_mask}
         if invalid:
-            raise ValueError(
-                f"{name}: {section} contains invalid feature masks: {invalid}"
-            )
+            raise ValueError(f"{name}: {section} contains invalid feature masks: {invalid}")
 
     longest_entry = max(
         (len(entry.split()) for entry in (*raw["entries"], *raw["code_entries"])),
         default=0,
     )
     if raw["max_ngram"] < longest_entry:
-        raise ValueError(
-            f"{name}: max_ngram={raw['max_ngram']} cannot reach a "
-            f"{longest_entry}-token entry"
-        )
+        raise ValueError(f"{name}: max_ngram={raw['max_ngram']} cannot reach a {longest_entry}-token entry")
 
 
 def to_lexicon(raw: FixtureLexicon) -> GazetteerLexicon:
@@ -164,10 +152,7 @@ def main() -> None:
         cases.append(
             {
                 "raw": raw,
-                "pieces": [
-                    {"piece": p.piece, "start": p.char_begin, "end": p.char_end}
-                    for p in pieces
-                ],
+                "pieces": [{"piece": p.piece, "start": p.char_begin, "end": p.char_end} for p in pieces],
                 "street": {"features": sfeat, "confidence": sconf},
                 "locality": {"features": lfeat, "confidence": lconf},
             }

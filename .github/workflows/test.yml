@@ -250,8 +250,8 @@ jobs:
           version: "0.11.16"
           enable-cache: true
           cache-dependency-glob: |
-            corpus-python/uv.lock
-            corpus-python/pyproject.toml
+            uv.lock
+            pyproject.toml
 
       - name: Lint and typecheck Python
         run: yarn lint:python
