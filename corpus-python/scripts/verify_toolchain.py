@@ -15,11 +15,13 @@ ONNX_WEB_CALL_SITES = ("package.json", "packages/neural/package.json")
 ONNX_WEB_RE = re.compile(r'"onnxruntime-web"\s*:\s*"([0-9][^"]*)"')
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PYPROJECT = REPO_ROOT / "corpus-python" / "pyproject.toml"
+PYPROJECT = REPO_ROOT / "pyproject.toml"
 MODAL_IMAGE = REPO_ROOT / "corpus-python" / "launch" / "app.py"
 EXPORT_ONNX = REPO_ROOT / "corpus-python" / "src" / "mailwoman_train" / "export" / "onnx.py"
 
 
+#: Files that run ruff. They must invoke `uv run ruff` so the [dev] pin in pyproject is the only
+#: version named anywhere. A `uvx ruff@<version>` here is a second pin that drifts.
 RUFF_CALL_SITES = (REPO_ROOT / "package.json", REPO_ROOT / ".husky" / "pre-commit")
 RUFF_UVX_RE = re.compile(r"uvx ruff@([0-9][^\s\"']*)")
 
@@ -37,7 +39,7 @@ def _pins_from_pyproject() -> dict[str, str]:
     return out
 
 
-PROJECT_VENV = REPO_ROOT / "corpus-python" / ".venv" / "bin" / "python3"
+PROJECT_VENV = REPO_ROOT / ".venv" / "bin" / "python3"
 
 
 def _installed_versions() -> dict[str, str]:
@@ -173,12 +175,11 @@ def main() -> int:
         problems.append("pyproject [dev] extras carry no exact ruff== pin")
     for path, versions in ruff_sites.items():
         name = path.relative_to(REPO_ROOT)
-        if not versions:
-            problems.append(f"{name}: no `uvx ruff@<version>` call found — this check reads a file it no longer guards")
-            continue
-        wrong = sorted(v for v in versions if v != ruff_pin)
-        if wrong:
-            problems.append(f"{name}: calls ruff@{', ruff@'.join(wrong)} but pyproject [dev] pins =={ruff_pin}")
+        if versions:
+            problems.append(
+                f"{name}: calls ruff via `uvx ruff@{', ruff@'.join(sorted(versions))}` — call sites run "
+                "`uv run ruff` so the [dev] pin is the only version; a second pin here drifted once already"
+            )
 
     installed = _installed_versions()
     installed_checked = 0
@@ -198,7 +199,7 @@ def main() -> int:
         + ", ".join(f"{name} {version or '(none)'}" for name, version in web_versions.items())
     )
     print(
-        f"[verify-toolchain] ruff pin =={ruff_pin}, call sites: "
+        f"[verify-toolchain] ruff pin =={ruff_pin}, uvx call sites (must be none): "
         + ", ".join(f"{p.relative_to(REPO_ROOT)} {sorted(v) or '(none)'}" for p, v in ruff_sites.items())
     )
     print(
@@ -212,7 +213,9 @@ def main() -> int:
             print(f"  - {p}", file=sys.stderr)
         return 1
 
-    print("[verify-toolchain] OK — pyproject, Modal image, export opset, the onnxruntime pair and the ruff pin agree.")
+    print(
+        "[verify-toolchain] OK — pyproject, Modal image, export opset and the onnxruntime pair agree; ruff has one pin."
+    )
     return 0
 
 

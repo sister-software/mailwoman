@@ -2,10 +2,10 @@ node_modules
 
 .notes
 
-# ignore all of whosonfirst/dictionaries
+# Whosonfirst dictionaries: ignore all .txt, then allowlist specific files.
 resources/whosonfirst/dictionaries/*/*.txt
 
-# whitelist certain files
+# Allowlisted dictionary files
 !resources/whosonfirst/dictionaries/country/wof:country.txt
 !resources/whosonfirst/dictionaries/country/wof:country_alpha3.txt
 !resources/whosonfirst/dictionaries/country/name:eng_x_preferred.txt
@@ -17,13 +17,13 @@ resources/whosonfirst/dictionaries/*/*.txt
 !resources/whosonfirst/dictionaries/locality/name:eng_x_preferred.txt
 !resources/whosonfirst/dictionaries/locality/name:fra_x_preferred.txt
 
-# ignore all custom dictionaries
+# Custom dictionaries
 resources/custom/dictionaries
 
-# ignore any openaddresses test cases
+# OpenAddresses test cases
 test/oa
 
-# OS X
+# macOS
 .DS_Store
 ._*
 
@@ -38,7 +38,7 @@ test/oa
 *.crt
 certs/
 
-## Logs
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -46,29 +46,26 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-## Diagnostic reports (https://nodejs.org/api/report.html)
+# Node diagnostic reports
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-## Runtime data
+# Runtime data
 pids
 *.pid
 *.seed
 *.pid.lock
 
-# Build files
+# Build output
 out
 dist
 
-# Storybook production build output (@mailwoman/react `build-storybook`)
+# Storybook build output
 storybook-static
 
-# `mailwoman clients generate` output (mailwoman/tools/generate-clients.ts) — the emitted specs +
-# the assembled/verified Python package and Rust crate. One-directional build product, never
-# committed; the conditional CI job (publish.yml) regenerates it fresh on every dispatch.
+# Generated client build output
 /clients-build/
 
 # Yarn (without zero-installs)
-# https://yarnpkg.com/getting-started/qa
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -77,14 +74,7 @@ storybook-static
 !.yarn/sdks
 !.yarn/versions
 
-# Coverage (vitest/istanbul report dirs).
-#
-# The rule is anchored to the root. A bare `coverage` matches a directory of that name at any depth,
-# which ignores source directories such as `packages/mailwoman/lib/coverage/` and cartographer's
-# coverage module.
-#
-# Vitest writes its report to `<root>/coverage` (the default `reportsDirectory`), and nothing writes a
-# per-package one, so anchoring the rule to the root covers the real output and stops claiming source.
+# Coverage / test artifacts
 /coverage/
 playwright-report
 playwright-traces
@@ -93,7 +83,7 @@ test-results
 .vitest-attachments
 __screenshots__
 
-# Python artifacts (corpus-python)
+# Python artifacts
 **/.venv/
 **/__pycache__/
 **/*.egg-info/
@@ -102,14 +92,11 @@ __screenshots__
 **/.ruff_cache/
 **/.pytest_cache/
 
-# Neural-weights model binaries — kept out of git per Phase 2 §"Eval reports committed
-# to git (numbers, not models)". model-card.json carries the eval numbers; .onnx and
-# .model files are reproduced by `python -m mailwoman_train package`.
+# Neural-weights model binaries
 packages/neural-weights-*/model.onnx
 packages/neural-weights-*/tokenizer.model
 
-# Docs static binaries — large build artifacts (ONNX model, WOF DB, FST gazetteer)
-# staged by the demo-assets plugin at build time. Not committed.
+# Docs static build artifacts
 docs/static/mailwoman/*.onnx
 docs/static/mailwoman/*.model
 docs/static/mailwoman/*.db
@@ -118,6 +105,7 @@ docs/static/mailwoman/*.json
 docs/static/mailwoman/sqlite/
 docs/static/mailwoman/pair-index/
 
+# Claude local files
 .claude/settings.local.json
 CLAUDE.local.md
 .claude/scheduled_tasks.lock
@@ -126,39 +114,30 @@ CLAUDE.local.md
 .claude/state/
 .claude/worktrees
 
-# expand-golden.ts outputs — operator skims locally, then promotes to versioned dir
+# expand-golden.ts outputs
 data/eval/golden/candidates/
 
-# Calibration confidences (#59): derivable from calibration-set.jsonl + the model, 3 MB. The frozen
-# calibration-set.jsonl + the fitted isotonic table ARE committed; the per-span dump is not.
+# Calibration confidences (derived)
 data/eval/calibration/confidences.jsonl
 
-# Fetched corpus source data. `corpus fetch` writes to $MAILWOMAN_DATA_ROOT, and this covers a run
-# that points --out-root back into the tree: a publisher's bulk download is reproducible from its
-# manifest and belongs in the data root. One BAN fetch is 4.6 GB over 101 department files.
+# Fetched corpus source data
 data/corpus/sources/
 
-# Local env files (R2 credentials, etc.) — keep out of git
+# Local env files
 .env
 .env.*
 
-corpus-python/.pytest_cache/
+**/.pytest_cache/
 output/
 .cache/
-# Per-run training-output download dirs (e.g. output-v150-fr-order-s42/ — pulled from the Modal
-# volume to local during a re-check; each holds a ~113MB model.onnx). The exact `output/` above
-# only matches the bare dir; the suffixed per-run dirs need their own glob.
+# Per-run training-output download dirs
 output-*/
 !.claude/output-styles/
 
-# Pi session state (not project config)
+# Pi session state
 .pi/flow.json
 
-# Night-shift ephemera — operational plans, logs, and session notes produced during
-# autonomous overnight shifts. AI-agent scratch, not project source (#379).
-# ds-*.txt / session-notes-*.md were previously only ignored inside
-# .agents/skills/deepseek-consult/ (below); the global patterns catch the same
-# scratch when it lands at the repo root or elsewhere. No tracked file matches either.
+# Night-shift scratch
 *-NIGHT-SHIFT-*.md
 *-NIGHT-SHIFT-*.log
 *-NIGHT-SHIFT-*.sh
@@ -169,60 +148,44 @@ HANDOFF-*.md
 ds-*.txt
 session-notes-*.md
 
-# DeepSeek consult skill directory — the skill definition (SKILL.md) IS tracked;
-# all other files (conversation transcripts, session notes, plans) are AI-agent
-# scratch and not project source (#379).
+# DeepSeek consult scratch (SKILL.md remains tracked)
 .agents/skills/deepseek-consult/*
 
-# Diagnostic scripts — one-off investigation scripts that aren't part of the shipped
-# toolchain. Keepers cited by docs/memories stay tracked; this only hides untracked
-
-# Coarse-placer (#244) training data + model artifacts — regenerable, not committed
+# Coarse-placer training data + model artifacts
 data/coarse-placer/
 
 nightshift
 
 ## Conventions
 
-### Never commit shell scripts. Use a `.ts` or `.tsx` file instead.
+### Never commit shell scripts. Use `.ts` or `.tsx`.
 .sh
 
-# tsc -b incremental state (per-workspace tsconfig.tsbuildinfo) — build junk, never committed.
+# TypeScript incremental build state
 *.tsbuildinfo
 
-# md5 sidecars written by the weights link scripts' freshness guards (`md5FileWithSidecar`) beside
-# whatever they hash. A derived cache keyed on mtime — committing one means a fresh checkout can
-# carry a hash that disagrees with the file next to it, which is precisely the staleness the guard
-# exists to catch.
+# md5 sidecars (derived)
 *.jsonl.md5
 
-# Throwaway benchmark/verification scripts an agent or operator drops beside the code it is
-# measuring. Named so they cannot be mistaken for a keeper, and ignored so a wide `git add` cannot
-# sweep one into a commit.
+# Throwaway benchmark/verification scripts
 *-tmp.ts
 *-tmp.tsx
 
-## Subagent-driven-development scratch (ledgers, briefs, review packages) — per-plan, never committed
+## Subagent scratch
 .superpowers/
 
-
-# dev-mcp writes its worktree-arm runner here for the life of one mwdev_compare; never commit it
+# dev-mcp worktree runner
 .mwdev-arm-runner.ts
 
-# Wrangler's local secrets for `wrangler dev`; the committed shape is .dev.vars.example
+# Wrangler local secrets/state
 .dev.vars
-# Wrangler's local state (the local D1, cached builds) beside a worker
 .wrangler/
 
-# A source archive of the tree itself, produced by hand for a one-off comparison. `src9.tgz` reached commit
-# 76f5e3544 that way, and `readLocalTextFile` decodes a tarball far enough for the debt check's vocabulary
-# pattern to match inside it, so a committed archive fails a check that has nothing to do with archives.
+# Local source archives
 *.tgz
 *.tar.gz
 
-# `styleframe build` writes a TypeScript companion beside the CSS it compiles from styleframe.config.ts. Nothing
-# imports it — consumers read tokens/index.css and tokens/tokens.json, and both of those ARE committed so a build
-# never needs the token compiler.
+# styleframe generated TypeScript companion
 packages/react/tokens/index.ts
 
 release-plan.json

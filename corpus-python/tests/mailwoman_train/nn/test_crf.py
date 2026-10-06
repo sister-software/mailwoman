@@ -1,8 +1,7 @@
 """Linear-chain CRF unit tests.
 
-Runs only in environments where ``torch`` is installed (corpus-python/.venv on the host
-GPU, training containers). Skipped silently otherwise so the test file doesn't break the
-lighter test-only venv used by the corpus build pipeline.
+- Runs only when ``torch`` is installed.
+- If ``torch`` is missing, pytest skips this file.
 """
 
 from __future__ import annotations
@@ -27,11 +26,11 @@ def test_transition_mask_rejects_orphan_i():
     mask = build_bio_transition_mask(ID_TO_LABEL)
     o = LABEL_TO_ID["O"]
     i_locality = LABEL_TO_ID["I-locality"]
-    # O → I-locality is the orphan-I bug that Saint Petersburg hits on the demo.
+    # Invalid: O -> I-locality (orphan I-*).
     assert mask[o, i_locality].item() == float("-inf")
-    # O → O is fine.
+    # Valid: O -> O.
     assert mask[o, o].item() == 0.0
-    # O → B-locality is fine.
+    # Valid: O -> B-locality.
     b_locality = LABEL_TO_ID["B-locality"]
     assert mask[o, b_locality].item() == 0.0
 
@@ -40,9 +39,9 @@ def test_transition_mask_rejects_cross_tag_i():
     mask = build_bio_transition_mask(ID_TO_LABEL)
     b_locality = LABEL_TO_ID["B-locality"]
     i_region = LABEL_TO_ID["I-region"]
-    # B-locality → I-region (orphan-I cross-tag) must be rejected.
+    # Invalid: B-locality -> I-region (cross-tag I-*).
     assert mask[b_locality, i_region].item() == float("-inf")
-    # B-locality → I-locality is the valid continuation.
+    # Valid continuation: B-locality -> I-locality.
     i_locality = LABEL_TO_ID["I-locality"]
     assert mask[b_locality, i_locality].item() == 0.0
 
@@ -60,7 +59,7 @@ def test_start_mask_rejects_i_prefix():
 def test_log_likelihood_finite_and_negative_of_neg_log():
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
-    # Toy batch: B=2, S=5. Emissions are random. tags are valid B-locality runs.
+    # Toy batch: B=2, S=5.
     torch.manual_seed(0)
     emissions = torch.randn(2, 5, n)
     b_locality = LABEL_TO_ID["B-locality"]
@@ -80,11 +79,11 @@ def test_log_likelihood_finite_and_negative_of_neg_log():
 
 
 def test_per_token_reduction_matches_sum_over_tokens():
-    """v0.4.0 §1: per_token reduction = sum NLL across batch / total real tokens.
+    """Check reduction math.
 
-    Verifies the new reduction mode produces a magnitude comparable to per-token CE,
-    distinct from the v0.3.0 per-sequence-mean. Tests both full-mask and partial-mask
-    paths (the latter is the regression-guard surface where the mask divisor matters).
+    - per_token = sum / number_of_real_tokens
+    - mean = sum / batch_size
+    - per_token and mean should differ when token count != batch size
     """
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
@@ -110,10 +109,9 @@ def test_per_token_reduction_matches_sum_over_tokens():
     assert torch.isfinite(nll_per_token)
     # per_token = sum / total_tokens
     assert torch.allclose(nll_per_token, nll_sum / total_tokens)
-    # mean (over 2 sequences) = sum / 2
+    # mean = sum / batch_size (2)
     assert torch.allclose(nll_mean, nll_sum / 2.0)
-    # And mean ≠ per_token whenever total_tokens != batch_size — verifies they're
-    # different reductions.
+    # Should differ here because total_tokens != batch_size.
     assert not torch.allclose(nll_mean, nll_per_token)
 
 
@@ -132,11 +130,8 @@ def test_unknown_reduction_raises():
 
 
 def test_log_likelihood_finite_with_padding():
-    # Regression guard for the multiplicative-mask NaN trap. alpha contains -inf at
-    # structurally-invalid start positions (I-* tags), and the partition recurrence
-    # used to blend old vs new alpha with `alpha * (1 - mask_t)`, which evaluates
-    # `0 * -inf = NaN` whenever mask_t = 1. The torch.where blend preserves -inf
-    # cleanly. Exercise both the full-mask and partial-mask paths.
+    # Regression guard: masked timesteps must not create NaNs.
+    # The masked case produces 0 * -inf in DP updates, which is where NaNs came from.
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
     torch.manual_seed(0)
@@ -144,7 +139,7 @@ def test_log_likelihood_finite_with_padding():
     b_locality = LABEL_TO_ID["B-locality"]
     i_locality = LABEL_TO_ID["I-locality"]
     o = LABEL_TO_ID["O"]
-    # Row 0 padded after 3 real tokens. row 1 full.
+    # Row 0 is padded after 3 tokens. Row 1 uses all tokens.
     tags = torch.tensor(
         [
             [b_locality, i_locality, o, 0, 0],
@@ -161,9 +156,8 @@ def test_log_likelihood_finite_with_padding():
 def test_viterbi_never_emits_orphan_i():
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
-    # Adversarial emissions: push hard toward I-locality at every position. Without the
-    # structural mask, Viterbi would emit [I-locality]*5 — invalid. With the mask, it
-    # must route through a B-locality first or just stay on O / B-*.
+    # Adversarial setup: every position strongly prefers I-locality.
+    # Decoder must still obey BIO constraints.
     i_locality = LABEL_TO_ID["I-locality"]
     emissions = torch.full((1, 5, n), -10.0)
     emissions[0, :, i_locality] = 10.0
@@ -171,7 +165,6 @@ def test_viterbi_never_emits_orphan_i():
     decoded = crf.viterbi_decode(emissions, mask)
     assert len(decoded) == 1
     seq = decoded[0]
-    # Either start with O / B-*, or start with B-locality then I-locality runs.
     for idx, tag_id in enumerate(seq):
         label = ID_TO_LABEL[tag_id]
         if not label.startswith("I-"):
@@ -179,7 +172,7 @@ def test_viterbi_never_emits_orphan_i():
         if idx == 0:
             pytest.fail(f"sequence starts with I-* (orphan): {label}")
         prev = ID_TO_LABEL[seq[idx - 1]]
-        # I-X is valid only after B-X or I-X with same tag.
+        # I-X is valid only after B-X or I-X with the same tag.
         assert prev.startswith(("B-", "I-")), f"orphan-I at {idx}: prev={prev}, curr={label}"
         _, prev_tag = prev.split("-", 1)
         _, curr_tag = label.split("-", 1)
@@ -198,11 +191,11 @@ def test_viterbi_respects_mask_length():
 
 # endregion
 
-# region v0.5.0 thread C: top-k decode
+# region top-k decode
 
 
 def test_top_k_decode_returns_argmax_as_first_path():
-    """Top-1 of top-k must equal the standard Viterbi argmax — same DP backbone."""
+    """Top-1 from top-k should match regular Viterbi."""
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
     torch.manual_seed(7)
@@ -229,7 +222,7 @@ def test_top_k_decode_scores_sorted_desc():
 
 
 def test_top_k_decode_paths_are_distinct():
-    """The k paths returned must be different tag sequences — list-Viterbi guarantee."""
+    """Returned top-k paths must be distinct sequences."""
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
     torch.manual_seed(11)
@@ -257,10 +250,10 @@ def test_top_k_decode_respects_mask_length():
 
 
 def test_top_k_decode_never_emits_orphan_i():
-    """Same structural guarantee as argmax Viterbi — the BIO mask applies to every path."""
+    """BIO constraints must hold for every top-k path."""
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
-    # Adversarial emissions favoring I-locality everywhere.
+    # Adversarial setup: all positions strongly favor I-locality.
     i_locality = LABEL_TO_ID["I-locality"]
     emissions = torch.full((1, 5, n), -10.0)
     emissions[0, :, i_locality] = 10.0
@@ -282,7 +275,7 @@ def test_top_k_decode_never_emits_orphan_i():
 
 
 def test_top_k_decode_calibrated_scores_are_log_probs():
-    """Each path's score = log P(path | emissions). Sum of exp(score) over K paths <= 1."""
+    """Scores are log-probabilities: sum(exp(score)) over returned paths is <= 1."""
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
     torch.manual_seed(0)
@@ -291,9 +284,9 @@ def test_top_k_decode_calibrated_scores_are_log_probs():
     paths = crf.top_k_decode(emissions, mask, k=10)[0]
     probs = [float(torch.tensor(p.score).exp()) for p in paths]
     s = sum(probs)
-    # Allow a tiny slack for fp32 rounding. the strict invariant is sum <= 1.
+    # Small slack for fp32 rounding. The exact invariant is sum <= 1.
     assert s <= 1.0 + 1e-5, f"top-k probabilities sum to {s} > 1"
-    # All scores are finite (no -inf made it past the filter).
+    # All returned scores should be finite.
     assert all(math_isfinite(p.score) for p in paths)
 
 

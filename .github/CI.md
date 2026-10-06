@@ -1,50 +1,129 @@
 # CI selection
 
-The `scope` job in `test.yml` runs `yarn mwops ci-scope` before conditional test jobs acquire runners.
-On a pull request, the command compares the head commit with its merge base against the base commit.
-The diff disables rename detection so that a move selects both its old and new workspace.
+## t;ldr
 
-The graph includes workspace dependencies from all four manifest dependency fields, plus literal
-imports and exports in tracked JavaScript and TypeScript files. Source scanning includes tests and
-literal dynamic imports. The command selects changed workspaces and their transitive consumers.
-Any change inside a workspace selects its tests, including changes to fixtures, assets, and local
-configuration. Computed imports rely on declared manifest dependencies.
-Literal paths under `corpus-python/` also select the JavaScript workspaces that read those scripts or
-fixtures. Calls to `repoRootPath`, `resolvePath`, and `join` with consecutive literal segments record
-the joined path. A directory reference selects every change below that directory.
+- `test.yml` runs a `scope` job first: `yarn mwops ci-scope`.
+- That job decides which test suites to run.
+- On pull requests, it compares:
+  - base commit
+  - vs head commit (through merge base)
+- Rename detection is off, so moving a file selects both old and new workspaces.
 
-A root configuration change, a shared fixture outside a workspace, an unrecognized path, a removed
-workspace, or a workspace manifest change selects every suite. Manifest changes require a full run
-because the current graph cannot describe a dependency edge that the change removed. Main pushes and
-workflow dispatches also select every suite. A failed graph read fails the required `test` check.
+## How selection is computed
 
-Fast and slow Vitest jobs receive selected test filenames as arguments. The existing Vitest configs
-retain their exclusions and suite boundaries. React, planetary, license-worker, Earth, packaging, and
-full-scale lexicon work run only when selected. The `opportunity` output selects the browser tests of
-the private opportunity map application, a step of the `react` job, when `@mailwoman/opportunity-app`
-or a workspace it depends on changes. The packaging job uses the published workspace set
-in `.release-it.json`, plus the release tooling. Lexicon selection includes changes that affect
-`mailwoman` or `@mailwoman/codex`; this is broader than the previous list of gazetteer paths.
+The graph uses:
 
-Python lint, type checking, security checks, and tests run in a separate hosted job when a Python file
-or anything under `corpus-python/` changes. Global changes and full runs select Python too. This job
-caches uv downloads using `corpus-python/uv.lock` and `corpus-python/pyproject.toml`.
+- workspace dependencies from all 4 manifest dependency fields
+- literal `import`/`export` usage in tracked JS/TS files
+- tests and literal dynamic imports
 
-Repository-wide formatting, lint, prose, architecture, and health checks continue to run on every PR.
-The docs typecheck runs once when the docs workspace is affected. The separate docs build workflow
-still has its own selection rules.
+Rules:
 
-Compiled-output caches require an exact match. Their keys include the runner OS and architecture,
-build sources, manifests, TypeScript configuration, the dependency lock, and Node/Yarn configuration.
-Colocated test files do not invalidate compiled output because build projects exclude those files.
-There is no fallback restore of compiled output from a different source tree.
+- Changed workspaces are selected.
+- Their transitive consumers are also selected.
+- Any change inside a workspace selects that workspace’s tests:
+  - fixtures
+  - assets
+  - local config
+- Computed imports fall back to manifest dependencies.
+- Literal paths under `corpus-python/` can also select JS workspaces that read those files.
+- Calls to `repoRootPath`, `resolvePath`, and `join` with consecutive literal segments are tracked as joined paths.
+- Referencing a directory means any change under that directory can select tests.
 
-The required `test` job checks that every selected job succeeded. A selected job that fails, is
-cancelled, or unexpectedly skips fails that check. The scope summary lists selected suites and affected
-workspaces. An unselected suite did not run. The existing data-fleet exception remains: data-dependent
-jobs skip when no data runner is available. The required `test` job then emits a partial-check warning.
+## When everything runs (full run)
 
-Workspace-level dependencies can select broad runs. For example, `mailwoman` declares a dependency on
-`@mailwoman/corpus`, and Earth declares a dependency on `mailwoman`. A corpus change therefore selects
-Earth. A future refinement would need measured dependencies for each source root or job before it could
-exclude that consumer safely.
+These cases select every suite:
+
+- root configuration change
+- shared fixture outside a workspace
+- unrecognized path
+- removed workspace
+- workspace manifest change
+- push to `main`
+- manual workflow dispatch
+
+Notes:
+
+- Manifest changes force full runs because the graph cannot represent removed dependency edges.
+- If graph reading fails, the required `test` check fails.
+
+## Job-specific behavior
+
+- Fast and slow Vitest jobs receive selected test filenames as arguments.
+- Existing Vitest config exclusions and suite boundaries still apply.
+- These suites only run when selected:
+  - react
+  - planetary
+  - license-worker
+  - Earth
+  - packaging
+  - full-scale lexicon
+
+### Opportunity app
+
+- `opportunity` output controls browser tests for the private opportunity map app (inside the `react` job).
+- It is selected when `@mailwoman/opportunity-app` changes, or any workspace it depends on changes.
+
+### Packaging
+
+- Uses published workspaces from `.release-it.json` plus release tooling.
+
+### Lexicon
+
+- Selected by changes affecting `mailwoman` or `@mailwoman/codex`.
+- This is broader than the old gazetteer-path list.
+
+## Python job
+
+Runs separate hosted Python checks (lint, type, security, tests) when:
+
+- any Python file changes, or
+- anything under `corpus-python/` changes, or
+- a global/full-run trigger happens
+
+Caching:
+
+- uv download cache key uses root `uv.lock` and `pyproject.toml`.
+
+## Always-on checks
+
+- Repository-wide formatting, lint, prose, architecture, and health checks run on every PR.
+- Docs typecheck runs once when the docs workspace is affected.
+- Docs build workflow keeps separate selection rules.
+
+## Compiled-output cache behavior
+
+- Cache restore requires an exact key match.
+- Keys include:
+  - runner OS + architecture
+  - build sources
+  - manifests
+  - TypeScript config
+  - dependency lock
+  - Node/Yarn config
+- Colocated test files do not invalidate compiled output (build projects exclude those files).
+- No fallback restore from a different source tree.
+
+## Required `test` check semantics
+
+- Required `test` passes only if every selected job succeeds.
+- Required `test` fails if a selected job:
+  - fails
+  - is cancelled
+  - unexpectedly skips
+- Scope summary shows selected suites and affected workspaces.
+- If a suite was not selected, it did not run.
+
+Data-fleet exception:
+
+- Data-dependent jobs can skip when no data runner is available.
+- In that case, required `test` emits a partial-check warning.
+
+## Why selection can be broad
+
+- Workspace dependency chains can fan out.
+- Example:
+  - `mailwoman` depends on `@mailwoman/corpus`
+  - Earth depends on `mailwoman`
+  - so a corpus change selects Earth
+- Narrower selection would require measured per-source-root or per-job dependencies.

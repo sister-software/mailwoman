@@ -1,49 +1,57 @@
 #!/usr/bin/env sh
 
-# Lint-only, STAGED-SCOPED pre-commit (2026-07-08): tests are CI's job, and repo-wide lint is CI's
-# job too (the Test workflow's Lint step runs the full `yarn lint`). The hook checks only what this
-# commit stages, so untracked WIP and unrelated drift can't block a commit.
+# Pre-commit policy (lint-only, staged-scoped):
+# - Tests run in CI, not here.
+# - Repo-wide lint runs in CI (`yarn lint`), not here.
+# - This hook checks only staged paths, so unrelated/untracked WIP won't block commits.
 #
-# Caveat: the linters read the WORKING-TREE contents of staged paths — a partially-staged file is
-# checked at its worktree state (same trade-off as lint-staged without the stash dance).
-#
-# set -e: without it a failing step never blocked the commit (the hook's exit code was the LAST
-# command's) — the old lint+tests hook had this hole.
+# Important caveat:
+# - Linters read WORKING-TREE content for staged paths.
+# - If a file is partially staged, linting sees current worktree state.
+
 set -e
 
-# Added/Copied/Modified/Renamed only — deletions have nothing to lint. Existence-filtered so a path
-# staged and then removed from the worktree can't crash the linters.
+# Build staged-file list:
+# - ACMR only (Added/Copied/Modified/Renamed).
+# - Skip deletions (nothing to lint).
+# - Keep only files that still exist in worktree (prevents crashes).
 STAGED=$(git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r f; do
 	[ -f "$f" ] && printf '%s\n' "$f"
 done)
 
-# The CLI-freshness reference (see the block below) is read BEFORE the formatter runs: `oxfmt --write` rewrites a
-# staged source with byte-identical content and still bumps its mtime, so a guard that reads `-newer` after it fires
-# on every commit that stages a command file, and `yarn compile` cannot clear it because the compile precedes the hook.
+# CLI freshness setup (computed BEFORE formatting):
+# - `oxfmt --write` can bump mtime even when file bytes do not change.
+# - So the `-newer` freshness check must use timestamps captured before formatter runs,
+#   otherwise command-file commits can fail forever until timing changes.
 CLI_REF=packages/mailwoman/tsconfig.tsbuildinfo
 [ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/out/tsconfig.tsbuildinfo
 [ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/out/cli/main.js
 CLI_STALE_SRC=""
 if [ -f "$CLI_REF" ]; then
-	# cli-native holds the specs of the native commands (license, doctor, geocode …); the reference reads them from
-	# the compiled CLI too, so a spec edit there is the same staleness as one under commands/.
-	# A colocated test is excluded: `packages/mailwoman/tsconfig.json` excludes `./**/*.test.ts`, so no compile reads
-	# one and no compile can make the reference newer than one. Since the roots were split, tests sit beside their
-	# modules under cli/kit, and a test edit alone left this guard unclearable.
+	# Source-of-truth paths that can stale generated CLI docs/man output:
+	# - cli/commands
+	# - cli/kit
+	# - cli/native
+	#
+	# Exclude test files:
+	# - Compile excludes `*.test.ts`/`*.test.tsx`.
+	# - Including tests here would create false stale failures (compile can never "refresh" them).
 	CLI_STALE_SRC=$(find packages/mailwoman/cli/commands packages/mailwoman/cli/kit packages/mailwoman/cli/native \( -name '*.tsx' -o -name '*.ts' \) ! -name '*.test.ts' ! -name '*.test.tsx' -newer "$CLI_REF" -print -quit 2>/dev/null)
 fi
 
 if [ -n "$STAGED" ]; then
-	# oxlint errors on paths it can't lint, so scope it to code files. Config discovery
-	# (oxlint.config.ts, incl. the sister-software/no-process-globals raw-access check) is
-	# path-independent — verified: explicit paths keep every rule active.
+	# JS/TS lint:
+	# - oxlint errors on unsupported paths, so pass only code extensions.
+	# - Config/rules still apply when explicit paths are passed.
 	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
 	if [ -n "$CODE" ]; then
 		printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix
 	fi
 
-	# oxfmt auto-formats (no --check flag). Errors when NO path in the list is a target (e.g. a
-	# commit staging only .yml/.sh), so scope it to the types it formats.
+	# Formatter:
+	# - oxfmt has no `--check`; it writes fixes.
+	# - It errors if no input path is a supported format target.
+	# - So pass only known format extensions.
 	FMT=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx|json|jsonc|md|mdx|toml|css|html)$' || true)
 	if [ -n "$FMT" ]; then
 		FMT_OUT=$(printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --write 2>&1) || {
@@ -55,43 +63,40 @@ if [ -n "$STAGED" ]; then
 		}
 	fi
 
-	# Python: ruff on staged corpus-python sources; the pin-consistency check runs whenever
-	# ANYTHING under corpus-python/ is staged (pyproject/modal edits must keep agreeing).
+	# Python checks:
+	# - Run ruff check+format on staged `corpus-python/**/*.py`.
+	# - Run toolchain pin-consistency check when:
+	#   - anything under `corpus-python/` is staged, or
+	#   - `pyproject.toml` or `uv.lock` is staged.
 	PY=$(printf '%s\n' "$STAGED" | grep -E '^corpus-python/.*\.py$' || true)
 	if [ -n "$PY" ]; then
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.16.10 check --fix
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.16.10 format
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uv run --extra dev ruff check --fix
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uv run --extra dev ruff format
 	fi
-	if printf '%s\n' "$STAGED" | grep -q '^corpus-python/'; then
-		uv run --project corpus-python --extra dev --extra train python corpus-python/scripts/verify_toolchain.py
+	if printf '%s\n' "$STAGED" | grep -qE '^corpus-python/|^pyproject\.toml$|^uv\.lock$'; then
+		uv run --extra dev --extra train python corpus-python/scripts/verify_toolchain.py
 	fi
 
-	# Re-stage fixed files so they're included in the commit
+	# Re-stage any files modified by auto-fixers.
 	printf '%s\n' "$STAGED" | tr '\n' '\0' | xargs -0 git add
 
-	# Vale reads the same prose surfaces as full lint, narrowed to files in the index.
-	# It reads working-tree contents, as the other staged checks above do.
+	# Prose lint (Vale), staged-scoped.
 	node config/vale/lint-prose.ts --staged -s docs-vocab -s code
 fi
 
-# CLI-reference freshness (2026-08-05): the docs CI check asserts docs/articles/developers/reference/
-# cli.mdx byte-for-byte against the command schemas, and it fired four times in one day because the
-# regeneration step lives a 20-minute CI round-trip away. Staged-scoped: only runs when this commit
-# touches the command surface. The generator reads the COMPILED tree (packages/mailwoman/out/cli/commands — the
-# commands are TSX, which node cannot type-strip), so a stale out/ would silently regenerate WRONG
-# bytes; the mtime guard turns that into an instruction instead.
+# CLI reference + man-page drift prevention:
+# - Only runs when staged changes touch `packages/mailwoman/cli/(commands|kit|native)/`.
+# - Generator reads COMPILED output (`out/cli/...`), not TSX source directly.
+# - Therefore, stale compile output can generate wrong bytes.
+# - Freshness guard converts that into a clear "run compile" instruction.
 if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailwoman/cli/(commands|kit|native)/'; then
 	if [ -f packages/mailwoman/out/cli/main.js ]; then
-		# Freshness reference: the tsbuildinfo, not cli.js — an incremental `tsc -b` that finds
-		# cli.js byte-identical does not rewrite it, so an mtime check against cli.js blocks
-		# forever after an unrelated source edit (bit the ablation-harness worktree 2026-08-05).
-		# tsc always touches the buildinfo when it runs; fall back to cli.js on trees without one.
-		# tsc writes the buildinfo NEXT TO THE TSCONFIG, not into outDir — `packages/mailwoman/tsconfig.tsbuildinfo`.
-		# This named `out/tsconfig.tsbuildinfo`, which has not existed for some time, so the guard silently fell
-		# through to the cli.js branch below and lost the property it was reaching for: tsc touches the buildinfo
-		# on every run, including one that finds every output byte-identical, whereas cli.js is only rewritten
-		# when its bytes change. The comparison itself ran at the top of this hook, before the formatter touched
-		# any staged source (`CLI_STALE_SRC`).
+		# Why buildinfo is the preferred freshness reference:
+		# - `tsc -b` may leave `cli.js` untouched when bytes are identical.
+		# - But `tsbuildinfo` is touched on each build run.
+		# - So buildinfo avoids "permanent stale" false failures.
+		# - Fallback to `cli.js` only when buildinfo is unavailable.
+		# - Comparison source is precomputed at script start (`CLI_STALE_SRC`) before formatter mtimes shift.
 		if [ -n "$CLI_STALE_SRC" ]; then
 			echo "pre-commit: $CLI_STALE_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
 			exit 1
@@ -102,9 +107,7 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 			echo "  git add docs/articles/developers/reference/cli.mdx" >&2
 			exit 1
 		fi
-		# The SECOND generated artifact, same freshness interface: the man page's CI drift test fired on
-		# 2026-08-17 (cli.mdx prose) and again on 2026-08-18 (a new flag) because only cli.mdx was
-		# hook-covered. Same guard, same remediation shape.
+		# Also enforce man-page freshness with same remediation pattern.
 		node packages/mailwoman/out/cli/main.js dev generate man-page
 		if ! git diff --quiet -- packages/mailwoman/man/mailwoman.1; then
 			echo "pre-commit: the man page moved — it has been regenerated in your worktree; stage it and retry:" >&2
@@ -116,11 +119,10 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 	fi
 fi
 
-# Raw-angle MDX lint — already staged-scoped by default (see the script header). A bare `<55` in
-# docs prose is a build-breaking MDX-JSX parse error; this class broke three builds on 2026-06-10.
-# The lint tool lives at packages/mailwoman/tools/dev-tools/lint-mdx-angles.ts
-# and needs the compiled CLI (`yarn compile`). An uncompiled tree (fresh clone) skips with a warning
-# rather than blocking every commit — CI's full lint still checks this class.
+# MDX raw-angle lint:
+# - Catches build-breaking MDX/JSX parse cases like bare `<55` in prose.
+# - Runs through compiled CLI tooling, so it requires `yarn compile` output.
+# - If not compiled, warn and skip locally; CI full lint still enforces it.
 if [ -f packages/mailwoman/out/cli/main.js ]; then
 	node packages/mailwoman/out/cli/main.js dev lint mdx-angles
 else

@@ -1,8 +1,10 @@
 # `mailwoman-corpus-python`
 
-Python helpers for the Mailwoman pipeline. This directory is not a Yarn workspace. It has its own
-`pyproject.toml` and runs under `uv` (Python 3.12, pinned by `.python-version`) instead of from
-Node.
+Python helpers for the Mailwoman pipeline.
+
+The `uv` project that builds it lives at the repository root (`pyproject.toml`, `uv.lock`, `.venv/`,
+`.python-version` — Python 3.12) so that `uv run` works from the root without a `--project` flag;
+this directory holds only the source.
 
 All the code is in one package, `src/mailwoman_train/`, with one directory per role:
 
@@ -31,12 +33,11 @@ now writes the `.parquet` files directly without Python.
 
 ## Install
 
-Everything runs under [`uv`](https://docs.astral.sh/uv/). `.python-version` pins the interpreter
-to 3.12, which matches the image in `launch/app.py`. Call every tool through `uv run` so that it
-uses the project environment instead of a system install.
+Everything runs under [`uv`](https://docs.astral.sh/uv/), from the repository root.
+`.python-version` pins the interpreter to 3.12, which matches the image in `launch/app.py`. Call
+every tool through `uv run` so that it uses the project environment instead of a system install.
 
 ```sh
-cd corpus-python
 uv sync --extra dev        # base deps + dev toolchain (ruff, mypy, bandit, pytest)
 uv run python -m mailwoman_train --help
 ```
@@ -54,31 +55,32 @@ recipe below follows this pattern.
 
 ## Toolchain
 
-All tools come from the `[dev]` extra. Invoke them with `uv run` so they read the project
-environment and the `pyproject.toml` config:
+All tools come from the `[dev]` extra. Invoke them with `uv run` from the repository root so they
+read the project environment and the root `pyproject.toml` config:
 
 - **Ruff** (`uv run ruff`) lints and formats. It is the Python counterpart of the repo's `oxlint`
   and `oxfmt`. Config: `[tool.ruff]`.
 - **mypy** (`uv run mypy`) runs `--strict` type checking over `src/` and currently reports zero
   errors. It does not check `launch/`, because `launch/` imports the Modal SDK, which is installed
   only where `modal run` runs. Config: `[tool.mypy]`.
-- **bandit** (`uv run bandit -r src`) runs security and static analysis. Config: `[tool.bandit]`.
-- **pytest** (`uv run pytest`) runs the corpus test suite.
+- **bandit** (`uv run bandit -r corpus-python/src`) runs security and static analysis. Config:
+  `[tool.bandit]`.
+- **pytest** (`uv run pytest corpus-python/tests`) runs the corpus test suite.
 
 ```sh
-uv run ruff check .            # lint        (oxlint)
-uv run ruff check --fix .      # lint + fix  (oxlint --fix)
-uv run ruff format .           # format      (oxfmt)
-uv run ruff format --check .   # format check, for CI
-uv run mypy                    # type check  (tsc --strict)
-uv run bandit -c pyproject.toml -r src   # security (static scan)
-uv run pytest                  # tests       (vitest)
-uv run python scripts/verify_toolchain.py   # train-pin consistency guard
+uv run ruff check                    # lint        (oxlint)
+uv run ruff check --fix              # lint + fix  (oxlint --fix)
+uv run ruff format                   # format      (oxfmt)
+uv run ruff format --check           # format check, for CI
+uv run mypy                          # type check  (tsc --strict)
+uv run bandit -c pyproject.toml -r corpus-python/src   # security (static scan)
+uv run pytest corpus-python/tests    # tests       (vitest)
+uv run python corpus-python/scripts/verify_toolchain.py   # train-pin consistency guard
 ```
 
 `yarn lint` from the repo root runs the full Python check (see `.github/workflows/test.yml`). It
 runs ruff lint and format, the `verify_toolchain.py` pin check, `mypy --strict` and `bandit`. Each
-step goes through `uv run`, which syncs the corpus-python venv on demand. The sync includes the
+step goes through `uv run`, which syncs the root venv on demand. The sync includes the
 `[train]` extras that mypy needs to resolve torch.
 
 ### Lab GPU (Radeon 780M / gfx1103) recipe

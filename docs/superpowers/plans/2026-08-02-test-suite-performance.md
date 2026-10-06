@@ -1834,10 +1834,10 @@ Run from the **main checkout**, which is the one that has the virtualenv:
 
 ```bash
 cd /home/lab/Projects/mailwoman
-yarn vitest list --run 2>/dev/null | grep -c "corpus-python/.venv" || echo 0
+yarn vitest list --run 2>/dev/null | grep -c ".venv" || echo 0
 ```
 
-Expected: a nonzero count — five files under `corpus-python/.venv/lib/python3.12/site-packages/trackio/frontend/`.
+Expected: a nonzero count — five files under `.venv/lib/python3.12/site-packages/trackio/frontend/`.
 
 Return to the worktree afterwards: `cd /home/lab/Projects/mailwoman/.claude/worktrees/perf+test-suite`
 
@@ -1846,7 +1846,7 @@ Return to the worktree afterwards: `cd /home/lab/Projects/mailwoman/.claude/work
 In `vitest.config.ts`, add to the `exclude` array, after the `.claude/worktrees` entry:
 
 ```ts
-			// `corpus-python/.venv` is a Python virtualenv that vendors a Svelte app (trackio) carrying
+			// `.venv` is a Python virtualenv that vendors a Svelte app (trackio) carrying
 			// its own *.test.js files. Vitest collected five of them; at `--maxWorkers=4` one FAILED the
 			// run outright ("No test suite found in file .../legend.test.js"), and the rest showed up as
 			// an unexplained `1 skipped`. Not a CI cost — .venv is not checked in, and a fresh checkout
@@ -1862,7 +1862,7 @@ Run (from the main checkout again):
 
 ```bash
 cd /home/lab/Projects/mailwoman
-yarn vitest list --run 2>/dev/null | grep -c "corpus-python/.venv" || echo 0
+yarn vitest list --run 2>/dev/null | grep -c ".venv" || echo 0
 cd /home/lab/Projects/mailwoman/.claude/worktrees/perf+test-suite
 ```
 
@@ -1902,7 +1902,7 @@ git commit -m "$(cat <<'EOF'
 test(config): stop collecting the Python virtualenv's vendored suites
 
 vitest's excludes covered node_modules but not .venv, so it collected five
-*.test.js files from corpus-python/.venv/.../trackio/frontend/ — a Svelte app
+*.test.js files from .venv/.../trackio/frontend/ — a Svelte app
 vendored inside a Python virtualenv. At --maxWorkers=4 one of them failed the
 run outright; the rest were the unexplained `1 skipped`.
 

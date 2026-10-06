@@ -11,7 +11,7 @@ import { runFileSync } from "@mailwoman/core/process"
 
 import { $public } from "#env"
 
-const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
+const PYTHON = $public.PYTHON ?? ".venv/bin/python"
 const TRAIN_REMOTE = "corpus-python/launch/app.py"
 
 if (!(await pathExists(PYTHON))) {
