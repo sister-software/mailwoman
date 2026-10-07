@@ -27,8 +27,8 @@
  *    without regard to case, and accept either form of a coded value.
  *
  * So this module exposes the primitives and leaves composition to each adapter. A configuration
- * object describing those four axes would have to be right about publishers whose files nobody has
- * read yet. A handful of small functions carries no such claim.
+ * object describing those axes would state claims about files no one has read. These small
+ * functions state none.
  *
  * The reference form is the exception, because its shapes are enumerable and measured:
  * {@linkcode componentJoinKey} reads all four.
@@ -40,43 +40,37 @@ import type { MarkupElement } from "@mailwoman/core/html/elements"
  * Whether an element's name is `wanted`, ignoring the case of both.
  *
  * The prefix a document binds a namespace to is the document's own choice.
- * Seven publishers write `ad:Address` and `gn:text`.
+ * Seven publishers write `ad:Address` and `gn:text`. The Dirección General del Catastro and the
+ * Gobierno de Navarra bind the same two namespaces to `AD:` and `GN:`. An exact comparison finds
+ * neither a locator, a street nor a postcode in either Spanish file. That reads as an address
+ * with none of those rather than as an unfamiliar prefix.
  *
- * The Dirección General del Catastro and the Gobierno de Navarra bind the same
- * two namespaces to `AD:` and `GN:`.
- * A reader comparing the name exactly finds neither a locator nor a street
- * nor a postcode in either Spanish file.
- *
- * That reads as an address carrying none rather than as a prefix this repository had not met.
- *
- * The prefix is still compared, because it carries the namespace and the namespace carries the meaning.
- * The Service public de Wallonie writes three `gml:name` elements inside each
- * `ad:ThoroughfareName`, ahead of the `ad:name` that holds the street.
- *
- * A reader that dropped the prefix and matched on `name` alone read the first of those three
- * and found no street on any of Wallonia's 58,591 thoroughfare features.
+ * The prefix is still compared, because it identifies the namespace and the namespace holds the
+ * meaning. The Service public de Wallonie writes three `gml:name` elements inside each
+ * `ad:ThoroughfareName`, ahead of the `ad:name` that holds the street. A reader that dropped the
+ * prefix and matched only on `name` read the first of those three, so it found no street on any of
+ * Wallonia's 58,591 thoroughfare features.
  */
 export function inspireNameIs(name: string, wanted: string): boolean {
 	return name.toLowerCase() === wanted.toLowerCase()
 }
 
 /**
- * The first child of `element` named `name`, ignoring case.
+ * The first child of `element` whose name matches `name`, ignoring case.
  *
- * `name` is written with the prefix the INSPIRE guideline uses, which is the
- * prefix eight of the nine publishers write.
- * The case-insensitive sibling of `childElement` from `@mailwoman/core/html/elements`,
- * which compares the name exactly as a general markup reader must.
+ * Write `name` with the prefix the INSPIRE guideline uses. Eight of the nine publishers use it.
+ * The case-insensitive sibling of `childElement` from `@mailwoman/core/html/elements`. That
+ * function compares the name exactly, as a general markup reader must.
  */
 export function inspireChild(element: MarkupElement, name: string): MarkupElement | undefined {
 	return element.children.find((child) => inspireNameIs(child.name, name))
 }
 
 /**
- * Every child of `element` named `name`, in document order, ignoring case.
+ * Every child of `element` whose name matches `name`, in document order, ignoring case.
  *
- * The case-insensitive sibling of `childElements` from `@mailwoman/core/html/elements`,
- * for the same reason {@linkcode inspireChild} is.
+ * The case-insensitive sibling of `childElements` from `@mailwoman/core/html/elements`, for the
+ * same reason {@linkcode inspireChild} exists.
  */
 export function inspireChildren(element: MarkupElement, name: string): readonly MarkupElement[] {
 	return element.children.filter((child) => inspireNameIs(child.name, name))
@@ -102,7 +96,7 @@ export function inspireElementAt(element: MarkupElement, ...path: readonly strin
 }
 
 /**
- * The final segment of an INSPIRE codelist URI, which is the value's name.
+ * The final segment of an INSPIRE codelist URI. That segment is the value's name.
  *
  * `http://inspire.ec.europa.eu/codelist/LocatorDesignatorTypeValue/buildingIdentifier`
  * reads `buildingIdentifier`.
@@ -123,8 +117,8 @@ export function codelistValue(uri: string | undefined): string | undefined {
  *
  * INSPIRE writes `xsi:nil="true"` and usually a `nilReason`.
  * Brussels writes the nil marker and no reason on all 232,003 of its void `ad:validFrom`
- * elements, and Czechia writes four `gn:pronunciation` elements nil with no reason,
- * so a reader keyed on `nilReason` alone mistakes a void value for a populated one.
+ * elements, and Czechia writes four `gn:pronunciation` elements nil with no reason. A reader that
+ * keys only on `nilReason` mistakes a void value for a populated one.
  *
  * An absent element answers false, so a caller distinguishes a void value from a missing one.
  */
@@ -135,10 +129,10 @@ export function isVoid(element: MarkupElement | undefined): boolean {
 /**
  * The reason a publisher gave for a void element, as a codelist value such as `Unpopulated`.
  *
- * Returns undefined when the element is void and states no reason, which the
- * schema permits and which Brussels does throughout.
- * A caller that needs to separate a void carrying a reason from a void carrying
- * none reads this together with {@linkcode isVoid}.
+ * Returns undefined when the element is void and states no reason. The schema permits that form,
+ * and Brussels uses it throughout.
+ * A caller that needs to separate a void with a reason from a void with none reads this together
+ * with {@linkcode isVoid}.
  */
 export function voidReason(element: MarkupElement | undefined): string | undefined {
 	if (!isVoid(element)) return undefined
@@ -149,17 +143,17 @@ export function voidReason(element: MarkupElement | undefined): string | undefin
 /**
  * Every locator designator on an address, keyed by its INSPIRE type name.
  *
- * One `ad:AddressLocator` carries a designator per part of the number, each in its
- * own `ad:LocatorDesignator` beside an `ad:type` naming what it is.
+ * One `ad:AddressLocator` holds a designator per part of the number, each in its
+ * own `ad:LocatorDesignator` beside an `ad:type` that states what it is.
  * Czechia writes two, `č.ev.` typed `buildingIdentifierPrefix` and `502` typed `buildingIdentifier`.
  *
  * The Netherlands writes four, including an empty `LocatorDesignatorTypeValue/addressNumberExtension`
  * and the postcode as `LocatorDesignatorTypeValue/postalDeliveryIdentifier`.
  *
  * A type may repeat, so each key holds a list in document order.
- * A designator the publisher wrote empty contributes an empty string, which is a value the publisher
- * stated rather than one it omitted: the Netherlands writes `<ad:designator/>` 198,118 times
- * over 108,708 features to mean "no extension", and that is a different condition from void.
+ * A designator the publisher wrote empty contributes an empty string. That string is a value the
+ * publisher stated rather than one it omitted. The Netherlands writes `<ad:designator/>` 198,118
+ * times over 108,708 features to mean "no extension", and that condition differs from void.
  *
  * A designator whose `ad:type` is absent or void is skipped, because its value cannot be placed.
  */
@@ -216,7 +210,7 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
  * value has to be reported rather than turned into an absence.
  *
  * A caller reads this when the difference changes what it does.
- * An adapter that refuses a row carrying no house number should report a void `buildingIdentifier` as
+ * An adapter that refuses a row with no house number should report a void `buildingIdentifier` as
  * a value it could not read, and an absent one as an address the publisher states has no number.
  */
 export function voidDesignatorTypes(address: MarkupElement): ReadonlySet<string> {
@@ -238,7 +232,7 @@ export function voidDesignatorTypes(address: MarkupElement): ReadonlySet<string>
 		const name = type && !isVoid(type) ? (codelistValue(type.attributes["xlink:href"]) ?? type.text) : undefined
 
 		// A void value whose own type is void or absent cannot be placed, so it is reported under
-		// the empty name rather than dropped, which keeps the address's unreadable parts countable.
+		// the empty name. That keeps the address's unreadable parts countable.
 		voided.add(name || "")
 	}
 
@@ -266,8 +260,8 @@ export function designator(
  * The href is returned verbatim, and {@linkcode componentJoinKey} turns it into a join key.
  * A component whose href is absent or empty is skipped.
  *
- * Brussels writes `<ad:component xlink:href=""/>` on 9 addresses, and those 9 therefore
- * carry no postal zone, which a caller must report rather than read as a resolved component.
+ * Brussels writes `<ad:component xlink:href=""/>` on 9 addresses. Those 9 hold no postal zone. A
+ * caller must report that rather than read a resolved component.
  */
 export function componentHrefs(address: MarkupElement): readonly string[] {
 	return componentLinks(address).map((link) => link.href)
@@ -283,7 +277,7 @@ export interface ComponentLink {
 	readonly href: string
 
 	/**
-	 * The `xlink:title`, or undefined where the reference carries none.
+	 * The `xlink:title`, or undefined where the reference has no title.
 	 */
 	readonly title?: string
 }
@@ -298,8 +292,8 @@ export interface ComponentLink {
  * Its references leave the file: a thoroughfare reference is the bare string `ThoroughfareName`
  * and an administrative-unit reference addresses a CartoCiudad stored query.
  *
- * The title is the only statement of the street name, the postcode and the place names
- * that its own file carries, so its adapter reads titles and resolves no reference.
+ * The title is the only statement of the street name, the postcode and the place names in its own
+ * file, so its adapter reads titles and resolves no reference.
  *
  * A component whose href is absent or empty is skipped, as in {@linkcode componentHrefs}.
  */
@@ -320,10 +314,10 @@ export function componentLinks(address: MarkupElement): readonly ComponentLink[]
 }
 
 /**
- * The query parameters a WFS stored-query reference carries its feature id in.
+ * The query parameters that hold a WFS stored-query reference's feature id.
  *
  * Each publisher picked a spelling, and the match below ignores case, so Czechia's `Id`
- * and Slovakia's `id` both resolve without naming each casing separately.
+ * and Slovakia's `id` both resolve.
  * A reader that knew only `id` returned Czechia's whole URL as the key, and no `gml:id`
  * equals a URL, so all 5,460 of one municipality's references read as unjoinable.
  */
@@ -342,14 +336,14 @@ const REFERENCE_ID_PARAMETERS = new Set(["id", "featureid", "resourceid"])
  * | Slovakia | `…ad/ows?…&id=AdminUnitName.15345` | `AdminUnitName.15345` |
  * | Flanders | `https://data.vlaanderen.be/id/straatnaam/6301` | the URI itself |
  *
- * A URI with no id parameter is its own key, which is what Flanders publishes on both sides of the join.
- * Its fragment is dropped, because a reference may carry one where the identifier does not:
+ * A URI with no id parameter is its own key. Flanders publishes that form on both sides of the join.
+ * Its fragment is dropped, because a reference may hold one where the identifier does not:
  * `http://vocab.belgif.be/auth/refnis1995/1000#id` addresses the same term as that URI without it.
  *
  * Whether a key joins is not a property of its spelling, so this reads a key
  * and the caller decides joinability against the features the publisher actually served.
- * Deciding it here from the URL's shape once reported 15 of Flanders' 20 references as
- * belonging to another register when every one of them addressed a feature of the same service.
+ * A check based on the URL's shape once reported 15 of Flanders' 20 references as belonging to
+ * another register, when every one of them addressed a feature of the same service.
  *
  * @returns The key, or undefined when the href is neither a fragment nor a URL.
  */
@@ -382,7 +376,7 @@ export function componentJoinKey(href: string): string | undefined {
 }
 
 /**
- * The spelling a `gn:GeographicalName` carries, reached from a feature that holds one.
+ * The spelling a `gn:GeographicalName` holds, reached from a feature that has one.
  *
  * Every name-bearing INSPIRE feature nests the text at
  * `…/gn:GeographicalName/gn:spelling/gn:SpellingOfName/gn:text`, under a per-feature
